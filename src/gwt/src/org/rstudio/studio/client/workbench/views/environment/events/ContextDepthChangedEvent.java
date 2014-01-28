@@ -30,9 +30,14 @@ public class ContextDepthChangedEvent extends
       void onContextDepthChanged(ContextDepthChangedEvent event);
    }
 
-   public ContextDepthChangedEvent(EnvironmentContextData data)
+   // This event is fired both as an event dispatched from the server and as
+   // an event from the client to set up state after requesting it from the
+   // server. The serverInitiated flag distinguishes between these states.
+   public ContextDepthChangedEvent(EnvironmentContextData data,
+                                   boolean serverInitiated)
    {
       contextData_ = data;
+      serverInitiated_ = serverInitiated;
    }
    
    public int getContextDepth() 
@@ -75,6 +80,11 @@ public class ContextDepthChangedEvent extends
       return contextData_.environmentIsLocal();
    }
    
+   public boolean isServerInitiated()
+   {
+      return serverInitiated_;
+   }
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -89,4 +99,5 @@ public class ContextDepthChangedEvent extends
   
    public static final Type<Handler> TYPE = new Type<Handler>();
    private final EnvironmentContextData contextData_;
+   private final boolean serverInitiated_;
 }

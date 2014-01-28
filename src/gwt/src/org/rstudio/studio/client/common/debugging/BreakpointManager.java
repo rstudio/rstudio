@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugSourceCompletedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 
 import com.google.gwt.core.client.JsArray;
@@ -87,7 +88,8 @@ public class BreakpointManager
                           PackageLoadedEvent.Handler,
                           PackageUnloadedEvent.Handler,
                           ConsoleWriteInputHandler,
-                          RestartStatusEvent.Handler
+                          RestartStatusEvent.Handler,
+                          DebugSourceCompletedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, BreakpointManager> {}
@@ -119,6 +121,7 @@ public class BreakpointManager
       events_.addHandler(PackageLoadedEvent.TYPE, this);
       events_.addHandler(PackageUnloadedEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
+      events_.addHandler(DebugSourceCompletedEvent.TYPE, this);
       
       binder.bind(commands, this);
    }
@@ -134,14 +137,20 @@ public class BreakpointManager
             path, 
             "toplevel", 
             lineNumber, 
-            Breakpoint.STATE_ACTIVE, 
+            path.equals(activeSource_) ? 
+                  Breakpoint.STATE_INACTIVE :
+                  Breakpoint.STATE_ACTIVE, 
             Breakpoint.TYPE_TOPLEVEL));
       
+      // If we're actively sourcing this file, we can't set breakpoints in 
+      // it just yet
+      if (path.equals(activeSource_))
+         breakpoint.setPendingDebugCompletion(true);
+
+      notifyServer(breakpoint, true, true);
+
       ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
       bps.add(breakpoint);
-      server_.updateShinyBreakpoints(bps, true, true, 
-                                     new VoidServerRequestCallback());
-
       return breakpoint;
    }
    
@@ -161,6 +170,7 @@ public class BreakpointManager
                   Breakpoint.STATE_PROCESSING :
                   Breakpoint.STATE_INACTIVE,
             Breakpoint.TYPE_FUNCTION));
+      notifyServer(breakpoint, true, false);
       
       // If the breakpoint is in a function that is active on the callstack, 
       // it's being set on the stored rather than the executing copy. It's 
@@ -230,13 +240,8 @@ public class BreakpointManager
          {
             setFunctionBreakpoints(new FileFunction(breakpoint));
          }
-         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
-         {
-            ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
-            bps.add(breakpoint);
-            server_.updateShinyBreakpoints(
-                  bps, false, true, new VoidServerRequestCallback());
-         }
+         notifyServer(breakpoint, false, 
+               breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL);
       }
       onBreakpointAddOrRemove();
    }
@@ -254,17 +259,7 @@ public class BreakpointManager
       if (breakpoint != null)
       {
          breakpoint.markStepsNeedUpdate();
-         // if this is a top-level breakpoint, it may be a Shiny breakpoint. 
-         // update the server's knowledge of the breakpoint so that the next
-         // time this breakpoint is injected, it's injected at the correct 
-         // line.
-         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL) 
-         {
-            ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
-            bps.add(breakpoint);
-            server_.updateShinyBreakpoints(bps, true, false,
-                                           new VoidServerRequestCallback());
-         }
+         notifyServer(breakpoint, true, false);
       }
    }
    
@@ -279,25 +274,6 @@ public class BreakpointManager
          }
       }
       return breakpoints;
-   }
-   
-   public boolean injectBreakpointsDuringSource(
-         String fileName, 
-         int startLine, 
-         int endLine)
-   {
-      for (Breakpoint breakpoint: breakpoints_)
-      {
-         if (breakpoint.isInFile(fileName) && 
-             breakpoint.getLineNumber() >= startLine &&
-             breakpoint.getLineNumber() <= endLine &&
-             breakpoint.getType() == Breakpoint.TYPE_FUNCTION)
-         {
-            prepareAndSetFunctionBreakpoints(new FileFunction(breakpoint));
-            return true;
-         }
-      }
-      return false;
    }
    
    // Event handlers ----------------------------------------------------------
@@ -385,6 +361,19 @@ public class BreakpointManager
    }
    
    @Override
+   public void onDebugSourceCompleted(DebugSourceCompletedEvent event)
+   {
+      if (event.getSucceeded())
+      {
+         resetBreakpointsInPath(
+               FilePathUtils.normalizePath(
+                     event.getPath(), 
+                     workbench_.getCurrentWorkingDir().getPath()),
+               true);
+      }
+   }
+   
+   @Override
    public void onContextDepthChanged(ContextDepthChangedEvent event)
    {
       // When we move around in debug context and hit a breakpoint, the initial
@@ -393,16 +382,25 @@ public class BreakpointManager
       // immediately.
       JsArray<CallFrame> frames = event.getCallFrames();
       Set<FileFunction> activeFunctions = new TreeSet<FileFunction>();
+      boolean hasSourceEquiv = false;
       for (int idx = 0; idx < frames.length(); idx++)
       {
-         String functionName = frames.get(idx).getFunctionName();
-         String fileName = frames.get(idx).getFileName();
-         if (functionName.equals(".doTrace"))
+         CallFrame frame = frames.get(idx);
+         String functionName = frame.getFunctionName();
+         String fileName = frame.getFileName();
+         if (functionName.equals(".doTrace") &&
+             event.isServerInitiated())
          {
-            events_.fireEvent(new SendToConsoleEvent("n", true));
+            events_.fireEvent(new SendToConsoleEvent(
+                  DebugCommander.NEXT_COMMAND, true));
          }
          activeFunctions.add(
                new FileFunction(functionName, fileName, "", false));
+         if (frame.isSourceEquiv())
+         {
+            activeSource_ = fileName;
+            hasSourceEquiv = true;
+         }
       }
       
       // For any functions that were previously active in the callstack but
@@ -432,6 +430,14 @@ public class BreakpointManager
       
       // Record the new frame list.
       activeFunctions_ = activeFunctions;
+      
+      // When we finish executing a top-level source, activate the top-level
+      // breakpoints in the file we were sourcing.
+      if (!hasSourceEquiv && activeSource_ != null)
+      {
+         activateTopLevelBreakpoints(activeSource_);
+         activeSource_ = null;
+      }
    }
    
    @Handler
@@ -603,9 +609,13 @@ public class BreakpointManager
       Set<FileFunction> functionsToBreak = new TreeSet<FileFunction>();
       for (Breakpoint breakpoint: breakpoints_)
       {
-         boolean processBreakpoint = isFile ?
-               breakpoint.isInFile(path) :
-               breakpoint.isInPath(path);
+         // set this breakpoint if it's a function breakpoint in the file 
+         // (or path) given
+         boolean processBreakpoint = 
+               (breakpoint.getType() == Breakpoint.TYPE_FUNCTION) && 
+               (isFile ?
+                  breakpoint.isInFile(path) :
+                  breakpoint.isInPath(path));
          if (processBreakpoint)
          {
             functionsToBreak.add(new FileFunction(breakpoint));
@@ -737,13 +747,10 @@ public class BreakpointManager
    private void clearAllBreakpoints()
    {
       Set<FileFunction> functions = new TreeSet<FileFunction>();
-      ArrayList<Breakpoint> topLevelBPs = new ArrayList<Breakpoint>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          breakpoint.setState(Breakpoint.STATE_REMOVING);
-         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
-            topLevelBPs.add(breakpoint);
-         else
+         if (breakpoint.getType () == Breakpoint.TYPE_FUNCTION)
             functions.add(new FileFunction(breakpoint));
       }
       // Remove the breakpoints from each unique function that had breakpoints
@@ -767,13 +774,8 @@ public class BreakpointManager
                   }
                });
       }
-      // Let the server know that top-level breakpoints were cleared (if any)
-      if (topLevelBPs.size() > 0)
-      {
-         server_.updateShinyBreakpoints(topLevelBPs, false, true, 
-                                        new VoidServerRequestCallback());
-      }
-      
+
+      server_.removeAllBreakpoints(new VoidServerRequestCallback());
       notifyBreakpointsSaved(new ArrayList<Breakpoint>(breakpoints_), false);
       breakpoints_.clear();
       onBreakpointAddOrRemove();
@@ -783,6 +785,36 @@ public class BreakpointManager
    {
       breakpointStateDirty_ = true;
       commands_.debugClearBreakpoints().setEnabled(breakpoints_.size() > 0);
+   }
+   
+   private void notifyServer(Breakpoint breakpoint, boolean added, boolean arm)
+   {
+      ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+      bps.add(breakpoint);
+      server_.updateBreakpoints(bps, added, arm, 
+                                new VoidServerRequestCallback());
+   }
+   
+   private void activateTopLevelBreakpoints(String path)
+   {
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         ArrayList<Breakpoint> activatedBreakpoints = 
+               new ArrayList<Breakpoint>();
+         if (breakpoint.isPendingDebugCompletion() &&
+             breakpoint.getState() == Breakpoint.STATE_INACTIVE &&
+             breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL &&
+             breakpoint.getPath().equals(path))
+         {
+            // If this is a top-level breakpoint in the file that we 
+            // just finished sourcing, activate the breakpoint.
+            breakpoint.setPendingDebugCompletion(false);
+            breakpoint.setState(Breakpoint.STATE_ACTIVE);
+            activatedBreakpoints.add(breakpoint);
+         }
+         if (activatedBreakpoints.size() > 0)
+            notifyBreakpointsSaved(activatedBreakpoints, true);
+      }
    }
    
    // Private classes ---------------------------------------------------------
@@ -859,6 +891,7 @@ public class BreakpointManager
 
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
+   private String activeSource_;
 
    private boolean breakpointStateDirty_ = false;
    private int currentBreakpointId_ = 0;

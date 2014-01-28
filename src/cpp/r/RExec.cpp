@@ -49,10 +49,14 @@ namespace {
 class DisableErrorHandlerScope : boost::noncopyable
 {
 public:
-   DisableErrorHandlerScope()
+   DisableErrorHandlerScope(bool disable = true)
       : didDisable_(false),
         previousErrorHandlerSEXP_(R_NilValue)
    {
+      // convenience for creating a stack variable that can conditionally
+      // disable error handler scope at runtime
+      if (!disable)
+         return;
       previousErrorHandlerSEXP_ = r::options::setErrorOption(R_NilValue);
       if (previousErrorHandlerSEXP_ != R_NilValue)
       {
@@ -105,10 +109,11 @@ Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
 Error evaluateExpressions(SEXP expr, 
                           SEXP env, 
                           SEXP* pSEXP,
-                          sexp::Protect* pProtect)   
+                          sexp::Protect* pProtect,
+                          bool safely = true)
 {
-   // disable custom error handlers while we execute code
-   DisableErrorHandlerScope disableErrorHandler;
+   // disable custom error handlers while we execute code, if requested
+   DisableErrorHandlerScope disableErrorHandler(safely);
 
    int er=0;
    int i=0,l;
@@ -150,9 +155,10 @@ Error evaluateExpressions(SEXP expr,
    }
 }
    
-Error evaluateExpressions(SEXP expr, SEXP* pSEXP, sexp::Protect* pProtect)
+Error evaluateExpressions(SEXP expr, SEXP* pSEXP, sexp::Protect* pProtect,
+                          bool safely = true)
 {
-   return evaluateExpressions(expr, R_GlobalEnv, pSEXP, pProtect);
+   return evaluateExpressions(expr, R_GlobalEnv, pSEXP, pProtect, safely);
 }
        
 void topLevelExec(void *data)
@@ -300,11 +306,11 @@ void RFunction::commonInit(const std::string& functionName)
 }
    
    
-Error RFunction::call(SEXP evalNS)
+Error RFunction::call(SEXP evalNS, bool safely)
 {
    sexp::Protect rProtect;
    SEXP ignoredResultSEXP ;
-   return call(evalNS, &ignoredResultSEXP, &rProtect);  
+   return call(evalNS, &ignoredResultSEXP, &rProtect, safely);
 }
 
 Error RFunction::call(SEXP* pResultSEXP, sexp::Protect* pProtect)
@@ -312,7 +318,8 @@ Error RFunction::call(SEXP* pResultSEXP, sexp::Protect* pProtect)
    return call(R_GlobalEnv, pResultSEXP, pProtect);
 }
    
-Error RFunction::call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect)
+Error RFunction::call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect,
+                      bool safely)
 {
    // verify the function
    if (functionSEXP_ == R_UnboundValue)
@@ -344,7 +351,8 @@ Error RFunction::call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect)
    }
    
    // call the function
-   Error error = evaluateExpressions(callSEXP, evalNS, pResultSEXP, pProtect);  
+   Error error = evaluateExpressions(callSEXP, evalNS, pResultSEXP, pProtect,
+                                     safely);
    if (error)
       return error;
    

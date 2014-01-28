@@ -649,14 +649,6 @@ public class EnvironmentPresenter extends BasePresenter
       if (currentBrowsePosition_ != null &&
           !useCurrentBrowseSource_)
       {
-         // If we're finished debugging this file and it has an active top-level
-         // debug session, let that session take over line highlighting instead
-         // of turning it off ourselves. 
-         if (!debugging &&
-             debugCommander_.hasTopLevelDebugSession(currentBrowseFile_))
-         {
-            return;
-         }
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
          eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
                                 (FilePosition) currentBrowsePosition_.cast(),
@@ -741,7 +733,7 @@ public class EnvironmentPresenter extends BasePresenter
             view_.setProgress(false);
             refreshingView_ = false;
             initialized_ = true;
-            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data, false));
          }
 
          @Override

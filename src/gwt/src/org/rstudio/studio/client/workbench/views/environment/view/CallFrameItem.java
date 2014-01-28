@@ -53,7 +53,7 @@ public class CallFrameItem extends Composite
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       functionName.addClickHandler(this);
-      if (!frame.isNavigable())
+      if (!frame.isNavigable() || hidden)
       {
          functionName.addStyleName(style.noSourceFrame());
          
@@ -110,6 +110,11 @@ public class CallFrameItem extends Composite
    {
       return frame_.isNavigable();
    }
+   
+   public boolean isHidden()
+   {
+      return frame_.isHidden();
+   }
 
    // Private functions -------------------------------------------------------
 
@@ -142,16 +147,18 @@ public class CallFrameItem extends Composite
    
    private String getFrameLabel()
    {
+      if (frame_.isSourceEquiv())
+      {
+         return "[Debug source]";
+      }
       if (frame_.getShinyFunctionLabel().isEmpty())
       {
-         return frame_.getFunctionName() +
-                "(" + frame_.getArgumentList() + ")";
+         return frame_.getFunctionName() + "(" + frame_.getArgumentList() + ")";
       }
       else
       {
          return "[Shiny: " + frame_.getShinyFunctionLabel() + "]";
       }
-         
    }
 
    @UiField Label functionName;

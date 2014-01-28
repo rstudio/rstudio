@@ -605,7 +605,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
-   sessionInfo["debug_state"] = modules::breakpoints::debugStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
 
    // send whether we should show the user identity

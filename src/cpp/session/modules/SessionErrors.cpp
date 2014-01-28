@@ -56,12 +56,9 @@ Error setErrHandler(int type, bool inMyCode,
    if (!breakpoints::haveSrcrefAttribute())
       return Success();
 
-   // clear the previous error handler; if we don't do this, the error handler
-   // we set will be unset by DisableErrorHandlerScope during call evaluation
-   r::options::setErrorOption(R_NilValue);
-
    Error error = r::exec::RFunction(
-            ".rs.setErrorManagementType", type, inMyCode).call();
+            ".rs.setErrorManagementType", type, inMyCode)
+            .call(R_GlobalEnv, false);
    if (error)
       return error;
 
@@ -123,10 +120,36 @@ void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler,
    SEXP currentHandler = r::options::getOption("error");
    if (currentHandler != *pErrorHandler)
    {
+      int handlerType = -1;
+      if (currentHandler != R_NilValue &&
+          r::sexp::isLanguage(currentHandler))
+      {
+         // it's possible for the SEXP to change (it's a pointer) even though
+         // the handler is correct; check the attribute of the function invoked
+         // by the handler and compare to the user preference.
+         SEXP fun = CAR(currentHandler);
+         SEXP typeSEXP = r::sexp::getAttrib(fun, "errorHandlerType");
+         if (typeSEXP != NULL && !r::sexp::isNull(typeSEXP))
+         {
+            Error error = r::sexp::extract(typeSEXP, &handlerType);
+            if (!error && handlerType == userSettings().errorHandlerType())
+            {
+               // the SEXP is different but the attribute matches; update our
+               // SEXP so we don't keep detecting a change
+               *pErrorHandler = currentHandler;
+               return;
+            }
+         }
+      }
       *pErrorHandler = currentHandler;
-      int handlerType = (currentHandler == R_NilValue) ?
+
+      // attempt to figure out what error handler type is in use, if any
+      if (handlerType < 0)
+      {
+         handlerType = (currentHandler == R_NilValue) ?
                         ERRORS_MESSAGE :
                         ERRORS_CUSTOM;
+      }
       if (recordSetting)
          userSettings().setErrorHandlerType(handlerType);
       enqueErrorHandlerChanged(handlerType);
@@ -193,8 +216,8 @@ Error initialize()
    return initBlock.execute();
 }
 
-} // namepsace errors
+} // namespace errors
 } // namespace modules
-} // namesapce session
+} // namespace session
 
 

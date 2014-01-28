@@ -97,6 +97,16 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
+RCNTXT* firstFunctionContext(RCNTXT* start)
+{
+   RCNTXT* firstFunContext = start;
+   while ((firstFunContext->callfun == NULL ||
+           firstFunContext->callfun == R_NilValue) &&
+          firstFunContext->callflag)
+      firstFunContext = firstFunContext->nextcontext;
+   return firstFunContext;
+}
+
 SEXP getOriginalFunctionCallObject(const RCNTXT* pContext)
 {
    SEXP callObject = pContext->callfun;
@@ -191,22 +201,10 @@ bool isDebugHiddenContext(RCNTXT* pContext)
    return TYPEOF(hideFlag) != NILSXP && r::sexp::asLogical(hideFlag);
 }
 
-// given a context from the context stack, indicate whether it should be emitted
-// to the callstack.
-bool isPrintableContext(RCNTXT* pContext)
+bool isErrorHandlerContext(RCNTXT* pContext)
 {
-   if (pContext->callflag & CTXT_FUNCTION)
-   {
-      if (isDebugHiddenContext(pContext))
-      {
-         // hidden function
-         return false;
-      }
-      // printable function
-      return true;
-   }
-   // not a function at all
-   return false;
+   SEXP errFlag = r::sexp::getAttrib(pContext->callfun, "errorHandlerType");
+   return TYPEOF(errFlag) == INTSXP;
 }
 
 // return the function context at the given depth
@@ -219,13 +217,11 @@ RCNTXT* getFunctionContext(const int depth,
    RCNTXT* pSrcContext = pRContext;
    int currentDepth = 0;
    bool foundUserCode = false;
+   RCNTXT* pErrContext = NULL;
+   int errorDepth = 0;
    while (pRContext->callflag)
    {
-      if (isDebugHiddenContext(pRContext))
-      {
-          pSrcContext = pRContext->nextcontext;
-      }
-      else if (isPrintableContext(pRContext))
+      if (pRContext->callflag & CTXT_FUNCTION)
       {
          // If the caller asked us to find user code, don't stop unless the
          // context we're examining meets the following criteria:
@@ -239,6 +235,7 @@ RCNTXT* getFunctionContext(const int depth,
          //    be considered real user code since we don't want to break into
          //    the error handler.
          if (++currentDepth >= depth &&
+             !isDebugHiddenContext(pRContext) &&
              !(findUserCode && (!isValidSrcref(pSrcContext->srcref) ||
                                  (pRContext != pSrcContext &&
                                   pRContext->srcref == pSrcContext->srcref))))
@@ -246,7 +243,14 @@ RCNTXT* getFunctionContext(const int depth,
             foundUserCode = true;
             break;
          }
-         pSrcContext = pRContext;
+         // Record the depth at which the error handler was found (if at all);
+         // we will default to reporting code at the function that invoked
+         // the handler, which is two functions down.
+         if (findUserCode && isErrorHandlerContext(pRContext))
+         {
+            pErrContext = getFunctionContext(currentDepth + 2, false,
+                                             &errorDepth);
+         }
       }
       pRContext = pRContext->nextcontext;
    }
@@ -263,12 +267,24 @@ RCNTXT* getFunctionContext(const int depth,
    }
    if (depth == TOP_FUNCTION && findUserCode && !foundUserCode)
    {
-      // if we were looking for the top user-mode function on the stack but
-      // found nothing, return the top of the stack rather than the bottom.
-      if (pEnvironment)
-         *pEnvironment = r::getGlobalContext()->cloenv;
-      if (pFoundDepth)
-         *pFoundDepth = 1;
+      if (pErrContext != NULL)
+      {
+         // if there's an error handler on the stack, report the "user" code to
+         // be the function that invoked the handler.
+         pRContext = pErrContext;
+         *pFoundDepth = errorDepth;
+         if (pEnvironment)
+            *pEnvironment = pErrContext->cloenv;
+      }
+      else
+      {
+         // if we were looking for the top user-mode function on the stack but
+         // found nothing, return the top of the stack rather than the bottom.
+         if (pEnvironment)
+            *pEnvironment = r::getGlobalContext()->cloenv;
+         if (pFoundDepth)
+            *pFoundDepth = 1;
+      }
       pRContext = r::getGlobalContext();
    }
    return pRContext;
@@ -337,7 +353,7 @@ Error functionNameFromContext(const RCNTXT* pContext,
                             .call(&functionName, &protect);
    if (!error && r::sexp::length(functionName) > 0)
    {
-      return r::sexp::extract(functionName, pFunctionName);
+      error = r::sexp::extract(functionName, pFunctionName);
    }
    else
    {
@@ -358,24 +374,20 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
    while (pRContext->callflag)
    {
-      // If this context is hidden from the debugger, we want to avoid
-      // delivering source refs for the context that invoked it. Pick up
-      // source refs from the next context in this case.
-      if (isDebugHiddenContext(pRContext))
-      {
-          pSrcContext = pRContext->nextcontext;
-      }
-      else if (isPrintableContext(pRContext))
+      if (pRContext->callflag & CTXT_FUNCTION)
       {
          json::Object varFrame;
          std::string functionName;
+         varFrame["context_depth"] = ++contextDepth;
+
          error = functionNameFromContext(pRContext, &functionName);
          if (error)
          {
             LOG_ERROR(error);
          }
-         varFrame["context_depth"] = ++contextDepth;
          varFrame["function_name"] = functionName;
+         varFrame["is_error_handler"] = isErrorHandlerContext(pRContext);
+         varFrame["is_hidden"] = isDebugHiddenContext(pRContext);
 
          // in the linked list of R contexts, the srcref associated with each
          // context points to the place from which the context was invoked.
@@ -684,26 +696,27 @@ json::Object commonEnvironmentStateData(
       {
          LOG_ERROR(error);
       }
-      varJson["function_name"] = functionName;
 
       // If the environment currently monitored is the function's environment,
-      // return that environment
-      if (s_pEnvironmentMonitor->getMonitoredEnvironment() ==
-          pContext->cloenv)
+      // return that environment, unless the environment is the global
+      // environment (which happens for source-equivalent functions).
+      SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
+      if (env != R_GlobalEnv && env == pContext->cloenv)
       {
          varJson["environment_name"] = functionName + "()";
          varJson["environment_is_local"] = true;
          inFunctionEnvironment = true;
       }
 
-      // see if the function to be debugged is out of sync with its saved
-      // sources (if available).
-      if (pContext)
+      if (pContext && functionName != "eval")
       {
+         // see if the function to be debugged is out of sync with its saved
+         // sources (if available).
          useProvidedSource =
                functionIsOutOfSync(pContext, &functionCode) &&
                functionCode != "NULL";
       }
+      varJson["function_name"] = functionName;
    }
    else
    {
@@ -885,11 +898,8 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
          if (!isValidSrcref(srcref))
          {
             // we don't, so reconstruct them from R output
-            RCNTXT *firstFunContext = r::getGlobalContext();
-            while ((firstFunContext->callfun == NULL ||
-                    firstFunContext->callfun == R_NilValue) &&
-                   firstFunContext->callflag)
-               firstFunContext = firstFunContext->nextcontext;
+            RCNTXT *firstFunContext = firstFunctionContext(
+                     r::getGlobalContext());
             srcref = simulatedSourceRefsOfContext(firstFunContext, NULL,
                                                   pLineDebugState.get());
          }

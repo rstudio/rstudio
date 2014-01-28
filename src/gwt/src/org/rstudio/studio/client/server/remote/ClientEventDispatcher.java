@@ -72,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 import org.rstudio.studio.client.workbench.views.environment.events.*;
+import org.rstudio.studio.client.workbench.views.environment.model.DebugSourceResult;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
@@ -450,7 +451,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ContextDepthChanged)) {
             EnvironmentContextData data = event.getData();
-            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data, true));
          }
          else if (type.equals(ClientEvent.HandleUnsavedChanges))
          {
@@ -528,6 +529,11 @@ public class ClientEventDispatcher
          {
             ShinyApplicationParams data = event.getData();
             eventBus_.fireEvent(new ShinyApplicationStatusEvent(data));
+         }
+         else if (type.equals(ClientEvent.DebugSourceCompleted))
+         {
+            DebugSourceResult result = (DebugSourceResult)event.getData();
+            eventBus_.fireEvent(new DebugSourceCompletedEvent(result));
          }
          else
          {
