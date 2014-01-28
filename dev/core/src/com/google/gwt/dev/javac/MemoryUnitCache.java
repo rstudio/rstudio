@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * This cache stores {@link CompilationUnit} instances in a Map.
- * 
+ *
  * Only one unit is cached per resource path. If the contentId of the unit
  * changes, the old unit is discarded and replaced with the new unit.
  */
@@ -51,7 +51,6 @@ class MemoryUnitCache implements UnitCache {
   /**
    * Track how the unit was loaded. Useful in {@link PersistentUnitCache} for
    * consolidating old cache files.
-   * 
    */
   protected static enum UnitOrigin {
     /**
@@ -73,7 +72,7 @@ class MemoryUnitCache implements UnitCache {
   /**
    * References to all {@link CompilationUnit} objects loaded from the
    * persistent store, and any new ones added to the store as well.
-   * 
+   *
    * The key is resource path.
    */
   protected final Map<String, UnitCacheEntry> unitMap = new MapMaker().softValues().makeMap();
@@ -119,8 +118,8 @@ class MemoryUnitCache implements UnitCache {
   }
 
   @Override
-  public CompilationUnit find(String resourcePath) {
-    UnitCacheEntry entry = unitMap.get(resourcePath);
+  public CompilationUnit find(String resourceLocation) {
+    UnitCacheEntry entry = unitMap.get(resourceLocation);
     if (entry != null) {
       return entry.getUnit();
     }
@@ -129,18 +128,18 @@ class MemoryUnitCache implements UnitCache {
 
   @Override
   public void remove(CompilationUnit unit) {
-    unitMap.remove(unit.getResourcePath());
+    unitMap.remove(unit.getResourceLocation());
     unitMapByContentId.remove(unit.getContentId());
   }
 
   private void add(CompilationUnit newUnit, UnitOrigin origin) {
     UnitCacheEntry newEntry = new UnitCacheEntry(newUnit, origin);
-    String resourcePath = newUnit.getResourcePath();
-    UnitCacheEntry oldEntry = unitMap.get(resourcePath);
+    String resourceLocation = newUnit.getResourceLocation();
+    UnitCacheEntry oldEntry = unitMap.get(resourceLocation);
     if (oldEntry != null) {
       remove(oldEntry.getUnit());
     }
-    unitMap.put(resourcePath, newEntry);
+    unitMap.put(resourceLocation, newEntry);
     unitMapByContentId.put(newUnit.getContentId(), newEntry);
   }
 }

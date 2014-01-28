@@ -47,12 +47,11 @@ public interface UnitCache {
   CompilationUnit find(ContentId contentId);
 
   /**
-   * Lookup a {@link CompilationUnit} by resource path. This should include any
-   * path prefix that may have been was stripped to reroot the resource.
+   * Lookup a {@link CompilationUnit} by resource location. This should not include any path prefix.
    *
-   * @see CompilationUnit#getResourcePath()
+   * @see CompilationUnit#getResourceLocation()
    */
-  CompilationUnit find(String resourcePath);
+  CompilationUnit find(String resourceLocation);
 
   /**
    * Remove a {@link CompilationUnit} from the cache.

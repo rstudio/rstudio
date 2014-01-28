@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -88,10 +88,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * uses lots of heap and takes 5-10 seconds. Once the PersistentUnitCache is
  * created, it starts eagerly loading the cache in a background thread).</li>
  *
- * <li>Although units logged to disk with the same resource path are eventually
- * cleaned up, the most recently compiled unit stays in the cache forever. This
- * means that stale units that are no longer referenced will never be purged,
- * unless by some external action (e.g. ant clean).</li>
+ * <li>Although units logged to disk with the same resource location are
+ * eventually cleaned up, the most recently compiled unit stays in the cache
+ * forever. This means that stale units that are no longer referenced will never
+ * be purged, unless by some external action (e.g. ant clean).</li>
  *
  * <li>Unless ant builds are made aware of the cache directory, the cache will
  * persist if a user does an ant clean.</li>
@@ -342,7 +342,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     awaitUnitCacheMapLoad();
     addedSinceLastCleanup++;
     super.add(newUnit);
-    addImpl(unitMap.get(newUnit.getResourcePath()));
+    addImpl(unitMap.get(newUnit.getResourceLocation()));
   }
 
   /**
@@ -414,9 +414,9 @@ class PersistentUnitCache extends MemoryUnitCache {
   }
 
   @Override
-  public CompilationUnit find(String resourcePath) {
+  public CompilationUnit find(String resourceLocation) {
     awaitUnitCacheMapLoad();
-    return super.find(resourcePath);
+    return super.find(resourceLocation);
   }
 
   public void rotateCurrentCacheFile() throws UnableToCompleteException {
@@ -568,7 +568,7 @@ class PersistentUnitCache extends MemoryUnitCache {
                 continue;
               }
               UnitCacheEntry entry = new UnitCacheEntry(unit, UnitOrigin.PERSISTENT);
-              UnitCacheEntry existingEntry = unitMap.get(unit.getResourcePath());
+              UnitCacheEntry existingEntry = unitMap.get(unit.getResourceLocation());
               /*
                * Don't assume that an existing entry is stale - an entry might
                * have been loaded already from another source like a
@@ -580,10 +580,10 @@ class PersistentUnitCache extends MemoryUnitCache {
               if (existingEntry != null
                   && unit.getLastModified() >= existingEntry.getUnit().getLastModified()) {
                 super.remove(existingEntry.getUnit());
-                unitMap.put(unit.getResourcePath(), entry);
+                unitMap.put(unit.getResourceLocation(), entry);
                 unitMapByContentId.put(unit.getContentId(), entry);
               } else if (existingEntry == null) {
-                unitMap.put(unit.getResourcePath(), entry);
+                unitMap.put(unit.getResourceLocation(), entry);
                 unitMapByContentId.put(unit.getContentId(), entry);
               }
             }
