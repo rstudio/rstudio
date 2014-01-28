@@ -145,6 +145,8 @@ java_library(
     deps = [
         ":compiler.standalone.super",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
+        # Safe to depend on servlet_api_3 because nobody directly depends on gwt-dev-classes
+        "//third_party/java_src/gwt/svn/tools:servlet_api_3",
     ],
 )
 

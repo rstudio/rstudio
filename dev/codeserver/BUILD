@@ -45,7 +45,8 @@ java_library(
         # approved dependencies (for open source code)
         "//third_party/java_src/gwt:gwt-dev",
         "//third_party/java_src/gwt:gwt-dev-private",
-        # no other dependencies allowed
+        # Codeserver is known to leak servlet_api_3 - dependents should be cautious
+        "//third_party/java_src/gwt/svn/tools:servlet_api_3",
         "//third_party/java/json",  # undeclared dependency of SourceMapConsumer. TODO: fix
     ],
 )
