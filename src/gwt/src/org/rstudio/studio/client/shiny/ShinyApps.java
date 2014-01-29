@@ -18,11 +18,15 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -33,12 +37,17 @@ public class ShinyApps implements SessionInitHandler
            extends CommandBinder<Commands, ShinyApps> {}
 
    @Inject
-   public ShinyApps(EventBus events, Session session, Commands commands, 
-                    GlobalDisplay display, Binder binder)
+   public ShinyApps(EventBus events, 
+                    Commands commands, 
+                    Session session,
+                    GlobalDisplay display, 
+                    Binder binder, 
+                    ShinyAppsServerOperations server)
    {
-      session_ = session;
       commands_ = commands;
       display_ = display;
+      session_ = session;
+      server_ = server;
 
       binder.bind(commands, this);
 
@@ -48,12 +57,16 @@ public class ShinyApps implements SessionInitHandler
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
-      boolean isShinyAppsInstalled = 
-            session_.getSessionInfo().getShinyappsInstalled();
-      commands_.shinyAppsConfigure().setVisible(isShinyAppsInstalled);
-      commands_.shinyAppsDeploy().setVisible(isShinyAppsInstalled);
-      commands_.shinyAppsTerminate().setVisible(isShinyAppsInstalled);
-      commands_.shinyAppsManageAccounts().setVisible(isShinyAppsInstalled);
+      // Deployment-related ShinyApps commands are invisible by default; they
+      // will be set to visible by the source pane if a Shiny file is open and
+      // the ShinyApps package is installed.
+      commands_.shinyAppsConfigure().setVisible(false);
+      commands_.shinyAppsDeploy().setVisible(false);
+      commands_.shinyAppsTerminate().setVisible(false);
+      
+      // "Manage accounts" can be invoked any time the package is available
+      commands_.shinyAppsManageAccounts().setVisible(
+            session_.getSessionInfo().getShinyappsInstalled());
    }
    
    @Handler
@@ -61,8 +74,29 @@ public class ShinyApps implements SessionInitHandler
    {
       display_.showMessage(GlobalDisplay.MSG_INFO, "NYI", "Not yet implemented");
    }
+   
+   @Handler
+   public void onShinyAppsManageAccounts()
+   {
+      server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString accounts)
+         {
+            display_.showMessage(GlobalDisplay.MSG_INFO, "Accounts", accounts.get(0));
+         }
 
-   private final Session session_;
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error retrieving ShinyApps accounts", 
+                                      error.getMessage());
+         }
+      });
+   }
+
    private final Commands commands_;
    private final GlobalDisplay display_;
+   private final Session session_;
+   private final ShinyAppsServerOperations server_;
 }

@@ -1764,6 +1764,12 @@ public class TextEditingTarget implements
       extendedType_ = extendedType;
    }
 
+   @Override
+   public String getExtendedFileType()
+   {
+      return extendedType_;
+   }
+
    public HasValue<String> getName()
    {
       return name_; 

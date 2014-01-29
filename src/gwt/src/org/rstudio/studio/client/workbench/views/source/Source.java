@@ -1978,6 +1978,9 @@ public class Source implements InsertSourceHandler,
       // manage source navigation
       manageSourceNavigationCommands();
       
+      // manage ShinyApps commands
+      manageShinyAppsCommands();
+      
       activeCommands_ = newCommands;
 
       assert verifyNoUnsupportedCommands(newCommands)
@@ -2052,6 +2055,16 @@ public class Source implements InsertSourceHandler,
          commands_.vcsBlameOnGitHub().setVisible(false);
          commands_.vcsBlameOnGitHub().setEnabled(false);
       }
+   }
+   
+   private void manageShinyAppsCommands()
+   {
+      boolean shinyCommandsAvailable = 
+            session_.getSessionInfo().getShinyappsInstalled() &&
+            activeEditor_.getExtendedFileType() == "shiny";
+      commands_.shinyAppsConfigure().setVisible(shinyCommandsAvailable);
+      commands_.shinyAppsDeploy().setVisible(shinyCommandsAvailable);
+      commands_.shinyAppsTerminate().setVisible(shinyCommandsAvailable);
    }
    
    private void manageSaveCommands()
