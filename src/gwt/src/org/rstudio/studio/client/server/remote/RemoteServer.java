@@ -3148,6 +3148,18 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void removeShinyAppsAccount(String accountName,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(accountName));
+      sendRequest(RPC_SCOPE,
+            REMOVE_SHINYAPPS_ACCOUNT,
+            params,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3427,4 +3439,5 @@ public class RemoteServer implements Server
    private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
    
    private static final String GET_SHINYAPPS_ACCOUNT_LIST = "get_shinyapps_account_list";
+   private static final String REMOVE_SHINYAPPS_ACCOUNT = "remove_shinyapps_account";
 }

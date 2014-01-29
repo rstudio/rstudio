@@ -15,11 +15,14 @@
 package org.rstudio.studio.client.common.shiny.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArrayString;
 
 public interface ShinyAppsServerOperations
 {
+   void removeShinyAppsAccount(String accountName, 
+               ServerRequestCallback<Void> requestCallback);
    void getShinyAppsAccountList(
                ServerRequestCallback<JsArrayString> requestCallback);
 }

@@ -9,6 +9,7 @@
 	}
 	</ui:style>
 	<g:HTMLPanel>
+	  <g:Label text="Connected Accounts"></g:Label>
 	  <g:ListBox styleName="{style.accountList}" 
 	             ui:field="accountList" visibleItemCount="5"></g:ListBox>
 	</g:HTMLPanel>

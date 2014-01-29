@@ -55,6 +55,18 @@ public class ShinyAppsAccountManager extends Composite
       return idx >= 0 ? accountList.getItemText(idx) : null;
    }
    
+   public void removeAccount(String accountName)
+   {
+      for (int i = 0; i < accountList.getItemCount(); i++)
+      {
+         if (accountList.getItemText(i).equals(accountName))
+         {
+            accountList.removeItem(i);
+            return;
+         }
+      }
+   }
+   
    public HandlerRegistration addAccountSelectionChangeHandler(
          ChangeHandler handler)
    {

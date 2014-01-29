@@ -17,3 +17,6 @@
    shinyapps::accounts()
 })
 
+.rs.addJsonRpcHandler("remove_shinyapps_account", function(account) {
+   shinyapps::removeAccount(account)
+})
