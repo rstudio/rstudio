@@ -33,7 +33,7 @@ public final class JsObjectLiteral extends JsLiteral {
 
   @Override
   public boolean equals(Object that) {
-    if (that == null && this.getClass() != that.getClass()) {
+    if (that == null || this.getClass() != that.getClass()) {
       return false;
     }
     JsObjectLiteral thatLiteral = (JsObjectLiteral) that;
