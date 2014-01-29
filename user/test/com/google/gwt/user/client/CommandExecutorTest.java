@@ -210,9 +210,6 @@ public class CommandExecutorTest extends GWTTestCase {
   public void testDoExecuteCommands_timeSliceUsage() {
     final CommandExecutor ce = new NonRestartingCommandExecutor();
 
-    Command tc = new TestCommand();
-    ce.submit(tc);
-
     TestIncrementalCommand tic = new TestIncrementalCommand();
     ce.submit(tic);
     ce.doExecuteCommands(Duration.currentTimeMillis());
