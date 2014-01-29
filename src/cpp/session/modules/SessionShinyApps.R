@@ -20,3 +20,12 @@
 .rs.addJsonRpcHandler("remove_shinyapps_account", function(account) {
    shinyapps::removeAccount(account)
 })
+
+# The parameter to this function is a string containing the R command from
+# the ShinyApps service; we just need to parse and execute it directly.
+# The client is responsible for verifying that the statement corresponds to
+# a valid ::setAccountInfo command.
+.rs.addJsonRpcHandler("connect_shinyapps_account", function(accountCmd) {
+   cmd <- parse(text=accountCmd)
+   eval(cmd, envir = globalenv())
+})

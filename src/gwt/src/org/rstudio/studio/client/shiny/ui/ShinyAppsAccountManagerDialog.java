@@ -28,6 +28,9 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ShinyAppsAccountManagerDialog extends ModalDialogBase
@@ -41,22 +44,15 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
       setText("Manage ShinyApps Accounts");
       setWidth("300px");
 
-      server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
+      connectButton_ = new ThemedButton("Connect...");
+      connectButton_.addClickHandler(new ClickHandler()
       {
          @Override
-         public void onResponseReceived(JsArrayString accounts)
+         public void onClick(ClickEvent event)
          {
-            manager_.setAccountList(accounts);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            display.showErrorMessage("Error retrieving ShinyApps accounts", 
-                                     error.getMessage());
+            onConnect();
          }
       });
-      connectButton_ = new ThemedButton("Connect...");
       disconnectButton_ = new ThemedButton("Disconnect");
       disconnectButton_.addClickHandler(new ClickHandler()
       {
@@ -89,6 +85,8 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
             setDisconnectButtonEnabledState();
          }
       });
+      
+      refreshAccountList();
    }
 
    @Override
@@ -100,6 +98,12 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
    private void onDisconnect()
    {
       final String account = manager_.getSelectedAccount();
+      if (account == null)
+      {
+         display_.showErrorMessage("Error Disconnection Account", 
+               "Please select an account to disconnect.");
+         return;
+      }
       display_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION, 
             "Confirm Remove Account", 
@@ -137,6 +141,21 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
       });
    }
    
+   private void onConnect()
+   {
+      ShinyAppsConnectAccountDialog dialog = 
+            new ShinyAppsConnectAccountDialog(server_, display_);
+      dialog.addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            refreshAccountList();
+         }
+      });
+      dialog.showModal();
+   }
+   
    private void onDone()
    {
       closeDialog();
@@ -146,6 +165,26 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
    {
       disconnectButton_.setEnabled(
             manager_.getSelectedAccount() != null);
+   }
+   
+   private void refreshAccountList()
+   {
+      server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString accounts)
+         {
+            manager_.setAccountList(accounts);
+            setDisconnectButtonEnabledState();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error retrieving ShinyApps accounts", 
+                                     error.getMessage());
+         }
+      });
    }
    
    private final ShinyAppsServerOperations server_;

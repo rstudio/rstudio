@@ -7,9 +7,16 @@
 	{
 	  width: 100%;
 	}
+	
+	.accountHeader
+	{
+	  font-weight: bold;
+	  margin-bottom: 5px;
+	}
 	</ui:style>
 	<g:HTMLPanel>
-	  <g:Label text="Connected Accounts"></g:Label>
+	  <g:Label styleName="{style.accountHeader}" 
+	           text="Connected Accounts"></g:Label>
 	  <g:ListBox styleName="{style.accountList}" 
 	             ui:field="accountList" visibleItemCount="5"></g:ListBox>
 	</g:HTMLPanel>

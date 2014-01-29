@@ -25,4 +25,6 @@ public interface ShinyAppsServerOperations
                ServerRequestCallback<Void> requestCallback);
    void getShinyAppsAccountList(
                ServerRequestCallback<JsArrayString> requestCallback);
+   void connectShinyAppsAccount(String command, 
+               ServerRequestCallback<Void> requestCallback);
 }
