@@ -49,7 +49,11 @@ import java.util.TreeMap;
 
 /**
  * A base class for Linkers that use an external script to boostrap the GWT module. This
- * implementation injects JavaScript Snippets into a JS program defined in an external file.
+ * implementation injects JavaScript Snippets into a JS program defined in an external file.<br />
+ *
+ * Created nocache.js files must provide an implementation of both __gwt_isKnownPropertyValue() and
+ * __gwt_getMetaProperty() to support the permutation selection process. These functions must be
+ * available within the nocache.js scope and must be made available to the permutation js scope.
  */
 public abstract class SelectionScriptLinker extends AbstractLinker {
 

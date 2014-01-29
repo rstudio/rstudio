@@ -423,7 +423,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     out.print("var $doc = $wnd.document;");
 
     // The functions for runAsync are set up in the bootstrap script so they
-    // can be overriden in the same way as other bootstrap code is, however
+    // can be overridden in the same way as other bootstrap code is, however
     // they will be called from, and expected to run in the scope of the GWT code
     // (usually an iframe) so, here we set up those pointers.
     out.print("function __gwtStartLoadingFragment(frag) {");
@@ -436,6 +436,22 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     out.print("}");
     out.newlineOpt();
     out.print("function __gwtInstallCode(code) {return __gwtModuleFunction.__installRunAsyncCode(code);}");
+    out.newlineOpt();
+
+    // The functions for property access are set up in the bootstrap script however
+    // they will be called from, and expected to run in the scope of the GWT code
+    // (usually an iframe) so, here we set up those pointers.
+    out.print("function __gwt_isKnownPropertyValue(propName, propValue) {");
+    out.newlineOpt();
+    out.print("return __gwtModuleFunction.__gwt_isKnownPropertyValue(propName, propValue);");
+    out.newlineOpt();
+    out.print("}");
+    out.newlineOpt();
+    out.print("function __gwt_getMetaProperty(name) {");
+    out.newlineOpt();
+    out.print("return __gwtModuleFunction.__gwt_getMetaProperty(name);");
+    out.newlineOpt();
+    out.print("}");
     out.newlineOpt();
 
     // Even though we call the $sendStats function in the code written in this

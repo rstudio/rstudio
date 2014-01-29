@@ -92,6 +92,8 @@ function __MODULE_FUNC__() {
     if (scriptsDone && loadDone) {
       var iframe = $doc.getElementById('__MODULE_NAME__');
       var frameWnd = iframe.contentWindow;
+      frameWnd.__gwt_isKnownPropertyValue = __gwt_isKnownPropertyValue;
+      frameWnd.__gwt_getMetaProperty = __gwt_getMetaProperty;
       // inject hosted mode property evaluation function
       if (isHostedMode()) {
         frameWnd.__gwt_getProperty = function(name) {

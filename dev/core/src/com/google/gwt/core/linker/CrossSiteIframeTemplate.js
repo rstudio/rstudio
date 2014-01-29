@@ -72,8 +72,8 @@ function __MODULE_FUNC__() {
   __MODULE_FUNC__.__gwtStartLoadingFragment = function() { return null; };
 
   // Exposed for property provider code
-  var __gwt_isKnownPropertyValue = function() { return false; };
-  var __gwt_getMetaProperty = function() { return null; };
+  __MODULE_FUNC__.__gwt_isKnownPropertyValue = function() { return false; };
+  __MODULE_FUNC__.__gwt_getMetaProperty = function() { return null; };
 
   // Exposed for permutations code
   __propertyErrorFunction = null;
