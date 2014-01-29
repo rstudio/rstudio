@@ -79,7 +79,6 @@ public final class JsStringLiteral extends JsValueLiteral {
 
   @Override
   public boolean isInternable() {
-    // Do not intern empty strings.
-    return value.length() != 0;
+    return true;
   }
 }

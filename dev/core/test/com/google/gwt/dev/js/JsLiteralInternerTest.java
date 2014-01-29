@@ -40,33 +40,65 @@ import java.util.Map;
  */
 public class JsLiteralInternerTest extends TestCase {
 
+  private static final String ONES = "1111111111111";
+  private static final String TWOS = "2222222222222";
+  private static final String THREES = "3333333333333";
+
+  private static final String AS_STRING = "'aaaaaaaaaaaaa'";
+  private static final String BS_STRING = "'bbbbbbbbbbbbb'";
+  private static final String CS_STRING = "'ccccccccccccc'";
+
+  private static final String AS_REGEX = "/aaaaaaaaaaaaa/";
+  private static final String BS_REGEX = "/bbbbbbbbbbbbb/";
+  private static final String CS_REGEX = "/ccccccccccccc/";
+
+  private static final String BIG = "'bigbigbigbigbigbigbigbigbigbigbigbigbigbig'";
+  private static final String ALSO_BIG = "'alsobigbigbigbigbigbigbigbigbigbigbigbigbigbig'";
+
+  private static final String SMALL_BUT_INTERNABLE = "'aaa'";
+
   public void testSimpleIntern() throws Exception {
     // Numbers
-    checkTranslation("var x = 22222, y = 22222;", "var $intern_0=22222;var x=$intern_0,y=$intern_0;");
+    checkTranslation(
+        String.format("var x = %1$s, y = %1$s;", ONES),
+        String.format("var $intern_0=%1$s;var x=$intern_0,y=$intern_0;", ONES));
 
     // Objects
-    checkTranslation("var x = {a:12, b:14}, y = {a:12, b: 14}, z = {a:12, b:13};",
-        "var $intern_0={a:12,b:14};var x=$intern_0,y=$intern_0,z={a:12,b:13};");
+    checkTranslation(
+        String.format("var x={a:%1$s,b:%2$s}, y={a:%1$s,b:%2$s}, z={a:%1$s,b:%3$s};",
+            ONES, TWOS, THREES),
+        String.format("var $intern_0={a:%1$s,b:%2$s};var x=$intern_0,y=$intern_0,z={a:%1$s,b:%3$s};",
+            ONES, TWOS, THREES));
 
-    checkTranslation("var x = {a:12, b:14}, y = {a:12, b: 14}, z = {a:12, b:13};",
-        "var $intern_0=12,$intern_1=14;var x={a:$intern_0,b:$intern_1}," +
-        "y={a:$intern_0,b:$intern_1},z={a:$intern_0,b:13};",false);
+    checkTranslation(
+        String.format("var x={a:%1$s,b:%2$s}, y={a:%1$s,b:%2$s}, z={a:%1$s,b:%3$s};",
+            ONES, TWOS, THREES),
+        String.format("var $intern_0=%1$s,$intern_1=%2$s;var x={a:$intern_0,b:$intern_1}," +
+        "y={a:$intern_0,b:$intern_1},z={a:$intern_0,b:%3$s};", ONES, TWOS, THREES), false);
 
     // Strings
-    checkTranslation("var x = 'abx', y = \"abx\" + 'abc', z = 'ab';",
-        "var $intern_0='abx';var x=$intern_0,y=$intern_0+'abc',z='ab';");
+    checkTranslation(
+        String.format("var x = %1$s, y = %1$s + %2$s, z = %3$s;", AS_STRING, BS_STRING, CS_STRING),
+        String.format("var $intern_0=%1$s;var x=$intern_0,y=$intern_0+%2$s,z=%3$s;", AS_STRING,
+            BS_STRING, CS_STRING));
 
     // Regexes
-    checkTranslation("var x = /abx/, y = /abx/ + /abc/, z = /ab/;",
-        "var $intern_0=/abx/;var x=$intern_0,y=$intern_0+/abc/,z=/ab/;");
+    checkTranslation(
+        String.format("var x = %1$s, y = %1$s + %2$s, z = %3$s;", AS_REGEX, BS_REGEX, CS_REGEX),
+        String.format("var $intern_0=%1$s;var x=$intern_0,y=$intern_0+%2$s,z=%3$s;", AS_REGEX,
+            BS_REGEX, CS_REGEX));
 
     // Arrays
-    checkTranslation("var x = [12,14], y = [12, 14], z = [12,13];",
-        "var $intern_0=[12,14];var x=$intern_0,y=$intern_0,z=[12,13];");
+    checkTranslation(
+        String.format("var x = [%1$s,%2$s], y = [%1$s, %2$s], z = [%1$s,%3$s];",
+            ONES, TWOS, THREES),
+        String.format("var $intern_0=[%1$s,%2$s];var x=$intern_0,y=$intern_0,z=[%1$s,%3$s];",
+            ONES, TWOS, THREES));
 
-    checkTranslation("var x = [12,14], y = [12, 14], z = [12, 13];",
-        "var $intern_0=12,$intern_1=14;var x=[$intern_0,$intern_1]," +
-            "y=[$intern_0,$intern_1],z=[$intern_0,13];",false);
+    checkTranslation(String.format("var x = [%1$s,%2$s], y = [%1$s, %2$s], z = [%1$s, %3$s];",
+        ONES, TWOS, THREES),
+        String.format("var $intern_0=%1$s,$intern_1=%2$s;var x=[$intern_0,$intern_1]," +
+            "y=[$intern_0,$intern_1],z=[$intern_0,%3$s];", ONES, TWOS, THREES), false);
   }
 
   public void testDoNotInternSmallNumbers() throws Exception {
@@ -74,7 +106,9 @@ public class JsLiteralInternerTest extends TestCase {
   }
 
   public void testDoNotInternSingleOccurrence() throws Exception {
-    checkTranslation("var x = 222222, y = 333333;", "var x=222222,y=333333;");
+    checkTranslation(
+        String.format("var x = %1$s, y = %2$s;", BIG, ALSO_BIG),
+        String.format("var x=%1$s,y=%2$s;", BIG, ALSO_BIG));
   }
 
   public void testDoNotInternEmptyObjectsOrArrayLiterals() throws Exception {
@@ -83,17 +117,40 @@ public class JsLiteralInternerTest extends TestCase {
   }
 
   public void testInternInLhs() throws Exception {
-    checkTranslation("var a = 'xxxx';a['xxxx']++;",
-        "var $intern_0='xxxx';var a=$intern_0;a[$intern_0]++;");
-    checkTranslation("var a = 'xxxx';++a['xxxx'];",
-        "var $intern_0='xxxx';var a=$intern_0;++a[$intern_0];");
+    checkTranslation(
+        String.format("var a = %1$s;a[%1$s]++;", AS_STRING),
+        String.format("var $intern_0=%1$s;var a=$intern_0;a[$intern_0]++;", AS_STRING));
+    checkTranslation(
+        String.format("var a = %1$s;++a[%1$s];", AS_STRING),
+        String.format("var $intern_0=%1$s;var a=$intern_0;++a[$intern_0];", AS_STRING));
   }
 
   public void testDoNotInternIllegalLhs() throws Exception {
-    checkTranslation("var a = 'xxxx';'xxxx'++;", "var a='xxxx';'xxxx'++;");
-    checkTranslation("var a = 'xxxx';++'xxxx';", "var a='xxxx';++'xxxx';");
+    checkTranslation(String.format("var a = %1$s;%1$s++;", AS_STRING),
+        String.format("var a=%1$s;%1$s++;", AS_STRING));
+    checkTranslation(String.format("var a = %1$s;++%1$s;", AS_STRING),
+        String.format("var a=%1$s;++%1$s;", AS_STRING));
     // TODO(rluble): Should also check for literal on lhs of a binary op, but it seems that
     // the JsParser already checks validity so it must be arrived at by a transformation.
+  }
+
+  public void testProfitability() throws Exception {
+    // Non profitable
+    checkTranslation(
+        String.format("var x = %1$s, y = %1$s, z = %1$s;", SMALL_BUT_INTERNABLE),
+        String.format("var x=%1$s,y=%1$s,z=%1$s;", SMALL_BUT_INTERNABLE));
+
+    // Becomes profitable as the number of occurrences increases
+    checkTranslation(
+        String.format("var x = %1$s, y = %1$s, z = %1$s, z = %1$s, z = %1$s, z = %1$s, z = %1$s, " +
+            "z = %1$s;", SMALL_BUT_INTERNABLE),
+        String.format("var $intern_0=%1$s;var x=$intern_0,y=$intern_0,z=$intern_0,z=$intern_0," +
+            "z=$intern_0,z=$intern_0,z=$intern_0,z=$intern_0;", SMALL_BUT_INTERNABLE));
+
+    // With a big string also becomes profitable.
+    checkTranslation(
+        String.format("var x = %1$s, y = %1$s, z = %1$s;", BIG),
+        String.format("var $intern_0=%1$s;var x=$intern_0,y=$intern_0,z=$intern_0;", BIG));
   }
 
   private void checkTranslation(String source, String expectedJs)

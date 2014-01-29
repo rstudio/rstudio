@@ -97,8 +97,7 @@ public final class JsObjectLiteral extends JsLiteral {
    */
   @Override
   public boolean isInternable() {
-    // There is no gain in interning the empty object.
-    return internable && properties.size() > 0;
+    return internable;
   }
 
   public void setInternable() {

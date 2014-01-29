@@ -173,12 +173,24 @@ public class JsLiteralInterner {
    * on the fly.
    */
   private static class LiteralInterningVisitor extends JsModVisitor {
+
+    /**
+     * The average length of an obfuscated id. It is OK to overestimate it.
+     */
+    private static final int AVERAGE_ID_LENGTH = 3;
+
+    /**
+     * The number of characters needed to declare an interned literal. As there are many literals we
+     * only count the equal sign and the comma.
+     * It is OK to overestimate the overhead.
+     */
+    private static final int INTERNED_LITERAL_DECLARATION_OVERHEAD = AVERAGE_ID_LENGTH + 2;
+
     /*
      * Minimum number of times a literal must occur to be interned.
      */
-    private static final Integer INTERN_THRESHOLD = Integer.parseInt(
-        // TODO(rluble): change the property name to reflect that not only strings are interned.
-        System.getProperty("gwt.jjs.stringInternerThreshold", "2"));
+    private static final Integer MINIMUM_NUMBER_OF_OCCURRENCES_TO_INTERN = Integer.parseInt(
+        System.getProperty("gwt.jjs.literalInternerThreshold", "2"));
 
     /**
      * The current fragment being visited.
@@ -202,7 +214,7 @@ public class JsLiteralInterner {
      * Count of # of occurences of each literal, or null if
      * count-sensitive interning is off.
      */
-    private Multiset<JsLiteral> occurrenceMap;
+    private Multiset<JsLiteral> occurrencesPerLiteral;
 
     /**
      * Only used to get fragment load order so literals used in multiple
@@ -216,9 +228,14 @@ public class JsLiteralInterner {
     private final JsScope scope;
 
     /**
-     * This is a TreeMap to ensure consistent iteration order.
+     * Whether to intern all literals without considering occurrence count and profitability.
      */
-    private final Map<JsLiteral, JsName> toCreate = Maps.newLinkedHashMap();
+    private final boolean alwaysIntern;
+
+    /**
+     * Maps a literal to be interned to its interned variable name.
+     */
+    private final Map<JsLiteral, JsName> variableNameForInternedLiteral = Maps.newLinkedHashMap();
 
     /**
      * This is a set of flags indicating what types of literals are to be interned.
@@ -229,15 +246,21 @@ public class JsLiteralInterner {
      * Constructor.
      *
      * @param scope specifies the scope in which the interned literals should be.
-     * @param occurrenceMap a multiset representing the literal counts.
+     * @param alwaysIntern whether to intern all literals without considering occurrence count and
+     *                     profitability
+     * @param occurrencesPerLiteral a multiset representing the literal counts.
      * @param whatToIntern what types of literals are to be interned.
      */
-    public LiteralInterningVisitor(JProgram program, JsScope scope,
-        Multiset<JsLiteral> occurrenceMap, byte whatToIntern) {
+    public LiteralInterningVisitor(JProgram program, JsScope scope, boolean alwaysIntern,
+        Multiset<JsLiteral> occurrencesPerLiteral, byte whatToIntern) {
+
+      assert alwaysIntern || (occurrencesPerLiteral != null);
+
       this.program = program;
       this.scope = scope;
-      this.occurrenceMap = occurrenceMap;
+      this.occurrencesPerLiteral = occurrencesPerLiteral;
       this.whatToIntern = whatToIntern;
+      this.alwaysIntern = alwaysIntern;
     }
 
     @Override
@@ -347,23 +370,42 @@ public class JsLiteralInterner {
       return false;
     }
 
+    /**
+     * Returns true if interning {@code literal} will most likely reduce code size.
+     */
+    private boolean isProfitableToIntern(JsLiteral literal, int occurrences) {
+      int literalSize = literal.toSource().length();
+      int internedSize = occurrences * AVERAGE_ID_LENGTH + INTERNED_LITERAL_DECLARATION_OVERHEAD +
+          literalSize;
+      int uninternedSize = occurrences * literalSize;
+      return internedSize < uninternedSize;
+    }
+
+    /**
+     * Interns a literal if deemed profitable or {@code alwaysIntern} is {@code true}.
+     */
     private boolean maybeInternLiteral(JsLiteral x, JsContext ctx) {
       if (!x.isInternable()) {
         return false;
       }
 
-      if (occurrenceMap != null) {
-        int occurrences = occurrenceMap.count(x);
-        if (occurrences < INTERN_THRESHOLD) {
+      if (!alwaysIntern) {
+        int occurrences = occurrencesPerLiteral.count(x);
+        if (occurrences < MINIMUM_NUMBER_OF_OCCURRENCES_TO_INTERN) {
+          return false;
+        }
+
+        boolean alreadyInterned = variableNameForInternedLiteral.containsKey(x);
+        if (!alreadyInterned && !isProfitableToIntern(x, occurrences)) {
           return false;
         }
       }
 
-      JsName name = toCreate.get(x);
+      JsName name = variableNameForInternedLiteral.get(x);
       if (name == null) {
         String ident = PREFIX + lastId++;
         name = scope.declareName(ident);
-        toCreate.put(x, name);
+        variableNameForInternedLiteral.put(x, name);
       }
 
       Integer currentAssignment = fragmentAssignment.get(x);
@@ -423,7 +465,7 @@ public class JsLiteralInterner {
    */
   public static Map<JsName, JsLiteral> exec(JProgram jprogram, JsProgram program,
       byte whatToIntern) {
-    LiteralInterningVisitor v = new LiteralInterningVisitor(jprogram, program.getScope(),
+    LiteralInterningVisitor v = new LiteralInterningVisitor(jprogram, program.getScope(), false,
         computeOccurrenceCounts(program), whatToIntern);
     v.accept(program);
 
@@ -439,10 +481,10 @@ public class JsLiteralInterner {
 
     for (Map.Entry<Integer, Set<JsLiteral>> entry : bins.entrySet()) {
       createVars(program, program.getFragmentBlock(entry.getKey()),
-          entry.getValue(), v.toCreate);
+          entry.getValue(), v.variableNameForInternedLiteral);
     }
 
-    return reverse(v.toCreate);
+    return reverse(v.variableNameForInternedLiteral);
   }
 
   /**
@@ -456,18 +498,25 @@ public class JsLiteralInterner {
    */
   public static boolean exec(JsProgram program, JsBlock block, JsScope scope,
       boolean alwaysIntern) {
-    LiteralInterningVisitor v = new LiteralInterningVisitor(null, scope, alwaysIntern ? null :
-        computeOccurrenceCounts(block), INTERN_ALL);
+
+    Multiset<JsLiteral> occurrencesPerLiteral = null;
+    if (!alwaysIntern) {
+      occurrencesPerLiteral = computeOccurrenceCounts(block);
+    }
+
+    LiteralInterningVisitor v = new LiteralInterningVisitor(null, scope, alwaysIntern,
+        occurrencesPerLiteral, INTERN_ALL);
     v.accept(block);
 
-    createVars(program, block, v.toCreate.keySet(), v.toCreate);
+    createVars(program, block, v.variableNameForInternedLiteral.keySet(),
+        v.variableNameForInternedLiteral);
 
     return v.didChange();
   }
 
   /**
    * Create variable declarations in {@code block} for literals
-   * {@code toCreate} using the variable map {@code names}.
+   * {@code variableNameForInternedLiteral} using the variable map {@code names}.
    */
   private static void createVars(JsProgram program, JsBlock block,
       Collection<JsLiteral> toCreate, Map<JsLiteral, JsName> names) {
@@ -490,10 +539,10 @@ public class JsLiteralInterner {
     return oc.getLiteralCounts();
   }
 
-  private static Map<JsName, JsLiteral> reverse(
-      Map<JsLiteral, JsName> toCreate) {
+  private static Map<JsName, JsLiteral> reverse(Map<JsLiteral, JsName>
+      variableNameForInternedLiteral) {
     Map<JsName, JsLiteral> reversed = Maps.newLinkedHashMap();
-    for (Entry<JsLiteral, JsName> entry : toCreate.entrySet()) {
+    for (Entry<JsLiteral, JsName> entry : variableNameForInternedLiteral.entrySet()) {
       reversed.put(entry.getValue(), entry.getKey());
     }
     return reversed;

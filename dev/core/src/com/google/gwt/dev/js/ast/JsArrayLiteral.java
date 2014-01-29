@@ -97,8 +97,7 @@ public final class JsArrayLiteral extends JsLiteral {
    */
   @Override
   public boolean isInternable() {
-    // Not profitable to intern empty arrays.
-    return internable && exprs.size() > 0;
+    return internable;
   }
 
   public void setInternable() {

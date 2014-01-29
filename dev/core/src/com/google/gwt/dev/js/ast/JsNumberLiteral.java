@@ -75,12 +75,8 @@ public final class JsNumberLiteral extends JsValueLiteral {
     v.endVisit(this, ctx);
   }
 
-  /**
-   * Number literals are always internable but it is only profitable to intern numbers with more
-   * than 3 digits.
-   */
   @Override
   public boolean isInternable() {
-    return Double.toString(value).length() > 3;
+    return true;
   }
 }
