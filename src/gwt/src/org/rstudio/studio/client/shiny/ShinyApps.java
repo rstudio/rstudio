@@ -19,14 +19,12 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.ui.ShinyAppsAccountManagerDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -67,6 +65,9 @@ public class ShinyApps implements SessionInitHandler
       // "Manage accounts" can be invoked any time the package is available
       commands_.shinyAppsManageAccounts().setVisible(
             session_.getSessionInfo().getShinyappsInstalled());
+      
+      // TODO: Initialize persistent state object to capture deployment
+      // history
    }
    
    @Handler
@@ -78,21 +79,9 @@ public class ShinyApps implements SessionInitHandler
    @Handler
    public void onShinyAppsManageAccounts()
    {
-      server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
-      {
-         @Override
-         public void onResponseReceived(JsArrayString accounts)
-         {
-            display_.showMessage(GlobalDisplay.MSG_INFO, "Accounts", accounts.get(0));
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            display_.showErrorMessage("Error retrieving ShinyApps accounts", 
-                                      error.getMessage());
-         }
-      });
+      ShinyAppsAccountManagerDialog dialog = 
+            new ShinyAppsAccountManagerDialog(server_, display_);
+      dialog.showModal();
    }
 
    private final Commands commands_;

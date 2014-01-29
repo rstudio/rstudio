@@ -312,6 +312,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="versionControlProjectSetup"/>
          </menu>
+         <separator/>
          <menu label="_ShinyApps">
             <cmd refid="shinyAppsDeploy"/>
             <cmd refid="shinyAppsConfigure"/>
