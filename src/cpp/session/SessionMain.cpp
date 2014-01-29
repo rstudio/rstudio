@@ -612,6 +612,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
            (options.programMode() == kSessionProgramModeServer) &&
            options.showUserIdentity();
 
+   // light up shinyapps-related UI features if shinyapps is installed
+   sessionInfo["shinyapps_installed"] =
+         module_context::isPackageInstalled("shinyapps");
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;

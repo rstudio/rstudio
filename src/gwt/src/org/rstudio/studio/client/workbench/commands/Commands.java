@@ -345,6 +345,12 @@ public abstract class
    public abstract AppCommand shinyRunInViewer();
    public abstract AppCommand shinyRunInBrowser();
    
+   // ShinyApps connectivity
+   public abstract AppCommand shinyAppsDeploy();
+   public abstract AppCommand shinyAppsManageAccounts();
+   public abstract AppCommand shinyAppsConfigure();
+   public abstract AppCommand shinyAppsTerminate();
+
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();

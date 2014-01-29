@@ -71,6 +71,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
+import org.rstudio.studio.client.shiny.ShinyApps;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationPanel;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationWindow;
@@ -209,6 +210,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(BreakpointManager.class).asEagerSingleton();
       bind(DebugCommander.class).asEagerSingleton();
       bind(ShortcutViewer.class).asEagerSingleton();
+      bind(ShinyApps.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
