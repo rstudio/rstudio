@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
+import java.util.List;
+
 import org.rstudio.studio.client.common.FilePathUtils;
 
 import com.google.gwt.core.client.GWT;
@@ -54,6 +56,30 @@ public class ShinyAppsDeploy extends Composite
       {
          accountList.addItem(accounts.get(i));
       }
+   }
+   
+   public String getSelectedAccount()
+   {
+      int idx = accountList.getSelectedIndex();
+      return idx >= 0 ? 
+            accountList.getItemText(idx) :
+            null;
+   }
+   
+   public void setAppList(List<String> apps)
+   {
+      appList.clear();
+      if (apps != null)
+      {
+         for (int i = 0; i < apps.size(); i++)
+         {
+            appList.addItem(apps.get(i));
+         }
+      }
+      appList.addItem("Create New");
+
+      // TODO: Don't always select the last item
+      appList.setSelectedIndex(appList.getItemCount() - 1);
    }
 
    @UiField Label sourceDir;

@@ -14,12 +14,16 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -34,7 +38,7 @@ public class ShinyAppsDeployDialog
    {
       super(server, display, new ShinyAppsDeploy());
       setText("Deploy to ShinyApps");
-      setWidth("400px");
+      setWidth("350px");
       deployButton_ = new ThemedButton("Deploy");
       addCancelButton();
       addOkButton(deployButton_);
@@ -64,6 +68,7 @@ public class ShinyAppsDeployDialog
             else
             {
                contents_.setAccountList(accounts);
+               updateApplicationList();
             }
          }
          
@@ -73,6 +78,35 @@ public class ShinyAppsDeployDialog
             display_.showErrorMessage("Error retrieving ShinyApps accounts", 
                                      error.getMessage());
             closeDialog();
+         }
+      });
+   }
+   
+   private void updateApplicationList()
+   {
+      String accountName = contents_.getSelectedAccount();
+      if (accountName == null)
+         return;
+      server_.getShinyAppsAppList(accountName,
+            new ServerRequestCallback<JsArray<ShinyAppsApplicationInfo>>()
+      {
+         @Override
+         public void onResponseReceived(
+               JsArray<ShinyAppsApplicationInfo> apps)
+         {
+            ArrayList<String> appNames = new ArrayList<String>();
+            for (int i = 0; i < apps.length(); i++)
+            {
+               appNames.add(apps.get(i).getName());
+            }
+            contents_.setAppList(appNames);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // we can always create a new app
+            contents_.setAppList(null);
          }
       });
    }

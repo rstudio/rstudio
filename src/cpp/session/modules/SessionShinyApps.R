@@ -21,6 +21,23 @@
    shinyapps::removeAccount(account)
 })
 
+.rs.addJsonRpcHandler("get_shinyapps_app_list", function(account) {
+   apps <- shinyapps::applications(account)
+   appList <- list()
+   # Extract the properties we're interested in and hint to the R-JSON
+   # converter that these are scalar values
+   for (i in seq_len(nrow(apps)))
+   {
+      appList[[i]] <- list(
+         name = .rs.scalar(unlist(apps[i,'name'])),
+         url = .rs.scalar(unlist(apps[i,'url'])),
+         status = .rs.scalar(unlist(apps[i,'status'])),
+         created_time = .rs.scalar(unlist(apps[i,'created_time'])),
+         updated_time = .rs.scalar(unlist(apps[i,'updated_time'])))
+   }
+   return(appList)
+})
+
 # The parameter to this function is a string containing the R command from
 # the ShinyApps service; we just need to parse and execute it directly.
 # The client is responsible for verifying that the statement corresponds to

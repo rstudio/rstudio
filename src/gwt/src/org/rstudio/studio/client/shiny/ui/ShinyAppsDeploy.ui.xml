@@ -6,22 +6,29 @@
 	{
 	  color: #808080;
 	}
+
 	.accountAppLists
 	{
 	   display: block;
 	   width: 100%;
 	}
+
 	.source
 	{
 	  font-weight: bold;
 	  margin-bottom: 10px;
 	}
+
+	.formTable
+	{
+	  width: 100%;
+	}
 	</ui:style>
-	<g:HTMLPanel>
+	<g:HTMLPanel styleName="">
 	<g:Label styleName="{style.sourceDestLabels}" text="Source"></g:Label>
 	<g:Label styleName="{style.source}" ui:field="sourceDir"></g:Label>
 	<g:Label styleName="{style.sourceDestLabels}" text="Destination"></g:Label>
-	<g:Grid>
+	<g:Grid styleName="{style.formTable}">
 	  <g:row>
        <g:customCell>
          <g:Label text="Account"></g:Label>
