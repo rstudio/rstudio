@@ -21,6 +21,9 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 
 public class ShinyAppsDeployDialog 
              extends ShinyAppsDialog<ShinyAppsDeploy>
@@ -41,9 +44,61 @@ public class ShinyAppsDeployDialog
          @Override
          public void onResponseReceived(JsArrayString accounts)
          {
-            contents_.setAccountList(accounts);
+            if (accounts.length() == 0)
+            {
+               // The user has no accounts connected--hide ourselves and 
+               // ask the user to connect an account before we continue.
+               hide();
+               ShinyAppsConnectAccountDialog dialog = 
+                     new ShinyAppsConnectAccountDialog(server_, display_);
+               dialog.addCloseHandler(new CloseHandler<PopupPanel>()
+               {
+                  @Override
+                  public void onClose(CloseEvent<PopupPanel> event)
+                  {
+                     onConnectAccountFinished();
+                  }
+               });
+               dialog.showModal();
+            }
+            else
+            {
+               contents_.setAccountList(accounts);
+            }
          }
          
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error retrieving ShinyApps accounts", 
+                                     error.getMessage());
+            closeDialog();
+         }
+      });
+   }
+   
+   // Runs when we've finished doing a just-in-time account connection
+   private void onConnectAccountFinished()
+   {
+      server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString accounts)
+         {
+            if (accounts.length() == 0)
+            {
+               // The user didn't successfully connect an account--just close 
+               // ourselves
+               closeDialog();
+            }
+            else
+            {
+               // We have an account, show it and re-display oursleves
+               contents_.setAccountList(accounts);
+               showModal();
+            }
+         }
+
          @Override
          public void onError(ServerError error)
          {
