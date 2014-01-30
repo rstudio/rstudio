@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
@@ -23,7 +22,6 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Event;
 
 /**
  * A widget that wraps the HTML &lt;input type='file'&gt; element. This widget
@@ -36,70 +34,6 @@ import com.google.gwt.user.client.Event;
  * </p>
  */
 public class FileUpload extends Widget implements HasName, HasChangeHandlers, HasEnabled {
-  /**
-   * Implementation class for {@link FileUpload}.
-   */
-  private static class FileUploadImpl {
-    /**
-     * Initialize the impl class.
-     * 
-     * @param fileUpload the {@link FileUpload} to handle
-     */
-    public void init(FileUpload fileUpload) {
-    }
-
-    /**
-     * Handle the browser event.
-     * 
-     * @param event the native event
-     * @return true to fire the event normally, false to ignore it
-     */
-    public boolean onBrowserEvent(Event event) {
-      return true;
-    }
-  }
-
-  /**
-   * Opera fires an onChange event every time a character is typed, but we only
-   * want to fire one when the input element is blurred.
-   */
-  @SuppressWarnings("unused")
-  private static class FileUploadImplOpera extends FileUploadImpl {
-    private FileUpload fileUpload;
-    private boolean eventPending;
-    private boolean allowEvent;
-
-    @Override
-    public void init(FileUpload fileUpload) {
-      this.fileUpload = fileUpload;
-      fileUpload.sinkEvents(Event.ONBLUR);
-    }
-
-    @Override
-    public boolean onBrowserEvent(Event event) {
-      switch (event.getTypeInt()) {
-        case Event.ONCHANGE:
-          // When we fire the change event onBlur, we allow it to pass to
-          // Widget#onBrowserEvent().
-          if (!allowEvent) {
-            eventPending = true;
-            return false;
-          }
-          break;
-        case Event.ONBLUR:
-          // Trigger a change event now.
-          if (eventPending) {
-            allowEvent = true;
-            fileUpload.getElement().dispatchEvent(
-                Document.get().createChangeEvent());
-            allowEvent = false;
-            eventPending = false;
-          }
-          break;
-      }
-      return true;
-    }
-  }
 
   /**
    * Creates a FileUpload widget that wraps an existing &lt;input
@@ -124,8 +58,6 @@ public class FileUpload extends Widget implements HasName, HasChangeHandlers, Ha
     return fileUpload;
   }
 
-  private FileUploadImpl impl;
-
   /**
    * Constructs a new file upload widget.
    */
@@ -144,8 +76,6 @@ public class FileUpload extends Widget implements HasName, HasChangeHandlers, Ha
   protected FileUpload(Element element) {
     assert InputElement.as(element).getType().equalsIgnoreCase("file");
     setElement(element);
-    impl = GWT.create(FileUploadImpl.class);
-    impl.init(this);
   }
 
   public HandlerRegistration addChangeHandler(ChangeHandler handler) {
@@ -173,13 +103,6 @@ public class FileUpload extends Widget implements HasName, HasChangeHandlers, Ha
    */
   public boolean isEnabled() {
     return !getElement().getPropertyBoolean("disabled");
-  }
-
-  @Override
-  public void onBrowserEvent(Event event) {
-    if (impl.onBrowserEvent(event)) {
-      super.onBrowserEvent(event);
-    }
   }
 
   /**
