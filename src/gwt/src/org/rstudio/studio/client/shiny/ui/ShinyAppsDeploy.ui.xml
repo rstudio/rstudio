@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	.sourceDestLabels
+	{
+	   font-size: 70%;
+	}
+	.accountAppLists
+	{
+	   display: block;
+	}
+	</ui:style>
+	<g:HTMLPanel>
+	<g:Label styleName="{style.sourceDestLabels}" text="Source"></g:Label>
+	<g:Label ui:field="sourceDir"></g:Label>
+	<g:Label styleName="{style.sourceDestLabels}" text="Destination"></g:Label>
+	<g:ListBox styleName="{style.accountAppLists}" ui:field="accountList"></g:ListBox>
+	<g:ListBox styleName="{style.accountAppLists}" ui:field="appList"></g:ListBox>
+	</g:HTMLPanel>
+</ui:UiBinder> 

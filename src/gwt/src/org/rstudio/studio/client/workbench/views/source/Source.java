@@ -2061,8 +2061,9 @@ public class Source implements InsertSourceHandler,
    {
       boolean shinyCommandsAvailable = 
             session_.getSessionInfo().getShinyappsInstalled() &&
+            (activeEditor_ != null) &&
+            (activeEditor_.getPath() != null) &&
             activeEditor_.getExtendedFileType() == "shiny";
-      commands_.shinyAppsConfigure().setVisible(shinyCommandsAvailable);
       commands_.shinyAppsDeploy().setVisible(shinyCommandsAvailable);
       commands_.shinyAppsTerminate().setVisible(shinyCommandsAvailable);
    }

@@ -20,6 +20,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.shiny.ui.ShinyAppsAccountManagerDialog;
+import org.rstudio.studio.client.shiny.ui.ShinyAppsDeployDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -58,7 +59,6 @@ public class ShinyApps implements SessionInitHandler
       // Deployment-related ShinyApps commands are invisible by default; they
       // will be set to visible by the source pane if a Shiny file is open and
       // the ShinyApps package is installed.
-      commands_.shinyAppsConfigure().setVisible(false);
       commands_.shinyAppsDeploy().setVisible(false);
       commands_.shinyAppsTerminate().setVisible(false);
       
@@ -73,7 +73,9 @@ public class ShinyApps implements SessionInitHandler
    @Handler
    public void onShinyAppsDeploy()
    {
-      display_.showMessage(GlobalDisplay.MSG_INFO, "NYI", "Not yet implemented");
+      ShinyAppsDeployDialog dialog = 
+            new ShinyAppsDeployDialog(server_, display_);
+      dialog.showModal();
    }
    
    @Handler
@@ -83,7 +85,7 @@ public class ShinyApps implements SessionInitHandler
             new ShinyAppsAccountManagerDialog(server_, display_);
       dialog.showModal();
    }
-
+   
    private final Commands commands_;
    private final GlobalDisplay display_;
    private final Session session_;

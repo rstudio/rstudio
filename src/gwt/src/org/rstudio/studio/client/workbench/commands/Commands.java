@@ -348,7 +348,6 @@ public abstract class
    // ShinyApps connectivity
    public abstract AppCommand shinyAppsDeploy();
    public abstract AppCommand shinyAppsManageAccounts();
-   public abstract AppCommand shinyAppsConfigure();
    public abstract AppCommand shinyAppsTerminate();
 
    // Other

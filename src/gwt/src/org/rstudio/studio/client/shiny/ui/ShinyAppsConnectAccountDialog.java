@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
-import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
@@ -25,13 +24,14 @@ import org.rstudio.studio.client.server.Void;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Widget;
 
-public class ShinyAppsConnectAccountDialog extends ModalDialogBase
+public class ShinyAppsConnectAccountDialog 
+       extends ShinyAppsDialog<ShinyAppsConnectAccount>
 {
    public ShinyAppsConnectAccountDialog(ShinyAppsServerOperations server, 
                                         final GlobalDisplay display)
    {
+      super(server, display, new ShinyAppsConnectAccount());
       display_ = display;
       server_ = server;
 
@@ -50,26 +50,19 @@ public class ShinyAppsConnectAccountDialog extends ModalDialogBase
       });
       addCancelButton();
       addOkButton(connectButton_);
-      connectui_ = new ShinyAppsConnectAccount();
-      connectui_.setOnAccountInfoChanged(new Command()
+      contents_.setOnAccountInfoChanged(new Command()
       {
          @Override
          public void execute()
          {
-            connectButton_.setEnabled(connectui_.getAccountInfo().length() > 0);
+            connectButton_.setEnabled(contents_.getAccountInfo().length() > 0);
          }
       });
    }
 
-   @Override
-   protected Widget createMainWidget()
-   {
-      return connectui_;
-   }
-   
    private void onConnect()
    {
-      final String cmd = connectui_.getAccountInfo();
+      final String cmd = contents_.getAccountInfo();
       if (!cmd.startsWith("shinyapps::setAccountInfo"))
       {
          display_.showErrorMessage("Error Connecting Account", 
@@ -100,9 +93,5 @@ public class ShinyAppsConnectAccountDialog extends ModalDialogBase
       });
    }
    
-   private final ShinyAppsServerOperations server_;
-   private GlobalDisplay display_;
-
    private ThemedButton connectButton_;
-   private ShinyAppsConnectAccount connectui_;
 }

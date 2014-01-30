@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
-import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -31,16 +30,14 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.Widget;
 
-public class ShinyAppsAccountManagerDialog extends ModalDialogBase
+public class ShinyAppsAccountManagerDialog 
+             extends ShinyAppsDialog<ShinyAppsAccountManager>
 {
    public ShinyAppsAccountManagerDialog(ShinyAppsServerOperations server, 
                                         final GlobalDisplay display)
    {
-      display_ = display;
-      server_ = server;
-
+      super(server, display, new ShinyAppsAccountManager());
       setText("Manage ShinyApps Accounts");
       setWidth("300px");
 
@@ -76,8 +73,7 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
       addLeftButton(connectButton_);
       addOkButton(doneButton_);
 
-      manager_ = new ShinyAppsAccountManager();
-      manager_.addAccountSelectionChangeHandler(new ChangeHandler()
+      contents_.addAccountSelectionChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
@@ -89,15 +85,9 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
       refreshAccountList();
    }
 
-   @Override
-   protected Widget createMainWidget()
-   {
-      return manager_;
-   }
-   
    private void onDisconnect()
    {
-      final String account = manager_.getSelectedAccount();
+      final String account = contents_.getSelectedAccount();
       if (account == null)
       {
          display_.showErrorMessage("Error Disconnection Account", 
@@ -128,7 +118,7 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
          @Override
          public void onResponseReceived(Void v)
          {
-            manager_.removeAccount(accountName);
+            contents_.removeAccount(accountName);
             setDisconnectButtonEnabledState();
          }
 
@@ -164,7 +154,7 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
    private void setDisconnectButtonEnabledState()
    {
       disconnectButton_.setEnabled(
-            manager_.getSelectedAccount() != null);
+            contents_.getSelectedAccount() != null);
    }
    
    private void refreshAccountList()
@@ -174,7 +164,7 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
          @Override
          public void onResponseReceived(JsArrayString accounts)
          {
-            manager_.setAccountList(accounts);
+            contents_.setAccountList(accounts);
             setDisconnectButtonEnabledState();
          }
 
@@ -187,11 +177,7 @@ public class ShinyAppsAccountManagerDialog extends ModalDialogBase
       });
    }
    
-   private final ShinyAppsServerOperations server_;
-   private GlobalDisplay display_;
-
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;
    private ThemedButton doneButton_;
-   private ShinyAppsAccountManager manager_;
 }
