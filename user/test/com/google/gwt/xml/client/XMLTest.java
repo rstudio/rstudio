@@ -139,7 +139,6 @@ public class XMLTest extends GWTTestCase {
     return "com.google.gwt.xml.XML";
   }
 
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testAttr() {
     Document d = createTestDocument();
     Element de = d.getDocumentElement();
@@ -207,7 +206,6 @@ public class XMLTest extends GWTTestCase {
     }
   }
 
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testDocument() {
     Document d = createTestDocument();
     NodeList e1Nodes = d.getElementsByTagName("e1");
@@ -374,7 +372,6 @@ public class XMLTest extends GWTTestCase {
     assertEquals(pi.getData(), "other data");
   }
 
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testText() {
     Document d = createTestDocument();
     List<Node> textLikeNodes = Arrays.asList(new Node[] {

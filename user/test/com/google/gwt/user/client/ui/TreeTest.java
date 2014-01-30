@@ -346,8 +346,7 @@ public class TreeTest extends GWTTestCase {
       // Expected.
     }
   }
-  
-  @DoNotRunWith(Platform.HtmlUnitLayout)
+
   public void testScrollOnSelectEnabledFalse() {
     // With scrolling disabled.
     Tree tree = createTree();

@@ -18,8 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.HasDirection.Direction;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -136,7 +134,6 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
   /**
    * Failed in all modes due to HtmlUnit bug.
    */
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testValueChangeEvent() {
     TextBoxBase tb = createTextBoxBase();
     // To work cross-platform, the tb must be added to the root panel.

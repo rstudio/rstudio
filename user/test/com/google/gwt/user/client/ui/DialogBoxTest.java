@@ -29,8 +29,6 @@ import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
@@ -183,10 +181,6 @@ public class DialogBoxTest extends PopupTest {
     });
   }
 
-  /**
-   * HtmlUnit test failed intermittently in nometa mode.
-   */
-  @DoNotRunWith(Platform.HtmlUnitUnknown)
   @Override
   public void testDependantPopupPanel() {
     // Create the dependent popup

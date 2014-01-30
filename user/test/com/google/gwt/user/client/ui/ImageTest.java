@@ -334,7 +334,6 @@ public class ImageTest extends GWTTestCase {
   /**
    * Tests the creation of an image in unclipped mode.
    */
-  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testCreateImage() {
     final Image image = new Image("counting-forwards.png");
 

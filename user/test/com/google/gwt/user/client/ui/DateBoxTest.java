@@ -21,8 +21,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.user.datepicker.client.DateBox.Format;
@@ -33,7 +31,6 @@ import java.util.Date;
 /**
  * Tests {@link DateBox}.
  */
-@DoNotRunWith({Platform.HtmlUnitBug})
 public class DateBoxTest extends WidgetTestBase {
   @Override
   public String getModuleName() {

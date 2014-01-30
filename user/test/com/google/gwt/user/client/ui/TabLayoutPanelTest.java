@@ -117,7 +117,6 @@ public class TabLayoutPanelTest extends GWTTestCase {
    * selected, when they're sized in EM units. This has been a problem on IE8
    * (see issue 4694).
    */
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testHiddenChildLayoutEM() {
     final TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
     p.setSize("128px", "128px");
@@ -486,7 +485,6 @@ public class TabLayoutPanelTest extends GWTTestCase {
   /**
    * Tests that tabs actually line up properly (see issue 4447).
    */
-  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testTabLayout() {
     TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
     RootPanel.get().add(p);

@@ -147,7 +147,6 @@ public abstract class NativeScrollbarTestBase<S extends AbstractNativeScrollbar>
     });
   }
 
-  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testSetScrollSize() {
     setScrollSize(scrollbar, 500);
     assertEquals(500, getScrollSize(scrollbar));

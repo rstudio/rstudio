@@ -16,21 +16,11 @@
 
 package com.google.gwt.storage.client;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
-
 import java.util.Map;
 
 /**
  * Tests {@link StorageMap}.
- * 
- * Because HtmlUnit does not support Storage, you will need to run these tests
- * manually by adding this line to your VM args: -Dgwt.args="-runStyle Manual:1"
- * If you are using Eclipse and GPE, go to "run configurations" or
- * "debug configurations", select the test you would like to run, and put this
- * line in the VM args under the arguments tab: -Dgwt.args="-runStyle Manual:1"
  */
-@DoNotRunWith(Platform.HtmlUnitUnknown)
 public abstract class StorageMapTest extends MapInterfaceTest<String, String> {
   protected Storage storage;
 

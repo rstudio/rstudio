@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.client;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -37,7 +35,6 @@ public class JsIdentityTest extends GWTTestCase {
    * Store some JavaObjects in a JsArrayOf, then ask Javascript to run find
    * elements via indexOf().
    */
-  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testJsIdentity() {
     JsArrayOf<Object> elements = JsArrayOf.create();
     Object id1 = new Object();

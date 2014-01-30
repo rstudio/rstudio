@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.DOM;
 
 /**
@@ -25,7 +23,6 @@ import com.google.gwt.user.client.DOM;
 public class VerticalSplitPanelTest extends
     SplitPanelTestBase<VerticalSplitPanel> {
 
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testDebugId() {
     VerticalSplitPanel vSplit = new VerticalSplitPanel();
     vSplit.ensureDebugId("vsplit");

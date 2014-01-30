@@ -266,7 +266,6 @@ public class WindowTest extends GWTTestCase {
   /**
    * Tests the ability of resize the Window and catch resize events.
    */
-  @DoNotRunWith({Platform.HtmlUnitLayout})
   public void testResizing() {
     // There is nothing to test if the browser doesn't support resize
     if (!ResizeHelper.isResizeSupported()) {

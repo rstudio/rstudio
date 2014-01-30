@@ -196,11 +196,6 @@ public class RequestBuilderTest extends RequestTestBase {
     testSend(builder, SERVLET_GET_RESPONSE);
   }
 
-  /*
-   * Need to file an HtmlUnit bug. TODO(amitmanjhi): contribute an HtmlUnit
-   * patch.
-   */
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testSend_HEAD() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
         getTestBaseURL());
@@ -235,11 +230,6 @@ public class RequestBuilderTest extends RequestTestBase {
     testSendRequest(builder, null, SERVLET_GET_RESPONSE);
   }
 
-  /*
-   * Need to file an HtmlUnit bug. TODO(amitmanjhi): contribute an HtmlUnit
-   * patch.
-   */
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testSendRequest_HEAD() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
         getTestBaseURL());

@@ -303,7 +303,6 @@ public class LayoutTest extends GWTTestCase {
    * bottom-height). Ok, so we don't test the *entire* cross-product, but enough
    * to be comfortable.
    */
-  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testStaticConstraints() {
     // This test assumes enough size. Ignore it if size cannot be guaranteed.
     if (!ResizeHelper.isResizeSupported()) {
@@ -346,7 +345,6 @@ public class LayoutTest extends GWTTestCase {
   /**
    * Tests all unit types.
    */
-  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testUnits() {
     // This test assumes enough size. Ignore it if size cannot be guaranteed.
     if (!ResizeHelper.isResizeSupported()) {

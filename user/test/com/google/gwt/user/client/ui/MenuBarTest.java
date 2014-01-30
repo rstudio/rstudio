@@ -249,7 +249,6 @@ public class MenuBarTest extends WidgetTestBase {
     assertFocused(menu.getElement());
   }
 
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testSetFocusOnHoverDisabled() {
     TextBox focusOwner = new TextBox();
     RootPanel.get().add(focusOwner);
