@@ -30,6 +30,14 @@ public class FilePathUtils
               idx + 1, unfriendlyFileName.length()).trim();
    }
    
+   public static String dirFromFile(String fileName)
+   {
+      int idx = fileName.lastIndexOf("/");
+      return idx > 0 ?
+            fileName.substring(0, idx) :
+            fileName;
+   }
+   
    public static String normalizePath (String path, String workingDirectory)
    {
       // Examine the path to see if it appears to be absolute. An absolute path

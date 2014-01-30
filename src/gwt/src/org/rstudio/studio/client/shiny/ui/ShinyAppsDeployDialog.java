@@ -26,14 +26,16 @@ public class ShinyAppsDeployDialog
              extends ShinyAppsDialog<ShinyAppsDeploy>
 {
    public ShinyAppsDeployDialog(ShinyAppsServerOperations server, 
-                                final GlobalDisplay display)
+                                final GlobalDisplay display, 
+                                String sourceDir)
    {
       super(server, display, new ShinyAppsDeploy());
       setText("Deploy to ShinyApps");
       setWidth("400px");
       deployButton_ = new ThemedButton("Deploy");
-      addOkButton(deployButton_);
       addCancelButton();
+      addOkButton(deployButton_);
+      contents_.setSourceDir(sourceDir);
       server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
       {
          @Override

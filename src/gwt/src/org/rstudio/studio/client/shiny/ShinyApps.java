@@ -17,8 +17,10 @@ package org.rstudio.studio.client.shiny;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
+import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.shiny.ui.ShinyAppsAccountManagerDialog;
 import org.rstudio.studio.client.shiny.ui.ShinyAppsDeployDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -30,7 +32,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ShinyApps implements SessionInitHandler
+public class ShinyApps implements SessionInitHandler, 
+                                  ShinyAppsActionEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, ShinyApps> {}
@@ -51,6 +54,7 @@ public class ShinyApps implements SessionInitHandler
       binder.bind(commands, this);
 
       events.addHandler(SessionInitEvent.TYPE, this);
+      events.addHandler(ShinyAppsActionEvent.TYPE, this); 
    }
    
    @Override
@@ -70,12 +74,17 @@ public class ShinyApps implements SessionInitHandler
       // history
    }
    
-   @Handler
-   public void onShinyAppsDeploy()
+   @Override
+   public void onShinyAppsAction(ShinyAppsActionEvent event)
    {
-      ShinyAppsDeployDialog dialog = 
-            new ShinyAppsDeployDialog(server_, display_);
-      dialog.showModal();
+      if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_DEPLOY)
+      {
+         ShinyAppsDeployDialog dialog = 
+               new ShinyAppsDeployDialog(
+                         server_, display_, 
+                         FilePathUtils.dirFromFile(event.getPath()));
+         dialog.showModal();
+      }
    }
    
    @Handler

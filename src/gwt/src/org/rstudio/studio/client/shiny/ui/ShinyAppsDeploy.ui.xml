@@ -4,18 +4,48 @@
 	<ui:style>
 	.sourceDestLabels
 	{
-	   font-size: 70%;
+	  color: #808080;
 	}
 	.accountAppLists
 	{
 	   display: block;
+	   width: 100%;
+	}
+	.source
+	{
+	  font-weight: bold;
+	  margin-bottom: 10px;
 	}
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Label styleName="{style.sourceDestLabels}" text="Source"></g:Label>
-	<g:Label ui:field="sourceDir"></g:Label>
+	<g:Label styleName="{style.source}" ui:field="sourceDir"></g:Label>
 	<g:Label styleName="{style.sourceDestLabels}" text="Destination"></g:Label>
-	<g:ListBox styleName="{style.accountAppLists}" ui:field="accountList"></g:ListBox>
-	<g:ListBox styleName="{style.accountAppLists}" ui:field="appList"></g:ListBox>
+	<g:Grid>
+	  <g:row>
+       <g:customCell>
+         <g:Label text="Account"></g:Label>
+       </g:customCell>
+       <g:customCell>
+         <g:ListBox styleName="{style.accountAppLists}" ui:field="accountList"></g:ListBox>
+       </g:customCell>
+	  </g:row>
+	  <g:row>
+       <g:customCell>
+         <g:Label text="Application"></g:Label>
+       </g:customCell>
+       <g:customCell>
+         <g:ListBox styleName="{style.accountAppLists}" ui:field="appList"></g:ListBox>
+       </g:customCell>
+	  </g:row>
+	  <g:row>
+       <g:customCell>
+         <g:Label text="Name"></g:Label>
+       </g:customCell>
+       <g:customCell>
+         <g:TextBox ui:field="appName"></g:TextBox>
+       </g:customCell>
+	  </g:row>
+	</g:Grid>
 	</g:HTMLPanel>
 </ui:UiBinder> 

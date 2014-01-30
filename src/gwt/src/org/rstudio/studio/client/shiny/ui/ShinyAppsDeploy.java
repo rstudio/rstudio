@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
+import org.rstudio.studio.client.common.FilePathUtils;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -21,6 +23,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ShinyAppsDeploy extends Composite
@@ -38,6 +41,12 @@ public class ShinyAppsDeploy extends Composite
       initWidget(uiBinder.createAndBindUi(this));
    }
    
+   public void setSourceDir(String dir)
+   {
+      sourceDir.setText(dir);
+      appName.setText(FilePathUtils.friendlyFileName(dir));
+   }
+   
    public void setAccountList(JsArrayString accounts)
    {
       accountList.clear();
@@ -50,4 +59,5 @@ public class ShinyAppsDeploy extends Composite
    @UiField Label sourceDir;
    @UiField ListBox accountList;
    @UiField ListBox appList;
+   @UiField TextBox appName;
 }
