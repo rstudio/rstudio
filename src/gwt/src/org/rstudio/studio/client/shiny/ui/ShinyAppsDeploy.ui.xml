@@ -10,7 +10,7 @@
 	.accountAppLists
 	{
 	   display: block;
-	   width: 100%;
+	   width: 250px;
 	}
 
 	.source
@@ -19,16 +19,12 @@
 	  margin-bottom: 10px;
 	}
 
-	.formTable
-	{
-	  width: 100%;
-	}
 	</ui:style>
-	<g:HTMLPanel styleName="">
+	<g:HTMLPanel>
 	<g:Label styleName="{style.sourceDestLabels}" text="Source"></g:Label>
 	<g:Label styleName="{style.source}" ui:field="sourceDir"></g:Label>
 	<g:Label styleName="{style.sourceDestLabels}" text="Destination"></g:Label>
-	<g:Grid styleName="{style.formTable}">
+	<g:Grid>
 	  <g:row>
        <g:customCell>
          <g:Label text="Account"></g:Label>
@@ -47,12 +43,15 @@
 	  </g:row>
 	  <g:row>
        <g:customCell>
-         <g:Label text="Name"></g:Label>
+         <g:Label ui:field="nameLabel" text="Name"></g:Label>
        </g:customCell>
        <g:customCell>
          <g:TextBox ui:field="appName"></g:TextBox>
        </g:customCell>
 	  </g:row>
 	</g:Grid>
+	<g:HTMLPanel visible="false" ui:field="appInfoPanel">
+	  <g:Label ui:field="urlLabel"></g:Label>
+	</g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 

@@ -17,12 +17,16 @@ package org.rstudio.studio.client.shiny.ui;
 import java.util.List;
 
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -30,7 +34,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ShinyAppsDeploy extends Composite
 {
-
    private static ShinyAppsDeployUiBinder uiBinder = GWT
          .create(ShinyAppsDeployUiBinder.class);
 
@@ -66,6 +69,14 @@ public class ShinyAppsDeploy extends Composite
             null;
    }
    
+   public String getSelectedApp()
+   {
+      int idx = appList.getSelectedIndex();
+      return idx >= 0 ? 
+            appList.getItemText(idx) :
+            null;
+   }
+   
    public void setAppList(List<String> apps)
    {
       appList.clear();
@@ -80,10 +91,41 @@ public class ShinyAppsDeploy extends Composite
 
       // TODO: Don't always select the last item
       appList.setSelectedIndex(appList.getItemCount() - 1);
+      showAppInfo(null);
+   }
+   
+   public void showAppInfo(ShinyAppsApplicationInfo info)
+   {
+      if (info == null)
+      {
+         appInfoPanel.setVisible(false);
+         nameLabel.setVisible(true);
+         appName.setVisible(true);
+         return;
+      }
+
+      urlLabel.setText(info.getUrl());
+
+      appInfoPanel.setVisible(true);
+      nameLabel.setVisible(false);
+      appName.setVisible(false);
+   }
+   
+   public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
+   {
+      return accountList.addChangeHandler(handler);
+   }
+
+   public HandlerRegistration addAppChangeHandler(ChangeHandler handler)
+   {
+      return appList.addChangeHandler(handler);
    }
 
    @UiField Label sourceDir;
+   @UiField Label nameLabel;
+   @UiField Label urlLabel;
    @UiField ListBox accountList;
    @UiField ListBox appList;
    @UiField TextBox appName;
+   @UiField HTMLPanel appInfoPanel;
 }
