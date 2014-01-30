@@ -1097,7 +1097,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       addStyleDependentName("horizontal");
     }
 
-    // Hide focus outline in Mozilla/Webkit/Opera
+    // Hide focus outline in Mozilla/Webkit
     getElement().getStyle().setProperty("outline", "0px");
 
     // Hide focus outline in IE 6/7

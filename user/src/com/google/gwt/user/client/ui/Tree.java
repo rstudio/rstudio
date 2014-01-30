@@ -1074,7 +1074,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     focusable.getStyle().setProperty("fontSize", "0");
     focusable.getStyle().setProperty("position", "absolute");
 
-    // Hide focus outline in Mozilla/Webkit/Opera
+    // Hide focus outline in Mozilla/Webkit
     focusable.getStyle().setProperty("outline", "0px");
 
     // Hide focus outline in IE 6/7
