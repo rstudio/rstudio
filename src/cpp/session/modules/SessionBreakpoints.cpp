@@ -297,7 +297,7 @@ bool setBreakpoint(const std::string& functionName,
 Error setBreakpoints(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string functionName, fileName, packageName;
+   std::string functionName, fileName, packageName, projPackageName;
    json::Array steps;
    bool set = false;
    Error error = json::readParams(request.params,
@@ -308,25 +308,29 @@ Error setBreakpoints(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // Always search the global namespace (and attached namespaces)
+   // first. Manipulating the source references for the copy in a searchable
+   // namespace has (inexplicable) side effects in package namespaces, but the
+   // reverse is not true (see case 3795).
+   set |= setBreakpoint(functionName, fileName, "", steps);
+
    // If we're in package development mode, try to set a breakpoint in the
-   // package's namespace first.
+   // package's namespace.
    const projects::ProjectContext& projectContext = projects::projectContext();
    if (projectContext.config().buildType == r_util::kBuildTypePackage)
    {
+      projPackageName = projectContext.packageInfo().name();
       set |= setBreakpoint(
-               functionName, fileName,
-               projectContext.packageInfo().name(), steps);
+               functionName, fileName, projPackageName, steps);
    }
 
    // If a package name was specified, try to set a breakpoint in that package's
-   // namespace, too.
-   if (packageName.length() > 0)
+   // namespace, too (unless we did already).
+   if (packageName.length() > 0 &&
+       packageName != projPackageName)
    {
       set |= setBreakpoint(functionName, fileName, packageName, steps);
    }
-
-   // Always search the global namespace.
-   set |= setBreakpoint(functionName, fileName, "", steps);
 
    // Couldn't find a function to set a breakpoint on--maybe a bad parameter?
    if (!set)
