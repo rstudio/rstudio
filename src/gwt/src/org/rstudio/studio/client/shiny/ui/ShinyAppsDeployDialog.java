@@ -19,16 +19,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -38,7 +42,9 @@ public class ShinyAppsDeployDialog
 {
    public ShinyAppsDeployDialog(ShinyAppsServerOperations server, 
                                 final GlobalDisplay display, 
+                                EventBus events,
                                 String sourceDir)
+                                
    {
       super(server, display, new ShinyAppsDeploy());
       setText("Deploy to ShinyApps");
@@ -46,7 +52,20 @@ public class ShinyAppsDeployDialog
       deployButton_ = new ThemedButton("Deploy");
       addCancelButton();
       addOkButton(deployButton_);
+      sourceDir_ = sourceDir;
+      events_ = events;
+
       contents_.setSourceDir(sourceDir);
+      
+      deployButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            onDeploy();
+         }
+      });
+      
       server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
       {
          @Override
@@ -199,6 +218,23 @@ public class ShinyAppsDeployDialog
       });
    }
    
+   private void onDeploy()
+   {
+      String appName = contents_.getSelectedApp();
+      if (appName == null || appName == "Create New")
+         appName = contents_.getNewAppName();
+      
+      String cmd = "shinyapps::deployApp(appDir=\"" + sourceDir_ + "\", " + 
+                   "account=\"" + contents_.getSelectedAccount() + "\", " + 
+                   "appName=\"" + appName + "\")";
+      
+      events_.fireEvent(new SendToConsoleEvent(cmd, true));
+      closeDialog();
+   }
+   
+   private EventBus events_;
+   
+   private String sourceDir_;
    private ThemedButton deployButton_;
    private Map<String, JsArray<ShinyAppsApplicationInfo>> apps_ = 
          new HashMap<String, JsArray<ShinyAppsApplicationInfo>>();

@@ -25,6 +25,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -94,6 +95,11 @@ public class ShinyAppsDeploy extends Composite
       showAppInfo(null);
    }
    
+   public String getNewAppName()
+   {
+      return appName.getText();
+   }
+   
    public void showAppInfo(ShinyAppsApplicationInfo info)
    {
       if (info == null)
@@ -104,7 +110,9 @@ public class ShinyAppsDeploy extends Composite
          return;
       }
 
-      urlLabel.setText(info.getUrl());
+      urlAnchor.setText(info.getUrl());
+      urlAnchor.setHref(info.getUrl());
+      statusLabel.setText(info.getStatus());
 
       appInfoPanel.setVisible(true);
       nameLabel.setVisible(false);
@@ -121,9 +129,10 @@ public class ShinyAppsDeploy extends Composite
       return appList.addChangeHandler(handler);
    }
 
+   @UiField Anchor urlAnchor;
    @UiField Label sourceDir;
    @UiField Label nameLabel;
-   @UiField Label urlLabel;
+   @UiField Label statusLabel;
    @UiField ListBox accountList;
    @UiField ListBox appList;
    @UiField TextBox appName;

@@ -50,6 +50,7 @@ public class ShinyApps implements SessionInitHandler,
       display_ = display;
       session_ = session;
       server_ = server;
+      events_ = events;
 
       binder.bind(commands, this);
 
@@ -81,7 +82,7 @@ public class ShinyApps implements SessionInitHandler,
       {
          ShinyAppsDeployDialog dialog = 
                new ShinyAppsDeployDialog(
-                         server_, display_, 
+                         server_, display_, events_,
                          FilePathUtils.dirFromFile(event.getPath()));
          dialog.showModal();
       }
@@ -99,4 +100,5 @@ public class ShinyApps implements SessionInitHandler,
    private final GlobalDisplay display_;
    private final Session session_;
    private final ShinyAppsServerOperations server_;
+   private final EventBus events_;
 }

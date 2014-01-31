@@ -7,16 +7,31 @@
 	  color: #808080;
 	}
 
-	.accountAppLists
+	.gridControl
 	{
 	   display: block;
 	   width: 250px;
+	   padding: 3px;
 	}
 
 	.source
 	{
 	  font-weight: bold;
 	  margin-bottom: 10px;
+	}
+	
+	.statusLabel
+	{
+	  font-size: 120%;
+     font-weight: bold;
+     text-align: center;
+     margin-bottom: 5px;
+	}
+	
+	.urlAnchor
+	{
+	  display: block;
+	  text-align: center;
 	}
 
 	</ui:style>
@@ -30,7 +45,7 @@
          <g:Label text="Account"></g:Label>
        </g:customCell>
        <g:customCell>
-         <g:ListBox styleName="{style.accountAppLists}" ui:field="accountList"></g:ListBox>
+         <g:ListBox styleName="{style.gridControl}" ui:field="accountList"></g:ListBox>
        </g:customCell>
 	  </g:row>
 	  <g:row>
@@ -38,7 +53,7 @@
          <g:Label text="Application"></g:Label>
        </g:customCell>
        <g:customCell>
-         <g:ListBox styleName="{style.accountAppLists}" ui:field="appList"></g:ListBox>
+         <g:ListBox styleName="{style.gridControl}" ui:field="appList"></g:ListBox>
        </g:customCell>
 	  </g:row>
 	  <g:row>
@@ -46,12 +61,13 @@
          <g:Label ui:field="nameLabel" text="Name"></g:Label>
        </g:customCell>
        <g:customCell>
-         <g:TextBox ui:field="appName"></g:TextBox>
+         <g:TextBox styleName="{style.gridControl}" ui:field="appName"></g:TextBox>
        </g:customCell>
 	  </g:row>
 	</g:Grid>
 	<g:HTMLPanel visible="false" ui:field="appInfoPanel">
-	  <g:Label ui:field="urlLabel"></g:Label>
+	  <g:Label styleName="{style.statusLabel}" ui:field="statusLabel"></g:Label>
+	  <g:Anchor styleName="{style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
 	</g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
