@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.shiny.model;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -34,4 +35,7 @@ public interface ShinyAppsServerOperations
 
    void getShinyAppsAppList(String accountName,
                ServerRequestCallback<JsArray<ShinyAppsApplicationInfo>> requestCallback);
+   
+   void getShinyAppsDeployments(String dir, 
+               ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>> requestCallback); 
 }

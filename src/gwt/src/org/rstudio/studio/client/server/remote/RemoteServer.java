@@ -64,6 +64,7 @@ import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
@@ -3186,6 +3187,19 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void getShinyAppsDeployments(
+         String dir,
+         ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(dir));
+      sendRequest(RPC_SCOPE,
+            GET_SHINYAPPS_DEPLOYMENTS,
+            params,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3468,4 +3482,5 @@ public class RemoteServer implements Server
    private static final String REMOVE_SHINYAPPS_ACCOUNT = "remove_shinyapps_account";
    private static final String CONNECT_SHINYAPPS_ACCOUNT = "connect_shinyapps_account";
    private static final String GET_SHINYAPPS_APP_LIST = "get_shinyapps_app_list";
+   private static final String GET_SHINYAPPS_DEPLOYMENTS = "get_shinyapps_deployments";
 }

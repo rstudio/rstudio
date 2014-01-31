@@ -13,6 +13,20 @@
 #
 #
 
+.rs.addFunction("scalarListFromFrame", function(frame)
+{
+   ret <- list()
+   cols <- names(frame)
+
+   # take apart the frame and compose a list of scalars from each row
+   for (i in seq_len(nrow(frame))) {
+      row <- lapply(cols, function(col) { .rs.scalar(unlist(frame[i,col])) })
+      names(row) <- cols
+      ret[[i]] <- row
+   }
+   return(ret)
+})
+
 .rs.addJsonRpcHandler("get_shinyapps_account_list", function() {
    shinyapps::accounts()
 })
@@ -22,20 +36,11 @@
 })
 
 .rs.addJsonRpcHandler("get_shinyapps_app_list", function(account) {
-   apps <- shinyapps::applications(account)
-   appList <- list()
-   # Extract the properties we're interested in and hint to the R-JSON
-   # converter that these are scalar values
-   for (i in seq_len(nrow(apps)))
-   {
-      appList[[i]] <- list(
-         name = .rs.scalar(unlist(apps[i,'name'])),
-         url = .rs.scalar(unlist(apps[i,'url'])),
-         status = .rs.scalar(unlist(apps[i,'status'])),
-         created_time = .rs.scalar(unlist(apps[i,'created_time'])),
-         updated_time = .rs.scalar(unlist(apps[i,'updated_time'])))
-   }
-   return(appList)
+   .rs.scalarListFromFrame(shinyapps::applications(account))
+})
+
+.rs.addJsonRpcHandler("get_shinyapps_deployments", function(dir) {
+   .rs.scalarListFromFrame(shinyapps::readDeployments(dir))
 })
 
 # The parameter to this function is a string containing the R command from

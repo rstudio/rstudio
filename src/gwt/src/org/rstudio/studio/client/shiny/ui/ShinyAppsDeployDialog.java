@@ -25,6 +25,7 @@ import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JsArray;
@@ -63,6 +64,25 @@ public class ShinyAppsDeployDialog
          public void onClick(ClickEvent event)
          {
             onDeploy();
+         }
+      });
+      
+      // Get the deployments of this directory from any account (should be fast,
+      // since this information is stored locally in the directory). 
+      server_.getShinyAppsDeployments(sourceDir, 
+            new ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<ShinyAppsDeploymentRecord> records)
+         {
+            processDeploymentRecords(records);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // If an error occurs we won't have any local deployment records,
+            // but the user can still create new deployments.
          }
       });
       
@@ -180,7 +200,13 @@ public class ShinyAppsDeployDialog
       ArrayList<String> appNames = new ArrayList<String>();
       for (int i = 0; i < apps.length(); i++)
       {
-         appNames.add(apps.get(i).getName());
+         ShinyAppsApplicationInfo appInfo = apps.get(i);
+         // Filter the app list by URLs deployed from this directory 
+         // specifically
+         if (deployments_.containsKey(appInfo.getUrl()))
+         {
+            appNames.add(apps.get(i).getName());
+         }
       }
       contents_.setAppList(appNames);
    }
@@ -232,10 +258,28 @@ public class ShinyAppsDeployDialog
       closeDialog();
    }
    
+   // Create a lookup from app URL to deployments made of this directory
+   // to that URL
+   private void processDeploymentRecords(
+         JsArray<ShinyAppsDeploymentRecord> records)
+   {
+      for (int i = 0; i < records.length(); i++)
+      {
+         ShinyAppsDeploymentRecord record = records.get(i);
+         deployments_.put(record.getUrl(), record);
+      }
+   }
+   
    private EventBus events_;
    
    private String sourceDir_;
    private ThemedButton deployButton_;
+   
+   // Map of account name to a list of applications owned by that account
    private Map<String, JsArray<ShinyAppsApplicationInfo>> apps_ = 
          new HashMap<String, JsArray<ShinyAppsApplicationInfo>>();
+   
+   // Map of app URL to the deployment made to that URL
+   private Map<String, ShinyAppsDeploymentRecord> deployments_ = 
+         new HashMap<String, ShinyAppsDeploymentRecord>();
 }
