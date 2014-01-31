@@ -24,6 +24,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -44,7 +45,9 @@ public class ShinyAppsDeployDialog
    public ShinyAppsDeployDialog(ShinyAppsServerOperations server, 
                                 final GlobalDisplay display, 
                                 EventBus events,
-                                String sourceDir)
+                                String sourceDir, 
+                                final String lastAccount, 
+                                String lastAppName)
                                 
    {
       super(server, display, new ShinyAppsDeploy());
@@ -55,6 +58,7 @@ public class ShinyAppsDeployDialog
       addOkButton(deployButton_);
       sourceDir_ = sourceDir;
       events_ = events;
+      lastAppName_ = lastAppName;
 
       contents_.setSourceDir(sourceDir);
       
@@ -73,7 +77,8 @@ public class ShinyAppsDeployDialog
             new ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>>()
       {
          @Override
-         public void onResponseReceived(JsArray<ShinyAppsDeploymentRecord> records)
+         public void onResponseReceived(
+               JsArray<ShinyAppsDeploymentRecord> records)
          {
             processDeploymentRecords(records);
          }
@@ -110,7 +115,11 @@ public class ShinyAppsDeployDialog
             }
             else
             {
-               contents_.setAccountList(accounts);
+               // pre-select the last account used to deploy this app, or 
+               // the first account if we don't have any deployment records
+               String initialAccount = lastAccount == null ? 
+                                          accounts.get(0) : lastAccount;
+               contents_.setAccountList(accounts, initialAccount);
                updateApplicationList();
             }
          }
@@ -140,25 +149,31 @@ public class ShinyAppsDeployDialog
          @Override
          public void onChange(ChangeEvent event)
          {
-            String appName = contents_.getSelectedApp();
-            if (appName == "Create New")
-            {
-               contents_.showAppInfo(null);
-            }
-            else if (apps_.containsKey(contents_.getSelectedAccount()))
-            {
-               JsArray<ShinyAppsApplicationInfo> apps =
-                     apps_.get(contents_.getSelectedAccount());
-               for (int i = 0; i < apps.length(); i++)
-               {
-                  if (apps.get(i).getName().equals(appName))
-                  {
-                     contents_.showAppInfo(apps.get(i));
-                  }
-               }
-            }
+            updateApplicationInfo();
          }
       });
+   }
+   
+   // Runs when the selected application changes 
+   private void updateApplicationInfo()
+   {
+      String appName = contents_.getSelectedApp();
+      if (appName == "Create New")
+      {
+         contents_.showAppInfo(null);
+      }
+      else if (apps_.containsKey(contents_.getSelectedAccount()))
+      {
+         JsArray<ShinyAppsApplicationInfo> apps =
+               apps_.get(contents_.getSelectedAccount());
+         for (int i = 0; i < apps.length(); i++)
+         {
+            if (apps.get(i).getName().equals(appName))
+            {
+               contents_.showAppInfo(apps.get(i));
+            }
+         }
+      }
    }
    
    private void updateApplicationList()
@@ -190,7 +205,7 @@ public class ShinyAppsDeployDialog
          public void onError(ServerError error)
          {
             // we can always create a new app
-            contents_.setAppList(null);
+            contents_.setAppList(null, null);
          }
       });
    }
@@ -208,7 +223,8 @@ public class ShinyAppsDeployDialog
             appNames.add(apps.get(i).getName());
          }
       }
-      contents_.setAppList(appNames);
+      contents_.setAppList(appNames, lastAppName_);
+      updateApplicationInfo();
    }
    
    // Runs when we've finished doing a just-in-time account connection
@@ -228,7 +244,7 @@ public class ShinyAppsDeployDialog
             else
             {
                // We have an account, show it and re-display ourselves
-               contents_.setAccountList(accounts);
+               contents_.setAccountList(accounts, accounts.get(0));
                updateApplicationList();
                showModal();
             }
@@ -250,11 +266,22 @@ public class ShinyAppsDeployDialog
       if (appName == null || appName == "Create New")
          appName = contents_.getNewAppName();
       
+      String account = contents_.getSelectedAccount();
+      
+      // send the deployment command to the console
       String cmd = "shinyapps::deployApp(appDir=\"" + sourceDir_ + "\", " + 
-                   "account=\"" + contents_.getSelectedAccount() + "\", " + 
+                   "account=\"" + account + "\", " + 
                    "appName=\"" + appName + "\")";
       
       events_.fireEvent(new SendToConsoleEvent(cmd, true));
+      
+      // let everyone know a deployment has started (this triggers the 
+      // deployment record to be cached for this directory, so we can 
+      // issue an identical deployment next time)
+      events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
+            sourceDir_,
+            ShinyAppsDeploymentRecord.create(appName, account, "")));
+
       closeDialog();
    }
    
@@ -270,9 +297,10 @@ public class ShinyAppsDeployDialog
       }
    }
    
-   private EventBus events_;
+   private final EventBus events_;
    
    private String sourceDir_;
+   private String lastAppName_;
    private ThemedButton deployButton_;
    
    // Map of account name to a list of applications owned by that account

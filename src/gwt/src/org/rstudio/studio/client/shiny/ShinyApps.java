@@ -16,24 +16,31 @@ package org.rstudio.studio.client.shiny;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDirectoryState;
 import org.rstudio.studio.client.shiny.ui.ShinyAppsAccountManagerDialog;
 import org.rstudio.studio.client.shiny.ui.ShinyAppsDeployDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class ShinyApps implements SessionInitHandler, 
-                                  ShinyAppsActionEvent.Handler
+                                  ShinyAppsActionEvent.Handler,
+                                  ShinyAppsDeployInitiatedEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, ShinyApps> {}
@@ -56,6 +63,7 @@ public class ShinyApps implements SessionInitHandler,
 
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(ShinyAppsActionEvent.TYPE, this); 
+      events.addHandler(ShinyAppsDeployInitiatedEvent.TYPE, this); 
    }
    
    @Override
@@ -71,8 +79,38 @@ public class ShinyApps implements SessionInitHandler,
       commands_.shinyAppsManageAccounts().setVisible(
             session_.getSessionInfo().getShinyappsInstalled());
       
-      // TODO: Initialize persistent state object to capture deployment
-      // history
+      // This object keeps track of the most recent deployment we made of each
+      // directory.
+      new JSObjectStateValue(
+            "shinyapps",
+            "shinyAppsDirectories",
+            ClientState.PERSISTENT,
+            session_.getSessionInfo().getClientState(),
+            false)
+       {
+          @Override
+          protected void onInit(JsObject value)
+          {
+             dirState_ = (ShinyAppsDirectoryState) (value == null ?
+                   ShinyAppsDirectoryState.create() :
+                   value.cast());
+          }
+   
+          @Override
+          protected JsObject getValue()
+          {
+             dirStateDirty_ = false;
+             return (JsObject) (dirState_ == null ?
+                   ShinyAppsDirectoryState.create().cast() :
+                   dirState_.cast());
+          }
+   
+          @Override
+          protected boolean hasChanged()
+          {
+             return dirStateDirty_;
+          }
+       };
    }
    
    @Override
@@ -80,14 +118,30 @@ public class ShinyApps implements SessionInitHandler,
    {
       if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_DEPLOY)
       {
+         String dir = FilePathUtils.dirFromFile(event.getPath());
+         ShinyAppsDeploymentRecord record = dirState_.getLastDeployment(dir);
+         String lastAccount = null;
+         String lastAppName = null;
+         if (record != null)
+         {
+            lastAccount = record.getAccount();
+            lastAppName = record.getName();
+         }
          ShinyAppsDeployDialog dialog = 
                new ShinyAppsDeployDialog(
-                         server_, display_, events_,
-                         FilePathUtils.dirFromFile(event.getPath()));
+                         server_, display_, events_, 
+                         dir, lastAccount, lastAppName);
          dialog.showModal();
       }
    }
    
+   @Override
+   public void onShinyAppsDeployInitiated(ShinyAppsDeployInitiatedEvent event)
+   {
+      dirState_.addDeployment(event.getPath(), event.getRecord());
+      dirStateDirty_ = true;
+   }
+
    @Handler
    public void onShinyAppsManageAccounts()
    {
@@ -101,4 +155,7 @@ public class ShinyApps implements SessionInitHandler,
    private final Session session_;
    private final ShinyAppsServerOperations server_;
    private final EventBus events_;
+   
+   private ShinyAppsDirectoryState dirState_;
+   private boolean dirStateDirty_ = false;
 }

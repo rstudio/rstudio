@@ -40,7 +40,7 @@
 })
 
 .rs.addJsonRpcHandler("get_shinyapps_deployments", function(dir) {
-   .rs.scalarListFromFrame(shinyapps::readDeployments(dir))
+   .rs.scalarListFromFrame(shinyapps::deployments(dir))
 })
 
 # The parameter to this function is a string containing the R command from

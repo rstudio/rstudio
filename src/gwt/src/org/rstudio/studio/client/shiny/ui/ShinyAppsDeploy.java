@@ -53,13 +53,18 @@ public class ShinyAppsDeploy extends Composite
       appName.setText(FilePathUtils.friendlyFileName(dir));
    }
    
-   public void setAccountList(JsArrayString accounts)
+   public void setAccountList(JsArrayString accounts, String selected)
    {
       accountList.clear();
+      int selectedIdx = 0;
       for (int i = 0; i < accounts.length(); i++)
       {
-         accountList.addItem(accounts.get(i));
+         String account = accounts.get(i);
+         accountList.addItem(account);
+         if (account.equals(selected))
+            selectedIdx = i;
       }
+      accountList.setSelectedIndex(selectedIdx);
    }
    
    public String getSelectedAccount()
@@ -78,21 +83,24 @@ public class ShinyAppsDeploy extends Composite
             null;
    }
    
-   public void setAppList(List<String> apps)
+   public void setAppList(List<String> apps, String selected)
    {
       appList.clear();
+      int selectedIdx = apps.size();
       if (apps != null)
       {
          for (int i = 0; i < apps.size(); i++)
          {
-            appList.addItem(apps.get(i));
+            String app = apps.get(i);
+            appList.addItem(app);
+            if (app.equals(selected))
+            {
+               selectedIdx = i;
+            }
          }
       }
       appList.addItem("Create New");
-
-      // TODO: Don't always select the last item
-      appList.setSelectedIndex(appList.getItemCount() - 1);
-      showAppInfo(null);
+      appList.setSelectedIndex(selectedIdx);
    }
    
    public String getNewAppName()
