@@ -71,9 +71,10 @@
    .rs.registerReplaceHook("install.packages", "utils", function(original,
                                                                 pkgs,
                                                                 lib,
+                                                                repos,
                                                                 ...) 
    {
-      if (.rs.loadedPackageUpdates(pkgs)) {
+      if (!is.null(repos) && .rs.loadedPackageUpdates(pkgs)) {
 
          # attempt to determine the install command
          if (length(sys.calls()) > 7) {
@@ -101,7 +102,7 @@
       })
 
       # call original
-      original(pkgs, lib, ...)
+      original(pkgs, lib, repos, ...)
    })
    
    # whenever a package is removed notify the client (leave attach/detach
