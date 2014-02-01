@@ -1,4 +1,5 @@
 AnalyserNode
+ApplicationCache
 Array
 ArrayBuffer
 Attr
@@ -22,6 +23,8 @@ CSSCharsetRule
 CSSFontFaceRule
 CSSHostRule
 CSSImportRule
+CSSKeyframeRule
+CSSKeyframesRule
 CSSMediaRule
 CSSPageRule
 CSSPrimitiveValue
@@ -56,6 +59,7 @@ DOMSettableTokenList
 DOMStringList
 DOMStringMap
 DOMTokenList
+DataTransferItemList
 DataView
 Date
 DelayNode
@@ -192,6 +196,7 @@ MediaStreamAudioDestinationNode
 MediaStreamAudioSourceNode
 MediaStreamEvent
 MediaStreamTrack
+MediaSource
 MessageChannel
 MessageEvent
 MessagePort
@@ -230,6 +235,7 @@ PluginArray
 PopStateEvent
 ProcessingInstruction
 ProgressEvent
+Promise
 RGBColor
 RTCIceCandidate
 RTCSessionDescription
