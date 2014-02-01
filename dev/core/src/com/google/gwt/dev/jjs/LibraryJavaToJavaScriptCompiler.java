@@ -164,8 +164,8 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
 
     // VisibleForTesting
     protected JDeclaredType ensureFullTypeLoaded(JDeclaredType type) {
-      String resourceLocation = LibraryGroupUnitCache.typeNameToResourceLocation(type.getName());
-      CompilationUnit compilationUnit = compilerContext.getUnitCache().find(resourceLocation);
+      String resourcePath = LibraryGroupUnitCache.typeNameToResourcePath(type.getName());
+      CompilationUnit compilationUnit = compilerContext.getUnitCache().find(resourcePath);
       type = compilationUnit.getTypeByName(type.getName());
       return type;
     }

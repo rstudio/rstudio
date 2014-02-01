@@ -398,7 +398,7 @@ public class CompilationStateBuilder {
       if (archivedUnit.getTypesSerializedVersion() != GwtAstBuilder.getSerializationVersion()) {
         continue;
       }
-      CompilationUnit cachedCompilationUnit = unitCache.find(archivedUnit.getResourceLocation());
+      CompilationUnit cachedCompilationUnit = unitCache.find(archivedUnit.getResourcePath());
       // A previously cached unit might be from the persistent cache or another
       // archive.
       if (cachedCompilationUnit == null

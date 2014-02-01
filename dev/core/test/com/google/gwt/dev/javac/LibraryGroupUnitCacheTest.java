@@ -33,8 +33,8 @@ public class LibraryGroupUnitCacheTest extends TestCase {
       new MockCompilationUnit("com.example.Foo", "source3");
 
   public void testFindCompilationUnit() {
-    String fooResourceLocation =
-        LibraryGroupUnitCache.typeNameToResourceLocation(fooCompilationUnit.getTypeName());
+    String fooResourcePath =
+        LibraryGroupUnitCache.typeNameToResourcePath(fooCompilationUnit.getTypeName());
 
     // Create random libraries with some compilation units.
     List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(4, 1);
@@ -48,14 +48,14 @@ public class LibraryGroupUnitCacheTest extends TestCase {
 
     // Finds regular and super sourced compilation units using both resource path and content id
     // lookups.
-    assertEquals(fooCompilationUnit, libraryGroupUnitCache.find(fooResourceLocation));
+    assertEquals(fooCompilationUnit, libraryGroupUnitCache.find(fooResourcePath));
     assertEquals(barCompilationUnit,
         libraryGroupUnitCache.find(new ContentId(barCompilationUnit.getTypeName(), "someHash")));
   }
 
   public void testNoSuchEntry() {
-    String barResourceLocation =
-        LibraryGroupUnitCache.typeNameToResourceLocation(barCompilationUnit.getTypeName());
+    String barResourcePath =
+        LibraryGroupUnitCache.typeNameToResourcePath(barCompilationUnit.getTypeName());
 
     // Create random libraries with some compilation units.
     List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(4, 1);
@@ -66,6 +66,6 @@ public class LibraryGroupUnitCacheTest extends TestCase {
         new LibraryGroupUnitCache(LibraryGroup.fromLibraries(libraries, true));
 
     // Verify that invalid lookups return a null.
-    assertEquals(null, libraryGroupUnitCache.find(barResourceLocation));
+    assertEquals(null, libraryGroupUnitCache.find(barResourcePath));
   }
 }

@@ -38,7 +38,7 @@ public class MockCompilationUnit extends CompilationUnit {
   private final List<CompiledClass> emptyCompiledClasses = Lists.newArrayList();
 
   public MockCompilationUnit(String typeName, String source) {
-    this(typeName, source, Shared.toPath(typeName));
+    this(typeName, source, "/mock/" + Shared.toPath(typeName));
   }
 
   public MockCompilationUnit(String typeName, String source, String resourceLocation) {

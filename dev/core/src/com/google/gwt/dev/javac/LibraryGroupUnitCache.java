@@ -37,11 +37,10 @@ public class LibraryGroupUnitCache implements UnitCache {
   private static final String JAVA_SUFFIX = ".java";
 
   /**
-   * Translates type names to resource locations to ease lookups since the unit cache system caches
-   * based on resource location but the natural mode of interaction with this cache is via type
-   * names.
+   * Translates type names to resource paths to ease lookups since the unit cache system caches
+   * based on resource path but the natural mode of interaction with this cache is via type names.
    */
-  public static String typeNameToResourceLocation(String typeName) {
+  public static String typeNameToResourcePath(String typeName) {
     Preconditions.checkState(!typeName.endsWith(JAVA_SUFFIX));
 
     // If typeName refers to a nested type using binary syntax.
@@ -64,8 +63,15 @@ public class LibraryGroupUnitCache implements UnitCache {
     return typeName.replace(".", "/") + JAVA_SUFFIX;
   }
 
+  private static String resourcePathToTypeName(String resourcePath) {
+    Preconditions.checkState(resourcePath.endsWith(JAVA_SUFFIX));
+
+    resourcePath = resourcePath.substring(0, resourcePath.length() - JAVA_SUFFIX.length());
+    return resourcePath.replace("/", ".");
+  }
+
   private Map<String, CompilationUnit> compilationUnitsByTypeName = Maps.newLinkedHashMap();
-  private Set<String> knownEmptyResourceLocations = Sets.newLinkedHashSet();
+  private Set<String> knownEmptyResourcePaths = Sets.newLinkedHashSet();
   private LibraryGroup libraryGroup;
 
   public LibraryGroupUnitCache(LibraryGroup libraryGroup) {
@@ -87,7 +93,7 @@ public class LibraryGroupUnitCache implements UnitCache {
     }
 
     compilationUnitsByTypeName.put(typeName, compilationUnit);
-    knownEmptyResourceLocations.remove(typeNameToResourceLocation(typeName));
+    knownEmptyResourcePaths.remove(typeNameToResourcePath(typeName));
   }
 
   @Override
@@ -100,7 +106,7 @@ public class LibraryGroupUnitCache implements UnitCache {
   @Override
   public void cleanup(TreeLogger logger) {
     compilationUnitsByTypeName.clear();
-    knownEmptyResourceLocations.clear();
+    knownEmptyResourcePaths.clear();
   }
 
   /**
@@ -114,23 +120,23 @@ public class LibraryGroupUnitCache implements UnitCache {
   @Override
   public CompilationUnit find(ContentId contentId) {
     String typeName = contentId.getSourceTypeName();
-    return find(typeNameToResourceLocation(typeName));
+    return find(typeNameToResourcePath(typeName));
   }
 
   @Override
-  public CompilationUnit find(String resourceLocation) {
-    String typeName = Shared.toTypeName(resourceLocation);
+  public CompilationUnit find(String resourcePath) {
+    String typeName = resourcePathToTypeName(resourcePath);
     if (compilationUnitsByTypeName.containsKey(typeName)) {
       return compilationUnitsByTypeName.get(typeName);
     }
 
-    if (knownEmptyResourceLocations.contains(resourceLocation)) {
+    if (knownEmptyResourcePaths.contains(resourcePath)) {
       return null;
     }
 
     CompilationUnit compilationUnit = libraryGroup.getCompilationUnitByTypeName(typeName);
     if (compilationUnit == null) {
-      knownEmptyResourceLocations.add(resourceLocation);
+      knownEmptyResourcePaths.add(resourcePath);
       return null;
     }
     compilationUnitsByTypeName.put(compilationUnit.getTypeName(), compilationUnit);
