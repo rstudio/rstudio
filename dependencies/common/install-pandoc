@@ -50,26 +50,17 @@ else
    then
       cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
    else
-      # copy binaries for appropriate distro/arch
-      if [ -x /usr/bin/dpkg ]; then
-        PACKAGING=debian
+      # copy binaries for appropriate distro/arch. debian and fedora
+      # use the fully static debian binaries (so we don't run into 
+      # problems with libgmp.so.3 being missing on later versions 
+      # of fedora. rhel 5 and 6 use the rpm binaries
+      if [[ -x /usr/bin/dpkg ]] || [[ -f /etc/fedora-release ]]; then
+        BINARY_TYPE=debian
       else
-        PACKAGING=rpm
+        BINARY_TYPE=rpm
       fi
       ARCH=`uname -m`
-
-      # default binaries are the debian ones (they are also used
-      # on fedora and RHEL 6)
-      cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc* ${PANDOC_DIR}
-     
-      # on redhat install an extra set of binaries for redhat5
-      if [ "$PACKAGING" == "rpm" ]; then
-        if [ ! -f /etc/fedora-release ]; then
-          PANDOC_RHEL5_DIR=${PANDOC_DIR}/redhat5
-          mkdir -p ${PANDOC_RHEL5_DIR}
-          cp ${PANDOC_NAME}/linux/rpm/${ARCH}/pandoc* ${PANDOC_RHEL5_DIR}
-        fi
-      fi
+      cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc* ${PANDOC_DIR}
    fi
    rm $PANDOC_ZIP
    rm -rf $PANDOC_NAME
