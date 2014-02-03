@@ -342,19 +342,32 @@ private:
 
       if (type == kRoxygenizePackage)
       {
-         if (roxygenize(packagePath))
-            enqueBuildCompleted();
+         successMessage_ = "Documentation completed";
+         roxygenize(packagePath, options, cb);
       }
       else
       {
+         // bind a function that can be used to build the package
+         boost::function<void()> buildFunction = boost::bind(
+                         &Build::buildPackage, Build::shared_from_this(),
+                         type, packagePath, options, cb);
+
          if (roxygenizeRequired(type))
          {
-            if (!roxygenize(packagePath))
-               return;
-         }
+            // special callback for roxygenize result
+            system::ProcessCallbacks roxygenizeCb = cb;
+            roxygenizeCb.onExit =  boost::bind(&Build::onRoxygenizeCompleted,
+                                               Build::shared_from_this(),
+                                               _1,
+                                               buildFunction);
 
-         // build the package
-         buildPackage(type, packagePath, options, cb);
+            // run it
+            roxygenize(packagePath, options, roxygenizeCb);
+         }
+         else
+         {
+            buildFunction();
+         }
       }
    }
 
@@ -390,7 +403,8 @@ private:
       }
    }
 
-   bool roxygenize(const FilePath& packagePath)
+
+   std::string buildRoxygenizeCall()
    {
       // build the call to roxygenize
       std::vector<std::string> roclets;
@@ -412,51 +426,60 @@ private:
 
       // show the user the call to roxygenize
       enqueCommandString(roxygenizeCall);
-      enqueBuildOutput(kBuildOutputNormal, "* checking for changes ... ");
 
       // format the command to send to R
       boost::format cmdFmt(
-         "capture.output(suppressPackageStartupMessages("
+         "suppressPackageStartupMessages("
             "{oldLC <- Sys.getlocale(category = 'LC_COLLATE'); "
             " Sys.setlocale(category = 'LC_COLLATE', locale = 'C'); "
             " on.exit(Sys.setlocale(category = 'LC_COLLATE', locale = oldLC));"
             " %1%; }"
-          "))");
-      std::string cmd = boost::str(cmdFmt % roxygenizeCall);
+          ")");
+      return boost::str(cmdFmt % roxygenizeCall);
+   }
 
-
-      // change to the package dir (and make sure we restore
-      // before leaving the function)
-      RestoreCurrentPathScope restorePathScope(
-                                 module_context::safeCurrentPath());
-      Error error = packagePath.makeCurrentPath();
-      if (error)
+   void onRoxygenizeCompleted(int exitStatus,
+                              const boost::function<void()>& buildFunction)
+   {
+      if (exitStatus == EXIT_SUCCESS)
       {
-         terminateWithError("setting the working directory for roxygenize",
-                            error);
-         return false;
-      }
-
-      // execute it
-      std::string output;
-      error = r::exec::evaluateString(cmd, &output);
-      if (error && (error.code() != r::errc::NoDataAvailableError))
-      {
-         enqueBuildOutput(kBuildOutputError, "ERROR\n\n");
-         terminateWithError(r::endUserErrorMessage(error));
-         return false;
+         std::string msg = "Documentation completed\n\n";
+         enqueBuildOutput(kBuildOutputNormal, msg);
+         buildFunction();
       }
       else
       {
-         // update progress
-         enqueBuildOutput(kBuildOutputNormal, "DONE\n");
-
-         // show output
-         enqueBuildOutput(kBuildOutputNormal,
-                          output + (output.empty() ? "\n" : "\n\n"));
-
-         return true;
+         terminateWithErrorStatus(exitStatus);
       }
+   }
+
+
+   void roxygenize(const FilePath& packagePath,
+                   core::system::ProcessOptions options,
+                   const core::system::ProcessCallbacks& cb)
+   {
+      FilePath rScriptPath;
+      Error error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError("Locating R script", error);
+         return;
+      }
+
+      // build the roxygenize command
+      shell_utils::ShellCommand cmd(rScriptPath);
+      cmd << "--slave";
+      cmd << "--vanilla";
+      cmd << "-e";
+      cmd << buildRoxygenizeCall();
+
+      // use the package working dir
+      options.workingDir = packagePath;
+
+      // run it
+      module_context::processSupervisor().runCommand(cmd,
+                                                     options,
+                                                     cb);
    }
 
    bool compileRcppAttributes(const FilePath& packagePath)
