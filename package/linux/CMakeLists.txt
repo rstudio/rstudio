@@ -37,7 +37,7 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libssl0.9.8, ")
 
   # rpm dependencies
-  set(RSTUDIO_RPM_DEPENDS "psmisc, ")
+  set(RSTUDIO_RPM_DEPENDS "psmisc, libffi, ")
 
 elseif(RSTUDIO_DESKTOP)
  

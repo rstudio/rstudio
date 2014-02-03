@@ -330,12 +330,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(PROGRAMS ${PANDOC_FILES}
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
-   set(PANDOC_REDHAT_BIN "${PANDOC_BIN}/redhat5")
-   if(EXISTS "${PANDOC_REDHAT_BIN}")
-      file(GLOB PANDOC_REDHAT_FILES "${PANDOC_REDHAT_BIN}/pandoc*")
-      install(PROGRAMS ${PANDOC_REDHAT_FILES}
-              DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc/redhat5)
-   endif()
 
    # install 64 bit binaries if we are on win64
    if(WIN32)

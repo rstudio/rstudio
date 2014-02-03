@@ -33,30 +33,9 @@ namespace {
 
 void initPandocPath()
 {
-   FilePath pandocPath = session::options().pandocPath();
-
-   // use special binaries for redhat5
-#if !defined(_WIN32) && !defined(__APPLE__)
-   FilePath redhatReleaseFile("/etc/redhat-release");
-   if (redhatReleaseFile.exists())
-   {
-      // get redhat release info
-      std::string redhatRelease;
-      Error error = core::readStringFromFile(redhatReleaseFile, &redhatRelease);
-      if (error)
-         LOG_ERROR(error);
-
-      // check for redhat 5
-      if (!boost::algorithm::istarts_with(redhatRelease, "fedora") &&
-          boost::algorithm::icontains(redhatRelease, "release 5"))
-      {
-         pandocPath = pandocPath.childPath("redhat5");
-      }
-   }
-#endif
-
    r::exec::RFunction sysSetenv("Sys.setenv");
-   sysSetenv.addParam("RSTUDIO_PANDOC", pandocPath.absolutePath());
+   sysSetenv.addParam("RSTUDIO_PANDOC", 
+                      session::options().pandocPath().absolutePath());
    Error error = sysSetenv.call();
    if (error)
       LOG_ERROR(error);
