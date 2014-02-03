@@ -58,12 +58,18 @@ else
       fi
       ARCH=`uname -m`
 
-      # Until we build proper redhat binaries we are going to install the
-      # debian binaries on all targets (this works for all flavors of 
-      # redhat save for RHEL/CentOS 5)
-      #
-      # cp ${PANDOC_NAME}/linux/${PACKAGING}/${ARCH}/pandoc* ${PANDOC_DIR}
+      # default binaries are the debian ones (they are also used
+      # on fedora and RHEL 6)
       cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc* ${PANDOC_DIR}
+     
+      # on redhat install an extra set of binaries for redhat5
+      if [ "$PACKAGING" == "rpm" ]; then
+        if [ ! -f /etc/fedora-release ]; then
+          PANDOC_RHEL5_DIR=${PANDOC_DIR}/redhat5
+          mkdir -p ${PANDOC_RHEL5_DIR}
+          cp ${PANDOC_NAME}/linux/rpm/${ARCH}/pandoc* ${PANDOC_RHEL5_DIR}
+        fi
+      fi
    fi
    rm $PANDOC_ZIP
    rm -rf $PANDOC_NAME
