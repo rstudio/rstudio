@@ -71,7 +71,7 @@
    .rs.registerReplaceHook("install.packages", "utils", function(original,
                                                                 pkgs,
                                                                 lib,
-                                                                repos,
+                                                                repos = getOption("repos"),
                                                                 ...) 
    {
       if (!is.null(repos) && .rs.loadedPackageUpdates(pkgs)) {
