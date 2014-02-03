@@ -2068,18 +2068,18 @@ public class TextEditingTarget implements
    }
 
    private String extractIndentation(String code)
-    {
-        Pattern leadingWhitespace = Pattern.create("^(\\s*)");
-        Match match = leadingWhitespace.match(code, 0);
-        return match == null ? "" : match.getGroup(1);
-    }
+   {
+      Pattern leadingWhitespace = Pattern.create("^(\\s*)");
+      Match match = leadingWhitespace.match(code, 0);
+      return match == null ? "" : match.getGroup(1);
+   }
 
-    private boolean isSelectionValueEmpty(String selection)
-    {
-        return selection == null || selection.trim().length() == 0;
-    }
+   private boolean isSelectionValueEmpty(String selection)
+   {
+      return selection == null || selection.trim().length() == 0;
+   }
 
-    @Handler
+   @Handler
    void onJumpToMatching()
    {
       docDisplay_.jumpToMatching();
