@@ -90,6 +90,7 @@ public abstract class
    public abstract AppCommand unfoldAll();
    public abstract AppCommand jumpToMatching();
    public abstract AppCommand extractFunction();
+   public abstract AppCommand extractLocalVariable();
    public abstract AppCommand commentUncomment();
    public abstract AppCommand reindent();
    public abstract AppCommand reflowComment();

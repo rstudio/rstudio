@@ -247,6 +247,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeCodeWithoutFocus());
          results.add(commands.executeLastCode());
          results.add(commands.extractFunction());
+         results.add(commands.extractLocalVariable());
          results.add(commands.commentUncomment());
          results.add(commands.reindent());
          results.add(commands.reflowComment());
