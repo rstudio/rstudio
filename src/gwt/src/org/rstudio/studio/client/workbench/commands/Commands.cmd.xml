@@ -1398,12 +1398,15 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="shinyAppsDeploy"
         menuLabel="Deploy App..."
-        desc="Deploy an application to the ShinyApps service"/>
+        desc="Deploy an application to the ShinyApps service"
+        visible="false"/>
    <cmd id="shinyAppsTerminate"
         menuLabel="Terminate App..."
-        desc="Terminate a ShinyApps application"/>
+        desc="Terminate a ShinyApps application"
+        visible="false"/>
    <cmd id="shinyAppsManageAccounts"
         menuLabel="Manage Accounts..."
-        desc="Connect or disconnect ShinyApps accounts"/>
+        desc="Connect or disconnect ShinyApps accounts"
+        visible="false"/>
 
 </commands>

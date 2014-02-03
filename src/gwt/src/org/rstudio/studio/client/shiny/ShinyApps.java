@@ -14,15 +14,22 @@
  */
 package org.rstudio.studio.client.shiny;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
+import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDirectoryState;
 import org.rstudio.studio.client.shiny.ui.ShinyAppsAccountManagerDialog;
@@ -33,7 +40,9 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -69,18 +78,13 @@ public class ShinyApps implements SessionInitHandler,
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
-      // Deployment-related ShinyApps commands are invisible by default; they
-      // will be set to visible by the source pane if a Shiny file is open and
-      // the ShinyApps package is installed.
-      commands_.shinyAppsDeploy().setVisible(false);
-      commands_.shinyAppsTerminate().setVisible(false);
-      
       // "Manage accounts" can be invoked any time the package is available
       commands_.shinyAppsManageAccounts().setVisible(
             session_.getSessionInfo().getShinyappsInstalled());
       
       // This object keeps track of the most recent deployment we made of each
-      // directory.
+      // directory, and is used to default directory deployments to last-used
+      // settings.
       new JSObjectStateValue(
             "shinyapps",
             "shinyAppsDirectories",
@@ -133,6 +137,10 @@ public class ShinyApps implements SessionInitHandler,
                          dir, lastAccount, lastAppName);
          dialog.showModal();
       }
+      else if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_TERMINATE)
+      {
+         terminateShinyApp(FilePathUtils.dirFromFile(event.getPath()));
+      }
    }
    
    @Override
@@ -148,6 +156,132 @@ public class ShinyApps implements SessionInitHandler,
       ShinyAppsAccountManagerDialog dialog = 
             new ShinyAppsAccountManagerDialog(server_, display_);
       dialog.showModal();
+   }
+   
+   // Terminate, step 1: create a list of apps deployed from this directory
+   private void terminateShinyApp(final String dir)
+   {
+      server_.getShinyAppsDeployments(dir, 
+            new ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>>()
+      {
+         @Override
+         public void onResponseReceived(
+               JsArray<ShinyAppsDeploymentRecord> records)
+         {
+            terminateShinyApp(dir, records);
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Terminating Application",
+                  "Could not determine application deployments for '" +
+                   dir + "':" + error.getMessage());
+         }
+      });
+   }
+   
+   // Terminate, step 2: Get the status of the applications from the server
+   private void terminateShinyApp(final String dir, 
+         JsArray<ShinyAppsDeploymentRecord> records)
+   {
+      if (records.length() == 0)
+      {
+         display_.showMessage(GlobalDisplay.MSG_INFO, "No Deployments Found", 
+               "No application deployments were found for '" + dir + "'");
+         return;
+      }
+      
+      // If we know the most recent deployment of the directory, act on that
+      // deployment by default
+      final ArrayList<ShinyAppsDeploymentRecord> recordList = 
+            new ArrayList<ShinyAppsDeploymentRecord>();
+      ShinyAppsDeploymentRecord lastRecord = dirState_.getLastDeployment(dir);
+      if (lastRecord != null)
+      {
+         recordList.add(lastRecord);
+      }
+      for (int i = 0; i < records.length(); i++)
+      {
+         ShinyAppsDeploymentRecord record = records.get(i);
+         if (lastRecord == null)
+         {
+            recordList.add(record);
+         }
+         else
+         {
+            if (record.getUrl().equals(lastRecord.getUrl()))
+               recordList.set(0, record);
+         }
+      }
+      
+      // We need to further filter the list by deployments that are 
+      // eligible for termination (i.e. are currently running)
+      server_.getShinyAppsAppList(recordList.get(0).getAccount(),
+            new ServerRequestCallback<JsArray<ShinyAppsApplicationInfo>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<ShinyAppsApplicationInfo> apps)
+         {
+            terminateShinyApp(dir, apps, recordList);
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Listing Applications",
+                  error.getMessage());
+         }
+      });
+   }
+   
+   // Terminate, step 3: compare the deployments and apps active on the server
+   // until we find a running app from the current directory
+   private void terminateShinyApp(String dir, 
+         JsArray<ShinyAppsApplicationInfo> apps, 
+         List<ShinyAppsDeploymentRecord> records)
+   {
+      for (int i = 0; i < records.size(); i++)
+      {
+         for (int j = 0; j < apps.length(); j++)
+         {
+            ShinyAppsApplicationInfo candidate = apps.get(j);
+            if (candidate.getName().equals(records.get(i).getName()) &&
+                candidate.getStatus().equals("running"))
+            {
+               terminateShinyApp(records.get(i).getAccount(), candidate);
+               return;
+            }
+         }
+      }
+      display_.showMessage(GlobalDisplay.MSG_INFO, 
+            "No Running Deployments Found", "No applications deployed from '" +
+             dir + "' appear to be running.");
+   }
+   
+   // Terminate, step 4: confirm that we've selected the right app for
+   // termination
+   private void terminateShinyApp(final String accountName, 
+                                  final ShinyAppsApplicationInfo target)
+   {
+      display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
+            "Confirm Terminate Application", 
+            "Terminate the application '" + target.getName() + "' running " +
+            "at " + target.getUrl() + "?", 
+            new Operation() {
+               @Override
+               public void execute()
+               {
+                  terminateShinyApp(accountName, target.getName());
+               }
+            }, 
+            true
+      );
+   }
+   
+   // Terminate, step 5: perform the termination 
+   private void terminateShinyApp(String accountName, final String appName)
+   {
+      events_.fireEvent(new SendToConsoleEvent("shinyapps::terminateApp(\"" +
+            appName + "\", \"" + accountName + "\")", true));
    }
    
    private final Commands commands_;

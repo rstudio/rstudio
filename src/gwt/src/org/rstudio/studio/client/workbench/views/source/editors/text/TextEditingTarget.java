@@ -2116,6 +2116,14 @@ public class TextEditingTarget implements
             docUpdateSentinel_.getPath()));
    }
 
+   @Handler 
+   void onShinyAppsTerminate()
+   {
+      events_.fireEvent(new ShinyAppsActionEvent(
+            ShinyAppsActionEvent.ACTION_TYPE_TERMINATE, 
+            docUpdateSentinel_.getPath()));
+   }
+
    void doReflowComment(String commentPrefix)
    {
       doReflowComment(commentPrefix, true);
