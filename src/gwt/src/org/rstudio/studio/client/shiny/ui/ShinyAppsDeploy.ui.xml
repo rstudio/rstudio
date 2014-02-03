@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style>
+	<ui:style type='org.rstudio.studio.client.shiny.ui.ShinyAppsDeploy.DeployStyle'>
 	.sourceDestLabels
 	{
 	  color: #808080;
@@ -23,17 +23,18 @@
 	
 	.statusLabel
 	{
-	  font-size: 120%;
+	  font-size: 140%;
      font-weight: bold;
      text-align: center;
-     margin-bottom: 5px;
+     margin-bottom: 15px;
 	}
 	
 	.urlAnchor
 	{
 	  display: block;
 	  text-align: center;
-	  margin-bottom: 10px;
+	  margin-top: 5px;
+	  margin-bottom: 5px;
 	}
 	
 	.transferArrow
@@ -42,6 +43,16 @@
 	  font-weight: bold;
 	  text-align: center;
 	  margin: 10px;
+	}
+	
+	.normalStatus
+	{
+	  color: green;
+	}
+	
+	.otherStatus
+	{
+	  color: red;
 	}
 	</ui:style>
 	<g:HTMLPanel>
@@ -74,8 +85,8 @@
 	  </g:row>
 	</g:Grid>
 	<g:HTMLPanel visible="false" ui:field="appInfoPanel">
-	  <g:Label styleName="{style.statusLabel}" ui:field="statusLabel"></g:Label>
 	  <g:Anchor styleName="{style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
+	  <g:Label styleName="{style.statusLabel}" ui:field="statusLabel"></g:Label>
 	</g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 

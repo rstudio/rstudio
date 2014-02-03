@@ -23,6 +23,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Anchor;
@@ -40,6 +41,13 @@ public class ShinyAppsDeploy extends Composite
 
    interface ShinyAppsDeployUiBinder extends UiBinder<Widget, ShinyAppsDeploy>
    {
+   }
+   
+   public interface DeployStyle extends CssResource
+   {
+      String statusLabel();
+      String normalStatus();
+      String otherStatus();
    }
 
    public ShinyAppsDeploy()
@@ -120,7 +128,12 @@ public class ShinyAppsDeploy extends Composite
 
       urlAnchor.setText(info.getUrl());
       urlAnchor.setHref(info.getUrl());
-      statusLabel.setText(info.getStatus());
+      String status = info.getStatus();
+      statusLabel.setText(status);
+      statusLabel.setStyleName(style.statusLabel() + " " + 
+              (status.equals("running") ?
+                    style.normalStatus() :
+                    style.otherStatus()));
 
       appInfoPanel.setVisible(true);
       nameLabel.setVisible(false);
@@ -145,4 +158,5 @@ public class ShinyAppsDeploy extends Composite
    @UiField ListBox appList;
    @UiField TextBox appName;
    @UiField HTMLPanel appInfoPanel;
+   @UiField DeployStyle style;
 }

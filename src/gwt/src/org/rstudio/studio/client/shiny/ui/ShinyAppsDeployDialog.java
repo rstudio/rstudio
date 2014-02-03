@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -37,6 +38,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public class ShinyAppsDeployDialog 
@@ -71,6 +73,8 @@ public class ShinyAppsDeployDialog
          }
       });
       
+      indicator_ = addProgressIndicator(false);
+
       // Get the deployments of this directory from any account (should be fast,
       // since this information is stored locally in the directory). 
       server_.getShinyAppsDeployments(sourceDir, 
@@ -188,6 +192,17 @@ public class ShinyAppsDeployDialog
          setAppList(apps_.get(accountName));
          return;
       }
+      
+      // This operation hits the ShinyApps service, so show some progress if 
+      // it takes more than a few ms
+      final Timer t = new Timer() {
+         @Override
+         public void run()
+         {
+            indicator_.onProgress("Contacting ShinyApps...");
+         }
+      };
+      t.schedule(500);
 
       // Not already in our cache, fetch it and populate the cache
       server_.getShinyAppsAppList(accountName,
@@ -197,6 +212,9 @@ public class ShinyAppsDeployDialog
          public void onResponseReceived(
                JsArray<ShinyAppsApplicationInfo> apps)
          {
+
+            t.cancel();
+            indicator_.onCompleted();
             apps_.put(accountName, apps);
             setAppList(apps);
          }
@@ -204,6 +222,8 @@ public class ShinyAppsDeployDialog
          @Override
          public void onError(ServerError error)
          {
+            t.cancel();
+            indicator_.onCompleted();
             // we can always create a new app
             contents_.setAppList(null, null);
          }
@@ -302,6 +322,7 @@ public class ShinyAppsDeployDialog
    private String sourceDir_;
    private String lastAppName_;
    private ThemedButton deployButton_;
+   private ProgressIndicator indicator_;
    
    // Map of account name to a list of applications owned by that account
    private Map<String, JsArray<ShinyAppsApplicationInfo>> apps_ = 
