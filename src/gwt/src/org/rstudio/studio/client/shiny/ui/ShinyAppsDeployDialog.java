@@ -40,6 +40,7 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public class ShinyAppsDeployDialog 
@@ -63,6 +64,10 @@ public class ShinyAppsDeployDialog
       events_ = events;
       lastAppName_ = lastAppName;
 
+      launchCheck_ = new CheckBox("Launch");
+      launchCheck_.setValue(true);
+      addLeftWidget(launchCheck_);
+      
       contents_.setSourceDir(sourceDir);
       
       deployButton_.addClickHandler(new ClickHandler()
@@ -307,11 +312,13 @@ public class ShinyAppsDeployDialog
          appName = contents_.getNewAppName();
       
       String account = contents_.getSelectedAccount();
+      String launch = launchCheck_.getValue() ? "TRUE" : "FALSE";
       
       // send the deployment command to the console
       String cmd = "shinyapps::deployApp(appDir=\"" + sourceDir_ + "\", " + 
                    "account=\"" + account + "\", " + 
-                   "appName=\"" + appName + "\")";
+                   "appName=\"" + appName + "\", " + 
+                   "launch.browser=" + launch + ")";
       
       events_.fireEvent(new SendToConsoleEvent(cmd, true));
       
@@ -343,6 +350,7 @@ public class ShinyAppsDeployDialog
    private String lastAppName_;
    private ThemedButton deployButton_;
    private ProgressIndicator indicator_;
+   private CheckBox launchCheck_;
    
    // Map of account name to a list of applications owned by that account
    private Map<String, JsArray<ShinyAppsApplicationInfo>> apps_ = 
