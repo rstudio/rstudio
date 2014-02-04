@@ -94,7 +94,7 @@ public class ShinyAppsDeploy extends Composite
    public void setAppList(List<String> apps, String selected)
    {
       appList.clear();
-      int selectedIdx = apps.size();
+      int selectedIdx = apps.size() - 1;
       if (apps != null)
       {
          for (int i = 0; i < apps.size(); i++)
