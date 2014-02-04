@@ -22,10 +22,14 @@ import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -53,6 +57,16 @@ public class ShinyAppsDeploy extends Composite
    public ShinyAppsDeploy()
    {
       initWidget(uiBinder.createAndBindUi(this));
+
+      // Validate the application name on every keystroke
+      appName.addKeyUpHandler(new KeyUpHandler()
+      {
+         @Override
+         public void onKeyUp(KeyUpEvent event)
+         {
+            validateAppName();
+         }
+      });
    }
    
    public void setSourceDir(String dir)
@@ -94,7 +108,7 @@ public class ShinyAppsDeploy extends Composite
    public void setAppList(List<String> apps, String selected)
    {
       appList.clear();
-      int selectedIdx = apps.size() - 1;
+      int selectedIdx = Math.max(0, apps.size() - 1);
       if (apps != null)
       {
          for (int i = 0; i < apps.size(); i++)
@@ -123,9 +137,11 @@ public class ShinyAppsDeploy extends Composite
          appInfoPanel.setVisible(false);
          nameLabel.setVisible(true);
          appName.setVisible(true);
+         validateAppName();
          return;
       }
 
+      setAppNameValid(true);
       urlAnchor.setText(info.getUrl());
       urlAnchor.setHref(info.getUrl());
       String status = info.getStatus();
@@ -138,6 +154,7 @@ public class ShinyAppsDeploy extends Composite
       appInfoPanel.setVisible(true);
       nameLabel.setVisible(false);
       appName.setVisible(false);
+      nameValidatePanel.setVisible(false);
    }
    
    public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
@@ -149,6 +166,32 @@ public class ShinyAppsDeploy extends Composite
    {
       return appList.addChangeHandler(handler);
    }
+   
+   public void setOnDeployEnabled(Command cmd)
+   {
+      onDeployEnabled_ = cmd;
+   }
+   
+   public void setOnDeployDisabled(Command cmd)
+   {
+      onDeployDisabled_ = cmd;
+   }
+   
+   private void validateAppName()
+   {
+      String app = appName.getText();
+      RegExp validReg = RegExp.compile("^[A-Za-z0-9_-]{4,63}$");
+      setAppNameValid(validReg.test(app));
+   }
+   
+   private void setAppNameValid(boolean isValid)
+   {
+      nameValidatePanel.setVisible(!isValid);
+      if (isValid && onDeployEnabled_ != null)
+         onDeployEnabled_.execute();
+      else if (!isValid && onDeployDisabled_ != null)
+         onDeployDisabled_.execute();
+   }
 
    @UiField Anchor urlAnchor;
    @UiField Label sourceDir;
@@ -158,5 +201,9 @@ public class ShinyAppsDeploy extends Composite
    @UiField ListBox appList;
    @UiField TextBox appName;
    @UiField HTMLPanel appInfoPanel;
+   @UiField HTMLPanel nameValidatePanel;
    @UiField DeployStyle style;
+   
+   private Command onDeployEnabled_;
+   private Command onDeployDisabled_;
 }

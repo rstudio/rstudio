@@ -38,6 +38,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.PopupPanel;
 
@@ -156,9 +157,28 @@ public class ShinyAppsDeployDialog
             updateApplicationInfo();
          }
       });
+      
+      contents_.setOnDeployDisabled(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            deployButton_.setEnabled(false);
+         }
+      });
+
+      contents_.setOnDeployEnabled(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            deployButton_.setEnabled(true);
+         }
+      });
    }
    
-   // Runs when the selected application changes 
+   // Runs when the selected application changes; shows the cached information
+   // (URL and status) for the selected application
    private void updateApplicationInfo()
    {
       String appName = contents_.getSelectedApp();
