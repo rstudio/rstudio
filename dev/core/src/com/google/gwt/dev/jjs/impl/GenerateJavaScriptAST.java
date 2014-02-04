@@ -164,7 +164,7 @@ import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import java.io.StringReader;
@@ -280,7 +280,7 @@ public class GenerateJavaScriptAST {
       // Start constructing the scope tree.
       currentScope = new Scope();
       scopesByLocal = new HashMap<JLocal, Scope>();
-      localsByName = HashMultimap.create();
+      localsByName = LinkedHashMultimap.create();
       return true;
     }
 
