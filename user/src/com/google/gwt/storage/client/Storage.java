@@ -64,49 +64,23 @@ import com.google.gwt.event.shared.HandlerRegistration;
 // storage events.
 @PartialSupport
 public final class Storage {
-  /**
-   * Detector for browser support of Storage.
-   */
+
+  // Still a separate class to prevent native calls on class load as it my break existing code.
   private static class StorageSupportDetector {
-    private final boolean isLocalStorageSupported = detectLocalStorageSupport();
-    private final boolean isSessionStorageSupported =
-        detectSessionStorageSupport();
+    static final boolean localStorageSupported = checkStorageSupport(StorageImpl.LOCAL_STORAGE);
+    static final boolean sessionStorageSupported = checkStorageSupport(StorageImpl.SESSION_STORAGE);
 
-    public boolean isLocalStorageSupported() {
-      return isLocalStorageSupported;
-    }
-
-    public boolean isSessionStorageSupported() {
-      return isSessionStorageSupported;
-    }
-
-    private native boolean detectLocalStorageSupport() /*-{
-      // This was changed from "typeof $wnd.localStorage != "undefined";" to
-      // support the case when localStorage is disabled.
-      return $wnd.localStorage != null;
+    // Adapted from modernizr
+    private static native boolean checkStorageSupport(String storage) /*-{
+      var c = '_gwt_dummy_';
+      try {
+        $wnd[storage].setItem(c, c);
+        $wnd[storage].removeItem(c);
+        return true;
+      } catch (e) {
+        return false;
+      }
     }-*/;
-
-    private native boolean detectSessionStorageSupport() /*-{
-      // This was changed from "typeof $wnd.sessionStorage != "undefined";" to
-      // support the case when sessionStorage is disabled.
-      return $wnd.sessionStorage != null;
-    }-*/;
-  }
-
-  /**
-   * Detector for browsers that do not support Storage.
-   */
-  @SuppressWarnings("unused")
-  private static class StorageSupportDetectorNo extends StorageSupportDetector {
-    @Override
-    public boolean isLocalStorageSupported() {
-      return false;
-    }
-
-    @Override
-    public boolean isSessionStorageSupported() {
-      return false;
-    }
   }
 
   static final StorageImpl impl = GWT.create(StorageImpl.class);
@@ -114,11 +88,6 @@ public final class Storage {
   private static Storage localStorage;
 
   private static Storage sessionStorage;
-
-  /**
-   * Singleton for Support detector.
-   */
-  private static StorageSupportDetector supportDetectorImpl;
 
   /**
    * Registers an event handler for StorageEvents.
@@ -148,13 +117,10 @@ public final class Storage {
    *         NOT supported.
    */
   public static Storage getLocalStorageIfSupported() {
-    if (isLocalStorageSupported()) {
-      if (localStorage == null) {
-        localStorage = new Storage(StorageImpl.LOCAL_STORAGE);
-      }
-      return localStorage;
+    if (localStorage == null && isLocalStorageSupported()) {
+      localStorage = new Storage(StorageImpl.LOCAL_STORAGE);
     }
-    return null;
+    return localStorage;
   }
 
   /**
@@ -172,13 +138,10 @@ public final class Storage {
    *         NOT supported.
    */
   public static Storage getSessionStorageIfSupported() {
-    if (isSessionStorageSupported()) {
-      if (sessionStorage == null) {
-        sessionStorage = new Storage(StorageImpl.SESSION_STORAGE);
-      }
-      return sessionStorage;
+    if (sessionStorage == null && isSessionStorageSupported()) {
+      sessionStorage = new Storage(StorageImpl.SESSION_STORAGE);
     }
-    return null;
+    return sessionStorage;
   }
 
   /**
@@ -186,7 +149,7 @@ public final class Storage {
    * Storage API is supported on the running platform.
    */
   public static boolean isLocalStorageSupported() {
-    return getStorageSupportDetector().isLocalStorageSupported();
+    return StorageSupportDetector.localStorageSupported;
   }
 
   /**
@@ -194,7 +157,7 @@ public final class Storage {
    * Storage API is supported on the running platform.
    */
   public static boolean isSessionStorageSupported() {
-    return getStorageSupportDetector().isSessionStorageSupported();
+    return StorageSupportDetector.sessionStorageSupported;
   }
 
   /**
@@ -214,13 +177,6 @@ public final class Storage {
    */
   public static void removeStorageEventHandler(StorageEvent.Handler handler) {
     impl.removeStorageEventHandler(handler);
-  }
-
-  private static StorageSupportDetector getStorageSupportDetector() {
-    if (supportDetectorImpl == null) {
-      supportDetectorImpl = GWT.create(StorageSupportDetector.class);
-    }
-    return supportDetectorImpl;
   }
 
   // Contains either "localStorage" or "sessionStorage":
