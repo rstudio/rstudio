@@ -18,8 +18,12 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 
 /**
- * An interface for caching {@link CompilationUnit}s. Alternate implementations
- * may cache only in memory or both cache in memory and persist to disk.
+ * An interface for caching {@link CompilationUnit}s. Alternate implementations may cache only in
+ * memory or both cache in memory and persist to disk.<br />
+ *
+ * All implementations must be reusable across multiple compiles of potentially different
+ * applications within the same process. Some JUnitShell test suite execution exercises exactly this
+ * path.
  */
 public interface UnitCache {
   /**
@@ -47,8 +51,12 @@ public interface UnitCache {
   CompilationUnit find(ContentId contentId);
 
   /**
-   * Lookup a {@link CompilationUnit} by resource path. This should include any
-   * path prefix that may have been was stripped to reroot the resource.
+   * Lookup a {@link CompilationUnit} by resource path. This should include any path prefix that may
+   * have been stripped to reroot the resource.<br />
+   *
+   * Contained CompilationUnits must be keyed on this combination of path prefix and path to avoid
+   * collision when reusing a UnitCache instance between compiles that do and do not SuperSource a
+   * given class.
    *
    * @see CompilationUnit#getResourcePath()
    */

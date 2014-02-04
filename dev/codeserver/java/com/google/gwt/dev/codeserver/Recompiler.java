@@ -30,7 +30,7 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
-import com.google.gwt.dev.javac.UnitCacheFactory;
+import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
@@ -81,7 +81,7 @@ class Recompiler {
             appSpace.getSpeedTracerLogFile().getAbsolutePath());
       }
       compilerContext = compilerContextBuilder.unitCache(
-          UnitCacheFactory.get(logger, appSpace.getUnitCacheDir())).build();
+          UnitCacheSingleton.get(logger, appSpace.getUnitCacheDir())).build();
     }
 
     long startTime = System.currentTimeMillis();

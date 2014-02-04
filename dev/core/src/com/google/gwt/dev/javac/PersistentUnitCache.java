@@ -71,7 +71,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * consolidated back into a single file.
  *
  * <p>
- * System Properties (see {@link UnitCacheFactory}).
+ * System Properties (see {@link UnitCacheSingleton}).
  *
  * <ul>
  * <li>gwt.persistentunitcache : enables the persistent cache (eventually will

@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,9 +21,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import java.io.File;
 
 /**
- * Creates a cache for {@link CompilationUnit} instances.
+ * Lazily creates a singleton cache for {@link CompilationUnit} instances.
  */
-public class UnitCacheFactory {
+public class UnitCacheSingleton {
 
   /**
    * The API must be enabled explicitly for persistent caching to be live.
@@ -38,7 +38,7 @@ public class UnitCacheFactory {
    * If the cache is enabled, instantiates the cache and begins loading units
    * into memory in a background thread. If the cache is not enabled, it clears
    * out any old cached files.
-   * 
+   *
    * Only one instance of the cache is instantiated. If a previously created
    * cache exists, the previous instance is returned.
    */

@@ -21,7 +21,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.javac.UnitCacheFactory;
+import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.shell.CheckForUpdates;
@@ -150,7 +150,7 @@ public class Compiler {
         persistentUnitCacheDir = new File(options.getWarDir(), "../");
       }
       compilerContext = compilerContextBuilder.unitCache(
-          UnitCacheFactory.get(logger, persistentUnitCacheDir)).build();
+          UnitCacheSingleton.get(logger, persistentUnitCacheDir)).build();
 
       for (ModuleDef module : modules) {
         compilerContext = compilerContextBuilder.module(module).build();
