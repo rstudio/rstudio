@@ -1963,8 +1963,11 @@ public class TextEditingTarget implements
                                  code))
          return;
 
-      final String indentation = extractIndentation(code);
-
+      // get the first line of the selection and calculate it's indentation
+      String firstLine = docDisplay_.getLine(
+                        docDisplay_.getSelectionStart().getRow());
+      final String indentation = extractIndentation(firstLine);
+      
       // used to parse the code
       server_.detectFreeVars(code,
            new RefactorServerRequestCallback(refactoringName)
