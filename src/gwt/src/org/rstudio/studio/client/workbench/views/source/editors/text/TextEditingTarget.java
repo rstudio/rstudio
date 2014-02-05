@@ -83,6 +83,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -1764,6 +1765,12 @@ public class TextEditingTarget implements
       extendedType_ = extendedType;
    }
 
+   @Override
+   public String getExtendedFileType()
+   {
+      return extendedType_;
+   }
+
    public HasValue<String> getName()
    {
       return name_; 
@@ -2099,6 +2106,22 @@ public class TextEditingTarget implements
    void onDebugBreakpoint()
    {
       docDisplay_.toggleBreakpointAtCursor();
+   }
+
+   @Handler 
+   void onShinyAppsDeploy()
+   {
+      events_.fireEvent(new ShinyAppsActionEvent(
+            ShinyAppsActionEvent.ACTION_TYPE_DEPLOY, 
+            docUpdateSentinel_.getPath()));
+   }
+
+   @Handler 
+   void onShinyAppsTerminate()
+   {
+      events_.fireEvent(new ShinyAppsActionEvent(
+            ShinyAppsActionEvent.ACTION_TYPE_TERMINATE, 
+            docUpdateSentinel_.getPath()));
    }
 
    void doReflowComment(String commentPrefix)

@@ -15,8 +15,9 @@
 
 
 #import <Foundation/NSObject.h>
+#import <Cocoa/Cocoa.h>
 
-@interface MainFrameMenu : NSObject {
+@interface MainFrameMenu : NSObject <NSMenuDelegate> {
    NSMenu* mainMenu_;
    NSMutableArray* menuStack_;
 

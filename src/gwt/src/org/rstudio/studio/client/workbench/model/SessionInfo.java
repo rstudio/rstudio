@@ -355,4 +355,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getHaveAdvancedStepCommands() /*-{
       return this.have_advanced_step_commands;
    }-*/;
+   
+   public final native boolean getShinyappsInstalled() /*-{
+      return this.shinyapps_installed;
+   }-*/;
 }

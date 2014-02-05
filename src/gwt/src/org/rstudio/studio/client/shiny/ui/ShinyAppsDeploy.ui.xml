@@ -1,0 +1,106 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style type='org.rstudio.studio.client.shiny.ui.ShinyAppsDeploy.DeployStyle'>
+	.sourceDestLabels
+	{
+	  color: #808080;
+	}
+	
+	.dropListControl
+	{
+	   width: 250px;
+	}
+
+	.gridControl
+	{
+	   display: block;
+	   width: 244px;
+	   padding: 3px;
+	}
+
+	.source
+	{
+	  font-weight: bold;
+	  margin-bottom: 10px;
+	  text-align: center;
+	}
+	
+	.statusLabel
+	{
+	  font-size: 140%;
+     font-weight: bold;
+     text-align: center;
+     margin-bottom: 15px;
+	}
+	
+	.urlAnchor
+	{
+	  display: block;
+	  text-align: center;
+	  margin-top: 5px;
+	  margin-bottom: 5px;
+	}
+	
+	.transferArrow
+	{
+	  font-size: 150%;
+	  font-weight: bold;
+	  text-align: center;
+	  margin: 10px;
+	}
+	
+	.normalStatus
+	{
+	  color: green;
+	}
+	
+	.otherStatus
+	{
+	  color: red;
+	}
+	
+	.validateError
+	{
+	   margin-left: 25px;
+	   color: red;
+	}
+	</ui:style>
+	<g:HTMLPanel>
+	<g:Label styleName="{style.source}" ui:field="sourceDir"></g:Label>
+	<g:Label styleName="{style.transferArrow}">&darr;</g:Label>
+	<g:Grid>
+	  <g:row>
+       <g:customCell>
+         <g:Label text="Account"></g:Label>
+       </g:customCell>
+       <g:customCell>
+         <g:ListBox styleName="{style.dropListControl}" ui:field="accountList"></g:ListBox>
+       </g:customCell>
+	  </g:row>
+	  <g:row>
+       <g:customCell>
+         <g:Label text="Application"></g:Label>
+       </g:customCell>
+       <g:customCell>
+         <g:ListBox styleName="{style.dropListControl}" ui:field="appList"></g:ListBox>
+       </g:customCell>
+	  </g:row>
+	  <g:row>
+       <g:customCell>
+         <g:Label ui:field="nameLabel" text="Name"></g:Label>
+       </g:customCell>
+       <g:customCell>
+         <g:TextBox styleName="{style.gridControl}" ui:field="appName" maxLength="63"></g:TextBox>
+       </g:customCell>
+	  </g:row>
+	</g:Grid>
+	<g:HTMLPanel visible="false" ui:field="appInfoPanel">
+	  <g:Anchor styleName="{style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
+	  <g:Label styleName="{style.statusLabel}" ui:field="statusLabel"></g:Label>
+	</g:HTMLPanel>
+	<g:HTMLPanel visible="false" ui:field="nameValidatePanel">
+	  <g:Label styleName="{style.validateError}" text="Application names must be between 4 and 63 characters, and can contain only alphanumeric characters, dashes, and underscores."></g:Label>
+	</g:HTMLPanel>
+	</g:HTMLPanel>
+</ui:UiBinder> 

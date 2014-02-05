@@ -53,6 +53,7 @@ public interface EditingTarget extends IsWidget,
    String getTabTooltip();
 
    void adaptToExtendedFileType(String extendedType);
+   String getExtendedFileType();
    
    HashSet<AppCommand> getSupportedCommands();
    boolean canCompilePdf();
