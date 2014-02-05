@@ -39,7 +39,6 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
    * these predicates in order and matching the first one that returns {@code true}.
    */
   private enum UserAgent {
-    opera("return (ua.indexOf('opera') != -1);"),
     safari("return (ua.indexOf('webkit') != -1);"),
     ie10("return (ua.indexOf('msie') != -1 && ($doc.documentMode == 10));"),
     ie9("return (ua.indexOf('msie') != -1 && ($doc.documentMode >= 9));"),

@@ -33,12 +33,11 @@
     </any>
   </replace-with>
 
-  <!-- WebKit, Opera 11.6+ support DataView but not Uint8ClampedArray -->
+  <!-- WebKit support DataView but not Uint8ClampedArray -->
   <replace-with class="com.google.gwt.typedarrays.client.NativeImplEmulClamped">
     <when-type-is class="com.google.gwt.typedarrays.client.NativeImpl"/>
     <any>
       <when-property-is name="user.agent" value="safari"/>
-      <when-property-is name="user.agent" value="opera"/>
     </any>
   </replace-with>
 
