@@ -41,12 +41,34 @@ void initPandocPath()
       LOG_ERROR(error);
 }
 
+// when the RMarkdown package is installed, give .Rmd files the extended type
+// "rmarkdown", unless they contain a special marker that indicates we should
+// use the previous rendering strategy
+std::string onDetectRmdSourceType(
+      boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (!pDoc->path().empty())
+   {
+      FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
+      if (filePath.extensionLowerCase() == ".rmd" &&
+          !boost::algorithm::icontains(pDoc->contents(),
+                                       "<!-- rmarkdown v1 -->"))
+      {
+         return "rmarkdown";
+      }
+   }
+   return std::string();
+}
 
 } // anonymous namespace
 
 Error initialize()
 {
    initPandocPath();
+
+   if (module_context::isPackageVersionInstalled("rmarkdown", "0.1"))
+      module_context::events().onDetectSourceExtendedType
+                              .connect(onDetectRmdSourceType);
 
    return Success();
 }

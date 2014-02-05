@@ -2774,7 +2774,9 @@ public class TextEditingTarget implements
    @Handler
    void onPreviewHTML()
    {
-      if (fileType_.isRd())
+      if (extendedType_ == "rmarkdown")
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, "NYI", "Markdown render here.");
+      else if (fileType_.isRd())
          previewRd();
       else if (fileType_.isRpres())
          previewRpresentation();
