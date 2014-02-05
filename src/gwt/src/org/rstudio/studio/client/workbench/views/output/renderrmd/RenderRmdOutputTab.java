@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
@@ -29,7 +30,8 @@ public class RenderRmdOutputTab extends DelayLoadWorkbenchTab<RenderRmdOutputPre
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<RenderRmdOutputPresenter, RenderRmdOutputTab>
-      implements RmdRenderStartedEvent.Handler
+      implements RmdRenderStartedEvent.Handler,
+                 RmdRenderOutputEvent.Handler
    {
       abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
@@ -44,6 +46,7 @@ public class RenderRmdOutputTab extends DelayLoadWorkbenchTab<RenderRmdOutputPre
       shim_ = shim;
 
       events.addHandler(RmdRenderStartedEvent.TYPE, shim);
+      events.addHandler(RmdRenderOutputEvent.TYPE, shim);
    }
 
    @Override

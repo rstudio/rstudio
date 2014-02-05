@@ -16,9 +16,11 @@
 #include "SessionRMarkdown.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/format.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
+#include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
 
@@ -46,6 +48,8 @@ public:
 
 private:
    RenderRmd(const FilePath& targetFile) :
+      isRunning_(false),
+      terminationRequested_(false),
       targetFile_(targetFile)
    {}
 
@@ -55,8 +59,102 @@ private:
       dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
       ClientEvent event(client_events::kRmdRenderStarted, dataJson);
       module_context::enqueClientEvent(event);
+
+      performRender(encoding);
    }
 
+   void performRender(const std::string& encoding)
+   {
+      // R binary
+      FilePath rProgramPath;
+      Error error = module_context::rScriptPath(&rProgramPath);
+      if (error)
+      {
+         terminateWithError(error);
+         return;
+      }
+
+      // args
+      std::vector<std::string> args;
+      args.push_back("--silent");
+      args.push_back("--no-save");
+      args.push_back("--no-restore");
+      args.push_back("-e");
+
+      // render command
+      boost::format fmt("rmarkdown::render('%1%', encoding='%2%');");
+      std::string cmd = boost::str(fmt % targetFile_.filename() % encoding);
+      args.push_back(cmd);
+
+      // options
+      core::system::ProcessOptions options;
+      options.terminateChildren = true;
+      options.redirectStdErrToStdOut = true;
+      options.workingDir = targetFile_.parent();
+
+      core::system::ProcessCallbacks cb;
+      cb.onContinue = boost::bind(&RenderRmd::onRenderContinue,
+                                  RenderRmd::shared_from_this());
+      cb.onStdout = boost::bind(&RenderRmd::onRenderOutput,
+                                RenderRmd::shared_from_this(), _2);
+      cb.onStderr = boost::bind(&RenderRmd::onRenderOutput,
+                                RenderRmd::shared_from_this(), _2);
+      cb.onExit =  boost::bind(&RenderRmd::onRenderCompleted,
+                                RenderRmd::shared_from_this(), _1, encoding);
+
+      module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
+                                                     args,
+                                                     options,
+                                                     cb);
+   }
+
+   bool onRenderContinue()
+   {
+      return !terminationRequested_;
+   }
+
+   void onRenderOutput(const std::string& output)
+   {
+      enqueRenderOutput(output);
+   }
+
+   void onRenderCompleted(int exitStatus, const std::string& encoding)
+   {
+      terminate(true);
+   }
+
+   void terminateWithError(const Error& error)
+   {
+      std::string message =
+            "Error rendering R Markdown for " +
+            module_context::createAliasedPath(targetFile_) + " " +
+            error.summary();
+      terminateWithError(message);
+   }
+
+   void terminateWithError(const std::string& message)
+   {
+      enqueRenderOutput(message);
+      terminate(false);
+   }
+
+   void terminate(bool succeeded)
+   {
+      isRunning_ = false;
+      json::Object resultJson;
+      resultJson["succeeded"] = true;
+      ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
+      module_context::enqueClientEvent(event);
+   }
+
+   static void enqueRenderOutput(const std::string& output)
+   {
+      ClientEvent event(client_events::kRmdRenderOutput, output);
+      module_context::enqueClientEvent(event);
+   }
+
+   bool isRunning_;
+   bool terminationRequested_;
    FilePath targetFile_;
 };
 

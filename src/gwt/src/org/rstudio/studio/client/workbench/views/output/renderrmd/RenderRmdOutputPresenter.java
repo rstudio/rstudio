@@ -19,6 +19,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -26,7 +27,8 @@ import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
 public class RenderRmdOutputPresenter extends BasePresenter
-   implements RmdRenderStartedEvent.Handler
+   implements RmdRenderStartedEvent.Handler,
+              RmdRenderOutputEvent.Handler
 {
    @Inject
    public RenderRmdOutputPresenter(CompileOutputPaneFactory outputFactory,
@@ -54,6 +56,13 @@ public class RenderRmdOutputPresenter extends BasePresenter
    public void onRmdRenderStarted(RmdRenderStartedEvent event)
    {
       view_.ensureVisible(true);
+      view_.compileStarted(event.getTargetFile());
+   }
+
+   @Override
+   public void onRmdRenderOutput(RmdRenderOutputEvent event)
+   {
+      view_.showOutput(event.getOutput());
    }
    
    CompileOutputPaneDisplay view_;

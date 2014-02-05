@@ -53,6 +53,8 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
@@ -540,6 +542,16 @@ public class ClientEventDispatcher
          {
             RmdRenderStartedEvent.Data data = event.getData();
             eventBus_.fireEvent(new RmdRenderStartedEvent(data));
+         }
+         else if (type.equals(ClientEvent.RmdRenderOutput))
+         {
+            String data = event.getData();
+            eventBus_.fireEvent(new RmdRenderOutputEvent(data));
+         }
+         else if (type.equals(ClientEvent.RmdRenderCompleted))
+         {
+            RmdRenderCompletedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RmdRenderCompletedEvent(data));
          }
          else
          {
