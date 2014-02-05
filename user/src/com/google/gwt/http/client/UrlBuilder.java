@@ -85,7 +85,9 @@ public class UrlBuilder {
 
     // http://www.google.com:80/path/to/file.html?k0=v0&k1=v1#token
     if (hash != null) {
-      url.append("#").append(URL.encode(hash));
+      // Hash characters in the hash fragment must be encoded separately
+      // because URL.encode does not do that (issue #8396)
+      url.append("#").append(URL.encode(hash).replace("#", "%23"));
     }
 
     return url.toString();

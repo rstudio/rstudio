@@ -57,6 +57,11 @@ public class UrlBuilderTest extends GWTTestCase {
     builder.setParameter("a_b", "a%b");
     assertEquals("http://google.com/path?a_b=a%25b#hash",
                  builder.buildString());
+
+    // Hash characters in the fragment should be encoded (issue #8396)
+    builder.setHash("ha#sh#");
+    assertEquals("http://google.com/path?a_b=a%25b#ha%23sh%23",
+        builder.buildString());
   }
 
   public void testBuildStringEntireUrl() {
