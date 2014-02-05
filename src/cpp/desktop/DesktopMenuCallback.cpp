@@ -17,6 +17,7 @@
 #include <QDebug>
 #include <QApplication>
 #include "DesktopCommandInvoker.hpp"
+#include "DesktopSubMenu.hpp"
 
 #ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
@@ -43,7 +44,10 @@ void MenuCallback::beginMenu(QString label)
    }
 #endif
 
-   QMenu* pMenu = new QMenu(label, pMainMenu_);
+   SubMenu* pMenu = new SubMenu(label, pMainMenu_);
+
+   connect(pMenu, SIGNAL(manageCommandVisibility(QString,QAction*)),
+           this, SIGNAL(manageCommandVisibility(QString,QAction*)));
 
    if (menuStack_.count() == 0)
       pMainMenu_->addMenu(pMenu);
@@ -145,7 +149,6 @@ void MenuCallback::addCommand(QString commandId,
       MenuActionBinder* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
       connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
               this, SIGNAL(manageCommand(QString,QAction*)));
-
    }
 }
 

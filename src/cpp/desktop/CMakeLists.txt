@@ -126,6 +126,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopSecondaryWindow.cpp
   DesktopSessionLauncher.cpp
   DesktopSlotBinders.cpp
+  DesktopSubMenu.cpp
   DesktopSynctex.cpp
   DesktopNetworkAccessManager.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
