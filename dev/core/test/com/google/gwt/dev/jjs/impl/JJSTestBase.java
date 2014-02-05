@@ -277,7 +277,8 @@ public abstract class JJSTestBase extends TestCase {
             + "  static RuntimeException makeAssertionError() { return new RuntimeException(); }"
             + "  static Throwable safeClose(AutoCloseable resource, Throwable mainException) {"
             + "    return mainException;"
-            + "  } "
+            + "  }"
+            + "  static <T> T checkNotNull(T value) { return value; }"
             + "}";
         }
     });

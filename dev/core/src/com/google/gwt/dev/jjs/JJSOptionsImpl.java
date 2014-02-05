@@ -26,6 +26,7 @@ import java.io.Serializable;
  */
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
+  private boolean addRuntimeChecks = false;
   private boolean aggressivelyOptimize = true;
   private boolean closureCompilerEnabled;
   private boolean clusterSimilarFunctions = true;
@@ -37,6 +38,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private int fragmentsMerge = -1;
   private boolean inlineLiteralParameters = true;
   private boolean jsonSoycEnabled = false;
+  private JsNamespaceOption namespace = JsNamespaceOption.NONE;
   private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_DEFAULT;
   private boolean optimizeDataflow = true;
   private boolean optimizePrecompile = false;
@@ -50,7 +52,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
   private boolean strictResources = false;
-  private JsNamespaceOption namespace = JsNamespaceOption.NONE;
 
   public JJSOptionsImpl() {
   }
@@ -60,6 +61,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   public void copyFrom(JJSOptions other) {
+    setAddRuntimeChecks(other.shouldAddRuntimeChecks());
     setAggressivelyOptimize(other.isAggressivelyOptimize());
     setCastCheckingDisabled(other.isCastCheckingDisabled());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
@@ -192,6 +194,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
+  public void setAddRuntimeChecks(boolean enabled) {
+    addRuntimeChecks = enabled;
+  }
+
+  @Override
   @Deprecated
   public void setAggressivelyOptimize(boolean enabled) {
     aggressivelyOptimize = enabled;
@@ -315,6 +322,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setStrict(boolean enabled) {
     strict = enabled;
+  }
+
+  @Override
+  public boolean shouldAddRuntimeChecks() {
+    return addRuntimeChecks;
   }
 
   @Override

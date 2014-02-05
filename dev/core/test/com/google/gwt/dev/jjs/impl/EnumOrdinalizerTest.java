@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
@@ -962,9 +963,9 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
      */
     boolean didChange = false;
     AstDumper.maybeDumpAST(program, "EnumOrdinalizerTest_start");
-    
+
     if (runMakeCallsStatic) {
-      didChange = MakeCallsStatic.exec(program).didChange() || didChange;
+      didChange = MakeCallsStatic.exec(new JJSOptionsImpl(), program).didChange() || didChange;
       AstDumper.maybeDumpAST(program,
           "EnumOrdinalizerTest_after_makeCallsStatic");
     }

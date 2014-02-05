@@ -38,6 +38,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setAddRuntimeChecks(boolean enabled) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   @Deprecated
   public final void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     throw new UnsupportedOperationException();

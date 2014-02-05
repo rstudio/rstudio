@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.dev.util.arg.OptionCheckedMode;
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
 import com.google.gwt.dev.util.arg.OptionClusterSimilarFunctions;
 import com.google.gwt.dev.util.arg.OptionDisableCastChecking;
@@ -51,5 +52,5 @@ public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
     OptionOptimizePrecompile, OptionOrdinalizeEnums, OptionRemoveDuplicateFunctions, OptionStrict,
     OptionStrictResources, OptionSoycHtmlDisabled, OptionEnableClosureCompiler,
     OptionFragmentsMerge, OptionFragmentCount, OptionSourceLevel,
-    OptionNamespace {
+    OptionNamespace, OptionCheckedMode {
 }

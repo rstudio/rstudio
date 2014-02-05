@@ -206,6 +206,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
+  public void setAddRuntimeChecks(boolean enabled) {
+    jjsOptions.setAddRuntimeChecks(enabled);
+  }
+
+  @Override
   @Deprecated
   public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
@@ -359,6 +364,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setValidateOnly(boolean validateOnly) {
     this.validateOnly = validateOnly;
+  }
+
+  @Override
+  public boolean shouldAddRuntimeChecks() {
+    return jjsOptions.shouldAddRuntimeChecks();
   }
 
   @Override

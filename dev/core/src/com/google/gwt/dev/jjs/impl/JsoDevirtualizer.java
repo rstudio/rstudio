@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.CreateStaticImplsVisitor;
+import com.google.gwt.dev.jjs.impl.MakeCallsStatic.StaticCallConverter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -102,7 +103,7 @@ public class JsoDevirtualizer {
 
       // Replaces this virtual method call with a static call to a devirtual version of the method.
       JMethod devirtualMethod = devirtualMethodByMethod.get(method);
-      ctx.replaceMe(MakeCallsStatic.makeStaticCall(x, devirtualMethod));
+      ctx.replaceMe(converter.convertCall(x, devirtualMethod));
     }
 
     @Override
@@ -214,10 +215,14 @@ public class JsoDevirtualizer {
   private final JProgram program;
 
   private final CreateStaticImplsVisitor staticImplCreator;
+  private final StaticCallConverter converter;
 
   private JsoDevirtualizer(JProgram program) {
     this.program = program;
     this.isJavaObjectMethod = program.getIndexedMethod("Cast.isJavaObject");
+    // TODO: consider turning on null checks for "this"?
+    // However, for JSO's there is existing code that relies on nulls being okay.
+    this.converter = new StaticCallConverter(program, false);
     staticImplCreator = new CreateStaticImplsVisitor(program);
   }
 

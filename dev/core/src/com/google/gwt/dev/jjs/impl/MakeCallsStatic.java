@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -43,6 +44,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsThisRef;
+import com.google.gwt.dev.util.arg.OptionCheckedMode;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -78,7 +80,7 @@ public class MakeCallsStatic {
      * When code is moved from an instance method to a static method, all
      * thisRefs must be replaced with paramRefs to the synthetic this param.
      */
-    private class RewriteJsniMethodBody extends JsModVisitor {
+    private static class RewriteJsniMethodBody extends JsModVisitor {
 
       private final JsName thisParam;
 
@@ -305,7 +307,7 @@ public class MakeCallsStatic {
         return;
       }
 
-      ctx.replaceMe(makeStaticCall(x, newMethod));
+      ctx.replaceMe(converter.convertCall(x, newMethod));
     }
 
     @Override
@@ -322,47 +324,98 @@ public class MakeCallsStatic {
     }
   }
 
+  /**
+   * Converts instance method calls to equivalent static method calls.
+   * Optionally adds a null check on the former "this" parameter.
+   */
+  static class StaticCallConverter {
+    private final JProgram program;
+    private final JMethod checkNotNull;
+
+    StaticCallConverter(JProgram program, boolean addNullChecksForThis) {
+      this.program = program;
+      if (addNullChecksForThis) {
+        checkNotNull = program.getIndexedMethod("Exceptions.checkNotNull");
+      } else {
+        checkNotNull = null;
+      }
+    }
+
+    /**
+     * Converts an instance method call to the equivalent static method call.
+     * @param original the instance method call to convert
+     * @param newMethod the static method to call instead
+     */
+    JExpression convertCall(JMethodCall original, JMethod newMethod) {
+
+      JMethodCall newCall = new JMethodCall(original.getSourceInfo(), null, newMethod);
+
+      /*
+       * If the qualifier is a JMultiExpression, invoke on the last value. This
+       * ensures that clinits maintain the same execution order relative to
+       * parameters in deeply-inlined scenarios.
+       */
+      //   (a, b).foo() --> (a, foo(b))
+      // Or in checked mode:
+      //   (a, b).foo() --> (a, foo(checkNotNull(b)))
+      if (original.getInstance() instanceof JMultiExpression) {
+        JMultiExpression multi = (JMultiExpression) original.getInstance();
+        int lastIndex = multi.getNumberOfExpressions() - 1;
+        newCall.addArg(makeNullCheck(multi.getExpression(lastIndex), original));
+        newCall.addArgs(original.getArgs());
+        multi.setExpression(lastIndex, newCall);
+        return multi;
+      } else {
+        // The qualifier becomes the first argument.
+        //   a.foo(b) --> foo(a,b)
+        // or in checked mode:
+        //   a.foo(b) --> foo(checkNotNull(a),b)
+        newCall.addArg(makeNullCheck(original.getInstance(), original));
+        newCall.addArgs(original.getArgs());
+        return newCall;
+      }
+    }
+
+    private JExpression makeNullCheck(JExpression x, JMethodCall call) {
+      if (checkNotNull == null) {
+        return x;
+      }
+
+      // Existing code plays tricks with JSO's, so don't add the null check.
+      if (isJso(call)) {
+        return x;
+      }
+
+      JMethodCall check = new JMethodCall(x.getSourceInfo(), null, checkNotNull);
+      check.addArg(x);
+      return check;
+    }
+
+    private boolean isJso(JMethodCall call) {
+      JDeclaredType type = call.getTarget().getEnclosingType();
+      return type != null && program.isJavaScriptObject(type);
+    }
+  }
+
   private static final String NAME = MakeCallsStatic.class.getSimpleName();
 
-  public static OptimizerStats exec(JProgram program) {
+  public static OptimizerStats exec(OptionCheckedMode option, JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new MakeCallsStatic(program).execImpl();
+    OptimizerStats stats = new MakeCallsStatic(option, program).execImpl();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
 
-  static JExpression makeStaticCall(JMethodCall x, JMethod newMethod) {
-    // Update the call site
-    JMethodCall newCall = new JMethodCall(x.getSourceInfo(), null, newMethod);
 
-    /*
-     * If the qualifier is a JMultiExpression, invoke on the last value. This
-     * ensures that clinits maintain the same execution order relative to
-     * parameters in deeply-inlined scenarios.
-     */
-    // (a, b).foo() --> (a, foo(b))
-    if (x.getInstance() instanceof JMultiExpression) {
-      JMultiExpression multi = (JMultiExpression) x.getInstance();
-      int lastIndex = multi.getNumberOfExpressions() - 1;
-      newCall.addArg(multi.getExpression(lastIndex));
-      newCall.addArgs(x.getArgs());
-      multi.setExpression(lastIndex, newCall);
-      return multi;
-    } else {
-      // The qualifier becomes the first arg
-      // a.foo(b) --> foo(a,b)
-      newCall.addArg(x.getInstance());
-      newCall.addArgs(x.getArgs());
-      return newCall;
-    }
-  }
 
   protected Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();
 
   private final JProgram program;
+  private final StaticCallConverter converter;
 
-  private MakeCallsStatic(JProgram program) {
+  private MakeCallsStatic(OptionCheckedMode option, JProgram program) {
     this.program = program;
+    this.converter = new StaticCallConverter(program, option.shouldAddRuntimeChecks());
   }
 
   private OptimizerStats execImpl() {

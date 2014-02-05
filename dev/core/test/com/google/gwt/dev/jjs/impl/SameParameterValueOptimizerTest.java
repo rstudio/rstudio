@@ -2,6 +2,7 @@
 
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
@@ -145,7 +146,7 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
   
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
-    MakeCallsStatic.exec(program);
+    MakeCallsStatic.exec(new JJSOptionsImpl(), program);
     return SameParameterValueOptimizer.exec(program).didChange();
   }
 }

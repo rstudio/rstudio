@@ -174,7 +174,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     private void optimizeJavaForDraft() {
       Event draftOptimizeEvent = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE);
       Finalizer.exec(jprogram);
-      MakeCallsStatic.exec(jprogram);
+      MakeCallsStatic.exec(options, jprogram);
       jprogram.typeOracle.recomputeAfterOptimizations();
       // needed for certain libraries that depend on dead stripping to work
       DeadCodeElimination.exec(jprogram);
