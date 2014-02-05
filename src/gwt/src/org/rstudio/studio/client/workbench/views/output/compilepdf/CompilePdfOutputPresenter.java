@@ -14,13 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandUtil;
 import org.rstudio.core.client.events.*;
@@ -29,7 +28,6 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
@@ -39,9 +37,10 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
+import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 
 
@@ -52,30 +51,16 @@ public class CompilePdfOutputPresenter extends BasePresenter
               CompilePdfErrorsEvent.Handler,
               CompilePdfCompletedEvent.Handler
 {
-   public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
-   {
-      void ensureVisible(boolean activate);
-      void compileStarted(String text);
-      void showOutput(String output);
-      void showErrors(JsArray<CompileError> errors);
-      void clearAll();
-      void compileCompleted();
-      HasClickHandlers stopButton();
-      HasClickHandlers showLogButton();
-      HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
-      boolean isEffectivelyVisible();
-      void scrollToBottom();
-   }
-
    @Inject
-   public CompilePdfOutputPresenter(Display view,
+   public CompilePdfOutputPresenter(CompileOutputPaneFactory outputFactory, 
                                     GlobalDisplay globalDisplay,
                                     CompilePdfServerOperations server,
                                     FileTypeRegistry fileTypeRegistry,
                                     Commands commands)
    {
-      super(view);
-      view_ = view;
+      super(outputFactory.create("Compile PDF", 
+                                 "View the LaTeX compilation log"));
+      view_ = (CompileOutputPaneDisplay) getView();
       globalDisplay_ = globalDisplay;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -301,7 +286,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    }
    
    private FileSystemItem targetFile_ = null;
-   private final Display view_;
+   private final CompileOutputPaneDisplay view_;
    private final GlobalDisplay globalDisplay_;
    private final CompilePdfServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;

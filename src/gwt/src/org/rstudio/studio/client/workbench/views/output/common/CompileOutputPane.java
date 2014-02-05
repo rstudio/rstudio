@@ -1,7 +1,7 @@
 /*
- * CompilePdfOutputPane.java
+ * CompileOutputPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.output.compilepdf;
+package org.rstudio.studio.client.workbench.views.output.common;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -20,6 +20,8 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
@@ -31,15 +33,17 @@ import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
-public class CompilePdfOutputPane extends WorkbenchPane
-      implements CompilePdfOutputPresenter.Display
+public class CompileOutputPane extends WorkbenchPane
+      implements CompileOutputPaneDisplay
 {
    @Inject
-   public CompilePdfOutputPane()
+   public CompileOutputPane(@Assisted("taskName") String taskName, 
+                            @Assisted("logTitle") String logTitle)
    {
-      super("Compile PDF");
+      super(taskName);
       compilePanel_ = new CompilePanel();
       ensureWidget();
+      logTitle_ = logTitle;
    }
 
    @Override
@@ -60,7 +64,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
                                          showLogImage, 
                                          (ClickHandler) null);
       showLogButton_.getElement().getStyle().setMarginBottom(3, Unit.PX);
-      showLogButton_.setTitle("View the LaTeX compilation log");
+      showLogButton_.setTitle(logTitle_);
       showLogSeparator_ = toolbar.addLeftSeparator();
       setShowLogVisible(false);
       toolbar.addLeftWidget(showLogButton_);
@@ -159,7 +163,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    private ToolbarFileLabel fileLabel_;
    private Widget showLogSeparator_;
    private ToolbarButton showLogButton_;
-
    
    private CompilePanel compilePanel_;
+   private String logTitle_;
 }

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client;
 
 import com.google.gwt.inject.client.AbstractGinModule;
+import com.google.gwt.inject.client.assistedinject.GinFactoryModuleBuilder;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
@@ -120,6 +121,7 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.renderrmd.RenderRmdOutputTab;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPane;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputTab;
@@ -133,8 +135,9 @@ import org.rstudio.studio.client.workbench.views.history.History;
 import org.rstudio.studio.client.workbench.views.history.HistoryTab;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputPane;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputPresenter;
+import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane;
+import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
+import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputTab;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
@@ -243,7 +246,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(EnvironmentPresenter.Display.class).to(EnvironmentPane.class);
       bind(ViewerPresenter.Display.class).to(ViewerPane.class);
       bind(Ignore.Display.class).to(IgnoreDialog.class);
-      bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
       bind(SourceCppOutputPresenter.Display.class).to(SourceCppOutputPane.class);
       bindTab("History", HistoryTab.class);
@@ -258,6 +260,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Environment", EnvironmentTab.class);
       bindTab("Viewer", ViewerTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
+      bindTab("Render R Markdown", RenderRmdOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);
 
@@ -320,6 +323,10 @@ public class RStudioGinModule extends AbstractGinModule
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
       bind(DocDisplay.class).to(AceEditor.class);
+      
+      install(new GinFactoryModuleBuilder()
+         .implement(CompileOutputPaneDisplay.class, CompileOutputPane.class)
+         .build(CompileOutputPaneFactory.class));
    }
 
    private <T extends WorkbenchTab> void bindTab(String name, Class<T> clazz)
