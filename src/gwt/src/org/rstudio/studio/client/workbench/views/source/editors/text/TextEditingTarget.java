@@ -2775,7 +2775,7 @@ public class TextEditingTarget implements
    void onPreviewHTML()
    {
       if (extendedType_ == "rmarkdown")
-         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, "NYI", "Markdown render here.");
+         renderRmd();
       else if (fileType_.isRd())
          previewRd();
       else if (fileType_.isRpres())
@@ -2843,9 +2843,20 @@ public class TextEditingTarget implements
             previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());   
             events_.fireEvent(new ShowHelpEvent(previewURL)) ; 
          }
-         
       });
-     
+   }
+   
+   void renderRmd()
+   {
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            server_.renderRmd(docUpdateSentinel_.getPath(),
+               docUpdateSentinel_.getEncoding(), 
+               new SimpleRequestCallback<Boolean>());
+         }
+      });
    }
    
    void previewHTML()

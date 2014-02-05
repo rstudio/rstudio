@@ -109,6 +109,9 @@ const int kViewerNavigate = 84;
 const int kSourceExtendedTypeDetected = 85;
 const int kShinyViewer = 86;
 const int kDebugSourceCompleted = 87;
+const int kRmdRenderStarted = 88;
+const int kRmdRenderOutput = 89;
+const int kRmdRenderCompleted = 90;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -286,6 +289,12 @@ std::string ClientEvent::typeName() const
          return "shiny_viewer";
       case client_events::kDebugSourceCompleted:
          return "debug_source_completed";
+      case client_events::kRmdRenderStarted:
+         return "rmd_render_started";
+      case client_events::kRmdRenderOutput:
+         return "rmd_render_output";
+      case client_events::kRmdRenderCompleted:
+         return "rmd_render_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

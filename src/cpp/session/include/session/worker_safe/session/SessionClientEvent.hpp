@@ -107,6 +107,9 @@ extern const int kViewerNavigate;
 extern const int kSourceExtendedTypeDetected;
 extern const int kShinyViewer;
 extern const int kDebugSourceCompleted;
+extern const int kRmdRenderStarted;
+extern const int kRmdRenderOutput;
+extern const int kRmdRenderCompleted;
 }
    
 class ClientEvent

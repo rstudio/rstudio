@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
 
@@ -30,6 +31,36 @@ namespace modules {
 namespace rmarkdown {
 
 namespace {
+
+class RenderRmd : boost::noncopyable,
+                  public boost::enable_shared_from_this<RenderRmd>
+{
+public:
+   static boost::shared_ptr<RenderRmd> create(const FilePath& targetFile,
+                                              const std::string& encoding)
+   {
+      boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile));
+      pRender->start(encoding);
+      return pRender;
+   }
+
+private:
+   RenderRmd(const FilePath& targetFile) :
+      targetFile_(targetFile)
+   {}
+
+   void start(const std::string& encoding)
+   {
+      json::Object dataJson;
+      dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
+      ClientEvent event(client_events::kRmdRenderStarted, dataJson);
+      module_context::enqueClientEvent(event);
+   }
+
+   FilePath targetFile_;
+};
+
+boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 
 void initPandocPath()
 {
@@ -60,17 +91,41 @@ std::string onDetectRmdSourceType(
    return std::string();
 }
 
+Error renderRmd(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   std::string file, encoding;
+   Error error = json::readParams(request.params, &file, &encoding);
+   if (error)
+      return error;
+
+   s_pCurrentRender_ = RenderRmd::create(
+            module_context::resolveAliasedPath(file),
+            encoding);
+
+   // TODO: Return false if there's already a render running
+   pResponse->setResult(true);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 Error initialize()
 {
+   using namespace module_context;
+
    initPandocPath();
 
    if (module_context::isPackageVersionInstalled("rmarkdown", "0.1"))
       module_context::events().onDetectSourceExtendedType
                               .connect(onDetectRmdSourceType);
 
-   return Success();
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "render_rmd", renderRmd));
+
+   return initBlock.execute();
 }
    
 } // namepsace rmarkdown

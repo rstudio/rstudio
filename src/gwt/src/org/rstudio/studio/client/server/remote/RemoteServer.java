@@ -3139,6 +3139,20 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void renderRmd(String file, String encoding,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1, new JSONString(encoding));
+      sendRequest(RPC_SCOPE,
+            RENDER_RMD,
+            params,
+            requestCallback);
+      
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3416,4 +3430,6 @@ public class RemoteServer implements Server
    private static final String GET_SHINY_VIEWER_TYPE = "get_shiny_viewer_type";
    private static final String GET_SHINY_RUN_CMD = "get_shiny_run_cmd";
    private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
+   
+   private static final String RENDER_RMD = "render_rmd";
 }

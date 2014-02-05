@@ -99,6 +99,9 @@ class ClientEvent extends JavaScriptObject
    public static final String SourceExtendedTypeDetected = "source_extended_type_detected";
    public static final String ShinyViewer = "shiny_viewer";
    public static final String DebugSourceCompleted = "debug_source_completed";
+   public static final String RmdRenderStarted = "rmd_render_started";
+   public static final String RmdRenderOutput = "rmd_render_output";
+   public static final String RmdRenderCompleted = "rmd_render_completed";
 
    protected ClientEvent()
    {
