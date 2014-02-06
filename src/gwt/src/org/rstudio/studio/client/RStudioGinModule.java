@@ -68,6 +68,7 @@ import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationWindow;
 import org.rstudio.studio.client.pdfviewer.ui.PDFViewerPanel;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.shiny.ShinyApplication;
@@ -319,6 +320,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(MetaServerOperations.class).to(RemoteServer.class);
       bind(ViewerServerOperations.class).to(RemoteServer.class);
       bind(ProfilerServerOperations.class).to(RemoteServer.class);
+      bind(RMarkdownServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

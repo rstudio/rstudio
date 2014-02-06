@@ -3153,6 +3153,14 @@ public class RemoteServer implements Server
       
    }
 
+   @Override
+   public void terminateRenderRmd(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            TERMINATE_RENDER_RMD,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3432,4 +3440,5 @@ public class RemoteServer implements Server
    private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
    
    private static final String RENDER_RMD = "render_rmd";
+   private static final String TERMINATE_RENDER_RMD = "terminate_render_rmd";
 }

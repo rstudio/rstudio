@@ -78,6 +78,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -2852,9 +2853,8 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            server_.renderRmd(docUpdateSentinel_.getPath(),
-               docUpdateSentinel_.getEncoding(), 
-               new SimpleRequestCallback<Boolean>());
+            events_.fireEvent(new RenderRmdEvent(docUpdateSentinel_.getPath(),
+               docUpdateSentinel_.getEncoding()));
          }
       });
    }

@@ -21,7 +21,6 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
-import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -44,9 +43,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 TexServerOperations,
                                                 HTMLPreviewServerOperations,
                                                 BuildServerOperations,
-                                                PresentationServerOperations, 
-                                                RMarkdownServerOperations
- 
+                                                PresentationServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and

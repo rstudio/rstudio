@@ -15,9 +15,12 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
 public interface RMarkdownServerOperations
 {
    void renderRmd(String file, String encoding,
                   ServerRequestCallback<Boolean> requestCallback);
+   
+   void terminateRenderRmd(ServerRequestCallback<Void> requestCallback);
 }

@@ -46,6 +46,16 @@ public:
       return pRender;
    }
 
+   void terminate()
+   {
+      terminationRequested_ = true;
+   }
+
+   bool isRunning()
+   {
+      return isRunning_;
+   }
+
 private:
    RenderRmd(const FilePath& targetFile) :
       isRunning_(false),
@@ -160,6 +170,11 @@ private:
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 
+bool isRenderRunning()
+{
+   return s_pCurrentRender_ && s_pCurrentRender_->isRunning();
+}
+
 void initPandocPath()
 {
    r::exec::RFunction sysSetenv("Sys.setenv");
@@ -207,6 +222,15 @@ Error renderRmd(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error terminateRenderRmd(const json::JsonRpcRequest&,
+                         json::JsonRpcResponse*)
+{
+   if (isRenderRunning())
+      s_pCurrentRender_->terminate();
+
+   return Success();
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -221,7 +245,8 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "render_rmd", renderRmd));
+      (bind(registerRpcMethod, "render_rmd", renderRmd))
+      (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd));
 
    return initBlock.execute();
 }
