@@ -352,7 +352,7 @@ public class TextEditingTargetWidget
       runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
-      knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");
+      knitToHTMLButton_.setText(width < 450 ? "" : "Knit");
       
       if (editor_.getFileType().isRd())
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");

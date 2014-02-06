@@ -45,7 +45,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
                                    GlobalDisplay globalDisplay,
                                    Commands commands)
    {
-      super(outputFactory.create("Render R Markdown", 
+      super(outputFactory.create("Knit", 
                                  "View the R Markdown render log"));
       view_ = (CompileOutputPaneDisplay) getView();
       server_ = server;

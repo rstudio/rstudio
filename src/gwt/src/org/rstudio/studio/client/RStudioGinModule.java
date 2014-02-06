@@ -264,7 +264,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Environment", EnvironmentTab.class);
       bindTab("Viewer", ViewerTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
-      bindTab("Render R Markdown", RenderRmdOutputTab.class);
+      bindTab("Knit", RenderRmdOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);
 
