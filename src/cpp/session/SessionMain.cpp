@@ -116,6 +116,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionProfiler.hpp"
 #include "modules/SessionRMarkdown.hpp"
 #include "modules/SessionRPubs.hpp"
+#include "modules/SessionShinyApps.hpp"
 #include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
@@ -611,6 +612,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["show_identity"] =
            (options.programMode() == kSessionProgramModeServer) &&
            options.showUserIdentity();
+
+   // light up shinyapps-related UI features if shinyapps is installed
+   sessionInfo["shinyapps_installed"] =
+         module_context::isPackageInstalled("shinyapps");
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -1584,6 +1589,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::updates::initialize)
       (modules::about::initialize)
       (modules::shiny_viewer::initialize)
+      (modules::shiny_apps::initialize)
 
       // workers
       (workers::web_request::initialize)

@@ -330,6 +330,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
+   public String getExtendedFileType()
+   {
+      return null;
+   }  
+
+   @Override
    public HasValue<String> getName()
    {
       return new Value<String>("Source Viewer");
@@ -703,5 +709,5 @@ public class CodeBrowserEditingTarget implements EditingTarget
    
    private SearchPathFunctionDefinition currentFunction_ = null;
 
-   private static final MyBinder binder_ = GWT.create(MyBinder.class);  
+   private static final MyBinder binder_ = GWT.create(MyBinder.class);
 }

@@ -63,6 +63,8 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
@@ -3140,6 +3142,65 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getShinyAppsAccountList(
+         ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            GET_SHINYAPPS_ACCOUNT_LIST,
+            requestCallback);
+   }
+
+   @Override
+   public void removeShinyAppsAccount(String accountName,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(accountName));
+      sendRequest(RPC_SCOPE,
+            REMOVE_SHINYAPPS_ACCOUNT,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void connectShinyAppsAccount(String command,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(command));
+      sendRequest(RPC_SCOPE,
+            CONNECT_SHINYAPPS_ACCOUNT,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void getShinyAppsAppList(
+         String accountName,
+         ServerRequestCallback<JsArray<ShinyAppsApplicationInfo>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(accountName));
+      sendRequest(RPC_SCOPE,
+            GET_SHINYAPPS_APP_LIST,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void getShinyAppsDeployments(
+         String dir,
+         ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(dir));
+      sendRequest(RPC_SCOPE,
+            GET_SHINYAPPS_DEPLOYMENTS,
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void renderRmd(String file, String encoding,
          ServerRequestCallback<Boolean> requestCallback)
    {
@@ -3150,7 +3211,6 @@ public class RemoteServer implements Server
             RENDER_RMD,
             params,
             requestCallback);
-      
    }
 
    @Override
@@ -3160,7 +3220,7 @@ public class RemoteServer implements Server
             TERMINATE_RENDER_RMD,
             requestCallback);
    }
-
+            
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3439,6 +3499,12 @@ public class RemoteServer implements Server
    private static final String GET_SHINY_RUN_CMD = "get_shiny_run_cmd";
    private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
    
+   private static final String GET_SHINYAPPS_ACCOUNT_LIST = "get_shinyapps_account_list";
+   private static final String REMOVE_SHINYAPPS_ACCOUNT = "remove_shinyapps_account";
+   private static final String CONNECT_SHINYAPPS_ACCOUNT = "connect_shinyapps_account";
+   private static final String GET_SHINYAPPS_APP_LIST = "get_shinyapps_app_list";
+   private static final String GET_SHINYAPPS_DEPLOYMENTS = "get_shinyapps_deployments";
+
    private static final String RENDER_RMD = "render_rmd";
    private static final String TERMINATE_RENDER_RMD = "terminate_render_rmd";
 }

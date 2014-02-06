@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
@@ -65,6 +66,12 @@ public class ProfilerEditingTarget implements EditingTarget
    public void adaptToExtendedFileType(String extendedType)
    {
    }
+
+   @Override
+   public String getExtendedFileType()
+   {
+      return null;
+   }   
 
    public HasValue<String> getName()
    {
@@ -313,5 +320,5 @@ public class ProfilerEditingTarget implements EditingTarget
    private final Value<Boolean> neverDirtyState_ = new Value<Boolean>(false);
 
    private final EventBus events_;
-   private final Commands commands_;   
+   private final Commands commands_;
 }

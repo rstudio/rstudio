@@ -84,6 +84,12 @@ public class UrlContentEditingTarget implements EditingTarget
    {
    }
 
+   @Override
+   public String getExtendedFileType()
+   {
+      return null;
+   }
+
    public HasValue<String> getName()
    {
       String title = getContentTitle();

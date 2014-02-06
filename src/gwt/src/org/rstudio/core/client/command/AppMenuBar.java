@@ -19,6 +19,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
+
 import org.rstudio.core.client.dom.DomUtils;
 
 import java.util.List;
@@ -102,11 +103,31 @@ public class AppMenuBar extends BaseMenuBar
    {
       return super.getItems();
    }
-
+   
    public static HandlerRegistration addSubMenuVisibleChangedHandler(
          SubMenuVisibleChangedHandler handler)
    {
       return listeners_.addHandler(SubMenuVisibleChangedEvent.TYPE, handler);
+   }
+   
+   // used to hide the menu bar itself if every item in the menu is a command,
+   // and every command is not visible. 
+   // (consider: with a little work this could be more generic, such that any
+   // menu subtree consisting entirely of invisible commands would be hidden, 
+   // but there are currently no cases where this is necessary.)
+   public boolean allInvisibleCmds()
+   {
+      for (MenuItem item: super.getItems())
+      {
+         if (item instanceof AppMenuItem)
+         {
+            if (((AppMenuItem)item).cmdVisible())
+               return false;
+         }
+         else 
+            return false;
+      }
+      return true;
    }
 
    private static final HandlerManager listeners_ = new HandlerManager(null);

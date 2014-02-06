@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.server;
 
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
@@ -23,7 +24,8 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 public interface Server extends ApplicationServerOperations,
                                 WorkbenchServerOperations,
                                 HTMLPreviewServerOperations,
-                                ShinyServerOperations
+                                ShinyServerOperations,
+                                ShinyAppsServerOperations
                                 
                                
 {     

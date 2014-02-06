@@ -90,6 +90,7 @@ public abstract class
    public abstract AppCommand unfoldAll();
    public abstract AppCommand jumpToMatching();
    public abstract AppCommand extractFunction();
+   public abstract AppCommand extractLocalVariable();
    public abstract AppCommand commentUncomment();
    public abstract AppCommand reindent();
    public abstract AppCommand reflowComment();
@@ -345,6 +346,11 @@ public abstract class
    public abstract AppCommand shinyRunInViewer();
    public abstract AppCommand shinyRunInBrowser();
    
+   // ShinyApps connectivity
+   public abstract AppCommand shinyAppsDeploy();
+   public abstract AppCommand shinyAppsManageAccounts();
+   public abstract AppCommand shinyAppsTerminate();
+
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();

@@ -247,6 +247,8 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.goToFunctionDefinition().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.extractFunction().createMenuItem(false));
+         menu.addItem(commands_.extractLocalVariable().createMenuItem(false));
+         menu.addSeparator();
          menu.addItem(commands_.reindent().createMenuItem(false));
          menu.addItem(commands_.reflowComment().createMenuItem(false));
          menu.addItem(commands_.commentUncomment().createMenuItem(false));

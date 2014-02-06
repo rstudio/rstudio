@@ -84,6 +84,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -1765,6 +1766,12 @@ public class TextEditingTarget implements
       extendedType_ = extendedType;
    }
 
+   @Override
+   public String getExtendedFileType()
+   {
+      return extendedType_;
+   }
+
    public HasValue<String> getName()
    {
       return name_; 
@@ -1935,7 +1942,69 @@ public class TextEditingTarget implements
                          new GitHubViewRequest(file, type)));
       }
    }
-   
+
+   @Handler
+   void onExtractLocalVariable()
+   {
+      docDisplay_.focus();
+
+      String initialSelection = docDisplay_.getSelectionValue();
+      final String refactoringName = "Extract local variable";
+      final String pleaseSelectCodeMessage = "Please select the code to " +
+                                             "extract into a variable.";
+      if (checkSelectionAndAlert(refactoringName,
+                                 pleaseSelectCodeMessage,
+                                 initialSelection)) return;
+
+      docDisplay_.fitSelectionToLines(false);
+
+      final String code = docDisplay_.getSelectionValue();
+      if (checkSelectionAndAlert(refactoringName,
+                                 pleaseSelectCodeMessage,
+                                 code))
+         return;
+
+      // get the first line of the selection and calculate it's indentation
+      String firstLine = docDisplay_.getLine(
+                        docDisplay_.getSelectionStart().getRow());
+      final String indentation = extractIndentation(firstLine);
+      
+      // used to parse the code
+      server_.detectFreeVars(code,
+           new RefactorServerRequestCallback(refactoringName)
+           {
+              @Override
+              void doExtract(JsArrayString response)
+              {
+                 globalDisplay_.promptForText(
+                         refactoringName,
+                         "Variable Name",
+                         "",
+                         new OperationWithInput<String>()
+                         {
+                            public void execute(String input)
+                            {
+                               final String extractedCode = indentation
+                                                            + input.trim()
+                                                            + " <- "
+                                                            + code
+                                                            + "\n";
+                               InputEditorPosition insertPosition = docDisplay_
+                                       .getSelection()
+                                       .extendToLineStart()
+                                       .getStart();
+                               docDisplay_.replaceSelection(
+                                       input.trim());
+                               docDisplay_.insertCode(
+                                       insertPosition,
+                                       extractedCode);
+                            }
+                         }
+                 );
+              }
+           }
+      );
+   }
    
    @Handler
    void onExtractFunction()
@@ -1943,86 +2012,84 @@ public class TextEditingTarget implements
       docDisplay_.focus();
 
       String initialSelection = docDisplay_.getSelectionValue();
-      if (initialSelection == null || initialSelection.trim().length() == 0)
-      {
-         globalDisplay_.showErrorMessage("Extract Function",
-                                         "Please select the code to extract " +
-                                         "into a function.");
-         return;
-      }
+      final String refactoringName = "Extract Function";
+      final String pleaseSelectCodeMessage = "Please select the code to " +
+                                             "extract into a function.";
+      if (checkSelectionAndAlert(refactoringName,
+                                 pleaseSelectCodeMessage,
+                                 initialSelection)) return;
 
       docDisplay_.fitSelectionToLines(false);
 
       final String code = docDisplay_.getSelectionValue();
-      if (code == null || code.trim().length() == 0)
-      {
-         globalDisplay_.showErrorMessage("Extract Function",
-                                         "Please select the code to extract " +
-                                         "into a function.");
-         return;
-      }
+      if (checkSelectionAndAlert(refactoringName,
+                                 pleaseSelectCodeMessage,
+                                 code)) return;
 
+      final String indentation = extractIndentation(code);
+      server_.detectFreeVars(code,
+           new RefactorServerRequestCallback(refactoringName)
+           {
+              @Override
+              void doExtract(final JsArrayString response)
+              {
+                 globalDisplay_.promptForText(
+                   refactoringName,
+                   "Function Name",
+                   "",
+                   new OperationWithInput<String>()
+                   {
+                      public void execute(String input)
+                      {
+                         String prefix;
+                         if (docDisplay_.getSelectionOffset(true) == 0)
+                            prefix = "";
+                         else prefix = "\n";
+                         String args = response != null ? response.join(", ")
+                                                        : "";
+                         docDisplay_.replaceSelection(
+                                 prefix
+                                 + indentation
+                                 + input.trim()
+                                 + " <- "
+                                 + "function (" + args + ") {\n"
+                                 + StringUtil.indent(code, "  ")
+                                 + "\n"
+                                 + indentation
+                                 + "}");
+                      }
+                   }
+                 );
+              }
+            }
+      );
+   }
+
+   private boolean checkSelectionAndAlert(String refactoringName,
+                                          String pleaseSelectCodeMessage,
+                                          String selection)
+   {
+      if (isSelectionValueEmpty(selection))
+      {
+         globalDisplay_.showErrorMessage(refactoringName,
+                                         pleaseSelectCodeMessage);
+         return true;
+      }
+      return false;
+   }
+
+   private String extractIndentation(String code)
+   {
       Pattern leadingWhitespace = Pattern.create("^(\\s*)");
       Match match = leadingWhitespace.match(code, 0);
-      final String indentation = match == null ? "" : match.getGroup(1);
-
-      server_.detectFreeVars(code, new ServerRequestCallback<JsArrayString>()
-      {
-         @Override
-         public void onResponseReceived(final JsArrayString response)
-         {
-            doExtract(response);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            globalDisplay_.showYesNoMessage(
-                  GlobalDisplay.MSG_WARNING,
-                  "Extract Function",
-                  "The selected code could not be " +
-                  "parsed.\n\n" +
-                  "Are you sure you want to continue?",
-                  new Operation()
-                  {
-                     public void execute()
-                     {
-                        doExtract(null);
-                     }
-                  },
-                  false);
-         }
-
-         private void doExtract(final JsArrayString response)
-         {
-            globalDisplay_.promptForText(
-                  "Extract Function",
-                  "Function Name",
-                  "",
-                  new OperationWithInput<String>()
-                  {
-                     public void execute(String input)
-                     {
-                        String prefix = docDisplay_.getSelectionOffset(true) == 0
-                              ? "" : "\n";
-                        String args = response != null ? response.join(", ")
-                                                       : "";
-                        docDisplay_.replaceSelection(
-                              prefix
-                              + indentation
-                              + input.trim()
-                              + " <- "
-                              + "function (" + args + ") {\n"
-                              + StringUtil.indent(code, "  ")
-                              + "\n"
-                              + indentation
-                              + "}");
-                     }
-                  });
-         }
-      });
+      return match == null ? "" : match.getGroup(1);
    }
-   
+
+   private boolean isSelectionValueEmpty(String selection)
+   {
+      return selection == null || selection.trim().length() == 0;
+   }
+
    @Handler
    void onJumpToMatching()
    {
@@ -2100,6 +2167,22 @@ public class TextEditingTarget implements
    void onDebugBreakpoint()
    {
       docDisplay_.toggleBreakpointAtCursor();
+   }
+
+   @Handler 
+   void onShinyAppsDeploy()
+   {
+      events_.fireEvent(new ShinyAppsActionEvent(
+            ShinyAppsActionEvent.ACTION_TYPE_DEPLOY, 
+            docUpdateSentinel_.getPath()));
+   }
+
+   @Handler 
+   void onShinyAppsTerminate()
+   {
+      events_.fireEvent(new ShinyAppsActionEvent(
+            ShinyAppsActionEvent.ACTION_TYPE_TERMINATE, 
+            docUpdateSentinel_.getPath()));
    }
 
    void doReflowComment(String commentPrefix)
@@ -3772,4 +3855,42 @@ public class TextEditingTarget implements
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
    private String extendedType_;
+
+   private abstract class RefactorServerRequestCallback
+           extends ServerRequestCallback<JsArrayString>
+   {
+      private final String refactoringName_;
+
+      public RefactorServerRequestCallback(String refactoringName)
+      {
+         refactoringName_ = refactoringName;
+      }
+
+      @Override
+      public void onResponseReceived(final JsArrayString response)
+      {
+         doExtract(response);
+      }
+
+      @Override
+      public void onError(ServerError error)
+      {
+         globalDisplay_.showYesNoMessage(
+                 GlobalDisplay.MSG_WARNING,
+                 refactoringName_,
+                 "The selected code could not be " +
+                 "parsed.\n\n" +
+                 "Are you sure you want to continue?",
+                 new Operation()
+                 {
+                    public void execute()
+                    {
+                       doExtract(null);
+                    }
+                 },
+                 false);
+      }
+
+      abstract void doExtract(final JsArrayString response);
+   }
 }

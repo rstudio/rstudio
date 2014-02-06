@@ -78,6 +78,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionProfiler.cpp
    modules/SessionRMarkdown.cpp
    modules/SessionRPubs.cpp
+   modules/SessionShinyApps.cpp
    modules/SessionShinyViewer.cpp
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp

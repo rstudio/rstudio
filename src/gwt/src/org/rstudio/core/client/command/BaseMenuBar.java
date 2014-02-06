@@ -67,8 +67,27 @@ public class BaseMenuBar extends MenuBar
          eventBus_.fireEvent(new GlassVisibilityEvent(true));
       super.onLoad();
       for (MenuItem child : getItems())
+      {
          if (child instanceof AppMenuItem)
             ((AppMenuItem)child).onShow();
+         else
+         {
+            // if this is a submenu that consists entirely of hidden commands, 
+            // hide the submenu and its flyout icon 
+            MenuBar submenu = child.getSubMenu(); 
+            if (submenu != null &&
+                submenu instanceof AppMenuBar)
+            {
+               boolean visible = child.isVisible();
+               boolean newVisible = !((AppMenuBar)submenu).allInvisibleCmds();
+               if (visible != newVisible)
+               {
+                  child.setVisible(newVisible);
+                  updateSubmenuIcon(child);
+               }
+            }
+         }
+      }
       if (autoHideRedundantSeparators_)
          manageSeparators();
    }
