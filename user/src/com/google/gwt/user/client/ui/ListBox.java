@@ -244,6 +244,17 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     return getOptionText(getSelectElement().getOptions().getItem(index));
   }
 
+  /**
+   * Gets the text for currently selected item. If multiple items are selected,
+   * this method will return the text of the first selected item.
+   *
+   * @return the text for selected item, or {@code null} if none is selected
+   */
+  public String getSelectedItemText() {
+    int index = getSelectedIndex();
+    return index == -1 ? null : getItemText(index);
+  }
+
   public String getName() {
     return getSelectElement().getName();
   }
@@ -269,6 +280,17 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   public String getValue(int index) {
     checkIndex(index);
     return getSelectElement().getOptions().getItem(index).getValue();
+  }
+
+  /**
+   * Gets the value for currently selected item. If multiple items are selected,
+   * this method will return the value of the first selected item.
+   *
+   * @return the value for selected item, or {@code null} if none is selected
+   */
+  public String getSelectedValue() {
+    int index = getSelectedIndex();
+    return index == -1 ? null : getValue(index);
   }
 
   /**
