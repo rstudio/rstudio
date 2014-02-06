@@ -26,7 +26,9 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.regexp.shared.RegExp;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -52,6 +54,13 @@ public class ShinyAppsDeploy extends Composite
       String statusLabel();
       String normalStatus();
       String otherStatus();
+      String launchCheck();
+   }
+   
+   public interface DeployResources extends ClientBundle
+   {
+      @Source("DeployArrow.png")
+      ImageResource deployArrow();
    }
 
    public ShinyAppsDeploy()
@@ -175,6 +184,11 @@ public class ShinyAppsDeploy extends Composite
    public void setOnDeployDisabled(Command cmd)
    {
       onDeployDisabled_ = cmd;
+   }
+   
+   public DeployStyle getStyle()
+   {
+      return style;
    }
    
    private void validateAppName()

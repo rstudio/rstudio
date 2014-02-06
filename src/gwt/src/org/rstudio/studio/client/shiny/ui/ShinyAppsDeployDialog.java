@@ -66,6 +66,7 @@ public class ShinyAppsDeployDialog
 
       launchCheck_ = new CheckBox("Launch");
       launchCheck_.setValue(true);
+      launchCheck_.setStyleName(contents_.getStyle().launchCheck());
       addLeftWidget(launchCheck_);
       
       contents_.setSourceDir(sourceDir);

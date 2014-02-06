@@ -24,6 +24,7 @@ import org.rstudio.studio.client.server.Void;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.HTML;
 
 public class ShinyAppsConnectAccountDialog 
        extends ShinyAppsDialog<ShinyAppsConnectAccount>
@@ -36,8 +37,12 @@ public class ShinyAppsConnectAccountDialog
       server_ = server;
 
       setText("Connect ShinyApps account");
-      setWidth("400px");
-
+      setWidth("450px");
+      HTML createLink = new HTML("<small>Need a ShinyApps account?<br />" +
+            "Get started at <a href=\"http://www.shinyapps.io/\"" + 
+            "target=\"blank\">http://www.shinyapps.io</a></small>");
+      createLink.setStyleName(contents_.getStyle().spaced());
+      addLeftWidget(createLink);
       connectButton_ = new ThemedButton("Connect");
       connectButton_.setEnabled(false);
       connectButton_.addClickHandler(new ClickHandler()
