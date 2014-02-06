@@ -125,6 +125,18 @@ private:
 
    void onRenderOutput(const std::string& output)
    {
+      // if the output being emitted starts with a token indicating rendering
+      // is complete, store the remainder of the emitted line as the file
+      // we rendered
+      std::string completeMarker("render complete: ");
+      if (boost::algorithm::starts_with(output, completeMarker))
+      {
+         // extract just the first line from the output
+         std::stringstream outputStream(output);
+         std::string renderLine;
+         std::getline(outputStream, renderLine);
+         outputFile_ = FilePath(renderLine.substr(completeMarker.length()));
+      }
       enqueRenderOutput(output);
    }
 
@@ -153,6 +165,8 @@ private:
       isRunning_ = false;
       json::Object resultJson;
       resultJson["succeeded"] = true;
+      resultJson["output_file"] =
+            module_context::createAliasedPath(outputFile_);
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);
    }
@@ -166,6 +180,7 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    FilePath targetFile_;
+   FilePath outputFile_;
 };
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
