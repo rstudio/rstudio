@@ -58,7 +58,7 @@ public class RmdOutputPresenter implements IsWidget
    @Handler
    public void onViewerPopout()
    {
-      globalDisplay_.openWindow(result_.getOutputFile());
+      globalDisplay_.showHtmlFile(result_.getOutputFile());
    }
 
    public void showOutput(RmdRenderResult result) 

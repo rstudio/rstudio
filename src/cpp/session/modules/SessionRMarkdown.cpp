@@ -168,7 +168,10 @@ private:
 
    void onRenderCompleted(int exitStatus, const std::string& encoding)
    {
-      terminate(true);
+      // consider the render to be successful if R doesn't return an error,
+      // and an output file was written
+      terminate(exitStatus == 0 &&
+                outputFile_.exists());
    }
 
    void terminateWithError(const Error& error)
@@ -215,7 +218,7 @@ boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 // replaces references to MathJax with references to our built-in resource
 // handler.
 // in:  script src = "http://foo/bar/Mathjax.js?abc=123"
-// out: script scr = "/rmd_resources/mathjax/MathJax.js?abc=123"
+// out: script src = "mathjax/MathJax.js?abc=123"
 class MathjaxFilter : public boost::iostreams::regex_filter
 {
 public:
