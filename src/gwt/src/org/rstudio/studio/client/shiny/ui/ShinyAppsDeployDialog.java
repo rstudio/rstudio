@@ -64,7 +64,7 @@ public class ShinyAppsDeployDialog
       events_ = events;
       lastAppName_ = lastAppName;
 
-      launchCheck_ = new CheckBox("Launch");
+      launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
       launchCheck_.setStyleName(contents_.getStyle().launchCheck());
       addLeftWidget(launchCheck_);
