@@ -355,7 +355,7 @@ private:
          if (roxygenizeRequired(type))
          {
             // special callback for roxygenize result
-            system::ProcessCallbacks roxygenizeCb = cb;
+            core::system::ProcessCallbacks roxygenizeCb = cb;
             roxygenizeCb.onExit =  boost::bind(&Build::onRoxygenizeCompleted,
                                                Build::shared_from_this(),
                                                _1,

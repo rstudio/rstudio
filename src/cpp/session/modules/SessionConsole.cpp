@@ -41,7 +41,8 @@ namespace {
 bool suppressOutput(const std::string& output)
 {
    // tokens to suppress
-   const char * const kGlibWarningToken = "GLib-WARNING **: getpwuid_r()";
+   const char * const kGlibWarningToken = "GLib-WARNING **:";
+   const char * const kGlibCriticalToken = "GLib-CRITICAL **:";
    const char * const kGlibGObjectWarningToken = "GLib-GObject-WARNING **:";
    const char * const kAutoreleaseNoPool = "utoreleaseNoPool";
    const char * const kSelectInterrupted = "select: Interrupted system call";
@@ -51,6 +52,7 @@ bool suppressOutput(const std::string& output)
 
    // check tokens
    if (boost::algorithm::contains(output, kGlibWarningToken) ||
+       boost::algorithm::contains(output, kGlibCriticalToken) ||
        boost::algorithm::contains(output, kGlibGObjectWarningToken) ||
        boost::algorithm::contains(output, kAutoreleaseNoPool) ||
        boost::algorithm::contains(output, kSelectInterrupted) ||

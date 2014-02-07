@@ -2850,7 +2850,7 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onKnitToHTML()
+   void onKnitDocument()
    {
       onPreviewHTML();
    }

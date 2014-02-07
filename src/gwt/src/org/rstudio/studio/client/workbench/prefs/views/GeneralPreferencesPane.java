@@ -142,7 +142,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (session_.getSessionInfo().getHaveSrcrefAttribute())
       {
 	      add(checkboxPref(
-	            "Use debug error handler only when errors contain my code", 
+	            "Use debug error handler only when my code contains errors", 
 	            prefs_.handleErrorsInUserCodeOnly()));
 	      CheckBox chkTracebacks = checkboxPref(
 	            "Automatically expand tracebacks in error inspector", 

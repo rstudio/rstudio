@@ -81,7 +81,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveSourceDocWithEncoding"/>
          <cmd refid="saveAllSourceDocs"/>
          <separator/>
-         <cmd refid="knitToHTML"/>
+         <cmd refid="knitDocument"/>
          <cmd refid="previewHTML"/>
          <cmd refid="compilePDF"/>
          <cmd refid="compileNotebook"/>
@@ -458,7 +458,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
          <shortcut refid="compileNotebook" value="Cmd+Shift+Alt+H" />
          <shortcut refid="previewHTML" value="Cmd+Shift+Y" />
-         <shortcut refid="knitToHTML" value="Cmd+Shift+H" />
+         <shortcut refid="knitDocument" value="Cmd+Shift+K" />
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
          <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
          <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
@@ -502,7 +502,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
          <shortcut refid="showRequestLog" value="Ctrl+`" />
          <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
-         <shortcut refid="setWorkingDir" value="Ctrl+Shift+K" />
+         <shortcut refid="setWorkingDir" value="Ctrl+Shift+H" />
          <shortcut refid="synctexSearch" value="Cmd+F8" />
          <shortcut refid="checkSpelling" value="F7" />
          <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
@@ -864,7 +864,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Authoring R Presentations"
         desc="Guide to using R Markdown"/>   
   
-   <cmd id="knitToHTML"
+   <cmd id="knitDocument"
         buttonLabel="Knit"
         menuLabel="_Knit"
         desc="Knit the current document"/>

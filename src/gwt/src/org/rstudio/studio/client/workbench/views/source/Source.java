@@ -232,7 +232,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.markdownHelp());
       dynamicCommands_.add(commands.usingRMarkdownHelp());
       dynamicCommands_.add(commands.authoringRPresentationsHelp());
-      dynamicCommands_.add(commands.knitToHTML());
+      dynamicCommands_.add(commands.knitDocument());
       dynamicCommands_.add(commands.previewHTML());
       dynamicCommands_.add(commands.compilePDF());
       dynamicCommands_.add(commands.compileNotebook());

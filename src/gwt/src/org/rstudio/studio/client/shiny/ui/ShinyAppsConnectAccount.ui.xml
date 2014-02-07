@@ -1,18 +1,25 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style>
+	<ui:style type="org.rstudio.studio.client.shiny.ui.ShinyAppsConnectAccount.ConnectStyle">
    @eval fixedFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 	
 	.accountInfo
 	{
 	  font-family: fixedFont;
-     width: 100%;
+	  padding: 5px;
+	  margin-left: 40px;
+	  width: 325px;
 	}
 	
 	.connectHeader
 	{
 	  font-weight: bold;
+	}
+	
+	.spaced
+	{
+	   margin-bottom: 5px;
 	}
 	</ui:style>
 	<g:HTMLPanel>
@@ -20,23 +27,18 @@
 	           text="Connecting your ShinyApps account"></g:Label>
 	  <g:HTML>
      <ol>
-       <li>Go to <a href="http://my.shinyapps.io/" target="_blank">your account 
-           on ShinyApps</a> and log in.</li>
-       <li>Click your name, then choose <b>Tokens</b> from your account menu.
-           </li>
-       <li>Use the Copy command under <b>Actions</b> to copy the token, account,
-           and secret information to the clipboard, and paste the result here
-           or at the R console. (It will start with 
-           <tt>shinyapps::setAccountInfo</tt>.)</li>
+       <li><p>Go to <a href="http://my.shinyapps.io/" target="_blank">your 
+           account on ShinyApps</a> and log in.</p></li>
+       <li><p>Click your name, then choose <b>Tokens</b> from your account menu.
+           </p></li>
+       <li><p>Use the Copy command under <b>Actions</b> to copy the token, 
+           account, and secret information to the clipboard, and paste the 
+           result here or at the R console. (It will start with 
+           <tt>shinyapps::setAccountInfo</tt>.)</p></li>
      </ol>
 	  </g:HTML>
-	  <g:TextArea styleName="{style.accountInfo}" ui:field="accountInfo"
-	              visibleLines="5">
+	  <g:TextArea styleName="{style.accountInfo} {style.spaced}"
+	              ui:field="accountInfo" visibleLines="5">
 	  </g:TextArea>
-	  <g:HTML>
-	    <small>Need a ShinyApps account? Get started at 
-	    <a href="http://www.shinyapps.io/" 
-	       target="_blank">http://www.shinyapps.io/</a>.</small>
-	  </g:HTML>
 	</g:HTMLPanel>
 </ui:UiBinder> 

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.shiny.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -33,6 +34,11 @@ public class ShinyAppsConnectAccount extends Composite
    interface ShinyAppsConnectAccountUiBinder extends
          UiBinder<Widget, ShinyAppsConnectAccount>
    {
+   }
+   
+   interface ConnectStyle extends CssResource
+   {
+      String spaced();
    }
 
    public ShinyAppsConnectAccount()
@@ -60,9 +66,14 @@ public class ShinyAppsConnectAccount extends Composite
    {
       return accountInfo.getText();
    }
+   
+   public ConnectStyle getStyle()
+   {
+      return style;
+   }
 
-   @UiField
-   TextArea accountInfo;
+   @UiField TextArea accountInfo;
+   @UiField ConnectStyle style;
    
    private Command onAccountInfoChanged_;
 }
