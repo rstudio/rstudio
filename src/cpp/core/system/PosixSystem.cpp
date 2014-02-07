@@ -586,7 +586,7 @@ std::string generateUuid(bool includeDashes)
 {
    // generaate the uuid and convert it to a strting
    uuid_t uuid ;
-   ::uuid_generate_random(uuid);
+   ::uuid_generate_time(uuid);
    char uuidBuffer[40];
    ::uuid_unparse_lower(uuid, uuidBuffer);
    std::string uuidStr(uuidBuffer);
