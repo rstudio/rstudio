@@ -70,7 +70,7 @@ public class RequestFactoryModel implements AcceptsModelVisitor, HasExtraTypes {
   }
 
   static String noSettersAllowed(JMethod found) {
-    return String.format("Optional setters not allowed here: ", found.getName());
+    return String.format("Optional setters not allowed here: %s", found.getName());
   }
 
   private final JClassType collectionInterface;
