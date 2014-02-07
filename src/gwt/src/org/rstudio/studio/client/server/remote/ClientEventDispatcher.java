@@ -56,6 +56,7 @@ import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -550,8 +551,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.RmdRenderCompleted))
          {
-            RmdRenderCompletedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RmdRenderCompletedEvent(data));
+            RmdRenderResult result = event.getData();
+            eventBus_.fireEvent(new RmdRenderCompletedEvent(result));
          }
          else
          {

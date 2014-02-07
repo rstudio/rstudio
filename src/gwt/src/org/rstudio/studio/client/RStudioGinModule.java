@@ -69,7 +69,12 @@ import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationWindow;
 import org.rstudio.studio.client.pdfviewer.ui.PDFViewerPanel;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.RmdOutputView;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPanel;
+import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter;
+import org.rstudio.studio.client.rmarkdown.ui.RmdOutputWindow;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.shiny.ShinyApplication;
@@ -216,6 +221,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DebugCommander.class).asEagerSingleton();
       bind(ShortcutViewer.class).asEagerSingleton();
       bind(ShinyApps.class).asEagerSingleton();
+      bind(RmdOutput.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
@@ -227,6 +233,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PDFViewerApplicationView.class).to(PDFViewerApplicationWindow.class);
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
+      bind(RmdOutputView.class).to(RmdOutputWindow.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
@@ -282,6 +289,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PDFViewerPresenter.Display.class).to(PDFViewerPanel.class);
       bind(HTMLPreviewPresenter.Display.class).to(HTMLPreviewPanel.class);
       bind(ShinyApplicationPresenter.Display.class).to(ShinyApplicationPanel.class);
+      bind(RmdOutputPresenter.Display.class).to(RmdOutputPanel.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

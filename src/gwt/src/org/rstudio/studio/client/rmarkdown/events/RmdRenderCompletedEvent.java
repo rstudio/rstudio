@@ -15,36 +15,26 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdRenderCompletedEvent extends GwtEvent<RmdRenderCompletedEvent.Handler>
 {  
-   public static class Data extends JavaScriptObject
-   {
-      protected Data()
-      {  
-      }
-      
-      public final native boolean getSucceeded() /*-{
-         return this.succeeded;
-      }-*/;
-   }
-   
    public interface Handler extends EventHandler
    {
       void onRmdRenderCompleted(RmdRenderCompletedEvent event);
    }
 
-   public RmdRenderCompletedEvent(Data data)
+   public RmdRenderCompletedEvent(RmdRenderResult result)
    {
-      data_ = data;
+      result_ = result;
    }
 
-   public Boolean getSucceeded()
+   public RmdRenderResult getResult()
    {
-      return data_.getSucceeded();
+      return result_;
    }
     
    @Override
@@ -59,7 +49,7 @@ public class RmdRenderCompletedEvent extends GwtEvent<RmdRenderCompletedEvent.Ha
       handler.onRmdRenderCompleted(this);
    }
    
-   private final Data data_;
+   private final RmdRenderResult result_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

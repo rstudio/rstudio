@@ -18,12 +18,10 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -31,29 +29,21 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
-public class ShinyApplicationPanel extends ResizeComposite
+public class ShinyApplicationPanel extends SatelliteFramePanel
                                    implements ShinyApplicationPresenter.Display
 {
    @Inject
    public ShinyApplicationPanel(Commands commands)
    {
-      commands_ = commands;
-      rootPanel_ = new LayoutPanel();
-      
-      toolbar_ = createToolbar(commands_);
-      rootPanel_.add(toolbar_);
-      rootPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
-      rootPanel_.setWidgetTopHeight(toolbar_, 0, Unit.PX, toolbar_.getHeight(), Unit.PX);
-      
-      initWidget(rootPanel_);
+      super(commands);
    }
    
-   private Toolbar createToolbar(Commands commands)
+   @Override 
+   protected void initToolbar(Toolbar toolbar, Commands commands)
    {
-      Toolbar toolbar = new Toolbar();
       ToolbarButton refreshButton = 
-            commands_.reloadShinyApp().createToolbarButton();
-      refreshButton.setLeftImage(commands_.viewerRefresh().getImageResource());
+            commands.reloadShinyApp().createToolbarButton();
+      refreshButton.setLeftImage(commands.viewerRefresh().getImageResource());
       refreshButton.getElement().getStyle().setMarginTop(2, Unit.PX);
       toolbar.addLeftWidget(refreshButton);
       if (Desktop.isDesktop())
@@ -65,10 +55,6 @@ public class ShinyApplicationPanel extends ResizeComposite
          urlBox_.addStyleName(ThemeStyles.INSTANCE.selectableText());
          toolbar.addLeftWidget(urlBox_);
       }
-      ToolbarButton popout = commands_.viewerPopout().createToolbarButton();
-      popout.setText("Open in Browser");
-      toolbar.addRightWidget(popout);
-      return toolbar;
    }
    
    @Override
@@ -76,21 +62,11 @@ public class ShinyApplicationPanel extends ResizeComposite
    {
       appParams_ = params;
 
-      if (appFrame_ != null)
-      {
-         rootPanel_.remove(appFrame_);
-         appFrame_ = null;
-      }
-      
       // We don't show the URL in server mode
       if (urlBox_ != null)
          urlBox_.setText(params.getUrl());
 
-      appFrame_ = new RStudioFrame(appParams_.getUrl());
-      appFrame_.setSize("100%", "100%");
-      rootPanel_.add(appFrame_);
-      rootPanel_.setWidgetLeftRight(appFrame_,  0, Unit.PX, 0, Unit.PX);
-      rootPanel_.setWidgetTopBottom(appFrame_, toolbar_.getHeight()+1, Unit.PX, 0, Unit.PX);
+      showUrl(params.getUrl());
    }
    
    @Override
@@ -98,13 +74,13 @@ public class ShinyApplicationPanel extends ResizeComposite
    {
       // appFrame_.getWindow().reload() would be better, but won't work here
       // due to same-origin policy restrictions
-      appFrame_.setUrl(appFrame_.getUrl());
+      getFrame().setUrl(getFrame().getUrl());
    }
 
    @Override
    public String getDocumentTitle()
    {
-      return appFrame_.getWindow().getDocument().getTitle();
+      return getFrame().getWindow().getDocument().getTitle();
    }
 
    @Override
@@ -132,12 +108,6 @@ public class ShinyApplicationPanel extends ResizeComposite
       return url;
    }
    
-   private final Commands commands_;
-
-   private LayoutPanel rootPanel_;
-   private Toolbar toolbar_;
    private Label urlBox_;
-
-   private RStudioFrame appFrame_;
    private ShinyApplicationParams appParams_;
 }
