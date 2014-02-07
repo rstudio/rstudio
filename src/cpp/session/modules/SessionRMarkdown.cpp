@@ -16,6 +16,7 @@
 #include "SessionRMarkdown.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -28,6 +29,8 @@
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
+
+#define kMathjaxSegment "mathjax"
 
 using namespace core;
 
@@ -62,6 +65,11 @@ public:
    FilePath outputFile()
    {
       return outputFile_;
+   }
+
+   FilePath targetDirectory()
+   {
+      return outputFile_.parent();
    }
 
    bool hasOutput()
@@ -204,6 +212,30 @@ private:
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 
+// replaces references to MathJax with references to our built-in resource
+// handler.
+// in:  script src = "http://foo/bar/Mathjax.js?abc=123"
+// out: script scr = "/rmd_resources/mathjax/MathJax.js?abc=123"
+class MathjaxFilter : public boost::iostreams::regex_filter
+{
+public:
+   MathjaxFilter()
+      : boost::iostreams::regex_filter(
+            boost::regex("script.src\\s*=\\s*\"http.*?(MathJax.js[^\"]*)\""),
+            boost::bind(&MathjaxFilter::substitute, this, _1))
+   {
+   }
+
+private:
+   std::string substitute(const boost::cmatch& match)
+   {
+      std::string result("script.src = \"" kMathjaxSegment "/");
+      result.append(match[1]);
+      result.append("\"");
+      return result;
+   }
+};
+
 bool isRenderRunning()
 {
    return s_pCurrentRender_ && s_pCurrentRender_->isRunning();
@@ -265,9 +297,26 @@ Error terminateRenderRmd(const json::JsonRpcRequest&,
    return Success();
 }
 
+// return the path to the local copy of MathJax installed with the RMarkdown
+// package
+FilePath mathJaxDirectory()
+{
+   std::string path;
+   FilePath mathJaxDir;
+   r::exec::RFunction findMathJax("system.file", "rmd/h/m");
+   findMathJax.addParam("package", "rmarkdown");
+   Error error = findMathJax.call(&path);
+   if (error)
+      LOG_ERROR(error);
+   else
+      mathJaxDir = FilePath(path);
+   return mathJaxDir;
+}
+
 void handleRmdOutputRequest(const http::Request& request,
                             http::Response* pResponse)
 {
+   // make sure we're looking at the result of a successful render
    if (!s_pCurrentRender_ ||
        !s_pCurrentRender_->hasOutput())
    {
@@ -283,14 +332,29 @@ void handleRmdOutputRequest(const http::Request& request,
    std::string path = http::util::pathAfterPrefix(request,
                                                   kRmdOutputLocation);
 
-   // if it is empty then this is the main request
    if (path.empty())
    {
-      pResponse->setFile(s_pCurrentRender_->outputFile(), request);
+      // serve the contents of the file with MathJax URLs mapped to our
+      // own resource handler
+      MathjaxFilter mathjaxFilter;
+      pResponse->setFile(s_pCurrentRender_->outputFile(), request,
+                         mathjaxFilter);
    }
-
-   // TODO: Handle requests for dependent files and mathjax files
+   else if (boost::algorithm::starts_with(path, kMathjaxSegment))
+   {
+      // serve the MathJax resource: find the requested path in the MathJax
+      // directory
+      pResponse->setFile(mathJaxDirectory().complete(
+                            path.substr(sizeof(kMathjaxSegment))),
+                         request);
+   }
+   else
+   {
+      FilePath filePath = s_pCurrentRender_->targetDirectory().childPath(path);
+      pResponse->setFile(filePath, request);
+   }
 }
+
 } // anonymous namespace
 
 Error initialize()
