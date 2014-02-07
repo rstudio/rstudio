@@ -23,7 +23,8 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
-public abstract class SatelliteFramePanel extends ResizeComposite
+public abstract class SatelliteFramePanel <T extends RStudioFrame>
+                      extends ResizeComposite
 {
    public SatelliteFramePanel(Commands commands)
    {
@@ -56,23 +57,24 @@ public abstract class SatelliteFramePanel extends ResizeComposite
          appFrame_ = null;
       }
       
-      appFrame_ = new RStudioFrame(url);
+      appFrame_ = createFrame(url);
       appFrame_.setSize("100%", "100%");
       rootPanel_.add(appFrame_);
       rootPanel_.setWidgetLeftRight(appFrame_,  0, Unit.PX, 0, Unit.PX);
       rootPanel_.setWidgetTopBottom(appFrame_, toolbar_.getHeight()+1, Unit.PX, 0, Unit.PX);
    }
    
-   protected RStudioFrame getFrame()
+   protected T getFrame()
    {
       return appFrame_;
    }
    
    protected abstract void initToolbar(Toolbar toolbar, Commands commands);
+   protected abstract T createFrame(String url);
 
    private final Commands commands_;
 
    private LayoutPanel rootPanel_;
    private Toolbar toolbar_;
-   private RStudioFrame appFrame_;
+   private T appFrame_;
 }

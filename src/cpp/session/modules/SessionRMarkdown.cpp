@@ -26,7 +26,10 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+#define kRmdOutput "rmd_output"
+#define kRmdOutputLocation "/" kRmdOutput "/"
+
+using namespace core;
 
 namespace session {
 namespace modules { 
@@ -54,6 +57,16 @@ public:
    bool isRunning()
    {
       return isRunning_;
+   }
+
+   FilePath outputFile()
+   {
+      return outputFile_;
+   }
+
+   bool hasOutput()
+   {
+      return !isRunning_ && outputFile_.exists();
    }
 
 private:
@@ -169,9 +182,10 @@ private:
    {
       isRunning_ = false;
       json::Object resultJson;
-      resultJson["succeeded"] = true;
+      resultJson["succeeded"] = succeeded;
       resultJson["output_file"] =
             module_context::createAliasedPath(outputFile_);
+      resultJson["output_url"] = kRmdOutput "/";
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);
    }
@@ -251,6 +265,32 @@ Error terminateRenderRmd(const json::JsonRpcRequest&,
    return Success();
 }
 
+void handleRmdOutputRequest(const http::Request& request,
+                            http::Response* pResponse)
+{
+   if (!s_pCurrentRender_ ||
+       !s_pCurrentRender_->hasOutput())
+   {
+      pResponse->setError(http::status::NotFound, "No render output available");
+      return;
+   }
+
+   // disable caching; the request path looks identical to the browser for each
+   // main request for content
+   pResponse->setNoCacheHeaders();
+
+   // get the requested path
+   std::string path = http::util::pathAfterPrefix(request,
+                                                  kRmdOutputLocation);
+
+   // if it is empty then this is the main request
+   if (path.empty())
+   {
+      pResponse->setFile(s_pCurrentRender_->outputFile(), request);
+   }
+
+   // TODO: Handle requests for dependent files and mathjax files
+}
 } // anonymous namespace
 
 Error initialize()
@@ -266,7 +306,8 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "render_rmd", renderRmd))
-      (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd));
+      (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
+      (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest));
 
    return initBlock.execute();
 }

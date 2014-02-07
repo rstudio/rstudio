@@ -17,19 +17,23 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.common.FilePathUtils;
 
-public class RmdOutputPanel extends SatelliteFramePanel
+public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                             implements RmdOutputPresenter.Display
 {
    @Inject
-   public RmdOutputPanel(Commands commands)
+   public RmdOutputPanel(Commands commands, 
+                         RMarkdownServerOperations server)
    {
       super(commands);
+      server_ = server;
    }
    
    @Override
@@ -37,7 +41,7 @@ public class RmdOutputPanel extends SatelliteFramePanel
    {
       fileLabel_.setText(
             FilePathUtils.friendlyFileName(result.getOutputFile()));
-      showUrl(result.getOutputFile());
+      showUrl(server_.getApplicationURL(result.getOutputUrl()));
    }
    
    @Override
@@ -47,5 +51,14 @@ public class RmdOutputPanel extends SatelliteFramePanel
       toolbar.addLeftWidget(fileLabel_);
    }
    
+   @Override
+   protected AnchorableFrame createFrame(String url)
+   {
+      AnchorableFrame frame = new AnchorableFrame();
+      frame.navigate(url);
+      return frame;
+   }
+   
    private Label fileLabel_;
+   private RMarkdownServerOperations server_;
 }

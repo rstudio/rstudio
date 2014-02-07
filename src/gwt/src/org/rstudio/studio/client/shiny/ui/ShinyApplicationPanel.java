@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -29,7 +30,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
-public class ShinyApplicationPanel extends SatelliteFramePanel
+public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
                                    implements ShinyApplicationPresenter.Display
 {
    @Inject
@@ -106,6 +107,12 @@ public class ShinyApplicationPanel extends SatelliteFramePanel
          url = thisUrl + url;
       }
       return url;
+   }
+   
+   @Override
+   protected RStudioFrame createFrame(String url)
+   {
+      return new RStudioFrame(url);
    }
    
    private Label urlBox_;

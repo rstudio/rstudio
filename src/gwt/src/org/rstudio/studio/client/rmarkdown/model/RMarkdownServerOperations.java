@@ -23,4 +23,6 @@ public interface RMarkdownServerOperations
                   ServerRequestCallback<Boolean> requestCallback);
    
    void terminateRenderRmd(ServerRequestCallback<Void> requestCallback);
+
+   public String getApplicationURL(String pathName);
 }
