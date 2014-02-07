@@ -16,7 +16,7 @@
 package com.google.gwt.emultest.java.lang;
 
 /**
- * Interface to contain constants shared between StringTest.java and String.java.
+ * Constants shared between various tests.
  */
 public class C {
   public static String FLOAT_STRING = "123.4599";
@@ -37,4 +37,18 @@ public class C {
   public static final String LONG_STRING = "1234567890123456";
   public static final int INT_VALUE = 123456789;
   public static final long LONG_VALUE = 1234567890123456L;
+
+  public static final char[] LARGE_CHAR_ARRAY_VALUE;
+  public static final String LARGE_CHAR_ARRAY_STRING;
+  static {
+    int inputCopies = 100000;
+    int inputSize = CHAR_ARRAY_VALUE.length;
+    LARGE_CHAR_ARRAY_VALUE = new char[inputCopies * inputSize];
+    for (int i = 0; i < inputCopies; ++i) {
+      for (int j = 0; j < inputSize; ++j) {
+        LARGE_CHAR_ARRAY_VALUE[i * inputSize + j] = CHAR_ARRAY_VALUE[j];
+      }
+    }
+    LARGE_CHAR_ARRAY_STRING = new String(new char[inputCopies]).replace("\0", CHAR_ARRAY_STRING);
+  }
 }

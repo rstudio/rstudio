@@ -702,6 +702,7 @@ public class StringTest extends GWTTestCase {
         4));
     assertEquals(C.FALSE_STRING, String.valueOf(C.FALSE_VALUE));
     assertEquals(C.TRUE_STRING, String.valueOf(C.TRUE_VALUE));
+    assertEquals(C.LARGE_CHAR_ARRAY_STRING, String.valueOf(C.LARGE_CHAR_ARRAY_VALUE));
   }
 
   /**
