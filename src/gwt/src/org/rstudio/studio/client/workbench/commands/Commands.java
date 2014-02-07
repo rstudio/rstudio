@@ -66,7 +66,7 @@ public abstract class
    public abstract AppCommand markdownHelp();
    public abstract AppCommand usingRMarkdownHelp();
    public abstract AppCommand authoringRPresentationsHelp();
-   public abstract AppCommand knitToHTML();
+   public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();
    public abstract AppCommand compilePDF();

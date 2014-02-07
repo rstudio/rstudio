@@ -142,7 +142,7 @@ public class TextEditingTargetWidget
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
-      toolbar.addLeftWidget(knitToHTMLButton_ = commands_.knitToHTML().createToolbarButton());
+      toolbar.addLeftWidget(knitDocumentButton_ = commands_.knitDocument().createToolbarButton());
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
@@ -352,7 +352,7 @@ public class TextEditingTargetWidget
       runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
-      knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");
+      knitDocumentButton_.setText(width < 450 ? "" : "Knit");
       
       if (editor_.getFileType().isRd())
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
@@ -549,7 +549,7 @@ public class TextEditingTargetWidget
    private ToolbarButton codeTransform_;
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
-   private ToolbarButton knitToHTMLButton_;
+   private ToolbarButton knitDocumentButton_;
    private ToolbarButton runButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
