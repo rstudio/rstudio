@@ -125,17 +125,22 @@ private:
 
    void onRenderOutput(const std::string& output)
    {
-      // if the output being emitted starts with a token indicating rendering
-      // is complete, store the remainder of the emitted line as the file
-      // we rendered
-      std::string completeMarker("render complete: ");
-      if (boost::algorithm::starts_with(output, completeMarker))
+      // check each line of the emitted output; if it starts with a token
+      // indicating rendering is complete, store the remainder of the emitted
+      // line as the file we rendered
+      std::string completeMarker("Output created: ");
+      std::string renderLine;
+      std::stringstream outputStream(output);
+      while (std::getline(outputStream, renderLine))
       {
-         // extract just the first line from the output
-         std::stringstream outputStream(output);
-         std::string renderLine;
-         std::getline(outputStream, renderLine);
-         outputFile_ = FilePath(renderLine.substr(completeMarker.length()));
+         if (boost::algorithm::starts_with(renderLine, completeMarker))
+         {
+            std::string fileName = renderLine.substr(completeMarker.length());
+            // if the path looks absolute, use it as-is; otherwise, presume
+            // it to be in the same directory as the input file
+            outputFile_ = targetFile_.parent().complete(fileName);
+            break;
+         }
       }
       enqueRenderOutput(output);
    }
