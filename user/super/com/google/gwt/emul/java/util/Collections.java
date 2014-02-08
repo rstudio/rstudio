@@ -88,6 +88,9 @@ public class Collections {
   }
 
   private static final class EmptyListIterator implements ListIterator {
+
+    static final EmptyListIterator INSTANCE = new EmptyListIterator();
+
     @Override
     public void add(Object o) {
       throw new UnsupportedOperationException();
@@ -717,8 +720,6 @@ public class Collections {
     }
   };
 
-  private static final ListIterator EMPTY_LIST_ITERATOR = new EmptyListIterator();
-
   public static <T> boolean addAll(Collection<? super T> c, T... a) {
     boolean result = false;
     for (T e : a) {
@@ -870,7 +871,7 @@ public class Collections {
 
   @SuppressWarnings(value = {"unchecked", "cast"})
   public static <T> Iterator<T> emptyIterator() {
-    return (Iterator<T>) EMPTY_LIST_ITERATOR;
+    return (Iterator<T>) EmptyListIterator.INSTANCE;
   }
 
   @SuppressWarnings(value = {"unchecked", "cast"})
@@ -880,7 +881,7 @@ public class Collections {
 
   @SuppressWarnings(value = {"unchecked", "cast"})
   public static <T> ListIterator<T> emptyListIterator() {
-    return (ListIterator<T>) EMPTY_LIST_ITERATOR;
+    return (ListIterator<T>) EmptyListIterator.INSTANCE;
   }
 
   @SuppressWarnings(value = {"unchecked", "cast"})
