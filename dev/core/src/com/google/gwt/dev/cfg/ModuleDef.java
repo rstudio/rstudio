@@ -479,6 +479,16 @@ public class ModuleDef {
     return name;
   }
 
+  /**
+   * Provided for Designer compatibility. Do not use.
+   */
+  @Deprecated
+  public CompilationState getCompilationState(TreeLogger logger)
+      throws UnableToCompleteException {
+    CompilerContext emptyCompilerContext = new CompilerContext.Builder().build();
+    return getCompilationState(logger, emptyCompilerContext);
+  }
+
   public CompilationState getCompilationState(TreeLogger logger, CompilerContext compilerContext)
       throws UnableToCompleteException {
     doRefresh();

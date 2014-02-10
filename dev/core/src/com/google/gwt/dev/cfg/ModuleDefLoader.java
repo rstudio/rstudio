@@ -123,6 +123,19 @@ public class ModuleDefLoader {
   }
 
   /**
+   * Loads a new (assumed monolithic) module from the class path and may or may not immediately
+   * scan associated directories for resources.<br />
+   *
+   * Provided for Designer compatibility. Do not use.
+   */
+  @Deprecated
+  public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName, boolean refresh)
+      throws UnableToCompleteException {
+    CompilerContext emptyCompilerContext = new CompilerContext.Builder().build();
+    return loadFromClassPath(logger, emptyCompilerContext, moduleName, refresh, true);
+  }
+
+  /**
    * Loads a new module from the class path and may or may not immediately scan associated
    * directories for resources or consider it monolithic, depending on parameters.
    */

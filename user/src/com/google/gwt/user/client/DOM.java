@@ -91,6 +91,23 @@ public class DOM {
    * @param child its new child
    * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
    */
+  @Deprecated
+  public static void appendChild(com.google.gwt.user.client.Element parent,
+                                 com.google.gwt.user.client.Element child) {
+    appendChild((Element) parent, (Element) child);
+  }
+
+  /**
+   * Appends one element to another's list of children.
+   * <p>
+   * If the child element is a {@link com.google.gwt.user.client.ui.PotentialElement}, it is first
+   * resolved.
+   * </p>
+   *
+   * @param parent the parent element
+   * @param child its new child
+   * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
+   */
   public static void appendChild(Element parent, Element child) {
     assert !PotentialElement.isPotential(parent) : "Cannot append to a PotentialElement";
 
@@ -703,6 +720,19 @@ public class DOM {
   /**
    * Gets an element's absolute left coordinate in the document's coordinate
    * system.
+   *
+   * @param elem the element to be measured
+   * @return the element's absolute left coordinate
+   * @deprecated Use {@link Element#getAbsoluteLeft()} instead.
+   */
+  @Deprecated
+  public static int getAbsoluteLeft(com.google.gwt.user.client.Element elem) {
+    return getAbsoluteLeft((Element) elem);
+  }
+
+  /**
+   * Gets an element's absolute left coordinate in the document's coordinate
+   * system.
    * 
    * @param elem the element to be measured
    * @return the element's absolute left coordinate
@@ -711,6 +741,19 @@ public class DOM {
   @Deprecated
   public static int getAbsoluteLeft(Element elem) {
     return elem.getAbsoluteLeft();
+  }
+
+  /**
+   * Gets an element's absolute top coordinate in the document's coordinate
+   * system.
+   *
+   * @param elem the element to be measured
+   * @return the element's absolute top coordinate
+   * @deprecated Use {@link Element#getAbsoluteTop()} instead.
+   */
+  @Deprecated
+  public static int getAbsoluteTop(com.google.gwt.user.client.Element elem) {
+    return getAbsoluteTop((Element) elem);
   }
 
   /**
@@ -766,6 +809,19 @@ public class DOM {
 
   /**
    * Gets an element's n-th child element.
+   *
+   * @param parent the element whose child is to be retrieved
+   * @param index the index of the child element
+   * @return the n-th child element
+   */
+  @Deprecated
+  public static com.google.gwt.user.client.Element getChild(
+      com.google.gwt.user.client.Element parent, int index) {
+    return getChild((Element) parent, index);
+  }
+
+  /**
+   * Gets an element's n-th child element.
    * 
    * @param parent the element whose child is to be retrieved
    * @param index the index of the child element
@@ -773,6 +829,17 @@ public class DOM {
    */
   public static com.google.gwt.user.client.Element getChild(Element parent, int index) {
     return asOld(impl.getChild(parent, index));
+  }
+
+  /**
+   * Gets the number of child elements present in a given parent element.
+   *
+   * @param parent the element whose children are to be counted
+   * @return the number of children
+   */
+  @Deprecated
+  public static int getChildCount(com.google.gwt.user.client.Element parent) {
+    return getChildCount((Element) parent);
   }
 
   /**
@@ -787,6 +854,20 @@ public class DOM {
 
   /**
    * Gets the index of a given child element within its parent.
+   *
+   * @param parent the parent element
+   * @param child the child element
+   * @return the child's index within its parent, or <code>-1</code> if it is
+   *         not a child of the given parent
+   */
+  @Deprecated
+  public static int getChildIndex(com.google.gwt.user.client.Element parent,
+                                  com.google.gwt.user.client.Element child) {
+    return getChildIndex((Element) parent, (Element) child);
+  }
+
+  /**
+   * Gets the index of a given child element within its parent.
    * 
    * @param parent the parent element
    * @param child the child element
@@ -795,6 +876,19 @@ public class DOM {
    */
   public static int getChildIndex(Element parent, Element child) {
     return impl.getChildIndex(parent, child);
+  }
+
+  /**
+   * Gets the named attribute from the element.
+   *
+   * @param elem the element whose property is to be retrieved
+   * @param attr the name of the attribute
+   * @return the value of the attribute
+   * @deprecated Use {@link Element#getAttribute(String)} instead.
+   */
+  @Deprecated
+  public static String getElementAttribute(com.google.gwt.user.client.Element elem, String attr) {
+    return getElementAttribute((Element) elem, attr);
   }
 
   /**
@@ -813,12 +907,25 @@ public class DOM {
   /**
    * Gets the element associated with the given unique id within the entire
    * document.
-   * 
+   *
    * @param id the id whose associated element is to be retrieved
    * @return the associated element, or <code>null</code> if none is found
    */
   public static com.google.gwt.user.client.Element getElementById(String id) {
     return asOld(Document.get().getElementById(id));
+  }
+
+  /**
+   * Gets any named property from an element, as a string.
+   *
+   * @param elem the element whose property is to be retrieved
+   * @param prop the name of the property
+   * @return the property's value
+   * @deprecated Use {@link Element#getProperty(String)} instead.
+   */
+  @Deprecated
+  public static String getElementProperty(com.google.gwt.user.client.Element elem, String prop) {
+    return getElementProperty((Element) elem, prop);
   }
 
   /**
@@ -906,6 +1013,18 @@ public class DOM {
 
   /**
    * Gets an HTML representation of an element's children.
+   *
+   * @param elem the element whose HTML is to be retrieved
+   * @return the HTML representation of the element's children
+   * @deprecated Use {@link Element#getInnerHTML()} instead.
+   */
+  @Deprecated
+  public static String getInnerHTML(com.google.gwt.user.client.Element elem) {
+    return getInnerHTML((Element) elem);
+  }
+
+  /**
+   * Gets an HTML representation of an element's children.
    * 
    * @param elem the element whose HTML is to be retrieved
    * @return the HTML representation of the element's children
@@ -919,6 +1038,19 @@ public class DOM {
   /**
    * Gets the text contained within an element. If the element has child
    * elements, only the text between them will be retrieved.
+   *
+   * @param elem the element whose inner text is to be retrieved
+   * @return the text inside this element
+   * @deprecated Use {@link Element#getInnerText()} instead.
+   */
+  @Deprecated
+  public static String getInnerText(com.google.gwt.user.client.Element elem) {
+    return getInnerText((Element) elem);
+  }
+
+  /**
+   * Gets the text contained within an element. If the element has child
+   * elements, only the text between them will be retrieved.
    * 
    * @param elem the element whose inner text is to be retrieved
    * @return the text inside this element
@@ -927,6 +1059,20 @@ public class DOM {
   @Deprecated
   public static String getInnerText(Element elem) {
     return elem.getInnerText();
+  }
+
+  /**
+   * Gets an integer property on a given element.
+   *
+   * @param elem the element whose property is to be retrieved
+   * @param attr the name of the property to be retrieved
+   * @return the property's value as an integer
+   * @deprecated Use the more appropriately named
+   *             {@link Element#getPropertyInt(String)} instead.
+   */
+  @Deprecated
+  public static int getIntAttribute(com.google.gwt.user.client.Element elem, String attr) {
+    return getIntAttribute((Element) elem, attr);
   }
 
   /**
@@ -966,12 +1112,38 @@ public class DOM {
 
   /**
    * Gets an element's parent element.
+   *
+   * @param elem the element whose parent is to be retrieved
+   * @return the parent element
+   */
+  @Deprecated
+  public static com.google.gwt.user.client.Element getParent(
+      com.google.gwt.user.client.Element elem) {
+    return getParent((Element) elem);
+  }
+
+  /**
+   * Gets an element's parent element.
    * 
    * @param elem the element whose parent is to be retrieved
    * @return the parent element
    */
   public static com.google.gwt.user.client.Element getParent(Element elem) {
     return asOld(elem.getParentElement());
+  }
+
+  /**
+   * Gets an attribute of the given element's style.
+   *
+   * @param elem the element whose style attribute is to be retrieved
+   * @param attr the name of the style attribute to be retrieved
+   * @return the style attribute's value
+   * @deprecated Use {@link Element#getStyle()} and
+   *             {@link Style#getProperty(String)} instead.
+   */
+  @Deprecated
+  public static String getStyleAttribute(com.google.gwt.user.client.Element elem, String attr) {
+    return getStyleAttribute((Element) elem, attr);
   }
 
   /**
@@ -1008,6 +1180,26 @@ public class DOM {
     // If child isn't a PotentialElement, resolve() returns
     // the Element itself.
     parent.insertBefore(PotentialElement.resolve(child).<Element> cast(), before);
+  }
+
+  /**
+   * Inserts an element as a child of the given parent element.
+   * <p>
+   * If the child element is a {@link com.google.gwt.user.client.ui.PotentialElement}, it is first
+   * resolved.
+   * </p>
+   *
+   * @param parent the parent element
+   * @param child the child element to add to <code>parent</code>
+   * @param index the index before which the child will be inserted (any value
+   *          greater than the number of existing children will cause the child
+   *          to be appended)
+   * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
+   */
+  @Deprecated
+  public static void insertChild(com.google.gwt.user.client.Element parent,
+                                 com.google.gwt.user.client.Element child, int index) {
+    insertChild((Element) parent, (Element) child, index);
   }
 
   /**
@@ -1087,6 +1279,19 @@ public class DOM {
       sCaptureElem = null;
     }
     impl.releaseCapture(elem);
+  }
+
+  /**
+   * Removes a child element from the given parent element.
+   *
+   * @param parent the parent element
+   * @param child the child element to be removed
+   * @deprecated Use {@link Element#removeChild(Element)} instead.
+   */
+  @Deprecated
+  public static void removeChild(com.google.gwt.user.client.Element parent,
+                                 com.google.gwt.user.client.Element child) {
+    removeChild((Element) parent, (Element) child);
   }
 
   /**
@@ -1198,6 +1403,20 @@ public class DOM {
   @Deprecated
   public static void setElementAttribute(Element elem, String attr, String value) {
     elem.setAttribute(attr, value);
+  }
+
+  /**
+   * Sets a property on the given element.
+   *
+   * @param elem the element whose property is to be set
+   * @param prop the name of the property to be set
+   * @param value the new property value
+   * @deprecated Use {@link Element#setPropertyString(String, String)} instead.
+   */
+  @Deprecated
+  public static void setElementProperty(com.google.gwt.user.client.Element elem,
+                                        String prop, String value) {
+    setElementProperty((Element) elem, prop, value);
   }
 
   /**
@@ -1325,6 +1544,21 @@ public class DOM {
 
   /**
    * Sets an attribute on the given element's style.
+   *
+   * @param elem the element whose style attribute is to be set
+   * @param attr the name of the style attribute to be set
+   * @param value the style attribute's new value
+   * @deprecated Use {@link Element#getStyle()} and
+   *             {@link Style#setProperty(String, String)} instead.
+   */
+  @Deprecated
+  public static void setStyleAttribute(com.google.gwt.user.client.Element elem,
+                                       String attr, String value) {
+    setStyleAttribute((Element) elem, attr, value);
+  }
+
+  /**
+   * Sets an attribute on the given element's style.
    * 
    * @param elem the element whose style attribute is to be set
    * @param attr the name of the style attribute to be set
@@ -1359,6 +1593,19 @@ public class DOM {
    */
   public static void sinkEvents(Element elem, int eventBits) {
     impl.sinkEvents(elem, eventBits);
+  }
+
+  /**
+   * Returns a stringized version of the element. This string is for debugging
+   * purposes and will NOT be consistent on different browsers.
+   *
+   * @param elem the element to stringize
+   * @return a string form of the element
+   * @deprecated Use {@link Element#getString()} instead.
+   */
+  @Deprecated
+  public static String toString(com.google.gwt.user.client.Element elem) {
+    return toString((Element) elem);
   }
 
   /**
