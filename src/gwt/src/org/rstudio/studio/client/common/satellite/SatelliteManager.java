@@ -100,6 +100,12 @@ public class SatelliteManager implements CloseHandler<Window>
                      callNotifyReactivated(window, params);
                      return;
                   }
+                  else
+                  {
+                     // for Chrome, let the window know it's about to be 
+                     // closed and reopened
+                     callNotifyPendingReactivate(window);
+                  }
                }
                // desktop mode: activate and return
                else
@@ -370,6 +376,11 @@ public class SatelliteManager implements CloseHandler<Window>
    private native void callDispatchCommand(JavaScriptObject satellite,
                                            String commandId) /*-{
       satellite.dispatchCommandToRStudioSatellite(commandId);
+   }-*/;
+   
+   // call notifyPendingReactivate on a satellite
+   private native void callNotifyPendingReactivate(JavaScriptObject satellite) /*-{
+      satellite.notifyPendingReactivate();
    }-*/;
 
    // check whether the current window is a satellite (note this method

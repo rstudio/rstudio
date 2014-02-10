@@ -84,6 +84,11 @@ public class Satellite implements HasCloseHandlers<Satellite>
    {
       handlerManager_.fireEvent(event);
    }
+   
+   public boolean isReactivatePending()
+   {
+      return pendingReactivate_;
+   }
 
    public native final void flushPendingEvents(String name) /*-{
       $wnd.opener.flushPendingEvents(name);
@@ -138,6 +143,11 @@ public class Satellite implements HasCloseHandlers<Satellite>
             satellite.@org.rstudio.studio.client.common.satellite.Satellite::dispatchCommand(Ljava/lang/String;)(commandId);
          }
       ); 
+      
+      // export request activation callback
+      $wnd.notifyPendingReactivate = $entry(function() {
+         satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingReactivate()();
+      });
 
       // register (this will call the setSessionInfo back)
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
@@ -193,13 +203,13 @@ public class Satellite implements HasCloseHandlers<Satellite>
       params_ = params;
    }
    
-   
    // called by main window to notify us of reactivation with a new
    // set of params
    private void notifyReactivated(JavaScriptObject params)
    {
       if (onReactivated_ != null)
          onReactivated_.execute(params);
+      pendingReactivate_ = false;
    }
    
    private void fireCloseEvent()
@@ -219,11 +229,18 @@ public class Satellite implements HasCloseHandlers<Satellite>
       commands_.getCommandById(commandId).execute();
    }
    
+   // called by the main window to notify us that we're about to be reactivated
+   private void notifyPendingReactivate()
+   {
+      pendingReactivate_ = true;
+   }
+   
    private final Session session_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final ClientEventDispatcher eventDispatcher_;
    private final HandlerManager handlerManager_ = new HandlerManager(this);
    private final Commands commands_;
+   private boolean pendingReactivate_ = false;
    private JavaScriptObject params_ = null;
    private CommandWithArg<JavaScriptObject> onReactivated_ = null;
 }

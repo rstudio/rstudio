@@ -129,6 +129,12 @@ public class ShinyApplicationPresenter
    
    private void onClose()
    {
+      // don't stop the app if the window is closing just to be opened again. 
+      // (we close and reopen as a workaround to forcefully activate the window
+      // on browsers that don't permit manual event reactivation)
+      if (satellite_.isReactivatePending())
+         return;
+      
       ShinyApplicationParams params = ShinyApplicationParams.create(
             params_.getPath(), 
             params_.getUrl(), 

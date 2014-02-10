@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.shiny;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
@@ -90,9 +92,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          // open the window to view the application if needed
          if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
          {
-            satelliteManager_.openSatellite(ShinyApplicationSatellite.NAME,     
-                                           event.getParams(),
-                                           new Size(960,1100));   
+            activateWindow(event.getParams());
          }
          currentAppFilePath_ = event.getParams().getPath();
       }
@@ -117,8 +117,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
           currentAppFilePath_ != null &&
           currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW) 
       {
-         satelliteManager_.activateSatelliteWindow(
-               ShinyApplicationSatellite.NAME);
+         activateWindow();
       }
    }
    
@@ -165,8 +164,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
          {
             satelliteManager_.dispatchCommand(commands_.reloadShinyApp());
-            satelliteManager_.activateSatelliteWindow(
-                  ShinyApplicationSatellite.NAME);
+            activateWindow();
          } 
          else if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_PANE &&
                   commands_.viewerRefresh().isEnabled())
@@ -246,6 +244,34 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             });
    }
    
+   private void activateWindow()
+   {
+      activateWindow(null);
+   }
+   
+   private void activateWindow(ShinyApplicationParams params)
+   {
+      // always hard close/reopen in Chrome; otherwise, just reopen when
+      // we have a new set of parameters
+      boolean forceReopen = (!Desktop.isDesktop() && BrowseCap.isChrome());
+      if (params != null)
+      {
+         params_ = params;
+         forceReopen = true;
+      }
+
+      if (forceReopen)
+      {
+         satelliteManager_.openSatellite(ShinyApplicationSatellite.NAME,     
+                                         params_, new Size(960,1100));   
+      }
+      else
+      {
+         satelliteManager_.activateSatelliteWindow(
+               ShinyApplicationSatellite.NAME);
+      }
+   }
+   
    private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;
    private final Commands commands_;
@@ -254,6 +280,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private final GlobalDisplay display_;
    private final ApplicationInterrupt interrupt_;
 
+   private ShinyApplicationParams params_;
    private String currentAppFilePath_;
    private boolean isBusy_;
    private int currentViewType_;
