@@ -27,79 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Reads the bytecode for a class and collects data needed for building
- * TypeOracle structures.
+ * A visitor (that collects class data from bytecode) and a model object to hold the collected data.
  */
 public class CollectClassData extends EmptyVisitor {
-
-  /**
-   * Type of this class.
-   */
-  public enum ClassType {
-    /**
-     * A top level class named the same as its source file.
-     */
-    TopLevel,
-
-    /**
-     * A non-static named class nested inside another class.
-     */
-    Inner {
-      @Override
-      public boolean hasHiddenConstructorArg() {
-        return true;
-      }
-    },
-
-    /**
-     * A static nested class inside another class.
-     */
-    Nested,
-
-    /**
-     * An anonymous inner class.
-     */
-    Anonymous {
-      @Override
-      public boolean hasNoExternalName() {
-        return true;
-      }
-    },
-
-    /**
-     * A named class defined inside a method.
-     */
-    Local {
-      /*
-       * Note that we do not return true for hasHiddenConstructorArg since Local
-       * classes inside a static method will not have one and AFAICT there is no
-       * way to distinguish these cases without looking up the declaring method.
-       * However, since we are dropping any classes for which
-       * hasNoExternalName() returns true in TypeOracleUpdater.addNewUnits, it
-       * doesn't matter if we leave the synthetic argument in the list.
-       */
-
-      @Override
-      public boolean hasNoExternalName() {
-        return true;
-      }
-    };
-
-    /**
-     * @return true if this class type has a hidden constructor argument for the
-     *         containing instance (ie, this$0).
-     */
-    public boolean hasHiddenConstructorArg() {
-      return false;
-    }
-
-    /**
-     * @return true if this class type is not visible outside a method.
-     */
-    public boolean hasNoExternalName() {
-      return false;
-    }
-  }
 
   /**
    * Holds the descriptor and value for an Enum-valued annotation.
@@ -134,27 +64,96 @@ public class CollectClassData extends EmptyVisitor {
     }
   }
 
+  /**
+   * Type of this class.
+   */
+  public enum ClassType {
+    /**
+     * An anonymous inner class.
+     */
+    Anonymous {
+      @Override
+      public boolean hasNoExternalName() {
+        return true;
+      }
+    },
+
+    /**
+     * A non-static named class nested inside another class.
+     */
+    Inner {
+      @Override
+      public boolean hasHiddenConstructorArg() {
+        return true;
+      }
+    },
+
+    /**
+     * A named class defined inside a method.
+     */
+    Local {
+      /*
+       * Note that we do not return true for hasHiddenConstructorArg since Local
+       * classes inside a static method will not have one and AFAICT there is no
+       * way to distinguish these cases without looking up the declaring method.
+       * However, since we are dropping any classes for which
+       * hasNoExternalName() returns true in TypeOracleUpdater.addNewUnits, it
+       * doesn't matter if we leave the synthetic argument in the list.
+       */
+
+      @Override
+      public boolean hasNoExternalName() {
+        return true;
+      }
+    },
+
+    /**
+     * A static nested class inside another class.
+     */
+    Nested,
+
+    /**
+     * A top level class named the same as its source file.
+     */
+    TopLevel;
+
+    /**
+     * @return true if this class type has a hidden constructor argument for the
+     *         containing instance (ie, this$0).
+     */
+    public boolean hasHiddenConstructorArg() {
+      return false;
+    }
+
+    /**
+     * @return true if this class type is not visible outside a method.
+     */
+    public boolean hasNoExternalName() {
+      return false;
+    }
+  }
+
+  private int access;
+
   private final List<CollectAnnotationData> annotations = new ArrayList<CollectAnnotationData>();
 
-  private String source = null;
-
-  // internal name
-  private String name;
-
-  private String signature;
-
-  // internal name of superclass
-  private String superName;
-
-  // internal names of interfaces
-  private String[] interfaces;
-  private final List<CollectMethodData> methods = new ArrayList<CollectMethodData>();
-  private final List<CollectFieldData> fields = new ArrayList<CollectFieldData>();
-  private int access;
-  private String outerClass;
-  private String outerMethodName;
-  private String outerMethodDesc;
   private CollectClassData.ClassType classType = ClassType.TopLevel;
+
+  private String enclosingInternalName;
+
+  private String enclosingMethodDesc;
+
+  private String enclosingMethodName;
+  private final List<CollectFieldData> fields = new ArrayList<CollectFieldData>();
+  // internal names of interfaces
+  private String[] interfaceInternalNames;
+  // internal name
+  private String internalName;
+  private final List<CollectMethodData> methods = new ArrayList<CollectMethodData>();
+  private String signature;
+  private String source = null;
+  // internal name of superclass
+  private String superInternalName;
 
   /**
    * Construct a visitor that will collect data about a class.
@@ -169,23 +168,26 @@ public class CollectClassData extends EmptyVisitor {
     return access;
   }
 
-  /**
-   * @return a list of annotations on this class.
-   */
   public List<CollectAnnotationData> getAnnotations() {
     return annotations;
   }
 
-  /**
-   * @return the class type.
-   */
   public CollectClassData.ClassType getClassType() {
     return classType;
   }
 
-  /**
-   * @return a list of fields in this class.
-   */
+  public String getEnclosingInternalName() {
+    return enclosingInternalName;
+  }
+
+  public String getEnclosingMethodDesc() {
+    return enclosingMethodDesc;
+  }
+
+  public String getEnclosingMethodName() {
+    return enclosingMethodName;
+  }
+
   public List<CollectFieldData> getFields() {
     return fields;
   }
@@ -193,64 +195,28 @@ public class CollectClassData extends EmptyVisitor {
   /**
    * @return an array of internal names of interfaces implemented by this class.
    */
-  public String[] getInterfaces() {
-    return interfaces;
+  public String[] getInterfaceInternalNames() {
+    return interfaceInternalNames;
   }
 
-  /**
-   * @return the methods
-   */
+  public String getInternalName() {
+    return internalName;
+  }
+
   public List<CollectMethodData> getMethods() {
     return methods;
   }
 
-  /**
-   * @return the name
-   */
-  public String getName() {
-    return name;
-  }
-
-  /**
-   * @return the outerClass
-   */
-  public String getOuterClass() {
-    return outerClass;
-  }
-
-  /**
-   * @return the outerMethodDesc
-   */
-  public String getOuterMethodDesc() {
-    return outerMethodDesc;
-  }
-
-  /**
-   * @return the outerMethodName
-   */
-  public String getOuterMethodName() {
-    return outerMethodName;
-  }
-
-  /**
-   * @return the signature
-   */
   public String getSignature() {
     return signature;
   }
 
-  /**
-   * @return the source
-   */
   public String getSource() {
     return source;
   }
 
-  /**
-   * @return the superName
-   */
-  public String getSuperName() {
-    return superName;
+  public String getSuperInternalName() {
+    return superInternalName;
   }
 
   /**
@@ -270,7 +236,7 @@ public class CollectClassData extends EmptyVisitor {
 
   @Override
   public String toString() {
-    return "class " + name;
+    return "class " + internalName;
   }
 
   /**
@@ -278,20 +244,20 @@ public class CollectClassData extends EmptyVisitor {
    *
    * @param version classfile version (ie, Opcodes.V1_5 etc)
    * @param access access flags (ie, bitwise or of Opcodes.ACC_*)
-   * @param name internal name of this class (ie, com/google/Foo)
+   * @param internalName internal name of this class (ie, com/google/Foo)
    * @param signature generic signature or null
-   * @param superName binary name of superclass (ie, java/lang/Object)
-   * @param interfaces array of binary names of implemented interfaces
+   * @param superInternalName internal name of superclass (ie, java/lang/Object)
+   * @param interfaces array of internal names of implemented interfaces
    */
   @Override
-  public void visit(int version, int access, String name, String signature,
-      String superName, String[] interfaces) {
+  public void visit(int version, int access, String internalName, String signature,
+      String superInternalName, String[] interfaces) {
     this.access = access;
-    assert Name.isInternalName(name);
-    this.name = name;
+    assert Name.isInternalName(internalName);
+    this.internalName = internalName;
     this.signature = signature;
-    this.superName = superName;
-    this.interfaces = interfaces;
+    this.superInternalName = superInternalName;
+    this.interfaceInternalNames = interfaces;
   }
 
   @Override
@@ -330,21 +296,21 @@ public class CollectClassData extends EmptyVisitor {
   /**
    * Called once for every inner class of this class.
    *
-   * @param name internal name of inner class (ie, com/google/Foo$1)
-   * @param outerName internal name of enclosing class (null if not a member
+   * @param internalName internal name of inner class (ie, com/google/Foo$1)
+   * @param enclosingInternalName internal name of enclosing class (null if not a member
    *          class or anonymous)
    * @param innerName simple name of the inner class (null if anonymous)
    * @param access access flags (bitwise or of Opcodes.ACC_*) as declared in the
    *          enclosing class
    */
   @Override
-  public void visitInnerClass(String name, String outerName, String innerName,
+  public void visitInnerClass(String internalName, String enclosingInternalName, String innerName,
       int access) {
     // If this inner class is ourselves, merge the access flags, since
     // static, for example, only appears in the InnerClass attribute.
-    if (this.name.equals(name)) {
-      if (outerName != null) {
-        outerClass = outerName;
+    if (this.internalName.equals(internalName)) {
+      if (enclosingInternalName != null) {
+        this.enclosingInternalName = enclosingInternalName;
       }
       // TODO(jat): should we only pull in a subset of these flags? Use only
       // these flags, or what? For now, just grab ACC_STATIC and ACC_PRIVATE
@@ -384,10 +350,11 @@ public class CollectClassData extends EmptyVisitor {
   }
 
   @Override
-  public void visitOuterClass(String owner, String name, String desc) {
-    this.outerClass = owner;
-    this.outerMethodName = name;
-    this.outerMethodDesc = desc;
+  public void visitOuterClass(
+      String enclosingInternalName, String enclosingMethodName, String enclosingMethodDesc) {
+    this.enclosingInternalName = enclosingInternalName;
+    this.enclosingMethodName = enclosingMethodName;
+    this.enclosingMethodDesc = enclosingMethodDesc;
     classType = ClassType.Anonymous; // Could be Local, catch that later
   }
 

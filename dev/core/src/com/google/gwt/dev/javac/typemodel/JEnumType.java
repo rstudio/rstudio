@@ -26,8 +26,8 @@ public class JEnumType extends JRealClassType implements
   private JEnumConstant[] lazyEnumConstants;
 
   JEnumType(TypeOracle oracle, JPackage declaringPackage,
-      String enclosingTypeName, String name) {
-    super(oracle, declaringPackage, enclosingTypeName, name, false);
+      String enclosingSimpleName, String simpleName) {
+    super(oracle, declaringPackage, enclosingSimpleName, simpleName, false);
   }
 
   /**

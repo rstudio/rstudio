@@ -210,7 +210,7 @@ public abstract class TypeOracleUpdaterTestBase extends TestCase {
       String packageName = Shared.getPackageName(aClass.getName());
       TypeData newData =
           new TypeData(packageName, aClass.getSimpleName(), aClass.getName().replace(".", "/"),
-              null, getByteCode(aClass), System.currentTimeMillis());
+              getByteCode(aClass), System.currentTimeMillis());
       results.add(newData);
       Class<?>[] subclasses = aClass.getDeclaredClasses();
       for (Class<?> subclass : subclasses) {

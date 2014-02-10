@@ -133,10 +133,10 @@ public class CollectClassDataTest extends AsmTestCase {
         & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Nested, cd.getClassType());
     assertEquals(0, cd.getFields().size());
-    assertEquals(0, cd.getInterfaces().length);
+    assertEquals(0, cd.getInterfaceInternalNames().length);
     assertEquals(0, cd.getAnnotations().size());
     assertEquals("com/google/gwt/dev/javac/asmbridge/EmptyVisitor",
-        cd.getSuperName());
+        cd.getSuperInternalName());
 
     List<CollectMethodData> methods = cd.getMethods();
     assertEquals(2, methods.size());
@@ -198,7 +198,7 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals("Lcom/google/gwt/dev/javac/typemodel/test/TestAnnotation;",
         annotation.getDesc());
     assertEquals("field", annotation.getValues().get("value"));
-    assertEquals(0, cd.getInterfaces().length);
+    assertEquals(0, cd.getInterfaceInternalNames().length);
     annotations = cd.getAnnotations();
     assertEquals(1, annotations.size());
     annotation = annotations.get(0).getAnnotation();
@@ -207,7 +207,7 @@ public class CollectClassDataTest extends AsmTestCase {
         annotation.getDesc());
     assertEquals(Byte.valueOf((byte) 42), annotation.getValues().get("b"));
     assertEquals(42, annotation.getValues().get("i"));
-    assertEquals("java/lang/Object", cd.getSuperName());
+    assertEquals("java/lang/Object", cd.getSuperInternalName());
 
     List<CollectMethodData> methods = cd.getMethods();
     assertEquals(3, methods.size());
@@ -264,7 +264,7 @@ public class CollectClassDataTest extends AsmTestCase {
     // Don't check for super bit, as it will depend on the JDK used to compile.
     assertEquals(0, cd.getAccess() & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Local, cd.getClassType());
-    assertEquals("methodWithLocal", cd.getOuterMethodName());
+    assertEquals("methodWithLocal", cd.getEnclosingMethodName());
   }
 
   public void testLocalStatic() {
@@ -272,7 +272,7 @@ public class CollectClassDataTest extends AsmTestCase {
     // Don't check for super bit, as it will depend on the JDK used to compile.
     assertEquals(0, cd.getAccess() & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Local, cd.getClassType());
-    assertEquals("methodWithLocalStatic", cd.getOuterMethodName());
+    assertEquals("methodWithLocalStatic", cd.getEnclosingMethodName());
   }
 
   // See http://code.google.com/p/google-web-toolkit/issues/detail?id=6591

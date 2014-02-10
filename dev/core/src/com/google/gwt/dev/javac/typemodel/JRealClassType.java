@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -56,11 +56,20 @@ public class JRealClassType extends JClassType implements
 
   private int modifierBits;
 
-  private final String name;
+  /**
+   * The name of the class with no package prefix or enclosing class name.
+   */
+  private final String simpleName;
 
-  private final String nestedName;
+  /**
+   * The name of the class with no package prefix but including enclosing class name if there is
+   * one.<br />
+   *
+   * Like Foo, or Foo.Bar.
+   */
+  private final String nestedSourceName;
 
-  private final TypeOracle oracle;
+  private final TypeOracle typeOracle;
 
   private JClassType superclass;
 
@@ -68,37 +77,34 @@ public class JRealClassType extends JClassType implements
 
   /**
    * Create a class type that reflects an actual type.
-   * 
-   * @param oracle
+   *
+   * @param typeOracle to register oneself into
    * @param declaringPackage
-   * @param enclosingTypeName the fully qualified source name of the enclosing
+   * @param enclosingSimpleName the short name of the enclosing
    *          class or null if a top-level class - setEnclosingType must be
    *          called later with the proper enclosing type if this is non-null
-   * @param name
+   * @param simpleName the short name
    * @param isInterface
    */
-  JRealClassType(TypeOracle oracle, JPackage declaringPackage, String enclosingTypeName,
-      String name, boolean isInterface) {
-    this.oracle = oracle;
+  JRealClassType(TypeOracle typeOracle, JPackage declaringPackage, String enclosingSimpleName,
+      String simpleName, boolean isInterface) {
+    this.typeOracle = typeOracle;
     this.declaringPackage = declaringPackage;
-    this.name = StringInterner.get().intern(name);
+    this.simpleName = StringInterner.get().intern(simpleName);
     this.isInterface = isInterface;
-    if (enclosingTypeName == null) {
+    if (enclosingSimpleName == null) {
       // Add myself to my package.
-      //
       declaringPackage.addType(this);
       // The nested name of a top-level class is its simple name.
-      //
-      nestedName = name;
+      nestedSourceName = simpleName;
     } else {
       // Compute my "nested name".
-      //
-      nestedName = enclosingTypeName + "." + name;
+      nestedSourceName = enclosingSimpleName + "." + simpleName;
 
       // We will add ourselves to the enclosing class when it is set in
       // setEnclosingType().
     }
-    oracle.addNewType(this);
+    typeOracle.addNewType(this);
   }
 
   public void addLastModifiedTime(long lastModifiedTime) {
@@ -187,7 +193,7 @@ public class JRealClassType extends JClassType implements
 
   @Override
   public String getJNISignature() {
-    String typeName = nestedName.replace('.', '$');
+    String typeName = nestedSourceName.replace('.', '$');
     String packageName = getPackage().getName().replace('.', '/');
     if (packageName.length() > 0) {
       packageName += "/";
@@ -212,7 +218,7 @@ public class JRealClassType extends JClassType implements
 
   @Override
   public String getName() {
-    return nestedName;
+    return nestedSourceName;
   }
 
   @Override
@@ -227,7 +233,7 @@ public class JRealClassType extends JClassType implements
 
   @Override
   public TypeOracle getOracle() {
-    return oracle;
+    return typeOracle;
   }
 
   @Override
@@ -253,7 +259,7 @@ public class JRealClassType extends JClassType implements
       if (!pkg.isDefault()) {
         lazyQualifiedBinaryName = pkg.getName() + ".";
       }
-      lazyQualifiedBinaryName += nestedName.replace('.', '$');
+      lazyQualifiedBinaryName += nestedSourceName.replace('.', '$');
     }
     return lazyQualifiedBinaryName;
   }
@@ -263,9 +269,9 @@ public class JRealClassType extends JClassType implements
     if (lazyQualifiedName == null) {
       JPackage pkg = getPackage();
       if (!pkg.isDefault()) {
-        lazyQualifiedName = pkg.getName() + "." + nestedName;
+        lazyQualifiedName = pkg.getName() + "." + nestedSourceName;
       } else {
-        lazyQualifiedName = nestedName;
+        lazyQualifiedName = nestedSourceName;
       }
       lazyQualifiedName = StringInterner.get().intern(lazyQualifiedName);
     }
@@ -274,7 +280,7 @@ public class JRealClassType extends JClassType implements
 
   @Override
   public String getSimpleSourceName() {
-    return name;
+    return simpleName;
   }
 
   @Override
@@ -316,7 +322,7 @@ public class JRealClassType extends JClassType implements
    * <li>have either no constructors or a parameterless constructor, and</li>
    * <li>be a top-level class or a static nested class.</li>
    * </ul>
-   * 
+   *
    * @return <code>true</code> if the type is default instantiable, or
    *         <code>false</code> otherwise
    */
@@ -360,7 +366,7 @@ public class JRealClassType extends JClassType implements
 
   /**
    * Tests if this type is contained within another type.
-   * 
+   *
    * @return true if this type has an enclosing type, false if this type is a
    *         top-level type
    */
@@ -463,7 +469,7 @@ public class JRealClassType extends JClassType implements
    * type is a class, its own methods are not added. If this type is an
    * interface, its own methods are added. Used internally by
    * {@link #getOverridableMethods()}.
-   * 
+   *
    * @param methodsBySignature
    */
   @Override

@@ -39,9 +39,9 @@ public interface Resolver {
 
   void addThrows(JAbstractMethod method, JClassType exception);
 
-  Map<String, JRealClassType> getInternalMapper();
-
   TypeOracle getTypeOracle();
+
+  Map<String, JRealClassType> getTypesByInternalName();
 
   JMethod newMethod(JClassType type, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -39,7 +39,7 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * over those found in the superinterface hierarchy. Note that the annotation
    * does not need to be tagged with {@code @Inherited} in order to be returned
    * from the superclass chain.
-   * 
+   *
    * @param annotationType the type of the annotation to look for
    * @return the desired annotation or <code>null</code> if the annotation is
    *         not present in the type's type hierarchy
@@ -89,10 +89,10 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * those found in superclasses and superinterfaces. A method is inheritable if
    * its accessibility is <code>public</code>, <code>protected</code>, or
    * package protected.
-   * 
+   *
    * This method offers a convenient way for Generators to find candidate
    * methods to call from a subclass.
-   * 
+   *
    * @return an array of {@link JMethod} objects representing inheritable
    *         methods
    */
@@ -108,8 +108,9 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
 
   /**
    * If an array, returns the name of this class without the package name or
-   * enclosing class name, followed by multiple pairs of square brackets;
-   * if not, returns the nested name of this type, without the package name.
+   * enclosing class name, followed by multiple pairs of square brackets; if
+   * not, returns the nested name of this type (like Foo or Foo.Bar),
+   * without the package name.
    */
   String getName();
 
@@ -131,14 +132,14 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * those found in superclasses and superinterfaces. A method is overridable if
    * it is not <code>final</code> and its accessibility is <code>public</code>,
    * <code>protected</code>, or package protected.
-   * 
+   *
    * Deferred binding generators often need to generate method implementations;
    * this method offers a convenient way to find candidate methods to implement.
-   * 
+   *
    * Note that the behavior does not match
    * {@link Class#getMethod(String, Class[])}, which does not return the most
    * derived method in some cases.
-   * 
+   *
    * @return an array of {@link JMethod} objects representing overridable
    *         methods
    */
@@ -161,11 +162,11 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
   /**
    * Returns <code>true</code> if this {@link JClassType} is assignable from the
    * specified {@link JClassType} parameter.
-   * 
+   *
    * @param possibleSubtype possible subtype of this {@link JClassType}
    * @return <code>true</code> if this {@link JClassType} is assignable from the
    *         specified {@link JClassType} parameter
-   * 
+   *
    * @throws NullPointerException if <code>possibleSubtype</code> is
    *           <code>null</code>
    */
@@ -174,11 +175,11 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
   /**
    * Returns <code>true</code> if this {@link JClassType} is assignable to the
    * specified {@link JClassType} parameter.
-   * 
+   *
    * @param possibleSupertype possible supertype of this {@link JClassType}
    * @return <code>true</code> if this {@link JClassType} is assignable to the
    *         specified {@link JClassType} parameter
-   * 
+   *
    * @throws NullPointerException if <code>possibleSupertype</code> is
    *           <code>null</code>
    */
@@ -192,7 +193,7 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * <li>have either no constructors or a parameterless constructor, and</li>
    * <li>be a top-level class or a static nested class.</li>
    * </ul>
-   * 
+   *
    * @return <code>true</code> if the type is default instantiable, or
    *         <code>false</code> otherwise
    */
@@ -201,7 +202,7 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
   /**
    * Returns true if the type may be enhanced on the server to contain extra
    * fields that are unknown to client code.
-   * 
+   *
    * @return <code>true</code> if the type might be enhanced on the server
    */
   boolean isEnhanced();
@@ -216,7 +217,7 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
 
   /**
    * Tests if this type is contained within another type.
-   * 
+   *
    * @return true if this type has an enclosing type, false if this type is a
    *         top-level type
    */
@@ -233,7 +234,7 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
   /**
    * Indicates that the type may be enhanced on the server to contain extra
    * fields that are unknown to client code.
-   * 
+   *
    * TODO(rice): find a better way to do this.
    */
   void setEnhanced();

@@ -34,6 +34,7 @@ import com.google.gwt.dev.javac.typemodel.JPackage;
 import com.google.gwt.dev.javac.typemodel.JRealClassType;
 import com.google.gwt.dev.javac.typemodel.JTypeParameter;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
+import com.google.gwt.dev.util.Name.BinaryName;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -90,8 +91,8 @@ public class ResolveGenericsTest extends AsmTestCase {
     }
 
     @Override
-    public Map<String, JRealClassType> getInternalMapper() {
-      return delegate.getInternalMapper();
+    public Map<String, JRealClassType> getTypesByInternalName() {
+      return delegate.getTypesByInternalName();
     }
 
     @Override
@@ -208,9 +209,8 @@ public class ResolveGenericsTest extends AsmTestCase {
         "dispatch", TestHandler.class);
     for (JClassType type : oracle.getTypes()) {
       if (type instanceof JRealClassType) {
-        typeOracleUpdater.getInternalMapper().put(
-            type.getQualifiedBinaryName().replace('.', '/'),
-            (JRealClassType) type);
+        typeOracleUpdater.getTypesByInternalName().put(
+            BinaryName.toInternalName(type.getQualifiedBinaryName()), (JRealClassType) type);
       }
     }
   }
@@ -301,11 +301,11 @@ public class ResolveGenericsTest extends AsmTestCase {
   }
 
   private void resolveClassSignature(JRealClassType type, String signature) {
-    Map<String, JRealClassType> internalMapper = resolver.getInternalMapper();
+    Map<String, JRealClassType> typesByInternalName = resolver.getTypesByInternalName();
     TypeParameterLookup lookup = new TypeParameterLookup();
     lookup.pushEnclosingScopes(type);
     ResolveClassSignature classResolver =
-        new ResolveClassSignature(resolver, internalMapper, failTreeLogger, type, lookup);
+        new ResolveClassSignature(resolver, typesByInternalName, failTreeLogger, type, lookup);
     new SignatureReader(signature).accept(classResolver);
     classResolver.finish();
   }
