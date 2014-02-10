@@ -17,9 +17,11 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -47,7 +49,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected void initToolbar (Toolbar toolbar, Commands commands)
    {
-      fileLabel_ = new Label();
+      toolbar.addLeftWidget(new ToolbarLabel("Viewing: "));
+      fileLabel_ = new ToolbarLabel();
+      fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(fileLabel_);
    }
    
@@ -59,6 +63,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       return frame;
    }
    
+   @Override
+   protected String openCommandText()
+   {
+      return "Open File";
+   }
+
    private Label fileLabel_;
    private RMarkdownServerOperations server_;
 }

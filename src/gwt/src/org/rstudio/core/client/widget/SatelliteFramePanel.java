@@ -44,7 +44,7 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    {
       Toolbar toolbar = new Toolbar();
       ToolbarButton popout = commands_.viewerPopout().createToolbarButton();
-      popout.setText("Open in Browser");
+      popout.setText(openCommandText());
       toolbar.addRightWidget(popout);
       return toolbar;
    }
@@ -71,6 +71,7 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    
    protected abstract void initToolbar(Toolbar toolbar, Commands commands);
    protected abstract T createFrame(String url);
+   protected abstract String openCommandText();
 
    private final Commands commands_;
 

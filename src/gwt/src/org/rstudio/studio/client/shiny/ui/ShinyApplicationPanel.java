@@ -114,6 +114,12 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    {
       return new RStudioFrame(url);
    }
+
+   @Override
+   protected String openCommandText()
+   {
+      return "Open in Browser";
+   }
    
    private Label urlBox_;
    private ShinyApplicationParams appParams_;

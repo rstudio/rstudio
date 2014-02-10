@@ -48,6 +48,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
       super(outputFactory.create("Knit", 
                                  "View the R Markdown render log"));
       view_ = (CompileOutputPaneDisplay) getView();
+      view_.setHasLogs(false);
       server_ = server;
 
       view_.stopButton().addClickHandler(new ClickHandler() {

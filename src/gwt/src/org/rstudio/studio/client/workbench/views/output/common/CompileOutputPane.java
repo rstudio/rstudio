@@ -60,14 +60,17 @@ public class CompileOutputPane extends WorkbenchPane
       fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       
       ImageResource showLogImage = StandardIcons.INSTANCE.show_log();
-      showLogButton_ = new ToolbarButton("View Log", 
-                                         showLogImage, 
-                                         (ClickHandler) null);
-      showLogButton_.getElement().getStyle().setMarginBottom(3, Unit.PX);
-      showLogButton_.setTitle(logTitle_);
-      showLogSeparator_ = toolbar.addLeftSeparator();
-      setShowLogVisible(false);
-      toolbar.addLeftWidget(showLogButton_);
+      if (hasLogs_)
+      {
+         showLogButton_ = new ToolbarButton("View Log", 
+                                            showLogImage, 
+                                            (ClickHandler) null);
+         showLogButton_.getElement().getStyle().setMarginBottom(3, Unit.PX);
+         showLogButton_.setTitle(logTitle_);
+         showLogSeparator_ = toolbar.addLeftSeparator();
+         setShowLogVisible(false);
+         toolbar.addLeftWidget(showLogButton_);
+      }
       
       compilePanel_.connectToolbar(toolbar);
      
@@ -154,8 +157,17 @@ public class CompileOutputPane extends WorkbenchPane
       return compilePanel_.errorList();
    }
    
+   @Override
+   public void setHasLogs(boolean logs)
+   {
+      hasLogs_ = logs;
+   }
+
    private void setShowLogVisible(boolean visible)
    {
+      if (!hasLogs_)
+         return;
+
       showLogSeparator_.setVisible(visible);
       showLogButton_.setVisible(visible);
    }
@@ -166,4 +178,5 @@ public class CompileOutputPane extends WorkbenchPane
    
    private CompilePanel compilePanel_;
    private String logTitle_;
+   private boolean hasLogs_ = true;
 }

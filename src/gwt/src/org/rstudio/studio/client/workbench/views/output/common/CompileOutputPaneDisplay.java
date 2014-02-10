@@ -36,4 +36,5 @@ public interface CompileOutputPaneDisplay extends WorkbenchView, HasEnsureHidden
    HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
    boolean isEffectivelyVisible();
    void scrollToBottom();
+   void setHasLogs(boolean logs);
 }
