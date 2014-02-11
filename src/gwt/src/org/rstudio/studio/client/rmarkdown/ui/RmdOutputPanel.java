@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
@@ -24,7 +26,7 @@ import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
-import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
@@ -39,11 +41,14 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    }
    
    @Override
-   public void showOutput(RmdRenderResult result)
+   public void showOutput(RmdPreviewParams params, boolean refresh)
    {
-      result_ = result;
-      fileLabel_.setText(result.getOutputFile());
-      showUrl(server_.getApplicationURL(result.getOutputUrl()));
+      params_ = params;
+      fileLabel_.setText(params.getOutputFile());
+      // when refreshing, reapply the current scroll position 
+      scrollPosition_ = refresh ? 
+            getScrollPosition() : params.getScrollPosition();
+      showUrl(server_.getApplicationURL(params.getOutputUrl()));
    }
    
    @Override
@@ -63,13 +68,24 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    {
       AnchorableFrame frame = new AnchorableFrame();
       frame.navigate(url);
+      frame.addLoadHandler(new LoadHandler()
+      {
+         @Override
+         public void onLoad(LoadEvent event)
+         {
+            getFrame().getIFrame().getContentDocument().setScrollTop(
+                  scrollPosition_);
+         }
+      });
       return frame;
    }
    
    @Override
    public void refresh()
    {
-      showUrl(server_.getApplicationURL(result_.getOutputUrl()));
+      // cache the scroll position, so we can re-apply it when the page loads
+      scrollPosition_ = getScrollPosition();
+      showUrl(server_.getApplicationURL(params_.getOutputUrl()));
    }
 
    @Override
@@ -78,7 +94,14 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       return "Open File";
    }
 
+   @Override
+   public int getScrollPosition()
+   {
+      return getFrame().getIFrame().getContentDocument().getScrollTop();
+   }
+
    private Label fileLabel_;
    private RMarkdownServerOperations server_;
-   private RmdRenderResult result_;
+   private RmdPreviewParams params_;
+   private int scrollPosition_ = 0;
 }

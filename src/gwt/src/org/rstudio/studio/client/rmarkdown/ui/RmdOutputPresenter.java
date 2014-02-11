@@ -18,9 +18,10 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -33,7 +34,8 @@ public class RmdOutputPresenter implements IsWidget
 
    public interface Display extends IsWidget
    {
-      void showOutput(RmdRenderResult result);
+      void showOutput(RmdPreviewParams params, boolean refresh);
+      int getScrollPosition();
       void refresh();
    }
    
@@ -48,6 +50,8 @@ public class RmdOutputPresenter implements IsWidget
       globalDisplay_ = globalDisplay;
       
       binder.bind(commands, this);  
+      
+      initializeEvents();
    }     
 
    @Override
@@ -59,7 +63,7 @@ public class RmdOutputPresenter implements IsWidget
    @Handler
    public void onViewerPopout()
    {
-      globalDisplay_.showHtmlFile(result_.getOutputFile());
+      globalDisplay_.showHtmlFile(params_.getOutputFile());
    }
    
    @Handler
@@ -68,14 +72,37 @@ public class RmdOutputPresenter implements IsWidget
       view_.refresh();
    }
 
-   public void showOutput(RmdRenderResult result) 
+   public void showOutput(RmdPreviewParams params) 
    {
-      result_ = result;
-      view_.showOutput(result);
+      // detect whether we're really doing a refresh
+      boolean refresh = params_ != null && 
+            params_.getOutputFile().equals(params.getOutputFile());
+      params_ = params;
+      view_.showOutput(params, refresh);
    }
    
+   private native void initializeEvents() /*-{  
+      var thiz = this;   
+      $wnd.addEventListener(
+            "unload",
+            $entry(function() {
+               thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter::onClose()();
+            }),
+            true);
+   }-*/;
+   
+   private void onClose() 
+   {
+      params_.setScrollPosition(view_.getScrollPosition());
+      notifyRmdOutputClosed(params_);
+   }
+   
+   private final native void notifyRmdOutputClosed(JavaScriptObject params) /*-{
+      $wnd.opener.notifyRmdOutputClosed(params);
+   }-*/;
+
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    
-   private RmdRenderResult result_;
+   private RmdPreviewParams params_;
 }

@@ -14,13 +14,19 @@
  */
 package org.rstudio.studio.client.rmarkdown;
 
+import java.util.Map;
+import java.util.HashMap;
+
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -41,18 +47,50 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
 
       binder.bind(commands, this);
+      
+      exportRmdOutputClosedCallback();
    }
    
    @Override
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
-      if (event.getResult().getSucceeded())
+      RmdRenderResult result = event.getResult();
+      if (result.getSucceeded())
       {
+         // use the current scroll position for this file, if available
+         int scrollPosition = 0;
+         if (scrollPositions_.containsKey(result.getOutputFile()))
+         {
+            scrollPosition = scrollPositions_.get(result.getOutputFile());
+         }
+         RmdPreviewParams params = RmdPreviewParams.create(
+               result, scrollPosition);
          satelliteManager_.openSatellite(RmdOutputSatellite.NAME,     
-                                         event.getResult(),
+                                         params,
                                          new Size(960,1100));   
       }
    }
+ 
+   private final native void exportRmdOutputClosedCallback()/*-{
+      var registry = this;     
+      $wnd.notifyRmdOutputClosed = $entry(
+         function(params) {
+            registry.@org.rstudio.studio.client.rmarkdown.RmdOutput::notifyRmdOutputClosed(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
+         }
+      ); 
+   }-*/;
    
+   // when the window is closed, remember our position within it
+   private void notifyRmdOutputClosed(JavaScriptObject closeParams)
+   {
+      RmdPreviewParams params = closeParams.cast();
+      scrollPositions_.put(params.getOutputFile(), params.getScrollPosition());
+   }
+
    private final SatelliteManager satelliteManager_;
+
+   // stores the last scroll position of each document we know about: map
+   // of path to position
+   private final Map<String, Integer> scrollPositions_ = 
+         new HashMap<String, Integer>();
 }

@@ -26,7 +26,7 @@ import com.google.inject.Singleton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.RmdOutputView;
-import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 @Singleton
@@ -46,7 +46,7 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
       presenter_ = pPresenter_.get();
-      showRenderResult((RmdRenderResult) params.cast());
+      showRenderResult((RmdPreviewParams) params.cast());
       
       // make it fill the containing layout panel
       Widget presWidget = presenter_.asWidget();
@@ -58,7 +58,7 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
    @Override
    public void reactivate(JavaScriptObject params)
    {
-      showRenderResult((RmdRenderResult) params.cast());
+      showRenderResult((RmdPreviewParams) params.cast());
    }
    
    @Override 
@@ -67,10 +67,10 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
       return this;
    }
    
-   private void showRenderResult(RmdRenderResult result)
+   private void showRenderResult(RmdPreviewParams params)
    {
-      Window.setTitle(result.getOutputFile());
-      presenter_.showOutput(result);
+      Window.setTitle(params.getOutputFile());
+      presenter_.showOutput(params);
    }
    
    private Provider<RmdOutputPresenter> pPresenter_;
