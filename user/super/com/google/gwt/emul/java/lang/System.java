@@ -152,12 +152,16 @@ public final class System {
   private static native void nativeArraycopy(
       Object src, int srcOfs, Object dest, int destOfs, int len) /*-{
     // Work around function.prototype.apply call stack size limits.
-    // Performance: http://jsperf.com/java-system-arraycopy
-    var toCopy = src.slice(srcOfs, srcOfs + len);
-    for (var batchStart = 0, end = len; batchStart < end;) { // increment in block
+    // Performance: http://jsperf.com/java-system-arraycopy/2
+    if (src === dest) {
+      // copying to the same array, make a copy first
+      src = src.slice(srcOfs, srcOfs + len);
+      srcOfs = 0;
+    }
+    for (var batchStart = srcOfs, end = srcOfs + len; batchStart < end;) { // increment in block
       var batchEnd = Math.min(batchStart + 10000, end);
       len = batchEnd - batchStart;
-      Array.prototype.splice.apply(dest, [destOfs, len].concat(toCopy.slice(batchStart, batchEnd)));
+      Array.prototype.splice.apply(dest, [destOfs, len].concat(src.slice(batchStart, batchEnd)));
       batchStart = batchEnd;
       destOfs += len;
     }
