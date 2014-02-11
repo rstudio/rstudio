@@ -45,13 +45,11 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
-      RmdRenderResult result = params.cast();
-      Window.setTitle(result.getOutputFile());
-      RmdOutputPresenter appPresenter = pPresenter_.get();
-      appPresenter.showOutput(result);
+      presenter_ = pPresenter_.get();
+      showRenderResult((RmdRenderResult) params.cast());
       
       // make it fill the containing layout panel
-      Widget presWidget = appPresenter.asWidget();
+      Widget presWidget = presenter_.asWidget();
       mainPanel.add(presWidget);
       mainPanel.setWidgetLeftRight(presWidget, 0, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetTopBottom(presWidget, 0, Unit.PX, 0, Unit.PX);
@@ -60,6 +58,7 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
    @Override
    public void reactivate(JavaScriptObject params)
    {
+      showRenderResult((RmdRenderResult) params.cast());
    }
    
    @Override 
@@ -68,5 +67,12 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
       return this;
    }
    
+   private void showRenderResult(RmdRenderResult result)
+   {
+      Window.setTitle(result.getOutputFile());
+      presenter_.showOutput(result);
+   }
+   
    private Provider<RmdOutputPresenter> pPresenter_;
+   private RmdOutputPresenter presenter_;
 }

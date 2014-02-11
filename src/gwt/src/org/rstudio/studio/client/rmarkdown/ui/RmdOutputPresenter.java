@@ -34,6 +34,7 @@ public class RmdOutputPresenter implements IsWidget
    public interface Display extends IsWidget
    {
       void showOutput(RmdRenderResult result);
+      void refresh();
    }
    
    @Inject
@@ -59,6 +60,12 @@ public class RmdOutputPresenter implements IsWidget
    public void onViewerPopout()
    {
       globalDisplay_.showHtmlFile(result_.getOutputFile());
+   }
+   
+   @Handler
+   public void onViewerRefresh()
+   {
+      view_.refresh();
    }
 
    public void showOutput(RmdRenderResult result) 

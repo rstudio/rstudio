@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
@@ -25,7 +26,6 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.common.FilePathUtils;
 
 public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                             implements RmdOutputPresenter.Display
@@ -41,8 +41,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    public void showOutput(RmdRenderResult result)
    {
-      fileLabel_.setText(
-            FilePathUtils.friendlyFileName(result.getOutputFile()));
+      result_ = result;
+      fileLabel_.setText(result.getOutputFile());
       showUrl(server_.getApplicationURL(result.getOutputUrl()));
    }
    
@@ -52,7 +52,10 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       toolbar.addLeftWidget(new ToolbarLabel("Viewing: "));
       fileLabel_ = new ToolbarLabel();
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
+      fileLabel_.getElement().getStyle().setMarginRight(7, Unit.PX);
       toolbar.addLeftWidget(fileLabel_);
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands.viewerRefresh().createToolbarButton());
    }
    
    @Override
@@ -64,6 +67,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    }
    
    @Override
+   public void refresh()
+   {
+      showUrl(server_.getApplicationURL(result_.getOutputUrl()));
+   }
+
+   @Override
    protected String openCommandText()
    {
       return "Open File";
@@ -71,4 +80,5 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
 
    private Label fileLabel_;
    private RMarkdownServerOperations server_;
+   private RmdRenderResult result_;
 }
