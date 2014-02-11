@@ -78,6 +78,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -2857,7 +2858,9 @@ public class TextEditingTarget implements
    @Handler
    void onPreviewHTML()
    {
-      if (fileType_.isRd())
+      if (extendedType_ == "rmarkdown")
+         renderRmd();
+      else if (fileType_.isRd())
          previewRd();
       else if (fileType_.isRpres())
          previewRpresentation();
@@ -2924,9 +2927,19 @@ public class TextEditingTarget implements
             previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());   
             events_.fireEvent(new ShowHelpEvent(previewURL)) ; 
          }
-         
       });
-     
+   }
+   
+   void renderRmd()
+   {
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            events_.fireEvent(new RenderRmdEvent(docUpdateSentinel_.getPath(),
+               docUpdateSentinel_.getEncoding()));
+         }
+      });
    }
    
    void previewHTML()

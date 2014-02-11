@@ -25,6 +25,11 @@ public abstract class BasePresenter implements IsWidget
       view_ = view;
    }
 
+   public WorkbenchView getView()
+   {
+      return view_;
+   }
+
    public Widget asWidget()
    {
       return (Widget) view_;
@@ -44,6 +49,6 @@ public abstract class BasePresenter implements IsWidget
    {
       view_.onSelected();
    }
-
+   
    private final WorkbenchView view_;
 }

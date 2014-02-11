@@ -3200,6 +3200,27 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void renderRmd(String file, String encoding,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1, new JSONString(encoding));
+      sendRequest(RPC_SCOPE,
+            RENDER_RMD,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void terminateRenderRmd(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            TERMINATE_RENDER_RMD,
+            requestCallback);
+   }
+            
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3483,4 +3504,7 @@ public class RemoteServer implements Server
    private static final String CONNECT_SHINYAPPS_ACCOUNT = "connect_shinyapps_account";
    private static final String GET_SHINYAPPS_APP_LIST = "get_shinyapps_app_list";
    private static final String GET_SHINYAPPS_DEPLOYMENTS = "get_shinyapps_deployments";
+
+   private static final String RENDER_RMD = "render_rmd";
+   private static final String TERMINATE_RENDER_RMD = "terminate_render_rmd";
 }

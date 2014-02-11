@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -76,7 +77,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    DebuggingServerOperations,
                                                    MetaServerOperations,
                                                    ViewerServerOperations,
-                                                   ProfilerServerOperations
+                                                   ProfilerServerOperations,
+                                                   RMarkdownServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

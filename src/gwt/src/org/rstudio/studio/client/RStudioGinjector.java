@@ -43,6 +43,7 @@ import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
+import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
@@ -99,6 +100,7 @@ public interface RStudioGinjector extends Ginjector
    ShinyApplicationSatellite getShinyApplicationSatellite();
    ShinyApplication getShinyApplication();
    ShinyViewerTypePopupMenu getShinyViewerTypePopupMenu();
+   RmdOutputSatellite getRmdOutputSatellite();
    EventBus getEventBus();
    GlobalDisplay getGlobalDisplay();
    RemoteFileSystemContext getRemoteFileSystemContext();
