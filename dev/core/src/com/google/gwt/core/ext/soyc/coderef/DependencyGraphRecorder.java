@@ -70,11 +70,11 @@ public class DependencyGraphRecorder extends DependencyRecorder {
   }
 
   protected String signatureFor(JMethod method) {
-    JMethod original = jProgram.staticImplFor(method);
-    if (original == null) { //method is the original
+    JMethod instanceMethod = jProgram.instanceMethodForStaticImpl(method);
+    if (instanceMethod == null) { //method is the instanceMethod
       return method.getSignature();
     }
-    return original.getSignature();
+    return instanceMethod.getSignature();
   }
 
   public MethodDescriptor methodDescriptorFrom(JMethod method) {

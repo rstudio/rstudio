@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -85,7 +85,7 @@ public class ControlFlowAnalyzer {
    * Marks as "referenced" any types, methods, and fields that are reachable.
    * Also marks as "instantiable" any classes and interfaces that can possibly
    * be instantiated.
-   * 
+   *
    * TODO(later): make RescueVisitor use less stack?
    */
   private class RescueVisitor extends JVisitor {
@@ -374,7 +374,7 @@ public class ControlFlowAnalyzer {
          * JRunAsync -> AsyncFragmentLoader.runAsync() -> callback.onSuccess().
          * This would completely defeat code splitting as all the code on the
          * other side of the barrier would become reachable.
-         * 
+         *
          * Code flow analysis is run separately on methods which implement
          * RunAsyncCallback.onSuccess() as top-level entry points.
          */
@@ -395,7 +395,7 @@ public class ControlFlowAnalyzer {
         return true;
       }
 
-      if (program.staticImplFor(method) != null) {
+      if (program.instanceMethodForStaticImpl(method) != null) {
         // CleanUpRefsVisitor does not prune these params, must rescue.
         return true;
       }
@@ -473,7 +473,7 @@ public class ControlFlowAnalyzer {
          * Because we're not currently tracking methods through JSNI, we need to
          * assume that it's not safe to prune parameters of a method referenced
          * as such.
-         * 
+         *
          * A better solution would be to perform basic escape analysis to ensure
          * that the function reference never escapes, or at minimum, ensure that
          * the method is immediately called after retrieving the method
@@ -534,7 +534,7 @@ public class ControlFlowAnalyzer {
      * JS object into Java code. If any point in the program can pass a value
      * from JS into Java which could potentially be cast to JavaScriptObject, we
      * must rescue JavaScriptObject.
-     * 
+     *
      * @param type The type of the value passing from Java to JavaScript.
      * @see com.google.gwt.core.client.JavaScriptObject
      */
@@ -659,11 +659,11 @@ public class ControlFlowAnalyzer {
              * enclosing class. That would pull in the clinit of that class,
              * which has initializers for all the class literals, which in turn
              * have all of the strings of all of the class names.
-             * 
+             *
              * This work is done in rescue() to allow JSNI references to class
              * literals (via the @Foo::class syntax) to correctly rescue class
              * literal initializers.
-             * 
+             *
              * TODO: Model ClassLiteral access a different way to avoid special
              * handling. See
              *  Pruner.transformToNullFieldRef()/transformToNullMethodCall().
@@ -737,7 +737,7 @@ public class ControlFlowAnalyzer {
         /*
          * Any reference types (except String, which works by default) that take
          * part in a concat must rescue java.lang.Object.toString().
-         * 
+         *
          * TODO: can we narrow the focus by walking up the type hierarchy or
          * doing explicit toString calls?
          */

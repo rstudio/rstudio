@@ -181,7 +181,7 @@ public final class Class<T> implements Type {
    * > 0 =>  type is instantiable class
    * < 0 => type is instantiable array
    * null => type is not instantiable
-   * string => type is primitive
+   * string => type is primitive.
    */
   static void setName(Class<?> clazz, String packageName, String className,
       int seedId) {
