@@ -367,6 +367,7 @@ public class Pruner {
           // Never prune clinit directly out of the class.
           if (i > 0) {
             type.removeMethod(i);
+            program.removeStaticImplMapping(method);
             madeChanges();
             --i;
           }
@@ -399,6 +400,7 @@ public class Pruner {
         // all other interface methods are instance and abstract
         if (!isInstantiated || !referencedNonTypes.contains(method)) {
           type.removeMethod(i);
+          assert program.instanceMethodForStaticImpl(method) == null;
           madeChanges();
           --i;
         }
@@ -432,9 +434,10 @@ public class Pruner {
          * 
          * TODO: prune params; MakeCallsStatic smarter to account for it.
          */
-        JMethod staticImplFor = program.staticImplFor(x);
+        JMethod instanceMethod = program.instanceMethodForStaticImpl(x);
         // Unless the instance method has already been pruned, of course.
-        if (saveCodeGenTypes && staticImplFor != null && referencedNonTypes.contains(staticImplFor)) {
+        if (saveCodeGenTypes && instanceMethod != null &&
+            referencedNonTypes.contains(instanceMethod)) {
           // instance method is still live
           return true;
         }
