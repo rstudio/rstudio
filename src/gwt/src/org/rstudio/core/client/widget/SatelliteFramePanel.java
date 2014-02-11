@@ -15,6 +15,8 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 
@@ -57,7 +59,7 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
          appFrame_ = null;
       }
       
-      appFrame_ = createFrame(url);
+      appFrame_ = createAppFrame(url);
       appFrame_.setSize("100%", "100%");
       rootPanel_.add(appFrame_);
       rootPanel_.setWidgetLeftRight(appFrame_,  0, Unit.PX, 0, Unit.PX);
@@ -67,6 +69,20 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    protected T getFrame()
    {
       return appFrame_;
+   }
+   
+   private T createAppFrame(String url)
+   {
+      T frame = createFrame(url);
+      frame.addLoadHandler(new LoadHandler()
+      {
+         @Override
+         public void onLoad(LoadEvent event)
+         {
+            appFrame_.getIFrame().focus();
+         }
+      });
+      return frame;
    }
    
    protected abstract void initToolbar(Toolbar toolbar, Commands commands);
