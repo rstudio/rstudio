@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
@@ -27,7 +28,9 @@ import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
@@ -64,13 +67,34 @@ public class RenderRmdOutputPresenter extends BasePresenter
    
    public void initialize()
    {
-      // TODO: Set initial state
    }
 
-   public void confirmClose(Command onConfirmed)
+   public void confirmClose(final Command onConfirmed)
    {
-      // TODO: Prompt for confirmation if necessary
-      onConfirmed.execute();
+      // if we're in the middle of rendering, presume that the user might be
+      // trying to end the render by closing the tabl.
+      if (renderRunning_)
+      {
+        globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
+              "Terminate Knit", 
+              "The knit for '" + targetFile_ + "' is in progress. Do you " +
+              "want to close the tab and stop the knit?", false, 
+              new Operation()
+              {
+                 @Override
+                 public void execute()
+                 {
+                    // Close the tab immediately and terminate the knit
+                    // asynchronously
+                    terminateRenderRmd();
+                    onConfirmed.execute();
+                 }
+              }, null, null, "Stop Knit", "Cancel", true);
+      }
+      else
+      {
+        onConfirmed.execute();
+      }
    }
 
    @Override
@@ -85,6 +109,8 @@ public class RenderRmdOutputPresenter extends BasePresenter
    {
       view_.ensureVisible(true);
       view_.compileStarted(event.getTargetFile());
+      targetFile_ = event.getTargetFile();
+      renderRunning_ = true;
    }
 
    @Override
@@ -97,14 +123,31 @@ public class RenderRmdOutputPresenter extends BasePresenter
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
       view_.compileCompleted();
+      renderRunning_ = false;
    }
    
    private void terminateRenderRmd()
    {
-      server_.terminateRenderRmd(new VoidServerRequestCallback());
+      server_.terminateRenderRmd(new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void v)
+         {
+            renderRunning_ = false;
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Knit Terminate Failed", 
+                  error.getMessage());
+         }
+      });
    }
    
-   RMarkdownServerOperations server_;
-   CompileOutputPaneDisplay view_;
-   GlobalDisplay globalDisplay_;
+   private RMarkdownServerOperations server_;
+   private CompileOutputPaneDisplay view_;
+   private GlobalDisplay globalDisplay_;
+   private boolean renderRunning_ = false;
+   private String targetFile_;
 }

@@ -90,6 +90,7 @@ private:
       dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
       ClientEvent event(client_events::kRmdRenderStarted, dataJson);
       module_context::enqueClientEvent(event);
+      isRunning_ = true;
 
       performRender(encoding);
    }
@@ -281,12 +282,18 @@ Error renderRmd(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   s_pCurrentRender_ = RenderRmd::create(
-            module_context::resolveAliasedPath(file),
-            encoding);
-
-   // TODO: Return false if there's already a render running
-   pResponse->setResult(true);
+   if (s_pCurrentRender_ &&
+       s_pCurrentRender_->isRunning())
+   {
+      pResponse->setResult(false);
+   }
+   else
+   {
+      s_pCurrentRender_ = RenderRmd::create(
+               module_context::resolveAliasedPath(file),
+               encoding);
+      pResponse->setResult(true);
+   }
 
    return Success();
 }
@@ -306,9 +313,14 @@ FilePath mathJaxDirectory()
 {
    std::string path;
    FilePath mathJaxDir;
+
+   // call system.file to find the appropriate path
    r::exec::RFunction findMathJax("system.file", "rmd/h/m");
    findMathJax.addParam("package", "rmarkdown");
    Error error = findMathJax.call(&path);
+
+   // we don't expect this to fail since we shouldn't be here if RMarkdown
+   // is not installed at the correct verwion
    if (error)
       LOG_ERROR(error);
    else
