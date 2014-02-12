@@ -7,7 +7,7 @@
   <property name="target" value="build" />
   <property name="emma.merged.out" value="${project.build}/emma-coverage" />
 
-  <!-- 
+  <!--
      Convenience for the lateral calls we make.  Use gwt.ant to
      descend into another directory, and this to call in the same build.xml.
      NOTE THE USE OF $TARGET, here and in common's gwt.ant.  This has the
@@ -18,7 +18,7 @@
      mean that subdirB needed subdirA to be _built_, not $target'ed (tested,
      etc.)
 
-     In other words, DO NOT USE DEPENDS=... IN A TARGET WITH GWT.ANT.    
+     In other words, DO NOT USE DEPENDS=... IN A TARGET WITH GWT.ANT.
     -->
   <macrodef name="call-subproject">
     <attribute name="subproject" />
@@ -30,10 +30,10 @@
     </sequential>
   </macrodef>
 
-  <property name="gwt.apicheck.config" 
-    location="tools/api-checker/config/gwt25_26userApi.conf"/>
+  <property name="gwt.apicheck.config"
+    location="tools/api-checker/config/gwt26_27userApi.conf"/>
   <property name="gwt.apicheck.referencelibs"
-    value="${gwt.tools}/api-checker-reference/2.5.1/gwt-dev-modified.jar:${gwt.tools}/api-checker-reference/2.5.1/gwt-user-modified.jar"/>
+    value="${gwt.tools}/api-checker-reference/2.6.0/gwt-dev-modified.jar:${gwt.tools}/api-checker-reference/2.6.0/gwt-user-modified.jar"/>
 
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
@@ -132,12 +132,12 @@
     <call-subproject subproject="requestfactory" subtarget="checkstyle" />
     <call-subproject subproject="servlet" subtarget="checkstyle" />
     <!-- servlet needed for tools/benchmark-viewer -->
-    <call-subproject subproject="servlet" subtarget="build" /> 
+    <call-subproject subproject="servlet" subtarget="build" />
     <call-subproject subproject="tools" subtarget="checkstyle" />
     <call-subproject subproject="samples" subtarget="checkstyle" />
   </target>
 
-  <target name="test" depends="dist-dev,apicheck,checkstyle" 
+  <target name="test" depends="dist-dev,apicheck,checkstyle"
           description="[action] Runs all the GWT tests, including checkstyle and apicheck">
     <call-subproject subproject="buildtools" subtarget="test" />
     <call-subproject subproject="dev" subtarget="test" />
@@ -148,7 +148,7 @@
     <call-subproject subproject="tools" subtarget="test" />
   </target>
 
-  <target name="testrf" depends="dist-dev" 
+  <target name="testrf" depends="dist-dev"
           description="[action] Runs the GWT RequestFactory tests">
     <call-subproject subproject="dev" subtarget="compile.tests" />
     <call-subproject subproject="user" subtarget="compile.tests" />
@@ -197,7 +197,7 @@
           depends="test">
   </target>
 
-  <target name="apicheck-nobuild" 
+  <target name="apicheck-nobuild"
     description="[action] Checks API compatibility to prior GWT revision">
     <java failonerror="true" fork="true"
           classname="com.google.gwt.tools.apichecker.ApiCompatibilityChecker">
@@ -220,7 +220,7 @@
     </java>
   </target>
 
-  <target name="apicheck" depends="buildonly,tools,apicheck-nobuild" 
+  <target name="apicheck" depends="buildonly,tools,apicheck-nobuild"
           description="[action] Builds GWT and checks API compatiblity to prior release"/>
 
 </project>
