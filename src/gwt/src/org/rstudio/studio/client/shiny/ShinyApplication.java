@@ -18,6 +18,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
@@ -117,7 +118,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
           currentAppFilePath_ != null &&
           currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW) 
       {
-         activateWindow();
+         satelliteManager_.activateSatelliteWindow(
+               ShinyApplicationSatellite.NAME);
       }
    }
    
@@ -251,19 +253,26 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    
    private void activateWindow(ShinyApplicationParams params)
    {
-      // always hard close/reopen in Chrome; otherwise, just reopen when
-      // we have a new set of parameters
-      boolean forceReopen = (!Desktop.isDesktop() && BrowseCap.isChrome());
+      WindowEx win = satelliteManager_.getSatelliteWindowObject(
+            ShinyApplicationSatellite.NAME);
+      boolean isRefresh = win != null && 
+            (params == null || (params_ != null &&
+                                params.getPath().equals(params_.getPath())));
+      boolean isChrome = !Desktop.isDesktop() && BrowseCap.isChrome();
       if (params != null)
-      {
          params_ = params;
-         forceReopen = true;
-      }
-
-      if (forceReopen)
+      if (win == null || (!isRefresh && !isChrome))
       {
+         // If there's no window yet, or we're switching apps in a browser
+         // other than Chrome, do a normal open
          satelliteManager_.openSatellite(ShinyApplicationSatellite.NAME,     
                                          params_, new Size(960,1100));   
+      } 
+      else if (isChrome)
+      {
+         // we have a window and we're Chrome, so force a close and reopen
+         satelliteManager_.forceReopenSatellite(ShinyApplicationSatellite.NAME, 
+                                                params_);
       }
       else
       {
