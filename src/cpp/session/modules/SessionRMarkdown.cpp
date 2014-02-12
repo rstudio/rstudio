@@ -26,6 +26,7 @@
 #include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include "SessionRPubs.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
@@ -97,6 +98,9 @@ private:
 
    void performRender(const std::string& encoding)
    {
+      // save encoding
+      encoding_ = encoding;
+
       // R binary
       FilePath rProgramPath;
       Error error = module_context::rScriptPath(&rProgramPath);
@@ -199,11 +203,23 @@ private:
             module_context::createAliasedPath(outputFile_);
       resultJson["output_url"] = kRmdOutput "/";
 
+      // for HTML documents, check to see whether they've been published
+      if (outputFile_.extensionLowerCase() == ".html")
+      {
+         resultJson["rpubs_published"] =
+               !rpubs::previousUploadId(outputFile_).empty();
+      }
+      else
+      {
+         resultJson["rpubs_published"] = false;
+      }
+
       // query rmarkdown for the output format
       r::sexp::Protect protect;
       SEXP sexpOutputFormat;
       Error error = r::exec::RFunction("rmarkdown:::default_output_format",
-                                       targetFile_.absolutePath())
+                                       targetFile_.absolutePath(),
+                                       encoding_)
                                       .call(&sexpOutputFormat, &protect);
       if (error)
       {
@@ -233,6 +249,7 @@ private:
    bool terminationRequested_;
    FilePath targetFile_;
    FilePath outputFile_;
+   std::string encoding_;
 };
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;

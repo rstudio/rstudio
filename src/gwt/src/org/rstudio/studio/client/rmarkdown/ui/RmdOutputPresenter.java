@@ -41,6 +41,7 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
                       boolean refresh);
       int getScrollPosition();
       void refresh();
+      String getTitle();
    }
    
    @Inject
@@ -77,6 +78,10 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    @Override
    public String getTitle()
    {
+      String title = view_.getTitle();
+      if (title != null && !title.isEmpty())
+         return title;
+      
       String htmlFile = getHtmlFile();
       if (htmlFile != null)
       {
@@ -99,7 +104,8 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    @Override
    public boolean isPublished()
    {
-      return false;
+      return params_ == null ?
+          false : params_.getResult().getRpubsPublished();
    }
 
    @Handler

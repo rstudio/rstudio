@@ -38,6 +38,10 @@ public class RmdRenderResult extends JavaScriptObject
       return this.output_format;
    }-*/;
    
+   public native final boolean getRpubsPublished() /*-{
+      return this.rpubs_published;
+   }-*/;
+   
    public final static String OUTPUT_HTML_DOCUMENT = "html_document";
    public final static String OUTPUT_REVEALJS_PRESENTATION = "revealjs_presentation";
    public final static String OUTPUT_IOSLIDES_PRESENTATION = "ioslides_presentation";

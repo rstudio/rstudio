@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -29,7 +31,6 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
-import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
@@ -50,8 +51,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       params_ = params;
       fileLabel_.setText(params.getOutputFile());
       boolean showPublish = enablePublish &&
-            params.getResult().getOutputFormat().equals(
-                  RmdRenderResult.OUTPUT_HTML_DOCUMENT);
+            params.getOutputFile().toLowerCase().endsWith(".html");
+      publishButton_.setText(params.getResult().getRpubsPublished() ? 
+            "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
       publishButtonSeparator_.setVisible(showPublish);
       // when refreshing, reapply the current scroll position 
@@ -85,8 +87,14 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          @Override
          public void onLoad(LoadEvent event)
          {
-            getFrame().getIFrame().getContentDocument().setScrollTop(
-                  scrollPosition_);
+            Document doc = getFrame().getIFrame().getContentDocument();
+            doc.setScrollTop(scrollPosition_);
+            String title = doc.getTitle();
+            if (title != null && !title.isEmpty())
+            {
+               Window.setTitle(title);
+               title_ = title;
+            }
          }
       });
       return frame;
@@ -111,10 +119,17 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    {
       return getFrame().getIFrame().getContentDocument().getScrollTop();
    }
+   
+   @Override
+   public String getTitle()
+   {
+      return title_;
+   }
 
    private Label fileLabel_;
    private ToolbarButton publishButton_;
    private Widget publishButtonSeparator_;
+   private String title_;
    
    private RMarkdownServerOperations server_;
    private RmdPreviewParams params_;
