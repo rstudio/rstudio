@@ -806,9 +806,7 @@ public class JProgram extends JNode {
   }
 
   public JMethod getStaticImpl(JMethod method) {
-    JMethod staticImpl = instanceToStaticMap.get(method);
-    assert staticImpl.getEnclosingType().getMethods().contains(staticImpl);
-    return staticImpl;
+    return instanceToStaticMap.get(method);
   }
 
   public JArrayType getTypeArray(JType elementType) {
@@ -1025,10 +1023,11 @@ public class JProgram extends JNode {
   }
 
   /**
-   * If {@code method} is a static impl method, returns the instance method
-   * that {@code method} is the implementation of. Otherwise, returns{@code null}.
+   * If <code>method</code> is a static impl method, returns the instance method
+   * that <code>method</code> is the implementation of. Otherwise, returns
+   * <code>null</code>.
    */
-  public JMethod instanceMethodForStaticImpl(JMethod method) {
+  public JMethod staticImplFor(JMethod method) {
     return staticToInstanceMap.get(method);
   }
 
