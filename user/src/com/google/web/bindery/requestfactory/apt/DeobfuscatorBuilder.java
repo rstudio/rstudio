@@ -15,6 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.apt;
 
+import com.google.gwt.core.shared.GwtIncompatible;
 import com.google.web.bindery.requestfactory.vm.impl.Deobfuscator;
 import com.google.web.bindery.requestfactory.vm.impl.OperationData;
 import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
@@ -127,6 +128,10 @@ class DeobfuscatorBuilder extends ScannerBase<Void> {
     println("import %s;", Arrays.class.getCanonicalName());
     println("import %s;", OperationData.class.getCanonicalName());
     println("import %s;", OperationKey.class.getCanonicalName());
+    println("import %s;", GwtIncompatible.class.getCanonicalName());
+    println("@%s(\"Server-side only but loaded through naming convention "
+        + "so must be in same package as shared %s interface\")",
+        GwtIncompatible.class.getSimpleName(), x.getSimpleName());
     println("public final class %s extends %s {", simpleName, Deobfuscator.Builder.class
         .getCanonicalName());
     println("{");
