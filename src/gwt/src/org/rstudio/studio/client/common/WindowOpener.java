@@ -32,5 +32,6 @@ public interface WindowOpener
    void openSatelliteWindow(GlobalDisplay globalDisplay,
                             String viewName,
                             int width,
-                            int height);
+                            int height, 
+                            NewWindowOptions options);
 }

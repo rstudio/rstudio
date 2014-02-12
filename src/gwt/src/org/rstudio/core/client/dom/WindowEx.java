@@ -123,6 +123,14 @@ public class WindowEx extends JavaScriptObject
    public final native Document getDocument() /*-{
       return this.document;
    }-*/;
+   
+   public final native int getLeft() /*-{
+      return this.screenX;
+   }-*/;
+
+   public final native int getTop() /*-{
+      return this.screenY;
+   }-*/;
 
    public static HandlerRegistration addFocusHandler(FocusHandler handler)
    {

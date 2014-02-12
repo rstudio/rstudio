@@ -89,6 +89,10 @@ public class RmdOutputPresenter implements IsWidget
                thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter::onClose()();
             }),
             true);
+            
+      $wnd.getRstudioFrameScrollPosition = $entry(function() {
+         return thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter::getScrollPosition()();
+      });
    }-*/;
    
    private void onClose() 
@@ -100,6 +104,11 @@ public class RmdOutputPresenter implements IsWidget
    private final native void notifyRmdOutputClosed(JavaScriptObject params) /*-{
       $wnd.opener.notifyRmdOutputClosed(params);
    }-*/;
+   
+   private int getScrollPosition()
+   {
+      return view_.getScrollPosition();
+   }
 
    private final Display view_;
    private final GlobalDisplay globalDisplay_;

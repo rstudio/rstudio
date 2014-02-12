@@ -70,11 +70,12 @@ public class DesktopWindowOpener extends WebWindowOpener
    public void openSatelliteWindow(GlobalDisplay globalDisplay,
                                    String mode,
                                    int width,
-                                   int height)
+                                   int height, 
+                                   NewWindowOptions options)
    {  
       String windowName = SatelliteUtils.getSatelliteWindowName(mode);
       Desktop.getFrame().prepareForSatelliteWindow(windowName, width, height);
-      super.openSatelliteWindow(globalDisplay, mode, width, height);
+      super.openSatelliteWindow(globalDisplay, mode, width, height, options);
    }
    
    @Override

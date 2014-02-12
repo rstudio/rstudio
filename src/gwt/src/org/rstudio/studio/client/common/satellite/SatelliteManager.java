@@ -22,6 +22,7 @@ import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
@@ -29,9 +30,11 @@ import org.rstudio.core.client.layout.ScreenUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Window;
@@ -65,6 +68,16 @@ public class SatelliteManager implements CloseHandler<Window>
    public void openSatellite(String name,
                              JavaScriptObject params,
                              Size preferredSize)
+   {
+      openSatellite(name, params, preferredSize, true, null);
+   }
+
+   // open a satellite window (re-activate existing if possible)
+   private void openSatellite(String name,
+                             JavaScriptObject params,
+                             Size preferredSize, 
+                             boolean adjustSize, 
+                             Point position)
    {
       // satellites can't launch other satellites -- this is because the 
       // delegating/forwarding of remote server calls and events doesn't
@@ -132,15 +145,68 @@ public class SatelliteManager implements CloseHandler<Window>
       if (params != null)
          satelliteParams_.put(name, params);
  
+      // set size and position, if desired
+      Size windowSize = adjustSize ? 
+            ScreenUtils.getAdjustedWindowSize(preferredSize) : 
+            preferredSize;
+      NewWindowOptions options = new NewWindowOptions();
+      if (position != null)
+         options.setPosition(position);
+
       // open the satellite - it will call us back on registerAsSatellite
       // at which time we'll call setSessionInfo, setParams, etc.
-      Size windowSize = ScreenUtils.getAdjustedWindowSize(preferredSize);
       RStudioGinjector.INSTANCE.getGlobalDisplay().openSatelliteWindow(
                                               name,
                                               windowSize.width,
-                                              windowSize.height);
+                                              windowSize.height, 
+                                              options);
    }
    
+   // Forcefully reopen a satellite window. This refreshes the window and
+   // pushes it to the front in Chrome. It should be used as a last resort;
+   // if responding to a UI event, use openSatellite instead, since Chrome
+   // permits window.open to reactivate windows in that context. 
+   public void forceReopenSatellite(final String name, 
+                                    final JavaScriptObject params)
+   {
+      Size preferredSize = null;
+      Point preferredPos = null;
+      for (ActiveSatellite satellite : satellites_)
+      {
+         if (satellite.getName().equals(name) && 
+             !satellite.getWindow().isClosed())
+         {
+            // save the window's geometry so we can restore it after the window 
+            // is destroyed
+            final WindowEx win = satellite.getWindow();
+            Document doc = win.getDocument();
+            preferredSize = new Size(doc.getClientWidth(), doc.getClientHeight());
+            preferredPos = new Point(win.getLeft(), win.getTop());
+            callNotifyPendingReactivate(win);
+
+            // close the window
+            try 
+            { 
+               win.close();
+            }
+            catch(Throwable e)
+            {
+            }
+            break;
+         }
+      }   
+      
+      // didn't find an open window to reopen
+      if (preferredSize == null)
+         return;
+      
+      // open a new window with the same geometry as the one we just destroyed,
+      // but with the newly supplied set of parameters
+      final Size windowSize = preferredSize;
+      final Point windowPos = preferredPos;
+      openSatellite(name, params, windowSize, false, windowPos);
+   }
+
    public boolean satelliteWindowExists(String name)
    {
       return getSatelliteWindowObject(name) != null;
