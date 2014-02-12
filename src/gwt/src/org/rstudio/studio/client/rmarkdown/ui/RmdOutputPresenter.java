@@ -16,17 +16,20 @@ package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class RmdOutputPresenter implements IsWidget
+public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
 {
    public interface Binder 
           extends CommandBinder<Commands, RmdOutputPresenter>
@@ -34,20 +37,25 @@ public class RmdOutputPresenter implements IsWidget
 
    public interface Display extends IsWidget
    {
-      void showOutput(RmdPreviewParams params, boolean refresh);
+      void showOutput(RmdPreviewParams params, boolean showPublish, 
+                      boolean refresh);
       int getScrollPosition();
       void refresh();
    }
    
    @Inject
    public RmdOutputPresenter(Display view,
-                             GlobalDisplay globalDisplay,
                              Binder binder,
-                             final Commands commands,
+                             GlobalDisplay globalDisplay,
+                             RPubsPresenter rpubsPresenter,
+                             Session session,
+                             Commands commands,
                              EventBus eventBus)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
+      session_ = session;
+      rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);  
       
@@ -60,6 +68,40 @@ public class RmdOutputPresenter implements IsWidget
       return view_.asWidget();
    }
    
+   @Override
+   public String getContextId()
+   {
+      return "RMarkdownPreview";
+   }
+
+   @Override
+   public String getTitle()
+   {
+      String htmlFile = getHtmlFile();
+      if (htmlFile != null)
+      {
+         FileSystemItem fsi = FileSystemItem.createFile(htmlFile);
+         return fsi.getStem();
+      }
+      else
+      {
+         return "(Untitled)";
+      }
+   }
+
+   @Override
+   public String getHtmlFile()
+   {
+      return params_ == null ? 
+         null : params_.getOutputFile();
+   }
+
+   @Override
+   public boolean isPublished()
+   {
+      return false;
+   }
+
    @Handler
    public void onViewerPopout()
    {
@@ -78,7 +120,8 @@ public class RmdOutputPresenter implements IsWidget
       boolean refresh = params_ != null && 
             params_.getOutputFile().equals(params.getOutputFile());
       params_ = params;
-      view_.showOutput(params, refresh);
+      view_.showOutput(params, session_.getSessionInfo().getAllowRpubsPublish(), 
+                       refresh);
    }
    
    private native void initializeEvents() /*-{  
@@ -112,6 +155,7 @@ public class RmdOutputPresenter implements IsWidget
 
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
+   private final Session session_;
    
    private RmdPreviewParams params_;
 }

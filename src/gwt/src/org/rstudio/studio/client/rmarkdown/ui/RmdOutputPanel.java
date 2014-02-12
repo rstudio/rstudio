@@ -18,15 +18,18 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
@@ -41,10 +44,16 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    }
    
    @Override
-   public void showOutput(RmdPreviewParams params, boolean refresh)
+   public void showOutput(RmdPreviewParams params, boolean enablePublish, 
+                          boolean refresh)
    {
       params_ = params;
       fileLabel_.setText(params.getOutputFile());
+      boolean showPublish = enablePublish &&
+            params.getResult().getOutputFormat().equals(
+                  RmdRenderResult.OUTPUT_HTML_DOCUMENT);
+      publishButton_.setVisible(showPublish);
+      publishButtonSeparator_.setVisible(showPublish);
       // when refreshing, reapply the current scroll position 
       scrollPosition_ = refresh ? 
             getScrollPosition() : params.getScrollPosition();
@@ -61,6 +70,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       toolbar.addLeftWidget(fileLabel_);
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands.viewerRefresh().createToolbarButton());
+      publishButtonSeparator_ = toolbar.addLeftSeparator();
+      publishButton_ = commands.publishHTML().createToolbarButton();
+      toolbar.addLeftWidget(publishButton_);
    }
    
    @Override
@@ -91,7 +103,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected String openCommandText()
    {
-      return "Open File";
+      return "Open in Browser";
    }
 
    @Override
@@ -101,6 +113,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    }
 
    private Label fileLabel_;
+   private ToolbarButton publishButton_;
+   private Widget publishButtonSeparator_;
+   
    private RMarkdownServerOperations server_;
    private RmdPreviewParams params_;
    private int scrollPosition_ = 0;

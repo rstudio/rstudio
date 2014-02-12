@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.core.client.Size;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class RmdPreviewParams extends JavaScriptObject
@@ -25,18 +27,21 @@ public class RmdPreviewParams extends JavaScriptObject
    public static native RmdPreviewParams create(RmdRenderResult result, 
                                                 int scrollPosition) /*-{
       return {
-         output_file: result.output_file,
-         output_url: result.output_url,
-         scroll_position: scrollPosition
+         'result': result,
+         'scroll_position': scrollPosition
       };
    }-*/;
    
+   public native final RmdRenderResult getResult() /*-{
+      return this.result;
+   }-*/;
+
    public native final String getOutputFile() /*-{
-      return this.output_file;
+      return this.result.output_file;
    }-*/;
    
    public native final String getOutputUrl() /*-{
-      return this.output_url;
+      return this.result.output_url;
    }-*/;
    
    public native final int getScrollPosition() /*-{
@@ -46,4 +51,17 @@ public class RmdPreviewParams extends JavaScriptObject
    public native final void setScrollPosition(int scrollPosition) /*-{
       this.scroll_position = scrollPosition;
    }-*/;
+   
+   public final Size getPreferredSize()
+   {
+      int chromeHeight = 100;
+      String format = getResult().getOutputFormat();
+      if (format.equals(RmdRenderResult.OUTPUT_IOSLIDES_PRESENTATION))
+         return new Size(910, 740 + chromeHeight);
+      if (format.equals(RmdRenderResult.OUTPUT_REVEALJS_PRESENTATION))
+         return new Size(960, 700 + chromeHeight);
+      
+      // default size (html_document and others)
+      return new Size(960, 1000 + chromeHeight);
+   }
 }

@@ -33,4 +33,12 @@ public class RmdRenderResult extends JavaScriptObject
    public native final String getOutputUrl() /*-{
       return this.output_url;
    }-*/;
+   
+   public native final String getOutputFormat() /*-{
+      return this.output_format;
+   }-*/;
+   
+   public final static String OUTPUT_HTML_DOCUMENT = "html_document";
+   public final static String OUTPUT_REVEALJS_PRESENTATION = "revealjs_presentation";
+   public final static String OUTPUT_IOSLIDES_PRESENTATION = "ioslides_presentation";
 }

@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.HashMap;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.Desktop;
@@ -100,7 +99,7 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
          {
             satelliteManager_.openSatellite(RmdOutputSatellite.NAME,     
                                             params,
-                                            new Size(960,1100));   
+                                            params.getPreferredSize());   
          }
       }
 
