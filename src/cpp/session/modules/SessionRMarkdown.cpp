@@ -198,6 +198,27 @@ private:
       resultJson["output_file"] =
             module_context::createAliasedPath(outputFile_);
       resultJson["output_url"] = kRmdOutput "/";
+
+      // query rmarkdown for the output format
+      r::sexp::Protect protect;
+      SEXP sexpOutputFormat;
+      Error error = r::exec::RFunction("rmarkdown:::default_output_format",
+                                       targetFile_.absolutePath())
+                                      .call(&sexpOutputFormat, &protect);
+      if (error)
+      {
+         LOG_ERROR(error);
+         resultJson["output_format"] = "";
+      }
+      else
+      {
+         std::string formatName;
+         error = r::sexp::getNamedListElement(sexpOutputFormat, "name",
+                                              &formatName);
+         if (error)
+            LOG_ERROR(error);
+         resultJson["output_format"] = formatName;
+      }
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);
    }
