@@ -153,12 +153,7 @@ public class XMLTest extends GWTTestCase {
   @DoNotRunWith({Platform.HtmlUnitBug})
   public void testCreate() {
     Document d = XMLParser.createDocument();
-    CDATASection createCDATA;
-    if (XMLParser.supportsCDATASection()) {
-      createCDATA = d.createCDATASection("sampl<<< >>e data");
-    } else {
-      createCDATA = d.createCDATASection("sample data");
-    }
+    CDATASection createCDATA = d.createCDATASection("sampl<<< >>e data");
     Comment createComment = d.createComment("a sample comment");
     DocumentFragment createDocumentFragment = d.createDocumentFragment();
     Element elementWithChildren = d.createElement("elementWithChildren");
@@ -193,17 +188,10 @@ public class XMLTest extends GWTTestCase {
 
     // Now check the document.
     XMLParser.removeWhitespace(d);
-    if (XMLParser.supportsCDATASection()) {
-      assertDocumentEquals(XMLParser.parse("<elementWithChildren>"
-          + "<![CDATA[sampl<<< >>e data]]>" + "<!--a sample comment-->"
-          + "<elementWithChildren/>" + "<?target processing instruction data?>"
-          + "sample text node" + "</elementWithChildren>"), d);
-    } else {
-      assertDocumentEquals(XMLParser.parse("<elementWithChildren>"
-          + "sample data" + "<!--a sample comment-->"
-          + "<elementWithChildren/>" + "<?target processing instruction data?>"
-          + "sample text node" + "</elementWithChildren>"), d);
-    }
+    assertDocumentEquals(XMLParser.parse("<elementWithChildren>"
+        + "<![CDATA[sampl<<< >>e data]]>" + "<!--a sample comment-->"
+        + "<elementWithChildren/>" + "<?target processing instruction data?>"
+        + "sample text node" + "</elementWithChildren>"), d);
   }
 
   public void testDocument() {

@@ -281,10 +281,6 @@ public abstract class XMLParserImpl {
     }
   }
 
-  public boolean supportsCDATASection() {
-    return true;
-  }
-
   protected abstract JavaScriptObject createDocumentImpl();
 
   protected abstract JavaScriptObject getElementByIdImpl(

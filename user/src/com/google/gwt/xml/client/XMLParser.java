@@ -64,9 +64,11 @@ public class XMLParser {
    * 
    * @return true if the browser supports {@link CDATASection}, otherwise
    *         <code>false</code>.
+   * @deprecated Always returns true
    */
+  @Deprecated
   public static boolean supportsCDATASection() {
-    return impl.supportsCDATASection();
+    return true;
   }
 
   /*
