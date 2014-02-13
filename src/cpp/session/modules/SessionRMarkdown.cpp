@@ -401,16 +401,16 @@ void handleRmdOutputRequest(const http::Request& request,
       return;
    }
 
-   // disable caching; the request path looks identical to the browser for each
-   // main request for content
-   pResponse->setNoCacheHeaders();
-
    // get the requested path
    std::string path = http::util::pathAfterPrefix(request,
                                                   kRmdOutputLocation);
 
    if (path.empty())
    {
+      // disable caching; the request path looks identical to the browser for
+      // each main request for content
+      pResponse->setNoCacheHeaders();
+
       // serve the contents of the file with MathJax URLs mapped to our
       // own resource handler
       MathjaxFilter mathjaxFilter;
@@ -421,14 +421,15 @@ void handleRmdOutputRequest(const http::Request& request,
    {
       // serve the MathJax resource: find the requested path in the MathJax
       // directory
-      pResponse->setFile(mathJaxDirectory().complete(
-                            path.substr(sizeof(kMathjaxSegment))),
-                         request);
+      pResponse->setCacheableFile(mathJaxDirectory().complete(
+                                    path.substr(sizeof(kMathjaxSegment))),
+                                  request);
    }
    else
    {
+      // serve a file resource from the output folder
       FilePath filePath = s_pCurrentRender_->targetDirectory().childPath(path);
-      pResponse->setFile(filePath, request);
+      pResponse->setCacheableFile(filePath, request);
    }
 }
 
