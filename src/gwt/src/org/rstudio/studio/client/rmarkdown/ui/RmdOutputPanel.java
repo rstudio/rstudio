@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
@@ -54,7 +55,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
                           boolean refresh)
    {
-      fileLabel_.setText(params.getOutputFile());
+      fileLabel_.setText(StringUtil.shortPathName(
+            FileSystemItem.createFile(params.getOutputFile()), 300));
       // we can only publish self-contained HTML to RPubs
       boolean showPublish = enablePublish && 
                             params.getResult().isHtml() &&
@@ -85,16 +87,20 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected void initToolbar (Toolbar toolbar, Commands commands)
    {
-      toolbar.addLeftWidget(new ToolbarLabel("Viewing: "));
       fileLabel_ = new ToolbarLabel();
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
       fileLabel_.getElement().getStyle().setMarginRight(7, Unit.PX);
       toolbar.addLeftWidget(fileLabel_);
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.viewerRefresh().createToolbarButton());
+      ToolbarButton popoutButton = 
+            commands.viewerPopout().createToolbarButton();
+      popoutButton.setText("Open in Browser");
+      toolbar.addLeftWidget(popoutButton);
       publishButtonSeparator_ = toolbar.addLeftSeparator();
       publishButton_ = commands.publishHTML().createToolbarButton(false);
       toolbar.addLeftWidget(publishButton_);
+
+      toolbar.addRightWidget(commands.viewerRefresh().createToolbarButton());
    }
    
    @Override
@@ -127,12 +133,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // cache the scroll position, so we can re-apply it when the page loads
       scrollPosition_ = getScrollPosition();
       showUrl(getCurrentUrl());
-   }
-
-   @Override
-   protected String openCommandText()
-   {
-      return "Open in Browser";
    }
 
    @Override
