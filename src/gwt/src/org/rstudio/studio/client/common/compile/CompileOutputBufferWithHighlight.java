@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 
 public class CompileOutputBufferWithHighlight extends Composite 
@@ -37,6 +38,7 @@ public class CompileOutputBufferWithHighlight extends Composite
       output_.setStylePrimaryName(styles_.output());
       output_.addStyleName("ace_text-layer");
       output_.addStyleName("ace_line");
+      output_.getElement().getStyle().setPadding(6, Unit.PX);
       output_.setWidth("100%");
       FontSizer.applyNormalFontSize(output_);
     
