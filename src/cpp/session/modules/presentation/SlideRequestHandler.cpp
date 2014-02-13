@@ -311,7 +311,7 @@ bool performKnit(const FilePath& rmdPath,
 
    // args
    std::vector<std::string> args;
-   args.push_back("--silent");
+   args.push_back("--slave");
    args.push_back("--no-save");
    args.push_back("--no-restore");
    args.push_back("-e");
