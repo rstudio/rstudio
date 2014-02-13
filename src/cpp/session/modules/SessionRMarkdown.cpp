@@ -24,6 +24,7 @@
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include "SessionRPubs.hpp"
@@ -229,6 +230,7 @@ private:
       {
          LOG_ERROR(error);
          resultJson["output_format"] = "";
+         resultJson["output_options"] = json::Value();
       }
       else
       {
@@ -238,6 +240,20 @@ private:
          if (error)
             LOG_ERROR(error);
          resultJson["output_format"] = formatName;
+
+         SEXP sexpOptions;
+         json::Value formatOptions;
+         error = r::sexp::getNamedListSEXP(sexpOutputFormat, "options",
+                                           &sexpOptions);
+         if (error)
+            LOG_ERROR(error);
+         else
+         {
+            error = r::json::jsonValueFromList(sexpOptions, &formatOptions);
+            if (error)
+               LOG_ERROR(error);
+         }
+         resultJson["output_options"] = formatOptions;
       }
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);

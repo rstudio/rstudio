@@ -49,7 +49,10 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                           boolean refresh)
    {
       fileLabel_.setText(params.getOutputFile());
-      boolean showPublish = enablePublish && params.getResult().isHtml();
+      // we can only publish self-contained HTML to RPubs
+      boolean showPublish = enablePublish && 
+                            params.getResult().isHtml() &&
+                            params.getResult().isSelfContained();
       publishButton_.setText(params.getResult().getRpubsPublished() ? 
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
