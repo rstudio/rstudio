@@ -359,4 +359,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getShinyappsInstalled() /*-{
       return this.shinyapps_installed;
    }-*/;
+   
+   public final native boolean getRMarkdownInstalled() /*-{
+      return this.rmarkdown_installed;
+   }-*/;
 }

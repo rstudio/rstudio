@@ -410,13 +410,18 @@ void handleRmdOutputRequest(const http::Request& request,
 
 } // anonymous namespace
 
+bool rmarkdownPackageInstalled()
+{
+   return module_context::isPackageVersionInstalled("rmarkdown", "0.1.1");
+}
+
 Error initialize()
 {
    using namespace module_context;
 
    initPandocPath();
 
-   if (module_context::isPackageVersionInstalled("rmarkdown", "0.1"))
+   if (module_context::isPackageVersionInstalled("rmarkdown", "0.1.1"))
       module_context::events().onDetectSourceExtendedType
                               .connect(onDetectRmdSourceType);
 

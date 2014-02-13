@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.workbench.model.Session;
 
 public class TextEditingTargetPreviewHtmlHelper
 {
@@ -28,9 +29,26 @@ public class TextEditingTargetPreviewHtmlHelper
    }
    
    @Inject
-   public void initialize(FileTypeCommands fileTypeCommands)
+   public void initialize(Session session,
+                          FileTypeCommands fileTypeCommands)
    {
+      session_ = session;
       fileTypeCommands_ = fileTypeCommands;
+   }
+   
+   public String detectExtendedType(String extendedType,
+                                    TextFileType fileType)
+   {
+      if (extendedType.length() == 0 && 
+          fileType.isRmd() &&
+          session_.getSessionInfo().getRMarkdownInstalled())
+      {
+         return "rmarkdown";
+      }
+      else
+      {
+         return extendedType;
+      }
    }
    
    public boolean verifyPrerequisites(WarningBarDisplay display,
@@ -76,8 +94,6 @@ public class TextEditingTargetPreviewHtmlHelper
                              " or higher)");
    }
    
+   private Session session_;
    private FileTypeCommands fileTypeCommands_;
-  
-   
- 
 }

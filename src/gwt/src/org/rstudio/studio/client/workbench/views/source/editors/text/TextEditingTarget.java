@@ -631,7 +631,11 @@ public class TextEditingTarget implements
       id_ = document.getId();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
+      
       extendedType_ = document.getExtendedType();
+      extendedType_ = previewHtmlHelper_.detectExtendedType(extendedType_, 
+                                                            fileType_);
+      
       view_ = new TextEditingTargetWidget(commands_,
                                           prefs_,
                                           fileTypeRegistry_,
