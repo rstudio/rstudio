@@ -146,27 +146,20 @@ inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
 
 }
 
+core::Error getNamedListSEXP(SEXP listSEXP, const std::string& name,
+                             SEXP* pValueSEXP);
+
 template <typename T>
 core::Error getNamedListElement(SEXP listSEXP,
                                 const std::string& name,
                                 T* pValue)
 {
-   // find the element
-   int valueIndex = indexOfElementNamed(listSEXP, name);
-
-   if (valueIndex != -1)
-   {
-      // get the appropriate value
-      SEXP valueSEXP = VECTOR_ELT(listSEXP, valueIndex);
-      return sexp::extract(valueSEXP, pValue);
-   }
-   else
-   {
-      // otherwise an error
-      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
-      error.addProperty("element", name);
+   SEXP valueSEXP;
+   core::Error error = getNamedListSEXP(listSEXP, name, &valueSEXP);
+   if (error)
       return error;
-   }
+   else
+      return sexp::extract(valueSEXP, pValue);
 }
 
 template <typename T>
