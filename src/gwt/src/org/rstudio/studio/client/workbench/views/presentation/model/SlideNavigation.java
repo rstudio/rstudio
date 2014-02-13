@@ -23,6 +23,14 @@ public class SlideNavigation extends JavaScriptObject
    {
    }
    
+   public final native static SlideNavigation create(
+         int totalSlides, JsArray<SlideNavigationItem> items) /*-{
+      var navigation = new Object();
+      navigation.total_slides = totalSlides;
+      navigation.items = items;
+      return navigation;
+   }-*/;
+   
    public final native int getTotalSlides() /*-{
       return this.total_slides;
    }-*/;

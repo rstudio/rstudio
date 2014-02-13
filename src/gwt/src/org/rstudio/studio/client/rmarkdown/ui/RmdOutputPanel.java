@@ -14,7 +14,10 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
@@ -23,6 +26,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
@@ -32,6 +36,8 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
+import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
 
 public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                             implements RmdOutputPresenter.Display
@@ -151,6 +157,41 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private String getCurrentUrl()
    {
       return getFrame().getIFrame().getContentDocument().getURL();
+   }
+   
+   @SuppressWarnings("unused")
+   private SlideNavigation getIoslidesNavigationList(Document doc)
+   {
+      
+      JsArray<SlideNavigationItem> navItems = JsArray.createArray().cast();
+      
+      NodeList<Element> slides = doc.getElementsByTagName("slide");
+      for (int i = 0; i<slides.getLength(); i++) {
+           
+         Element slide = slides.getItem(i);
+         boolean segue = slide.getClassName().contains("segue");
+         
+         NodeList<Element> hgroups = slide.getElementsByTagName("hgroup");
+         if (hgroups.getLength() == 1)
+         {
+            Element header = hgroups.getItem(0).getFirstChildElement();
+            if (header.getTagName().equalsIgnoreCase("h2"))
+            {
+               String title = header.getInnerText();
+               if (!StringUtil.isNullOrEmpty(title))
+               {
+                  SlideNavigationItem navItem = SlideNavigationItem.create(
+                        title, segue ? 0 : 1, i, -1);
+                  navItems.push(navItem);
+                  
+               }
+            }
+            
+         }
+      }
+      
+      return SlideNavigation.create(slides.getLength(), navItems);
+      
    }
 
    private Label fileLabel_;

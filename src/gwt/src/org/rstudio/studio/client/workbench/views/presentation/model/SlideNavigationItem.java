@@ -21,6 +21,18 @@ public class SlideNavigationItem extends JavaScriptObject
    protected SlideNavigationItem()
    {
    }
+   
+   public static final native SlideNavigationItem create(String title,
+                                                         int indent,
+                                                         int index,
+                                                         int line) /*-{
+        var item = new Object();
+        item.title = title;
+        item.indent = indent;
+        item.index = index;
+        item.line = line;
+        return item;
+   }-*/;
       
    public final native String getTitle() /*-{
       return this.title;
