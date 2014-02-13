@@ -29,6 +29,8 @@ import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -59,53 +61,88 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
       RmdRenderResult result = event.getResult();
       if (result.getSucceeded())
       {
-         // find the last known position for this file
-         int scrollPosition = 0;
-         String anchor = "";
-         if (scrollPositions_.containsKey(result.getOutputFile()))
-         {
-            scrollPosition = scrollPositions_.get(result.getOutputFile());
-         }
-         if (anchors_.containsKey(result.getOutputFile()))
-         {
-            anchor = anchors_.get(result.getOutputFile());
-         }
-         RmdPreviewParams params = RmdPreviewParams.create(
-               result, scrollPosition, anchor);
+         displayRenderResult(result);
+      }
+   }
+   
+   private void displayRenderResult(RmdRenderResult result)
+   {
+      // find the last known position for this file
+      int scrollPosition = 0;
+      String anchor = "";
+      if (scrollPositions_.containsKey(keyFromResult(result)))
+      {
+         scrollPosition = scrollPositions_.get(keyFromResult(result));
+      }
+      if (anchors_.containsKey(keyFromResult(result)))
+      {
+         anchor = anchors_.get(keyFromResult(result));
+      }
+      final RmdPreviewParams params = RmdPreviewParams.create(
+            result, scrollPosition, anchor);
 
-         WindowEx win = satelliteManager_.getSatelliteWindowObject(
-               RmdOutputSatellite.NAME);
-
-         // we're refreshing if the window is up and we're pulling the same
-         // output file as the last one
-         boolean isRefresh = win != null &&
-                             result_ != null && 
-                             result_.getOutputFile().equals(
-                                   result.getOutputFile());
-         // if this isn't a refresh but there's a window up, cache the scroll
-         // position of the old document before we replace it
-         if (!isRefresh && result_ != null && win != null)
+      WindowEx win = satelliteManager_.getSatelliteWindowObject(
+            RmdOutputSatellite.NAME);
+      
+      // if there's a window up but it's showing a different document type, 
+      // close it so that we can create a new one better suited to this doc type
+      if (win != null && 
+          result_ != null && 
+          !result_.getOutputFormat().equals(result.getOutputFormat()))
+      {
+         satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
+         win = null;
+         // let window finish closing before continuing
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
-            scrollPositions_.put(result_.getOutputFile(), 
-                                 getScrollPosition(win));
-         }
-         if (win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
-         {
-            // we're on Chrome, cache the scroll position unless we're switching
-            // docs and do a hard close/reopen
-            if (isRefresh)
+            @Override
+            public void execute()
             {
-               params.setScrollPosition(getScrollPosition(win));
+               displayRenderResult(null, params);
             }
-            satelliteManager_.forceReopenSatellite(RmdOutputSatellite.NAME, 
-                                                   params);
-         }
-         else
-         {
-            satelliteManager_.openSatellite(RmdOutputSatellite.NAME,     
-                                            params,
-                                            params.getPreferredSize());   
-         }
+         });
+      }
+      else
+      {
+         displayRenderResult(win, params);
+      }
+   }
+   
+   private void displayRenderResult(WindowEx win, RmdPreviewParams params)
+   {
+      RmdRenderResult result = params.getResult();
+      
+      // we're refreshing if the window is up and we're pulling the same
+      // output file as the last one
+      boolean isRefresh = win != null &&
+                          result_ != null && 
+                          result_.getOutputFile().equals(
+                                result.getOutputFile());
+
+      // if this isn't a refresh but there's a window up, cache the scroll
+      // position of the old document before we replace it
+      if (!isRefresh && result_ != null && win != null)
+      {
+         cacheDocPosition(result_, getScrollPosition(win), getAnchor(win));
+      }
+
+      // if it is a refresh, use the doc's existing positions
+      if (isRefresh)
+      {
+         params.setScrollPosition(getScrollPosition(win));
+         params.setAnchor(getAnchor(win));
+      }
+
+      if (win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
+      {
+         satelliteManager_.forceReopenSatellite(RmdOutputSatellite.NAME, 
+                                                params);
+      }
+      else
+      {
+         satelliteManager_.openSatellite(RmdOutputSatellite.NAME,     
+                                         params,
+                                         params.getPreferredSize());   
       }
 
       // save the result so we know if the next render is a re-render of the
@@ -126,21 +163,38 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
       return win.getRstudioFrameScrollPosition();
    }-*/;
    
+   private final native String getAnchor(JavaScriptObject win) /*-{
+      return win.getRstudioFrameAnchor();
+   }-*/;
+   
    // when the window is closed, remember our position within it
    private void notifyRmdOutputClosed(JavaScriptObject closeParams)
    {
       // save anchor location for presentations and scroll position for 
       // documents
       RmdPreviewParams params = closeParams.cast();
-      if (params.isHtmlPresentation())
+      cacheDocPosition(params.getResult(), params.getScrollPosition(), 
+                       params.getAnchor());
+   }
+   
+   private void cacheDocPosition(RmdRenderResult result, int scrollPosition, 
+                                 String anchor)
+   {
+      if (result.isHtmlPresentation())
       {
-         anchors_.put(params.getOutputFile(), params.getAnchor());
+         anchors_.put(keyFromResult(result), anchor);
       }
       else
       {
-         scrollPositions_.put(params.getOutputFile(), 
-                              params.getScrollPosition());
+         scrollPositions_.put(keyFromResult(result), scrollPosition);
       }
+   }
+   
+   // Generates lookup keys from results; used to enforce caching scroll 
+   // position and/or anchor by document name and type 
+   private String keyFromResult(RmdRenderResult result)
+   {
+      return result.getOutputFile() + "-" + result.getOutputFormat();
    }
 
    private final SatelliteManager satelliteManager_;

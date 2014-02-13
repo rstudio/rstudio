@@ -42,6 +42,25 @@ public class RmdRenderResult extends JavaScriptObject
       return this.rpubs_published;
    }-*/;
    
+   public final boolean isHtml()
+   {
+      return getOutputFile().toLowerCase().endsWith(".html");
+   }
+   
+   public final boolean isHtmlPresentation()
+   {
+      return isHtml() && getOutputFormat().endsWith(
+                  RmdRenderResult.OUTPUT_PRESENTATION_SUFFIX);
+   }
+   
+   // indicates whether this result represents the same *output* document as
+   // another result (must match name and type)
+   public final boolean equals(RmdRenderResult other)
+   {
+      return getOutputFile().equals(other.getOutputFile()) &&
+             getOutputFormat().equals(other.getOutputFormat());
+   }
+
    public final static String OUTPUT_HTML_DOCUMENT = "html_document";
    public final static String OUTPUT_REVEALJS_PRESENTATION = "revealjs_presentation";
    public final static String OUTPUT_IOSLIDES_PRESENTATION = "ioslides_presentation";

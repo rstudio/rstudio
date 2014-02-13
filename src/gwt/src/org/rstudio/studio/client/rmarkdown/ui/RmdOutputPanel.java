@@ -49,19 +49,26 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                           boolean refresh)
    {
       fileLabel_.setText(params.getOutputFile());
-      boolean showPublish = enablePublish && params.isHtml();
+      boolean showPublish = enablePublish && params.getResult().isHtml();
       publishButton_.setText(params.getResult().getRpubsPublished() ? 
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
-      publishButton_.setEnabled(showPublish);
       publishButtonSeparator_.setVisible(showPublish);
-      // when refreshing, reapply the current scroll position 
+      // when refreshing, reapply the current scroll position and anchor
       scrollPosition_ = refresh ? 
             getScrollPosition() : params.getScrollPosition();
-      String url = server_.getApplicationURL(params.getOutputUrl());
-      if (params.getAnchor().length() > 0)
+      String url;
+      if (refresh)
       {
-         url += "#" + params.getAnchor();
+         url = getCurrentUrl();
+      }
+      else
+      {
+         url = server_.getApplicationURL(params.getOutputUrl());
+         if (params.getAnchor().length() > 0)
+         {
+            url += "#" + params.getAnchor();
+         }
       }
       showUrl(url);
    }
@@ -77,7 +84,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands.viewerRefresh().createToolbarButton());
       publishButtonSeparator_ = toolbar.addLeftSeparator();
-      publishButton_ = commands.publishHTML().createToolbarButton();
+      publishButton_ = commands.publishHTML().createToolbarButton(false);
       toolbar.addLeftWidget(publishButton_);
    }
    

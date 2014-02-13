@@ -74,16 +74,4 @@ public class RmdPreviewParams extends JavaScriptObject
       // default size (html_document and others)
       return new Size(960, 1000 + chromeHeight);
    }
-   
-   public final boolean isHtml()
-   {
-      return getOutputFile().toLowerCase().endsWith(".html");
-   }
-   
-   public final boolean isHtmlPresentation()
-   {
-      return isHtml() && 
-            getResult().getOutputFormat().endsWith(
-                  RmdRenderResult.OUTPUT_PRESENTATION_SUFFIX);
-   }
 }

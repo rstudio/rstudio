@@ -125,7 +125,7 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    {
       // detect whether we're really doing a refresh
       boolean refresh = params_ != null && 
-            params_.getOutputFile().equals(params.getOutputFile());
+            params_.getResult().equals(params.getResult());
       params_ = params;
       view_.showOutput(params, session_.getSessionInfo().getAllowRpubsPublish(), 
                        refresh);
@@ -143,6 +143,10 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
       $wnd.getRstudioFrameScrollPosition = $entry(function() {
          return thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter::getScrollPosition()();
       });
+
+      $wnd.getRstudioFrameAnchor = $entry(function() {
+         return thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter::getAnchor()();
+      });
    }-*/;
    
    private void onClose() 
@@ -159,6 +163,11 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    private int getScrollPosition()
    {
       return view_.getScrollPosition();
+   }
+   
+   private String getAnchor()
+   {
+      return view_.getAnchor();
    }
 
    private final Display view_;
