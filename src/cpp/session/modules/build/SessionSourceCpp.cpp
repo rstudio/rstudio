@@ -29,7 +29,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionBuildUtils.hpp"
 #include "SessionBuildErrors.hpp"
 #include "SessionBuildEnvironment.hpp"
 
@@ -55,7 +54,8 @@ struct SourceCppState
 
    void addOutput(int type, const std::string& output)
    {
-      outputs.push_back(buildOutputAsJson(BuildOutput(type,output)));
+      using namespace module_context;
+      outputs.push_back(compileOutputAsJson(CompileOutput(type,output)));
    }
 
    json::Value asJson() const
@@ -83,10 +83,11 @@ void enqueSourceCppCompleted(const FilePath& sourceFile,
                              const std::string& errorOutput)
 {
    // reset last sourceCpp state with new data
+   using namespace module_context;
    SourceCppState sourceCppState;
    sourceCppState.targetFile = module_context::createAliasedPath(sourceFile);
-   sourceCppState.addOutput(kBuildOutputNormal, output);
-   sourceCppState.addOutput(kBuildOutputError, errorOutput);
+   sourceCppState.addOutput(kCompileOutputNormal, output);
+   sourceCppState.addOutput(kCompileOutputError, errorOutput);
 
    // parse errors
    std::string allOutput = output + "\n" + errorOutput;

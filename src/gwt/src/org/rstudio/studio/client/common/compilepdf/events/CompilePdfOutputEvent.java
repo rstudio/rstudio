@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.common.compilepdf.events;
 
+import org.rstudio.studio.client.common.compile.CompileOutput;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,12 +26,12 @@ public class CompilePdfOutputEvent extends GwtEvent<CompilePdfOutputEvent.Handle
       void onCompilePdfOutput(CompilePdfOutputEvent event);
    }
 
-   public CompilePdfOutputEvent(String output)
+   public CompilePdfOutputEvent(CompileOutput output)
    {
       output_ = output;
    }
    
-   public String getOutput()
+   public CompileOutput getOutput()
    {
       return output_;
    }
@@ -46,7 +48,7 @@ public class CompilePdfOutputEvent extends GwtEvent<CompilePdfOutputEvent.Handle
       handler.onCompilePdfOutput(this);
    }
    
-   private String output_;
+   private CompileOutput output_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

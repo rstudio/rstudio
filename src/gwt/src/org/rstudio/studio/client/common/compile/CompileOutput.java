@@ -27,6 +27,13 @@ public class CompileOutput extends JavaScriptObject
    public static final int kNormal = 1;
    public static final int kError = 2;
 
+   public static native CompileOutput create(int type, String output) /*-{
+      var compileOutput = new Object();
+      compileOutput.type = type;
+      compileOutput.output = output;
+      return compileOutput;
+   }-*/; 
+   
    public native final int getType() /*-{
       return this.type;
    }-*/;

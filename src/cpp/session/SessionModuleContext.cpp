@@ -1445,5 +1445,13 @@ core::Error executeAsync(const json::JsonRpcFunction& function,
    return Success();
 }
 
+core::json::Object compileOutputAsJson(const CompileOutput& compileOutput)
+{
+   json::Object compileOutputJson;
+   compileOutputJson["type"] = compileOutput.type;
+   compileOutputJson["output"] = compileOutput.output;
+   return compileOutputJson;
+}
+
 } // namespace module_context         
 } // namespace session

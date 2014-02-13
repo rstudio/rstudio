@@ -90,7 +90,6 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuild.cpp
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
-   modules/build/SessionBuildUtils.cpp
    modules/build/SessionSourceCpp.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp

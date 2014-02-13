@@ -28,6 +28,8 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.compile.CompileOutput;
+import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
 import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -41,7 +43,7 @@ public class CompileOutputPane extends WorkbenchPane
                             @Assisted("logTitle") String logTitle)
    {
       super(taskName);
-      compilePanel_ = new CompilePanel();
+      compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
       ensureWidget();
       logTitle_ = logTitle;
    }
@@ -104,7 +106,7 @@ public class CompileOutputPane extends WorkbenchPane
    }
    
    @Override
-   public void showOutput(String output)
+   public void showOutput(CompileOutput output)
    {
       compilePanel_.showOutput(output);
    }

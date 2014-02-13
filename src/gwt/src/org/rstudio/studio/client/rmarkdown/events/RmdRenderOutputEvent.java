@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
+import org.rstudio.studio.client.common.compile.CompileOutput;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -25,12 +27,12 @@ public class RmdRenderOutputEvent extends GwtEvent<RmdRenderOutputEvent.Handler>
       void onRmdRenderOutput(RmdRenderOutputEvent event);
    }
 
-   public RmdRenderOutputEvent(String output)
+   public RmdRenderOutputEvent(CompileOutput output)
    {
       output_ = output;
    }
 
-   public String getOutput()
+   public CompileOutput getOutput()
    {
       return output_;
    }
@@ -47,7 +49,7 @@ public class RmdRenderOutputEvent extends GwtEvent<RmdRenderOutputEvent.Handler>
       handler.onRmdRenderOutput(this);
    }
    
-   private final String output_;
+   private final CompileOutput output_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

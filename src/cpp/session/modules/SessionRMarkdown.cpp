@@ -125,16 +125,20 @@ private:
       // options
       core::system::ProcessOptions options;
       options.terminateChildren = true;
-      options.redirectStdErrToStdOut = true;
       options.workingDir = targetFile_.parent();
 
       core::system::ProcessCallbacks cb;
+      using namespace module_context;
       cb.onContinue = boost::bind(&RenderRmd::onRenderContinue,
                                   RenderRmd::shared_from_this());
       cb.onStdout = boost::bind(&RenderRmd::onRenderOutput,
-                                RenderRmd::shared_from_this(), _2);
+                                RenderRmd::shared_from_this(),
+                                kCompileOutputNormal,
+                                _2);
       cb.onStderr = boost::bind(&RenderRmd::onRenderOutput,
-                                RenderRmd::shared_from_this(), _2);
+                                RenderRmd::shared_from_this(),
+                                kCompileOutputError,
+                                _2);
       cb.onExit =  boost::bind(&RenderRmd::onRenderCompleted,
                                 RenderRmd::shared_from_this(), _1, encoding);
 
@@ -149,7 +153,7 @@ private:
       return !terminationRequested_;
    }
 
-   void onRenderOutput(const std::string& output)
+   void onRenderOutput(int type, const std::string& output)
    {
       // check each line of the emitted output; if it starts with a token
       // indicating rendering is complete, store the remainder of the emitted
@@ -168,7 +172,7 @@ private:
             break;
          }
       }
-      enqueRenderOutput(output);
+      enqueRenderOutput(type, output);
    }
 
    void onRenderCompleted(int exitStatus, const std::string& encoding)
@@ -190,7 +194,7 @@ private:
 
    void terminateWithError(const std::string& message)
    {
-      enqueRenderOutput(message);
+      enqueRenderOutput(module_context::kCompileOutputError, message);
       terminate(false);
    }
 
@@ -239,9 +243,13 @@ private:
       module_context::enqueClientEvent(event);
    }
 
-   static void enqueRenderOutput(const std::string& output)
+   static void enqueRenderOutput(int type,
+                                 const std::string& output)
    {
-      ClientEvent event(client_events::kRmdRenderOutput, output);
+      using namespace module_context;
+      CompileOutput compileOutput(type, output);
+      ClientEvent event(client_events::kRmdRenderOutput,
+                        compileOutputAsJson(compileOutput));
       module_context::enqueClientEvent(event);
    }
 

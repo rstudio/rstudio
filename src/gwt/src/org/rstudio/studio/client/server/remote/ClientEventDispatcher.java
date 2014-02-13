@@ -349,7 +349,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.CompilePdfOutputEvent))
          {
-            String output = event.getData();
+            CompileOutput output = event.getData();
             eventBus_.fireEvent(new CompilePdfOutputEvent(output));
          }
          else if (type.equals(ClientEvent.CompilePdfErrorsEvent))
@@ -546,7 +546,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.RmdRenderOutput))
          {
-            String data = event.getData();
+            CompileOutput data = event.getData();
             eventBus_.fireEvent(new RmdRenderOutputEvent(data));
          }
          else if (type.equals(ClientEvent.RmdRenderCompleted))

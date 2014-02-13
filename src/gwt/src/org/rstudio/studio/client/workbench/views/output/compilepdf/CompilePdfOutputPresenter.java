@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
@@ -110,7 +111,8 @@ public class CompilePdfOutputPresenter extends BasePresenter
       
       compileStarted(compilePdfState.getTargetFile());
       
-      view_.showOutput(compilePdfState.getOutput());
+      view_.showOutput(CompileOutput.create(CompileOutput.kNormal,
+                                            compilePdfState.getOutput()));
       
       if (compilePdfState.getErrors().length() > 0)
          view_.showErrors(compilePdfState.getErrors());    

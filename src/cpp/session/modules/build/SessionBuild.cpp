@@ -49,7 +49,6 @@
 
 #include "SessionBuildEnvironment.hpp"
 #include "SessionBuildErrors.hpp"
-#include "SessionBuildUtils.hpp"
 #include "SessionSourceCpp.hpp"
 
 using namespace core;
@@ -444,7 +443,7 @@ private:
       if (exitStatus == EXIT_SUCCESS)
       {
          std::string msg = "Documentation completed\n\n";
-         enqueBuildOutput(kBuildOutputNormal, msg);
+         enqueBuildOutput(module_context::kCompileOutputNormal, msg);
          buildFunction();
       }
       else
@@ -501,10 +500,12 @@ private:
          else if (!result.stdOut.empty() || !result.stdErr.empty())
          {
             enqueCommandString("Rcpp::compileAttributes()");
-            enqueBuildOutput(kBuildOutputNormal, result.stdOut);
+            enqueBuildOutput(module_context::kCompileOutputNormal,
+                             result.stdOut);
             if (!result.stdErr.empty())
-               enqueBuildOutput(kBuildOutputError, result.stdErr);
-            enqueBuildOutput(kBuildOutputNormal, "\n");
+               enqueBuildOutput(module_context::kCompileOutputError,
+                                result.stdErr);
+            enqueBuildOutput(module_context::kCompileOutputNormal, "\n");
             return result.exitStatus == EXIT_SUCCESS;
          }
          else
@@ -1049,7 +1050,8 @@ private:
    void terminateWithErrorStatus(int exitStatus)
    {
       boost::format fmt("\nExited with status %1%.\n\n");
-      enqueBuildOutput(kBuildOutputError, boost::str(fmt % exitStatus));
+      enqueBuildOutput(module_context::kCompileOutputError,
+                       boost::str(fmt % exitStatus));
       enqueBuildCompleted();
    }
 
@@ -1062,7 +1064,7 @@ private:
 
    void terminateWithError(const std::string& msg)
    {
-      enqueBuildOutput(kBuildOutputError, msg);
+      enqueBuildOutput(module_context::kCompileOutputError, msg);
       enqueBuildCompleted();
    }
 
@@ -1087,23 +1089,23 @@ public:
       std::transform(output_.begin(),
                      output_.end(),
                      std::back_inserter(outputJson),
-                     buildOutputAsJson);
+                     module_context::compileOutputAsJson);
       return outputJson;
    }
 
    std::string outputAsText()
    {
       std::string output;
-      BOOST_FOREACH(const BuildOutput& buildOutput, output_)
+      BOOST_FOREACH(const module_context::CompileOutput& compileOutput, output_)
       {
-         output.append(buildOutput.output);
+         output.append(compileOutput.output);
       }
       return output;
    }
 
    void terminate()
    {
-      enqueBuildOutput(kBuildOutputNormal, "\n");
+      enqueBuildOutput(module_context::kCompileOutputNormal, "\n");
       terminationRequested_ = true;
    }
 
@@ -1124,9 +1126,10 @@ private:
       for (int i=0; i<size; i++)
       {
          // apply filter
+         using namespace module_context;
          std::string line = lines.at(i);
          int type = errorOutputFilterFunction_(line) ?
-                                 kBuildOutputError : kBuildOutputNormal;
+                                 kCompileOutputError : kCompileOutputNormal;
 
          // add newline if this wasn't the last line
          if (i != (size-1))
@@ -1142,7 +1145,7 @@ private:
       if (errorOutputFilterFunction_)
          outputWithFilter(output);
       else
-         enqueBuildOutput(kBuildOutputNormal, output);
+         enqueBuildOutput(module_context::kCompileOutputNormal, output);
    }
 
    void onStandardError(const std::string& output)
@@ -1150,11 +1153,13 @@ private:
       if (errorOutputFilterFunction_)
          outputWithFilter(output);
       else
-         enqueBuildOutput(kBuildOutputError, output);
+         enqueBuildOutput(module_context::kCompileOutputError, output);
    }
 
    void onCompleted(int exitStatus)
    {
+      using namespace module_context;
+
       // call the error parser if one has been specified
       if (errorParser_)
       {
@@ -1169,7 +1174,7 @@ private:
       if (exitStatus != EXIT_SUCCESS)
       {
          boost::format fmt("\nExited with status %1%.\n\n");
-         enqueBuildOutput(kBuildOutputError, boost::str(fmt % exitStatus));
+         enqueBuildOutput(kCompileOutputError, boost::str(fmt % exitStatus));
 
          // if this is a package build then check if we can build
          // C++ code at all
@@ -1196,7 +1201,7 @@ private:
       else
       {
          if (!successMessage_.empty())
-            enqueBuildOutput(kBuildOutputNormal, successMessage_ + "\n");
+            enqueBuildOutput(kCompileOutputNormal, successMessage_ + "\n");
 
          if (successFunction_)
             successFunction_();
@@ -1207,19 +1212,20 @@ private:
 
    void enqueBuildOutput(int type, const std::string& output)
    {
-      BuildOutput buildOutput(type, output);
+      module_context::CompileOutput compileOutput(type, output);
 
-      output_.push_back(buildOutput);
+      output_.push_back(compileOutput);
 
       ClientEvent event(client_events::kBuildOutput,
-                        buildOutputAsJson(buildOutput));
+                        compileOutputAsJson(compileOutput));
 
       module_context::enqueClientEvent(event);
    }
 
    void enqueCommandString(const std::string& cmd)
    {
-      enqueBuildOutput(kBuildOutputCommand, "==> " + cmd + "\n\n");
+      enqueBuildOutput(module_context::kCompileOutputCommand,
+                       "==> " + cmd + "\n\n");
    }
 
    void enqueBuildErrors(const json::Array& errors)
@@ -1237,7 +1243,8 @@ private:
       isRunning_ = false;
 
       if (!postBuildWarning_.empty())
-         enqueBuildOutput(kBuildOutputError, postBuildWarning_ + "\n\n");
+         enqueBuildOutput(module_context::kCompileOutputError,
+                          postBuildWarning_ + "\n\n");
 
       // enque event
       std::string afterRestartCommand;
@@ -1282,7 +1289,7 @@ private:
 private:
    bool isRunning_;
    bool terminationRequested_;
-   std::vector<BuildOutput> output_;
+   std::vector<module_context::CompileOutput> output_;
    CompileErrorParser errorParser_;
    std::string errorsBaseDir_;
    json::Array errorsJson_;

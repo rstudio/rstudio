@@ -443,6 +443,24 @@ void addSuspendHandler(const SuspendHandler& handler);
 
 bool rSessionResumed();
 
+const int kCompileOutputCommand = 0;
+const int kCompileOutputNormal = 1;
+const int kCompileOutputError = 2;
+
+struct CompileOutput
+{
+   CompileOutput(int type, const std::string& output)
+      : type(type), output(output)
+   {
+   }
+
+   int type;
+   std::string output;
+};
+
+core::json::Object compileOutputAsJson(const CompileOutput& compileOutput);
+
+
 } // namespace module_context
 } // namespace session
 
