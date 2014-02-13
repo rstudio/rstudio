@@ -20,6 +20,13 @@
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
 
+  <!-- HistoryImplPushState is default for all browsers, History includes a -->
+  <!-- feature check for HTML5 pushstate. If HTML5 pushstate is not supported -->
+  <!-- HistoryImplHashToken is used as fallback programatically. -->
+  <replace-with class="com.google.gwt.user.client.History.HistoryImplPushState">
+    <when-type-is class="com.google.gwt.user.client.History.HistoryImpl" />
+  </replace-with>
+
   <!-- IE8 does not work with the standard implementation -->
   <replace-with class="com.google.gwt.user.client.History.HistoryImplIE8">
     <when-type-is class="com.google.gwt.user.client.History.HistoryImpl" />

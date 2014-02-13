@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 
 /**
  * Tests for the history system.
- * 
+ *
  * TODO: find a way to test unescaping of the initial hash value.
  */
 public class HistoryTest extends GWTTestCase {
@@ -193,7 +193,7 @@ public class HistoryTest extends GWTTestCase {
     delayTestFinish(5000);
     timer = new Timer() {
       private int count = 0;
-      
+
       @Override
       public void run() {
         if (count++ == 0) {
@@ -220,6 +220,109 @@ public class HistoryTest extends GWTTestCase {
     });
 
     History.newItem("testHistoryChangedCount");
+  }
+
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
+  public void testReplaceItem() {
+    /*
+     * Sentinel token which should only be seen if tokens are lost during the rest of the test.
+     * Without this, History.back() might send the browser too far back, i.e. back to before the web
+     * app containing our test module.
+     */
+    History.newItem("if-you-see-this-then-history-went-back-too-far");
+
+    final String historyToken1 = "token 1";
+    final String historyToken2 = "token 2";
+    final String historyToken3 = "token 3";
+
+    delayTestFinish(10000);
+
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+      private int state = 0;
+
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
+        String historyToken = event.getValue();
+        switch (state) {
+          case 0: {
+            if (!historyToken.equals(historyToken1)) {
+              fail("Expecting token '" + historyToken1 + "', but got: " + historyToken);
+            }
+
+            state = 1;
+            History.newItem(historyToken2);
+            break;
+          }
+
+          case 1: {
+            if (!historyToken.equals(historyToken2)) {
+              fail("Expecting token '" + historyToken2 + "', but got: " + historyToken);
+            }
+
+            state = 2;
+            History.replaceItem(historyToken3, true);
+            break;
+          }
+
+          case 2: {
+            if (!historyToken.equals(historyToken3)) {
+              fail("Expecting token '" + historyToken3 + "', but got: " + historyToken);
+            }
+            state = 3;
+            History.back();
+            break;
+          }
+
+          case 3: {
+            if (!historyToken.equals(historyToken1)) {
+              fail("Expecting token '" + historyToken1 + "', but got: " + historyToken);
+            }
+            finishTest();
+          }
+        }
+      }
+    });
+
+    History.newItem(historyToken1);
+  }
+
+  public void testReplaceItemNoEvent() {
+    /*
+     * Sentinel token which should only be seen if tokens are lost during the rest of the test.
+     * Without this, History.back() might send the browser too far back, i.e. back to before the web
+     * app containing our test module.
+     */
+    History.newItem("if-you-see-this-then-history-went-back-too-far");
+    final String historyToken1 = "token 1";
+    final String historyToken2 = "token 2";
+    final String historyToken2_encoded = "token%202";
+
+    History.newItem(historyToken1);
+
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
+        fail("No event expected");
+      }
+    });
+
+    History.replaceItem(historyToken2, false);
+    assertEquals(historyToken2, History.getToken());
+
+    delayTestFinish(500);
+
+    timer = new Timer() {
+      @Override
+      public void run() {
+        // Make sure that we have updated the URL properly.
+        assertEquals(historyToken2_encoded, getCurrentLocationHash());
+        finishTest();
+      }
+    };
+
+    timer.schedule(200);
   }
 
   public void testTokenEscaping() {
@@ -358,4 +461,9 @@ public class HistoryTest extends GWTTestCase {
   private void addHistoryListenerImpl(ValueChangeHandler<String> handler) {
     this.handlerRegistration = History.addValueChangeHandler(handler);
   }
+
+  private native boolean isI8orIE9() /*-{
+    return $wnd.navigator.userAgent.toLowerCase().indexOf('msie') != -1 &&
+        ($doc.documentMode == 8 || $doc.documentMode == 9);
+  }-*/;
 }
