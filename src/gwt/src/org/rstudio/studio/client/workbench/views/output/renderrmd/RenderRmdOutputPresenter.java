@@ -53,6 +53,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       server_ = server;
+      commands_ = commands;
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -107,6 +108,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
    @Override
    public void onRmdRenderStarted(RmdRenderStartedEvent event)
    {
+      switchToConsoleAfterRender_ = !view_.isEffectivelyVisible();
       view_.ensureVisible(true);
       view_.compileStarted(event.getTargetFile());
       targetFile_ = event.getTargetFile();
@@ -124,6 +126,14 @@ public class RenderRmdOutputPresenter extends BasePresenter
    {
       view_.compileCompleted();
       renderRunning_ = false;
+      if (event.getResult().getSucceeded() && switchToConsoleAfterRender_)
+      {
+         commands_.activateConsole().execute();
+      }
+      else if (!event.getResult().getSucceeded())
+      {
+         view_.ensureVisible(true);
+      }
    }
    
    private void terminateRenderRmd()
@@ -145,9 +155,12 @@ public class RenderRmdOutputPresenter extends BasePresenter
       });
    }
    
-   private RMarkdownServerOperations server_;
-   private CompileOutputPaneDisplay view_;
-   private GlobalDisplay globalDisplay_;
+   private final RMarkdownServerOperations server_;
+   private final CompileOutputPaneDisplay view_;
+   private final GlobalDisplay globalDisplay_;
+   private final Commands commands_;
+   
    private boolean renderRunning_ = false;
+   private boolean switchToConsoleAfterRender_ = false;
    private String targetFile_;
 }

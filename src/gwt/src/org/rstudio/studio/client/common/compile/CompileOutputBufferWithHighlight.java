@@ -24,8 +24,6 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 
 public class CompileOutputBufferWithHighlight extends Composite 
