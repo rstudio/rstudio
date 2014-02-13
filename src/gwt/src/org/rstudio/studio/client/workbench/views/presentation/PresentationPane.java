@@ -22,10 +22,8 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -39,17 +37,17 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.AnchorableFrame;
-import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
+import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.presentation.Presentation.SlideMenu;
 
 public class PresentationPane extends WorkbenchPane implements Presentation.Display
 {
@@ -75,10 +73,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
       toolbar.addLeftSeparator();
       
-      titleLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles()
-                                                .presentationNavigatorLabel());
-      menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_); 
-      getSlideMenu().setDropDownVisible(false);
+      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar);
+     
       toolbar.addLeftSeparator();
       
       if (!isTutorial)
@@ -222,37 +218,10 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    }
    
    @Override
-   public SlideMenu getSlideMenu()
+   public SlideNavigationMenu getSlideMenu()
    {
-      return slideMenu_;
+      return slideNavigationMenu_;
    }
-
-   private SlideMenu slideMenu_ = new SlideMenu() {
-
-      @Override
-      public void setCaption(String caption)
-      {
-         titleLabel_.setText(caption);
-      }
-
-      @Override
-      public void addItem(MenuItem menu)
-      {
-         slidesMenu_.addItem(menu);  
-      }
-
-      @Override
-      public void clear()
-      {
-         slidesMenu_.clearItems();
-      }
-
-      @Override
-      public void setDropDownVisible(boolean visible)
-      {
-         menuWidget_.setVisible(visible);
-      }
-   };
    
    @Override
    public String getPresentationTitle()
@@ -326,24 +295,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       }
    }
    
-   private class SlidesPopupMenu extends ScrollableToolbarPopupMenu
-   {
-      public SlidesPopupMenu()
-      {
-         addStyleName(ThemeStyles.INSTANCE.statusBarMenu());
-      }
-      
-      @Override
-      protected int getMaxHeight()
-      {
-         return Window.getClientHeight() - titleLabel_.getAbsoluteTop() -
-                titleLabel_.getOffsetHeight() - 300;
-      }
-   }
-   
-   private Label titleLabel_ = new Label();
-   private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
-   private Widget menuWidget_;
+   private SlideNavigationToolbarMenu slideNavigationMenu_;
    private ToolbarButton refreshButton_;
    private ToolbarButton progressButton_;
    private boolean busyPending_ = false;

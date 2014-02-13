@@ -20,11 +20,9 @@ import java.util.Iterator;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.json.client.JSONString;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Barrier;
@@ -50,6 +48,8 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
+import org.rstudio.studio.client.common.presentation.SlideView;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 
 import org.rstudio.studio.client.server.Void;
@@ -71,14 +71,13 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
 import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
 
 public class Presentation extends BasePresenter 
 {
    public interface Binder extends CommandBinder<Commands, Presentation> {}
    
-   public interface Display extends WorkbenchView
+   public interface Display extends WorkbenchView, SlideView
    {  
       void load(String url);
       void zoom(String title, String url, Command onClosed);
@@ -86,26 +85,16 @@ public class Presentation extends BasePresenter
       boolean hasSlides();
       
       void home();
-      void slide(int index);
+
       void next();
       void prev();
       
       void pauseMedia();
-      
-      SlideMenu getSlideMenu();
-      
+          
       String getPresentationTitle();
       
       void showBusy();
       void hideBusy();
-   }
-   
-   public interface SlideMenu
-   {
-      void setCaption(String caption);
-      void setDropDownVisible(boolean visible);
-      void addItem(MenuItem menu);
-      void clear();
    }
    
    @Inject
@@ -146,6 +135,7 @@ public class Presentation extends BasePresenter
             return currentState_.getFilePath();
          }
       });
+      navigationPresenter_ = new SlideNavigationPresenter(view_);
      
       binder.bind(commands, this);
       
@@ -572,26 +562,8 @@ public class Presentation extends BasePresenter
       // note the slide index and save it
       currentState_.setSlideIndex(index);
       indexPersister_.setIndex(index);
-      
-      
-      // find the first navigation item that is <= to the index
-      if (slideNavigation_ != null)
-      {
-         JsArray<SlideNavigationItem> items = slideNavigation_.getItems();
-         for (int i=(items.length()-1); i>=0; i--)
-         {
-            if (items.get(i).getIndex() <= index)
-            {
-               String caption = items.get(i).getTitle();
-               caption += " (" + (index+1) + "/" + 
-                          slideNavigation_.getTotalSlides() + ")";
-               
-               
-               view_.getSlideMenu().setCaption(caption);
-               break;
-            }
-         }
-      }
+     
+      navigationPresenter_.setSlideIndex(index);
          
       // execute commands if we stay on the slide for > 500ms
       new Timer() {
@@ -617,35 +589,8 @@ public class Presentation extends BasePresenter
    private void initPresentationNavigator(JavaScriptObject jsNavigator)
    {
       // record current slides
-      slideNavigation_ = jsNavigator.cast();
-      JsArray<SlideNavigationItem> items = slideNavigation_.getItems();
-      
-      // reset the slides menu
-      SlideMenu slideMenu = view_.getSlideMenu();
-      slideMenu.clear(); 
-      for (int i=0; i<items.length(); i++)
-      {
-         // get slide
-         final SlideNavigationItem item = items.get(i);
-          
-         // build html
-         SafeHtmlBuilder menuHtml = new SafeHtmlBuilder();
-         for (int j=0; j<item.getIndent(); j++)
-            menuHtml.appendHtmlConstant("&nbsp;&nbsp;&nbsp;");
-         menuHtml.appendEscaped(item.getTitle());
-         
-      
-         slideMenu.addItem(new MenuItem(menuHtml.toSafeHtml(),
-                                        new Command() {
-            @Override
-            public void execute()
-            {
-               view_.slide(item.getIndex()); 
-            }
-         })); 
-      }  
-      
-      slideMenu.setDropDownVisible(slideNavigation_.getItems().length() > 1);
+      SlideNavigation slideNavigation = jsNavigator.cast();
+      navigationPresenter_.setSlideNavigation(slideNavigation);
    }
    
    private void recordPresentationQuizAnswer(int slideIndex, 
@@ -749,8 +694,9 @@ public class Presentation extends BasePresenter
    private final RemoteFileSystemContext fileSystemContext_;
    private final Session session_;
    private final PresentationDispatcher dispatcher_;
+   private final SlideNavigationPresenter navigationPresenter_;
    private PresentationState currentState_ = null;
-   private SlideNavigation slideNavigation_ = null;
+  
    private boolean usingRmd_ = false;
   
    private FileSystemItem saveAsStandaloneDefaultPath_ = null;
