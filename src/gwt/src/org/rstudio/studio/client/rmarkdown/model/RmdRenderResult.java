@@ -45,4 +45,5 @@ public class RmdRenderResult extends JavaScriptObject
    public final static String OUTPUT_HTML_DOCUMENT = "html_document";
    public final static String OUTPUT_REVEALJS_PRESENTATION = "revealjs_presentation";
    public final static String OUTPUT_IOSLIDES_PRESENTATION = "ioslides_presentation";
+   public final static String OUTPUT_PRESENTATION_SUFFIX = "_presentation";
 }

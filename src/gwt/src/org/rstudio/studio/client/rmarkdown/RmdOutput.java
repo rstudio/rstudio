@@ -59,14 +59,19 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
       RmdRenderResult result = event.getResult();
       if (result.getSucceeded())
       {
-         // find the last known scroll position for this file
+         // find the last known position for this file
          int scrollPosition = 0;
+         String anchor = "";
          if (scrollPositions_.containsKey(result.getOutputFile()))
          {
             scrollPosition = scrollPositions_.get(result.getOutputFile());
          }
+         if (anchors_.containsKey(result.getOutputFile()))
+         {
+            anchor = anchors_.get(result.getOutputFile());
+         }
          RmdPreviewParams params = RmdPreviewParams.create(
-               result, scrollPosition);
+               result, scrollPosition, anchor);
 
          WindowEx win = satelliteManager_.getSatelliteWindowObject(
                RmdOutputSatellite.NAME);
@@ -124,8 +129,18 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
    // when the window is closed, remember our position within it
    private void notifyRmdOutputClosed(JavaScriptObject closeParams)
    {
+      // save anchor location for presentations and scroll position for 
+      // documents
       RmdPreviewParams params = closeParams.cast();
-      scrollPositions_.put(params.getOutputFile(), params.getScrollPosition());
+      if (params.isHtmlPresentation())
+      {
+         anchors_.put(params.getOutputFile(), params.getAnchor());
+      }
+      else
+      {
+         scrollPositions_.put(params.getOutputFile(), 
+                              params.getScrollPosition());
+      }
    }
 
    private final SatelliteManager satelliteManager_;
@@ -134,5 +149,7 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
    // of path to position
    private final Map<String, Integer> scrollPositions_ = 
          new HashMap<String, Integer>();
+   private final Map<String, String> anchors_ = 
+         new HashMap<String, String>();
    private RmdRenderResult result_;
 }

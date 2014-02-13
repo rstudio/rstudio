@@ -42,6 +42,7 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
       int getScrollPosition();
       void refresh();
       String getTitle();
+      String getAnchor();
    }
    
    @Inject
@@ -147,6 +148,7 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    private void onClose() 
    {
       params_.setScrollPosition(view_.getScrollPosition());
+      params_.setAnchor(view_.getAnchor());
       notifyRmdOutputClosed(params_);
    }
    

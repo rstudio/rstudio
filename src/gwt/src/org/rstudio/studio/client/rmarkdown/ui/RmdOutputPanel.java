@@ -48,18 +48,22 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
                           boolean refresh)
    {
-      params_ = params;
       fileLabel_.setText(params.getOutputFile());
-      boolean showPublish = enablePublish &&
-            params.getOutputFile().toLowerCase().endsWith(".html");
+      boolean showPublish = enablePublish && params.isHtml();
       publishButton_.setText(params.getResult().getRpubsPublished() ? 
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
+      publishButton_.setEnabled(showPublish);
       publishButtonSeparator_.setVisible(showPublish);
       // when refreshing, reapply the current scroll position 
       scrollPosition_ = refresh ? 
             getScrollPosition() : params.getScrollPosition();
-      showUrl(server_.getApplicationURL(params.getOutputUrl()));
+      String url = server_.getApplicationURL(params.getOutputUrl());
+      if (params.getAnchor().length() > 0)
+      {
+         url += "#" + params.getAnchor();
+      }
+      showUrl(url);
    }
    
    @Override
@@ -88,7 +92,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          public void onLoad(LoadEvent event)
          {
             Document doc = getFrame().getIFrame().getContentDocument();
-            doc.setScrollTop(scrollPosition_);
+            if (scrollPosition_ > 0)
+               doc.setScrollTop(scrollPosition_);
             String title = doc.getTitle();
             if (title != null && !title.isEmpty())
             {
@@ -105,7 +110,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    {
       // cache the scroll position, so we can re-apply it when the page loads
       scrollPosition_ = getScrollPosition();
-      showUrl(server_.getApplicationURL(params_.getOutputUrl()));
+      showUrl(getCurrentUrl());
    }
 
    @Override
@@ -125,6 +130,21 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    {
       return title_;
    }
+   
+   @Override
+   public String getAnchor()
+   {
+      String url = getCurrentUrl();
+      int anchorPos = url.lastIndexOf("#");
+      return anchorPos > 0 ? url.substring(anchorPos + 1) : "";
+   }
+   
+   // the current URL is the one currently showing in the frame, which may 
+   // reflect navigation occurring after initial load (e.g. anchor changes)
+   private String getCurrentUrl()
+   {
+      return getFrame().getIFrame().getContentDocument().getURL();
+   }
 
    private Label fileLabel_;
    private ToolbarButton publishButton_;
@@ -132,6 +152,5 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private String title_;
    
    private RMarkdownServerOperations server_;
-   private RmdPreviewParams params_;
    private int scrollPosition_ = 0;
 }

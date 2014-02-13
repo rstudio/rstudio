@@ -25,10 +25,12 @@ public class RmdPreviewParams extends JavaScriptObject
    }
    
    public static native RmdPreviewParams create(RmdRenderResult result, 
-                                                int scrollPosition) /*-{
+                                                int scrollPosition, 
+                                                String anchor) /*-{
       return {
          'result': result,
-         'scroll_position': scrollPosition
+         'scroll_position': scrollPosition,
+         'anchor': anchor
       };
    }-*/;
    
@@ -52,6 +54,14 @@ public class RmdPreviewParams extends JavaScriptObject
       this.scroll_position = scrollPosition;
    }-*/;
    
+   public native final String getAnchor() /*-{
+      return this.anchor;
+   }-*/;
+   
+   public native final void setAnchor(String anchor) /*-{
+      this.anchor = anchor;
+   }-*/;
+   
    public final Size getPreferredSize()
    {
       int chromeHeight = 100;
@@ -63,5 +73,17 @@ public class RmdPreviewParams extends JavaScriptObject
       
       // default size (html_document and others)
       return new Size(960, 1000 + chromeHeight);
+   }
+   
+   public final boolean isHtml()
+   {
+      return getOutputFile().toLowerCase().endsWith(".html");
+   }
+   
+   public final boolean isHtmlPresentation()
+   {
+      return isHtml() && 
+            getResult().getOutputFormat().endsWith(
+                  RmdRenderResult.OUTPUT_PRESENTATION_SUFFIX);
    }
 }
