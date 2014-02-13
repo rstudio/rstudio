@@ -34,7 +34,7 @@ public class LibraryGroupUnitCacheTest extends TestCase {
 
   public void testFindCompilationUnit() {
     String fooResourcePath =
-        LibraryGroupUnitCache.typeNameToResourcePath(fooCompilationUnit.getTypeName());
+        LibraryGroupUnitCache.typeSourceNameToResourcePath(fooCompilationUnit.getTypeName());
 
     // Create random libraries with some compilation units.
     List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(4, 1);
@@ -55,7 +55,7 @@ public class LibraryGroupUnitCacheTest extends TestCase {
 
   public void testNoSuchEntry() {
     String barResourcePath =
-        LibraryGroupUnitCache.typeNameToResourcePath(barCompilationUnit.getTypeName());
+        LibraryGroupUnitCache.typeSourceNameToResourcePath(barCompilationUnit.getTypeName());
 
     // Create random libraries with some compilation units.
     List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(4, 1);

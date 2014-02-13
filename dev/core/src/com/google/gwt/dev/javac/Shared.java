@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -113,6 +113,9 @@ public class Shared {
     return (pos < 0) ? "" : internalName.substring(0, pos);
   }
 
+  /**
+   * Returns the source name of the Java type defined within the given source Resource.
+   */
   public static String getTypeName(Resource sourceFile) {
     String path = sourceFile.getPath();
     assert (path.endsWith(".java"));
@@ -157,6 +160,9 @@ public class Shared {
     return qualifiedTypeName.replace('.', '/') + ".java";
   }
 
+  /**
+   * Returns the source name of the type defined within the given path.
+   */
   public static String toTypeName(String path) {
     assert (path.endsWith(".java"));
     path = path.substring(0, path.lastIndexOf('.'));

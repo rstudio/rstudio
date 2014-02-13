@@ -146,7 +146,7 @@ public class ZipLibraryWriter implements LibraryWriter {
 
         // Precompiled sources
         writeClassFilePaths();
-        writeCompilationUnitTypeNames();
+        writeCompilationUnitTypeSourceNames();
 
         // Resources
         writeBuildResources();
@@ -157,7 +157,7 @@ public class ZipLibraryWriter implements LibraryWriter {
         // Generator related
         writeNewBindingPropertyValuesByName();
         writeNewConfigurationPropertyValuesByName();
-        writeReboundTypeNames();
+        writeReboundTypeSourceNames();
         writeRanGeneratorNames();
         writeGeneratedArtifactPaths();
         writeGeneratedArtifacts();
@@ -209,11 +209,11 @@ public class ZipLibraryWriter implements LibraryWriter {
       }
     }
 
-    private void writeCompilationUnitTypeNames() {
-      writeStringSet(Libraries.REGULAR_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME,
-          regularCompilationUnitTypeNames);
-      writeStringSet(Libraries.SUPER_SOURCE_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME,
-          superSourceCompilationUnitTypeNames);
+    private void writeCompilationUnitTypeSourceNames() {
+      writeStringSet(Libraries.REGULAR_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME,
+          regularCompilationUnitTypeSourceNames);
+      writeStringSet(Libraries.SUPER_SOURCE_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME,
+          superSourceCompilationUnitTypeSourceNames);
     }
 
     private void writeDependencyLibraryNames() {
@@ -267,18 +267,18 @@ public class ZipLibraryWriter implements LibraryWriter {
       writeStringSet(Libraries.RAN_GENERATOR_NAMES_ENTRY_NAME, ranGeneratorNames);
     }
 
-    private void writeReboundTypeNames() {
-      writeStringSet(Libraries.REBOUND_TYPE_NAMES_ENTRY_NAME, reboundTypeNames);
+    private void writeReboundTypeSourceNames() {
+      writeStringSet(Libraries.REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME, reboundTypeSourceNames);
     }
 
     private void writeResources(
-        String typeName, String directory, Map<String, Resource> resourcesByPath) {
+        String typeSourceName, String directory, Map<String, Resource> resourcesByPath) {
       for (Resource resource : resourcesByPath.values()) {
         startEntry(directory + resource.getPath());
         try {
           ByteStreams.copy(resource.openContents(), zipOutputStream);
         } catch (IOException e) {
-          throw new CompilerIoException("Failed to copy " + typeName + " resource "
+          throw new CompilerIoException("Failed to copy " + typeSourceName + " resource "
               + resource.getPath() + " into new library file " + zipFile.getPath() + ".", e);
         }
       }
@@ -350,7 +350,7 @@ public class ZipLibraryWriter implements LibraryWriter {
   }
 
   private Map<String, Resource> buildResourcesByPath = Maps.newHashMap();
-  private Map<String, CompilationUnit> compilationUnitsByTypeName = Maps.newHashMap();
+  private Map<String, CompilationUnit> compilationUnitsByTypeSourceName = Maps.newHashMap();
   private Set<String> dependencyLibraryNames = Sets.newHashSet();
   private ArtifactSet generatedArtifacts = new ArtifactSet();
   private String libraryName;
@@ -360,11 +360,11 @@ public class ZipLibraryWriter implements LibraryWriter {
   private ZipEntryBackedObject<PermutationResult> permutationResultHandle;
   private Map<String, Resource> publicResourcesByPath = Maps.newHashMap();
   private Set<String> ranGeneratorNames = Sets.newHashSet();
-  private Set<String> reboundTypeNames = Sets.newHashSet();
+  private Set<String> reboundTypeSourceNames = Sets.newHashSet();
   private Set<String> regularClassFilePaths = Sets.newHashSet();
-  private Set<String> regularCompilationUnitTypeNames = Sets.newLinkedHashSet();
+  private Set<String> regularCompilationUnitTypeSourceNames = Sets.newLinkedHashSet();
   private Set<String> superSourceClassFilePaths = Sets.newHashSet();
-  private Set<String> superSourceCompilationUnitTypeNames = Sets.newLinkedHashSet();
+  private Set<String> superSourceCompilationUnitTypeSourceNames = Sets.newLinkedHashSet();
   private ZipWriter zipWriter;
 
   public ZipLibraryWriter(String fileName) {
@@ -381,14 +381,14 @@ public class ZipLibraryWriter implements LibraryWriter {
     // The ResourceOracle system should already have deduped input source with colliding names, but
     // it's best to be sure.
     Preconditions.checkState(
-        !compilationUnitsByTypeName.containsKey(compilationUnit.getTypeName()));
+        !compilationUnitsByTypeSourceName.containsKey(compilationUnit.getTypeName()));
 
     if (compilationUnit.isSuperSource()) {
-      superSourceCompilationUnitTypeNames.add(compilationUnit.getTypeName());
+      superSourceCompilationUnitTypeSourceNames.add(compilationUnit.getTypeName());
     } else {
-      regularCompilationUnitTypeNames.add(compilationUnit.getTypeName());
+      regularCompilationUnitTypeSourceNames.add(compilationUnit.getTypeName());
     }
-    compilationUnitsByTypeName.put(compilationUnit.getTypeName(), compilationUnit);
+    compilationUnitsByTypeSourceName.put(compilationUnit.getTypeName(), compilationUnit);
 
     for (CompiledClass compiledClass : compilationUnit.getCompiledClasses()) {
       if (compilationUnit.isSuperSource()) {
@@ -461,8 +461,8 @@ public class ZipLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public Set<String> getReboundTypeNames() {
-    return Collections.unmodifiableSet(reboundTypeNames);
+  public Set<String> getReboundTypeSourceNames() {
+    return Collections.unmodifiableSet(reboundTypeSourceNames);
   }
 
   @Override
@@ -471,8 +471,8 @@ public class ZipLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public void setReboundTypeNames(Set<String> reboundTypeNames) {
-    this.reboundTypeNames = reboundTypeNames;
+  public void setReboundTypeSourceNames(Set<String> reboundTypeSourceNames) {
+    this.reboundTypeSourceNames = reboundTypeSourceNames;
   }
 
   @Override

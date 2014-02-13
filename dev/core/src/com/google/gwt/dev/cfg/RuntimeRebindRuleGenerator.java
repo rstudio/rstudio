@@ -22,7 +22,7 @@ import java.util.Map;
  */
 public class RuntimeRebindRuleGenerator {
 
-  public static final Map<String, String> RUNTIME_REBIND_RULE_SOURCES_BY_NAME =
+  public static final Map<String, String> RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME =
       Maps.newLinkedHashMap();
   public static int runtimeRebindRuleCount = 0;
 
@@ -34,11 +34,11 @@ public class RuntimeRebindRuleGenerator {
    * on the types being instantiated.
    */
   public void generate(String jsniCreateInstanceExpression, String matchesExpression) {
-    String typeName = "RuntimeRebindRule" + runtimeRebindRuleCount++;
+    String typeShortName = "RuntimeRebindRule" + runtimeRebindRuleCount++;
 
     StringBuilder typeBody = new StringBuilder();
     typeBody.append(
-        "private static class " + typeName + " extends RuntimeRebindRule {\n");
+        "private static class " + typeShortName + " extends RuntimeRebindRule {\n");
     typeBody.append("  public native Object createInstance() /*-{\n");
     typeBody.append("    " + jsniCreateInstanceExpression + "\n");
     typeBody.append("  }-*/;\n");
@@ -47,6 +47,6 @@ public class RuntimeRebindRuleGenerator {
     typeBody.append("  }\n");
     typeBody.append("}\n");
 
-    RUNTIME_REBIND_RULE_SOURCES_BY_NAME.put(typeName, typeBody.toString());
+    RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME.put(typeShortName, typeBody.toString());
   }
 }

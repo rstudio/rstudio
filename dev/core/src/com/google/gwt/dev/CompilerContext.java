@@ -197,13 +197,13 @@ public class CompilerContext {
 
   public Set<String> gatherNewReboundTypeNamesForGenerator(String generatorName) {
     Set<String> newReboundTypeNames =
-        getLibraryGroup().gatherNewReboundTypeNamesForGenerator(generatorName);
-    newReboundTypeNames.addAll(libraryWriter.getReboundTypeNames());
+        getLibraryGroup().gatherNewReboundTypeSourceNamesForGenerator(generatorName);
+    newReboundTypeNames.addAll(libraryWriter.getReboundTypeSourceNames());
     return newReboundTypeNames;
   }
 
   public Set<String> gatherOldReboundTypeNamesForGenerator(String generatorName) {
-    return getLibraryGroup().gatherOldReboundTypeNamesForGenerator(generatorName);
+    return getLibraryGroup().gatherOldReboundTypeSourceNamesForGenerator(generatorName);
   }
 
   public ResourceOracle getBuildResourceOracle() {

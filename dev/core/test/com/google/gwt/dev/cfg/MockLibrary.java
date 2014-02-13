@@ -98,8 +98,8 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public CompilationUnit getCompilationUnitByTypeName(String typeName) {
-    return compilationUnitsByTypeName.get(typeName);
+  public CompilationUnit getCompilationUnitByTypeSourceName(String typeSourceName) {
+    return compilationUnitsByTypeName.get(typeSourceName);
   }
 
   @Override
@@ -148,7 +148,7 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Set<String> getReboundTypeNames() {
+  public Set<String> getReboundTypeSourceNames() {
     return reboundTypeNames;
   }
 
@@ -158,7 +158,7 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Set<String> getRegularCompilationUnitTypeNames() {
+  public Set<String> getRegularCompilationUnitTypeSourceNames() {
     return compilationUnitTypeNames;
   }
 
@@ -168,7 +168,7 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Set<String> getSuperSourceCompilationUnitTypeNames() {
+  public Set<String> getSuperSourceCompilationUnitTypeSourceNames() {
     return superSourceCompilationUnitTypeNames;
   }
 

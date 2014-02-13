@@ -165,7 +165,7 @@ public class RuleGenerateWithTest extends TestCase {
   public void testGenerate() throws UnableToCompleteException {
     // Sets up environment.
     Map<String, String> runtimeRebindRuleSourcesByName =
-        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_NAME;
+        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;
     MockModuleDef moduleDef = new MockModuleDef();
     CompilerContext compilerContext = new CompilerContext.Builder().module(moduleDef).build();
 

@@ -77,17 +77,17 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     }
 
     @Override
-    public String generate(TreeLogger logger, GeneratorContext generatorContext, String typeName)
-        throws UnableToCompleteException {
+    public String generate(TreeLogger logger, GeneratorContext generatorContext,
+        String typeShortName) throws UnableToCompleteException {
       try {
         String userAgentValue = generatorContext.getPropertyOracle()
             .getSelectionProperty(logger, "user.agent").getCurrentValue();
         PrintWriter pw =
-            generatorContext.tryCreate(logger, "com.google.gwt", userAgentValue + typeName);
+            generatorContext.tryCreate(logger, "com.google.gwt", userAgentValue + typeShortName);
         if (pw != null) {
           generatorContext.commit(logger, pw);
         }
-        return typeName + userAgentValue;
+        return typeShortName + userAgentValue;
       } catch (BadPropertyValueException e) {
         throw new UnableToCompleteException();
       }
@@ -111,17 +111,17 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     }
 
     @Override
-    public String generate(TreeLogger logger, GeneratorContext generatorContext, String typeName)
-        throws UnableToCompleteException {
+    public String generate(TreeLogger logger, GeneratorContext generatorContext,
+        String typeShortName) throws UnableToCompleteException {
       try {
         String localeValue = generatorContext.getPropertyOracle()
             .getSelectionProperty(logger, "locale").getCurrentValue();
         PrintWriter pw =
-            generatorContext.tryCreate(logger, "com.google.gwt", localeValue + typeName);
+            generatorContext.tryCreate(logger, "com.google.gwt", localeValue + typeShortName);
         if (pw != null) {
           generatorContext.commit(logger, pw);
         }
-        return typeName + localeValue;
+        return typeShortName + localeValue;
       } catch (BadPropertyValueException e) {
         throw new UnableToCompleteException();
       }
@@ -175,7 +175,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
 
     private boolean dirty = false;
     private boolean globalCompile;
-    private Map<String, StringWriter> stringWriterByTypeName = Maps.newHashMap();
+    private Map<String, StringWriter> stringWriterByTypeSourceName = Maps.newHashMap();
 
     public MockGeneratorContext(CompilerContext compilerContext, CompilationState compilationState,
         ArtifactSet allGeneratedArtifacts, boolean isProdMode, boolean globalCompile) {
@@ -210,10 +210,10 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     }
 
     @Override
-    public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleTypeName) {
-      if (!stringWriterByTypeName.containsKey(packageName + "." + simpleTypeName)) {
+    public PrintWriter tryCreate(TreeLogger logger, String packageName, String typeShortName) {
+      if (!stringWriterByTypeSourceName.containsKey(packageName + "." + typeShortName)) {
         StringWriter stringWriter = new StringWriter();
-        stringWriterByTypeName.put(packageName + "." + simpleTypeName, stringWriter);
+        stringWriterByTypeSourceName.put(packageName + "." + typeShortName, stringWriter);
         dirty = true;
         return new PrintWriter(stringWriter);
       }
@@ -225,7 +225,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
 
     private class MockLibraryPrecompiler extends LibraryPrecompiler {
 
-      private Set<String> processedReboundTypeNames = Sets.newHashSet();
+      private Set<String> processedReboundTypeSourceNames = Sets.newHashSet();
       private Set<JDeclaredType> reboundTypes = Sets.<JDeclaredType>newHashSet(
           createInstantiableClassType("com.google.ErrorMessages"),
           createInstantiableClassType("com.google.EventShim"));
@@ -258,11 +258,11 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
       }
 
       @Override
-      protected boolean runGenerator(RuleGenerateWith generatorRule, Set<String> reboundTypeNames)
-          throws UnableToCompleteException {
-        processedReboundTypeNames.addAll(reboundTypeNames);
+      protected boolean runGenerator(RuleGenerateWith generatorRule,
+          Set<String> reboundTypeSourceNames) throws UnableToCompleteException {
+        processedReboundTypeSourceNames.addAll(reboundTypeSourceNames);
         runCountByGeneratorName.incrementAndGet(generatorRule.getName());
-        return super.runGenerator(generatorRule, reboundTypeNames);
+        return super.runGenerator(generatorRule, reboundTypeSourceNames);
       }
     }
 
@@ -279,8 +279,8 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     }
   }
 
-  private static JClassType createInstantiableClassType(String typeName) {
-    JClassType instantiableType = new JClassType(SourceOrigin.UNKNOWN, typeName, false, true);
+  private static JClassType createInstantiableClassType(String typeBinaryName) {
+    JClassType instantiableType = new JClassType(SourceOrigin.UNKNOWN, typeBinaryName, false, true);
     JConstructor defaultConstructor = new JConstructor(SourceOrigin.UNKNOWN, instantiableType);
     defaultConstructor.setOriginalTypes(instantiableType, Lists.<JType>newArrayList());
     instantiableType.addMethod(defaultConstructor);
@@ -294,8 +294,8 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
 
   public void testBuildFallbackRuntimeRebindRules() throws UnableToCompleteException {
     // Sets up environment.
-    Map<String, String> runtimeRebindRuleSourcesByName =
-        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_NAME;
+    Map<String, String> runtimeRebindRuleSourcesByShortName =
+        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;
     Set<JDeclaredType> reboundTypes =
         Sets.<JDeclaredType>newHashSet(createInstantiableClassType("CanvasElement"));
 
@@ -304,7 +304,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
 
     // Expects a worst case rebind rule was created that will at least attempt to create a
     // CanvasElement when a CanvasElement is requested.
-    String runtimeRebindRule0 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule0");
+    String runtimeRebindRule0 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule0");
     assertTrue(runtimeRebindRule0.contains("@CanvasElement::new()()"));
     assertTrue(runtimeRebindRule0.contains("requestTypeName.equals(\"CanvasElement\")"));
   }
@@ -313,8 +313,8 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     // Sets up environment.
     Set<String> allRootTypes = Sets.newHashSet();
     compiler.jprogram = new JProgram();
-    Map<String, String> runtimeRebindRuleSourcesByName =
-        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_NAME;
+    Map<String, String> runtimeRebindRuleSourcesByShortName =
+        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;
     Rules rules = new Rules();
     RuleFail ruleFail = new RuleFail();
     ruleFail.getRootCondition().getConditions().add(new ConditionWhenPropertyIs("foo", "bar"));
@@ -330,20 +330,20 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     precompiler.buildSimpleRuntimeRebindRules(rules);
 
     // Only 3 rebind rules were created because the generator rule was skipped.
-    assertEquals(3, runtimeRebindRuleSourcesByName.size());
+    assertEquals(3, runtimeRebindRuleSourcesByShortName.size());
 
     // Expects to see the created fallback rule first.
-    String runtimeRebindRule0 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule0");
+    String runtimeRebindRule0 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule0");
     assertTrue(runtimeRebindRule0.contains("@CanvasElement::new()()"));
     assertTrue(runtimeRebindRule0.contains("requestTypeName.equals(\"CanvasElement\")"));
 
     // Expects to see the created replace with rule second.
-    String runtimeRebindRule1 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule1");
+    String runtimeRebindRule1 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule1");
     assertTrue(runtimeRebindRule1.contains("@WebkitCanvasElement::new()()"));
     assertTrue(runtimeRebindRule1.contains("requestTypeName.equals(\"CanvasElement\")"));
 
     // Expects to see the created fail rule third.
-    String runtimeRebindRule2 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule2");
+    String runtimeRebindRule2 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule2");
     assertTrue(runtimeRebindRule2.contains("Deferred binding request failed for type"));
     assertTrue(runtimeRebindRule2.contains(
         "RuntimePropertyRegistry.getPropertyValue(\"foo\").equals(\"bar\")"));
@@ -354,12 +354,13 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     // JProgram was informed of the newly created PropertyProviderRegistrator type and its name
     // reflects the name of the module currently being processed.
     assertEquals("com.google.gwt.lang.mock_RuntimeRebindRegistrator",
-        compiler.jprogram.getRuntimeRebindRegistratorTypeName());
+        compiler.jprogram.getRuntimeRebindRegistratorTypeSourceName());
     // The allRootTypes list was augmented to know about this newly created type.
-    assertTrue(allRootTypes.contains(compiler.jprogram.getRuntimeRebindRegistratorTypeName()));
+    assertTrue(
+        allRootTypes.contains(compiler.jprogram.getRuntimeRebindRegistratorTypeSourceName()));
 
-    String registratorSource = generatorContext.stringWriterByTypeName.get(
-        compiler.jprogram.getRuntimeRebindRegistratorTypeName()).toString();
+    String registratorSource = generatorContext.stringWriterByTypeSourceName.get(
+        compiler.jprogram.getRuntimeRebindRegistratorTypeSourceName()).toString();
     System.out.println(registratorSource);
     // The generated registrator contains all of the RuntimeRebindRule class instantiation,
     // and registrations.
@@ -393,15 +394,16 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
         Sets.newTreeSet(Lists.newArrayList(userAgentProperty, flavorProperty)),
         Sets.newTreeSet(Lists.newArrayList(emulateStackProperty)));
 
-    // JProgram was informed of the newly created PropertyProviderRegistrator type and its name
-    // reflects the name of the module currently being processed.
+    // JProgram was informed of the newly created PropertyProviderRegistrator type and its source
+    // name reflects the name of the module currently being processed.
     assertEquals("com.google.gwt.lang.mock_PropertyProviderRegistrator",
-        compiler.jprogram.getPropertyProviderRegistratorTypeName());
+        compiler.jprogram.getPropertyProviderRegistratorTypeSourceName());
     // The allRootTypes list was augmented to know about this newly created type.
-    assertTrue(allRootTypes.contains(compiler.jprogram.getPropertyProviderRegistratorTypeName()));
+    assertTrue(
+        allRootTypes.contains(compiler.jprogram.getPropertyProviderRegistratorTypeSourceName()));
 
-    String registratorSource = generatorContext.stringWriterByTypeName.get(
-        compiler.jprogram.getPropertyProviderRegistratorTypeName()).toString();
+    String registratorSource = generatorContext.stringWriterByTypeSourceName.get(
+        compiler.jprogram.getPropertyProviderRegistratorTypeSourceName()).toString();
     // The generated registrator contains PropertyValueProvider class definitions, instantiation,
     // and registration for each binding property.
     assertTrue(registratorSource.contains("class PropertyValueProvider0"));
@@ -418,8 +420,8 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
 
   public void testRunGeneratorsToFixedPoint() throws UnableToCompleteException {
     // Sets up environment.
-    Map<String, String> runtimeRebindRuleSourcesByName =
-        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_NAME;
+    Map<String, String> runtimeRebindRuleSourcesByShortName =
+        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;
     MockLibraryWriter libraryWriter = new MockLibraryWriter();
     // A library group with a varied
     // user.agent/locale/BrowserShimGenerator/LocaleMessageGenerator configuration of properties
@@ -463,9 +465,9 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
         "com.google.WindowShim", // Old lib rebind, reprocessed because of new property values.
         "com.google.ChromeMessages", // Old lib rebind, reprocessed because of new property values.
         "com.google.ErrorMessages" // Explicitly rebound at top level
-    ), precompiler.processedReboundTypeNames);
+    ), precompiler.processedReboundTypeSourceNames);
     // Rebinds for 3 locales * 2 locale rebound files + 5 user agents * 2 user agent rebound files.
-    assertEquals(16, runtimeRebindRuleSourcesByName.size());
+    assertEquals(16, runtimeRebindRuleSourcesByShortName.size());
   }
 
   protected void finishSetUpWithCompilerContext() throws UnableToCompleteException {
@@ -480,7 +482,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_NAME.clear();
+    RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME.clear();
     RuntimeRebindRuleGenerator.runtimeRebindRuleCount = 0;
     compilerContext = new CompilerContext.Builder().module(new MockModuleDef()).build();
     finishSetUpWithCompilerContext();

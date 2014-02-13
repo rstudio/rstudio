@@ -106,9 +106,9 @@ class ZipLibrary implements Library {
       }
     }
 
-    private CompilationUnit readCompilationUnitByTypeName(String typeName) {
+    private CompilationUnit readCompilationUnitByTypeSourceName(String typeSourceName) {
       ZipEntry compilationUnitEntry =
-          zipFile.getEntry(Libraries.computeCompilationUnitEntryName(typeName));
+          zipFile.getEntry(Libraries.computeCompilationUnitEntryName(typeSourceName));
       if (compilationUnitEntry == null) {
         return null;
       }
@@ -122,9 +122,9 @@ class ZipLibrary implements Library {
         objectInputStream.close();
       } catch (IOException e) {
         throw new CompilerIoException(
-            "Failed to read compilation unit " + typeName + " for deserialization.", e);
+            "Failed to read compilation unit " + typeSourceName + " for deserialization.", e);
       } catch (ClassNotFoundException e) {
-        throw new CompilerIoException("Failed to deserialize compilation unit " + typeName
+        throw new CompilerIoException("Failed to deserialize compilation unit " + typeSourceName
             + " because of a missing referenced class.", e);
       }
       return compilationUnit;
@@ -171,16 +171,16 @@ class ZipLibrary implements Library {
       return readStringSet(Libraries.RAN_GENERATOR_NAMES_ENTRY_NAME);
     }
 
-    private Set<String> readReboundTypeNames() {
-      return readStringSet(Libraries.REBOUND_TYPE_NAMES_ENTRY_NAME);
+    private Set<String> readReboundTypeSourceNames() {
+      return readStringSet(Libraries.REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME);
     }
 
     private Set<String> readRegularClassFilePaths() {
       return readStringSet(Libraries.REGULAR_CLASS_FILE_PATHS_ENTRY_NAME);
     }
 
-    private Set<String> readRegularCompilationUnitTypeNames() {
-      return readStringSet(Libraries.REGULAR_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME);
+    private Set<String> readRegularCompilationUnitTypeSourceNames() {
+      return readStringSet(Libraries.REGULAR_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME);
     }
 
     private String readString(String entryName) {
@@ -226,8 +226,8 @@ class ZipLibrary implements Library {
       return readStringSet(Libraries.SUPER_SOURCE_CLASS_FILE_PATHS_ENTRY_NAME);
     }
 
-    private Set<String> readSuperSourceCompilationUnitTypeNames() {
-      return readStringSet(Libraries.SUPER_SOURCE_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME);
+    private Set<String> readSuperSourceCompilationUnitTypeSourceNames() {
+      return readStringSet(Libraries.SUPER_SOURCE_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME);
     }
 
     private String readToString(String entryName, InputStream inputStream) {
@@ -247,7 +247,7 @@ class ZipLibrary implements Library {
   private Set<String> buildResourcePaths;
   private Map<String, Resource> buildResourcesByPath = Maps.newHashMap();
   private Set<String> classFilePaths;
-  private Map<String, CompilationUnit> compilationUnitsByTypeName = Maps.newHashMap();
+  private Map<String, CompilationUnit> compilationUnitsByTypeSourceName = Maps.newHashMap();
   private Set<String> dependencyLibraryNames;
   private ArtifactSet generatedArtifacts;
   private String libraryName;
@@ -257,10 +257,10 @@ class ZipLibrary implements Library {
   private Set<String> publicResourcePaths;
   private Map<String, Resource> publicResourcesByPath = Maps.newHashMap();
   private Set<String> ranGeneratorNames;
-  private Set<String> reboundTypeNames;
-  private Set<String> regularCompilationUnitTypeNames;
+  private Set<String> reboundTypeSourceNames;
+  private Set<String> regularCompilationUnitTypeSourceNames;
   private Set<String> superSourceClassFilePaths;
-  private Set<String> superSourceCompilationUnitTypeNames;
+  private Set<String> superSourceCompilationUnitTypeSourceNames;
   private final ZipLibraryReader zipLibraryReader;
 
   ZipLibrary(String fileName) throws IncompatibleLibraryVersionException {
@@ -293,20 +293,20 @@ class ZipLibrary implements Library {
   }
 
   @Override
-  public CompilationUnit getCompilationUnitByTypeName(String typeName) {
+  public CompilationUnit getCompilationUnitByTypeSourceName(String typeSourceName) {
     // If the type cache doesn't contain the type yet.
-    if (!compilationUnitsByTypeName.containsKey(typeName)) {
+    if (!compilationUnitsByTypeSourceName.containsKey(typeSourceName)) {
       // and the library on disk doesn't contain the type at all.
-      if (!containsCompilationUnit(typeName)) {
+      if (!containsCompilationUnit(typeSourceName)) {
         // cache the fact that the type isn't available on disk.
-        compilationUnitsByTypeName.put(typeName, null);
+        compilationUnitsByTypeSourceName.put(typeSourceName, null);
         return null;
       }
       // otherwise read and cache the type.
-      compilationUnitsByTypeName.put(
-          typeName, zipLibraryReader.readCompilationUnitByTypeName(typeName));
+      compilationUnitsByTypeSourceName.put(
+          typeSourceName, zipLibraryReader.readCompilationUnitByTypeSourceName(typeSourceName));
     }
-    return compilationUnitsByTypeName.get(typeName);
+    return compilationUnitsByTypeSourceName.get(typeSourceName);
   }
 
   @Override
@@ -385,11 +385,12 @@ class ZipLibrary implements Library {
   }
 
   @Override
-  public Set<String> getReboundTypeNames() {
-    if (reboundTypeNames == null) {
-      reboundTypeNames = Collections.unmodifiableSet(zipLibraryReader.readReboundTypeNames());
+  public Set<String> getReboundTypeSourceNames() {
+    if (reboundTypeSourceNames == null) {
+      reboundTypeSourceNames =
+          Collections.unmodifiableSet(zipLibraryReader.readReboundTypeSourceNames());
     }
-    return reboundTypeNames;
+    return reboundTypeSourceNames;
   }
 
   @Override
@@ -401,12 +402,12 @@ class ZipLibrary implements Library {
   }
 
   @Override
-  public Set<String> getRegularCompilationUnitTypeNames() {
-    if (regularCompilationUnitTypeNames == null) {
-      regularCompilationUnitTypeNames =
-          Collections.unmodifiableSet(zipLibraryReader.readRegularCompilationUnitTypeNames());
+  public Set<String> getRegularCompilationUnitTypeSourceNames() {
+    if (regularCompilationUnitTypeSourceNames == null) {
+      regularCompilationUnitTypeSourceNames =
+          Collections.unmodifiableSet(zipLibraryReader.readRegularCompilationUnitTypeSourceNames());
     }
-    return regularCompilationUnitTypeNames;
+    return regularCompilationUnitTypeSourceNames;
   }
 
   @Override
@@ -419,20 +420,20 @@ class ZipLibrary implements Library {
   }
 
   @Override
-  public Set<String> getSuperSourceCompilationUnitTypeNames() {
-    if (superSourceCompilationUnitTypeNames == null) {
-      superSourceCompilationUnitTypeNames =
-          Collections.unmodifiableSet(zipLibraryReader.readSuperSourceCompilationUnitTypeNames());
+  public Set<String> getSuperSourceCompilationUnitTypeSourceNames() {
+    if (superSourceCompilationUnitTypeSourceNames == null) {
+      superSourceCompilationUnitTypeSourceNames = Collections.unmodifiableSet(
+          zipLibraryReader.readSuperSourceCompilationUnitTypeSourceNames());
     }
-    return superSourceCompilationUnitTypeNames;
+    return superSourceCompilationUnitTypeSourceNames;
   }
 
   /**
-   * Uses regular and super source compilation unit type name indexes to determine whether a
-   * compilation unit of any kind is present that matches the given type name.
+   * Uses regular and super source compilation unit type source name indexes to determine whether a
+   * compilation unit of any kind is present that matches the given type source name.
    */
-  private boolean containsCompilationUnit(String typeName) {
-    return getRegularCompilationUnitTypeNames().contains(typeName)
-        || getSuperSourceCompilationUnitTypeNames().contains(typeName);
+  private boolean containsCompilationUnit(String typeSourceName) {
+    return getRegularCompilationUnitTypeSourceNames().contains(typeSourceName)
+        || getSuperSourceCompilationUnitTypeSourceNames().contains(typeSourceName);
   }
 }

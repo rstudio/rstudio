@@ -93,9 +93,9 @@ public class ZipLibrariesTest extends TestCase {
     // Read data back from disk.
     ZipLibrary zipLibrary = new ZipLibrary(zipFile.getPath());
     CompilationUnit actualCompilationUnit =
-        zipLibrary.getCompilationUnitByTypeName("com.google.gwt.lang.RuntimeRebinder");
+        zipLibrary.getCompilationUnitByTypeSourceName("com.google.gwt.lang.RuntimeRebinder");
     CompilationUnit actualSuperSourceCompilationUnit =
-        zipLibrary.getCompilationUnitByTypeName("com.google.gwt.lang.SuperRuntimeRebinder");
+        zipLibrary.getCompilationUnitByTypeSourceName("com.google.gwt.lang.SuperRuntimeRebinder");
 
     // Compare it.
     assertEquals(expectedLibraryName, zipLibrary.getLibraryName());

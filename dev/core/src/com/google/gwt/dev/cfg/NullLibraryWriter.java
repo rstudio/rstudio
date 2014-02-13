@@ -85,7 +85,7 @@ public class NullLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public Set<String> getReboundTypeNames() {
+  public Set<String> getReboundTypeSourceNames() {
     return strings;
   }
 
@@ -94,7 +94,7 @@ public class NullLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public void setReboundTypeNames(Set<String> reboundTypeNames) {
+  public void setReboundTypeSourceNames(Set<String> reboundTypeSourceNames) {
   }
 
   @Override

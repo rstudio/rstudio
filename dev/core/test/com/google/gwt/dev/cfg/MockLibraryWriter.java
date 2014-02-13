@@ -108,7 +108,7 @@ public class MockLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public Set<String> getReboundTypeNames() {
+  public Set<String> getReboundTypeSourceNames() {
     return reboundTypeNames;
   }
 
@@ -118,8 +118,8 @@ public class MockLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public void setReboundTypeNames(Set<String> reboundTypeNames) {
-    this.reboundTypeNames = reboundTypeNames;
+  public void setReboundTypeSourceNames(Set<String> reboundTypeSourceNames) {
+    this.reboundTypeNames = reboundTypeSourceNames;
   }
 
   @Override

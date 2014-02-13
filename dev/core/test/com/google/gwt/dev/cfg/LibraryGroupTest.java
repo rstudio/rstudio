@@ -58,7 +58,7 @@ public class LibraryGroupTest extends TestCase {
     }
   }
 
-  public void testGetCompilationUnitTypeNamesSeesAll() {
+  public void testGetCompilationUnitTypeSourceNamesSeesAll() {
     // Create regular/super source compilation units.
     MockCompilationUnit regularCompilationUnit =
         new MockCompilationUnit("com.google.gwt.Regular", "blah");
@@ -75,27 +75,27 @@ public class LibraryGroupTest extends TestCase {
     LibraryGroup libraryGroup = LibraryGroup.fromLibraries(
         Lists.<Library> newArrayList(regularLibrary, superSourceLibrary), true);
 
-    // Show that getCompilationUnitTypeNames sees both kinds of compilation units.
-    assertEquals(libraryGroup.getCompilationUnitTypeNames(),
+    // Show that getCompilationUnitTypeSourceNames sees both kinds of compilation units.
+    assertEquals(libraryGroup.getCompilationUnitTypeSourceNames(),
         Sets.newHashSet("com.google.gwt.Regular", "com.google.gwt.Super"));
   }
 
-  public void testGetReboundTypeNames() {
+  public void testGetReboundTypeSourceNames() {
     // Build a large random acyclic library graph.
     List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(210, 3);
     // Stick the libraries into a library group.
     LibraryGroup libraryGroup = LibraryGroup.fromLibraries(libraries, true);
 
     // Insert a differently named rebound type into every library.
-    Set<String> expectedReboundTypeNames = Sets.newHashSet();
+    Set<String> expectedReboundTypeSourceNames = Sets.newHashSet();
     for (Library library : libraries) {
-      String reboundTypeName = "Type" + System.identityHashCode(library);
-      library.getReboundTypeNames().add(reboundTypeName);
-      expectedReboundTypeNames.add(reboundTypeName);
+      String reboundTypeSourceName = "Type" + System.identityHashCode(library);
+      library.getReboundTypeSourceNames().add(reboundTypeSourceName);
+      expectedReboundTypeSourceNames.add(reboundTypeSourceName);
     }
 
     // Show that the library group collects and returns them all.
-    assertTrue(expectedReboundTypeNames.equals(libraryGroup.getReboundTypeNames()));
+    assertTrue(expectedReboundTypeSourceNames.equals(libraryGroup.getReboundTypeSourceNames()));
   }
 
   public void testLibraryLinkOrder() {
@@ -176,7 +176,8 @@ public class LibraryGroupTest extends TestCase {
   }
 
   public static LibraryGroup buildVariedPropertyGeneratorLibraryGroup(String generatorNameOne,
-      Set<String> reboundTypeNamesOne, String generatorNameTwo, Set<String> reboundTypeNamesTwo) {
+      Set<String> reboundTypeSourceNamesOne, String generatorNameTwo,
+      Set<String> reboundTypeSourceNamesTwo) {
     // A root library that adds more legal user.agent and locale values but for which no generators
     // have been run.
     MockLibrary rootLibrary = new MockLibrary("RootLibrary");
@@ -192,7 +193,7 @@ public class LibraryGroupTest extends TestCase {
     subLibrary1.getNewBindingPropertyValuesByName()
         .putAll("user.agent", Lists.newArrayList("webkit", "mozilla", "ie"));
     subLibrary1.getRanGeneratorNames().add(generatorNameOne);
-    subLibrary1.getReboundTypeNames().addAll(reboundTypeNamesOne);
+    subLibrary1.getReboundTypeSourceNames().addAll(reboundTypeSourceNamesOne);
 
     // A library that adds legal locale values and has already run the LocaleMessageGenerator
     // generator.
@@ -200,7 +201,7 @@ public class LibraryGroupTest extends TestCase {
     subLibrary2.getNewBindingPropertyValuesByName()
         .putAll("locale", Lists.newArrayList("en", "fr"));
     subLibrary2.getRanGeneratorNames().add(generatorNameTwo);
-    subLibrary2.getReboundTypeNames().addAll(reboundTypeNamesTwo);
+    subLibrary2.getReboundTypeSourceNames().addAll(reboundTypeSourceNamesTwo);
 
     LibraryGroup libraryGroup = LibraryGroup.fromLibraries(
         Lists.<Library>newArrayList(rootLibrary, subLibrary1, subLibrary2), true);
@@ -225,7 +226,7 @@ public class LibraryGroupTest extends TestCase {
         Lists.<Library> newArrayList(regularLibrary, superSourceLibrary), true);
 
     // Show that the library group prefers to return the super source version.
-    assertEquals(libraryGroup.getCompilationUnitByTypeName("com.google.gwt.Regular"),
+    assertEquals(libraryGroup.getCompilationUnitByTypeSourceName("com.google.gwt.Regular"),
         superSourceCompilationUnit);
   }
 

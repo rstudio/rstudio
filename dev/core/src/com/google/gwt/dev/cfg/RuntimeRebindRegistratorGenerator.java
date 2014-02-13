@@ -41,29 +41,29 @@ public class RuntimeRebindRegistratorGenerator extends Generator {
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context, String moduleName) {
-    Map<String, String> runtimeRebindRuleSourcesByName =
-        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_NAME;
+    Map<String, String> runtimeRebindRuleSourcesByShortName =
+        RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;
 
     // Creates a new class definition unique per module to avoid collision.
-    String typeName =
+    String typeShortName =
         moduleName.replace(".", "_").replace("-", "_") + "_" + RUNTIME_REBIND_REGISTRATOR_SUFFIX;
-    PrintWriter out = context.tryCreate(logger, PACKAGE_PATH, typeName);
+    PrintWriter out = context.tryCreate(logger, PACKAGE_PATH, typeShortName);
 
     if (out != null) {
       out.println("package " + PACKAGE_PATH + ";");
-      out.println("public class " + typeName + " {");
+      out.println("public class " + typeShortName + " {");
 
       // Drop all of the runtime rebind rule class implementations in.
-      for (String runtimeRebindRuleSource : runtimeRebindRuleSourcesByName.values()) {
+      for (String runtimeRebindRuleSource : runtimeRebindRuleSourcesByShortName.values()) {
         out.println(runtimeRebindRuleSource);
       }
 
       out.println("  public static void register() {");
-      if (!runtimeRebindRuleSourcesByName.isEmpty()) {
+      if (!runtimeRebindRuleSourcesByShortName.isEmpty()) {
         // Instantiates and registers each one.
-        for (String runtimeRebindRuleName : runtimeRebindRuleSourcesByName.keySet()) {
+        for (String runtimeRebindRuleShortName : runtimeRebindRuleSourcesByShortName.keySet()) {
           out.println(String.format(
-              "    RuntimeRebinder.registerRuntimeRebindRule(new %s());", runtimeRebindRuleName));
+              "    RuntimeRebinder.registerRuntimeRebindRule(new %s());", runtimeRebindRuleShortName));
         }
       } else {
         out.println("    // There are no runtime rebind rules for this module.");
@@ -76,6 +76,6 @@ public class RuntimeRebindRegistratorGenerator extends Generator {
       // Must have been a cache hit.
     }
 
-    return PACKAGE_PATH + "." + typeName;
+    return PACKAGE_PATH + "." + typeShortName;
   }
 }

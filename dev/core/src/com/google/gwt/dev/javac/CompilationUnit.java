@@ -361,7 +361,7 @@ public abstract class CompilationUnit implements Serializable {
   }
 
   /**
-   * Returns the fully-qualified name of the top level public type.
+   * Returns the source name of the top level public type.
    */
   public abstract String getTypeName();
 

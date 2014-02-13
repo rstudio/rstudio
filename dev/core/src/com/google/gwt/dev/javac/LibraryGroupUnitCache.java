@@ -40,7 +40,7 @@ public class LibraryGroupUnitCache implements UnitCache {
    * Translates type names to resource paths to ease lookups since the unit cache system caches
    * based on resource path but the natural mode of interaction with this cache is via type names.
    */
-  public static String typeNameToResourcePath(String typeName) {
+  public static String typeSourceNameToResourcePath(String typeName) {
     Preconditions.checkState(!typeName.endsWith(JAVA_SUFFIX));
 
     // If typeName refers to a nested type using binary syntax.
@@ -93,7 +93,7 @@ public class LibraryGroupUnitCache implements UnitCache {
     }
 
     compilationUnitsByTypeName.put(typeName, compilationUnit);
-    knownEmptyResourcePaths.remove(typeNameToResourcePath(typeName));
+    knownEmptyResourcePaths.remove(typeSourceNameToResourcePath(typeName));
   }
 
   @Override
@@ -120,7 +120,7 @@ public class LibraryGroupUnitCache implements UnitCache {
   @Override
   public CompilationUnit find(ContentId contentId) {
     String typeName = contentId.getSourceTypeName();
-    return find(typeNameToResourcePath(typeName));
+    return find(typeSourceNameToResourcePath(typeName));
   }
 
   @Override
@@ -134,7 +134,7 @@ public class LibraryGroupUnitCache implements UnitCache {
       return null;
     }
 
-    CompilationUnit compilationUnit = libraryGroup.getCompilationUnitByTypeName(typeName);
+    CompilationUnit compilationUnit = libraryGroup.getCompilationUnitByTypeSourceName(typeName);
     if (compilationUnit == null) {
       knownEmptyResourcePaths.add(resourcePath);
       return null;

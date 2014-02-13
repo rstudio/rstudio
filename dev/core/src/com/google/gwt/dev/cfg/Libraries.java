@@ -13,6 +13,8 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.dev.util.Name;
+
 /**
  * Utility functions and constants for reading and writing library files.
  */
@@ -60,14 +62,14 @@ public class Libraries {
   public static final String PERMUTATION_RESULT_ENTRY_NAME = "permutationResult.ser";
   public static final String PUBLIC_RESOURCE_PATHS_ENTRY_NAME = "publicResourcePaths.txt";
   public static final String RAN_GENERATOR_NAMES_ENTRY_NAME = "ranGeneratorNames.txt";
-  public static final String REBOUND_TYPE_NAMES_ENTRY_NAME = "reboundTypeNames.txt";
+  public static final String REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME = "reboundTypeSourceNames.txt";
   public static final String REGULAR_CLASS_FILE_PATHS_ENTRY_NAME = "regularClassFilePaths.txt";
-  public static final String REGULAR_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME =
-      "regularCompilationUnitTypeNames.txt";
+  public static final String REGULAR_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME =
+      "regularCompilationUnitTypeSourceNames.txt";
   public static final String SUPER_SOURCE_CLASS_FILE_PATHS_ENTRY_NAME =
       "superSourceClassFilePaths.txt";
-  public static final String SUPER_SOURCE_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME =
-      "superSourceCompilationUnitTypeNames.txt";
+  public static final String SUPER_SOURCE_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME =
+      "superSourceCompilationUnitTypeSourceNames.txt";
   public static final String VALUE_SEPARATOR = ",";
   public static final String VERSION_NUMBER_ENTRY_NAME = "versionNumber.txt";
 
@@ -89,8 +91,9 @@ public class Libraries {
    * Computes a consistent full path, escaped and with extension at which to store a given
    * compilation unit path.
    */
-  public static String computeCompilationUnitEntryName(String compilationUnitTypeName) {
-    return DIRECTORY_COMPILATION_UNITS + compilationUnitTypeName.replace(".", "/").replace("$", "_")
+  public static String computeCompilationUnitEntryName(String compilationUnitTypeSourceName) {
+    assert Name.isSourceName(compilationUnitTypeSourceName);
+    return DIRECTORY_COMPILATION_UNITS + compilationUnitTypeSourceName.replace(".", "/")
         + EXTENSION_COMPILATION_UNITS;
   }
 }
