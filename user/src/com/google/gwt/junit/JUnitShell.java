@@ -65,6 +65,8 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.junit.client.impl.JUnitResult;
+import com.google.gwt.thirdparty.guava.common.base.Splitter;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerInt;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -564,10 +566,8 @@ public class JUnitShell extends DevMode {
 
         @Override
         public boolean setString(String str) {
-          shell.remoteUserAgents = str.split(",");
-          for (int i = 0; i < shell.remoteUserAgents.length; i++) {
-            shell.remoteUserAgents[i] = shell.remoteUserAgents[i].trim();
-          }
+          Splitter splitter = Splitter.on(",").omitEmptyStrings().trimResults();
+          shell.userAgentsOpt = ImmutableSet.copyOf(splitter.split(str));
           return true;
         }
       });
@@ -649,16 +649,15 @@ public class JUnitShell extends DevMode {
   }
 
   /**
-   * Get the list of remote user agents to compile. This method returns null
-   * until all clients have connected.
+   * Get the set of remote user agents to compile.
    *
-   * @return the list of remote user agents
+   * @return the set of remote user agents
    */
-  public static String[] getRemoteUserAgents() {
+  public static Set<String> getRemoteUserAgents() {
     if (unitTestShell == null) {
       return null;
     }
-    return unitTestShell.remoteUserAgents;
+    return unitTestShell.runStyle.getUserAgents();
   }
 
   /**
@@ -887,10 +886,9 @@ public class JUnitShell extends DevMode {
   private UnableToCompleteException pendingException;
 
   /**
-   * The remote user agents that have connected. Populated after all user agents
-   * have connected so we can limit permutations for remote tests.
+   * The remote user agents so we can limit permutations for remote tests.
    */
-  private String[] remoteUserAgents;
+  Set<String> userAgentsOpt; // Visible for testing
 
   /**
    * What type of test we're running; Local development, local production, or
@@ -977,6 +975,10 @@ public class JUnitShell extends DevMode {
       runStyle.setTries(tries);
     }
 
+    if (userAgentsOpt != null) {
+      runStyle.setUserAgents(userAgentsOpt);
+    }
+
     if (!runStyle.setupMode(getTopLogger(), developmentMode)) {
       getTopLogger().log(
           TreeLogger.ERROR,
@@ -1025,23 +1027,6 @@ public class JUnitShell extends DevMode {
         return true;
       }
       waitingForClients = false;
-    }
-
-    // Limit permutations after all clients have connected.
-    if (remoteUserAgents == null
-        && messageQueue.getNumConnectedClients() == expectedClients) {
-      remoteUserAgents = messageQueue.getUserAgents();
-      String userAgentList = "";
-      for (int i = 0; i < remoteUserAgents.length; i++) {
-        if (i > 0) {
-          userAgentList += ", ";
-        }
-        userAgentList += remoteUserAgents[i];
-      }
-      getTopLogger().log(
-          TreeLogger.INFO,
-          "All clients connected (Limiting future permutations to: "
-              + userAgentList + ")");
     }
 
     long currentTimeMillis = System.currentTimeMillis();
@@ -1112,15 +1097,15 @@ public class JUnitShell extends DevMode {
     // do nothing -- JUnitShell isn't expected to have startup URLs
   }
 
-  void compileForWebMode(ModuleDef module, String... userAgents)
+  void compileForWebMode(ModuleDef module, Set<String> userAgents)
       throws UnableToCompleteException {
-    if (userAgents != null && userAgents.length > 0) {
+    if (userAgents != null && !userAgents.isEmpty()) {
       Properties props = module.getProperties();
       Property userAgent = props.find("user.agent");
       if (userAgent instanceof BindingProperty) {
         BindingProperty bindingProperty = (BindingProperty) userAgent;
         bindingProperty.setAllowedValues(bindingProperty.getRootCondition(),
-            userAgents);
+            userAgents.toArray(new String[0]));
       }
     }
     if (!new Compiler(options).run(getTopLogger(), module)) {
@@ -1138,7 +1123,7 @@ public class JUnitShell extends DevMode {
     return url;
   }
 
-  void maybeCompileForWebMode(ModuleDef module, String... userAgents)
+  void maybeCompileForWebMode(ModuleDef module, Set<String> userAgents)
       throws UnableToCompleteException {
     compilerContext = compilerContextBuilder.module(module).build();
     // Load any declared servlets.

@@ -35,6 +35,8 @@ public abstract class RunStyle {
 
   private int tries = 1;
 
+  private Set<String> userAgents;
+
   /**
    * Constructor for RunStyle. Any subclass must provide a constructor with the
    * same signature since this will be how the RunStyle is created via
@@ -78,6 +80,15 @@ public abstract class RunStyle {
   }
 
   /**
+   * Returns user agents for this run style.
+   *
+   * @return the user agents, or {@code null} if unknown
+   */
+  public Set<String> getUserAgents() {
+    return userAgents;
+  }
+
+  /**
    * Returns the number of times this test should be tried to run. A test
    * succeeds if it succeeds even once.
    * 
@@ -114,6 +125,13 @@ public abstract class RunStyle {
    */
   public void setTries(int tries) {
     this.tries = tries;
+  }
+
+  /**
+   * Sets the associated user agents for this run style.
+   */
+  public void setUserAgents(Set<String> userAgents) {
+    this.userAgents = userAgents;
   }
 
   /**

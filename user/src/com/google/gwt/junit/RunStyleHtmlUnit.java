@@ -18,6 +18,7 @@ package com.google.gwt.junit;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.HostedModePluginObject;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import com.gargoylesoftware.htmlunit.AlertHandler;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
@@ -40,7 +41,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -186,7 +186,21 @@ public class RunStyleHtmlUnit extends RunStyle {
     }
   }
 
-  private static final Map<String, BrowserVersion> BROWSER_MAP = createBrowserMap();
+  private static final Map<String, BrowserVersion> BROWSER_MAP = Maps.newHashMap();
+  private static final Map<BrowserVersion, String> USER_AGENT_MAP  = Maps.newHashMap();
+
+  static {
+    addBrowser(BrowserVersion.FIREFOX_17, "gecko1_8");
+    addBrowser(BrowserVersion.CHROME, "safari");
+    addBrowser(BrowserVersion.INTERNET_EXPLORER_8, "ie8");
+    addBrowser(BrowserVersion.INTERNET_EXPLORER_9, "ie9");
+    addBrowser(BrowserVersion.INTERNET_EXPLORER_10, "ie10");
+  }
+
+  private static void addBrowser(BrowserVersion browser, String userAgent) {
+    BROWSER_MAP.put(browser.getNickname(), browser);
+    USER_AGENT_MAP.put(browser, userAgent);
+  }
 
   /*
    * as long as this number is greater than 1, GWTTestCaseTest::testRetry will
@@ -196,31 +210,6 @@ public class RunStyleHtmlUnit extends RunStyle {
 
   private static final Set<Platform> PLATFORMS = ImmutableSet.of(Platform.HtmlUnitBug,
       Platform.HtmlUnitLayout, Platform.HtmlUnitUnknown);
-
-  /**
-   * Returns the list of browsers Htmlunit emulates as a comma separated string.
-   */
-  static String getBrowserList() {
-    StringBuffer sb = new StringBuffer();
-    for (String str : BROWSER_MAP.keySet()) {
-      sb.append(str);
-      sb.append(",");
-    }
-    if (sb.length() > 1) {
-      return sb.substring(0, sb.length() - 1);
-    }
-    return sb.toString();
-  }
-
-  private static Map<String, BrowserVersion> createBrowserMap() {
-    Map<String, BrowserVersion> browserMap = new HashMap<String, BrowserVersion>();
-    for (BrowserVersion browser : new BrowserVersion[] {
-        BrowserVersion.FIREFOX_17, BrowserVersion.INTERNET_EXPLORER_8,
-        BrowserVersion.INTERNET_EXPLORER_9, BrowserVersion.CHROME}) {
-      browserMap.put(browser.getNickname(), browser);
-    }
-    return Collections.unmodifiableMap(browserMap);
-  }
 
   private Set<BrowserVersion> browsers = new HashSet<BrowserVersion>();
   private boolean developmentMode;
@@ -245,6 +234,7 @@ public class RunStyleHtmlUnit extends RunStyle {
       args = "FF17";
     }
     Set<BrowserVersion> browserSet = new HashSet<BrowserVersion>();
+    Set<String> userAgentSet = new HashSet<String>();
     for (String browserName : args.split(",")) {
       BrowserVersion browser = BROWSER_MAP.get(browserName);
       if (browser == null) {
@@ -255,9 +245,10 @@ public class RunStyleHtmlUnit extends RunStyle {
         return -1;
       }
       browserSet.add(browser);
+      userAgentSet.add(USER_AGENT_MAP.get(browser));
     }
     browsers = Collections.unmodifiableSet(browserSet);
-
+    setUserAgents(Collections.unmodifiableSet(userAgentSet));
     setTries(DEFAULT_TRIES); // set to the default value for this RunStyle
     return browsers.size();
   }

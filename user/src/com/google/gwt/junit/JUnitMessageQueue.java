@@ -23,12 +23,10 @@ import com.google.gwt.junit.client.impl.JUnitResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * A message queue to pass data between {@link JUnitShell} and
@@ -55,8 +53,8 @@ public class JUnitMessageQueue {
      */
     private final String desc;
 
-    public ClientInfoExt(int sessionId, String userAgent, String desc) {
-      super(sessionId, userAgent);
+    public ClientInfoExt(int sessionId, String desc) {
+      super(sessionId);
       this.desc = desc;
     }
 
@@ -129,11 +127,6 @@ public class JUnitMessageQueue {
   private final Map<TestInfo, Map<ClientStatus, JUnitResult>> testResults = new HashMap<TestInfo, Map<ClientStatus, JUnitResult>>();
 
   /**
-   * A set of the GWT user agents (eg. ie6, gecko1_8) that have connected.
-   */
-  private final Set<String> userAgents = new HashSet<String>();
-
-  /**
    * Only instantiable within this package.
    */
   JUnitMessageQueue(int numClients) {
@@ -153,7 +146,6 @@ public class JUnitMessageQueue {
   public TestBlock getTestBlock(ClientInfoExt clientInfo, int blockIndex,
       long timeout) throws TimeoutException {
     synchronized (clientStatusesLock) {
-      userAgents.add(clientInfo.getUserAgent());
       ClientStatus clientStatus = ensureClientStatus(clientInfo);
       clientStatus.blockIndex = blockIndex;
 
@@ -223,7 +215,6 @@ public class JUnitMessageQueue {
       if (results == null) {
         throw new IllegalArgumentException("results cannot be null");
       }
-      userAgents.add(clientInfo.getUserAgent());
       ClientStatus clientStatus = ensureClientStatus(clientInfo);
 
       // Cache the test results.
@@ -365,15 +356,6 @@ public class JUnitMessageQueue {
             + " client(s) haven't responded back to JUnitShell since the start of the test.");
       }
       return buf.toString();
-    }
-  }
-
-  /**
-   * Returns a list of all user agents that have connected.
-   */
-  String[] getUserAgents() {
-    synchronized (clientStatusesLock) {
-      return userAgents.toArray(new String[userAgents.size()]);
     }
   }
 

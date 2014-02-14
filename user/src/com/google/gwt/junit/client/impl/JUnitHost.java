@@ -36,14 +36,8 @@ public interface JUnitHost extends RemoteService {
      */
     private int sessionId;
 
-    /**
-     * The GWT user.agent property of this client, e.g. "ie6", "safari", etc.
-     */
-    private String userAgent;
-
-    public ClientInfo(int sessionId, String userAgent) {
+    public ClientInfo(int sessionId) {
       this.sessionId = sessionId;
-      this.userAgent = userAgent;
     }
 
     /**
@@ -54,10 +48,6 @@ public interface JUnitHost extends RemoteService {
 
     public int getSessionId() {
       return sessionId;
-    }
-
-    public String getUserAgent() {
-      return userAgent;
     }
   }
 

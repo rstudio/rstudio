@@ -86,7 +86,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     ClientInfoExt clientInfoExt;
     HttpServletRequest request = getThreadLocalRequest();
     if (clientInfo.getSessionId() < 0) {
-      clientInfoExt = createNewClientInfo(clientInfo.getUserAgent(), request);
+      clientInfoExt = createNewClientInfo(request);
     } else {
       clientInfoExt = createClientInfo(clientInfo, request);
     }
@@ -126,23 +126,19 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       JUnitResult result = new JUnitResult();
       initResult(request, result);
       result.setException(new JUnitFatalLaunchException(requestPayload));
-      getHost().reportFatalLaunch(createNewClientInfo(null, request), result);
+      getHost().reportFatalLaunch(createNewClientInfo(request), result);
     } else {
       super.service(request, response);
     }
   }
 
-  private ClientInfoExt createClientInfo(ClientInfo clientInfo,
-      HttpServletRequest request) {
+  private ClientInfoExt createClientInfo(ClientInfo clientInfo, HttpServletRequest request) {
     assert (clientInfo.getSessionId() >= 0);
-    return new ClientInfoExt(clientInfo.getSessionId(),
-        clientInfo.getUserAgent(), getClientDesc(request));
+    return new ClientInfoExt(clientInfo.getSessionId(), getClientDesc(request));
   }
 
-  private ClientInfoExt createNewClientInfo(String userAgent,
-      HttpServletRequest request) {
-    return new ClientInfoExt(createSessionId(), userAgent,
-        getClientDesc(request));
+  private ClientInfoExt createNewClientInfo(HttpServletRequest request) {
+    return new ClientInfoExt(createSessionId(), getClientDesc(request));
   }
 
   private int createSessionId() {

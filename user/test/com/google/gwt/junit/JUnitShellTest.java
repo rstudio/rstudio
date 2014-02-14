@@ -15,6 +15,8 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+
 import junit.framework.TestCase;
 
 /**
@@ -27,6 +29,11 @@ public class JUnitShellTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     shell = new JUnitShell();
+  }
+
+  public void testUserAgents() throws Exception {
+    parseGoodArgs("-userAgents", "A, B,C");
+    assertEquals(ImmutableSet.of("A", "B", "C"), shell.userAgentsOpt);
   }
 
   public void testDefaultModuleUrl() throws Exception {
