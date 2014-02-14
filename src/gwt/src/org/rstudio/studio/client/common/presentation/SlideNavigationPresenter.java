@@ -55,37 +55,45 @@ public class SlideNavigationPresenter implements
  
    @Override
    public void onSlideNavigationChanged(SlideNavigationChangedEvent event)
-   {
+   {  
       slideNavigation_ = event.getNavigation();
-      JsArray<SlideNavigationItem> items = slideNavigation_.getItems();
       
-      // reset the slides menu
       SlideNavigationMenu navigationMenu = view_.getNavigationMenu();
       navigationMenu.clear(); 
-      for (int i=0; i<items.length(); i++)
-      {
-         // get slide
-         final SlideNavigationItem item = items.get(i);
-          
-         // build html
-         SafeHtmlBuilder menuHtml = new SafeHtmlBuilder();
-         for (int j=0; j<item.getIndent(); j++)
-            menuHtml.appendHtmlConstant("&nbsp;&nbsp;&nbsp;");
-         menuHtml.appendEscaped(item.getTitle());
+      
+      if (slideNavigation_ != null)
+      {  
+         JsArray<SlideNavigationItem> items = slideNavigation_.getItems();
+         for (int i=0; i<items.length(); i++)
+         {
+            // get slide
+            final SlideNavigationItem item = items.get(i);
+             
+            // build html
+            SafeHtmlBuilder menuHtml = new SafeHtmlBuilder();
+            for (int j=0; j<item.getIndent(); j++)
+               menuHtml.appendHtmlConstant("&nbsp;&nbsp;&nbsp;");
+            menuHtml.appendEscaped(item.getTitle());
          
-      
-         navigationMenu.addItem(new MenuItem(menuHtml.toSafeHtml(),
-                                        new Command() {
-            @Override
-            public void execute()
-            {
-               view_.navigate(item.getIndex()); 
-            }
-         })); 
-      }  
-      
-      navigationMenu.setDropDownVisible(
-                              slideNavigation_.getItems().length() > 1);
+            navigationMenu.addItem(new MenuItem(menuHtml.toSafeHtml(),
+                                           new Command() {
+               @Override
+               public void execute()
+               {
+                  view_.navigate(item.getIndex()); 
+               }
+            })); 
+         }  
+         
+         navigationMenu.setVisible(true);
+         
+         navigationMenu.setDropDownVisible(
+                                 slideNavigation_.getItems().length() > 1);
+      }
+      else
+      {
+         navigationMenu.setVisible(false);
+      }
       
    }
    

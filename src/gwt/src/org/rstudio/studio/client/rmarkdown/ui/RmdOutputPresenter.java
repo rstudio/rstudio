@@ -19,6 +19,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -35,7 +36,8 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
           extends CommandBinder<Commands, RmdOutputPresenter>
    {}
 
-   public interface Display extends IsWidget
+   public interface Display extends IsWidget,
+                                    SlideNavigationPresenter.Display
    {
       void showOutput(RmdPreviewParams params, boolean showPublish, 
                       boolean refresh);
@@ -58,6 +60,7 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
       globalDisplay_ = globalDisplay;
       session_ = session;
       rpubsPresenter.setContext(this);
+      slideNavigationPresenter_ = new SlideNavigationPresenter(view_);
       
       binder.bind(commands, this);  
       
@@ -173,6 +176,8 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
+  
+   private final SlideNavigationPresenter slideNavigationPresenter_;
    
    private RmdPreviewParams params_;
 }

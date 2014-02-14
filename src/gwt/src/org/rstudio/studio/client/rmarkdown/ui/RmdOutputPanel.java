@@ -21,6 +21,8 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,6 +39,11 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
+import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
+import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEvent;
+import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent;
+import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent.Handler;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigationItem;
 
@@ -87,6 +94,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected void initToolbar (Toolbar toolbar, Commands commands)
    {
+      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar, false);
+      
       fileLabel_ = new ToolbarLabel();
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
       fileLabel_.getElement().getStyle().setMarginRight(7, Unit.PX);
@@ -122,6 +131,21 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                Window.setTitle(title);
                title_ = title;
             }
+            
+            // update slide navigation
+            SlideNavigation slideNavigation = getSlideNavigationList(doc);  
+            handlerManager_.fireEvent(new SlideNavigationChangedEvent(
+                                                           slideNavigation));
+            
+            // use the anchor to update the slide index
+            try
+            {
+               int index = Integer.parseInt(getAnchor());
+               handlerManager_.fireEvent(new SlideIndexChangedEvent(index-1));
+            }
+            catch(NumberFormatException e)
+            {
+            }
          }
       });
       return frame;
@@ -155,47 +179,83 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       return anchorPos > 0 ? url.substring(anchorPos + 1) : "";
    }
    
+   @Override
+   public void navigate(int index)
+   {
+      String url = getCurrentUrl();
+      int anchorPos = url.lastIndexOf("#");
+      if (anchorPos != -1)
+         url = url.substring(0, anchorPos);
+      url = url + "#" + (index + 1);
+      
+      showUrl(url);
+   }
+
+   @Override
+   public SlideNavigationMenu getNavigationMenu()
+   {
+      return slideNavigationMenu_;
+   }
+
+   @Override
+   public HandlerRegistration addSlideNavigationChangedHandler(Handler handler)
+   {
+      return handlerManager_.addHandler(SlideNavigationChangedEvent.TYPE, 
+                                        handler);
+   }
+   
+   @Override
+   public HandlerRegistration addSlideIndexChangedHandler(
+                                 SlideIndexChangedEvent.Handler handler)
+   {
+      return handlerManager_.addHandler(SlideIndexChangedEvent.TYPE, handler);
+   }
+   
    // the current URL is the one currently showing in the frame, which may 
    // reflect navigation occurring after initial load (e.g. anchor changes)
    private String getCurrentUrl()
    {
       return getFrame().getIFrame().getContentDocument().getURL();
    }
-   
-   @SuppressWarnings("unused")
-   private SlideNavigation getIoslidesNavigationList(Document doc)
+  
+   private SlideNavigation getSlideNavigationList(Document doc)
    {
-      
+      // look for ioslides 
       JsArray<SlideNavigationItem> navItems = JsArray.createArray().cast();
       
       NodeList<Element> slides = doc.getElementsByTagName("slide");
-      for (int i = 0; i<slides.getLength(); i++) {
-           
+      for (int i = 0; i<slides.getLength(); i++) 
+      {     
          Element slide = slides.getItem(i);
          boolean segue = slide.getClassName().contains("segue");
          
          NodeList<Element> hgroups = slide.getElementsByTagName("hgroup");
-         if (hgroups.getLength() == 1)
-         {
+         if (hgroups.getLength() != 0)
+         {  
+            // get the slide
             Element header = hgroups.getItem(0).getFirstChildElement();
-            if (header.getTagName().equalsIgnoreCase("h2"))
+            String h = header.getTagName();
+            if (h.equalsIgnoreCase("h1") || h.equalsIgnoreCase("h2"))
             {
                String title = header.getInnerText();
                if (!StringUtil.isNullOrEmpty(title))
-               {
+               {  
                   SlideNavigationItem navItem = SlideNavigationItem.create(
-                        title, segue ? 0 : 1, i, -1);
+                                    title, segue ? 0 : 1, i, -1);
                   navItems.push(navItem);
                   
                }
             }
-            
          }
       }
       
-      return SlideNavigation.create(slides.getLength(), navItems);
-      
+      if (navItems.length() > 0)
+         return SlideNavigation.create(navItems.length(), navItems);  
+      else
+         return null;
    }
+   
+   private SlideNavigationToolbarMenu slideNavigationMenu_;
 
    private Label fileLabel_;
    private ToolbarButton publishButton_;
@@ -204,4 +264,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    
    private RMarkdownServerOperations server_;
    private int scrollPosition_ = 0;
+   
+   private HandlerManager handlerManager_ = new HandlerManager(this);
 }
