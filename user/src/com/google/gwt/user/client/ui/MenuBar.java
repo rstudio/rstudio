@@ -37,7 +37,8 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -176,6 +177,108 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     ImageResource menuBarSubMenuIcon();
   }
 
+  private final class MenuPopup extends DecoratedPopupPanel {
+    private boolean towardsEast = !LocaleInfo.getCurrentLocale().isRTL();
+
+    public MenuPopup() {
+      super(true, false, "menuPopup");
+      setAnimationType(AnimationType.ONE_WAY_CORNER);
+      setAnimationEnabled(true);
+      setStyleName(STYLENAME_DEFAULT + "Popup");
+      String primaryStyleName = MenuBar.this.getStylePrimaryName();
+      if (!STYLENAME_DEFAULT.equals(primaryStyleName)) {
+        addStyleName(primaryStyleName + "Popup");
+      }
+      setPreviewingAllNativeEvents(true);
+    }
+
+    @Override
+    protected void onPreviewNativeEvent(NativePreviewEvent event) {
+      // Hook the popup panel's event preview. We use this to keep it from
+      // auto-hiding when the parent menu is clicked.
+      if (!event.isCanceled()) {
+
+        switch (event.getTypeInt()) {
+          case Event.ONMOUSEDOWN:
+            // If the event target is part of the parent menu, suppress the
+            // event altogether.
+            EventTarget target = event.getNativeEvent().getEventTarget();
+            Element parentMenuElement = MenuBar.this.getElement();
+            if (parentMenuElement.isOrHasChild(Element.as(target))) {
+              event.cancel();
+              return;
+            }
+            super.onPreviewNativeEvent(event);
+            if (event.isCanceled()) {
+              selectItem(null);
+            }
+            return;
+        }
+      }
+      super.onPreviewNativeEvent(event);
+    }
+
+    public void positionBelow(MenuItem target) {
+      int top = MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight();
+      int left = towardsEast ? leftOf(target) : rightOf(target) - getOffsetWidth();
+      setPositionInClient(left, top);
+    }
+
+    public void positionNextTo(MenuItem target) {
+      // Calculate top
+      int offsetTop = target.getSubMenu().getAbsoluteTop() - getAbsoluteTop();
+      int top = target.getAbsoluteTop() - offsetTop;
+
+      // Calculate left for alternative directions
+      int leftIfTowardEast = rightOf(MenuBar.this);
+      int leftIfTowardWest = leftOf(MenuBar.this) - getOffsetWidth();
+
+      // Choose direction to show
+      int overflowIfTowardsEast = leftIfTowardEast + getOffsetWidth() - getClientRight();
+      int overflowIfTowardsWest = getClientLeft() - leftIfTowardWest;
+      selectDirection(overflowIfTowardsEast, overflowIfTowardsWest);
+
+      int left = towardsEast ? leftIfTowardEast : leftIfTowardWest;
+
+      setPositionInClient(left, top);
+    }
+
+    private void setPositionInClient(int left, int top) {
+      // Keep the popup inside client area
+      if (getOffsetWidth() < Window.getClientWidth()) {
+        left = Math.min(left, getClientRight() - getOffsetWidth());
+        left = Math.max(getClientLeft(), left);
+      }
+      setPopupPosition(left, top);
+    }
+
+    private void selectDirection(int overflowIfTowardsEast, int overflowIfTowardsWest) {
+      if (overflowIfTowardsEast <= 0 && overflowIfTowardsWest <= 0) {
+        // Fits both sides, use the direction from parent
+        towardsEast = parentMenu.popup.towardsEast;
+      } else {
+        // Doesn't fit both sides, use the side with less or no overflow
+        towardsEast = (overflowIfTowardsEast < overflowIfTowardsWest);
+      }
+    }
+
+    private int leftOf(UIObject object) {
+      return object.getAbsoluteLeft();
+    }
+
+    private int rightOf(UIObject object) {
+      return object.getAbsoluteLeft() + object.getOffsetWidth();
+    }
+
+    private int getClientLeft() {
+      return Window.getScrollLeft();
+    }
+
+    private int getClientRight() {
+      return getClientLeft() + Window.getClientWidth();
+    }
+  }
+
   private static final String STYLENAME_DEFAULT = "gwt-MenuBar";
 
   /**
@@ -193,7 +296,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private AbstractImagePrototype subMenuIcon = null;
   private boolean isAnimationEnabled = false;
   private MenuBar parentMenu;
-  private PopupPanel popup;
+  private MenuPopup popup;
   private MenuItem selectedItem;
   private MenuBar shownChildMenu;
   private boolean vertical, autoOpen;
@@ -1172,96 +1275,26 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     }
   }
 
-  /*
-   * This method is called when a menu bar is shown.
-   */
-  private void onShow() {
-    // clear the selection; a keyboard user can cursor down to the first item
-    selectItem(null);
-  }
-
   private void openPopup(final MenuItem item) {
     // Only the last popup to be opened should preview all event
     if (parentMenu != null && parentMenu.popup != null) {
       parentMenu.popup.setPreviewingAllNativeEvents(false);
     }
 
-    // Create a new popup for this item, and position it next to
-    // the item (below if this is a horizontal menu bar, to the
-    // right if it's a vertical bar).
-    popup = new DecoratedPopupPanel(true, false, "menuPopup") {
-      {
-        setWidget(item.getSubMenu());
-        setPreviewingAllNativeEvents(true);
-        item.getSubMenu().onShow();
-      }
-
-      @Override
-      protected void onPreviewNativeEvent(NativePreviewEvent event) {
-        // Hook the popup panel's event preview. We use this to keep it from
-        // auto-hiding when the parent menu is clicked.
-        if (!event.isCanceled()) {
-
-          switch (event.getTypeInt()) {
-            case Event.ONMOUSEDOWN:
-              // If the event target is part of the parent menu, suppress the
-              // event altogether.
-              EventTarget target = event.getNativeEvent().getEventTarget();
-              Element parentMenuElement = item.getParentMenu().getElement();
-              if (parentMenuElement.isOrHasChild(Element.as(target))) {
-                event.cancel();
-                return;
-              }
-              super.onPreviewNativeEvent(event);
-              if (event.isCanceled()) {
-                selectItem(null);
-              }
-              return;
-          }
-        }
-        super.onPreviewNativeEvent(event);
-      }
-    };
-    popup.setAnimationType(AnimationType.ONE_WAY_CORNER);
-    popup.setAnimationEnabled(isAnimationEnabled);
-    popup.setStyleName(STYLENAME_DEFAULT + "Popup");
-    String primaryStyleName = getStylePrimaryName();
-    if (!STYLENAME_DEFAULT.equals(primaryStyleName)) {
-      popup.addStyleName(primaryStyleName + "Popup");
-    }
-    popup.addPopupListener(this);
-
     shownChildMenu = item.getSubMenu();
-    item.getSubMenu().parentMenu = this;
+    shownChildMenu.selectItem(null);
+    shownChildMenu.parentMenu = this;
 
-    // Show the popup, ensuring that the menubar's event preview remains on top
-    // of the popup's.
-    popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
-
+    popup = new MenuPopup();
+    popup.setWidget(shownChildMenu);
+    popup.addPopupListener(this);
+    popup.setPopupPositionAndShow(new PositionCallback() {
       @Override
       public void setPosition(int offsetWidth, int offsetHeight) {
-
-        // depending on the bidi direction position a menu on the left or right
-        // of its base item
-        if (LocaleInfo.getCurrentLocale().isRTL()) {
-          if (vertical) {
-            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() - offsetWidth
-                + 1, item.getAbsoluteTop());
-          } else {
-            popup.setPopupPosition(item.getAbsoluteLeft()
-                + item.getOffsetWidth() - offsetWidth,
-                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight()
-                    - 1);
-          }
+        if (vertical) {
+          popup.positionNextTo(item);
         } else {
-          if (vertical) {
-            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft()
-                + MenuBar.this.getOffsetWidth() - 1, item.getAbsoluteTop());
-          } else {
-            popup.setPopupPosition(item.getAbsoluteLeft(),
-                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight()
-                    - 1);
-          }
+          popup.positionBelow(item);
         }
       }
     });

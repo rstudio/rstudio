@@ -320,9 +320,6 @@ a, a:visited, a:hover {
 .gwt-MenuBar-vertical .subMenuIcon-selected {
   background: #E0EDFE;
 }
-.gwt-MenuBarPopup {
-  margin: 0px 3px 0px 0px;
-}
 .gwt-MenuBarPopup .menuPopupTopCenter {
   background: url(images/hborder.png) 0px -12px repeat-x;
 }
