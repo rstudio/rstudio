@@ -28,14 +28,26 @@ import com.google.gwt.user.client.ui.Widget;
 public class SlideNavigationToolbarMenu 
                      implements SlideNavigationMenu
 {
-   public SlideNavigationToolbarMenu(Toolbar toolbar, boolean separatorBefore)
+   public SlideNavigationToolbarMenu(Toolbar toolbar)
    {
-      if (separatorBefore)
-         separatorWidget_ = toolbar.addLeftSeparator();
-          
+      this(toolbar, 200, 300, false);
+   }
+   
+   public SlideNavigationToolbarMenu(Toolbar toolbar,
+                                     int maxWidth,
+                                     int heightOffset,
+                                     boolean separatorAfter)
+   {
       titleLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles()
                                           .presentationNavigatorLabel());
+      titleLabel_.getElement().getStyle().setProperty("max-width", 
+                                                      maxWidth + "px");
+      
       menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_);
+      heightOffset_ = heightOffset;
+      
+      if (separatorAfter)
+         separatorWidget_ = toolbar.addLeftSeparator();
       
       setDropDownVisible(false);
    }
@@ -50,10 +62,10 @@ public class SlideNavigationToolbarMenu
    @Override
    public void setVisible(boolean visible)
    {
-      if (separatorWidget_ != null)
-         separatorWidget_.setVisible(visible);
       titleLabel_.setVisible(visible);
       setDropDownVisible(visible);
+      if (separatorWidget_ != null)
+         separatorWidget_.setVisible(visible);
    }
 
    @Override
@@ -91,12 +103,13 @@ public class SlideNavigationToolbarMenu
       protected int getMaxHeight()
       {
          return Window.getClientHeight() - titleLabel_.getAbsoluteTop() -
-                titleLabel_.getOffsetHeight() - 300;
+                titleLabel_.getOffsetHeight() - heightOffset_;
       }
    }
    
-   private Widget separatorWidget_ = null;
    private Label titleLabel_ = new Label();
    private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
    private Widget menuWidget_;
+   private Widget separatorWidget_ = null;
+   private final int heightOffset_ ;
 }

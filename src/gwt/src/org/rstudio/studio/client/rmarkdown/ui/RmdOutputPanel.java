@@ -23,12 +23,14 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.AnchorableFrame;
@@ -62,8 +64,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
                           boolean refresh)
    {
-      fileLabel_.setText(StringUtil.shortPathName(
-            FileSystemItem.createFile(params.getOutputFile()), 300));
+      fileLabel_.setText(FileSystemItem.createFile(
+                                       params.getOutputFile()).getName());
+      
       // we can only publish self-contained HTML to RPubs
       boolean showPublish = enablePublish && 
                             params.getResult().isHtml() &&
@@ -94,7 +97,10 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected void initToolbar (Toolbar toolbar, Commands commands)
    {
-      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar, false);
+      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar, 
+                                                            400, 
+                                                            100,
+                                                            true);
       
       fileLabel_ = new ToolbarLabel();
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
@@ -132,24 +138,38 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                title_ = title;
             }
             
-            // update slide navigation
-            SlideNavigation slideNavigation = getSlideNavigationList(doc);  
+            // see if we can do ioslides navigation
+            SlideNavigation slideNavigation = getIoslidesNavigationList(doc);  
             handlerManager_.fireEvent(new SlideNavigationChangedEvent(
                                                            slideNavigation));
             
-            // use the anchor to update the slide index
-            try
+            // slide change monitoring
+            slideChangeMonitor_.cancel();
+            if (slideNavigation != null)
             {
-               int index = Integer.parseInt(getAnchor());
-               handlerManager_.fireEvent(new SlideIndexChangedEvent(index-1));
-            }
-            catch(NumberFormatException e)
-            {
+               fireSlideIndexChanged();
+               slideChangeMonitor_.scheduleRepeating(250);
             }
          }
       });
       return frame;
    }
+   
+   private Timer slideChangeMonitor_ = new Timer() {
+
+      @Override
+      public void run()
+      {
+         String url = getCurrentUrl();
+         if (!url.equals(lastUrl_))
+         {
+            lastUrl_ = url;
+            fireSlideIndexChanged();
+         }
+      }
+      
+      private String lastUrl_ = null;  
+   };
    
    @Override
    public void refresh()
@@ -182,13 +202,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    public void navigate(int index)
    {
-      String url = getCurrentUrl();
-      int anchorPos = url.lastIndexOf("#");
-      if (anchorPos != -1)
-         url = url.substring(0, anchorPos);
-      url = url + "#" + (index + 1);
-      
-      showUrl(url);
+      getFrame().getIFrame().focus();
+      ioslidesNavigate(getFrame().getWindow(), index + 1); 
    }
 
    @Override
@@ -218,12 +233,15 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       return getFrame().getIFrame().getContentDocument().getURL();
    }
   
-   private SlideNavigation getSlideNavigationList(Document doc)
+   private SlideNavigation getIoslidesNavigationList(Document doc)
    {
       // look for ioslides 
       JsArray<SlideNavigationItem> navItems = JsArray.createArray().cast();
       
       NodeList<Element> slides = doc.getElementsByTagName("slide");
+      if (slides.getLength() <= 2) // just the title slide + the background
+         return null;
+      
       for (int i = 0; i<slides.getLength(); i++) 
       {     
          Element slide = slides.getItem(i);
@@ -250,9 +268,28 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       }
       
       if (navItems.length() > 0)
-         return SlideNavigation.create(navItems.length(), navItems);  
+         return SlideNavigation.create(slides.getLength() - 1, navItems);  
       else
          return null;
+   }
+   
+   private native void ioslidesNavigate(WindowEx w, int slideIndex) /*-{
+      return w.slidedeck.loadSlide(slideIndex);
+   }-*/;
+    
+   private void fireSlideIndexChanged()
+   {
+      try
+      {
+         String anchor = getAnchor();
+         if (anchor.length() == 0)
+            anchor = "1";
+         int index = Integer.parseInt(anchor);
+         handlerManager_.fireEvent(new SlideIndexChangedEvent(index-1));
+      }
+      catch(NumberFormatException e)
+      {
+      }
    }
    
    private SlideNavigationToolbarMenu slideNavigationMenu_;
