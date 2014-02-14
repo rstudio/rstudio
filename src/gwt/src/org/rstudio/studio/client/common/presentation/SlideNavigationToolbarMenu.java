@@ -19,6 +19,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
@@ -28,16 +29,22 @@ import com.google.gwt.user.client.ui.Widget;
 public class SlideNavigationToolbarMenu 
                      implements SlideNavigationMenu
 {
-   public SlideNavigationToolbarMenu(Toolbar toolbar)
+   public SlideNavigationToolbarMenu(Toolbar toolbar, ToolbarButton homeButton)
    {
-      this(toolbar, 200, 300, false);
+      this(toolbar, homeButton, 200, 300, false);
    }
    
    public SlideNavigationToolbarMenu(Toolbar toolbar,
+                                     ToolbarButton homeButton,
                                      int maxWidth,
                                      int heightOffset,
                                      boolean separatorAfter)
    {
+      
+      homeButton_ = homeButton;
+      toolbar.addLeftWidget(homeButton_);
+      homeSeparatorWidget_ = toolbar.addLeftSeparator();
+      
       titleLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles()
                                           .presentationNavigatorLabel());
       titleLabel_.getElement().getStyle().setProperty("max-width", 
@@ -62,6 +69,8 @@ public class SlideNavigationToolbarMenu
    @Override
    public void setVisible(boolean visible)
    {
+      homeButton_.setVisible(visible);
+      homeSeparatorWidget_.setVisible(visible);
       titleLabel_.setVisible(visible);
       setDropDownVisible(visible);
       if (separatorWidget_ != null)
@@ -107,6 +116,8 @@ public class SlideNavigationToolbarMenu
       }
    }
    
+   private ToolbarButton homeButton_;
+   private Widget homeSeparatorWidget_;
    private Label titleLabel_ = new Label();
    private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
    private Widget menuWidget_;

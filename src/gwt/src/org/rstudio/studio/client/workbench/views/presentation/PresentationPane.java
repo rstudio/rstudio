@@ -70,9 +70,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       
       Toolbar toolbar = new Toolbar();
       
-      toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
-      
-      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar);
+      ToolbarButton homeButton = commands_.presentationHome().createToolbarButton();
+      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar, homeButton);
      
       toolbar.addLeftSeparator();
       
