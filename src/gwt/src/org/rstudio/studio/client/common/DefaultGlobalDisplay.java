@@ -351,6 +351,15 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       else
          openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
    }
+   
+   @Override
+   public void showWordDoc(String path)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().showWordDoc(path);
+      else
+         openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
+   }
 
    private final Provider<ApplicationView> view_;
    private final Session session_;

@@ -22,6 +22,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
@@ -43,10 +44,12 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
    @Inject
    public RmdOutput(EventBus eventBus, 
                     Commands commands,
+                    GlobalDisplay globalDisplay,
                     Binder binder,
                     final SatelliteManager satelliteManager)
    {
       satelliteManager_ = satelliteManager;
+      globalDisplay_ = globalDisplay;
       
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
 
@@ -59,7 +62,20 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
       RmdRenderResult result = event.getResult();
-      if (result.getSucceeded())
+      if (!result.getSucceeded())
+         return;
+      
+      if (result.getOutputFormat().equals(RmdRenderResult.OUTPUT_PDF_DOCUMENT))
+      {
+         // show in-browser for server mode, open the file in desktop mode
+         globalDisplay_.showHtmlFile(result.getOutputFile());
+      }
+      else if (result.getOutputFormat().equals(
+            RmdRenderResult.OUTPUT_WORD_DOCUMENT))
+      {
+         globalDisplay_.showWordDoc(result.getOutputFile());
+      }
+      else
       {
          displayRenderResult(result);
       }
@@ -198,6 +214,7 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
    }
 
    private final SatelliteManager satelliteManager_;
+   private final GlobalDisplay globalDisplay_;
 
    // stores the last scroll position of each document we know about: map
    // of path to position

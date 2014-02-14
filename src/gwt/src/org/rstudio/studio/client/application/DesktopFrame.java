@@ -41,6 +41,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
    void showFile(String path);
+   void showWordDoc(String path);
    void openMinimalWindow(String name, String url, int width, int height);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int width, int height);

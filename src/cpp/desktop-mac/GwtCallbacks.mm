@@ -312,6 +312,23 @@ NSString* resolveAliasedPath(NSString* path)
    }
 }
 
+- (void) showWordDoc: (NSString*) path
+{
+   if (path == nil || [path length] == 0)
+      return;
+   
+   // create the structure describing the doc to open
+   path = resolveAliasedPath(path);
+   CFURLRef urls[1];
+   urls[0] = (CFURLRef)[NSURL fileURLWithPath: path];
+   CFArrayRef docArr =
+         CFArrayCreate(kCFAllocatorDefault, (const void**)&urls, 1,
+                       &kCFTypeArrayCallBacks);
+   
+   // open Word in view (read-only) mode 
+   LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+}
+
 - (Boolean) isRetina
 {
    NSWindow* mainWindow = [[MainFrameController instance] window];
@@ -764,6 +781,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"showFolder";
    else if (sel == @selector(showFile:))
       return @"showFile";
+   else if (sel == @selector(showWordDoc:))
+      return @"showWordDoc";
    else if (sel == @selector(openMinimalWindow:url:width:height:))
       return @"openMinimalWindow";
    else if (sel == @selector(activateSatelliteWindow:))

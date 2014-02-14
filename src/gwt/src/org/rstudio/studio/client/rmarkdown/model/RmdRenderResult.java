@@ -87,6 +87,8 @@ public class RmdRenderResult extends JavaScriptObject
    public final static String OUTPUT_REVEALJS_PRESENTATION = "revealjs_presentation";
    public final static String OUTPUT_IOSLIDES_PRESENTATION = "ioslides_presentation";
    public final static String OUTPUT_PRESENTATION_SUFFIX = "_presentation";
+   public final static String OUTPUT_WORD_DOCUMENT = "word_document";
+   public final static String OUTPUT_PDF_DOCUMENT = "pdf_document";
 
    // format option strings from the rmarkdown package
    public final static String FORMAT_SELF_CONTAINED = "self_contained";

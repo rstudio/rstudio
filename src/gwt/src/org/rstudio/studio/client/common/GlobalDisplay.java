@@ -104,6 +104,8 @@ public abstract class GlobalDisplay extends MessageDisplay
    
    public abstract void showHtmlFile(String path);
    
+   public abstract void showWordDoc(String path);
+   
    public void openRStudioLink(String linkName)
    {
       openRStudioLink(linkName, true);
