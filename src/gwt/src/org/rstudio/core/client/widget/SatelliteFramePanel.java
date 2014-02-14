@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public abstract class SatelliteFramePanel <T extends RStudioFrame>
@@ -33,22 +32,13 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
       commands_ = commands;
       rootPanel_ = new LayoutPanel();
       
-      toolbar_ = createToolbar(commands_);
+      toolbar_ = new Toolbar();
       initToolbar(toolbar_, commands_);
       rootPanel_.add(toolbar_);
       rootPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
       rootPanel_.setWidgetTopHeight(toolbar_, 0, Unit.PX, toolbar_.getHeight(), Unit.PX);
       
       initWidget(rootPanel_);
-   }
-   
-   private Toolbar createToolbar(Commands commands)
-   {
-      Toolbar toolbar = new Toolbar();
-      ToolbarButton popout = commands_.viewerPopout().createToolbarButton();
-      popout.setText(openCommandText());
-      toolbar.addRightWidget(popout);
-      return toolbar;
    }
    
    protected void showUrl(String url)
@@ -87,7 +77,6 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    
    protected abstract void initToolbar(Toolbar toolbar, Commands commands);
    protected abstract T createFrame(String url);
-   protected abstract String openCommandText();
 
    private final Commands commands_;
 

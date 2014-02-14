@@ -42,20 +42,27 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    @Override 
    protected void initToolbar(Toolbar toolbar, Commands commands)
    {
-      ToolbarButton refreshButton = 
-            commands.reloadShinyApp().createToolbarButton();
-      refreshButton.setLeftImage(commands.viewerRefresh().getImageResource());
-      refreshButton.getElement().getStyle().setMarginTop(2, Unit.PX);
-      toolbar.addLeftWidget(refreshButton);
       if (Desktop.isDesktop())
       {
-         toolbar.addLeftSeparator();
          urlBox_ = new Label("");
          Style style = urlBox_.getElement().getStyle();
          style.setColor("#606060");
          urlBox_.addStyleName(ThemeStyles.INSTANCE.selectableText());
+         urlBox_.getElement().getStyle().setMarginRight(7, Unit.PX);
          toolbar.addLeftWidget(urlBox_);
+         toolbar.addLeftSeparator();
       }
+
+      ToolbarButton popoutButton = 
+            commands.viewerPopout().createToolbarButton();
+      popoutButton.setText("Open in Browser");
+      toolbar.addLeftWidget(popoutButton);
+
+      ToolbarButton refreshButton = 
+            commands.reloadShinyApp().createToolbarButton();
+      refreshButton.setLeftImage(commands.viewerRefresh().getImageResource());
+      refreshButton.getElement().getStyle().setMarginTop(2, Unit.PX);
+      toolbar.addRightWidget(refreshButton);
    }
    
    @Override
@@ -115,12 +122,6 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
       return new RStudioFrame(url);
    }
 
-   @Override
-   protected String openCommandText()
-   {
-      return "Open in Browser";
-   }
-   
    private Label urlBox_;
    private ShinyApplicationParams appParams_;
 }
