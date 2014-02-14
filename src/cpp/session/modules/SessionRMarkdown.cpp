@@ -167,6 +167,11 @@ private:
          if (boost::algorithm::starts_with(renderLine, completeMarker))
          {
             std::string fileName = renderLine.substr(completeMarker.length());
+
+            // trim any whitespace from the end of the filename (on Windows this
+            // includes part of CR-LF)
+            boost::algorithm::trim(fileName);
+
             // if the path looks absolute, use it as-is; otherwise, presume
             // it to be in the same directory as the input file
             outputFile_ = targetFile_.parent().complete(fileName);
