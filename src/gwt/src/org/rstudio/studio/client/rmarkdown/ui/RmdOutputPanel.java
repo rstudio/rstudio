@@ -36,8 +36,8 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
+import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
+import org.rstudio.studio.client.common.presentation.model.SlideNavigationItem;
 
 public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                             implements RmdOutputPresenter.Display

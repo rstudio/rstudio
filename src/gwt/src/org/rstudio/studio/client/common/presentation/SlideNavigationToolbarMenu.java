@@ -25,10 +25,14 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SlideNavigationToolbarMenu implements SlideNavigationMenu
+public class SlideNavigationToolbarMenu 
+                     implements SlideNavigationMenu
 {
-   public SlideNavigationToolbarMenu(Toolbar toolbar)
+   public SlideNavigationToolbarMenu(Toolbar toolbar, boolean separatorBefore)
    {
+      if (separatorBefore)
+         separatorWidget_ = toolbar.addLeftSeparator();
+          
       titleLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles()
                                           .presentationNavigatorLabel());
       menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_);
@@ -36,6 +40,21 @@ public class SlideNavigationToolbarMenu implements SlideNavigationMenu
       setDropDownVisible(false);
    }
    
+   @Override
+   public boolean isVisible()
+   {
+      return titleLabel_.isVisible();
+   }
+   
+   
+   @Override
+   public void setVisible(boolean visible)
+   {
+      if (separatorWidget_ != null)
+         separatorWidget_.setVisible(visible);
+      titleLabel_.setVisible(visible);
+      setDropDownVisible(visible);
+   }
 
    @Override
    public void setCaption(String caption)
@@ -58,7 +77,7 @@ public class SlideNavigationToolbarMenu implements SlideNavigationMenu
    @Override
    public void setDropDownVisible(boolean visible)
    {
-      menuWidget_.setVisible(visible);
+      menuWidget_.setVisible(isVisible() && visible);
    }
    
    private class SlidesPopupMenu extends ScrollableToolbarPopupMenu
@@ -76,6 +95,7 @@ public class SlideNavigationToolbarMenu implements SlideNavigationMenu
       }
    }
    
+   private Widget separatorWidget_ = null;
    private Label titleLabel_ = new Label();
    private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
    private Widget menuWidget_;

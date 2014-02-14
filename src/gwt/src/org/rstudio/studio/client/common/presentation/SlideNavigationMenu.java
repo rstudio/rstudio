@@ -19,6 +19,8 @@ import com.google.gwt.user.client.ui.MenuItem;
 
 public interface SlideNavigationMenu
 {
+   boolean isVisible();
+   void setVisible(boolean visible);
    void setCaption(String caption);
    void setDropDownVisible(boolean visible);
    void addItem(MenuItem menu);

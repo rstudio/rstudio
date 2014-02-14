@@ -71,9 +71,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       Toolbar toolbar = new Toolbar();
       
       toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
-      toolbar.addLeftSeparator();
       
-      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar);
+      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar, true);
      
       toolbar.addLeftSeparator();
       
@@ -200,7 +199,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    }
    
    @Override
-   public void slide(int index)
+   public void navigate(int index)
    {
       frame_.slide(index);
    }
@@ -218,7 +217,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    }
    
    @Override
-   public SlideNavigationMenu getSlideMenu()
+   public SlideNavigationMenu getNavigationMenu()
    {
       return slideNavigationMenu_;
    }

@@ -19,6 +19,8 @@ import java.util.Iterator;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -48,8 +50,11 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
 import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
-import org.rstudio.studio.client.common.presentation.SlideView;
+import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEvent;
+import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent;
+import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 
 import org.rstudio.studio.client.server.Void;
@@ -70,14 +75,14 @@ import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileS
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
-import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
 
-public class Presentation extends BasePresenter 
+public class Presentation extends BasePresenter
+                          implements SlideNavigationPresenter.Display
 {
    public interface Binder extends CommandBinder<Commands, Presentation> {}
    
-   public interface Display extends WorkbenchView, SlideView
+   public interface Display extends WorkbenchView
    {  
       void load(String url);
       void zoom(String title, String url, Command onClosed);
@@ -85,9 +90,11 @@ public class Presentation extends BasePresenter
       boolean hasSlides();
       
       void home();
-
+      void navigate(int index);
       void next();
       void prev();
+      
+      SlideNavigationMenu getNavigationMenu();
       
       void pauseMedia();
           
@@ -135,7 +142,7 @@ public class Presentation extends BasePresenter
             return currentState_.getFilePath();
          }
       });
-      navigationPresenter_ = new SlideNavigationPresenter(view_);
+      navigationPresenter_ = new SlideNavigationPresenter(this);
      
       binder.bind(commands, this);
       
@@ -495,6 +502,35 @@ public class Presentation extends BasePresenter
       });
    }
    
+
+   @Override
+   public void navigate(int index)
+   {
+     view_.navigate(index);
+      
+   }
+
+   @Override
+   public SlideNavigationMenu getNavigationMenu()
+   {
+      return view_.getNavigationMenu();
+   }
+
+   @Override
+   public HandlerRegistration addSlideNavigationChangedHandler(
+                              SlideNavigationChangedEvent.Handler handler)
+   {
+      return handlerManager_.addHandler(SlideNavigationChangedEvent.TYPE, 
+                                        handler);
+   }
+
+   @Override
+   public HandlerRegistration addSlideIndexChangedHandler(
+                              SlideIndexChangedEvent.Handler handler)
+   {
+      return handlerManager_.addHandler(SlideIndexChangedEvent.TYPE, handler);
+   }
+   
    private void reloadWorkbench()
    { 
       Barrier barrier = new Barrier();
@@ -562,9 +598,9 @@ public class Presentation extends BasePresenter
       // note the slide index and save it
       currentState_.setSlideIndex(index);
       indexPersister_.setIndex(index);
-     
-      navigationPresenter_.setSlideIndex(index);
-         
+      
+      handlerManager_.fireEvent(new SlideIndexChangedEvent(index));
+        
       // execute commands if we stay on the slide for > 500ms
       new Timer() {
          @Override
@@ -589,8 +625,8 @@ public class Presentation extends BasePresenter
    private void initPresentationNavigator(JavaScriptObject jsNavigator)
    {
       // record current slides
-      SlideNavigation slideNavigation = jsNavigator.cast();
-      navigationPresenter_.setSlideNavigation(slideNavigation);
+      SlideNavigation navigation = jsNavigator.cast();
+      handlerManager_.fireEvent(new SlideNavigationChangedEvent(navigation));
    }
    
    private void recordPresentationQuizAnswer(int slideIndex, 
@@ -700,4 +736,6 @@ public class Presentation extends BasePresenter
    private boolean usingRmd_ = false;
   
    private FileSystemItem saveAsStandaloneDefaultPath_ = null;
+   
+   private HandlerManager handlerManager_ = new HandlerManager(this);
 }

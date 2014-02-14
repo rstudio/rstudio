@@ -15,29 +15,53 @@
 
 package org.rstudio.studio.client.common.presentation;
 
-import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
+
+import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEvent;
+import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent;
+import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
+import org.rstudio.studio.client.common.presentation.model.SlideNavigationItem;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 
-public class SlideNavigationPresenter
+public class SlideNavigationPresenter implements 
+                                 SlideNavigationChangedEvent.Handler,
+                                 SlideIndexChangedEvent.Handler
 {
-   public SlideNavigationPresenter(SlideView view)
+   public interface Display
    {
-      view_ = view;
+      void navigate(int index);
+      
+      SlideNavigationMenu getNavigationMenu();
+      
+      HandlerRegistration addSlideNavigationChangedHandler(
+                              SlideNavigationChangedEvent.Handler handler);
+      
+      HandlerRegistration addSlideIndexChangedHandler(
+                              SlideIndexChangedEvent.Handler handler);
    }
    
-   public void setSlideNavigation(SlideNavigation navigation)
+   public SlideNavigationPresenter(Display view)
    {
-      slideNavigation_ = navigation;
+      view_ = view;
+      
+      view_.addSlideNavigationChangedHandler(this);
+      view_.addSlideIndexChangedHandler(this);
+   }
+  
+ 
+   @Override
+   public void onSlideNavigationChanged(SlideNavigationChangedEvent event)
+   {
+      slideNavigation_ = event.getNavigation();
       JsArray<SlideNavigationItem> items = slideNavigation_.getItems();
       
       // reset the slides menu
-      SlideNavigationMenu slideMenu = view_.getSlideMenu();
-      slideMenu.clear(); 
+      SlideNavigationMenu navigationMenu = view_.getNavigationMenu();
+      navigationMenu.clear(); 
       for (int i=0; i<items.length(); i++)
       {
          // get slide
@@ -50,22 +74,26 @@ public class SlideNavigationPresenter
          menuHtml.appendEscaped(item.getTitle());
          
       
-         slideMenu.addItem(new MenuItem(menuHtml.toSafeHtml(),
+         navigationMenu.addItem(new MenuItem(menuHtml.toSafeHtml(),
                                         new Command() {
             @Override
             public void execute()
             {
-               view_.slide(item.getIndex()); 
+               view_.navigate(item.getIndex()); 
             }
          })); 
       }  
       
-      slideMenu.setDropDownVisible(slideNavigation_.getItems().length() > 1);
+      navigationMenu.setDropDownVisible(
+                              slideNavigation_.getItems().length() > 1);
+      
    }
    
-   public void setSlideIndex(int index)
+   @Override
+   public void onSlideIndexChanged(SlideIndexChangedEvent event)
    {
       // find the first navigation item that is <= to the index
+      int index = event.getIndex();
       if (slideNavigation_ != null)
       {
          JsArray<SlideNavigationItem> items = slideNavigation_.getItems();
@@ -78,15 +106,15 @@ public class SlideNavigationPresenter
                           slideNavigation_.getTotalSlides() + ")";
                
                
-               view_.getSlideMenu().setCaption(caption);
+               view_.getNavigationMenu().setCaption(caption);
                break;
             }
          }
       }
+      
    }
    
-   
-   private final SlideView view_;
+   private final Display view_;
    private SlideNavigation slideNavigation_ = null;
    
 }
