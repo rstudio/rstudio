@@ -19,6 +19,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
@@ -122,6 +123,12 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    public void onViewerRefresh()
    {
       view_.refresh();
+   }
+   
+   @Handler
+   public void onRefreshSuperDevMode()
+   {
+      SuperDevMode.reload();
    }
 
    public void showOutput(RmdPreviewParams params) 
