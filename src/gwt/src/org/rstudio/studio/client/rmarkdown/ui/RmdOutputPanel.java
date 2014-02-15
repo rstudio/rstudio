@@ -219,7 +219,13 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void navigate(int index)
    {
       getFrame().getIFrame().focus();
-      ioslidesNavigate(getFrame().getWindow(), index + 1); 
+      
+      String url = getCurrentUrl();
+      int anchorPos = url.lastIndexOf("#");
+      if (anchorPos > 0)
+         url = url.substring(0, anchorPos);
+      
+      showUrl(url + "#" + (index + 1));
    }
 
    @Override
@@ -288,11 +294,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       else
          return null;
    }
-   
-   private native void ioslidesNavigate(WindowEx w, int slideIndex) /*-{
-      return w.slidedeck.loadSlide(slideIndex);
-   }-*/;
-    
+  
    private void fireSlideIndexChanged()
    {
       try
