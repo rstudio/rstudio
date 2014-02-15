@@ -38,9 +38,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     Iterator<? extends E> iter = c.iterator();
     boolean changed = false;
     while (iter.hasNext()) {
-      if (add(iter.next())) {
-        changed = true;
-      }
+      changed |= add(iter.next());
     }
     return changed;
   }
