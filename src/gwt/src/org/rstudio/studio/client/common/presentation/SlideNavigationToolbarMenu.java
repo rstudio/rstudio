@@ -47,7 +47,7 @@ public class SlideNavigationToolbarMenu
       
       titleLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles()
                                           .presentationNavigatorLabel());
-      titleLabel_.getElement().getStyle().setProperty("max-width", 
+      titleLabel_.getElement().getStyle().setProperty("maxWidth", 
                                                       maxWidth + "px");
       
       menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_);
