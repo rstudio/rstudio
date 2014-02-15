@@ -128,6 +128,9 @@ private:
       options.terminateChildren = true;
       options.workingDir = targetFile_.parent();
 
+      // buffer the output so we can inspect it for the completed marker
+      boost::shared_ptr<std::string> pAllOutput = boost::make_shared<std::string>();
+      
       core::system::ProcessCallbacks cb;
       using namespace module_context;
       cb.onContinue = boost::bind(&RenderRmd::onRenderContinue,
@@ -135,13 +138,18 @@ private:
       cb.onStdout = boost::bind(&RenderRmd::onRenderOutput,
                                 RenderRmd::shared_from_this(),
                                 kCompileOutputNormal,
-                                _2);
+                                _2,
+                                pAllOutput);
       cb.onStderr = boost::bind(&RenderRmd::onRenderOutput,
                                 RenderRmd::shared_from_this(),
                                 kCompileOutputError,
-                                _2);
+                                _2,
+                                pAllOutput);
       cb.onExit =  boost::bind(&RenderRmd::onRenderCompleted,
-                                RenderRmd::shared_from_this(), _1, encoding);
+                                RenderRmd::shared_from_this(),
+                               _1,
+                               encoding,
+                               pAllOutput);
 
       module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
                                                      args,
@@ -154,14 +162,25 @@ private:
       return !terminationRequested_;
    }
 
-   void onRenderOutput(int type, const std::string& output)
+   void onRenderOutput(int type, const std::string& output,
+                       boost::shared_ptr<std::string> pAllOutput)
+   {
+      // buffer output
+      pAllOutput->append(output);
+      
+      enqueRenderOutput(type, output);
+   }
+
+   void onRenderCompleted(int exitStatus,
+                          const std::string& encoding,
+                          boost::shared_ptr<std::string> pAllOutput)
    {
       // check each line of the emitted output; if it starts with a token
       // indicating rendering is complete, store the remainder of the emitted
       // line as the file we rendered
       std::string completeMarker("Output created: ");
       std::string renderLine;
-      std::stringstream outputStream(output);
+      std::stringstream outputStream(*pAllOutput);
       while (std::getline(outputStream, renderLine))
       {
          if (boost::algorithm::starts_with(renderLine, completeMarker))
@@ -178,15 +197,10 @@ private:
             break;
          }
       }
-      enqueRenderOutput(type, output);
-   }
-
-   void onRenderCompleted(int exitStatus, const std::string& encoding)
-   {
+      
       // consider the render to be successful if R doesn't return an error,
       // and an output file was written
-      terminate(exitStatus == 0 &&
-                outputFile_.exists());
+      terminate(exitStatus == 0 && outputFile_.exists());
    }
 
    void terminateWithError(const Error& error)
