@@ -15,14 +15,14 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
@@ -33,7 +33,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.AnchorableFrame;
@@ -139,14 +139,39 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    {
       AnchorableFrame frame = new AnchorableFrame();
       frame.navigate(url);
-      frame.addLoadHandler(new LoadHandler()
-      {
+      
+      // poll for document availability then perform initialization
+      // tasks once it's available (addLoadHandler wasn't always 
+      // getting called at least under Cocoa WebKit)
+      
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+
          @Override
-         public void onLoad(LoadEvent event)
+         public boolean execute()
          {
-            Document doc = getFrame().getIFrame().getContentDocument();
+            
+            
+            // see if the document is ready
+            AnchorableFrame frame = getFrame();
+            if (frame == null)
+               return true;
+            
+            IFrameElementEx iframe = frame.getIFrame();
+            if (iframe == null)
+               return true;
+            
+            Document doc = iframe.getContentDocument();
+            if (doc == null)
+               return true;
+            
+            // ensure focus
+            iframe.focus();
+            
+            // restore scroll position
             if (scrollPosition_ > 0)
                doc.setScrollTop(scrollPosition_);
+            
+            // set title
             String title = doc.getTitle();
             if (title != null && !title.isEmpty())
             {
@@ -154,20 +179,25 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                title_ = title;
             }
             
-            // see if we can do ioslides navigation
-            SlideNavigation slideNavigation = getIoslidesNavigationList(doc);  
+            // detect slides
+            SlideNavigation slideNav = getIoslidesNavigationList(doc);  
             handlerManager_.fireEvent(new SlideNavigationChangedEvent(
-                                                           slideNavigation));
+                                                             slideNav));
             
             // slide change monitoring
             slideChangeMonitor_.cancel();
-            if (slideNavigation != null)
-            {
+            if (slideNav != null)
+            {  
                fireSlideIndexChanged();
                slideChangeMonitor_.scheduleRepeating(250);
             }
+            
+            return false;
          }
-      });
+         
+      }, 250);
+      
+       
       return frame;
    }
    
