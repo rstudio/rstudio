@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -170,14 +169,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             // restore scroll position
             if (scrollPosition_ > 0)
                doc.setScrollTop(scrollPosition_);
-            
-            // set title
-            String title = doc.getTitle();
-            if (title != null && !title.isEmpty())
-            {
-               Window.setTitle(title);
-               title_ = title;
-            }
             
             // detect slides
             SlideNavigation slideNav = getIoslidesNavigationList(doc);  
