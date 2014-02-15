@@ -193,6 +193,15 @@ public class Collections {
     }
   }
 
+  private static final class ReverseComparator implements Comparator<Comparable<Object>> {
+    static final ReverseComparator INSTANCE = new ReverseComparator();
+
+    @Override
+    public int compare(Comparable<Object> o1, Comparable<Object> o2) {
+      return o2.compareTo(o1);
+    }
+  }
+
   private static final class SingletonList<E> extends AbstractList<E> implements Serializable {
     private E element;
 
@@ -714,12 +723,6 @@ public class Collections {
   @SuppressWarnings("unchecked")
   public static final Set EMPTY_SET = new EmptySet();
 
-  private static Comparator<Comparable<Object>> reverseComparator = new Comparator<Comparable<Object>>() {
-    public int compare(Comparable<Object> o1, Comparable<Object> o2) {
-      return o2.compareTo(o1);
-    }
-  };
-
   public static <T> boolean addAll(Collection<? super T> c, T... a) {
     boolean result = false;
     for (T e : a) {
@@ -1008,7 +1011,7 @@ public class Collections {
 
   @SuppressWarnings("unchecked")
   public static <T> Comparator<T> reverseOrder() {
-    return (Comparator<T>) reverseComparator;
+    return (Comparator<T>) ReverseComparator.INSTANCE;
   }
 
   public static <T> Comparator<T> reverseOrder(final Comparator<T> cmp) {
