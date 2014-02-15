@@ -69,6 +69,7 @@ public slots:
    void onWorkbenchInitialized(QString scratchPath);
    void showFolder(QString path);
    void showFile(QString path);
+   void showWordDoc(QString path);
 
    QString getRVersion();
    QString chooseRVersion();
