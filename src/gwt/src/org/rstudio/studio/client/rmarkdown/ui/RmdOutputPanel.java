@@ -88,11 +88,20 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       else
       {
          url = server_.getApplicationURL(params.getOutputUrl());
-         if (params.getAnchor().length() > 0)
-         {
-            url += "#" + params.getAnchor();
-         }
+         
+         // if these are slides then an anchor may be implied by 
+         // a slide_number parameter
+         String anchor = "";
+         if (params.getResult().getSlideNumber() > 0)
+            anchor = String.valueOf(params.getResult().getSlideNumber());
+         else
+            anchor = params.getAnchor();
+         
+         if (anchor.length() > 0)
+            url += "#" + anchor;
       }
+      
+     
       showUrl(url);
    }
    

@@ -101,7 +101,9 @@ public class RenderRmdOutputPresenter extends BasePresenter
    @Override
    public void onRenderRmd(RenderRmdEvent event)
    {
-      server_.renderRmd(event.getSourceFile(), event.getEncoding(), 
+      server_.renderRmd(event.getSourceFile(), 
+                        event.getSourceLine(),
+                        event.getEncoding(), 
             new SimpleRequestCallback<Boolean>());
    }
 

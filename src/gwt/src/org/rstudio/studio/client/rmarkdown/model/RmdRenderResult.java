@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayNumber;
 
 public class RmdRenderResult extends JavaScriptObject
 {
@@ -69,6 +70,14 @@ public class RmdRenderResult extends JavaScriptObject
                   RmdRenderResult.OUTPUT_PRESENTATION_SUFFIX);
    }
    
+   public final native int getSlideNumber() /*-{
+      return this.slide_number;
+   }-*/;
+   
+   public final native JsArrayNumber getSlideBreaks() /*-{
+      return this.slide_breaks;
+   }-*/;
+
    public final boolean isSelfContained()
    {
       return getFormatOption(FORMAT_SELF_CONTAINED, false);

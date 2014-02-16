@@ -2940,7 +2940,9 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            events_.fireEvent(new RenderRmdEvent(docUpdateSentinel_.getPath(),
+            events_.fireEvent(new RenderRmdEvent(
+               docUpdateSentinel_.getPath(),
+               docDisplay_.getCursorPosition().getRow() + 1,
                docUpdateSentinel_.getEncoding()));
          }
       });

@@ -19,7 +19,7 @@ import org.rstudio.studio.client.server.Void;
 
 public interface RMarkdownServerOperations
 {
-   void renderRmd(String file, String encoding,
+   void renderRmd(String file, int line, String encoding,
                   ServerRequestCallback<Boolean> requestCallback);
    
    void terminateRenderRmd(ServerRequestCallback<Void> requestCallback);

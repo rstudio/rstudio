@@ -18,6 +18,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
@@ -47,9 +48,11 @@ class RenderRmd : boost::noncopyable,
 {
 public:
    static boost::shared_ptr<RenderRmd> create(const FilePath& targetFile,
+                                              int sourceLine,
                                               const std::string& encoding)
    {
-      boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile));
+      boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
+                                                         sourceLine));
       pRender->start(encoding);
       return pRender;
    }
@@ -80,10 +83,11 @@ public:
    }
 
 private:
-   RenderRmd(const FilePath& targetFile) :
+   RenderRmd(const FilePath& targetFile, int sourceLine) :
       isRunning_(false),
       terminationRequested_(false),
-      targetFile_(targetFile)
+      targetFile_(targetFile),
+      sourceLine_(sourceLine)
    {}
 
    void start(const std::string& encoding)
@@ -273,9 +277,74 @@ private:
                LOG_ERROR(error);
          }
          resultJson["output_options"] = formatOptions;
+
+         // default to no slide info
+         resultJson["slide_number"] = -1;
+         resultJson["slide_breaks"] = json::Value();
+
+         // allow for format specific additions to the result json
+         ammendResults(formatName, &resultJson);
       }
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);
+   }
+
+   void ammendResults(const std::string& formatName,
+                      json::Object* pResultJson)
+   {
+      if (boost::algorithm::ends_with(formatName, "_presentation"))
+         ammendPresentationResults(pResultJson);
+   }
+
+   void ammendPresentationResults(json::Object* pResultJson)
+   {
+      // alias for nicer map syntax
+      json::Object& resultJson = *pResultJson;
+
+      // read the input file
+      std::vector<std::string> lines;
+      Error error = core::readStringVectorFromFile(targetFile_, &lines, false);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      // scan the input file looking for headers and slide breaks
+      std::vector<int> slideBreaks;
+      slideBreaks.push_back(1);
+      bool inCode = false;
+      boost::regex reCode("^`{3,}.*$");
+      boost::regex reSlide("^(##?.*|\\-{4,}\\w*|\\*{4,}\\w*)$");
+      for (int i = 0; i<lines.size(); i++)
+      {
+         if (boost::regex_search(lines.at(i), reCode))
+         {
+            inCode = !inCode;
+         }
+         else if (boost::regex_search(lines.at(i), reSlide))
+         {
+            if (!inCode)
+               slideBreaks.push_back(i + 1);
+         }
+      }
+
+      // determine which slide the user was editing by scanning for
+      // the first slide line which is >= the source line then
+      // add this as an anchor field
+      int slide = slideBreaks.size();
+      for (int i = 0; i<slideBreaks.size(); i++)
+      {
+         if (slideBreaks.at(i) >= sourceLine_)
+         {
+            slide = i;
+            break;
+         }
+      }
+
+      // set slide number and slide breaks
+      resultJson["slide_number"] = slide;
+      resultJson["slide_breaks"] = json::toJsonArray(slideBreaks);
    }
 
    static void enqueRenderOutput(int type,
@@ -291,6 +360,7 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    FilePath targetFile_;
+   int sourceLine_;
    FilePath outputFile_;
    std::string encoding_;
 };
@@ -358,8 +428,9 @@ std::string onDetectRmdSourceType(
 Error renderRmd(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
+   int line = -1;
    std::string file, encoding;
-   Error error = json::readParams(request.params, &file, &encoding);
+   Error error = json::readParams(request.params, &file, &line, &encoding);
    if (error)
       return error;
 
@@ -372,6 +443,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
    {
       s_pCurrentRender_ = RenderRmd::create(
                module_context::resolveAliasedPath(file),
+               line,
                encoding);
       pResponse->setResult(true);
    }
