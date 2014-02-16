@@ -14,12 +14,9 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -30,7 +27,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -49,7 +45,6 @@ import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEve
 import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent;
 import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent.Handler;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.common.presentation.model.SlideNavigationItem;
 
 public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                             implements RmdOutputPresenter.Display
@@ -66,10 +61,16 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
                           boolean refresh)
    {
+      // slide navigation (may be null)
+      SlideNavigation slideNav = params.getResult().getSlideNavigation();
+      handlerManager_.fireEvent(new SlideNavigationChangedEvent(slideNav));
+      slideChangeMonitor_.cancel();
+      
+      // file label
       fileLabel_.setText(FileSystemItem.createFile(
                                        params.getOutputFile()).getName());
       
-      // we can only publish self-contained HTML to RPubs
+      // RPubs
       boolean showPublish = enablePublish && 
                             params.getResult().isHtml() &&
                             params.getResult().isSelfContained();
@@ -77,9 +78,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
       publishButtonSeparator_.setVisible(showPublish);
+      
       // when refreshing, reapply the current scroll position and anchor
       scrollPosition_ = refresh ? 
             getScrollPosition() : params.getScrollPosition();
+     
+      // load url      
       String url;
       if (refresh)
       {
@@ -92,8 +96,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          // if these are slides then an anchor may be implied by 
          // a slide_number parameter
          String anchor = "";
-         if (params.getResult().getSlideNumber() > 0)
-            anchor = String.valueOf(params.getResult().getSlideNumber());
+         if (params.getResult().getPreviewSlide() > 0)
+            anchor = String.valueOf(params.getResult().getPreviewSlide());
          else
             anchor = params.getAnchor();
          
@@ -101,7 +105,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             url += "#" + anchor;
       }
       
-     
       showUrl(url);
    }
    
@@ -179,18 +182,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             if (scrollPosition_ > 0)
                doc.setScrollTop(scrollPosition_);
             
-            // detect slides
-            SlideNavigation slideNav = getIoslidesNavigationList(doc);  
-            handlerManager_.fireEvent(new SlideNavigationChangedEvent(
-                                                             slideNav));
-            
-            // slide change monitoring
-            slideChangeMonitor_.cancel();
-            if (slideNav != null)
+            if (getNavigationMenu().isVisible())
             {  
                fireSlideIndexChanged();
                slideChangeMonitor_.scheduleRepeating(250);
             }
+            
             
             return false;
          }
@@ -283,46 +280,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private String getCurrentUrl()
    {
       return getFrame().getIFrame().getContentDocument().getURL();
-   }
-  
-   private SlideNavigation getIoslidesNavigationList(Document doc)
-   {
-      // look for ioslides 
-      JsArray<SlideNavigationItem> navItems = JsArray.createArray().cast();
-      
-      NodeList<Element> slides = doc.getElementsByTagName("slide");
-      if (slides.getLength() <= 2) // just the title slide + the background
-         return null;
-      
-      for (int i = 0; i<slides.getLength(); i++) 
-      {     
-         Element slide = slides.getItem(i);
-         boolean segue = slide.getClassName().contains("segue");
-         
-         NodeList<Element> hgroups = slide.getElementsByTagName("hgroup");
-         if (hgroups.getLength() != 0)
-         {  
-            // get the slide
-            Element header = hgroups.getItem(0).getFirstChildElement();
-            String h = header.getTagName();
-            if (h.equalsIgnoreCase("h1") || h.equalsIgnoreCase("h2"))
-            {
-               String title = header.getInnerText();
-               if (!StringUtil.isNullOrEmpty(title))
-               {  
-                  SlideNavigationItem navItem = SlideNavigationItem.create(
-                                    title, segue ? 0 : 1, i, -1);
-                  navItems.push(navItem);
-                  
-               }
-            }
-         }
-      }
-      
-      if (navItems.length() > 0)
-         return SlideNavigation.create(slides.getLength() - 1, navItems);  
-      else
-         return null;
    }
   
    private void fireSlideIndexChanged()

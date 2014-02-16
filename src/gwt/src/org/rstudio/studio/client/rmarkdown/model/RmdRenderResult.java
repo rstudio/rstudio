@@ -14,8 +14,9 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
+
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayNumber;
 
 public class RmdRenderResult extends JavaScriptObject
 {
@@ -70,12 +71,12 @@ public class RmdRenderResult extends JavaScriptObject
                   RmdRenderResult.OUTPUT_PRESENTATION_SUFFIX);
    }
    
-   public final native int getSlideNumber() /*-{
-      return this.slide_number;
+   public final native int getPreviewSlide() /*-{
+      return this.preview_slide;
    }-*/;
    
-   public final native JsArrayNumber getSlideBreaks() /*-{
-      return this.slide_breaks;
+   public final native SlideNavigation getSlideNavigation() /*-{
+      return this.slide_navigation;
    }-*/;
 
    public final boolean isSelfContained()

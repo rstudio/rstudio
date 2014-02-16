@@ -346,6 +346,17 @@ void trimLeadingLines(int maxLines, std::string* pLines)
    }
 }
 
+void stripQuotes(std::string* pStr)
+{
+   if (pStr->length() > 0 && (pStr->at(0) == '\'' || pStr->at(0) == '"'))
+      *pStr = pStr->substr(1);
+
+   int len = pStr->length();
+
+   if (len > 0 && (pStr->at(len-1) == '\'' || pStr->at(len-1) == '"'))
+      *pStr = pStr->substr(0, len -1);
+}
+
 } // namespace string_utils
 } // namespace core 
 

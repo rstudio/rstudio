@@ -27,13 +27,44 @@ namespace modules {
 namespace rmarkdown {
 namespace presentation {
 
+namespace {
+
+struct SlideNavigationItem
+{
+   SlideNavigationItem(const std::string& title,
+                       int indent,
+                       int index,
+                       int line)
+      : title(title), indent(indent), index(index), line(line)
+   {
+   }
+
+   std::string title;
+   int indent;
+   int index;
+   int line;
+};
+
+json::Value itemAsJson(const SlideNavigationItem& item)
+{
+   json::Object slideJson;
+   slideJson["title"] = item.title;
+   slideJson["indent"] = item.indent;
+   slideJson["index"] = item.index;
+   slideJson["line"] = item.line;
+   return slideJson;
+}
+
+} // anonymous namespace
+
+
 void ammendResults(const std::string& formatName,
                    core::FilePath& targetFile,
                    int sourceLine,
                    json::Object* pResultJson)
 {
-   // screen for presentation format
-   if (!boost::algorithm::ends_with(formatName, "_presentation"))
+   // provide slide navigation for ioslides_presentation
+   if (formatName != "ioslides_presentation")
       return;
 
    // alias for nicer map syntax
@@ -49,40 +80,116 @@ void ammendResults(const std::string& formatName,
    }
 
    // scan the input file looking for headers and slide breaks
-   std::vector<int> slideBreaks;
-   slideBreaks.push_back(1);
+   int totalSlides = 0;
+   std::vector<SlideNavigationItem> slideNavigationItems;
    bool inCode = false;
+   bool inYaml = false;
+   bool haveTitle = false;
+   boost::regex reYaml("^\\-{3}\\s*$");
+   boost::regex reTitle("^title\\:(.*)$");
    boost::regex reCode("^`{3,}.*$");
-   boost::regex reSlide("^(##?.*|\\-{4,}\\w*|\\*{4,}\\w*)$");
+   boost::regex reTitledSlide("^#(#)?(.*)$");
+   boost::regex reUntitledSlide("^(\\-{4,}|\\*{4,})\\w*$");
    for (int i = 0; i<lines.size(); i++)
    {
-      if (boost::regex_search(lines.at(i), reCode))
-      {
+      // alias line
+      const std::string& line = lines.at(i);
+
+      // toggle code state
+      if (boost::regex_search(line, reCode))
          inCode = !inCode;
-      }
-      else if (boost::regex_search(lines.at(i), reSlide))
+
+      // bail if we are in code
+      if (inCode)
+         continue;
+
+      // toggle yaml state
+      if (boost::regex_search(line, reYaml))
       {
-         if (!inCode)
-            slideBreaks.push_back(i + 1);
+         if (!inYaml)
+         {
+            inYaml = true;
+         }
+         else if (inYaml && !haveTitle) // no title found in first
+                                        // yaml block, bail
+         {
+            break;
+         }
+      }
+
+      // look for a title if we don't have one
+      if (!haveTitle)
+      {
+         // titles only valid in yaml
+         if (inYaml)
+         {
+            boost::smatch match;
+            if (boost::regex_search(line, match, reTitle))
+            {
+               std::string title = match[1];
+               boost::algorithm::trim(title);
+               string_utils::stripQuotes(&title);
+               if (title.empty())
+                  title = "Untitled Slide";
+               SlideNavigationItem item(title, 0, totalSlides++, 0);
+               slideNavigationItems.push_back(item);
+               haveTitle = true;
+
+            }
+         }
+      }
+      // if we already have the title look for slides
+      else
+      {
+         // titled slides
+         boost::smatch match;
+         if (boost::regex_search(line, match, reTitledSlide))
+         {
+            std::string title = match[2];
+            boost::algorithm::trim(title);
+            if (title.empty())
+               title = "Untitled Slide";
+
+            int indent = std::string(match[1]).empty() ? 0 : 1;
+            SlideNavigationItem item(title, indent, totalSlides++, i);
+            slideNavigationItems.push_back(item);
+         }
+         // untitled slides
+         else if (boost::regex_search(line, reUntitledSlide))
+         {
+            SlideNavigationItem item("Untitled Slide", 1, totalSlides++, i);
+            slideNavigationItems.push_back(item);
+         }
       }
    }
 
-   // determine which slide the user was editing by scanning for
-   // the first slide line which is >= the source line then
-   // add this as an anchor field
-   int slide = slideBreaks.size();
-   for (int i = 0; i<slideBreaks.size(); i++)
+   // did we find slides?
+   if (totalSlides > 0)
    {
-      if (slideBreaks.at(i) >= sourceLine)
+      // determine which slide the cursor is on
+      int previewSlide = 1;
+      for (int i = (slideNavigationItems.size()-1); i>=0; i--)
       {
-         slide = i;
-         break;
+         const SlideNavigationItem& item = slideNavigationItems.at(i);
+         if (sourceLine >= item.line)
+         {
+            previewSlide = item.index + 1;
+            break;
+         }
       }
-   }
 
-   // set slide number and slide breaks
-   resultJson["slide_number"] = slide;
-   resultJson["slide_breaks"] = json::toJsonArray(slideBreaks);
+      // return as json
+      resultJson["preview_slide"] = previewSlide;
+      json::Array jsonSlideNavigationItems;
+      std::transform(slideNavigationItems.begin(),
+                     slideNavigationItems.end(),
+                     std::back_inserter(jsonSlideNavigationItems),
+                     itemAsJson);
+      json::Object jsonSlideNavigation;
+      jsonSlideNavigation["total_slides"] = totalSlides;
+      jsonSlideNavigation["items"] = jsonSlideNavigationItems;
+      resultJson["slide_navigation"] = jsonSlideNavigation;
+   }
 }
 
 
