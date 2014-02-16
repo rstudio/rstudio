@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -149,6 +150,13 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    protected AnchorableFrame createFrame(String url)
    {
       AnchorableFrame frame = new AnchorableFrame();
+      
+      // allow full screen
+      Element el = frame.getElement();
+      el.setAttribute("webkitallowfullscreen", "");
+      el.setAttribute("mozallowfullscreen", "");
+      el.setAttribute("allowfullscreen", "");
+      
       frame.navigate(url);
       
       // poll for document availability then perform initialization
