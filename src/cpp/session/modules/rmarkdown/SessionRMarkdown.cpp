@@ -29,6 +29,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "Presentation.hpp"
+
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
 
@@ -230,6 +232,10 @@ private:
             module_context::createAliasedPath(outputFile_);
       resultJson["output_url"] = kRmdOutput "/";
 
+      // default to no slide info
+      resultJson["slide_number"] = -1;
+      resultJson["slide_breaks"] = json::Value();
+
       // for HTML documents, check to see whether they've been published
       if (outputFile_.extensionLowerCase() == ".html")
       {
@@ -277,73 +283,14 @@ private:
          }
          resultJson["output_options"] = formatOptions;
 
-         // default to no slide info
-         resultJson["slide_number"] = -1;
-         resultJson["slide_breaks"] = json::Value();
-
          // allow for format specific additions to the result json
-         ammendResults(formatName, &resultJson);
+         rmarkdown::presentation::ammendResults(formatName,
+                                     targetFile_,
+                                     sourceLine_,
+                                     &resultJson);
       }
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);
-   }
-
-   void ammendResults(const std::string& formatName,
-                      json::Object* pResultJson)
-   {
-      if (boost::algorithm::ends_with(formatName, "_presentation"))
-         ammendPresentationResults(pResultJson);
-   }
-
-   void ammendPresentationResults(json::Object* pResultJson)
-   {
-      // alias for nicer map syntax
-      json::Object& resultJson = *pResultJson;
-
-      // read the input file
-      std::vector<std::string> lines;
-      Error error = core::readStringVectorFromFile(targetFile_, &lines, false);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-
-      // scan the input file looking for headers and slide breaks
-      std::vector<int> slideBreaks;
-      slideBreaks.push_back(1);
-      bool inCode = false;
-      boost::regex reCode("^`{3,}.*$");
-      boost::regex reSlide("^(##?.*|\\-{4,}\\w*|\\*{4,}\\w*)$");
-      for (int i = 0; i<lines.size(); i++)
-      {
-         if (boost::regex_search(lines.at(i), reCode))
-         {
-            inCode = !inCode;
-         }
-         else if (boost::regex_search(lines.at(i), reSlide))
-         {
-            if (!inCode)
-               slideBreaks.push_back(i + 1);
-         }
-      }
-
-      // determine which slide the user was editing by scanning for
-      // the first slide line which is >= the source line then
-      // add this as an anchor field
-      int slide = slideBreaks.size();
-      for (int i = 0; i<slideBreaks.size(); i++)
-      {
-         if (slideBreaks.at(i) >= sourceLine_)
-         {
-            slide = i;
-            break;
-         }
-      }
-
-      // set slide number and slide breaks
-      resultJson["slide_number"] = slide;
-      resultJson["slide_breaks"] = json::toJsonArray(slideBreaks);
    }
 
    static void enqueRenderOutput(int type,
