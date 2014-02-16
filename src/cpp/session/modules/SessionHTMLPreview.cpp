@@ -50,8 +50,6 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
-#include "SessionRPubs.hpp"
-
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
@@ -454,6 +452,7 @@ private:
                                          bool enableSaveAs,
                                          bool enableRefresh)
    {
+      using namespace module_context;
       json::Object resultJson;
       resultJson["succeeded"] = true;
       resultJson["source_file"] = module_context::createAliasedPath(sourceFile);
@@ -461,7 +460,7 @@ private:
       resultJson["preview_url"] = previewUrl;
       resultJson["enable_saveas"] = enableSaveAs;
       resultJson["enable_refresh"] = enableRefresh;
-      resultJson["previously_published"] = !rpubs::previousUploadId(htmlFile).empty();
+      resultJson["previously_published"] = !previousRpubsUploadId(htmlFile).empty();
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
    }

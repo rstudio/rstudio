@@ -114,7 +114,6 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionProfiler.hpp"
-#include "modules/SessionRMarkdown.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionShinyApps.hpp"
 #include "modules/SessionShinyViewer.hpp"
@@ -131,6 +130,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
+#include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 
 #include "modules/SessionGit.hpp"

@@ -28,7 +28,6 @@
 #include <r/RJson.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include "SessionRPubs.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
@@ -235,7 +234,7 @@ private:
       if (outputFile_.extensionLowerCase() == ".html")
       {
          resultJson["rpubs_published"] =
-               !rpubs::previousUploadId(outputFile_).empty();
+               !module_context::previousRpubsUploadId(outputFile_).empty();
       }
       else
       {

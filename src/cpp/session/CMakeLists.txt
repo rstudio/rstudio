@@ -76,7 +76,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionProfiler.cpp
-   modules/SessionRMarkdown.cpp
    modules/SessionRPubs.cpp
    modules/SessionShinyApps.cpp
    modules/SessionShinyViewer.cpp
@@ -107,6 +106,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideQuizRenderer.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
+   modules/rmarkdown/SessionRMarkdown.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp

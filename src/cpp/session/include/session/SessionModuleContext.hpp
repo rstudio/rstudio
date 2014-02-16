@@ -461,6 +461,8 @@ struct CompileOutput
 core::json::Object compileOutputAsJson(const CompileOutput& compileOutput);
 
 
+std::string previousRpubsUploadId(const core::FilePath& filePath);
+
 } // namespace module_context
 } // namespace session
 
