@@ -90,7 +90,16 @@ public final class Impl {
   public static native JavaScriptObject entry(JavaScriptObject jsFunction) /*-{
     return function() {
       try {
-        return @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
+        if (@com.google.gwt.core.client.GWT::isScript()()) {
+          return @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
+        } else {
+          var _ = @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
+          if (_ != null) {
+            // Unwraps for Development Mode (see #apply())
+            _ = _.val;
+          }
+          return _;
+        }
       } catch (e) {
         // This catch block is here to ensure that the finally block in entry0
         // will be executed correctly on IE6/7.  We can't put a catch Throwable
@@ -291,8 +300,8 @@ public final class Impl {
     } else {
       var _ = jsFunction.apply(thisObj, args);
       if (_ != null) {
-        // Wrap for Development Mode
-        _ = Object(_);
+        // Wrap for Development Mode (unwrapped in #entry())
+        _ = { val: _ };
       }
       return _;
     }
