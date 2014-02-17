@@ -322,7 +322,7 @@ class MathjaxFilter : public boost::iostreams::regex_filter
 public:
    MathjaxFilter()
       : boost::iostreams::regex_filter(
-            boost::regex("script.src\\s*=\\s*\"http.*?(MathJax.js[^\"]*)\""),
+            boost::regex("^(\\s*script.src\\s*=\\s*)\"http.*?(MathJax.js[^\"]*)\""),
             boost::bind(&MathjaxFilter::substitute, this, _1))
    {
    }
@@ -330,8 +330,9 @@ public:
 private:
    std::string substitute(const boost::cmatch& match)
    {
-      std::string result("script.src = \"" kMathjaxSegment "/");
-      result.append(match[1]);
+      std::string result(match[1]);
+      result.append("\"" kMathjaxSegment "/");
+      result.append(match[2]);
       result.append("\"");
       return result;
    }

@@ -326,7 +326,14 @@ NSString* resolveAliasedPath(NSString* path)
                        &kCFTypeArrayCallBacks);
    
    // open Word in view (read-only) mode 
-   LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+   OSStatus status =
+      LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+   if (status != noErr)
+   {
+      // if we failed to open in the viewer role, just invoke the default
+      // opener
+      [self showFile: path];
+   }
 }
 
 - (Boolean) isRetina
