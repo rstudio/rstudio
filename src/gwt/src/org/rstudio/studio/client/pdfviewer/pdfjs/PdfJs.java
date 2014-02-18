@@ -39,6 +39,7 @@ public class PdfJs
       final PdfJsResources res = PdfJsResources.INSTANCE;
       ExternalJavaScriptLoader.loadSequentially(
             new String[] {
+                  res.webL10nJs().getSafeUri().asString(),
                   res.compatibilityJs().getSafeUri().asString(),
                   res.pdfjs().getSafeUri().asString(),
                   //res.debuggerJs().getSafeUri().asString(),
@@ -51,6 +52,7 @@ public class PdfJs
                {
                   if (!initialized_)
                   {
+                     PDFView.initializePdfJs();
                      PDFView.initializeEvents();
 
                      LinkElement styleLink = Document.get().createLinkElement();

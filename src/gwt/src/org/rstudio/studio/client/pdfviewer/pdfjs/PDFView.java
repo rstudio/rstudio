@@ -86,7 +86,6 @@ public class PDFView extends JavaScriptObject
    }-*/;
 
    public native static void initializeEvents() /*-{
-
       var _setInitialView = $wnd.PDFView.setInitialView;
       $wnd.PDFView.setInitialView = $entry(function(storedHash, scale) {
          _setInitialView.call($wnd.PDFView, storedHash, scale);
@@ -107,6 +106,10 @@ public class PDFView extends JavaScriptObject
             }),
             true);
    }-*/;
+   
+   public native static void initializePdfJs() /*-{
+      $wnd.PDFView.initialize();
+   }-*/;
 
    private static void firePageChangeEvent()
    {
@@ -125,11 +128,11 @@ public class PDFView extends JavaScriptObject
 
    public static void setLoadingVisible(boolean visible)
    {
-      Element el = Document.get().getElementById("loading");
+      Element el = Document.get().getElementById("outerContainer");
       if (visible)
-         el.removeAttribute("hidden");
+         el.addClassName("loadingInProgress");
       else
-         el.setAttribute("hidden", "hidden");
+         el.removeClassName("loadingInProgress");
    }
 
    public static native void navigateTo(JavaScriptObject dest) /*-{

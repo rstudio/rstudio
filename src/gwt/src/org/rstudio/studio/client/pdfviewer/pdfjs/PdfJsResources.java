@@ -28,6 +28,9 @@ public interface PdfJsResources extends ClientBundle
    @Source("compatibility.min.js")
    StaticDataResource compatibilityJs();
 
+   @Source("webl10n.min.js")
+   StaticDataResource webL10nJs();
+
    @Source("debugger.min.js")
    StaticDataResource debuggerJs();
 

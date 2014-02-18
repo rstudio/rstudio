@@ -13,24 +13,31 @@ cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout c684dfc
+git checkout a2e85a7
 
-make
+node make generic singlefile
 cd ..
 
 minify () {
   echo "Minifying $1.js => $1.min.js"
   CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
-  java -jar "compiler/compiler.jar" $CC_OPTS --js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.js --js_output_file ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.min.js
+  if [ "$2" = "debug" ]; then
+    cp ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.min.js
+  else
+    java -jar "compiler/compiler.jar" $CC_OPTS --js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.js --js_output_file ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.min.js
+  fi
 }
 
-cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/web/compatibility.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/web/debugger.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/web/viewer.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.js
-cp pdfjs/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
+cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.js
+cp pdfjs/build/generic/web/compatibility.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
+cp pdfjs/build/generic/web/debugger.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
+cp pdfjs/build/generic/web/viewer.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.js
+cp pdfjs/build/generic/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
+cp pdfjs/external/webL10n/l10n.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/webl10n.js
 
-minify pdf
-minify compatibility
-minify debugger
-minify viewer
+minify pdf $1
+minify compatibility $1
+minify debugger $1
+minify viewer $1
+minify webl10n $1
+
