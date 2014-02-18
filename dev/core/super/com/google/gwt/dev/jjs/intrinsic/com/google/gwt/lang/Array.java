@@ -72,17 +72,14 @@ public final class Array {
     }-*/;
   }
 
-  // Array initialization values types
-  private static final int INIT_TO_NULL = 0;
-  private static final int INIT_TO_ZERO_INT  = 1;
-  private static final int INIT_TO_FALSE = 2;
-  private static final int INIT_TO_ZERO_LONG = 3;
-
   // Array element type classes
   private static final int TYPE_JAVA_OBJECT = 0;
   private static final int TYPE_JAVA_OBJECT_OR_JSO = 1;
   private static final int TYPE_JSO = 2;
   private static final int TYPE_JAVA_LANG_OBJECT = 3;
+  private static final int TYPE_PRIMITIVE_LONG = 4;
+  private static final int TYPE_PRIMITIVE_NUMBER = 5;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 6;
 
   /**
    * Creates a copy of the specified array.
@@ -116,9 +113,13 @@ public final class Array {
    */
   public static <T> T[] createFrom(T[] array, int length) {
     Array a = asArrayType(array);
-    Array result = initializeArrayElementsWithDefaults(INIT_TO_NULL, length);
-    initValues(a.getClass(), Util.getCastableTypeMap(a), a.elementTypeId,
-        a.elementTypeClass, result);
+    // TODO(rluble): The behaviour here seems erroneous as the array elements will not be
+    // initialized but left undefined. However the usages seem to be safe and changing here
+    // might have performace penalty. Maybe rename to createUninitializedFrom(), to make
+    // the meaning clearer.
+    Array result = initializeArrayElementsWithDefaults(TYPE_JAVA_OBJECT, length);
+    initValues(a.getClass(), Util.getCastableTypeMap(a), a.elementTypeId,  a.elementTypeClass,
+        result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -131,18 +132,18 @@ public final class Array {
    * @param castableTypeMap the map of types to which this array can be casted,
    *          in the form of a JSON map object
    * @param elementTypeId the typeId of array elements
-   * @param elementTypeClass whether the element type is java.lang.Object (TYPE_JAVA_LANG_OBJECT),
-   *        is guaranteed to be a java object (TYPE_JAVA_OBJECT), is guaranteed to be a JSO
-   *        (TYPE_JSO) or can be either (TYPE_JAVA_OBJECT_OR_JSO).
+   * @param elementTypeClass whether the element type is java.lang.Object
+   *        ({@link TYPE_JAVA_LANG_OBJECT}), is guaranteed to be a java object
+   *        ({@link TYPE_JAVA_OBJECT}), is guaranteed to be a JSO
+   *        ({@link TYPE_JSO}), can be either ({@link TYPE_JAVA_OBJECT_OR_JSO}) or
+   *        or some primitive type {@link TYPE_PRIMITIVE_BOOLEAN}, {@link TYPE_PRIMITIVE_LONG} or
+   *        {@link TYPE_PRIMITIVE_NUMBER}.
    * @param length the length of the array
-   * @param initValueType what is the initial value for elements;
-   *           INIT_TO_NULL: null; INIT_TO_ZERO_INT: zero; INIT_TO_FALSE: false;
-   *           INIT_TO_ZERO_LONG: long
    * @return the new array
    */
   public static Array initDim(Class<?> arrayClass, JavaScriptObject castableTypeMap,
-      int elementTypeId, int length, int elementTypeClass, int initValueType) {
-    Array result = initializeArrayElementsWithDefaults(initValueType, length);
+      int elementTypeId, int length, int elementTypeClass) {
+    Array result = initializeArrayElementsWithDefaults(elementTypeClass, length);
     initValues(arrayClass, castableTypeMap, elementTypeId, elementTypeClass, result);
     return result;
   }
@@ -155,20 +156,19 @@ public final class Array {
    * @param castableTypeMapExprs the JSON castableTypeMap of each dimension,
    *          from highest to lowest
    * @param elementTypeIds the elementTypeId of each dimension, from highest to lowest
-   * @param leafElementTypeClass whether the leaf element type is java.lang.Object
-   *        (TYPE_JAVA_LANG_OBJECT), is guaranteed to be a java object (TYPE_JAVA_OBJECT),
-   *        is guaranteed to be a JSO (TYPE_JSO) or can be either (TYPE_JAVA_OBJECT_OR_JSO).
+   * @param leafElementTypeClass whether the element type is java.lang.Object
+   *        ({@link TYPE_JAVA_LANG_OBJECT}), is guaranteed to be a java object
+   *        ({@link TYPE_JAVA_OBJECT}), is guaranteed to be a JSO
+   *        ({@link TYPE_JSO}), can be either ({@link TYPE_JAVA_OBJECT_OR_JSO}) or
+   *        or some primitive type {@link TYPE_PRIMITIVE_BOOLEAN}, {@link TYPE_PRIMITIVE_LONG} or
+   *        {@link TYPE_PRIMITIVE_NUMBER}.
    * @param dimExprs the length of each dimension, from highest to lower
-   * @param leafElementInitValueType what is the initial value for leaf elements;
-   *           INIT_TO_NULL: null; INIT_TO_ZERO_INT: zero; INIT_TO_FALSE: false;
-   *           INIT_TO_ZERO_LONG: long
    * @return the new array
    */
-  public static Array initDims(Class<?> arrayClasses[],
-      JavaScriptObject[] castableTypeMapExprs, int[] elementTypeIds,
-      int leafElementTypeClass, int[] dimExprs, int count, int leafElementInitValueType) {
+  public static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
+      int[] elementTypeIds, int leafElementTypeClass, int[] dimExprs, int count) {
     return initDims(arrayClasses, castableTypeMapExprs, elementTypeIds, leafElementTypeClass,
-        dimExprs, 0, count, leafElementInitValueType);
+        dimExprs, 0, count);
   }
 
   /**
@@ -182,7 +182,9 @@ public final class Array {
    * @param elementTypeClass whether the element type is java.lang.Object
    *        ({@link TYPE_JAVA_LANG_OBJECT}), is guaranteed to be a java object
    *        ({@link TYPE_JAVA_OBJECT}), is guaranteed to be a JSO
-   *        ({@link TYPE_JSO}) or can be either ({@link TYPE_JAVA_OBJECT_OR_JSO}).
+   *        ({@link TYPE_JSO}), can be either ({@link TYPE_JAVA_OBJECT_OR_JSO}) or
+   *        or some primitive type {@link TYPE_PRIMITIVE_BOOLEAN}, {@link TYPE_PRIMITIVE_LONG} or
+   *        {@link TYPE_PRIMITIVE_NUMBER}.
    * @param array the JSON array that will be transformed into a GWT array
    * @return values; having wrapped it for GWT
    */
@@ -259,33 +261,30 @@ public final class Array {
   }-*/;
 
   /**
-   * Creates a primitive JSON array of a given seedType.
-   *
-   * @param seedType the primitive type of the array; 0: null; 1: zero;
-   *     2: false; 3: (long) 0
-   * @param length the requested length
-   * @see #INIT_TO_NULL
-   * @see #INIT_TO_ZERO_INT
-   * @see #INIT_TO_FALSE
-   * @see #INIT_TO_ZERO_LONG
-   * @return the new JSON array
+   * Creates a primitive JSON array of a given the element type class.
    */
-  private static native Array initializeArrayElementsWithDefaults(int initValueType,
-      int length) /*-{
+  private static native Array initializeArrayElementsWithDefaults(
+      int elementTypeClass, int length) /*-{
     var array = new Array(length);
-    if (initValueType == @com.google.gwt.lang.Array::INIT_TO_NULL) {
-      // Do not initialize as undefined is equivalent to null
-      return array;
-    }
-
     var initValue;
-    if (initValueType == @com.google.gwt.lang.Array::INIT_TO_ZERO_LONG) {
-      // Fill array with the type used by LongLib
-      initValue = {l: 0, m: 0, h:0};
-    } else if (initValueType ==  @com.google.gwt.lang.Array::INIT_TO_ZERO_INT) {
-      initValue = 0;
-    } else { // initValueType == @com.google.gwt.lang.Array::INIT_TO_FALSE
-      initValue = false;
+    switch (elementTypeClass) {
+      case @com.google.gwt.lang.Array::TYPE_JAVA_OBJECT:
+      case @com.google.gwt.lang.Array::TYPE_JAVA_OBJECT_OR_JSO:
+      case @com.google.gwt.lang.Array::TYPE_JAVA_LANG_OBJECT:
+      case @com.google.gwt.lang.Array::TYPE_JSO:
+        // Do not initialize as undefined is equivalent to null
+        return array;
+      case @com.google.gwt.lang.Array::TYPE_PRIMITIVE_LONG:
+        // Fill array with the type used by LongLib
+        // TODO(rluble): This should refer to the zero long value defined in LongLib
+        initValue = {l: 0, m: 0, h:0};
+        break;
+      case @com.google.gwt.lang.Array::TYPE_PRIMITIVE_NUMBER:
+          initValue = 0;
+        break;
+      case @com.google.gwt.lang.Array::TYPE_PRIMITIVE_BOOLEAN:
+        initValue = false;
+        break;
     }
 
     for ( var i = 0; i < length; ++i) {
@@ -295,23 +294,22 @@ public final class Array {
   }-*/;
 
   private static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
-      int[] elementTypeIds, int leafElementTypeClass, int[] dimExprs,
-      int index, int count, int leafInitValueType) {
+      int[] elementTypeIds, int leafElementTypeClass, int[] dimExprs, int index, int count) {
     int length = dimExprs[index];
     boolean isLastDim = (index == (count - 1));
+    // All dimensions but the last are plain reference types.
+    int elementTypeClass = isLastDim ? leafElementTypeClass : TYPE_JAVA_OBJECT;
 
-    // All dimensions but the last are reference types hence initied to null
-    Array result = initializeArrayElementsWithDefaults(isLastDim ? leafInitValueType :
-       INIT_TO_NULL, length);
+    Array result = initializeArrayElementsWithDefaults(elementTypeClass, length);
     initValues(arrayClasses[index], castableTypeMapExprs[index],
-        elementTypeIds[index], isLastDim ? leafElementTypeClass : TYPE_JAVA_OBJECT, result);
+        elementTypeIds[index], elementTypeClass, result);
 
     if (!isLastDim) {
       // Recurse to next dimension.
       ++index;
       for (int i = 0; i < length; ++i) {
         set(result, i, initDims(arrayClasses, castableTypeMapExprs,
-            elementTypeIds, leafElementTypeClass, dimExprs, index, count, leafInitValueType));
+            elementTypeIds, leafElementTypeClass, dimExprs, index, count));
       }
     }
     return result;
