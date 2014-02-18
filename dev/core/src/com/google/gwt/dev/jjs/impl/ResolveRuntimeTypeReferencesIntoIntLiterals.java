@@ -25,11 +25,13 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.collect.Multiset;
+import com.google.gwt.thirdparty.guava.common.collect.Multisets;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Assigns and replaces JRuntimeTypeReference nodes with an int type id literal.<br />
@@ -44,7 +46,7 @@ public class ResolveRuntimeTypeReferencesIntoIntLiterals {
    */
   private class RuntimeTypeCollectorVisitor extends JVisitor {
 
-    private final Set<JReferenceType> typesRequiringRuntimeIds = Sets.newHashSet();
+    private final Multiset<JReferenceType> typesRequiringRuntimeIds = HashMultiset.create();
 
     @Override
     public void endVisit(JRuntimeTypeReference x, Context ctx) {
@@ -105,8 +107,9 @@ public class ResolveRuntimeTypeReferencesIntoIntLiterals {
     // java.lang.String should get 2
     assignNextId(program.getTypeJavaLangString());
 
-    // Should we sort them?
-    for (JType type : visitor.typesRequiringRuntimeIds) {
+    ImmutableMultiset<JReferenceType> typesByFrequency =
+        Multisets.copyHighestCountFirst(visitor.typesRequiringRuntimeIds);
+    for (JType type : typesByFrequency) {
       assignNextId(type);
     }
 
