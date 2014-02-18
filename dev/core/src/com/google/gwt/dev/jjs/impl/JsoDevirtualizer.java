@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
@@ -92,7 +93,7 @@ public class JsoDevirtualizer {
       if (!mightBeJsoMethod(method)) {
         return;
       }
-      JType instanceType = x.getInstance().getType();
+      JType instanceType = ((JReferenceType) x.getInstance().getType()).getUnderlyingType();
       // If the instance can't possibly be a JSO, String or an interface implemented by String, do
       // not devirtualize.
       if (instanceType != program.getTypeJavaLangObject()
@@ -212,7 +213,7 @@ public class JsoDevirtualizer {
    * Returns true if getClass() is devirtualized for {@code type}.
    */
   public static boolean isGetClassDevirtualized(JProgram program, JType type) {
-    return type == program.getTypeJavaLangObject() || type == program.getTypeJavaLangString();
+    return type == program.getJavaScriptObject() || type == program.getTypeJavaLangString();
   }
 
   /**
