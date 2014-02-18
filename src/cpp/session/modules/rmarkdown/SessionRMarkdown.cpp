@@ -235,8 +235,8 @@ private:
       resultJson["output_url"] = kRmdOutput "/";
 
       // default to no slide info
-      resultJson["slide_number"] = -1;
-      resultJson["slide_breaks"] = json::Value();
+      resultJson["preview_slide"] = -1;
+      resultJson["slide_navigation"] = json::Value();
 
       // for HTML documents, check to see whether they've been published
       if (outputFile_.extensionLowerCase() == ".html")
