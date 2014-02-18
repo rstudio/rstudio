@@ -59,11 +59,14 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
   }
 
   public PriorityQueue(int initialCapacity) {
-    this(initialCapacity, Comparators.natural());
+    this(initialCapacity, null);
   }
 
   public PriorityQueue(int initialCapacity, Comparator<? super E> cmp) {
     heap = new ArrayList<E>(initialCapacity);
+    if (cmp == null) {
+      cmp = Comparators.natural();
+    }
     this.cmp = cmp;
   }
 
@@ -100,7 +103,7 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
   }
 
   public Comparator<? super E> comparator() {
-    return cmp;
+    return cmp == Comparators.natural() ? null : cmp;
   }
 
   @Override

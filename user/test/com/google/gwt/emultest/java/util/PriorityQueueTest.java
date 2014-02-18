@@ -19,8 +19,10 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
+import java.util.TreeSet;
 
 /**
  * Test PriorityQueue.
@@ -97,6 +99,30 @@ public class PriorityQueueTest extends GWTTestCase {
     assertEquals(21, pq.remove().intValue());
     assertEquals(31, pq.remove().intValue());
     assertTrue(pq.isEmpty());
+  }
+
+  public void testComparator() {
+    PriorityQueue<Integer> pq = new PriorityQueue<Integer>();
+    assertNull(pq.comparator());
+
+    pq = new PriorityQueue<Integer>(11);
+    assertNull(pq.comparator());
+
+    Comparator<Integer> comparator = new Comparator<Integer>() {
+      @Override
+      public int compare(Integer o1, Integer o2) {
+        return o1 - o2;
+      }
+    };
+    pq = new PriorityQueue<Integer>(11, comparator);
+    assertEquals(comparator, pq.comparator());
+
+    PriorityQueue<Integer> anotherQueue = new PriorityQueue<Integer>(pq);
+    assertEquals(pq.comparator(), anotherQueue.comparator());
+
+    TreeSet<Integer> sortedSet = new TreeSet<Integer>(comparator);
+    pq = new PriorityQueue<Integer>(sortedSet);
+    assertEquals(sortedSet.comparator(), pq.comparator());
   }
 
   public void testFromCollection() {
