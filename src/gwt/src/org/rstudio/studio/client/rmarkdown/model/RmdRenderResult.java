@@ -28,6 +28,10 @@ public class RmdRenderResult extends JavaScriptObject
       return this.succeeded;
    }-*/;
 
+   public native final String getTargetFile() /*-{
+      return this.target_file;
+   }-*/;
+   
    public native final String getOutputFile() /*-{
       return this.output_file;
    }-*/;

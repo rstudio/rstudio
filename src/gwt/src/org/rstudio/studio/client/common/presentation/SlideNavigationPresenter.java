@@ -22,6 +22,8 @@ import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigationItem;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
@@ -32,8 +34,10 @@ public class SlideNavigationPresenter implements
                                  SlideIndexChangedEvent.Handler
 {
    public interface Display
-   {
+   {     
       void navigate(int index);
+      
+      void editCurrentSlide();
       
       SlideNavigationMenu getNavigationMenu();
       
@@ -50,6 +54,24 @@ public class SlideNavigationPresenter implements
       
       view_.addSlideNavigationChangedHandler(this);
       view_.addSlideIndexChangedHandler(this);
+      
+      view_.getNavigationMenu().getHomeButton().addClickHandler(
+            new ClickHandler() {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  view_.navigate(0);                                   
+               }
+      });
+      
+      view_.getNavigationMenu().getEditButton().addClickHandler(
+            new ClickHandler() {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  view_.editCurrentSlide();
+               }
+      });
    }
   
  
@@ -124,5 +146,4 @@ public class SlideNavigationPresenter implements
    
    private final Display view_;
    private SlideNavigation slideNavigation_ = null;
-   
 }

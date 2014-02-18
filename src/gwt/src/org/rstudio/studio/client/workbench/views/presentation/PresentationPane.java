@@ -70,16 +70,10 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       
       Toolbar toolbar = new Toolbar();
       
-      ToolbarButton homeButton = commands_.presentationHome().createToolbarButton();
-      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar, homeButton);
-     
-      toolbar.addLeftSeparator();
+      slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar); 
+      slideNavigationMenu_.setEditButtonVisible(!isTutorial);
       
-      if (!isTutorial)
-      {
-         toolbar.addLeftWidget(commands_.presentationEdit().createToolbarButton());
-         toolbar.addLeftSeparator();
-      }
+      toolbar.addLeftSeparator();
       
       toolbar.addLeftWidget(commands_.presentationFullscreen().createToolbarButton());
      

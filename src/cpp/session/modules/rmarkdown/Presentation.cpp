@@ -131,7 +131,7 @@ void ammendResults(const std::string& formatName,
                string_utils::stripQuotes(&title);
                if (title.empty())
                   title = "Untitled Slide";
-               SlideNavigationItem item(title, 0, totalSlides++, 0);
+               SlideNavigationItem item(title, 0, totalSlides++, 1);
                slideNavigationItems.push_back(item);
                haveTitle = true;
 
@@ -151,13 +151,13 @@ void ammendResults(const std::string& formatName,
                title = "Untitled Slide";
 
             int indent = std::string(match[1]).empty() ? 0 : 1;
-            SlideNavigationItem item(title, indent, totalSlides++, i);
+            SlideNavigationItem item(title, indent, totalSlides++, i+1);
             slideNavigationItems.push_back(item);
          }
          // untitled slides
          else if (boost::regex_search(line, reUntitledSlide))
          {
-            SlideNavigationItem item("Untitled Slide", 1, totalSlides++, i);
+            SlideNavigationItem item("Untitled Slide", 1, totalSlides++, i+1);
             slideNavigationItems.push_back(item);
          }
       }

@@ -228,6 +228,8 @@ private:
       isRunning_ = false;
       json::Object resultJson;
       resultJson["succeeded"] = succeeded;
+      resultJson["target_file"] =
+            module_context::createAliasedPath(targetFile_);
       resultJson["output_file"] =
             module_context::createAliasedPath(outputFile_);
       resultJson["output_url"] = kRmdOutput "/";

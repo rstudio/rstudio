@@ -19,8 +19,6 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
@@ -28,7 +26,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -40,6 +38,7 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
 import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
 import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEvent;
@@ -52,9 +51,11 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
 {
    @Inject
    public RmdOutputPanel(Commands commands, 
+                         FileTypeRegistry fileTypeRegistry,
                          RMarkdownServerOperations server)
    {
       super(commands);
+      fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
    }
    
@@ -62,9 +63,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
                           boolean refresh)
    {
+      // remember target file (for invoking editor)
+      targetFile_ = FileSystemItem.createFile(params.getTargetFile());
+      
       // slide navigation (may be null)
-      SlideNavigation slideNav = params.getResult().getSlideNavigation();
-      handlerManager_.fireEvent(new SlideNavigationChangedEvent(slideNav));
+      slideNavigation_ = params.getResult().getSlideNavigation();
+      handlerManager_.fireEvent(new SlideNavigationChangedEvent(slideNavigation_));
       slideChangeMonitor_.cancel();
       
       // file label
@@ -112,20 +116,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected void initToolbar (Toolbar toolbar, Commands commands)
    {
-      AppCommand presHome = commands.presentationHome();
-      ToolbarButton homeButton = new ToolbarButton(
-            presHome.getImageResource(),
-            new ClickHandler() {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  navigate(0);
-               }
-            });
-      homeButton.setTitle(presHome.getTooltip());
-      
       slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar, 
-                                                            homeButton,
                                                             400, 
                                                             100,
                                                             true);
@@ -168,8 +159,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          @Override
          public boolean execute()
          {
-            
-            
             // see if the document is ready
             AnchorableFrame frame = getFrame();
             if (frame == null)
@@ -264,6 +253,22 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    }
 
    @Override
+   public void editCurrentSlide()
+   {
+      if (targetFile_ != null && slideNavigation_ != null)
+      {
+         // determine what slide we are on
+         int index = getCurrentSlideIndex();
+         
+         // get the line of code associated with it
+         int line = slideNavigation_.getItems().get(index).getLine();
+         
+         // invoke the editor
+         fileTypeRegistry_.editFile(targetFile_, FilePosition.create(line, 1));
+      }
+   }
+   
+   @Override
    public SlideNavigationMenu getNavigationMenu()
    {
       return slideNavigationMenu_;
@@ -292,16 +297,22 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
   
    private void fireSlideIndexChanged()
    {
+      handlerManager_.fireEvent(new SlideIndexChangedEvent(
+                                                   getCurrentSlideIndex())); 
+   }
+   
+   private int getCurrentSlideIndex()
+   {
       try
       {
          String anchor = getAnchor();
          if (anchor.length() == 0)
             anchor = "1";
-         int index = Integer.parseInt(anchor);
-         handlerManager_.fireEvent(new SlideIndexChangedEvent(index-1));
+         return Integer.parseInt(anchor) - 1;
       }
       catch(NumberFormatException e)
       {
+         return 0;
       }
    }
    
@@ -312,8 +323,13 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private Widget publishButtonSeparator_;
    private String title_;
    
+   private FileTypeRegistry fileTypeRegistry_;
+   
    private RMarkdownServerOperations server_;
    private int scrollPosition_ = 0;
+   
+   private FileSystemItem targetFile_ = null;
+   private SlideNavigation slideNavigation_ = null;
    
    private HandlerManager handlerManager_ = new HandlerManager(this);
 }
