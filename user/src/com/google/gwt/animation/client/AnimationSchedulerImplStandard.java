@@ -43,7 +43,8 @@ class AnimationSchedulerImplStandard extends AnimationScheduler {
   }
 
   private static native JavaScriptObject requestImpl(AnimationCallback cb, Element element) /*-{
-    var callback = $entry(function(time) {
+    var callback = $entry(function() {
+      var time = @com.google.gwt.core.client.Duration::currentTimeMillis()();
       cb.@com.google.gwt.animation.client.AnimationScheduler.AnimationCallback::execute(D)(time);
     });
 

@@ -17,15 +17,16 @@ package com.google.gwt.animation.client;
 
 import com.google.gwt.animation.client.AnimationScheduler.AnimationCallback;
 import com.google.gwt.animation.client.AnimationScheduler.AnimationHandle;
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 
 /**
- * Tests the {@link AnimationSchedulerImplTimer} class.
+ * Tests the {@link AnimationScheduler} class.
  */
-public class AnimationSchedulerImplTimerTest extends GWTTestCase {
+public class AnimationSchedulerTest extends GWTTestCase {
 
   /**
    * The default timeout of asynchronous tests.
@@ -39,7 +40,7 @@ public class AnimationSchedulerImplTimerTest extends GWTTestCase {
    */
   private static final int TIMER_DELAY = 3000;
 
-  private AnimationSchedulerImplTimer scheduler;
+  private AnimationScheduler scheduler;
 
   @Override
   public String getModuleName() {
@@ -69,10 +70,13 @@ public class AnimationSchedulerImplTimerTest extends GWTTestCase {
 
   public void testRequestAnimationFrame() {
     delayTestFinish(TEST_TIMEOUT);
+    final double startTime = Duration.currentTimeMillis();
     DivElement element = Document.get().createDivElement();
     scheduler.requestAnimationFrame(new AnimationCallback() {
       @Override
       public void execute(double timestamp) {
+        // Make sure timestamp is not a high-res timestamp (see issue 8570)
+        assertTrue(timestamp >= startTime);
         finishTest();
       }
     }, element);
@@ -80,9 +84,12 @@ public class AnimationSchedulerImplTimerTest extends GWTTestCase {
 
   public void testRequestAnimationFrameWithoutElement() {
     delayTestFinish(TEST_TIMEOUT);
+    final double startTime = Duration.currentTimeMillis();
     scheduler.requestAnimationFrame(new AnimationCallback() {
       @Override
       public void execute(double timestamp) {
+        // Make sure timestamp is not a high-res timestamp (see issue 8570)
+        assertTrue(timestamp >= startTime);
         finishTest();
       }
     }, null);
@@ -90,7 +97,7 @@ public class AnimationSchedulerImplTimerTest extends GWTTestCase {
 
   @Override
   protected void gwtSetUp() throws Exception {
-    scheduler = new AnimationSchedulerImplTimer();
+    scheduler = AnimationScheduler.get();
   }
 
   @Override
