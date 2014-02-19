@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -31,110 +32,110 @@ public class DocumentTest extends GWTTestCase {
   public void testElementCreators() {
     Document doc = Document.get();
 
-    assertEquals("a", doc.createAnchorElement().getTagName().toLowerCase());
-    assertEquals("area", doc.createAreaElement().getTagName().toLowerCase());
-    assertEquals("base", doc.createBaseElement().getTagName().toLowerCase());
+    assertEquals("a", StringCase.toLower(doc.createAnchorElement().getTagName()));
+    assertEquals("area", StringCase.toLower(doc.createAreaElement().getTagName()));
+    assertEquals("base", StringCase.toLower(doc.createBaseElement().getTagName()));
     assertEquals("blockquote",
-        doc.createBlockQuoteElement().getTagName().toLowerCase());
-    assertEquals("br", doc.createBRElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createBlockQuoteElement().getTagName()));
+    assertEquals("br", StringCase.toLower(doc.createBRElement().getTagName()));
     assertEquals("caption",
-        doc.createCaptionElement().getTagName().toLowerCase());
-    assertEquals("col", doc.createColElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createCaptionElement().getTagName()));
+    assertEquals("col", StringCase.toLower(doc.createColElement().getTagName()));
     assertEquals("colgroup",
-        doc.createColGroupElement().getTagName().toLowerCase());
-    assertEquals("del", doc.createDelElement().getTagName().toLowerCase());
-    assertEquals("div", doc.createDivElement().getTagName().toLowerCase());
-    assertEquals("dl", doc.createDLElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createColGroupElement().getTagName()));
+    assertEquals("del", StringCase.toLower(doc.createDelElement().getTagName()));
+    assertEquals("div", StringCase.toLower(doc.createDivElement().getTagName()));
+    assertEquals("dl", StringCase.toLower(doc.createDLElement().getTagName()));
     assertEquals("fieldset",
-        doc.createFieldSetElement().getTagName().toLowerCase());
-    assertEquals("form", doc.createFormElement().getTagName().toLowerCase());
-    assertEquals("frame", doc.createFrameElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createFieldSetElement().getTagName()));
+    assertEquals("form", StringCase.toLower(doc.createFormElement().getTagName()));
+    assertEquals("frame", StringCase.toLower(doc.createFrameElement().getTagName()));
     assertEquals("frameset",
-        doc.createFrameSetElement().getTagName().toLowerCase());
-    assertEquals("head", doc.createHeadElement().getTagName().toLowerCase());
-    assertEquals("h1", doc.createHElement(1).getTagName().toLowerCase());
-    assertEquals("hr", doc.createHRElement().getTagName().toLowerCase());
-    assertEquals("iframe", doc.createIFrameElement().getTagName().toLowerCase());
-    assertEquals("img", doc.createImageElement().getTagName().toLowerCase());
-    assertEquals("ins", doc.createInsElement().getTagName().toLowerCase());
-    assertEquals("label", doc.createLabelElement().getTagName().toLowerCase());
-    assertEquals("legend", doc.createLegendElement().getTagName().toLowerCase());
-    assertEquals("li", doc.createLIElement().getTagName().toLowerCase());
-    assertEquals("link", doc.createLinkElement().getTagName().toLowerCase());
-    assertEquals("map", doc.createMapElement().getTagName().toLowerCase());
-    assertEquals("meta", doc.createMetaElement().getTagName().toLowerCase());
-    assertEquals("object", doc.createObjectElement().getTagName().toLowerCase());
-    assertEquals("ol", doc.createOLElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createFrameSetElement().getTagName()));
+    assertEquals("head", StringCase.toLower(doc.createHeadElement().getTagName()));
+    assertEquals("h1", StringCase.toLower(doc.createHElement(1).getTagName()));
+    assertEquals("hr", StringCase.toLower(doc.createHRElement().getTagName()));
+    assertEquals("iframe", StringCase.toLower(doc.createIFrameElement().getTagName()));
+    assertEquals("img", StringCase.toLower(doc.createImageElement().getTagName()));
+    assertEquals("ins", StringCase.toLower(doc.createInsElement().getTagName()));
+    assertEquals("label", StringCase.toLower(doc.createLabelElement().getTagName()));
+    assertEquals("legend", StringCase.toLower(doc.createLegendElement().getTagName()));
+    assertEquals("li", StringCase.toLower(doc.createLIElement().getTagName()));
+    assertEquals("link", StringCase.toLower(doc.createLinkElement().getTagName()));
+    assertEquals("map", StringCase.toLower(doc.createMapElement().getTagName()));
+    assertEquals("meta", StringCase.toLower(doc.createMetaElement().getTagName()));
+    assertEquals("object", StringCase.toLower(doc.createObjectElement().getTagName()));
+    assertEquals("ol", StringCase.toLower(doc.createOLElement().getTagName()));
     assertEquals("optgroup",
-        doc.createOptGroupElement().getTagName().toLowerCase());
-    assertEquals("option", doc.createOptionElement().getTagName().toLowerCase());
-    assertEquals("param", doc.createParamElement().getTagName().toLowerCase());
-    assertEquals("p", doc.createPElement().getTagName().toLowerCase());
-    assertEquals("pre", doc.createPreElement().getTagName().toLowerCase());
-    assertEquals("q", doc.createQElement().getTagName().toLowerCase());
-    assertEquals("script", doc.createScriptElement().getTagName().toLowerCase());
-    assertEquals("select", doc.createSelectElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createOptGroupElement().getTagName()));
+    assertEquals("option", StringCase.toLower(doc.createOptionElement().getTagName()));
+    assertEquals("param", StringCase.toLower(doc.createParamElement().getTagName()));
+    assertEquals("p", StringCase.toLower(doc.createPElement().getTagName()));
+    assertEquals("pre", StringCase.toLower(doc.createPreElement().getTagName()));
+    assertEquals("q", StringCase.toLower(doc.createQElement().getTagName()));
+    assertEquals("script", StringCase.toLower(doc.createScriptElement().getTagName()));
+    assertEquals("select", StringCase.toLower(doc.createSelectElement().getTagName()));
     assertEquals("select",
-        doc.createSelectElement(false).getTagName().toLowerCase());
-    assertEquals("span", doc.createSpanElement().getTagName().toLowerCase());
-    assertEquals("style", doc.createStyleElement().getTagName().toLowerCase());
-    assertEquals("table", doc.createTableElement().getTagName().toLowerCase());
-    assertEquals("tbody", doc.createTBodyElement().getTagName().toLowerCase());
-    assertEquals("td", doc.createTDElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createSelectElement(false).getTagName()));
+    assertEquals("span", StringCase.toLower(doc.createSpanElement().getTagName()));
+    assertEquals("style", StringCase.toLower(doc.createStyleElement().getTagName()));
+    assertEquals("table", StringCase.toLower(doc.createTableElement().getTagName()));
+    assertEquals("tbody", StringCase.toLower(doc.createTBodyElement().getTagName()));
+    assertEquals("td", StringCase.toLower(doc.createTDElement().getTagName()));
     assertEquals("textarea",
-        doc.createTextAreaElement().getTagName().toLowerCase());
-    assertEquals("tfoot", doc.createTFootElement().getTagName().toLowerCase());
-    assertEquals("thead", doc.createTHeadElement().getTagName().toLowerCase());
-    assertEquals("th", doc.createTHElement().getTagName().toLowerCase());
-    assertEquals("title", doc.createTitleElement().getTagName().toLowerCase());
-    assertEquals("tr", doc.createTRElement().getTagName().toLowerCase());
-    assertEquals("ul", doc.createULElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createTextAreaElement().getTagName()));
+    assertEquals("tfoot", StringCase.toLower(doc.createTFootElement().getTagName()));
+    assertEquals("thead", StringCase.toLower(doc.createTHeadElement().getTagName()));
+    assertEquals("th", StringCase.toLower(doc.createTHElement().getTagName()));
+    assertEquals("title", StringCase.toLower(doc.createTitleElement().getTagName()));
+    assertEquals("tr", StringCase.toLower(doc.createTRElement().getTagName()));
+    assertEquals("ul", StringCase.toLower(doc.createULElement().getTagName()));
 
     assertEquals("button",
-        doc.createPushButtonElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createPushButtonElement().getTagName()));
     assertEquals("button",
-        doc.createResetButtonElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createResetButtonElement().getTagName()));
     assertEquals("button",
-        doc.createSubmitButtonElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createSubmitButtonElement().getTagName()));
 
     assertEquals("button",
-        doc.createPushButtonElement().getType().toLowerCase());
+        StringCase.toLower(doc.createPushButtonElement().getType()));
     assertEquals("reset",
-        doc.createResetButtonElement().getType().toLowerCase());
+        StringCase.toLower(doc.createResetButtonElement().getType()));
     assertEquals("submit",
-        doc.createSubmitButtonElement().getType().toLowerCase());
+        StringCase.toLower(doc.createSubmitButtonElement().getType()));
 
     assertEquals("input",
-        doc.createCheckInputElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createCheckInputElement().getTagName()));
     assertEquals("input",
-        doc.createFileInputElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createFileInputElement().getTagName()));
     assertEquals("input",
-        doc.createHiddenInputElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createHiddenInputElement().getTagName()));
     assertEquals("input",
-        doc.createImageInputElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createImageInputElement().getTagName()));
     assertEquals("input",
-        doc.createPasswordInputElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createPasswordInputElement().getTagName()));
     assertEquals("input",
-        doc.createRadioInputElement("foo").getTagName().toLowerCase());
+        StringCase.toLower(doc.createRadioInputElement("foo").getTagName()));
     assertEquals("input",
-        doc.createTextInputElement().getTagName().toLowerCase());
+        StringCase.toLower(doc.createTextInputElement().getTagName()));
 
     assertEquals("button",
-        doc.createButtonInputElement().getType().toLowerCase());
+        StringCase.toLower(doc.createButtonInputElement().getType()));
     assertEquals("checkbox",
-        doc.createCheckInputElement().getType().toLowerCase());
-    assertEquals("file", doc.createFileInputElement().getType().toLowerCase());
+        StringCase.toLower(doc.createCheckInputElement().getType()));
+    assertEquals("file", StringCase.toLower(doc.createFileInputElement().getType()));
     assertEquals("hidden",
-        doc.createHiddenInputElement().getType().toLowerCase());
-    assertEquals("image", doc.createImageInputElement().getType().toLowerCase());
+        StringCase.toLower(doc.createHiddenInputElement().getType()));
+    assertEquals("image", StringCase.toLower(doc.createImageInputElement().getType()));
     assertEquals("password",
-        doc.createPasswordInputElement().getType().toLowerCase());
+        StringCase.toLower(doc.createPasswordInputElement().getType()));
     assertEquals("radio",
-        doc.createRadioInputElement("foo").getType().toLowerCase());
-    assertEquals("reset", doc.createResetInputElement().getType().toLowerCase());
+        StringCase.toLower(doc.createRadioInputElement("foo").getType()));
+    assertEquals("reset", StringCase.toLower(doc.createResetInputElement().getType()));
     assertEquals("submit",
-        doc.createSubmitInputElement().getType().toLowerCase());
-    assertEquals("text", doc.createTextInputElement().getType().toLowerCase());
+        StringCase.toLower(doc.createSubmitInputElement().getType()));
+    assertEquals("text", StringCase.toLower(doc.createTextInputElement().getType()));
   }
 
   /**

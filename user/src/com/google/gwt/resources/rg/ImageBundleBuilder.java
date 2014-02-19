@@ -17,6 +17,7 @@ package com.google.gwt.resources.rg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -758,7 +759,7 @@ class ImageBundleBuilder {
         }
       }
     } catch (IllegalArgumentException iex) {
-      if (imageName.toLowerCase().endsWith("png")
+      if (StringCase.toLower(imageName).endsWith("png")
           && iex.getMessage() != null
           && iex.getStackTrace()[0].getClassName().equals(
               "javax.imageio.ImageTypeSpecifier$Indexed")) {

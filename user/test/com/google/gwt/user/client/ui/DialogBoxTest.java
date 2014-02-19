@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -236,7 +237,7 @@ public class DialogBoxTest extends PopupTest {
     DialogBox box = new DialogBox();
     box.setHTML(SafeHtmlUtils.fromSafeConstant(html));
 
-    assertEquals(html, box.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(box.getHTML()));
   }
 
   /**
@@ -249,7 +250,7 @@ public class DialogBoxTest extends PopupTest {
     Element td = dialogBox.getCellElement(0, 1);
     assertEquals(dialogBox.getText(), "text");
     caption.setHTML("<b>text</b>");
-    assertEquals("<b>text</b>", dialogBox.getHTML().toLowerCase());
+    assertEquals("<b>text</b>", StringCase.toLower(dialogBox.getHTML()));
     dialogBox.show();
     assertTrue(dialogBox.getCaption() == caption);
     assertTrue(caption.asWidget().getElement() == DOM.getChild(td, 0));

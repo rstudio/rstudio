@@ -16,6 +16,7 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -144,7 +145,7 @@ public class CustomButtonTest extends GWTTestCase {
       Face f = entry.getValue();
       String faceName = entry.getKey();
       assertEquals(f.getText(), faceName);
-      assertEquals(f.getHTML().toLowerCase(), "<b>" + faceName.toLowerCase()
+      assertEquals(StringCase.toLower(f.getHTML()), "<b>" + StringCase.toLower(faceName)
           + "</b>");
     }
   }
@@ -153,7 +154,7 @@ public class CustomButtonTest extends GWTTestCase {
     PushButton button = new PushButton();
     button.setHTML(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, button.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(button.getHTML()));
   }
 
   public void testSyntheticClick() {

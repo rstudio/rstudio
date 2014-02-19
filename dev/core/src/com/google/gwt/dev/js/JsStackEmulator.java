@@ -67,6 +67,7 @@ import com.google.gwt.dev.util.collect.Maps;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -844,7 +845,7 @@ public class JsStackEmulator {
 
     String value = property.getCurrentValue();
     assert value != null : property.getName() + " did not have a value";
-    StackMode stackMode = StackMode.valueOf(value.toUpperCase());
+    StackMode stackMode = StackMode.valueOf(value.toUpperCase(Locale.ENGLISH));
     // Check for multiply defined properties
     if (propertyOracles.length > 1) {
       for (int i = 1; i < propertyOracles.length; ++i) {

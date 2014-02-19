@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -120,9 +121,9 @@ public class TableTests extends GWTTestCase {
     assertEquals("thead should exist", thead, table.getTHead());
     assertEquals("tfoot should exist", tfoot, table.getTFoot());
 
-    assertEquals("<thead> expected", "thead", thead.getTagName().toLowerCase());
-    assertEquals("<tbody> expected", "tbody", tbody.getTagName().toLowerCase());
-    assertEquals("<tfoot> expected", "tfoot", tfoot.getTagName().toLowerCase());
+    assertEquals("<thead> expected", "thead", StringCase.toLower(thead.getTagName()));
+    assertEquals("<tbody> expected", "tbody", StringCase.toLower(tbody.getTagName()));
+    assertEquals("<tfoot> expected", "tfoot", StringCase.toLower(tfoot.getTagName()));
 
     // Ensure table row enumeration contains all rows (order of section rows is
     // not guaranteed across browsers).

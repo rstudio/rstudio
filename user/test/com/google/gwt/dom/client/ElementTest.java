@@ -18,6 +18,7 @@ package com.google.gwt.dom.client;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.junit.DoNotRunWith;
@@ -425,7 +426,7 @@ public class ElementTest extends GWTTestCase {
 
     Node div = Document.get().createDivElement();
     assertTrue(Element.is(div));
-    assertEquals("div", Element.as(div).getTagName().toLowerCase());
+    assertEquals("div", StringCase.toLower(Element.as(div).getTagName()));
 
     // Element.is(null) is allowed and should return false.
     assertFalse(Element.is(null));
@@ -433,7 +434,7 @@ public class ElementTest extends GWTTestCase {
     // Element sub-classes like DivElement have is(...) and as(...) too
     assertFalse(DivElement.is(Document.get()));
     assertTrue(DivElement.is(div));
-    assertEquals("div", DivElement.as(div).getTagName().toLowerCase());
+    assertEquals("div", StringCase.toLower(DivElement.as(div).getTagName()));
     assertFalse(DivElement.is(null));
   }
 
@@ -442,7 +443,7 @@ public class ElementTest extends GWTTestCase {
    */
   public void testNamespaces() {
     Element elem = Document.get().createElement("myns:elem");
-    assertEquals("myns:elem", elem.getTagName().toLowerCase());
+    assertEquals("myns:elem", StringCase.toLower(elem.getTagName()));
   }
 
   /**
@@ -451,7 +452,7 @@ public class ElementTest extends GWTTestCase {
   public void testNativeProperties() {
     DivElement div = Document.get().createDivElement();
 
-    assertEquals("div", div.getTagName().toLowerCase());
+    assertEquals("div", StringCase.toLower(div.getTagName()));
 
     div.setClassName("myClass");
     assertEquals(div.getClassName(), "myClass");
@@ -649,8 +650,8 @@ public class ElementTest extends GWTTestCase {
     Element button = div.getFirstChildElement();
     Element img = button.getFirstChildElement();
 
-    assertEquals("button", button.getTagName().toLowerCase());
-    assertEquals("img", img.getTagName().toLowerCase());
+    assertEquals("button", StringCase.toLower(button.getTagName()));
+    assertEquals("img", StringCase.toLower(img.getTagName()));
     assertTrue(((ImageElement) img).getSrc().endsWith("foo.gif"));
   }
 

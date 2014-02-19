@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -95,7 +96,7 @@ public class CellPanelParser implements ElementParser {
       } else {
         if (!writer.isWidgetElement(child)) {
           writer.die(elem, "Expected a widget or <%s:%s>, found %s",
-              elem.getPrefix(), CELL_TAG.toLowerCase(), child);
+              elem.getPrefix(), StringCase.toLower(CELL_TAG), child);
         }
         // It's just a normal child, so parse it as a widget.
         FieldWriter childField = writer.parseElementToField(child);
@@ -106,6 +107,6 @@ public class CellPanelParser implements ElementParser {
 
   private boolean localTagNameIsCell(String tagName) {
     // Older templates had this as "Cell", but now we prefer "cell"
-    return tagName.equals(CELL_TAG) || tagName.equals(CELL_TAG.toLowerCase());
+    return tagName.equals(CELL_TAG) || tagName.equals(StringCase.toLower(CELL_TAG));
   }
 }

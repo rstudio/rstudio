@@ -16,6 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
@@ -42,8 +43,8 @@ public class ImageLoadingCellTest extends CellTestBase<String> {
     assertEquals(2, elem.getChildCount());
     Element imgWrapper = elem.getChild(1).cast();
     ImageElement img = imgWrapper.getFirstChildElement().cast();
-    assertEquals("img", img.getTagName().toLowerCase());
-    assertTrue(img.getSrc().toLowerCase().endsWith("test.png"));
+    assertEquals("img", StringCase.toLower(img.getTagName()));
+    assertTrue(StringCase.toLower(img.getSrc()).endsWith("test.png"));
   }
 
   @Override
@@ -62,8 +63,8 @@ public class ImageLoadingCellTest extends CellTestBase<String> {
     assertEquals(2, elem.getChildCount());
     Element imgWrapper = elem.getChild(1).cast();
     ImageElement img = imgWrapper.getFirstChildElement().cast();
-    assertEquals("img", img.getTagName().toLowerCase());
-    assertTrue(img.getSrc().toLowerCase().endsWith("test.png"));
+    assertEquals("img", StringCase.toLower(img.getTagName()));
+    assertTrue(StringCase.toLower(img.getSrc()).endsWith("test.png"));
   }
 
   @Override

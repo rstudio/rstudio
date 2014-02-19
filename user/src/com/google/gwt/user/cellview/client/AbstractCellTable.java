@@ -22,6 +22,7 @@ import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.builder.shared.HtmlTableSectionBuilder;
 import com.google.gwt.dom.builder.shared.TableSectionBuilder;
 import com.google.gwt.dom.client.BrowserEvents;
@@ -472,7 +473,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
        * generate the entire table. We do the same for all browsers to avoid any
        * future bugs, since setting innerHTML on a table section seems brittle.
        */
-      sectionTag = sectionTag.toLowerCase();
+      sectionTag = StringCase.toLower(sectionTag);
       if ("tbody".equals(sectionTag)) {
         tmpElem.setInnerSafeHtml(template.tbody(rowHtml));
       } else if ("thead".equals(sectionTag)) {
@@ -739,7 +740,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      */
     private void replaceTableSection(AbstractCellTable<?> table, TableSectionElement section,
         SafeHtml html) {
-      String sectionName = section.getTagName().toLowerCase();
+      String sectionName = StringCase.toLower(section.getTagName());
       TableSectionElement newSection = convertToSectionElement(table, sectionName, html);
       TableElement tableElement = table.getElement().cast();
       tableElement.replaceChild(newSection, section);

@@ -16,6 +16,7 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -217,7 +218,7 @@ public class NodeTest extends GWTTestCase {
     DivElement div = doc.createDivElement();
     Text txt0 = doc.createTextNode("foo");
 
-    assertEquals("div", div.getNodeName().toLowerCase());
+    assertEquals("div", StringCase.toLower(div.getNodeName()));
 
     assertEquals("foo", txt0.getNodeValue());
     txt0.setNodeValue("bar");

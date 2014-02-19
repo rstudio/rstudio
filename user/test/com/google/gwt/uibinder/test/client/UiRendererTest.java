@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.test.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Node;
@@ -216,7 +217,7 @@ public class UiRendererTest extends GWTTestCase {
 
     // Was the first span rendered as a "HTML-safe" text string?
     Node spanWithConstantTextNode = innerDiv.getChild(0);
-    assertEquals("span", spanWithConstantTextNode.getNodeName().toLowerCase());
+    assertEquals("span", StringCase.toLower(spanWithConstantTextNode.getNodeName()));
     assertEquals(Node.TEXT_NODE, spanWithConstantTextNode.getFirstChild().getNodeType());
     assertEquals("<b>This text won't be bold!</b>",
         spanWithConstantTextNode.getFirstChild().getNodeValue());
@@ -236,13 +237,13 @@ public class UiRendererTest extends GWTTestCase {
     // Fields not present in owning class produce no content
     Node spanNode = innerDiv.getChild(4);
     assertEquals(Node.ELEMENT_NODE, spanNode.getNodeType());
-    assertEquals("span", spanNode.getNodeName().toLowerCase());
+    assertEquals("span", StringCase.toLower(spanNode.getNodeName()));
     assertFalse(spanNode.hasChildNodes());
 
     // Field passed to render() and used twice was rendered correctly too
     Node spanNode2 = innerDiv.getChild(5);
     assertEquals(Node.ELEMENT_NODE, spanNode2.getNodeType());
-    assertEquals("span", spanNode2.getNodeName().toLowerCase());
+    assertEquals("span", StringCase.toLower(spanNode2.getNodeName()));
     assertTrue(spanNode2.hasChildNodes());
     assertSpanContainsRenderedValueText(RENDERED_VALUE_TWICE + RENDERED_VALUE_TWICE,
         spanNode2.getFirstChild());
@@ -271,7 +272,7 @@ public class UiRendererTest extends GWTTestCase {
   private void assertSpanContainsRenderedValue(Node root) {
     Node firstFieldNode = root.getChild(2);
     assertEquals(Node.ELEMENT_NODE, firstFieldNode.getNodeType());
-    assertEquals("span", firstFieldNode.getNodeName().toLowerCase());
+    assertEquals("span", StringCase.toLower(firstFieldNode.getNodeName()));
     assertTrue(firstFieldNode.hasChildNodes());
     Node renderedValue = firstFieldNode.getFirstChild();
     assertSpanContainsRenderedValueText(RENDERED_VALUE, renderedValue);

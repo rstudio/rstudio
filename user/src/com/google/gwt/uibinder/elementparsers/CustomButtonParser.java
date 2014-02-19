@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
@@ -84,7 +85,7 @@ public class CustomButtonParser implements ElementParser {
   }
 
   private String faceNameGetter(String faceName) {
-    return "get" + faceName.substring(0, 1).toUpperCase()
+    return "get" + StringCase.toUpper(faceName.substring(0, 1))
         + faceName.substring(1);
   }
 }

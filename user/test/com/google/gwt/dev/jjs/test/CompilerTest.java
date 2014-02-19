@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.jjs.test.compilertests.MethodNamedSameAsClass;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -1192,7 +1193,7 @@ public class CompilerTest extends GWTTestCase {
     assertFalse("Hello, AJAX".equals("me"));
     assertTrue("Hello, AJAX".equals("Hello, AJAX"));
     assertTrue("Hello, AJAX".equalsIgnoreCase("HELLO, ajax"));
-    assertEquals("hello, ajax", "Hello, AJAX".toLowerCase());
+    assertEquals("hello, ajax", StringCase.toLower("Hello, AJAX"));
 
     assertEquals("foobar", "foo" + barShouldInline());
     assertEquals("1bar", 1 + barShouldInline());

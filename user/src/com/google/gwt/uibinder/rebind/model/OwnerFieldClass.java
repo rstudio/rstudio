@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiConstructor;
@@ -253,7 +254,7 @@ public class OwnerFieldClass {
       addSetter(allSetters, beanPropertyName, method);
 
       // keep backwards compatibility (i.e. hTML instead of HTML for setHTML)
-      String legacyPropertyName = propertyName.substring(0, 1).toLowerCase()
+      String legacyPropertyName = StringCase.toLower(propertyName.substring(0, 1))
           + propertyName.substring(1);
       if (!legacyPropertyName.equals(beanPropertyName)) {
         addSetter(allSetters, legacyPropertyName, method);
@@ -304,7 +305,7 @@ public class OwnerFieldClass {
           if (tag.equals("")) {
             String name = method.getName();
             if (name.startsWith("add")) {
-              tag = name.substring(3).toLowerCase();
+              tag = StringCase.toLower(name.substring(3));
             } else {
               logger.die(method.getName()
                   + " must either specify a UiChild tagname or begin "

@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.test.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ParagraphElement;
@@ -90,15 +91,15 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testTableWithColumns() {
-    assertEquals("col", domUi.narrowColumn.getTagName().toLowerCase());
-    assertEquals("tr", domUi.tr.getTagName().toLowerCase());
-    assertEquals("th", domUi.th1.getTagName().toLowerCase());
-    assertEquals("th", domUi.th2.getTagName().toLowerCase());
+    assertEquals("col", StringCase.toLower(domUi.narrowColumn.getTagName()));
+    assertEquals("tr", StringCase.toLower(domUi.tr.getTagName()));
+    assertEquals("th", StringCase.toLower(domUi.th1.getTagName()));
+    assertEquals("th", StringCase.toLower(domUi.th2.getTagName()));
   }
 
   public void testTableWithExplicitTbody() {
-    assertEquals("tbody", domUi.tbody.getTagName().toLowerCase());
-    assertEquals("th", domUi.th4.getTagName().toLowerCase());
+    assertEquals("tbody", StringCase.toLower(domUi.tbody.getTagName()));
+    assertEquals("th", StringCase.toLower(domUi.th4.getTagName()));
   }
 
   public void testAutoboxingFieldRef() {
@@ -275,11 +276,11 @@ public class UiBinderTest extends GWTTestCase {
   public void testCustomButtonParser() {
     // .toLowerCase normalization to keep IE happy
     assertEquals("<b>click me</b>",
-        widgetUi.pushButton.getUpFace().getHTML().toLowerCase());
+        StringCase.toLower(widgetUi.pushButton.getUpFace().getHTML()));
     assertTrue(widgetUi.pushButton.getUpHoveringFace().getHTML().contains(
         ">Click ME!<"));
     assertEquals("<b>click me!</b>",
-        widgetUi.pushButton.getUpHoveringFace().getHTML().toLowerCase());
+        StringCase.toLower(widgetUi.pushButton.getUpHoveringFace().getHTML()));
     // Can't test the images at all :-P
   }
 
@@ -297,13 +298,13 @@ public class UiBinderTest extends GWTTestCase {
   public void suppressedForSafari3Fail_testDomTextNoMessageWithFunnyChars() {
     ParagraphElement p = widgetUi.funnyCharsParagraph;
     // WebKit does \n replace thing, so let's do it everywhere
-    String t = p.getInnerHTML().replace("\n", " ").toLowerCase();
+    String t = StringCase.toLower(p.getInnerHTML().replace("\n", " "));
     String expected = "Templates can be marked up for <b>localization</b>, which presents alls "
         + "kinds of exciting opportunities for bugs related to character escaping. "
         + "Consider these funny characters \\ \" \" ' ' &amp; &lt; &gt; &gt; { }, and "
         + "the various places they might make your life miserable, like this "
         + "untranslated paragraph.";
-    expected = expected.toLowerCase();
+    expected = StringCase.toLower(expected);
     assertEquals(expected, t);
   }
 
@@ -610,7 +611,7 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void suppressForIEfail_testBizarrelyElementedWidgets() {
-    assertInOrder(widgetUi.widgetCrazyTable.getInnerHTML().toLowerCase(),
+    assertInOrder(StringCase.toLower(widgetUi.widgetCrazyTable.getInnerHTML()),
         "<td>they have been known</td>", "<td>to write widgets</td>",
         "<td>that masquerade</td>", "<td>as table cells,</td>",
         "<td>just like these.</td>", "<td>burma shave</td>");
@@ -649,11 +650,11 @@ public class UiBinderTest extends GWTTestCase {
   
   public void testUiTextWithSafeHtml() {
     assertEquals("<b>this text should be bold!</b>",
-        widgetUi.htmlWithComputedSafeHtml.getHTML().toLowerCase());
+        StringCase.toLower(widgetUi.htmlWithComputedSafeHtml.getHTML()));
     assertEquals("&lt;b&gt;this text won't be bold!&lt;/b&gt;",
-        widgetUi.htmlWithComputedText.getHTML().toLowerCase().replaceAll(">", "&gt;"));
+        StringCase.toLower(widgetUi.htmlWithComputedText.getHTML()).replaceAll(">", "&gt;"));
     assertEquals("<b>this text won't be bold!</b>",
-        widgetUi.labelWithComputedText.getText().toLowerCase());
+        StringCase.toLower(widgetUi.labelWithComputedText.getText()));
   }
   
   /**
@@ -662,12 +663,12 @@ public class UiBinderTest extends GWTTestCase {
    * IE's habit of returning capitalized DOM elements.
    */
   private void assertInOrder(String body, String... expected) {
-    body = body.toLowerCase();
+    body = StringCase.toLower(body);
     int lastIndex = 0;
     String lastExpected = "";
 
     for (String next : expected) {
-      next = next.toLowerCase();
+      next = StringCase.toLower(next);
       int index = body.indexOf(next);
       assertTrue(body + " should contain " + next, index > -1);
       assertTrue("Expect " + next + " after " + lastExpected, index > lastIndex);

@@ -17,6 +17,7 @@ package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.io.UnsupportedEncodingException;
@@ -445,9 +446,9 @@ public class StringTest extends GWTTestCase {
    * TODO: needs rewriting to avoid compiler optimizations.
    */
   public void testLowerCase() {
-    assertEquals("abc", "AbC".toLowerCase());
-    assertEquals("abc", "abc".toLowerCase());
-    assertEquals("", "".toLowerCase());
+    assertEquals("abc", StringCase.toLower("AbC"));
+    assertEquals("abc", StringCase.toLower("abc"));
+    assertEquals("", StringCase.toLower(""));
   }
 
   public void testMatch() {
@@ -499,7 +500,7 @@ public class StringTest extends GWTTestCase {
     assertFalse(test.regionMatches(true, 1, "bCdx", 0, 4));
     assertFalse(test.regionMatches(true, 1, "bCdx", 1, 3));
     assertTrue(test.regionMatches(true, 0, "xaBcd", 1, 4));
-    test = test.toUpperCase();
+    test = StringCase.toUpper(test);
     assertTrue(test.regionMatches(true, 0, "XAbCd", 1, 4));
     assertTrue(test.regionMatches(true, 1, "BcD", 0, 3));
     assertTrue(test.regionMatches(true, 1, "bCdx", 0, 3));
@@ -683,9 +684,9 @@ public class StringTest extends GWTTestCase {
    * TODO: needs rewriting to avoid compiler optimizations.
    */
   public void testUpperCase() {
-    assertEquals("abc", "AbC".toLowerCase());
-    assertEquals("abc", "abc".toLowerCase());
-    assertEquals("", "".toLowerCase());
+    assertEquals("abc", StringCase.toLower("AbC"));
+    assertEquals("abc", StringCase.toLower("abc"));
+    assertEquals("", StringCase.toLower(""));
   }
 
   /*

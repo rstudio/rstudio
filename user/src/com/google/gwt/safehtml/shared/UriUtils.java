@@ -16,6 +16,7 @@
 package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.regexp.shared.RegExp;
 
@@ -78,7 +79,7 @@ public final class UriUtils {
             || DONT_NEED_ENCODING.indexOf(c) != -1) {
           sb.append((char) c);
         } else {
-          String hexByte = Integer.toHexString(c).toUpperCase();
+          String hexByte = StringCase.toUpper(Integer.toHexString(c));
           if (hexByte.length() == 1) {
             hexByte = "0" + hexByte;
           }
@@ -227,12 +228,12 @@ public final class UriUtils {
      * For this reason there are two checks for mailto: "mailto" and "MAILTO"
      * For details, see: http://www.i18nguy.com/unicode/turkish-i18n.html
      */
-    String schemeLc = scheme.toLowerCase();
+    String schemeLc = StringCase.toLower(scheme);
     return ("http".equals(schemeLc)
         || "https".equals(schemeLc)
         || "ftp".equals(schemeLc)
         || "mailto".equals(schemeLc)
-        || "MAILTO".equals(scheme.toUpperCase()));
+        || "MAILTO".equals(StringCase.toUpper(scheme)));
   }
 
   /**

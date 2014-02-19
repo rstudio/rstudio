@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -77,9 +78,9 @@ class ReservedNames {
     if (!JsProtectedNames.isLegalName(newIdent)) {
       return false;
     }
-    String lcIdent = newIdent.toLowerCase();
+    String lcIdent = newIdent.toLowerCase(Locale.ENGLISH);
     for (String suffix : blacklistedSuffixes) {
-      if (lcIdent.endsWith(suffix.toLowerCase())) {
+      if (lcIdent.endsWith(suffix.toLowerCase(Locale.ENGLISH))) {
         return false;
       }
     }

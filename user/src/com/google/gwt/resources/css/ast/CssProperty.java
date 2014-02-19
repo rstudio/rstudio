@@ -16,6 +16,7 @@
 package com.google.gwt.resources.css.ast;
 
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.shared.impl.StringCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -342,7 +343,7 @@ public class CssProperty extends CssNode implements CssSubstitution {
       StringBuilder b = new StringBuilder();
       for (char c : s.toCharArray()) {
         if (Character.isISOControl(c)) {
-          b.append('\\').append(Integer.toHexString(c).toUpperCase()).append(
+          b.append('\\').append(StringCase.toUpper(Integer.toHexString(c))).append(
               " ");
         } else {
           switch (c) {

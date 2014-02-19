@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
@@ -85,7 +86,7 @@ public class TreeTest extends GWTTestCase {
   public void testAddItemSafeHtml() {
     Tree t = createTree();
     TreeItem item = t.addItem(SafeHtmlUtils.fromSafeConstant(html));
-    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item.getHTML()));
   }
 
   /**
@@ -178,7 +179,7 @@ public class TreeTest extends GWTTestCase {
   public void testInsertItemSafeHtml() {
     Tree t = createTree();
     TreeItem item = t.insertItem(0, SafeHtmlUtils.fromSafeConstant(html));
-    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item.getHTML()));
   }
 
   public void testInsertTextItem() {

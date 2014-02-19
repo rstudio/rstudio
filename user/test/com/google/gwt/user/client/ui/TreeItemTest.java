@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
@@ -61,7 +62,7 @@ public class TreeItemTest extends GWTTestCase {
   public void testAddItemSafeHtml() {
     TreeItem item = new TreeItem(SafeHtmlUtils.fromSafeConstant("foo"));
     TreeItem child = item.addItem(SafeHtmlUtils.fromSafeConstant(HTML));
-    assertEquals(HTML, child.getHTML().toLowerCase());
+    assertEquals(HTML, StringCase.toLower(child.getHTML()));
   }
   
   /**
@@ -90,7 +91,7 @@ public class TreeItemTest extends GWTTestCase {
 
     // Insert at zero.
     TreeItem a = item.insertItem(0, SafeHtmlUtils.fromSafeConstant("a"));
-    assertEquals("a", a.getHTML().toLowerCase());
+    assertEquals("a", StringCase.toLower(a.getHTML()));
     assertEquals(2, item.getChildCount());
     assertEquals(a, item.getChild(0));
     assertEquals(b, item.getChild(1));
@@ -208,13 +209,13 @@ public class TreeItemTest extends GWTTestCase {
   public void testSafeHtmlConstructor() {
     TreeItem item = new TreeItem(SafeHtmlUtils.fromSafeConstant(HTML));
     
-    assertEquals(HTML, item.getHTML().toLowerCase());
+    assertEquals(HTML, StringCase.toLower(item.getHTML()));
   }
 
   public void testSetSafeHtml() {
     TreeItem item = new TreeItem(SafeHtmlUtils.fromSafeConstant("foo"));
     item.setHTML(SafeHtmlUtils.fromSafeConstant(HTML));
-    assertEquals(HTML, item.getHTML().toLowerCase());
+    assertEquals(HTML, StringCase.toLower(item.getHTML()));
   }
 
   /**

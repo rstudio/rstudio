@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -458,14 +459,14 @@ public class MenuBarTest extends WidgetTestBase {
     // ensure safehtml passes through when a command is set.
     MenuItem item1 =
       bar.addItem(SafeHtmlUtils.fromSafeConstant(html), BLANK_COMMAND);
-    assertEquals(html, item1.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item1.getHTML()));
     assertEquals(BLANK_COMMAND, item1.getCommand());
     assertEquals(bar, item1.getParentMenu());
 
     // ensure safehtml passes through when a submenu/popup is set.
     MenuBar foo = new MenuBar(true);
     MenuItem item2 = foo.addItem(SafeHtmlUtils.fromSafeConstant(html), bar);
-    assertEquals(html, item2.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item2.getHTML()));
     assertEquals(bar, item2.getSubMenu());
     assertEquals(foo, item2.getParentMenu());
   }
@@ -476,14 +477,14 @@ public class MenuBarTest extends WidgetTestBase {
     // ensure safehtml passes through when a command is set.
     MenuItem item1 =
       bar.addItem(SafeHtmlUtils.fromSafeConstant(html), BLANK_SCHEDULED_COMMAND);
-    assertEquals(html, item1.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item1.getHTML()));
     assertEquals(BLANK_SCHEDULED_COMMAND, item1.getScheduledCommand());
     assertEquals(bar, item1.getParentMenu());
 
     // ensure safehtml passes through when a submenu/popup is set.
     MenuBar foo = new MenuBar(true);
     MenuItem item2 = foo.addItem(SafeHtmlUtils.fromSafeConstant(html), bar);
-    assertEquals(html, item2.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item2.getHTML()));
     assertEquals(bar, item2.getSubMenu());
     assertEquals(foo, item2.getParentMenu());
   }

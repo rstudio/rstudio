@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
+import com.google.gwt.core.shared.impl.StringCase;
 
 /**
  * Super class for AbstractMethod and AbstractClass creators. The primary
@@ -82,7 +83,7 @@ public class AbstractSourceCreator {
       return "Integer";
     } else {
       String s = type.getSimpleSourceName();
-      return s.substring(0, 1).toUpperCase() + s.substring(1);
+      return StringCase.toUpper(s.substring(0, 1)) + s.substring(1);
     }
   }
 

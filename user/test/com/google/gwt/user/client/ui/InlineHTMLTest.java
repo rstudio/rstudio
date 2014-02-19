@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
@@ -36,7 +37,7 @@ public class InlineHTMLTest extends LabelTest {
     InlineHTML htmlElement = 
       new InlineHTML(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, htmlElement.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(htmlElement.getHTML()));
   }
 
   // test that the SafeHtml constructor creates the direction HTML.
@@ -46,8 +47,8 @@ public class InlineHTMLTest extends LabelTest {
     InlineHTML htmlElementRTL = 
       new InlineHTML(SafeHtmlUtils.fromSafeConstant(html), Direction.RTL);
     
-    assertEquals(html, htmlElementRTL.getHTML().toLowerCase());
-    assertEquals(html, htmlElementLTR.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(htmlElementRTL.getHTML()));
+    assertEquals(html, StringCase.toLower(htmlElementLTR.getHTML()));
     assertEquals(Direction.LTR, htmlElementLTR.getTextDirection());
     assertEquals(Direction.RTL, htmlElementRTL.getTextDirection());
   }
@@ -56,6 +57,6 @@ public class InlineHTMLTest extends LabelTest {
     InlineHTML htmlElement = new InlineHTML("<b>foo</b>");
     htmlElement.setHTML(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, htmlElement.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(htmlElement.getHTML()));
   }
 }

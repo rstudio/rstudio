@@ -15,6 +15,8 @@
  */
 package com.google.gwt.view.client;
 
+import com.google.gwt.core.shared.impl.StringCase;
+
 /**
  * Tests for {@link SingleSelectionModel}.
  */
@@ -132,7 +134,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
       @Override
       public Object getKey(String item) {
-        return item.toUpperCase();
+        return StringCase.toUpper(item);
       }
     };
     SingleSelectionModel<String> model = createSelectionModel(keyProvider);

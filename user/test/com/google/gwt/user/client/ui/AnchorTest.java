@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -122,12 +123,12 @@ public class AnchorTest extends GWTTestCase {
     String target = "_blank";
     Anchor anchor1 = new Anchor(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html.toLowerCase(), anchor1.getHTML().toLowerCase());
+    assertEquals(StringCase.toLower(html), StringCase.toLower(anchor1.getHTML()));
     
     Anchor anchor2 = new Anchor(
         SafeHtmlUtils.fromSafeConstant(html), href, target);
     
-    assertEquals(html, anchor2.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(anchor2.getHTML()));
     assertEquals(href, anchor2.getHref());
     assertEquals(target, anchor2.getTarget());
   }
@@ -136,7 +137,7 @@ public class AnchorTest extends GWTTestCase {
     Anchor anchor = new Anchor("hello");
     anchor.setHTML(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, anchor.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(anchor.getHTML()));
   }
 
   public void testScriptAnchor() {

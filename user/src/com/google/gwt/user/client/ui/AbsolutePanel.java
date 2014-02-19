@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 
@@ -275,7 +276,7 @@ public class AbsolutePanel extends ComplexPanel implements
      * the offsetParent, for elements whose parent is the document BODY, is the
      * HTML element, not the BODY element.
      */
-    if ("body".equals(getElement().getNodeName().toLowerCase())) {
+    if ("body".equals(StringCase.toLower(getElement().getNodeName()))) {
       return;
     }
 

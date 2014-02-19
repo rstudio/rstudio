@@ -17,6 +17,7 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Event;
@@ -70,7 +71,7 @@ abstract class CellBasedWidgetImpl {
    * @return true if the element is focusable, false if not
    */
   public boolean isFocusable(Element elem) {
-    return focusableTypes.contains(elem.getTagName().toLowerCase())
+    return focusableTypes.contains(StringCase.toLower(elem.getTagName()))
         || elem.getTabIndex() >= 0;
   }
 

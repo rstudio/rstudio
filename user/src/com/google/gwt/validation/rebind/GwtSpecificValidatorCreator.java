@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Functions;
@@ -196,7 +197,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     if (propertyName.length() == 0) {
       return "";
     }
-    String cap = propertyName.substring(0, 1).toUpperCase();
+    String cap = StringCase.toUpper(propertyName.substring(0, 1));
     if (propertyName.length() > 1) {
       cap += propertyName.substring(1);
     }

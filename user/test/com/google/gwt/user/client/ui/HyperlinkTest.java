@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -48,13 +49,13 @@ public class HyperlinkTest extends GWTTestCase {
 
   public void testSafeHtmlConstructor() {
     Hyperlink link = new Hyperlink(SafeHtmlUtils.fromSafeConstant(TEST_HTML), TEST_HISTORY_TOKEN);
-    assertEquals(TEST_HTML, link.getHTML().toLowerCase());
+    assertEquals(TEST_HTML, StringCase.toLower(link.getHTML()));
   }
 
   public void testSetSafeHtml() {
     Hyperlink link = new Hyperlink("foobar", TEST_HISTORY_TOKEN);
     link.setHTML(SafeHtmlUtils.fromSafeConstant(TEST_HTML));
-    assertEquals(TEST_HTML, link.getHTML().toLowerCase());
+    assertEquals(TEST_HTML, StringCase.toLower(link.getHTML()));
   }
 
   public void testLinkToken() {

@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
@@ -41,7 +42,7 @@ public class MenuItemTest extends GWTTestCase {
     };
     MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), command);
 
-    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item.getHTML()));
     assertEquals(command, item.getCommand());
   }
 
@@ -53,7 +54,7 @@ public class MenuItemTest extends GWTTestCase {
     };
     MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), command);
 
-    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item.getHTML()));
     assertEquals(command, item.getScheduledCommand());
   }
 
@@ -61,7 +62,7 @@ public class MenuItemTest extends GWTTestCase {
     MenuBar subMenu = new MenuBar();
     MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), subMenu);
 
-    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item.getHTML()));
     assertEquals(subMenu, item.getSubMenu());
   }
 
@@ -107,7 +108,7 @@ public class MenuItemTest extends GWTTestCase {
     MenuItem item = new MenuItem("foo", command);
     item.setHTML(SafeHtmlUtils.fromSafeConstant(html));
 
-    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item.getHTML()));
     assertEquals(command, item.getCommand());
   }
 
@@ -120,7 +121,7 @@ public class MenuItemTest extends GWTTestCase {
     MenuItem item = new MenuItem("foo", command);
     item.setHTML(SafeHtmlUtils.fromSafeConstant(html));
 
-    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(item.getHTML()));
     assertEquals(command, item.getScheduledCommand());
   }
 

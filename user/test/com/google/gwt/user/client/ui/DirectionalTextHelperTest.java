@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.BidiUtils;
@@ -187,7 +188,7 @@ public class DirectionalTextHelperTest extends GWTTestCase {
       // assertEquals(id + "retreived html is incorrect", iwContent,
       //     directionalTextHelper.getTextOrHtml(true).toLowerCase());
       assertEquals(id + "retreived text is incorrect", IW_TEXT,
-          directionalTextHelper.getTextOrHtml(false).toLowerCase());
+          StringCase.toLower(directionalTextHelper.getTextOrHtml(false)));
     }
   }
 }

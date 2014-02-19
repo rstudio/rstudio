@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -1429,7 +1430,7 @@ public class ModuleDefSchema extends Schema {
 
   @SuppressWarnings("unused")
   protected Schema __module_begin(NullableName renameTo, String type) {
-    moduleDef.enterModule(ModuleType.valueOf(type.toUpperCase()), moduleName);
+    moduleDef.enterModule(ModuleType.valueOf(type.toUpperCase(Locale.ENGLISH)), moduleName);
     return bodySchema;
   }
 

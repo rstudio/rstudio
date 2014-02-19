@@ -17,6 +17,7 @@ package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Display;
@@ -174,7 +175,7 @@ class HtmlStylesBuilder implements StylesBuilder {
           hyphenated += word;
         } else {
           // Hyphenate the first letter.
-          hyphenated += "-" + matches.getGroup(1).toLowerCase();
+          hyphenated += "-" + StringCase.toLower(matches.getGroup(1));
           if (matches.getGroupCount() > 1) {
             hyphenated += matches.getGroup(2);
           }

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.core.shared.impl.StringCase;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -428,8 +430,7 @@ public class RPCServletUtils {
        * properly parsed character encoding string if we decide to make this
        * change.
        */
-      if (characterEncoding.toLowerCase().indexOf(expectedCharSet.toLowerCase())
-          != -1) {
+      if (StringCase.toLower(characterEncoding).contains(StringCase.toLower(expectedCharSet))) {
         encodingOkay = true;
       }
     }
@@ -462,12 +463,12 @@ public class RPCServletUtils {
     boolean contentTypeIsOkay = false;
 
     if (contentType != null) {
-      contentType = contentType.toLowerCase();
+      contentType = StringCase.toLower(contentType);
       /*
        * NOTE:We use startsWith because some servlet engines, i.e. Tomcat, do
        * not remove the charset component but others do.
        */
-      if (contentType.startsWith(expectedContentType.toLowerCase())) {
+      if (contentType.startsWith(StringCase.toLower(expectedContentType))) {
         contentTypeIsOkay = true;
       }
     }

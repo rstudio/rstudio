@@ -15,6 +15,8 @@
  */
 package com.google.gwt.emultest.java.util;
 
+import com.google.gwt.core.shared.impl.StringCase;
+
 import org.apache.commons.collections.TestMap;
 
 import java.util.ArrayList;
@@ -557,7 +559,7 @@ public class HashMapTest extends TestMap {
     assertTrue(keySet.size() == SIZE_ONE);
     assertTrue(keySet.contains(KEY_TEST_KEY_SET));
     assertFalse(keySet.contains(VALUE_TEST_KEY_SET));
-    assertFalse(keySet.contains(KEY_TEST_KEY_SET.toUpperCase()));
+    assertFalse(keySet.contains(StringCase.toUpper(KEY_TEST_KEY_SET)));
   }
 
   /*
@@ -619,18 +621,18 @@ public class HashMapTest extends TestMap {
     assertEquals(srcMap.size(), dstMap.size());
     assertTrue(dstMap.containsKey(KEY_1));
     assertTrue(dstMap.containsValue(VALUE_1));
-    assertFalse(dstMap.containsKey(KEY_1.toUpperCase()));
-    assertFalse(dstMap.containsValue(VALUE_1.toUpperCase()));
+    assertFalse(dstMap.containsKey(StringCase.toUpper(KEY_1)));
+    assertFalse(dstMap.containsValue(StringCase.toUpper(VALUE_1)));
 
     assertTrue(dstMap.containsKey(KEY_2));
     assertTrue(dstMap.containsValue(VALUE_2));
-    assertFalse(dstMap.containsKey(KEY_2.toUpperCase()));
-    assertFalse(dstMap.containsValue(VALUE_2.toUpperCase()));
+    assertFalse(dstMap.containsKey(StringCase.toUpper(KEY_2)));
+    assertFalse(dstMap.containsValue(StringCase.toUpper(VALUE_2)));
 
     assertTrue(dstMap.containsKey(KEY_3));
     assertTrue(dstMap.containsValue(VALUE_3));
-    assertFalse(dstMap.containsKey(KEY_3.toUpperCase()));
-    assertFalse(dstMap.containsValue(VALUE_3.toUpperCase()));
+    assertFalse(dstMap.containsKey(StringCase.toUpper(KEY_3)));
+    assertFalse(dstMap.containsValue(StringCase.toUpper(VALUE_3)));
 
     // Check that an empty map does not blow away the contents of the
     // destination map

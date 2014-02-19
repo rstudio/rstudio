@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -500,7 +501,7 @@ public class UiBinderParser {
 
         if (writer.isBinderElement(elem)) {
           try {
-            Resource.valueOf(elem.getLocalName().toUpperCase()).create(
+            Resource.valueOf(StringCase.toUpper(elem.getLocalName())).create(
                 UiBinderParser.this, elem);
           } catch (IllegalArgumentException e) {
             writer.die(elem,

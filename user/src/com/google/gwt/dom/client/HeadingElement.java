@@ -16,6 +16,7 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.shared.impl.StringCase;
 
 /**
  * For the H1 to H6 elements.
@@ -86,7 +87,7 @@ public class HeadingElement extends Element {
       return false;
     }
     
-    String tag = elem.getTagName().toLowerCase();
+    String tag = StringCase.toLower(elem.getTagName());
     
     if (tag.length() != 2) {
       return false;

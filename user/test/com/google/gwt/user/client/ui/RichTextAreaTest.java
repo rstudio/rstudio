@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -307,7 +308,7 @@ public class RichTextAreaTest extends GWTTestCase {
       @Override
       public void onInitialize(InitializeEvent event) {
         richTextArea.setHTML("<b>foo</b>");
-        assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
+        assertEquals("<b>foo</b>", StringCase.toLower(richTextArea.getHTML()));
         finishTest();
       }
     });
@@ -328,7 +329,7 @@ public class RichTextAreaTest extends GWTTestCase {
         new Timer() {
           @Override
           public void run() {
-            assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
+            assertEquals("<b>foo</b>", StringCase.toLower(richTextArea.getHTML()));
             finishTest();
           }
         }.schedule(100);
@@ -336,7 +337,7 @@ public class RichTextAreaTest extends GWTTestCase {
     });
     richTextArea.setHTML("<b>foo</b>");
     RootPanel.get().add(richTextArea);
-    assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
+    assertEquals("<b>foo</b>", StringCase.toLower(richTextArea.getHTML()));
   }
 
   /**
@@ -351,7 +352,7 @@ public class RichTextAreaTest extends GWTTestCase {
       @Override
       public void onInitialize(InitializeEvent event) {
         richTextArea.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-        assertEquals(html, richTextArea.getHTML().toLowerCase());
+        assertEquals(html, StringCase.toLower(richTextArea.getHTML()));
         finishTest();
       }
     });
@@ -373,7 +374,7 @@ public class RichTextAreaTest extends GWTTestCase {
         new Timer() {
           @Override
           public void run() {
-            assertEquals(html, richTextArea.getHTML().toLowerCase());
+            assertEquals(html, StringCase.toLower(richTextArea.getHTML()));
             finishTest();
           }
         }.schedule(100);
@@ -381,7 +382,7 @@ public class RichTextAreaTest extends GWTTestCase {
     });
     richTextArea.setHTML(SafeHtmlUtils.fromSafeConstant(html));
     RootPanel.get().add(richTextArea);
-    assertEquals(html, richTextArea.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(richTextArea.getHTML()));
   }
 
   /**

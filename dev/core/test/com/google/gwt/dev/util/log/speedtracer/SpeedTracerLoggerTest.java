@@ -30,6 +30,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Locale;
 
 /**
  * Tests the SpeedTracerLogger class.
@@ -247,7 +248,7 @@ public class SpeedTracerLoggerTest extends TestCase {
   private BufferedReader extractJsonFromWriter(Writer writer)
       throws IOException {
     String jsonString = writer.toString();
-    assertTrue(jsonString.substring(0,5).toLowerCase().startsWith("<html"));
+    assertTrue(jsonString.substring(0,5).toLowerCase(Locale.ENGLISH).startsWith("<html"));
     BufferedReader jsonReader = new BufferedReader(new StringReader(jsonString));
     // Skip ahead to start of JSON
     while (true) {

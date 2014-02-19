@@ -17,6 +17,7 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
@@ -294,13 +295,13 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
     table.setColumnWidth(column1, "100px");
     Element col0 = table.colgroup.getFirstChildElement();
     Element col1 = col0.getNextSiblingElement();
-    assertEquals("100px", col1.getStyle().getWidth().toLowerCase());
+    assertEquals("100px", StringCase.toLower(col1.getStyle().getWidth()));
 
     // Remove column 1.
     table.removeColumn(column1);
     table.getPresenter().flush();
     assertEquals("0px", col1.getStyle().getWidth());
-    assertEquals("none", col1.getStyle().getDisplay().toLowerCase());
+    assertEquals("none", StringCase.toLower(col1.getStyle().getDisplay()));
   }
 
   public void testEmptyTableWidgetAttachDetach() {
@@ -345,7 +346,7 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
     Element col0 = table.colgroup.getFirstChildElement();
     Element col1 = col0.getNextSiblingElement();
     assertEquals("", col0.getStyle().getWidth());
-    assertEquals("100px", col1.getStyle().getWidth().toLowerCase());
+    assertEquals("100px", StringCase.toLower(col1.getStyle().getWidth()));
 
     // Clear the width.
     table.clearColumnWidth(column1);
@@ -354,7 +355,7 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
 
     // Set the width again.
     table.setColumnWidth(column0, 30.1, Unit.PCT);
-    assertEquals("30.1%", col0.getStyle().getWidth().toLowerCase());
+    assertEquals("30.1%", StringCase.toLower(col0.getStyle().getWidth()));
     assertEquals("", col1.getStyle().getWidth());
   }
 

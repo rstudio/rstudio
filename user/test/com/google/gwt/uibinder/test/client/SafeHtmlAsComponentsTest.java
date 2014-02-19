@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.test.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -53,8 +54,8 @@ public class SafeHtmlAsComponentsTest extends GWTTestCase {
   public void testSafeHtml() {
     Ui domUi = new Ui();
     assertNotNull(domUi.safeObject);
-    assertEquals(domUi.safeObject.asString().toLowerCase(),
-                 domUi.div.getInnerHTML().toLowerCase());
-    assertEquals("Hello <b>Bob</b>".toLowerCase(), domUi.div.getInnerHTML().toLowerCase());
+    assertEquals(StringCase.toLower(domUi.safeObject.asString()),
+                 StringCase.toLower(domUi.div.getInnerHTML()));
+    assertEquals(StringCase.toLower("Hello <b>Bob</b>"), StringCase.toLower(domUi.div.getInnerHTML()));
   }
 }

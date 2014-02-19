@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.tools.util;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 
 import java.io.File;
@@ -77,7 +78,7 @@ public class CreatorUtilities {
             + "Must be present before .launch file can be created");
       }
 
-      String lcPath = path.toLowerCase();
+      String lcPath = StringCase.toLower(path);
 
       if (f.isDirectory()) {
         // For a directory, we assume it contains compiled class files

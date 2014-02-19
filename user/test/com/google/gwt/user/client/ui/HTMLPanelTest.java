@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -344,17 +345,17 @@ public class HTMLPanelTest extends GWTTestCase {
     hp.addAndReplaceElement(label, "labelHere");
 
     Element parent = label.getElement().getParentElement();
-    assertEquals("td", parent.getTagName().toLowerCase());
+    assertEquals("td", StringCase.toLower(parent.getTagName()));
 
     parent = parent.getParentElement();
-    assertEquals("tr", parent.getTagName().toLowerCase());
+    assertEquals("tr", StringCase.toLower(parent.getTagName()));
 
     while (parent != null && parent != hp.getElement()) {
       parent = parent.getParentElement();
     }
 
     assertNotNull(parent);
-    assertEquals("table", parent.getTagName().toLowerCase());
+    assertEquals("table", StringCase.toLower(parent.getTagName()));
   }
 
   /**
@@ -364,7 +365,7 @@ public class HTMLPanelTest extends GWTTestCase {
     HTMLPanel hp = new HTMLPanel("h3", "");
 
     Element element = hp.getElement();
-    assertEquals("h3", element.getTagName().toLowerCase());
+    assertEquals("h3", StringCase.toLower(element.getTagName()));
     assertEquals("", element.getInnerText());
   }
 
@@ -419,10 +420,10 @@ public class HTMLPanelTest extends GWTTestCase {
     hp.addAndReplaceElement(label, "labelHere");
 
     Element parent = label.getElement().getParentElement();
-    assertEquals("td", parent.getTagName().toLowerCase());
+    assertEquals("td", StringCase.toLower(parent.getTagName()));
 
     parent = parent.getParentElement();
-    assertEquals("tr", parent.getTagName().toLowerCase());
+    assertEquals("tr", StringCase.toLower(parent.getTagName()));
 
     // Look for the table in the main panel div
     Element firstChild = null;
@@ -432,8 +433,8 @@ public class HTMLPanelTest extends GWTTestCase {
     }
 
     assertNotNull(parent);
-    assertEquals("div", parent.getTagName().toLowerCase());
-    assertEquals("table", firstChild.getTagName().toLowerCase());
+    assertEquals("div", StringCase.toLower(parent.getTagName()));
+    assertEquals("table", StringCase.toLower(firstChild.getTagName()));
   }
 
   /**

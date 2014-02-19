@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -47,7 +48,7 @@ public class ResetButtonTest extends GWTTestCase {
   public void testSetSafeHtmlConstructor() {
     ResetButton button = new ResetButton(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, button.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(button.getHTML()));
   }
 
   public void testSafeHtmlWithHandler() {
@@ -55,6 +56,6 @@ public class ResetButtonTest extends GWTTestCase {
     ResetButton button = 
       new ResetButton(SafeHtmlUtils.fromSafeConstant(html), handler);
     
-    assertEquals(html, button.getHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(button.getHTML()));
   }
 }

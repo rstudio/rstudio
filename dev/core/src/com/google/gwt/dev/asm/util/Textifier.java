@@ -32,6 +32,7 @@ package com.google.gwt.dev.asm.util;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import com.google.gwt.dev.asm.Attribute;
@@ -217,7 +218,7 @@ public class Textifier extends Printer {
             buf.append("// DEPRECATED\n");
         }
         buf.append("// access flags 0x")
-                .append(Integer.toHexString(access).toUpperCase()).append('\n');
+                .append(Integer.toHexString(access).toUpperCase(Locale.ENGLISH)).append('\n');
 
         appendDescriptor(CLASS_SIGNATURE, signature);
         if (signature != null) {
@@ -305,7 +306,7 @@ public class Textifier extends Printer {
         buf.setLength(0);
         buf.append(tab).append("// access flags 0x");
         buf.append(
-                Integer.toHexString(access & ~Opcodes.ACC_SUPER).toUpperCase())
+                Integer.toHexString(access & ~Opcodes.ACC_SUPER).toUpperCase(Locale.ENGLISH))
                 .append('\n');
         buf.append(tab);
         appendAccess(access);
@@ -328,7 +329,7 @@ public class Textifier extends Printer {
             buf.append(tab).append("// DEPRECATED\n");
         }
         buf.append(tab).append("// access flags 0x")
-                .append(Integer.toHexString(access).toUpperCase()).append('\n');
+                .append(Integer.toHexString(access).toUpperCase(Locale.ENGLISH)).append('\n');
         if (signature != null) {
             buf.append(tab);
             appendDescriptor(FIELD_SIGNATURE, signature);
@@ -371,7 +372,7 @@ public class Textifier extends Printer {
             buf.append(tab).append("// DEPRECATED\n");
         }
         buf.append(tab).append("// access flags 0x")
-                .append(Integer.toHexString(access).toUpperCase()).append('\n');
+                .append(Integer.toHexString(access).toUpperCase(Locale.ENGLISH)).append('\n');
 
         if (signature != null) {
             buf.append(tab);

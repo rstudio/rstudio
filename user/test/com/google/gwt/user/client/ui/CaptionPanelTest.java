@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -165,8 +166,8 @@ public class CaptionPanelTest extends GWTTestCase {
   }
 
   private void assertEqualsIgnoreCase(String expected, String actual) {
-    String expectedLc = expected != null ? expected.toLowerCase() : null;
-    String actualLc = actual != null ? actual.toLowerCase() : null;
+    String expectedLc = expected != null ? StringCase.toLower(expected) : null;
+    String actualLc = actual != null ? StringCase.toLower(actual) : null;
     assertEquals(expectedLc, actualLc);
   }
 
@@ -274,7 +275,7 @@ public class CaptionPanelTest extends GWTTestCase {
       assertSame(widget, panel.getContentWidget());
       Element panelFirstChild = panel.getElement().getFirstChildElement();
       // The legend element ought to be removed from the DOM at this point.
-      assertNotEquals("legend", panelFirstChild.getTagName().toLowerCase());
+      assertNotEquals("legend", StringCase.toLower(panelFirstChild.getTagName()));
       // (Perhaps redundantly) check that the one child is the content widget.
       assertSame(panelFirstChild, widget.getElement());
       assertNull(panelFirstChild.getNextSibling());
@@ -327,14 +328,14 @@ public class CaptionPanelTest extends GWTTestCase {
   public void testSafeHtmlConstructor() {
     CaptionPanel panel = new CaptionPanel(SafeHtmlUtils.fromSafeConstant(html));
 
-    assertEquals(html, panel.getCaptionHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(panel.getCaptionHTML()));
   }
 
   public void testSetCaptionSafeHtml() {
     CaptionPanel panel = new CaptionPanel("hiworld");
     panel.setCaptionHTML(SafeHtmlUtils.fromSafeConstant(html));
 
-    assertEquals(html, panel.getCaptionHTML().toLowerCase());
+    assertEquals(html, StringCase.toLower(panel.getCaptionHTML()));
   }
 
   private CaptionPanel createEmptyCaptionPanel() {

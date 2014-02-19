@@ -730,7 +730,7 @@ public final class SpeedTracerLogger {
         Format format = Format.HTML;
         if (defaultFormatString != null) {
           for (Format value : Format.values()) {
-            if (value.name().toLowerCase().equals(defaultFormatString.toLowerCase())) {
+            if (value.name().equalsIgnoreCase(defaultFormatString)) {
               format = value;
               break;
             }

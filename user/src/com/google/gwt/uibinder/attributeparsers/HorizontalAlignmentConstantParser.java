@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -58,7 +59,7 @@ class HorizontalAlignmentConstantParser extends StrictAttributeParser {
 
   @Override
   public String parse(XMLElement source, String value) throws UnableToCompleteException {
-    String translated = values.get(value.toUpperCase());
+    String translated = values.get(StringCase.toUpper(value));
     if (translated != null) {
       return translated;
     }

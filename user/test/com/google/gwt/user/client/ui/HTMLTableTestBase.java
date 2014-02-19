@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -309,7 +310,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
   public void testSafeHtml() {
     HTMLTable table = getTable(1, 1);
     table.setHTML(0, 0, SafeHtmlUtils.fromSafeConstant(html));
-    assertEquals(html, table.getHTML(0, 0).toLowerCase());
+    assertEquals(html, StringCase.toLower(table.getHTML(0, 0)));
   }
 
   public void testStyles() {

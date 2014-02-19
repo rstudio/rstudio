@@ -21,6 +21,7 @@ import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
 import static com.google.gwt.dom.client.BrowserEvents.KEYUP;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
@@ -331,7 +332,7 @@ public class EditTextCell extends
       EventTarget eventTarget = event.getEventTarget();
       if (Element.is(eventTarget)) {
         Element target = Element.as(eventTarget);
-        if ("input".equals(target.getTagName().toLowerCase())) {
+        if ("input".equals(StringCase.toLower(target.getTagName()))) {
           commit(context, parent, viewData, valueUpdater);
         }
       }

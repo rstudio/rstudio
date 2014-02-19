@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
@@ -217,8 +218,8 @@ public class RadioButtonTest extends GWTTestCase {
     Element parent = radio.getElement();
     Element firstChild = parent.getFirstChildElement().cast();
     Element secondChild = firstChild.getNextSiblingElement().cast();
-    assertEquals("input", firstChild.getTagName().toLowerCase());
-    assertEquals("label", secondChild.getTagName().toLowerCase());
+    assertEquals("input", StringCase.toLower(firstChild.getTagName()));
+    assertEquals("label", StringCase.toLower(secondChild.getTagName()));
   }
 
   public void testSafeHtml() {
@@ -226,11 +227,11 @@ public class RadioButtonTest extends GWTTestCase {
       new RadioButton("radio", SafeHtmlUtils.fromSafeConstant(html1));
     
     assertEquals("radio", radio.getName());
-    assertEquals(html1, radio.getHTML().toLowerCase());
+    assertEquals(html1, StringCase.toLower(radio.getHTML()));
     
     radio.setHTML(SafeHtmlUtils.fromSafeConstant(html2));
     
-    assertEquals(html2, radio.getHTML().toLowerCase());
+    assertEquals(html2, StringCase.toLower(radio.getHTML()));
   }
 
   private void doClick(Element elm) {
