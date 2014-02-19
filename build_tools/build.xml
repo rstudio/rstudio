@@ -24,6 +24,12 @@
     </antcall>
   </target>
 
+  <target name="compile.tests" description="Compile GWT tests">
+    <antcall target="-do">
+      <param name="target" value="compile.tests" />
+    </antcall>
+  </target>
+
   <target name="test" depends="build" description="Test GWT">
     <antcall target="-do">
       <param name="target" value="test" />

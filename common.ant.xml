@@ -406,6 +406,7 @@
   <target name="verify" depends="checkstyle, test"
           description="Runs tests and checkstyle static analysis"/>
   <target name="checkstyle"/>
+  <target name="compile.tests"/>
   <target name="test" depends="build"/>
   <target name="build"/>
 

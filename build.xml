@@ -145,6 +145,16 @@
     <call-subproject subproject="samples" subtarget="checkstyle"/>
   </target>
 
+  <target name="compile.tests" description="[action] Compile all the GWT tests, without running them">
+    <call-subproject subproject="buildtools" subtarget="compile.tests"/>
+    <call-subproject subproject="dev" subtarget="compile.tests"/>
+    <call-subproject subproject="codeserver" subtarget="compile.tests"/>
+    <call-subproject subproject="user" subtarget="compile.tests"/>
+    <call-subproject subproject="requestfactory" subtarget="compile.tests"/>
+    <call-subproject subproject="servlet" subtarget="compile.tests"/>
+    <call-subproject subproject="tools" subtarget="compile.tests"/>
+  </target>
+
   <target name="test" depends="dist-dev,apicheck,checkstyle"
           description="[action] Runs all the GWT tests, including checkstyle and apicheck">
     <call-subproject subproject="buildtools" subtarget="test"/>
@@ -155,6 +165,7 @@
     <call-subproject subproject="servlet" subtarget="test"/>
     <call-subproject subproject="tools" subtarget="test"/>
   </target>
+
 
   <target name="testrf" depends="dist-dev"
           description="[action] Runs the GWT RequestFactory tests">
