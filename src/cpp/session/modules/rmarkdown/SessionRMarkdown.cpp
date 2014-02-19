@@ -252,6 +252,14 @@ private:
          resultJson["rpubs_published"] = false;
       }
 
+
+      // allow for format specific additions to the result json
+      rmarkdown::presentation::ammendResults(
+                                  outputFormat_["format_name"].get_str(),
+                                  targetFile_,
+                                  sourceLine_,
+                                  &resultJson);
+
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);
    }
@@ -296,12 +304,6 @@ private:
          }
 
          resultJson["format_options"] = formatOptions;
-
-         // allow for format specific additions to the result json
-         rmarkdown::presentation::ammendResults(formatName,
-                                     targetFile_,
-                                     sourceLine_,
-                                     pResult);
       }
    }
 
