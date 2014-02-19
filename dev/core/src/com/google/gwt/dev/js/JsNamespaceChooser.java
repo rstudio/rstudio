@@ -188,10 +188,16 @@ public class JsNamespaceChooser {
         continue;
       }
 
+      // Convert the function statement into an assignment taking a named function expression:
+      // var a.b = function b() { ... }
+      // The function is named for better stack traces in some browsers.
+      // Note: for reserving names, currently we pretend that 'b' is in global scope to avoid
+      // any name conflicts. It is actually two different names in two scopes; the 'b' in 'a.b'
+      // is in the 'a' namespace scope and the function name is in a separate scope containing
+      // just the function. We don't model either scope in the GWT compiler yet.
       JsNameRef newName = name.makeRef(func.getSourceInfo());
       JsBinaryOperation assign =
           new JsBinaryOperation(func.getSourceInfo(), JsBinaryOperator.ASG, newName, func);
-      func.setName(null);
       statements.set(i, new JsExprStmt(parent.getSourceInfo(), assign));
       changed = true;
     }

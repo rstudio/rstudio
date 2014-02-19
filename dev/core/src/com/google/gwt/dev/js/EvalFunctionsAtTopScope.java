@@ -119,7 +119,7 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
      * check if this function is a vtable declaration and don't move functions
      * used in other expressions or are in vtable assignments.
      */
-    if (x.getName() != null && !dontMove.contains(x)
+    if (x.getName() != null && x.getName().getNamespace() == null && !dontMove.contains(x)
         && !isVtableDeclaration(currentStatement)) {
       /*
        * Reinsert this function into the statement immediately before the

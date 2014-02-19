@@ -68,7 +68,7 @@ public class JsNamespaceChooserTest extends TestCase {
   public void testMoveGlobalFunction() throws Exception {
     program = parseJs("function f() {} f();");
     mapJavaMethod("f");
-    checkResult("var ce={};ce.f=function(){};ce.f();");
+    checkResult("var ce={};ce.f=function f(){};ce.f();");
   }
 
   public void testSkipUnmappedFunction() throws Exception {
