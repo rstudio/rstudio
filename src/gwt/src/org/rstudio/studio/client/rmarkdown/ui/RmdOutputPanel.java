@@ -78,7 +78,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // RPubs
       boolean showPublish = enablePublish && 
                             params.getResult().isHtml() &&
-                            params.getResult().isSelfContained();
+                            params.getResult().getFormat().isSelfContained();
       publishButton_.setText(params.getResult().getRpubsPublished() ? 
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);

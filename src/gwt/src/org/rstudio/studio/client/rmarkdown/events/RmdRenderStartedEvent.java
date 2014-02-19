@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -29,6 +31,10 @@ public class RmdRenderStartedEvent extends GwtEvent<RmdRenderStartedEvent.Handle
       
       public final native String getTargetFile() /*-{
          return this.target_file;
+      }-*/;
+      
+      public final native RmdOutputFormat getFormat() /*-{
+         return this.output_format;
       }-*/;
    }
    
@@ -45,6 +51,11 @@ public class RmdRenderStartedEvent extends GwtEvent<RmdRenderStartedEvent.Handle
    public String getTargetFile()
    {
       return data_.getTargetFile();
+   }
+   
+   public RmdOutputFormat getFormat() 
+   {
+      return data_.getFormat();
    }
     
    @Override

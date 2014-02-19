@@ -94,6 +94,8 @@ private:
    void start(const std::string& encoding)
    {
       json::Object dataJson;
+      getOutputFormat(targetFile_.absolutePath(), encoding, &outputFormat_);
+      dataJson["output_format"] = outputFormat_;
       dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
       ClientEvent event(client_events::kRmdRenderStarted, dataJson);
       module_context::enqueClientEvent(event);
@@ -135,7 +137,7 @@ private:
 
       // buffer the output so we can inspect it for the completed marker
       boost::shared_ptr<std::string> pAllOutput = boost::make_shared<std::string>();
-      
+
       core::system::ProcessCallbacks cb;
       using namespace module_context;
       cb.onContinue = boost::bind(&RenderRmd::onRenderContinue,
@@ -233,6 +235,7 @@ private:
       resultJson["output_file"] =
             module_context::createAliasedPath(outputFile_);
       resultJson["output_url"] = kRmdOutput "/";
+      resultJson["output_format"] = outputFormat_;
 
       // default to no slide info
       resultJson["preview_slide"] = -1;
@@ -249,18 +252,26 @@ private:
          resultJson["rpubs_published"] = false;
       }
 
+      ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
+      module_context::enqueClientEvent(event);
+   }
+
+   void getOutputFormat(const std::string& path,
+                        const std::string& encoding,
+                        json::Object* pResultJson)
+   {
       // query rmarkdown for the output format
+      json::Object& resultJson = *pResultJson;
       r::sexp::Protect protect;
       SEXP sexpOutputFormat;
       Error error = r::exec::RFunction("rmarkdown:::default_output_format",
-                                       targetFile_.absolutePath(),
-                                       encoding_)
+                                       path, encoding)
                                       .call(&sexpOutputFormat, &protect);
       if (error)
       {
          LOG_ERROR(error);
-         resultJson["output_format"] = "";
-         resultJson["output_options"] = json::Value();
+         resultJson["format_name"] = "";
+         resultJson["format_options"] = json::Value();
       }
       else
       {
@@ -269,7 +280,7 @@ private:
                                               &formatName);
          if (error)
             LOG_ERROR(error);
-         resultJson["output_format"] = formatName;
+         resultJson["format_name"] = formatName;
 
          SEXP sexpOptions;
          json::Value formatOptions;
@@ -283,16 +294,15 @@ private:
             if (error)
                LOG_ERROR(error);
          }
-         resultJson["output_options"] = formatOptions;
+
+         resultJson["format_options"] = formatOptions;
 
          // allow for format specific additions to the result json
          rmarkdown::presentation::ammendResults(formatName,
                                      targetFile_,
                                      sourceLine_,
-                                     &resultJson);
+                                     pResult);
       }
-      ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
-      module_context::enqueClientEvent(event);
    }
 
    static void enqueRenderOutput(int type,
@@ -311,6 +321,7 @@ private:
    int sourceLine_;
    FilePath outputFile_;
    std::string encoding_;
+   json::Object outputFormat_;
 };
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
