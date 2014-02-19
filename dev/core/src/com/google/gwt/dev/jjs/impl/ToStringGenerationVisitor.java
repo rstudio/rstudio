@@ -118,7 +118,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_DO = "do".toCharArray();
   protected static final char[] CHARS_DOTCLASS = ".class".toCharArray();
   protected static final char[] CHARS_ELSE = "else".toCharArray();
-  protected static final char[] CHARS_EMPTYDIMS = "[]".toCharArray();
   protected static final char[] CHARS_EXTENDS = "extends ".toCharArray();
   protected static final char[] CHARS_FALSE = "false".toCharArray();
   protected static final char[] CHARS_FINAL = "final ".toCharArray();
@@ -137,7 +136,8 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_PROTECTED = "protected ".toCharArray();
   protected static final char[] CHARS_PUBLIC = "public ".toCharArray();
   protected static final char[] CHARS_RETURN = "return".toCharArray();
-  protected static final char[] CHARS_SEEDIDOF = " JRuntimeTypeReference ".toCharArray();
+  protected static final char[] CHARS_RUNTIMETYPEREFERENCE =
+      " JRuntimeTypeReference ".toCharArray();
   protected static final char[] CHARS_SLASHSTAR = "/*".toCharArray();
   protected static final char[] CHARS_STARSLASH = "*/".toCharArray();
   protected static final char[] CHARS_STATIC = "static ".toCharArray();
@@ -698,7 +698,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JRuntimeTypeReference x, Context ctx) {
     print(CHARS_SLASHSTAR);
-    print(CHARS_SEEDIDOF);
+    print(CHARS_RUNTIMETYPEREFERENCE);
     print(CHARS_STARSLASH);
     printStringLiteral(x.getReferredType().getName());
     return false;

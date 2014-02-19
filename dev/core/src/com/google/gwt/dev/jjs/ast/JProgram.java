@@ -95,7 +95,7 @@ public class JProgram extends JNode {
    * Classes are inserted into the JsAST in the order they appear in the Set.
    */
   public static final Set<String> IMMORTAL_CODEGEN_TYPES_SET = Sets.newLinkedHashSet(Arrays.asList(
-      "com.google.gwt.lang.CollapsedPropertyHolder", "com.google.gwt.lang.SeedUtil"));
+      "com.google.gwt.lang.CollapsedPropertyHolder", "com.google.gwt.lang.JavaClassHierarchySetupUtil"));
 
   public static final String JAVASCRIPTOBJECT = "com.google.gwt.core.client.JavaScriptObject";
 

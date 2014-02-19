@@ -1,11 +1,11 @@
 /*
  * Copyright 2013 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -43,7 +43,7 @@ import java.util.Map;
  */
 public class FragmentExtractorTest extends JJSTestBase {
 
-  private static final JsName DEFINE_SEED_NAME = new JsName(null, "defineSeed", "defineSeed");
+  private static final JsName DEFINE_CLASS_FUNCTION_NAME = new JsName(null, "defineClass", "defineClass");
 
   private static class MockSourceInfo implements SourceInfo {
 
@@ -175,9 +175,9 @@ public class FragmentExtractorTest extends JJSTestBase {
   /**
    * Invokes FragmentExtractor with a fragment description claiming that Bar was not made live by
    * the current fragment, but that it has a constructor which *was* made live. Verifies that the
-   * defineSeed invocation from the global JS block *is* included in the extracted statement output.
+   * defineClass invocation from the global JS block *is* included in the extracted statement output.
    */
-  public void testDefineSeed_DeadTypeLiveConstructor() {
+  public void testDefineClass_DeadTypeLiveConstructor() {
     FragmentExtractor fragmentExtractor;
     LivenessPredicate constructorLivePredicate;
 
@@ -188,15 +188,15 @@ public class FragmentExtractorTest extends JJSTestBase {
       final JsName barConstructorName = new JsName(null, "Bar", "Bar");
       final JConstructor barConstructor = new JConstructor(nullSourceInfo, barType);
       Map<String, JsFunction> functionsByName = new HashMap<String, JsFunction>();
-      functionsByName.put("SeedUtil.defineSeed",
-          new JsFunction(nullSourceInfo, new JsRootScope(), DEFINE_SEED_NAME));
+      functionsByName.put("JavaClassHierarchySetupUtil.defineClass",
+          new JsFunction(nullSourceInfo, new JsRootScope(), DEFINE_CLASS_FUNCTION_NAME));
 
-      final JsExprStmt defineSeedStatement = createDefineSeedStatement(barConstructorName);
+      final JsExprStmt defineClassStatement = createDefineClassStatement(barConstructorName);
 
       JsProgram jsProgram = new JsProgram();
       jsProgram.setIndexedFunctions(functionsByName);
-      // Defines the entirety of the JS program being split, to be the one defineSeed statement.
-      jsProgram.getGlobalBlock().getStatements().add(defineSeedStatement);
+      // Defines the entirety of the JS program being split, to be the one defineClass statement.
+      jsProgram.getGlobalBlock().getStatements().add(defineClassStatement);
 
       JavaToJavaScriptMap map = new MockJavaToJavaScriptMap() {
           @Override
@@ -210,8 +210,8 @@ public class FragmentExtractorTest extends JJSTestBase {
 
           @Override
         public JClassType typeForStatement(JsStatement statement) {
-          if (statement == defineSeedStatement) {
-            // Indicates that Bar is the type associated with the defineSeed statement.
+          if (statement == defineClassStatement) {
+            // Indicates that Bar is the type associated with the defineClass statement.
             return barType;
           }
           return null;
@@ -236,18 +236,18 @@ public class FragmentExtractorTest extends JJSTestBase {
     List<JsStatement> extractedStatements =
         fragmentExtractor.extractStatements(constructorLivePredicate, new NothingAlivePredicate());
 
-    // Asserts that the single defineSeed statement was included in the extraction output.
+    // Asserts that the single defineClass statement was included in the extraction output.
     assertEquals(1, extractedStatements.size());
-    JsStatement defineSeedStatement = extractedStatements.get(0);
-    assertTrue(defineSeedStatement.toString().contains("defineSeed"));
+    JsStatement defineClassStatement = extractedStatements.get(0);
+    assertTrue(defineClassStatement.toString().contains("defineClass"));
   }
 
-  private JsExprStmt createDefineSeedStatement(final JsName barConstructorName) {
+  private JsExprStmt createDefineClassStatement(final JsName barConstructorName) {
     SourceInfo nullSourceInfo = new MockSourceInfo();
-    JsInvocation defineSeedInvocation = new JsInvocation(nullSourceInfo);
-    defineSeedInvocation.getArguments().add(new JsNameRef(nullSourceInfo, barConstructorName));
-    defineSeedInvocation.setQualifier(new JsNameRef(nullSourceInfo, DEFINE_SEED_NAME));
-    final JsExprStmt defineSeedStatement = new JsExprStmt(nullSourceInfo, defineSeedInvocation);
-    return defineSeedStatement;
+    JsInvocation defineClassInvocation = new JsInvocation(nullSourceInfo);
+    defineClassInvocation.getArguments().add(new JsNameRef(nullSourceInfo, barConstructorName));
+    defineClassInvocation.setQualifier(new JsNameRef(nullSourceInfo, DEFINE_CLASS_FUNCTION_NAME));
+    final JsExprStmt defineClassStatement = new JsExprStmt(nullSourceInfo, defineClassInvocation);
+    return defineClassStatement;
   }
 }

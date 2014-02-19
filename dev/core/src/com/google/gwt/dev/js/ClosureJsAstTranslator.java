@@ -56,7 +56,6 @@ import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
-import com.google.gwt.dev.js.ast.JsSeedIdOf;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
@@ -431,8 +430,6 @@ public class ClosureJsAstTranslator {
         return transform((JsThisRef) x);
       case NAME_OF:
         return transform((JsNameOf) x);
-      case SEED_ID_OF:
-        return transform((JsSeedIdOf) x);
       case NAME_REF:
         return transform((JsNameRef) x);
       case NEW:
@@ -665,11 +662,6 @@ public class ClosureJsAstTranslator {
     if (result != null) {
       n.addChildToBack(transform(x.getExpr()));
     }
-    return applySourceInfo(n, x);
-  }
-
-  private Node transform(JsSeedIdOf x) {
-    Node n = Node.newNumber(x.getSeedId());
     return applySourceInfo(n, x);
   }
 

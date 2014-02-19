@@ -592,11 +592,12 @@ public class CodeSplitterTest extends JJSTestBase {
                "}";
       }
     });
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.SeedUtil") {
+    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.JavaClassHierarchySetupUtil") {
       @Override
       public CharSequence getContent() {
-        return "package com.google.gwt.lang; public class SeedUtil {" +
-               "public static Object defineSeed(int id, int seed, Object map){return null;}}";
+        return "package com.google.gwt.lang; public class JavaClassHierarchySetupUtil {" +
+               "public static Object defineClass(int typeId, int superTypeId, Object map)" +
+               "{return null;}}";
       }
     });
 

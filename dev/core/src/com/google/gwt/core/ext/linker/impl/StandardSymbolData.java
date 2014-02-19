@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,15 +32,15 @@ import java.net.URISyntaxException;
 public class StandardSymbolData implements SymbolData {
 
   public static StandardSymbolData forClass(String className, String uriString,
-      int lineNumber, int queryId, CastableTypeMap castableTypeMap, int seedId) {
+      int lineNumber, CastableTypeMap castableTypeMap, int typeId) {
     return new StandardSymbolData(className, null, null, uriString, lineNumber,
-        queryId, castableTypeMap, seedId);
+        castableTypeMap, typeId);
   }
 
   public static StandardSymbolData forMember(String className,
       String memberName, String methodSig, String uriString, int lineNumber) {
     return new StandardSymbolData(className, memberName, methodSig, uriString,
-        lineNumber, 0, null, -1);
+        lineNumber, null, -1);
   }
 
   public static String toUriString(String fileName) {
@@ -63,13 +63,12 @@ public class StandardSymbolData implements SymbolData {
   private int sourceLine;
   private String sourceUri;
   private String symbolName;
-  private int queryId;
-  private int seedId;
+  private int typeId;
   private CastableTypeMap castableTypeMap;
 
   private StandardSymbolData(String className, String memberName,
-      String methodSig, String sourceUri, int sourceLine, int queryId, 
-      CastableTypeMap castableTypeMap, int seedId) {
+      String methodSig, String sourceUri, int sourceLine,
+      CastableTypeMap castableTypeMap, int typeId) {
     assert className != null && className.length() > 0 : "className";
     assert memberName != null || methodSig == null : "methodSig without memberName";
     assert sourceLine >= -1 : "sourceLine: " + sourceLine;
@@ -79,11 +78,10 @@ public class StandardSymbolData implements SymbolData {
     this.methodSig = methodSig;
     this.sourceUri = sourceUri;
     this.sourceLine = sourceLine;
-    this.queryId = queryId;
     this.castableTypeMap = castableTypeMap;
-    this.seedId = seedId;
+    this.typeId = typeId;
   }
-  
+
   @Override
   public CastableTypeMap getCastableTypeMap() {
     return castableTypeMap;
@@ -114,15 +112,9 @@ public class StandardSymbolData implements SymbolData {
   public String getMemberName() {
     return memberName;
   }
-
   @Override
-  public int getQueryId() {
-    return queryId;
-  }
-
-  @Override
-  public int getSeedId() {
-    return seedId;
+  public int getRuntimeTypeId() {
+    return typeId;
   }
 
   @Override
@@ -187,9 +179,10 @@ public class StandardSymbolData implements SymbolData {
     sourceLine = in.readInt();
     sourceUri = (String) in.readObject();
     symbolName = in.readUTF();
-    queryId = in.readInt();
+    // Ignore used to hold seedId.
+    in.readInt();
     castableTypeMap = (CastableTypeMap) in.readObject();
-    seedId = in.readInt();
+    typeId = in.readInt();
     fragmentNumber = in.readInt();
   }
 
@@ -217,9 +210,10 @@ public class StandardSymbolData implements SymbolData {
     out.writeInt(sourceLine);
     out.writeObject(sourceUri);
     out.writeUTF(symbolName);
-    out.writeInt(queryId);
+    // TODO(rluble): remove this line. Writes the typeId where the seed id used to be.
+    out.writeInt(typeId);
     out.writeObject(castableTypeMap);
-    out.writeInt(seedId);
+    out.writeInt(typeId);
     out.writeInt(fragmentNumber);
   }
 

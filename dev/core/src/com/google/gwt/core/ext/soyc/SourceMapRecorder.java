@@ -76,7 +76,7 @@ public class SourceMapRecorder {
           }
           if (r.getStartLine() == 0 || r.getEndLine() == 0) {
             // or other bogus entries that appear
-            // SeedUtil:seedTable is pruned here, may be others too
+            // JavaClassHierarchySetupUtil:prototypesByTypeId is pruned here, may be others too
             continue;
           }
           // Starting with V3, SourceMap line numbers are zero-based.

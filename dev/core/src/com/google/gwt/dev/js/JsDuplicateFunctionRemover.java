@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -190,22 +190,22 @@ public class JsDuplicateFunctionRemover {
    * IMPORTANT NOTE: It is NOT safe to rename JsNames after this pass is performed. E.g.
    *
    * Consider an output  JavaScript for two unrelated classes:
-   * defineSeed(...) //class A
+   * defineClass(...) //class A
    * _.a
    * _.m1 = function() { return this.a; }
    *
-   * defineSeed(...) // class B
+   * defineClass(...) // class B
    * _.a
    * _.m2 = function() { return this.a; }
    *
    * Here m1() in class A and m2 in class B have identical parameters and bodies; hence the result
    * will be
    *
-   * defineSeed(...) //class A
+   * defineClass(...) //class A
    * _.a
    * _.m1 = g1
    *
-   * defineSeed(...) // class B
+   * defineClass(...) // class B
    * _.a
    * _.m2 = g1
    *

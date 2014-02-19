@@ -35,7 +35,7 @@ public final class Class<T> implements Type {
   /**
    * Create a Class object for an array.<p>
    *
-   * Arrays are not registered in the seed table and get the class literal explicitely at
+   * Arrays are not registered in the prototype table and get the class literal explicitely at
    * construction.<p>
    *
    * @skip
@@ -135,10 +135,13 @@ public final class Class<T> implements Type {
   /**
     * Used by {@link WebModePayloadSink} to create uninitialized instances.
     */
-   static native JavaScriptObject getSeedFunction(Class<?> clazz) /*-{
-     var func = @com.google.gwt.lang.SeedUtil::seedTable[clazz.@java.lang.Class::seedId];
+   static native JavaScriptObject getPrototypeForClass(Class<?> clazz) /*-{
+     var typeId = clazz.@java.lang.Class::typeId;
+     var prototype = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[typeId];
+     // TODO(rluble): introduce pragma annotation to indicate that this function should not be
+     // inlined.
      clazz = null; // HACK: prevent pruning via inlining by using param as lvalue
-     return func;
+     return prototype;
    }-*/;
 
   public static boolean isClassMetadataEnabled() {
@@ -147,7 +150,8 @@ public final class Class<T> implements Type {
   }
 
   /**
-   * null implies lack of seed function / non-instantiable type
+   * null implies non-instantiable type, with no entries in
+   * {@link JavaClassHierarchySetupUtil::prototypesByTypeId}.
    */
   static native boolean isInstantiable(int typeId) /*-{
     return !!typeId;
@@ -155,42 +159,47 @@ public final class Class<T> implements Type {
 
 
   /**
-   * null implies lack of seed function / non-instantiable type.
+   * Return a value representing the lack of typeId.
+   *
+   * <p>NOTE: this is a hack to subvert the Java type system.
    */
   static native int getNullTypeId() /*-{
-    // TODO(rluble): Simplify by changing typeIds to JavaScriptObject type.
+    // TODO(rluble): Reimplement in a less hacky way possibly representing typeIds types as
+    // JavaScriptObjects.
     return null;
   }-*/;
 
   /**
-   * Install class literal into seed.prototype.clazz field (if type is instantiable) such that
+   * Install class literal into prototype.clazz field (if type is instantiable) such that
    * Object.getClass() returning this.clazz returns the literal. Also stores typeId on class literal
    * for looking up prototypes given a literal. This is used for deRPC at the moment, but may be
    * used to implement Class.newInstance() in the future.
+   *
+   * If the prototype for typeId has not yet been created, then install the literal into a
+   * placeholder array to differentiate the two cases.
    */
   static native void maybeSetClassLiteral(int typeId, Class<?> clazz) /*-{
     var proto;
     if (!typeId) {
-      // Type is not instantiable, hence not registered in the seed table.
+      // Type is not instantiable, hence not registered in the metadata table.
       return;
     }
-    clazz.@java.lang.Class::seedId = typeId;
+    clazz.@java.lang.Class::typeId = typeId;
     // Guarantees virtual method won't be pruned by using a JSNI ref
     // This is required because deRPC needs to call it.
-    var seed = @java.lang.Class::getSeedFunction(Ljava/lang/Class;)(clazz);
+    var prototype  = @java.lang.Class::getPrototypeForClass(Ljava/lang/Class;)(clazz);
     // A class literal may be referenced prior to an async-loaded vtable setup
     // For example, class literal lives in inital fragment,
     // but type is instantiated in another fragment
-    if (!seed) {
-      // Leave a place holder for now to be filled in by __defineSeed__ later
-      seed = @com.google.gwt.lang.SeedUtil::seedTable[typeId] = function(){};
-      seed.@java.lang.Object::___clazz = clazz;
+    if (!prototype) {
+      // Leave a place holder for now to be filled in by __defineClass__ later.
+      // TODO(rluble): Do not rely on the fact that if the entry is an array it is a placeholder.
+      @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[typeId] = [clazz];
       return;
     }
-    // Type already registered in the seed table, install the class literal in the appropriate
+    // Type already registered in the metadata table, install the class literal in the appropriate
     // prototype field.
-    proto = seed.prototype;
-    proto.@java.lang.Object::___clazz = clazz;
+    prototype.@java.lang.Object::___clazz = clazz;
   }-*/;
 
   /**
@@ -245,7 +254,7 @@ public final class Class<T> implements Type {
 
   private String typeName;
 
-  private int seedId;
+  private int typeId;
 
   /**
    * Not publicly instantiable.

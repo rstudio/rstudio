@@ -42,7 +42,7 @@ public class ConditionWhenTypeAssignableTo extends Condition {
   @Override
   public String toSource() {
     // TODO(stalcup): implement Class.isAssignableFrom() and route it to something like
-    // Cast.canCastSeed();
+    // Cast.canCastTypeId();
     throw new UnsupportedOperationException("Not implemented yet");
   }
 

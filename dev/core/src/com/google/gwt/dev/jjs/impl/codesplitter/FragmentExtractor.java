@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -51,7 +51,7 @@ import java.util.Set;
 /**
  * Extracts multiple JS statements (called a fragment) out of the complete JS program based on
  * supplied type/method/field/string liveness conditions.
- * 
+ *
  * <p>
  * <b>Liveness as defined here is not an intuitive concept.</b> A type or method (note that
  * constructors are methods) is considered live for the current fragment when that type can only be
@@ -77,17 +77,17 @@ public class FragmentExtractor {
   }
 
   /**
-   * Mutates the provided defineSeed statement to remove references to constructors which have not
+   * Mutates the provided defineClass statement to remove references to constructors which have not
    * been made live by the current fragment. It also counts the constructor references that
    * were not removed.
    */
-  private class DefineSeedMinimizerVisitor extends JsModVisitor {
+  private class DefineClassMinimizerVisitor extends JsModVisitor {
 
     private final LivenessPredicate alreadyLoadedPredicate;
     private final LivenessPredicate livenessPredicate;
     private int liveConstructorCount;
 
-    private DefineSeedMinimizerVisitor(
+    private DefineClassMinimizerVisitor(
         LivenessPredicate alreadyLoadedPredicate, LivenessPredicate livenessPredicate) {
       this.alreadyLoadedPredicate = alreadyLoadedPredicate;
       this.livenessPredicate = livenessPredicate;
@@ -122,12 +122,12 @@ public class FragmentExtractor {
     }
   }
 
-  private static class MinimalDefineSeedResult {
+  private static class MinimalDefineClassResult {
 
     private int liveConstructorCount;
     private JsExprStmt statement;
 
-    public MinimalDefineSeedResult(JsExprStmt statement, int liveConstructorCount) {
+    public MinimalDefineClassResult(JsExprStmt statement, int liveConstructorCount) {
       this.statement = statement;
       this.liveConstructorCount = liveConstructorCount;
     }
@@ -162,11 +162,11 @@ public class FragmentExtractor {
     return map.vtableInitToMethod(stat);
   }
 
-  private static JsExprStmt createDefineSeedClone(JsExprStmt defineSeedStatement) {
+  private static JsExprStmt createDefineClassClone(JsExprStmt defineClassStatement) {
     Cloner cloner = new Cloner();
-    cloner.accept(defineSeedStatement.getExpression());
-    JsExprStmt minimalDefineSeedStatement = cloner.getExpression().makeStmt();
-    return minimalDefineSeedStatement;
+    cloner.accept(defineClassStatement.getExpression());
+    JsExprStmt minimalDefineClassStatement = cloner.getExpression().makeStmt();
+    return minimalDefineClassStatement;
   }
 
   private final JProgram jprogram;
@@ -217,7 +217,7 @@ public class FragmentExtractor {
      */
     JClassType currentVtableType = null;
     JClassType pendingVtableType = null;
-    JsExprStmt pendingDefineSeed = null;
+    JsExprStmt pendingDefineClass = null;
 
     List<JsStatement> statements = jsprogram.getGlobalBlock().getStatements();
     for (JsStatement statement : statements) {
@@ -225,18 +225,18 @@ public class FragmentExtractor {
       boolean keep;
       JClassType vtableTypeAssigned = vtableTypeAssigned(statement);
       if (vtableTypeAssigned != null) {
-        // Keeps defineSeed statements of live types or types with a live constructor.
-        MinimalDefineSeedResult minimalDefineSeedResult = createMinimalDefineSeed(
+        // Keeps defineClass statements of live types or types with a live constructor.
+        MinimalDefineClassResult minimalDefineClassResult = createMinimalDefineClass(
             livenessPredicate, alreadyLoadedPredicate, (JsExprStmt) statement);
         boolean liveType = !alreadyLoadedPredicate.isLive(vtableTypeAssigned)
             && livenessPredicate.isLive(vtableTypeAssigned);
-        boolean liveConstructors = minimalDefineSeedResult.liveConstructorCount > 0;
+        boolean liveConstructors = minimalDefineClassResult.liveConstructorCount > 0;
 
         if (liveConstructors || liveType) {
-          statement = minimalDefineSeedResult.statement;
+          statement = minimalDefineClassResult.statement;
           keep = true;
         } else {
-          pendingDefineSeed = minimalDefineSeedResult.statement;
+          pendingDefineClass = minimalDefineClassResult.statement;
           pendingVtableType = vtableTypeAssigned;
           keep = false;
         }
@@ -256,9 +256,9 @@ public class FragmentExtractor {
         JClassType vtableType = vtableTypeNeeded(statement);
         if (vtableType != null && vtableType != currentVtableType) {
           assert pendingVtableType == vtableType;
-          extractedStats.add(pendingDefineSeed);
+          extractedStats.add(pendingDefineClass);
           currentVtableType = pendingVtableType;
-          pendingDefineSeed = null;
+          pendingDefineClass = null;
           pendingVtableType = null;
         }
         extractedStats.add(statement);
@@ -310,23 +310,24 @@ public class FragmentExtractor {
   }
 
   /**
-   * DefineSeeds mark the existence of a class and associate a castMaps with the class's various
-   * constructors. These multiple constructors are provided as JsNameRef varargs to the defineSeed
-   * call but only the constructors that are live in the current fragment should be included.
-   * 
+   * DefineClass calls mark the existence of a class and associate a castMaps with the class's
+   * various constructors. These multiple constructors are provided as JsNameRef varargs to the
+   * defineClass call but only the constructors that are live in the current fragment should be
+   * included.
+   *
    * <p>
-   * This function strips out the dead constructors and returns the modified defineSeed call. The
-   * stripped constructors will be kept by other defineSeed calls in other fragments at other times.
+   * This function strips out the dead constructors and returns the modified defineClass call. The
+   * stripped constructors will be kept by other defineClass calls in other fragments at other times.
    * </p>
    */
-  private MinimalDefineSeedResult createMinimalDefineSeed(LivenessPredicate livenessPredicate,
-      LivenessPredicate alreadyLoadedPredicate, JsExprStmt defineSeedStatement) {
-    DefineSeedMinimizerVisitor defineSeedMinimizerVisitor =
-        new DefineSeedMinimizerVisitor(alreadyLoadedPredicate, livenessPredicate);
-    JsExprStmt minimalDefineSeedStatement = createDefineSeedClone(defineSeedStatement);
-    defineSeedMinimizerVisitor.accept(minimalDefineSeedStatement);
-    return new MinimalDefineSeedResult(
-        minimalDefineSeedStatement, defineSeedMinimizerVisitor.liveConstructorCount);
+  private MinimalDefineClassResult createMinimalDefineClass(LivenessPredicate livenessPredicate,
+      LivenessPredicate alreadyLoadedPredicate, JsExprStmt defineClassStatement) {
+    DefineClassMinimizerVisitor defineClassMinimizerVisitor =
+        new DefineClassMinimizerVisitor(alreadyLoadedPredicate, livenessPredicate);
+    JsExprStmt minimalDefineClassStatement = createDefineClassClone(defineClassStatement);
+    defineClassMinimizerVisitor.accept(minimalDefineClassStatement);
+    return new MinimalDefineClassResult(
+        minimalDefineClassStatement, defineClassMinimizerVisitor.liveConstructorCount);
   }
 
   private boolean isLive(JsStatement stat, LivenessPredicate livenessPredicate) {
@@ -359,7 +360,7 @@ public class FragmentExtractor {
    * then return whether the interned value is live. If the variable corresponds
    * to a Java field, then return whether the Java field is live. Otherwise,
    * assume the variable is needed and return <code>true</code>.
-   * 
+   *
    * Whenever this method is updated, also look at
    * {@link #containsRemovableVars(JsStatement)}.
    */
@@ -422,7 +423,7 @@ public class FragmentExtractor {
   /**
    * If <code>state</code> is of the form <code>_ = String.prototype</code>,
    * then return <code>String</code>. If the form is
-   * <code>defineSeed(id, superId, cTM, ctor1, ctor2, ...)</code> return the type
+   * <code>defineClass(id, superId, cTM, ctor1, ctor2, ...)</code> return the type
    * corresponding to that id. Otherwise return <code>null</code>.
    */
   private JClassType vtableTypeAssigned(JsStatement stat) {
@@ -431,13 +432,15 @@ public class FragmentExtractor {
     }
     JsExprStmt expr = (JsExprStmt) stat;
     if (expr.getExpression() instanceof JsInvocation) {
-      // Handle a defineSeed call.
+      // Handle a defineClass call.
       JsInvocation call = (JsInvocation) expr.getExpression();
       if (!(call.getQualifier() instanceof JsNameRef)) {
         return null;
       }
       JsNameRef func = (JsNameRef) call.getQualifier();
-      if (func.getName() != jsprogram.getIndexedFunction("SeedUtil.defineSeed").getName()) {
+      JsFunction defineClassJsFunc =
+          jsprogram.getIndexedFunction("JavaClassHierarchySetupUtil.defineClass");
+      if (func.getName() != defineClassJsFunc.getName()) {
         return null;
       }
       return map.typeForStatement(stat);

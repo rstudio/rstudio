@@ -683,8 +683,7 @@ public class GenerateJavaScriptAST {
           ((JIntLiteral) getRuntimeTypeReference(x)).getValue() : -1;
       StandardSymbolData symbolData =
           StandardSymbolData.forClass(x.getName(), x.getSourceInfo().getFileName(), x
-              .getSourceInfo().getStartLine(), intTypeReference, castableTypeMap,
-              x instanceof JClassType || x instanceof JArrayType ? intTypeReference : -1);
+              .getSourceInfo().getStartLine(), castableTypeMap, intTypeReference);
       assert !symbolTable.containsKey(symbolData);
       symbolTable.put(symbolData, jsName);
     }
@@ -1879,7 +1878,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateClassSetup(JClassType x, List<JsStatement> globalStmts) {
-      generateSeedFuncAndPrototype(x, globalStmts);
+      generateClassDefinition(x, globalStmts);
       generateVTables(x, globalStmts);
 
       if (x == program.getTypeJavaLangObject()) {
@@ -2163,33 +2162,33 @@ public class GenerateJavaScriptAST {
       return (JsLiteral) javaToJavaScriptLiteralConverter.pop();
     }
 
-    private void generateSeedFuncAndPrototype(JClassType x, List<JsStatement> globalStmts) {
+    private void generateClassDefinition(JClassType x, List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo();
       if (x != program.getTypeJavaLangString()) {
 
-        JsInvocation defineSeed = new JsInvocation(x.getSourceInfo());
-        JsName seedNameRef = indexedFunctions.get(
-            "SeedUtil.defineSeed").getName();
-        defineSeed.setQualifier(seedNameRef.makeRef(x.getSourceInfo()));
+        JsInvocation defineClass = new JsInvocation(x.getSourceInfo());
+        JsName defineClassRef = indexedFunctions.get(
+            "JavaClassHierarchySetupUtil.defineClass").getName();
+        defineClass.setQualifier(defineClassRef.makeRef(x.getSourceInfo()));
         JLiteral typeId = getRuntimeTypeReference(x);
         JClassType superClass = x.getSuperClass();
         JLiteral superTypeId = (superClass == null) ? JNullLiteral.INSTANCE :
             getRuntimeTypeReference(x.getSuperClass());
-        // SeedUtil.defineSeed(queryId, superId, castableMap, constructors)
-        defineSeed.getArguments().add(convertJavaLiteral(typeId));
-        defineSeed.getArguments().add(convertJavaLiteral(superTypeId));
+        // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
+        defineClass.getArguments().add(convertJavaLiteral(typeId));
+        defineClass.getArguments().add(convertJavaLiteral(superTypeId));
         JsExpression castMap = generateCastableTypeMap(x);
-        defineSeed.getArguments().add(castMap);
+        defineClass.getArguments().add(castMap);
 
         // Chain assign the same prototype to every live constructor.
         for (JMethod method : x.getMethods()) {
           if (liveCtors.contains(method)) {
-            defineSeed.getArguments().add(names.get(method).makeRef(
+            defineClass.getArguments().add(names.get(method).makeRef(
                 sourceInfo));
           }
         }
 
-        JsStatement tmpAsgStmt = defineSeed.makeStmt();
+        JsStatement tmpAsgStmt = defineClass.makeStmt();
         globalStmts.add(tmpAsgStmt);
         typeForStatMap.put(tmpAsgStmt, x);
       } else {
@@ -2771,7 +2770,7 @@ public class GenerateJavaScriptAST {
   }
 
   /**
-   * Looks up or assigns a seed id for a type..
+   * Retrieves the runtime typeId for {@code type}.
    */
   JLiteral getRuntimeTypeReference(JReferenceType type) {
     return typeIdsByType.get(type);

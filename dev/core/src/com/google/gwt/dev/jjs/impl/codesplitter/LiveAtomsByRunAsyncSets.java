@@ -1,11 +1,11 @@
 /*
  * Copyright 2013 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -37,10 +37,10 @@ import java.util.PriorityQueue;
  * Maps an atom to a set of runAsyncs that can be live (NOT necessary exclusively) when that
  * runAsync is activated. The runAsyncs are represented by a bit set where S[i] is set if the atom
  * needs to be live when runAsync i is live.<br />
- * 
+ *
  * In this class "payload size" is the size of the atoms that will be loaded (beyond the set of
  * atoms already loaded in the initial sequence) as part of a particular exclusive fragment.
- * 
+ *
  * "Subset" refers to an arbitrary combination of runAsync ids.
  */
 class LiveAtomsByRunAsyncSets {
@@ -81,9 +81,9 @@ class LiveAtomsByRunAsyncSets {
   }
 
   private static int getSizeEstimate(JDeclaredType type) {
-    int defineSeedSize = AVERAGE_NAME_SIZE + 50;
+    int defineClassSize = AVERAGE_NAME_SIZE + 50;
     int methodsSize = (3 + AVERAGE_NAME_SIZE) * type.getMethods().size();
-    return defineSeedSize + methodsSize;
+    return defineClassSize + methodsSize;
   }
 
   private static int getSizeEstimate(JField field) {

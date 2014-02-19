@@ -59,7 +59,6 @@ import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
-import com.google.gwt.dev.js.ast.JsSeedIdOf;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
@@ -147,7 +146,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   /**
    * Generate the output string using short or long identifiers.
-   * 
+   *
    * @param useLongIdents if true, emit all identifiers in long form
    */
   JsToStringGenerationVisitor(TextOutput out, boolean useLongIdents) {
@@ -651,7 +650,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     }
     return false;
   }
-  
+
   @Override
   public boolean visit(JsNumericEntry x, JsContext ctx) {
     p.print(Integer.toString(x.getValue()));
@@ -761,12 +760,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       _space();
       accept(expr);
     }
-    return false;
-  }
-
-  @Override
-  public boolean visit(JsSeedIdOf x, JsContext ctx) {
-    p.print(String.valueOf(x.getSeedId()));
     return false;
   }
 

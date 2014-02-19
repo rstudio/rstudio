@@ -62,8 +62,8 @@ import java.util.Map;
  * Class literal factory methods are responsible for installing references
  * to themselves on the Object.clazz field of their JS runtime prototype
  * since getClass() is no longer an overridden method.  Prototypes can be
- * looked up via 'seedId' from the global seedTable object, and so each
- * class literal factory method is passed the seedId of its type.
+ * looked up via 'typeId' from the global prototypesByTypeId object, and so each
+ * class literal factory method is passed the typeId of its type.
  * <p>
  */
 public class ImplementClassLiteralsAsFields {
@@ -188,7 +188,7 @@ public class ImplementClassLiteralsAsFields {
     call.addArgs(packageName, className);
 
     if (type instanceof JArrayType || type instanceof JClassType) {
-      // Add the name of the seed function for concrete types
+      // Add a runtime type reference.
       call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
           (JReferenceType) type));
     } else if (type instanceof JPrimitiveType) {

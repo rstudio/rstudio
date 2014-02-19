@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -65,9 +65,9 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
         optimize("function a(){};function b(){} b.prototype={}; a(); b();"));
     // As parameter
     assertEquals(
-        "function defineSeed(a,b){}\n;function a(){}\n;function b(){}\ndefineSeed(a,b);a();b();",
-        optimize("function defineSeed(a,b){};function a(){};function b(){}"
-            + " defineSeed(a,b); a(); b();"));
+        "function defineClass(a,b){}\n;function a(){}\n;function b(){}\ndefineClass(a,b);a();b();",
+        optimize("function defineClass(a,b){};function a(){};function b(){}"
+            + " defineClass(a,b); a(); b();"));
   }
 
   public void testRemoveDuplicates() throws Exception {
@@ -214,14 +214,14 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
 
   /**
    * Optimize a JS program.
-   * 
+   *
    * @param program the source program
    * @param toExec a list of classes that implement
    *          <code>static void exec(JsProgram)</code>
    * @return optimized JS
    */
   protected String optimize(JsProgram program, Class<?>... toExec) throws Exception {
- 
+
     for (Class<?> clazz : toExec) {
       Method m = clazz.getMethod("exec", JsProgram.class);
       m.invoke(null, program);

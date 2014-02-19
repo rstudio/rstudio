@@ -39,7 +39,7 @@ import java.util.Map;
  * Ints are assigned sequentially under the assumption that all types in the application are known.
  */
 public class ResolveRuntimeTypeReferencesIntoIntLiterals {
-  // TODO(rluble): this pass should insert the defineSeed in Java.
+  // TODO(rluble): this pass should insert the defineClass in Java.
 
   /**
    * Collects all types that need an Id at runtime.
