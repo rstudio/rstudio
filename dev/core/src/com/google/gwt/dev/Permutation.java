@@ -77,15 +77,8 @@ public final class Permutation implements Serializable {
    */
   public void mergeFrom(Permutation other, SortedSet<String> liveRebindRequests) {
     if (getClass().desiredAssertionStatus()) {
-      for (SortedMap<String, String> myRebind : orderedRebindAnswers) {
-        for (SortedMap<String, String> otherRebind : other.orderedRebindAnswers) {
-          for (String rebindRequest : liveRebindRequests) {
-            String myAnswer = myRebind.get(rebindRequest);
-            String otherAnswer = otherRebind.get(rebindRequest);
-            assert myAnswer.equals(otherAnswer);
-          }
-        }
-      }
+      // Traverse and compare in unison.
+      assertSameAnswers(liveRebindRequests, orderedRebindAnswers, other.orderedRebindAnswers);
     }
     mergeRebindsFromCollapsed(other);
   }
@@ -128,6 +121,16 @@ public final class Permutation implements Serializable {
     SortedMap<String, String> answerMap = orderedRebindAnswers.get(0);
     assert answerMap != null;
     answerMap.put(requestType, resultType);
+  }
+
+  private static void assertSameAnswers(SortedSet<String> liveRebindRequests,
+      List<SortedMap<String, String>> theseAnswers, List<SortedMap<String, String>> thoseAnswers) {
+    assert theseAnswers.size() == thoseAnswers.size();
+    for (int i = 0; i < theseAnswers.size(); i++) {
+      for (String request : liveRebindRequests) {
+        assert theseAnswers.get(i).get(request).equals(thoseAnswers.get(i).get(request));
+      }
+    }
   }
 
   /**

@@ -23,6 +23,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * See issue 8539.
  */
 public class CodeSplitterCollapsedPropertiesTest extends GWTTestCase {
+  // TODO(rluble): Add a test for {@link Permutation.mergeFrom}.
 
   private static final int RUNASYNC_TIMEOUT = 30000;
 
