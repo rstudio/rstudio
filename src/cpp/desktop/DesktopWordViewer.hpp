@@ -33,11 +33,14 @@ public:
    core::Error closeActiveDocument();
 
 private:
-   core::Error openDocument(QString& path);
+   core::Error openDocument(QString& path, IDispatch* idispDocs,
+                            IDispatch** pidispDoc);
    core::Error showWord();
+   core::Error getDocumentPosition(IDispatch* idispPos, int* pxPos, int* pyPos);
+   core::Error setDocumentPosition(IDispatch* idispPos, int xPos, int yPos);
    IDispatch* idispWord_;
-   IDispatch* idispDocs_;
-   IDispatch* idispCurrentDoc_;
+   int docScrollX_;
+   int docScrollY_;
 };
 
 } // namespace desktop
