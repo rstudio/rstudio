@@ -182,10 +182,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             Document doc = iframe.getContentDocument();
             if (doc == null)
                return true;
-            
-            // ensure focus
-            iframe.focus();
-            
             // restore scroll position
             if (scrollPosition_ > 0)
                doc.setScrollTop(scrollPosition_);
