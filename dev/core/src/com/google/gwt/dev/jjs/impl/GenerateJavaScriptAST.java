@@ -910,8 +910,14 @@ public class GenerateJavaScriptAST {
         }
       }
 
-      if (typeOracle.isInstantiatedType(x) && !program.isJavaScriptObject(x)) {
+      if (typeOracle.isInstantiatedType(x) && !program.isJavaScriptObject(x) &&
+          x !=  program.getTypeJavaLangString()) {
         generateClassSetup(x, globalStmts);
+      } else if (x == program.getTypeJavaLangString()) {
+        // String no longer has class setup, only needs to set Cast.stringCastMap.
+        // TODO(rluble): This probably should be done at a fixed place rather
+        // than waiting to visit the String class.
+        setupStringCastMap(x, globalStmts);
       }
 
       // setup fields
@@ -2164,56 +2170,50 @@ public class GenerateJavaScriptAST {
 
     private void generateClassDefinition(JClassType x, List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo();
-      if (x != program.getTypeJavaLangString()) {
+      assert x != program.getTypeJavaLangString();
 
-        JsInvocation defineClass = new JsInvocation(x.getSourceInfo());
-        JsName defineClassRef = indexedFunctions.get(
-            "JavaClassHierarchySetupUtil.defineClass").getName();
-        defineClass.setQualifier(defineClassRef.makeRef(x.getSourceInfo()));
-        JLiteral typeId = getRuntimeTypeReference(x);
-        JClassType superClass = x.getSuperClass();
-        JLiteral superTypeId = (superClass == null) ? JNullLiteral.INSTANCE :
-            getRuntimeTypeReference(x.getSuperClass());
-        // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
-        defineClass.getArguments().add(convertJavaLiteral(typeId));
-        defineClass.getArguments().add(convertJavaLiteral(superTypeId));
-        JsExpression castMap = generateCastableTypeMap(x);
-        defineClass.getArguments().add(castMap);
+      JsInvocation defineClass = new JsInvocation(sourceInfo);
+      JsName defineClassRef = indexedFunctions.get(
+          "JavaClassHierarchySetupUtil.defineClass").getName();
+      defineClass.setQualifier(defineClassRef.makeRef(sourceInfo));
+      JLiteral typeId = getRuntimeTypeReference(x);
+      JClassType superClass = x.getSuperClass();
+      JLiteral superTypeId = (superClass == null) ? JNullLiteral.INSTANCE :
+          getRuntimeTypeReference(x.getSuperClass());
+      // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
+      defineClass.getArguments().add(convertJavaLiteral(typeId));
+      defineClass.getArguments().add(convertJavaLiteral(superTypeId));
+      JsExpression castMap = generateCastableTypeMap(x);
+      defineClass.getArguments().add(castMap);
 
-        // Chain assign the same prototype to every live constructor.
-        for (JMethod method : x.getMethods()) {
-          if (liveCtors.contains(method)) {
-            defineClass.getArguments().add(names.get(method).makeRef(
-                sourceInfo));
-          }
+      // Chain assign the same prototype to every live constructor.
+      for (JMethod method : x.getMethods()) {
+        if (liveCtors.contains(method)) {
+          defineClass.getArguments().add(names.get(method).makeRef(
+              sourceInfo));
         }
-
-        JsStatement tmpAsgStmt = defineClass.makeStmt();
-        globalStmts.add(tmpAsgStmt);
-        typeForStatMap.put(tmpAsgStmt, x);
-      } else {
-        /*
-         * MAGIC: java.lang.String is implemented as a JavaScript String
-         * primitive with a modified prototype.
-         */
-        JsNameRef rhs = prototype.makeRef(sourceInfo);
-        rhs.setQualifier(JsRootScope.INSTANCE.findExistingUnobfuscatableName("String").makeRef(
-            sourceInfo));
-        JsExpression tmpAsg = createAssignment(globalTemp.makeRef(sourceInfo), rhs);
-        JsExprStmt tmpAsgStmt = tmpAsg.makeStmt();
-        globalStmts.add(tmpAsgStmt);
-        typeForStatMap.put(tmpAsgStmt, x);
-        JField castableTypeMapField = program.getIndexedField("Cast.stringCastMap");
-        JsName castableTypeMapName = names.get(castableTypeMapField);
-        JsNameRef ctmRef = castableTypeMapName.makeRef(sourceInfo);
-//        ctmRef.setQualifier(globalTemp.makeRef(sourceInfo));
-        JsExpression castMapLit = generateCastableTypeMap(x);
-        JsExpression ctmAsg = createAssignment(ctmRef,
-            castMapLit);
-        JsExprStmt ctmAsgStmt = ctmAsg.makeStmt();
-        globalStmts.add(ctmAsgStmt);
-//        typeForStatMap.put(ctmAsgStmt, x);
       }
+
+      JsStatement tmpAsgStmt = defineClass.makeStmt();
+      globalStmts.add(tmpAsgStmt);
+      typeForStatMap.put(tmpAsgStmt, x);
+    }
+
+    /*
+     * Sets up the catmap for String.
+     */
+    private void setupStringCastMap(JClassType x, List<JsStatement> globalStmts) {
+      //  Cast.stringCastMap = /* String cast map */ { ..:1, ..:1}
+      JField castableTypeMapField = program.getIndexedField("Cast.stringCastMap");
+      JsName castableTypeMapName = names.get(castableTypeMapField);
+      JsNameRef ctmRef = castableTypeMapName.makeRef(x.getSourceInfo());
+
+      JsExpression castMapLit = generateCastableTypeMap(x);
+      JsExpression ctmAsg = createAssignment(ctmRef,
+          castMapLit);
+      JsExprStmt ctmAsgStmt = ctmAsg.makeStmt();
+      globalStmts.add(ctmAsgStmt);
+      typeForStatMap.put(ctmAsgStmt, x);
     }
 
     private void generateToStringAlias(JClassType x, List<JsStatement> globalStmts) {
@@ -2261,24 +2261,18 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
-      boolean isString = (x == program.getTypeJavaLangString());
+      assert x != program.getTypeJavaLangString();
       for (JMethod method : x.getMethods()) {
         SourceInfo sourceInfo = method.getSourceInfo();
         if (method.needsVtable() && !method.isAbstract()) {
           JsNameRef lhs = polymorphicNames.get(method).makeRef(sourceInfo);
           lhs.setQualifier(globalTemp.makeRef(sourceInfo));
 
-          JsExpression rhs;
-          if (isString && "toString".equals(method.getName()))  {
-            // special-case String.toString: alias to the native JS toString()
-            rhs = createNativeToStringRef(globalTemp.makeRef(sourceInfo));
-          } else {
-            /*
-             * Inline JsFunction rather than reference, e.g. _.vtableName =
-             * function functionName() { ... }
-             */
-            rhs = methodBodyMap.get(method.getBody());
-          }
+          /*
+           * Inline JsFunction rather than reference, e.g. _.vtableName =
+           * function functionName() { ... }
+           */
+          JsExpression rhs = methodBodyMap.get(method.getBody());
           JsExpression asg = createAssignment(lhs, rhs);
           JsExprStmt asgStat = new JsExprStmt(x.getSourceInfo(), asg);
           globalStmts.add(asgStat);

@@ -29,9 +29,10 @@ final class Cast {
    * As plain JavaScript Strings (not monkey patcheed) are used to model Java Strings,
    * {@code  stringCastMap} stores runtime type info for cast purposes for string objects.
    *
-   * NOTE: it is important that it is initialized to null so that Cast does not require a clinit.
+   * NOTE: it is important that the field is left uninitialized so that Cast does not
+   * require a clinit.
    */
-  private static JavaScriptObject stringCastMap = null;
+  private static JavaScriptObject stringCastMap;
 
   static native boolean canCast(Object src, int dstId) /*-{
     return src.@java.lang.Object::castableTypeMap && !!src.@java.lang.Object::castableTypeMap[dstId]
