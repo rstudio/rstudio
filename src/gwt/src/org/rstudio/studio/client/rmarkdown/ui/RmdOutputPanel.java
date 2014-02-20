@@ -88,27 +88,38 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       scrollPosition_ = refresh ? 
             getScrollPosition() : params.getScrollPosition();
      
+      // check for an anchor implied by a preview_slide field
+      String anchor = "";
+      if (params.getResult().getPreviewSlide() > 0)
+         anchor = String.valueOf(params.getResult().getPreviewSlide());
+            
       // load url      
       String url;
       if (refresh)
       {
          url = getCurrentUrl();
+         
+         // if there's an anchor then strip any anchor we already have
+         if (anchor.length() > 0)
+         {
+            int anchorPos = url.lastIndexOf('#');
+            if (anchorPos != -1)
+               url = url.substring(0, anchorPos);
+         }
       }
       else
       {
          url = server_.getApplicationURL(params.getOutputUrl());
          
-         // if these are slides then an anchor may be implied by 
-         // a slide_number parameter
-         String anchor = "";
-         if (params.getResult().getPreviewSlide() > 0)
-            anchor = String.valueOf(params.getResult().getPreviewSlide());
-         else
+         // check for an explicit anchor if there wasn't one implied
+         // by the preview_slide
+         if (anchor.length() == 0)
             anchor = params.getAnchor();
-         
-         if (anchor.length() > 0)
-            url += "#" + anchor;
       }
+      
+      // add the anchor if necessary
+      if (anchor.length() > 0)
+         url += "#" + anchor;
       
       showUrl(url);
    }
