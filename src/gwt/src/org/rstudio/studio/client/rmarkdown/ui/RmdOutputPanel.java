@@ -193,14 +193,14 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             if (getNavigationMenu().isVisible())
             {  
                fireSlideIndexChanged();
-               slideChangeMonitor_.scheduleRepeating(250);
+               slideChangeMonitor_.scheduleRepeating(100);
             }
             
             
             return false;
          }
          
-      }, 250);
+      }, 50);
       
        
       return frame;
