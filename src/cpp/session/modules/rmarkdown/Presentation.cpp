@@ -88,7 +88,7 @@ void ammendResults(const std::string& formatName,
    boost::regex reYaml("^\\-{3}\\s*$");
    boost::regex reTitle("^title\\:(.*)$");
    boost::regex reCode("^`{3,}.*$");
-   boost::regex reTitledSlide("^#(#)?(.*)$");
+   boost::regex reTitledSlide("^#(#)?([^|\\{]+).*$");
    boost::regex reUntitledSlide("^(\\-{4,}|\\*{4,})\\w*$");
    for (int i = 0; i<lines.size(); i++)
    {
