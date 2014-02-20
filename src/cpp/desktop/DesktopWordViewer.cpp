@@ -100,6 +100,18 @@ HRESULT getIDispatchProp(IDispatch* idispIn, const std::wstring& strName,
    return hr;
 }
 
+HRESULT getIntProp(IDispatch* idisp, const std::wstring& strName, int* pOut)
+{
+   VARIANT result;
+   VariantInit(&result);
+   HRESULT hr = invokeDispatch(DISPATCH_PROPERTYGET, &result,
+                               idisp, strName, 0);
+   if (FAILED(hr))
+      return hr;
+   *pOut = result.intVal;
+   return hr;
+}
+
 } // anonymous namespace
 
 WordViewer::WordViewer():
@@ -150,13 +162,28 @@ Error WordViewer::showDocument(QString& path)
    VERIFY_HRESULT(getIDispatchProp(idispWord_, L"Documents", &idispDocs));
 
    // Open the documenet
+   path = path.replace(QChar(L'/'), QChar(L'\\'));
    errorHR = openDocument(path, idispDocs, &idispDoc);
    if (errorHR)
       return errorHR;
+   if (docPath_ == path)
+   {
+      // Reopening the last-opened doc: apply the scroll position if we have
+      // one cached
+      if (docScrollX_ > 0 || docScrollY_ > 0)
+         setDocumentPosition(idispDoc, docScrollX_, docScrollY_);
+   }
+   else
+   {
+      // Opening a different doc: forget scroll position and save the doc name
+      docScrollX_ = 0;
+      docScrollY_ = 0;
+      docPath_ = path;
+   }
 
-   // Set the cached scroll position, if we have one
-   if (docScrollX_ > 0 || docScrollY_ > 0)
-      setDocumentPosition(idispDoc, docScrollX_, docScrollY_);
+   // Bring Word to the foreground
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, NULL, idispWord_,
+                                 L"Activate", 0));
 
 LErrExit:
    return errorHR;
@@ -184,9 +211,9 @@ Error WordViewer::openDocument(QString& path, IDispatch* idispDocs,
 
    const WCHAR *strOpen = L"Open";
    DISPID dispidOpen;
+
    BSTR bstrFileName =
-         SysAllocString(reinterpret_cast<const WCHAR*>(
-                           path.replace(QChar(L'/'), QChar(L'\\')).utf16()));
+         SysAllocString(reinterpret_cast<const WCHAR*>(path.utf16()));
 
    // COM requires that arguments are specified in reverse order
    DISPID argPos[2] = { 2, 0 };
@@ -223,7 +250,7 @@ LErrExit:
    return errorHR;
 }
 
-Error WordViewer::closeActiveDocument()
+Error WordViewer::closeLastViewedDocument()
 {
    Error errorHR = Success();
    HRESULT hr = S_OK;
@@ -231,8 +258,12 @@ Error WordViewer::closeActiveDocument()
    if (idispWord_ == NULL)
       return Success();
 
+   // Find the open document corresponding to the one we last rendered. If we
+   // find it, close it; if we can't find it, do nothing.
    IDispatch* idispDoc = NULL;
-   VERIFY_HRESULT(getIDispatchProp(idispWord_, L"ActiveDocument", &idispDoc));
+   errorHR = getDocumentByPath(docPath_, &idispDoc);
+   if (errorHR)
+      return errorHR;
    if (idispDoc == NULL)
       return Success();
 
@@ -253,17 +284,10 @@ Error WordViewer::getDocumentPosition(IDispatch* idispDoc, int* pxPos,
    HRESULT hr = S_OK;
 
    IDispatch* idispWindow = NULL;
-   VARIANT result;
 
    VERIFY_HRESULT(getIDispatchProp(idispDoc, L"ActiveWindow", &idispWindow));
-
-   VariantInit(&result);
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYGET, &result, idispWindow,
-                                 L"HorizontalPercentScrolled", 0));
-   *pxPos = result.intVal;
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYGET, &result, idispWindow,
-                                 L"VerticalPercentScrolled", 0));
-   *pyPos = result.intVal;
+   VERIFY_HRESULT(getIntProp(idispWindow, L"HorizontalPercentScrolled", pxPos));
+   VERIFY_HRESULT(getIntProp(idispWindow, L"VerticalPercentScrolled", pyPos));
 
 LErrExit:
    return errorHR;
@@ -285,6 +309,46 @@ Error WordViewer::setDocumentPosition(IDispatch* idispDoc, int xPos, int yPos)
    varPos.intVal = yPos;
    VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, NULL, idispWindow,
                                  L"VerticalPercentScrolled", 1, varPos));
+LErrExit:
+   return errorHR;
+}
+
+// Given a path, searches for the document in the Documents collection that
+// has the path given. The out parameter is set to that document's IDispatch
+// pointer, or NULL if no document with the path could be found.
+Error WordViewer::getDocumentByPath(QString& path, IDispatch** pidispDoc)
+{
+   Error errorHR = Success();
+   HRESULT hr = S_OK;
+
+   IDispatch* idispDocs = NULL;
+   IDispatch* idispDoc = NULL;
+   VARIANT varDocIdx;
+   VARIANT varResult;
+   int docCount = 0;
+
+   *pidispDoc = NULL;
+
+   VERIFY_HRESULT(getIDispatchProp(idispWord_, L"Documents", &idispDocs));
+   VERIFY_HRESULT(getIntProp(idispDocs, L"Count", &docCount));
+
+   varDocIdx.vt = VT_INT;
+   for (int i = 1; i <= docCount; i++)
+   {
+      VariantInit(&varResult);
+      varDocIdx.intVal = i;
+      VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, &varResult, idispDocs,
+                                    L"Item", 1, varDocIdx));
+      idispDoc = varResult.pdispVal;
+      VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYGET, &varResult, idispDoc,
+                                    L"FullName", 0));
+      if (path.toStdWString() == varResult.bstrVal)
+      {
+         *pidispDoc = idispDoc;
+         break;
+      }
+   }
+
 LErrExit:
    return errorHR;
 }

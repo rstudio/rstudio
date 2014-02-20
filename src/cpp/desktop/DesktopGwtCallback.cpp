@@ -343,7 +343,7 @@ void GwtCallback::showWordDoc(QString path)
 void GwtCallback::prepareShowWordDoc()
 {
 #ifdef Q_OS_WIN32
-   Error error = wordViewer_.closeActiveDocument();
+   Error error = wordViewer_.closeLastViewedDocument();
    if (error)
    {
       LOG_ERROR(error);
