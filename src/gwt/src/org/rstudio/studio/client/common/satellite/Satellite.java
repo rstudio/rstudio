@@ -120,6 +120,8 @@ public class Satellite implements HasCloseHandlers<Satellite>
       // export notifyReactivated callback
       $wnd.notifyRStudioSatelliteReactivated = $entry(
          function(params) {
+            if (params == null)
+               return;  
             satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyReactivated(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
          }
       ); 
