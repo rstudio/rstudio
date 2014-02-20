@@ -372,20 +372,24 @@ public class Workbench implements BusyHandler,
    
    private void checkForInitMessages()
    {
-      server_.getInitMessages(new ServerRequestCallback<String>() {
-         @Override
-         public void onResponseReceived(String message) 
-         {
-            if (message != null)
-               globalDisplay_.showWarningBar(false, message);
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            // ignore
-         }
-      });
+      // only check for init messages in server mode
+      if (!Desktop.isDesktop())
+      {
+         server_.getInitMessages(new ServerRequestCallback<String>() {
+            @Override
+            public void onResponseReceived(String message) 
+            {
+               if (message != null)
+                  globalDisplay_.showWarningBar(false, message);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               // ignore
+            }
+         });
+      }
    }
     
 
