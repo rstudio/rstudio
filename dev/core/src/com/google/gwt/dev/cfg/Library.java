@@ -74,6 +74,11 @@ public interface Library {
   String getLibraryName();
 
   /**
+   * Returns a mapping from compilation unit type source name to a list of nested type source names.
+   */
+  Multimap<String, String> getNestedNamesByCompilationUnitName();
+
+  /**
    * Returns a mapping from binding property name to a list of values which were made legal for that
    * binding property by this library. Facilitates partial generator execution.
    */

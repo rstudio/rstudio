@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -57,7 +57,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
 
   /**
    * Resolve a method signature.
-   * 
+   *
    * @param resolver
    * @param logger
    * @param method
@@ -126,7 +126,8 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
         continue;
       }
       // Try to resolve annotations, ignore any that fail.
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations =
+          new HashMap<Class<? extends Annotation>, Annotation>();
       resolver.resolveAnnotations(logger, argAnnotations[i],
           declaredAnnotations);
 
@@ -156,16 +157,14 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
   public SignatureVisitor visitClassBound() {
     JType[] bound = new JClassType[1];
     bounds.add(bound);
-    return new ResolveTypeSignature(resolver, resolver.getTypesByInternalName(),
-        logger, bound, typeParamLookup, null);
+    return new ResolveTypeSignature(resolver, logger, bound, typeParamLookup, null);
   }
 
   @Override
   public SignatureVisitor visitExceptionType() {
     JClassType[] exc = new JClassType[1];
     exceptions.add(exc);
-    return new ResolveTypeSignature(resolver, resolver.getTypesByInternalName(),
-        logger, exc, typeParamLookup, null);
+    return new ResolveTypeSignature(resolver, logger, exc, typeParamLookup, null);
   }
 
   @Override
@@ -179,22 +178,19 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
   public SignatureVisitor visitInterfaceBound() {
     JType[] bound = new JType[1];
     bounds.add(bound);
-    return new ResolveTypeSignature(resolver, resolver.getTypesByInternalName(),
-        logger, bound, typeParamLookup, null);
+    return new ResolveTypeSignature(resolver, logger, bound, typeParamLookup, null);
   }
 
   @Override
   public SignatureVisitor visitParameterType() {
     JType[] param = new JType[1];
     params.add(param);
-    return new ResolveTypeSignature(resolver, resolver.getTypesByInternalName(),
-        logger, param, typeParamLookup, null);
+    return new ResolveTypeSignature(resolver, logger, param, typeParamLookup, null);
   }
 
   @Override
   public SignatureVisitor visitReturnType() {
-    return new ResolveTypeSignature(resolver, resolver.getTypesByInternalName(),
-        logger, returnType, typeParamLookup, null);
+    return new ResolveTypeSignature(resolver, logger, returnType, typeParamLookup, null);
   }
 
   private void finishBound() {

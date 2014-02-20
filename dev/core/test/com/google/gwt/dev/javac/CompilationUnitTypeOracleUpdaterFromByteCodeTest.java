@@ -53,7 +53,9 @@ public class CompilationUnitTypeOracleUpdaterFromByteCodeTest extends TypeOracle
     }
     CompilationUnitTypeOracleUpdater typeOracleUpdater =
         new CompilationUnitTypeOracleUpdater(new TypeOracle());
-    typeOracleUpdater.addNewTypes(createTreeLogger(), typeDataList);
+    typeOracleUpdater.addNewTypesDontIndex(createTreeLogger(), typeDataList,
+        new MethodArgNamesLookup());
+    typeOracleUpdater.indexTypes();
     this.typeOracle = typeOracleUpdater.getTypeOracle();
     checkTypes(typeOracle.getTypes());
   }

@@ -79,17 +79,19 @@ public class CompilationState {
   /**
    * Our type oracle.
    */
-  private final TypeOracle typeOracle = new TypeOracle();
+  private final TypeOracle typeOracle;
 
   /**
    * Updates our type oracle.
    */
-  private final CompilationUnitTypeOracleUpdater typeOracleUpdater =
-      new CompilationUnitTypeOracleUpdater(typeOracle);
+  private final CompilationUnitTypeOracleUpdater typeOracleUpdater;
 
-  CompilationState(TreeLogger logger, Collection<CompilationUnit> units,
+  CompilationState(TreeLogger logger, TypeOracle typeOracle,
+      CompilationUnitTypeOracleUpdater typeOracleUpdater, Collection<CompilationUnit> units,
       CompileMoreLater compileMoreLater) {
     this.compileMoreLater = compileMoreLater;
+    this.typeOracle = typeOracle;
+    this.typeOracleUpdater = typeOracleUpdater;
     assimilateUnits(logger, units);
   }
 
@@ -178,5 +180,10 @@ public class CompilationState {
     CompilationUnitInvalidator.retainValidUnits(logger, units,
         compileMoreLater.getValidClasses());
     typeOracleUpdater.addNewUnits(logger, units);
+  }
+
+  // VisibleForTesting
+  public Map<String, CompiledClass> getValidClasses() {
+    return compileMoreLater.getValidClasses();
   }
 }

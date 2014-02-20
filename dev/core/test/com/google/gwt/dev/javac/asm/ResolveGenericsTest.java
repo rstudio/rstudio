@@ -91,11 +91,6 @@ public class ResolveGenericsTest extends AsmTestCase {
     }
 
     @Override
-    public Map<String, JRealClassType> getTypesByInternalName() {
-      return delegate.getTypesByInternalName();
-    }
-
-    @Override
     public TypeOracle getTypeOracle() {
       return delegate.getTypeOracle();
     }
@@ -152,6 +147,11 @@ public class ResolveGenericsTest extends AsmTestCase {
     public void setSuperClass(JRealClassType type, JClassType superType) {
       delegate.setSuperClass(type, superType);
     }
+
+    @Override
+    public JRealClassType findByInternalName(String typeInternalName) {
+      return delegate.findByInternalName(typeInternalName);
+    }
   }
 
   private static final TreeLogger failTreeLogger = new FailErrorTreeLogger();
@@ -191,10 +191,10 @@ public class ResolveGenericsTest extends AsmTestCase {
   private final JRealClassType testType;
 
   public ResolveGenericsTest() {
-    typeOracleUpdater = TypeOracleTestingUtils.buildStandardUpdaterWith(failTreeLogger);
+    typeOracleUpdater =
+        TypeOracleTestingUtils.buildStandardUpdaterWith(failTreeLogger);
     resolver = new MockResolver(typeOracleUpdater.getMockResolver());
     oracle = typeOracleUpdater.getTypeOracle();
-    createUnresolvedClass(String.class, null);
     testHandler = createUnresolvedClass(TestHandler.class, null);
     testHandler1 = createUnresolvedClass(TestHandler1.class, null);
     testOuter0 = createUnresolvedClass(TestOuter0.class, null);
@@ -301,11 +301,10 @@ public class ResolveGenericsTest extends AsmTestCase {
   }
 
   private void resolveClassSignature(JRealClassType type, String signature) {
-    Map<String, JRealClassType> typesByInternalName = resolver.getTypesByInternalName();
     TypeParameterLookup lookup = new TypeParameterLookup();
     lookup.pushEnclosingScopes(type);
     ResolveClassSignature classResolver =
-        new ResolveClassSignature(resolver, typesByInternalName, failTreeLogger, type, lookup);
+        new ResolveClassSignature(resolver, failTreeLogger, type, lookup);
     new SignatureReader(signature).accept(classResolver);
     classResolver.finish();
   }

@@ -33,7 +33,6 @@ import com.google.gwt.dev.util.Name;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Resolve a single parameterized type.
@@ -41,7 +40,6 @@ import java.util.Map;
 public class ResolveTypeSignature extends EmptySignatureVisitor {
 
   private final Resolver resolver;
-  private final Map<String, JRealClassType> typesByInternalName;
   private final TreeLogger logger;
   private final JType[] returnTypeRef;
   private final TypeParameterLookup lookup;
@@ -61,17 +59,15 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
    * @param lookup
    * @param enclosingClass
    */
-  public ResolveTypeSignature(Resolver resolver, Map<String, JRealClassType> typesByInternalName,
-      TreeLogger logger, JType[] returnTypeRef, TypeParameterLookup lookup,
-      JClassType enclosingClass) {
-    this(resolver, typesByInternalName, logger, returnTypeRef, lookup, enclosingClass, '=');
+  public ResolveTypeSignature(Resolver resolver, TreeLogger logger,
+      JType[] returnTypeRef, TypeParameterLookup lookup, JClassType enclosingClass) {
+    this(resolver, logger, returnTypeRef, lookup, enclosingClass, '=');
   }
 
-  public ResolveTypeSignature(Resolver resovler, Map<String, JRealClassType> typesByInternalName,
-      TreeLogger logger, JType[] returnTypeRef, TypeParameterLookup lookup,
-      JClassType enclosingClass, char wildcardMatch) {
+  public ResolveTypeSignature(Resolver resovler, TreeLogger logger,
+      JType[] returnTypeRef, TypeParameterLookup lookup, JClassType enclosingClass,
+      char wildcardMatch) {
     this.resolver = resovler;
-    this.typesByInternalName = typesByInternalName;
     this.logger = logger;
     this.returnTypeRef = returnTypeRef;
     this.lookup = lookup;
@@ -126,7 +122,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
   public void visitClassType(String internalName) {
     assert Name.isInternalName(internalName);
     outerClass = enclosingClass;
-    JRealClassType classType = typesByInternalName.get(internalName);
+    JRealClassType classType = resolver.findByInternalName(internalName);
     // TODO(jat): failures here are likely binary-only annotations or local
     // classes that have been elided from TypeOracle -- what should we do in
     // those cases? Currently we log an error and replace them with Object,
@@ -186,8 +182,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
     // not sure what the enclosing class of a type argument means, but
     // I haven't found a case where it is actually used while processing
     // the type argument.
-    return new ResolveTypeSignature(resolver, typesByInternalName, logger, arg,
-        lookup, null, wildcard);
+    return new ResolveTypeSignature(resolver, logger, arg, lookup, null, wildcard);
   }
 
   @Override

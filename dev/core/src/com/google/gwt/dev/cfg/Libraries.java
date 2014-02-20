@@ -55,6 +55,8 @@ public class Libraries {
   public static final String KEY_VALUE_SEPARATOR = "->";
   public static final String LIBRARY_NAME_ENTRY_NAME = "libraryName.txt";
   public static final String LINE_SEPARATOR = "\n";
+  public static final String NESTED_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME =
+      "nestedNamesByEnclosingName.txt";
   public static final String NEW_BINDING_PROPERTY_VALUES_BY_NAME_ENTRY_NAME =
       "newBindingPropertyValuesByName.txt";
   public static final String NEW_CONFIGURATION_PROPERTY_VALUES_BY_NAME_ENTRY_NAME =

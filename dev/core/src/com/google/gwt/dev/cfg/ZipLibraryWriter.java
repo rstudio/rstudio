@@ -21,10 +21,12 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jjs.CompilerIoException;
 import com.google.gwt.dev.jjs.PermutationResult;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -147,6 +149,7 @@ public class ZipLibraryWriter implements LibraryWriter {
         // Precompiled sources
         writeClassFilePaths();
         writeCompilationUnitTypeSourceNames();
+        writeNestedNamesByCompilationUnitName();
 
         // Resources
         writeBuildResources();
@@ -255,6 +258,11 @@ public class ZipLibraryWriter implements LibraryWriter {
           newConfigurationPropertyValuesByName);
     }
 
+    private void writeNestedNamesByCompilationUnitName() {
+      writeStringMultimap(Libraries.NESTED_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME,
+          nestedNamesByCompilationUnitName);
+    }
+
     private void writePublicResourcePaths() {
       writeStringSet(Libraries.PUBLIC_RESOURCE_PATHS_ENTRY_NAME, publicResourcesByPath.keySet());
     }
@@ -304,14 +312,14 @@ public class ZipLibraryWriter implements LibraryWriter {
         while (entryIterator.hasNext()) {
           Entry<String, Collection<String>> entry = entryIterator.next();
           String key = entry.getKey();
-          Preconditions.checkState(
-              isTriviallySerializable(key), "Nonserializable characters in key '%s'.", key);
+          assert isTriviallySerializable(key) : String.format(
+              "Nonserializable characters in key '%s'.", key);
           zipOutputStream.write(key.getBytes());
 
           boolean first = true;
           for (String value : entry.getValue()) {
-            Preconditions.checkState(
-                isTriviallySerializable(value), "Nonserializable characters in value '%s'.", value);
+            assert isTriviallySerializable(value) : String.format(
+                "Nonserializable characters in value '%s'.", value);
             if (first) {
               first = false;
               zipOutputStream.write(Libraries.KEY_VALUE_SEPARATOR.getBytes());
@@ -334,7 +342,7 @@ public class ZipLibraryWriter implements LibraryWriter {
       createZipEntry(entryName);
       try {
         for (String string : stringSet) {
-          Preconditions.checkState(isTriviallySerializable(string),
+          assert isTriviallySerializable(string) : String.format(
               "Nonserializable characters in string '%s'.", string);
         }
         zipOutputStream.write(Joiner.on(Libraries.LINE_SEPARATOR).join(stringSet).getBytes());
@@ -357,6 +365,7 @@ public class ZipLibraryWriter implements LibraryWriter {
   private Multimap<String, String> newBindingPropertyValuesByName = LinkedHashMultimap.create();
   private Multimap<String, String> newConfigurationPropertyValuesByName =
       LinkedHashMultimap.create();
+  private Multimap<String, String> nestedNamesByCompilationUnitName = LinkedHashMultimap.create();
   private ZipEntryBackedObject<PermutationResult> permutationResultHandle;
   private Map<String, Resource> publicResourcesByPath = Maps.newHashMap();
   private Set<String> ranGeneratorNames = Sets.newHashSet();
@@ -378,10 +387,9 @@ public class ZipLibraryWriter implements LibraryWriter {
 
   @Override
   public void addCompilationUnit(CompilationUnit compilationUnit) {
-    // The ResourceOracle system should already have deduped input source with colliding names, but
-    // it's best to be sure.
-    Preconditions.checkState(
-        !compilationUnitsByTypeSourceName.containsKey(compilationUnit.getTypeName()));
+    assert !compilationUnit.isError() : "Invalid units should be pruned before writing.";
+    assert !compilationUnitsByTypeSourceName.containsKey(
+        compilationUnit.getTypeName()) : "Units should be deduped before writing.";
 
     if (compilationUnit.isSuperSource()) {
       superSourceCompilationUnitTypeSourceNames.add(compilationUnit.getTypeName());
@@ -389,6 +397,15 @@ public class ZipLibraryWriter implements LibraryWriter {
       regularCompilationUnitTypeSourceNames.add(compilationUnit.getTypeName());
     }
     compilationUnitsByTypeSourceName.put(compilationUnit.getTypeName(), compilationUnit);
+
+    nestedNamesByCompilationUnitName.removeAll(compilationUnit.getTypeName());
+    for (JDeclaredType type : compilationUnit.getTypes()) {
+      String typeSourceName = BinaryName.toSourceName(type.getName());
+      // Anonymous classes have no sourceName and don't need to be indexed.
+      if (Name.isSourceName(typeSourceName)) {
+        nestedNamesByCompilationUnitName.put(compilationUnit.getTypeName(), typeSourceName);
+      }
+    }
 
     for (CompiledClass compiledClass : compilationUnit.getCompiledClasses()) {
       if (compilationUnit.isSuperSource()) {

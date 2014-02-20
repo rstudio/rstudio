@@ -23,6 +23,7 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.impl.ZipFileResource;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.base.Splitter;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -150,6 +151,10 @@ class ZipLibrary implements Library {
       return readString(Libraries.LIBRARY_NAME_ENTRY_NAME);
     }
 
+    private Multimap<String, String> readNestedNamesByCompilationUnitName() {
+      return readStringMultimap(Libraries.NESTED_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME);
+    }
+
     private Multimap<String, String> readNewBindingPropertyValuesByName() {
       return readStringMultimap(Libraries.NEW_BINDING_PROPERTY_VALUES_BY_NAME_ENTRY_NAME);
     }
@@ -251,6 +256,8 @@ class ZipLibrary implements Library {
   private Set<String> dependencyLibraryNames;
   private ArtifactSet generatedArtifacts;
   private String libraryName;
+  private Multimap<String, String> nestedNamesByCompilationUnitName;
+  private Multimap<String, String> compilationUnitNamesByNestedName = HashMultimap.create();
   private Multimap<String, String> newBindingPropertyValuesByName;
   private Multimap<String, String> newConfigurationPropertyValuesByName;
   private ZipEntryBackedObject<PermutationResult> permutationResultHandle;
@@ -296,6 +303,12 @@ class ZipLibrary implements Library {
   public CompilationUnit getCompilationUnitByTypeSourceName(String typeSourceName) {
     // If the type cache doesn't contain the type yet.
     if (!compilationUnitsByTypeSourceName.containsKey(typeSourceName)) {
+
+      // Ensure the nested name mapping has been read.
+      getNestedNamesByCompilationUnitName();
+      // Convert nested to enclosing type name.
+      typeSourceName = compilationUnitNamesByNestedName.get(typeSourceName).iterator().next();
+
       // and the library on disk doesn't contain the type at all.
       if (!containsCompilationUnit(typeSourceName)) {
         // cache the fact that the type isn't available on disk.
@@ -332,6 +345,16 @@ class ZipLibrary implements Library {
       libraryName = zipLibraryReader.readLibraryName();
     }
     return libraryName;
+  }
+
+  @Override
+  public Multimap<String, String> getNestedNamesByCompilationUnitName() {
+    if (nestedNamesByCompilationUnitName == null) {
+      nestedNamesByCompilationUnitName = Multimaps.unmodifiableMultimap(
+          zipLibraryReader.readNestedNamesByCompilationUnitName());
+      Multimaps.invertFrom(nestedNamesByCompilationUnitName, compilationUnitNamesByNestedName);
+    }
+    return nestedNamesByCompilationUnitName;
   }
 
   @Override

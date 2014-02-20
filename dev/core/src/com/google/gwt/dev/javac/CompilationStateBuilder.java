@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
+import com.google.gwt.dev.javac.typemodel.LibraryTypeOracle;
+import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
@@ -498,7 +500,20 @@ public class CompilationStateBuilder {
     Collection<CompilationUnit> resultUnits = compileMoreLater.compile(
         logger, compilerContext, builders, cachedUnits,
         CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE);
-    return new CompilationState(logger, resultUnits, compileMoreLater);
+
+    boolean compileMonolithic = compilerContext.shouldCompileMonolithic();
+    TypeOracle typeOracle = null;
+    CompilationUnitTypeOracleUpdater typeOracleUpdater = null;
+    if (compileMonolithic) {
+      typeOracle = new TypeOracle();
+      typeOracleUpdater = new CompilationUnitTypeOracleUpdater(typeOracle);
+    } else {
+      typeOracle = new LibraryTypeOracle(compilerContext);
+      typeOracleUpdater = ((LibraryTypeOracle) typeOracle).getTypeOracleUpdater();
+    }
+
+    return new CompilationState(logger, typeOracle, typeOracleUpdater, resultUnits,
+        compileMoreLater);
   }
 
   public CompilationState doBuildFrom(

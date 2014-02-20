@@ -62,8 +62,8 @@ public class RuntimeRebindRegistratorGenerator extends Generator {
       if (!runtimeRebindRuleSourcesByShortName.isEmpty()) {
         // Instantiates and registers each one.
         for (String runtimeRebindRuleShortName : runtimeRebindRuleSourcesByShortName.keySet()) {
-          out.println(String.format(
-              "    RuntimeRebinder.registerRuntimeRebindRule(new %s());", runtimeRebindRuleShortName));
+          out.println(String.format("    RuntimeRebinder.registerRuntimeRebindRule(new %s());",
+              runtimeRebindRuleShortName));
         }
       } else {
         out.println("    // There are no runtime rebind rules for this module.");

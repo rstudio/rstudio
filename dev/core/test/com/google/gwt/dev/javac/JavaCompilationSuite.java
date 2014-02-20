@@ -27,7 +27,7 @@ import junit.framework.TestSuite;
  * Tests script and resource injection.
  */
 public class JavaCompilationSuite {
-  
+
   static {
     /*
      * Required for OS X Leopard. This call ensures we have a valid context
@@ -36,7 +36,7 @@ public class JavaCompilationSuite {
      */
     BootStrapPlatform.applyPlatformHacks();
   }
-  
+
   public static Test suite() {
     TestSuite suite = new TestSuite(JavaCompilationSuite.class.getName());
 
@@ -58,6 +58,7 @@ public class JavaCompilationSuite {
     suite.addTestSuite(PersistentUnitCacheTest.class);
     suite.addTestSuite(CompilationUnitTypeOracleUpdaterFromByteCodeTest.class);
     suite.addTestSuite(CompilationUnitTypeOracleUpdaterFromSourceTest.class);
+    suite.addTestSuite(LibraryCompilationUnitTypeOracleUpdaterFromSourceTest.class);
 
     suite.addTestSuite(CollectClassDataTest.class);
     suite.addTestSuite(CollectReferencesVisitorTest.class);

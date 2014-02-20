@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -46,6 +49,7 @@ public class MockCompilationUnit extends CompilationUnit {
     this.resourceLocation = resourceLocation;
     contentId = new ContentId(typeName, source);
     lastModified = nextTimestamp.getAndIncrement();
+    types.add(new JClassType(SourceOrigin.UNKNOWN, typeName, false, true));
   }
 
   @Override
@@ -98,6 +102,13 @@ public class MockCompilationUnit extends CompilationUnit {
   @Override
   public boolean isError() {
     return false;
+  }
+
+  private List<JDeclaredType> types = Lists.newArrayList();
+
+  @Override
+  public List<JDeclaredType> getTypes() {
+    return types;
   }
 
   @Override

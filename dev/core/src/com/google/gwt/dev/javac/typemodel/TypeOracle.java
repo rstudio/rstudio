@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,10 +18,10 @@ package com.google.gwt.dev.javac.typemodel;
 import com.google.gwt.core.ext.typeinfo.BadTypeArgsException;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.ParseException;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.javac.JavaSourceParser;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.resource.Resource;
@@ -50,7 +50,7 @@ import java.util.Set;
  * identity relative to this type oracle instance. Consequently, you can
  * reliably compare object identity of any objects this type oracle produces.
  * For example, the following code relies on this stable identity guarantee:
- * 
+ *
  * <pre>
  * JClassType o = typeOracle.getJavaLangObject();
  * JClassType s1 = typeOracle.getType(&quot;java.lang.String&quot;);
@@ -60,9 +60,9 @@ import java.util.Set;
  * JParameterizedType ls = typeOracle.parse(&quot;java.util.List&lt;java.lang.String&gt;&quot;);
  * assert (ls.getTypeArgs()[0] == s1);
  * </pre>
- * 
+ *
  * </p>
- * 
+ *
  */
 public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
@@ -211,25 +211,25 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     if (0 != (bits & MOD_VOLATILE)) {
       strings.add("volatile");
     }
-    
+
     if (0 != (bits & MOD_TRANSIENT)) {
       strings.add("transient");
     }
-   
+
     return strings.toArray(NO_STRINGS);
   }
-  
+
   static String[] modifierBitsToNamesForMethod(int bits) {
     List<String> strings = modifierBitsToNamesForMethodsAndFields(bits);
-    
+
     if (0 != (bits & MOD_ABSTRACT)) {
       strings.add("abstract");
     }
-    
+
     if (0 != (bits & MOD_NATIVE)) {
       strings.add("native");
-    } 
-    
+    }
+
     return strings.toArray(NO_STRINGS);
   }
 
@@ -238,11 +238,11 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     System.arraycopy(extTypeArgs, 0, result, 0, extTypeArgs.length);
     return result;
   }
-  
+
   /**
    * Converts modifier bits, which are common to fields and methods, to
    * readable names.
-   * 
+   *
    * @see TypeOracle#modifierBitsToNamesForField(int) modifierBitsToNamesForField
    * @see TypeOracle#modifierBitsToNamesForMethod(int) modifierBitsToNamesForMethod
    */
@@ -340,7 +340,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   /**
    * Attempts to find a package by name. All requests for the same package
    * return the same package object.
-   * 
+   *
    * @return <code>null</code> if the package could not be found
    */
   @Override
@@ -349,25 +349,23 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   }
 
   /**
-   * Finds a class or interface given its fully-qualified name.
-   * 
-   * @param name fully-qualified class/interface name - for nested classes, use
-   *          its source name rather than its binary name (that is, use a "."
-   *          rather than a "$")
-   * 
+   * Finds a type (even nested ones) given its fully-qualified name.
+   *
+   * @param name fully-qualified class/interface name - for nested classes, use its source name
+   *          rather than its binary name (that is, use a "." rather than a "$")
+   *
    * @return <code>null</code> if the type is not found
    */
   @Override
   public JClassType findType(String name) {
-    assert Name.isSourceName(name);
+    assert Name.isSourceName(name) : name + " is not a source name";
     return allTypes.get(name);
   }
 
   /**
-   * Finds a type given its package-relative name. For nested classes, use its
-   * source name rather than its binary name (that is, use a "." rather than a
-   * "$").
-   * 
+   * Finds a type (even nested ones) given its package-relative name. For nested classes, use its
+   * source name rather than its binary name (that is, use a "." rather than a "$").
+   *
    * @return <code>null</code> if the type is not found
    */
   @Override
@@ -387,7 +385,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Gets the type object that represents an array of the specified type. The
    * returned type always has a stable identity so as to guarantee that all
    * calls to this method with the same argument return the same object.
-   * 
+   *
    * @param componentType the component type of the array, which can itself be
    *          an array type
    * @return a type object representing an array of the component type
@@ -439,7 +437,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   /**
    * Gets a package by name. All requests for the same package return the same
    * package object.
-   * 
+   *
    * @return the package object associated with the specified name
    */
   @Override
@@ -453,7 +451,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
   /**
    * Gets an array of all packages known to this type oracle.
-   * 
+   *
    * @return an array of packages, possibly of zero-length
    */
   @Override
@@ -466,7 +464,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * specified raw type and a set of type arguments. The returned type always
    * has a stable identity so as to guarantee that all calls to this method with
    * the same arguments return the same object.
-   * 
+   *
    * @param extGenericType a generic base class
    * @param extEnclosingType
    * @param extTypeArgs the type arguments bound to the specified generic type
@@ -531,7 +529,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * specified raw type and a set of type arguments. The returned type always
    * has a stable identity so as to guarantee that all calls to this method with
    * the same arguments return the same object.
-   * 
+   *
    * @param genericType a generic base class
    * @param typeArgs the type arguments bound to the specified generic type
    * @return a type object representing this particular binding of type
@@ -583,7 +581,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Finds a type given its fully qualified name. For nested classes, use its
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
-   * 
+   *
    * @return the specified type
    */
   @Override
@@ -600,7 +598,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Finds a type given its package-relative name. For nested classes, use its
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
-   * 
+   *
    * @return the specified type
    */
   @Override
@@ -615,7 +613,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
   /**
    * Gets all types, both top-level and nested.
-   * 
+   *
    * @return an array of types, possibly of zero length
    */
   @Override
@@ -674,7 +672,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * <li><code>List&lt;List&lt;Shape&gt;&gt;</code></li>
    * </ul>
    * </p>
-   * 
+   *
    * @param type a type signature to be parsed
    * @return the type object corresponding to the parse type
    */
@@ -689,8 +687,9 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     return parseImpl(type);
   }
 
-  void addNewType(JRealClassType newType) {
+  public void addNewType(JRealClassType newType) {
     String fqcn = newType.getQualifiedSourceName();
+    assert !allTypes.containsKey(fqcn) : "TypeOracle already contains " + fqcn;
     allTypes.put(fqcn, newType);
     recentTypes.add(newType);
   }
@@ -706,9 +705,8 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Called after a block of new types are added.
    */
   void finish() {
-    JClassType[] newTypes = recentTypes.toArray(new JClassType[recentTypes.size()]);
-    computeHierarchyRelationships(newTypes);
-    computeSingleJsoImplData(newTypes);
+    computeHierarchyRelationships();
+    computeSingleJsoImplData();
     recentTypes.clear();
   }
 
@@ -756,29 +754,29 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     return false;
   }
 
-  private void computeHierarchyRelationships(JClassType[] types) {
+  private void computeHierarchyRelationships() {
     // For each type, walk up its hierarchy chain and tell each supertype
     // about its subtype.
-    for (JClassType type : types) {
-      type.notifySuperTypes();
+    for (JClassType recentType : recentTypes) {
+      recentType.notifySuperTypes();
     }
   }
 
   /**
    * Updates the list of jsoSingleImpl types from recently-added types.
    */
-  private void computeSingleJsoImplData(JClassType... newTypes) {
+  private void computeSingleJsoImplData() {
     JClassType jsoType = findType(JSO_CLASS);
     if (jsoType == null) {
       return;
     }
 
-    for (JClassType type : newTypes) {
-      if (!jsoType.isAssignableFrom(type)) {
+    for (JClassType recentType : recentTypes) {
+      if (!jsoType.isAssignableFrom(recentType)) {
         continue;
       }
 
-      for (JClassType intf : JClassType.getFlattenedSuperTypeHierarchy(type)) {
+      for (JClassType intf : JClassType.getFlattenedSuperTypeHierarchy(recentType)) {
         // If intf refers to a JParameterizedType, we need to use its generic
         // base type instead.
         if (intf instanceof JParameterizedType) {
@@ -807,23 +805,23 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
          */
         JClassType previousType = jsoSingleImpls.get(intf);
         if (previousType == null) {
-          jsoSingleImpls.put(intf, type);
-        } else if (type.isAssignableFrom(previousType)) {
-          jsoSingleImpls.put(intf, type);
-        } else if (type.isAssignableTo(previousType)) {
+          jsoSingleImpls.put(intf, recentType);
+        } else if (recentType.isAssignableFrom(previousType)) {
+          jsoSingleImpls.put(intf, recentType);
+        } else if (recentType.isAssignableTo(previousType)) {
           // Do nothing
         } else {
           // Special case: If two JSOs implement the same interface, but they
           // share a common base class that fully implements that interface,
           // then choose that base class.
-          JClassType impl = findFullyImplementingBase(intf, type, previousType);
+          JClassType impl = findFullyImplementingBase(intf, recentType, previousType);
           if (impl != null) {
             jsoSingleImpls.put(intf, impl);
           } else {
             throw new InternalCompilerException("Already seen an implementing JSO subtype ("
                 + previousType.getName() + ") for interface (" + intf.getName()
-                + ") while examining newly-added type (" + type.getName() + "). This is a bug in "
-                + "JSORestrictionsChecker.");
+                + ") while examining newly-added type (" + recentType.getName()
+                + "). This is a bug in " + "JSORestrictionsChecker.");
           }
         }
       }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,6 @@ import com.google.gwt.dev.javac.typemodel.JTypeParameter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Signature visitor that resolves all the type variables and their bounds for a
@@ -34,7 +33,6 @@ import java.util.Map;
  */
 public class ResolveClassSignature extends EmptySignatureVisitor {
 
-  private final Map<String, JRealClassType> binaryMapper;
   private ArrayList<JType[]> bounds = null;
   private JTypeParameter currentParam = null;
   private final List<JType[]> interfaces = new ArrayList<JType[]>();
@@ -45,11 +43,9 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
   private final JType[] superClass = new JType[1];
   private final JRealClassType type;
 
-  public ResolveClassSignature(Resolver resolver,
-      Map<String, JRealClassType> binaryMapper, TreeLogger logger,
-      JRealClassType type, TypeParameterLookup lookup) {
+  public ResolveClassSignature(Resolver resolver, TreeLogger logger, JRealClassType type,
+      TypeParameterLookup lookup) {
     this.resolver = resolver;
-    this.binaryMapper = binaryMapper;
     this.logger = logger;
     this.type = type;
     this.lookup = lookup;
@@ -96,8 +92,7 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
   public SignatureVisitor visitClassBound() {
     JType[] bound = new JType[1];
     bounds.add(bound);
-    return new ResolveTypeSignature(resolver, binaryMapper, logger, bound,
-        lookup, null);
+    return new ResolveTypeSignature(resolver, logger, bound, lookup, null);
   }
 
   @Override
@@ -112,22 +107,19 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
     finish();
     JType[] intf = new JType[1];
     interfaces.add(intf);
-    return new ResolveTypeSignature(resolver, binaryMapper, logger, intf,
-        lookup, null);
+    return new ResolveTypeSignature(resolver, logger, intf, lookup, null);
   }
 
   @Override
   public SignatureVisitor visitInterfaceBound() {
     JType[] bound = new JType[1];
     bounds.add(bound);
-    return new ResolveTypeSignature(resolver, binaryMapper, logger, bound,
-        lookup, null);
+    return new ResolveTypeSignature(resolver, logger, bound, lookup, null);
   }
 
   @Override
   public SignatureVisitor visitSuperclass() {
     finish();
-    return new ResolveTypeSignature(resolver, binaryMapper, logger, superClass,
-        lookup, null);
+    return new ResolveTypeSignature(resolver, logger, superClass, lookup, null);
   }
 }

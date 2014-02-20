@@ -36,7 +36,9 @@ public interface LibraryWriter {
   void addBuildResource(Resource buildResource);
 
   /**
-   * Adds a previously compiled (but not yet unified) compilation unit.
+   * Adds a previously compiled (but not yet unified) compilation unit.<br />
+   *
+   * Provided compilation units are assumed to have already been validated.
    */
   void addCompilationUnit(CompilationUnit compilationUnit);
 

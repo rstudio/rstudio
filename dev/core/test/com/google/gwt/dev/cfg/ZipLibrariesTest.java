@@ -17,13 +17,18 @@ import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.MockCompilationUnit;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
+import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -65,6 +70,16 @@ public class ZipLibrariesTest extends TestCase {
         return true;
       }
     };
+    MockCompilationUnit expectedNestedTypeCompilationUnit =
+        new MockCompilationUnit("com.google.gwt.user.Outer", "superblah") {
+            @Override
+          public List<JDeclaredType> getTypes() {
+            return Lists.<JDeclaredType> newArrayList(
+                new JClassType(SourceOrigin.UNKNOWN, "com.google.gwt.user.Outer", false, true),
+                new JClassType(SourceOrigin.UNKNOWN, "com.google.gwt.user.Outer.Inner", false,
+                    true));
+          }
+        };
 
     // Put data in the library and save it.
     ZipLibraryWriter zipLibraryWriter = new ZipLibraryWriter(zipFile.getPath());
@@ -88,6 +103,7 @@ public class ZipLibrariesTest extends TestCase {
     zipLibraryWriter.addDependencyLibraryNames(expectedDependencyLibraryNames);
     zipLibraryWriter.addCompilationUnit(expectedCompilationUnit);
     zipLibraryWriter.addCompilationUnit(expectedSuperSourceCompilationUnit);
+    zipLibraryWriter.addCompilationUnit(expectedNestedTypeCompilationUnit);
     zipLibraryWriter.write();
 
     // Read data back from disk.
@@ -116,6 +132,8 @@ public class ZipLibrariesTest extends TestCase {
         actualSuperSourceCompilationUnit.getResourceLocation());
     assertEquals(expectedSuperSourceCompilationUnit.getTypeName(),
         actualSuperSourceCompilationUnit.getTypeName());
+    assertTrue(zipLibrary.getNestedNamesByCompilationUnitName().get("com.google.gwt.user.Outer")
+        .contains("com.google.gwt.user.Outer.Inner"));
   }
 
   public void testVersionNumberException() throws IOException {

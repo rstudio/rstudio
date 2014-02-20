@@ -16,6 +16,9 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.dev.cfg.LibraryGroup.DuplicateLibraryNameException;
 import com.google.gwt.dev.cfg.LibraryGroup.UnresolvedLibraryException;
 import com.google.gwt.dev.javac.MockCompilationUnit;
+import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -56,6 +59,32 @@ public class LibraryGroupTest extends TestCase {
     } catch (DuplicateLibraryNameException e) {
       // Expected behavior.
     }
+  }
+
+  public void testGetCompilationUnitByTypeNamesSeesAllNested() {
+    // Create a nested compilation units.
+    MockCompilationUnit nestedTypeCompilationUnit =
+        new MockCompilationUnit("com.google.gwt.user.Outer", "superblah") {
+            @Override
+          public List<JDeclaredType> getTypes() {
+            return Lists.<JDeclaredType> newArrayList(
+                new JClassType(SourceOrigin.UNKNOWN, "com.google.gwt.user.Outer", false, true),
+                new JClassType(SourceOrigin.UNKNOWN, "com.google.gwt.user.Outer.Inner", false,
+                    true));
+          }
+        };
+
+    // Create the library.
+    MockLibrary regularLibrary = new MockLibrary("LibraryA");
+    regularLibrary.addCompilationUnit(nestedTypeCompilationUnit);
+
+    // Stick it in a library group.
+    LibraryGroup libraryGroup =
+        LibraryGroup.fromLibraries(Lists.<Library> newArrayList(regularLibrary), true);
+
+    // Shows that get by name works for nested types.
+    assertEquals(nestedTypeCompilationUnit,
+        libraryGroup.getCompilationUnitByTypeSourceName("com.google.gwt.user.Outer.Inner"));
   }
 
   public void testGetCompilationUnitTypeSourceNamesSeesAll() {

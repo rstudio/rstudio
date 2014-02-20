@@ -483,6 +483,12 @@ public class LibraryGroup {
         for (String compilationUnitTypeSourceName :
             library.getRegularCompilationUnitTypeSourceNames()) {
           librariesByCompilationUnitTypeSourceName.put(compilationUnitTypeSourceName, library);
+
+          Collection<String> nestedTypeSourceNames =
+              library.getNestedNamesByCompilationUnitName().get(compilationUnitTypeSourceName);
+          for (String nestedTypeSourceName : nestedTypeSourceNames) {
+            librariesByCompilationUnitTypeSourceName.put(nestedTypeSourceName, library);
+          }
         }
       }
 
@@ -492,6 +498,12 @@ public class LibraryGroup {
             library.getSuperSourceCompilationUnitTypeSourceNames()) {
           librariesByCompilationUnitTypeSourceName.put(superSourceCompilationUnitTypeSourceName,
               library);
+
+          Collection<String> nestedTypeSourceNames = library.getNestedNamesByCompilationUnitName()
+              .get(superSourceCompilationUnitTypeSourceName);
+          for (String nestedTypeSourceName : nestedTypeSourceNames) {
+            librariesByCompilationUnitTypeSourceName.put(nestedTypeSourceName, library);
+          }
         }
       }
 

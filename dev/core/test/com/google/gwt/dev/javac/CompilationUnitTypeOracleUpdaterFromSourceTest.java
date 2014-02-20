@@ -149,11 +149,10 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
     resources.add(CU_Object);
     resources.add(CU_HasSyntaxErrors);
     buildTypeOracle();
-    JClassType[] types = typeOracle.getTypes();
-    // Only java.lang.Object should remain.
-    //
-    assertEquals(1, types.length);
-    assertEquals("java.lang.Object", types[0].getQualifiedSourceName());
+
+    assertNull(typeOracle.findType(CU_HasSyntaxErrors.getTypeName()));
+    assertNotNull(typeOracle.findType(CU_Object.getTypeName()));
+    assertEquals(1, typeOracle.getTypes().length);
   }
 
   public void testUnresolvedSymbols() throws TypeOracleException {
@@ -161,11 +160,11 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
     resources.add(CU_HasUnresolvedSymbols);
     resources.add(CU_RefsInfectedCompilationUnit);
     buildTypeOracle();
-    JClassType[] types = typeOracle.getTypes();
-    // Only java.lang.Object should remain.
-    //
-    assertEquals(1, types.length);
-    assertEquals("java.lang.Object", types[0].getQualifiedSourceName());
+
+    assertNull(typeOracle.findType(CU_HasUnresolvedSymbols.getTypeName()));
+    assertNull(typeOracle.findType(CU_RefsInfectedCompilationUnit.getTypeName()));
+    assertNotNull(typeOracle.findType(CU_Object.getTypeName()));
+    assertEquals(1, typeOracle.getTypes().length);
   }
 
   @Override
