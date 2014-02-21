@@ -74,11 +74,6 @@ public:
       return outputFile_;
    }
 
-   FilePath targetDirectory()
-   {
-      return outputFile_.parent();
-   }
-
    bool hasOutput()
    {
       return !isRunning_ && outputFile_.exists();
@@ -233,9 +228,20 @@ private:
       resultJson["succeeded"] = succeeded;
       resultJson["target_file"] =
             module_context::createAliasedPath(targetFile_);
-      resultJson["output_file"] =
-            module_context::createAliasedPath(outputFile_);
-      resultJson["output_url"] = kRmdOutput "/";
+
+      std::string outputFile = module_context::createAliasedPath(outputFile_);
+      resultJson["output_file"] = outputFile;
+
+      // A component of the output URL is the full (aliased) path of the output
+      // file, on which the renderer bases requests. This path is a URL
+      // component (see notes in handleRmdOutputRequest) and thus needs to
+      // arrive URL-escaped.
+      std::string outputUrl(kRmdOutput "/");
+      outputUrl.append(http::util::urlEncode(
+                       http::util::urlEncode(outputFile, false), false));
+      outputUrl.append("/");
+      resultJson["output_url"] = outputUrl;
+
       resultJson["output_format"] = outputFormat_;
 
       // default to no slide info
@@ -451,20 +457,37 @@ FilePath mathJaxDirectory()
    return mathJaxDir;
 }
 
+// Handles a request for RMarkdown output. This request embeds the name of
+// the file to be viewed as an encoded part of the URL. For instance, requests
+// to show render output for ~/abc.html and its resources look like:
+//
+// http://<server>/rmd_output/~%252Fabc.html/...
+//
+// Note that this requires two URL encoding passes at the origin, since a
+// a URL decoding pass is made on the whole URL before this handler is invoked.
 void handleRmdOutputRequest(const http::Request& request,
                             http::Response* pResponse)
 {
-   // make sure we're looking at the result of a successful render
-   if (!s_pCurrentRender_ ||
-       !s_pCurrentRender_->hasOutput())
+   std::string path = http::util::pathAfterPrefix(request,
+                                                  kRmdOutputLocation);
+
+   // Read the desired output file name from the URL
+   size_t pos = path.find('/', 1);
+   if (pos == std::string::npos)
    {
-      pResponse->setError(http::status::NotFound, "No render output available");
+      pResponse->setError(http::status::NotFound, "No output file found");
+      return;
+   }
+   std::string outputFile = http::util::urlDecode(path.substr(0, pos));
+   FilePath outputFilePath(module_context::resolveAliasedPath(outputFile));
+   if (!outputFilePath.exists())
+   {
+      pResponse->setError(http::status::NotFound, outputFile + " not found");
       return;
    }
 
-   // get the requested path
-   std::string path = http::util::pathAfterPrefix(request,
-                                                  kRmdOutputLocation);
+   // Strip the output file name from the URL
+   path = path.substr(pos + 1, path.length());
 
    if (path.empty())
    {
@@ -475,8 +498,7 @@ void handleRmdOutputRequest(const http::Request& request,
       // serve the contents of the file with MathJax URLs mapped to our
       // own resource handler
       MathjaxFilter mathjaxFilter;
-      pResponse->setFile(s_pCurrentRender_->outputFile(), request,
-                         mathjaxFilter);
+      pResponse->setFile(outputFilePath, request, mathjaxFilter);
    }
    else if (boost::algorithm::starts_with(path, kMathjaxSegment))
    {
@@ -489,7 +511,7 @@ void handleRmdOutputRequest(const http::Request& request,
    else
    {
       // serve a file resource from the output folder
-      FilePath filePath = s_pCurrentRender_->targetDirectory().childPath(path);
+      FilePath filePath = outputFilePath.parent().childPath(path);
       pResponse->setCacheableFile(filePath, request);
    }
 }
