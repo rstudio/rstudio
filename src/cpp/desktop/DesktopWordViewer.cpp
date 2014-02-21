@@ -139,6 +139,26 @@ Error WordViewer::showDocument(QString& path)
    Error errorHR = Success();
    HRESULT hr = S_OK;
 
+   // If we have an active IDispatch pointer to Word, check to see whether
+   // it has been closed
+   if (idispWord_ != NULL)
+   {
+      // Test the interface by looking up a known DISPID
+      const WCHAR* wstrQuit = L"Quit";
+      DISPID dispid;
+      hr = idispWord_->GetIDsOfNames(IID_NULL, const_cast<WCHAR**>(&wstrQuit),
+                                     1, LOCALE_USER_DEFAULT, &dispid);
+
+      // If the lookup fails, release this IDispatch pointer--it's stale.
+      // We'll CoCreate a new instance of Word below.
+      if (FAILED(hr) &&
+          SCODE_CODE(hr) == RPC_S_SERVER_UNAVAILABLE)
+      {
+         idispWord_->Release();
+         idispWord_ = NULL;
+      }
+   }
+
    // Get an IDispatch for the Word Application root object
    if (idispWord_ == NULL)
    {
