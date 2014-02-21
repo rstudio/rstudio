@@ -90,7 +90,7 @@ void ammendResults(const std::string& formatName,
    boost::regex reCode("^`{3,}.*$");
    boost::regex reTitledSlide("^#(#)?([^|\\{]+).*$");
    boost::regex reUntitledSlide("^(\\-{4,}|\\*{4,})\\w*$");
-   for (int i = 0; i<lines.size(); i++)
+   for (unsigned i = 0; i<lines.size(); i++)
    {
       // alias line
       const std::string& line = lines.at(i);
