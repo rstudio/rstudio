@@ -102,7 +102,7 @@ public class JMethodCall extends JExpression {
    * compilation.
    */
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method,
-      JType overrideReturnType) {
+      JType overrideReturnType, JExpression... args) {
     super(info);
     assert (method != null);
     assert (instance != null || method.isStatic());
@@ -110,6 +110,7 @@ public class JMethodCall extends JExpression {
     this.method = method;
     assert (overrideReturnType != null);
     this.overrideReturnType = overrideReturnType;
+    addArgs(args);
   }
 
   /**

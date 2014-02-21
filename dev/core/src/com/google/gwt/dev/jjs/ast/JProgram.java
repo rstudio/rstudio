@@ -633,7 +633,7 @@ public class JProgram extends JNode {
 
   public JCastMap getCastMap(JReferenceType referenceType) {
     // ensure jsonCastableTypeMaps has been initialized
-    // it might not have been if the CastNormalizer has not been run
+    // it might not have been if the ImplementCastsAndTypeChecks has not been run
     if (castMaps == null) {
       initTypeInfo(null);
     }
@@ -743,11 +743,7 @@ public class JProgram extends JNode {
     return JNullLiteral.INSTANCE;
   }
 
-  public JStringLiteral getLiteralString(SourceInfo sourceInfo, char[] s) {
-    return getLiteralString(sourceInfo, String.valueOf(s));
-  }
-
-  public JStringLiteral getLiteralString(SourceInfo sourceInfo, String s) {
+  public JStringLiteral getStringLiteral(SourceInfo sourceInfo, String s) {
     sourceInfo.addCorrelation(sourceInfo.getCorrelator().by(Literal.STRING));
     return new JStringLiteral(sourceInfo, s, typeString);
   }

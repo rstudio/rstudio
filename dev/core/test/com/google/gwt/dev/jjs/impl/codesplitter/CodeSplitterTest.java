@@ -36,7 +36,8 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
-import com.google.gwt.dev.jjs.impl.CastNormalizer;
+import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
+import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
@@ -520,7 +521,8 @@ public class CodeSplitterTest extends JJSTestBase {
             "com.google.gwt.lang.Exceptions");
     jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
 
-    CastNormalizer.exec(jProgram, false);
+    ComputeCastabilityInformation.exec(jProgram, false);
+    ImplementCastsAndTypeChecks.exec(jProgram, false);
     ArrayNormalizer.exec(jProgram, false);
     TypeTightener.exec(jProgram);
     MethodCallTightener.exec(jProgram);

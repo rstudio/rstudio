@@ -76,6 +76,16 @@ public abstract class OptimizerTestBase extends JJSTestBase {
       assertTrue(actualMethodSnippets.containsAll(expectedMethodSnippets));
     }
 
+    /**
+     * Check whether the resulting is equivalent to {@code expected}.<p>
+     *
+     * Caveat: {@code expected} needs to be syntactically and type correct (as it will be compiled).
+     * Normalizer passes for the most part are not expected to produce type correct transformations
+     * as at the end the will be translated into an untyped language.
+     * In some cases the test might be able to use this function even if it is testing a pass
+     * that does not produce type correct program by replacing some standard mocked resources
+     * (tweaking method parameter and return types).
+     */
     public void into(String... expected) throws UnableToCompleteException {
       // We can't compile expected code into non-main method.
       Preconditions.checkState(methodName.equals(MAIN_METHOD_NAME));

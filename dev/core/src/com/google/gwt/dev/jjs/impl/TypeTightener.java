@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -71,52 +71,52 @@ import java.util.Map;
  * the information to infer places where "tighter" (that is, more specific)
  * types can be inferred for locals, fields, parameters, and method return
  * types. We also optimize dynamic casts and instanceof operations.
- * 
+ *
  * Examples:
- * 
+ *
  * This declaration of variable foo:
- * 
+ *
  * <pre>
  * final List foo = new ArrayList();
  * </pre>
- * 
+ *
  * can be tightened from List to ArrayList because no type other than ArrayList
  * can ever be assigned to foo.
- * 
+ *
  * The return value of the method bar:
- * 
+ *
  * <pre>
- * Collection bar() { 
- *   return new LinkedHashSet; 
+ * Collection bar() {
+ *   return new LinkedHashSet;
  * }
  * </pre>
- * 
+ *
  * can be tightened from Collection to LinkedHashSet since it
  * will never return any other type.
- * 
+ *
  * By working in conjunction with {@link MethodCallTightener}, Type tightening
  * can eliminate generating run-time dispatch code for polymorphic methods.
- * 
+ *
  * Type flow occurs automatically in most JExpressions. But locals, fields,
  * parameters, and method return types serve as "way points" where type
  * information is fixed based on the declared type. Type tightening can be done
  * by analyzing the types "flowing" into each way point, and then updating the
  * declared type of the way point to be a more specific type than it had before.
- * 
+ *
  * Oddly, it's quite possible to tighten a variable to the Null type, which
  * means either the variable was never assigned, or it was only ever assigned
  * null. This is great for two reasons:
- * 
+ *
  * 1) Once a variable has been tightened to null, it will no longer impact the
  * variables that depend on it.
- * 
+ *
  * 2) It creates some very interesting opportunities to optimize later, since we
  * know statically that the value of the variable is always null.
- * 
+ *
  * Open issue: we don't handle recursion where a method passes (some of) its own
  * args to itself or returns its own call result. With our naive analysis, we
  * can't figure out that tightening might occur.
- * 
+ *
  * Type flow is not supported for primitive types, only reference types.
  */
 public class TypeTightener {
@@ -187,7 +187,7 @@ public class TypeTightener {
    * of assignment). Method return types receive type flow from their contained
    * return statements, plus the return type of any methods that
    * override/implement them.
-   * 
+   *
    * Note that we only have to run this pass ONCE to record the relationships,
    * because type tightening never changes any relationships, only the types of
    * the things related. In my original implementation, I had naively mapped
@@ -357,7 +357,7 @@ public class TypeTightener {
    * Wherever possible, use the type flow information recorded by RecordVisitor
    * to change the declared type of a field, local, parameter, or method to a
    * more specific type.
-   * 
+   *
    * Also optimize dynamic casts and instanceof operations where possible.
    */
   public class TightenTypesVisitor extends JModVisitor {
@@ -365,12 +365,12 @@ public class TypeTightener {
     /**
      * Tries to determine a specific concrete type for the cast, then either
      * removes the cast, or tightens the cast to a narrower type.
-     * 
+     *
      * If static analysis determines that a cast is not possible, swap in a cast
      * to a null type. This will later be normalized into throwing an
      * Exception.
-     * 
-     * @see CastNormalizer
+     *
+     * @see ImplementCastsAndTypeChecks
      */
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
@@ -885,7 +885,7 @@ public class TypeTightener {
      * We must iterate multiple times because each way point we tighten creates
      * more opportunities to do additional tightening for the things that depend
      * on it.
-     * 
+     *
      * TODO(zundel): See if we can remove this loop, or otherwise run to less
      * than completion if we compile with an option for less than 100% optimized
      * output.

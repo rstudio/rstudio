@@ -66,7 +66,8 @@ import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.AstDumper;
-import com.google.gwt.dev.jjs.impl.CastNormalizer;
+import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
+import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
@@ -92,6 +93,7 @@ import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferencesIntoIntLiterals;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
+import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
@@ -702,7 +704,9 @@ public abstract class JavaToJavaScriptCompiler {
       PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
       LongCastNormalizer.exec(jprogram);
       LongEmulationNormalizer.exec(jprogram);
-      CastNormalizer.exec(jprogram, options.isCastCheckingDisabled());
+      TypeCoercionNormalizer.exec(jprogram);
+      ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+      ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled());
       ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
       EqualityNormalizer.exec(jprogram);
     }
@@ -1020,7 +1024,7 @@ public abstract class JavaToJavaScriptCompiler {
 
       JMethodCall availableCall = new JMethodCall(info, null, isStatsAvailableMethod);
       JMethodCall onModuleStartCall = new JMethodCall(info, null, onModuleStartMethod);
-      onModuleStartCall.addArg(jprogram.getLiteralString(info, mainClassName));
+      onModuleStartCall.addArg(jprogram.getStringLiteral(info, mainClassName));
 
       JBinaryOperation amp = new JBinaryOperation(
           info, jprogram.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,

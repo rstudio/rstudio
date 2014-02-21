@@ -42,7 +42,7 @@ import java.util.Collections;
 
 /**
  * Replace array accesses and instantiations with calls to the Array class.
- * Depends on {@link CompoundAssignmentNormalizer} and {@link CastNormalizer}
+ * Depends on {@link CompoundAssignmentNormalizer} and {@link ImplementCastsAndTypeChecks}
  * having already run.
  */
 public class ArrayNormalizer {

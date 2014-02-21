@@ -183,8 +183,8 @@ public class ImplementClassLiteralsAsFields {
     assert method != null;
 
     JMethodCall call = new JMethodCall(info, null, method);
-    JStringLiteral packageName = program.getLiteralString(info, getPackageName(typeName));
-    JStringLiteral className = program.getLiteralString(info, getClassName(typeName));
+    JStringLiteral packageName = program.getStringLiteral(info, getPackageName(typeName));
+    JStringLiteral className = program.getStringLiteral(info, getClassName(typeName));
     call.addArgs(packageName, className);
 
     if (type instanceof JArrayType || type instanceof JClassType) {
@@ -193,7 +193,7 @@ public class ImplementClassLiteralsAsFields {
           (JReferenceType) type));
     } else if (type instanceof JPrimitiveType) {
       // And give primitive types an illegal, though meaningful, value
-      call.addArg(program.getLiteralString(info, " " + type.getJavahSignatureName()));
+      call.addArg(program.getStringLiteral(info, " " + type.getJavahSignatureName()));
     }
 
     if (type instanceof JClassType) {

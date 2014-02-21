@@ -752,7 +752,7 @@ public class DeadCodeElimination {
       if (lhs instanceof JValueLiteral && rhs instanceof JValueLiteral) {
         Object lhsObj = ((JValueLiteral) lhs).getValueObj();
         Object rhsObj = ((JValueLiteral) rhs).getValueObj();
-        ctx.replaceMe(program.getLiteralString(info, String.valueOf(lhsObj)
+        ctx.replaceMe(program.getStringLiteral(info, String.valueOf(lhsObj)
             + String.valueOf(rhsObj)));
       }
     }
@@ -1661,7 +1661,7 @@ public class DeadCodeElimination {
         }
         Object result = actual.invoke(instance, paramValues);
         if (result instanceof String) {
-          ctx.replaceMe(program.getLiteralString(x.getSourceInfo(), (String) result));
+          ctx.replaceMe(program.getStringLiteral(x.getSourceInfo(), (String) result));
         } else if (result instanceof Boolean) {
           ctx.replaceMe(program.getLiteralBoolean(((Boolean) result).booleanValue()));
         } else if (result instanceof Character) {
