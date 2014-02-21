@@ -26,6 +26,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -368,6 +369,12 @@ void initPandocPath()
       LOG_ERROR(error);
 }
 
+bool haveMarkdownToHTMLOption()
+{
+   SEXP markdownToHTMLOption = r::options::getOption("rstudio.markdownToHTML");
+   return !r::sexp::isNull(markdownToHTMLOption);
+}
+
 // when the RMarkdown package is installed, give .Rmd files the extended type
 // "rmarkdown", unless they contain a special marker that indicates we should
 // use the previous rendering strategy
@@ -377,9 +384,10 @@ std::string onDetectRmdSourceType(
    if (!pDoc->path().empty())
    {
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
-      if (filePath.extensionLowerCase() == ".rmd" &&
+      if ((filePath.extensionLowerCase() == ".rmd") &&
           !boost::algorithm::icontains(pDoc->contents(),
-                                       "<!-- rmarkdown v1 -->"))
+                                       "<!-- rmarkdown v1 -->") &&
+          !haveMarkdownToHTMLOption())
       {
          return "rmarkdown";
       }
