@@ -308,6 +308,84 @@ public class Style extends JavaScriptObject {
       public String getCssName() {
         return DISPLAY_INLINE_BLOCK;
       }
+    },
+    INLINE_TABLE {
+      @Override
+      public String getCssName() {
+        return DISPLAY_INLINE_TABLE;
+      }
+    },
+    LIST_ITEM {
+      @Override
+      public String getCssName() {
+        return DISPLAY_LIST_ITEM;
+      }
+    },
+    RUN_IN {
+      @Override
+      public String getCssName() {
+        return DISPLAY_RUN_IN;
+      }
+    },
+    TABLE {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE;
+      }
+    },
+    TABLE_CAPTION {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE_CAPTION;
+      }
+    },
+    TABLE_COLUMN_GROUP {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE_COLUMN_GROUP;
+      }
+    },
+    TABLE_HEADER_GROUP {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE_HEADER_GROUP;
+      }
+    },
+    TABLE_FOOTER_GROUP {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE_FOOTER_GROUP;
+      }
+    },
+    TABLE_ROW_GROUP {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE_ROW_GROUP;
+      }
+    },
+    TABLE_CELL {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE_CELL;
+      }
+    },
+    TABLE_COLUMN {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE_COLUMN;
+      }
+    },
+    TABLE_ROW {
+      @Override
+      public String getCssName() {
+        return DISPLAY_TABLE_ROW;
+      }
+    },
+    INITIAL {
+      @Override
+      public String getCssName() {
+        return DISPLAY_INITIAL;
+      }
     };
     @Override
     public abstract String getCssName();
@@ -927,6 +1005,19 @@ public class Style extends JavaScriptObject {
   private static final String DISPLAY_INLINE = "inline";
   private static final String DISPLAY_BLOCK = "block";
   private static final String DISPLAY_NONE = "none";
+  private static final String DISPLAY_INLINE_TABLE = "inline-table";
+  private static final String DISPLAY_LIST_ITEM = "list-item";
+  private static final String DISPLAY_RUN_IN = "run-in";
+  private static final String DISPLAY_TABLE = "table";
+  private static final String DISPLAY_TABLE_CAPTION = "table-caption";
+  private static final String DISPLAY_TABLE_COLUMN_GROUP = "table-column-group";
+  private static final String DISPLAY_TABLE_HEADER_GROUP = "table-header-group";
+  private static final String DISPLAY_TABLE_FOOTER_GROUP = "table-footer-group";
+  private static final String DISPLAY_TABLE_ROW_GROUP = "table-row-group";
+  private static final String DISPLAY_TABLE_CELL = "table-cell";
+  private static final String DISPLAY_TABLE_COLUMN = "table-column";
+  private static final String DISPLAY_TABLE_ROW = "table-row";
+  private static final String DISPLAY_INITIAL = "initial";
 
   private static final String FLOAT_LEFT = "left";
   private static final String FLOAT_RIGHT = "right";
