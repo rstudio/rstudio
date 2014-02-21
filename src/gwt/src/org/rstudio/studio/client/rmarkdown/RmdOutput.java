@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -82,14 +83,22 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       RmdRenderResult result = event.getResult();
       if (!result.getSucceeded())
          return;
-      
-      if (result.getFormatName().equals(RmdOutputFormat.OUTPUT_PDF_DOCUMENT))
+      String format = result.getFormatName(); 
+      if (format.equals(RmdOutputFormat.OUTPUT_PDF_DOCUMENT))
       {
-         // show in-browser for server mode, open the file in desktop mode
-         globalDisplay_.showHtmlFile(result.getOutputFile());
+         // if there's a registered Synctex-compatible viewer, use that 
+         if (SynctexUtils.getDesktopSynctexViewer().length() > 0)
+         {
+            Desktop.getFrame().externalSynctexPreview(
+                  result.getOutputFile(), 1);
+         }
+         else
+         {
+            // show in-browser for server mode, open the file in desktop mode
+            globalDisplay_.showHtmlFile(result.getOutputFile());
+         }
       }
-      else if (result.getFormat().getFormatName().equals(
-            RmdOutputFormat.OUTPUT_WORD_DOCUMENT))
+      else if (format.equals(RmdOutputFormat.OUTPUT_WORD_DOCUMENT))
       {
          globalDisplay_.showWordDoc(result.getOutputFile());
       }
