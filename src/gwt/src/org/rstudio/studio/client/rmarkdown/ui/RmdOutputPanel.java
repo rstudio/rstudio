@@ -19,6 +19,9 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
@@ -28,13 +31,18 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.AnchorableFrame;
+import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FindTextBox;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -83,6 +91,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
       publishButtonSeparator_.setVisible(showPublish);
+      
+      // find text box
+      boolean showFind = params.getResult().isHtml() && 
+                         !params.getResult().isHtmlPresentation();
+      findTextBox_.setVisible(showFind);
+      findSeparator_.setVisible(showFind);
       
       // when refreshing, reapply the current scroll position and anchor
       scrollPosition_ = refresh ? 
@@ -145,6 +159,51 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       publishButton_ = commands.publishHTML().createToolbarButton(false);
       toolbar.addLeftWidget(publishButton_);
 
+      findTextBox_ = new FindTextBox("Find");
+      findTextBox_.setIconVisible(true);
+      findTextBox_.setOverrideWidth(120);
+      findTextBox_.getElement().getStyle().setMarginRight(6, Unit.PX);
+      toolbar.addRightWidget(findTextBox_);
+      
+      findTextBox_.addKeyDownHandler(new KeyDownHandler() {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            // enter key triggers a find
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               findInTopic(findTextBox_.getValue().trim(), findTextBox_);
+               findTextBox_.focus();
+            }
+            else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+            {
+               findTextBox_.setValue("");
+            }       
+         }
+         
+         private void findInTopic(String term, CanFocus findInputSource)
+         {
+            // get content window
+            WindowEx contentWindow = getFrame().getWindow();
+            if (contentWindow == null)
+               return;
+                
+            if (!contentWindow.find(term, false, false, true, false))
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                     MessageDialog.INFO,
+                     "Find in Page", 
+                     "No occurences found",
+                     findInputSource);
+            }     
+         }
+         
+      });
+      toolbar.addRightWidget(findTextBox_);
+      findSeparator_ = toolbar.addRightSeparator();
+      
       toolbar.addRightWidget(commands.viewerRefresh().createToolbarButton());
    }
    
@@ -337,6 +396,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    
    private FileSystemItem targetFile_ = null;
    private SlideNavigation slideNavigation_ = null;
+   
+   private FindTextBox findTextBox_;
+   private Widget findSeparator_;
    
    private HandlerManager handlerManager_ = new HandlerManager(this);
 }
