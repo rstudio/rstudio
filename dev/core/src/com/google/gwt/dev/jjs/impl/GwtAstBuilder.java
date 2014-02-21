@@ -1517,8 +1517,7 @@ public class GwtAstBuilder {
       }
 
       // add exception variable
-      JLocal exceptionVar =
-          createTempLocal(info, "$primary_ex", javaLangThrowable, false, curMethod.body);
+      JLocal exceptionVar = createLocalThrowable(info, "$primary_ex");
 
       innerBlock.addStmt(makeDeclaration(info, exceptionVar, JNullLiteral.INSTANCE));
 
@@ -1529,8 +1528,7 @@ public class GwtAstBuilder {
       clauseTypes.add(javaLangThrowable);
 
       //     add catch exception variable.
-      JLocal catchVar =
-          createTempLocal(info, "$caught_ex", javaLangThrowable, false, curMethod.body);
+      JLocal catchVar = createLocalThrowable(info, "$caught_ex");
 
       JBlock catchBlock = new JBlock(info);
       catchBlock.addStmt(createAssignment(info, javaLangThrowable, exceptionVar, catchVar));
@@ -1542,8 +1540,8 @@ public class GwtAstBuilder {
       // create finally block
       JBlock finallyBlock = new JBlock(info);
       for (int i = x.resources.length - 1; i >= 0; i--) {
-        finallyBlock.addStmt(createCloseBlockFor(info, x.resources[i],
-            resourceVariables.get(i), exceptionVar, scope));
+        finallyBlock.addStmt(createCloseBlockFor(info,
+            resourceVariables.get(i), exceptionVar));
       }
 
       // if (exception != null) throw exception
@@ -1558,15 +1556,14 @@ public class GwtAstBuilder {
       return innerBlock;
     }
 
-    private JLocal createTempLocal(SourceInfo info, String prefix, JType type, boolean isFinal,
-        JMethodBody enclosingMethodBody) {
+    private JLocal createLocalThrowable(SourceInfo info, String prefix) {
       int index = curMethod.body.getLocals().size() + 1;
       return JProgram.createLocal(info, prefix + "_" + index,
             javaLangThrowable, false, curMethod.body);
     }
 
-    private JStatement createCloseBlockFor(final SourceInfo info, final LocalDeclaration resource,
-        JLocal resourceVar, JLocal exceptionVar, BlockScope scope) {
+    private JStatement createCloseBlockFor(final SourceInfo info,
+        JLocal resourceVar, JLocal exceptionVar) {
       /**
        * Create the following code:
        *
@@ -2947,8 +2944,6 @@ public class GwtAstBuilder {
   private static final char[] VALUE = "Value".toCharArray();
   private static final char[] VALUE_OF = "valueOf".toCharArray();
   private static final char[] VALUES = "values".toCharArray();
-  private static final char[] CLOSE = "close".toCharArray();
-  private static final char[] ADDSUPRESSED = "addSuppressed".toCharArray();
 
   static {
     InternalCompilerException.preload();

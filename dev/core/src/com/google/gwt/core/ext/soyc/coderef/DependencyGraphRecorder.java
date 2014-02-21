@@ -34,7 +34,6 @@ import java.util.Map;
 public class DependencyGraphRecorder extends DependencyRecorder {
 
   private Map<String, ClassDescriptor> codeModel = Maps.newTreeMap();
-  private String currentGraph;
   private int nextUniqueId = 0;
   private JProgram jProgram;
 
@@ -58,8 +57,6 @@ public class DependencyGraphRecorder extends DependencyRecorder {
   @Override
   public void startDependencyGraph(String name, String extendz) {
     super.startDependencyGraph(name, extendz);
-
-    currentGraph = name;
   }
 
   @Override

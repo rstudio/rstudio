@@ -306,8 +306,6 @@ public class JProgram extends JNode {
   // wrap up .add here, and filter out forced source
   private Set<String> referenceOnlyTypeNames = Sets.newHashSet();
 
-  private Map<JReferenceType, Integer> queryIdsByType;
-
   /**
    * Filled in by ReplaceRunAsync, once the numbers are known.
    */

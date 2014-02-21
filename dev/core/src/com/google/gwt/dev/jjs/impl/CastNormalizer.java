@@ -558,8 +558,6 @@ public class CastNormalizer {
 
   private final JProgram program;
 
-  private Map<JReferenceType, Integer> queryIdsByType;
-
   private CastNormalizer(JProgram program, boolean disableCastChecking) {
     this.program = program;
     this.disableCastChecking = disableCastChecking;

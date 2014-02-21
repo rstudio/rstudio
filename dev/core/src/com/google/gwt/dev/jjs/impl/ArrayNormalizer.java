@@ -161,7 +161,7 @@ public class ArrayNormalizer {
       JRuntimeTypeReference arrayElementRuntimeTypeReference =
           getElementRuntimeTypeReference(sourceInfo, arrayType);
       JType elementType = arrayType.getElementType();
-      JIntLiteral elementTypeClass = JIntLiteral.get(getTypeClass(arrayType.getElementType()));
+      JIntLiteral elementTypeClass = JIntLiteral.get(getTypeClass(elementType));
       JExpression dim = x.dims.get(0);
       call.addArgs(classLit, castableTypeMap, arrayElementRuntimeTypeReference, dim,
           elementTypeClass);
