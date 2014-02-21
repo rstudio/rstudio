@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public abstract class SatelliteFramePanel <T extends RStudioFrame>
@@ -51,9 +52,10 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
       
       appFrame_ = createAppFrame(url);
       appFrame_.setSize("100%", "100%");
-      rootPanel_.add(appFrame_);
-      rootPanel_.setWidgetLeftRight(appFrame_,  0, Unit.PX, 0, Unit.PX);
-      rootPanel_.setWidgetTopBottom(appFrame_, toolbar_.getHeight()+1, Unit.PX, 0, Unit.PX);
+      glassPanel_ = new AutoGlassPanel(appFrame_);
+      rootPanel_.add(glassPanel_);
+      rootPanel_.setWidgetLeftRight(glassPanel_,  0, Unit.PX, 0, Unit.PX);
+      rootPanel_.setWidgetTopBottom(glassPanel_, toolbar_.getHeight()+1, Unit.PX, 0, Unit.PX);
    }
    
    protected T getFrame()
@@ -83,4 +85,5 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    private LayoutPanel rootPanel_;
    private Toolbar toolbar_;
    private T appFrame_;
+   private AutoGlassPanel glassPanel_;
 }
