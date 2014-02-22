@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -153,7 +154,11 @@ public class PrecompressLinker extends AbstractLinker {
 
         InputStream originalBytes = art.getContents(compressBranch);
         ByteArrayOutputStream compressedBytes = new ByteArrayOutputStream();
-        GZIPOutputStream gzip = new GZIPOutputStream(compressedBytes);
+        GZIPOutputStream gzip = new GZIPOutputStream(compressedBytes) {
+            {
+              def.setLevel(Deflater.BEST_COMPRESSION);
+            }
+        };
 
         int originalLength = 0;
         int n;
