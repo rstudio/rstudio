@@ -673,7 +673,7 @@ Error createNotebook(const json::JsonRpcRequest& request,
 
       std::string contents;
       contents.append(prefix);
-      contents.append("`r opts_chunk$set(tidy=FALSE, comment=NA, "
+      contents.append("`r knitr::opts_chunk$set(tidy=FALSE, comment=NA, "
                       "fig.path='" +std::string(FIGURE_DIR) + "/')`");
       contents.append("\n");
       contents.append("```{r}\n");

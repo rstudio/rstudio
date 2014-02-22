@@ -3120,19 +3120,51 @@ public class TextEditingTarget implements
       {
          return;
       }
-
-      doHtmlPreview(new Provider<HTMLPreviewParams>()
+      
+      
+      if (session_.getSessionInfo().getRMarkdownInstalled())
       {
-         @Override
-         public HTMLPreviewParams get()
+         saveThenExecute(null, new Command()
          {
-            return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
-                                            docUpdateSentinel_.getEncoding(),
-                                            true,
-                                            true,
-                                            true);
-         }
-      });
+            @Override
+            public void execute()
+            {
+               generateNotebook(new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     // notebook path for script path
+                     FileSystemItem script = FileSystemItem.createFile(
+                                             docUpdateSentinel_.getPath());
+                     FileSystemItem scriptDir = script.getParentPath();
+                     String notebook = scriptDir.completePath(
+                                                   script.getStem() + ".Rmd");
+                     
+                     events_.fireEvent(new RenderRmdEvent(
+                                           notebook,
+                                           1,
+                                           docUpdateSentinel_.getEncoding()));
+                  }
+               });
+            }
+         });
+      }
+      else
+      {
+         doHtmlPreview(new Provider<HTMLPreviewParams>()
+         {
+            @Override
+            public HTMLPreviewParams get()
+            {
+               return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
+                                               docUpdateSentinel_.getEncoding(),
+                                               true,
+                                               true,
+                                               true);
+            }
+         });
+      }
    }
 
    @Handler
