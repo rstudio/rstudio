@@ -113,7 +113,7 @@ public class PaneManager
                       @Named("Viewer") final WorkbenchTab viewerTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
-                      @Named("Knit") final WorkbenchTab renderRmdTab,
+                      @Named("R Markdown") final WorkbenchTab renderRmdTab,
                       final FindOutputTab findOutputTab)
    {
       eventBus_ = eventBus;

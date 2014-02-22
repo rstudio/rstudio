@@ -48,7 +48,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
                                    GlobalDisplay globalDisplay,
                                    Commands commands)
    {
-      super(outputFactory.create("Knit", 
+      super(outputFactory.create("R Markdown", 
                                  "View the R Markdown render log"));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
@@ -77,9 +77,9 @@ public class RenderRmdOutputPresenter extends BasePresenter
       if (renderRunning_)
       {
         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-              "Terminate Knit", 
-              "The knit for '" + targetFile_ + "' is in progress. Do you " +
-              "want to close the tab and stop the knit?", false, 
+              "Stop R Markdown Rendering", 
+              "The rendering of '" + targetFile_ + "' is in progress. Do you "+
+              "want to terminate and close the tab?", false, 
               new Operation()
               {
                  @Override
@@ -90,7 +90,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
                     terminateRenderRmd();
                     onConfirmed.execute();
                  }
-              }, null, null, "Stop Knit", "Cancel", true);
+              }, null, null, "Stop", "Cancel", true);
       }
       else
       {

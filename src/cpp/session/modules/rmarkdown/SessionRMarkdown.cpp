@@ -384,7 +384,8 @@ std::string onDetectRmdSourceType(
    if (!pDoc->path().empty())
    {
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
-      if ((filePath.extensionLowerCase() == ".rmd") &&
+      if ((filePath.extensionLowerCase() == ".rmd" ||
+           filePath.extensionLowerCase() == ".md") &&
           !boost::algorithm::icontains(pDoc->contents(),
                                        "<!-- rmarkdown v1 -->") &&
           !haveMarkdownToHTMLOption())

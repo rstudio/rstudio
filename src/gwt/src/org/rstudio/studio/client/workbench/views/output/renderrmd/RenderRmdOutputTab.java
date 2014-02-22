@@ -46,7 +46,7 @@ public class RenderRmdOutputTab extends DelayLoadWorkbenchTab<RenderRmdOutputPre
                              EventBus events,
                              final Session session)
    {
-      super("Knit", shim);
+      super("R Markdown", shim);
       shim_ = shim;
 
       events.addHandler(RenderRmdEvent.TYPE, shim);
