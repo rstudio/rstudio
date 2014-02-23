@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 
 /**
  * Test various collections.
@@ -207,6 +208,41 @@ public class CollectionsTest extends EmulTestBase {
     List<Integer> b = createRandomList();
     Collections.fill(b, null);
     assertEquals(new Object[b.size()], b);
+  }
+
+  public void testNewSetFromMap() {
+    Object o1 = new Object();
+    Object o2 = new Object();
+    Object o3 = new Object();
+
+    try {
+      HashMap<Object, Boolean> nonEmptyMap = new HashMap<Object, Boolean>();
+      nonEmptyMap.put(o1, true);
+      Collections.newSetFromMap(nonEmptyMap);
+      fail();
+    } catch (IllegalArgumentException e) {
+    }
+
+    Set<Object> set = Collections.newSetFromMap(new HashMap<Object, Boolean>());
+
+    set.add(o1);
+    assertTrue(set.contains(o1));
+    assertEquals(1, set.size());
+
+    set.add(o2);
+    assertTrue(set.contains(o2));
+    assertEquals(2, set.size());
+
+    set.add(o3);
+    assertTrue(set.contains(o3));
+    assertEquals(3, set.size());
+
+    set.remove(o2);
+    assertFalse(set.contains(o2));
+    assertEquals(2, set.size());
+
+    set.clear();
+    assertEquals(0, set.size());
   }
 
   public void testReverse() {
