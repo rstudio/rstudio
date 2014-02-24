@@ -314,8 +314,11 @@ public class JsoDevirtualizer {
       return methodByDevirtualMethod.get(method);
     }
 
-    JClassType jsoType = program.getJavaScriptObject();
+    // Add devirtualized methods to the right JSO class so that JavaScriptObject does not need
+    // to be special treated in modular compilation.
+    JClassType jsoSubtype = (JClassType) jsoImpl.getEnclosingType();
     SourceInfo sourceInfo = method.getSourceInfo().makeChild();
+
 
     // Create the new method.
     String prefix;
@@ -331,10 +334,10 @@ public class JsoDevirtualizer {
     jsoMethodInstances.put(method.getSignature(), methodCount);
     String devirtualName = prefix + "__devirtual$";
     JMethod devirtualMethod =
-        new JMethod(sourceInfo, devirtualName, jsoType, method.getType(), false, true, true,
+        new JMethod(sourceInfo, devirtualName, jsoSubtype, method.getType(), false, true, true,
             AccessModifier.PUBLIC);
     devirtualMethod.setBody(new JMethodBody(sourceInfo));
-    jsoType.addMethod(devirtualMethod);
+    jsoSubtype.addMethod(devirtualMethod);
     devirtualMethod.setSynthetic();
 
     // Setup parameters.
@@ -389,13 +392,15 @@ public class JsoDevirtualizer {
             thenValue, elseValue);
 
     JMethod stringMethod = findOverridingMethod(method, program.getTypeJavaLangString());
-    if (stringMethod != null) {
-      // It is a method implemented by String.
+    if (stringMethod != null && jsoImpl.getEnclosingType() != program.getTypeJavaLangString()) {
+      // It is a method overriden by String. {@code conditional} already dispatches correctly
+      // methods defined at String.
+
       // Cast.isJavaString(temp) ? String.method(args) : conditional
       JMethodCall stringCondition =
           new JMethodCall(sourceInfo, null, isJavaStringMethod, new JLocalRef(sourceInfo, temp));
-      assert stringMethod != null : "String does not override " +  method.toString() + " declared at "
-          + method.getEnclosingType().getName();
+      assert stringMethod != null : "String does not override " +  method.toString() +
+          " declared at " + method.getEnclosingType().getName();
 
       JMethodCall staticImplCall = new JMethodCall(sourceInfo, null,
           getStaticImpl(stringMethod));

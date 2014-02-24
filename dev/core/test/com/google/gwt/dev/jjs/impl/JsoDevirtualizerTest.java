@@ -93,10 +93,10 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
     // the method used for val2 and val3.
     StringBuffer expected = new StringBuffer();
     expected.append("int result = ");
-    expected.append("JavaScriptObject.a__devirtual$(EntryPoint.val1) + ");
-    expected.append("JavaScriptObject.a__devirtual$(EntryPoint.val2) + ");
-    expected.append("JavaScriptObject.a0__devirtual$(EntryPoint.val3) + ");
-    expected.append("JavaScriptObject.a0__devirtual$(EntryPoint.val4);");
+    expected.append("EntryPoint$Jso1.a__devirtual$(EntryPoint.val1) + ");
+    expected.append("EntryPoint$Jso1.a__devirtual$(EntryPoint.val2) + ");
+    expected.append("EntryPoint$Jso2.a0__devirtual$(EntryPoint.val3) + ");
+    expected.append("EntryPoint$Jso2.a0__devirtual$(EntryPoint.val4);");
 
     Result result = optimize("void", code.toString());
     // Asserts that a() method calls were redirected to the devirtualized version.
@@ -126,26 +126,27 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
         "static Comparable javaVal = new J1();",
         "static Comparable jsoVal = Jso1.create();",
         "static Comparable stringVal = \"string\";",
+        "static String aString = \"string\";",
         "static CharSequence stringCharSeq = \"string\";");
 
     // Constructs a code snippet that calls a() but NOT b().
     StringBuilder code = new StringBuilder();
     code.append("int result = javaVal.compareTo(javaVal) + jsoVal.compareTo(jsoVal) +"
-        + " stringVal.compareTo(stringVal) + stringCharSeq.length();");
+        + " stringVal.compareTo(stringVal) + stringCharSeq.length() + aString.length();");
 
-    // Constructs an expectation about the resulting devirtualized method calls of a(). The salient
-    // point in the results below is that the JSO method used for val1 and val1 has a different name
-    // the method used for val2 and val3.
+    // Constructs an expectation about the resulting devirtualized method calls for
+    // Comparable.compareTo() and CharSequence.length(). Note that calls to CharSequence.length and
+    // String.length are devirtualized separately.
     StringBuffer expected = new StringBuffer();
     expected.append("int result = ");
     expected.append(
-        "JavaScriptObject.compareTo__devirtual$(EntryPoint.javaVal, EntryPoint.javaVal) + " +
-        "JavaScriptObject.compareTo__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + " +
-        "JavaScriptObject.compareTo__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + " +
-        "JavaScriptObject.length__devirtual$(EntryPoint.stringCharSeq);");
+        "EntryPoint$Jso1.compareTo__devirtual$(EntryPoint.javaVal, EntryPoint.javaVal) + " +
+        "EntryPoint$Jso1.compareTo__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + " +
+        "EntryPoint$Jso1.compareTo__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + " +
+        "String.length__devirtual$(EntryPoint.stringCharSeq) + " +
+        "String.length0__devirtual$(EntryPoint.aString);");
 
     Result result = optimize("void", code.toString());
-    // Asserts that a() method calls were redirected to the devirtualized version.
     result.intoString(expected.toString());
   }
 
