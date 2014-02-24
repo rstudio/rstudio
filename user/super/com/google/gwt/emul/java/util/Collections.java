@@ -1123,9 +1123,7 @@ public class Collections {
   }
 
   public static <T> void sort(List<T> target) {
-    Object[] x = target.toArray();
-    Arrays.sort(x);
-    replaceContents(target, x);
+    sort(target, null);
   }
 
   @SuppressWarnings("unchecked")
