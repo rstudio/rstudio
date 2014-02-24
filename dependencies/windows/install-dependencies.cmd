@@ -130,9 +130,11 @@ if not exist pandoc\%PANDOC_VERSION% (
   rmdir /s /q %PANDOC_NAME%
 )
 
+
+install-rmarkdown.cmd
+
 popd
 
-call install-rmarkdown.cmd
 
 
 
