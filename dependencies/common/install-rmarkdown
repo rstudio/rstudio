@@ -46,7 +46,7 @@ EOF
 
 # create source package (remove previous first)
 cd ..
-rm rmarkdown*.tar.gz
+rm -f rmarkdown*.tar.gz
 R CMD build rmarkdown
 
 # back to install-dir
