@@ -16,6 +16,11 @@ then
    exit 1
 fi
 
+# sync to latest version of rmarkdown
+cd ../../dependencies/common/
+./install-rmarkdown
+cd $PACKAGE_DIR
+
 # set build type( if necessary) and build dir
 if test -z "$CMAKE_BUILD_TYPE"
 then

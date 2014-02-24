@@ -4,6 +4,11 @@ set -e
 
 PACKAGE_DIR=`pwd`
 
+# sync to latest version of rmarkdown
+cd ../../dependencies/common/
+./install-rmarkdown
+cd $PACKAGE_DIR
+
 if [ "$1" == "clean" ]
 then
    # remove existing build dir

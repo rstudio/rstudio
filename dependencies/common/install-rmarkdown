@@ -1,0 +1,54 @@
+#!/bin/bash
+
+#
+# install-rmarkdown
+#
+# Copyright (C) 2009-12 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+# install dir
+INSTALL_DIR=`pwd`
+
+# git clone if necessary
+RMARKDOWN_DIR=rmarkdown
+if [ ! -d "$RMARKDOWN_DIR" ]
+then
+  git clone https://github.com/rstudio/rmarkdown.git
+fi
+
+# clean and checkout target branch
+RMARKDOWN_VERSION=master
+cd $RMARKDOWN_DIR
+git checkout .
+git clean -df .
+git pull
+git checkout $RMARKDOWN_VERSION
+
+# append GitHub fields to DESCRIPTION
+RMARKDOWN_SHA1=`git rev-parse $RMARKDOWN_VERSION`
+cat <<EOF >> DESCRIPTION
+GithubRepo: rmarkdown
+GithubUsername: rstudio
+GithubRef: $RMARKDOWN_VERSION
+GithubSHA1: $RMARKDOWN_SHA1
+EOF
+
+# create source package (remove previous first)
+cd ..
+rm rmarkdown*.tar.gz
+R CMD build rmarkdown
+
+# back to install-dir
+cd $INSTALL_DIR
+
