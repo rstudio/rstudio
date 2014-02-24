@@ -1,5 +1,5 @@
 /*
- * Presentation.cpp
+ * RMarkdownPresentation.cpp
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "Presentation.hpp"
+#include "RMarkdownPresentation.hpp"
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>

@@ -30,7 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "Presentation.hpp"
+#include "RMarkdownPresentation.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"

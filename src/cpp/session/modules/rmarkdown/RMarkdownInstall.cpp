@@ -1,7 +1,7 @@
 /*
- * Presentation.hpp
+ * RMarkdownInstall.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,31 +13,25 @@
  *
  */
 
-#ifndef SESSION_SESSION_RMARKDOWN_PRESENTATION_HPP
-#define SESSION_SESSION_RMARKDOWN_PRESENTATION_HPP
+#include "RMarkdownInstall.hpp"
 
-#include <string>
+#include <core/Error.hpp>
 
-namespace core {
-   class FilePath;
-}
+using namespace core;
 
-#include <core/json/Json.hpp>
- 
 namespace session {
-namespace modules {      
+namespace modules { 
 namespace rmarkdown {
-namespace presentation {
+namespace install {
 
-void ammendResults(const std::string& formatName,
-                   core::FilePath& targetFile,
-                   int sourceLine,
-                   core::json::Object* pResultsJson);
+namespace {
+
+
+} // anonymous namespace
 
 
 } // namespace presentation
-} // namespace rmarkdown
-} // namepace modules
+} // namepsace rmarkdown
+} // namespace modules
 } // namesapce session
 
-#endif // SESSION_SESSION_RMARKDOWN_PRESENTATION_HPP
