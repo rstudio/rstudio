@@ -16,6 +16,12 @@
 #ifndef SESSION_HTML_PREVIEW_HPP
 #define SESSION_HTML_PREVIEW_HPP
 
+#define kQtMathJaxConfigScript "<script type=\"text/x-mathjax-config\">" \
+   "MathJax.Hub.Config({" \
+   "  \"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] } " \
+   " });" \
+   "</script>"
+
 #include <core/json/Json.hpp>
 
 namespace core {

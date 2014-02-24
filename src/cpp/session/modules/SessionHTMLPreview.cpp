@@ -799,12 +799,7 @@ void modifyOutputForPreview(std::string* pOutput)
       boost::algorithm::replace_first(
                *pOutput,
                target,
-               target + "\n"
-               "<script type=\"text/x-mathjax-config\">"
-                  "MathJax.Hub.Config({"
-                  "  \"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] } "
-                  " });"
-               "</script>");
+               target + "\n" kQtMathJaxConfigScript);
 #endif
    }
 

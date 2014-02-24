@@ -14,6 +14,7 @@
  */
 
 #include "SessionRMarkdown.hpp"
+#include "../SessionHTMLPreview.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filter/regex.hpp>
@@ -38,6 +39,7 @@
 #define kRmdOutputLocation "/" kRmdOutput "/"
 
 #define kMathjaxSegment "mathjax"
+#define kMathjaxBeginComment "<!-- dynamically load mathjax"
 
 using namespace core;
 
@@ -239,8 +241,14 @@ private:
       // component (see notes in handleRmdOutputRequest) and thus needs to
       // arrive URL-escaped.
       std::string outputUrl(kRmdOutput "/");
-      outputUrl.append(http::util::urlEncode(
-                       http::util::urlEncode(outputFile, false), false));
+      std::string encodedOutputFile =
+                       http::util::urlEncode(
+                       http::util::urlEncode(outputFile, false), false);
+#ifdef WIN32
+      // One additional URL escaping pass is needed on Windows
+      encodedOutputFile = http::util::urlEncode(encodedOutputFile, false);
+#endif
+      outputUrl.append(encodedOutputFile);
       outputUrl.append("/");
       resultJson["output_url"] = outputUrl;
 
@@ -352,7 +360,8 @@ public:
       // the regular expression matches any of the three tokens that look
       // like the beginning of math, and the "script src" line itself
       : boost::iostreams::regex_filter(
-            boost::regex("\\\\\\[|\\\\\\(|<math|"
+            boost::regex(kMathjaxBeginComment "|"
+                         "\\\\\\[|\\\\\\(|<math|"
                          "^(\\s*script.src\\s*=\\s*)\"http.*?(MathJax.js[^\"]*)\""),
             boost::bind(&MathjaxFilter::substitute, this, _1)),
         hasMathjax_(false)
@@ -364,19 +373,32 @@ private:
    {
       std::string result;
 
-      // if we found one of the MathJax markup start tokens, we need to emit
-      // MathJax scripts
       if (match[0] == "\\[" ||
           match[0] == "\\(" ||
           match[0] == "<math")
       {
+         // if we found one of the MathJax markup start tokens, we need to emit
+         // MathJax scripts
          hasMathjax_ = true;
          return match[0];
       }
-
-      // this is the MathJax script itself; emit it if we found a start token
-      if (hasMathjax_)
+      else if (match[0] == kMathjaxBeginComment)
       {
+         // we found the start of the MathJax section; add the MathJax config
+         // block if we're in a configuration that requires it
+#ifdef __APPLE__
+         return match[0];
+#else
+         if (session::options().programMode() != kSessionProgramModeDesktop)
+            return match[0];
+
+         result.append(kQtMathJaxConfigScript "\n");
+         result.append(match[0]);
+#endif
+      }
+      else if (hasMathjax_)
+      {
+         // this is the MathJax script itself; emit it if we found a start token
          result.append(match[1]);
          result.append("\"" kMathjaxSegment "/");
          result.append(match[2]);
