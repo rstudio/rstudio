@@ -340,25 +340,52 @@ boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 // handler.
 // in:  script src = "http://foo/bar/Mathjax.js?abc=123"
 // out: script src = "mathjax/MathJax.js?abc=123"
+//
+// if no MathJax use is found in the document, removes the script src statement
+// entirely, so we don't incur the cost of loading MathJax in preview mode
+// unless the document actually has markup.
 class MathjaxFilter : public boost::iostreams::regex_filter
 {
 public:
    MathjaxFilter()
+      // the regular expression matches any of the three tokens that look
+      // like the beginning of math, and the "script src" line itself
       : boost::iostreams::regex_filter(
-            boost::regex("^(\\s*script.src\\s*=\\s*)\"http.*?(MathJax.js[^\"]*)\""),
-            boost::bind(&MathjaxFilter::substitute, this, _1))
+            boost::regex("\\\\\\[|\\\\\\(|<math|"
+                         "^(\\s*script.src\\s*=\\s*)\"http.*?(MathJax.js[^\"]*)\""),
+            boost::bind(&MathjaxFilter::substitute, this, _1)),
+        hasMathjax_(false)
    {
    }
 
 private:
    std::string substitute(const boost::cmatch& match)
    {
-      std::string result(match[1]);
-      result.append("\"" kMathjaxSegment "/");
-      result.append(match[2]);
-      result.append("\"");
+      std::string result;
+
+      // if we found one of the MathJax markup start tokens, we need to emit
+      // MathJax scripts
+      if (match[0] == "\\[" ||
+          match[0] == "\\(" ||
+          match[0] == "<math")
+      {
+         hasMathjax_ = true;
+         return match[0];
+      }
+
+      // this is the MathJax script itself; emit it if we found a start token
+      if (hasMathjax_)
+      {
+         result.append(match[1]);
+         result.append("\"" kMathjaxSegment "/");
+         result.append(match[2]);
+         result.append("\"");
+      }
+
       return result;
    }
+
+   bool hasMathjax_;
 };
 
 bool isRenderRunning()
