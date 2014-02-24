@@ -24,7 +24,7 @@ namespace session {
 namespace modules {      
 namespace rmarkdown {
 
-bool rmarkdownPackageInstalled();
+bool rmarkdownPackageAvailable();
 
 core::Error initialize();
 

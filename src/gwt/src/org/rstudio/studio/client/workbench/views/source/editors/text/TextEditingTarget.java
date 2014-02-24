@@ -78,7 +78,6 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
-import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -2940,10 +2939,10 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            events_.fireEvent(new RenderRmdEvent(
+            rmarkdownHelper_.renderRMarkdown(
                docUpdateSentinel_.getPath(),
                docDisplay_.getCursorPosition().getRow() + 1,
-               docUpdateSentinel_.getEncoding()));
+               docUpdateSentinel_.getEncoding());
          }
       });
    }
@@ -3113,16 +3112,8 @@ public class TextEditingTarget implements
 
    @Handler
    void onCompileNotebook()
-   {
-      if (!rmarkdownHelper_.verifyPrerequisites("Compile Notebook",
-                                                  view_,
-                                                  FileTypeRegistry.RMARKDOWN))
-      {
-         return;
-      }
-      
-      
-      if (session_.getSessionInfo().getRMarkdownInstalled())
+   { 
+      if (session_.getSessionInfo().getRMarkdownPackageAvailable())
       {
          saveThenExecute(null, new Command()
          {
@@ -3141,10 +3132,10 @@ public class TextEditingTarget implements
                      String notebook = scriptDir.completePath(
                                                    script.getStem() + ".Rmd");
                      
-                     events_.fireEvent(new RenderRmdEvent(
+                     rmarkdownHelper_.renderRMarkdown(
                                            notebook,
                                            1,
-                                           docUpdateSentinel_.getEncoding()));
+                                           docUpdateSentinel_.getEncoding());
                   }
                });
             }
@@ -3152,6 +3143,13 @@ public class TextEditingTarget implements
       }
       else
       {
+         if (!rmarkdownHelper_.verifyPrerequisites("Compile Notebook",
+               view_,
+               FileTypeRegistry.RMARKDOWN))
+         {
+            return;
+         }
+         
          doHtmlPreview(new Provider<HTMLPreviewParams>()
          {
             @Override

@@ -617,8 +617,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["shinyapps_installed"] =
          module_context::isPackageVersionInstalled("shinyapps", "0.2.1");
 
-   sessionInfo["rmarkdown_installed"] =
-         modules::rmarkdown::rmarkdownPackageInstalled();
+   sessionInfo["rmarkdown_available"] =
+         modules::rmarkdown::rmarkdownPackageAvailable();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

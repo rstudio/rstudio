@@ -27,6 +27,7 @@
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/ROptions.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -420,7 +421,6 @@ std::string onDetectRmdSourceType(
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
       if ((filePath.extensionLowerCase() == ".rmd" ||
            filePath.extensionLowerCase() == ".md") &&
-           install::haveRequiredVersion() &&
           !boost::algorithm::icontains(pDoc->contents(),
                                        "<!-- rmarkdown v1 -->") &&
           !haveMarkdownToHTMLOption())
@@ -559,9 +559,9 @@ void handleRmdOutputRequest(const http::Request& request,
 
 } // anonymous namespace
 
-bool rmarkdownPackageInstalled()
+bool rmarkdownPackageAvailable()
 {
-   return install::haveRequiredVersion();
+   return r::util::hasRequiredVersion("3.0");
 }
 
 Error initialize()
@@ -571,8 +571,11 @@ Error initialize()
 
    initPandocPath();
 
-   module_context::events().onDetectSourceExtendedType
+   if (rmarkdownPackageAvailable())
+   {
+      module_context::events().onDetectSourceExtendedType
                                        .connect(onDetectRmdSourceType);
+   }
 
    ExecBlock initBlock;
    initBlock.addFunctions()

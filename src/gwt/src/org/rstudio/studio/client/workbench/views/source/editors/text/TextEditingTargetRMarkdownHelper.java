@@ -19,11 +19,13 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -39,12 +41,14 @@ public class TextEditingTargetRMarkdownHelper
    @Inject
    public void initialize(Session session,
                           GlobalDisplay globalDisplay,
+                          EventBus eventBus,
                           FileTypeCommands fileTypeCommands,
                           RMarkdownServerOperations server)
    {
       session_ = session;
       fileTypeCommands_ = fileTypeCommands;
       globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
       server_ = server;
    }
    
@@ -52,8 +56,8 @@ public class TextEditingTargetRMarkdownHelper
                                     TextFileType fileType)
    {
       if (extendedType.length() == 0 && 
-          fileType.isRmd() &&
-          session_.getSessionInfo().getRMarkdownInstalled())
+          fileType.isMarkdown() &&
+          session_.getSessionInfo().getRMarkdownPackageAvailable())
       {
          return "rmarkdown";
       }
@@ -87,6 +91,22 @@ public class TextEditingTargetRMarkdownHelper
             progress.onError(error.getUserMessage());
             
          } 
+      });
+   }
+   
+   
+   public void renderRMarkdown(final String sourceFile, 
+                               final int sourceLine,
+                               final String encoding)
+   {
+      withRMarkdownPackage("Rendering R Markdown documents", new Command() {
+         @Override
+         public void execute()
+         {
+            eventBus_.fireEvent(new RenderRmdEvent(sourceFile,
+                                                   sourceLine,
+                                                   encoding));
+         }
       });
    }
    
@@ -136,6 +156,7 @@ public class TextEditingTargetRMarkdownHelper
    
    private Session session_;
    private GlobalDisplay globalDisplay_;
+   private EventBus eventBus_;
    private FileTypeCommands fileTypeCommands_;
    private RMarkdownServerOperations server_;
 }
