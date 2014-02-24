@@ -62,6 +62,7 @@ import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
@@ -3198,6 +3199,13 @@ public class RemoteServer implements Server
             GET_SHINYAPPS_DEPLOYMENTS,
             params,
             requestCallback);
+   }
+   
+   @Override
+   public void getRMarkdownContext(
+                  ServerRequestCallback<RMarkdownContext> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_rmarkdown_context", requestCallback);
    }
 
    @Override

@@ -347,7 +347,7 @@ public class TextEditingTarget implements
       prefs_ = prefs;
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
-      previewHtmlHelper_ = new TextEditingTargetPreviewHtmlHelper();
+      rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(server);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
@@ -633,7 +633,7 @@ public class TextEditingTarget implements
       fileType_ = (TextFileType) type;
       
       extendedType_ = document.getExtendedType();
-      extendedType_ = previewHtmlHelper_.detectExtendedType(extendedType_, 
+      extendedType_ = rmarkdownHelper_.detectExtendedType(extendedType_, 
                                                             fileType_);
       
       view_ = new TextEditingTargetWidget(commands_,
@@ -801,7 +801,7 @@ public class TextEditingTarget implements
       
       // validate required components (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
-      previewHtmlHelper_.verifyPrerequisites(view_, fileType_);  
+      rmarkdownHelper_.verifyPrerequisites(view_, fileType_);  
       
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
@@ -2951,7 +2951,7 @@ public class TextEditingTarget implements
    void previewHTML()
    {
       // validate pre-reqs
-      if (!previewHtmlHelper_.verifyPrerequisites(view_, fileType_))
+      if (!rmarkdownHelper_.verifyPrerequisites(view_, fileType_))
          return;
 
       doHtmlPreview(new Provider<HTMLPreviewParams>()
@@ -3114,7 +3114,7 @@ public class TextEditingTarget implements
    @Handler
    void onCompileNotebook()
    {
-      if (!previewHtmlHelper_.verifyPrerequisites("Compile Notebook",
+      if (!rmarkdownHelper_.verifyPrerequisites("Compile Notebook",
                                                   view_,
                                                   FileTypeRegistry.RMARKDOWN))
       {
@@ -3872,7 +3872,7 @@ public class TextEditingTarget implements
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
-   private final TextEditingTargetPreviewHtmlHelper previewHtmlHelper_;
+   private final TextEditingTargetRMarkdownHelper rmarkdownHelper_;
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private boolean ignoreDeletes_;

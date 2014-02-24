@@ -111,6 +111,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
+   modules/rmarkdown/Install.cpp
    modules/rmarkdown/Presentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp

@@ -382,7 +382,7 @@ bool haveMarkdownToHTMLOption()
 }
 
 // when the RMarkdown package is installed, give .Rmd files the extended type
-// "rmarkdown", unless they contain a special marker that indicates we should
+// "rmarkdown", unless there is a marker that indicates we should
 // use the previous rendering strategy
 std::string onDetectRmdSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -392,6 +392,7 @@ std::string onDetectRmdSourceType(
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
       if ((filePath.extensionLowerCase() == ".rmd" ||
            filePath.extensionLowerCase() == ".md") &&
+           rmarkdown::rmarkdownPackageInstalled() &&
           !boost::algorithm::icontains(pDoc->contents(),
                                        "<!-- rmarkdown v1 -->") &&
           !haveMarkdownToHTMLOption())
@@ -400,6 +401,17 @@ std::string onDetectRmdSourceType(
       }
    }
    return std::string();
+}
+
+Error getRMarkdownContext(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   json::Object contextJson;
+   contextJson["rmarkdown_installed"] = rmarkdown::rmarkdownPackageInstalled();
+
+   pResponse->setResult(contextJson);
+
+   return Success();
 }
 
 Error renderRmd(const json::JsonRpcRequest& request,
@@ -521,7 +533,7 @@ void handleRmdOutputRequest(const http::Request& request,
 
 bool rmarkdownPackageInstalled()
 {
-   return module_context::isPackageVersionInstalled("rmarkdown", "0.1.1");
+   return module_context::isPackageVersionInstalled("rmarkdown", "0.1.2");
 }
 
 Error initialize()
@@ -530,12 +542,12 @@ Error initialize()
 
    initPandocPath();
 
-   if (module_context::isPackageVersionInstalled("rmarkdown", "0.1.1"))
-      module_context::events().onDetectSourceExtendedType
-                              .connect(onDetectRmdSourceType);
+   module_context::events().onDetectSourceExtendedType
+                                       .connect(onDetectRmdSourceType);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_rmarkdown_context", getRMarkdownContext))
       (bind(registerRpcMethod, "render_rmd", renderRmd))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest));

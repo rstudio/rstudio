@@ -1,5 +1,5 @@
 /*
- * TextEditingTargetPreviewHtmlHelper.java
+ * TextEditingTargetRMarkdownHelper.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,26 +14,38 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.model.Session;
 
-public class TextEditingTargetPreviewHtmlHelper
+public class TextEditingTargetRMarkdownHelper
 {
-   public TextEditingTargetPreviewHtmlHelper()
+   public TextEditingTargetRMarkdownHelper()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
    @Inject
    public void initialize(Session session,
-                          FileTypeCommands fileTypeCommands)
+                          GlobalDisplay globalDisplay,
+                          FileTypeCommands fileTypeCommands,
+                          RMarkdownServerOperations server)
    {
       session_ = session;
       fileTypeCommands_ = fileTypeCommands;
+      globalDisplay_ = globalDisplay;
+      server_ = server;
    }
    
    public String detectExtendedType(String extendedType,
@@ -50,6 +62,34 @@ public class TextEditingTargetPreviewHtmlHelper
          return extendedType;
       }
    }
+   
+   public void withRMarkdownPackage(String action, final Command onReady)
+   {
+      final ProgressIndicator progress = new GlobalProgressDelayer(
+            globalDisplay_,
+            200,
+            "New R Markdown...").getIndicator();
+      
+      server_.getRMarkdownContext(new SimpleRequestCallback<RMarkdownContext>()
+      {
+         @Override
+         public void onResponseReceived(RMarkdownContext context)
+         {
+            progress.onCompleted();
+            
+            if (onReady != null)
+               onReady.execute();
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            progress.onError(error.getUserMessage());
+            
+         } 
+      });
+   }
+   
    
    public boolean verifyPrerequisites(WarningBarDisplay display,
                                       TextFileType fileType)
@@ -95,5 +135,7 @@ public class TextEditingTargetPreviewHtmlHelper
    }
    
    private Session session_;
+   private GlobalDisplay globalDisplay_;
    private FileTypeCommands fileTypeCommands_;
+   private RMarkdownServerOperations server_;
 }

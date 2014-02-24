@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
@@ -192,6 +193,7 @@ public class Source implements InsertSourceHandler,
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
+      rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       events_ = events;
       session_ = session;
       synctex_ = synctex;
@@ -701,10 +703,20 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRMarkdownDoc()
    {
-      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
-                               "", 
-                               "r_markdown.Rmd",
-                               Position.create(3, 0));
+      rmarkdown_.withRMarkdownPackage(
+         "Creating R Markdown documents",
+         new Command(){
+            @Override
+            public void execute()
+            {
+               newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+                     "", 
+                     "r_markdown.Rmd",
+                     Position.create(3, 0));
+               
+            }
+          }
+        );
    }
    
    @Handler
@@ -2438,6 +2450,7 @@ public class Source implements InsertSourceHandler,
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
+   private final TextEditingTargetRMarkdownHelper rmarkdown_;
    private final EventBus events_;
    private final Session session_;
    private final Synctex synctex_;

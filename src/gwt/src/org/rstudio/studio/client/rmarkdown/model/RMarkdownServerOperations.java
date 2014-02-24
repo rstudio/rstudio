@@ -19,6 +19,9 @@ import org.rstudio.studio.client.server.Void;
 
 public interface RMarkdownServerOperations
 {
+   void getRMarkdownContext(
+            ServerRequestCallback<RMarkdownContext> requestCallback);
+   
    void renderRmd(String file, int line, String encoding,
                   ServerRequestCallback<Boolean> requestCallback);
    
