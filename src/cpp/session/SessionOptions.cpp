@@ -187,7 +187,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "R library path")
       ("r-session-packages",
          value<std::string>(&sessionPackagesPath_)->default_value("R/packages"),
-         "R library path")
+         "R packages path")
+      ("r-session-package-archives",
+          value<std::string>(&sessionPackageArchivesPath_)->default_value("R/packages"),
+         "R package archives path")
       ("r-libs-user",
          value<std::string>(&rLibsUser_)->default_value(""),
          "R user library path")
