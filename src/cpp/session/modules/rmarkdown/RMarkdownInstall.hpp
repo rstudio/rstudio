@@ -16,11 +16,29 @@
 #ifndef SESSION_SESSION_RMARKDOWN_INSTALL_HPP
 #define SESSION_SESSION_RMARKDOWN_INSTALL_HPP
 
+namespace core {
+   class Error;
+}
+
 namespace session {
 namespace modules {      
 namespace rmarkdown {
 namespace install {
 
+core::Error initialize();
+
+enum Status
+{
+   NotInstalled,
+   OlderVersionInstalled,
+   Installed
+};
+
+Status status();
+
+bool haveRequiredVersion();
+
+core::Error installWithProgress();
 
 } // namespace install
 } // namespace rmarkdown

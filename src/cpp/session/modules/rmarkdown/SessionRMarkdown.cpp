@@ -30,6 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "RMarkdownInstall.hpp"
 #include "RMarkdownPresentation.hpp"
 
 #define kRmdOutput "rmd_output"
@@ -392,7 +393,7 @@ std::string onDetectRmdSourceType(
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
       if ((filePath.extensionLowerCase() == ".rmd" ||
            filePath.extensionLowerCase() == ".md") &&
-           rmarkdown::rmarkdownPackageInstalled() &&
+           install::haveRequiredVersion() &&
           !boost::algorithm::icontains(pDoc->contents(),
                                        "<!-- rmarkdown v1 -->") &&
           !haveMarkdownToHTMLOption())
@@ -407,7 +408,7 @@ Error getRMarkdownContext(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
    json::Object contextJson;
-   contextJson["rmarkdown_installed"] = rmarkdown::rmarkdownPackageInstalled();
+   contextJson["rmarkdown_installed"] = install::haveRequiredVersion();
 
    pResponse->setResult(contextJson);
 
@@ -533,11 +534,12 @@ void handleRmdOutputRequest(const http::Request& request,
 
 bool rmarkdownPackageInstalled()
 {
-   return module_context::isPackageVersionInstalled("rmarkdown", "0.1.2");
+   return install::haveRequiredVersion();
 }
 
 Error initialize()
 {
+   using boost::bind;
    using namespace module_context;
 
    initPandocPath();
@@ -547,10 +549,12 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (install::initialize)
       (bind(registerRpcMethod, "get_rmarkdown_context", getRMarkdownContext))
       (bind(registerRpcMethod, "render_rmd", renderRmd))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
-      (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest));
+      (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
+      (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
    return initBlock.execute();
 }
