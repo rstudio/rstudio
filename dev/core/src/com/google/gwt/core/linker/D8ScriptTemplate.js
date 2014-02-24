@@ -39,6 +39,7 @@ navigator.userAgent = {};
 navigator.userAgent.toLowerCase = function(){ return "webkit";};
 console = {};
 console.log = function(msg){print(msg);};
+window.console = console;
 $stats= function(){};
 $sessionId = "";
 
