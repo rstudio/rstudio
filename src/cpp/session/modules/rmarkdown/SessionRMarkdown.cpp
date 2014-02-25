@@ -453,12 +453,23 @@ std::string onDetectRmdSourceType(
    return std::string();
 }
 
-Error getRMarkdownContext(const json::JsonRpcRequest& request,
+Error getRMarkdownContext(const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
-{
+{  
+   // check the current status
+   install::Status status = install::status();
+
+   // silent upgrade if we have an older version
+   if (status == install::OlderVersionInstalled)
+   {
+      Error error = install::silentUpgrade();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // return installation status
    json::Object contextJson;
    contextJson["rmarkdown_installed"] = install::haveRequiredVersion();
-
    pResponse->setResult(contextJson);
 
    return Success();

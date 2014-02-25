@@ -36,21 +36,7 @@ namespace {
 // note the current version
 std::string s_currentVersion;
 
-// perform a silent upgrade
-void silentUpgrade(bool)
-{
-   // path to archive
-   FilePath archivesDir = session::options().sessionPackageArchivesPath();
-   FilePath rmarkdownArchivePath = archivesDir.childPath("rmarkdown_" +
-                                                         s_currentVersion +
-                                                         ".tar.gz");
-   std::string pkg = string_utils::utf8ToSystem(
-                                    rmarkdownArchivePath.absolutePath());
 
-   Error error = r::exec::RFunction(".rs.updateRMarkdownPackage", pkg).call();
-   if (error)
-      LOG_ERROR(error);
-}
 
 } // anonymous namespace
 
@@ -73,14 +59,6 @@ Error initialize()
          s_currentVersion = match[1];
          break;
       }
-   }
-
-   // check the status, if we've got an older version then schedule
-   // some deferred work to do a silent upgrade
-   if (status() == OlderVersionInstalled)
-   {
-      using namespace boost::posix_time;
-      module_context::events().onDeferredInit.connect(silentUpgrade);
    }
 
    return Success();
@@ -114,6 +92,19 @@ Error installWithProgress()
    return Success();
 }
 
+// perform a silent upgrade
+Error silentUpgrade()
+{
+   // path to archive
+   FilePath archivesDir = session::options().sessionPackageArchivesPath();
+   FilePath rmarkdownArchivePath = archivesDir.childPath("rmarkdown_" +
+                                                         s_currentVersion +
+                                                         ".tar.gz");
+   std::string pkg = string_utils::utf8ToSystem(
+                                    rmarkdownArchivePath.absolutePath());
+
+   return r::exec::RFunction(".rs.updateRMarkdownPackage", pkg).call();
+}
 
 } // namespace presentation
 } // namepsace rmarkdown

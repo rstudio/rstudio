@@ -40,6 +40,8 @@ bool haveRequiredVersion();
 
 core::Error installWithProgress();
 
+core::Error silentUpgrade();
+
 } // namespace install
 } // namespace rmarkdown
 } // namepace modules
