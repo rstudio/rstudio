@@ -41,6 +41,7 @@ set (SESSION_SOURCE_FILES
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp
+   SessionConsoleProcess.cpp
    SessionContentUrls.cpp
    SessionSSH.cpp
    SessionMain.cpp
@@ -62,7 +63,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
-   modules/SessionConsoleProcess.cpp
    modules/SessionDirty.cpp
    modules/SessionErrors.cpp
    modules/SessionFiles.cpp

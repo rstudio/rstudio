@@ -14,22 +14,29 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class TextEditingTargetRMarkdownHelper
 {
@@ -70,7 +77,7 @@ public class TextEditingTargetRMarkdownHelper
    }
    
    public void withRMarkdownPackage(
-          String action, 
+          final String action, 
           final CommandWithArg<RMarkdownContext> onReady)
    {
       final ProgressIndicator progress = new GlobalProgressDelayer(
@@ -78,21 +85,29 @@ public class TextEditingTargetRMarkdownHelper
             250,
             "R Markdown...").getIndicator();
       
-      server_.getRMarkdownContext(new SimpleRequestCallback<RMarkdownContext>()
+      server_.getRMarkdownContext(new ServerRequestCallback<RMarkdownContext>()
       {
          @Override
-         public void onResponseReceived(RMarkdownContext context)
+         public void onResponseReceived(final RMarkdownContext context)
          { 
+            progress.onCompleted();
+            
             if (context.getRMarkdownInstalled())
             {
-               progress.onCompleted();
-               
                if (onReady != null)
                   onReady.execute(context);
             }
             else
             {
-               progress.onError("Unable to install the rmarkdown package");
+               installRMarkdownPackage(action, new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     if (onReady != null)
+                        onReady.execute(context);
+                  }
+                  
+               });
             }
          }
          
@@ -105,6 +120,7 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+  
    
    public void renderRMarkdown(final String sourceFile, 
                                final int sourceLine,
@@ -157,6 +173,65 @@ public class TextEditingTargetRMarkdownHelper
       return true;
    }
    
+   private void installRMarkdownPackage(String action,
+                                        final Command onInstalled)
+   {
+      globalDisplay_.showYesNoMessage(
+         MessageDialog.QUESTION,
+         "Install Required Package", 
+         action + " requires the rmarkdown package. " +
+               "Do you want to install it now?",
+         new Operation() {
+            @Override
+            public void execute()
+            {
+               server_.installRMarkdown(
+                  new SimpleRequestCallback<ConsoleProcess>() {
+
+                     @Override
+                     public void onResponseReceived(ConsoleProcess proc)
+                     {
+                        final ConsoleProgressDialog dialog = 
+                              new ConsoleProgressDialog(proc, server_);
+                        dialog.showModal();
+
+                        proc.addProcessExitHandler(
+                           new ProcessExitEvent.Handler()
+                           {
+                              @Override
+                              public void onProcessExit(ProcessExitEvent event)
+                              {
+                                 ifRMarkdownInstalled(new Command() {
+
+                                    @Override
+                                    public void execute()
+                                    {
+                                       dialog.hide();
+                                       onInstalled.execute();
+                                    }
+                                 });     
+                              }
+                           }); 
+                     }
+                  });
+            }
+         },
+         true);
+   }
+
+
+   private void ifRMarkdownInstalled(final Command onInstalled)
+   {
+      server_.getRMarkdownContext(new SimpleRequestCallback<RMarkdownContext>(){
+         @Override
+         public void onResponseReceived(RMarkdownContext context)
+         {
+            if (context.getRMarkdownInstalled())
+               onInstalled.execute();
+         }
+      });
+   }
+   
    private void showKnitrPreviewWarning(WarningBarDisplay display,
                                         String feature, 
                                         String requiredVersion)
@@ -166,6 +241,7 @@ public class TextEditingTargetRMarkdownHelper
                              " or higher)");
    }
    
+  
    private Session session_;
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;

@@ -3207,6 +3207,14 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, "get_rmarkdown_context", requestCallback);
    }
+   
+   @Override
+   public void installRMarkdown(
+                        ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "install_rmarkdown", 
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
 
    @Override
    public void renderRmd(String file, int line, String encoding,

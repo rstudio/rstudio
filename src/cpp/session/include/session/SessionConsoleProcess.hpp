@@ -32,7 +32,6 @@ namespace core {
 }
 
 namespace session {
-namespace modules {
 namespace console_process {
 
 enum InteractionMode
@@ -250,7 +249,6 @@ core::json::Array processesAsJson();
 core::Error initialize();
 
 } // namespace console_process
-} // namespace modules
 } // namespace session
 
 #endif // SESSION_CONSOLE_PROCESS_HPP

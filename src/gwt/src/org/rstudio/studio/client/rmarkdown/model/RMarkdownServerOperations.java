@@ -14,13 +14,18 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
-public interface RMarkdownServerOperations
+public interface RMarkdownServerOperations extends CryptoServerOperations
 {
    void getRMarkdownContext(
             ServerRequestCallback<RMarkdownContext> requestCallback);
+   
+   void installRMarkdown(
+         ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void renderRmd(String file, int line, String encoding,
                   ServerRequestCallback<Boolean> requestCallback);

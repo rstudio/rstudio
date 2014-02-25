@@ -39,12 +39,13 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionConsoleProcess.hpp>
 
 #include <r/RExec.hpp>
 
 #include "SessionVCS.hpp"
 #include "vcs/SessionVCSUtils.hpp"
-#include "SessionConsoleProcess.hpp"
+
 #include "SessionAskPass.hpp"
 #include "SessionWorkbench.hpp"
 #include "SessionGit.hpp"
@@ -52,7 +53,7 @@
 using namespace core;
 using namespace core::shell_utils;
 using namespace session::modules::vcs_utils;
-using namespace session::modules::console_process;
+using namespace session::console_process;
 
 namespace session {
 namespace modules {
@@ -253,12 +254,13 @@ core::Error createConsoleProc(const ShellArgs& args,
       options.stdOutFile = outputFile;
 
    // create the process
+   using namespace session::console_process;
    *ppCP = ConsoleProcess::create(command,
                                   options,
                                   caption,
                                   dialog,
-                                  console_process::InteractionPossible,
-                                  console_process::kDefaultMaxOutputLines);
+                                  InteractionPossible,
+                                  kDefaultMaxOutputLines);
 
    if (enqueueRefreshOnExit)
       (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));

@@ -102,7 +102,6 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
-#include "modules/SessionConsoleProcess.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
@@ -135,6 +134,8 @@ extern "C" const char *locale2charset(const char *);
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
+
+#include <session/SessionConsoleProcess.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include "projects/SessionProjectsInternal.hpp"
@@ -523,7 +524,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["lists"] = modules::lists::allListsAsJson();
 
    sessionInfo["console_processes"] =
-         session::modules::console_process::processesAsJson();
+         session::console_process::processesAsJson();
 
    // is internal preview supported by the client browser
    std::string userAgent = ptrConnection->request().userAgent();
@@ -1552,6 +1553,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // addins
       (addins::initialize)
 
+      // console processes
+       (console_process::initialize)
+
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
@@ -1560,7 +1564,6 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::ask_pass::initialize)
       (modules::agreement::initialize)
       (modules::console::initialize)
-      (modules::console_process::initialize)
 #ifdef RSTUDIO_SERVER
       (modules::crypto::initialize)
 #endif

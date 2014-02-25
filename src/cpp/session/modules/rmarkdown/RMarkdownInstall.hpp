@@ -16,11 +16,18 @@
 #ifndef SESSION_SESSION_RMARKDOWN_INSTALL_HPP
 #define SESSION_SESSION_RMARKDOWN_INSTALL_HPP
 
+#include <boost/shared_ptr.hpp>
+
 namespace core {
    class Error;
 }
 
 namespace session {
+
+namespace console_process {
+class ConsoleProcess;
+} // namespace console_process
+
 namespace modules {      
 namespace rmarkdown {
 namespace install {
@@ -38,7 +45,8 @@ Status status();
 
 bool haveRequiredVersion();
 
-core::Error installWithProgress();
+core::Error installWithProgress(
+               boost::shared_ptr<console_process::ConsoleProcess>* ppCP);
 
 core::Error silentUpgrade();
 
