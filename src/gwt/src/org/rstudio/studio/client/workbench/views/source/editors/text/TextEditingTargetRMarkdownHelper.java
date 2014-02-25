@@ -73,8 +73,8 @@ public class TextEditingTargetRMarkdownHelper
    {
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
-            200,
-            "New R Markdown...").getIndicator();
+            250,
+            "R Markdown...").getIndicator();
       
       server_.getRMarkdownContext(new SimpleRequestCallback<RMarkdownContext>()
       {
