@@ -17,6 +17,9 @@
 {
   pkgDir <- find.package("rmarkdown")
   .rs.forceUnloadPackage("rmarkdown")
-  utils::install.packages(archive, lib = dirname(pkgDir), repos = NULL)
+  utils::install.packages(archive,
+                          lib = dirname(pkgDir),
+                          repos = NULL,
+                          type = "source")
 })
 
