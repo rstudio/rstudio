@@ -42,7 +42,7 @@
            <g:ListBox ui:field="listFormats_"></g:ListBox>
 	     </g:FlowPanel>
 	     <g:ScrollPanel>
-	        <g:HTMLPanel ui:field="panelOptions_"></g:HTMLPanel>
+	        <g:VerticalPanel ui:field="panelOptions_"></g:VerticalPanel>
 	     </g:ScrollPanel>
 	     </g:HeaderPanel>
 	  </g:layer>

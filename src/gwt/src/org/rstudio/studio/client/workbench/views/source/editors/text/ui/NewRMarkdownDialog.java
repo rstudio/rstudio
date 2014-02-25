@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.widget.ModalDialog;
@@ -28,15 +30,14 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
@@ -175,11 +176,25 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private void addFormatOptions(RmdTemplateFormat format)
    {
+      optionWidgets_ = new ArrayList<NewRmdFormatOption>();
       JsArrayString options = format.getOptions();
       for (int i = 0; i < options.length(); i++)
       {
+         NewRmdFormatOption optionWidget;
          RmdTemplateFormatOption option = mapOptions_.get(options.get(i));
-         panelOptions_.add(new Label(option.getUiName()));
+         if (option.getType().equals("boolean"))
+         {
+            optionWidget = new NewRmdBooleanOption(option);
+         } 
+         else if (option.getType().equals("choice"))
+         {
+            optionWidget = new NewRmdChoiceOption(option);
+         }
+         else
+            continue;
+         
+         optionWidgets_.add(optionWidget);
+         panelOptions_.add(optionWidget);
       }
    }
    
@@ -187,7 +202,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField TextBox txtTitle_;
    @UiField ListBox listTemplates_;
    @UiField ListBox listFormats_;
-   @UiField HTMLPanel panelOptions_;
+   @UiField VerticalPanel panelOptions_;
 
    private final Widget mainWidget_;
 
@@ -195,6 +210,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private JsArray<RmdTemplateFormat> formats_;
    private JsArray<RmdTemplateFormatOption> options_;
    private Map<String, RmdTemplateFormatOption> mapOptions_;
+   private List<NewRmdFormatOption> optionWidgets_;
    
    @SuppressWarnings("unused")
    private final RMarkdownContext context_;

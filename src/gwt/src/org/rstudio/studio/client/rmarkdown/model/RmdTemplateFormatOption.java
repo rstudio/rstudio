@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RmdTemplateFormatOption extends JavaScriptObject
 {
@@ -36,5 +37,9 @@ public class RmdTemplateFormatOption extends JavaScriptObject
 
    public final native String getDefaultValue() /*-{
       return this.option_default;
+   }-*/;
+
+   public final native JsArrayString getChoiceList() /*-{
+      return this.option_list;
    }-*/;
 }

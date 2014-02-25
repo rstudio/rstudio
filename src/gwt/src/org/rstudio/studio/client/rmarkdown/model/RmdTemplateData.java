@@ -26,7 +26,7 @@ public class RmdTemplateData
             {
             format_name: "html_document",
             format_ui_name: "HTML",
-            format_options: [ "toc", "self_contained" ]
+            format_options: [ "toc", "self_contained", "theme" ]
             },
             {
             format_name: "pdf_document", 
@@ -45,7 +45,15 @@ public class RmdTemplateData
             option_name: "self_contained",
             option_ui_name: "Create a standalone HTML document", 
             option_type: "boolean", 
-            option_default: "false"
+            option_default: "true"
+            },
+            {
+            option_name: "theme",
+            option_ui_name: "Theme", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "default", "cerulean", "journal", "flatly",
+                           "readable", "spacelab", "united", "yeti", "cosmo"]
             }
          ]
          },
