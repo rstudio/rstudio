@@ -28,9 +28,9 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -44,25 +44,34 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 {
    public static class Result
    {  
-      public Result(String author, String title, String format)
+      public Result(String author, String title, String format, 
+                    List<NewRmdFormatOption> options)
       {
-         this.author = author;
-         this.title = title;
-         this.format = format;
+         result_ = toJSO(author, title, format, 
+                         NewRmdFormatOptions.optionsListToJson(options));
       }
       
-      public String toYAMLFrontMatter()
+      public JavaScriptObject getJSOResult()
       {
-         return "---\n" + 
-               "author: " + author + "\n" +
-               "title: " + title + "\n" +
-               "format: " + format + "\n" + 
-               "---\n";
+         return result_;
       }
+      
+      private final native JavaScriptObject toJSO(String author, 
+                                                 String title, 
+                                                 String format, 
+                                                 JavaScriptObject options) /*-{
+         var output = new Object();
+         output[format] = options;
+         
+         var result = new Object();
+         result["author"] = author;
+         result["title"] = title;
+         result["output"] = output;
+        
+         return result;
+      }-*/;
 
-      public final String author;
-      public final String title;
-      public final String format;
+      private JavaScriptObject result_;
    }
 
    public interface Binder extends UiBinder<Widget, NewRMarkdownDialog>
@@ -106,7 +115,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    protected Result collectInput()
    {
       return new Result(txtAuthor_.getText().trim(), txtTitle_.getText().trim(),
-            getSelectedFormat());
+            getSelectedFormat(), optionWidgets_);
    }
 
    @Override

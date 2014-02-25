@@ -1,5 +1,5 @@
 /*
- * NewRmdFormatOption.java
+ * RmdYamlResult.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,15 +12,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
+package org.rstudio.studio.client.rmarkdown.model;
 
-import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
+import com.google.gwt.core.client.JavaScriptObject;
 
-import com.google.gwt.user.client.ui.IsWidget;
-
-public interface NewRmdFormatOption extends IsWidget
+public class RmdYamlResult extends JavaScriptObject 
 {
-   boolean valueIsDefault();
-   String getValue();
-   RmdTemplateFormatOption getOption();
+   protected RmdYamlResult()
+   {
+   }
+
+   public final native String getYaml() /*-{
+      return this.yaml;
+   }-*/;
 }

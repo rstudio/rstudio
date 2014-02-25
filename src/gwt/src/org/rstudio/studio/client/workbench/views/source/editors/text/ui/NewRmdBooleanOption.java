@@ -17,12 +17,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Composite;
 
-public class NewRmdBooleanOption extends Composite implements NewRmdFormatOption
+public class NewRmdBooleanOption extends NewRmdBaseOption
 {
    public NewRmdBooleanOption(RmdTemplateFormatOption option)
    {
+      super(option);
       checkBox_ = new CheckBox(option.getUiName());
       defaultValue_ = Boolean.parseBoolean(option.getDefaultValue());
       checkBox_.setValue(defaultValue_);

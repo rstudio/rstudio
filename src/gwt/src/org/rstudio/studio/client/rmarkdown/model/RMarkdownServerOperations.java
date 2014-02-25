@@ -17,6 +17,8 @@ package org.rstudio.studio.client.rmarkdown.model;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 public interface RMarkdownServerOperations
 {
    void getRMarkdownContext(
@@ -26,6 +28,10 @@ public interface RMarkdownServerOperations
                   ServerRequestCallback<Boolean> requestCallback);
    
    void terminateRenderRmd(ServerRequestCallback<Void> requestCallback);
+   
+   
+   void convertToYAML(JavaScriptObject input, 
+                      ServerRequestCallback<RmdYamlResult> requestCallback);
 
    public String getApplicationURL(String pathName);
 }

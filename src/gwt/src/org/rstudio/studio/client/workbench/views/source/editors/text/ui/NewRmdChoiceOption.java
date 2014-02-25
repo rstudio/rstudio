@@ -17,15 +17,15 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.ListBox;
 
-public class NewRmdChoiceOption extends Composite implements NewRmdFormatOption
+public class NewRmdChoiceOption extends NewRmdBaseOption
 {
    public NewRmdChoiceOption(RmdTemplateFormatOption option)
    {
+      super(option);
       HTMLPanel panel = new HTMLPanel("");
       defaultValue_ = option.getDefaultValue();
       panel.add(new InlineLabel(option.getUiName() + ":"));
