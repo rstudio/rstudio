@@ -851,6 +851,7 @@ public class Source implements InsertSourceHandler,
             {
                new NewRMarkdownDialog(
                   context,
+                  session_.getSessionInfo().getUserIdentity(),
                   new OperationWithInput<NewRMarkdownDialog.Result>()
                   {
                      @Override

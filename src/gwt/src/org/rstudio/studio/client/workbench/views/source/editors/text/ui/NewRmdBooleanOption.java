@@ -17,16 +17,19 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTMLPanel;
 
 public class NewRmdBooleanOption extends NewRmdBaseOption
 {
    public NewRmdBooleanOption(RmdTemplateFormatOption option)
    {
       super(option);
+      HTMLPanel panel = new HTMLPanel("");
       checkBox_ = new CheckBox(option.getUiName());
       defaultValue_ = Boolean.parseBoolean(option.getDefaultValue());
       checkBox_.setValue(defaultValue_);
-      initWidget(checkBox_);
+      panel.add(checkBox_);
+      initWidget(panel);
    }
 
    @Override

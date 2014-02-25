@@ -34,4 +34,9 @@ public class RmdTemplateFormat extends JavaScriptObject
    public final native JsArrayString getOptions() /*-{
       return this.format_options;
    }-*/;
+
+   public final native String getNotes() /*-{
+      return this.format_notes || "";
+   }-*/;
+   
 }

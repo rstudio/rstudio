@@ -31,10 +31,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -80,11 +82,14 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
    public NewRMarkdownDialog(
          RMarkdownContext context,
+         String author,
          OperationWithInput<Result> operation)
    {
       super("New R Markdown Document", operation);
       context_ = context;
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      txtAuthor_.setText(author);
+      txtTitle_.setText("Untitled");
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -185,6 +190,15 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private void addFormatOptions(RmdTemplateFormat format)
    {
+      if (format.getNotes().length() > 0)
+      {
+         labelFormatNotes_.setText(format.getNotes());
+         labelFormatNotes_.setVisible(true);
+      }
+      else
+      {
+         labelFormatNotes_.setVisible(false);
+      }
       optionWidgets_ = new ArrayList<NewRmdFormatOption>();
       JsArrayString options = format.getOptions();
       for (int i = 0; i < options.length(); i++)
@@ -204,6 +218,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          
          optionWidgets_.add(optionWidget);
          panelOptions_.add(optionWidget);
+         optionWidget.asWidget().getElement().getStyle().setMarginTop(5, Unit.PX);
+         optionWidget.asWidget().getElement().getStyle().setMarginBottom(5, Unit.PX);
       }
    }
    
@@ -212,6 +228,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField ListBox listTemplates_;
    @UiField ListBox listFormats_;
    @UiField VerticalPanel panelOptions_;
+   @UiField Label labelFormatNotes_;
 
    private final Widget mainWidget_;
 

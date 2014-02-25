@@ -7,7 +7,7 @@
 	  height: 100%;
 	}
 	
-	.formatPanel
+	.templatePanel
 	{
 	  margin-top: 15px;
 	}
@@ -23,29 +23,59 @@
 	.templateList option
 	{
 	  padding: 2px;
-     font-size: 110%;
+     font-size: 120%;
+	}
+	
+	.topLabel
+	{
+	  font-weight: bold;
+	}
+	
+	.formatPanel
+	{
+	  padding-bottom: 5px;
+	  border-bottom: 1px solid #a0a0a0;
+	}
+	
+	.templateDetails
+	{
+	  margin-left: 20px;
+	}
+	
+	.textBox
+	{
+	  padding: 2px;
+	}
+	
+	.authorLabel
+	{
+	  margin-left: 15px;
+	}
+	
+	.notesLabel
+	{
+	   color: #505050;
 	}
 	</ui:style>
-	<g:HTMLPanel width="500px">
-	<g:InlineLabel text="Author:"></g:InlineLabel><g:TextBox ui:field="txtAuthor_"></g:TextBox>
-	<g:InlineLabel text="Title:"></g:InlineLabel><g:TextBox ui:field="txtTitle_"></g:TextBox>
-	<g:LayoutPanel height="300px" width="100%" styleName="{style.formatPanel}">
-	  <g:layer width="33%" height="100%">
-	     <g:ListBox ui:field="listTemplates_" 
-	                styleName="{style.fillHeight} {style.templateList}" 
-	                visibleItemCount="5"></g:ListBox>
-	  </g:layer>
-	  <g:layer width="67%" left="33%" height="100%">
-	     <g:HeaderPanel>
-	     <g:FlowPanel>
-	        <g:InlineLabel text="Format:"></g:InlineLabel>
+	<g:HTMLPanel>
+	<g:InlineLabel styleName="{style.topLabel}" text="Title:"></g:InlineLabel>
+	<g:TextBox styleName="{style.textBox}" width="250px" ui:field="txtTitle_"></g:TextBox>
+	<g:InlineLabel styleName="{style.topLabel} {style.authorLabel}" text="Author:"></g:InlineLabel>
+	<g:TextBox styleName="{style.textBox}" width="100px" ui:field="txtAuthor_"></g:TextBox>
+	<g:HorizontalPanel height="300px" styleName="{style.templatePanel}">
+     <g:ListBox ui:field="listTemplates_" 
+                styleName="{style.fillHeight} {style.templateList}" 
+                visibleItemCount="5" width="150px"></g:ListBox>
+     <g:HeaderPanel styleName="{style.templateDetails}" width="300px" height="100%">
+        <g:FlowPanel styleName="{style.formatPanel}">
+           <g:InlineLabel styleName="{style.topLabel}" text="Format:"></g:InlineLabel>
            <g:ListBox ui:field="listFormats_"></g:ListBox>
-	     </g:FlowPanel>
-	     <g:ScrollPanel>
-	        <g:VerticalPanel ui:field="panelOptions_"></g:VerticalPanel>
-	     </g:ScrollPanel>
-	     </g:HeaderPanel>
-	  </g:layer>
-	</g:LayoutPanel>
+           <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"></g:Label>
+        </g:FlowPanel>
+        <g:ScrollPanel>
+           <g:VerticalPanel ui:field="panelOptions_"></g:VerticalPanel>
+        </g:ScrollPanel>
+     </g:HeaderPanel>
+	</g:HorizontalPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 

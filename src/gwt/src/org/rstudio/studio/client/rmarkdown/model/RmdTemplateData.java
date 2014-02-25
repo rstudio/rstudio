@@ -26,12 +26,15 @@ public class RmdTemplateData
             {
             format_name: "html_document",
             format_ui_name: "HTML",
-            format_options: [ "toc", "self_contained", "theme" ]
+            format_options: [ "toc", "self_contained", "smart", "theme", 
+                              "highlight" ],
+            format_notes: "HTML is recommended for authoring. You can switch to PDF or Word anytime."
             },
             {
             format_name: "pdf_document", 
             format_ui_name: "PDF",
-            format_options: [ "toc" ]
+            format_options: [ "toc", "number_sections", "highlight", 
+                              "latex_engine" ]
             } 
          ],
          template_options: [ 
@@ -54,7 +57,34 @@ public class RmdTemplateData
             option_default: "default",
             option_list: [ "default", "cerulean", "journal", "flatly",
                            "readable", "spacelab", "united", "yeti", "cosmo"]
-            }
+            },
+            {
+            option_name: "highlight",
+            option_ui_name: "Syntax highlighting", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "default", "tango", "pygments", "kate", "monochrome",
+                           "espresso", "zenburn", "haddock", "textmate" ]
+            },
+            {
+            option_name: "smart",
+            option_ui_name: "Use smart punctuation", 
+            option_type: "boolean", 
+            option_default: "true"
+            },
+            {
+            option_name: "number_sections",
+            option_ui_name: "Number section headings", 
+            option_type: "boolean", 
+            option_default: "false"
+            },
+            {
+            option_name: "latex_engine",
+            option_ui_name: "LaTeX Engine", 
+            option_type: "choice", 
+            option_default: "pdflatex",
+            option_list: [ "pdflatex", "lualatex", "xelatex" ]
+            },
          ]
          },
          {
