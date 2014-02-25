@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RmdTemplateFormat extends JavaScriptObject
 {
@@ -30,7 +31,7 @@ public class RmdTemplateFormat extends JavaScriptObject
       return this.format_ui_name;
    }-*/;
    
-   public final native String getOptions() /*-{
+   public final native JsArrayString getOptions() /*-{
       return this.format_options;
    }-*/;
 }

@@ -27,10 +27,12 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.StackPanel;
@@ -81,6 +83,15 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             updateOptions(getSelectedTemplate());
          }
       });
+      listFormats_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            updateFormatOptions(getSelectedFormat());
+         }
+      });
+
       templates_ = RmdTemplateData.getTemplates();
       for (int i = 0; i < templates_.length(); i++)
       {
@@ -116,7 +127,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private String getSelectedFormat()
    {
-      return listFormats_.getValue(listTemplates_.getSelectedIndex());
+      return listFormats_.getValue(listFormats_.getSelectedIndex());
    }
    
    private void updateOptions(String selectedTemplate)
@@ -133,20 +144,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private void updateOptions(RmdTemplate template)
    {
-      panelOptions_.clear();
       formats_ = template.getFormats();
       options_ = template.getOptions();
-      panelOptions_.add(new Label("Format: "));
-      listFormats_ = new ListBox();
-      listFormats_.addChangeHandler(new ChangeHandler()
-      {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            updateFormatOptions(getSelectedFormat());
-         }
-      });
-      panelOptions_.add(listFormats_);
+      listFormats_.clear();
       for (int i = 0; i < formats_.length(); i++)
       {
          listFormats_.addItem(formats_.get(i).getUiName(), 
@@ -157,30 +157,38 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       {
          mapOptions_.put(options_.get(i).getName(), options_.get(i));
       }
+      updateFormatOptions(getSelectedFormat());
    }
    
    private void updateFormatOptions(String format)
    {
+      panelOptions_.clear();
       for (int i = 0; i < formats_.length(); i++)
       {
          if (formats_.get(i).getName().equals(format))
          {
-            updateFormatOptions(formats_.get(i));
+            addFormatOptions(formats_.get(i));
             break;
          }
       }
    }
    
-   private void updateFormatOptions(RmdTemplateFormat format)
+   private void addFormatOptions(RmdTemplateFormat format)
    {
+      JsArrayString options = format.getOptions();
+      for (int i = 0; i < options.length(); i++)
+      {
+         RmdTemplateFormatOption option = mapOptions_.get(options.get(i));
+         panelOptions_.add(new Label(option.getUiName()));
+      }
    }
    
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
    @UiField ListBox listTemplates_;
-   @UiField StackPanel panelOptions_;
-   
-   private ListBox listFormats_;
+   @UiField ListBox listFormats_;
+   @UiField HTMLPanel panelOptions_;
+
    private final Widget mainWidget_;
 
    private JsArray<RmdTemplate> templates_;

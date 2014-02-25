@@ -11,18 +11,40 @@
 	{
 	  margin-top: 15px;
 	}
+	
+	.templateList
+	{
+	  padding: 5px;
+	  box-sizing: border-box;
+	  -moz-box-sizing: border-box;
+	  -webkit-box-sizing: border-box;
+	}
+	
+	.templateList option
+	{
+	  padding: 2px;
+     font-size: 110%;
+	}
 	</ui:style>
-	<g:HTMLPanel>
+	<g:HTMLPanel width="500px">
 	<g:InlineLabel text="Author:"></g:InlineLabel><g:TextBox ui:field="txtAuthor_"></g:TextBox>
 	<g:InlineLabel text="Title:"></g:InlineLabel><g:TextBox ui:field="txtTitle_"></g:TextBox>
-	<g:LayoutPanel height="300px" styleName="{style.formatPanel}">
+	<g:LayoutPanel height="300px" width="100%" styleName="{style.formatPanel}">
 	  <g:layer width="33%" height="100%">
-	     <g:ListBox ui:field="listTemplates_" styleName="{style.fillHeight}" visibleItemCount="5"></g:ListBox>
+	     <g:ListBox ui:field="listTemplates_" 
+	                styleName="{style.fillHeight} {style.templateList}" 
+	                visibleItemCount="5"></g:ListBox>
 	  </g:layer>
 	  <g:layer width="67%" left="33%" height="100%">
-	     <g:ScrollPanel styleName="{style.fillHeight}">
-	        <g:StackPanel ui:field="panelOptions_"></g:StackPanel>
+	     <g:HeaderPanel>
+	     <g:FlowPanel>
+	        <g:InlineLabel text="Format:"></g:InlineLabel>
+           <g:ListBox ui:field="listFormats_"></g:ListBox>
+	     </g:FlowPanel>
+	     <g:ScrollPanel>
+	        <g:HTMLPanel ui:field="panelOptions_"></g:HTMLPanel>
 	     </g:ScrollPanel>
+	     </g:HeaderPanel>
 	  </g:layer>
 	</g:LayoutPanel>
 	</g:HTMLPanel>

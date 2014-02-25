@@ -57,7 +57,8 @@ public class RmdTemplateData
             format_ui_name: "IOSlides",
             format_options: []
             }
-         ]
+         ],
+         template_options: []
          }
    ];
    }-*/;
