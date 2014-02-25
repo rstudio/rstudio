@@ -18,6 +18,8 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.Shardable;
@@ -28,19 +30,46 @@ import com.google.gwt.dev.util.DefaultTextOutput;
 /**
  * Implements the canonical GWT bootstrap sequence that loads the GWT module in
  * a separate iframe.
+ *
+ * @deprecated use {@link CrossSiteIframeLinker} instead.
  */
 @LinkerOrder(Order.PRIMARY)
 @Shardable
+@Deprecated
 public class IFrameLinker extends SelectionScriptLinker {
+  private static final String SUPPRESS_DEPRECATION_WARNING_PROPERTY = "iframe.linker.suppressDeprecationWarning";
+
   /**
    * This string is inserted between script chunks. It is made default access
    * for testing.
    */
   static final String SCRIPT_CHUNK_SEPARATOR = "--></script>\n<script><!--\n";
 
+  // Also used by the XSLinker.
+  static void maybeEmitDeprecationWarning(String linkerName, TreeLogger logger, LinkerContext context) {
+    boolean suppressDeprecationWarning = false;
+    for (ConfigurationProperty prop : context.getConfigurationProperties()) {
+      if (SUPPRESS_DEPRECATION_WARNING_PROPERTY.equals(prop.getName())) {
+        suppressDeprecationWarning = Boolean.parseBoolean(prop.getValues().get(0));
+        break;
+      }
+    }
+    if (!suppressDeprecationWarning) {
+      logger.log(TreeLogger.WARN,
+          linkerName + " linker is deprecated; consider switching to the xsiframe linker");
+    }
+  }
+
   @Override
   public String getDescription() {
-    return "Standard";
+    return "IFrame";
+  }
+
+  @Override
+  public ArtifactSet link(TreeLogger logger, LinkerContext context, ArtifactSet artifacts,
+      boolean onePermutation) throws UnableToCompleteException {
+    maybeEmitDeprecationWarning(getDescription(), logger, context);
+    return super.link(logger, context, artifacts, onePermutation);
   }
 
   @Override
@@ -179,5 +208,4 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.newline();
     return out.toString();
   }
-
 }

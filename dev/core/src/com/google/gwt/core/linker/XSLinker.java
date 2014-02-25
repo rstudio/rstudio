@@ -17,6 +17,7 @@ package com.google.gwt.core.linker;
 
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
@@ -28,13 +29,23 @@ import com.google.gwt.util.tools.shared.StringUtils;
 
 /**
  * Generates a cross-site compatible bootstrap sequence.
+ *
+ * @deprecated use {@link CrossSiteIframeLinker} instead.
  */
 @LinkerOrder(Order.PRIMARY)
 @Shardable
+@Deprecated
 public class XSLinker extends SelectionScriptLinker {
   @Override
   public String getDescription() {
     return "Cross-Site";
+  }
+
+  @Override
+  public ArtifactSet link(TreeLogger logger, LinkerContext context, ArtifactSet artifacts,
+      boolean onePermutation) throws UnableToCompleteException {
+    IFrameLinker.maybeEmitDeprecationWarning(getDescription(), logger, context);
+    return super.link(logger, context, artifacts, onePermutation);
   }
 
   @Override

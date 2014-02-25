@@ -43,6 +43,10 @@
   <inherits name="com.google.gwt.core.XSLinker" />
   <inherits name="com.google.gwt.core.CrossSiteIframeLinker" />
 
+  <!-- std and xs linkers are deprecated and will emit a warning, which can be turned off -->
+  <define-configuration-property name="iframe.linker.suppressDeprecationWarning" is-multi-valued="false" />
+  <set-configuration-property name="iframe.linker.suppressDeprecationWarning" value="false" />
+
   <!-- When true, compiles in support for GWT.unloadModule(), otherwise it is a no-op. -->
   <define-property name="gwt.unloadEnabled" values="false, true"/>
   <set-property name="gwt.unloadEnabled" value="false"/>
