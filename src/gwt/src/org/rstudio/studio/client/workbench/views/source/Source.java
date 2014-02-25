@@ -709,10 +709,6 @@ public class Source implements InsertSourceHandler,
       SessionInfo sessionInfo = session_.getSessionInfo();
       boolean useRMarkdownV2 = sessionInfo.getRMarkdownPackageAvailable();
       
-      // until we get the RMarkdown v2 New Doc dialog spiffed up 
-      // we always use RMarkdown v1
-      useRMarkdownV2 = false;
-      
       if (useRMarkdownV2)
          newRMarkdownV2Doc();
       else
