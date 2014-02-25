@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -69,7 +69,9 @@ public class TextEditingTargetRMarkdownHelper
       }
    }
    
-   public void withRMarkdownPackage(String action, final Command onReady)
+   public void withRMarkdownPackage(
+          String action, 
+          final CommandWithArg<RMarkdownContext> onReady)
    {
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
@@ -80,11 +82,18 @@ public class TextEditingTargetRMarkdownHelper
       {
          @Override
          public void onResponseReceived(RMarkdownContext context)
-         {
-            progress.onCompleted();
-            
-            if (onReady != null)
-               onReady.execute();
+         { 
+            if (context.getRMarkdownInstalled())
+            {
+               progress.onCompleted();
+               
+               if (onReady != null)
+                  onReady.execute(context);
+            }
+            else
+            {
+               progress.onError("Unable to install the rmarkdown package");
+            }
          }
          
          @Override
@@ -101,9 +110,10 @@ public class TextEditingTargetRMarkdownHelper
                                final int sourceLine,
                                final String encoding)
    {
-      withRMarkdownPackage("Rendering R Markdown documents", new Command() {
+      withRMarkdownPackage("Rendering R Markdown documents", 
+                           new CommandWithArg<RMarkdownContext>() {
          @Override
-         public void execute()
+         public void execute(RMarkdownContext arg)
          {
             eventBus_.fireEvent(new RenderRmdEvent(sourceFile,
                                                    sourceLine,

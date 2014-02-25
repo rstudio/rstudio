@@ -62,6 +62,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -847,11 +848,13 @@ public class Source implements InsertSourceHandler,
    {
       rmarkdown_.withRMarkdownPackage(
          "Creating R Markdown documents",
-         new Command(){
+         new CommandWithArg<RMarkdownContext>(){
+
             @Override
-            public void execute()
+            public void execute(RMarkdownContext context)
             {
                new NewRMarkdownDialog(
+                  context,
                   new OperationWithInput<NewRMarkdownDialog.Result>()
                   {
                      @Override

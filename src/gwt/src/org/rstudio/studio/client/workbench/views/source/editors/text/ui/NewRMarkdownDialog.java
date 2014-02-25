@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -49,9 +50,12 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    {
    }
 
-   public NewRMarkdownDialog(OperationWithInput<Result> operation)
+   public NewRMarkdownDialog(
+         RMarkdownContext context,
+         OperationWithInput<Result> operation)
    {
       super("New R Markdown Document", operation);
+      context_ = context;
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
    }
 
@@ -75,6 +79,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
+   
+   @SuppressWarnings("unused")
+   private final RMarkdownContext context_;
    
    private final Widget mainWidget_;
 }
