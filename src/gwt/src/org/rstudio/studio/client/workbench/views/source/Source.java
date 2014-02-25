@@ -93,6 +93,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.File
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Result;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
@@ -709,11 +711,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute()
             {
-               newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
-                     "", 
-                     "r_markdown.Rmd",
-                     Position.create(3, 0));
-               
+               newRMarkdownDoc();
             }
           }
         );
@@ -836,6 +834,32 @@ public class Source implements InsertSourceHandler,
       });
    }
    
+   private void newRMarkdownDoc()
+   {
+      new NewRMarkdownDialog(
+         new OperationWithInput<NewRMarkdownDialog.Result>()
+         {
+            @Override
+            public void execute(final NewRMarkdownDialog.Result result)
+            {
+               newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+                     "", 
+                     "r_markdown.Rmd",
+                     Position.create(3, 0),
+                     null,
+                     new TransformerCommand<String>()
+                     {
+                        @Override
+                        public String transform(String input)
+                        {
+                           return result.toYAMLFrontMatter() + "\n" + input;
+                        }
+                     });
+            }
+         }
+      ).showModal();
+   }
+   
    private void newSourceDocWithTemplate(final TextFileType fileType, 
                                          String name,
                                          String template)
@@ -858,6 +882,17 @@ public class Source implements InsertSourceHandler,
                        final Position cursorPosition,
                        final CommandWithArg<EditingTarget> onSuccess)
    {
+      newSourceDocWithTemplate(fileType, name, template, cursorPosition, null, null);
+   }
+
+   private void newSourceDocWithTemplate(
+                       final TextFileType fileType, 
+                       String name,
+                       String template,
+                       final Position cursorPosition,
+                       final CommandWithArg<EditingTarget> onSuccess,
+                       final TransformerCommand<String> contentTransformer)
+   {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
             globalDisplay_, 500, "Creating new document...").getIndicator();
 
@@ -868,6 +903,9 @@ public class Source implements InsertSourceHandler,
          public void onResponseReceived(String templateContents)
          {
             indicator.onCompleted();
+
+            if (contentTransformer != null)
+               templateContents = contentTransformer.transform(templateContents);
 
             newDoc(fileType, 
                   templateContents, 

@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	
+	</ui:style>
+	<g:HTMLPanel>
+	<g:InlineLabel text="Author:"></g:InlineLabel><g:TextBox ui:field="txtAuthor_"></g:TextBox>
+	<g:InlineLabel text="Title:"></g:InlineLabel><g:TextBox ui:field="txtTitle_"></g:TextBox>
+	</g:HTMLPanel>
+</ui:UiBinder> 
