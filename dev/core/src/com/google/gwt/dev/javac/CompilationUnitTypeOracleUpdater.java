@@ -47,7 +47,6 @@ import com.google.gwt.dev.javac.typemodel.JWildcardType;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.javac.typemodel.TypeOracleUpdater;
 import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -207,7 +206,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     private final Map<String, CollectClassData> classDataByInternalName =
         new HashMap<String, CollectClassData>();
 
-    private final HashMap<JRealClassType, CollectClassData> classDataByType =
+    private final Map<JRealClassType, CollectClassData> classDataByType =
         new HashMap<JRealClassType, CollectClassData>();
 
     private final Resolver resolver = new CompilationUnitTypeOracleResolver(this);
@@ -511,8 +510,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     assert !collectClassData.hasNoExternalName();
     String enclosingSimpleName = null;
     if (enclosingClassData != null) {
-      enclosingSimpleName = InternalName.toSourceName(
-          InternalName.getClassName(enclosingClassData.getInternalName()));
+      enclosingSimpleName = enclosingClassData.getNestedSourceName();
     }
     if ((access & Opcodes.ACC_ANNOTATION) != 0) {
       type = newAnnotationType(pkg, enclosingSimpleName, simpleName);

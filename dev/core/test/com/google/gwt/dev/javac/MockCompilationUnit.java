@@ -38,7 +38,8 @@ public class MockCompilationUnit extends CompilationUnit {
   private final long lastModified;
   private final String resourceLocation;
   private final String typeName;
-  private final List<CompiledClass> emptyCompiledClasses = Lists.newArrayList();
+  private final List<CompiledClass> compiledClasses = Lists.newArrayList();
+  private final List<JDeclaredType> types = Lists.newArrayList();
 
   public MockCompilationUnit(String typeName, String source) {
     this(typeName, source, "/mock/" + Shared.toPath(typeName));
@@ -49,6 +50,7 @@ public class MockCompilationUnit extends CompilationUnit {
     this.resourceLocation = resourceLocation;
     contentId = new ContentId(typeName, source);
     lastModified = nextTimestamp.getAndIncrement();
+    compiledClasses.add(new MockCompiledClass(null, typeName.replace('.', '/'), typeName));
     types.add(new JClassType(SourceOrigin.UNKNOWN, typeName, false, true));
   }
 
@@ -61,7 +63,7 @@ public class MockCompilationUnit extends CompilationUnit {
 
   @Override
   public Collection<CompiledClass> getCompiledClasses() {
-    return emptyCompiledClasses;
+    return compiledClasses;
   }
 
   @Override
@@ -103,8 +105,6 @@ public class MockCompilationUnit extends CompilationUnit {
   public boolean isError() {
     return false;
   }
-
-  private List<JDeclaredType> types = Lists.newArrayList();
 
   @Override
   public List<JDeclaredType> getTypes() {

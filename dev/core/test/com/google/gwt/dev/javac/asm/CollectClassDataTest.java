@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,15 +15,16 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.dev.javac.typemodel.test.PrimitiveValuesAnnotation;
-import com.google.gwt.dev.javac.typemodel.test.TestAnnotation;
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.javac.asm.CollectAnnotationData.AnnotationData;
 import com.google.gwt.dev.javac.asm.CollectClassData.ClassType;
+import com.google.gwt.dev.javac.asm.CollectClassDataTest.Pseudo$Inner.Deepest;
+import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
+import com.google.gwt.dev.javac.typemodel.test.PrimitiveValuesAnnotation;
+import com.google.gwt.dev.javac.typemodel.test.TestAnnotation;
 
 import java.util.List;
 
@@ -43,7 +44,6 @@ public class CollectClassDataTest extends AsmTestCase {
     }
   }
 
-
   public static class One extends EmptyVisitor {
 
     @Override
@@ -55,6 +55,12 @@ public class CollectClassDataTest extends AsmTestCase {
         }
       };
       return new CollectAnnotationData(desc, visible);
+    }
+  }
+
+  protected static class Pseudo$Inner {
+
+    public static class Deepest {
     }
   }
 
@@ -124,6 +130,7 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(0, cd.getFields().size());
     List<CollectMethodData> methods = cd.getMethods();
     assertEquals(2, methods.size());
+    assertEquals(null, cd.getNestedSourceName());
   }
 
   public void testOne() {
@@ -137,6 +144,7 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(0, cd.getAnnotations().size());
     assertEquals("com/google/gwt/dev/javac/asmbridge/EmptyVisitor",
         cd.getSuperInternalName());
+    assertEquals("CollectClassDataTest.One", cd.getNestedSourceName());
 
     List<CollectMethodData> methods = cd.getMethods();
     assertEquals(2, methods.size());
@@ -174,6 +182,7 @@ public class CollectClassDataTest extends AsmTestCase {
     // Don't check for super bit, as it will depend on the JDK used to compile.
     assertEquals(Opcodes.ACC_PUBLIC, cd.getAccess() & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.TopLevel, cd.getClassType());
+    assertEquals("CollectClassDataTest", cd.getNestedSourceName());
   }
 
   public void testTwo() {
@@ -208,6 +217,7 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(Byte.valueOf((byte) 42), annotation.getValues().get("b"));
     assertEquals(42, annotation.getValues().get("i"));
     assertEquals("java/lang/Object", cd.getSuperInternalName());
+    assertEquals("CollectClassDataTest.Two", cd.getNestedSourceName());
 
     List<CollectMethodData> methods = cd.getMethods();
     assertEquals(3, methods.size());
@@ -257,6 +267,17 @@ public class CollectClassDataTest extends AsmTestCase {
     // Don't check for super bit, as it will depend on the JDK used to compile.
     assertEquals(Opcodes.ACC_PUBLIC, cd.getAccess() & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Inner, cd.getClassType());
+    assertEquals("CollectClassDataTest.Two.TwoInner", cd.getNestedSourceName());
+  }
+
+  public void testPseudoInner() {
+    CollectClassData cd = collect(Pseudo$Inner.class);
+    assertEquals("CollectClassDataTest.Pseudo$Inner", cd.getNestedSourceName());
+  }
+
+  public void testPseudoInnerDeepest() {
+    CollectClassData cd = collect(Deepest.class);
+    assertEquals("CollectClassDataTest.Pseudo$Inner.Deepest", cd.getNestedSourceName());
   }
 
   public void testLocal() {
@@ -273,12 +294,14 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(0, cd.getAccess() & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Local, cd.getClassType());
     assertEquals("methodWithLocalStatic", cd.getEnclosingMethodName());
+    assertEquals(null, cd.getNestedSourceName());
   }
 
   // See http://code.google.com/p/google-web-toolkit/issues/detail?id=6591
   // Argument names were incorrect in the presence of long/double args
   public void testLongDoubleArgs() {
     CollectClassData cd = collect(LongDoubleArgs.class);
+    assertEquals("CollectClassDataTest.LongDoubleArgs", cd.getNestedSourceName());
     List<CollectMethodData> methods = cd.getMethods();
     assertEquals(2, methods.size());
     CollectMethodData method = methods.get(0);

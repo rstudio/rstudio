@@ -15,11 +15,9 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jjs.PermutationResult;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
@@ -29,6 +27,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -82,14 +81,11 @@ public class MockLibrary implements Library {
     compilationUnitsByTypeName.put(compilationUnitTypeSourceName, compilationUnit);
     compilationUnitTypeNames.add(compilationUnitTypeSourceName);
 
-    List<JDeclaredType> types = compilationUnit.getTypes();
-    for (JDeclaredType type : types) {
-      String sourceName = BinaryName.toSourceName(type.getName());
-      // Anonymous classes have no sourceName and don't need to be indexed.
-      if (Name.isSourceName(sourceName)) {
-        nestedNamesByCompilationUnitName.put(compilationUnitTypeSourceName, sourceName);
-        compilationUnitNamesByNestedName.put(sourceName, compilationUnitTypeSourceName);
-      }
+    Collection<CompiledClass> compiledClasses = compilationUnit.getCompiledClasses();
+    for (CompiledClass compiledClasse : compiledClasses) {
+    String sourceName = compiledClasse.getSourceName();
+      nestedNamesByCompilationUnitName.put(compilationUnitTypeSourceName, sourceName);
+      compilationUnitNamesByNestedName.put(sourceName, compilationUnitTypeSourceName);
     }
   }
 
@@ -99,14 +95,11 @@ public class MockLibrary implements Library {
         superSourceCompilationUnit);
     compilationUnitTypeNames.add(superSourceCompilationUnitTypeSourceName);
 
-    List<JDeclaredType> types = superSourceCompilationUnit.getTypes();
-    for (JDeclaredType type : types) {
-      String sourceName = BinaryName.toSourceName(type.getName());
-      // Anonymous classes have no sourceName and don't need to be indexed.
-      if (Name.isSourceName(sourceName)) {
-        nestedNamesByCompilationUnitName.put(superSourceCompilationUnitTypeSourceName, sourceName);
-        compilationUnitNamesByNestedName.put(sourceName, superSourceCompilationUnitTypeSourceName);
-      }
+    Collection<CompiledClass> compiledClasses = superSourceCompilationUnit.getCompiledClasses();
+    for (CompiledClass compiledClasse : compiledClasses) {
+    String sourceName = compiledClasse.getSourceName();
+      nestedNamesByCompilationUnitName.put(superSourceCompilationUnitTypeSourceName, sourceName);
+      compilationUnitNamesByNestedName.put(sourceName, superSourceCompilationUnitTypeSourceName);
     }
   }
 

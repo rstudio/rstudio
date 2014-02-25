@@ -68,7 +68,7 @@ public class CompilationUnitInvalidatorTest extends TestCase {
     Map<String, CompiledClass> validClasses = new HashMap<String, CompiledClass>();
     validClasses.put("bad0", bad0.getCompiledClasses().iterator().next());
     validClasses.put("good0", good0.getCompiledClasses().iterator().next());
-    
+
     // At least some of the members of units also appear within validClasses
     // By putting bad2 here, this test ensures that bad3 (and dependents)
     // will be removed even though bad2 is in validClasses.
@@ -90,8 +90,8 @@ public class CompilationUnitInvalidatorTest extends TestCase {
   }
 
   private static CompilationUnit getUnitWithApiRefs(
-      final boolean isError, final String sourceName, final String... apiRefs) {
-    return new MockCompilationUnit(sourceName, sourceName) {
+      final boolean isError, final String simpleName, final String... apiRefs) {
+    return new MockCompilationUnit(simpleName, simpleName) {
       @Override
       public boolean isError() {
         return isError;
@@ -99,7 +99,7 @@ public class CompilationUnitInvalidatorTest extends TestCase {
 
       @Override
       public Collection<CompiledClass> getCompiledClasses() {
-        CompiledClass cc = new CompiledClass(new byte[1], null, false, sourceName);
+        CompiledClass cc = new CompiledClass(new byte[1], null, false, simpleName, simpleName);
         cc.initUnit(this);
         return Collections.<CompiledClass>singletonList(cc);
       }

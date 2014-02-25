@@ -18,31 +18,32 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Test class for {@link JdtCompiler}.
  */
 public class JdtCompilerTest extends JdtCompilerTestBase {
 
+  public static final MockJavaResource OUTER_INNER = JavaResourceBase.createMockJavaResource(
+      "com.google.Outer",
+      "package com.google;",
+      "public class Outer {",
+      "  private static class Inner {",
+      "    private static class Deep$est {}",
+      "  }",
+      "}");
+
+  public static final MockJavaResource PSEUDO_INNER = JavaResourceBase.createMockJavaResource(
+      "com.google.Pseudo$Inner", "package com.google;", "public class Pseudo$Inner {}");
+
   public void testCompile() throws Exception {
     assertResourcesCompileSuccessfully(JavaResourceBase.FOO, JavaResourceBase.BAR);
-  }
-
-  public void testCompileError() throws Exception {
-    List<CompilationUnit> units = compile(JavaResourceBase.BAR);
-    assertOnlyLastUnitHasErrors(units, "Foo cannot be resolved to a type");
-  }
-
-  public void testCompileIncremental() throws Exception {
-    List<CompilationUnitBuilder> builders = buildersFor();
-    Collection<CompilationUnit> units = compile(builders);
-    assertUnitsCompiled(units);
-    addAll(builders, JavaResourceBase.FOO, JavaResourceBase.BAR);
-    units = compile(builders);
-    assertUnitsCompiled(units);
   }
 
   public void testCompileEmptyFile() throws Exception {
@@ -57,6 +58,20 @@ public class JdtCompilerTest extends JdtCompilerTestBase {
     assertUnitCompilesWithNoErrors("com.example.EmptyWithImports",
         "package com.example;",
         "import java.util.Collections;");
+  }
+
+  public void testCompileError() throws Exception {
+    List<CompilationUnit> units = compile(JavaResourceBase.BAR);
+    assertOnlyLastUnitHasErrors(units, "Foo cannot be resolved to a type");
+  }
+
+  public void testCompileIncremental() throws Exception {
+    List<CompilationUnitBuilder> builders = buildersFor();
+    Collection<CompilationUnit> units = compile(builders);
+    assertUnitsCompiled(units);
+    addAll(builders, JavaResourceBase.FOO, JavaResourceBase.BAR);
+    units = compile(builders);
+    assertUnitsCompiled(units);
   }
 
   public void testRemoveUnusedImports() throws Exception {
@@ -97,6 +112,19 @@ public class JdtCompilerTest extends JdtCompilerTestBase {
         "import static java.util.BlahBlahBlah.Blah;",
         "public class UnusedStaticImports {",
         "}");
+  }
+
+  public void testSourceNames() throws Exception {
+    List<CompilationUnit> compilationUnits = compile(OUTER_INNER, PSEUDO_INNER);
+    Set<String> sourceNames = Sets.newHashSet();
+    for (CompilationUnit compilationUnit : compilationUnits) {
+      for (CompiledClass compiledClass : compilationUnit.getCompiledClasses()) {
+        sourceNames.add(compiledClass.getSourceName());
+      }
+    }
+
+    assertTrue(sourceNames.containsAll(Lists.newArrayList("com.google.Outer",
+        "com.google.Outer.Inner", "com.google.Outer.Inner.Deep$est", "com.google.Pseudo$Inner")));
   }
 
   private void assertUnitCompilesWithNoErrors(String sourceName, String... sourceLines)

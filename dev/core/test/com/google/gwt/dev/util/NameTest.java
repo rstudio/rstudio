@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,7 +30,7 @@ public class NameTest extends TestCase {
   /**
    * Used to test getting names from a Class instance.
    */
-  private static class Inner {   
+  private static class Inner {
   }
 
   public void testBinaryName() {
@@ -137,10 +137,10 @@ public class NameTest extends TestCase {
 
   public void testIsSourceName() {
     assertTrue(Name.isSourceName("org.test.Foo"));
-    assertFalse(Name.isSourceName("org.test.Foo$Bar"));
-    assertFalse(Name.isSourceName("org.test.Foo$Bar$Baz"));
-    assertFalse(Name.isSourceName("org.test.Foo$Bar$Baz$"));
-    assertFalse(Name.isSourceName("org.test.Foo$Bar$Baz$1"));
+    assertTrue(Name.isSourceName("org.test.Foo$Bar"));
+    assertTrue(Name.isSourceName("org.test.Foo$Bar$Baz"));
+    assertTrue(Name.isSourceName("org.test.Foo$Bar$Baz$"));
+    assertTrue(Name.isSourceName("org.test.Foo$Bar$Baz$1"));
     assertFalse(Name.isSourceName("org/test/Foo"));
     assertFalse(Name.isSourceName("org/test/Foo$Bar"));
     assertFalse(Name.isSourceName("org/test/Foo$Bar$Baz"));

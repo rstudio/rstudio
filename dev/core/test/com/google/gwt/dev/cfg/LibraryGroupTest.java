@@ -15,10 +15,9 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.cfg.LibraryGroup.DuplicateLibraryNameException;
 import com.google.gwt.dev.cfg.LibraryGroup.UnresolvedLibraryException;
+import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.MockCompilationUnit;
-import com.google.gwt.dev.jjs.SourceOrigin;
-import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.javac.MockCompiledClass;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -65,12 +64,13 @@ public class LibraryGroupTest extends TestCase {
     // Create a nested compilation units.
     MockCompilationUnit nestedTypeCompilationUnit =
         new MockCompilationUnit("com.google.gwt.user.Outer", "superblah") {
-            @Override
-          public List<JDeclaredType> getTypes() {
-            return Lists.<JDeclaredType> newArrayList(
-                new JClassType(SourceOrigin.UNKNOWN, "com.google.gwt.user.Outer", false, true),
-                new JClassType(SourceOrigin.UNKNOWN, "com.google.gwt.user.Outer.Inner", false,
-                    true));
+          @Override
+          public Collection<CompiledClass> getCompiledClasses() {
+            MockCompiledClass outerCompiledClass = new MockCompiledClass(null,
+                "com/google/gwt/user/Outer", "com.google.gwt.user.Outer");
+            MockCompiledClass innerCompiledClass = new MockCompiledClass(outerCompiledClass,
+                "com/google/gwt/user/Outer$Inner", "com.google.gwt.user.Outer.Inner");
+            return Lists.<CompiledClass> newArrayList(outerCompiledClass, innerCompiledClass);
           }
         };
 

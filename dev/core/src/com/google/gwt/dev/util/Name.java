@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,7 +25,7 @@ public class Name {
   /**
    * Represents a Java class name in binary form, for example:
    * {@code org.example.Foo$Bar}.
-   * 
+   *
    * See {@link "http://java.sun.com/docs/books/jls/third_edition/html/binaryComp.html#59892"}
    */
   public static class BinaryName {
@@ -54,12 +54,19 @@ public class Name {
       return binaryName.replace('.', '/');
     }
 
+    /**
+     * @deprecated BinaryName to SourceName transformation is ambiguous in rare circumstances
+     *             (for example when the name of a top level class includes a $, like "Foo$Bar").
+     *             Instead use some source of SourceName that has been accurately preserved since
+     *             initial compilation.
+     */
+    @Deprecated
     public static String toSourceName(String binaryName) {
       assert isBinaryName(binaryName);
       // don't change a trailing $ to a .
       return NON_TRAILING_DOLLAR.matcher(binaryName).replaceAll(".$1");
     }
-    
+
     private BinaryName() {
     }
   }
@@ -67,11 +74,11 @@ public class Name {
   /**
      * Represents a Java class name in internal form, for example:
      * {@code org/example/Foo$Bar}.
-     * 
+     *
      * See {@link "http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#14757"}
      */
     public static class InternalName {
-  
+
       public static String getClassName(String name) {
         assert isInternalName(name);
         int lastSlash = name.lastIndexOf('/');
@@ -80,18 +87,25 @@ public class Name {
         }
         return name.substring(lastSlash + 1);
       }
-  
+
       public static String toBinaryName(String internalName) {
         assert isInternalName(internalName);
         return internalName.replace('/', '.');
       }
-      
+
+      /**
+       * @deprecated InternalName to SourceName transformation is ambiguous in rare circumstances
+       *             (for example when the name of a top level class includes a $, like "Foo$Bar").
+       *             Instead use some source of SourceName that has been accurately preserved since
+       *             initial compilation.
+       */
+      @Deprecated
       public static String toSourceName(String internalName) {
         assert isInternalName(internalName);
         // don't change a trailing $ or slash to a .
         return NON_TRAILING_DOLLAR_SLASH.matcher(internalName).replaceAll(".$1");
       }
-  
+
       private InternalName() {
       }
     }
@@ -132,7 +146,7 @@ public class Name {
   /**
    * Represents a Java class name in either source or binary form, for example:
    * {@code org.example.Foo.Bar or org.example.Foo$Bar}.
-   * 
+   *
    * See {@link "http://java.sun.com/docs/books/jls/third_edition/html/binaryComp.html#59892"}
    */
   public static class SourceOrBinaryName {
@@ -153,7 +167,7 @@ public class Name {
 
   /**
    * Get the binary name for a Java class.
-   * 
+   *
    * @param clazz class literal
    * @return binary name for the class
    */
@@ -163,7 +177,7 @@ public class Name {
 
   /**
    * Get the internal name for a Java class.
-   * 
+   *
    * @param clazz class literal
    * @return internal name for the class
    */
@@ -173,7 +187,7 @@ public class Name {
 
   /**
    * Get the source name for a Java class.
-   * 
+   *
    * @param clazz class literal
    * @return source name for the class
    */
@@ -183,11 +197,11 @@ public class Name {
 
   /**
    * @return true if name could be a valid binary name.
-   * 
+   *
    * Note that many invalid names might pass this test -- in particular, source
    * names cannot be verified to know they are not valid binary names without
    * being able to tell the package name part of the name.
-   * 
+   *
    * @param name class name to test
    */
   public static boolean isBinaryName(String name) {
@@ -196,9 +210,9 @@ public class Name {
 
   /**
    * @return true if name could be a valid internal name.
-   * 
+   *
    * Note that many invalid names might pass this test.
-   * 
+   *
    * @param name class name to test
    */
   public static boolean isInternalName(String name) {
@@ -207,21 +221,17 @@ public class Name {
 
   /**
    * @return true if name could be a valid source name.
-   * 
+   *
    * Note that many invalid names might pass this test.
-   * 
+   *
    * @param name class name to test
    */
   // TODO(stalcup): improve validation using Character.isJavaIdentifierStart() and
   // Character.isJavaIdentifierPart().
   public static boolean isSourceName(String name) {
-    if (name == null) {
-      return true;
-    }
-    int dollar = name.indexOf('$');
-    return !name.contains("/") && (dollar < 0 || dollar == name.length() - 1);
+    return name == null || !name.contains("/");
   }
-  
+
   private Name() {
   }
 }

@@ -21,10 +21,7 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jjs.CompilerIoException;
 import com.google.gwt.dev.jjs.PermutationResult;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
@@ -399,12 +396,10 @@ public class ZipLibraryWriter implements LibraryWriter {
     compilationUnitsByTypeSourceName.put(compilationUnit.getTypeName(), compilationUnit);
 
     nestedNamesByCompilationUnitName.removeAll(compilationUnit.getTypeName());
-    for (JDeclaredType type : compilationUnit.getTypes()) {
-      String typeSourceName = BinaryName.toSourceName(type.getName());
-      // Anonymous classes have no sourceName and don't need to be indexed.
-      if (Name.isSourceName(typeSourceName)) {
-        nestedNamesByCompilationUnitName.put(compilationUnit.getTypeName(), typeSourceName);
-      }
+    Collection<CompiledClass> compiledClasses = compilationUnit.getCompiledClasses();
+    for (CompiledClass compiledClass : compiledClasses) {
+      String typeSourceName = compiledClass.getSourceName();
+      nestedNamesByCompilationUnitName.put(compilationUnit.getTypeName(), typeSourceName);
     }
 
     for (CompiledClass compiledClass : compilationUnit.getCompiledClasses()) {

@@ -64,6 +64,7 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.io.BaseEncoding;
 
 import junit.framework.TestCase;
 
@@ -649,6 +650,40 @@ public abstract class TypeOracleUpdaterTestBase extends TestCase {
     }
   };
 
+  /**
+   * Not sourced off disk like the others since some build systems refuse files with $ in the name.
+   */
+  protected static final MutableJavaResource CU_PseudoInner = new MutableJavaResource(
+      "com.google.gwt.dev.javac.mediatortest",
+      "com.google.gwt.dev.javac.mediatortest.Pseudo$Inner") {
+
+        @Override
+        public CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("package com.google.gwt.dev.javac.mediatortest;\n");
+          code.append("public class Pseudo$Inner {}\n");
+          return code;
+        }
+
+        @Override
+        public TypeData[] getTypeData() {
+          byte[] classBytes = BaseEncoding.base16().decode(
+              "CAFEBABE000000330010070002010032636F6D2F676F6F676C652F6777742F6465762F6A617661632"
+              + "F6D65646961746F72746573742F50736575646F24496E6E65720700040100106A6176612F6C616E672"
+              + "F4F626A6563740100063C696E69743E010003282956010004436F64650A000300090C0005000601000"
+              + "F4C696E654E756D6265725461626C650100124C6F63616C5661726961626C655461626C65010004746"
+              + "869730100344C636F6D2F676F6F676C652F6777742F6465762F6A617661632F6D65646961746F72746"
+              + "573742F50736575646F24496E6E65723B01000A536F7572636546696C6501001150736575646F24496"
+              + "E6E65722E6A617661002100010003000000000001000100050006000100070000002F0001000100000"
+              + "0052AB70008B100000002000A00000006000100000003000B0000000C000100000005000C000D00000"
+              + "001000E00000002000F");
+          TypeData classData = new TypeData("com.google.gwt.dev.javac.mediatortest", "Pseudo$Inner",
+              "com/google/gwt/dev/javac/mediatortest/Pseudo$Inner", classBytes,
+              System.currentTimeMillis());
+          return new TypeData[] {classData};
+        }
+      };
+
   protected static final CheckedJavaResource CU_ReferencesGenericListConstant =
       new CheckedJavaResource(ReferencesGenericListConstant.class) {
         @Override
@@ -1214,6 +1249,17 @@ public abstract class TypeOracleUpdaterTestBase extends TestCase {
     buildTypeOracle();
 
     assertNull(typeOracle.findType(CU_ExtendsParameterizedInterface.getTypeName()));
+  }
+
+  public void testPseudoInnerSourceName() throws TypeOracleException {
+    addTestResource(CU_Object);
+    resources.add(CU_PseudoInner);
+    buildTypeOracle();
+
+    JClassType pseudoInnerType = typeOracle.findType(CU_PseudoInner.getTypeName());
+    assertNotNull(pseudoInnerType);
+    assertEquals("Pseudo$Inner", pseudoInnerType.getSimpleSourceName());
+    assertEquals(CU_PseudoInner.getTypeName(), pseudoInnerType.getQualifiedSourceName());
   }
 
   /**

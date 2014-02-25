@@ -15,11 +15,10 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.MockCompilationUnit;
+import com.google.gwt.dev.javac.MockCompiledClass;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
-import com.google.gwt.dev.jjs.SourceOrigin;
-import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -28,7 +27,7 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -73,11 +72,12 @@ public class ZipLibrariesTest extends TestCase {
     MockCompilationUnit expectedNestedTypeCompilationUnit =
         new MockCompilationUnit("com.google.gwt.user.Outer", "superblah") {
             @Override
-          public List<JDeclaredType> getTypes() {
-            return Lists.<JDeclaredType> newArrayList(
-                new JClassType(SourceOrigin.UNKNOWN, "com.google.gwt.user.Outer", false, true),
-                new JClassType(SourceOrigin.UNKNOWN, "com.google.gwt.user.Outer.Inner", false,
-                    true));
+          public Collection<CompiledClass> getCompiledClasses() {
+            MockCompiledClass outerCompiledClass = new MockCompiledClass(null,
+                "com/google/gwt/user/Outer", "com.google.gwt.user.Outer");
+            MockCompiledClass innerCompiledClass = new MockCompiledClass(outerCompiledClass,
+                "com/google/gwt/user/Outer$Inner", "com.google.gwt.user.Outer.Inner");
+            return Lists.<CompiledClass> newArrayList(outerCompiledClass, innerCompiledClass);
           }
         };
 

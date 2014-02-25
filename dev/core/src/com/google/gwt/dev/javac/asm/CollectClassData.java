@@ -149,6 +149,8 @@ public class CollectClassData extends EmptyVisitor {
   private String[] interfaceInternalNames;
   // internal name
   private String internalName;
+  // nested source name
+  private String nestedSourceName;
   private final List<CollectMethodData> methods = new ArrayList<CollectMethodData>();
   private String signature;
   private String source = null;
@@ -207,6 +209,10 @@ public class CollectClassData extends EmptyVisitor {
     return methods;
   }
 
+  public String getNestedSourceName() {
+    return nestedSourceName;
+  }
+
   public String getSignature() {
     return signature;
   }
@@ -244,10 +250,10 @@ public class CollectClassData extends EmptyVisitor {
    *
    * @param version classfile version (ie, Opcodes.V1_5 etc)
    * @param access access flags (ie, bitwise or of Opcodes.ACC_*)
-   * @param internalName internal name of this class (ie, com/google/Foo)
    * @param signature generic signature or null
-   * @param superInternalName internal name of superclass (ie, java/lang/Object)
    * @param interfaces array of internal names of implemented interfaces
+   * @param internalName internal name of this class (ie, com/google/Foo)
+   * @param superInternalName internal name of superclass (ie, java/lang/Object)
    */
   @Override
   public void visit(int version, int access, String internalName, String signature,
@@ -265,6 +271,17 @@ public class CollectClassData extends EmptyVisitor {
     CollectAnnotationData av = new CollectAnnotationData(desc, visible);
     annotations.add(av);
     return av;
+  }
+
+  @Override
+  public void visitEnd() {
+    super.visitEnd();
+    if (classType == ClassType.TopLevel) {
+      // top level source name calculation is trivial
+      nestedSourceName = internalName.substring(internalName.lastIndexOf('/') + 1);
+    } else if (classType == ClassType.Anonymous) {
+      nestedSourceName = null;
+    }
   }
 
   /**
@@ -306,6 +323,9 @@ public class CollectClassData extends EmptyVisitor {
   @Override
   public void visitInnerClass(String internalName, String enclosingInternalName, String innerName,
       int access) {
+
+    buildNestedSourceName(internalName, enclosingInternalName, innerName);
+
     // If this inner class is ourselves, merge the access flags, since
     // static, for example, only appears in the InnerClass attribute.
     if (this.internalName.equals(internalName)) {
@@ -367,5 +387,26 @@ public class CollectClassData extends EmptyVisitor {
   @Override
   public void visitSource(String source, String debug) {
     this.source = source;
+  }
+
+  private void buildNestedSourceName(String internalName, String enclosingInternalName,
+      String innerName) {
+    if (classType == ClassType.Anonymous || enclosingInternalName == null) {
+      return;
+    }
+
+    // ignores classes outside of this class' containment chain
+    if (!this.internalName.startsWith(internalName + "$")
+        && !this.internalName.equals(internalName)) {
+      return;
+    }
+
+    if (nestedSourceName == null) {
+      // for 'com.Foo$Bar' in 'com.Foo', starts nestedSourceName as 'Foo'
+      nestedSourceName =
+          enclosingInternalName.substring(enclosingInternalName.lastIndexOf('/') + 1);
+    }
+    // tacks on the simple name, which might contain a '$'
+    nestedSourceName += "." + innerName;
   }
 }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,7 +18,6 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.DiskCacheToken;
-import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.StringInterner;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -36,7 +35,7 @@ import java.util.Map;
 /**
  * Encapsulates the state of a single compiled class file.
  */
-public final class CompiledClass implements Serializable {
+public class CompiledClass implements Serializable {
 
   private static final DiskCache diskCache = DiskCache.INSTANCE;
 
@@ -86,8 +85,21 @@ public final class CompiledClass implements Serializable {
   private CompilationUnit unit;
 
   /**
+   * For mock construction in tests.
+   */
+  // VisibleForTesting
+  protected CompiledClass(CompiledClass enclosingClass,
+      String internalName, String sourceName) {
+    this.enclosingClass = enclosingClass;
+    this.internalName = StringInterner.get().intern(internalName);
+    this.sourceName = StringInterner.get().intern(sourceName);
+    this.isLocal = false;
+    this.classBytesToken = null;
+  }
+
+  /**
    * Create a compiled class from raw class bytes.
-   * 
+   *
    * @param classBytes - byte code for this class
    * @param enclosingClass - outer class
    * @param isLocal Is this class a local class? (See the JLS rev 2 section
@@ -95,12 +107,13 @@ public final class CompiledClass implements Serializable {
    * @param internalName the internal binary name for this class. e.g.
    *          {@code java/util/Map$Entry}. See
    *          {@link "http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#14757"}
+   * @param sourceName the qualified source name, e.g. {@code java.util.Map.Entry}.
    */
   CompiledClass(byte[] classBytes, CompiledClass enclosingClass, boolean isLocal,
-      String internalName) {
+      String internalName, String sourceName) {
     this.enclosingClass = enclosingClass;
     this.internalName = StringInterner.get().intern(internalName);
-    this.sourceName = StringInterner.get().intern(InternalName.toSourceName(internalName));
+    this.sourceName = StringInterner.get().intern(sourceName);
     this.classBytesToken = new DiskCacheToken(diskCache.writeByteArray(classBytes));
     this.isLocal = isLocal;
   }

@@ -21,12 +21,13 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.util.tools.Utility;
 
@@ -367,9 +368,9 @@ public class JdtCompiler {
         assert enclosingClass != null;
       }
       String internalName = CharOperation.charToString(classFile.fileName());
-      CompiledClass result =
-          new CompiledClass(classFile.getBytes(), enclosingClass, isLocalType(classFile),
-              internalName);
+      String sourceName = getSourceName(classFile.referenceBinding);
+      CompiledClass result = new CompiledClass(classFile.getBytes(), enclosingClass,
+          isLocalType(classFile), internalName, sourceName);
       results.put(classFile, result);
     }
 
@@ -791,8 +792,7 @@ public class JdtCompiler {
       }
 
       private void addReference(ReferenceBinding referencedType) {
-        String binaryName = CharOperation.toString(referencedType.compoundName);
-        apiRefs.add(BinaryName.toSourceName(binaryName));
+        apiRefs.add(getSourceName(referencedType));
       }
 
       /**
@@ -947,4 +947,9 @@ public class JdtCompiler {
     }
   }
 
+  private static String getSourceName(ReferenceBinding classBinding) {
+    return Joiner.on(".").skipNulls().join(new String[] {
+        Strings.emptyToNull(CharOperation.charToString(classBinding.qualifiedPackageName())),
+        CharOperation.charToString(classBinding.qualifiedSourceName())});
+  }
 }
