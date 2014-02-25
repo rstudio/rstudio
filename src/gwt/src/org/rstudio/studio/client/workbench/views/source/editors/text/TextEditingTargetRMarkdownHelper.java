@@ -52,11 +52,13 @@ public class TextEditingTargetRMarkdownHelper
       server_ = server;
    }
    
-   public String detectExtendedType(String extendedType,
+   public String detectExtendedType(String contents,
+                                    String extendedType,
                                     TextFileType fileType)
    {
       if (extendedType.length() == 0 && 
           fileType.isMarkdown() &&
+          !contents.contains("<!-- rmarkdown v1 -->") && 
           session_.getSessionInfo().getRMarkdownPackageAvailable())
       {
          return "rmarkdown";

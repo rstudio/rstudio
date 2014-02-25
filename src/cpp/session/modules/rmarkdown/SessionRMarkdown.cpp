@@ -445,7 +445,7 @@ std::string onDetectRmdSourceType(
            filePath.extensionLowerCase() == ".md") &&
           !boost::algorithm::icontains(pDoc->contents(),
                                        "<!-- rmarkdown v1 -->") &&
-          !haveMarkdownToHTMLOption())
+          rmarkdownPackageAvailable())
       {
          return "rmarkdown";
       }
@@ -583,7 +583,18 @@ void handleRmdOutputRequest(const http::Request& request,
 
 bool rmarkdownPackageAvailable()
 {
-   return r::util::hasRequiredVersion("3.0");
+   if (!haveMarkdownToHTMLOption())
+   {
+#ifdef _WIN32
+      return r::util::hasRequiredVersion("3.0");
+#else
+      return r::util::hasRequiredVersion("2.14.1");
+#endif
+   }
+   else
+   {
+      return false;
+   }
 }
 
 Error initialize()
@@ -593,11 +604,8 @@ Error initialize()
 
    initPandocPath();
 
-   if (rmarkdownPackageAvailable())
-   {
-      module_context::events().onDetectSourceExtendedType
+   module_context::events().onDetectSourceExtendedType
                                        .connect(onDetectRmdSourceType);
-   }
 
    ExecBlock initBlock;
    initBlock.addFunctions()

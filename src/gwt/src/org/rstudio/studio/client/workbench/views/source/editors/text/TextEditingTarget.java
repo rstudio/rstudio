@@ -632,8 +632,9 @@ public class TextEditingTarget implements
       fileType_ = (TextFileType) type;
       
       extendedType_ = document.getExtendedType();
-      extendedType_ = rmarkdownHelper_.detectExtendedType(extendedType_, 
-                                                            fileType_);
+      extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
+                                                          extendedType_, 
+                                                          fileType_);
       
       view_ = new TextEditingTargetWidget(commands_,
                                           prefs_,

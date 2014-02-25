@@ -94,7 +94,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.File
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Result;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
