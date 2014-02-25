@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -704,16 +705,17 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRMarkdownDoc()
    {
-      rmarkdown_.withRMarkdownPackage(
-         "Creating R Markdown documents",
-         new Command(){
-            @Override
-            public void execute()
-            {
-               newRMarkdownDoc();
-            }
-          }
-        );
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      boolean useRMarkdownV2 = sessionInfo.getRMarkdownPackageAvailable();
+      
+      // until we get the RMarkdown v2 New Doc dialog spiffed up 
+      // we always use RMarkdown v1
+      useRMarkdownV2 = false;
+      
+      if (useRMarkdownV2)
+         newRMarkdownV2Doc();
+      else
+         newRMarkdownV1Doc();
    }
    
    @Handler
@@ -833,30 +835,48 @@ public class Source implements InsertSourceHandler,
       });
    }
    
-   private void newRMarkdownDoc()
+   private void newRMarkdownV1Doc()
    {
-      new NewRMarkdownDialog(
-         new OperationWithInput<NewRMarkdownDialog.Result>()
-         {
+      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+            "", 
+            "r_markdown.Rmd",
+            Position.create(3, 0));
+   }
+   
+   private void newRMarkdownV2Doc()
+   {
+      rmarkdown_.withRMarkdownPackage(
+         "Creating R Markdown documents",
+         new Command(){
             @Override
-            public void execute(final NewRMarkdownDialog.Result result)
+            public void execute()
             {
-               newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
-                     "", 
-                     "r_markdown.Rmd",
-                     Position.create(3, 0),
-                     null,
-                     new TransformerCommand<String>()
+               new NewRMarkdownDialog(
+                  new OperationWithInput<NewRMarkdownDialog.Result>()
+                  {
+                     @Override
+                     public void execute(final NewRMarkdownDialog.Result result)
                      {
-                        @Override
-                        public String transform(String input)
-                        {
-                           return result.toYAMLFrontMatter() + "\n" + input;
-                        }
-                     });
+                        newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+                              "", 
+                              "r_markdown_v2.Rmd",
+                              Position.create(5, 0),
+                              null,
+                              new TransformerCommand<String>()
+                              {
+                                 @Override
+                                 public String transform(String input)
+                                 {
+                                    return result.toYAMLFrontMatter() + 
+                                           "\n" + input;
+                                 }
+                              });
+                     }
+                  }
+               ).showModal();
             }
          }
-      ).showModal();
+      );
    }
    
    private void newSourceDocWithTemplate(final TextFileType fileType, 
