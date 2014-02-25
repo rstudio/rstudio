@@ -22,7 +22,19 @@ if ($wnd) {
   // (This assumes that properties.js has already set up the map.)
   $wnd.__gwt_activeModules["__MODULE_NAME__"].canRedirect = devModePermitted;
 
-  if (devModePermitted) {
+  function supportsSessionStorage() {
+    // adapted from Modernizr
+    var key = '_gwt_dummy_';
+    try {
+      $wnd.sessionStorage.setItem(key, key);
+      $wnd.sessionStorage.removeItem(key);
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
+
+  if (devModePermitted && supportsSessionStorage()) {
     // We use a different key for each module so that we can turn on dev mode
     // independently for each.
     var devModeKey = '__gwtDevModeHook:__MODULE_NAME__';
