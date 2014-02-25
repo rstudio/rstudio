@@ -215,7 +215,7 @@ class TypeIndexedSet<T extends Comparable> extends ForwardingSortedSet<T> implem
     };
 
     private final Iterable<? extends Comparable> elements;
-    private Multimap<Class<?>, Comparable> index = null;
+    private transient Multimap<Class<?>, Comparable> index = null;
 
     /**
      * Caches the results of {@link #find(Class)}.  If an entry for the Class
@@ -223,7 +223,7 @@ class TypeIndexedSet<T extends Comparable> extends ForwardingSortedSet<T> implem
      *
      * <p>If a set is mutated, the cache is cleared.
      */
-    private Map<Class<?>, SortedSet<?>> findCache;
+    private transient Map<Class<?>, SortedSet<?>> findCache;
 
     TypeIndex(Iterable<? extends Comparable> elements) {
       this.elements = elements;
