@@ -538,21 +538,6 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     }
   }
 
-  /**
-   * Default comparator, requires the key type implement Comparable. Will fail
-   * on null values.
-   */
-  @SuppressWarnings("unchecked")
-  private static Comparator<?> DEFAULT_COMPARATOR = new Comparator<Comparable>() {
-    public int compare(Comparable a, Comparable b) {
-      // Explicit null check to match JRE specs
-      if (a == null || b == null) {
-        throw new NullPointerException();
-      }
-      return a.compareTo(b);
-    }
-  };
-
   private static final int LEFT = 0;
   private static final int RIGHT = 1;
 
@@ -605,7 +590,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   public TreeMap(Comparator<? super K> c) {
     root = null;
     if (c == null) {
-      c = (Comparator<? super K>) DEFAULT_COMPARATOR;
+      c = Comparators.natural();
     }
     cmp = c;
   }
@@ -628,7 +613,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   }
 
   public Comparator<? super K> comparator() {
-    if (cmp == DEFAULT_COMPARATOR) {
+    if (cmp == Comparators.natural()) {
       return null;
     }
     return cmp;
