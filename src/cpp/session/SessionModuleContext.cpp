@@ -908,13 +908,14 @@ bool isPackageInstalled(const std::string& packageName)
 }
 
 bool isPackageVersionInstalled(const std::string& packageName,
-                               const std::string& version)
+                               const std::string& version,
+                               const std::string& githubSHA1)
 {
    r::session::utils::SuppressOutputInScope suppressOutput;
 
    bool installed;
    r::exec::RFunction func(".rs.isPackageVersionInstalled",
-                           packageName, version);
+                           packageName, version, githubSHA1);
    Error error = func.call(&installed);
    return !error ? installed : false;
 }

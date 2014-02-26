@@ -90,8 +90,34 @@
   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
 })
 
-.rs.addFunction("isPackageVersionInstalled", function(name, version) {
-   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
+.rs.addFunction("isPackageVersionInstalled", function(name,
+                                                      version,
+                                                      githubSHA1 = "") {
+   if (.rs.isPackageInstalled(name))
+   {
+     pkgVersion <- .rs.getPackageVersion(name)
+     if (pkgVersion > version)
+     {
+       TRUE
+     }
+     else if (pkgVersion < version)
+     {
+       FALSE
+     }
+     else if (nzchar(githubSHA1)) # for identical versions compare the SHA1
+     {
+       pkgSHA1 <- utils::packageDescription(name, fields="GithubSHA1")
+       identical(pkgSHA1, githubSHA1)
+     }
+     else
+     {
+       TRUE
+     }
+   }
+   else
+   {
+     FALSE
+   }
 })
 
 

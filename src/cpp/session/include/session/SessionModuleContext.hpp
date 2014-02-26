@@ -98,7 +98,8 @@ bool isPackageInstalled(const std::string& packageName);
 
 // check if a package is installed with a specific version
 bool isPackageVersionInstalled(const std::string& packageName,
-                               const std::string& version);
+                               const std::string& version,
+                               const std::string& githubSHA1 = std::string());
 
 // find the package name for a source file
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath);

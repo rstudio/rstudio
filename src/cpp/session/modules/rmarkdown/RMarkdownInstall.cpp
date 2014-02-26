@@ -40,12 +40,15 @@ namespace {
 
 // note the current version
 std::string s_currentVersion;
+std::string s_currentSHA1;
 
 std::string rmarkdownPackageArchive()
 {
    FilePath archivesDir = session::options().sessionPackageArchivesPath();
    FilePath rmarkdownArchivePath = archivesDir.childPath("rmarkdown_" +
                                                          s_currentVersion +
+                                                         "_" +
+                                                         s_currentSHA1 +
                                                          ".tar.gz");
    return string_utils::utf8ToSystem(rmarkdownArchivePath.absolutePath());
 }
@@ -62,13 +65,14 @@ Error initialize()
    Error error = archivesDir.children(&children);
    if (error)
       return error;
-   boost::regex re("rmarkdown_([0-9]+\\.[0-9]+\\.[0-9]+)\\.tar\\.gz");
+   boost::regex re("rmarkdown_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
    BOOST_FOREACH(const FilePath& child, children)
    {
       boost::smatch match;
       if (boost::regex_match(child.filename(), match, re))
       {
          s_currentVersion = match[1];
+         s_currentSHA1 = match[2];
          break;
       }
    }
@@ -78,7 +82,9 @@ Error initialize()
 
 Status status()
 {
-   if (module_context::isPackageVersionInstalled("rmarkdown", s_currentVersion))
+   if (module_context::isPackageVersionInstalled("rmarkdown",
+                                                 s_currentVersion,
+                                                 s_currentSHA1))
    {
       return Installed;
    }

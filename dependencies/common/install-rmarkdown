@@ -46,8 +46,15 @@ EOF
 
 # create source package (remove previous first)
 cd ..
-rm -f rmarkdown*.tar.gz
+RMARKDOWN_ARCHIVE_PATTERN="rmarkdown*.tar.gz"
+rm -f $RMARKDOWN_ARCHIVE_PATTERN
 R CMD build rmarkdown
+
+# modify filename to include SHA1
+RMARKDOWN_ARCHIVE=`ls $RMARKDOWN_ARCHIVE_PATTERN`
+RMARKDOWN_ARCHIVE_STEM=${RMARKDOWN_ARCHIVE%.tar.gz}
+RMARKDOWN_ARCHIVE_SHA1=${RMARKDOWN_ARCHIVE_STEM}_${RMARKDOWN_SHA1}.tar.gz
+mv $RMARKDOWN_ARCHIVE $RMARKDOWN_ARCHIVE_SHA1
 
 # back to install-dir
 cd $INSTALL_DIR
