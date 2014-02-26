@@ -34,7 +34,7 @@ public class RmdTemplateData
             format_name: "pdf_document", 
             format_ui_name: "PDF",
             format_options: [ "toc", "number_sections", "highlight", 
-                              "latex_engine" ]
+                              "latex_engine", "fig_width", "fig_height" ]
             } 
          ],
          template_options: [ 
@@ -96,6 +96,20 @@ public class RmdTemplateData
             option_ui_name: "Default figure height in inches", 
             option_type: "float", 
             option_default: "5"
+            },
+            {
+            option_name: "fig_width",
+            option_format: "pdf_document",
+            option_ui_name: "Default figure width in inches", 
+            option_type: "float", 
+            option_default: "6"
+            },
+            {
+            option_name: "fig_height",
+            option_format: "pdf_document",
+            option_ui_name: "Default figure height in inches", 
+            option_type: "float", 
+            option_default: "4.5"
             }
          ]
          },

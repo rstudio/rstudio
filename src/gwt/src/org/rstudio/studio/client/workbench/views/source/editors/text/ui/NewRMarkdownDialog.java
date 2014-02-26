@@ -15,9 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -31,6 +29,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -167,11 +166,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          listFormats_.addItem(formats_.get(i).getUiName(), 
                               formats_.get(i).getName());
       }
-      mapOptions_ = new HashMap<String, RmdTemplateFormatOption>();
-      for (int i = 0; i < options_.length(); i++)
-      {
-         mapOptions_.put(options_.get(i).getName(), options_.get(i));
-      }
       updateFormatOptions(getSelectedFormat());
    }
    
@@ -204,7 +198,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       for (int i = 0; i < options.length(); i++)
       {
          NewRmdFormatOption optionWidget;
-         RmdTemplateFormatOption option = mapOptions_.get(options.get(i));
+         RmdTemplateFormatOption option = findOption(format.getName(),
+                                                     options.get(i));
+         if (option == null)
+            continue;
+         
          if (option.getType().equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
          {
             optionWidget = new NewRmdBooleanOption(option);
@@ -222,9 +220,32 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          
          optionWidgets_.add(optionWidget);
          panelOptions_.add(optionWidget);
-         optionWidget.asWidget().getElement().getStyle().setMarginTop(5, Unit.PX);
-         optionWidget.asWidget().getElement().getStyle().setMarginBottom(5, Unit.PX);
+         Style optionStyle = optionWidget.asWidget().getElement().getStyle();
+         optionStyle.setMarginTop(5, Unit.PX);
+         optionStyle.setMarginBottom(5, Unit.PX);
       }
+   }
+   
+   private RmdTemplateFormatOption findOption(String formatName, 
+                                              String optionName)
+   {
+      RmdTemplateFormatOption result = null;
+      for (int i = 0; i < options_.length(); i++)
+      {
+         RmdTemplateFormatOption option = options_.get(i);
+
+         // Not the option we're looking for 
+         if (!option.getName().equals(optionName))
+            continue;
+
+         // A format-specific option for a different format
+         if (option.getFormatName().length() > 0 && 
+             !option.getFormatName().equals(formatName))
+            continue; 
+
+         result = option;
+      }
+      return result;
    }
    
    @UiField TextBox txtAuthor_;
@@ -239,7 +260,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private JsArray<RmdTemplate> templates_;
    private JsArray<RmdTemplateFormat> formats_;
    private JsArray<RmdTemplateFormatOption> options_;
-   private Map<String, RmdTemplateFormatOption> mapOptions_;
    private List<NewRmdFormatOption> optionWidgets_;
    
    @SuppressWarnings("unused")
