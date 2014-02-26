@@ -82,15 +82,33 @@ Error initialize()
 
 Status status()
 {
-   if (module_context::isPackageVersionInstalled("rmarkdown",
-                                                 s_currentVersion,
-                                                 s_currentSHA1))
+   if (module_context::isPackageInstalled("rmarkdown"))
    {
-      return Installed;
-   }
-   else if (module_context::isPackageInstalled("rmarkdown"))
-   {
-      return OlderVersionInstalled;
+      // if this package came from the rstudio ide then check if it needs
+      // an update (i.e. has a different SHA1)
+      r::exec::RFunction func(".rs.rstudioIDEPackageRequiresUpdate",
+                              "rmarkdown", s_currentSHA1);
+      bool idePackageRequiresUpdate = false;
+      Error error = func.call(&idePackageRequiresUpdate);
+      if (error)
+         LOG_ERROR(error);
+
+      if (idePackageRequiresUpdate)
+      {
+         return InstalledRequiresUpdate;
+      }
+      else // not from the IDE, check version
+      {
+         if (module_context::isPackageVersionInstalled("rmarkdown",
+                                                       s_currentVersion))
+         {
+            return Installed;
+         }
+         else
+         {
+            return InstalledRequiresUpdate;
+         }
+      }
    }
    else
    {
@@ -171,7 +189,7 @@ Error installWithProgress(
 }
 
 // perform a silent upgrade
-Error silentUpgrade()
+Error silentUpdate()
 {
    return r::exec::RFunction(".rs.updateRMarkdownPackage",
                              rmarkdownPackageArchive()).call();

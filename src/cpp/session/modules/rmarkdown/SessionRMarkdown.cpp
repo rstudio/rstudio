@@ -461,9 +461,9 @@ Error getRMarkdownContext(const json::JsonRpcRequest&,
    install::Status status = install::status();
 
    // silent upgrade if we have an older version
-   if (status == install::OlderVersionInstalled)
+   if (status == install::InstalledRequiresUpdate)
    {
-      Error error = install::silentUpgrade();
+      Error error = install::silentUpdate();
       if (error)
          LOG_ERROR(error);
    }

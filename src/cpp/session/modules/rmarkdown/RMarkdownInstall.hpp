@@ -37,8 +37,8 @@ core::Error initialize();
 enum Status
 {
    NotInstalled,
-   OlderVersionInstalled,
-   Installed
+   Installed,
+   InstalledRequiresUpdate
 };
 
 Status status();
@@ -48,7 +48,7 @@ bool haveRequiredVersion();
 core::Error installWithProgress(
                boost::shared_ptr<console_process::ConsoleProcess>* ppCP);
 
-core::Error silentUpgrade();
+core::Error silentUpdate();
 
 } // namespace install
 } // namespace rmarkdown

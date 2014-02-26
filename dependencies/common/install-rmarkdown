@@ -42,6 +42,7 @@ GithubRepo: rmarkdown
 GithubUsername: rstudio
 GithubRef: $RMARKDOWN_VERSION
 GithubSHA1: $RMARKDOWN_SHA1
+Repository: RStudioIDE
 EOF
 
 # create source package (remove previous first)
