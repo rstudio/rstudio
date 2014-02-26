@@ -20,11 +20,11 @@ import java.util.HashMap;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -84,16 +84,16 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (!result.getSucceeded())
          return;
         
-      String format = result.getFormatName(); 
-      if (format.equals(RmdOutputFormat.OUTPUT_PDF_DOCUMENT) ||
-          format.equals(RmdOutputFormat.OUTPUT_BEAMER_PRESENTATION))
+      String extension = FileSystemItem.getExtensionFromPath(
+                                                result.getOutputFile()); 
+      if (".pdf".equals(extension))
       {
          if (Desktop.isDesktop())
             Desktop.getFrame().showFile(result.getOutputFile());
          else // browsers we target can all now show pdfs inline
             globalDisplay_.showHtmlFile(result.getOutputFile());
       }
-      else if (format.equals(RmdOutputFormat.OUTPUT_WORD_DOCUMENT))
+      else if (".docx".equals(extension))
       {
          globalDisplay_.showWordDoc(result.getOutputFile());
       }
