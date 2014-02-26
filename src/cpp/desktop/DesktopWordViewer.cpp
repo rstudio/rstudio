@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include <windows.h>
+#include <winuser.h>
 #include <oleauto.h>
 
 #include <boost/utility.hpp>
@@ -138,6 +139,13 @@ Error WordViewer::showDocument(QString& path)
 {
    Error errorHR = Success();
    HRESULT hr = S_OK;
+
+   // Allow Word to become the foreground window. CoAllowSetForegroundWindow
+   // would be preferable here, since we'd be able to restrict activation to
+   // only the process we started, but it is not exposed by MinGW headers.
+   // Note that AllowSetForegroundWindow already limits activation to processes
+   // initiated by the foreground process, and self-expires on user input.
+   AllowSetForegroundWindow(ASFW_ANY);
 
    // If we have an active IDispatch pointer to Word, check to see whether
    // it has been closed
