@@ -27,14 +27,22 @@ public class RmdTemplateData
             format_name: "html_document",
             format_ui_name: "HTML",
             format_options: [ "toc", "self_contained", "smart", "theme", 
-                              "highlight", "fig_width", "fig_height" ],
+                              "highlight", "fig_caption", "fig_width", 
+                              "fig_height" ],
             format_notes: "HTML is recommended for authoring. You can switch to PDF or Word anytime."
             },
             {
             format_name: "pdf_document", 
             format_ui_name: "PDF",
             format_options: [ "toc", "number_sections", "highlight", 
-                              "latex_engine", "fig_width", "fig_height" ]
+                              "latex_engine", "fig_caption", "fig_crop", 
+                              "fig_width", "fig_height" ]
+            },
+            {
+            format_name: "word_document", 
+            format_ui_name: "Word",
+            format_options: [ "highlight", "fig_caption", "fig_width", 
+                              "fig_height" ]
             } 
          ],
          template_options: [ 
@@ -87,30 +95,49 @@ public class RmdTemplateData
             },
             {
             option_name: "fig_width",
+            option_format: "html_document",
             option_ui_name: "Default figure width in inches", 
             option_type: "float", 
             option_default: "7"
             },
             {
             option_name: "fig_height",
+            option_format: "html_document",
             option_ui_name: "Default figure height in inches", 
             option_type: "float", 
             option_default: "5"
             },
             {
             option_name: "fig_width",
-            option_format: "pdf_document",
             option_ui_name: "Default figure width in inches", 
             option_type: "float", 
             option_default: "6"
             },
             {
             option_name: "fig_height",
-            option_format: "pdf_document",
             option_ui_name: "Default figure height in inches", 
             option_type: "float", 
             option_default: "4.5"
-            }
+            },
+            {
+            option_name: "fig_crop",
+            option_ui_name: "Crop figures with pdfcrop (if available)", 
+            option_type: "boolean", 
+            option_default: "true"
+            },
+            {
+            option_name: "fig_caption",
+            option_ui_name: "Render figures with captions", 
+            option_type: "boolean", 
+            option_default: "true"
+            },
+            {
+            option_name: "fig_caption",
+            option_format: "html_document",
+            option_ui_name: "Render figures with captions", 
+            option_type: "boolean", 
+            option_default: "false"
+            },
          ]
          },
          {

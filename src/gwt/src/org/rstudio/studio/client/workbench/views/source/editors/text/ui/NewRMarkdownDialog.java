@@ -221,7 +221,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          optionWidgets_.add(optionWidget);
          panelOptions_.add(optionWidget);
          Style optionStyle = optionWidget.asWidget().getElement().getStyle();
-         optionStyle.setMarginTop(5, Unit.PX);
+         optionStyle.setMarginTop(3, Unit.PX);
          optionStyle.setMarginBottom(5, Unit.PX);
       }
    }
@@ -238,10 +238,16 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          if (!option.getName().equals(optionName))
             continue;
 
-         // A format-specific option for a different format
-         if (option.getFormatName().length() > 0 && 
-             !option.getFormatName().equals(formatName))
-            continue; 
+         String optionFormatName = option.getFormatName();
+         if (optionFormatName.length() > 0)
+         {
+            // A format-specific option: if it's for this format we're done,
+            // otherwise keep looking
+            if (optionFormatName.equals(formatName))
+               return option;
+            else
+               continue;
+         }
 
          result = option;
       }
