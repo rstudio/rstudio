@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
+import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -28,9 +30,10 @@ public class NewRmdFloatOption extends NewRmdBaseOption
       HTMLPanel panel = new HTMLPanel("");
       defaultValue_ = Float.parseFloat(option.getDefaultValue());
       panel.add(new InlineLabel(option.getUiName() + ":"));
-      txtValue_ = new TextBox();
+      txtValue_ = new NumericTextBox();
       txtValue_.setValue(option.getDefaultValue());
       txtValue_.setWidth("40px");
+      txtValue_.getElement().getStyle().setMarginLeft(5, Unit.PX);
       panel.add(txtValue_);
 
       initWidget(panel);

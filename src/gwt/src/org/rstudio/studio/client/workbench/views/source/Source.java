@@ -884,7 +884,7 @@ public class Source implements InsertSourceHandler,
                      @Override
                      public String transform(String input)
                      {
-                        return "---\n" + yaml + "---\n" + input;
+                        return "---\n" + yaml + "---\n\n" + input;
                      }
                   });
          }

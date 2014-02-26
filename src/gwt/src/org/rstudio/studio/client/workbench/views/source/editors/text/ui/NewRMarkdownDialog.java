@@ -29,10 +29,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -65,7 +68,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          output[format] = options;
          
          var result = new Object();
-         result["author"] = author;
+         if (author.length > 0)
+         {
+            result["author"] = author;
+            result["date"] = (new Date()).toLocaleDateString();
+         }
          result["title"] = title;
          result["output"] = output;
         
@@ -78,6 +85,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    public interface Binder extends UiBinder<Widget, NewRMarkdownDialog>
    {
    }
+   
+   public interface NewRmdStyle extends CssResource
+   {
+      // Stub to ensure style is injected during construction
+   }
 
    public NewRMarkdownDialog(
          RMarkdownContext context,
@@ -87,6 +99,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       super("New R Markdown Document", operation);
       context_ = context;
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      style.ensureInjected();
       txtAuthor_.setText(author);
       txtTitle_.setText("Untitled");
       listTemplates_.addChangeHandler(new ChangeHandler()
@@ -113,6 +126,18 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       }
       listTemplates_.setSelectedIndex(0);
       updateOptions(getSelectedTemplate());
+      
+      // when dialog is finished booting, focus the title so it's ready to
+      // accept input
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            txtTitle_.setSelectionRange(0, txtTitle_.getText().length());
+            txtTitle_.setFocus(true);
+         }
+      });
    }
 
    @Override
@@ -260,6 +285,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField ListBox listFormats_;
    @UiField VerticalPanel panelOptions_;
    @UiField Label labelFormatNotes_;
+   @UiField NewRmdStyle style;
 
    private final Widget mainWidget_;
 
