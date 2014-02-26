@@ -88,17 +88,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (format.equals(RmdOutputFormat.OUTPUT_PDF_DOCUMENT) ||
           format.equals(RmdOutputFormat.OUTPUT_BEAMER_PRESENTATION))
       {
-         // if there's a registered Synctex-compatible viewer, use that 
-         if (SynctexUtils.getDesktopSynctexViewer().length() > 0)
-         {
-            Desktop.getFrame().externalSynctexPreview(
-                  result.getOutputFile(), 1);
-         }
-         else
-         {
-            // show in-browser for server mode, open the file in desktop mode
+         if (Desktop.isDesktop())
+            Desktop.getFrame().showFile(result.getOutputFile());
+         else // browsers we target can all now show pdfs inline
             globalDisplay_.showHtmlFile(result.getOutputFile());
-         }
       }
       else if (format.equals(RmdOutputFormat.OUTPUT_WORD_DOCUMENT))
       {
