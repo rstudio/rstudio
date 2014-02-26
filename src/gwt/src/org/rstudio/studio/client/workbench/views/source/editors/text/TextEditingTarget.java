@@ -2832,7 +2832,10 @@ public class TextEditingTarget implements
    @Handler
    void onUsingRMarkdownHelp()
    {
-      globalDisplay_.openRStudioLink("using_markdown");
+      if (extendedType_.equals("rmarkdown"))
+         globalDisplay_.openRStudioLink("using_rmarkdown");
+      else
+         globalDisplay_.openRStudioLink("using_markdown");
    }
    
    @Handler
