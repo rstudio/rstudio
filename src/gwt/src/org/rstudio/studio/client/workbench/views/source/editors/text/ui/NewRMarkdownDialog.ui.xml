@@ -72,7 +72,7 @@
            <g:ListBox ui:field="listFormats_"></g:ListBox>
            <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"></g:Label>
         </g:FlowPanel>
-        <g:ScrollPanel>
+        <g:ScrollPanel height="100%">
            <g:VerticalPanel ui:field="panelOptions_"></g:VerticalPanel>
         </g:ScrollPanel>
      </g:HeaderPanel>

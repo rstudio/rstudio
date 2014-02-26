@@ -144,21 +144,26 @@ public class RmdTemplateData
          template_name: "Presentation",
          template_formats: [
             {
-            format_name: "revealjs_presentation",
-            format_ui_name: "RevealJS",
-            format_options: ["center", "incremental", "self_contained", "smart",
-                             "fig_caption", "theme", "transition" ]
+            format_name: "ioslides_presentation",
+            format_ui_name: "HTML (IOSlides)",
+            format_options: [ "incremental", "transition", "widescreen", 
+                              "smaller", "fig_width", "fig_height", 
+                              "fig_caption", "highlight", "self_contained",
+                              "smart" ]
             },
             {
-            format_name: "ioslides_presentation",
-            format_ui_name: "IOSlides",
-            format_options: [ "incremental", "smart", "widescreen", "smaller",
-                              "fig_caption" ]
+            format_name: "revealjs_presentation",
+            format_ui_name: "HTML (RevealJS)",
+            format_options: ["center", "incremental", "theme", "transition", 
+                             "fig_width", "fig_height", "fig_caption",
+                             "highlight", "self_contained", "smart" ]
             },
             {
             format_name: "beamer_presentation",
-            format_ui_name: "Beamer",
-            format_options: [ "incremental", "fig_caption" ]
+            format_ui_name: "PDF (Beamer)",
+            format_options: [ "toc", "incremental", "theme", "colortheme", 
+                              "fonttheme", "fig_width", "fig_height", 
+                              "fig_crop", "fig_caption", "highlight" ]
             }
          ],
          template_options: [
@@ -197,6 +202,14 @@ public class RmdTemplateData
                            "linear", "fade", "none" ]
             },
             {
+            option_name: "transition",
+            option_ui_name: "Slide transition speed", 
+            option_format: "ioslides_presentation", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "default", "slower", "faster" ]
+            },
+            {
             option_name: "smart",
             option_ui_name: "Use smart punctuation", 
             option_type: "boolean", 
@@ -219,6 +232,99 @@ public class RmdTemplateData
             option_ui_name: "Render figures with captions", 
             option_type: "boolean", 
             option_default: "false"
+            },
+            {
+            option_name: "fig_width",
+            option_ui_name: "Default figure width (in inches)", 
+            option_type: "float", 
+            option_default: "7.5"
+            },
+            {
+            option_name: "fig_height",
+            option_ui_name: "Default figure width (in inches)", 
+            option_type: "float", 
+            option_default: "4.5"
+            },
+            {
+            option_name: "fig_width",
+            option_format: "revealjs_presentation",
+            option_ui_name: "Default figure width (in inches)", 
+            option_type: "float", 
+            option_default: "8"
+            },
+            {
+            option_name: "fig_height",
+            option_format: "revealjs_presentation",
+            option_ui_name: "Default figure width (in inches)", 
+            option_type: "float", 
+            option_default: "6"
+            },
+            {
+            option_name: "fig_width",
+            option_format: "beamer_presentation",
+            option_ui_name: "Default figure width (in inches)", 
+            option_type: "float", 
+            option_default: "10"
+            },
+            {
+            option_name: "fig_height",
+            option_format: "beamer_presentation",
+            option_ui_name: "Default figure width (in inches)", 
+            option_type: "float", 
+            option_default: "7"
+            },
+            {
+            option_name: "highlight",
+            option_ui_name: "Syntax highlighting", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "default", "tango", "pygments", "kate", "monochrome",
+                           "espresso", "zenburn", "haddock", "textmate" ]
+            },
+            {
+            option_name: "toc",
+            option_ui_name: "Include a table of contents", 
+            option_type: "boolean", 
+            option_default: "false"
+            },
+            {
+            option_name: "fig_crop",
+            option_ui_name: "Crop figures with pdfcrop (if available)", 
+            option_type: "boolean", 
+            option_default: "true"
+            },
+            {
+            option_name: "theme",
+            option_format: "beamer_presentation",
+            option_ui_name: "Theme", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "AnnArbor", "Antibes", "Bergen", "Berkeley",
+                           "Berlin", "Boadilla", "boxes", "CambridgeUS", 
+                           "Copenhagen", "Darmstadt", "default", "Dresden", 
+                           "Frankfurt", "Goettingen", "Hannover", "Ilmenau", 
+                           "JuanLesPins", "Luebeck", "Madrid", "Malmoe", 
+                           "Marburg", "Montpellier", "PaloAlto", "Pittsburgh", 
+                           "Rochester", "Singapore", "Szeged", "Warsaw" ]
+            },
+            {
+            option_name: "fonttheme",
+            option_ui_name: "Font theme", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "default", "professionalfonts", "serif", 
+                           "structurebold", "structureitalicserif", 
+                           "structuresmallcapsserif" ]
+            },
+            {
+            option_name: "colortheme",
+            option_ui_name: "Color theme", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "albatross", "beaver", "beetle", "crane", "default", 
+                           "dolphin", "dove", "fly", "lily", "orchid", "rose", 
+                           "seagull", "seahorse", "sidebartab", "structure", 
+                           "whale", "wolverine" ]
             },
          ]
          }
