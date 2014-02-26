@@ -89,9 +89,14 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (".pdf".equals(extension))
       {
          if (Desktop.isDesktop())
-            Desktop.getFrame().showFile(result.getOutputFile());
+         {
+            Desktop.getFrame().showPDF(result.getOutputFile(),
+                                       result.getPreviewSlide());
+         }
          else // browsers we target can all now show pdfs inline
+         {
             globalDisplay_.showHtmlFile(result.getOutputFile());
+         }
       }
       else if (".docx".equals(extension))
       {
