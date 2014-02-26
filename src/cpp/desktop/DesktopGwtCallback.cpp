@@ -340,6 +340,19 @@ void GwtCallback::showWordDoc(QString path)
 #endif
 }
 
+void GwtCallback::showPDF(QString path, int pdfPage)
+{
+#ifdef Q_OS_WIN32
+   // use sumatra on windows because it's so much better behaved
+   // than acrobat reader for previewing
+   path = resolveAliasedPath(path);
+   pSynctex_->view(path, pdfPage);
+#else
+   // Invoke default viewer on other platforms
+   showFile(path);
+#endif
+}
+
 void GwtCallback::prepareShowWordDoc()
 {
 #ifdef Q_OS_WIN32

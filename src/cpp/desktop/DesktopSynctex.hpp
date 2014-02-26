@@ -72,6 +72,14 @@ public:
    {
    }
 
+   // view without synctex (defaults to viewing with synctex, it's
+   // up to various implementations to create their own non-synctex
+   // implementations
+   virtual void view(const QString& pdfFile, int pdfPage)
+   {
+      syncView(pdfFile, pdfPage);
+   }
+
 protected:
    WId mainWindowId() const { return pMainWindow_->effectiveWinId(); }
 

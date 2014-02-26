@@ -110,5 +110,17 @@ void SumatraSynctex::syncView(const QString& pdfFile, int page)
    QProcess::startDetached(sumatraExePath_, args);
 }
 
+void SumatraSynctex::view(const QString& pdfFile, int pdfPage)
+{
+   QStringList args = standardSumatraArgs();
+   if (pdfPage != -1)
+   {
+      args.append(QString::fromAscii("-page"));
+      args.append(QString::fromStdString(safe_convert::numberToString(pdfPage)));
+   }
+   args.append(pdfFile);
+   QProcess::startDetached(sumatraExePath_, args);
+}
+
 } // namesapce synctex
 } // namespace desktop
