@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -173,6 +175,24 @@ public class TextEditingTargetRMarkdownHelper
       return true;
    }
    
+   public void convertToYAML(JavaScriptObject input, 
+                             final CommandWithArg<String> onFinished)
+   {
+      server_.convertToYAML(input, new ServerRequestCallback<RmdYamlResult>()
+      {
+         @Override
+         public void onResponseReceived(RmdYamlResult yamlResult)
+         {
+            onFinished.execute(yamlResult.getYaml());
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            onFinished.execute("");
+         }
+      });
+   }
+   
    private void installRMarkdownPackage(String action,
                                         final Command onInstalled)
    {
@@ -231,7 +251,7 @@ public class TextEditingTargetRMarkdownHelper
          }
       });
    }
-   
+            
    private void showKnitrPreviewWarning(WarningBarDisplay display,
                                         String feature, 
                                         String requiredVersion)

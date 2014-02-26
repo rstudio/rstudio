@@ -709,10 +709,6 @@ public class Source implements InsertSourceHandler,
       SessionInfo sessionInfo = session_.getSessionInfo();
       boolean useRMarkdownV2 = sessionInfo.getRMarkdownPackageAvailable();
       
-      // until we get the RMarkdown v2 New Doc dialog spiffed up 
-      // we always use RMarkdown v1
-      useRMarkdownV2 = false;
-      
       if (useRMarkdownV2)
          newRMarkdownV2Doc();
       else
@@ -855,31 +851,44 @@ public class Source implements InsertSourceHandler,
             {
                new NewRMarkdownDialog(
                   context,
+                  session_.getSessionInfo().getUserIdentity(),
                   new OperationWithInput<NewRMarkdownDialog.Result>()
                   {
                      @Override
                      public void execute(final NewRMarkdownDialog.Result result)
                      {
-                        newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
-                              "", 
-                              "r_markdown_v2.Rmd",
-                              Position.create(5, 0),
-                              null,
-                              new TransformerCommand<String>()
-                              {
-                                 @Override
-                                 public String transform(String input)
-                                 {
-                                    return result.toYAMLFrontMatter() + 
-                                           "\n" + input;
-                                 }
-                              });
+                        newRMarkdownV2Doc(result);
                      }
                   }
                ).showModal();
             }
          }
       );
+   }
+   
+   private void newRMarkdownV2Doc(NewRMarkdownDialog.Result result)
+   {
+      rmarkdown_.convertToYAML(result.getJSOResult(), 
+            new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(final String yaml)
+         {
+            newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+                  "", 
+                  "r_markdown_v2.Rmd",
+                  Position.create(5, 0),
+                  null,
+                  new TransformerCommand<String>()
+                  {
+                     @Override
+                     public String transform(String input)
+                     {
+                        return "---\n" + yaml + "---\n" + input;
+                     }
+                  });
+         }
+      });
    }
    
    private void newSourceDocWithTemplate(final TextFileType fileType, 

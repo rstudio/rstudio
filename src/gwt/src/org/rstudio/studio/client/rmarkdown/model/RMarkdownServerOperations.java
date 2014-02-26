@@ -19,6 +19,8 @@ import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 public interface RMarkdownServerOperations extends CryptoServerOperations
 {
    void getRMarkdownContext(
@@ -31,6 +33,10 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                   ServerRequestCallback<Boolean> requestCallback);
    
    void terminateRenderRmd(ServerRequestCallback<Void> requestCallback);
+   
+   
+   void convertToYAML(JavaScriptObject input, 
+                      ServerRequestCallback<RmdYamlResult> requestCallback);
 
    public String getApplicationURL(String pathName);
 }

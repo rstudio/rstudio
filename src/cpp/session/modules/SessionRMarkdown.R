@@ -23,4 +23,8 @@
                           type = "source")
 })
 
+.rs.addJsonRpcHandler("convert_to_yaml", function(input)
+{
+   list(yaml = .rs.scalar(yaml::as.yaml(input)))
+})
 
