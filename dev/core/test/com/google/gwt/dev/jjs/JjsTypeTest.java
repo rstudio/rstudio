@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 
@@ -45,6 +46,7 @@ public class JjsTypeTest extends TestCase {
   private JReferenceType arrayOfInt;
   private JArrayType arrayOfObject;
   private JClassType classA;
+  private JClassType classArrayList;
   private JClassType classB;
   private JClassType classBase;
   private JNonNullType classBaseNn;
@@ -56,16 +58,19 @@ public class JjsTypeTest extends TestCase {
   private JClassType classJso2;
   private JClassType classObject;
   private JClassType classString;
+  private JReferenceType intfCloneable;
+  private JInterfaceType intfCollection;
   private JInterfaceType intfI;
   private JInterfaceType intfIBase;
+  private JInterfaceType intfIterable;
   private JInterfaceType intfJ;
   private JInterfaceType intfK;
+  private JInterfaceType intfList;
+  private JReferenceType intfSerializable;
   private JProgram program;
   private SourceInfo synthSource;
   private JReferenceType typeNull;
   private JTypeOracle typeOracle;
-  private JReferenceType intfSerializable;
-  private JReferenceType intfCloneable;
 
   public void testCanTheoreticallyCast() {
     assertFalse(typeOracle.canTheoreticallyCast(classBnn, typeNull));
@@ -98,6 +103,9 @@ public class JjsTypeTest extends TestCase {
 
     assertTrue(typeOracle.canTheoreticallyCast(arrayOfA, intfCloneable));
     assertTrue(typeOracle.canTheoreticallyCast(intfCloneable, arrayOfA));
+
+    assertTrue(typeOracle.canTheoreticallyCast(intfList, intfIterable));
+    assertTrue(typeOracle.canTheoreticallyCast(classArrayList, intfIterable));
   }
 
   public void testCanTriviallyCast() {
@@ -201,6 +209,29 @@ public class JjsTypeTest extends TestCase {
     }
   }
 
+  public void testGetSuperHierarchy() {
+    assertSuperHierarchy(classObject);
+    assertSuperHierarchy(classString, classObject);
+    assertSuperHierarchy(classJso, classObject);
+    assertSuperHierarchy(intfSerializable);
+    assertSuperHierarchy(intfCloneable);
+    assertSuperHierarchy(intfIBase);
+    assertSuperHierarchy(intfI, intfIBase);
+    assertSuperHierarchy(intfJ);
+    assertSuperHierarchy(intfK);
+    assertSuperHierarchy(classBase, classObject);
+    assertSuperHierarchy(classA, classObject, classBase);
+    assertSuperHierarchy(classB, classObject, classBase, intfIBase, intfI);
+    assertSuperHierarchy(classC, classObject, intfIBase, intfI);
+    assertSuperHierarchy(classBSub, classObject, classBase, classB, intfIBase, intfI);
+    assertSuperHierarchy(classJso1, classObject, classJso, intfJ);
+    assertSuperHierarchy(classJso2, classObject, classJso, intfK);
+    assertSuperHierarchy(intfIterable);
+    assertSuperHierarchy(intfCollection, intfIterable);
+    assertSuperHierarchy(intfList, intfIterable, intfCollection);
+    assertSuperHierarchy(classArrayList, intfList, classObject, intfIterable, intfCollection);
+  }
+
   public void testJavahSignatures() {
     for (JReferenceType type : severalTypes()) {
       if (!(type instanceof JNullType)) {
@@ -230,6 +261,11 @@ public class JjsTypeTest extends TestCase {
   @Override
   protected void setUp() {
     createSampleProgram();
+  }
+
+  private void assertSuperHierarchy(JReferenceType type, JReferenceType... superHierarchyTypes) {
+    assertEquals(typeOracle.getSuperHierarchyTypes(type),
+        Sets.<JReferenceType> newHashSet(superHierarchyTypes));
   }
 
   private JClassType createClass(String className, JClassType superClass, boolean isAbstract,
@@ -285,6 +321,14 @@ public class JjsTypeTest extends TestCase {
     classJso1.addImplements(intfJ);
     classJso2 = createClass("Jso2", classJso, false, false);
     classJso2.addImplements(intfK);
+
+    intfIterable = createInterface("java.util.Iterable");
+    intfCollection = createInterface("java.util.Collection");
+    intfCollection.addImplements(intfIterable);
+    intfList = createInterface("java.util.List");
+    intfList.addImplements(intfCollection);
+    classArrayList = createClass("java.util.ArrayList", classObject, false, false);
+    classArrayList.addImplements(intfList);
 
     program.typeOracle.computeBeforeAST();
 

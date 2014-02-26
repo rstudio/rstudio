@@ -23,6 +23,7 @@ import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.IdentitySets;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -282,6 +283,7 @@ public class JTypeOracle implements Serializable {
    */
   private final Map<JInterfaceType, Set<JInterfaceType>> superInterfaceMap =
       new IdentityHashMap<JInterfaceType, Set<JInterfaceType>>();
+
   /**
    * A map of all methods with virtual overrides, onto the collection of
    * overridden methods. Each key method's collections is a map of the set of
@@ -587,6 +589,21 @@ public class JTypeOracle implements Serializable {
 
   public JClassType getSingleJsoImpl(JReferenceType maybeSingleJsoIntf) {
     return jsoSingleImpls.get(maybeSingleJsoIntf.getUnderlyingType());
+  }
+
+  public Set<JDeclaredType> getSuperHierarchyTypes(JReferenceType type) {
+    Set<JDeclaredType> superHierarchyTypes = Sets.newHashSet();
+    if (superClassMap.containsKey(type)) {
+      superHierarchyTypes.addAll(superClassMap.get(type));
+    }
+    if (superInterfaceMap.containsKey(type)) {
+      superHierarchyTypes.addAll(superInterfaceMap.get(type));
+    }
+    if (implementsMap.containsKey(type)) {
+      superHierarchyTypes.addAll(implementsMap.get(type));
+    }
+
+    return superHierarchyTypes;
   }
 
   public boolean isDualJsoInterface(JReferenceType maybeDualImpl) {
