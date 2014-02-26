@@ -205,13 +205,17 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       {
          NewRmdFormatOption optionWidget;
          RmdTemplateFormatOption option = mapOptions_.get(options.get(i));
-         if (option.getType().equals("boolean"))
+         if (option.getType().equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
          {
             optionWidget = new NewRmdBooleanOption(option);
          } 
-         else if (option.getType().equals("choice"))
+         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_CHOICE))
          {
             optionWidget = new NewRmdChoiceOption(option);
+         }
+         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT))
+         {
+            optionWidget = new NewRmdFloatOption(option);
          }
          else
             continue;

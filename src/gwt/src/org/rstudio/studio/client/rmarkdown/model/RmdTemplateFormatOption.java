@@ -42,4 +42,8 @@ public class RmdTemplateFormatOption extends JavaScriptObject
    public final native JsArrayString getChoiceList() /*-{
       return this.option_list;
    }-*/;
+   
+   public final static String TYPE_BOOLEAN = "boolean";
+   public final static String TYPE_CHOICE = "choice";
+   public final static String TYPE_FLOAT = "float";
 }

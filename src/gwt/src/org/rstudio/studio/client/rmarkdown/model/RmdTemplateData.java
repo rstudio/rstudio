@@ -27,7 +27,7 @@ public class RmdTemplateData
             format_name: "html_document",
             format_ui_name: "HTML",
             format_options: [ "toc", "self_contained", "smart", "theme", 
-                              "highlight" ],
+                              "highlight", "fig_width", "fig_height" ],
             format_notes: "HTML is recommended for authoring. You can switch to PDF or Word anytime."
             },
             {
@@ -84,6 +84,18 @@ public class RmdTemplateData
             option_type: "choice", 
             option_default: "pdflatex",
             option_list: [ "pdflatex", "lualatex", "xelatex" ]
+            },
+            {
+            option_name: "fig_width",
+            option_ui_name: "Default figure width in inches", 
+            option_type: "float", 
+            option_default: "7"
+            },
+            {
+            option_name: "fig_height",
+            option_ui_name: "Default figure height in inches", 
+            option_type: "float", 
+            option_default: "5"
             },
          ]
          },

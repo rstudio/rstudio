@@ -1,5 +1,5 @@
 /*
- * NewRmdChoiceOption.java
+ * NewRmdNumberOption.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -16,33 +16,22 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
 
-public class NewRmdChoiceOption extends NewRmdBaseOption
+public class NewRmdFloatOption extends NewRmdBaseOption
 {
-   public NewRmdChoiceOption(RmdTemplateFormatOption option)
+   public NewRmdFloatOption(RmdTemplateFormatOption option)
    {
       super(option);
       HTMLPanel panel = new HTMLPanel("");
-      defaultValue_ = option.getDefaultValue();
+      defaultValue_ = Float.parseFloat(option.getDefaultValue());
       panel.add(new InlineLabel(option.getUiName() + ":"));
-      choices_ = new ListBox();
-      
-      JsArrayString choiceList = option.getChoiceList();
-      int selectedIdx = 0;
-      for (int i = 0; i < choiceList.length(); i++)
-      {
-         choices_.addItem(choiceList.get(i));
-         if (choiceList.get(i).equals(defaultValue_))
-         {
-            selectedIdx = i;
-         }
-      }
-      choices_.setSelectedIndex(selectedIdx);
-      panel.add(choices_);
+      txtValue_ = new TextBox();
+      txtValue_.setValue(option.getDefaultValue());
+      txtValue_.setWidth("40px");
+      panel.add(txtValue_);
 
       initWidget(panel);
    }
@@ -50,15 +39,16 @@ public class NewRmdChoiceOption extends NewRmdBaseOption
    @Override
    public boolean valueIsDefault()
    {
-      return defaultValue_ == getValue();
+      return defaultValue_ == Float.parseFloat(txtValue_.getText());
    }
 
    @Override
    public String getValue()
    {
-      return choices_.getValue(choices_.getSelectedIndex());
+      Float val = Float.parseFloat(txtValue_.getText());
+      return val.toString();
    }
    
-   private final String defaultValue_;
-   private ListBox choices_;
+   private final Float defaultValue_;
+   private TextBox txtValue_;
 }

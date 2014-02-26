@@ -30,12 +30,20 @@ public class NewRmdFormatOptions
       {
          if (!option.valueIsDefault())
          {
-            if (option.getOption().getType().equals("boolean"))
+            if (option.getOption().getType().equals(
+                  RmdTemplateFormatOption.TYPE_BOOLEAN))
             {
                addOption(optionList, option.getOption(), 
                          Boolean.parseBoolean(option.getValue()));
             }
-            else if (option.getOption().getType().equals("choice"))
+            if (option.getOption().getType().equals(
+                  RmdTemplateFormatOption.TYPE_FLOAT))
+            {
+               addOption(optionList, option.getOption(), 
+                         Float.parseFloat(option.getValue()));
+            }
+            else if (option.getOption().getType().equals(
+                  RmdTemplateFormatOption.TYPE_CHOICE))
             {
                addOption(optionList, option.getOption(), option.getValue());
             }
@@ -57,6 +65,11 @@ public class NewRmdFormatOptions
 
    private final native static void addOption (JavaScriptObject optionList, 
          RmdTemplateFormatOption option, String value) /*-{
+      optionList[option.option_name] = value;
+   }-*/;
+
+   private final native static void addOption (JavaScriptObject optionList, 
+         RmdTemplateFormatOption option, float value) /*-{
       optionList[option.option_name] = value;
    }-*/;
 }
