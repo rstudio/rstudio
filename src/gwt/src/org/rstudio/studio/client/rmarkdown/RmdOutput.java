@@ -83,8 +83,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       RmdRenderResult result = event.getResult();
       if (!result.getSucceeded())
          return;
+        
       String format = result.getFormatName(); 
-      if (format.equals(RmdOutputFormat.OUTPUT_PDF_DOCUMENT))
+      if (format.equals(RmdOutputFormat.OUTPUT_PDF_DOCUMENT) ||
+          format.equals(RmdOutputFormat.OUTPUT_BEAMER_PRESENTATION))
       {
          // if there's a registered Synctex-compatible viewer, use that 
          if (SynctexUtils.getDesktopSynctexViewer().length() > 0)
