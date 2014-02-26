@@ -158,7 +158,7 @@ public class SourceMapTest extends TestCase {
     }
 
     @Override
-    public int getRuntimeTypeId() {
+    public String getRuntimeTypeId() {
       throw new ShouldNotImplement(NOT_IMPLEMENTED_MESSAGE);
     }
 

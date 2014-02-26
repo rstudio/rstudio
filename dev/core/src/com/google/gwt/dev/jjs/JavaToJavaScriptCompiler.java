@@ -90,7 +90,7 @@ import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferencesIntoIntLiterals;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
 import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
@@ -269,7 +269,7 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(rluble): This pass seems to fit in the normalize semantics.
         Map<JType, JLiteral> typeIdLiteralssByType =
-            ResolveRuntimeTypeReferencesIntoIntLiterals.exec(jprogram);
+            ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram);
 
         // TODO(stalcup): this stage shouldn't exist, move into optimize.
         postNormalizationOptimizeJava();

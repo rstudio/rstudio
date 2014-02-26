@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -52,31 +52,30 @@ public final class WebModeClientOracle extends ClientOracle implements
     private WebModeClientOracle oracle = new WebModeClientOracle();
 
     public void add(String jsIdent, String jsniIdent, String className,
-        String memberName, int queryId, CastableTypeData castableTypeData,
-        int seedId) {
-      
+        String memberName, String runtimeTypeId, CastableTypeData castableTypeData) {
+
       oracle.idents.add(jsIdent);
       ClassData data = oracle.getClassData(className);
-      
+
       /*
-       * Don't overwrite castableTypeData and queryId if already set.
-       * There are many versions of symbols for a given className, 
+       * Don't overwrite castableTypeData and runtimeTypeId if already set.
+       * There are many versions of symbols for a given className,
        * corresponding to the type of member fields, etc.,
-       * which don't have the queryId or castableTypeData initialized.  Only
+       * which don't have the runtimeTypeId or castableTypeData initialized.  Only
        * the symbol data for the class itself has this info.
        */
       if (data.castableTypeData == null) {
-        data.queryId = queryId;
+        data.runtimeTypeId = runtimeTypeId;
         data.castableTypeData = castableTypeData;
       }
-      
+
       if (jsniIdent == null || jsniIdent.length() == 0) {
         data.typeName = className;
-        data.seedName = jsIdent;
+        data.jsSymbolName = jsIdent;
         oracle.seedNamesToClassData.put(jsIdent, data);
         // Class.getName() with metadata disabled is "Class$S<seedId>"
-        oracle.seedIdsToClassData.put("S" + seedId, data);
-        data.seedId = seedId;
+        oracle.seedIdsToClassData.put("S" + runtimeTypeId, data);
+        data.runtimeTypeId = runtimeTypeId;
       } else {
         if (jsniIdent.contains("(")) {
           jsniIdent = jsniIdent.substring(jsniIdent.indexOf("::") + 2,
@@ -125,26 +124,25 @@ public final class WebModeClientOracle extends ClientOracle implements
   }
 
   private static class ClassData implements Serializable {
-    private static final long serialVersionUID = 5L;
+    private static final long serialVersionUID = 6L;
 
     public CastableTypeData castableTypeData;
     public final Map<String, String> fieldIdentsToNames = new HashMap<String, String>();
     public final Map<String, String> fieldNamesToIdents = new HashMap<String, String>();
     public final Map<String, String> methodJsniNamesToIdents = new HashMap<String, String>();
-    public int queryId;
-    public String seedName;
+    public String runtimeTypeId;
+    public String jsSymbolName;
     public List<String> serializableFields = Collections.emptyList();
     public String typeName;
-    public int seedId;
   }
 
   /**
    * Defined to prevent simple changes from invalidating stored data.
-   * 
+   *
    * TODO: Use something other than Java serialization to store this type's
    * data.
    */
-  private static final long serialVersionUID = 2L;
+  private static final long serialVersionUID = 3L;
 
   /**
    * Recreate a WebModeClientOracle based on the contents previously emitted by
@@ -250,7 +248,7 @@ public final class WebModeClientOracle extends ClientOracle implements
     }
     return ident;
   }
-  
+
   @Override
   public CastableTypeData getCastableTypeData(Class<?> clazz) {
     while (clazz != null) {
@@ -363,21 +361,21 @@ public final class WebModeClientOracle extends ClientOracle implements
   }
 
   @Override
-  public int getQueryId(Class<?> clazz) {
+  public String getRuntimeTypeId(Class<?> clazz) {
     while (clazz != null) {
-      int toReturn = getQueryId(canonicalName(clazz));
-      if (toReturn != 0) {
+      String toReturn = getRuntimeTypeId(canonicalName(clazz));
+      if (toReturn != null) {
         return toReturn;
       }
       clazz = clazz.getSuperclass();
     }
-    return 0;
+    return null;
   }
 
   @Override
-  public String getSeedName(Class<?> clazz) {
+  public String getJsSymbolName(Class<?> clazz) {
     ClassData data = getClassData(clazz.getName());
-    return data.seedName;
+    return data.jsSymbolName;
   }
 
   @Override
@@ -432,7 +430,7 @@ public final class WebModeClientOracle extends ClientOracle implements
       return clazz.getName();
     }
   }
-  
+
   private CastableTypeData getCastableTypeData(String className) {
     ClassData data = getClassData(className);
     return data.castableTypeData;
@@ -460,9 +458,9 @@ public final class WebModeClientOracle extends ClientOracle implements
     return getMethodId(className, methodName, jsniArgTypes);
   }
 
-  private int getQueryId(String className) {
+  private String getRuntimeTypeId(String className) {
     ClassData data = getClassData(className);
-    return data.queryId;
+    return data.runtimeTypeId;
   }
 
   /**

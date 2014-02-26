@@ -34,15 +34,14 @@ final class Cast {
    */
   private static JavaScriptObject stringCastMap;
 
-  static native boolean canCast(Object src, int dstId) /*-{
+  static native boolean canCast(Object src, JavaScriptObject dstId) /*-{
     return src.@java.lang.Object::castableTypeMap && !!src.@java.lang.Object::castableTypeMap[dstId]
         || @com.google.gwt.lang.Cast::isJavaString(Ljava/lang/Object;)(src) &&
         !!@com.google.gwt.lang.Cast::stringCastMap[dstId];
   }-*/;
 
   // Will eventually be the implementation for class.isAssignableFrom().
-  // TODO(rluble): Unify the logic into a version that accepts either strings or int as typeIds.
-  static native boolean canCastTypeId(String srcTypeId, String dstTypeId) /*-{
+  static native boolean canCastTypeId(JavaScriptObject srcTypeId, JavaScriptObject dstTypeId) /*-{
     var prototype = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[srcTypeId];
     return (prototype.@java.lang.Object::castableTypeMap &&
             !!prototype.@java.lang.Object::castableTypeMap[dstTypeId]);
@@ -52,7 +51,7 @@ final class Cast {
     return String.fromCharCode(x);
   }-*/;
 
-  static Object dynamicCast(Object src, int dstId) {
+  static Object dynamicCast(Object src, JavaScriptObject dstId) {
     if (src != null && !canCast(src, dstId)) {
       throw new ClassCastException();
     }
@@ -62,7 +61,7 @@ final class Cast {
   /**
    * Allow a dynamic cast to an object, always succeeding if it's a JSO.
    */
-  static Object dynamicCastAllowJso(Object src, int dstId) {
+  static Object dynamicCastAllowJso(Object src, JavaScriptObject dstId) {
     if (src != null && !isJavaScriptObject(src) &&
         !canCast(src, dstId)) {
       throw new ClassCastException();
@@ -80,7 +79,7 @@ final class Cast {
     return src;
   }
 
-  static boolean instanceOf(Object src, int dstId) {
+  static boolean instanceOf(Object src, JavaScriptObject dstId) {
     return (src != null) && canCast(src, dstId);
   }
 
@@ -92,7 +91,7 @@ final class Cast {
    * Returns true if the object is a Java object and can be cast, or if it's a
    * non-null JSO.
    */
-  static boolean instanceOfOrJso(Object src, int dstId) {
+  static boolean instanceOfOrJso(Object src, JavaScriptObject dstId) {
     return (src != null) &&
         (isJavaScriptObject(src) || canCast(src, dstId));
   }

@@ -111,7 +111,7 @@ public interface SymbolData extends Serializable {
   /**
    * Returns the runtime typeId.
    */
-  int getRuntimeTypeId();
+  String getRuntimeTypeId();
 
   /**
    * Returns the line number on which the symbol was originally declared or

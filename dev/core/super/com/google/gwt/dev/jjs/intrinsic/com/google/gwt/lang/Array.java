@@ -142,7 +142,7 @@ public final class Array {
    * @return the new array
    */
   public static Array initDim(Class<?> arrayClass, JavaScriptObject castableTypeMap,
-      int elementTypeId, int length, int elementTypeClass) {
+      JavaScriptObject elementTypeId, int length, int elementTypeClass) {
     Array result = initializeArrayElementsWithDefaults(elementTypeClass, length);
     initValues(arrayClass, castableTypeMap, elementTypeId, elementTypeClass, result);
     return result;
@@ -166,7 +166,7 @@ public final class Array {
    * @return the new array
    */
   public static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
-      int[] elementTypeIds, int leafElementTypeClass, int[] dimExprs, int count) {
+      JavaScriptObject[] elementTypeIds, int leafElementTypeClass, int[] dimExprs, int count) {
     return initDims(arrayClasses, castableTypeMapExprs, elementTypeIds, leafElementTypeClass,
         dimExprs, 0, count);
   }
@@ -189,7 +189,7 @@ public final class Array {
    * @return values; having wrapped it for GWT
    */
   public static Array initValues(Class<?> arrayClass, JavaScriptObject castableTypeMap,
-      int elementTypeId, int elementTypeClass, Array array) {
+      JavaScriptObject elementTypeId, int elementTypeClass, Array array) {
     ExpandoWrapper.wrapArray(array);
     setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
@@ -294,7 +294,8 @@ public final class Array {
   }-*/;
 
   private static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
-      int[] elementTypeIds, int leafElementTypeClass, int[] dimExprs, int index, int count) {
+      JavaScriptObject[] elementTypeIds, int leafElementTypeClass, int[] dimExprs,
+      int index, int count) {
     int length = dimExprs[index];
     boolean isLastDim = (index == (count - 1));
     // All dimensions but the last are plain reference types.
@@ -338,6 +339,6 @@ public final class Array {
    *
    * @see #setCheck
    */
-  protected int elementTypeId = 0;
+  protected JavaScriptObject elementTypeId = null;
   protected int elementTypeClass = 0;
 }

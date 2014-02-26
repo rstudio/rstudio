@@ -42,14 +42,14 @@ public class JavaClassHierarchySetupUtil {
    * As a prerequisite if superSeed is not null, it is assumed that defineClass for the supertype
    * has already been called.
    */
-  public static native JavaScriptObject defineClass(int typeId, int superTypeId,
-      JavaScriptObject castableTypeMap) /*-{
+  public static native JavaScriptObject defineClass(JavaScriptObject typeId,
+      JavaScriptObject superTypeId, JavaScriptObject castableTypeMap) /*-{
     // Setup aliases for (horribly long) JSNI references.
     var prototypesByTypeId = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId;
     var createSubclassPrototype =
-        @com.google.gwt.lang.JavaClassHierarchySetupUtil::createSubclassPrototype(I)
+        @com.google.gwt.lang.JavaClassHierarchySetupUtil::createSubclassPrototype(*)
     var maybeGetClassLiteralFromPlaceHolder =  @com.google.gwt.lang.JavaClassHierarchySetupUtil::
-        maybeGetClassLiteralFromPlaceHolder(Lcom/google/gwt/core/client/JavaScriptObject;);
+        maybeGetClassLiteralFromPlaceHolder(*);
     // end of alias definitions.
 
     var prototype = prototypesByTypeId[typeId];
@@ -73,7 +73,7 @@ public class JavaClassHierarchySetupUtil {
   /**
    * Create a subclass prototype.
    */
-  public static native JavaScriptObject createSubclassPrototype(int superTypeId) /*-{
+  public static native JavaScriptObject createSubclassPrototype(JavaScriptObject superTypeId) /*-{
     // Setup aliases for (horribly long) JSNI references.
     var prototypesByTypeId = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId;
     // end of alias definitions.

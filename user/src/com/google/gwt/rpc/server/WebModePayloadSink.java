@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -61,7 +61,7 @@ import java.util.logging.Logger;
 
 /**
  * A CommandSink that will generate a web-mode payload.
- * 
+ *
  * ONE-SHOT EVAL (no incremental evaluation, must call finish())
  */
 public class WebModePayloadSink extends CommandSink {
@@ -169,7 +169,7 @@ public class WebModePayloadSink extends CommandSink {
     public void endVisit(LongValueCommand x, Context ctx) {
       // TODO (rice): use backwards-compatible wire format?
       long fieldValue = x.getValue();
-      
+
       /*
        * Client code represents longs internally as an Object with numeric
        * properties l, m, and h. In order to make serialization of longs faster,
@@ -541,7 +541,7 @@ public class WebModePayloadSink extends CommandSink {
 
       String initValuesId = clientOracle.getMethodId(
           "com.google.gwt.lang.Array", "initValues", "Ljava/lang/Class;",
-          "Lcom/google/gwt/core/client/JavaScriptObject;", "I", 
+          "Lcom/google/gwt/core/client/JavaScriptObject;", "I",
           "Lcom/google/gwt/lang/Array;");
       assert initValuesId != null : "Could not find initValues";
 
@@ -555,7 +555,7 @@ public class WebModePayloadSink extends CommandSink {
       constructorFunctions.put(targetClass, functionName);
 
       /*
-       * Set the castableTypeData and queryIds to exact values, 
+       * Set the castableTypeData and queryIds to exact values,
        * or fall back to acting like a plain Object[] array.
        */
       CastableTypeData castableTypeData = clientOracle.getCastableTypeData(targetClass);
@@ -563,14 +563,14 @@ public class WebModePayloadSink extends CommandSink {
         castableTypeData = clientOracle.getCastableTypeData(Object[].class);
       }
 
-      int queryId = clientOracle.getQueryId(x.getComponentType());
-      if (queryId == 0) {
-        queryId = clientOracle.getQueryId(Object.class);
+      String runtimeTypeId = clientOracle.getRuntimeTypeId(x.getComponentType());
+      if (runtimeTypeId == null) {
+        runtimeTypeId = clientOracle.getRuntimeTypeId(Object.class);
       }
 
       byte[] ident = getBytes("_0");
 
-      // function foo(_0) {return initValues(classLit, castableTypeData, queryId, _0)}
+      // function foo(_0) {return initValues(classLit, castableTypeData, runtimeTypeId, _0)}
       function();
       push(functionName);
       lparen();
@@ -584,7 +584,7 @@ public class WebModePayloadSink extends CommandSink {
       comma();
       push(castableTypeData.toJs());
       comma();
-      push(String.valueOf(queryId));
+      push(String.valueOf(runtimeTypeId));
       comma();
       push(ident);
       rparen();
@@ -602,7 +602,7 @@ public class WebModePayloadSink extends CommandSink {
         return functionName;
       }
 
-      String seedName = clientOracle.getSeedName(targetClass);
+      String seedName = clientOracle.getJsSymbolName(targetClass);
       assert seedName != null : "TypeOverride failed to rescue "
           + targetClass.getName();
       functionName = getBytes(clientOracle.createUnusedIdent(seedName));

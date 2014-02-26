@@ -61,24 +61,24 @@ import java.util.Vector;
  * TODO: could add generics to require args to be of the same type
  */
 public class TestSetValidator {
-  
+
   private static class UnassignableObject {
   }
-  
+
   /**
-   * Check that an Object array has it's meta-data preserved (e.g. Array.queryId),
+   * Check that an Object array has it's meta-data preserved (e.g. Array.runtimeTypeId),
    * to ensure proper type checking on element assignment.
    */
   public static boolean checkObjectArrayElementAssignment(Object[] array,
       int index, Object value) {
-    
+
     // first check that the requested assignment succeeds
     try {
       array[index] = value;
     } catch (ArrayStoreException e) {
       return false;
     }
-    
+
     // next check that assignment with a bogus type throws ArrayStoreException
     try {
       array[index] = new UnassignableObject();
@@ -87,7 +87,7 @@ public class TestSetValidator {
       return true;
     }
   }
-  
+
   public static boolean equals(boolean[] expected, boolean[] actual) {
     if (actual == null) {
       return false;
@@ -298,7 +298,7 @@ public class TestSetValidator {
      * Stack traces are not comparable because they are automatically filled in when
      * the exception is instantiated, with the instantiation site's stack trace.
      */
-    
+
     return true;
   }
 
@@ -344,13 +344,13 @@ public class TestSetValidator {
       if (value != entry.getValue()) {
         if (value == null || entry.getValue() == null) {
           return false;
-        } 
+        }
 
         if (!map.get(entry.getKey()).equals(entry.getValue())) {
           return false;
         }
       }
-    } 
+    }
 
     return true;
   }
@@ -370,13 +370,13 @@ public class TestSetValidator {
       if (value != entry.getValue()) {
         if (value == null || entry.getValue() == null) {
           return false;
-        } 
+        }
 
         if (!map.get(entry.getKey()).equals(entry.getValue())) {
           return false;
         }
       }
-    } 
+    }
 
     return true;
   }
@@ -431,7 +431,7 @@ public class TestSetValidator {
 
     return true;
   }
-  
+
   public static boolean isValidEnumKey(
       IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> expected,
       IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> map) {
@@ -474,7 +474,7 @@ public class TestSetValidator {
     if (expected.size() != map.size()) {
       return false;
     }
-    
+
     Set<Entry<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>> mapEntries =
         map.entrySet();
     Set<Entry<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>> expectedEntries =
@@ -616,7 +616,7 @@ public class TestSetValidator {
     if (actual == null) {
       return false;
     }
-    
+
     /*
      * Throwable doesn't declare equals.
      */
@@ -632,7 +632,7 @@ public class TestSetValidator {
     if (actualCauses.size() != expectedCauses.size()) {
       return false;
     }
-    
+
     /* Null elements, and make a copy of the actualCauses set */
     Iterator<Throwable> expectedIter = expectedCauses.iterator();
     while (expectedIter.hasNext()) {
@@ -648,7 +648,7 @@ public class TestSetValidator {
         return false;
       }
     }
-    
+
     /*
      * The elements themselves. We rely on the fact that the test sets do not
      * contain duplicates of causes.
@@ -671,7 +671,7 @@ public class TestSetValidator {
 
     return true;
   }
-  
+
   public static boolean isValid(Vector<?> expected, Vector<?> actual) {
     if (actual == null) {
       return false;
@@ -804,7 +804,7 @@ public class TestSetValidator {
     assertSame(result, child.getParent());
     return true;
   }
-  
+
   public static boolean isValidSingletonList(List<MarkerTypeSingleton> list) {
     if (list == null || list.size() != 1) {
       return false;

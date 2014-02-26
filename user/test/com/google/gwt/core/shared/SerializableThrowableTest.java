@@ -112,6 +112,14 @@ public class SerializableThrowableTest extends GWTTestCase {
   }
 
   private static boolean isClassMetadataAvailable() {
-    return SerializableThrowableTest.class.getName().endsWith(".SerializableThrowableTest");
+    String name = Object.class.getName();
+
+    if (name.equals("java.lang.Object")) {
+      return true;
+    } else if (name.startsWith("Class$")) {
+      return false;
+    }
+
+    throw new RuntimeException("Unexpected class name " + name);
   }
 }

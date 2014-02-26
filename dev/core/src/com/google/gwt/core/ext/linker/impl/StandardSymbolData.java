@@ -32,7 +32,7 @@ import java.net.URISyntaxException;
 public class StandardSymbolData implements SymbolData {
 
   public static StandardSymbolData forClass(String className, String uriString,
-      int lineNumber, CastableTypeMap castableTypeMap, int typeId) {
+      int lineNumber, CastableTypeMap castableTypeMap, String typeId) {
     return new StandardSymbolData(className, null, null, uriString, lineNumber,
         castableTypeMap, typeId);
   }
@@ -40,7 +40,7 @@ public class StandardSymbolData implements SymbolData {
   public static StandardSymbolData forMember(String className,
       String memberName, String methodSig, String uriString, int lineNumber) {
     return new StandardSymbolData(className, memberName, methodSig, uriString,
-        lineNumber, null, -1);
+        lineNumber, null, null);
   }
 
   public static String toUriString(String fileName) {
@@ -63,12 +63,12 @@ public class StandardSymbolData implements SymbolData {
   private int sourceLine;
   private String sourceUri;
   private String symbolName;
-  private int typeId;
+  private String typeId;
   private CastableTypeMap castableTypeMap;
 
   private StandardSymbolData(String className, String memberName,
       String methodSig, String sourceUri, int sourceLine,
-      CastableTypeMap castableTypeMap, int typeId) {
+      CastableTypeMap castableTypeMap, String typeId) {
     assert className != null && className.length() > 0 : "className";
     assert memberName != null || methodSig == null : "methodSig without memberName";
     assert sourceLine >= -1 : "sourceLine: " + sourceLine;
@@ -113,7 +113,7 @@ public class StandardSymbolData implements SymbolData {
     return memberName;
   }
   @Override
-  public int getRuntimeTypeId() {
+  public String getRuntimeTypeId() {
     return typeId;
   }
 
@@ -179,10 +179,8 @@ public class StandardSymbolData implements SymbolData {
     sourceLine = in.readInt();
     sourceUri = (String) in.readObject();
     symbolName = in.readUTF();
-    // Ignore used to hold seedId.
-    in.readInt();
     castableTypeMap = (CastableTypeMap) in.readObject();
-    typeId = in.readInt();
+    typeId = (String) in.readObject();
     fragmentNumber = in.readInt();
   }
 
@@ -210,10 +208,8 @@ public class StandardSymbolData implements SymbolData {
     out.writeInt(sourceLine);
     out.writeObject(sourceUri);
     out.writeUTF(symbolName);
-    // TODO(rluble): remove this line. Writes the typeId where the seed id used to be.
-    out.writeInt(typeId);
     out.writeObject(castableTypeMap);
-    out.writeInt(typeId);
+    out.writeObject(typeId);
     out.writeInt(fragmentNumber);
   }
 

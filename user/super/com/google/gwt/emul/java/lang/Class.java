@@ -41,7 +41,7 @@ public final class Class<T> implements Type {
    * @skip
    */
   static <T> Class<T> createForArray(String packageName, String className,
-      int typeId, Class<?> componentType) {
+      JavaScriptObject typeId, Class<?> componentType) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     if (clazz.isClassMetadataEnabled()) {
@@ -61,7 +61,7 @@ public final class Class<T> implements Type {
    * @skip
    */
   static <T> Class<T> createForClass(String packageName, String className,
-      int typeId, Class<? super T> superclass) {
+      JavaScriptObject typeId, Class<? super T> superclass) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     if (clazz.isClassMetadataEnabled()) {
@@ -80,7 +80,7 @@ public final class Class<T> implements Type {
    * @skip
    */
   static <T> Class<T> createForEnum(String packageName, String className,
-      int typeId, Class<? super T> superclass,
+      JavaScriptObject typeId, Class<? super T> superclass,
       JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
@@ -108,7 +108,7 @@ public final class Class<T> implements Type {
     if (clazz.isClassMetadataEnabled()) {
       initializeNames(clazz, packageName, className);
     } else {
-      synthesizeClassNamesFromTypeId(clazz, getNullTypeId());
+      synthesizeClassNamesFromTypeId(clazz, null);
     }
     clazz.modifiers = INTERFACE;
     return clazz;
@@ -153,21 +153,10 @@ public final class Class<T> implements Type {
    * null implies non-instantiable type, with no entries in
    * {@link JavaClassHierarchySetupUtil::prototypesByTypeId}.
    */
-  static native boolean isInstantiable(int typeId) /*-{
+  static native boolean isInstantiable(JavaScriptObject typeId) /*-{
     return !!typeId;
   }-*/;
 
-
-  /**
-   * Return a value representing the lack of typeId.
-   *
-   * <p>NOTE: this is a hack to subvert the Java type system.
-   */
-  static native int getNullTypeId() /*-{
-    // TODO(rluble): Reimplement in a less hacky way possibly representing typeIds types as
-    // JavaScriptObjects.
-    return null;
-  }-*/;
 
   /**
    * Install class literal into prototype.clazz field (if type is instantiable) such that
@@ -178,7 +167,7 @@ public final class Class<T> implements Type {
    * If the prototype for typeId has not yet been created, then install the literal into a
    * placeholder array to differentiate the two cases.
    */
-  static native void maybeSetClassLiteral(int typeId, Class<?> clazz) /*-{
+  static native void maybeSetClassLiteral(JavaScriptObject typeId, Class<?> clazz) /*-{
     var proto;
     if (!typeId) {
       // Type is not instantiable, hence not registered in the metadata table.
@@ -218,7 +207,7 @@ public final class Class<T> implements Type {
    * <p>
    * Only called if metadata IS disabled.
    */
-  static void synthesizeClassNamesFromTypeId(Class<?> clazz, int typeId) {
+  static void synthesizeClassNamesFromTypeId(Class<?> clazz, JavaScriptObject typeId) {
     /*
      * The initial "" + in the below code is to prevent clazz.hashCode() from
      * being autoboxed. The class literal creation code is run very early

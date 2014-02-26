@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -36,7 +36,7 @@ public abstract class ClientOracle {
 
   /**
    * Create a CommandSink that can encode a payload for the client.
-   * 
+   *
    * @param out the OutputStream to which the output will be written
    * @return a CommandSink
    * @throws IOException if the CommandSink cannot write to the OutputStream
@@ -76,7 +76,7 @@ public abstract class ClientOracle {
   /**
    * Return the name of a field from a client-side id. This will search
    * superclasses for the first instance of the named field.
-   * 
+   *
    * @return The field's declaring class and the name of the field
    */
   public abstract Pair<Class<?>, String> getFieldName(Class<?> clazz,
@@ -105,15 +105,15 @@ public abstract class ClientOracle {
   public abstract Field[] getOperableFields(Class<?> clazz);
 
   /**
-   * Returns the assigned castability queryId of a given type.
+   * Returns the assigned castability runtimeTypeId of a given type.
    */
-  public abstract int getQueryId(Class<?> clazz);
+  public abstract String getRuntimeTypeId(Class<?> clazz);
 
   /**
    * Returns the name of the top-level function that is used as the seed
    * function for a given type.
    */
-  public abstract String getSeedName(Class<?> clazz);
+  public abstract String getJsSymbolName(Class<?> clazz);
 
   /**
    * Returns the deobfuscated name of a type based on the name of the type's
