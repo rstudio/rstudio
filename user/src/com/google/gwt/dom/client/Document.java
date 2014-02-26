@@ -1372,6 +1372,18 @@ public class Document extends Node {
   }-*/;
 
   /**
+   * The element that contains metadata about the document, including links to or
+   * definitions of scripts and style sheets.
+   *
+   * @return the document's head
+   */
+  public final native HeadElement getHead() /*-{
+    // IE8 does not have document.head
+    // when removing IE8 support we remove the second statement
+    return this.head || this.getElementsByTagName('head')[0];
+  }-*/;
+
+  /**
    * Returns the URI of the page that linked to this page. The value is an empty
    * string if the user navigated to the page directly (not through a link, but,
    * for example, via a bookmark).
