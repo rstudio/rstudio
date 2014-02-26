@@ -245,9 +245,10 @@ private:
       std::string encodedOutputFile =
                        http::util::urlEncode(
                        http::util::urlEncode(outputFile, false), false);
-#ifdef WIN32
-      // One additional URL escaping pass is needed on Windows
-      encodedOutputFile = http::util::urlEncode(encodedOutputFile, false);
+#ifndef __APPLE__
+      // on the desktop (except Cocoa) we need to make another escaping pass
+      if (session::options().programMode() == kSessionProgramModeDesktop)
+         encodedOutputFile = http::util::urlEncode(encodedOutputFile, false);
 #endif
       outputUrl.append(encodedOutputFile);
       outputUrl.append("/");
