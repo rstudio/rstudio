@@ -96,19 +96,90 @@ public class RmdTemplateData
             option_ui_name: "Default figure height in inches", 
             option_type: "float", 
             option_default: "5"
-            },
+            }
          ]
          },
          {
          template_name: "Presentation",
          template_formats: [
             {
+            format_name: "revealjs_presentation",
+            format_ui_name: "RevealJS",
+            format_options: ["center", "incremental", "self_contained", "smart",
+                             "fig_caption", "theme", "transition" ]
+            },
+            {
             format_name: "ioslides_presentation",
             format_ui_name: "IOSlides",
-            format_options: []
+            format_options: [ "incremental", "smart", "widescreen", "smaller",
+                              "fig_caption" ]
+            },
+            {
+            format_name: "beamer_presentation",
+            format_ui_name: "Beamer",
+            format_options: [ "incremental", "fig_caption" ]
             }
          ],
-         template_options: []
+         template_options: [
+            {
+            option_name: "center",
+            option_ui_name: "Vertically center content on slides", 
+            option_type: "boolean", 
+            option_default: "false"
+            },
+            {
+            option_name: "incremental",
+            option_ui_name: "Render slide bullets incrementally", 
+            option_type: "boolean", 
+            option_default: "false"
+            },
+            {
+            option_name: "self_contained",
+            option_ui_name: "Create a standalone HTML presentation", 
+            option_type: "boolean", 
+            option_default: "true"
+            },
+            {
+            option_name: "theme",
+            option_ui_name: "Visual theme", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "default", "simple", "sky", "beige", "serif", 
+                           "solarized" ]
+            },
+            {
+            option_name: "transition",
+            option_ui_name: "Slide transition", 
+            option_type: "choice", 
+            option_default: "default",
+            option_list: [ "default", "cube", "page", "concave", "zoom", 
+                           "linear", "fade", "none" ]
+            },
+            {
+            option_name: "smart",
+            option_ui_name: "Use smart punctuation", 
+            option_type: "boolean", 
+            option_default: "true"
+            },
+            {
+            option_name: "widescreen",
+            option_ui_name: "Display presentation with wider dimensions", 
+            option_type: "boolean", 
+            option_default: "false"
+            },
+            {
+            option_name: "smaller",
+            option_ui_name: "Use smaller text on all slides", 
+            option_type: "boolean", 
+            option_default: "false"
+            },
+            {
+            option_name: "fig_caption",
+            option_ui_name: "Render figures with captions", 
+            option_type: "boolean", 
+            option_default: "false"
+            },
+         ]
          }
    ];
    }-*/;
