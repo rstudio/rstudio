@@ -90,8 +90,21 @@
   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
 })
 
-.rs.addFunction("isPackageVersionInstalled", function(name, version) {
-   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
+.rs.addFunction("isPackageVersionInstalled", function(name, version) {  
+  .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
+})
+
+.rs.addFunction("rstudioIDEPackageRequiresUpdate", function(name, sha1) {
+   
+  if (.rs.isPackageInstalled(name))
+  {
+     f <- utils::packageDescription(name, fields=c("Repository", "GithubSHA1"))
+     identical(f$Repository, "RStudioIDE") && !identical(f$GithubSHA1, sha1)
+  }
+  else
+  {
+     TRUE
+  }
 })
 
 

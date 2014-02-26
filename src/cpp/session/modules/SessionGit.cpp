@@ -53,8 +53,8 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionConsoleProcess.hpp>
 
-#include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
 
 #include "SessionVCS.hpp"
@@ -66,7 +66,7 @@
 
 using namespace core;
 using namespace core::shell_utils;
-using session::modules::console_process::ConsoleProcess;
+using session::console_process::ConsoleProcess;
 using namespace session::modules::vcs_utils;
 using session::modules::source_control::FileWithStatus;
 using session::modules::source_control::VCSStatus;
@@ -299,7 +299,7 @@ protected:
                                  boost::shared_ptr<ConsoleProcess>* ppCP,
                                  const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
    {
-      using namespace session::modules::console_process;
+      using namespace session::console_process;
 
       core::system::ProcessOptions options = procOptions();
 #ifdef _WIN32

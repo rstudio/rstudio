@@ -25,12 +25,14 @@
 #include "vcs/SessionVCSCore.hpp"
 
 namespace session {
-namespace modules {
+
 namespace console_process {
 
 class ConsoleProcess;
 
 } // namespace console_process
+
+namespace modules {
 
 namespace git {
 

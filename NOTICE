@@ -32,11 +32,13 @@ obtain the source code for pandoc at:
 
   https://github.com/jgm/pandoc
 
-In addition, RStudio for Windows is bundled with binary copies of GNU
-DiffUtils, GNU Grep, SumatraPDF, and several components of MSYS.
-These components are licensed to you under the GPLv3, the terms of which
-are included below. You can obtain source code for these components at:
+In addition, RStudio is bundled with a binary archive of the rmarkdown
+package; and RStudio for Windows is bundled with binary copies of GNU
+DiffUtils, GNU Grep, SumatraPDF, and several components of MSYS.  These 
+components are licensed to you under the GPLv3, the terms of which are 
+included below. You can obtain source code for these components at:
 
+  https://github.com/rstudio/rmarkdown
   http://ftp.gnu.org/gnu/diffutils/
   http://ftp.gnu.org/gnu/grep/
   http://sourceforge.net/projects/mingw/files/MSYS/

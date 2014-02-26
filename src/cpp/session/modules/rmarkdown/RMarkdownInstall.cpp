@@ -17,12 +17,17 @@
 
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <core/Error.hpp>
+#include <core/system/Environment.hpp>
+#include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionConsoleProcess.hpp>
 
 using namespace core;
 
@@ -35,8 +40,18 @@ namespace {
 
 // note the current version
 std::string s_currentVersion;
+std::string s_currentSHA1;
 
-
+std::string rmarkdownPackageArchive()
+{
+   FilePath archivesDir = session::options().sessionPackageArchivesPath();
+   FilePath rmarkdownArchivePath = archivesDir.childPath("rmarkdown_" +
+                                                         s_currentVersion +
+                                                         "_" +
+                                                         s_currentSHA1 +
+                                                         ".tar.gz");
+   return string_utils::utf8ToSystem(rmarkdownArchivePath.absolutePath());
+}
 
 } // anonymous namespace
 
@@ -50,13 +65,14 @@ Error initialize()
    Error error = archivesDir.children(&children);
    if (error)
       return error;
-   boost::regex re("rmarkdown_([0-9]+\\.[0-9]+\\.[0-9]+)\\.tar\\.gz");
+   boost::regex re("rmarkdown_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
    BOOST_FOREACH(const FilePath& child, children)
    {
       boost::smatch match;
       if (boost::regex_match(child.filename(), match, re))
       {
          s_currentVersion = match[1];
+         s_currentSHA1 = match[2];
          break;
       }
    }
@@ -66,13 +82,33 @@ Error initialize()
 
 Status status()
 {
-   if (module_context::isPackageVersionInstalled("rmarkdown", s_currentVersion))
+   if (module_context::isPackageInstalled("rmarkdown"))
    {
-      return Installed;
-   }
-   else if (module_context::isPackageInstalled("rmarkdown"))
-   {
-      return OlderVersionInstalled;
+      // if this package came from the rstudio ide then check if it needs
+      // an update (i.e. has a different SHA1)
+      r::exec::RFunction func(".rs.rstudioIDEPackageRequiresUpdate",
+                              "rmarkdown", s_currentSHA1);
+      bool idePackageRequiresUpdate = false;
+      Error error = func.call(&idePackageRequiresUpdate);
+      if (error)
+         LOG_ERROR(error);
+
+      if (idePackageRequiresUpdate)
+      {
+         return InstalledRequiresUpdate;
+      }
+      else // not from the IDE, check version
+      {
+         if (module_context::isPackageVersionInstalled("rmarkdown",
+                                                       s_currentVersion))
+         {
+            return Installed;
+         }
+         else
+         {
+            return InstalledRequiresUpdate;
+         }
+      }
    }
    else
    {
@@ -86,24 +122,77 @@ bool haveRequiredVersion()
 }
 
 
-Error installWithProgress()
-{
+Error installWithProgress(
+                  boost::shared_ptr<console_process::ConsoleProcess>* ppCP)
+{ 
+   // first ensure we have a writeable user library
+   Error error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();
+   if (error)
+      return error;
+
+   // R binary
+   FilePath rProgramPath;
+   error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+      return error;
+
+   // options/environment
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   options.redirectStdErrToStdOut = true;
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   // allow child process to inherit our R_LIBS
+   std::string libPaths = module_context::libPathsString();
+   if (!libPaths.empty())
+      core::system::setenv(&childEnv, "R_LIBS", libPaths);
+   options.environment = childEnv;
+
+   // CRAN packages
+   using namespace module_context;
+   std::vector<std::string> cranPackages;
+   if (!isPackageVersionInstalled("knitr", "1.2"))
+      cranPackages.push_back("'knitr'");
+   if (!isPackageVersionInstalled("yaml", "2.1.5"))
+      cranPackages.push_back("'yaml'");
+
+   // build install command
+   std::string cmd = "{";
+   if (!cranPackages.empty())
+   {
+      std::string pkgList = boost::algorithm::join(cranPackages, ",");
+      cmd += "utils::install.packages(c(" + pkgList + "), " +
+             "repos = '"+ userSettings().cranMirror().url + "');";
+   }
+   cmd += "utils::install.packages('" + rmarkdownPackageArchive() + "', "
+                                   "repos = NULL, type = 'source');";
+   cmd += "}";
+
+   // build args
+   std::vector<std::string> args;
+   args.push_back("--slave");
+   args.push_back("--no-save");
+   args.push_back("--no-restore");
+   args.push_back("-e");
+   args.push_back(cmd);
+
+   // create and execute console process
+   *ppCP = console_process::ConsoleProcess::create(
+            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            args,
+            options,
+            "Installing R Markdown Package",
+            true,
+            console_process::InteractionNever);
 
    return Success();
 }
 
 // perform a silent upgrade
-Error silentUpgrade()
+Error silentUpdate()
 {
-   // path to archive
-   FilePath archivesDir = session::options().sessionPackageArchivesPath();
-   FilePath rmarkdownArchivePath = archivesDir.childPath("rmarkdown_" +
-                                                         s_currentVersion +
-                                                         ".tar.gz");
-   std::string pkg = string_utils::utf8ToSystem(
-                                    rmarkdownArchivePath.absolutePath());
-
-   return r::exec::RFunction(".rs.updateRMarkdownPackage", pkg).call();
+   return r::exec::RFunction(".rs.updateRMarkdownPackage",
+                             rmarkdownPackageArchive()).call();
 }
 
 } // namespace presentation
