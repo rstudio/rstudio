@@ -63,9 +63,12 @@ void ammendResults(const std::string& formatName,
                    int sourceLine,
                    json::Object* pResultJson)
 {
-   // provide slide navigation for ioslides_presentation
-   if (formatName != "ioslides_presentation")
+   // provide slide navigation for ioslides and beamer
+   if (formatName != "ioslides_presentation" &&
+       formatName != "beamer_presentation")
+   {
       return;
+   }
 
    // alias for nicer map syntax
    json::Object& resultJson = *pResultJson;
