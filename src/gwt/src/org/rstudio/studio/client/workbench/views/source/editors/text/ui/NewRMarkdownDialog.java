@@ -196,7 +196,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       {
          if (templates_.get(i).getName().equals(selectedTemplate))
          {
-            templateOptions_.setTemplate(templates_.get(i));
+            templateOptions_.setTemplate(templates_.get(i), true);
             break;
          }
       }

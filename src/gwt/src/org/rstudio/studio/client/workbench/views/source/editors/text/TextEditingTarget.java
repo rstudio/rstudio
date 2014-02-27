@@ -79,6 +79,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
+import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -2208,7 +2209,8 @@ public class TextEditingTarget implements
          @Override
          public void execute(RmdYamlData arg)
          {
-            // TODO: Merge YAML data from 'arg' with template data
+            RmdTemplateOptionsDialog dialog = new RmdTemplateOptionsDialog();
+            dialog.showModal();
          }
       });
    }

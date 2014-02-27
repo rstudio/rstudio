@@ -61,10 +61,11 @@ public class RmdTemplateOptionsWidget extends Composite
       });
    }
    
-   public void setTemplate(RmdTemplate template)
+   public void setTemplate(RmdTemplate template, boolean forCreate)
    {
       formats_ = template.getFormats();
       options_ = template.getOptions();
+      forCreate_ = forCreate;
       listFormats_.clear();
       for (int i = 0; i < formats_.length(); i++)
       {
@@ -153,9 +154,7 @@ public class RmdTemplateOptionsWidget extends Composite
          if (!option.getName().equals(optionName))
             continue;
 
-         // This is the Create dialog, so ignore options that aren't targeted
-         // for creation.
-         if (!option.showForCreate())
+         if (forCreate_ && !option.showForCreate())
             continue;
 
          String optionFormatName = option.getFormatName();
@@ -177,6 +176,7 @@ public class RmdTemplateOptionsWidget extends Composite
    private JsArray<RmdTemplateFormat> formats_;
    private JsArray<RmdTemplateFormatOption> options_;
    private List<RmdFormatOption> optionWidgets_;
+   private boolean forCreate_ = false;
 
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;
