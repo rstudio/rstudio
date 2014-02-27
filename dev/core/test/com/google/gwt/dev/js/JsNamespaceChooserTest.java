@@ -54,26 +54,45 @@ public class JsNamespaceChooserTest extends TestCase {
       new JClassType(SourceOrigin.UNKNOWN, "com.example.Foo", false, false);
   private Map<HasName, JsName> javaToName = Maps.newHashMap();
 
-  public void testMoveGlobal() throws Exception {
+  public void testMoveJavaField() throws Exception {
     program = parseJs("var x = 1; x = 2;");
     mapJavaField("x");
     checkResult("var ce={};ce.x=1;ce.x=2;");
+    checkNamespaceEquals("ce", "x");
   }
 
-  public void testSkipUnmappedGlobal() throws Exception {
+  public void testMoveUninitializedJavaField() throws Exception {
+    program = parseJs("var x; x = 1;");
+    mapJavaField("x");
+    checkResult("var ce={};ce.x=1;");
+    checkNamespaceEquals("ce", "x");
+  }
+
+  public void testSkipNonJavaGlobal() throws Exception {
     program = parseJs("var x = 1; x = 2;");
     checkResult("var x=1;x=2;");
+    checkNamespaceEquals(null, "x");
   }
 
-  public void testMoveGlobalFunction() throws Exception {
+  public void testMoveJavaFunction() throws Exception {
     program = parseJs("function f() {} f();");
     mapJavaMethod("f");
     checkResult("var ce={};ce.f=function f(){};ce.f();");
+    checkNamespaceEquals("ce", "f");
   }
 
-  public void testSkipUnmappedFunction() throws Exception {
+  public void testSkipNonJavaFunction() throws Exception {
     program = parseJs("function f() {} f();");
     checkResult("function f(){}\nf();");
+    checkNamespaceEquals(null, "f");
+  }
+
+  public void testSkipPolymorphicJavaMethod() throws Exception {
+    program = parseJs("var _ = {}; _.f = function f() {};");
+    mapJavaMethod("f");
+    checkResult("var _={};_.f=function f(){};");
+    checkNamespaceEquals(null, "_");
+    checkNamespaceEquals(null, "f");
   }
 
   public void testSkipNamedFunctionExpression() throws Exception {
@@ -82,10 +101,10 @@ public class JsNamespaceChooserTest extends TestCase {
     program = parseJs("var a; a = function f() {}; a();");
     mapJavaMethod("f");
 
-    // In this case 'ce' is unused, but it's harmless.
-    checkResult("var ce={};var a;a=function f(){};a();");
+    checkResult("var a;a=function f(){};a();");
   }
 
+  /** Adds a mapping from a JavaScript global to a Java field. */
   private void mapJavaField(String name) {
     JField field = new JField(SourceOrigin.UNKNOWN, name, javaType, JPrimitiveType.INT, true,
         Disposition.NONE);
@@ -93,6 +112,7 @@ public class JsNamespaceChooserTest extends TestCase {
     javaToName.put(field, program.getScope().findExistingName(name));
   }
 
+  /** Adds a mapping from a JavaScript global to a Java method. */
   private void mapJavaMethod(String name) {
     JMethod method = new JMethod(SourceOrigin.UNKNOWN, name, javaType, JPrimitiveType.VOID, false,
         true, false, AccessModifier.DEFAULT);
@@ -104,6 +124,14 @@ public class JsNamespaceChooserTest extends TestCase {
     exec();
     String actual = serializeJs(program);
     assertEquals(expectedJs, actual);
+  }
+
+  private void checkNamespaceEquals(String expectedNamespace, String global) {
+    JsName globalName = program.getScope().findExistingName(global);
+    assertNotNull("name doesn't exist: " + global, globalName);
+    JsName actual = globalName.getNamespace();
+    assertEquals("namespace is different",
+        expectedNamespace, actual == null ? null : actual.getIdent());
   }
 
   private void exec() {

@@ -29,16 +29,16 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
-import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -57,57 +57,154 @@ public class JsNamespaceChooser {
   private final JsProgram program;
   private final JavaToJavaScriptMap jjsmap;
 
-  public JsNamespaceChooser(JsProgram program, JavaToJavaScriptMap jjsmap) {
+  /**
+   * The namespaces to be added to the program.
+   */
+  private final Map<String, JsName> packageToNamespace = Maps.newLinkedHashMap();
+
+  private JsNamespaceChooser(JsProgram program, JavaToJavaScriptMap jjsmap) {
     this.program = program;
     this.jjsmap = jjsmap;
   }
 
   private void execImpl() {
 
-    Map<String, JsName> packageToNamespace = Maps.newHashMap();
-    JsVars namespaceVars = new JsVars(SourceOrigin.UNKNOWN);
+    // First pass: visit each top-level statement in the program and move it if possible.
+    // (This isn't a standard visitor because we don't want to recurse.)
 
-    // Work from a copy because we will be adding newly-created namespace names.
-    ImmutableList<JsName> allNames = ImmutableList.copyOf(program.getScope().getAllNames());
-    for (JsName name : allNames) {
-      if (name.getNamespace() != null || !name.isObfuscatable()) {
-        continue;
-      }
-
-      String packageName = findPackage(name);
-      if (packageName == null) {
-        continue;
-      }
-
-      if (name.getStaticRef() instanceof JsFunction) {
-        JsFunction func = (JsFunction) name.getStaticRef();
-        if (program.isIndexedFunction(func)) {
-          // JsStackEmulator assumes that Exceptions.wrap is a top-level function with a
-          // non-null name, in order to create a ref to it. Possibly others?
-          continue;
+    List<JsStatement> globalStatements = program.getGlobalBlock().getStatements();
+    List<JsStatement> after = Lists.newArrayList();
+    for (JsStatement before : globalStatements) {
+      if (before instanceof JsExprStmt) {
+        JsExpression exp = ((JsExprStmt) before).getExpression();
+        if (exp instanceof JsFunction) {
+          after.add(visitGlobalFunction((JsFunction) exp));
+        } else {
+          after.add(before);
         }
+      } else if (before instanceof JsVars) {
+        for (JsVar var : ((JsVars) before)) {
+          JsStatement replacement = visitGlobalVar(var);
+          if (replacement != null) {
+            after.add(replacement);
+          }
+        }
+      } else {
+        after.add(before);
       }
-
-      // Find the namespace for this package
-      JsName namespace = packageToNamespace.get(packageName);
-      if (namespace == null) {
-        // Add an initializer for this package
-        namespace = program.getScope().declareName(chooseUnusedName(packageName));
-        JsVar init = new JsVar(SourceOrigin.UNKNOWN, namespace);
-        init.setInitExpr(new JsObjectLiteral(SourceOrigin.UNKNOWN));
-        namespaceVars.add(init);
-        packageToNamespace.put(packageName, namespace);
-      }
-
-      name.setNamespace(namespace);
     }
 
-    fixGlobalFunctions(program);
+    after.addAll(0, createNamespaceInitializers(packageToNamespace.values()));
+
+    globalStatements.clear();
+    globalStatements.addAll(after);
+
+    // Second pass: fix all references for moved names.
     new NameFixer().accept(program);
+  }
 
-    if (!namespaceVars.isEmpty()) {
-      program.getGlobalBlock().getStatements().add(0, namespaceVars);
+  /**
+   * Moves a global variable to a namespace if possible.
+   * (The references must still be fixed up.)
+   * @return the new initializer or null to delete it
+   */
+  private JsStatement visitGlobalVar(JsVar x) {
+    JsName name = x.getName();
+
+    if (!moveName(name)) {
+      // We can't move it, but let's put the initializer on a separate line for readability.
+      JsVars vars = new JsVars(x.getSourceInfo());
+      vars.add(x);
+      return vars;
     }
+
+    // Convert the initializer from a var to an assignment.
+    JsNameRef newName = name.makeRef(x.getSourceInfo());
+    JsExpression init = x.getInitExpr();
+    if (init == null) {
+      // It's undefined so we don't need to initialize it at all.
+      // (The namespace is sufficient.)
+      return null;
+    }
+    JsBinaryOperation assign = new JsBinaryOperation(x.getSourceInfo(),
+        JsBinaryOperator.ASG, newName, init);
+    return assign.makeStmt();
+  }
+
+  /**
+   * Moves a global function to a namespace if possible.
+   * (References must still be fixed up.)
+   * @return the new function definition.
+   */
+  private JsStatement visitGlobalFunction(JsFunction func) {
+    JsName name = func.getName();
+    if (name == null || !moveName(name)) {
+      return func.makeStmt(); // no change
+    }
+
+    // Convert the function statement into an assignment taking a named function expression:
+    // var a.b = function b() { ... }
+    // The function also keeps its unqualified name for better stack traces in some browsers.
+    // Note: for reserving names, currently we pretend that 'b' is in global scope to avoid
+    // any name conflicts. It is actually two different names in two scopes; the 'b' in 'a.b'
+    // is in the 'a' namespace scope and the function name is in a separate scope containing
+    // just the function. We don't model either scope in the GWT compiler yet.
+    JsNameRef newName = name.makeRef(func.getSourceInfo());
+    JsBinaryOperation assign =
+        new JsBinaryOperation(func.getSourceInfo(), JsBinaryOperator.ASG, newName, func);
+    return assign.makeStmt();
+  }
+
+  /**
+   * Creates a "var = {}" statement for each namespace.
+   */
+  private List<JsStatement> createNamespaceInitializers(Collection<JsName> namespaces) {
+    // Let's list them vertically for readability.
+    List<JsStatement> inits = Lists.newArrayList();
+    for (JsName name : namespaces) {
+      JsVar var = new JsVar(SourceOrigin.UNKNOWN, name);
+      var.setInitExpr(new JsObjectLiteral(SourceOrigin.UNKNOWN));
+      JsVars vars = new JsVars(SourceOrigin.UNKNOWN);
+      vars.add(var);
+      inits.add(vars);
+    }
+    return inits;
+  }
+
+  /**
+   * Attempts to move the given name to a namespace. Returns true if it was changed.
+   * Side effects: may set the name's namespace and/or add a new mapping to
+   * {@link #packageToNamespace}.
+   */
+  private boolean moveName(JsName name) {
+    if (name.getNamespace() != null) {
+      return false; // already in a namespace. (Shouldn't happen.)
+    }
+
+    if (!name.isObfuscatable()) {
+      return false; // probably a JavaScript name
+    }
+
+    String packageName = findPackage(name);
+    if (packageName == null) {
+      return false; // not compiled from Java
+    }
+
+    if (name.getStaticRef() instanceof JsFunction) {
+      JsFunction func = (JsFunction) name.getStaticRef();
+      if (program.isIndexedFunction(func)) {
+        return false; // may be called directly in another pass (for example JsStackEmulator).
+      }
+    }
+
+    JsName namespace = packageToNamespace.get(packageName);
+    if (namespace == null) {
+      namespace = program.getScope().declareName(chooseUnusedName(packageName));
+      packageToNamespace.put(packageName, namespace);
+    }
+
+    name.setNamespace(namespace);
+    return true;
   }
 
   private String chooseUnusedName(String packageName) {
@@ -165,54 +262,11 @@ public class JsNamespaceChooser {
   }
 
   /**
-   * Fix top-level function definitions that should point to a namespace.
-   * (This is not a visitor because we don't need to recurse.)
-   * @return true if anything changed
-   */
-  private static boolean fixGlobalFunctions(JsProgram program) {
-
-    boolean changed = false;
-    List<JsStatement> statements = program.getGlobalBlock().getStatements();
-    for (int i = 0; i < statements.size(); i++) {
-      JsStatement statement = statements.get(i);
-      if (!(statement instanceof JsExprStmt)) {
-        continue;
-      }
-      JsExprStmt parent = (JsExprStmt) statement;
-      if (!(parent.getExpression() instanceof JsFunction)) {
-        continue;
-      }
-      JsFunction func = (JsFunction) parent.getExpression();
-      JsName name = func.getName();
-      if (name == null || name.getNamespace() == null) {
-        continue;
-      }
-
-      // Convert the function statement into an assignment taking a named function expression:
-      // var a.b = function b() { ... }
-      // The function is named for better stack traces in some browsers.
-      // Note: for reserving names, currently we pretend that 'b' is in global scope to avoid
-      // any name conflicts. It is actually two different names in two scopes; the 'b' in 'a.b'
-      // is in the 'a' namespace scope and the function name is in a separate scope containing
-      // just the function. We don't model either scope in the GWT compiler yet.
-      JsNameRef newName = name.makeRef(func.getSourceInfo());
-      JsBinaryOperation assign =
-          new JsBinaryOperation(func.getSourceInfo(), JsBinaryOperator.ASG, newName, func);
-      statements.set(i, new JsExprStmt(parent.getSourceInfo(), assign));
-      changed = true;
-    }
-    return changed;
-  }
-
-  /**
-   * A compiler pass that moves all global variable definitions to the
-   * correct namespace and fixes all name references.
+   * A compiler pass that qualifies all moved names with the namespace.
+   * name => namespace.name
    */
   private static class NameFixer extends JsModVisitor {
 
-    /**
-     * Replace "name" with "namespace.name".
-     */
     @Override
     public void endVisit(JsNameRef x, JsContext ctx) {
       if (!x.isLeaf() || x.getQualifier() != null || x.getName() == null) {
@@ -226,41 +280,6 @@ public class JsNamespaceChooser {
 
       x.setQualifier(new JsNameRef(x.getSourceInfo(), namespace));
       didChange = true;
-    }
-
-    /**
-     * Replace top-level "var name = " with "namespace.name = ".
-     */
-    @Override
-    public void endVisit(JsVars x, JsContext ctx) {
-      if (!ctx.canInsert()) {
-        return;
-      }
-
-      // Replace each var with a new statement.
-      for (JsVar var : x) {
-        JsName name = var.getName();
-        JsName namespace = var.getName().getNamespace();
-        if (namespace == null) {
-          // Leave it as a global var.
-          // (A separate var is actually better for debugging.)
-          JsVars vars = new JsVars(var.getSourceInfo());
-          vars.add(var);
-          ctx.insertBefore(vars);
-        } else {
-          // Change to an assignment to a namespace variable.
-          JsNameRef newName = name.makeRef(x.getSourceInfo());
-          JsExpression init = var.getInitExpr();
-          if (init == null) {
-            init = JsNullLiteral.INSTANCE;
-          }
-          JsBinaryOperation assign = new JsBinaryOperation(var.getSourceInfo(),
-              JsBinaryOperator.ASG, newName, init);
-          ctx.insertBefore(assign.makeStmt());
-        }
-      }
-
-      ctx.removeMe();
     }
   }
 }
