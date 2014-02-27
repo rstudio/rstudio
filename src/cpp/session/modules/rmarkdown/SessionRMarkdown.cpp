@@ -273,14 +273,31 @@ private:
 
 
       // allow for format specific additions to the result json
+      std::string formatName =  outputFormat_["format_name"].get_str();
       rmarkdown::presentation::ammendResults(
-                                  outputFormat_["format_name"].get_str(),
+                                  formatName,
                                   targetFile_,
                                   sourceLine_,
                                   &resultJson);
 
+      // if we failed then we may want to enque additional diagnostics
+      if (!succeeded)
+         enqueFailureDiagnostics(formatName);
+
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);
+   }
+
+   void enqueFailureDiagnostics(const std::string& formatName)
+   {
+      if ((formatName == "pdf_document" ||
+           formatName == "beamer_presentation")
+          && !module_context::isPdfLatexInstalled())
+      {
+         enqueRenderOutput(module_context::kCompileOutputError,
+                           "\nNo TeX installation detected. TeX is required "
+                           "to create PDF output with R Markdown.");
+      }
    }
 
    void getOutputFormat(const std::string& path,

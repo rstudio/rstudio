@@ -82,6 +82,8 @@ core::FilePath tempDir();
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 
+bool isPdfLatexInstalled();
+
 // is the file a text file
 bool isTextFile(const core::FilePath& targetPath);
 
