@@ -346,7 +346,7 @@ void GwtCallback::showPDF(QString path, int pdfPage)
    // use sumatra on windows because it's so much better behaved
    // than acrobat reader for previewing
    path = resolveAliasedPath(path);
-   pSynctex_->view(path, pdfPage);
+   synctex().view(path, pdfPage);
 #else
    // Invoke default viewer on other platforms
    showFile(path);
