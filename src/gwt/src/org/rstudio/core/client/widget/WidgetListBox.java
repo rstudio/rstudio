@@ -27,8 +27,8 @@ import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
@@ -80,17 +80,23 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
       add(panel_);
       panel_.addStyleName(style_.listPanel());
       addStyleName(style_.outerPanel());
-      addKeyPressHandler(new KeyPressHandler()
+   }
+
+   @Override 
+   protected void onLoad()
+   {
+      super.onLoad();
+      addKeyDownHandler(new KeyDownHandler()
       {
          @Override
-         public void onKeyPress(KeyPressEvent event)
+         public void onKeyDown(KeyDownEvent event)
          {
-            if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_DOWN &&
-                selectedIdx_ < maxIdx_)
+            if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN &&
+                selectedIdx_ < (maxIdx_ - 1))
             {
                setSelectedIndex(selectedIdx_+1, true);
             }
-            else if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_UP &
+            else if (event.getNativeKeyCode() == KeyCodes.KEY_UP &
                 selectedIdx_ > 0)
             {
                setSelectedIndex(selectedIdx_-1, true);
@@ -105,7 +111,7 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
       return handlerManager_.addHandler(ChangeEvent.getType(), handler);    
    }
    
-   public <T extends IsWidget> void addItem(T item)
+   public void addItem(IsWidget item)
    {
       // wrap the widget in a panel that can receive click events, indicate
       // selection, etc.

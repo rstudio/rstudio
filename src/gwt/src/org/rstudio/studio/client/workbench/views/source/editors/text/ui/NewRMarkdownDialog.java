@@ -30,8 +30,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -165,18 +163,16 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          listTemplates_.addItem(menuItem);
       }
       updateOptions(getSelectedTemplate());
-      
+   }
+   
+   @Override
+   protected void onDialogShown()
+   {
       // when dialog is finished booting, focus the title so it's ready to
       // accept input
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            txtTitle_.setSelectionRange(0, txtTitle_.getText().length());
-            txtTitle_.setFocus(true);
-         }
-      });
+      super.onDialogShown();
+      txtTitle_.setSelectionRange(0, txtTitle_.getText().length());
+      txtTitle_.setFocus(true);
    }
 
    @Override
