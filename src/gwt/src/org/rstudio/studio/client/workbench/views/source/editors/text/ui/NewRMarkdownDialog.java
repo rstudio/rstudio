@@ -295,9 +295,14 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       for (int i = 0; i < options_.length(); i++)
       {
          RmdTemplateFormatOption option = options_.get(i);
-
+         
          // Not the option we're looking for 
          if (!option.getName().equals(optionName))
+            continue;
+
+         // This is the Create dialog, so ignore options that aren't targeted
+         // for creation.
+         if (!option.showForCreate())
             continue;
 
          String optionFormatName = option.getFormatName();
