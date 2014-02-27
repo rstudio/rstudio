@@ -53,6 +53,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
                     List<NewRmdFormatOption> options)
       {
          template_ = template;
+         author_ = author;
          result_ = toJSO(author, title, format, 
                          NewRmdFormatOptions.optionsListToJson(options));
       }
@@ -60,6 +61,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       public String getTemplate()
       {
          return template_;
+      }
+      
+      public String getAuthor()
+      {
+         return author_;
       }
       
       public JavaScriptObject getJSOResult()
@@ -87,6 +93,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       }-*/;
 
       private final String template_;
+      private final String author_;
       private final JavaScriptObject result_;
    }
 

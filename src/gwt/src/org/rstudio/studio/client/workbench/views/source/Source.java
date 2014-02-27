@@ -852,12 +852,19 @@ public class Source implements InsertSourceHandler,
             {
                new NewRMarkdownDialog(
                   context,
-                  session_.getSessionInfo().getUserIdentity(),
+                  uiPrefs_.documentAuthor().getGlobalValue(),
                   new OperationWithInput<NewRMarkdownDialog.Result>()
                   {
                      @Override
                      public void execute(final NewRMarkdownDialog.Result result)
                      {
+                        // if an author was specified, persist it
+                        String author = result.getAuthor();
+                        if (author.length() > 0)
+                        {
+                           uiPrefs_.documentAuthor().setGlobalValue(author);
+                           uiPrefs_.writeUIPrefs();
+                        }
                         newRMarkdownV2Doc(result);
                      }
                   }
