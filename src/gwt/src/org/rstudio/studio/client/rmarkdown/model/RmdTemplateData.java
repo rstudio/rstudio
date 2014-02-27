@@ -36,7 +36,8 @@ public class RmdTemplateData
             format_ui_name: "PDF",
             format_options: [ "toc", "number_sections", "highlight", 
                               "latex_engine", "fig_crop", "fig_width", 
-                              "fig_height" ,"fig_caption" ]
+                              "fig_height" ,"fig_caption" ],
+            format_notes: "PDF output requires an installation of TeX"
             },
             {
             format_name: "word_document", 
@@ -178,7 +179,8 @@ public class RmdTemplateData
             format_ui_name: "PDF (Beamer)",
             format_options: [ "toc", "incremental", "theme", "colortheme", 
                               "fonttheme", "fig_width", "fig_height", 
-                              "fig_crop", "fig_caption", "highlight" ]
+                              "fig_crop", "fig_caption", "highlight" ],
+            format_notes: "PDF output requires an installation of TeX"
             }
          ],
          template_options: [
