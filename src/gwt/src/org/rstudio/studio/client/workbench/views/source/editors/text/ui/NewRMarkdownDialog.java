@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
@@ -35,7 +36,9 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -91,6 +94,15 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       // Stub to ensure style is injected during construction
    }
 
+   public interface Resources extends ClientBundle
+   {
+      @Source("MarkdownPresentationIcon.png")
+      ImageResource presentationIcon();
+
+      @Source("MarkdownDocumentIcon.png")
+      ImageResource documentIcon();
+   }
+
    public NewRMarkdownDialog(
          RMarkdownContext context,
          String author,
@@ -122,9 +134,29 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       templates_ = RmdTemplateData.getTemplates();
       for (int i = 0; i < templates_.length(); i++)
       {
-         listTemplates_.addItem(templates_.get(i).getName());
+         String templateName = templates_.get(i).getName();
+         TemplateMenuItem menuItem = new TemplateMenuItem(templateName);
+         
+         ImageResource img = null;
+
+         // Special treatment for built-in templates with known names
+         if (templateName.equals(RmdTemplateData.DOCUMENT_TEMPLATE))
+         {
+            img = resources.documentIcon();
+         } 
+         else if (templateName.equals(RmdTemplateData.PRESENTATION_TEMPLATE))
+         {
+            img = resources.presentationIcon();
+         }
+
+         // Add an image if we have one
+         if (img != null)
+         {
+            menuItem.addIcon(img);
+         }
+
+         listTemplates_.addItem(menuItem);
       }
-      listTemplates_.setSelectedIndex(0);
       updateOptions(getSelectedTemplate());
       
       // when dialog is finished booting, focus the title so it's ready to
@@ -161,7 +193,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private String getSelectedTemplate() 
    {
-      return listTemplates_.getItemText(listTemplates_.getSelectedIndex());
+      return templates_.get(listTemplates_.getSelectedIndex()).getName();
    }
    
    private String getSelectedFormat()
@@ -281,11 +313,12 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
-   @UiField ListBox listTemplates_;
+   @UiField WidgetListBox listTemplates_;
    @UiField ListBox listFormats_;
    @UiField VerticalPanel panelOptions_;
    @UiField Label labelFormatNotes_;
    @UiField NewRmdStyle style;
+   @UiField Resources resources;
 
    private final Widget mainWidget_;
 

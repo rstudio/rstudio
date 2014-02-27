@@ -1,6 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:r="urn:import:org.rstudio.core.client.widget">
+
+	<ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
 	<ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.NewRmdStyle">
 	.fillHeight
 	{
@@ -14,7 +17,6 @@
 	
 	.templateList
 	{
-	  padding: 5px;
 	  box-sizing: border-box;
 	  -moz-box-sizing: border-box;
 	  -webkit-box-sizing: border-box;
@@ -63,16 +65,16 @@
 	<g:InlineLabel styleName="{style.topLabel} {style.authorLabel}" text="Author:"></g:InlineLabel>
 	<g:TextBox styleName="{style.textBox}" width="100px" ui:field="txtAuthor_"></g:TextBox>
 	<g:HorizontalPanel height="300px" styleName="{style.templatePanel}">
-     <g:ListBox ui:field="listTemplates_" 
+     <r:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
-                visibleItemCount="5" width="150px"></g:ListBox>
+                width="150px"></r:WidgetListBox>
      <g:HeaderPanel styleName="{style.templateDetails}" width="300px" height="100%">
         <g:FlowPanel styleName="{style.formatPanel}">
            <g:InlineLabel styleName="{style.topLabel}" text="Format:"></g:InlineLabel>
            <g:ListBox ui:field="listFormats_"></g:ListBox>
            <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"></g:Label>
         </g:FlowPanel>
-        <g:ScrollPanel>
+        <g:ScrollPanel height="100%">
            <g:VerticalPanel ui:field="panelOptions_"></g:VerticalPanel>
         </g:ScrollPanel>
      </g:HeaderPanel>
