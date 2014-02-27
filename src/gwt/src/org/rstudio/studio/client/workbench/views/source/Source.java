@@ -889,7 +889,7 @@ public class Source implements InsertSourceHandler,
                   "", 
                   isPresentation ? "r_markdown_v2_presentation.Rmd" :
                                    "r_markdown_v2.Rmd",
-                  Position.create(5, 0),
+                  Position.create(1, 0),
                   null,
                   new TransformerCommand<String>()
                   {
