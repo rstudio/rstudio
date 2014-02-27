@@ -26,23 +26,23 @@ public class RmdTemplateData
             {
             format_name: "html_document",
             format_ui_name: "HTML",
-            format_options: [ "toc", "self_contained", "smart", "theme", 
-                              "highlight", "fig_caption", "fig_width", 
-                              "fig_height" ],
+            format_options: [ "toc", "theme", "highlight", "fig_width", 
+                              "fig_height", "fig_caption", "smart", 
+                              "self_contained" ],
             format_notes: "HTML is recommended for authoring. You can switch to PDF or Word anytime."
             },
             {
             format_name: "pdf_document", 
             format_ui_name: "PDF",
             format_options: [ "toc", "number_sections", "highlight", 
-                              "latex_engine", "fig_caption", "fig_crop", 
-                              "fig_width", "fig_height" ]
+                              "latex_engine", "fig_crop", "fig_width", 
+                              "fig_height" ,"fig_caption" ]
             },
             {
             format_name: "word_document", 
             format_ui_name: "Word",
-            format_options: [ "highlight", "fig_caption", "fig_width", 
-                              "fig_height" ]
+            format_options: [ "highlight", "fig_width", "fig_height", 
+                              "fig_caption" ]
             } 
          ],
          template_options: [ 
@@ -330,4 +330,7 @@ public class RmdTemplateData
          }
    ];
    }-*/;
+   
+   public final static String DOCUMENT_TEMPLATE = "Document";
+   public final static String PRESENTATION_TEMPLATE = "Presentation";
 }
