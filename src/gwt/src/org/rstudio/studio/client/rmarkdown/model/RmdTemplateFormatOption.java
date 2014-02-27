@@ -46,6 +46,10 @@ public class RmdTemplateFormatOption extends JavaScriptObject
    public final native String getFormatName() /*-{
       return this.option_format || "";
    }-*/;
+   
+   public final native boolean showForCreate() /*-{
+      return this.option_for_create;
+   }-*/;
 
    public final static String TYPE_BOOLEAN = "boolean";
    public final static String TYPE_CHOICE = "choice";

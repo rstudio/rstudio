@@ -30,8 +30,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -55,6 +53,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
                     List<NewRmdFormatOption> options)
       {
          template_ = template;
+         author_ = author;
          result_ = toJSO(author, title, format, 
                          NewRmdFormatOptions.optionsListToJson(options));
       }
@@ -62,6 +61,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       public String getTemplate()
       {
          return template_;
+      }
+      
+      public String getAuthor()
+      {
+         return author_;
       }
       
       public JavaScriptObject getJSOResult()
@@ -89,6 +93,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       }-*/;
 
       private final String template_;
+      private final String author_;
       private final JavaScriptObject result_;
    }
 
@@ -165,18 +170,16 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          listTemplates_.addItem(menuItem);
       }
       updateOptions(getSelectedTemplate());
-      
+   }
+   
+   @Override
+   protected void onDialogShown()
+   {
       // when dialog is finished booting, focus the title so it's ready to
       // accept input
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            txtTitle_.setSelectionRange(0, txtTitle_.getText().length());
-            txtTitle_.setFocus(true);
-         }
-      });
+      super.onDialogShown();
+      txtTitle_.setSelectionRange(0, txtTitle_.getText().length());
+      txtTitle_.setFocus(true);
    }
 
    @Override
@@ -299,9 +302,14 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       for (int i = 0; i < options_.length(); i++)
       {
          RmdTemplateFormatOption option = options_.get(i);
-
+         
          // Not the option we're looking for 
          if (!option.getName().equals(optionName))
+            continue;
+
+         // This is the Create dialog, so ignore options that aren't targeted
+         // for creation.
+         if (!option.showForCreate())
             continue;
 
          String optionFormatName = option.getFormatName();
