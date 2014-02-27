@@ -29,7 +29,7 @@ public class RmdTemplateData
             format_options: [ "toc", "theme", "highlight", "fig_width", 
                               "fig_height", "fig_caption", "smart", 
                               "self_contained" ],
-            format_notes: "HTML is recommended for authoring. You can switch to PDF or Word anytime."
+            format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
             format_name: "pdf_document", 
@@ -164,7 +164,7 @@ public class RmdTemplateData
                               "smaller", "fig_width", "fig_height", 
                               "fig_caption", "highlight", "self_contained",
                               "smart" ],
-            format_notes: "Recommended format for HTML presentations. You can also print ioslides to PDF with Chrome."
+            format_notes: "Recommended format for HTML presentations (you can also print ioslides to PDF with Chrome)."
             },
             {
             format_name: "revealjs_presentation",
