@@ -120,7 +120,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          String author,
          OperationWithInput<Result> operation)
    {
-      super("New R Markdown Document", operation);
+      super("New R Markdown", operation);
       context_ = context;
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       style.ensureInjected();
