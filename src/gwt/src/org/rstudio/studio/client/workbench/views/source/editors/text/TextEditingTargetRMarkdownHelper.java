@@ -167,7 +167,8 @@ public class TextEditingTargetRMarkdownHelper
             showKnitrPreviewWarning(display, "R Presentations", "1.2");
             return false;
          }
-         else if (fileType.requiresKnit())
+         else if (fileType.requiresKnit() && 
+                  !session_.getSessionInfo().getRMarkdownPackageAvailable())
          {
    
             showKnitrPreviewWarning(display, feature, "1.2");
