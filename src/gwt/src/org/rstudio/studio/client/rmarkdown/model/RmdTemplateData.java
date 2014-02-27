@@ -145,15 +145,16 @@ public class RmdTemplateData
          template_formats: [
             {
             format_name: "ioslides_presentation",
-            format_ui_name: "HTML (IOSlides)",
+            format_ui_name: "HTML (ioslides)",
             format_options: [ "incremental", "transition", "widescreen", 
                               "smaller", "fig_width", "fig_height", 
                               "fig_caption", "highlight", "self_contained",
-                              "smart" ]
+                              "smart" ],
+            format_notes: "Recommended format for HTML presentations. You can also print ioslides to PDF with Chrome."
             },
             {
             format_name: "revealjs_presentation",
-            format_ui_name: "HTML (RevealJS)",
+            format_ui_name: "HTML (reveal.js)",
             format_options: ["center", "incremental", "theme", "transition", 
                              "fig_width", "fig_height", "fig_caption",
                              "highlight", "self_contained", "smart" ]
