@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.Arrays;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -35,6 +37,7 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
+import org.rstudio.studio.client.rmarkdown.model.YamlUtils;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -183,7 +186,10 @@ public class TextEditingTargetRMarkdownHelper
          @Override
          public void onResponseReceived(RmdYamlResult yamlResult)
          {
-            onFinished.execute(yamlResult.getYaml());
+            String yaml = yamlResult.getYaml();
+            yaml = YamlUtils.reorderYaml(yaml, Arrays.asList(
+                  "title", "author", "date", "output"));
+            onFinished.execute(yaml);
          }
          @Override
          public void onError(ServerError error)
