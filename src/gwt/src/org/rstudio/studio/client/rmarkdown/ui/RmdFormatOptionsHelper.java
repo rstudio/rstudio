@@ -1,5 +1,5 @@
 /*
- * NewRmdFormatOptions.java
+ * RmdFormatOptionsHelper.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
+package org.rstudio.studio.client.rmarkdown.ui;
 
 import java.util.List;
 
@@ -20,13 +20,13 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class NewRmdFormatOptions
+public class RmdFormatOptionsHelper
 {
    public final static JavaScriptObject optionsListToJson(
-         List<NewRmdFormatOption> options)
+         List<RmdFormatOption> options)
    {
       JavaScriptObject optionList = createOptionList();
-      for (NewRmdFormatOption option: options)
+      for (RmdFormatOption option: options)
       {
          if (!option.valueIsDefault())
          {

@@ -1,5 +1,5 @@
 /*
- * NewRmdFormatOption.java
+ * RmdFormatOption.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,13 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
+package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.user.client.ui.IsWidget;
 
-public interface NewRmdFormatOption extends IsWidget
+public interface RmdFormatOption extends IsWidget
 {
    boolean valueIsDefault();
    String getValue();
