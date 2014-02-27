@@ -26,17 +26,18 @@ public class RmdTemplateData
             {
             format_name: "html_document",
             format_ui_name: "HTML",
-            format_options: [ "toc", "theme", "highlight", "fig_width", 
-                              "fig_height", "fig_caption", "smart", 
+            format_options: [ "theme", "highlight", "fig_width", 
+                              "fig_height", "fig_caption", "toc", "smart", 
                               "self_contained" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
             format_name: "pdf_document", 
             format_ui_name: "PDF",
-            format_options: [ "toc", "number_sections", "highlight", 
+            format_options: [ "highlight", 
                               "latex_engine", "fig_crop", "fig_width", 
-                              "fig_height" ,"fig_caption" ],
+                              "fig_height" ,"fig_caption",
+                              "toc", "number_sections" ],
             format_notes: "PDF output requires an installation of TeX"
             },
             {
@@ -161,10 +162,10 @@ public class RmdTemplateData
             {
             format_name: "ioslides_presentation",
             format_ui_name: "HTML (ioslides)",
-            format_options: [ "incremental", "transition", "widescreen", 
-                              "smaller", "fig_width", "fig_height", 
-                              "fig_caption", "highlight", "self_contained",
-                              "smart" ],
+            format_options: [ "fig_width", "fig_height", "fig_caption", 
+                              "incremental", "transition", "smaller",
+                              "widescreen",
+                              "highlight", "self_contained", "smart" ],
             format_notes: "Recommended format for HTML presentations (you can also print ioslides to PDF with Chrome)."
             },
             {
@@ -177,9 +178,9 @@ public class RmdTemplateData
             {
             format_name: "beamer_presentation",
             format_ui_name: "PDF (Beamer)",
-            format_options: [ "toc", "incremental", "theme", "colortheme", 
+            format_options: [ "incremental", "theme", "colortheme", 
                               "fonttheme", "fig_width", "fig_height", 
-                              "fig_crop", "fig_caption", "highlight" ],
+                              "fig_crop", "fig_caption", "toc", "highlight" ],
             format_notes: "PDF output requires an installation of TeX"
             }
          ],
@@ -188,14 +189,14 @@ public class RmdTemplateData
             option_name: "center",
             option_ui_name: "Vertically center content on slides", 
             option_type: "boolean", 
-            option_for_create: true,
+            option_for_create: false,
             option_default: "false"
             },
             {
             option_name: "incremental",
             option_ui_name: "Render slide bullets incrementally", 
             option_type: "boolean", 
-            option_for_create: true,
+            option_for_create: false,
             option_default: "false"
             },
             {
@@ -207,7 +208,7 @@ public class RmdTemplateData
             },
             {
             option_name: "theme",
-            option_ui_name: "Visual theme", 
+            option_ui_name: "Theme", 
             option_type: "choice", 
             option_for_create: true,
             option_default: "default",
@@ -218,7 +219,7 @@ public class RmdTemplateData
             option_name: "transition",
             option_ui_name: "Slide transition", 
             option_type: "choice", 
-            option_for_create: true,
+            option_for_create: false,
             option_default: "default",
             option_list: [ "default", "cube", "page", "concave", "zoom", 
                            "linear", "fade", "none" ]
@@ -228,7 +229,7 @@ public class RmdTemplateData
             option_ui_name: "Slide transition speed", 
             option_format: "ioslides_presentation", 
             option_type: "choice", 
-            option_for_create: true,
+            option_for_create: false,
             option_default: "default",
             option_list: [ "default", "slower", "faster" ]
             },
@@ -241,7 +242,7 @@ public class RmdTemplateData
             },
             {
             option_name: "widescreen",
-            option_ui_name: "Display presentation with wider dimensions", 
+            option_ui_name: "Use widescreen dimensions", 
             option_type: "boolean", 
             option_for_create: true,
             option_default: "false"
@@ -358,7 +359,7 @@ public class RmdTemplateData
             option_name: "colortheme",
             option_ui_name: "Color theme", 
             option_type: "choice", 
-            option_for_create: false,
+            option_for_create: true,
             option_default: "default",
             option_list: [ "albatross", "beaver", "beetle", "crane", "default", 
                            "dolphin", "dove", "fly", "lily", "orchid", "rose", 
