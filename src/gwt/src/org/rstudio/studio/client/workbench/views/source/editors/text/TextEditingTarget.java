@@ -78,6 +78,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -2187,6 +2188,29 @@ public class TextEditingTarget implements
       events_.fireEvent(new ShinyAppsActionEvent(
             ShinyAppsActionEvent.ACTION_TYPE_TERMINATE, 
             docUpdateSentinel_.getPath()));
+   }
+
+   @Handler 
+   void onEditRmdFormatOptions()
+   {
+      String code = docDisplay_.getCode();
+      String[] parts = code.split("---");
+      if (parts.length < 3)
+      {
+         globalDisplay_.showErrorMessage("Edit Format Failed",  
+               "Can't find the YAML front matter for this document. Make " +
+               "sure the front matter is enclosed by lines containing only " +
+               "three dashes: ---.");
+      }
+      rmarkdownHelper_.convertFromYaml(parts[1], 
+            new CommandWithArg<RmdYamlData>() 
+      {
+         @Override
+         public void execute(RmdYamlData arg)
+         {
+            // TODO: Merge YAML data from 'arg' with template data
+         }
+      });
    }
 
    void doReflowComment(String commentPrefix)

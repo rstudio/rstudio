@@ -38,5 +38,8 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    void convertToYAML(JavaScriptObject input, 
                       ServerRequestCallback<RmdYamlResult> requestCallback);
 
+   void convertFromYAML(String input, 
+                        ServerRequestCallback<RmdYamlData> requestCallback);
+
    public String getApplicationURL(String pathName);
 }

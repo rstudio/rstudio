@@ -28,3 +28,7 @@
    list(yaml = .rs.scalar(yaml::as.yaml(input)))
 })
 
+.rs.addJsonRpcHandler("convert_from_yaml", function(yaml)
+{
+   list(data = yaml::yaml.load(yaml))
+})

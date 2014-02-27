@@ -146,6 +146,8 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
 
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
@@ -300,6 +302,8 @@ public class TextEditingTargetWidget
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
       
+      editRmdFormatButton_.setVisible(extendedType_.equals("rmarkdown"));
+
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
       
@@ -558,6 +562,7 @@ public class TextEditingTargetWidget
    private ToolbarButton helpMenuButton_;
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
+   private ToolbarButton editRmdFormatButton_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;

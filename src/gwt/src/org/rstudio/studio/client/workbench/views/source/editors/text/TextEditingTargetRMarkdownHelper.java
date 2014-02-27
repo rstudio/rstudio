@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rmarkdown.model.YamlUtils;
 import org.rstudio.studio.client.server.ServerError;
@@ -199,6 +200,24 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+   public void convertFromYaml(String yaml, 
+                               final CommandWithArg<RmdYamlData> onFinished)
+   {
+      server_.convertFromYAML(yaml, new ServerRequestCallback<RmdYamlData>()
+      {
+         @Override
+         public void onResponseReceived(RmdYamlData yamlData)
+         {
+            onFinished.execute(yamlData);
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            onFinished.execute(null);
+         }
+      });
+   }
+
    private void installRMarkdownPackage(String action,
                                         final Command onInstalled)
    {
