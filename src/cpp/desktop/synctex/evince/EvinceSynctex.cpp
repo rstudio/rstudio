@@ -135,20 +135,22 @@ void EvinceSynctex::onFindWindowFinished(QDBusPendingCallWatcher* pWatcher)
 
 void EvinceSynctex::syncView(EvinceWindow* pWindow, const SyncRequest& req)
 {
-   if (req.page != -1)
-   {
-      QStringList args;
-      args.append(QString::fromAscii("-i"));
-      args.append(QString::fromStdString(
-                           safe_convert::numberToString(req.page)));
-      args.append(req.pdfFile);
-      QProcess::startDetached(QString::fromAscii("evince"), args);
-   }
-   else
+   if (req.hasSourceLoc())
    {
       syncView(pWindow, req.srcFile, req.srcLoc);
    }
-
+   else
+   {
+      QStringList args;
+      if (req.hasPage())
+      {
+         args.append(QString::fromAscii("-i"));
+         args.append(QString::fromStdString(
+                           safe_convert::numberToString(req.page)));
+      }
+      args.append(req.pdfFile);
+      QProcess::startDetached(QString::fromAscii("evince"), args);
+   }
 }
 
 void EvinceSynctex::syncView(EvinceWindow* pWindow,

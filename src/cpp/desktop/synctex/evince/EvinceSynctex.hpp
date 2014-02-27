@@ -63,6 +63,11 @@ private:
       {
       }
 
+      SyncRequest(QString pdfFile)
+         : pdfFile(pdfFile), page(-1)
+      {
+      }
+
       SyncRequest(QString pdfFile, int page)
          : pdfFile(pdfFile), page(page)
       {
@@ -72,6 +77,9 @@ private:
          : pdfFile(pdfFile), page(-1), srcFile(srcFile), srcLoc(srcLoc)
       {
       }
+
+      bool hasSourceLoc() const { return !srcFile.isEmpty(); }
+      bool hasPage() const { return page != -1; }
 
       QString pdfFile;
       int page;
