@@ -1,0 +1,18 @@
+## First Slide
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide With Code
+
+```{r}
+summary(cars)
+```
+
+## Slide With Plot
+
+```{r, echo=FALSE}
+plot(cars)
+```
+

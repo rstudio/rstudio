@@ -51,11 +51,17 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 {
    public static class Result
    {  
-      public Result(String author, String title, String format, 
+      public Result(String template, String author, String title, String format, 
                     List<NewRmdFormatOption> options)
       {
+         template_ = template;
          result_ = toJSO(author, title, format, 
                          NewRmdFormatOptions.optionsListToJson(options));
+      }
+      
+      public String getTemplate()
+      {
+         return template_;
       }
       
       public JavaScriptObject getJSOResult()
@@ -82,7 +88,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          return result;
       }-*/;
 
-      private JavaScriptObject result_;
+      private final String template_;
+      private final JavaScriptObject result_;
    }
 
    public interface Binder extends UiBinder<Widget, NewRMarkdownDialog>
@@ -175,8 +182,10 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @Override
    protected Result collectInput()
    {
-      return new Result(txtAuthor_.getText().trim(), txtTitle_.getText().trim(),
-            getSelectedFormat(), optionWidgets_);
+      return new Result(getSelectedTemplate(), 
+                        txtAuthor_.getText().trim(), 
+                        txtTitle_.getText().trim(),
+                        getSelectedFormat(), optionWidgets_);
    }
 
    @Override

@@ -63,6 +63,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -866,7 +867,7 @@ public class Source implements InsertSourceHandler,
       );
    }
    
-   private void newRMarkdownV2Doc(NewRMarkdownDialog.Result result)
+   private void newRMarkdownV2Doc(final NewRMarkdownDialog.Result result)
    {
       rmarkdown_.convertToYAML(result.getJSOResult(), 
             new CommandWithArg<String>()
@@ -874,9 +875,13 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(final String yaml)
          {
+            boolean isPresentation = result.getTemplate().equals(
+                                      RmdTemplateData.PRESENTATION_TEMPLATE);
+            
             newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
                   "", 
-                  "r_markdown_v2.Rmd",
+                  isPresentation ? "r_markdown_v2_presentation.Rmd" :
+                                   "r_markdown_v2.Rmd",
                   Position.create(5, 0),
                   null,
                   new TransformerCommand<String>()
