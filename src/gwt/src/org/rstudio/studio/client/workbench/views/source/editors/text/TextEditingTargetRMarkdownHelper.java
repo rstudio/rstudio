@@ -38,7 +38,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
-import org.rstudio.studio.client.rmarkdown.model.YamlUtils;
+import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -187,10 +187,10 @@ public class TextEditingTargetRMarkdownHelper
          @Override
          public void onResponseReceived(RmdYamlResult yamlResult)
          {
-            String yaml = yamlResult.getYaml();
-            yaml = YamlUtils.reorderYaml(yaml, Arrays.asList(
-                  "title", "author", "date", "output"));
-            onFinished.execute(yaml);
+            YamlTree yamlTree = new YamlTree(yamlResult.getYaml());
+            yamlTree.reorder(
+                  Arrays.asList("title", "author", "date", "output"));
+            onFinished.execute(yamlTree.toString());
          }
          @Override
          public void onError(ServerError error)

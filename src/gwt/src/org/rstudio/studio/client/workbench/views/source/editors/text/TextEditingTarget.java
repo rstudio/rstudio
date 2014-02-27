@@ -78,7 +78,11 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
+import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -130,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequ
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class TextEditingTarget implements 
                                   EditingTarget,
@@ -2203,14 +2208,34 @@ public class TextEditingTarget implements
                "sure the front matter is enclosed by lines containing only " +
                "three dashes: ---.");
       }
-      rmarkdownHelper_.convertFromYaml(parts[1], 
+      final String yaml = parts[1];
+      rmarkdownHelper_.convertFromYaml(yaml, 
             new CommandWithArg<RmdYamlData>() 
       {
          @Override
          public void execute(RmdYamlData arg)
          {
-            RmdTemplateOptionsDialog dialog = new RmdTemplateOptionsDialog();
-            dialog.showModal();
+            YamlTree tree = new YamlTree(yaml);
+
+            // Find the template appropriate to the first output format listed
+            List<String> outputs = tree.getChildKeys("output");
+            String firstOutput = outputs.get(0);
+            JsArray<RmdTemplate> templates = RmdTemplateData.getTemplates();
+            for (int i = 0; i < templates.length(); i++)
+            {
+               JsArray<RmdTemplateFormat> formats = 
+                     templates.get(i).getFormats();
+               for (int j = 0; j < formats.length(); j++)
+               {
+                  if (formats.get(j).getName().equals(firstOutput))
+                  {
+                     RmdTemplateOptionsDialog dialog = 
+                           new RmdTemplateOptionsDialog(templates.get(i));
+                     dialog.showModal();
+                     return;
+                  }
+               }
+            }
          }
       });
    }

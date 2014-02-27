@@ -1,5 +1,5 @@
 /*
- * YamlUtils.java
+ * YamlTree.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -15,18 +15,21 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 
-public class YamlUtils
+public class YamlTree
 {
-   private static class YamlTreeNode
+   private class YamlTreeNode
    {
       public YamlTreeNode(String line)
       {
          yamlLine = line;
+         key = getKey(line);
          indentLevel = getIndentLevel(line);
       }
       
@@ -36,19 +39,23 @@ public class YamlUtils
          child.parent = this;
       }
       
-      public String getKey()
-      {
-         RegExp key = RegExp.compile("^\\s*([^:]+):");
-         MatchResult result = key.exec(yamlLine);
-         return result.getGroup(1);
-      }
-
       public String yamlLine;
+      public String key;
       public int indentLevel = 0;
       public YamlTreeNode parent = null;
       public List<YamlTreeNode> children = new ArrayList<YamlTreeNode>();
       
-      private static int getIndentLevel(String line)
+      private String getKey(String line)
+      {
+         RegExp keyReg = RegExp.compile("^\\s*([^:]+):");
+         MatchResult result = keyReg.exec(line);
+         if (result == null)
+            return "";
+          else
+            return result.getGroup(1);
+      }
+
+      private int getIndentLevel(String line)
       {
          RegExp whitespace = RegExp.compile("^\\s*");
          MatchResult result = whitespace.exec(line);
@@ -56,11 +63,22 @@ public class YamlUtils
       }
    }
    
-   public static String reorderYaml(String yaml, List<String> orderedKeys)
+   public YamlTree(String yaml)
+   {
+      root_ = createYamlTree(yaml);
+      keyMap_ = new HashMap<String, YamlTreeNode>();
+      createKeyMap(root_, keyMap_);
+   }
+   
+   public String toString()
+   {
+      return yamlFromTree(root_);
+   }
+   
+   public void reorder(List<String> orderedKeys)
    {
       // Sort the YAML lines into a tree
-      YamlTreeNode tree = createYamlTree(yaml);
-      YamlTreeNode parent = findParentNodeOfKey(tree, orderedKeys.get(0));
+      YamlTreeNode parent = findParentNodeOfKey(root_, orderedKeys.get(0));
       
       // Move around subtrees to match the given list of ordered keys 
       // (swap subtrees into a position matching that specified)
@@ -69,7 +87,7 @@ public class YamlUtils
          for (int j = i; j < parent.children.size(); j++)
          {
             YamlTreeNode child = parent.children.get(j);
-            if (orderedKeys.get(i) == child.getKey())
+            if (orderedKeys.get(i) == child.key)
             {
                YamlTreeNode previousChild = parent.children.get(i);
                parent.children.set(i, child);
@@ -77,12 +95,20 @@ public class YamlUtils
             }
          }
       }
-
-      // Re-emit the lines in the new order
-      return yamlFromTree(tree);
    }
 
-   private static YamlTreeNode createYamlTree(String yaml)
+   public List<String> getChildKeys(String parentKey)
+   {
+      YamlTreeNode parent = keyMap_.get(parentKey);
+      ArrayList<String> result = new ArrayList<String>();
+      for (YamlTreeNode child: parent.children)
+      {
+         result.add(child.key);
+      }
+      return result;
+   }
+
+   private YamlTreeNode createYamlTree(String yaml)
    {
       String[] lines = yaml.split("\n");
       YamlTreeNode root = new YamlTreeNode("");
@@ -132,7 +158,7 @@ public class YamlUtils
    {
       for (YamlTreeNode child: root.children)
       {
-         if (child.getKey() == key)
+         if (child.key == key)
             return root;
          YamlTreeNode node = findParentNodeOfKey(child, key);
          if (node != null)
@@ -140,4 +166,17 @@ public class YamlUtils
       }
       return null;
    }
+   
+   private static void createKeyMap(YamlTreeNode root, 
+                                    Map<String, YamlTreeNode> output)
+   {
+      for (YamlTreeNode child: root.children)
+      {
+         output.put(child.key, child);
+         createKeyMap(child, output);
+      }
+   }
+   
+   private final Map<String, YamlTreeNode> keyMap_;
+   private final YamlTreeNode root_;
 }
