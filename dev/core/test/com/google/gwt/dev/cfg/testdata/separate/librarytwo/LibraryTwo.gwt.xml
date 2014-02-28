@@ -1,3 +1,6 @@
 <module>
   <source path="client"/>
+  <define-property name="libraryTwoProperty" values="yes,no"/>
+  <define-configuration-property name="libraryTwoConfigProperty" is-multi-valued="false"/>
+  <set-configuration-property name="libraryTwoConfigProperty" value="true"/>
 </module>

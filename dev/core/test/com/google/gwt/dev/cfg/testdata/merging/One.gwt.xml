@@ -1,3 +1,4 @@
 <module>
   <source path="client" excludes="Toxic.java" skips="InTwo.java"/>
+  <resource path="resources"/>
 </module>

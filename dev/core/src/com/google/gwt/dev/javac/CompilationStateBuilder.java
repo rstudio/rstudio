@@ -69,6 +69,10 @@ public class CompilationStateBuilder {
 
     private final class UnitProcessorImpl implements UnitProcessor {
 
+      /**
+       * A callback after the JDT compiler has compiled a .java file and created a matching
+       * CompilationUnitDeclaration. We take this opportunity to create a matching CompilationUnit.
+       */
       @Override
       public void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
           List<CompiledClass> compiledClasses) {
@@ -97,7 +101,26 @@ public class CompilationStateBuilder {
           Map<TypeDeclaration, Binding[]> artificialRescues =
               new HashMap<TypeDeclaration, Binding[]>();
           ArtificialRescueChecker.check(cud, builder.isGenerated(), artificialRescues);
-          BinaryTypeReferenceRestrictionsChecker.check(cud);
+          if (compilerContext.shouldCompileMonolithic()) {
+            // GWT drives JDT in a way that allows missing references in the source to be resolved
+            // to precompiled bytecode on disk (see INameEnvironment). This is done so that
+            // annotations can be supplied in bytecode form only. But since no AST is available for
+            // these types it creates the danger that some functional class (not just an annotation)
+            // gets filled in but is missing AST. This would cause later compiler stages to fail.
+            //
+            // Library compilation needs to ignore this check since it is expected behavior for the
+            // source being compiled in a library to make references to other types which are only
+            // available as bytecode coming out of dependency libraries.
+            //
+            // But if the referenced bytecode did not come from a dependency library but instead was
+            // free floating in the classpath, then there is no guarrantee that AST for it was ever
+            // seen and translated to JS anywhere in the dependency tree. This would be a mistake.
+            //
+            // TODO(stalcup): add a more specific check for library compiles such that binary types
+            // can be referenced but only if they are an Annotation or if the binary type comes from
+            // a dependency library.
+            BinaryTypeReferenceRestrictionsChecker.check(cud);
+          }
 
           MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud,
               builder.getSourceMapPath());
@@ -512,8 +535,8 @@ public class CompilationStateBuilder {
       typeOracleUpdater = ((LibraryTypeOracle) typeOracle).getTypeOracleUpdater();
     }
 
-    return new CompilationState(logger, typeOracle, typeOracleUpdater, resultUnits,
-        compileMoreLater);
+    return new CompilationState(logger, compilerContext, typeOracle, typeOracleUpdater,
+        resultUnits, compileMoreLater);
   }
 
   public CompilationState doBuildFrom(

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -65,8 +65,7 @@ public class PropertyDefiningStrategy implements Strategy {
       for (Property property : properties) {
         BindingProperty binding = props.createBinding(property.name());
         if (!binding.isDefinedValue(property.value())) {
-          binding.addDefinedValue(
-              binding.getRootCondition(), property.value());
+          binding.addTargetLibraryDefinedValue(binding.getRootCondition(), property.value());
         }
         binding.setAllowedValues(
             binding.getRootCondition(), property.value());
@@ -108,7 +107,7 @@ public class PropertyDefiningStrategy implements Strategy {
         if (name != null) {
           Method testMethod = testCase.getClass().getMethod(testCase.getName());
           if (testMethod.isAnnotationPresent(WithProperties.class)) {
-            WithProperties annotation = 
+            WithProperties annotation =
               testMethod.getAnnotation(WithProperties.class);
             for (Property property : annotation.value()) {
               props.add(checkProperty(property));

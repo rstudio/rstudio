@@ -30,7 +30,9 @@ public class DynamicPropertyOracleTest extends TestCase {
     List<String> expectedValues = Lists.newArrayList("webkit", "mozilla");
     Properties properties = new Properties();
     ConfigurationProperty userAgentProperty = properties.createConfiguration("user.agent", true);
-    userAgentProperty.setValues(expectedValues);
+    for (String expectedValue : expectedValues) {
+      userAgentProperty.addValue(expectedValue);
+    }
     DynamicPropertyOracle dynamicPropertyOracle = new DynamicPropertyOracle(properties);
 
     // Pulls out the prepared configuration property.

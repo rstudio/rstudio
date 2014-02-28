@@ -17,18 +17,23 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.ZipEntryBackedObject;
+import com.google.gwt.dev.util.PersistenceBackedObject;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Multimaps;
 
 import java.util.Set;
 
 /**
- * A do-nothing library writer for code paths that expect a library writer but
- * which are running in a context in which no library should to be built.
+ * A do-nothing library writer for code paths that expect a library writer but which are running in
+ * a context in which no library should to be built.
  */
 public class NullLibraryWriter implements LibraryWriter {
 
+  private Multimap<String, String> newBindingPropertyValuesByName = LinkedHashMultimap.create();
+  private Multimap<String, String> newConfigurationPropertyValuesByName =
+      LinkedHashMultimap.create();
   private Set<String> strings = ImmutableSet.of();
 
   @Override
@@ -52,13 +57,15 @@ public class NullLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public void addNewBindingPropertyValuesByName(
-      String propertyName, Iterable<String> propertyValues) {
+  public void addNewBindingPropertyValuesByName(String propertyName,
+      Iterable<String> propertyValues) {
+    newBindingPropertyValuesByName.putAll(propertyName, propertyValues);
   }
 
   @Override
-  public void addNewConfigurationPropertyValuesByName(
-      String propertyName, Iterable<String> propertyValues) {
+  public void addNewConfigurationPropertyValuesByName(String propertyName,
+      Iterable<String> propertyValues) {
+    newConfigurationPropertyValuesByName.putAll(propertyName, propertyValues);
   }
 
   @Override
@@ -71,16 +78,16 @@ public class NullLibraryWriter implements LibraryWriter {
 
   @Override
   public Multimap<String, String> getNewBindingPropertyValuesByName() {
-    return null;
+    return Multimaps.unmodifiableMultimap(newBindingPropertyValuesByName);
   }
 
   @Override
   public Multimap<String, String> getNewConfigurationPropertyValuesByName() {
-    return null;
+    return Multimaps.unmodifiableMultimap(newConfigurationPropertyValuesByName);
   }
 
   @Override
-  public ZipEntryBackedObject<PermutationResult> getPermutationResultHandle() {
+  public PersistenceBackedObject<PermutationResult> getPermutationResultHandle() {
     return null;
   }
 

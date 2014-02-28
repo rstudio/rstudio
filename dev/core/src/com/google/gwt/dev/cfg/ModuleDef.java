@@ -132,6 +132,13 @@ public class ModuleDef {
     return true;
   }
 
+  /**
+   * All resources found on the public path, specified by <public> directives in
+   * modules (or the implicit ./public directory). Marked 'lazy' because it does not
+   * start searching for resources until a query is made.
+   */
+  protected ResourceOracleImpl lazyPublicOracle;
+
   private final Set<String> activeLinkers = new LinkedHashSet<String>();
 
   private String activePrimaryLinker;
@@ -157,16 +164,14 @@ public class ModuleDef {
 
   private final List<String> entryPointTypeNames = new ArrayList<String>();
 
+  /**
+   * Names of free-standing compilable library modules that are depended upon by this module.
+   */
+  private final Set<String> externalLibraryModuleNames = Sets.newLinkedHashSet();
+
   private final Set<File> gwtXmlFiles = new HashSet<File>();
 
   private final Set<String> inheritedModules = new HashSet<String>();
-
-  /**
-   * All resources found on the public path, specified by <public> directives in
-   * modules (or the implicit ./public directory). Marked 'lazy' because it does not
-   * start searching for resources until a query is made.
-   */
-  protected ResourceOracleImpl lazyPublicOracle;
 
   /**
    * Contains files other than .java and .class files (such as CSS and PNG files) from either the
@@ -179,17 +184,6 @@ public class ModuleDef {
    * directives in modules (or the implicit ./client directory).
    */
   private ResourceOracleImpl lazySourceOracle;
-
-  /**
-   * Names of free-standing compilable library modules that are depended upon by this module.
-   */
-  private final Set<String> externalLibraryModuleNames = Sets.newLinkedHashSet();
-
-  /**
-   * Names of non-independently-compilable modules (mostly filesets) that together make up the
-   * current module.
-   */
-  private final Set<String> targetLibraryModuleNames = Sets.newLinkedHashSet();
 
   private final Map<String, Class<? extends Linker>> linkerTypesByName =
       new LinkedHashMap<String, Class<? extends Linker>>();
@@ -214,7 +208,7 @@ public class ModuleDef {
 
   private PathPrefixSet publicPrefixSet = new PathPrefixSet();
 
-  private PathPrefixSet resourcePrefixSet = new PathPrefixSet();
+  private Set<PathPrefix> resourcePrefixes = Sets.newHashSet();
 
   private final ResourceLoader resources;
 
@@ -229,6 +223,12 @@ public class ModuleDef {
   private PathPrefixSet sourcePrefixSet = new PathPrefixSet();
 
   private final Styles styles = new Styles();
+
+  /**
+   * Names of non-independently-compilable modules (mostly filesets) that together make up the
+   * current module.
+   */
+  private final Set<String> targetLibraryModuleNames = Sets.newLinkedHashSet();
 
   public ModuleDef(String name) {
     this(name, ResourceLoaders.forClassLoader(Thread.currentThread()));
@@ -293,8 +293,7 @@ public class ModuleDef {
     if (!attributeIsForTargetLibrary()) {
       return;
     }
-    PathPrefix pathPrefix = new PathPrefix(resourcePath, NON_JAVA_RESOURCES);
-    resourcePrefixSet.add(pathPrefix);
+    resourcePrefixes.add(new PathPrefix(resourcePath, NON_JAVA_RESOURCES));
   }
 
   public void addRule(Rule rule) {
@@ -517,7 +516,7 @@ public class ModuleDef {
       }
 
       // Register build resource paths.
-      for (PathPrefix resourcePathPrefix : resourcePrefixSet.values()) {
+      for (PathPrefix resourcePathPrefix : resourcePrefixes) {
         newPathPrefixes.add(resourcePathPrefix);
       }
       lazyResourcesOracle.setPathPrefixes(newPathPrefixes);
@@ -589,6 +588,18 @@ public class ModuleDef {
   public ResourceOracleImpl getPublicResourceOracle() {
     ensureResourcesScanned();
     return lazyPublicOracle;
+  }
+
+  public long getResourceLastModified() {
+    long resourceLastModified = 1000;
+    Set<Resource> allResources = Sets.newHashSet();
+    allResources.addAll(getPublicResourceOracle().getResources());
+    allResources.addAll(getSourceResourceOracle().getResources());
+    allResources.addAll(getBuildResourceOracle().getResources());
+    for (Resource resource : allResources) {
+      resourceLastModified = Math.max(resourceLastModified, resource.getLastModified());
+    }
+    return resourceLastModified;
   }
 
   public Set<Resource> getResourcesNewerThan(long modificationTime) {
@@ -671,18 +682,6 @@ public class ModuleDef {
     return lastModified > 0 ? lastModified : moduleDefCreationTime;
   }
 
-  public long getResourceLastModified() {
-    long resourceLastModified = 1000;
-    Set<Resource> allResources = Sets.newHashSet();
-    allResources.addAll(getPublicResourceOracle().getResources());
-    allResources.addAll(getSourceResourceOracle().getResources());
-    allResources.addAll(getBuildResourceOracle().getResources());
-    for (Resource resource : allResources) {
-      resourceLastModified = Math.max(resourceLastModified, resource.getLastModified());
-    }
-    return resourceLastModified;
-  }
-
   /**
    * For convenience in unit tests, servlets can be automatically loaded and
    * mapped in the embedded web server. If a servlet is already mapped to the
@@ -714,8 +713,24 @@ public class ModuleDef {
     this.nameOverride = nameOverride;
   }
 
+  void addBindingPropertyDefinedValue(BindingProperty bindingProperty, String token) {
+    if (attributeIsForTargetLibrary()) {
+      bindingProperty.addTargetLibraryDefinedValue(bindingProperty.getRootCondition(), token);
+    } else {
+      bindingProperty.addDefinedValue(bindingProperty.getRootCondition(), token);
+    }
+  }
+
   void addCompilationUnitArchiveURL(URL url) {
     archiveURLs.add(url);
+  }
+
+  void addConfigurationPropertyValue(ConfigurationProperty configurationProperty, String value) {
+    if (attributeIsForTargetLibrary()) {
+      configurationProperty.addTargetLibraryValue(value);
+    } else {
+      configurationProperty.addValue(value);
+    }
   }
 
   void addInheritedModules(String moduleName) {
@@ -771,12 +786,26 @@ public class ModuleDef {
     moduleDefNormalize.end();
   }
 
+  void setConfigurationPropertyValue(ConfigurationProperty configurationProperty,
+      String value) {
+    if (attributeIsForTargetLibrary()) {
+      configurationProperty.setTargetLibraryValue(value);
+    } else {
+      configurationProperty.setValue(value);
+    }
+  }
+
   private void addExternalLibraryModuleName(String moduleName) {
     // Ignore circular dependencies on self.
     if (moduleName.equals(getName())) {
       return;
     }
     externalLibraryModuleNames.add(moduleName);
+  }
+
+  private boolean attributeIsForTargetLibrary() {
+    return currentAttributeSource.isEmpty()
+        || currentAttributeSource.peek() == AttributeSource.TARGET_LIBRARY;
   }
 
   private void checkForSeedTypes(TreeLogger logger, CompilationState compilationState)
@@ -820,10 +849,5 @@ public class ModuleDef {
     lazyPublicOracle.scanResources(TreeLogger.NULL);
     lazySourceOracle.scanResources(TreeLogger.NULL);
     moduleDefEvent.end();
-  }
-
-  boolean attributeIsForTargetLibrary() {
-    return currentAttributeSource.isEmpty()
-        || currentAttributeSource.peek() == AttributeSource.TARGET_LIBRARY;
   }
 }

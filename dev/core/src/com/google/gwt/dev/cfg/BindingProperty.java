@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,10 +32,10 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 /**
@@ -55,6 +56,7 @@ public class BindingProperty extends Property {
   private HashMap<String,LinkedList<String>> fallbackValues = new HashMap<String,LinkedList<String>>();
   private PropertyProvider provider;
   private Class<? extends PropertyProviderGenerator> providerGenerator;
+  private final SortedSet<String> targetLibraryDefinedValues = new TreeSet<String>();
   private final ConditionAll rootCondition = new ConditionAll();
 
   {
@@ -87,15 +89,20 @@ public class BindingProperty extends Property {
     collapsedValues = Lists.add(collapsedValues, temp);
   }
 
-  public void addDefinedValue(Condition condition, String newValue) {
-    definedValues.add(newValue);
+  public void addDefinedValue(Condition condition, String definedValue) {
+    definedValues.add(definedValue);
     SortedSet<String> set = conditionalValues.get(condition);
     if (set == null) {
       set = new TreeSet<String>();
       set.addAll(conditionalValues.get(rootCondition));
       conditionalValues.put(condition, set);
     }
-    set.add(newValue);
+    set.add(definedValue);
+  }
+
+  public void addTargetLibraryDefinedValue(Condition condition, String definedValue) {
+    targetLibraryDefinedValues.add(definedValue);
+    addDefinedValue(condition, definedValue);
   }
 
   /**
@@ -211,6 +218,10 @@ public class BindingProperty extends Property {
     return fallback;
   }
 
+  public List<String> getTargetLibraryDefinedValues() {
+    return ImmutableList.copyOf(targetLibraryDefinedValues);
+  }
+
   public PropertyProvider getProvider() {
     return provider;
   }
@@ -232,6 +243,10 @@ public class BindingProperty extends Property {
 
   public ConditionAll getRootCondition() {
     return rootCondition;
+  }
+
+  public boolean hasTargetLibraryDefinedValues() {
+    return !targetLibraryDefinedValues.isEmpty();
   }
 
   /**

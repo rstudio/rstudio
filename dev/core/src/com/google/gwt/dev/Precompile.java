@@ -255,7 +255,7 @@ public class Precompile {
       long moduleLoadFinished = System.currentTimeMillis();
 
       String[] declEntryPts = module.getEntryPointTypeNames();
-      if (declEntryPts.length == 0) {
+      if (compilerContext.shouldCompileMonolithic() && declEntryPts.length == 0) {
         logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
         throw new UnableToCompleteException();
       }

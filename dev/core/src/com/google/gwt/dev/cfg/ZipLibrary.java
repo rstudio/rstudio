@@ -89,8 +89,8 @@ class ZipLibrary implements Library {
     }
 
     private Resource readBuildResourceByPath(String path) {
-      return new ZipFileResource(
-          zipFile, libraryPath, lastModified, Libraries.DIRECTORY_BUILD_RESOURCES + path);
+      return new ZipFileResource(zipFile, "file:" + libraryPath, lastModified,
+          Libraries.DIRECTORY_BUILD_RESOURCES + path);
     }
 
     private Set<String> readBuildResourcePaths() {
@@ -164,8 +164,8 @@ class ZipLibrary implements Library {
     }
 
     private Resource readPublicResourceByPath(String path) {
-      return new ZipFileResource(
-          zipFile, libraryPath, lastModified, Libraries.DIRECTORY_PUBLIC_RESOURCES + path);
+      return new ZipFileResource(zipFile, "file:" + libraryPath, lastModified,
+          Libraries.DIRECTORY_PUBLIC_RESOURCES + path);
     }
 
     private Set<String> readPublicResourcePaths() {

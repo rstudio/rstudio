@@ -3,4 +3,7 @@
   <inherits name="com.google.gwt.dev.cfg.testdata.separate.librarytwo.LibraryTwo"/>
 
   <source path="client"/>
+
+  <extend-property name="libraryTwoProperty" values="maybe"/>
+  <set-configuration-property name="libraryTwoConfigProperty" value="false"/> 
 </module>

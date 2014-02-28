@@ -40,6 +40,7 @@ public class ZipFileResource extends AbstractResource {
    * ZipFile can not provide them.
    */
   public ZipFileResource(ZipFile zipFile, String filePath, long lastModified, String entryName) {
+    assert filePath.startsWith("file:/");
     this.zipFile = zipFile;
     this.filePath = filePath;
     this.lastModified = lastModified;
@@ -57,6 +58,7 @@ public class ZipFileResource extends AbstractResource {
 
     this.zipFile = classPathEntry.getZipFile();
     this.filePath = classPathEntry.getLocation();
+    assert filePath.startsWith("file:/");
     this.lastModified = classPathEntry.lastModified();
   }
 

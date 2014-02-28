@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,10 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,12 +27,13 @@ import java.util.List;
  */
 public class ConfigurationProperty extends Property {
   private final boolean allowMultipleValues;
+  private List<String> targetLibraryValues = new ArrayList<String>();
   private List<String> values = new ArrayList<String>();
 
   public ConfigurationProperty(String name) {
     this(name, false);
   }
-  
+
   public ConfigurationProperty(String name, boolean allowMultipleValues) {
     super(name);
     this.allowMultipleValues = allowMultipleValues;
@@ -37,7 +41,7 @@ public class ConfigurationProperty extends Property {
       values.add(null); // single-valued properties default to null
     }
   }
-  
+
   public void addValue(String value) {
     if (!allowMultipleValues) {
       throw new IllegalStateException(
@@ -46,12 +50,21 @@ public class ConfigurationProperty extends Property {
     values.add(value);
   }
 
+  public void addTargetLibraryValue(String value) {
+    addValue(value);
+    targetLibraryValues.add(value);
+  }
+
   public boolean allowsMultipleValues() {
     return allowMultipleValues;
   }
-  
+
   public void clear() {
     values.clear();
+  }
+
+  public List<String> getTargetLibraryValues() {
+    return ImmutableList.copyOf(targetLibraryValues);
   }
 
   public String getValue() {
@@ -60,15 +73,26 @@ public class ConfigurationProperty extends Property {
     }
     return values.get(0);
   }
-  
+
   public List<String> getValues() {
-    ArrayList<String> v = new ArrayList<String>(values.size());
-    v.addAll(values);
-    return v;
+    return Collections.unmodifiableList(values);
   }
-  
+
+  public boolean hasTargetLibraryValues() {
+    return !targetLibraryValues.isEmpty();
+  }
+
   public boolean isMultiValued() {
     return values.size() > 1;
+  }
+
+  public void setTargetLibraryValue(String value) {
+    if (targetLibraryValues.size() == 0) {
+      targetLibraryValues.add(value);
+    } else {
+      targetLibraryValues.set(0, value);
+    }
+    setValue(value);
   }
 
   public void setValue(String value) {
@@ -77,14 +101,5 @@ public class ConfigurationProperty extends Property {
     } else {
       values.set(0, value);
     }
-  }
-  
-  public void setValues(List<String> values) {
-    if (!allowMultipleValues && values.size() > 1) {
-      throw new IllegalStateException(
-      "Attempt to set > 1 value for a single-valued ConfigurationProperty");
-    }
-    this.values.clear();
-    this.values.addAll(values);
   }
 }

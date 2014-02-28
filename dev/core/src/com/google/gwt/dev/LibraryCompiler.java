@@ -147,12 +147,15 @@ public class LibraryCompiler {
       precompilation.removeSourceArtifacts(logger);
     }
 
+    Event compilePermutationsEvent =
+        SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
     permutations = new Permutation[] {precompilation.getPermutations()[0]};
     permutationResultFiles = new ArrayList<PersistenceBackedObject<PermutationResult>>();
     permutationResultFiles.add(libraryWriter.getPermutationResultHandle());
     CompilePerms.compile(
         branch, compilerContext, precompilation, permutations, compilerOptions.getLocalWorkers(),
         permutationResultFiles);
+    compilePermutationsEvent.end();
 
     generatedArtifacts = precompilation.getGeneratedArtifacts();
     libraryWriter.addGeneratedArtifacts(generatedArtifacts);

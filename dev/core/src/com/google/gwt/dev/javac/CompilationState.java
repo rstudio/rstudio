@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationStateBuilder.CompileMoreLater;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -86,10 +87,13 @@ public class CompilationState {
    */
   private final CompilationUnitTypeOracleUpdater typeOracleUpdater;
 
-  CompilationState(TreeLogger logger, TypeOracle typeOracle,
-      CompilationUnitTypeOracleUpdater typeOracleUpdater, Collection<CompilationUnit> units,
-      CompileMoreLater compileMoreLater) {
+  private CompilerContext compilerContext;
+
+  CompilationState(TreeLogger logger, CompilerContext compilerContext,
+      TypeOracle typeOracle, CompilationUnitTypeOracleUpdater typeOracleUpdater,
+      Collection<CompilationUnit> units, CompileMoreLater compileMoreLater) {
     this.compileMoreLater = compileMoreLater;
+    this.compilerContext = compilerContext;
     this.typeOracle = typeOracle;
     this.typeOracleUpdater = typeOracleUpdater;
     assimilateUnits(logger, units);
@@ -179,6 +183,11 @@ public class CompilationState {
     }
     CompilationUnitInvalidator.retainValidUnits(logger, units,
         compileMoreLater.getValidClasses());
+
+    // Only valid units should be saved in the library.
+    for (CompilationUnit compilationUnit : units) {
+      compilerContext.getLibraryWriter().addCompilationUnit(compilationUnit);
+    }
     typeOracleUpdater.addNewUnits(logger, units);
   }
 

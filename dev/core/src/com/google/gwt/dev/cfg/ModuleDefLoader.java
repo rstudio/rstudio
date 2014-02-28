@@ -18,6 +18,7 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.impl.UrlResource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -162,6 +163,31 @@ public class ModuleDefLoader {
       LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
       libraryWriter.setLibraryName(module.getName());
       libraryWriter.addDependencyLibraryNames(module.getExternalLibraryModuleNames());
+
+      // Records binding property defined values that were newly created in this library.
+      for (BindingProperty bindingProperty : module.getProperties().getBindingProperties()) {
+        libraryWriter.addNewBindingPropertyValuesByName(
+            bindingProperty.getName(), bindingProperty.getTargetLibraryDefinedValues());
+      }
+      // Records configuration property value changes that occurred in this library.
+      for (ConfigurationProperty configurationProperty :
+          module.getProperties().getConfigurationProperties()) {
+        libraryWriter.addNewConfigurationPropertyValuesByName(
+            configurationProperty.getName(), configurationProperty.getTargetLibraryValues());
+      }
+      // Saves non java and gwt.xml build resources, like PNG and CSS files.
+      for (Resource buildResource : module.getBuildResourceOracle().getResources()) {
+        if (buildResource.getPath().endsWith(".java")
+            || buildResource.getPath().endsWith(".gwt.xml")) {
+          continue;
+        }
+        libraryWriter.addBuildResource(buildResource);
+      }
+      // Saves public resources.
+      for (Resource publicResource : module.getPublicResourceOracle().getResources()) {
+        libraryWriter.addPublicResource(publicResource);
+      }
+
       return module;
     } finally {
       moduleDefLoadFromClassPathEvent.end();
@@ -281,6 +307,7 @@ public class ModuleDefLoader {
     TreeLogger logger = parentLogger.branch(TreeLogger.DEBUG, "Loading inherited module '"
         + moduleName + "'", null);
     LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
+    LibraryGroup libraryGroup = compilerContext.getLibraryGroup();
 
     if (!ModuleDef.isValidModuleName(moduleName)) {
       logger.log(TreeLogger.ERROR, "Invalid module name: '" + moduleName + "'",
@@ -294,6 +321,9 @@ public class ModuleDefLoader {
     String slashedModuleName = moduleName.replace('.', '/');
     String resName = slashedModuleName + ModuleDefLoader.GWT_MODULE_XML_SUFFIX;
     URL moduleURL = resourceLoader.getResource(resName);
+    if (moduleURL == null && libraryGroup.containsBuildResource(resName)) {
+      moduleURL = libraryGroup.getBuildResourceByPath(resName).getURL();
+    }
 
     long lastModified = 0;
     if (moduleURL != null) {

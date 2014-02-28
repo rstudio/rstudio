@@ -164,6 +164,9 @@ public class ModuleDefSchema extends Schema {
     protected final String __set_property_fallback_2_value = null;
 
     @SuppressWarnings("unused") // referenced reflectively
+    protected final String __resource_1_path = "";
+
+    @SuppressWarnings("unused") // referenced reflectively
     protected final String __source_1_path = "";
 
     @SuppressWarnings("unused") // referenced reflectively
@@ -408,7 +411,7 @@ public class ModuleDefSchema extends Schema {
       BindingProperty prop = moduleDef.getProperties().createBinding(name.token);
 
       for (int i = 0; i < values.length; i++) {
-        prop.addDefinedValue(prop.getRootCondition(), values[i].token);
+        moduleDef.addBindingPropertyDefinedValue(prop, values[i].token);
       }
 
       // No children.
@@ -422,46 +425,47 @@ public class ModuleDefSchema extends Schema {
     }
 
     @SuppressWarnings("unused") // called reflectively
-    protected Schema __extend_configuration_property_begin(PropertyName name,
-        String value) throws UnableToCompleteException {
+    protected Schema __extend_configuration_property_begin(PropertyName name, String value)
+        throws UnableToCompleteException {
 
       // Property must already exist as a configuration property
-      Property prop = moduleDef.getProperties().find(name.token);
-      if ((prop == null) || !(prop instanceof ConfigurationProperty)) {
-        logger.log(TreeLogger.ERROR, "The property " + name.token
-            + " must already exist as a configuration property");
+      Property configurationProperty = moduleDef.getProperties().find(name.token);
+      if ((configurationProperty == null)
+          || !(configurationProperty instanceof ConfigurationProperty)) {
+        logger.log(TreeLogger.ERROR,
+            "The property " + name.token + " must already exist as a configuration property");
         throw new UnableToCompleteException();
       }
 
-      ConfigurationProperty configProp = (ConfigurationProperty) prop;
+      ConfigurationProperty configProp = (ConfigurationProperty) configurationProperty;
       if (!configProp.allowsMultipleValues()) {
-        logger.log(TreeLogger.ERROR, "The property " + name.token
-            + " does not support multiple values");
+        logger.log(
+            TreeLogger.ERROR, "The property " + name.token + " does not support multiple values");
         throw new UnableToCompleteException();
       }
-      configProp.addValue(value);
+      moduleDef.addConfigurationPropertyValue(configProp, value);
 
       return null;
     }
 
     @SuppressWarnings("unused") // called reflectively
-    protected Schema __extend_property_begin(BindingProperty property,
+    protected Schema __extend_property_begin(BindingProperty bindingProperty,
         PropertyValue[] values, PropertyFallbackValue fallbackValue)
         throws UnableToCompleteException {
       for (int i = 0; i < values.length; i++) {
-        property.addDefinedValue(property.getRootCondition(), values[i].token);
+        moduleDef.addBindingPropertyDefinedValue(bindingProperty, values[i].token);
       }
 
       // validate fallback-property value if present
       if (fallbackValue != null) {
-        if (!property.isDefinedValue(fallbackValue.token)) {
-        logger.log(TreeLogger.ERROR, "The property " + property.name
-            + " fallback-value was not defined");
-        throw new UnableToCompleteException();
+        if (!bindingProperty.isDefinedValue(fallbackValue.token)) {
+          logger.log(TreeLogger.ERROR,
+              "The property " + bindingProperty.name + " fallback-value was not defined");
+          throw new UnableToCompleteException();
         }
         // add fallback map to the property
         for (int i = 0; i < values.length; i++) {
-          property.addFallbackValue(values[i].token, fallbackValue.token);
+          bindingProperty.addFallbackValue(values[i].token, fallbackValue.token);
         }
       }
 
@@ -643,7 +647,7 @@ public class ModuleDefSchema extends Schema {
         }
         throw new UnableToCompleteException();
       }
-      ((ConfigurationProperty) existingProperty).setValue(value);
+      moduleDef.setConfigurationPropertyValue((ConfigurationProperty) existingProperty, value);
 
       // No children.
       return null;
@@ -718,6 +722,12 @@ public class ModuleDefSchema extends Schema {
           caseSensitive, false);
     }
 
+    @SuppressWarnings("unused") // called reflectively
+    protected Schema __resource_begin(String path) {
+      addResourcePackage(path);
+      return null;
+    }
+
     /**
      * @param src a partial or full url to a stylesheet file to inject
      * @return <code>null</code> since there can be no children
@@ -781,6 +791,10 @@ public class ModuleDefSchema extends Schema {
       String fullDir = parentDir + normChildDir;
       moduleDef.addPublicPackage(fullDir, includeList, excludeList, skipList,
           defaultExcludes, caseSensitive);
+    }
+
+    private void addResourcePackage(String relDir) {
+      moduleDef.addResourcePath(modulePackageAsPath + relDir + "/");
     }
 
     private void addSourcePackage(String relDir, String includes,

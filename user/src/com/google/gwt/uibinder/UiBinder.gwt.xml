@@ -17,7 +17,7 @@
   <inherits name="com.google.gwt.resources.Resources" />
 
   <source path="client"/>
-  <source path="resources"/>
+  <resource path="resources"/>
   <public path="public" />
 
   <!-- By default UiBinder implementations are generated to use SafeHtmlTemplates
