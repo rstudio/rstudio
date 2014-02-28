@@ -62,13 +62,16 @@ public class ToolbarPopupMenuButton extends ToolbarButton
    @Override
    public void setText(String text)
    {
+      setText(text, true);
+   }
+   
+   public void setText(String text, boolean fireEvent)
+   {
       boolean changed = !getText().equals(text);
       
       super.setText(text);
       
-      if (changed)
+      if (changed && fireEvent)
          ValueChangeEvent.fire(ToolbarPopupMenuButton.this, text);
-         
    }
-
 }

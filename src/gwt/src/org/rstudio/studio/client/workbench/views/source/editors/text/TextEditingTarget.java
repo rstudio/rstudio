@@ -81,6 +81,7 @@ import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
+import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -131,6 +132,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitH
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -170,10 +172,13 @@ public class TextEditingTarget implements
       
       void adaptToExtendedFileType(String extendedType);
       void onShinyApplicationStateChanged(String state);
-      void setFormatOptions(List<String> options, String selected);
 
       void debug_dumpContents();
       void debug_importDump();
+      
+      void setFormatOptions(List<String> options, String selected);
+      HandlerRegistration addRmdFormatChangedHandler(
+            ValueChangeHandler<String> handler);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -882,6 +887,15 @@ public class TextEditingTarget implements
       // formats
       if (extendedType_.equals("rmarkdown"))
          updateRmdFormatList();
+      
+      view_.addRmdFormatChangedHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            setRmdFormat(event.getValue());
+         }
+      });
 
       initStatusBar();
    }
@@ -2206,6 +2220,11 @@ public class TextEditingTarget implements
    @Handler 
    void onEditRmdFormatOptions()
    {
+      showFrontMatterEditor(null);
+   }
+   
+   private void showFrontMatterEditor(final String initialFormat)
+   {
       final String yaml = getRmdFrontMatter();
       if (yaml == null)
       {
@@ -2220,24 +2239,42 @@ public class TextEditingTarget implements
          @Override
          public void execute(RmdYamlData arg)
          {
-            showFrontMatterEditor(yaml, arg);
+            showFrontMatterEditorDialog(yaml, arg, initialFormat);
          }
       });
    }
    
-   private void showFrontMatterEditor(String yaml, RmdYamlData data)
+   private void showFrontMatterEditorDialog(String yaml, RmdYamlData data, 
+                                            String initialFormat)
    {
+      // Get the selected template format from the YAML, and show the 
+      // dialog for the given format (or the format currently at the top
+      // of the YAML if not supplied)
       RmdSelectedTemplate selTemplate = 
             rmarkdownHelper_.getTemplateFormat(yaml);
+      if (initialFormat == null)
+         initialFormat = selTemplate.format;
       RmdTemplateOptionsDialog dialog = 
-         new RmdTemplateOptionsDialog(selTemplate.template, selTemplate.format,
+         new RmdTemplateOptionsDialog(selTemplate.template, initialFormat,
             data.getFrontMatter(),
             new OperationWithInput<RmdTemplateOptionsDialog.Result>()
             {
                @Override
                public void execute(RmdTemplateOptionsDialog.Result in)
                {
+                  // when the dialog is completed successfully, apply the new
+                  // front matter
                   applyRmdFrontMatter(in);
+               }
+            }, 
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  // when the dialog is cancelled, update the view's format list
+                  // (to cancel in-place changes)
+                  updateRmdFormatList();
                }
             });
       dialog.showModal();
@@ -2273,6 +2310,7 @@ public class TextEditingTarget implements
       code = code.substring(0, range[0]) + yaml + 
              code.substring(range[1], code.length());
       docDisplay_.setCode(code, true);
+      updateRmdFormatList();
    }
 
    private void applyRmdFrontMatter(RmdTemplateOptionsDialog.Result result)
@@ -2289,15 +2327,19 @@ public class TextEditingTarget implements
       });
    }
    
-   private void updateRmdFormatList()
+   private RmdSelectedTemplate getSelectedTemplate()
    {
       // try to extract the front matter and ascertain the template to which
       // it refers
       String yaml = getRmdFrontMatter();
       if (yaml == null)
-         return;
-      RmdSelectedTemplate selTemplate = 
-            rmarkdownHelper_.getTemplateFormat(yaml);
+         return null;
+      return rmarkdownHelper_.getTemplateFormat(yaml);
+   }
+   
+   private void updateRmdFormatList()
+   {
+      RmdSelectedTemplate selTemplate = getSelectedTemplate();
       if (selTemplate == null)
          return;
       
@@ -2316,6 +2358,37 @@ public class TextEditingTarget implements
          }
       }
       view_.setFormatOptions(formatList, formatUiName);
+   }
+   
+   private void setRmdFormat(String formatUiName)
+   {
+      RmdSelectedTemplate selTemplate = getSelectedTemplate();
+      if (selTemplate == null)
+         return;
+      
+      // find the format in the current template that matches the given UI name
+      JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
+      for (int i = 0; i < formats.length(); i++)
+      {
+         if (formats.get(i).getUiName().equals(formatUiName))
+         {
+            String formatName = formats.get(i).getName();
+            YamlTree yamlTree = new YamlTree(getRmdFrontMatter());
+            List<String> outputFormats = yamlTree.getChildKeys("output");
+            if (outputFormats.contains(formatName))
+            {
+               // this format is already defined; just move it to the top
+               yamlTree.reorder(Arrays.asList(formatName));
+               applyRmdFrontMatter(yamlTree.toString());
+            }
+            else
+            {
+               // not already defined, launch the editor dialog 
+               showFrontMatterEditor(formatName);
+            }
+            return;
+         }
+      }
    }
    
    void doReflowComment(String commentPrefix)

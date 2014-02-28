@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -39,9 +40,10 @@ public class RmdTemplateOptionsDialog
    public RmdTemplateOptionsDialog(RmdTemplate template,
          String initialFormat,
          RmdFrontMatter frontMatter, 
-         OperationWithInput<RmdTemplateOptionsDialog.Result> onSaved)
+         OperationWithInput<RmdTemplateOptionsDialog.Result> onSaved,
+         Operation onCancelled)
    {
-      super("Edit R Markdown Format Options", onSaved);
+      super("Edit R Markdown Format Options", onSaved, onCancelled);
       setWidth("350px");
       setHeight("400px");
       templateOptions_ = new RmdTemplateOptionsWidget();

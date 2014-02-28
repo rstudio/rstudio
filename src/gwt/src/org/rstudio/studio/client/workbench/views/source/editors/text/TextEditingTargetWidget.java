@@ -149,10 +149,10 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
       toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
       rmdFormatButton_ = new ToolbarPopupMenuButton();
       rmdFormatButton_.setText("Format");
       toolbar.addLeftWidget(rmdFormatButton_);
-      toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
 
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
@@ -509,7 +509,7 @@ public class TextEditingTargetWidget
    public void setFormatOptions(List<String> options, String selected)
    {
       rmdFormatButton_.clearMenu();
-      rmdFormatButton_.setText(selected);
+      rmdFormatButton_.setText(selected, false);
       for (String option: options)
       {
          rmdFormatButton_.addMenuItem(option);
@@ -558,6 +558,13 @@ public class TextEditingTargetWidget
       editor_.onVisibilityChanged(visible);
    }
    
+   @Override
+   public HandlerRegistration addRmdFormatChangedHandler(
+         ValueChangeHandler<String> handler)
+   {
+      return rmdFormatButton_.addValueChangeHandler(handler);
+   }
+
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final FileTypeRegistry fileTypeRegistry_;
