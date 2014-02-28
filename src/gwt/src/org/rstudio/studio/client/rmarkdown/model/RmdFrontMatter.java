@@ -29,12 +29,21 @@ public class RmdFrontMatter extends JavaScriptObject
 
    public final native RmdFrontMatterOutputOptions getOutputOption(
          String format) /*-{
-     return this.output[format] || null;
+     var options = this.output[format];
+     if (typeof options === "undefined")
+        return null;
+     else if (options === "default")
+        return {}
+     else
+        return options;
    }-*/;
    
    public final native void setOutputOption(String format, 
          JavaScriptObject options) /*-{
-     this.output[format] = options;
+     if (Object.getOwnPropertyNames(options).length === 0)
+        this.output[format] = "default"
+     else
+        this.output[format] = options;
    }-*/;
    
    public final static String FRONTMATTER_SEPARATOR = "---\n";
