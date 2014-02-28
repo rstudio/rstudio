@@ -46,10 +46,12 @@ import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
 import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
+import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsLiteralInterner;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsLiteral;
 import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -89,6 +91,14 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         optimizeJavaToFixedPoint();
       }
       RemoveEmptySuperCalls.exec(jprogram);
+    }
+
+    @Override
+    protected void optimizeJs(Set<JsNode> inlinableJsFunctions) throws InterruptedException {
+      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+        optimizeJsLoop(inlinableJsFunctions);
+        JsDuplicateCaseFolder.exec(jsProgram);
+      }
     }
 
     @Override

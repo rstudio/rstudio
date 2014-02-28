@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.PrecompileTaskOptions;
+import com.google.gwt.dev.PrecompileTaskOptionsImpl;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConditionNone;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
@@ -37,9 +39,9 @@ import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
-import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
+import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
@@ -510,7 +512,11 @@ public class CodeSplitterTest extends JJSTestBase {
       }
     });
     addBuiltinClasses(sourceOracle);
-    CompilerContext compilerContext = new CompilerContext();
+
+    PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
+    options.setOutput(JsOutputOption.PRETTY);
+    CompilerContext compilerContext = new CompilerContext.Builder().options(options).build();
+
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, compilerContext,
             sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
@@ -532,7 +538,7 @@ public class CodeSplitterTest extends JJSTestBase {
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
-        jProgram, jsProgram, JsOutputOption.PRETTY, typeIdsByType, symbolTable, new PropertyOracle[]{
+        jProgram, jsProgram, compilerContext, typeIdsByType, symbolTable, new PropertyOracle[]{
         new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
     CodeSplitter.exec(logger, jProgram, jsProgram, map, expectedFragmentCount, leftOverMergeSize,
         NULL_RECORDER);

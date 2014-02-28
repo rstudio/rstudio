@@ -66,15 +66,15 @@ import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.AstDumper;
-import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
-import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
+import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
+import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
@@ -106,7 +106,6 @@ import com.google.gwt.dev.js.CoverageInstrumentor;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.FreshNameGenerator;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
-import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsLiteralInterner;
@@ -278,7 +277,7 @@ public abstract class JavaToJavaScriptCompiler {
 
         // (5) Construct the Js AST
         Pair<? extends JavaToJavaScriptMap, Set<JsNode>> jjsMapAndInlineableFunctions =
-            GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput(),
+            GenerateJavaScriptAST.exec(jprogram, jsProgram, compilerContext,
                 typeIdLiteralssByType,  symbolTable, propertyOracles);
         JavaToJavaScriptMap jjsmap = jjsMapAndInlineableFunctions.getLeft();
 
@@ -300,10 +299,9 @@ public abstract class JavaToJavaScriptCompiler {
         EvalFunctionsAtTopScope.exec(jsProgram, jjsmap);
 
         // (7) Optimize the JS AST.
-        if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
-          optimizeJs(jjsMapAndInlineableFunctions.getRight());
-          JsDuplicateCaseFolder.exec(jsProgram);
-        }
+
+        final Set<JsNode> inlinableJsFunctions = jjsMapAndInlineableFunctions.getRight();
+        optimizeJs(inlinableJsFunctions);
 
         // TODO(stalcup): move to normalization
         // Must run before code splitter and namer.
@@ -350,6 +348,9 @@ public abstract class JavaToJavaScriptCompiler {
         }
       }
     }
+
+    protected abstract  void optimizeJs(Set<JsNode> inlinableJsFunctions)
+        throws InterruptedException;
 
     protected abstract void optimizeJava() throws InterruptedException;
 
@@ -719,7 +720,7 @@ public abstract class JavaToJavaScriptCompiler {
       return new GZIPInputStream(artifact.getContents(TreeLogger.NULL));
     }
 
-    private void optimizeJs(Collection<JsNode> toInline) throws InterruptedException {
+    protected void optimizeJsLoop(Collection<JsNode> toInline) throws InterruptedException {
       List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
       int counter = 0;
       while (true) {
