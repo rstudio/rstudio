@@ -14,26 +14,58 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
+import com.google.gwt.dev.javac.CompilationStateTestBase;
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.CompiledClass;
-import com.google.gwt.dev.javac.MockCompilationUnit;
-import com.google.gwt.dev.javac.MockCompiledClass;
+import com.google.gwt.dev.javac.JdtCompilerTest;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import junit.framework.TestCase;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
  * Tests for ZipLibrary and ZipLibraryWriter.
  */
-public class ZipLibrariesTest extends TestCase {
+public class ZipLibrariesTest extends CompilationStateTestBase {
+
+  public static final MockJavaResource BAR = new MockJavaResource("test.Bar") {
+      @Override
+    public CharSequence getContent() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("package test;");
+      sb.append("public class Bar extends Foo {");
+      sb.append("  public String value() { return \"Bar\"; }");
+      sb.append("}");
+      return sb;
+    }
+  };
+
+  public static final MockJavaResource SUPER_FOO = new MockJavaResource("test.Foo") {
+      @Override
+    public CharSequence getContent() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("package test;");
+      sb.append("public class Foo {");
+      sb.append("}");
+      return sb;
+    }
+
+      @Override
+    public String getLocation() {
+      return "/super/" + path;
+    }
+
+      @Override
+    public boolean wasRerooted() {
+      return true;
+    }
+  };
 
   private static class SimpleMockResource extends MockResource {
 
@@ -60,26 +92,10 @@ public class ZipLibrariesTest extends TestCase {
     Set<String> expectedUserAgentConfigurationValues = Sets.newHashSet("webkit");
     Set<String> expectedLocaleConfigurationValues = Sets.newHashSet("en", "fr");
     Set<String> expectedDependencyLibraryNames = Sets.newHashSet("FooLib", "BarLib");
-    MockCompilationUnit expectedCompilationUnit =
-        new MockCompilationUnit("com.google.gwt.lang.RuntimeRebinder", "blah");
-    MockCompilationUnit expectedSuperSourceCompilationUnit = new MockCompilationUnit(
-        "com.google.gwt.lang.SuperRuntimeRebinder", "superblah") {
-      @Override
-      public boolean isSuperSource() {
-        return true;
-      }
-    };
-    MockCompilationUnit expectedNestedTypeCompilationUnit =
-        new MockCompilationUnit("com.google.gwt.user.Outer", "superblah") {
-            @Override
-          public Collection<CompiledClass> getCompiledClasses() {
-            MockCompiledClass outerCompiledClass = new MockCompiledClass(null,
-                "com/google/gwt/user/Outer", "com.google.gwt.user.Outer");
-            MockCompiledClass innerCompiledClass = new MockCompiledClass(outerCompiledClass,
-                "com/google/gwt/user/Outer$Inner", "com.google.gwt.user.Outer.Inner");
-            return Lists.<CompiledClass> newArrayList(outerCompiledClass, innerCompiledClass);
-          }
-        };
+    oracle.add(BAR, SUPER_FOO, JdtCompilerTest.OUTER_INNER);
+    rebuildCompilationState();
+    List<CompilationUnit> compilationUnits =
+        Lists.newArrayList(state.getCompilationUnitMap().values());
 
     // Put data in the library and save it.
     ZipLibraryWriter zipLibraryWriter = new ZipLibraryWriter(zipFile.getPath());
@@ -93,25 +109,25 @@ public class ZipLibrariesTest extends TestCase {
         return expectedResourceContents;
       }
     });
-    zipLibraryWriter.addNewConfigurationPropertyValuesByName(
-        "user.agent", expectedUserAgentConfigurationValues);
-    zipLibraryWriter.addNewConfigurationPropertyValuesByName(
-        "locale", expectedLocaleConfigurationValues);
+    zipLibraryWriter.addNewConfigurationPropertyValuesByName("user.agent",
+        expectedUserAgentConfigurationValues);
+    zipLibraryWriter.addNewConfigurationPropertyValuesByName("locale",
+        expectedLocaleConfigurationValues);
     for (String generatorName : expectedRanGeneratorNames) {
       zipLibraryWriter.addRanGeneratorName(generatorName);
     }
     zipLibraryWriter.addDependencyLibraryNames(expectedDependencyLibraryNames);
-    zipLibraryWriter.addCompilationUnit(expectedCompilationUnit);
-    zipLibraryWriter.addCompilationUnit(expectedSuperSourceCompilationUnit);
-    zipLibraryWriter.addCompilationUnit(expectedNestedTypeCompilationUnit);
+    for (CompilationUnit compilationUnit : compilationUnits) {
+      zipLibraryWriter.addCompilationUnit(compilationUnit);
+    }
     zipLibraryWriter.write();
 
     // Read data back from disk.
     ZipLibrary zipLibrary = new ZipLibrary(zipFile.getPath());
-    CompilationUnit actualCompilationUnit =
-        zipLibrary.getCompilationUnitByTypeSourceName("com.google.gwt.lang.RuntimeRebinder");
-    CompilationUnit actualSuperSourceCompilationUnit =
-        zipLibrary.getCompilationUnitByTypeSourceName("com.google.gwt.lang.SuperRuntimeRebinder");
+    CompilationUnit barCompilationUnit =
+        zipLibrary.getCompilationUnitByTypeSourceName(BAR.getTypeName());
+    CompilationUnit superFooCompilationUnit =
+        zipLibrary.getCompilationUnitByTypeSourceName(SUPER_FOO.getTypeName());
 
     // Compare it.
     assertEquals(expectedLibraryName, zipLibrary.getLibraryName());
@@ -123,17 +139,25 @@ public class ZipLibrariesTest extends TestCase {
     assertEquals(expectedLocaleConfigurationValues,
         zipLibrary.getNewConfigurationPropertyValuesByName().get("locale"));
     assertEquals(expectedDependencyLibraryNames, zipLibrary.getDependencyLibraryNames());
+
     // CompilationUnit
-    assertEquals(
-        expectedCompilationUnit.getResourceLocation(), actualCompilationUnit.getResourceLocation());
-    assertEquals(expectedCompilationUnit.getTypeName(), actualCompilationUnit.getTypeName());
+    List<JDeclaredType> barTypes = barCompilationUnit.getTypes();
+    assertEquals(1, barTypes.size());
+    assertEquals(BAR.getTypeName(), barTypes.get(0).getName());
+    assertEquals(BAR.getLocation(), barCompilationUnit.getResourceLocation());
+    assertEquals(BAR.getTypeName(), barCompilationUnit.getTypeName());
+
     // SuperSourceCompilationUnit
-    assertEquals(expectedSuperSourceCompilationUnit.getResourceLocation(),
-        actualSuperSourceCompilationUnit.getResourceLocation());
-    assertEquals(expectedSuperSourceCompilationUnit.getTypeName(),
-        actualSuperSourceCompilationUnit.getTypeName());
-    assertTrue(zipLibrary.getNestedNamesByCompilationUnitName().get("com.google.gwt.user.Outer")
-        .contains("com.google.gwt.user.Outer.Inner"));
+    List<JDeclaredType> superFoo = superFooCompilationUnit.getTypes();
+    assertEquals(1, superFoo.size());
+    assertEquals(SUPER_FOO.getTypeName(), superFoo.get(0).getName());
+    assertEquals(SUPER_FOO.getLocation(), superFooCompilationUnit.getResourceLocation());
+    assertEquals(SUPER_FOO.getTypeName(), superFooCompilationUnit.getTypeName());
+
+    // Can find inner classes.
+    assertTrue(zipLibrary.getNestedNamesByCompilationUnitName().get(
+        JdtCompilerTest.OUTER_INNER.getTypeName()).contains(
+        JdtCompilerTest.OUTER_INNER.getTypeName() + ".Inner"));
   }
 
   public void testVersionNumberException() throws IOException {
