@@ -146,13 +146,12 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
       toolbar.addLeftWidget(knitDocumentButton_ = commands_.knitDocument().createToolbarButton());
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
       rmdFormatButton_ = new ToolbarPopupMenuButton();
       rmdFormatButton_.setText("Format");
       toolbar.addLeftWidget(rmdFormatButton_);
+      toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
