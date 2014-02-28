@@ -144,10 +144,11 @@ public class TextEditingTargetWidget
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
-      toolbar.addLeftWidget(knitDocumentButton_ = commands_.knitDocument().createToolbarButton());
+      knitDocumentButton_ = commands_.knitDocument().createToolbarButton();
+      knitDocumentButton_.getElement().getStyle().setMarginRight(2, Unit.PX);
+      toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
-      rmdFormatButton_ = new ToolbarPopupMenuButton();
-      rmdFormatButton_.setText("Format");
+      rmdFormatButton_ = new ToolbarPopupMenuButton(false);
       toolbar.addLeftWidget(rmdFormatButton_);
       toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
       toolbar.addLeftSeparator();
@@ -362,7 +363,7 @@ public class TextEditingTargetWidget
       runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
-      knitDocumentButton_.setText(width < 450 ? "" : "Knit");
+      knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
       if (editor_.getFileType().isRd())
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
@@ -505,13 +506,15 @@ public class TextEditingTargetWidget
    
 
    @Override
-   public void setFormatOptions(List<String> options, String selected)
+   public void setFormatOptions(List<String> options, List<String> values, 
+                                String selectedOption)
    {
       rmdFormatButton_.clearMenu();
-      rmdFormatButton_.setText(selected, false);
-      for (String option: options)
+      knitCommandText_ = "Knit " + selectedOption;
+      knitDocumentButton_.setText(knitCommandText_);
+      for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
-         rmdFormatButton_.addMenuItem(option);
+         rmdFormatButton_.addMenuItem("Knit " + options.get(i), values.get(i));
       }
    }
 
@@ -596,4 +599,5 @@ public class TextEditingTargetWidget
 
    private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;
    private String sourceCommandText_ = "Source";
+   private String knitCommandText_ = "Knit";
 }

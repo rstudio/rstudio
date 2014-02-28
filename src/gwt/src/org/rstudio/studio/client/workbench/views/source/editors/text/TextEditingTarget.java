@@ -176,7 +176,8 @@ public class TextEditingTarget implements
       void debug_dumpContents();
       void debug_importDump();
       
-      void setFormatOptions(List<String> options, String selected);
+      void setFormatOptions(List<String> options, List<String> values, 
+                            String selected);
       HandlerRegistration addRmdFormatChangedHandler(
             ValueChangeHandler<String> handler);
    }
@@ -2348,47 +2349,44 @@ public class TextEditingTarget implements
       String formatUiName = "";
       JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
       List<String> formatList = new ArrayList<String>();
+      List<String> valueList = new ArrayList<String>();
       for (int i = 0; i < formats.length(); i++)
       {
          String uiName = formats.get(i).getUiName();
          formatList.add(uiName);
+         valueList.add(formats.get(i).getName());
          if (formats.get(i).getName().equals(selTemplate.format))
          {
             formatUiName = uiName;
          }
       }
-      view_.setFormatOptions(formatList, formatUiName);
+      view_.setFormatOptions(formatList, valueList, formatUiName);
    }
    
-   private void setRmdFormat(String formatUiName)
+   private void setRmdFormat(String formatName)
    {
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
       if (selTemplate == null)
          return;
       
-      // find the format in the current template that matches the given UI name
-      JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
-      for (int i = 0; i < formats.length(); i++)
+      // do nothing if this is the current format
+      if (selTemplate.format.equals(formatName))
+         return;
+      
+      YamlTree yamlTree = new YamlTree(getRmdFrontMatter());
+      List<String> outputFormats = yamlTree.getChildKeys("output");
+      if (!outputFormats.contains(formatName))
       {
-         if (formats.get(i).getUiName().equals(formatUiName))
-         {
-            String formatName = formats.get(i).getName();
-            YamlTree yamlTree = new YamlTree(getRmdFrontMatter());
-            List<String> outputFormats = yamlTree.getChildKeys("output");
-            if (outputFormats.contains(formatName))
-            {
-               // this format is already defined; just move it to the top
-               yamlTree.reorder(Arrays.asList(formatName));
-               applyRmdFrontMatter(yamlTree.toString());
-            }
-            else
-            {
-               // not already defined, launch the editor dialog 
-               showFrontMatterEditor(formatName);
-            }
-            return;
-         }
+         // we need to add this format to the yaml
+         yamlTree.addYamlLine("output", formatName + ": default");
       }
+
+      // move this format to the top of the list
+      yamlTree.reorder(Arrays.asList(formatName));
+      applyRmdFrontMatter(yamlTree.toString());
+      
+      // re-knit the document
+      renderRmd();
    }
    
    void doReflowComment(String commentPrefix)

@@ -30,13 +30,23 @@ public class YamlTree
       {
          yamlLine = line;
          key = getKey(line);
-         indentLevel = getIndentLevel(line);
+         indentLevel = getIndentLevel();
       }
       
       public void addChild(YamlTreeNode child)
       {
          children.add(child);
          child.parent = this;
+      }
+      
+      public String getIndent()
+      {
+         RegExp whitespace = RegExp.compile("^\\s*");
+         MatchResult result = whitespace.exec(yamlLine);
+         if (result == null)
+            return "";
+         else
+            return result.getGroup(0);
       }
       
       public String yamlLine;
@@ -55,11 +65,9 @@ public class YamlTree
             return result.getGroup(1);
       }
 
-      private int getIndentLevel(String line)
+      private int getIndentLevel()
       {
-         RegExp whitespace = RegExp.compile("^\\s*");
-         MatchResult result = whitespace.exec(line);
-         return result.getGroup(0).length();
+         return getIndent().length();
       }
    }
    
@@ -106,6 +114,17 @@ public class YamlTree
          result.add(child.key);
       }
       return result;
+   }
+   
+   public void addYamlLine(String parentKey, String line)
+   {
+      if (keyMap_.containsKey(parentKey))
+      {
+         YamlTreeNode parent = keyMap_.get(parentKey);
+         YamlTreeNode child = 
+               new YamlTreeNode(parent.getIndent() + "  " + line);
+         parent.children.add(child);
+      }
    }
 
    private YamlTreeNode createYamlTree(String yaml)
