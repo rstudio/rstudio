@@ -78,6 +78,11 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
+import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
+import org.rstudio.studio.client.rmarkdown.model.YamlTree;
+import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -105,6 +110,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -126,8 +132,10 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitH
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class TextEditingTarget implements 
                                   EditingTarget,
@@ -167,6 +175,10 @@ public class TextEditingTarget implements
 
       void debug_dumpContents();
       void debug_importDump();
+      
+      void setFormatOptions(List<String> options, String selected);
+      HandlerRegistration addRmdFormatChangedHandler(
+            ValueChangeHandler<String> handler);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -641,7 +653,7 @@ public class TextEditingTarget implements
                                           fileTypeRegistry_,
                                           docDisplay_,
                                           fileType_,
-                                          document.getExtendedType(),
+                                          extendedType_,
                                           events_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
@@ -871,6 +883,20 @@ public class TextEditingTarget implements
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
       }
       
+      // for R Markdown docs, populate the popup menu with a list of available
+      // formats
+      if (extendedType_.equals("rmarkdown"))
+         updateRmdFormatList();
+      
+      view_.addRmdFormatChangedHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            setRmdFormat(event.getValue());
+         }
+      });
+
       initStatusBar();
    }
    
@@ -1767,6 +1793,8 @@ public class TextEditingTarget implements
    public void adaptToExtendedFileType(String extendedType)
    {
       view_.adaptToExtendedFileType(extendedType);
+      if (extendedType.equals("rmarkdown"))
+         updateRmdFormatList();
       extendedType_ = extendedType;
    }
 
@@ -2189,6 +2217,180 @@ public class TextEditingTarget implements
             docUpdateSentinel_.getPath()));
    }
 
+   @Handler 
+   void onEditRmdFormatOptions()
+   {
+      showFrontMatterEditor(null);
+   }
+   
+   private void showFrontMatterEditor(final String initialFormat)
+   {
+      final String yaml = getRmdFrontMatter();
+      if (yaml == null)
+      {
+         globalDisplay_.showErrorMessage("Edit Format Failed",  
+               "Can't find the YAML front matter for this document. Make " +
+               "sure the front matter is enclosed by lines containing only " +
+               "three dashes: ---.");
+         return;
+      }
+      rmarkdownHelper_.convertFromYaml(yaml, new CommandWithArg<RmdYamlData>() 
+      {
+         @Override
+         public void execute(RmdYamlData arg)
+         {
+            showFrontMatterEditorDialog(yaml, arg, initialFormat);
+         }
+      });
+   }
+   
+   private void showFrontMatterEditorDialog(String yaml, RmdYamlData data, 
+                                            String initialFormat)
+   {
+      // Get the selected template format from the YAML, and show the 
+      // dialog for the given format (or the format currently at the top
+      // of the YAML if not supplied)
+      RmdSelectedTemplate selTemplate = 
+            rmarkdownHelper_.getTemplateFormat(yaml);
+      if (initialFormat == null)
+         initialFormat = selTemplate.format;
+      RmdTemplateOptionsDialog dialog = 
+         new RmdTemplateOptionsDialog(selTemplate.template, initialFormat,
+            data.getFrontMatter(),
+            new OperationWithInput<RmdTemplateOptionsDialog.Result>()
+            {
+               @Override
+               public void execute(RmdTemplateOptionsDialog.Result in)
+               {
+                  // when the dialog is completed successfully, apply the new
+                  // front matter
+                  applyRmdFrontMatter(in);
+               }
+            }, 
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  // when the dialog is cancelled, update the view's format list
+                  // (to cancel in-place changes)
+                  updateRmdFormatList();
+               }
+            });
+      dialog.showModal();
+   }
+   
+   private int[] getFrontMatterRange(String code)
+   {
+      String separator = RmdFrontMatter.FRONTMATTER_SEPARATOR;
+      int beginPos = code.indexOf(separator) + separator.length();
+      if (beginPos < 0)
+         return null;
+      int endPos = code.indexOf(separator, beginPos);
+      if (endPos < 0)
+         return null;
+      return new int[] { beginPos, endPos };
+   }
+
+   private String getRmdFrontMatter()
+   {
+      String code = docDisplay_.getCode();
+      int[] range = getFrontMatterRange(code);
+      if (range == null)
+         return null;
+      return code.substring(range[0], range[1]);
+   }
+   
+   private void applyRmdFrontMatter(String yaml)
+   {
+      String code = docDisplay_.getCode();
+      int[] range = getFrontMatterRange(code);
+      if (range == null)
+         return;
+      code = code.substring(0, range[0]) + yaml + 
+             code.substring(range[1], code.length());
+      docDisplay_.setCode(code, true);
+      updateRmdFormatList();
+   }
+
+   private void applyRmdFrontMatter(RmdTemplateOptionsDialog.Result result)
+   {
+      rmarkdownHelper_.frontMatterToYAML(result.frontMatter, 
+            result.format,
+            new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String yaml)
+         {
+            applyRmdFrontMatter(yaml);
+         }
+      });
+   }
+   
+   private RmdSelectedTemplate getSelectedTemplate()
+   {
+      // try to extract the front matter and ascertain the template to which
+      // it refers
+      String yaml = getRmdFrontMatter();
+      if (yaml == null)
+         return null;
+      return rmarkdownHelper_.getTemplateFormat(yaml);
+   }
+   
+   private void updateRmdFormatList()
+   {
+      RmdSelectedTemplate selTemplate = getSelectedTemplate();
+      if (selTemplate == null)
+         return;
+      
+      // we know which template this doc is using--populate the format list
+      // with the formats available in the template
+      String formatUiName = "";
+      JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
+      List<String> formatList = new ArrayList<String>();
+      for (int i = 0; i < formats.length(); i++)
+      {
+         String uiName = formats.get(i).getUiName();
+         formatList.add(uiName);
+         if (formats.get(i).getName().equals(selTemplate.format))
+         {
+            formatUiName = uiName;
+         }
+      }
+      view_.setFormatOptions(formatList, formatUiName);
+   }
+   
+   private void setRmdFormat(String formatUiName)
+   {
+      RmdSelectedTemplate selTemplate = getSelectedTemplate();
+      if (selTemplate == null)
+         return;
+      
+      // find the format in the current template that matches the given UI name
+      JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
+      for (int i = 0; i < formats.length(); i++)
+      {
+         if (formats.get(i).getUiName().equals(formatUiName))
+         {
+            String formatName = formats.get(i).getName();
+            YamlTree yamlTree = new YamlTree(getRmdFrontMatter());
+            List<String> outputFormats = yamlTree.getChildKeys("output");
+            if (outputFormats.contains(formatName))
+            {
+               // this format is already defined; just move it to the top
+               yamlTree.reorder(Arrays.asList(formatName));
+               applyRmdFrontMatter(yamlTree.toString());
+            }
+            else
+            {
+               // not already defined, launch the editor dialog 
+               showFrontMatterEditor(formatName);
+            }
+            return;
+         }
+      }
+   }
+   
    void doReflowComment(String commentPrefix)
    {
       doReflowComment(commentPrefix, true);

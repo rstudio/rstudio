@@ -63,6 +63,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -876,7 +877,8 @@ public class Source implements InsertSourceHandler,
    
    private void newRMarkdownV2Doc(final NewRMarkdownDialog.Result result)
    {
-      rmarkdown_.convertToYAML(result.getJSOResult(), 
+      rmarkdown_.frontMatterToYAML((RmdFrontMatter)result.getJSOResult().cast(), 
+            null,
             new CommandWithArg<String>()
       {
          @Override

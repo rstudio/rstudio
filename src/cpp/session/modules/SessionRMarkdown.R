@@ -13,6 +13,18 @@
 #
 #
 
+.rs.addFunction("scalarListFromList", function(l)
+{
+   # hint that every non-list element of the hierarchical list l
+   # is a scalar value
+   l <- lapply(l, function(ele) {
+      if (is.list(ele)) 
+         .rs.scalarListFromList(ele)
+      else
+         .rs.scalar(ele)
+   })
+})
+
 .rs.addFunction("updateRMarkdownPackage", function(archive) 
 {
   pkgDir <- find.package("rmarkdown")
@@ -28,3 +40,7 @@
    list(yaml = .rs.scalar(yaml::as.yaml(input)))
 })
 
+.rs.addJsonRpcHandler("convert_from_yaml", function(yaml)
+{
+   list(data = .rs.scalarListFromList(yaml::yaml.load(yaml)))
+})

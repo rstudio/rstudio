@@ -1,5 +1,5 @@
 /*
- * RmdTemplate.java
+ * RmdFrontMatter.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -15,31 +15,27 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
-public class RmdTemplate extends JavaScriptObject
+public class RmdFrontMatter extends JavaScriptObject
 {
-   protected RmdTemplate() 
+   protected RmdFrontMatter()
    {
    }
    
-   public static final native RmdTemplate create() /*-{
-      return {
-         template_name: "",
-         template_formats: [ ],
-         template_options: [ ]
-      };
+   public final native JsArrayString getFormatList() /*-{
+     return Object.getOwnPropertyNames(this.output);
    }-*/;
 
-   public final native String getName() /*-{
-      return this.template_name;
+   public final native RmdFrontMatterOutputOptions getOutputOption(
+         String format) /*-{
+     return this.output[format] || null;
    }-*/;
-
-   public final native JsArray<RmdTemplateFormat> getFormats() /*-{
-      return this.template_formats;
+   
+   public final native void setOutputOption(String format, 
+         JavaScriptObject options) /*-{
+     this.output[format] = options;
    }-*/;
-
-   public final native JsArray<RmdTemplateFormatOption> getOptions() /*-{
-      return this.template_options;
-   }-*/;
+   
+   public final static String FRONTMATTER_SEPARATOR = "---\n";
 }

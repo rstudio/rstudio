@@ -63,6 +63,7 @@ import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
@@ -3251,6 +3252,18 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void convertFromYAML(String yaml,
+         ServerRequestCallback<RmdYamlData> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(yaml));
+      sendRequest(RPC_SCOPE,
+            CONVERT_FROM_YAML,
+            params,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3538,4 +3551,5 @@ public class RemoteServer implements Server
    private static final String RENDER_RMD = "render_rmd";
    private static final String TERMINATE_RENDER_RMD = "terminate_render_rmd";
    private static final String CONVERT_TO_YAML = "convert_to_yaml";
+   private static final String CONVERT_FROM_YAML = "convert_from_yaml";
 }

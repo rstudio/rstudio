@@ -1,5 +1,5 @@
 /*
- * NewRmdBooleanOption.java
+ * RmdBooleanOption.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,22 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
+package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLPanel;
 
-public class NewRmdBooleanOption extends NewRmdBaseOption
+public class RmdBooleanOption extends RmdBaseOption
 {
-   public NewRmdBooleanOption(RmdTemplateFormatOption option)
+   public RmdBooleanOption(RmdTemplateFormatOption option, String initialValue)
    {
       super(option);
       HTMLPanel panel = new HTMLPanel("");
       checkBox_ = new CheckBox(option.getUiName());
       defaultValue_ = Boolean.parseBoolean(option.getDefaultValue());
-      checkBox_.setValue(defaultValue_);
+      checkBox_.setValue(Boolean.parseBoolean(initialValue));
       panel.add(checkBox_);
       initWidget(panel);
    }

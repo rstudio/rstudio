@@ -1,5 +1,5 @@
 /*
- * RmdTemplate.java
+ * RmdFrontMatterOutputOptions.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,34 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
-public class RmdTemplate extends JavaScriptObject
+public class RmdFrontMatterOutputOptions extends JavaScriptObject
 {
-   protected RmdTemplate() 
+   protected RmdFrontMatterOutputOptions()
    {
    }
    
-   public static final native RmdTemplate create() /*-{
-      return {
-         template_name: "",
-         template_formats: [ ],
-         template_options: [ ]
-      };
+   public final native JsArrayString getOptionList() /*-{
+      return Object.getOwnPropertyNames(this);
    }-*/;
-
-   public final native String getName() /*-{
-      return this.template_name;
-   }-*/;
-
-   public final native JsArray<RmdTemplateFormat> getFormats() /*-{
-      return this.template_formats;
-   }-*/;
-
-   public final native JsArray<RmdTemplateFormatOption> getOptions() /*-{
-      return this.template_options;
+   
+   public final native String getOptionValue(String optionName) /*-{
+      var option = this[optionName];
+      if (typeof option === "undefined")
+         return null;
+      else 
+         return option.toString();
    }-*/;
 }

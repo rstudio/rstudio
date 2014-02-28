@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:r="urn:import:org.rstudio.core.client.widget">
+	xmlns:rw="urn:import:org.rstudio.core.client.widget"
+	xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
 
 	<ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
 	<ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.NewRmdStyle">
@@ -22,23 +23,10 @@
 	  -webkit-box-sizing: border-box;
 	}
 	
-	.templateList option
-	{
-	  padding: 2px;
-     font-size: 120%;
-	}
-	
 	.topLabel
 	{
 	  font-weight: bold;
 	  margin-right: 5px;
-	}
-	
-	.formatPanel
-	{
-	  padding: 6px;
-	  background-color: #e0e0e0;
-	  margin-bottom: 10px;
 	}
 	
 	.templateDetails
@@ -56,10 +44,6 @@
 	  margin-left: 15px;
 	}
 	
-	.notesLabel
-	{
-	   color: #505050;
-	}
 	</ui:style>
 	<g:HTMLPanel>
 	<g:InlineLabel styleName="{style.topLabel}" text="Title:"></g:InlineLabel>
@@ -67,19 +51,12 @@
 	<g:InlineLabel styleName="{style.topLabel} {style.authorLabel}" text="Author:"></g:InlineLabel>
 	<g:TextBox styleName="{style.textBox}" width="100px" ui:field="txtAuthor_"></g:TextBox>
 	<g:HorizontalPanel height="300px" styleName="{style.templatePanel}">
-     <r:WidgetListBox ui:field="listTemplates_"
+     <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
-                width="150px"></r:WidgetListBox>
-     <g:HeaderPanel styleName="{style.templateDetails}" width="300px" height="100%">
-        <g:FlowPanel styleName="{style.formatPanel}">
-           <g:InlineLabel styleName="{style.topLabel}" text="Output Format:"></g:InlineLabel>
-           <g:ListBox ui:field="listFormats_"></g:ListBox>
-           <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"></g:Label>
-        </g:FlowPanel>
-        <g:ScrollPanel height="100%">
-           <g:VerticalPanel ui:field="panelOptions_"></g:VerticalPanel>
-        </g:ScrollPanel>
-     </g:HeaderPanel>
+                width="150px"></rw:WidgetListBox>
+     <rmd:RmdTemplateOptionsWidget ui:field="templateOptions_"
+                styleName="{style.templateDetails}" width="300px" height="100%">
+     </rmd:RmdTemplateOptionsWidget>
 	</g:HorizontalPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
