@@ -78,6 +78,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
@@ -2215,29 +2216,62 @@ public class TextEditingTarget implements
          @Override
          public void execute(RmdYamlData arg)
          {
-            YamlTree tree = new YamlTree(yaml);
+            showFrontMatterEditor(yaml, arg);
+         }
+      });
+   }
+   
+   private void showFrontMatterEditor(String yaml, RmdYamlData data)
+   {
+      YamlTree tree = new YamlTree(yaml);
 
-            // Find the template appropriate to the first output format listed
-            List<String> outputs = tree.getChildKeys("output");
-            String firstOutput = outputs.get(0);
-            JsArray<RmdTemplate> templates = RmdTemplateData.getTemplates();
-            for (int i = 0; i < templates.length(); i++)
+      // Find the template appropriate to the first output format listed
+      List<String> outputs = tree.getChildKeys("output");
+      String firstOutput = outputs.get(0);
+      JsArray<RmdTemplate> templates = RmdTemplateData.getTemplates();
+      for (int i = 0; i < templates.length(); i++)
+      {
+         JsArray<RmdTemplateFormat> formats = 
+               templates.get(i).getFormats();
+         for (int j = 0; j < formats.length(); j++)
+         {
+            if (formats.get(j).getName().equals(firstOutput))
             {
-               JsArray<RmdTemplateFormat> formats = 
-                     templates.get(i).getFormats();
-               for (int j = 0; j < formats.length(); j++)
-               {
-                  if (formats.get(j).getName().equals(firstOutput))
-                  {
-                     RmdTemplateOptionsDialog dialog = 
-                           new RmdTemplateOptionsDialog(templates.get(i), 
-                                                        firstOutput,
-                                                        arg.getFrontMatter());
-                     dialog.showModal();
-                     return;
-                  }
-               }
+               RmdTemplateOptionsDialog dialog = 
+                  new RmdTemplateOptionsDialog(templates.get(i), 
+                     firstOutput,
+                     data.getFrontMatter(),
+                     new OperationWithInput<RmdTemplateOptionsDialog.Result>()
+                     {
+                        @Override
+                        public void execute(RmdTemplateOptionsDialog.Result in)
+                        {
+                           applyRmdFrontMatter(in);
+                        }
+                     });
+               dialog.showModal();
+               return;
             }
+         }
+      }
+   }
+   
+   private void applyRmdFrontMatter(RmdTemplateOptionsDialog.Result result)
+   {
+      rmarkdownHelper_.frontMatterToYAML(result.frontMatter, 
+            result.format,
+            new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String yaml)
+         {
+            String code = docDisplay_.getCode();
+            String separator = RmdFrontMatter.FRONTMATTER_SEPARATOR;
+            int beginPos = code.indexOf(separator) + separator.length();
+            int endPos = code.indexOf(separator, beginPos);
+            code = code.substring(0, beginPos) + yaml + 
+                   code.substring(endPos, code.length());
+            docDisplay_.setCode(code, true);
          }
       });
    }

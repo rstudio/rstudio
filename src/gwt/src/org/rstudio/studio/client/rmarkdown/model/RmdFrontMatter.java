@@ -31,4 +31,11 @@ public class RmdFrontMatter extends JavaScriptObject
          String format) /*-{
      return this.output[format] || null;
    }-*/;
+   
+   public final native void setOutputOption(String format, 
+         JavaScriptObject options) /*-{
+     this.output[format] = options;
+   }-*/;
+   
+   public final static String FRONTMATTER_SEPARATOR = "---\n";
 }

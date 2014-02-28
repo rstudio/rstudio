@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
@@ -179,8 +180,9 @@ public class TextEditingTargetRMarkdownHelper
       return true;
    }
    
-   public void convertToYAML(JavaScriptObject input, 
-                             final CommandWithArg<String> onFinished)
+   public void frontMatterToYAML(RmdFrontMatter input, 
+                                 final String format,
+                                 final CommandWithArg<String> onFinished)
    {
       server_.convertToYAML(input, new ServerRequestCallback<RmdYamlResult>()
       {
@@ -190,6 +192,8 @@ public class TextEditingTargetRMarkdownHelper
             YamlTree yamlTree = new YamlTree(yamlResult.getYaml());
             yamlTree.reorder(
                   Arrays.asList("title", "author", "date", "output"));
+            if (format != null)
+               yamlTree.reorder(Arrays.asList(format));
             onFinished.execute(yamlTree.toString());
          }
          @Override

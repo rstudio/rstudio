@@ -92,6 +92,18 @@ public class RmdTemplateOptionsWidget extends Composite
       return listFormats_.getValue(listFormats_.getSelectedIndex());
    }
    
+   // Returns a modified version of the front matter, with the current set
+   // of options applied.
+   public RmdFrontMatter getFrontMatter()
+   {
+      if (frontMatter_ == null)
+         return null;
+      frontMatter_.setOutputOption(
+            getSelectedFormat(), 
+            RmdFormatOptionsHelper.optionsListToJson(optionWidgets_));
+      return frontMatter_;
+   }
+   
    public void setSelectedFormat(String format)
    {
       for (int i = 0; i < listFormats_.getItemCount(); i++)
@@ -147,12 +159,12 @@ public class RmdTemplateOptionsWidget extends Composite
 
          // check to see whether a value for this format and option were
          // specified in the front matter
-         if (frontMatter_ != null)
+         if (frontMatterCache_ != null)
          {
             String key = format.getName() + ":" + option.getName();
-            if (frontMatter_.containsKey(key))
+            if (frontMatterCache_.containsKey(key))
             {
-               initialValue = frontMatter_.get(key);
+               initialValue = frontMatterCache_.get(key);
             }
          }
          
@@ -212,7 +224,8 @@ public class RmdTemplateOptionsWidget extends Composite
    
    private void applyFrontMatter(RmdFrontMatter frontMatter)
    {
-      frontMatter_ = new HashMap<String, String>();
+      frontMatter_ = frontMatter;
+      frontMatterCache_ = new HashMap<String, String>();
       JsArrayString formats = frontMatter.getFormatList();
       for (int i = 0; i < formats.length(); i++)
       {
@@ -223,7 +236,7 @@ public class RmdTemplateOptionsWidget extends Composite
          for (int j = 0; j < optionList.length(); j++)
          {
             String option = optionList.get(j);
-            frontMatter_.put(format + ":" + option, 
+            frontMatterCache_.put(format + ":" + option, 
                              options.getOptionValue(option));
          }
       }
@@ -233,7 +246,8 @@ public class RmdTemplateOptionsWidget extends Composite
    private JsArray<RmdTemplateFormatOption> options_;
    private List<RmdFormatOption> optionWidgets_;
    private boolean forCreate_ = false;
-   private Map<String, String> frontMatter_;
+   private Map<String, String> frontMatterCache_;
+   private RmdFrontMatter frontMatter_;
 
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;

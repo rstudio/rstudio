@@ -14,23 +14,38 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 
 import com.google.gwt.user.client.ui.Widget;
 
-public class RmdTemplateOptionsDialog extends ModalDialogBase
+public class RmdTemplateOptionsDialog 
+   extends ModalDialog<RmdTemplateOptionsDialog.Result>
 {
-   public RmdTemplateOptionsDialog(RmdTemplate template, String initialFormat,
-                                   RmdFrontMatter frontMatter)
+   public class Result
    {
-      setText("Edit R Markdown Format Options");
+      public Result(RmdFrontMatter frontMatter, String format)
+      {
+         this.frontMatter = frontMatter;
+         this.format = format;
+      }
+
+      public RmdFrontMatter frontMatter;
+      public String format;
+   }
+
+   public RmdTemplateOptionsDialog(RmdTemplate template,
+         String initialFormat,
+         RmdFrontMatter frontMatter, 
+         OperationWithInput<RmdTemplateOptionsDialog.Result> onSaved)
+   {
+      super("Edit R Markdown Format Options", onSaved);
       setWidth("350px");
       setHeight("400px");
-      addCancelButton();
-      addOkButton(new ThemedButton("OK"));
       templateOptions_ = new RmdTemplateOptionsWidget();
       templateOptions_.setTemplate(template, false, frontMatter);
       templateOptions_.setSelectedFormat(initialFormat);
@@ -44,5 +59,18 @@ public class RmdTemplateOptionsDialog extends ModalDialogBase
       return templateOptions_;
    }
    
+   @Override
+   protected RmdTemplateOptionsDialog.Result collectInput()
+   {
+      return new Result(templateOptions_.getFrontMatter(), 
+                        templateOptions_.getSelectedFormat());
+   }
+
+   @Override
+   protected boolean validate(RmdTemplateOptionsDialog.Result input)
+   {
+      return true;
+   }
+
    RmdTemplateOptionsWidget templateOptions_;
 }
