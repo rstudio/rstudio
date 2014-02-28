@@ -49,6 +49,22 @@ public class YamlTree
             return result.getGroup(0);
       }
       
+      public String getValue()
+      {
+         int idx = yamlLine.indexOf(":");
+         if (idx < 0)
+            return "";
+         return yamlLine.substring(idx + 2);
+      }
+      
+      public void setValue(String value)
+      {
+         int idx = yamlLine.indexOf(":");
+         if (idx < 0)
+            return;
+         yamlLine = yamlLine.substring(0, idx + 2) + value;
+      }
+      
       public String yamlLine;
       public String key;
       public int indentLevel = 0;
@@ -86,7 +102,9 @@ public class YamlTree
    public void reorder(List<String> orderedKeys)
    {
       // Sort the YAML lines into a tree
-      YamlTreeNode parent = findParentNodeOfKey(root_, orderedKeys.get(0));
+      if (!keyMap_.containsKey(orderedKeys.get(0)))
+         return;
+      YamlTreeNode parent = keyMap_.get(orderedKeys.get(0)).parent;
       
       // Move around subtrees to match the given list of ordered keys 
       // (swap subtrees into a position matching that specified)
@@ -107,6 +125,8 @@ public class YamlTree
 
    public List<String> getChildKeys(String parentKey)
    {
+      if (!keyMap_.containsKey(parentKey))
+         return null;
       YamlTreeNode parent = keyMap_.get(parentKey);
       ArrayList<String> result = new ArrayList<String>();
       for (YamlTreeNode child: parent.children)
@@ -116,15 +136,30 @@ public class YamlTree
       return result;
    }
    
-   public void addYamlLine(String parentKey, String line)
+   public void addYamlValue(String parentKey, String key, String value)
    {
+      String line = key + ": " + value;
       if (keyMap_.containsKey(parentKey))
       {
          YamlTreeNode parent = keyMap_.get(parentKey);
          YamlTreeNode child = 
                new YamlTreeNode(parent.getIndent() + "  " + line);
-         parent.children.add(child);
+         keyMap_.put(key, child);
+         parent.addChild(child);
       }
+   }
+   
+   public String getKeyValue(String key)
+   {
+      if (keyMap_.containsKey(key))
+         return keyMap_.get(key).getValue();
+      return "";
+   }
+
+   public void setKeyValue(String key, String value)
+   {
+      if (keyMap_.containsKey(key))
+         keyMap_.get(key).setValue(value);
    }
 
    private YamlTreeNode createYamlTree(String yaml)
@@ -170,20 +205,6 @@ public class YamlTree
          yaml += yamlFromTree(child);
       }
       return yaml;
-   }
-   
-   private static YamlTreeNode findParentNodeOfKey(YamlTreeNode root, 
-                                                   String key)
-   {
-      for (YamlTreeNode child: root.children)
-      {
-         if (child.key == key)
-            return root;
-         YamlTreeNode node = findParentNodeOfKey(child, key);
-         if (node != null)
-            return node;
-      }
-      return null;
    }
    
    private static void createKeyMap(YamlTreeNode root, 

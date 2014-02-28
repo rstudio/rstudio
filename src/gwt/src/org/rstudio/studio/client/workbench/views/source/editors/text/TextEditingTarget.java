@@ -2304,6 +2304,9 @@ public class TextEditingTarget implements
    
    private void applyRmdFrontMatter(String yaml)
    {
+      if (yaml == null || yaml.isEmpty())
+         return;
+      
       String code = docDisplay_.getCode();
       int[] range = getFrontMatterRange(code);
       if (range == null)
@@ -2369,20 +2372,37 @@ public class TextEditingTarget implements
       if (selTemplate == null)
          return;
       
-      // do nothing if this is the current format
+      // if this is the current format, we don't need to change the front matter
       if (selTemplate.format.equals(formatName))
+      {
+         renderRmd();
+         return;
+      }
+      
+      // examine the YAML tree and rearrange it as necessary to make the
+      // document render in the desired format
+      YamlTree yamlTree = new YamlTree(getRmdFrontMatter());
+      List<String> outputFormats = 
+            yamlTree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
+      if (outputFormats == null)
          return;
       
-      YamlTree yamlTree = new YamlTree(getRmdFrontMatter());
-      List<String> outputFormats = yamlTree.getChildKeys("output");
-      if (!outputFormats.contains(formatName))
+      if (outputFormats.isEmpty())
+      {
+         yamlTree.setKeyValue(RmdFrontMatter.OUTPUT_KEY, formatName);
+      }
+      else if (!outputFormats.contains(formatName))
       {
          // we need to add this format to the yaml
-         yamlTree.addYamlLine("output", formatName + ": default");
+         yamlTree.addYamlValue(RmdFrontMatter.OUTPUT_KEY, 
+               formatName,
+               RmdFrontMatter.DEFAULT_FORMAT);
       }
 
-      // move this format to the top of the list
-      yamlTree.reorder(Arrays.asList(formatName));
+      // if there are multiple formats, move this format to the top of the list
+      if (!outputFormats.isEmpty())
+         yamlTree.reorder(Arrays.asList(formatName));
+
       applyRmdFrontMatter(yamlTree.toString());
       
       // re-knit the document

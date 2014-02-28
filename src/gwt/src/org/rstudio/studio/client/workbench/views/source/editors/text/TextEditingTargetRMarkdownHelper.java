@@ -244,8 +244,14 @@ public class TextEditingTargetRMarkdownHelper
       YamlTree tree = new YamlTree(yaml);
       
       // Find the template appropriate to the first output format listed
-      List<String> outputs = tree.getChildKeys("output");
-      String outFormat = outputs.get(0);
+      String outFormat = null;
+      List<String> outputs = tree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
+      if (outputs == null)
+         return null;
+      if (outputs.isEmpty())
+         outFormat = tree.getKeyValue(RmdFrontMatter.OUTPUT_KEY);
+      else
+         outFormat = outputs.get(0);
       JsArray<RmdTemplate> templates = RmdTemplateData.getTemplates();
       for (int i = 0; i < templates.length(); i++)
       {

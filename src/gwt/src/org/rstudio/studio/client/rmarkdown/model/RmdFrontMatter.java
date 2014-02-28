@@ -23,12 +23,33 @@ public class RmdFrontMatter extends JavaScriptObject
    {
    }
    
+   public static final native RmdFrontMatter create(String titleText) /*-{
+      return {
+         title: titleText,
+         output: {}
+      };
+   }-*/;
+   
+   public final native void setAuthor(String author) /*-{
+      this.author = author;
+   }-*/;
+
+   public final native void addDate() /*-{
+      this.date = (new Date()).toLocaleDateString();
+   }-*/;
+   
    public final native JsArrayString getFormatList() /*-{
-     return Object.getOwnPropertyNames(this.output);
+      if (typeof this.output === "string")
+         return [ this.output ];
+      else
+         return Object.getOwnPropertyNames(this.output);
    }-*/;
 
    public final native RmdFrontMatterOutputOptions getOutputOption(
          String format) /*-{
+     if (this.output === format)
+        return {}
+        
      var options = this.output[format];
      if (typeof options === "undefined")
         return null;
@@ -41,10 +62,22 @@ public class RmdFrontMatter extends JavaScriptObject
    public final native void setOutputOption(String format, 
          JavaScriptObject options) /*-{
      if (Object.getOwnPropertyNames(options).length === 0)
-        this.output[format] = "default"
+     {
+        if (typeof this.output === "string" ||
+            Object.getOwnPropertyNames(this.output).length === 0)
+           this.output = format;
+        else
+           this.output[format] = "default"
+     }
      else
+     {
+        if (typeof this.output === "string")
+           this.output = {};
         this.output[format] = options;
+     }
    }-*/;
    
+   public final static String OUTPUT_KEY = "output";
+   public final static String DEFAULT_FORMAT = "default";
    public final static String FRONTMATTER_SEPARATOR = "---\n";
 }

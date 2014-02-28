@@ -38,5 +38,4 @@ public class RmdTemplateFormat extends JavaScriptObject
    public final native String getNotes() /*-{
       return this.format_notes || "";
    }-*/;
-   
 }

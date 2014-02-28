@@ -18,6 +18,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsWidget;
@@ -62,24 +63,20 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          return result_;
       }
       
-      private final native JavaScriptObject toJSO(String author, 
-                                                 String title, 
-                                                 String format, 
-                                                 JavaScriptObject options) /*-{
-         var output = new Object();
-         output[format] = options;
-         
-         var result = new Object();
-         if (author.length > 0)
+      private final JavaScriptObject toJSO(String author, 
+                                           String title, 
+                                           String format, 
+                                           JavaScriptObject options)
+      {
+         RmdFrontMatter result = RmdFrontMatter.create(title);
+         if (author.length() > 0)
          {
-            result["author"] = author;
-            result["date"] = (new Date()).toLocaleDateString();
+            result.setAuthor(author);
+            result.addDate();
          }
-         result["title"] = title;
-         result["output"] = output;
-        
+         result.setOutputOption(format, options);
          return result;
-      }-*/;
+      }
 
       private final String template_;
       private final String author_;
