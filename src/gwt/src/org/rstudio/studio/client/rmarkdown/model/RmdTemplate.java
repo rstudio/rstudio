@@ -23,6 +23,14 @@ public class RmdTemplate extends JavaScriptObject
    {
    }
    
+   public static final native RmdTemplate create() /*-{
+      return {
+         template_name: "",
+         template_formats: [ ],
+         template_options: [ ]
+      };
+   }-*/;
+
    public final native String getName() /*-{
       return this.template_name;
    }-*/;

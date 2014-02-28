@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.List;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
@@ -147,6 +149,9 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
       toolbar.addLeftSeparator();
+      rmdFormatButton_ = new ToolbarPopupMenuButton();
+      rmdFormatButton_.setText("Format");
+      toolbar.addLeftWidget(rmdFormatButton_);
       toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
 
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
@@ -279,6 +284,7 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
+      boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
       
       // don't show the run buttons for cpp files, or R files in Shiny
       runButton_.setVisible(canExecuteCode && !isCpp && !isShinyFile());
@@ -302,7 +308,8 @@ public class TextEditingTargetWidget
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
       
-      editRmdFormatButton_.setVisible(extendedType_.equals("rmarkdown"));
+      rmdFormatButton_.setVisible(isRMarkdown2);
+      editRmdFormatButton_.setVisible(isRMarkdown2);
 
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
@@ -497,6 +504,18 @@ public class TextEditingTargetWidget
       setSourceButtonFromShinyState();
    }
    
+
+   @Override
+   public void setFormatOptions(List<String> options, String selected)
+   {
+      rmdFormatButton_.clearMenu();
+      rmdFormatButton_.setText(selected);
+      for (String option: options)
+      {
+         rmdFormatButton_.addMenuItem(option);
+      }
+   }
+
    public void setSourceButtonFromShinyState()
    {
       sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
@@ -563,6 +582,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
+   private ToolbarPopupMenuButton rmdFormatButton_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;

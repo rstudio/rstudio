@@ -15,9 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 

@@ -54,6 +54,11 @@ public class ToolbarPopupMenuButton extends ToolbarButton
       }));
    }
    
+   public void clearMenu()
+   {
+      getMenu().clearItems();
+   }
+   
    @Override
    public void setText(String text)
    {

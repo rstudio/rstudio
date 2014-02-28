@@ -15,8 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.Arrays;
+import java.util.List;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -37,6 +38,9 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
@@ -47,6 +51,18 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialo
 
 public class TextEditingTargetRMarkdownHelper
 {
+   public class RmdSelectedTemplate
+   {
+      public RmdSelectedTemplate (RmdTemplate template, String format)
+      {
+         this.template = template;
+         this.format = format;
+      }
+
+      RmdTemplate template;
+      String format;
+   }
+
    public TextEditingTargetRMarkdownHelper()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -222,6 +238,30 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
 
+   public RmdSelectedTemplate getTemplateFormat(String yaml)
+   {
+      YamlTree tree = new YamlTree(yaml);
+      
+      // Find the template appropriate to the first output format listed
+      List<String> outputs = tree.getChildKeys("output");
+      String outFormat = outputs.get(0);
+      JsArray<RmdTemplate> templates = RmdTemplateData.getTemplates();
+      for (int i = 0; i < templates.length(); i++)
+      {
+         JsArray<RmdTemplateFormat> formats = 
+               templates.get(i).getFormats();
+         for (int j = 0; j < formats.length(); j++)
+         {
+            if (formats.get(j).getName().equals(outFormat))
+            {
+               return new RmdSelectedTemplate(templates.get(i), outFormat);
+            }
+         }
+      }
+      // No template found
+      return null;
+   }
+  
    private void installRMarkdownPackage(String action,
                                         final Command onInstalled)
    {
@@ -290,7 +330,6 @@ public class TextEditingTargetRMarkdownHelper
                              " or higher)");
    }
    
-  
    private Session session_;
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;
