@@ -15,8 +15,12 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
@@ -63,8 +67,16 @@ public class RmdTemplateOptionsWidget extends Composite
    
    public void setTemplate(RmdTemplate template, boolean forCreate)
    {
+      setTemplate(template, forCreate, null);
+   }
+
+   public void setTemplate(RmdTemplate template, boolean forCreate, 
+                           RmdFrontMatter frontMatter)
+   {
       formats_ = template.getFormats();
       options_ = template.getOptions();
+      if (frontMatter != null)
+         applyFrontMatter(frontMatter);
       forCreate_ = forCreate;
       listFormats_.clear();
       for (int i = 0; i < formats_.length(); i++)
@@ -78,6 +90,18 @@ public class RmdTemplateOptionsWidget extends Composite
    public String getSelectedFormat()
    {
       return listFormats_.getValue(listFormats_.getSelectedIndex());
+   }
+   
+   public void setSelectedFormat(String format)
+   {
+      for (int i = 0; i < listFormats_.getItemCount(); i++)
+      {
+         if (listFormats_.getValue(i).equals(format))
+         {
+            listFormats_.setSelectedIndex(i);
+            updateFormatOptions(format);
+         }
+      }
    }
    
    public JavaScriptObject getOptionsJSON()
@@ -119,17 +143,30 @@ public class RmdTemplateOptionsWidget extends Composite
          if (option == null)
             continue;
          
+         String initialValue = option.getDefaultValue();
+
+         // check to see whether a value for this format and option were
+         // specified in the front matter
+         if (frontMatter_ != null)
+         {
+            String key = format.getName() + ":" + option.getName();
+            if (frontMatter_.containsKey(key))
+            {
+               initialValue = frontMatter_.get(key);
+            }
+         }
+         
          if (option.getType().equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
          {
-            optionWidget = new RmdBooleanOption(option);
+            optionWidget = new RmdBooleanOption(option, initialValue);
          } 
          else if (option.getType().equals(RmdTemplateFormatOption.TYPE_CHOICE))
          {
-            optionWidget = new RmdChoiceOption(option);
+            optionWidget = new RmdChoiceOption(option, initialValue);
          }
          else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT))
          {
-            optionWidget = new RmdFloatOption(option);
+            optionWidget = new RmdFloatOption(option, initialValue);
          }
          else
             continue;
@@ -172,11 +209,31 @@ public class RmdTemplateOptionsWidget extends Composite
       }
       return result;
    }
+   
+   private void applyFrontMatter(RmdFrontMatter frontMatter)
+   {
+      frontMatter_ = new HashMap<String, String>();
+      JsArrayString formats = frontMatter.getFormatList();
+      for (int i = 0; i < formats.length(); i++)
+      {
+         String format = formats.get(i);
+         RmdFrontMatterOutputOptions options = 
+               frontMatter.getOutputOption(format);
+         JsArrayString optionList = options.getOptionList();
+         for (int j = 0; j < optionList.length(); j++)
+         {
+            String option = optionList.get(j);
+            frontMatter_.put(format + ":" + option, 
+                             options.getOptionValue(option));
+         }
+      }
+   }
 
    private JsArray<RmdTemplateFormat> formats_;
    private JsArray<RmdTemplateFormatOption> options_;
    private List<RmdFormatOption> optionWidgets_;
    private boolean forCreate_ = false;
+   private Map<String, String> frontMatter_;
 
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;

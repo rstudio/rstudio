@@ -16,14 +16,15 @@ package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
-import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 
 import com.google.gwt.user.client.ui.Widget;
 
 public class RmdTemplateOptionsDialog extends ModalDialogBase
 {
-   public RmdTemplateOptionsDialog(RmdTemplate template)
+   public RmdTemplateOptionsDialog(RmdTemplate template, String initialFormat,
+                                   RmdFrontMatter frontMatter)
    {
       setText("Edit R Markdown Format Options");
       setWidth("350px");
@@ -31,7 +32,8 @@ public class RmdTemplateOptionsDialog extends ModalDialogBase
       addCancelButton();
       addOkButton(new ThemedButton("OK"));
       templateOptions_ = new RmdTemplateOptionsWidget();
-      templateOptions_.setTemplate(template, false);
+      templateOptions_.setTemplate(template, false, frontMatter);
+      templateOptions_.setSelectedFormat(initialFormat);
       templateOptions_.setHeight("300px");
       templateOptions_.setWidth("375px");
    }

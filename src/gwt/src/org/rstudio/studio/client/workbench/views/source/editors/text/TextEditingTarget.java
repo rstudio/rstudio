@@ -2230,7 +2230,9 @@ public class TextEditingTarget implements
                   if (formats.get(j).getName().equals(firstOutput))
                   {
                      RmdTemplateOptionsDialog dialog = 
-                           new RmdTemplateOptionsDialog(templates.get(i));
+                           new RmdTemplateOptionsDialog(templates.get(i), 
+                                                        firstOutput,
+                                                        arg.getFrontMatter());
                      dialog.showModal();
                      return;
                   }

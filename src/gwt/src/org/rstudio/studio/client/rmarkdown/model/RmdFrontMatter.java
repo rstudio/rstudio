@@ -1,5 +1,5 @@
 /*
- * RmdYamlData.java
+ * RmdFrontMatter.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -15,14 +15,20 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
-public class RmdYamlData extends JavaScriptObject
+public class RmdFrontMatter extends JavaScriptObject
 {
-   protected RmdYamlData()
+   protected RmdFrontMatter()
    {
    }
+   
+   public final native JsArrayString getFormatList() /*-{
+     return Object.getOwnPropertyNames(this.output);
+   }-*/;
 
-   public final native RmdFrontMatter getFrontMatter() /*-{
-      return this.data;
+   public final native RmdFrontMatterOutputOptions getOutputOption(
+         String format) /*-{
+     return this.output[format] || null;
    }-*/;
 }

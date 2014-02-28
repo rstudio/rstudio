@@ -24,14 +24,14 @@ import com.google.gwt.user.client.ui.TextBox;
 
 public class RmdFloatOption extends RmdBaseOption
 {
-   public RmdFloatOption(RmdTemplateFormatOption option)
+   public RmdFloatOption(RmdTemplateFormatOption option, String initialValue)
    {
       super(option);
       HTMLPanel panel = new HTMLPanel("");
       defaultValue_ = Float.parseFloat(option.getDefaultValue());
       panel.add(new InlineLabel(option.getUiName() + ":"));
       txtValue_ = new NumericTextBox();
-      txtValue_.setValue(option.getDefaultValue());
+      txtValue_.setValue(initialValue);
       txtValue_.setWidth("40px");
       txtValue_.getElement().getStyle().setMarginLeft(5, Unit.PX);
       panel.add(txtValue_);

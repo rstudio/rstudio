@@ -21,13 +21,13 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 
 public class RmdBooleanOption extends RmdBaseOption
 {
-   public RmdBooleanOption(RmdTemplateFormatOption option)
+   public RmdBooleanOption(RmdTemplateFormatOption option, String initialValue)
    {
       super(option);
       HTMLPanel panel = new HTMLPanel("");
       checkBox_ = new CheckBox(option.getUiName());
       defaultValue_ = Boolean.parseBoolean(option.getDefaultValue());
-      checkBox_.setValue(defaultValue_);
+      checkBox_.setValue(Boolean.parseBoolean(initialValue));
       panel.add(checkBox_);
       initWidget(panel);
    }

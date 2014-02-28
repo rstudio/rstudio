@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.ListBox;
 
 public class RmdChoiceOption extends RmdBaseOption
 {
-   public RmdChoiceOption(RmdTemplateFormatOption option)
+   public RmdChoiceOption(RmdTemplateFormatOption option, String initialValue)
    {
       super(option);
       HTMLPanel panel = new HTMLPanel("");
@@ -36,7 +36,7 @@ public class RmdChoiceOption extends RmdBaseOption
       for (int i = 0; i < choiceList.length(); i++)
       {
          choices_.addItem(choiceList.get(i));
-         if (choiceList.get(i).equals(defaultValue_))
+         if (choiceList.get(i).equals(initialValue))
          {
             selectedIdx = i;
          }

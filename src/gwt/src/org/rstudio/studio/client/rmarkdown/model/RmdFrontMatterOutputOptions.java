@@ -1,5 +1,5 @@
 /*
- * RmdYamlData.java
+ * RmdFrontMatterOutputOptions.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,17 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
-public class RmdYamlData extends JavaScriptObject
+public class RmdFrontMatterOutputOptions extends JavaScriptObject
 {
-   protected RmdYamlData()
+   protected RmdFrontMatterOutputOptions()
    {
    }
-
-   public final native RmdFrontMatter getFrontMatter() /*-{
-      return this.data;
+   
+   public final native JsArrayString getOptionList() /*-{
+      return Object.getOwnPropertyNames(this);
+   }-*/;
+   
+   public final native String getOptionValue(String optionName) /*-{
+      var option = this[optionName];
+      if (typeof option === "undefined")
+         return null;
+      else 
+         return option.toString();
    }-*/;
 }
