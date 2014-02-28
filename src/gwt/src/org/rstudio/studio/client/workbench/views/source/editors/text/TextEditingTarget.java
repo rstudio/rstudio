@@ -653,7 +653,7 @@ public class TextEditingTarget implements
                                           fileTypeRegistry_,
                                           docDisplay_,
                                           fileType_,
-                                          document.getExtendedType(),
+                                          extendedType_,
                                           events_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
