@@ -2333,12 +2333,26 @@ public class TextEditingTarget implements
    
    private RmdSelectedTemplate getSelectedTemplate()
    {
-      // try to extract the front matter and ascertain the template to which
-      // it refers
-      String yaml = getRmdFrontMatter();
-      if (yaml == null)
+      // We put this in late in the dev cycle right before a preview and 
+      // observed in at least one instance a null ref coming out of 
+      // YamlTree.getChildKeys. This caused the entire source pane to 
+      // not load! Just be paranoid let's add a try catch until we satisfy
+      // ourselves that the error was transient (e.g. due to the gwt tree
+      // being out of sync?). Filed as bug #3826
+      try
+      {
+         // try to extract the front matter and ascertain the template to which
+         // it refers
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return null;
+         return rmarkdownHelper_.getTemplateFormat(yaml);
+      }
+      catch(Exception ex)
+      {
+         Debug.log("Error getting selected template: " + ex.getMessage());
          return null;
-      return rmarkdownHelper_.getTemplateFormat(yaml);
+      }
    }
    
    private void updateRmdFormatList()
