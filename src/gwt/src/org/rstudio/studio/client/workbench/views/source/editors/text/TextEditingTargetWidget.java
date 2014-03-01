@@ -510,6 +510,9 @@ public class TextEditingTargetWidget
                                 String selectedOption)
    {
       rmdFormatButton_.clearMenu();
+      int parenPos = selectedOption.indexOf('(');
+      if (parenPos != -1)
+         selectedOption = selectedOption.substring(0, parenPos).trim();
       knitCommandText_ = "Knit " + selectedOption;
       knitDocumentButton_.setText(knitCommandText_);
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
