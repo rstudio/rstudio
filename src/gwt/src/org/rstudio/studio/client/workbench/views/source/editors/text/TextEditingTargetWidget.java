@@ -148,7 +148,7 @@ public class TextEditingTargetWidget
       knitDocumentButton_.getElement().getStyle().setMarginRight(2, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
-      rmdFormatButton_ = new ToolbarPopupMenuButton(false);
+      rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
       toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
       toolbar.addLeftSeparator();

@@ -28,14 +28,15 @@ public class ToolbarPopupMenuButton extends ToolbarButton
 {
    public ToolbarPopupMenuButton()
    {
-      this(true);
+      this(true, true);
    }
 
-   public ToolbarPopupMenuButton(boolean showText)
+   public ToolbarPopupMenuButton(boolean showText, boolean rightAlignMenu)
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
-            new ToolbarPopupMenu());
+            new ToolbarPopupMenu(),
+            rightAlignMenu);
       showText_ = showText;
    }
 
