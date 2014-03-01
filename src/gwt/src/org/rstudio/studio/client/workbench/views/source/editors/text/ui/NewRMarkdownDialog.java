@@ -99,6 +99,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
       @Source("MarkdownDocumentIcon.png")
       ImageResource documentIcon();
+
+      @Source("MarkdownOptionsIcon.png")
+      ImageResource optionsIcon();
    }
 
    public NewRMarkdownDialog(

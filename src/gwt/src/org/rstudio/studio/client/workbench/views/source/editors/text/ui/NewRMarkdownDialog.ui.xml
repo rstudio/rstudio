@@ -14,6 +14,7 @@
 	.templatePanel
 	{
 	  margin-top: 15px;
+	  margin-bottom: 15px;
 	}
 	
 	.templateList
@@ -44,12 +45,19 @@
 	  margin-left: 15px;
 	}
 	
+	.optionsIcon
+	{
+	  vertical-align: middle;
+	  float: left;
+	  margin-right: 5px;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
 	<g:InlineLabel styleName="{style.topLabel}" text="Title:"></g:InlineLabel>
-	<g:TextBox styleName="{style.textBox}" width="250px" ui:field="txtTitle_"></g:TextBox>
+	<g:TextBox styleName="{style.textBox}" width="225px" ui:field="txtTitle_"></g:TextBox>
 	<g:InlineLabel styleName="{style.topLabel} {style.authorLabel}" text="Author:"></g:InlineLabel>
-	<g:TextBox styleName="{style.textBox}" width="100px" ui:field="txtAuthor_"></g:TextBox>
+	<g:TextBox styleName="{style.textBox}" width="125px" ui:field="txtAuthor_"></g:TextBox>
 	<g:HorizontalPanel height="300px" styleName="{style.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
@@ -58,5 +66,9 @@
                 styleName="{style.templateDetails}" width="300px" height="100%">
      </rmd:RmdTemplateOptionsWidget>
 	</g:HorizontalPanel>
+	<g:HTMLPanel width="425px">
+	<g:Image resource="{resources.optionsIcon}" styleName="{style.optionsIcon}"></g:Image>
+	<g:Label text="Click the settings icon in the editor toolbar to change these options at any time."></g:Label>
+   </g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
