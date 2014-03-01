@@ -91,7 +91,7 @@ public class RmdTemplateData
             option_name: "number_sections",
             option_ui_name: "Number section headings", 
             option_type: "boolean", 
-            option_for_create: true,
+            option_for_create: false,
             option_default: "false"
             },
             {
@@ -142,7 +142,7 @@ public class RmdTemplateData
             {
             option_name: "fig_caption",
             option_ui_name: "Render figures with captions", 
-            option_for_create: true,
+            option_for_create: false,
             option_type: "boolean", 
             option_default: "true"
             },
@@ -150,7 +150,7 @@ public class RmdTemplateData
             option_name: "fig_caption",
             option_format: "html_document",
             option_ui_name: "Render figures with captions", 
-            option_for_create: true,
+            option_for_create: false,
             option_type: "boolean", 
             option_default: "false"
             },
@@ -244,14 +244,14 @@ public class RmdTemplateData
             option_name: "widescreen",
             option_ui_name: "Use widescreen dimensions", 
             option_type: "boolean", 
-            option_for_create: true,
+            option_for_create: false,
             option_default: "false"
             },
             {
             option_name: "smaller",
             option_ui_name: "Use smaller text on all slides", 
             option_type: "boolean", 
-            option_for_create: true,
+            option_for_create: false,
             option_default: "false"
             },
             {
