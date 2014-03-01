@@ -68,7 +68,7 @@
 	</g:HorizontalPanel>
 	<g:HTMLPanel width="425px">
 	<g:Image resource="{resources.optionsIcon}" styleName="{style.optionsIcon}"></g:Image>
-	<g:Label text="Click the settings icon in the editor toolbar to change these options at any time."></g:Label>
+	<g:Label text="You don't need to decide about the various options now. Click the settings icon in the editor toolbar to change them at any time."></g:Label>
    </g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
