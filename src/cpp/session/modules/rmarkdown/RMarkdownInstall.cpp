@@ -24,6 +24,7 @@
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -191,6 +192,9 @@ Error installWithProgress(
 // perform a silent upgrade
 Error silentUpdate()
 {
+   // suppress output which occurs during silent update
+   r::session::utils::SuppressOutputInScope suppressOutput;
+
    return r::exec::RFunction(".rs.updateRMarkdownPackage",
                              rmarkdownPackageArchive()).call();
 }
