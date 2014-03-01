@@ -18,5 +18,6 @@
 <!-- order of those events could change.                                -->
 <module type="fileset">
     <inherits name="com.google.gwt.dev.jjs.CompilerSuite"/>
+    <add-linker name="std" />
     <script src="empty-gwt-stats.js" />
 </module>

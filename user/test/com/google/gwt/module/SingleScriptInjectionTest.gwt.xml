@@ -15,6 +15,8 @@
 <module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
 
+  <add-linker name='std' />
+
   <!-- Includes a stylesheet as well, to include this in the test -->
   <stylesheet src="BigBody.css"/>
   <script src="script1/ScriptInjectionTest1.js"/>

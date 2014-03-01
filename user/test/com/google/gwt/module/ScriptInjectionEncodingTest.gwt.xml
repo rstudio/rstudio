@@ -14,6 +14,6 @@
 
 <module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
-
+  <add-linker name='std' />
   <script src="script-encoding/ScriptInjectionEncodingTest.js"/>
 </module>
