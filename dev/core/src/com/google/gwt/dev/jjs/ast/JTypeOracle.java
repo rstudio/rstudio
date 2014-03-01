@@ -283,7 +283,6 @@ public class JTypeOracle implements Serializable {
    */
   private final Map<JInterfaceType, Set<JInterfaceType>> superInterfaceMap =
       new IdentityHashMap<JInterfaceType, Set<JInterfaceType>>();
-
   /**
    * A map of all methods with virtual overrides, onto the collection of
    * overridden methods. Each key method's collections is a map of the set of
@@ -500,7 +499,7 @@ public class JTypeOracle implements Serializable {
 
     /*
      * Now that the basic type hierarchy is computed, compute which JSOs
-     * implement interfaces singlely or dually.
+     * implement interfaces singly or dually.
      */
     JClassType jsoType = program.getJavaScriptObject();
     List<JClassType> jsoSubTypes = Lists.create();
@@ -519,17 +518,17 @@ public class JTypeOracle implements Serializable {
       }
     }
 
-    for (JDeclaredType type : program.getDeclaredTypes()) {
+    for (JDeclaredType type : program.getModuleDeclaredTypes()) {
       if (type instanceof JClassType) {
         computeImplements((JClassType) type);
       }
     }
-    for (JDeclaredType type : program.getDeclaredTypes()) {
+    for (JDeclaredType type : program.getModuleDeclaredTypes()) {
       if (type instanceof JClassType) {
         computeCouldImplement((JClassType) type);
       }
     }
-    for (JDeclaredType type : program.getDeclaredTypes()) {
+    for (JDeclaredType type : program.getModuleDeclaredTypes()) {
       if (type instanceof JClassType) {
         computeVirtualUpRefs((JClassType) type);
       }

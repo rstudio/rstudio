@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -176,7 +177,10 @@ public class ImplicitCssResource {
   }
 
   private String getBodyFileName() {
-    return String.format("uibinder:%s.%s.css", packageName, className);
+    String bodyFileName = String.format("uibinder.%s.%s.css", packageName, className);
+    // To verify that the resulting file can be retrieved out of zip files using a URL reference.
+    assert isValidUrl("file:/" + bodyFileName);
+    return bodyFileName;
   }
 
   private List<URL> getExternalCss() throws UnableToCompleteException {
@@ -231,5 +235,16 @@ public class ImplicitCssResource {
       ResourceGeneratorUtil.addNamedFile(getBodyFileName(), generatedFile);
     }
     return generatedFile;
+  }
+
+  private boolean isValidUrl(String urlString) {
+    try {
+      new URL(urlString).toURI();
+    } catch (MalformedURLException e) {
+      return false;
+    } catch (URISyntaxException e) {
+      return false;
+    }
+    return true;
   }
 }

@@ -405,40 +405,105 @@ public class JdtCompiler {
     public NameEnvironmentAnswer findType(char[][] compoundTypeName) {
       char[] internalNameChars = CharOperation.concatWith(compoundTypeName, '/');
       String internalName = String.valueOf(internalNameChars);
-      CompiledClass compiledClass = internalTypes.get(internalName);
-      try {
-        if (compiledClass != null) {
-          return compiledClass.getNameEnvironmentAnswer();
-        }
-      } catch (ClassFormatException ex) {
-        // fall back to binary class
-      }
+
       if (isPackage(internalName)) {
         return null;
       }
-      if (additionalTypeProviderDelegate != null) {
-        GeneratedUnit unit = additionalTypeProviderDelegate.doFindAdditionalType(internalName);
-        if (unit != null) {
-          CompilationUnitBuilder b = CompilationUnitBuilder.create(unit);
-          Adapter a = new Adapter(b);
-          return new NameEnvironmentAnswer(a, null);
-        }
+
+      NameEnvironmentAnswer cachedAnswer = findTypeInCache(internalName);
+      if (cachedAnswer != null) {
+        return cachedAnswer;
       }
-      try {
-        URL resource = getClassLoader().getResource(internalName + ".class");
-        if (resource != null) {
-          InputStream openStream = resource.openStream();
-          try {
-            ClassFileReader cfr = ClassFileReader.read(openStream, resource.toExternalForm(), true);
-            return new NameEnvironmentAnswer(cfr, null);
-          } finally {
-            Utility.close(openStream);
-          }
-        }
-      } catch (ClassFormatException e) {
-      } catch (IOException e) {
+
+      NameEnvironmentAnswer additionalProviderAnswer = findTypeInAdditionalProvider(internalName);
+      if (additionalProviderAnswer != null) {
+        return additionalProviderAnswer;
       }
+
+      NameEnvironmentAnswer libraryGroupAnswer = findTypeInLibraryGroup(internalName);
+      if (libraryGroupAnswer != null) {
+        return libraryGroupAnswer;
+      }
+
+      // TODO(stalcup): Add verification that all classpath bytecode is for Annotations.
+      NameEnvironmentAnswer classPathAnswer = findTypeInClassPath(internalName);
+      if (classPathAnswer != null) {
+        return classPathAnswer;
+      }
+
       return null;
+    }
+
+    private NameEnvironmentAnswer findTypeInCache(String internalName) {
+      if (!internalTypes.containsKey(internalName)) {
+        return null;
+      }
+
+      try {
+        return internalTypes.get(internalName).getNameEnvironmentAnswer();
+      } catch (ClassFormatException ex) {
+        return null;
+      }
+    }
+
+    private NameEnvironmentAnswer findTypeInAdditionalProvider(String internalName) {
+      if (additionalTypeProviderDelegate == null) {
+        return null;
+      }
+
+      GeneratedUnit unit = additionalTypeProviderDelegate.doFindAdditionalType(internalName);
+      if (unit == null) {
+        return null;
+      }
+
+      return new NameEnvironmentAnswer(new Adapter(CompilationUnitBuilder.create(unit)), null);
+    }
+
+    private NameEnvironmentAnswer findTypeInLibraryGroup(String internalName) {
+      if (compilerContext.getLibraryGroup() == null) {
+        return null;
+      }
+
+      InputStream classFileStream =
+          compilerContext.getLibraryGroup().getClassFileStream(internalName);
+      if (classFileStream == null) {
+        return null;
+      }
+
+      try {
+        ClassFileReader classFileReader =
+            ClassFileReader.read(classFileStream, internalName + ".class", true);
+        return new NameEnvironmentAnswer(classFileReader, null);
+      } catch (IOException e) {
+        return null;
+      } catch (ClassFormatException e) {
+        return null;
+      } finally {
+        Utility.close(classFileStream);
+      }
+    }
+
+    private NameEnvironmentAnswer findTypeInClassPath(String internalName) {
+      URL resource = getClassLoader().getResource(internalName + ".class");
+      if (resource == null) {
+        return null;
+      }
+
+      InputStream openStream = null;
+      try {
+        openStream = resource.openStream();
+        ClassFileReader classFileReader =
+            ClassFileReader.read(openStream, resource.toExternalForm(), true);
+        return new NameEnvironmentAnswer(classFileReader, null);
+      } catch (IOException e) {
+        return null;
+      } catch (ClassFormatException e) {
+        return null;
+      } finally {
+        if (openStream != null) {
+          Utility.close(openStream);
+        }
+      }
     }
 
     @Override
