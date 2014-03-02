@@ -29,10 +29,7 @@
 {
   pkgDir <- find.package("rmarkdown")
   .rs.forceUnloadPackage("rmarkdown")
-  utils::install.packages(archive,
-                          lib = dirname(pkgDir),
-                          repos = NULL,
-                          type = "source")
+  .Call("rs_installPackage",  archive, dirname(pkgDir))
 })
 
 .rs.addJsonRpcHandler("convert_to_yaml", function(input)
