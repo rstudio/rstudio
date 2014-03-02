@@ -33,7 +33,7 @@ public class RunAsyncContentTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    // References the .gwt.xml file that sets up deferred binding for LoggingXhrLoadingStrategy.
+    // References the .gwt.xml file that sets up deferred binding for LoggingScriptTagLoadingStrategy.
     return "com.google.gwt.dev.jjs.RunAsyncContent";
   }
 
@@ -49,7 +49,7 @@ public class RunAsyncContentTest extends GWTTestCase {
       @Override
       public void onSuccess() {
         String sharedContent = "Same String in multiple fragments.";
-        assertTrue(LoggingXhrLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
+        assertTrue(LoggingScriptTagLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
         // Doesn't matter which one finishes first since that is not taken into account in code
         // splitting logic.
         finishTest();
@@ -64,7 +64,7 @@ public class RunAsyncContentTest extends GWTTestCase {
       @Override
       public void onSuccess() {
         String sharedContent = "Same String in multiple fragments.";
-        assertTrue(LoggingXhrLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
+        assertTrue(LoggingScriptTagLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
         // Doesn't matter which one finishes first since that is not taken into account in code
         // splitting logic.
         finishTest();
@@ -84,7 +84,7 @@ public class RunAsyncContentTest extends GWTTestCase {
       @Override
       public void onSuccess() {
         String sharedContent = "Same String in multiple asyncs but ends not in the leftovers.";
-        assertFalse(LoggingXhrLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
+        assertFalse(LoggingScriptTagLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
         // Doesn't matter which one finishes first since that is not taken into account in code
         // splitting logic.
         finishTest();
@@ -99,7 +99,7 @@ public class RunAsyncContentTest extends GWTTestCase {
       @Override
       public void onSuccess() {
         String sharedContent = "Same String in multiple asyncs but ends not in the leftovers.";
-        assertFalse(LoggingXhrLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
+        assertFalse(LoggingScriptTagLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
         // Doesn't matter which one finishes first since that is not taken into account in code
         // splitting logic.
         finishTest();
@@ -118,7 +118,7 @@ public class RunAsyncContentTest extends GWTTestCase {
       @Override
       public void onSuccess() {
         String uniqueContent = "Fragment From Regular RunAsync";
-        assertFalse(LoggingXhrLoadingStrategy.getLeftOverFragmentText().contains(uniqueContent));
+        assertFalse(LoggingScriptTagLoadingStrategy.getLeftOverFragmentText().contains(uniqueContent));
         finishTest();
       }
     });
@@ -135,7 +135,7 @@ public class RunAsyncContentTest extends GWTTestCase {
       @Override
       public void onSuccess() {
         String uniqueContent = "Fragment From RunAsync With Class Literal";
-        assertFalse(LoggingXhrLoadingStrategy.getLeftOverFragmentText().contains(uniqueContent));
+        assertFalse(LoggingScriptTagLoadingStrategy.getLeftOverFragmentText().contains(uniqueContent));
         finishTest();
       }
     });

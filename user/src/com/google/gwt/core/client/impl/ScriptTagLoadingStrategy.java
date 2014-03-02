@@ -33,7 +33,8 @@ public class ScriptTagLoadingStrategy extends LoadingStrategyBase {
   /**
    * Uses a JSONP style script tag mechanism to download the code.
    */
-  protected static class ScriptTagDownloadStrategy implements DownloadStrategy {
+  // Visible for testing.
+  public static class ScriptTagDownloadStrategy implements DownloadStrategy {
     @Override
     public void tryDownload(final RequestData request) {
       setAsyncCallback(request.getFragment(), request);

@@ -15,7 +15,7 @@
 <module type="fileset">
   <inherits name="com.google.gwt.core.Core" />
   <source path="test" />
-  <replace-with class="com.google.gwt.dev.jjs.test.LoggingXhrLoadingStrategy">
+  <replace-with class="com.google.gwt.dev.jjs.test.LoggingScriptTagLoadingStrategy">
     <when-type-is class="com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy"/>
   </replace-with>
 </module>
