@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 /**
  * Skeletal implementation of the Map interface. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractMap.html">[Sun
@@ -114,10 +116,12 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
   protected AbstractMap() {
   }
 
+  @Override
   public void clear() {
     entrySet().clear();
   }
 
+  @Override
   public boolean containsKey(Object key) {
     return implFindEntry(key, false) != null;
   }
@@ -133,7 +137,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return false;
   }
 
-  boolean containsEntry(Map.Entry<?, ?> entry) {
+  boolean containsEntry(Entry<?, ?> entry) {
     Object key = entry.getKey();
     Object value = entry.getValue();
     Object ourValue = get(key);
@@ -150,6 +154,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return true;
   }
 
+  @Override
   public abstract Set<Entry<K, V>> entrySet();
 
   @Override
@@ -183,6 +188,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return Collections.hashCode(entrySet());
   }
 
+  @Override
   public boolean isEmpty() {
     return size() == 0;
   }
@@ -244,6 +250,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
   @Override
   public void putAll(Map<? extends K, ? extends V> map) {
+    checkNotNull(map);
     for (Entry<? extends K, ? extends V> e : map.entrySet()) {
       put(e.getKey(), e.getValue());
     }
@@ -320,6 +327,10 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
         return AbstractMap.this.size();
       }
     };
+  }
+
+  static <K, V> K getEntryKeyOrNull(Entry<K, V> entry) {
+    return entry == null ? null : entry.getKey();
   }
 
   static <K, V> V getEntryValueOrNull(Entry<K, V> entry) {

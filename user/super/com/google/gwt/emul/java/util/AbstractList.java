@@ -18,6 +18,7 @@ package java.util;
 import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalPositionIndexes;
 import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
 import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElementIndex;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
 import static com.google.gwt.core.shared.impl.GwtPreconditions.checkPositionIndex;
 import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
 
@@ -178,6 +179,8 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
 
   @Override
   public boolean addAll(int index, Collection<? extends E> c) {
+    checkNotNull(c);
+
     boolean changed = false;
     for (E e : c) {
       add(index++, e);

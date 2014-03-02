@@ -81,6 +81,16 @@ public class TreeMapIntegerDoubleTest extends TreeMapTest<Integer, Double> {
   }
 
   @Override
+  Integer[] getSortedKeys() {
+    return new Integer[] {1, 2, 3, 4};
+  }
+
+  @Override
+  Double[] getSortedValues() {
+    return new Double[] {0.1, 0.2, 0.3, 0.4};
+  }
+
+  @Override
   protected Object[] getNewSampleValues() {
     return getValues2();
   }

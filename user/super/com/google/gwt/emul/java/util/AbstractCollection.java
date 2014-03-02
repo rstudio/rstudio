@@ -39,6 +39,8 @@ public abstract class AbstractCollection<E> implements Collection<E> {
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
+    checkNotNull(c);
+
     boolean changed = false;
     for (E e : c) {
       changed |= add(e);
@@ -61,6 +63,8 @@ public abstract class AbstractCollection<E> implements Collection<E> {
 
   @Override
   public boolean containsAll(Collection<?> c) {
+    checkNotNull(c);
+
     for (Object e : c) {
       if (!contains(e)) {
         return false;

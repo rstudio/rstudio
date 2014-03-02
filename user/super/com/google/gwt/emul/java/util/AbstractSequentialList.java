@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 /**
  * Skeletal implementation of the List interface. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractSequentialList.html">[Sun
@@ -36,6 +38,8 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
 
   @Override
   public boolean addAll(int index, Collection<? extends E> c) {
+    checkNotNull(c);
+
     boolean modified = false;
     ListIterator<E> iter = listIterator(index);
     for (E e : c) {

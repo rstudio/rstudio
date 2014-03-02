@@ -236,6 +236,16 @@ treeMap.entrySet().iterator();
   }
 
   @Override
+  String[] getSortedKeys() {
+    return new String[] {"aa", "bb", "cc", "dd"};
+  }
+
+  @Override
+  String[] getSortedValues() {
+    return new String[] {"aval", "bval", "cval", "dval"};
+  }
+
+  @Override
   String[] getValues() {
     return convertToStringArray(getSampleValues());
   }
@@ -252,7 +262,7 @@ treeMap.entrySet().iterator();
   }
 
   private SortedMap<String, String> createKnownKeysMap() {
-    SortedMap<String, String> sortedMap = createSortedMap();
+    SortedMap<String, String> sortedMap = createNavigableMap();
     sortedMap.put("dd", "dval");
     sortedMap.put("aa", "aval");
     sortedMap.put("cc", "cval");
