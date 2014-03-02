@@ -2299,9 +2299,16 @@ public class TextEditingTarget implements
    {
       String code = docDisplay_.getCode();
       int[] range = getFrontMatterRange(code);
+      // if there is none then use the "implicit" front matter
+      // indicating an html document
       if (range == null)
-         return null;
-      return code.substring(range[0], range[1]);
+      {
+         return "output: html_document\n";
+      }
+      else
+      {
+         return code.substring(range[0], range[1]);
+      }
    }
    
    private void applyRmdFrontMatter(String yaml)
@@ -2312,9 +2319,17 @@ public class TextEditingTarget implements
       String code = docDisplay_.getCode();
       int[] range = getFrontMatterRange(code);
       if (range == null)
-         return;
-      code = code.substring(0, range[0]) + yaml + 
-             code.substring(range[1], code.length());
+      {
+         code = RmdFrontMatter.FRONTMATTER_SEPARATOR +
+                yaml +
+                RmdFrontMatter.FRONTMATTER_SEPARATOR +
+                code;
+      }
+      else
+      {
+         code = code.substring(0, range[0]) + yaml + 
+                code.substring(range[1], code.length());
+      }
       docDisplay_.setCode(code, true);
       updateRmdFormatList();
    }
