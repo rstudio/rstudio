@@ -176,7 +176,9 @@ public class TextEditingTarget implements
       void debug_dumpContents();
       void debug_importDump();
       
-      void setFormatOptions(List<String> options, List<String> values, 
+      void setFormatOptions(TextFileType fileType,
+                            List<String> options, 
+                            List<String> values, 
                             String selected);
       HandlerRegistration addRmdFormatChangedHandler(
             ValueChangeHandler<String> handler);
@@ -2377,7 +2379,7 @@ public class TextEditingTarget implements
             formatUiName = uiName;
          }
       }
-      view_.setFormatOptions(formatList, valueList, formatUiName);
+      view_.setFormatOptions(fileType_, formatList, valueList, formatUiName);
    }
    
    private void setRmdFormat(String formatName)

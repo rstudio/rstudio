@@ -362,7 +362,7 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
-      previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
+      previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);                                                       
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
       if (editor_.getFileType().isRd())
@@ -506,7 +506,9 @@ public class TextEditingTargetWidget
    
 
    @Override
-   public void setFormatOptions(List<String> options, List<String> values, 
+   public void setFormatOptions(TextFileType fileType,
+                                List<String> options, 
+                                List<String> values, 
                                 String selectedOption)
    {
       rmdFormatButton_.clearMenu();
@@ -515,9 +517,12 @@ public class TextEditingTargetWidget
          selectedOption = selectedOption.substring(0, parenPos).trim();
       knitCommandText_ = "Knit " + selectedOption;
       knitDocumentButton_.setText(knitCommandText_);
+      previewCommandText_ = "Preview " + selectedOption;
+      previewHTMLButton_.setText(previewCommandText_);
+      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit ";
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
-         rmdFormatButton_.addMenuItem("Knit " + options.get(i), values.get(i));
+         rmdFormatButton_.addMenuItem(prefix + options.get(i), values.get(i));
       }
    }
 
@@ -603,4 +608,5 @@ public class TextEditingTargetWidget
    private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
+   private String previewCommandText_ = "Preview";
 }
