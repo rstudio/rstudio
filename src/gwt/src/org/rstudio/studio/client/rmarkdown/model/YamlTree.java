@@ -35,8 +35,17 @@ public class YamlTree
       
       public void addChild(YamlTreeNode child)
       {
-         children.add(child);
-         child.parent = this;
+         // if this node has a key, add it as a tree node; otherwise, add its
+         // line data to this node (as a multi-line continuation)
+         if (child.key.length() > 0)
+         {
+            children.add(child);
+            child.parent = this;
+         }
+         else
+         {
+            yamlLine += ("\n" + child.yamlLine);
+         }
       }
       
       public String getIndent()
@@ -54,7 +63,7 @@ public class YamlTree
          int idx = yamlLine.indexOf(":");
          if (idx < 0)
             return "";
-         return yamlLine.substring(idx + 2);
+         return yamlLine.substring(idx + 2).trim();
       }
       
       public void setValue(String value)
@@ -212,11 +221,21 @@ public class YamlTree
    {
       for (YamlTreeNode child: root.children)
       {
-         output.put(child.key, child);
+         String key = child.key;
+         // add this key if it doesn't already exist, or if it does exist and
+         // this key is closer to the root than the existing key
+         if (key.length() > 0 &&
+             (!output.containsKey(key) ||
+              child.indentLevel < output.get(key).indentLevel))
+         {
+            output.put(child.key, child);
+         }
          createKeyMap(child, output);
       }
    }
    
+   // A flattened version of the tree as a list of key-value pairs. In the 
+   // case where multiple keys exist, the key closest to the root is stored.
    private final Map<String, YamlTreeNode> keyMap_;
    private final YamlTreeNode root_;
 }
