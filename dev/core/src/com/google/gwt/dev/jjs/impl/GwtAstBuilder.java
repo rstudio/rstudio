@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.javac.JSORestrictionsChecker;
+import com.google.gwt.dev.javac.JdtUtil;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
@@ -2966,18 +2967,6 @@ public class GwtAstBuilder {
     return AST_VERSION;
   }
 
-  static String dotify(char[][] name) {
-    StringBuffer result = new StringBuffer();
-    for (int i = 0; i < name.length; ++i) {
-      if (i > 0) {
-        result.append('.');
-      }
-
-      result.append(name[i]);
-    }
-    return result.toString();
-  }
-
   static Disposition getFieldDisposition(FieldBinding binding) {
     Disposition disposition;
     if (isCompileTimeConstant(binding)) {
@@ -3398,7 +3387,7 @@ public class GwtAstBuilder {
         char[] localName = binding.constantPoolName();
         name = new String(localName).replace('/', '.');
       } else {
-        name = dotify(binding.compoundName);
+        name = JdtUtil.sourceNameFromNamesArray(binding.compoundName);
       }
       name = intern(name);
       JDeclaredType type;

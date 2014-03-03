@@ -37,6 +37,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Interner;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.ImportReference;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
@@ -75,6 +76,7 @@ public class CompilationStateBuilder {
        */
       @Override
       public void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
+          List<ImportReference> cudOriginaImports,
           List<CompiledClass> compiledClasses) {
         Event event = SpeedTracerLogger.start(DevModeEventType.CSB_PROCESS);
         try {
@@ -87,16 +89,17 @@ public class CompilationStateBuilder {
           // JSNI check + collect dependencies.
           final Set<String> jsniDeps = new HashSet<String>();
           Map<String, Binding> jsniRefs = new HashMap<String, Binding>();
-          JsniChecker.check(cud, jsoState, jsniMethods, jsniRefs, new JsniChecker.TypeResolver() {
-            @Override
-            public ReferenceBinding resolveType(String sourceOrBinaryName) {
-              ReferenceBinding resolveType = compiler.resolveType(sourceOrBinaryName);
-              if (resolveType != null) {
-                jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
-              }
-              return resolveType;
-            }
-          });
+          JsniChecker.check(cud, cudOriginaImports, jsoState, jsniMethods, jsniRefs,
+              new JsniChecker.TypeResolver() {
+                @Override
+                public ReferenceBinding resolveType(String sourceOrBinaryName) {
+                  ReferenceBinding resolveType = compiler.resolveType(sourceOrBinaryName);
+                  if (resolveType != null) {
+                    jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
+                  }
+                  return resolveType;
+                }
+              });
 
           Map<TypeDeclaration, Binding[]> artificialRescues =
               new HashMap<TypeDeclaration, Binding[]>();

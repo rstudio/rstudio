@@ -28,7 +28,9 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -45,6 +47,7 @@ import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.ImportReference;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
@@ -134,7 +137,7 @@ public class JdtCompiler {
 
     @Override
     public void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
-        List<CompiledClass> compiledClasses) {
+        List<ImportReference> cudOriginaImports, List<CompiledClass> compiledClasses) {
       builder.setClasses(compiledClasses).setTypes(Collections.<JDeclaredType> emptyList())
           .setDependencies(new Dependencies()).setJsniMethods(Collections.<JsniMethod> emptyList())
           .setMethodArgs(new MethodArgNamesLookup())
@@ -191,7 +194,7 @@ public class JdtCompiler {
    */
   public interface UnitProcessor {
     void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
-        List<CompiledClass> compiledClasses);
+        List<ImportReference> cudOriginalImports, List<CompiledClass> compiledClasses);
   }
 
   /**
@@ -246,6 +249,12 @@ public class JdtCompiler {
    * annotated with a *.GwtIncompatible annotation.
    */
   private static class ParserImpl extends Parser {
+
+    // A place to stash imports before removal. These are needed to correctly check the
+    // references in Jsni.
+    // TODO(rluble): find a more modular way for this fix.
+    public final ListMultimap<CompilationUnitDeclaration, ImportReference> originalImportsByCud =
+        ArrayListMultimap.create();
     public ParserImpl(ProblemReporter problemReporter, boolean optimizeStringLiterals) {
       super(problemReporter, optimizeStringLiterals);
     }
@@ -266,6 +275,11 @@ public class JdtCompiler {
       if (removeGwtIncompatible) {
         // Remove @GwtIncompatible classes and members.
         GwtIncompatiblePreprocessor.preproccess(decl);
+      }
+      if (decl.imports != null) {
+        for (ImportReference importReference : decl.imports) {
+          originalImportsByCud.put(decl, importReference);
+        }
       }
       if (removeUnusedImports) {
         // Lastly remove any unused imports
@@ -349,7 +363,15 @@ public class JdtCompiler {
       ICompilationUnit icu = cud.compilationResult().compilationUnit;
       Adapter adapter = (Adapter) icu;
       CompilationUnitBuilder builder = adapter.getBuilder();
-      processor.process(builder, cud, compiledClasses);
+
+      // TODO(rluble): jsni method parsing should probably be done right after Java parsing, at
+      // that moment the original list of imports is still present and this hack would not be
+      // needed.
+      assert parser instanceof ParserImpl;
+      // Retrieve the original list of imports and dispose.
+      List<ImportReference> cudOriginalImports =
+          ((ParserImpl) parser).originalImportsByCud.removeAll(cud);
+      processor.process(builder, cud, cudOriginalImports, compiledClasses);
     }
 
     /**

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,6 +34,7 @@ import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
+import org.eclipse.jdt.internal.compiler.ast.ImportReference;
 import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
@@ -57,8 +58,10 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
@@ -82,13 +85,14 @@ public class JsniChecker {
    */
   public interface TypeResolver {
     /**
-     * @param sourceOrBinaryName Either source or binary names are allowed in JSNI
+     * @param sourceOrBinaryName Either source or binary names are allowed in JSNI.
      */
     ReferenceBinding resolveType(String sourceOrBinaryName);
   }
 
   private class JsniDeclChecker extends SafeASTVisitor implements
       ClassFileConstants {
+
     @Override
     public void endVisit(MethodDeclaration meth, ClassScope scope) {
       if (meth.isNative()) {
@@ -152,13 +156,15 @@ public class JsniChecker {
             + "' may not be returned from a JSNI method");
       }
 
-      if (meth.arguments != null) {
-        for (Argument arg : meth.arguments) {
-          if (containsLong(arg.type, scope)) {
-            longAccessError(arg, "Parameter '" + String.valueOf(arg.name)
-                + "': type '" + typeString(arg.type)
-                + "' is not safe to access in JSNI code");
-          }
+      if (meth.arguments == null) {
+        return;
+      }
+
+      for (Argument arg : meth.arguments) {
+        if (containsLong(arg.type, scope)) {
+          longAccessError(arg, "Parameter '" + String.valueOf(arg.name)
+              + "': type '" + typeString(arg.type)
+              + "' is not safe to access in JSNI code");
         }
       }
     }
@@ -175,7 +181,6 @@ public class JsniChecker {
 
   private class JsniRefChecker extends JsVisitor {
 
-    private transient SourceInfo errorInfo;
     private final boolean hasUnsafeLongsAnnotation;
     private final MethodDeclaration method;
 
@@ -191,47 +196,114 @@ public class JsniChecker {
 
     @Override
     public void endVisit(JsNameRef x, JsContext ctx) {
-      this.errorInfo = x.getSourceInfo();
       String ident = x.getIdent();
-      if (ident.charAt(0) == '@') {
-        JsniRef jsniRef = JsniRef.parse(ident);
-        if (jsniRef == null) {
-          emitError("Malformed JSNI identifier '" + ident + "'");
-        } else {
-          Binding binding = checkRef(jsniRef, x.getQualifier() != null,
-              ctx.isLvalue());
-          if (binding != null) {
-            jsniRefs.put(ident, binding);
-          }
-        }
+      if (ident.charAt(0) != '@') {
+        // Not a jsni reference.
+        return;
       }
-      this.errorInfo = null;
+
+      JsniRef jsniRef = JsniRef.parse(ident);
+      if (jsniRef == null) {
+        emitError("Malformed JSNI identifier '" + ident + "'", x.getSourceInfo());
+        return;
+      }
+
+      resolveClassReference(jsniRef);
+
+      Binding binding = checkRef(x.getSourceInfo(), jsniRef, x.getQualifier() != null,
+          ctx.isLvalue());
+      if (binding != null) {
+        jsniRefs.put(ident, binding);
+      }
     }
 
-    private FieldBinding checkFieldRef(ReferenceBinding clazz, JsniRef jsniRef,
-        boolean hasQualifier, boolean isLvalue) {
+    private void resolveClassReference(JsniRef jsniRef) {
+      String originalName = jsniRef.className();
+      String importedClassName = originalName;
+      if (importedClassName.contains(".")) {
+        // Only retain up the first dot to support innerclasses. E.g. import c.g.A and reference
+        // @A.I::f.
+        importedClassName = importedClassName.substring(0,importedClassName.indexOf("."));
+      }
+
+      // 1. Check to see if this name refers to the enclosing class or is directly accessible
+      // from it.
+      ReferenceBinding declaringClass = method.binding.declaringClass;
+      while (declaringClass != null) {
+        String declaringClassName =
+            JdtUtil.sourceNameFromNamesArray(declaringClass.compoundName);
+        if (declaringClassName.equals(importedClassName) ||
+            declaringClassName.endsWith("." + importedClassName)) {
+          // Referring to declaring class name using unqualified name.
+          jsniRef.setClassName(declaringClassName + originalName.substring(importedClassName.length()));
+          return;
+        }
+        String fullClassName = declaringClassName + "." + originalName;
+        if (typeResolver.resolveType(fullClassName) != null) {
+          jsniRef.setClassName(fullClassName);
+          return;
+        }
+        declaringClass = declaringClass.enclosingTypeAt(1);
+      }
+
+      // 2. Check to see if this name is one of the named imports.
+      for (ImportReference importReference : cudImports) {
+        String nameFromImport = JdtUtil.sourceNameFromNamesArray(importReference.getImportName());
+        if (!importReference.isStatic()  && importReference.trailingStarPosition == 0 &&
+           nameFromImport.endsWith("." + importedClassName)) {
+          jsniRef.setClassName(nameFromImport + originalName.substring(importedClassName.length()));
+          return;
+        }
+      }
+
+      // 3. Check to see if this name is resolvable from the current package.
+      String currentPackageClassName =
+          JdtUtil.sourceNameFromNamesArray(method.binding.declaringClass.getPackage().compoundName);
+      currentPackageClassName += (currentPackageClassName.isEmpty() ? "" : ".") +  originalName;
+
+      if (typeResolver.resolveType(currentPackageClassName) != null) {
+        jsniRef.setClassName(currentPackageClassName);
+        return;
+      }
+
+      // 4. Check to see if this name is resolvable as an import on demand.
+      for (ImportReference importReference : cudImports) {
+        if (importReference.isStatic() || importReference.trailingStarPosition == 0) {
+          continue;
+        }
+        String fullClassName = JdtUtil.sourceNameFromNamesArray(importReference.getImportName())
+            + "." + originalName;
+        if (typeResolver.resolveType(fullClassName) != null) {
+          jsniRef.setClassName(fullClassName);
+          return;
+        }
+      }
+    }
+
+    private FieldBinding checkFieldRef(SourceInfo errorInfo, ReferenceBinding clazz,
+        JsniRef jsniRef, boolean hasQualifier, boolean isLvalue) {
       assert jsniRef.isField();
       FieldBinding target = getField(clazz, jsniRef);
       if (target == null) {
         emitError("Referencing field '" + jsniRef.className() + "."
-            + jsniRef.memberName() + "': unable to resolve field");
+            + jsniRef.memberName() + "': unable to resolve field", errorInfo);
         return null;
       }
       if (target.isDeprecated()) {
         emitWarning("deprecation",
             "Referencing deprecated field '" + jsniRef.className() + "."
-                + jsniRef.memberName() + "'");
+                + jsniRef.memberName() + "'", errorInfo);
       }
       if (isLvalue && target.constant() != Constant.NotAConstant) {
         emitError("Illegal assignment to compile-time constant '"
-            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+            + jsniRef.className() + "." + jsniRef.memberName() + "'", errorInfo);
       }
       if (target.isStatic() && hasQualifier) {
         emitError("Unnecessary qualifier on static field '"
-            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+            + jsniRef.className() + "." + jsniRef.memberName() + "'", errorInfo);
       } else if (!target.isStatic() && !hasQualifier) {
         emitError("Missing qualifier on instance field '" + jsniRef.className()
-            + "." + jsniRef.memberName() + "'");
+            + "." + jsniRef.memberName() + "'", errorInfo);
       }
 
       if (hasUnsafeLongsAnnotation) {
@@ -240,48 +312,53 @@ public class JsniChecker {
       if (containsLong(target.type)) {
         emitError("Referencing field '" + jsniRef.className() + "."
             + jsniRef.memberName() + "': type '" + typeString(target.type)
-            + "' is not safe to access in JSNI code");
+            + "' is not safe to access in JSNI code", errorInfo);
       }
       return target;
     }
 
-    private MethodBinding checkMethodRef(ReferenceBinding clazz,
+    private MethodBinding checkMethodRef(SourceInfo errorInfo, ReferenceBinding clazz,
         JsniRef jsniRef, boolean hasQualifier, boolean isLvalue) {
       assert jsniRef.isMethod();
-      MethodBinding target = getMethod(clazz, jsniRef);
-      if (target == null) {
+      List<MethodBinding> targets = getMatchingMethods(clazz, jsniRef);
+      if (targets.size() > 1) {
+          emitError("Referencing method '" + jsniRef.className() + "."
+            + jsniRef.memberSignature() + "': ambiguous wildcard match", errorInfo);
+        return null;
+      } else if (targets.isEmpty()) {
         emitError("Referencing method '" + jsniRef.className() + "."
-            + jsniRef.memberSignature() + "': unable to resolve method");
+            + jsniRef.memberSignature() + "': unable to resolve method", errorInfo);
         return null;
       }
+      MethodBinding target = targets.get(0);
       if (target.isDeprecated()) {
         emitWarning("deprecation",
             "Referencing deprecated method '" + jsniRef.className() + "."
-                + jsniRef.memberName() + "'");
+                + jsniRef.memberName() + "'", errorInfo);
       }
       if (isLvalue) {
         emitError("Illegal assignment to method '" + jsniRef.className() + "."
-            + jsniRef.memberName() + "'");
+            + jsniRef.memberName() + "'", errorInfo);
       }
       boolean needsQualifer = !target.isStatic() && !target.isConstructor();
       if (!needsQualifer && hasQualifier) {
         emitError("Unnecessary qualifier on static method '"
-            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+            + jsniRef.className() + "." + jsniRef.memberName() + "'", errorInfo);
       } else if (needsQualifer && !hasQualifier) {
         emitError("Missing qualifier on instance method '"
-            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+            + jsniRef.className() + "." + jsniRef.memberName() + "'", errorInfo);
       }
       if (!target.isStatic() && JSORestrictionsChecker.isJso(clazz)) {
         emitError("Referencing method '" + jsniRef.className() + "."
             + jsniRef.memberSignature()
-            + "': references to instance methods in overlay types are illegal");
+            + "': references to instance methods in overlay types are illegal", errorInfo);
       }
       if (checkerState.isJsoInterface(clazz)) {
         String implementor = checkerState.getJsoImplementor(clazz);
         emitError("Referencing interface method '" + jsniRef.className() + "."
             + jsniRef.memberSignature() + "': implemented by '" + implementor
             + "'; references to instance methods in overlay types are illegal"
-            + "; use a stronger type or a Java trampoline method");
+            + "; use a stronger type or a Java trampoline method", errorInfo);
       }
 
       if (hasUnsafeLongsAnnotation) {
@@ -291,7 +368,7 @@ public class JsniChecker {
         emitError("Referencing method '" + jsniRef.className() + "."
             + jsniRef.memberName() + "': return type '"
             + typeString(target.returnType)
-            + "' is not safe to access in JSNI code");
+            + "' is not safe to access in JSNI code", errorInfo);
       }
 
       if (target.parameters != null) {
@@ -303,30 +380,27 @@ public class JsniChecker {
             emitError("Parameter " + i + " of method '" + jsniRef.className()
                 + "." + jsniRef.memberName() + "': type '"
                 + typeString(paramType)
-                + "' may not be passed out of JSNI code");
+                + "' may not be passed out of JSNI code", errorInfo);
           }
         }
       }
       return target;
     }
 
-    private Binding checkRef(JsniRef jsniRef, boolean hasQualifier,
+    private Binding checkRef(SourceInfo errorInfo, JsniRef jsniRef, boolean hasQualifier,
         boolean isLvalue) {
       String className = jsniRef.className();
       if ("null".equals(className)) {
-        if (jsniRef.isField()) {
-          if (!"nullField".equals(jsniRef.memberName())) {
-            emitError("Referencing field '" + jsniRef.className() + "."
-                + jsniRef.memberName()
-                + "': 'nullField' is the only legal field reference for 'null'");
-          }
-        } else {
-          if (!"nullMethod()".equals(jsniRef.memberSignature())) {
-            emitError("Referencing method '" + jsniRef.className() + "."
-                + jsniRef.memberSignature()
-                + "': 'nullMethod()' is the only legal method for 'null'");
-          }
-          return null;
+        // Do not emit errors for null.nullField or null.nullMethod.
+        // TODO(rluble): Why should these ever reach checkRef()?
+        if (jsniRef.isField() && !"nullField".equals(jsniRef.memberName())) {
+          emitError("Referencing field '" + jsniRef.className() + "."
+              + jsniRef.memberName()
+              + "': 'nullField' is the only legal field reference for 'null'", errorInfo);
+        } else if (jsniRef.isMethod() && !"nullMethod()".equals(jsniRef.memberSignature())) {
+          emitError("Referencing method '" + jsniRef.className() + "."
+              + jsniRef.memberSignature()
+              + "': 'nullMethod()' is the only legal method for 'null'", errorInfo);
         }
         return null;
       }
@@ -367,23 +441,23 @@ public class JsniChecker {
       if ((binding == null && looksLikeAnonymousClass(jsniRef))
           || (binding != null && binding.isAnonymousType())) {
         emitError("Referencing class '" + className
-            + "': JSNI references to anonymous classes are illegal");
+            + "': JSNI references to anonymous classes are illegal", errorInfo);
         return null;
       } else if (binding == null) {
         emitError("Referencing class '" + className
-            + "': unable to resolve class");
+            + "': unable to resolve class", errorInfo);
         return null;
       }
 
       if (clazz != null && clazz.isDeprecated()) {
         emitWarning("deprecation", "Referencing deprecated class '" + className
-            + "'");
+            + "'", errorInfo);
       }
 
       if (jsniRef.isField() && "class".equals(jsniRef.memberName())) {
         if (isLvalue) {
           emitError("Illegal assignment to class literal '"
-              + jsniRef.className() + ".class'");
+              + jsniRef.className() + ".class'", errorInfo);
           return null;
         }
         // Reference to the class itself.
@@ -398,23 +472,23 @@ public class JsniChecker {
         emitError("Referencing member '" + jsniRef.className() + "."
             + jsniRef.memberName()
             + "': 'class' is the only legal reference for "
-            + (isArray ? "array" : "primitive") + " types");
+            + (isArray ? "array" : "primitive") + " types", errorInfo);
         return null;
       }
 
       assert clazz != null;
       if (jsniRef.isMethod()) {
-        return checkMethodRef(clazz, jsniRef, hasQualifier, isLvalue);
+        return checkMethodRef(errorInfo, clazz, jsniRef, hasQualifier, isLvalue);
       } else {
-        return checkFieldRef(clazz, jsniRef, hasQualifier, isLvalue);
+        return checkFieldRef(errorInfo, clazz, jsniRef, hasQualifier, isLvalue);
       }
     }
 
-    private void emitError(String msg) {
+    private void emitError(String msg, SourceInfo errorInfo) {
       JsniCollector.reportJsniError(errorInfo, method, msg);
     }
 
-    private void emitWarning(String category, String msg) {
+    private void emitWarning(String category, String msg, SourceInfo errorInfo) {
       for (Set<String> suppressWarnings : suppressWarningsStack) {
         if (suppressWarnings.contains(category)
             || suppressWarnings.contains("all")) {
@@ -443,40 +517,59 @@ public class JsniChecker {
       return clazz.getField(jsniRef.memberName().toCharArray(), false);
     }
 
-    private MethodBinding getMethod(ReferenceBinding clazz, JsniRef jsniRef) {
+    private MethodBinding getMatchingConstructor(ReferenceBinding clazz, JsniRef jsniRef) {
+      for (MethodBinding constructorBinding : clazz.getMethods(INIT_CTOR_CHARS)) {
+        StringBuilder methodSig = new StringBuilder();
+        if (clazz instanceof NestedTypeBinding) {
+          // Match synthetic args for enclosing instances.
+          NestedTypeBinding nestedBinding = (NestedTypeBinding) clazz;
+          if (nestedBinding.enclosingInstances != null) {
+            for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
+              SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
+              methodSig.append(arg.type.signature());
+            }
+          }
+        }
+        if (constructorBinding.parameters != null) {
+          for (TypeBinding binding : constructorBinding.parameters) {
+            methodSig.append(binding.signature());
+          }
+        }
+        if (methodSig.toString().equals(jsniRef.paramTypesString())) {
+          return constructorBinding;
+        }
+      }
+      return null;
+    }
+
+    private List<MethodBinding> getMatchingMethods(ReferenceBinding clazz, JsniRef jsniRef) {
       assert jsniRef.isMethod();
+      List<MethodBinding> foundMethods = new ArrayList<MethodBinding>();
       String methodName = jsniRef.memberName();
       if ("new".equals(methodName)) {
-        for (MethodBinding findMethod : clazz.getMethods(INIT_CTOR_CHARS)) {
-          StringBuilder methodSig = new StringBuilder();
-          if (clazz instanceof NestedTypeBinding) {
-            // Match synthetic args for enclosing instances.
-            NestedTypeBinding nestedBinding = (NestedTypeBinding) clazz;
-            if (nestedBinding.enclosingInstances != null) {
-              for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-                SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-                methodSig.append(arg.type.signature());
-              }
-            }
-          }
-          if (findMethod.parameters != null) {
-            for (TypeBinding binding : findMethod.parameters) {
-              methodSig.append(binding.signature());
-            }
-          }
-          if (methodSig.toString().equals(jsniRef.paramTypesString())) {
-            return findMethod;
-          }
+        MethodBinding constructorBinding = getMatchingConstructor(clazz, jsniRef);
+        if (constructorBinding != null) {
+          foundMethods.add(constructorBinding);
         }
       } else {
         Queue<ReferenceBinding> work = new LinkedList<ReferenceBinding>();
         work.add(clazz);
+        MethodBinding currentFind = null;
         while (!work.isEmpty()) {
           clazz = work.remove();
+          NEXT_METHOD:
           for (MethodBinding findMethod : clazz.getMethods(methodName.toCharArray())) {
-            if (paramTypesMatch(findMethod, jsniRef)) {
-              return findMethod;
+            if (!paramTypesMatch(findMethod, jsniRef)) {
+              continue;
             }
+            for (MethodBinding alreadyFound : foundMethods) {
+              // Only collect methods with different signatures (same signatures are overloads
+              // hence they are ok.
+              if (paramTypesMatch(alreadyFound, findMethod)) {
+                break NEXT_METHOD;
+              }
+            }
+            foundMethods.add(findMethod);
           }
           ReferenceBinding[] superInterfaces = clazz.superInterfaces();
           if (superInterfaces != null) {
@@ -488,7 +581,7 @@ public class JsniChecker {
           }
         }
       }
-      return null;
+      return foundMethods;
     }
 
     @Deprecated
@@ -540,6 +633,24 @@ public class JsniChecker {
       return methodSig.toString().equals(jsniRef.paramTypesString());
     }
 
+    private boolean paramTypesMatch(MethodBinding thisMethod, MethodBinding thatMethod) {
+      int thisParameterCount = thisMethod.parameters == null ? 0 : thisMethod.parameters.length;
+      int thatParameterCount = thatMethod.parameters == null ? 0 : thatMethod.parameters.length;
+
+      if (thisParameterCount != thatParameterCount) {
+        return false;
+      }
+
+      for (int i = 0; i < thisParameterCount; i++) {
+        TypeBinding thisBinding = thisMethod.parameters[i];
+        TypeBinding thatBinding = thatMethod.parameters[i];
+        if (!new String(thisBinding.signature()).equals(new String(thatBinding.signature()))) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     private String typeString(TypeBinding type) {
       return String.valueOf(type.shortReadableName());
     }
@@ -553,48 +664,52 @@ public class JsniChecker {
   /**
    * Checks an entire
    * {@link org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration}.
-   * 
+   *
    */
-  public static void check(CompilationUnitDeclaration cud,
+  public static void check(CompilationUnitDeclaration cud, List<ImportReference> cudOriginalImports,
       CheckerState checkerState,
       Map<MethodDeclaration, JsniMethod> jsniMethods,
       Map<String, Binding> jsniRefs, TypeResolver typeResolver) {
-    new JsniChecker(cud, checkerState, typeResolver, jsniMethods, jsniRefs).check();
+    new JsniChecker(cud, cudOriginalImports, checkerState, typeResolver, jsniMethods, jsniRefs).check();
   }
 
   Set<String> getSuppressedWarnings(Annotation[] annotations) {
-    if (annotations != null) {
-      for (Annotation a : annotations) {
-        if (SuppressWarnings.class.getName().equals(
-            CharOperation.toString(((ReferenceBinding) a.resolvedType).compoundName))) {
-          for (MemberValuePair pair : a.memberValuePairs()) {
-            if (String.valueOf(pair.name).equals("value")) {
-              Expression valueExpr = pair.value;
-              if (valueExpr instanceof StringLiteral) {
-                // @SuppressWarnings("Foo")
-                return Sets.create(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(
-                    Locale.ENGLISH));
-              } else if (valueExpr instanceof ArrayInitializer) {
-                // @SuppressWarnings({ "Foo", "Bar"})
-                ArrayInitializer ai = (ArrayInitializer) valueExpr;
-                String[] values = new String[ai.expressions.length];
-                for (int i = 0, j = values.length; i < j; i++) {
-                  if ((ai.expressions[i]) instanceof StringLiteral) {
-                    StringLiteral expression = (StringLiteral) ai.expressions[i];
-                    values[i] = expression.constant.stringValue().toLowerCase(Locale.ENGLISH);
-                  } else {
-                    suppressionAnnotationWarning(a,
-                        "Unable to analyze SuppressWarnings annotation, " +
-                            ai.expressions[i].toString() + " not a string constant.");
-                  }
-                }
-                return Sets.create(values);
-              } else {
-                suppressionAnnotationWarning(a, "Unable to analyze SuppressWarnings annotation, " +
-                    valueExpr.toString() + " not a string constant.");
-              }
+    if (annotations == null) {
+      return Sets.create();
+    }
+
+    for (Annotation a : annotations) {
+      if (!SuppressWarnings.class.getName().equals(
+          CharOperation.toString(((ReferenceBinding) a.resolvedType).compoundName))) {
+        continue;
+      }
+      for (MemberValuePair pair : a.memberValuePairs()) {
+        if (!String.valueOf(pair.name).equals("value")) {
+          continue;
+        }
+        Expression valueExpr = pair.value;
+        if (valueExpr instanceof StringLiteral) {
+          // @SuppressWarnings("Foo")
+          return Sets.create(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(
+              Locale.ENGLISH));
+        } else if (valueExpr instanceof ArrayInitializer) {
+          // @SuppressWarnings({ "Foo", "Bar"})
+          ArrayInitializer ai = (ArrayInitializer) valueExpr;
+          String[] values = new String[ai.expressions.length];
+          for (int i = 0, j = values.length; i < j; i++) {
+            if ((ai.expressions[i]) instanceof StringLiteral) {
+              StringLiteral expression = (StringLiteral) ai.expressions[i];
+              values[i] = expression.constant.stringValue().toLowerCase(Locale.ENGLISH);
+            } else {
+              suppressionAnnotationWarning(a,
+                  "Unable to analyze SuppressWarnings annotation, " +
+                      ai.expressions[i].toString() + " not a string constant.");
             }
           }
+          return Sets.create(values);
+        } else {
+          suppressionAnnotationWarning(a, "Unable to analyze SuppressWarnings annotation, " +
+              valueExpr.toString() + " not a string constant.");
         }
       }
     }
@@ -603,17 +718,19 @@ public class JsniChecker {
 
   private final CheckerState checkerState;
   private final CompilationUnitDeclaration cud;
+  private final List<ImportReference> cudImports;
   private final Map<MethodDeclaration, JsniMethod> jsniMethods;
   private final Map<String, Binding> jsniRefs;
   private final Stack<Set<String>> suppressWarningsStack = new Stack<Set<String>>();
   private final TypeResolver typeResolver;
 
-  private JsniChecker(CompilationUnitDeclaration cud,
+  private JsniChecker(CompilationUnitDeclaration cud, List<ImportReference> cudImports,
       CheckerState checkerState, TypeResolver typeResolver,
       Map<MethodDeclaration, JsniMethod> jsniMethods,
       Map<String, Binding> jsniRefs) {
     this.checkerState = checkerState;
     this.cud = cud;
+    this.cudImports = cudImports;
     this.typeResolver = typeResolver;
     this.jsniMethods = jsniMethods;
     this.jsniRefs = jsniRefs;
@@ -629,11 +746,13 @@ public class JsniChecker {
    * the argument is <code>null</code>, returns <code>false</code>.
    */
   private boolean containsLong(TypeBinding type) {
-    if (type instanceof BaseTypeBinding) {
-      BaseTypeBinding btb = (BaseTypeBinding) type;
-      if (btb.id == TypeIds.T_long) {
+    if (!(type instanceof BaseTypeBinding)) {
+      return false;
+    }
+
+    BaseTypeBinding btb = (BaseTypeBinding) type;
+    if (btb.id == TypeIds.T_long) {
         return true;
-      }
     }
 
     return false;
@@ -641,28 +760,31 @@ public class JsniChecker {
 
   private boolean hasUnsafeLongsAnnotation(MethodDeclaration meth,
       ClassScope scope) {
-    if (meth.annotations != null) {
-      for (Annotation annot : meth.annotations) {
-        if (isUnsafeLongAnnotation(annot, scope)) {
-          return true;
-        }
+    if (meth.annotations == null) {
+      return false;
+    }
+
+    for (Annotation annot : meth.annotations) {
+      if (isUnsafeLongAnnotation(annot, scope)) {
+        return true;
       }
     }
     return false;
   }
 
   private boolean isUnsafeLongAnnotation(Annotation annot, ClassScope scope) {
-    if (annot.type != null) {
-      TypeBinding resolved = annot.type.resolveType(scope);
-      if (resolved != null) {
-        if (resolved instanceof ReferenceBinding) {
-          ReferenceBinding rb = (ReferenceBinding) resolved;
-          if (CharOperation.equals(rb.compoundName,
-              UNSAFE_LONG_ANNOTATION_CHARS)) {
-            return true;
-          }
-        }
-      }
+    if (annot.type == null) {
+      return false;
+    }
+
+    TypeBinding resolved = annot.type.resolveType(scope);
+    if (resolved == null || !(resolved instanceof ReferenceBinding)) {
+      return false;
+    }
+
+    ReferenceBinding rb = (ReferenceBinding) resolved;
+    if (CharOperation.equals(rb.compoundName, UNSAFE_LONG_ANNOTATION_CHARS)) {
+      return true;
     }
     return false;
   }

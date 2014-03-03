@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -49,7 +49,7 @@ public class JsniRef {
    * <li>the method parameter types, excluding the parentheses
    * </ol>
    */
-  private static Pattern JsniRefPattern = Pattern.compile("@?([^:]+)::([^(]+)(\\((.*)\\))?");
+  private static Pattern JsniRefPattern = Pattern.compile("@?([^:@]*)::([^(]+)(\\((.*)\\))?");
 
   /**
    * Parse a Java reference from JSNI code. This parser is forgiving; it does
@@ -123,7 +123,7 @@ public class JsniRef {
     return types.toArray(Empty.STRINGS);
   }
 
-  private final String className;
+  private String className;
   private final String memberName;
   private final String[] paramTypes;
   private final String paramTypesString;
@@ -190,6 +190,10 @@ public class JsniRef {
 
   public String paramTypesString() {
     return paramTypesString;
+  }
+
+  public void setClassName(String className) {
+    this.className = className;
   }
 
   @Override
