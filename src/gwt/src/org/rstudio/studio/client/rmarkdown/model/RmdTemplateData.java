@@ -53,6 +53,7 @@ public class RmdTemplateData
             option_ui_name: "Include table of contents", 
             option_type: "boolean", 
             option_for_create: true,
+            option_transferable: true,
             option_default: "false"
             },
             {
@@ -76,6 +77,7 @@ public class RmdTemplateData
             option_ui_name: "Syntax highlighting", 
             option_type: "choice", 
             option_for_create: false,
+            option_transferable: true,
             option_default: "default",
             option_list: [ "default", "tango", "pygments", "kate", "monochrome",
                            "espresso", "zenburn", "haddock", "textmate" ]
@@ -197,6 +199,7 @@ public class RmdTemplateData
             option_ui_name: "Render slide bullets incrementally", 
             option_type: "boolean", 
             option_for_create: false,
+            option_transferable: true,
             option_default: "false"
             },
             {
@@ -312,6 +315,7 @@ public class RmdTemplateData
             option_ui_name: "Syntax highlighting", 
             option_type: "choice", 
             option_for_create: false,
+            option_transferable: true,
             option_default: "default",
             option_list: [ "default", "tango", "pygments", "kate", "monochrome",
                            "espresso", "zenburn", "haddock", "textmate" ]

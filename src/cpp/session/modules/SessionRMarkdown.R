@@ -39,5 +39,19 @@
 
 .rs.addJsonRpcHandler("convert_from_yaml", function(yaml)
 {
-   list(data = .rs.scalarListFromList(yaml::yaml.load(yaml)))
+   data <- list()
+   parseError <- ""
+   parseSucceeded <- FALSE
+   tryCatch(
+   {
+      data <- .rs.scalarListFromList(yaml::yaml.load(yaml))
+      parseSucceeded <- TRUE
+   },
+   error = function(e)
+   {
+      parseError <<- as.character(e)
+   })
+   list(data = data, 
+        parse_succeeded = .rs.scalar(parseSucceeded),
+        parse_error = .rs.scalar(parseError))
 })

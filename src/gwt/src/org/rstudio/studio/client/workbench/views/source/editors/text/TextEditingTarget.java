@@ -79,6 +79,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
@@ -2223,10 +2224,10 @@ public class TextEditingTarget implements
    @Handler 
    void onEditRmdFormatOptions()
    {
-      showFrontMatterEditor(null);
+      showFrontMatterEditor();
    }
    
-   private void showFrontMatterEditor(final String initialFormat)
+   private void showFrontMatterEditor()
    {
       final String yaml = getRmdFrontMatter();
       if (yaml == null)
@@ -2242,23 +2243,57 @@ public class TextEditingTarget implements
          @Override
          public void execute(RmdYamlData arg)
          {
-            showFrontMatterEditorDialog(yaml, arg, initialFormat);
+            if (!arg.parseSucceeded())
+            {
+               // try to find where the YAML segment begins in the document
+               // so we can show an adjusted line number for the error
+               int numLines = docDisplay_.getRowCount();
+               int offsetLine = 0;
+               String separator = RmdFrontMatter.FRONTMATTER_SEPARATOR.trim();
+               for (int i = 0; i < numLines; i++)
+               {
+                  if (docDisplay_.getLine(i).equals(separator))
+                  {
+                     offsetLine = i + 1;
+                     break;
+                  }
+               }
+               globalDisplay_.showErrorMessage("Edit Format Failed", 
+                     "The YAML front matter in this document could not be " +
+                     "successfully parsed. This parse error needs to be " + 
+                     "resolved before format options can be edited: \n\n" + 
+                     arg.getOffsetParseError(offsetLine));
+            }
+            else
+            {
+               showFrontMatterEditorDialog(yaml, arg);
+            }
          }
       });
    }
    
-   private void showFrontMatterEditorDialog(String yaml, RmdYamlData data, 
-                                            String initialFormat)
+   private void showFrontMatterEditorDialog(String yaml, RmdYamlData data)
    {
-      // Get the selected template format from the YAML, and show the 
-      // dialog for the given format (or the format currently at the top
-      // of the YAML if not supplied)
-      RmdSelectedTemplate selTemplate = 
-            rmarkdownHelper_.getTemplateFormat(yaml);
-      if (initialFormat == null)
-         initialFormat = selTemplate.format;
+      JsArrayString existingFormats = data.getFrontMatter().getFormatList();
+      String format = "";
+      RmdTemplate template = null;
+      if (existingFormats.length() == 1)
+      {
+         // If there's only one format, just show the editor for that format
+         format = existingFormats.get(0);
+         template = rmarkdownHelper_.getTemplateForFormat(format);
+      }
+      else
+      {
+         // If there are multiple formats, get the selected template format from
+         // the YAML, and show the dialog for the given format
+         RmdSelectedTemplate selTemplate = 
+               rmarkdownHelper_.getTemplateFormat(yaml);
+         format = selTemplate.format;
+         template = selTemplate.template;
+      }
       RmdTemplateOptionsDialog dialog = 
-         new RmdTemplateOptionsDialog(selTemplate.template, initialFormat,
+         new RmdTemplateOptionsDialog(template, format,
             data.getFrontMatter(),
             new OperationWithInput<RmdTemplateOptionsDialog.Result>()
             {

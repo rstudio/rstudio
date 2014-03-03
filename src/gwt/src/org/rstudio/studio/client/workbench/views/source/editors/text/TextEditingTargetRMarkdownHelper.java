@@ -251,7 +251,28 @@ public class TextEditingTargetRMarkdownHelper
          }
       });
    }
+   
+   // Return the template appropriate to the given output format
+   public RmdTemplate getTemplateForFormat(String outFormat)
+   {
+      JsArray<RmdTemplate> templates = RmdTemplateData.getTemplates();
+      for (int i = 0; i < templates.length(); i++)
+      {
+         JsArray<RmdTemplateFormat> formats = 
+               templates.get(i).getFormats();
+         for (int j = 0; j < formats.length(); j++)
+         {
+            if (formats.get(j).getName().equals(outFormat))
+            {
+               return templates.get(i);
+            }
+         }
+      }
+      // No template found
+      return null;
+   }
 
+   // Return the selected template and format given the YAML front matter
    public RmdSelectedTemplate getTemplateFormat(String yaml)
    {
       YamlTree tree = new YamlTree(yaml);
@@ -265,21 +286,11 @@ public class TextEditingTargetRMarkdownHelper
          outFormat = tree.getKeyValue(RmdFrontMatter.OUTPUT_KEY);
       else
          outFormat = outputs.get(0);
-      JsArray<RmdTemplate> templates = RmdTemplateData.getTemplates();
-      for (int i = 0; i < templates.length(); i++)
-      {
-         JsArray<RmdTemplateFormat> formats = 
-               templates.get(i).getFormats();
-         for (int j = 0; j < formats.length(); j++)
-         {
-            if (formats.get(j).getName().equals(outFormat))
-            {
-               return new RmdSelectedTemplate(templates.get(i), outFormat);
-            }
-         }
-      }
-      // No template found
-      return null;
+      
+      RmdTemplate template = getTemplateForFormat(outFormat);
+      if (template == null)
+         return null;
+      return new RmdSelectedTemplate(template, outFormat);
    }
   
    private void installRMarkdownPackage(String action,

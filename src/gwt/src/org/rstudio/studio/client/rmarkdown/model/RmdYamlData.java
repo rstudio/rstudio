@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 
 public class RmdYamlData extends JavaScriptObject
 {
@@ -25,4 +27,30 @@ public class RmdYamlData extends JavaScriptObject
    public final native RmdFrontMatter getFrontMatter() /*-{
       return this.data;
    }-*/;
+   
+   public final native String getParseError() /*-{
+      return this.parse_error;
+   }-*/;
+
+   public final native boolean parseSucceeded() /*-{
+      return this.parse_succeeded;
+   }-*/;
+   
+   // Returns the parse error, with the line number adjusted by the given 
+   // offset. 
+   public final String getOffsetParseError(int offsetline)
+   {
+      String error = getParseError();
+      String lineRegex = "line (\\d+),";
+      RegExp reg = RegExp.compile(lineRegex);
+      MatchResult result = reg.exec(error);
+      if (result == null || result.getGroupCount() < 2)
+         return getParseError();
+      else
+      {
+         Integer newLine = Integer.parseInt(result.getGroup(1)) + offsetline;
+         return error.replaceAll(lineRegex, 
+                                 "line " + newLine.toString() + ",");
+      }
+   }
 }

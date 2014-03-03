@@ -51,6 +51,10 @@ public class RmdTemplateFormatOption extends JavaScriptObject
       return this.option_for_create;
    }-*/;
 
+   public final native boolean isTransferable() /*-{
+      return this.option_transferable || false;
+   }-*/;
+
    public final static String TYPE_BOOLEAN = "boolean";
    public final static String TYPE_CHOICE = "choice";
    public final static String TYPE_FLOAT = "float";

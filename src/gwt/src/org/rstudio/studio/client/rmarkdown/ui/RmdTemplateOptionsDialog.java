@@ -43,7 +43,8 @@ public class RmdTemplateOptionsDialog
          OperationWithInput<RmdTemplateOptionsDialog.Result> onSaved,
          Operation onCancelled)
    {
-      super("Edit R Markdown Format Options", onSaved, onCancelled);
+      super("Edit R Markdown " + template.getName() + " Options", 
+            onSaved, onCancelled);
       setWidth("350px");
       setHeight("400px");
       templateOptions_ = new RmdTemplateOptionsWidget();
