@@ -39,6 +39,8 @@ public class RmdFrontMatter extends JavaScriptObject
    }-*/;
    
    public final native JsArrayString getFormatList() /*-{
+      if (typeof this.output === "undefined")
+         return [ "html_document" ];
       if (typeof this.output === "string")
          return [ this.output ];
       else
@@ -47,7 +49,8 @@ public class RmdFrontMatter extends JavaScriptObject
 
    public final native RmdFrontMatterOutputOptions getOutputOption(
          String format) /*-{
-     if (this.output === format)
+     if (typeof this.output === "undefined" || 
+         this.output === format)
         return {}
         
      var options = this.output[format];
@@ -63,7 +66,8 @@ public class RmdFrontMatter extends JavaScriptObject
          JavaScriptObject options) /*-{
      if (Object.getOwnPropertyNames(options).length === 0)
      {
-        if (typeof this.output === "string" ||
+        if (typeof this.output === "undefined" ||
+            typeof this.output === "string" ||
             Object.getOwnPropertyNames(this.output).length === 0)
            this.output = format;
         else
