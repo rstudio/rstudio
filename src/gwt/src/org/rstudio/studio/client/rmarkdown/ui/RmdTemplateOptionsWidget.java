@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -159,14 +160,10 @@ public class RmdTemplateOptionsWidget extends Composite
 
          // check to see whether a value for this format and option were
          // specified in the front matter
-         if (frontMatterCache_ != null)
-         {
-            String key = format.getName() + ":" + option.getName();
-            if (frontMatterCache_.containsKey(key))
-            {
-               initialValue = frontMatterCache_.get(key);
-            }
-         }
+         String frontMatterValue = getFrontMatterDefault(
+               format.getName(), option.getName());
+         if (frontMatterValue != null)
+            initialValue = frontMatterValue;
          
          if (option.getType().equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
          {
@@ -226,6 +223,7 @@ public class RmdTemplateOptionsWidget extends Composite
    {
       frontMatter_ = frontMatter;
       frontMatterCache_ = new HashMap<String, String>();
+      ensureOptionsCache();
       JsArrayString formats = frontMatter.getFormatList();
       for (int i = 0; i < formats.length(); i++)
       {
@@ -236,9 +234,60 @@ public class RmdTemplateOptionsWidget extends Composite
          for (int j = 0; j < optionList.length(); j++)
          {
             String option = optionList.get(j);
-            frontMatterCache_.put(format + ":" + option, 
-                             options.getOptionValue(option));
+            String value = options.getOptionValue(option);
+            frontMatterCache_.put(format + ":" + option, value);
+            if (optionCache_.containsKey(option))
+            {
+               // If the option is specifically labeled as transferable
+               // between formats, add a generic key to be applied to other
+               // formats
+               RmdTemplateFormatOption formatOption = optionCache_.get(option);
+               if (formatOption.isTransferable())
+               {
+                  frontMatterCache_.put(option, value);
+               }
+            }
          }
+      }
+   }
+   
+   private String getFrontMatterDefault(String formatName, String optionName)
+   {
+      // if we have no front matter, we have no default
+      if (frontMatterCache_ == null)
+         return null;
+      
+      // is this value defined in the front matter?
+      String key = formatName + ":" + optionName;
+      if (frontMatterCache_.containsKey(key))
+         return frontMatterCache_.get(key);
+      else 
+      {
+         // is this value transferable from a format defined in the front
+         // matter? (don't transfer options into formats explicitly defined
+         // in the front matter)
+         JsArrayString frontMatterFormats = frontMatter_.getFormatList();
+         if ((!StringUtil.jsArrayStringContains(frontMatterFormats, formatName)) 
+               &&
+             frontMatterCache_.containsKey(optionName))
+         {
+            return frontMatterCache_.get(optionName);
+         }
+      }
+      return null;
+   }
+   
+   private void ensureOptionsCache()
+   {
+      if (optionCache_ != null)
+         return;
+      optionCache_ = new HashMap<String, RmdTemplateFormatOption>();
+      for (int i = 0; i < options_.length(); i++)
+      {
+         RmdTemplateFormatOption option = options_.get(i);
+         if (option.getFormatName().length() > 0)
+            continue;
+         optionCache_.put(option.getName(), option);
       }
    }
 
@@ -246,8 +295,18 @@ public class RmdTemplateOptionsWidget extends Composite
    private JsArray<RmdTemplateFormatOption> options_;
    private List<RmdFormatOption> optionWidgets_;
    private boolean forCreate_ = false;
-   private Map<String, String> frontMatterCache_;
    private RmdFrontMatter frontMatter_;
+   
+   // Cache of options present in the template (ignores those options that 
+   // are specifically marked for a format)
+   private Map<String, RmdTemplateFormatOption> optionCache_;
+
+   // Cache of values set in the front matter, e.g.:
+   // "html_document:fig_width" => "7.5"
+   // In the case of options that are marked as transferable, maps directly
+   // from an option name to its default, e.g.
+   // "toc" => "true"
+   private Map<String, String> frontMatterCache_;
 
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;
