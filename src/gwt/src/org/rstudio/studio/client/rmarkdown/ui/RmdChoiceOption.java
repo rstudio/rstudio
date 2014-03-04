@@ -33,7 +33,10 @@ public class RmdChoiceOption extends RmdNullableOption
       {
          panel.add(nonNullCheckBox());
       }
-      panel.add(new InlineLabel(option.getUiName() + ":"));
+      else
+      {
+         panel.add(new InlineLabel(option.getUiName() + ":"));
+      }
       choices_ = new ListBox();
       
       JsArrayString choiceList = option.getChoiceList();

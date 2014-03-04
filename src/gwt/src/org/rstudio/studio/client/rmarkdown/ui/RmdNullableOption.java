@@ -27,7 +27,7 @@ public abstract class RmdNullableOption extends RmdBaseOption
       super(option);
       if (option.isNullable())
       {
-         nonNullCheck_ = new CheckBox();
+         nonNullCheck_ = new CheckBox(option.getUiName() + ": ");
          nonNullCheck_.setValue(!initialValue.equals("null"));
          nonNullCheck_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
          {

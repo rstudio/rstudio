@@ -18,8 +18,10 @@ import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.InlineLabel;
 
 public class RmdFileOption extends RmdNullableOption
 {
@@ -34,14 +36,17 @@ public class RmdFileOption extends RmdNullableOption
       {
          panel.add(nonNullCheckBox());
       }
+      else
+      {
+         panel.add(new InlineLabel(option.getUiName() + ": "));
+      }
       
-      HTMLPanel fileChooserPanel = new HTMLPanel("");
-      fileChooserPanel.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
-      fileChooser_ = new FileChooserTextBox(option.getUiName(), null);
+      fileChooser_ = new FileChooserTextBox("", null);
       if (!initialValue.equals("null"))
          fileChooser_.setText(initialValue);
-      fileChooserPanel.add(fileChooser_);
-      panel.add(fileChooserPanel);
+      fileChooser_.getElement().getStyle().setMarginLeft(20, Unit.PX);
+      fileChooser_.getElement().getStyle().setMarginTop(3, Unit.PX);
+      panel.add(fileChooser_);
 
       updateNull();
 
