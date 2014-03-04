@@ -1,5 +1,5 @@
 /*
- * RmdChoiceOption.java
+ * RmdFileOption.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -14,67 +14,63 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.ListBox;
 
-public class RmdChoiceOption extends RmdNullableOption
+public class RmdFileOption extends RmdNullableOption
 {
-   public RmdChoiceOption(RmdTemplateFormatOption option, String initialValue)
+   public RmdFileOption(RmdTemplateFormatOption option, String initialValue)
    {
       super(option, initialValue);
       defaultValue_ = option.getDefaultValue();
 
       HTMLPanel panel = new HTMLPanel("");
+
       if (option.isNullable())
       {
          panel.add(nonNullCheckBox());
       }
-      panel.add(new InlineLabel(option.getUiName() + ":"));
-      choices_ = new ListBox();
       
-      JsArrayString choiceList = option.getChoiceList();
-      int selectedIdx = 0;
-      for (int i = 0; i < choiceList.length(); i++)
-      {
-         choices_.addItem(choiceList.get(i));
-         if (choiceList.get(i).equals(initialValue))
-         {
-            selectedIdx = i;
-         }
-      }
-      choices_.setSelectedIndex(selectedIdx);
-      panel.add(choices_);
+      HTMLPanel fileChooserPanel = new HTMLPanel("");
+      fileChooserPanel.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
+      fileChooser_ = new FileChooserTextBox(option.getUiName(), null);
+      if (!initialValue.equals("null"))
+         fileChooser_.setText(initialValue);
+      fileChooserPanel.add(fileChooser_);
+      panel.add(fileChooserPanel);
 
       updateNull();
+
       initWidget(panel);
    }
 
    @Override
    public boolean valueIsDefault()
    {
-      return defaultValue_ == getValue();
+      if (valueIsNull() && defaultValue_.equals("null"))
+         return true;
+      return getValue() == defaultValue_;
    }
 
    @Override
    public String getValue()
    {
       if (valueIsNull())
-      {
          return null;
-      }
-      return choices_.getValue(choices_.getSelectedIndex());
+      return fileChooser_.getText();
    }
    
    @Override
    public void updateNull()
    {
-      choices_.setEnabled(!valueIsNull());
+      fileChooser_.setEnabled(!valueIsNull());
    }
-   
-   private final String defaultValue_;
-   private ListBox choices_;
+
+   FileChooserTextBox fileChooser_;
+   CheckBox nonNullCheck_;
+   String defaultValue_;
 }

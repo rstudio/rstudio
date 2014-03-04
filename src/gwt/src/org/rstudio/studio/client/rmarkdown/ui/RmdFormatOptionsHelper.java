@@ -30,20 +30,19 @@ public class RmdFormatOptionsHelper
       {
          if (!option.valueIsDefault())
          {
-            if (option.getOption().getType().equals(
-                  RmdTemplateFormatOption.TYPE_BOOLEAN))
+            String type = option.getOption().getType();
+            if (type.equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
             {
                addOption(optionList, option.getOption(), 
                          Boolean.parseBoolean(option.getValue()));
             }
-            if (option.getOption().getType().equals(
-                  RmdTemplateFormatOption.TYPE_FLOAT))
+            if (type.equals(RmdTemplateFormatOption.TYPE_FLOAT))
             {
                addOption(optionList, option.getOption(), 
                          Float.parseFloat(option.getValue()));
             }
-            else if (option.getOption().getType().equals(
-                  RmdTemplateFormatOption.TYPE_CHOICE))
+            else if (type.equals(RmdTemplateFormatOption.TYPE_CHOICE) ||
+                     type.equals(RmdTemplateFormatOption.TYPE_FILE))
             {
                addOption(optionList, option.getOption(), option.getValue());
             }

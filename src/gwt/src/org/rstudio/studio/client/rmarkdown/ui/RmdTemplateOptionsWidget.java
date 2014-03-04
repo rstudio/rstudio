@@ -177,6 +177,10 @@ public class RmdTemplateOptionsWidget extends Composite
          {
             optionWidget = new RmdFloatOption(option, initialValue);
          }
+         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FILE))
+         {
+            optionWidget = new RmdFileOption(option, initialValue);
+         }
          else
             continue;
          

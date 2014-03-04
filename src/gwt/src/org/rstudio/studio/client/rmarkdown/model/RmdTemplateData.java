@@ -28,7 +28,7 @@ public class RmdTemplateData
             format_ui_name: "HTML",
             format_options: [ "theme", "highlight", "fig_width", 
                               "fig_height", "fig_caption", "toc", "smart", 
-                              "self_contained" ],
+                              "self_contained", "css" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
@@ -65,7 +65,7 @@ public class RmdTemplateData
             },
             {
             option_name: "theme",
-            option_ui_name: "Theme", 
+            option_ui_name: "Apply theme", 
             option_type: "choice", 
             option_default: "default",
             option_for_create: true,
@@ -157,6 +157,14 @@ public class RmdTemplateData
             option_for_create: false,
             option_type: "boolean", 
             option_default: "false"
+            },
+            {
+            option_name: "css",
+            option_ui_name: "Apply CSS file", 
+            option_type: "file", 
+            option_for_create: false,
+            option_nullable: true,
+            option_default: "null"
             },
          ]
          },
