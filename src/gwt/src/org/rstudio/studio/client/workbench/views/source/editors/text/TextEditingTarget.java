@@ -181,6 +181,7 @@ public class TextEditingTarget implements
                             List<String> options, 
                             List<String> values, 
                             String selected);
+      void setFormatOptionsVisible(boolean visible);
       HandlerRegistration addRmdFormatChangedHandler(
             ValueChangeHandler<String> handler);
    }
@@ -2412,7 +2413,10 @@ public class TextEditingTarget implements
    {
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
       if (selTemplate == null)
+      {
+         view_.setFormatOptionsVisible(false);
          return;
+      }
       
       // we know which template this doc is using--populate the format list
       // with the formats available in the template
