@@ -17,7 +17,6 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLPanel;

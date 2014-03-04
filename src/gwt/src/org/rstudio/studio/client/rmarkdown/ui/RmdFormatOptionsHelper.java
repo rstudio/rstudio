@@ -26,9 +26,11 @@ public class RmdFormatOptionsHelper
 {
    public final static JavaScriptObject optionsListToJson(
          List<RmdFormatOption> options, 
-         FileSystemItem document)
+         FileSystemItem document, 
+         JavaScriptObject optionList)
    {
-      JavaScriptObject optionList = createOptionList();
+      if (optionList == null) 
+         optionList = createOptionList();
       for (RmdFormatOption option: options)
       {
          if (!option.valueIsDefault())

@@ -108,8 +108,10 @@ public class RmdTemplateOptionsWidget extends Composite
          return null;
       frontMatter_.setOutputOption(
             getSelectedFormat(), 
-            RmdFormatOptionsHelper.optionsListToJson(optionWidgets_, 
-                                                     document_));
+            RmdFormatOptionsHelper.optionsListToJson(
+                  optionWidgets_, 
+                  document_, 
+                  frontMatter_.getOutputOption(getSelectedFormat())));
       return frontMatter_;
    }
    
@@ -127,8 +129,11 @@ public class RmdTemplateOptionsWidget extends Composite
    
    public JavaScriptObject getOptionsJSON()
    {
-      return RmdFormatOptionsHelper.optionsListToJson(optionWidgets_,
-                                                      document_);
+      return RmdFormatOptionsHelper.optionsListToJson(
+            optionWidgets_,
+            document_, 
+            frontMatter_ == null ? 
+                  null : frontMatter_.getOutputOption(getSelectedFormat()));
    }
    
    private void updateFormatOptions(String format)
