@@ -2295,6 +2295,7 @@ public class TextEditingTarget implements
       RmdTemplateOptionsDialog dialog = 
          new RmdTemplateOptionsDialog(template, format,
             data.getFrontMatter(),
+            getPath() == null ? null : FileSystemItem.createFile(getPath()),
             new OperationWithInput<RmdTemplateOptionsDialog.Result>()
             {
                @Override
