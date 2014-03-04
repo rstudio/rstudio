@@ -242,6 +242,7 @@ public class JavaAstConstructor {
               "  public static Object defineClass(int typeId, int superTypeId, Object map) {",
               "    return null;",
               "  }",
+              "  public static void patchIsArray() {}",
               "}"
           );
         }

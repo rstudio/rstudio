@@ -18,11 +18,12 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalRef;
+import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -34,42 +35,59 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
-import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.CreateStaticImplsVisitor;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.StaticCallConverter;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * JSO devirtualization is the process of converting virtual method calls on instances that might be
- * a JSO in the AST like "someJsoObject.doFoo();" to static calls like
- * "JavaScriptObject.doFoo__devirtual$(someJsoObject);"<br />
+ * Devirtualization is the process of converting virtual method calls on instances that might be
+ * a JSO, a string or and array (like "obj.doFoo();") to static calls (like
+ * "SomeClass.doFoo__devirtual$(obj)).
  *
- * See https://code.google.com/p/google-web-toolkit/wiki/OverlayTypes for why this is done.<br />
+ * This transformation is done on arrays, strings and JSOs virtual method calls; as this objects
+ * do not have the virtual methods in their prototypes. The static version is a trampoline that
+ * decides how to dispatch the method.
  *
- * To complete the transformation:<br />
- * 1. methods that are defined on JSO subclasses must be turned into static functions.<br />
- * 2. all method calls to the original functions must be rerouted to the new static versions.<br />
+ * See https://code.google.com/p/google-web-toolkit/wiki/OverlayTypes for why this is done for JSOs.
+ * <br />
  *
- * All functions defined on JSO subclasses are devirtualized. This ensures they're available during
- * separate compilation and it does not bloat optimized output because unused ones are pruned during
- * monolithic compilation.<br />
+ * To complete the transformation:
+ * <ul>
+ *  <li>
+ *  1. methods that need to be devirtualized must be turned into static functions.
+ *  </li>
+ *  <li>
+ *  2. all method calls to the original functions must be rerouted either to the new static
+ *      version or to a static dispatcher trampoline function that is created by this pass.
+ *  </li>
+ * </ul>
+ * These trampolines are created whether a call to the function exists for separate compiled
+ * modules to work. In a globally optimized build unused ones are pruned away. <br />
  *
  * This transform may NOT be run multiple times; it will create ever-expanding replacement
  * expressions.
  */
 public class JsoDevirtualizer {
+  // TODO(rluble): rename the class as Devirtualizer as it deals with all three instances of
+  // devirtualization (arrays, strings and JSOs).
 
   /**
-   * Rewrite any virtual dispatches to Object or JavaScriptObject such that
-   * dispatch occurs statically for JSOs. <br />
+   * Rewrite any virtual dispatches to Object, Strings or JavaScriptObject such that
+   * dispatch occurs statically for JSOs, strings and arrays. <br />
    *
    * In the following cases JMethodCalls need to be rewritten:
    * <ol>
    * <li>a dual dispatch interface</li>
    * <li>a single dispatch trough single-jso interface</li>
    * <li>a java.lang.Object override from JavaScriptObject</li>
+   * <li>methods defined at String</li>
    * <li>in draftMode, a 'static' virtual JSO call that hasn't been made
    * static yet.</li>
    * </ol>
@@ -100,6 +118,8 @@ public class JsoDevirtualizer {
           && !program.typeOracle.canBeJavaScriptObject(instanceType)
           // not a string
           && instanceType != program.getTypeJavaLangString()
+          // not an array
+          && !(instanceType instanceof JArrayType)
           // not an interface of String, e.g. CharSequence or Comparable
           && !program.getTypeJavaLangString().getImplements().contains(instanceType)) {
         return;
@@ -141,49 +161,33 @@ public class JsoDevirtualizer {
       // TODO(rluble): (Separate compilation) JsoDevirtualizer should be run before optimizations
       // and optimizations need to be strong enough to perform the same kind of size reductions
       // achieved by keeping track of singleImpls.
-      if (program.typeOracle.isDualJsoInterface(targetType)) {
+
+      //
+      if (!program.typeOracle.isDualJsoInterface(targetType) &&
+          program.typeOracle.isSingleJsoImpl(targetType)) {
+        // Optimize the trampoline away when there is ONLY JSO dispatch.
+        // TODO(rluble): verify that this case can not arise in optimized mode and if so
+        // remove as is an unnecessary optimization.
+
+        assert targetType instanceof JInterfaceType;
+        assert !program.getTypeJavaLangString().getImplements().contains(targetType);
+
         JMethod overridingMethod =
             findOverridingMethod(method, program.typeOracle.getSingleJsoImpl(targetType));
         assert overridingMethod != null;
 
         JMethod jsoStaticImpl = getStaticImpl(overridingMethod);
-        JMethod devirtualMethod = getOrCreateDevirtualMethod(method, jsoStaticImpl);
-        devirtualMethodByMethod.put(method, devirtualMethod);
+        devirtualMethodByMethod.put(method, jsoStaticImpl);
       } else if (program.isJavaScriptObject(targetType)) {
-        // It's a virtual JSO dispatch, usually occurs in draftCompile
+        // A virtual dispatch on a target that is already known to be a JavaScriptObject, this
+        // should have been handled by MakeCallsStatic.
+        // TODO(rluble): verify that this case can not arise in optimized mode and if so
+        // remove as is an unnecessary optimization.
         JMethod devirtualMethod = getStaticImpl(method);
         devirtualMethodByMethod.put(method, devirtualMethod);
-      } else if (program.typeOracle.isSingleJsoImpl(targetType)) {
-          JMethod overridingMethod =
-              findOverridingMethod(method, program.typeOracle.getSingleJsoImpl(targetType));
-          assert overridingMethod != null;
-
-          JMethod jsoStaticImpl = getStaticImpl(overridingMethod);
-          devirtualMethodByMethod.put(method, jsoStaticImpl);
-      } else if (targetType == program.getTypeJavaLangObject()) {
-        // it's a java.lang.Object overridden method in JSO
-        JMethod overridingMethod = findOverridingMethod(method, program.getJavaScriptObject());
-        if (overridingMethod != null) {
-          JMethod jsoStaticImpl = getStaticImpl(overridingMethod);
-          JMethod devirtualMethod = getOrCreateDevirtualMethod(method, jsoStaticImpl);
-          devirtualMethodByMethod.put(method, devirtualMethod);
-        } else {
-          assert false : "Object method not overriden by JavaScriptObject";
-        }
-      } else if (targetType == program.getTypeJavaLangString()
-          || program.getTypeJavaLangString().getImplements().contains(targetType)) {
-        // It's a java.lang.String method.
-        JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangString());
-        if (overridingMethod != null) {
-          JMethod jsoStaticImpl = getStaticImpl(overridingMethod);
-          JMethod newMethod = getOrCreateDevirtualMethod(method, jsoStaticImpl);
-          devirtualMethodByMethod.put(method, newMethod);
-        } else {
-          // else this method isn't overridden by JavaScriptObject
-          assert false : "String interface method not overridden by String";
-        }
       } else {
-        assert false : "Object method not related to JavaScriptObject";
+        JMethod devirtualMethod = getOrCreateDevirtualMethod(method);
+        devirtualMethodByMethod.put(method, devirtualMethod);
       }
     }
 
@@ -220,13 +224,12 @@ public class JsoDevirtualizer {
    * Maps each Object instance methods (ie, {@link Object#equals(Object)}) onto
    * its corresponding devirtualizing method.
    */
-  protected Map<JMethod, JMethod> devirtualMethodByMethod = new HashMap<JMethod, JMethod>();
-
+  protected Map<JMethod, JMethod> devirtualMethodByMethod = Maps.newHashMap();
 
   /**
-   * Contains the Cast.isNonStringJavaObject method.
+   * Contains the Cast.isRegularJavaObject method.
    */
-  private final JMethod isNonStringJavaObjectMethod;
+  private final JMethod isRegularJavaObjectMethod;
 
   /**
    * Contains the Cast.isJavaString method.
@@ -234,26 +237,60 @@ public class JsoDevirtualizer {
   private final JMethod isJavaStringMethod;
 
   /**
+   * Contains the Cast.instanceofArray method.
+   */
+  private final JMethod instanceofArrayMethod;
+  /**
    * Key is the method signature, value is the number of unique instances with
    * the same signature.
    */
-  private Map<String, Integer> jsoMethodInstances = new HashMap<String, Integer>();
+  private Multiset<String> jsoMethodInstances = HashMultiset.create();
 
   /**
    * Contains the set of devirtualizing methods that replace polymorphic calls
    * to Object methods.
    */
-  private final Map<JMethod, JMethod> methodByDevirtualMethod = new HashMap<JMethod, JMethod>();
+  private final Map<JMethod, JMethod> methodByDevirtualMethod = Maps.newHashMap();
 
   private final JProgram program;
 
   private final CreateStaticImplsVisitor staticImplCreator;
   private final StaticCallConverter converter;
 
+  /**
+   * Creates and empty devirtualized method for devirtualizing {@code method} in class
+   * {@code inclass}.
+   */
+  private JMethod createDevirtualMethodFor(JMethod method, JDeclaredType inClass) {
+    SourceInfo sourceInfo = method.getSourceInfo().makeChild();
+
+    int methodCount = jsoMethodInstances.add(method.getSignature(),1);
+    String  prefix = method.getName() + (methodCount == 0 ? "" : methodCount);
+    JMethod devirtualMethod = new JMethod(sourceInfo, prefix + "__devirtual$",
+        inClass, method.getType(), false, true, true, AccessModifier.PUBLIC);
+    devirtualMethod.setBody(new JMethodBody(sourceInfo));
+    devirtualMethod.setSynthetic();
+    inClass.addMethod(devirtualMethod);
+    // Setup parameters.
+    JProgram.createParameter(sourceInfo, "this$static", method.getEnclosingType(), true,
+        true, devirtualMethod);
+    for (JParameter oldParam : method.getParams()) {
+      JProgram.createParameter(sourceInfo, oldParam.getName(), oldParam.getType(), true, false,
+          devirtualMethod);
+    }
+
+    devirtualMethod.freezeParamTypes();
+    devirtualMethod.addThrownExceptions(method.getThrownExceptions());
+    sourceInfo.addCorrelation(sourceInfo.getCorrelator().by(devirtualMethod));
+
+    return devirtualMethod;
+  }
+
   private JsoDevirtualizer(JProgram program) {
     this.program = program;
     this.isJavaStringMethod = program.getIndexedMethod("Cast.isJavaString");
-    this.isNonStringJavaObjectMethod = program.getIndexedMethod("Cast.isNonStringJavaObject");
+    this.isRegularJavaObjectMethod = program.getIndexedMethod("Cast.isRegularJavaObject");
+    this.instanceofArrayMethod = program.getIndexedMethod("Cast.instanceofArray");
     // TODO: consider turning on null checks for "this"?
     // However, for JSO's there is existing code that relies on nulls being okay.
     this.converter = new StaticCallConverter(program, false);
@@ -288,135 +325,212 @@ public class JsoDevirtualizer {
   }
 
   /**
+   * Construct conditional expression for dispatch. Handle the cases where a dispatch or check
+   * is null indicating impossibility of such operation.
+   */
+  private static JExpression constructMinimalCondition(JMethod checkMethod, JVariableRef target,
+      JMethodCall trueDispatch, JExpression falseDispatch) {
+    // TODO(rluble): Maybe we should emit sligthly different code in checked mode, so that if
+    // no condition is met an exception would be thrown rather than cascading.
+    if (falseDispatch == null && trueDispatch == null) {
+      return null;
+    }
+    if (falseDispatch == null) {
+      // No need for condition to be evaluated.
+      return trueDispatch;
+    }
+    if (trueDispatch == null || falseDispatch instanceof JMethodCall &&
+        ((JMethodCall) falseDispatch).getTarget() == trueDispatch.getTarget()) {
+      // Both branches do the same dispatch (or no trueDispatch).
+      return falseDispatch;
+    }
+    JMethodCall condition =
+        new JMethodCall(trueDispatch.getSourceInfo(), null, checkMethod, target);
+
+    return new JConditional(condition.getSourceInfo(), trueDispatch.getType(), condition,
+        trueDispatch, falseDispatch);
+  }
+
+  /**
+   * Create a dispatch call taking the arguments from the devirtual method.
+   */
+  private static JMethodCall maybeCreateDispatch(JMethod dispatchTo,
+      JMethod devirtualMethod) {
+    if (dispatchTo == null) {
+      return null;
+    }
+    List<JParameter> parameters = Lists.newArrayList(devirtualMethod.getParams());
+    SourceInfo sourceInfo = devirtualMethod.getSourceInfo();
+    JParameterRef thisParamRef = null;
+
+    if (!dispatchTo.isStatic()) {
+      // This is a virtual dispatch, take the first parameter as the receiver.
+      thisParamRef = new JParameterRef(sourceInfo, parameters.remove(0));
+    }
+
+    JMethodCall dispatchCall = new JMethodCall(sourceInfo, thisParamRef,
+        dispatchTo);
+    for (JParameter param : parameters) {
+      dispatchCall.addArg(new JParameterRef(sourceInfo, param));
+    }
+    return dispatchCall;
+  }
+
+  // Byte mask used by {@link ::getÓrCreateDevirtualMethod} to determine possible dispatches of a
+  // method.
+  private static final byte STRING = 0x01;
+  private static final byte REGULAR_JAVA_OBJECT = 0x02;
+  private static final byte ARRAY = 0x04;
+  private static final byte JSO = 0x08;
+
+  /**
    * Create a conditional method to discriminate between static and virtual
    * dispatch.
    *
    * <pre>
    * static boolean equals__devirtual$(Object this, Object other) {
    *   return Cast.isJavaString() ? String.equals(other) :
-   *       Cast.isNonStringJavaObject(this) ?
+   *       Cast.isRegularJavaObjectMethod(this) ?
    *       this.equals(other) : JavaScriptObject.equals$(this, other);
    * }
    * </pre>
    */
-  private JMethod getOrCreateDevirtualMethod(JMethod method, JMethod jsoImpl) {
-    /**
-     * TODO(cromwellian) generate a inlined expression instead of Method Because
-     * devirtualization happens after optimization, the devirtual methods don't
-     * optimize well in the JS pass. Consider "inlining" a hand optimized
-     * devirtual method at callsites instead of a JMethodCall. As a bonus, the
-     * inlined code can be specialized for each callsite, for example, if there
-     * are no side effects, then there's no need for a temporary. Or, if the
-     * instance can't possibly be java.lang.String, then the JSO check becomes a
-     * cheaper check for typeMarker.
-     */
+  private JMethod getOrCreateDevirtualMethod(JMethod method) {
+
     if (methodByDevirtualMethod.containsKey(method)) {
       return methodByDevirtualMethod.get(method);
     }
 
-    // Add devirtualized methods to the right JSO class so that JavaScriptObject does not need
-    // to be special treated in modular compilation.
-    JClassType jsoSubtype = (JClassType) jsoImpl.getEnclosingType();
-    SourceInfo sourceInfo = method.getSourceInfo().makeChild();
+    /////////////////////////////////////////////////////////////////
+    // 1. Determine which types of object are target of this dispatch
+    /////////////////////////////////////////////////////////////////
+    byte possibleTargetTypes = 0x0;
+    JReferenceType enclosingType = method.getEnclosingType();
+    if (enclosingType == program.getTypeJavaLangObject()) {
+      // Object methods can be dispatched to all four possible classes.
+      possibleTargetTypes = STRING | REGULAR_JAVA_OBJECT | ARRAY | JSO;
+    } else if (enclosingType == program.getTypeJavaLangString()) {
+      // String is final and can not be extended.
+      possibleTargetTypes |= STRING;
+    }
 
+    if (program.typeOracle.isDualJsoInterface(enclosingType)) {
+      // If it is an interface implemented both by JSOs and regular Java Objects;
+      possibleTargetTypes = REGULAR_JAVA_OBJECT | JSO;
+    } else if (program.typeOracle.isSingleJsoImpl(enclosingType) ||
+        program.isJavaScriptObject(enclosingType)) {
+      // If it is either an interface implemented by JSOs or JavaScriptObject or one of its
+      // subclasses.
+      possibleTargetTypes = JSO;
+    }
 
-    // Create the new method.
-    String prefix;
-    Integer methodCount;
-    methodCount = jsoMethodInstances.get(method.getSignature());
-    if (methodCount == null) {
-      prefix = method.getName();
-      methodCount = 0;
+    if (program.getTypeJavaLangString().getImplements().contains(enclosingType)) {
+      // If it is an interface implemented by String.
+      possibleTargetTypes |= STRING | REGULAR_JAVA_OBJECT;
+    }
+
+    /////////////////////////////////////////////////////////////////
+    // 2. Compute the dispatch to method for each relevant case.
+    /////////////////////////////////////////////////////////////////
+    Map<Byte, JMethod> dispatchToMethodByTargetType = Maps.newTreeMap();
+    if ((possibleTargetTypes & STRING) != 0) {
+      JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangString());
+      assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
+          method.getName() + " not overriden by String";
+      dispatchToMethodByTargetType.put(STRING, getStaticImpl(overridingMethod));
+    }
+    if ((possibleTargetTypes & JSO) != 0) {
+      JMethod overridingMethod = findOverridingMethod(method,
+          program.typeOracle.getSingleJsoImpl(enclosingType));
+      if (overridingMethod == null && enclosingType == program.getTypeJavaLangObject()) {
+        overridingMethod = findOverridingMethod(method, program.getJavaScriptObject());
+      }
+      assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
+          method.getName() + " not overriden by JavaScriptObject";
+      dispatchToMethodByTargetType.put(JSO, getStaticImpl(overridingMethod));
+    }
+    if ((possibleTargetTypes & ARRAY) != 0) {
+      // Arrays only implement Object methods as the Clonable interface is not supported in GWT.
+      JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangObject());
+      assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
+          method.getName() + " not overriden by Object";
+      dispatchToMethodByTargetType.put(ARRAY, getStaticImpl(overridingMethod));
+    }
+    if ((possibleTargetTypes & REGULAR_JAVA_OBJECT) != 0) {
+      dispatchToMethodByTargetType.put(REGULAR_JAVA_OBJECT, method);
+    }
+
+    /////////////////////////////////////////////////////////////////
+    // 3. Create a devirtualized method.
+    /////////////////////////////////////////////////////////////////
+
+    // Decide where to place the devirtual method. Ideally these methods should reside in the
+    // declaring type, but some of these will be interfaces and currently GWT does not emit
+    // any code for them.
+    // TODO(rluble): place interface methods in the corresponding interface once Java 9 defender
+    // method support is implemented.
+    JClassType devirtualMethodEnclosingClass  = null;
+    if (method.getEnclosingType() instanceof JClassType) {
+      devirtualMethodEnclosingClass = (JClassType) method.getEnclosingType();
+    } else if (dispatchToMethodByTargetType.get(STRING) != null) {
+      // Methods from interfaces implemented by String end up in String.
+      devirtualMethodEnclosingClass = program.getTypeJavaLangString();
+    } else if (dispatchToMethodByTargetType.get(JSO) != null) {
+      // This is an interface method implemented by a JSO, place in the JSO class.
+      devirtualMethodEnclosingClass = (JClassType)
+          dispatchToMethodByTargetType.get(JSO).getEnclosingType();
     } else {
-      prefix = method.getName() + methodCount;
-      methodCount++;
+      // It is an interface implemented by String or arrays, place it in Object.
+      devirtualMethodEnclosingClass = program.getTypeJavaLangObject();
     }
-    jsoMethodInstances.put(method.getSignature(), methodCount);
-    String devirtualName = prefix + "__devirtual$";
-    JMethod devirtualMethod =
-        new JMethod(sourceInfo, devirtualName, jsoSubtype, method.getType(), false, true, true,
-            AccessModifier.PUBLIC);
-    devirtualMethod.setBody(new JMethodBody(sourceInfo));
-    jsoSubtype.addMethod(devirtualMethod);
-    devirtualMethod.setSynthetic();
+    // The class where the method is being place is in the current compile.
+    assert !program.isReferenceOnly(devirtualMethodEnclosingClass);
+    JMethod devirtualMethod = createDevirtualMethodFor(method, devirtualMethodEnclosingClass);
 
-    // Setup parameters.
-    JParameter thisParam =
-        JProgram.createParameter(sourceInfo, "this$static", method.getEnclosingType(), true,
-            true, devirtualMethod);
-    for (JParameter oldParam : method.getParams()) {
-      JProgram.createParameter(sourceInfo, oldParam.getName(), oldParam.getType(), true, false,
-          devirtualMethod);
-    }
-    devirtualMethod.freezeParamTypes();
-    devirtualMethod.addThrownExceptions(method.getThrownExceptions());
-    sourceInfo.addCorrelation(sourceInfo.getCorrelator().by(devirtualMethod));
+    /**
+     * Encoding
+     */
+    SourceInfo sourceInfo = method.getSourceInfo().makeChild();
+    JParameter thisParam = devirtualMethod.getParams().get(0);
 
-    // maybeJsoInvocation = this$static
-    JLocal temp =
-        JProgram.createLocal(sourceInfo, "maybeJsoInvocation", thisParam.getType(), true,
-            (JMethodBody) devirtualMethod.getBody());
-    JMultiExpression multi = new JMultiExpression(sourceInfo);
+    // Synthesize the dispatch at a single conditional doing the checks in this order.
+    //   isString(obj) ? dispatchToString : (
+    //     isRegularJavaObject(obj) ? obj.method : (
+    //       isArray(obj) ?
+    //         dispatchToArray :
+    //         dispatchToJSO
+    //     )
+    //   )
 
-    // (maybeJsoInvocation = this$static, )
-    multi.addExpressions(JProgram.createAssignmentStmt(sourceInfo, new JLocalRef(sourceInfo, temp),
-        new JParameterRef(sourceInfo, thisParam)).getExpr());
+    // Construct back to fort. Last is JSO.
+    JExpression dispatchExpression =
+        maybeCreateDispatch(dispatchToMethodByTargetType.get(JSO), devirtualMethod);
 
-    // Build from bottom up.
-    // isNonStringJavaObject(temp)
-    JMethodCall isNonStringJavaObjectCheck =
-        new JMethodCall(sourceInfo, null, isNonStringJavaObjectMethod);
-    isNonStringJavaObjectCheck.addArg(new JLocalRef(sourceInfo, temp));
+    // Dispatch to array
+    dispatchExpression = constructMinimalCondition(
+        instanceofArrayMethod,
+        new JParameterRef(thisParam.getSourceInfo(), thisParam),
+        maybeCreateDispatch(dispatchToMethodByTargetType.get(ARRAY), devirtualMethod),
+        dispatchExpression);
 
-    // temp.method(args)
-    JMethodCall thenValue =
-        new JMethodCall(sourceInfo, new JLocalRef(sourceInfo, temp), method);
-    for (JParameter param : devirtualMethod.getParams()) {
-      if (param != thisParam) {
-        thenValue.addArg(new JParameterRef(sourceInfo, param));
-      }
-    }
+    // Dispatch to regular object
+    dispatchExpression = constructMinimalCondition(
+        isRegularJavaObjectMethod,
+        new JParameterRef(thisParam.getSourceInfo(), thisParam),
+        maybeCreateDispatch(
+            dispatchToMethodByTargetType.get(REGULAR_JAVA_OBJECT), devirtualMethod),
+        dispatchExpression);
 
-    // jso$method(temp, args)
-    JMethodCall elseValue = new JMethodCall(sourceInfo, null, jsoImpl);
-    elseValue.addArg(new JLocalRef(sourceInfo, temp));
-    for (JParameter param : devirtualMethod.getParams()) {
-      if (param != thisParam) {
-        elseValue.addArg(new JParameterRef(sourceInfo, param));
-      }
-    }
+    // Dispatch to regular string
+    dispatchExpression = constructMinimalCondition(
+        isJavaStringMethod,
+        new JParameterRef(thisParam.getSourceInfo(), thisParam),
+        maybeCreateDispatch(dispatchToMethodByTargetType.get(STRING), devirtualMethod),
+        dispatchExpression);
 
-    // isNotStringJavaObject(temp) ? temp.method(args) : jso$method(temp, args)
-    JConditional conditional =
-        new JConditional(sourceInfo, method.getType(), isNonStringJavaObjectCheck,
-            thenValue, elseValue);
+    // return dispatchConditional;
+    JReturnStatement returnStatement = new JReturnStatement(sourceInfo, dispatchExpression);
 
-    JMethod stringMethod = findOverridingMethod(method, program.getTypeJavaLangString());
-    if (stringMethod != null && jsoImpl.getEnclosingType() != program.getTypeJavaLangString()) {
-      // It is a method overriden by String. {@code conditional} already dispatches correctly
-      // methods defined at String.
-
-      // Cast.isJavaString(temp) ? String.method(args) : conditional
-      JMethodCall stringCondition =
-          new JMethodCall(sourceInfo, null, isJavaStringMethod, new JLocalRef(sourceInfo, temp));
-      assert stringMethod != null : "String does not override " +  method.toString() +
-          " declared at " + method.getEnclosingType().getName();
-
-      JMethodCall staticImplCall = new JMethodCall(sourceInfo, null,
-          getStaticImpl(stringMethod));
-      staticImplCall.addArg(new JLocalRef(sourceInfo, temp));
-      for (JParameter param : devirtualMethod.getParams()) {
-        if (param != thisParam) {
-          staticImplCall.addArg(new JParameterRef(sourceInfo, param));
-        }
-      }
-      conditional = new JConditional(sourceInfo, method.getType(),
-          stringCondition, staticImplCall, conditional);
-    }
-
-    multi.addExpressions(conditional);
-
-    JReturnStatement returnStatement = new JReturnStatement(sourceInfo, multi);
     ((JMethodBody) devirtualMethod.getBody()).getBlock().addStmt(returnStatement);
     methodByDevirtualMethod.put(method, devirtualMethod);
 

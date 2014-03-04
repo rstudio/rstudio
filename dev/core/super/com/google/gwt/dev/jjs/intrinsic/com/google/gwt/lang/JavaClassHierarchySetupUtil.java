@@ -93,4 +93,13 @@ public class JavaClassHierarchySetupUtil {
     // to distinguish it from an actual prototype.
     return (entry instanceof Array) ? entry[0] : null;
   }-*/;
+
+  /**
+   * Patch up Array.isArray for browsers that don't support the fast native check.
+   */
+  public static native void patchIsArray() /*-{
+    if (!Array.isArray) {
+        Array.isArray = function (vArg) { return Object.prototype.toString.call(vArg) === "[object Array]"; };
+    }
+  }-*/;
 }

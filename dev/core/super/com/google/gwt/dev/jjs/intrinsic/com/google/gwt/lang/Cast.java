@@ -100,15 +100,15 @@ final class Cast {
   }
 
   static boolean isJavaObject(Object src) {
-    return isNonStringJavaObject(src) || isJavaString(src);
+    return isRegularJavaObject(src) || isJavaString(src);
   }
 
   static boolean isJavaScriptObject(Object src) {
-    return !isNonStringJavaObject(src) && !isJavaString(src);
+    return !isRegularJavaObject(src) && !isJavaString(src);
   }
 
   static boolean isJavaScriptObjectOrString(Object src) {
-    return !isNonStringJavaObject(src);
+    return !isRegularJavaObject(src);
   }
 
   /**
@@ -212,7 +212,7 @@ final class Cast {
     return o;
   }
 
-  private static native JavaScriptObject getNullMethod() /*-{
+  public static native JavaScriptObject getNullMethod() /*-{
     return @null::nullMethod();
   }-*/;
 
@@ -230,16 +230,23 @@ final class Cast {
   /**
    * Returns whether the Object is a Java Object but not a String.
    *
-   * Depends on all Java Objects (except for String) having the typeMarker field
+   * Depends on all Java Objects (except for String and Arrays) having the typeMarker field
    * generated, and set to the nullMethod for the current GWT module.  Note this
    * test essentially tests whether an Object is a java object for the current
    * GWT module.  Java Objects from external GWT modules are not recognizable as
    * Java Objects in this context.
    */
   // Visible for getIndexedMethod()
-  static boolean isNonStringJavaObject(Object src) {
-    return Util.getTypeMarker(src) == getNullMethod();
+  static boolean isRegularJavaObject(Object src) {
+    return Util.getTypeMarker(src) == getNullMethod() && !instanceofArray(src);
   }
+
+  /**
+   * Returns true if {@code src} is an array (native or not).
+   */
+  static native boolean instanceofArray(Object src) /*-{
+    return Array.isArray(src);
+  }-*/;
 }
 
 // CHECKSTYLE_NAMING_ON

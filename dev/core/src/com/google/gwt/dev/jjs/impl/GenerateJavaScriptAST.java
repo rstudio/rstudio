@@ -935,11 +935,6 @@ public class GenerateJavaScriptAST {
       if (typeOracle.isInstantiatedType(x) && !program.isJavaScriptObject(x) &&
           x !=  program.getTypeJavaLangString()) {
         generateClassSetup(x, globalStmts);
-      } else if (x == program.getTypeJavaLangString()) {
-        // String no longer has class setup, only needs to set Cast.stringCastMap.
-        // TODO(rluble): This probably should be done at a fixed place rather
-        // than waiting to visit the String class.
-        setupStringCastMap(x, globalStmts);
       }
 
       // setup fields
@@ -1931,6 +1926,16 @@ public class GenerateJavaScriptAST {
         generateToStringAlias(x, globalStmts);
         // special: setup the identifying typeMarker field
         generateTypeMarker(globalStmts);
+
+        // Set up the artificial castmap for string.
+        setupStringCastMap(program.getTypeJavaLangString(), globalStmts);
+
+        // Patch Array.isArray
+        JsFunction patchFunc = indexedFunctions.get("JavaClassHierarchySetupUtil.patchIsArray");
+        JsName patchFuncName = patchFunc.getName();
+        JsInvocation callPatchFunc = new JsInvocation(x.getSourceInfo());
+        callPatchFunc.setQualifier(patchFuncName.makeRef(x.getSourceInfo()));
+        globalStmts.add(callPatchFunc.makeStmt());
       }
     }
 
