@@ -340,7 +340,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     // Expects to see the created replace with rule second.
     String runtimeRebindRule1 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule1");
     assertTrue(runtimeRebindRule1.contains("@WebkitCanvasElement::new()()"));
-    assertTrue(runtimeRebindRule1.contains("requestTypeName.equals(\"CanvasElement\")"));
+    assertTrue(runtimeRebindRule1.contains("requestTypeClass == CanvasElement.class"));
 
     // Expects to see the created fail rule third.
     String runtimeRebindRule2 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule2");
@@ -361,7 +361,6 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
 
     String registratorSource = generatorContext.stringWriterByTypeSourceName.get(
         compiler.jprogram.getRuntimeRebindRegistratorTypeSourceName()).toString();
-    System.out.println(registratorSource);
     // The generated registrator contains all of the RuntimeRebindRule class instantiation,
     // and registrations.
     assertTrue(registratorSource.contains(

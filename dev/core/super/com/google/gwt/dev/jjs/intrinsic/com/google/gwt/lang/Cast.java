@@ -20,13 +20,16 @@ import com.google.gwt.core.client.JavaScriptObject;
 // CHECKSTYLE_NAMING_OFF: Uses legacy conventions of underscore prefixes.
 
 /**
- * This is a magic class the compiler uses to perform any cast operations that
- * require code.
+ * This is a magic class the compiler uses to perform any cast operations that require code.<br />
+ *
+ * The cast operations are only as accurate as the contents of the castableTypeMaps and should not
+ * be used directly by user code. The compiler takes care to record most cast operations in user
+ * code so that it can build limited but accurate castableTypeMaps.
  */
 final class Cast {
 
   /**
-   * As plain JavaScript Strings (not monkey patcheed) are used to model Java Strings,
+   * As plain JavaScript Strings (not monkey patched) are used to model Java Strings,
    * {@code  stringCastMap} stores runtime type info for cast purposes for string objects.
    *
    * NOTE: it is important that the field is left uninitialized so that Cast does not
@@ -40,11 +43,11 @@ final class Cast {
         !!@com.google.gwt.lang.Cast::stringCastMap[dstId];
   }-*/;
 
-  // Will eventually be the implementation for class.isAssignableFrom().
-  static native boolean canCastTypeId(JavaScriptObject srcTypeId, JavaScriptObject dstTypeId) /*-{
+  static native boolean canCastClass(Class<?> srcClazz, Class<?> dstClass) /*-{
+    var srcTypeId = srcClazz.@java.lang.Class::typeId;
+    var dstTypeId = dstClass.@java.lang.Class::typeId;
     var prototype = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[srcTypeId];
-    return (prototype.@java.lang.Object::castableTypeMap &&
-            !!prototype.@java.lang.Object::castableTypeMap[dstTypeId]);
+    return @com.google.gwt.lang.Cast::canCast(*)(prototype, dstTypeId);
   }-*/;
 
   static native String charToString(char x) /*-{

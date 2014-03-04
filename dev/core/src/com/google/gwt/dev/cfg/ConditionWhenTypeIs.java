@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.TreeLogger;
  * A deferred binding condition to determine whether the type being rebound is
  * exactly a particular type.
  */
+//TODO(stalcup): guard against attempts to replace classes that have special prototype handling
+//like String and Array.
 public class ConditionWhenTypeIs extends Condition {
 
   private final String exactTypeName;
@@ -31,7 +33,7 @@ public class ConditionWhenTypeIs extends Condition {
 
   @Override
   public String toSource() {
-    return String.format("requestTypeName.equals(\"%s\")", exactTypeName);
+    return String.format("requestTypeClass == %s.class", exactTypeName);
   }
 
   @Override

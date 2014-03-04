@@ -114,19 +114,18 @@ public class ConditionTest extends TestCase {
     }
 
     // Compound conditions collapse effectively empty slots.
-    assertEquals("((requestTypeName.equals(\"com.google.gwt.Foo\")))", new ConditionAll(
+    assertEquals("((requestTypeClass == com.google.gwt.Foo.class))", new ConditionAll(
         new ConditionAny(), new ConditionWhenTypeIs("com.google.gwt.Foo")).toSource());
 
     // Exercise it all.
-    assertEquals(
-        "!(((((requestTypeName.equals(\"com.google.gwt.Foo\")) && (RuntimePropertyRegistry."
-        + "getPropertyValue(\"user.agent\").equals(\"webkit\")))) || (((requestTypeName.equals"
-        + "(\"com.google.gwt.HasFocus\")) && (RuntimePropertyRegistry.getPropertyValue("
-        + "\"user.agent\").equals(\"ie9\"))))))", new ConditionNone(new ConditionAll(
-        new ConditionWhenTypeIs("com.google.gwt.Foo"),
+    String a = new ConditionNone(new ConditionAll(new ConditionWhenTypeIs("com.google.gwt.Foo"),
         new ConditionWhenPropertyIs("user.agent", "webkit")), new ConditionAll(
         new ConditionWhenTypeIs("com.google.gwt.HasFocus"),
-        new ConditionWhenPropertyIs("user.agent", "ie9"))).toSource());
+        new ConditionWhenPropertyIs("user.agent", "ie9"))).toSource();
+    assertEquals("!(((((requestTypeClass == com.google.gwt.Foo.class) && (RuntimePropertyRegistry."
+        + "getPropertyValue(\"user.agent\").equals(\"webkit\")))) || (((requestTypeClass == "
+        + "com.google.gwt.HasFocus.class) && (RuntimePropertyRegistry.getPropertyValue("
+        + "\"user.agent\").equals(\"ie9\"))))))", a);
   }
 
   private boolean isTrue(Condition cond, String testType)

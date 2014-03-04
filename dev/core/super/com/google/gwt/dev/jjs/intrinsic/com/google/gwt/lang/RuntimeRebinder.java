@@ -42,7 +42,8 @@ public class RuntimeRebinder {
    * that matches the requested type and current browser state and then uses that rebind rule to
    * create an object instance.
    */
-  public static Object createInstance(String requestTypeName) {
+  public static Object createInstance(Class<?> requestTypeClass) {
+    String requestTypeName = requestTypeClass.getName();
     // If the matching rebind rule has been previously located.
     if (runtimeRebindRuleByRequestTypeName.containsKey(requestTypeName)) {
       // Grab it.
@@ -56,7 +57,7 @@ public class RuntimeRebinder {
     for (int i = runtimeRebindRules.size() - 1; i >= 0; i--) {
       RuntimeRebindRule runtimeRebindRule = runtimeRebindRules.get(i);
       // If the current rule matches the requested type and current browser state.
-      if (runtimeRebindRule.matches(requestTypeName)) {
+      if (runtimeRebindRule.matches(requestTypeClass)) {
         // Then cache the rule for later.
         runtimeRebindRuleByRequestTypeName.put(requestTypeName, runtimeRebindRule);
         // And use the rule to create an instance to fulfill the request.
