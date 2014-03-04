@@ -17,6 +17,9 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.ListBox;
@@ -26,8 +29,15 @@ public class RmdChoiceOption extends RmdBaseOption
    public RmdChoiceOption(RmdTemplateFormatOption option, String initialValue)
    {
       super(option);
-      HTMLPanel panel = new HTMLPanel("");
       defaultValue_ = option.getDefaultValue();
+
+      HTMLPanel panel = new HTMLPanel("");
+      if (option.isNullable())
+      {
+         nonNullCheck_ = new CheckBox();
+         nonNullCheck_.setValue(!initialValue.equals("null"));
+         panel.add(nonNullCheck_);
+      }
       panel.add(new InlineLabel(option.getUiName() + ":"));
       choices_ = new ListBox();
       
@@ -44,6 +54,19 @@ public class RmdChoiceOption extends RmdBaseOption
       choices_.setSelectedIndex(selectedIdx);
       panel.add(choices_);
 
+      if (option.isNullable())
+      {
+         nonNullCheck_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               updateNull();
+            }
+         });
+         updateNull();
+      }
+
       initWidget(panel);
    }
 
@@ -56,9 +79,19 @@ public class RmdChoiceOption extends RmdBaseOption
    @Override
    public String getValue()
    {
+      if (nonNullCheck_ != null && !nonNullCheck_.getValue())
+      {
+         return null;
+      }
       return choices_.getValue(choices_.getSelectedIndex());
+   }
+   
+   private void updateNull()
+   {
+      choices_.setEnabled(nonNullCheck_.getValue());
    }
    
    private final String defaultValue_;
    private ListBox choices_;
+   private CheckBox nonNullCheck_;
 }

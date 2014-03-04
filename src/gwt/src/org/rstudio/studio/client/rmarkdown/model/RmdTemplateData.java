@@ -69,6 +69,7 @@ public class RmdTemplateData
             option_type: "choice", 
             option_default: "default",
             option_for_create: true,
+            option_nullable: true,
             option_list: [ "default", "cerulean", "journal", "flatly",
                            "readable", "spacelab", "united", "yeti", "cosmo"]
             },
@@ -78,6 +79,7 @@ public class RmdTemplateData
             option_type: "choice", 
             option_for_create: false,
             option_transferable: true,
+            option_nullable: true,
             option_default: "default",
             option_list: [ "default", "tango", "pygments", "kate", "monochrome",
                            "espresso", "zenburn", "haddock", "textmate" ]

@@ -32,6 +32,8 @@ public class RmdFrontMatterOutputOptions extends JavaScriptObject
       var option = this[optionName];
       if (typeof option === "undefined")
          return null;
+      else if (option === null)
+         return "null";
       else 
          return option.toString();
    }-*/;
