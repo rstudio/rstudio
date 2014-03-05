@@ -33,6 +33,9 @@ public class RmdOutputFormat extends JavaScriptObject
    // value to "Boolean", which fails since it's an unboxed native value. 
    public native final boolean getFormatOption(String option, 
                                                boolean defaultValue) /*-{
+      if (typeof this.format_options === "undefined" ||
+          this.format_options === null)
+          return defaultValue;
       var optionValue = this.format_options[option];
       if (typeof optionValue === "undefined")
          return defaultValue;
