@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.core.client.JsArrayUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -42,4 +44,16 @@ public class RmdTemplate extends JavaScriptObject
    public final native JsArray<RmdTemplateFormatOption> getOptions() /*-{
       return this.template_options;
    }-*/;
+   
+   public final RmdTemplateFormat getFormat(String format)
+   {
+      return JsArrayUtil.jsFindInCollection(getFormats(), "format_name", 
+                                            format);
+   }
+
+   public final RmdTemplateFormatOption getOption(String option)
+   {
+      return JsArrayUtil.jsFindInCollection(getOptions(), "option_name", 
+                                            option);
+   }
 }

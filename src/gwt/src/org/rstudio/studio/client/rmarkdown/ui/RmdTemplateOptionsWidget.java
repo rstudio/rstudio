@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
@@ -293,7 +293,7 @@ public class RmdTemplateOptionsWidget extends Composite
          // matter? (don't transfer options into formats explicitly defined
          // in the front matter)
          JsArrayString frontMatterFormats = frontMatter_.getFormatList();
-         if ((!StringUtil.jsArrayStringContains(frontMatterFormats, formatName)) 
+         if ((!JsArrayUtil.jsArrayStringContains(frontMatterFormats, formatName)) 
                &&
              frontMatterCache_.containsKey(optionName))
          {

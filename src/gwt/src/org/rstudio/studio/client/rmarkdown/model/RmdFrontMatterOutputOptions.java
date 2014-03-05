@@ -45,4 +45,19 @@ public class RmdFrontMatterOutputOptions extends JavaScriptObject
    public final native void removeOption(String optionName) /*-{
       delete this[optionName];
    }-*/;
+   
+   public final native void setOptionValue(RmdTemplateFormatOption option,
+                                           String value) /*-{
+      switch (option.option_type)
+      {
+         case "boolean":
+            this[option.option_name] = (value === "true");
+            break;
+         case "float":
+            this[option.option_name] = parseFloat(value);
+            break;
+         default:
+            this[option.option_name] = value;
+      }
+   }-*/;
 }
