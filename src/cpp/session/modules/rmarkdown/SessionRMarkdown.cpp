@@ -624,18 +624,7 @@ void handleRmdOutputRequest(const http::Request& request,
    {
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
-
-      std::string videoExts(".mov|.mp4|.m4v|.3gp|.avi");
-      std::string ext = filePath.extensionLowerCase();
-      if (ext.length() == 4 &&
-          videoExts.find(ext) != std::string::npos &&
-          session::options().programMode() == kSessionProgramModeDesktop)
-      {
-         // mp4 and QuickTime files served in IFrames cause problems on
-         // some desktop configurations (see case 3828)
-         pResponse->addHeader("X-Frame-Options", "deny");
-      }
-      
+      html_preview::addFileSpecificHeaders(filePath, pResponse);
       pResponse->setCacheableFile(filePath, request);
    }
 }
