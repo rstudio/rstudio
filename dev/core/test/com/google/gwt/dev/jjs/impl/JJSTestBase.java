@@ -248,7 +248,7 @@ public abstract class JJSTestBase extends TestCase {
     return program;
   }
 
-  protected void addBuiltinClasses(MockResourceOracle sourceOracle) {
+  private void addBuiltinClasses(MockResourceOracle sourceOracle) {
     sourceOracle.addOrReplace(new MockJavaResource("java.lang.RuntimeException") {
       @Override
       public CharSequence getContent() {
@@ -263,6 +263,7 @@ public abstract class JJSTestBase extends TestCase {
         return ""
             + "package com.google.gwt.lang;"
             + "public class Exceptions { "
+            + "  static Object wrap(Object e) { return e; }"
             + "  static RuntimeException makeAssertionError() { return new RuntimeException(); }"
             + "  static Throwable safeClose(AutoCloseable resource, Throwable mainException) {"
             + "    return mainException;"
@@ -270,6 +271,38 @@ public abstract class JJSTestBase extends TestCase {
             + "  static <T> T checkNotNull(T value) { return value; }"
             + "}";
         }
+    });
+  }
+
+  /**
+   * Adds the mock resources needed to run {@link GenerateJavaScriptAST}.
+   */
+  protected final void addBuiltinClassesToGenerateJavaScriptAST(MockResourceOracle sourceOracle) {
+    addBuiltinClasses(sourceOracle);
+
+    sourceOracle.add(new MockJavaResource("com.google.gwt.lang.JavaClassHierarchySetupUtil") {
+      @Override
+      public CharSequence getContent() {
+        return "package com.google.gwt.lang; public class JavaClassHierarchySetupUtil {" +
+            "public static Object defineClass(int typeId, int superTypeId, Object map)" +
+            "{return null;}}";
+      }
+    });
+
+    sourceOracle.add(new MockJavaResource("com.google.gwt.core.client.impl.Impl") {
+      @Override
+      public CharSequence getContent() {
+        return "package com.google.gwt.core.client.impl; public class Impl {"+
+            "public static Object registerEntry(){return null;}}";
+      }
+    });
+
+    sourceOracle.add(new MockJavaResource("com.google.gwt.lang.CollapsedPropertyHolder") {
+      @Override
+      public CharSequence getContent() {
+        return "package com.google.gwt.lang; public class CollapsedPropertyHolder {" +
+            "public static int permutationId = -1;}";
+      }
     });
   }
 

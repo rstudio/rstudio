@@ -67,8 +67,6 @@ public class JavaAstConstructor {
       code.append("  static void initDim(Class arrayClass, JavaScriptObject castableTypeMap, int elementTypeId, int elementTypeClass, int length) { }\n");
       code.append("  static void initDims(Class arrayClasses[], JavaScriptObject[] castableTypeMapExprs, int[] elementTypeIds, int leafElementTypeClass, int[] dimExprs, int count) { }\n");
       code.append("  static void initValues(Class arrayClass, JavaScriptObject castableTypeMap, int elementTypeId, int elementTypeClass, Array array) { }\n");
-      code.append("  public int length = 0;\n");
-      code.append("  protected Class<?> arrayClass = null;\n");
       code.append("}\n");
       return code;
     }

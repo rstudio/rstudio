@@ -504,14 +504,24 @@ public class CodeSplitterTest extends JJSTestBase {
    */
   protected void compileSnippet(final String code) throws UnableToCompleteException {
     // By default expects 4 fragments and don't merge leftovers.
-    addMockIntrinsic();
+
+    addBuiltinClassesToGenerateJavaScriptAST(sourceOracle);
+
+    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.core.client.GWT") {
+      @Override
+      public CharSequence getContent() {
+        return "package com.google.gwt.core.client; public class GWT {" +
+            "public static void runAsync(RunAsyncCallback cb){}"+
+            "public static void runAsync(Class<?> clazz, RunAsyncCallback cb){}}";
+      }
+    });
+
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
       public CharSequence getContent() {
         return code;
       }
     });
-    addBuiltinClasses(sourceOracle);
 
     PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     options.setOutput(JsOutputOption.PRETTY);
@@ -583,56 +593,4 @@ public class CodeSplitterTest extends JJSTestBase {
     return properties;
   }
 
-  /**
-   * Add some of the compiler intrinsic
-   */
-  private void addMockIntrinsic() {
-    // TODO(rluble): Unify all compiler intrinsic into either JavaResourceBase or
-    // JavaASTConstructor.
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Array") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.lang; public class Array {" +
-               " public static int length = 0;" +
-               " public static void setCheck(Array array, int index, Object value) { }" +
-               " static void initDim() { }" +
-               " static void initDims() { }" +
-               " static void initValues() { }" +
-               "}";
-      }
-    });
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.JavaClassHierarchySetupUtil") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.lang; public class JavaClassHierarchySetupUtil {" +
-               "public static Object defineClass(int typeId, int superTypeId, Object map)" +
-               "{return null;}}";
-      }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.core.client.impl.Impl") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.core.client.impl; public class Impl {"+
-               "public static Object registerEntry(){return null;}}";
-      }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.CollapsedPropertyHolder") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.lang; public class CollapsedPropertyHolder {" +
-               "public static int permutationId = -1;}";
-      }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.core.client.GWT") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.core.client; public class GWT {" +
-            "public static void runAsync(RunAsyncCallback cb){}"+
-            "public static void runAsync(Class<?> clazz, RunAsyncCallback cb){}}";
-      }
-    });
-  }
 }
