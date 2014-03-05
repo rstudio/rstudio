@@ -35,14 +35,27 @@ import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
+import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
+import com.google.gwt.dev.jjs.impl.ComputeExhaustiveCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
+import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
+import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
+import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
+import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
+import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.ReboundTypeRecorder;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
+import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
 import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsLiteral;
@@ -86,6 +99,21 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
 
     public LibraryPermutationCompiler(Permutation permutation) {
       super(permutation);
+    }
+
+    @Override
+    protected Map<JType, JLiteral> normalizeSemantics() {
+      JsoDevirtualizer.exec(jprogram);
+      CatchBlockNormalizer.exec(jprogram);
+      PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
+      LongCastNormalizer.exec(jprogram);
+      LongEmulationNormalizer.exec(jprogram);
+      TypeCoercionNormalizer.exec(jprogram);
+      ComputeExhaustiveCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+      ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled());
+      ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
+      EqualityNormalizer.exec(jprogram);
+      return ResolveRuntimeTypeReferences.IntoStringLiterals.exec(jprogram);
     }
 
     @Override

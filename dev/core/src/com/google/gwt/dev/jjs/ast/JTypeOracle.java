@@ -23,6 +23,8 @@ import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.IdentitySets;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.Serializable;
@@ -260,8 +262,8 @@ public class JTypeOracle implements Serializable {
    * A map of all classes to the set of classes that extend them, directly or
    * indirectly.
    */
-  private final Map<JClassType, Set<JClassType>> subClassMap =
-      new IdentityHashMap<JClassType, Set<JClassType>>();
+  private final Map<JReferenceType, Set<JReferenceType>> subClassMap =
+      new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
 
   /**
    * A map of all interfaces to the set of interfaces that extend them, directly
@@ -274,8 +276,8 @@ public class JTypeOracle implements Serializable {
    * A map of all classes to the set of classes they extend, directly or
    * indirectly.
    */
-  private final Map<JClassType, Set<JClassType>> superClassMap =
-      new IdentityHashMap<JClassType, Set<JClassType>>();
+  private final Map<JReferenceType, Set<JReferenceType>> superClassMap =
+      new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
 
   /**
    * A map of all interfaces to the set of interfaces they extend, directly or
@@ -504,7 +506,8 @@ public class JTypeOracle implements Serializable {
     JClassType jsoType = program.getJavaScriptObject();
     List<JClassType> jsoSubTypes = Lists.create();
     if (jsoType != null) {
-      jsoSubTypes = new ArrayList<JClassType>(get(subClassMap, jsoType));
+      jsoSubTypes = new ArrayList<JClassType>(
+          ImmutableList.copyOf(Iterables.filter(get(subClassMap, jsoType), JClassType.class)));
       Collections.sort(jsoSubTypes, new HasNameSort());
       for (JClassType jsoSubType : jsoSubTypes) {
         for (JInterfaceType intf : jsoSubType.getImplements()) {
@@ -532,6 +535,11 @@ public class JTypeOracle implements Serializable {
       if (type instanceof JClassType) {
         computeVirtualUpRefs((JClassType) type);
       }
+    }
+
+    // Depends on already complete super hierarchy for element types.
+    for (JArrayType arrayType : program.getAllArrayTypes()) {
+      recordSuperSubInfo(arrayType);
     }
 
     // Create dual mappings for any jso interface with a Java implementor.
@@ -590,8 +598,8 @@ public class JTypeOracle implements Serializable {
     return jsoSingleImpls.get(maybeSingleJsoIntf.getUnderlyingType());
   }
 
-  public Set<JDeclaredType> getSuperHierarchyTypes(JReferenceType type) {
-    Set<JDeclaredType> superHierarchyTypes = Sets.newHashSet();
+  public Set<JReferenceType> getSuperHierarchyTypes(JReferenceType type) {
+    Set<JReferenceType> superHierarchyTypes = Sets.newHashSet();
     if (superClassMap.containsKey(type)) {
       superHierarchyTypes.addAll(superClassMap.get(type));
     }
@@ -834,8 +842,8 @@ public class JTypeOracle implements Serializable {
     Set<JInterfaceType> couldImplementSet = new IdentityHashSet<JInterfaceType>();
     // all of my direct implements are trivially true
     couldImplementSet.addAll(get(implementsMap, type));
-    List<JClassType> subclasses = new ArrayList<JClassType>();
-    subclasses.addAll(get(subClassMap, type));
+    List<JClassType> subclasses = new ArrayList<JClassType>(
+        ImmutableList.copyOf(Iterables.filter(get(subClassMap, type), JClassType.class)));
     for (JClassType subclass : subclasses) {
       for (JInterfaceType intf : subclass.getImplements()) {
         couldImplementSet.add(intf);
@@ -859,7 +867,8 @@ public class JTypeOracle implements Serializable {
     Set<JInterfaceType> implementsSet = new IdentityHashSet<JInterfaceType>();
     List<JClassType> list = new ArrayList<JClassType>();
     list.add(type);
-    list.addAll(get(superClassMap, type));
+    list.addAll(
+        ImmutableList.copyOf(Iterables.filter(get(superClassMap, type), JClassType.class)));
     for (JClassType superclass : list) {
       for (JInterfaceType intf : superclass.getImplements()) {
         implementsSet.add(intf);
@@ -1022,10 +1031,36 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Record the all of my super classes (and myself as a subclass of them).
+   * Record all of my super classes (and myself as a subclass of them).
+   */
+  private void recordSuperSubInfo(JArrayType arrayType) {
+    Set<JReferenceType> superSet = new IdentityHashSet<JReferenceType>();
+
+    // All arrays are a subclass of Object.
+    superSet.add(program.getTypeJavaLangObject());
+    add(subClassMap, program.getTypeJavaLangObject(), arrayType);
+
+    // Primitive arrays have no leaf type super hierarchy.
+    if (arrayType.getLeafType() instanceof JPrimitiveType) {
+      superClassMap.put(arrayType, IdentitySets.normalize(superSet));
+      return;
+    }
+
+    // Class arrays reuse their leaf type super hierarchy.
+    JDeclaredType leafType = (JDeclaredType) arrayType.getLeafType();
+    for (JReferenceType leafSuperType : getSuperHierarchyTypes(leafType)) {
+      JArrayType superArrayType = program.getTypeArray(leafSuperType, arrayType.getDims());
+      superSet.add(superArrayType);
+      add(subClassMap, superArrayType, arrayType);
+    }
+    superClassMap.put(arrayType, IdentitySets.normalize(superSet));
+  }
+
+  /**
+   * Record all of my super classes (and myself as a subclass of them).
    */
   private void recordSuperSubInfo(JClassType type) {
-    Set<JClassType> superSet = new IdentityHashSet<JClassType>();
+    Set<JReferenceType> superSet = new IdentityHashSet<JReferenceType>();
     for (JClassType t = type.getSuperClass(); t != null; t = t.getSuperClass()) {
       superSet.add(t);
       add(subClassMap, t, type);
@@ -1036,7 +1071,7 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Record the all of my super interfaces (and myself as a sub interface of
+   * Record all of my super interfaces (and myself as a sub interface of
    * them).
    */
   private void recordSuperSubInfo(JInterfaceType type) {

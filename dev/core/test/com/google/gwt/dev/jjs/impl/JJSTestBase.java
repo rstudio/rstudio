@@ -201,7 +201,7 @@ public abstract class JJSTestBase extends TestCase {
    */
   protected JProgram compileSnippet(final String returnType,
       final String codeSnippet) throws UnableToCompleteException {
-    return compileSnippet(returnType, "", codeSnippet);
+    return compileSnippet(returnType, "", codeSnippet, true);
   }
 
   /**
@@ -212,9 +212,10 @@ public abstract class JJSTestBase extends TestCase {
    *          the code snippet has no return statement
    * @param params the parameter list of the method to compile
    * @param codeSnippet the body of the entry method
+   * @param compileMonolithic whether the compile is monolithic
    */
   protected JProgram compileSnippet(final String returnType,
-      final String params, final String codeSnippet)
+      final String params, final String codeSnippet, boolean compileMonolithic)
       throws UnableToCompleteException {
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
@@ -237,7 +238,8 @@ public abstract class JJSTestBase extends TestCase {
       }
     });
     addBuiltinClasses(sourceOracle);
-    CompilerContext compilerContext = new CompilerContext();
+    CompilerContext compilerContext =
+        new CompilerContext.Builder().compileMonolithic(compileMonolithic).build();
     compilerContext.getOptions().setSourceLevel(sourceLevel);
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, compilerContext,

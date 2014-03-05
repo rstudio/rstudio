@@ -46,7 +46,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Replace cast and instanceof operations with calls to the Cast class. Depends
+ * Builds minimal cast maps to cover cast and instanceof operations. Depends
  * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer},
  * {@link JsoDevirtualizer}, and {@link LongCastNormalizer} having already run.
  */

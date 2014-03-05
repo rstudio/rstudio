@@ -24,7 +24,7 @@ public abstract class CfgAnalysisTestBase<A extends Assumption<A>>
 
   protected AnalysisResult analyzeWithParams(String returnType, String params,
       String... codeSnippet) throws UnableToCompleteException {
-    JProgram program = compileSnippet(returnType, params, Joiner.on("\n").join(codeSnippet));
+    JProgram program = compileSnippet(returnType, params, Joiner.on("\n").join(codeSnippet), true);
     JMethodBody body = (JMethodBody) findMainMethod(program).getBody();
     Cfg cfgGraph = CfgBuilder.build(program, body.getBlock());
 

@@ -62,38 +62,27 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.AstDumper;
-import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
-import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
-import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
-import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
-import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
-import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
-import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
-import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
-import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
@@ -264,21 +253,16 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): move to before optimize.
         // (3) Normalize the resolved Java AST
-        normalizeSemantics();
-
-        // TODO(rluble): This pass seems to fit in the normalize semantics.
-        Map<JType, JLiteral> typeIdLiteralssByType =
-            ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram);
+        Map<JType, JLiteral> typeIdLiteralsByType = normalizeSemantics();
 
         // TODO(stalcup): this stage shouldn't exist, move into optimize.
         postNormalizationOptimizeJava();
         jprogram.typeOracle.recomputeAfterOptimizations();
 
-
         // (5) Construct the Js AST
         Pair<? extends JavaToJavaScriptMap, Set<JsNode>> jjsMapAndInlineableFunctions =
             GenerateJavaScriptAST.exec(jprogram, jsProgram, compilerContext,
-                typeIdLiteralssByType,  symbolTable, propertyOracles);
+                typeIdLiteralsByType,  symbolTable, propertyOracles);
         JavaToJavaScriptMap jjsmap = jjsMapAndInlineableFunctions.getLeft();
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
@@ -699,18 +683,7 @@ public abstract class JavaToJavaScriptCompiler {
      *
      * These passes can not be reordering because of subtle interdependencies.
      */
-    private void normalizeSemantics() {
-      JsoDevirtualizer.exec(jprogram);
-      CatchBlockNormalizer.exec(jprogram);
-      PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
-      LongCastNormalizer.exec(jprogram);
-      LongEmulationNormalizer.exec(jprogram);
-      TypeCoercionNormalizer.exec(jprogram);
-      ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
-      ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled());
-      ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
-      EqualityNormalizer.exec(jprogram);
-    }
+    protected abstract Map<JType, JLiteral> normalizeSemantics();
 
     /**
      * Open an emitted artifact and gunzip its contents.
