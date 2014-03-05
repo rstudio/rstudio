@@ -15,55 +15,35 @@
  */
 package com.google.gwt.dev.jjs.impl.codesplitter;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.SymbolData;
-import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.PrecompileTaskOptionsImpl;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConditionNone;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
-import com.google.gwt.dev.cfg.Properties;
-import com.google.gwt.dev.cfg.StaticPropertyOracle;
-import com.google.gwt.dev.javac.CompilationState;
-import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
-import com.google.gwt.dev.jjs.JavaAstConstructor;
 import com.google.gwt.dev.jjs.JsOutputOption;
-import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JRunAsync;
-import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
-import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
-import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
-import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
-import com.google.gwt.dev.jjs.impl.JJSTestBase;
+import com.google.gwt.dev.jjs.impl.FullCompileTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
-import com.google.gwt.dev.jjs.impl.MethodCallTightener;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
-import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.dev.util.Pair;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 
 /**
  * Unit test for {@link com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter}.
  */
-public class CodeSplitterTest extends JJSTestBase {
+public class CodeSplitterTest extends FullCompileTestBase {
 
   /**
    * A {@link MultipleDependencyGraphRecorder} that does nothing.
@@ -100,28 +80,22 @@ public class CodeSplitterTest extends JJSTestBase {
   private final String initialA = "public static void initialA() {}";
   private final String initialB = "public static void initialB() {}";
 
-  // Compilation Configuration Properties.
-  private BindingProperty stackMode = new BindingProperty("compiler.stackMode");
-  private BindingProperty[] orderedProps = {stackMode};
-  private String[] orderedPropValues = {"STRIP" };
+  public int leftOverMergeSize = 0;
+  public int expectedFragmentCount = 0;
 
   private ConfigurationProperty initialSequenceProp =
       new ConfigurationProperty(CodeSplitters.PROP_INITIAL_SEQUENCE, true);
-  private ConfigurationProperty[] configProps = { initialSequenceProp };
-
-
-  private JProgram jProgram = null;
-  private JsProgram jsProgram = null;
-
-  public int leftOverMergeSize = 0;
-  public int expectedFragmentCount = 0;
-  public List<JRunAsync> initialAsyncSequence = Lists.newArrayList();
 
   @Override
   public void setUp() throws Exception {
-    super.setUp();
+    // Compilation Configuration Properties.
+    BindingProperty stackMode = new BindingProperty("compiler.stackMode");
     stackMode.addDefinedValue(new ConditionNone(), "STRIP");
+    setProperties(new BindingProperty[]{stackMode}, new String[]{"STRIP"},
+        new ConfigurationProperty[]{initialSequenceProp});
+    super.setUp();
     jsProgram = new JsProgram();
+
   }
 
   public void testSimple() throws UnableToCompleteException {
@@ -362,7 +336,6 @@ public class CodeSplitterTest extends JJSTestBase {
     assertTrue(cfa.getInstantiatedTypes().contains(findType(program, "com.google.gwt.lang.Array")));
   }
 
-
   /**
    * Test that the conversion from -XfragmentCount expectCount into number of exclusive fragments
    * is correct.
@@ -498,60 +471,25 @@ public class CodeSplitterTest extends JJSTestBase {
     visitor.accept(fragment);
     return found[0];
   }
+  @Override
+  protected void optimizeJava() {
+  }
 
-  /**
-   * Compiles a Java class <code>test.EntryPoint</code> and use the code splitter on it.
-   */
-  protected void compileSnippet(final String code) throws UnableToCompleteException {
-    // By default expects 4 fragments and don't merge leftovers.
-
-    addBuiltinClassesToGenerateJavaScriptAST(sourceOracle);
-
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.core.client.GWT") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.core.client; public class GWT {" +
-            "public static void runAsync(RunAsyncCallback cb){}"+
-            "public static void runAsync(Class<?> clazz, RunAsyncCallback cb){}}";
-      }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
-      @Override
-      public CharSequence getContent() {
-        return code;
-      }
-    });
-
+  @Override
+  protected CompilerContext provideCompilerContext() {
     PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     options.setOutput(JsOutputOption.PRETTY);
-    CompilerContext compilerContext = new CompilerContext.Builder().options(options).build();
+    options.setRunAsyncEnabled(true);
+    return new CompilerContext.Builder().options(options).build();
+  }
 
-    CompilationState state =
-        CompilationStateBuilder.buildFrom(logger, compilerContext,
-            sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
-
-    Properties properties = createPropertiesObject(configProps);
-    jProgram =
-        JavaAstConstructor.construct(logger, state, properties, "test.EntryPoint",
-            "com.google.gwt.lang.Exceptions");
-    jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
-
-    ComputeCastabilityInformation.exec(jProgram, false);
-    ImplementCastsAndTypeChecks.exec(jProgram, false);
-    ArrayNormalizer.exec(jProgram, false);
-    TypeTightener.exec(jProgram);
-    MethodCallTightener.exec(jProgram);
-    Map<JType, JLiteral> typeIdsByType =
-        ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jProgram);
-
-    Map<StandardSymbolData, JsName> symbolTable =
-        new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
-    JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
-        jProgram, jsProgram, compilerContext, typeIdsByType, symbolTable, new PropertyOracle[]{
-        new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
+  @Override
+  protected Pair<JavaToJavaScriptMap, Set<JsNode>> compileSnippet(final String code)
+      throws UnableToCompleteException {
+    JavaToJavaScriptMap map = super.compileSnippet(code).getLeft();
     CodeSplitter.exec(logger, jProgram, jsProgram, map, expectedFragmentCount, leftOverMergeSize,
-        NULL_RECORDER);
+       NULL_RECORDER);
+    return null;
   }
 
   private static String createRunAsync(String cast, String body) {
@@ -579,18 +517,4 @@ public class CodeSplitterTest extends JJSTestBase {
   private static String createRunAsync(String body) {
     return createRunAsync("", body);
   }
-
-  private static Properties createPropertiesObject(ConfigurationProperty[] propertyArray) {
-    Properties properties = new Properties();
-    for (ConfigurationProperty configurationPropertyFromArray : propertyArray) {
-      ConfigurationProperty configurationProperty =
-          properties.createConfiguration(configurationPropertyFromArray.getName(),
-          configurationPropertyFromArray.allowsMultipleValues());
-      for (String value : configurationPropertyFromArray.getValues()) {
-        configurationProperty.addValue(value);
-      }
-    }
-    return properties;
-  }
-
 }

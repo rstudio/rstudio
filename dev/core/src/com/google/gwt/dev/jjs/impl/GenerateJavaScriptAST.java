@@ -2589,10 +2589,6 @@ public class GenerateJavaScriptAST {
 
     private JMethod currentMethod;
 
-    // Java methods that would have not been already exploited for inline opportunities due to
-    // either being native or containing classes to native methods are collected here.
-    Set<JMethod> methodsForJsInlining = Sets.newHashSet();
-
     @Override
     public void endVisit(JMethod x, Context ctx) {
       if (x.isNative()) {

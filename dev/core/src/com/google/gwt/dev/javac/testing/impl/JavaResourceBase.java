@@ -184,9 +184,8 @@ public class JavaResourceBase {
           "}");
 
   public static final MockJavaResource IS_SERIALIZABLE =
-      createMockJavaResource(
-      "com.google.gwt.user.client.rpc.IsSerializable",
-      "package com.google.gwt.user.client.rpc;",
+      createMockJavaResource("com.google.gwt.user.client.rpc.IsSerializable",
+          "package com.google.gwt.user.client.rpc;",
           "public interface IsSerializable {",
           "}");
 
@@ -246,8 +245,13 @@ public class JavaResourceBase {
           "  public boolean equals(Object that){return this == that;}",
           "  public int hashCode() { return 0; }",
           "  public String toString() { return \"Object\"; }",
-          "  public Class<?> getClass() { return ___clazz; }"
-          ,
+          "  public Class<?> getClass() { return ___clazz; }",
+          "}");
+
+  public static final MockJavaResource RUNTIME_EXCEPTION =
+      createMockJavaResource("java.lang.RuntimeException",
+          "package java.lang;",
+          "public class RuntimeException extends Exception {",
           "}");
 
   public static final MockJavaResource SERIALIZABLE =
@@ -320,7 +324,8 @@ public class JavaResourceBase {
         AUTOCLOSEABLE, ANNOTATION, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
         CLASS_NOT_FOUND_EXCEPTION, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT,
         INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR,
-        NUMBER, OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE};
+        NUMBER, OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,
+        SUPPRESS_WARNINGS, THROWABLE};
   }
 
   /**

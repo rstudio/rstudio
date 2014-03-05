@@ -39,9 +39,9 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
+import com.google.gwt.dev.jjs.impl.FullCompileTestBase;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
-import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -59,7 +59,7 @@ import java.util.TreeMap;
 /**
  * Tests that {@link JsStackEmulator} generates the expected JavaScript code.
  */
-public class JsStackEmulatorTest extends JJSTestBase {
+public class JsStackEmulatorTest extends FullCompileTestBase {
 
   private final ConfigurationProperty recordFileNamesProp =
       new ConfigurationProperty("compiler.emulatedStack.recordFileNames", false);
@@ -105,9 +105,6 @@ public class JsStackEmulatorTest extends JJSTestBase {
       }
     });
     sourceOracle.add(JavaAstConstructor.getCompilerTypes());
-    addBuiltinClassesToGenerateJavaScriptAST(sourceOracle);
-
-    // Construct the Java AST.
 
     PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     options.setOutput(JsOutputOption.PRETTY);
@@ -166,5 +163,9 @@ public class JsStackEmulatorTest extends JJSTestBase {
     JsVisitor generator = new JsSourceGenerationVisitor(text);
     generator.accept(node);
     return text.toString();
+  }
+
+  @Override
+  protected void optimizeJava() {
   }
 }
