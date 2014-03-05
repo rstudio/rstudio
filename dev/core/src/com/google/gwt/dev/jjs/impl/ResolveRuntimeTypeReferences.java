@@ -130,8 +130,10 @@ public abstract class ResolveRuntimeTypeReferences {
     }
 
     public void endVisit(JReferenceType x, Context ctx) {
-      // All reference types retained will need an id.
-      typesRequiringRuntimeIds.add(x);
+      // All instantiable reference types retained will need an id.
+      if (program.typeOracle.isInstantiatedType(x)) {
+        typesRequiringRuntimeIds.add(x);
+      }
     }
   }
 
