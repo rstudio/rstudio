@@ -47,7 +47,6 @@ import com.google.gwt.resources.ext.ResourceGeneratorType;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.resources.rg.BundleResourceGenerator;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -333,11 +332,6 @@ public abstract class AbstractClientBundleGenerator extends IncrementalGenerator
     }
   }
 
-  private static ImmutableSet<String> relevantPropertyNames = ImmutableSet.of(
-      "ClientBundle.enableInlining", "ClientBundle.enableRenaming", "CssResource.mergeEnabled",
-      "CssResource.obfuscationPrefix", "CssResource.reservedClassPrefixes", "CssResource.style",
-      "ExternalTextResource.useJsonp", "locale", "user.agent");
-
   @Override
   public boolean contentDependsOnTypes() {
     return false;
@@ -521,11 +515,6 @@ public abstract class AbstractClientBundleGenerator extends IncrementalGenerator
       return new RebindResult(RebindMode.USE_ALL_NEW_WITH_NO_CACHING,
           createdClassName);
     }
-  }
-
-  @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
-    return relevantPropertyNames;
   }
 
   @Override
