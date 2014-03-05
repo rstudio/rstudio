@@ -174,7 +174,7 @@ public class RmdTemplateData
             {
             format_name: "ioslides_presentation",
             format_ui_name: "HTML (ioslides)",
-            format_options: [ "fig_width", "fig_height", "fig_caption", 
+            format_options: [ "logo", "fig_width", "fig_height", "fig_caption", 
                               "incremental", "transition", "smaller",
                               "widescreen",
                               "highlight", "self_contained", "smart" ],
@@ -379,6 +379,14 @@ public class RmdTemplateData
                            "dolphin", "dove", "fly", "lily", "orchid", "rose", 
                            "seagull", "seahorse", "sidebartab", "structure", 
                            "whale", "wolverine" ]
+            },
+            {
+            option_name: "logo",
+            option_ui_name: "Show logo (square, at least 128x128)", 
+            option_type: "file", 
+            option_for_create: true,
+            option_nullable: true,
+            option_default: "null"
             },
          ]
          }

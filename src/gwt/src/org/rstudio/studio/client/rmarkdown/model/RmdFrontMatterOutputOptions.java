@@ -24,6 +24,10 @@ public class RmdFrontMatterOutputOptions extends JavaScriptObject
    {
    }
    
+   public final static native RmdFrontMatterOutputOptions create() /*-{
+      return {};
+   }-*/;
+   
    public final native JsArrayString getOptionList() /*-{
       return Object.getOwnPropertyNames(this);
    }-*/;
@@ -36,5 +40,9 @@ public class RmdFrontMatterOutputOptions extends JavaScriptObject
          return "null";
       else 
          return option.toString();
+   }-*/;
+   
+   public final native void removeOption(String optionName) /*-{
+      delete this[optionName];
    }-*/;
 }

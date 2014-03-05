@@ -68,10 +68,21 @@ public class RmdFileOption extends RmdNullableOption
       return fileChooser_.getText();
    }
    
+   @Override 
+   public boolean valueIsNull()
+   {
+      // it's possible for users to check that they'd like to use a file but
+      // fail to select one; in this case, act as though they didn't check the
+      // box
+      return super.valueIsNull() || 
+             fileChooser_.getText() == null ||
+             fileChooser_.getText().trim().isEmpty();
+   }
+
    @Override
    public void updateNull()
    {
-      fileChooser_.setEnabled(!valueIsNull());
+      fileChooser_.setEnabled(!super.valueIsNull());
    }
 
    FileChooserTextBox fileChooser_;

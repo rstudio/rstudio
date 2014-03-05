@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -27,13 +28,17 @@ public class RmdFormatOptionsHelper
    public final static JavaScriptObject optionsListToJson(
          List<RmdFormatOption> options, 
          FileSystemItem document, 
-         JavaScriptObject optionList)
+         RmdFrontMatterOutputOptions optionList)
    {
       if (optionList == null) 
-         optionList = createOptionList();
+         optionList = RmdFrontMatterOutputOptions.create();
       for (RmdFormatOption option: options)
       {
-         if (!option.valueIsDefault())
+         if (option.valueIsDefault())
+         {
+            optionList.removeOption(option.getOption().getName());
+         }
+         else
          {
             String type = option.getOption().getType();
             if (type.equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
@@ -55,6 +60,7 @@ public class RmdFormatOptionsHelper
                // For file options, compute the path relative to the document
                // if we're starting with an absolute path
                if (document != null && 
+                   option.getValue() != null && 
                    FilePathUtils.pathIsAbsolute(option.getValue()))
                {
                   FileSystemItem selFile = 
@@ -76,10 +82,6 @@ public class RmdFormatOptionsHelper
       }
       return optionList;
    }
-   
-   private final native static JavaScriptObject createOptionList() /*-{
-      return {};
-   }-*/;
    
    // We need one of these per type since JSNI doesn't unbox templated types
    // for us
