@@ -533,6 +533,8 @@ public class TextEditingTargetWidget
       }
       rmdFormatButton_.setVisible(visible);
       editRmdFormatButton_.setVisible(visible);
+      rmdFormatButton_.setEnabled(visible);
+      editRmdFormatButton_.setEnabled(visible);
    }
    
    private void setFormatText(String text)
