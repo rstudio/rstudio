@@ -82,12 +82,14 @@ public class LibraryGroupTest extends TestCase {
     LibraryGroup libraryGroup =
         LibraryGroup.fromLibraries(Lists.<Library> newArrayList(regularLibrary), true);
 
-    // Shows that get by name works for nested types.
+    // Shows that get by source or binary name works for nested types.
     assertEquals(nestedTypeCompilationUnit,
         libraryGroup.getCompilationUnitByTypeSourceName("com.google.gwt.user.Outer.Inner"));
+    assertEquals(nestedTypeCompilationUnit,
+        libraryGroup.getCompilationUnitByTypeBinaryName("com.google.gwt.user.Outer$Inner"));
   }
 
-  public void testGetCompilationUnitTypeSourceNamesSeesAll() {
+  public void testGetCompilationUnitTypeNamesSourceNamesSeesAll() {
     // Create regular/super source compilation units.
     MockCompilationUnit regularCompilationUnit =
         new MockCompilationUnit("com.google.gwt.Regular", "blah");
@@ -256,6 +258,8 @@ public class LibraryGroupTest extends TestCase {
 
     // Show that the library group prefers to return the super source version.
     assertEquals(libraryGroup.getCompilationUnitByTypeSourceName("com.google.gwt.Regular"),
+        superSourceCompilationUnit);
+    assertEquals(libraryGroup.getCompilationUnitByTypeBinaryName("com.google.gwt.Regular"),
         superSourceCompilationUnit);
   }
 

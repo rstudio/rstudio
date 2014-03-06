@@ -665,6 +665,8 @@ public class JProgram extends JNode {
     return fragmentPartitioninResult;
   }
 
+  // TODO(stalcup): this is a blatant bug. there's no unambiguous way to convert from binary name to
+  // source name. JProgram needs to index types both ways.
   public JDeclaredType getFromTypeMap(String qualifiedBinaryOrSourceName) {
     String srcTypeName = qualifiedBinaryOrSourceName.replace('$', '.');
 

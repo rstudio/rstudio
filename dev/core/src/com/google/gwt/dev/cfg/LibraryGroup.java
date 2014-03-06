@@ -102,6 +102,7 @@ public class LibraryGroup {
   private List<Library> libraries = Lists.newArrayList();
   private Map<String, Library> librariesByBuildResourcePath;
   private Map<String, Library> librariesByClassFilePath;
+  private Map<String, Library> librariesByCompilationUnitTypeBinaryName;
   private Map<String, Library> librariesByCompilationUnitTypeSourceName;
   private Map<String, Library> librariesByName;
   private Map<String, Library> librariesByPublicResourcePath;
@@ -214,6 +215,17 @@ public class LibraryGroup {
     Library library =
         getLibrariesByClassFilePath().get(Libraries.computeClassFileName(classFilePath));
     return library.getClassFileStream(classFilePath);
+  }
+
+  /**
+   * Returns the compilation unit for the given compilation unit type name if present or null.
+   */
+  public CompilationUnit getCompilationUnitByTypeBinaryName(String typeBinaryName) {
+    if (!getLibrariesByCompilationUnitTypeBinaryName().containsKey(typeBinaryName)) {
+      return null;
+    }
+    Library library = getLibrariesByCompilationUnitTypeBinaryName().get(typeBinaryName);
+    return library.getCompilationUnitByTypeBinaryName(typeBinaryName);
   }
 
   /**
@@ -474,6 +486,44 @@ public class LibraryGroup {
   }
 
   // TODO(stalcup): throw an error if more than one version of a type is provided.
+  private Map<String, Library> getLibrariesByCompilationUnitTypeBinaryName() {
+    if (librariesByCompilationUnitTypeBinaryName == null) {
+      librariesByCompilationUnitTypeBinaryName = Maps.newLinkedHashMap();
+
+      // Record regular compilation units first.
+      for (Library library : libraries) {
+        for (String compilationUnitTypeSourceName :
+            library.getRegularCompilationUnitTypeSourceNames()) {
+          librariesByCompilationUnitTypeSourceName.put(compilationUnitTypeSourceName, library);
+
+          Collection<String> nestedTypeBinaryNames = library
+              .getNestedBinaryNamesByCompilationUnitName().get(compilationUnitTypeSourceName);
+          for (String nestedTypeBinaryName : nestedTypeBinaryNames) {
+            librariesByCompilationUnitTypeBinaryName.put(nestedTypeBinaryName, library);
+          }
+        }
+      }
+
+      // Overwrite with superSource compilation units, so they have higher priority.
+      for (Library library : libraries) {
+        for (String superSourceCompilationUnitTypeSourceName :
+            library.getSuperSourceCompilationUnitTypeSourceNames()) {
+          librariesByCompilationUnitTypeSourceName.put(superSourceCompilationUnitTypeSourceName,
+              library);
+
+          Collection<String> nestedTypeBinaryNames = library
+              .getNestedBinaryNamesByCompilationUnitName().get(
+              superSourceCompilationUnitTypeSourceName);
+          for (String nestedTypeBinaryName : nestedTypeBinaryNames) {
+            librariesByCompilationUnitTypeBinaryName.put(nestedTypeBinaryName, library);
+          }
+        }
+      }
+    }
+    return Collections.unmodifiableMap(librariesByCompilationUnitTypeBinaryName);
+  }
+
+  // TODO(stalcup): throw an error if more than one version of a type is provided.
   private Map<String, Library> getLibrariesByCompilationUnitTypeSourceName() {
     if (librariesByCompilationUnitTypeSourceName == null) {
       librariesByCompilationUnitTypeSourceName = Maps.newLinkedHashMap();
@@ -484,8 +534,8 @@ public class LibraryGroup {
             library.getRegularCompilationUnitTypeSourceNames()) {
           librariesByCompilationUnitTypeSourceName.put(compilationUnitTypeSourceName, library);
 
-          Collection<String> nestedTypeSourceNames =
-              library.getNestedNamesByCompilationUnitName().get(compilationUnitTypeSourceName);
+          Collection<String> nestedTypeSourceNames = library
+              .getNestedSourceNamesByCompilationUnitName().get(compilationUnitTypeSourceName);
           for (String nestedTypeSourceName : nestedTypeSourceNames) {
             librariesByCompilationUnitTypeSourceName.put(nestedTypeSourceName, library);
           }
@@ -499,18 +549,16 @@ public class LibraryGroup {
           librariesByCompilationUnitTypeSourceName.put(superSourceCompilationUnitTypeSourceName,
               library);
 
-          Collection<String> nestedTypeSourceNames = library.getNestedNamesByCompilationUnitName()
-              .get(superSourceCompilationUnitTypeSourceName);
+          Collection<String> nestedTypeSourceNames = library
+              .getNestedSourceNamesByCompilationUnitName().get(
+              superSourceCompilationUnitTypeSourceName);
           for (String nestedTypeSourceName : nestedTypeSourceNames) {
             librariesByCompilationUnitTypeSourceName.put(nestedTypeSourceName, library);
           }
         }
       }
-
-      librariesByCompilationUnitTypeSourceName =
-          Collections.unmodifiableMap(librariesByCompilationUnitTypeSourceName);
     }
-    return librariesByCompilationUnitTypeSourceName;
+    return Collections.unmodifiableMap(librariesByCompilationUnitTypeSourceName);
   }
 
   private Map<String, Library> getLibrariesByPublicResourcePath() {

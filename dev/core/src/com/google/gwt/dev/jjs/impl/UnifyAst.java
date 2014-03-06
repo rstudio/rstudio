@@ -19,12 +19,12 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.Shared;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
@@ -81,13 +81,13 @@ import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -118,10 +118,47 @@ import java.util.Set;
  *
  * - Class.desiredAssertionStatus, Class.isClassMetaDataEnabled, GWT.isClient,
  * GWT.isProdMode, GWT.isScript.
- *
- * TODO: SOYC correlations.
  */
+// TODO: SOYC correlations.
+// TODO(stalcup): perform only binary name based lookups so that libraries
+// don't need to index compilation units by both source and binary name
 public class UnifyAst {
+
+  /**
+   * Embodies the access methods for the compiled class, compilation unit and type for a flavor of
+   * type name.
+   */
+  private abstract class NameBasedTypeLocator {
+    private final Map<String, CompiledClass> compiledClassesByTypeName;
+
+    private NameBasedTypeLocator(Map<String, CompiledClass> compiledClassesByTypeName) {
+      this.compiledClassesByTypeName = compiledClassesByTypeName;
+    }
+
+    protected abstract CompilationUnit getCompilationUnitFromLibrary(String typeName);
+
+    protected CompilationUnit getCompilationUnitFromSource(String typeName) {
+      return compiledClassesByTypeName.get(typeName).getUnit();
+    }
+
+    protected JDeclaredType getResolvedType(String typeName) {
+      JDeclaredType resolvedType = program.getFromTypeMap(typeName);
+      assert resolvedType != null || errorsFound;
+      return resolvedType;
+    }
+
+    protected boolean libraryCompilationUnitIsAvailable(String typeName) {
+      return getCompilationUnitFromLibrary(typeName) != null;
+    }
+
+    protected boolean resolvedTypeIsAvailable(String typeName) {
+      return program.getFromTypeMap(typeName) != null;
+    }
+
+    protected boolean sourceCompilationUnitIsAvailable(String typeName) {
+      return compiledClassesByTypeName.containsKey(typeName);
+    }
+  }
 
   private class UnifyVisitor extends JModVisitor {
 
@@ -357,7 +394,8 @@ public class UnifyAst {
     @Override
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
-      return true;
+      // Only visit contents of methods defined in types which are part of this compile.
+      return !program.isReferenceOnly(x.getEnclosingType());
     }
 
     @Override
@@ -368,18 +406,38 @@ public class UnifyAst {
       return !magicMethodCalls.contains(target);
     }
 
-    private JExpression handleGwtCreate(JMethodCall x) {
-      assert (x.getArgs().size() == 1);
-      JExpression arg = x.getArgs().get(0);
+    private JExpression createRebindExpression(JMethodCall gwtCreateCall) {
+      assert (gwtCreateCall.getArgs().size() == 1);
+      JExpression arg = gwtCreateCall.getArgs().get(0);
       if (!(arg instanceof JClassLiteral)) {
-        error(x, "Only class literals may be used as arguments to GWT.create()");
+        error(gwtCreateCall, "Only class literals may be used as arguments to GWT.create()");
         return null;
       }
       JClassLiteral classLiteral = (JClassLiteral) arg;
       if (!(classLiteral.getRefType() instanceof JDeclaredType)) {
-        error(x, "Only classes and interfaces may be used as arguments to GWT.create()");
+        error(gwtCreateCall,
+            "Only classes and interfaces may be used as arguments to GWT.create()");
         return null;
       }
+
+      if (compilerContext.shouldCompileMonolithic()) {
+        return createStaticRebindExpression(gwtCreateCall, classLiteral);
+      } else {
+        return createRuntimeRebindExpression(gwtCreateCall, classLiteral);
+      }
+    }
+
+    private JExpression createRuntimeRebindExpression(JMethodCall gwtCreateCall,
+        JClassLiteral classLiteral) {
+      // RuntimeRebinder.createInstance(classLiteral);
+      JMethod runtimeCreateInstanceMethod =
+          program.getIndexedMethod("RuntimeRebinder.createInstance");
+      return new JMethodCall(gwtCreateCall.getSourceInfo(), null, runtimeCreateInstanceMethod,
+          classLiteral);
+    }
+
+    private JExpression createStaticRebindExpression(JMethodCall gwtCreateCall,
+        JClassLiteral classLiteral) {
       JDeclaredType type = (JDeclaredType) classLiteral.getRefType();
       String reqType = JGwtCreate.nameOf(type);
       List<String> answers;
@@ -387,30 +445,30 @@ public class UnifyAst {
         answers = Lists.create(rpo.getAllPossibleRebindAnswers(logger, reqType));
         rpo.getGeneratorContext().finish(logger);
       } catch (UnableToCompleteException e) {
-        error(x, "Failed to resolve '" + reqType + "' via deferred binding");
+        error(gwtCreateCall, "Failed to resolve '" + reqType + "' via deferred binding");
         return null;
       }
 
       ArrayList<JExpression> instantiationExpressions = new ArrayList<JExpression>(answers.size());
       for (String answer : answers) {
-        JDeclaredType answerType = searchForTypeBySource(answer);
+        JDeclaredType answerType = findType(answer, sourceNameBasedTypeLocator);
         if (answerType == null) {
-          error(x, "Rebind result '" + answer + "' could not be found");
+          error(gwtCreateCall, "Rebind result '" + answer + "' could not be found");
           return null;
         }
         if (!(answerType instanceof JClassType)) {
-          error(x, "Rebind result '" + answer + "' must be a class");
+          error(gwtCreateCall, "Rebind result '" + answer + "' must be a class");
           return null;
         }
         if (answerType.isAbstract()) {
-          error(x, "Rebind result '" + answer + "' cannot be abstract");
+          error(gwtCreateCall, "Rebind result '" + answer + "' cannot be abstract");
           return null;
         }
-        JExpression result =
-            JGwtCreate.createInstantiationExpression(x.getSourceInfo(), (JClassType) answerType,
-                currentMethod.getEnclosingType());
+        JExpression result = JGwtCreate.createInstantiationExpression(gwtCreateCall.getSourceInfo(),
+            (JClassType) answerType, currentMethod.getEnclosingType());
         if (result == null) {
-          error(x, "Rebind result '" + answer + "' has no default (zero argument) constructors");
+          error(gwtCreateCall,
+              "Rebind result '" + answer + "' has no default (zero argument) constructors");
           return null;
         }
         instantiationExpressions.add(result);
@@ -419,8 +477,8 @@ public class UnifyAst {
       if (answers.size() == 1) {
         return instantiationExpressions.get(0);
       } else {
-        return new JGwtCreate(x.getSourceInfo(), reqType, answers, program.getTypeJavaLangObject(),
-            instantiationExpressions);
+        return new JGwtCreate(gwtCreateCall.getSourceInfo(), reqType, answers,
+            program.getTypeJavaLangObject(), instantiationExpressions);
       }
     }
 
@@ -438,7 +496,7 @@ public class UnifyAst {
       JsniRef ref = JsniRef.parse(stringValue);
       if (ref != null) {
         if (Name.isBinaryName(ref.className())) {
-          searchForTypeByBinary(ref.className());
+          findType(ref.className(), binaryNameBasedTypeLocator);
         }
         node = JsniRefLookup.findJsniRefTarget(ref, program, new JsniRefLookup.ErrorReporter() {
           @Override
@@ -449,7 +507,7 @@ public class UnifyAst {
       } else {
         // See if it's just @foo.Bar, which would result in the class seed
         String typeName = stringValue.charAt(0) == '@' ? stringValue.substring(1) : stringValue;
-        node = searchForTypeByBinary(typeName);
+        node = findType(typeName, binaryNameBasedTypeLocator);
       }
       if (node == null) {
         // Not found, must be null
@@ -463,7 +521,7 @@ public class UnifyAst {
       JMethod target = x.getTarget();
       String sig = target.getEnclosingType().getName() + '.' + target.getSignature();
       if (GWT_CREATE.equals(sig) || OLD_GWT_CREATE.equals(sig)) {
-        return handleGwtCreate(x);
+        return createRebindExpression(x);
       } else if (IMPL_GET_NAME_OF.equals(sig)) {
         return handleImplNameOf(x);
       }
@@ -516,8 +574,9 @@ public class UnifyAst {
       GWT_IS_CLIENT, OLD_GWT_IS_CLIENT, GWT_IS_PROD_MODE, OLD_GWT_IS_PROD_MODE, GWT_IS_SCRIPT,
       OLD_GWT_IS_SCRIPT, CLASS_DESIRED_ASSERTION_STATUS, CLASS_IS_CLASS_METADATA_ENABLED));
 
-  private final Map<String, CompiledClass> classFileMap;
-  private final Map<String, CompiledClass> classFileMapBySource;
+  private final CompilationState compilationState;
+  private final Map<String, CompiledClass> compiledClassesByInternalName;
+  private final Map<String, CompiledClass> compiledClassesBySourceName;
   private boolean errorsFound = false;
   private final Set<CompilationUnit> failedUnits = new IdentityHashSet<CompilationUnit>();
   private final Map<String, JField> fieldMap = new HashMap<String, JField>();
@@ -541,7 +600,6 @@ public class UnifyAst {
   private final Set<JMethod> magicMethodCalls = new IdentityHashSet<JMethod>();
   private final Set<JMethod> gwtDebuggerMethods = new IdentityHashSet<JMethod>();
   private final Map<String, JMethod> methodMap = new HashMap<String, JMethod>();
-  private final JJSOptions options;
   private final JProgram program;
   private final RebindPermutationOracle rpo;
 
@@ -555,21 +613,27 @@ public class UnifyAst {
   private final Map<String, List<JMethod>> virtualMethodsPending =
       new java.util.HashMap<String, List<JMethod>>();
 
+  private NameBasedTypeLocator sourceNameBasedTypeLocator;
+  private NameBasedTypeLocator binaryNameBasedTypeLocator;
+  private NameBasedTypeLocator internalNameBasedTypeLocator;
+
   public UnifyAst(TreeLogger logger, CompilerContext compilerContext, JProgram program,
       JsProgram jsProgram, RebindPermutationOracle rpo) {
     this.logger = logger;
     this.compilerContext = compilerContext;
     this.program = program;
     this.jsProgram = jsProgram;
-    this.options = compilerContext.getOptions();
     this.rpo = rpo;
-    this.classFileMap = rpo.getCompilationState().getClassFileMap();
-    this.classFileMapBySource = rpo.getCompilationState().getClassFileMapBySource();
+    this.compilationState = rpo.getCompilationState();
+    this.compiledClassesByInternalName = compilationState.getClassFileMap();
+    this.compiledClassesBySourceName = compilationState.getClassFileMapBySource();
+
+    initializeNameBasedLocators();
   }
 
   public void addRootTypes(Collection<String> sourceTypeNames) throws UnableToCompleteException {
     for (String sourceTypeName : sourceTypeNames) {
-      searchForTypeBySource(sourceTypeName);
+      findType(sourceTypeName, sourceNameBasedTypeLocator);
     }
     if (errorsFound) {
       throw new UnableToCompleteException();
@@ -581,9 +645,9 @@ public class UnifyAst {
    * translated, and unified.
    */
   public void buildEverything() throws UnableToCompleteException {
-    for (String internalName : classFileMap.keySet()) {
+    for (String internalName : compiledClassesByInternalName.keySet()) {
       String typeName = InternalName.toBinaryName(internalName);
-      searchForTypeByBinary(typeName);
+      findType(typeName, binaryNameBasedTypeLocator);
     }
 
     for (JDeclaredType type : program.getDeclaredTypes()) {
@@ -605,20 +669,40 @@ public class UnifyAst {
   }
 
   /**
-   * For normal compilation, only translate and stitch types reachable from
-   * entry points. This reduces memory and improves compile speed. Any
-   * unreachable elements are pruned.
+   * Translates and stitches (unifies) type ASTs into one connected graph.<br />
+   *
+   * For normal monolithic compiles only types reachable from entry points are traversed. This
+   * speeds, saves memory trims unreferenced elements.<br />
+   *
+   * Library compiles traverse all types that were supplied as source in the compilation state and
+   * no elements are pruned.
    */
   public void exec() throws UnableToCompleteException {
-    // Trace execution from entry points.
+    // Trace execution from entry points and resolve references.
     for (JMethod entryMethod : program.getEntryMethods()) {
       flowInto(entryMethod);
     }
 
-    // Trace execution from compiler code gen types.
+    // Trace execution from compiler code gen types and resolve references.
     for (JClassType type : program.codeGenTypes) {
       for (JMethod method : type.getMethods()) {
         flowInto(method);
+      }
+    }
+
+    // If this is a library compile.
+    if (!compilerContext.shouldCompileMonolithic()) {
+      // Trace execution from all types supplied as source and resolve references.
+      Set<String> sourceNames = ImmutableSet.copyOf(compiledClassesBySourceName.keySet());
+      for (String sourceTypeName : sourceNames) {
+        JDeclaredType type = findType(sourceTypeName, sourceNameBasedTypeLocator);
+        instantiate(type);
+        for (JField field : type.getFields()) {
+          flowInto(field);
+        }
+        for (JMethod method : type.getMethods()) {
+          flowInto(method);
+        }
       }
     }
 
@@ -650,7 +734,7 @@ public class UnifyAst {
     }
 
     // ReplaceRunAsyncs
-    if (options.isRunAsyncEnabled()) {
+    if (compilerContext.getOptions().isRunAsyncEnabled()) {
       flowInto(program.getIndexedMethod("AsyncFragmentLoader.onLoad"));
       flowInto(program.getIndexedMethod("AsyncFragmentLoader.runAsync"));
     }
@@ -666,40 +750,71 @@ public class UnifyAst {
     mainLoop();
 
     // Post-stitching clean-ups.
-
-    // Prune any untranslated types, fields, and methods.
-    for (Iterator<JDeclaredType> it = program.getDeclaredTypes().iterator(); it.hasNext();) {
-      JDeclaredType type = it.next();
-      boolean isInstantiated = instantiatedTypes.contains(type);
-      for (int i = 0; i < type.getFields().size(); ++i) {
-        JField field = type.getFields().get(i);
-        if (!liveFieldsAndMethods.contains(field) || (!field.isStatic() && !isInstantiated)) {
-          type.removeField(i);
-          --i;
-        }
-      }
-
-      // Special clinit handling.
-      JMethod clinit = type.getClinitMethod();
-      if (!liveFieldsAndMethods.contains(clinit)) {
-        clinit.setBody(new JMethodBody(SourceOrigin.UNKNOWN));
-      }
-      for (int i = 1; i < type.getMethods().size(); ++i) {
-        JMethod method = type.getMethods().get(i);
-        if (!liveFieldsAndMethods.contains(method) || (!method.isStatic() && !isInstantiated)) {
-          type.removeMethod(i);
-          --i;
-        }
-      }
+    if (compilerContext.shouldCompileMonolithic()) {
+      pruneDeadFieldsAndMethods();
     }
-
     computeOverrides();
     if (errorsFound) {
       throw new UnableToCompleteException();
     }
   }
 
-  private void assimilateUnit(CompilationUnit unit) {
+  private void pruneDeadFieldsAndMethods() {
+    for (JDeclaredType type : program.getDeclaredTypes()) {
+      // Remove dead fields.
+      boolean isInstantiated = instantiatedTypes.contains(type);
+      for (int fieldIndex = 0; fieldIndex < type.getFields().size(); ++fieldIndex) {
+        JField field = type.getFields().get(fieldIndex);
+        if (!liveFieldsAndMethods.contains(field) || (!field.isStatic() && !isInstantiated)) {
+          type.removeField(fieldIndex);
+          --fieldIndex;
+        }
+      }
+
+      // Empty the body of dead clinits.
+      JMethod clinit = type.getClinitMethod();
+      if (!liveFieldsAndMethods.contains(clinit)) {
+        clinit.setBody(new JMethodBody(SourceOrigin.UNKNOWN));
+      }
+
+      // Remove dead methods.
+      for (int methodIndex = 1; methodIndex < type.getMethods().size(); ++methodIndex) {
+        JMethod method = type.getMethods().get(methodIndex);
+        if (!liveFieldsAndMethods.contains(method) || (!method.isStatic() && !isInstantiated)) {
+          type.removeMethod(methodIndex);
+          --methodIndex;
+        }
+      }
+    }
+  }
+
+  private void assimilateLibraryUnit(CompilationUnit referencedCompilationUnit) {
+    if (referencedCompilationUnit.isError()) {
+      if (failedUnits.add(referencedCompilationUnit)) {
+        CompilationProblemReporter.reportErrors(logger, referencedCompilationUnit, false);
+        errorsFound = true;
+      }
+      return;
+    }
+
+    compilerContext.getUnitCache().add(referencedCompilationUnit);
+    compilationState.addReferencedCompilationUnits(logger, Lists.create(referencedCompilationUnit));
+    // Record the types in the JProgram but do *not* flow into them and resolve their internal
+    // references. There's no need since they're not part of this library.
+    for (JDeclaredType referenceOnlyType : referencedCompilationUnit.getTypes()) {
+      program.addType(referenceOnlyType);
+      program.addReferenceOnlyType(referenceOnlyType);
+    }
+    // Flow into the signature of each contained method, so that method call references from
+    // inside this library to functions on these external types can resolve.
+    for (JDeclaredType t : referencedCompilationUnit.getTypes()) {
+      for (JMethod method : t.getMethods()) {
+        flowInto(method);
+      }
+    }
+  }
+
+  private void assimilateSourceUnit(CompilationUnit unit) {
     if (unit.isError()) {
       if (failedUnits.add(unit)) {
         CompilationProblemReporter.reportErrors(logger, unit, false);
@@ -888,11 +1003,66 @@ public class UnifyAst {
     block.addStmt(new JReturnStatement(info, returnValue));
   }
 
+  private void initializeNameBasedLocators() {
+    sourceNameBasedTypeLocator = new NameBasedTypeLocator(compiledClassesBySourceName) {
+      @Override
+      protected CompilationUnit getCompilationUnitFromLibrary(String sourceName) {
+        return compilerContext.getLibraryGroup().getCompilationUnitByTypeSourceName(sourceName);
+      }
+    };
+    binaryNameBasedTypeLocator = new NameBasedTypeLocator(null) {
+      @Override
+      protected CompilationUnit getCompilationUnitFromLibrary(String binaryName) {
+        return compilerContext.getLibraryGroup().getCompilationUnitByTypeBinaryName(binaryName);
+      }
+
+      @Override
+      protected CompilationUnit getCompilationUnitFromSource(String binaryName) {
+        // There is no binary name based index for this, use the internal name based one instead.
+        return internalNameBasedTypeLocator.getCompilationUnitFromSource(
+            BinaryName.toInternalName(binaryName));
+      }
+
+      @Override
+      protected boolean sourceCompilationUnitIsAvailable(String binaryName) {
+        // There is no binary name based index for this, use the internal name based one instead.
+        return internalNameBasedTypeLocator.sourceCompilationUnitIsAvailable(
+            BinaryName.toInternalName(binaryName));
+      }
+    };
+    internalNameBasedTypeLocator = new NameBasedTypeLocator(compiledClassesByInternalName) {
+      @Override
+      protected CompilationUnit getCompilationUnitFromLibrary(String internalName) {
+        // There is no internal name based index for this, use the binary name based one instead.
+        return binaryNameBasedTypeLocator.getCompilationUnitFromLibrary(
+            InternalName.toBinaryName(internalName));
+      }
+
+      @Override
+      protected JDeclaredType getResolvedType(String internalName) {
+        // There is no internal name based index for this, use the binary name based one instead.
+        return binaryNameBasedTypeLocator.getResolvedType(InternalName.toBinaryName(internalName));
+      }
+
+      @Override
+      protected boolean resolvedTypeIsAvailable(String internalName) {
+        // There is no internal name based index for this, use the binary name based one instead.
+        return binaryNameBasedTypeLocator.resolvedTypeIsAvailable(
+            InternalName.toBinaryName(internalName));
+      }
+    };
+  }
+
   private void instantiate(JDeclaredType type) {
+    // Don't flow into all the parts of types defined outside this compile.
+    if (program.isReferenceOnly(type)) {
+      return;
+    }
     if (type.isExternal()) {
       assert errorsFound;
       return;
     }
+
     if (!instantiatedTypes.contains(type)) {
       instantiatedTypes.add(type);
       if (type.getSuperClass() != null) {
@@ -965,9 +1135,11 @@ public class UnifyAst {
         } else {
           assert sig.startsWith("java.lang.Class.");
           if (CLASS_DESIRED_ASSERTION_STATUS.equals(sig)) {
-            implementMagicMethod(method, JBooleanLiteral.get(options.isEnableAssertions()));
+            implementMagicMethod(
+                method, JBooleanLiteral.get(compilerContext.getOptions().isEnableAssertions()));
           } else if (CLASS_IS_CLASS_METADATA_ENABLED.equals(sig)) {
-            implementMagicMethod(method, JBooleanLiteral.get(!options.isClassMetadataDisabled()));
+            implementMagicMethod(method,
+                JBooleanLiteral.get(!compilerContext.getOptions().isClassMetadataDisabled()));
           } else {
             assert false;
           }
@@ -1001,34 +1173,31 @@ public class UnifyAst {
     type.resolve(resolvedInterfaces, resolvedRescues);
   }
 
-  private JDeclaredType searchForTypeByBinary(String binaryTypeName) {
-    JDeclaredType type = program.getFromTypeMap(binaryTypeName);
-    if (type == null) {
-      CompiledClass cc = classFileMap.get(BinaryName.toInternalName(binaryTypeName));
-      if (cc == null) {
-        // TODO: error
-        throw new NoClassDefFoundError(binaryTypeName);
-      }
-      assimilateUnit(cc.getUnit());
-      type = program.getFromTypeMap(binaryTypeName);
-      assert type != null || errorsFound;
+  private JDeclaredType findType(String typeName, NameBasedTypeLocator nameBasedTypeLocator) {
+    if (nameBasedTypeLocator.resolvedTypeIsAvailable(typeName)) {
+      return nameBasedTypeLocator.getResolvedType(typeName);
     }
-    return type;
-  }
 
-  private JDeclaredType searchForTypeBySource(String sourceTypeName) {
-    JDeclaredType type = program.getFromTypeMap(sourceTypeName);
-    if (type == null) {
-      CompiledClass cc = classFileMapBySource.get(sourceTypeName);
-      if (cc == null) {
-        // TODO: error
-        throw new NoClassDefFoundError(sourceTypeName);
-      }
-      assimilateUnit(cc.getUnit());
-      type = program.getFromTypeMap(sourceTypeName);
-      assert type != null || errorsFound;
+    if (nameBasedTypeLocator.sourceCompilationUnitIsAvailable(typeName)) {
+      assimilateSourceUnit(nameBasedTypeLocator.getCompilationUnitFromSource(typeName));
+      return nameBasedTypeLocator.getResolvedType(typeName);
     }
-    return type;
+
+    if (compilerContext.shouldCompileMonolithic()) {
+      throw new NoClassDefFoundError(String.format(
+          "Could not find %s in types compiled from source. "
+          + "It was either unavailable or failed to compile.", typeName));
+    }
+
+    if (nameBasedTypeLocator.libraryCompilationUnitIsAvailable(typeName)) {
+      assimilateLibraryUnit(nameBasedTypeLocator.getCompilationUnitFromLibrary(typeName));
+      return nameBasedTypeLocator.getResolvedType(typeName);
+    }
+
+    throw new NoClassDefFoundError(String.format(
+        "Could not find %s in types compiled from source or in provided dependency libraries. "
+        + "Either the source file was unavailable, failed to compile or there is a missing "
+        + "dependencies.", typeName));
   }
 
   private void staticInitialize(JDeclaredType type) {
@@ -1072,7 +1241,7 @@ public class UnifyAst {
     }
 
     String typeName = type.getName();
-    JDeclaredType newType = searchForTypeByBinary(typeName);
+    JDeclaredType newType = findType(typeName, binaryNameBasedTypeLocator);
     if (newType == null) {
       assert errorsFound;
       return type;

@@ -32,6 +32,8 @@ import java.util.Set;
  *
  * Implementers are encouraged to load their contents lazily to minimize work.
  */
+// TODO(stalcup): refactor UnifyAst to only perform binary name based lookups so that libraries
+// don't need to index compilation units by both source and binary name
 public interface Library {
 
   /**
@@ -51,9 +53,16 @@ public interface Library {
   InputStream getClassFileStream(String classFilePath);
 
   /**
-   * Returns the compilation unit with the given type source name. The returned compilation unit
-   * might be regular or might be super sourced depending on which was stored during library
-   * construction.
+   * Returns the compilation unit containing the type with the given binary name. The returned
+   * compilation unit might be regular or might be super sourced depending on which was stored
+   * during library construction.
+   */
+  CompilationUnit getCompilationUnitByTypeBinaryName(String typeBinaryName);
+
+  /**
+   * Returns the compilation unit containing the type with the given source name. The returned
+   * compilation unit might be regular or might be super sourced depending on which was stored
+   * during library construction.
    */
   CompilationUnit getCompilationUnitByTypeSourceName(String typeSourceName);
 
@@ -74,9 +83,14 @@ public interface Library {
   String getLibraryName();
 
   /**
+   * Returns a mapping from compilation unit type source name to a list of nested type binary names.
+   */
+  Multimap<String, String> getNestedBinaryNamesByCompilationUnitName();
+
+  /**
    * Returns a mapping from compilation unit type source name to a list of nested type source names.
    */
-  Multimap<String, String> getNestedNamesByCompilationUnitName();
+  Multimap<String, String> getNestedSourceNamesByCompilationUnitName();
 
   /**
    * Returns a mapping from binding property name to a list of values which were made legal for that

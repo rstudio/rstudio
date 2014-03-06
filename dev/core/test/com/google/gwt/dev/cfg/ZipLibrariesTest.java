@@ -154,10 +154,15 @@ public class ZipLibrariesTest extends CompilationStateTestBase {
     assertEquals(SUPER_FOO.getLocation(), superFooCompilationUnit.getResourceLocation());
     assertEquals(SUPER_FOO.getTypeName(), superFooCompilationUnit.getTypeName());
 
-    // Can find inner classes.
-    assertTrue(zipLibrary.getNestedNamesByCompilationUnitName().get(
+    // Can find inner classes by source name.
+    assertTrue(zipLibrary.getNestedSourceNamesByCompilationUnitName().get(
         JdtCompilerTest.OUTER_INNER.getTypeName()).contains(
         JdtCompilerTest.OUTER_INNER.getTypeName() + ".Inner"));
+
+    // Can find inner classes by binary name.
+    assertTrue(zipLibrary.getNestedBinaryNamesByCompilationUnitName().get(
+        JdtCompilerTest.OUTER_INNER.getTypeName()).contains(
+        JdtCompilerTest.OUTER_INNER.getTypeName() + "$Inner"));
   }
 
   public void testVersionNumberException() throws IOException {

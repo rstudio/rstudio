@@ -22,6 +22,7 @@ import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jjs.CompilerIoException;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
@@ -245,6 +246,13 @@ public class ZipLibraryWriter implements LibraryWriter {
       writeString(Libraries.LIBRARY_NAME_ENTRY_NAME, libraryName);
     }
 
+    private void writeNestedNamesByCompilationUnitName() {
+      writeStringMultimap(Libraries.NESTED_SOURCE_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME,
+          nestedSourceNamesByCompilationUnitName);
+      writeStringMultimap(Libraries.NESTED_BINARY_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME,
+          nestedBinaryNamesByCompilationUnitName);
+    }
+
     private void writeNewBindingPropertyValuesByName() {
       writeStringMultimap(
           Libraries.NEW_BINDING_PROPERTY_VALUES_BY_NAME_ENTRY_NAME, newBindingPropertyValuesByName);
@@ -253,11 +261,6 @@ public class ZipLibraryWriter implements LibraryWriter {
     private void writeNewConfigurationPropertyValuesByName() {
       writeStringMultimap(Libraries.NEW_CONFIGURATION_PROPERTY_VALUES_BY_NAME_ENTRY_NAME,
           newConfigurationPropertyValuesByName);
-    }
-
-    private void writeNestedNamesByCompilationUnitName() {
-      writeStringMultimap(Libraries.NESTED_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME,
-          nestedNamesByCompilationUnitName);
     }
 
     private void writePublicResourcePaths() {
@@ -359,10 +362,13 @@ public class ZipLibraryWriter implements LibraryWriter {
   private Set<String> dependencyLibraryNames = Sets.newHashSet();
   private ArtifactSet generatedArtifacts = new ArtifactSet();
   private String libraryName;
+  private Multimap<String, String> nestedBinaryNamesByCompilationUnitName =
+      LinkedHashMultimap.create();
+  private Multimap<String, String> nestedSourceNamesByCompilationUnitName =
+      LinkedHashMultimap.create();
   private Multimap<String, String> newBindingPropertyValuesByName = LinkedHashMultimap.create();
   private Multimap<String, String> newConfigurationPropertyValuesByName =
       LinkedHashMultimap.create();
-  private Multimap<String, String> nestedNamesByCompilationUnitName = LinkedHashMultimap.create();
   private ZipEntryBackedObject<PermutationResult> permutationResultHandle;
   private Map<String, Resource> publicResourcesByPath = Maps.newHashMap();
   private Set<String> ranGeneratorNames = Sets.newHashSet();
@@ -395,11 +401,14 @@ public class ZipLibraryWriter implements LibraryWriter {
     }
     compilationUnitsByTypeSourceName.put(compilationUnit.getTypeName(), compilationUnit);
 
-    nestedNamesByCompilationUnitName.removeAll(compilationUnit.getTypeName());
+    nestedSourceNamesByCompilationUnitName.removeAll(compilationUnit.getTypeName());
+    nestedBinaryNamesByCompilationUnitName.removeAll(compilationUnit.getTypeName());
     Collection<CompiledClass> compiledClasses = compilationUnit.getCompiledClasses();
     for (CompiledClass compiledClass : compiledClasses) {
-      String typeSourceName = compiledClass.getSourceName();
-      nestedNamesByCompilationUnitName.put(compilationUnit.getTypeName(), typeSourceName);
+      nestedSourceNamesByCompilationUnitName.put(compilationUnit.getTypeName(),
+          compiledClass.getSourceName());
+      nestedBinaryNamesByCompilationUnitName.put(compilationUnit.getTypeName(),
+          InternalName.toBinaryName(compiledClass.getInternalName()));
     }
 
     for (CompiledClass compiledClass : compilationUnit.getCompiledClasses()) {

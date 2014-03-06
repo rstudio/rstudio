@@ -27,6 +27,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -96,7 +97,7 @@ public class CompilationState {
     this.compilerContext = compilerContext;
     this.typeOracle = typeOracle;
     this.typeOracleUpdater = typeOracleUpdater;
-    assimilateUnits(logger, units);
+    assimilateUnits(logger, units, true);
   }
 
   /**
@@ -114,9 +115,26 @@ public class CompilationState {
       generatedUnitsAddEvent.addData("# new generated units", "" + generatedUnits.size());
       Collection<CompilationUnit> newUnits = compileMoreLater.addGeneratedTypes(
           logger, generatedUnits);
-      assimilateUnits(logger, newUnits);
+      assimilateUnits(logger, newUnits, true);
     } finally {
       generatedUnitsAddEvent.end();
+    }
+  }
+
+  /**
+   * Indexes referenced external compilation units but does not save them in a library.
+   */
+  public void addReferencedCompilationUnits(TreeLogger logger,
+      List<CompilationUnit> referencedUnits) {
+    Event referencedUnitsAddEvent =
+        SpeedTracerLogger.start(DevModeEventType.COMP_STATE_ADD_REFERENCED_UNITS);
+    try {
+      logger = logger.branch(TreeLogger.DEBUG,
+          "Adding '" + referencedUnits.size() + "' new referenced units");
+      referencedUnitsAddEvent.addData("# new referenced units", "" + referencedUnits.size());
+      assimilateUnits(logger, referencedUnits, false);
+    } finally {
+      referencedUnitsAddEvent.end();
     }
   }
 
@@ -172,8 +190,8 @@ public class CompilationState {
     return typeOracleUpdater;
   }
 
-  private void assimilateUnits(TreeLogger logger,
-      Collection<CompilationUnit> units) {
+  private void assimilateUnits(TreeLogger logger, Collection<CompilationUnit> units,
+      boolean saveInLibrary) {
     for (CompilationUnit unit : units) {
       unitMap.put(unit.getTypeName(), unit);
       for (CompiledClass compiledClass : unit.getCompiledClasses()) {
@@ -181,12 +199,14 @@ public class CompilationState {
         classFileMapBySource.put(compiledClass.getSourceName(), compiledClass);
       }
     }
-    CompilationUnitInvalidator.retainValidUnits(logger, units,
-        compileMoreLater.getValidClasses());
+    CompilationUnitInvalidator.retainValidUnits(logger, units, compileMoreLater.getValidClasses());
 
-    // Only valid units should be saved in the library.
-    for (CompilationUnit compilationUnit : units) {
-      compilerContext.getLibraryWriter().addCompilationUnit(compilationUnit);
+    // Performed after compilation unit invalidator because only valid units should be saved in the
+    // library.
+    if (saveInLibrary) {
+      for (CompilationUnit compilationUnit : units) {
+        compilerContext.getLibraryWriter().addCompilationUnit(compilationUnit);
+      }
     }
     typeOracleUpdater.addNewUnits(logger, units);
   }
