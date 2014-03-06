@@ -333,6 +333,11 @@ public class UIPrefsAccessor extends Prefs
       return integer("shiny_viewer_type", ShinyViewerType.SHINY_VIEWER_WINDOW);
    }
 
+   public PrefValue<String> documentAuthor()
+   {
+      return string("document_author", "");
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 
@@ -464,6 +465,17 @@ public class StringUtil
             result += separator;
       }
       return result;
+   }
+   
+   public static boolean jsArrayStringContains(JsArrayString haystack, 
+                                               String needle)
+   {
+      for (int i = 0; i < haystack.length(); i++)
+      {
+         if (haystack.get(i).equals(needle))
+            return true;
+      }
+      return false;
    }
 
    private static final String[] LABELS = {

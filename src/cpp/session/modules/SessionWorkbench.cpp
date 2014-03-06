@@ -43,12 +43,12 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionConsoleProcess.hpp>
 
 #include "SessionVCS.hpp"
 #include "SessionGit.hpp"
 #include "SessionSVN.hpp"
 
-#include "SessionConsoleProcess.hpp"
 #include "SessionSpelling.hpp"
 
 #include <R_ext/RStartup.h>
@@ -657,7 +657,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
 {
 #ifndef _WIN32
    using namespace session::module_context;
-   using namespace session::modules::console_process;
+   using namespace session::console_process;
 
    // configure environment for shell
    core::system::Options shellEnv;

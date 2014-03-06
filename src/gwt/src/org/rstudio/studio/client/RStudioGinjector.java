@@ -58,7 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCod
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPreviewHtmlHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 
@@ -77,7 +77,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RnwWeaveSelectWidget selectWidget);
    void injectMembers(CompilePdfProgressDialog compilePdfProgressDialog);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
-   void injectMembers(TextEditingTargetPreviewHtmlHelper previewHtmlHelper);
    void injectMembers(SpellChecker spellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
    void injectMembers(FileExport fileExport);
@@ -89,6 +88,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ProjectPopupMenu projectPopupMenu);
    void injectMembers(ClearAllDialog clearAllDialog);
    void injectMembers(TextEditingTargetPresentationHelper presHelper);
+   void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

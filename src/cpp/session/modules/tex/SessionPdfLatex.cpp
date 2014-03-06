@@ -254,7 +254,7 @@ const char * const kSynctexOption = "-synctex=1";
 
 bool isInstalled()
 {
-   return !module_context::findProgram("pdflatex").empty();
+   return module_context::isPdfLatexInstalled();
 }
 
 

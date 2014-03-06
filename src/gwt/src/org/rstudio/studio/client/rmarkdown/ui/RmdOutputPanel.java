@@ -19,8 +19,9 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
@@ -28,18 +29,24 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.AnchorableFrame;
+import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FindTextBox;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
 import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
 import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEvent;
@@ -52,9 +59,11 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
 {
    @Inject
    public RmdOutputPanel(Commands commands, 
+                         FileTypeRegistry fileTypeRegistry,
                          RMarkdownServerOperations server)
    {
       super(commands);
+      fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
    }
    
@@ -62,9 +71,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
                           boolean refresh)
    {
+      // remember target file (for invoking editor)
+      targetFile_ = FileSystemItem.createFile(params.getTargetFile());
+      
       // slide navigation (may be null)
-      SlideNavigation slideNav = params.getResult().getSlideNavigation();
-      handlerManager_.fireEvent(new SlideNavigationChangedEvent(slideNav));
+      slideNavigation_ = params.getResult().getSlideNavigation();
+      handlerManager_.fireEvent(new SlideNavigationChangedEvent(slideNavigation_));
       slideChangeMonitor_.cancel();
       
       // file label
@@ -74,37 +86,54 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // RPubs
       boolean showPublish = enablePublish && 
                             params.getResult().isHtml() &&
-                            params.getResult().isSelfContained();
+                            params.getResult().getFormat().isSelfContained();
       publishButton_.setText(params.getResult().getRpubsPublished() ? 
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
       publishButtonSeparator_.setVisible(showPublish);
       
+      // find text box
+      boolean showFind = params.getResult().isHtml() && 
+                         !params.getResult().isHtmlPresentation();
+      findTextBox_.setVisible(showFind);
+      findSeparator_.setVisible(showFind);
+      
       // when refreshing, reapply the current scroll position and anchor
       scrollPosition_ = refresh ? 
             getScrollPosition() : params.getScrollPosition();
      
+      // check for an anchor implied by a preview_slide field
+      String anchor = "";
+      if (params.getResult().getPreviewSlide() > 0)
+         anchor = String.valueOf(params.getResult().getPreviewSlide());
+            
       // load url      
       String url;
       if (refresh)
       {
          url = getCurrentUrl();
+         
+         // if there's an anchor then strip any anchor we already have
+         if (anchor.length() > 0)
+         {
+            int anchorPos = url.lastIndexOf('#');
+            if (anchorPos != -1)
+               url = url.substring(0, anchorPos);
+         }
       }
       else
       {
          url = server_.getApplicationURL(params.getOutputUrl());
          
-         // if these are slides then an anchor may be implied by 
-         // a slide_number parameter
-         String anchor = "";
-         if (params.getResult().getPreviewSlide() > 0)
-            anchor = String.valueOf(params.getResult().getPreviewSlide());
-         else
+         // check for an explicit anchor if there wasn't one implied
+         // by the preview_slide
+         if (anchor.length() == 0)
             anchor = params.getAnchor();
-         
-         if (anchor.length() > 0)
-            url += "#" + anchor;
       }
+      
+      // add the anchor if necessary
+      if (anchor.length() > 0)
+         url += "#" + anchor;
       
       showUrl(url);
    }
@@ -112,20 +141,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected void initToolbar (Toolbar toolbar, Commands commands)
    {
-      AppCommand presHome = commands.presentationHome();
-      ToolbarButton homeButton = new ToolbarButton(
-            presHome.getImageResource(),
-            new ClickHandler() {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  navigate(0);
-               }
-            });
-      homeButton.setTitle(presHome.getTooltip());
-      
       slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar, 
-                                                            homeButton,
                                                             400, 
                                                             100,
                                                             true);
@@ -143,6 +159,51 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       publishButton_ = commands.publishHTML().createToolbarButton(false);
       toolbar.addLeftWidget(publishButton_);
 
+      findTextBox_ = new FindTextBox("Find");
+      findTextBox_.setIconVisible(true);
+      findTextBox_.setOverrideWidth(120);
+      findTextBox_.getElement().getStyle().setMarginRight(6, Unit.PX);
+      toolbar.addRightWidget(findTextBox_);
+      
+      findTextBox_.addKeyDownHandler(new KeyDownHandler() {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            // enter key triggers a find
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               findInTopic(findTextBox_.getValue().trim(), findTextBox_);
+               findTextBox_.focus();
+            }
+            else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+            {
+               findTextBox_.setValue("");
+            }       
+         }
+         
+         private void findInTopic(String term, CanFocus findInputSource)
+         {
+            // get content window
+            WindowEx contentWindow = getFrame().getWindow();
+            if (contentWindow == null)
+               return;
+                
+            if (!contentWindow.find(term, false, false, true, false))
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                     MessageDialog.INFO,
+                     "Find in Page", 
+                     "No occurences found",
+                     findInputSource);
+            }     
+         }
+         
+      });
+      toolbar.addRightWidget(findTextBox_);
+      findSeparator_ = toolbar.addRightSeparator();
+      
       toolbar.addRightWidget(commands.viewerRefresh().createToolbarButton());
    }
    
@@ -168,8 +229,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          @Override
          public boolean execute()
          {
-            
-            
             // see if the document is ready
             AnchorableFrame frame = getFrame();
             if (frame == null)
@@ -182,25 +241,21 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             Document doc = iframe.getContentDocument();
             if (doc == null)
                return true;
-            
-            // ensure focus
-            iframe.focus();
-            
-            // restore scroll position
-            if (scrollPosition_ > 0)
-               doc.setScrollTop(scrollPosition_);
-            
+
             if (getNavigationMenu().isVisible())
             {  
                fireSlideIndexChanged();
-               slideChangeMonitor_.scheduleRepeating(250);
+               slideChangeMonitor_.scheduleRepeating(100);
             }
             
-            
+            // Even though the document exists, it may not have rendered all
+            // its content yet
+            setScrollPositionOnLoad();
+
             return false;
          }
          
-      }, 250);
+      }, 50);
       
        
       return frame;
@@ -264,6 +319,22 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    }
 
    @Override
+   public void editCurrentSlide()
+   {
+      if (targetFile_ != null && slideNavigation_ != null)
+      {
+         // determine what slide we are on
+         int index = getCurrentSlideIndex();
+         
+         // get the line of code associated with it
+         int line = slideNavigation_.getItems().get(index).getLine();
+         
+         // invoke the editor
+         fileTypeRegistry_.editFile(targetFile_, FilePosition.create(line, 1));
+      }
+   }
+   
+   @Override
    public SlideNavigationMenu getNavigationMenu()
    {
       return slideNavigationMenu_;
@@ -292,18 +363,54 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
   
    private void fireSlideIndexChanged()
    {
+      handlerManager_.fireEvent(new SlideIndexChangedEvent(
+                                                   getCurrentSlideIndex())); 
+   }
+   
+   private int getCurrentSlideIndex()
+   {
       try
       {
          String anchor = getAnchor();
          if (anchor.length() == 0)
             anchor = "1";
-         int index = Integer.parseInt(anchor);
-         handlerManager_.fireEvent(new SlideIndexChangedEvent(index-1));
+         return Integer.parseInt(anchor) - 1;
       }
       catch(NumberFormatException e)
       {
+         return 0;
       }
    }
+   
+   private void setScrollPositionOnLoad()
+   {
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+         @Override
+         public boolean execute()
+         {
+            // check to see whether the document has finished loading--
+            // we don't want to apply the scroll position until all content
+            // has been fully rendered
+            Document doc = getFrame().getIFrame().getContentDocument();
+            String readyState = getDocumentReadyState(doc);
+            if (readyState == null)
+               return false;
+            
+            if (!readyState.equals("complete"))
+               return true;
+
+            // restore scroll position
+            if (scrollPosition_ > 0)
+               doc.setScrollTop(scrollPosition_);
+
+            return false;
+         }
+      }, 50);
+   }
+   
+   private final native String getDocumentReadyState(Document doc) /*-{
+      return doc.readyState || null;
+   }-*/;
    
    private SlideNavigationToolbarMenu slideNavigationMenu_;
 
@@ -312,8 +419,16 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private Widget publishButtonSeparator_;
    private String title_;
    
+   private FileTypeRegistry fileTypeRegistry_;
+   
    private RMarkdownServerOperations server_;
    private int scrollPosition_ = 0;
+   
+   private FileSystemItem targetFile_ = null;
+   private SlideNavigation slideNavigation_ = null;
+   
+   private FindTextBox findTextBox_;
+   private Widget findSeparator_;
    
    private HandlerManager handlerManager_ = new HandlerManager(this);
 }

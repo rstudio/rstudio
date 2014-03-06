@@ -4,3 +4,6 @@ overlay/
 CEF/
 node-webkit/
 pandoc/
+rmarkdown/
+rmarkdown*.tar.gz
+

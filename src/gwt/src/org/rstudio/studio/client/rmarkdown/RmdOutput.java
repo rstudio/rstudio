@@ -20,11 +20,14 @@ import java.util.HashMap;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -36,7 +39,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class RmdOutput implements RmdRenderCompletedEvent.Handler
+public class RmdOutput implements RmdRenderStartedEvent.Handler,
+                                  RmdRenderCompletedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, RmdOutput> {}
@@ -51,6 +55,7 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
       satelliteManager_ = satelliteManager;
       globalDisplay_ = globalDisplay;
       
+      eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
 
       binder.bind(commands, this);
@@ -59,19 +64,41 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
    }
    
    @Override
+   public void onRmdRenderStarted(RmdRenderStartedEvent event)
+   {
+      // When a Word document starts rendering, tell the desktop frame 
+      // (if it exists) to get ready; this generally involves closing the 
+      // document in preparation for a refresh
+      if (event.getFormat().getFormatName()
+            .equals(RmdOutputFormat.OUTPUT_WORD_DOCUMENT) &&
+          Desktop.isDesktop())
+      {
+         Desktop.getFrame().prepareShowWordDoc();
+      }
+   }
+   
+   @Override
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
       RmdRenderResult result = event.getResult();
       if (!result.getSucceeded())
          return;
-      
-      if (result.getOutputFormat().equals(RmdRenderResult.OUTPUT_PDF_DOCUMENT))
+        
+      String extension = FileSystemItem.getExtensionFromPath(
+                                                result.getOutputFile()); 
+      if (".pdf".equals(extension))
       {
-         // show in-browser for server mode, open the file in desktop mode
-         globalDisplay_.showHtmlFile(result.getOutputFile());
+         if (Desktop.isDesktop())
+         {
+            Desktop.getFrame().showPDF(result.getOutputFile(),
+                                       result.getPreviewSlide());
+         }
+         else // browsers we target can all now show pdfs inline
+         {
+            globalDisplay_.showHtmlFile(result.getOutputFile());
+         }
       }
-      else if (result.getOutputFormat().equals(
-            RmdRenderResult.OUTPUT_WORD_DOCUMENT))
+      else if (".docx".equals(extension))
       {
          globalDisplay_.showWordDoc(result.getOutputFile());
       }
@@ -104,7 +131,7 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
       // close it so that we can create a new one better suited to this doc type
       if (win != null && 
           result_ != null && 
-          !result_.getOutputFormat().equals(result.getOutputFormat()))
+          !result_.getFormatName().equals(result.getFormatName()))
       {
          satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
          win = null;
@@ -210,7 +237,7 @@ public class RmdOutput implements RmdRenderCompletedEvent.Handler
    // position and/or anchor by document name and type 
    private String keyFromResult(RmdRenderResult result)
    {
-      return result.getOutputFile() + "-" + result.getOutputFormat();
+      return result.getOutputFile() + "-" + result.getFormatName();
    }
 
    private final SatelliteManager satelliteManager_;

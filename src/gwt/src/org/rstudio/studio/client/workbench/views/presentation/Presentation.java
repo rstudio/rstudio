@@ -202,10 +202,12 @@ public class Presentation extends BasePresenter
       reloadWorkbench();
    }
    
-   @Handler
-   void onPresentationHome()
+   @Override
+   public void editCurrentSlide()
    {
-      view_.home();
+      eventBus_.fireEvent(new EditPresentationSourceEvent(
+            FileSystemItem.createFile(currentState_.getFilePath()),
+            currentState_.getSlideIndex())); 
    }
    
    @Handler
@@ -219,15 +221,7 @@ public class Presentation extends BasePresenter
    {
       view_.prev();
    }
-   
-   @Handler
-   void onPresentationEdit()
-   {
-      eventBus_.fireEvent(new EditPresentationSourceEvent(
-            FileSystemItem.createFile(currentState_.getFilePath()),
-            currentState_.getSlideIndex()));
-   }
-   
+  
    @Handler
    void onPresentationFullscreen()
    {
@@ -626,7 +620,8 @@ public class Presentation extends BasePresenter
    {
       // record current slides
       SlideNavigation navigation = jsNavigator.cast();
-      handlerManager_.fireEvent(new SlideNavigationChangedEvent(navigation));
+      handlerManager_.fireEvent(
+               new SlideNavigationChangedEvent(navigation));
    }
    
    private void recordPresentationQuizAnswer(int slideIndex, 

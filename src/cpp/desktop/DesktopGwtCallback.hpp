@@ -21,6 +21,10 @@
 
 #include "DesktopGwtCallbackOwner.hpp"
 
+#ifdef Q_OS_WIN32
+#include "DesktopWordViewer.hpp"
+#endif
+
 namespace desktop {
 
 class MainWindow;
@@ -70,6 +74,8 @@ public slots:
    void showFolder(QString path);
    void showFile(QString path);
    void showWordDoc(QString path);
+   void showPDF(QString path, int pdfPage);
+   void prepareShowWordDoc();
 
    QString getRVersion();
    QString chooseRVersion();
@@ -168,6 +174,9 @@ private:
    GwtCallbackOwner* pOwner_;
    Synctex* pSynctex_;
    int pendingQuit_;
+#ifdef Q_OS_WIN32
+   WordViewer wordViewer_;
+#endif
 
 };
 

@@ -336,6 +336,11 @@ NSString* resolveAliasedPath(NSString* path)
    }
 }
 
+- (void) showPDF: (NSString*) path pdfPage: (int) pdfPage
+{
+   [self showFile: path];
+}
+
 - (Boolean) isRetina
 {
    NSWindow* mainWindow = [[MainFrameController instance] window];
@@ -790,6 +795,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"showFile";
    else if (sel == @selector(showWordDoc:))
       return @"showWordDoc";
+   else if (sel == @selector(showPDF:pdfPage:))
+      return @"showPDF";
    else if (sel == @selector(openMinimalWindow:url:width:height:))
       return @"openMinimalWindow";
    else if (sel == @selector(activateSatelliteWindow:))

@@ -1,5 +1,5 @@
 /*
- * Presentation.cpp
+ * RMarkdownPresentation.cpp
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "Presentation.hpp"
+#include "RMarkdownPresentation.hpp"
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -63,9 +63,12 @@ void ammendResults(const std::string& formatName,
                    int sourceLine,
                    json::Object* pResultJson)
 {
-   // provide slide navigation for ioslides_presentation
-   if (formatName != "ioslides_presentation")
+   // provide slide navigation for ioslides and beamer
+   if (formatName != "ioslides_presentation" &&
+       formatName != "beamer_presentation")
+   {
       return;
+   }
 
    // alias for nicer map syntax
    json::Object& resultJson = *pResultJson;
@@ -88,9 +91,9 @@ void ammendResults(const std::string& formatName,
    boost::regex reYaml("^\\-{3}\\s*$");
    boost::regex reTitle("^title\\:(.*)$");
    boost::regex reCode("^`{3,}.*$");
-   boost::regex reTitledSlide("^#(#)?(.*)$");
+   boost::regex reTitledSlide("^#(#)?([^|\\{]+).*$");
    boost::regex reUntitledSlide("^(\\-{4,}|\\*{4,})\\w*$");
-   for (int i = 0; i<lines.size(); i++)
+   for (unsigned i = 0; i<lines.size(); i++)
    {
       // alias line
       const std::string& line = lines.at(i);
@@ -131,7 +134,7 @@ void ammendResults(const std::string& formatName,
                string_utils::stripQuotes(&title);
                if (title.empty())
                   title = "Untitled Slide";
-               SlideNavigationItem item(title, 0, totalSlides++, 0);
+               SlideNavigationItem item(title, 0, totalSlides++, 1);
                slideNavigationItems.push_back(item);
                haveTitle = true;
 
@@ -151,13 +154,13 @@ void ammendResults(const std::string& formatName,
                title = "Untitled Slide";
 
             int indent = std::string(match[1]).empty() ? 0 : 1;
-            SlideNavigationItem item(title, indent, totalSlides++, i);
+            SlideNavigationItem item(title, indent, totalSlides++, i+1);
             slideNavigationItems.push_back(item);
          }
          // untitled slides
          else if (boost::regex_search(line, reUntitledSlide))
          {
-            SlideNavigationItem item("Untitled Slide", 1, totalSlides++, i);
+            SlideNavigationItem item("Untitled Slide", 1, totalSlides++, i+1);
             slideNavigationItems.push_back(item);
          }
       }

@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.presentation;
 
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.MenuItem;
 
 public interface SlideNavigationMenu
@@ -25,4 +26,9 @@ public interface SlideNavigationMenu
    void setDropDownVisible(boolean visible);
    void addItem(MenuItem menu);
    void clear();
+   
+   void setEditButtonVisible(boolean visible);
+   
+   HasClickHandlers getHomeButton();
+   HasClickHandlers getEditButton();
 }

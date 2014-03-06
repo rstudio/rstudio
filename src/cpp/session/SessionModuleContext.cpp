@@ -760,6 +760,11 @@ FilePath findProgram(const std::string& name)
    }
 }
 
+bool isPdfLatexInstalled()
+{
+   return !module_context::findProgram("pdflatex").empty();
+}
+
 namespace {
 
 bool hasTextMimeType(const FilePath& filePath)

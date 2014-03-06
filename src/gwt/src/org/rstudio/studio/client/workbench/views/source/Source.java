@@ -62,6 +62,9 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -71,6 +74,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -86,12 +90,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
@@ -192,6 +198,7 @@ public class Source implements InsertSourceHandler,
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
+      rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       events_ = events;
       session_ = session;
       synctex_ = synctex;
@@ -701,10 +708,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRMarkdownDoc()
    {
-      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
-                               "", 
-                               "r_markdown.Rmd",
-                               Position.create(3, 0));
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      boolean useRMarkdownV2 = sessionInfo.getRMarkdownPackageAvailable();
+      
+      if (useRMarkdownV2)
+         newRMarkdownV2Doc();
+      else
+         newRMarkdownV1Doc();
    }
    
    @Handler
@@ -824,6 +834,77 @@ public class Source implements InsertSourceHandler,
       });
    }
    
+   private void newRMarkdownV1Doc()
+   {
+      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+            "", 
+            "r_markdown.Rmd",
+            Position.create(3, 0));
+   }
+   
+   private void newRMarkdownV2Doc()
+   {
+      rmarkdown_.withRMarkdownPackage(
+         "Creating R Markdown documents",
+         new CommandWithArg<RMarkdownContext>(){
+
+            @Override
+            public void execute(RMarkdownContext context)
+            {
+               new NewRMarkdownDialog(
+                  context,
+                  uiPrefs_.documentAuthor().getGlobalValue(),
+                  new OperationWithInput<NewRMarkdownDialog.Result>()
+                  {
+                     @Override
+                     public void execute(final NewRMarkdownDialog.Result result)
+                     {
+                        // if an author was specified, persist it
+                        String author = result.getAuthor();
+                        if (author.length() > 0)
+                        {
+                           uiPrefs_.documentAuthor().setGlobalValue(author);
+                           uiPrefs_.writeUIPrefs();
+                        }
+                        newRMarkdownV2Doc(result);
+                     }
+                  }
+               ).showModal();
+            }
+         }
+      );
+   }
+   
+   private void newRMarkdownV2Doc(final NewRMarkdownDialog.Result result)
+   {
+      rmarkdown_.frontMatterToYAML((RmdFrontMatter)result.getJSOResult().cast(), 
+            null,
+            new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(final String yaml)
+         {
+            boolean isPresentation = result.getTemplate().equals(
+                                      RmdTemplateData.PRESENTATION_TEMPLATE);
+            
+            newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+                  "", 
+                  isPresentation ? "r_markdown_v2_presentation.Rmd" :
+                                   "r_markdown_v2.Rmd",
+                  Position.create(1, 0),
+                  null,
+                  new TransformerCommand<String>()
+                  {
+                     @Override
+                     public String transform(String input)
+                     {
+                        return "---\n" + yaml + "---\n\n" + input;
+                     }
+                  });
+         }
+      });
+   }
+   
    private void newSourceDocWithTemplate(final TextFileType fileType, 
                                          String name,
                                          String template)
@@ -846,6 +927,17 @@ public class Source implements InsertSourceHandler,
                        final Position cursorPosition,
                        final CommandWithArg<EditingTarget> onSuccess)
    {
+      newSourceDocWithTemplate(fileType, name, template, cursorPosition, null, null);
+   }
+
+   private void newSourceDocWithTemplate(
+                       final TextFileType fileType, 
+                       String name,
+                       String template,
+                       final Position cursorPosition,
+                       final CommandWithArg<EditingTarget> onSuccess,
+                       final TransformerCommand<String> contentTransformer)
+   {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
             globalDisplay_, 500, "Creating new document...").getIndicator();
 
@@ -856,6 +948,9 @@ public class Source implements InsertSourceHandler,
          public void onResponseReceived(String templateContents)
          {
             indicator.onCompleted();
+
+            if (contentTransformer != null)
+               templateContents = contentTransformer.transform(templateContents);
 
             newDoc(fileType, 
                   templateContents, 
@@ -2438,6 +2533,7 @@ public class Source implements InsertSourceHandler,
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
+   private final TextEditingTargetRMarkdownHelper rmarkdown_;
    private final EventBus events_;
    private final Session session_;
    private final Synctex synctex_;

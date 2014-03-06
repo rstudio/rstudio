@@ -107,7 +107,7 @@ public class EnvironmentObjects extends ResizeComposite
    public void addObject(RObject obj)
    {
       int idx = indexOfExistingObject(obj.getName());
-      RObjectEntry newEntry = entryFromRObject(obj);
+      final RObjectEntry newEntry = entryFromRObject(obj);
       boolean added = false;
 
       // if the object is already in the environment, just update the value
@@ -117,8 +117,21 @@ public class EnvironmentObjects extends ResizeComposite
 
          if (oldEntry.rObject.getType().equals(obj.getType()))
          {
-            // type did not change; update in-place and preserve expansion flag
-            newEntry.expanded = oldEntry.expanded;
+            // type hasn't changed
+            if (oldEntry.expanded && 
+                newEntry.contentsAreDeferred)
+            {
+               // we're replacing an object that has server-deferred contents--
+               // refill it immediately. (another approach would be to push the
+               // set of currently expanded objects to the server so these
+               // objects would show up on the client already expanded)
+               fillEntryContents(newEntry, idx, false);
+            }
+            else
+            {
+               // contents aren't deferred, just use the expanded state directly
+               newEntry.expanded = oldEntry.expanded;
+            }
             objectDataProvider_.getList().set(idx, newEntry);
             added = true;
          }
@@ -469,9 +482,22 @@ public class EnvironmentObjects extends ResizeComposite
    }
 
    @Override
-   public void fillObjectContents(RObject object, Operation onCompleted)
+   public void fillEntryContents(final RObjectEntry entry, 
+                                 final int idx, 
+                                 boolean drawProgress)
    {
-      observer_.fillObjectContents(object, onCompleted);
+      entry.expanded = false;
+      entry.isExpanding = true;
+      if (drawProgress)
+         objectDisplay_.redrawRow(idx);
+      observer_.fillObjectContents(entry.rObject, new Operation() {
+         public void execute()
+         {
+            entry.expanded = true;
+            entry.isExpanding = false;
+            objectDisplay_.redrawRow(idx);
+         }
+      });
    }
 
    // Private methods: object management --------------------------------------

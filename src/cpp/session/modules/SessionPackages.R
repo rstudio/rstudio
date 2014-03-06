@@ -210,6 +210,12 @@
   .libPaths(c(userdir, .libPaths()))
 })
 
+.rs.addFunction("ensureWriteableUserLibrary", function()
+{
+   if (!.rs.defaultLibPathIsWriteable())
+      .rs.initDefaultUserLibrary()
+})
+
 .rs.addFunction( "initializeRStudioPackages", function(libDir,
                                                        pkgSrcDir,
                                                        rsVersion,
@@ -218,8 +224,7 @@
   if (getRversion() >= "3.0.0") {
     
     # make sure the default library is writeable
-    if (!.rs.defaultLibPathIsWriteable()) 
-      .rs.initDefaultUserLibrary()
+    .rs.ensureWriteableUserLibrary()
 
     # function to update a package if necessary
     updateIfNecessary <- function(pkgName) {

@@ -17,7 +17,8 @@ project (SESSION)
 
 add_subdirectory(workers)
 
-# verify that install-dictionaries, install-mathjax, and install-pandoc have been run
+# verify that install-dictionaries, install-mathjax, install-pandoc,
+# and install-rmarkdown have been run
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
   message(FATAL_ERROR "Dictionaries not found (re-run install-dependencies script to install)")
 endif()
@@ -26,6 +27,9 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax")
 endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
+endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
+  message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
 endif()
 
 # include files
@@ -37,6 +41,7 @@ set (SESSION_SOURCE_FILES
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp
+   SessionConsoleProcess.cpp
    SessionContentUrls.cpp
    SessionSSH.cpp
    SessionMain.cpp
@@ -58,7 +63,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
-   modules/SessionConsoleProcess.cpp
    modules/SessionDirty.cpp
    modules/SessionErrors.cpp
    modules/SessionFiles.cpp
@@ -107,7 +111,8 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
-   modules/rmarkdown/Presentation.cpp
+   modules/rmarkdown/RMarkdownInstall.cpp
+   modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
@@ -331,6 +336,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(PROGRAMS ${PANDOC_FILES}
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
+
+   # install rmarkdown package
+   file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
+   install(FILES ${RMARKDOWN_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install 64 bit binaries if we are on win64
    if(WIN32)

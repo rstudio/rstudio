@@ -12,6 +12,12 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+.rs.addFunction("valueFromStr", function(val)
+{
+   capture.output(try({ str(val) }, silent = TRUE));
+})
+
 .rs.addFunction("valueAsString", function(val)
 {
    tryCatch(
@@ -44,7 +50,7 @@
                 return (paste(substr(val, 1, 1024), " ..."))
          }
          else if (length(val) > 1)
-            return (capture.output(str(val)))
+            return (.rs.valueFromStr(val))
          else
             return ("NO_VALUE")
       }
@@ -71,7 +77,7 @@
       # only return the first 100 lines of detail (generally columns)--any more
       # won't be very presentable in the environment pane. the first line
       # generally contains descriptive text, so don't return that.
-      output <- capture.output(str(val))
+      output <- .rs.valueFromStr(val)
       return (output[min(length(output), 2):min(length(output),100)])
    },
    error = function(e) { })
@@ -321,7 +327,7 @@
               || is.factor(obj)
               || is.raw(obj))
       {
-         return(capture.output(str(obj)))
+         return(.rs.valueFromStr(obj))
       }
       else
          return("")

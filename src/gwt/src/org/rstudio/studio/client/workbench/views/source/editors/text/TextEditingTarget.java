@@ -78,7 +78,12 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
-import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
+import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
+import org.rstudio.studio.client.rmarkdown.model.YamlTree;
+import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -106,6 +111,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -127,8 +133,10 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitH
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class TextEditingTarget implements 
                                   EditingTarget,
@@ -168,6 +176,13 @@ public class TextEditingTarget implements
 
       void debug_dumpContents();
       void debug_importDump();
+      
+      void setFormatOptions(TextFileType fileType,
+                            List<String> options, 
+                            List<String> values, 
+                            String selected);
+      HandlerRegistration addRmdFormatChangedHandler(
+            ValueChangeHandler<String> handler);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -347,7 +362,7 @@ public class TextEditingTarget implements
       prefs_ = prefs;
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
-      previewHtmlHelper_ = new TextEditingTargetPreviewHtmlHelper();
+      rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(server);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
@@ -633,15 +648,16 @@ public class TextEditingTarget implements
       fileType_ = (TextFileType) type;
       
       extendedType_ = document.getExtendedType();
-      extendedType_ = previewHtmlHelper_.detectExtendedType(extendedType_, 
-                                                            fileType_);
+      extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
+                                                          extendedType_, 
+                                                          fileType_);
       
       view_ = new TextEditingTargetWidget(commands_,
                                           prefs_,
                                           fileTypeRegistry_,
                                           docDisplay_,
                                           fileType_,
-                                          document.getExtendedType(),
+                                          extendedType_,
                                           events_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
@@ -801,7 +817,7 @@ public class TextEditingTarget implements
       
       // validate required components (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
-      previewHtmlHelper_.verifyPrerequisites(view_, fileType_);  
+      rmarkdownHelper_.verifyPrerequisites(view_, fileType_);  
       
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
@@ -871,6 +887,20 @@ public class TextEditingTarget implements
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
       }
       
+      // for R Markdown docs, populate the popup menu with a list of available
+      // formats
+      if (extendedType_.equals("rmarkdown"))
+         updateRmdFormatList();
+      
+      view_.addRmdFormatChangedHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            setRmdFormat(event.getValue());
+         }
+      });
+
       initStatusBar();
    }
    
@@ -1767,6 +1797,8 @@ public class TextEditingTarget implements
    public void adaptToExtendedFileType(String extendedType)
    {
       view_.adaptToExtendedFileType(extendedType);
+      if (extendedType.equals("rmarkdown"))
+         updateRmdFormatList();
       extendedType_ = extendedType;
    }
 
@@ -2189,6 +2221,260 @@ public class TextEditingTarget implements
             docUpdateSentinel_.getPath()));
    }
 
+   @Handler 
+   void onEditRmdFormatOptions()
+   {
+      showFrontMatterEditor();
+   }
+   
+   private void showFrontMatterEditor()
+   {
+      final String yaml = getRmdFrontMatter();
+      if (yaml == null)
+      {
+         globalDisplay_.showErrorMessage("Edit Format Failed",  
+               "Can't find the YAML front matter for this document. Make " +
+               "sure the front matter is enclosed by lines containing only " +
+               "three dashes: ---.");
+         return;
+      }
+      rmarkdownHelper_.convertFromYaml(yaml, new CommandWithArg<RmdYamlData>() 
+      {
+         @Override
+         public void execute(RmdYamlData arg)
+         {
+            if (!arg.parseSucceeded())
+            {
+               // try to find where the YAML segment begins in the document
+               // so we can show an adjusted line number for the error
+               int numLines = docDisplay_.getRowCount();
+               int offsetLine = 0;
+               String separator = RmdFrontMatter.FRONTMATTER_SEPARATOR.trim();
+               for (int i = 0; i < numLines; i++)
+               {
+                  if (docDisplay_.getLine(i).equals(separator))
+                  {
+                     offsetLine = i + 1;
+                     break;
+                  }
+               }
+               globalDisplay_.showErrorMessage("Edit Format Failed", 
+                     "The YAML front matter in this document could not be " +
+                     "successfully parsed. This parse error needs to be " + 
+                     "resolved before format options can be edited: \n\n" + 
+                     arg.getOffsetParseError(offsetLine));
+            }
+            else
+            {
+               showFrontMatterEditorDialog(yaml, arg);
+            }
+         }
+      });
+   }
+   
+   private void showFrontMatterEditorDialog(String yaml, RmdYamlData data)
+   {
+      JsArrayString existingFormats = data.getFrontMatter().getFormatList();
+      String format = "";
+      RmdTemplate template = null;
+      if (existingFormats.length() == 1)
+      {
+         // If there's only one format, just show the editor for that format
+         format = existingFormats.get(0);
+         template = rmarkdownHelper_.getTemplateForFormat(format);
+      }
+      else
+      {
+         // If there are multiple formats, get the selected template format from
+         // the YAML, and show the dialog for the given format
+         RmdSelectedTemplate selTemplate = 
+               rmarkdownHelper_.getTemplateFormat(yaml);
+         format = selTemplate.format;
+         template = selTemplate.template;
+      }
+      RmdTemplateOptionsDialog dialog = 
+         new RmdTemplateOptionsDialog(template, format,
+            data.getFrontMatter(),
+            new OperationWithInput<RmdTemplateOptionsDialog.Result>()
+            {
+               @Override
+               public void execute(RmdTemplateOptionsDialog.Result in)
+               {
+                  // when the dialog is completed successfully, apply the new
+                  // front matter
+                  applyRmdFrontMatter(in);
+               }
+            }, 
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  // when the dialog is cancelled, update the view's format list
+                  // (to cancel in-place changes)
+                  updateRmdFormatList();
+               }
+            });
+      dialog.showModal();
+   }
+   
+   private int[] getFrontMatterRange(String code)
+   {
+      String separator = RmdFrontMatter.FRONTMATTER_SEPARATOR;
+      int beginPos = code.indexOf(separator) + separator.length();
+      if (beginPos < 0)
+         return null;
+      int endPos = code.indexOf(separator, beginPos);
+      if (endPos < 0)
+         return null;
+      return new int[] { beginPos, endPos };
+   }
+
+   private String getRmdFrontMatter()
+   {
+      String code = docDisplay_.getCode();
+      int[] range = getFrontMatterRange(code);
+      // if there is none then use the "implicit" front matter
+      // indicating an html document
+      if (range == null)
+      {
+         return "output: html_document\n";
+      }
+      else
+      {
+         return code.substring(range[0], range[1]);
+      }
+   }
+   
+   private void applyRmdFrontMatter(String yaml)
+   {
+      if (yaml == null || yaml.isEmpty())
+         return;
+      
+      String code = docDisplay_.getCode();
+      int[] range = getFrontMatterRange(code);
+      if (range == null)
+      {
+         code = RmdFrontMatter.FRONTMATTER_SEPARATOR +
+                yaml +
+                RmdFrontMatter.FRONTMATTER_SEPARATOR +
+                code;
+      }
+      else
+      {
+         code = code.substring(0, range[0]) + yaml + 
+                code.substring(range[1], code.length());
+      }
+      docDisplay_.setCode(code, true);
+      updateRmdFormatList();
+   }
+
+   private void applyRmdFrontMatter(RmdTemplateOptionsDialog.Result result)
+   {
+      rmarkdownHelper_.frontMatterToYAML(result.frontMatter, 
+            result.format,
+            new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String yaml)
+         {
+            applyRmdFrontMatter(yaml);
+         }
+      });
+   }
+   
+   private RmdSelectedTemplate getSelectedTemplate()
+   {
+      // We put this in late in the dev cycle right before a preview and 
+      // observed in at least one instance a null ref coming out of 
+      // YamlTree.getChildKeys. This caused the entire source pane to 
+      // not load! Just be paranoid let's add a try catch until we satisfy
+      // ourselves that the error was transient (e.g. due to the gwt tree
+      // being out of sync?). Filed as bug #3826
+      try
+      {
+         // try to extract the front matter and ascertain the template to which
+         // it refers
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return null;
+         return rmarkdownHelper_.getTemplateFormat(yaml);
+      }
+      catch(Exception ex)
+      {
+         Debug.log("Error getting selected template: " + ex.getMessage());
+         return null;
+      }
+   }
+   
+   private void updateRmdFormatList()
+   {
+      RmdSelectedTemplate selTemplate = getSelectedTemplate();
+      if (selTemplate == null)
+         return;
+      
+      // we know which template this doc is using--populate the format list
+      // with the formats available in the template
+      String formatUiName = "";
+      JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
+      List<String> formatList = new ArrayList<String>();
+      List<String> valueList = new ArrayList<String>();
+      for (int i = 0; i < formats.length(); i++)
+      {
+         String uiName = formats.get(i).getUiName();
+         formatList.add(uiName);
+         valueList.add(formats.get(i).getName());
+         if (formats.get(i).getName().equals(selTemplate.format))
+         {
+            formatUiName = uiName;
+         }
+      }
+      view_.setFormatOptions(fileType_, formatList, valueList, formatUiName);
+   }
+   
+   private void setRmdFormat(String formatName)
+   {
+      RmdSelectedTemplate selTemplate = getSelectedTemplate();
+      if (selTemplate == null)
+         return;
+      
+      // if this is the current format, we don't need to change the front matter
+      if (selTemplate.format.equals(formatName))
+      {
+         renderRmd();
+         return;
+      }
+      
+      // examine the YAML tree and rearrange it as necessary to make the
+      // document render in the desired format
+      YamlTree yamlTree = new YamlTree(getRmdFrontMatter());
+      List<String> outputFormats = 
+            yamlTree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
+      if (outputFormats == null)
+         return;
+      
+      if (outputFormats.isEmpty())
+      {
+         yamlTree.setKeyValue(RmdFrontMatter.OUTPUT_KEY, formatName);
+      }
+      else if (!outputFormats.contains(formatName))
+      {
+         // we need to add this format to the yaml
+         yamlTree.addYamlValue(RmdFrontMatter.OUTPUT_KEY, 
+               formatName,
+               RmdFrontMatter.DEFAULT_FORMAT);
+      }
+
+      // if there are multiple formats, move this format to the top of the list
+      if (!outputFormats.isEmpty())
+         yamlTree.reorder(Arrays.asList(formatName));
+
+      applyRmdFrontMatter(yamlTree.toString());
+      
+      // re-knit the document
+      renderRmd();
+   }
+   
    void doReflowComment(String commentPrefix)
    {
       doReflowComment(commentPrefix, true);
@@ -2832,7 +3118,10 @@ public class TextEditingTarget implements
    @Handler
    void onUsingRMarkdownHelp()
    {
-      globalDisplay_.openRStudioLink("using_markdown");
+      if (extendedType_.equals("rmarkdown"))
+         globalDisplay_.openRStudioLink("using_rmarkdown");
+      else
+         globalDisplay_.openRStudioLink("using_markdown");
    }
    
    @Handler
@@ -2940,10 +3229,10 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            events_.fireEvent(new RenderRmdEvent(
+            rmarkdownHelper_.renderRMarkdown(
                docUpdateSentinel_.getPath(),
                docDisplay_.getCursorPosition().getRow() + 1,
-               docUpdateSentinel_.getEncoding()));
+               docUpdateSentinel_.getEncoding());
          }
       });
    }
@@ -2951,7 +3240,7 @@ public class TextEditingTarget implements
    void previewHTML()
    {
       // validate pre-reqs
-      if (!previewHtmlHelper_.verifyPrerequisites(view_, fileType_))
+      if (!rmarkdownHelper_.verifyPrerequisites(view_, fileType_))
          return;
 
       doHtmlPreview(new Provider<HTMLPreviewParams>()
@@ -3113,26 +3402,57 @@ public class TextEditingTarget implements
 
    @Handler
    void onCompileNotebook()
-   {
-      if (!previewHtmlHelper_.verifyPrerequisites("Compile Notebook",
-                                                  view_,
-                                                  FileTypeRegistry.RMARKDOWN))
+   { 
+      if (session_.getSessionInfo().getRMarkdownPackageAvailable())
       {
-         return;
-      }
-
-      doHtmlPreview(new Provider<HTMLPreviewParams>()
-      {
-         @Override
-         public HTMLPreviewParams get()
+         saveThenExecute(null, new Command()
          {
-            return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
-                                            docUpdateSentinel_.getEncoding(),
-                                            true,
-                                            true,
-                                            true);
+            @Override
+            public void execute()
+            {
+               generateNotebook(new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     // notebook path for script path
+                     FileSystemItem script = FileSystemItem.createFile(
+                                             docUpdateSentinel_.getPath());
+                     FileSystemItem scriptDir = script.getParentPath();
+                     String notebook = scriptDir.completePath(
+                                                   script.getStem() + ".Rmd");
+                     
+                     rmarkdownHelper_.renderRMarkdown(
+                                           notebook,
+                                           1,
+                                           docUpdateSentinel_.getEncoding());
+                  }
+               });
+            }
+         });
+      }
+      else
+      {
+         if (!rmarkdownHelper_.verifyPrerequisites("Compile Notebook",
+               view_,
+               FileTypeRegistry.RMARKDOWN))
+         {
+            return;
          }
-      });
+         
+         doHtmlPreview(new Provider<HTMLPreviewParams>()
+         {
+            @Override
+            public HTMLPreviewParams get()
+            {
+               return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
+                                               docUpdateSentinel_.getEncoding(),
+                                               true,
+                                               true,
+                                               true);
+            }
+         });
+      }
    }
 
    @Handler
@@ -3840,7 +4160,7 @@ public class TextEditingTarget implements
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
-   private final TextEditingTargetPreviewHtmlHelper previewHtmlHelper_;
+   private final TextEditingTargetRMarkdownHelper rmarkdownHelper_;
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private boolean ignoreDeletes_;

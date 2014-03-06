@@ -28,9 +28,16 @@ public class ToolbarPopupMenuButton extends ToolbarButton
 {
    public ToolbarPopupMenuButton()
    {
+      this(true, true);
+   }
+
+   public ToolbarPopupMenuButton(boolean showText, boolean rightAlignMenu)
+   {
       super("",
             StandardIcons.INSTANCE.empty_command(),
-            new ToolbarPopupMenu());
+            new ToolbarPopupMenu(),
+            rightAlignMenu);
+      showText_ = showText;
    }
 
    @Override
@@ -40,11 +47,11 @@ public class ToolbarPopupMenuButton extends ToolbarButton
       return addHandler(handler, ValueChangeEvent.getType());
    }
 
-   public void addMenuItem(final String value)
+   public void addMenuItem(String text, final String value)
    {
       ToolbarPopupMenu menu = getMenu();
 
-      menu.addItem(new MenuItem(value, new Command()
+      menu.addItem(new MenuItem(text, new Command()
       {
          @Override
          public void execute()
@@ -53,17 +60,37 @@ public class ToolbarPopupMenuButton extends ToolbarButton
          }
       }));
    }
+
+   public void addMenuItem(final String value)
+   {
+      addMenuItem(value, value);
+   }
+   
+   public void clearMenu()
+   {
+      getMenu().clearItems();
+   }
    
    @Override
    public void setText(String text)
    {
-      boolean changed = !getText().equals(text);
-      
-      super.setText(text);
-      
-      if (changed)
-         ValueChangeEvent.fire(ToolbarPopupMenuButton.this, text);
-         
+      setText(text, true);
    }
-
+   
+   public void setText(String text, boolean fireEvent)
+   {
+      boolean changed = !text_.equals(text);
+      
+      text_ = text;
+      if (showText_)
+      {
+         super.setText(text);
+      }
+      
+      if (changed && fireEvent)
+         ValueChangeEvent.fire(ToolbarPopupMenuButton.this, text);
+   }
+   
+   private String text_;
+   private boolean showText_;
 }

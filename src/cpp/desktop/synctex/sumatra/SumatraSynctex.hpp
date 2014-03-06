@@ -41,6 +41,8 @@ public:
 
    virtual void syncView(const QString& pdfFile, int pdfPage);
 
+   virtual void view(const QString& pdfFile, int pdfPage);
+
 private:
    QString sumatraExePath_;
 };

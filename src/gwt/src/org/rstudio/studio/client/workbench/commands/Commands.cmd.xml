@@ -33,8 +33,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
             <separator/>
-            <cmd refid="newSweaveDoc"/>
             <cmd refid="newRMarkdownDoc"/>
+            <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
             <cmd refid="newRPresentationDoc"/>
             <separator/>
@@ -887,6 +887,10 @@ well as menu structures (for main menu and popup menus).
    <cmd id="compileNotebook"
         menuLabel="_Compile Notebook..."
         desc="Compile an HTML notebook from the current R script"/>
+
+   <cmd id="editRmdFormatOptions"
+        menuLabel="_Format Options..."
+        desc="Edit the R Markdown format options for the current file"/>
 
    <cmd id="synctexSearch"
         menuLabel="S_ync PDF View to Editor"

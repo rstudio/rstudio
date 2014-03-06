@@ -15,12 +15,16 @@
 
 package org.rstudio.studio.client.common.presentation;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -29,19 +33,21 @@ import com.google.gwt.user.client.ui.Widget;
 public class SlideNavigationToolbarMenu 
                      implements SlideNavigationMenu
 {
-   public SlideNavigationToolbarMenu(Toolbar toolbar, ToolbarButton homeButton)
+   public SlideNavigationToolbarMenu(Toolbar toolbar)
    {
-      this(toolbar, homeButton, 200, 300, false);
+      this(toolbar, 200, 300, false);
    }
-   
+    
    public SlideNavigationToolbarMenu(Toolbar toolbar,
-                                     ToolbarButton homeButton,
                                      int maxWidth,
                                      int heightOffset,
                                      boolean separatorAfter)
-   {
-      
-      homeButton_ = homeButton;
+   { 
+
+      Commands commands = RStudioGinjector.INSTANCE.getCommands();
+      AppCommand presHome = commands.presentationHome();
+      homeButton_ = new ToolbarButton(presHome.getImageResource(), null);
+      homeButton_.setTitle(presHome.getTooltip());
       toolbar.addLeftWidget(homeButton_);
       homeSeparatorWidget_ = toolbar.addLeftSeparator();
       
@@ -52,6 +58,11 @@ public class SlideNavigationToolbarMenu
       
       menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_);
       heightOffset_ = heightOffset;
+     
+      AppCommand presEdit = commands.presentationEdit();
+      editSeparatorWidget_ = toolbar.addLeftSeparator();
+      editButton_ = new ToolbarButton(presEdit.getImageResource(), null);
+      toolbar.addLeftWidget(editButton_);    
       
       if (separatorAfter)
          separatorWidget_ = toolbar.addLeftSeparator();
@@ -73,6 +84,7 @@ public class SlideNavigationToolbarMenu
       homeSeparatorWidget_.setVisible(visible);
       titleLabel_.setVisible(visible);
       setDropDownVisible(visible);
+      setEditButtonVisible(visible);
       if (separatorWidget_ != null)
          separatorWidget_.setVisible(visible);
    }
@@ -101,6 +113,26 @@ public class SlideNavigationToolbarMenu
       menuWidget_.setVisible(isVisible() && visible);
    }
    
+   @Override
+   public void setEditButtonVisible(boolean visible)
+   {
+      visible = isVisible() && visible;
+      editButton_.setVisible(visible);
+      editSeparatorWidget_.setVisible(visible);
+   }
+   
+   @Override
+   public HasClickHandlers getHomeButton()
+   {
+      return homeButton_;
+   }
+
+   @Override
+   public HasClickHandlers getEditButton()
+   {
+      return editButton_;
+   }
+   
    private class SlidesPopupMenu extends ScrollableToolbarPopupMenu
    {
       public SlidesPopupMenu()
@@ -118,6 +150,8 @@ public class SlideNavigationToolbarMenu
    
    private ToolbarButton homeButton_;
    private Widget homeSeparatorWidget_;
+   private ToolbarButton editButton_;
+   private Widget editSeparatorWidget_;
    private Label titleLabel_ = new Label();
    private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
    private Widget menuWidget_;

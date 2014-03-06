@@ -12,7 +12,8 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#include "SessionConsoleProcess.hpp"
+
+#include <session/SessionConsoleProcess.hpp>
 
 #include <boost/regex.hpp>
 #include <boost/foreach.hpp>
@@ -38,7 +39,6 @@
 using namespace core;
 
 namespace session {
-namespace modules {
 namespace console_process {
 
 namespace {
@@ -761,5 +761,4 @@ Error initialize()
 }
 
 } // namespace console_process
-} // namespace modules
 } // namespace session

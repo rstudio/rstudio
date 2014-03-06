@@ -38,6 +38,11 @@ public class RmdPreviewParams extends JavaScriptObject
       return this.result;
    }-*/;
 
+   public native final String getTargetFile() /*-{
+      return this.result.target_file;
+   }-*/;
+
+   
    public native final String getOutputFile() /*-{
       return this.result.output_file;
    }-*/;
@@ -65,10 +70,10 @@ public class RmdPreviewParams extends JavaScriptObject
    public final Size getPreferredSize()
    {
       int chromeHeight = 100;
-      String format = getResult().getOutputFormat();
-      if (format.equals(RmdRenderResult.OUTPUT_IOSLIDES_PRESENTATION))
+      String format = getResult().getFormatName();
+      if (format.equals(RmdOutputFormat.OUTPUT_IOSLIDES_PRESENTATION))
          return new Size(1100, 900 + chromeHeight);
-      if (format.equals(RmdRenderResult.OUTPUT_REVEALJS_PRESENTATION))
+      if (format.equals(RmdOutputFormat.OUTPUT_REVEALJS_PRESENTATION))
          return new Size(960, 700 + chromeHeight);
       
       // default size (html_document and others)

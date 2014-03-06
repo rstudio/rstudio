@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.List;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
@@ -142,8 +144,13 @@ public class TextEditingTargetWidget
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
-      toolbar.addLeftWidget(knitDocumentButton_ = commands_.knitDocument().createToolbarButton());
+      knitDocumentButton_ = commands_.knitDocument().createToolbarButton();
+      knitDocumentButton_.getElement().getStyle().setMarginRight(2, Unit.PX);
+      toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
+      rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
+      toolbar.addLeftWidget(rmdFormatButton_);
+      toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
@@ -277,6 +284,7 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
+      boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
       
       // don't show the run buttons for cpp files, or R files in Shiny
       runButton_.setVisible(canExecuteCode && !isCpp && !isShinyFile());
@@ -300,6 +308,9 @@ public class TextEditingTargetWidget
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
       
+      rmdFormatButton_.setVisible(isRMarkdown2);
+      editRmdFormatButton_.setVisible(isRMarkdown2);
+
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
       
@@ -351,8 +362,8 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
-      previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
-      knitDocumentButton_.setText(width < 450 ? "" : "Knit");
+      previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);                                                       
+      knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
       if (editor_.getFileType().isRd())
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
@@ -493,6 +504,28 @@ public class TextEditingTargetWidget
       setSourceButtonFromShinyState();
    }
    
+
+   @Override
+   public void setFormatOptions(TextFileType fileType,
+                                List<String> options, 
+                                List<String> values, 
+                                String selectedOption)
+   {
+      rmdFormatButton_.clearMenu();
+      int parenPos = selectedOption.indexOf('(');
+      if (parenPos != -1)
+         selectedOption = selectedOption.substring(0, parenPos).trim();
+      knitCommandText_ = "Knit " + selectedOption;
+      knitDocumentButton_.setText(knitCommandText_);
+      previewCommandText_ = "Preview " + selectedOption;
+      previewHTMLButton_.setText(previewCommandText_);
+      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit ";
+      for (int i = 0; i < Math.min(options.size(), values.size()); i++)
+      {
+         rmdFormatButton_.addMenuItem(prefix + options.get(i), values.get(i));
+      }
+   }
+
    public void setSourceButtonFromShinyState()
    {
       sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
@@ -535,6 +568,13 @@ public class TextEditingTargetWidget
       editor_.onVisibilityChanged(visible);
    }
    
+   @Override
+   public HandlerRegistration addRmdFormatChangedHandler(
+         ValueChangeHandler<String> handler)
+   {
+      return rmdFormatButton_.addValueChangeHandler(handler);
+   }
+
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final FileTypeRegistry fileTypeRegistry_;
@@ -558,6 +598,8 @@ public class TextEditingTargetWidget
    private ToolbarButton helpMenuButton_;
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
+   private ToolbarButton editRmdFormatButton_;
+   private ToolbarPopupMenuButton rmdFormatButton_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;
@@ -565,4 +607,6 @@ public class TextEditingTargetWidget
 
    private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;
    private String sourceCommandText_ = "Source";
+   private String knitCommandText_ = "Knit";
+   private String previewCommandText_ = "Preview";
 }

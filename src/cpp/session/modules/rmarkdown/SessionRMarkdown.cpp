@@ -14,6 +14,7 @@
  */
 
 #include "SessionRMarkdown.hpp"
+#include "../SessionHTMLPreview.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filter/regex.hpp>
@@ -26,15 +27,20 @@
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/ROptions.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionConsoleProcess.hpp>
 
-#include "Presentation.hpp"
+#include "RMarkdownInstall.hpp"
+#include "RMarkdownPresentation.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
 
 #define kMathjaxSegment "mathjax"
+#define kMathjaxBeginComment "<!-- dynamically load mathjax"
 
 using namespace core;
 
@@ -73,11 +79,6 @@ public:
       return outputFile_;
    }
 
-   FilePath targetDirectory()
-   {
-      return outputFile_.parent();
-   }
-
    bool hasOutput()
    {
       return !isRunning_ && outputFile_.exists();
@@ -94,6 +95,8 @@ private:
    void start(const std::string& encoding)
    {
       json::Object dataJson;
+      getOutputFormat(targetFile_.absolutePath(), encoding, &outputFormat_);
+      dataJson["output_format"] = outputFormat_;
       dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
       ClientEvent event(client_events::kRmdRenderStarted, dataJson);
       module_context::enqueClientEvent(event);
@@ -135,7 +138,7 @@ private:
 
       // buffer the output so we can inspect it for the completed marker
       boost::shared_ptr<std::string> pAllOutput = boost::make_shared<std::string>();
-      
+
       core::system::ProcessCallbacks cb;
       using namespace module_context;
       cb.onContinue = boost::bind(&RenderRmd::onRenderContinue,
@@ -228,13 +231,34 @@ private:
       isRunning_ = false;
       json::Object resultJson;
       resultJson["succeeded"] = succeeded;
-      resultJson["output_file"] =
-            module_context::createAliasedPath(outputFile_);
-      resultJson["output_url"] = kRmdOutput "/";
+      resultJson["target_file"] =
+            module_context::createAliasedPath(targetFile_);
+
+      std::string outputFile = module_context::createAliasedPath(outputFile_);
+      resultJson["output_file"] = outputFile;
+
+      // A component of the output URL is the full (aliased) path of the output
+      // file, on which the renderer bases requests. This path is a URL
+      // component (see notes in handleRmdOutputRequest) and thus needs to
+      // arrive URL-escaped.
+      std::string outputUrl(kRmdOutput "/");
+      std::string encodedOutputFile =
+                       http::util::urlEncode(
+                       http::util::urlEncode(outputFile, false), false);
+#ifndef __APPLE__
+      // on the desktop (except Cocoa) we need to make another escaping pass
+      if (session::options().programMode() == kSessionProgramModeDesktop)
+         encodedOutputFile = http::util::urlEncode(encodedOutputFile, false);
+#endif
+      outputUrl.append(encodedOutputFile);
+      outputUrl.append("/");
+      resultJson["output_url"] = outputUrl;
+
+      resultJson["output_format"] = outputFormat_;
 
       // default to no slide info
-      resultJson["slide_number"] = -1;
-      resultJson["slide_breaks"] = json::Value();
+      resultJson["preview_slide"] = -1;
+      resultJson["slide_navigation"] = json::Value();
 
       // for HTML documents, check to see whether they've been published
       if (outputFile_.extensionLowerCase() == ".html")
@@ -247,18 +271,57 @@ private:
          resultJson["rpubs_published"] = false;
       }
 
+
+      // allow for format specific additions to the result json
+      std::string formatName =  outputFormat_["format_name"].get_str();
+      rmarkdown::presentation::ammendResults(
+                                  formatName,
+                                  targetFile_,
+                                  sourceLine_,
+                                  &resultJson);
+
+      // if we failed then we may want to enque additional diagnostics
+      if (!succeeded)
+         enqueFailureDiagnostics(formatName);
+
+      ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
+      module_context::enqueClientEvent(event);
+   }
+
+   void enqueFailureDiagnostics(const std::string& formatName)
+   {
+      if ((formatName == "pdf_document" ||
+           formatName == "beamer_presentation")
+          && !module_context::isPdfLatexInstalled())
+      {
+         enqueRenderOutput(module_context::kCompileOutputError,
+            "\nNo TeX installation detected (TeX is required "
+            "to create PDF output). You should install "
+            "a recommended TeX distribution for your platform:\n\n"
+            "  Windows: MiKTeX (Complete) - http://miktex.org/2.9/setup\n"
+            "  (NOTE: Be sure to download the Complete rather than Basic installation)\n\n"
+            "  Mac OS X: TexLive 2013 (Full) - http://tug.org/mactex/\n"
+            "  (NOTE: Download with Safari rather than Chrome _strongly_ recommended)\n\n"
+            "  Linux: Use system package manager\n\n");
+      }
+   }
+
+   void getOutputFormat(const std::string& path,
+                        const std::string& encoding,
+                        json::Object* pResultJson)
+   {
       // query rmarkdown for the output format
+      json::Object& resultJson = *pResultJson;
       r::sexp::Protect protect;
       SEXP sexpOutputFormat;
       Error error = r::exec::RFunction("rmarkdown:::default_output_format",
-                                       targetFile_.absolutePath(),
-                                       encoding_)
+                                       path, encoding)
                                       .call(&sexpOutputFormat, &protect);
       if (error)
       {
          LOG_ERROR(error);
-         resultJson["output_format"] = "";
-         resultJson["output_options"] = json::Value();
+         resultJson["format_name"] = "";
+         resultJson["format_options"] = json::Value();
       }
       else
       {
@@ -267,7 +330,7 @@ private:
                                               &formatName);
          if (error)
             LOG_ERROR(error);
-         resultJson["output_format"] = formatName;
+         resultJson["format_name"] = formatName;
 
          SEXP sexpOptions;
          json::Value formatOptions;
@@ -281,16 +344,9 @@ private:
             if (error)
                LOG_ERROR(error);
          }
-         resultJson["output_options"] = formatOptions;
 
-         // allow for format specific additions to the result json
-         rmarkdown::presentation::ammendResults(formatName,
-                                     targetFile_,
-                                     sourceLine_,
-                                     &resultJson);
+         resultJson["format_options"] = formatOptions;
       }
-      ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
-      module_context::enqueClientEvent(event);
    }
 
    static void enqueRenderOutput(int type,
@@ -309,6 +365,7 @@ private:
    int sourceLine_;
    FilePath outputFile_;
    std::string encoding_;
+   json::Object outputFormat_;
 };
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
@@ -317,25 +374,66 @@ boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 // handler.
 // in:  script src = "http://foo/bar/Mathjax.js?abc=123"
 // out: script src = "mathjax/MathJax.js?abc=123"
+//
+// if no MathJax use is found in the document, removes the script src statement
+// entirely, so we don't incur the cost of loading MathJax in preview mode
+// unless the document actually has markup.
 class MathjaxFilter : public boost::iostreams::regex_filter
 {
 public:
    MathjaxFilter()
+      // the regular expression matches any of the three tokens that look
+      // like the beginning of math, and the "script src" line itself
       : boost::iostreams::regex_filter(
-            boost::regex("^(\\s*script.src\\s*=\\s*)\"http.*?(MathJax.js[^\"]*)\""),
-            boost::bind(&MathjaxFilter::substitute, this, _1))
+            boost::regex(kMathjaxBeginComment "|"
+                         "\\\\\\[|\\\\\\(|<math|"
+                         "^(\\s*script.src\\s*=\\s*)\"http.*?(MathJax.js[^\"]*)\""),
+            boost::bind(&MathjaxFilter::substitute, this, _1)),
+        hasMathjax_(false)
    {
    }
 
 private:
    std::string substitute(const boost::cmatch& match)
    {
-      std::string result(match[1]);
-      result.append("\"" kMathjaxSegment "/");
-      result.append(match[2]);
-      result.append("\"");
+      std::string result;
+
+      if (match[0] == "\\[" ||
+          match[0] == "\\(" ||
+          match[0] == "<math")
+      {
+         // if we found one of the MathJax markup start tokens, we need to emit
+         // MathJax scripts
+         hasMathjax_ = true;
+         return match[0];
+      }
+      else if (match[0] == kMathjaxBeginComment)
+      {
+         // we found the start of the MathJax section; add the MathJax config
+         // block if we're in a configuration that requires it
+#ifdef __APPLE__
+         return match[0];
+#else
+         if (session::options().programMode() != kSessionProgramModeDesktop)
+            return match[0];
+
+         result.append(kQtMathJaxConfigScript "\n");
+         result.append(match[0]);
+#endif
+      }
+      else if (hasMathjax_)
+      {
+         // this is the MathJax script itself; emit it if we found a start token
+         result.append(match[1]);
+         result.append("\"" kMathjaxSegment "/");
+         result.append(match[2]);
+         result.append("\"");
+      }
+
       return result;
    }
+
+   bool hasMathjax_;
 };
 
 bool isRenderRunning()
@@ -353,8 +451,14 @@ void initPandocPath()
       LOG_ERROR(error);
 }
 
+bool haveMarkdownToHTMLOption()
+{
+   SEXP markdownToHTMLOption = r::options::getOption("rstudio.markdownToHTML");
+   return !r::sexp::isNull(markdownToHTMLOption);
+}
+
 // when the RMarkdown package is installed, give .Rmd files the extended type
-// "rmarkdown", unless they contain a special marker that indicates we should
+// "rmarkdown", unless there is a marker that indicates we should
 // use the previous rendering strategy
 std::string onDetectRmdSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -362,14 +466,51 @@ std::string onDetectRmdSourceType(
    if (!pDoc->path().empty())
    {
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
-      if (filePath.extensionLowerCase() == ".rmd" &&
+      if ((filePath.extensionLowerCase() == ".rmd" ||
+           filePath.extensionLowerCase() == ".md") &&
           !boost::algorithm::icontains(pDoc->contents(),
-                                       "<!-- rmarkdown v1 -->"))
+                                       "<!-- rmarkdown v1 -->") &&
+          rmarkdownPackageAvailable())
       {
          return "rmarkdown";
       }
    }
    return std::string();
+}
+
+Error getRMarkdownContext(const json::JsonRpcRequest&,
+                          json::JsonRpcResponse* pResponse)
+{  
+   // check the current status
+   install::Status status = install::status();
+
+   // silent upgrade if we have an older version
+   if (status == install::InstalledRequiresUpdate)
+   {
+      Error error = install::silentUpdate();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // return installation status
+   json::Object contextJson;
+   contextJson["rmarkdown_installed"] = install::haveRequiredVersion();
+   pResponse->setResult(contextJson);
+
+   return Success();
+}
+
+Error installRMarkdown(const json::JsonRpcRequest&,
+                       json::JsonRpcResponse* pResponse)
+{
+   boost::shared_ptr<console_process::ConsoleProcess> pCP;
+   Error error = install::installWithProgress(&pCP);
+   if (error)
+      return error;
+
+   pResponse->setResult(pCP->toJson());
+
+   return Success();
 }
 
 Error renderRmd(const json::JsonRpcRequest& request,
@@ -428,20 +569,37 @@ FilePath mathJaxDirectory()
    return mathJaxDir;
 }
 
+// Handles a request for RMarkdown output. This request embeds the name of
+// the file to be viewed as an encoded part of the URL. For instance, requests
+// to show render output for ~/abc.html and its resources look like:
+//
+// http://<server>/rmd_output/~%252Fabc.html/...
+//
+// Note that this requires two URL encoding passes at the origin, since a
+// a URL decoding pass is made on the whole URL before this handler is invoked.
 void handleRmdOutputRequest(const http::Request& request,
                             http::Response* pResponse)
 {
-   // make sure we're looking at the result of a successful render
-   if (!s_pCurrentRender_ ||
-       !s_pCurrentRender_->hasOutput())
+   std::string path = http::util::pathAfterPrefix(request,
+                                                  kRmdOutputLocation);
+
+   // Read the desired output file name from the URL
+   size_t pos = path.find('/', 1);
+   if (pos == std::string::npos)
    {
-      pResponse->setError(http::status::NotFound, "No render output available");
+      pResponse->setError(http::status::NotFound, "No output file found");
+      return;
+   }
+   std::string outputFile = http::util::urlDecode(path.substr(0, pos));
+   FilePath outputFilePath(module_context::resolveAliasedPath(outputFile));
+   if (!outputFilePath.exists())
+   {
+      pResponse->setError(http::status::NotFound, outputFile + " not found");
       return;
    }
 
-   // get the requested path
-   std::string path = http::util::pathAfterPrefix(request,
-                                                  kRmdOutputLocation);
+   // Strip the output file name from the URL
+   path = path.substr(pos + 1, path.length());
 
    if (path.empty())
    {
@@ -452,8 +610,7 @@ void handleRmdOutputRequest(const http::Request& request,
       // serve the contents of the file with MathJax URLs mapped to our
       // own resource handler
       MathjaxFilter mathjaxFilter;
-      pResponse->setFile(s_pCurrentRender_->outputFile(), request,
-                         mathjaxFilter);
+      pResponse->setFile(outputFilePath, request, mathjaxFilter);
    }
    else if (boost::algorithm::starts_with(path, kMathjaxSegment))
    {
@@ -466,33 +623,48 @@ void handleRmdOutputRequest(const http::Request& request,
    else
    {
       // serve a file resource from the output folder
-      FilePath filePath = s_pCurrentRender_->targetDirectory().childPath(path);
+      FilePath filePath = outputFilePath.parent().childPath(path);
       pResponse->setCacheableFile(filePath, request);
    }
 }
 
 } // anonymous namespace
 
-bool rmarkdownPackageInstalled()
+bool rmarkdownPackageAvailable()
 {
-   return module_context::isPackageVersionInstalled("rmarkdown", "0.1.1");
+   if (!haveMarkdownToHTMLOption())
+   {
+#ifdef _WIN32
+      return r::util::hasRequiredVersion("3.0");
+#else
+      return r::util::hasRequiredVersion("2.14.1");
+#endif
+   }
+   else
+   {
+      return false;
+   }
 }
 
 Error initialize()
 {
+   using boost::bind;
    using namespace module_context;
 
    initPandocPath();
 
-   if (module_context::isPackageVersionInstalled("rmarkdown", "0.1.1"))
-      module_context::events().onDetectSourceExtendedType
-                              .connect(onDetectRmdSourceType);
+   module_context::events().onDetectSourceExtendedType
+                                       .connect(onDetectRmdSourceType);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (install::initialize)
+      (bind(registerRpcMethod, "get_rmarkdown_context", getRMarkdownContext))
+      (bind(registerRpcMethod, "install_rmarkdown", installRMarkdown))
       (bind(registerRpcMethod, "render_rmd", renderRmd))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
-      (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest));
+      (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
+      (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
    return initBlock.execute();
 }

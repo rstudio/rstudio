@@ -327,110 +327,33 @@ void GwtCallback::showWordDoc(QString path)
 #ifdef Q_OS_WIN32
 
    path = resolveAliasedPath(path);
-
-   // Convenience to write a warning and bail out at any failure point
-#define VERIFY_HRESULT(x) hr = (x); \
-      if (FAILED(hr)) { \
-         LOG_WARNING_MESSAGE("Failed during document open. HRESULT:  " + \
-                             safe_convert::numberToString(hr)); \
-         return; \
-      }
-
-   // On Windows we first attempt to open Word documents via COM automation.
-   // This isn't straightforward but creates a communication channel we can
-   // utilize to improve the iterative authoring experience as needed.
-   CLSID clsid;
-   LPCOLESTR progId = L"Word.Application";
-   HRESULT hr = CLSIDFromProgID(progId, &clsid);
-   IDispatch* pWord = NULL;
-   if (SUCCEEDED(hr))
+   Error error = wordViewer_.showDocument(path);
+   if (error)
    {
-      hr = CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER, IID_IDispatch,
-                            reinterpret_cast<void**>(&pWord));
-   }
-   if (FAILED(hr))
-   {
-      // if word isn't installed, or we failed to instantiate it, just open in
-      // the default handler for docx files, if any
+      LOG_ERROR(error);
       showFile(path);
-      return;
    }
-
-   // Make Word visible
-   const WCHAR *strVisible = L"Visible";
-   DISPID dispidVisible;
-   DISPID propPut = DISPID_PROPERTYPUT;
-   DISPPARAMS visibleParams;
-   VARIANT visible;
-   VARIANT result;
-   visible.vt = VT_BOOL;
-   visible.boolVal = true;
-   visibleParams.rgvarg = &visible;
-   visibleParams.rgdispidNamedArgs = &propPut;
-   visibleParams.cArgs = 1;
-   visibleParams.cNamedArgs = 1;
-   VERIFY_HRESULT(pWord->GetIDsOfNames(
-                     IID_NULL, const_cast<WCHAR**>(&strVisible), 1,
-                     LOCALE_USER_DEFAULT, &dispidVisible));
-   VariantInit(&result);
-   VERIFY_HRESULT(pWord->Invoke(
-                     dispidVisible, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                     DISPATCH_PROPERTYPUT, &visibleParams, &result,
-                     NULL, NULL));
-
-   // Get the Documents collection
-   const WCHAR *strDocuments = L"Documents";
-   DISPID dispidDocuments;
-   DISPPARAMS dparams = { NULL, NULL, 0, 0 };
-   IDispatch *pDocs = NULL;
-   VERIFY_HRESULT(pWord->GetIDsOfNames(
-                     IID_NULL, const_cast<WCHAR**>(&strDocuments), 1,
-                     LOCALE_USER_DEFAULT, &dispidDocuments));
-   VariantInit(&result);
-   VERIFY_HRESULT(pWord->Invoke(dispidDocuments, IID_NULL,
-                     LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYGET, &dparams,
-                     &result, NULL, NULL));
-   pDocs = result.pdispVal;
-
-   // Invoke the "Open" method with the file we have
-   const WCHAR *strOpen = L"Open";
-   DISPID dispidOpen;
-
-   // COM requires that arguments are specified in reverse order
-   DISPID argPos[2] = { 2, 0 };
-   VARIANT args[2];
-
-   // ReadOnly argument
-   args[0].vt = VT_BOOL;
-   args[0].boolVal = true;
-
-   // FileName argument: construct by replacing POSIX-style separators
-   // with Windows path separators
-   BSTR bstrFileName =
-         SysAllocString(reinterpret_cast<const WCHAR*>(
-                           path.replace(QChar(L'/'), QChar(L'\\')).utf16()));
-   args[1].vt = VT_BSTR;
-   args[1].bstrVal = bstrFileName;
-
-   dparams.rgvarg = args;
-   dparams.rgdispidNamedArgs = argPos;
-   dparams.cArgs = 2;
-   dparams.cNamedArgs = 2;
-   VERIFY_HRESULT(pDocs->GetIDsOfNames(
-                     IID_NULL, const_cast<WCHAR**>(&strOpen),  1,
-                     LOCALE_USER_DEFAULT, &dispidOpen));
-   VERIFY_HRESULT(pDocs->Invoke(
-                     dispidOpen, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                     DISPATCH_METHOD, &dparams, NULL, NULL, NULL));
-
-   // Release resources
-   SysFreeString(bstrFileName);
-
-#undef VERIFY_HRESULT
 
 #else
    // Invoke default viewer on other platforms
    showFile(path);
+#endif
+}
+
+void GwtCallback::showPDF(QString path, int pdfPage)
+{
+   path = resolveAliasedPath(path);
+   synctex().view(path, pdfPage);
+}
+
+void GwtCallback::prepareShowWordDoc()
+{
+#ifdef Q_OS_WIN32
+   Error error = wordViewer_.closeLastViewedDocument();
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
 #endif
 }
 
