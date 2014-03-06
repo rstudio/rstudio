@@ -3231,6 +3231,14 @@ public class RemoteServer implements Server
             params,
             requestCallback);
    }
+   
+   @Override
+   public void renderRmdSource(String source,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, RENDER_RMD_SOURCE, source, requestCallback);
+   }
+
 
    @Override
    public void terminateRenderRmd(ServerRequestCallback<Void> requestCallback)
@@ -3549,6 +3557,7 @@ public class RemoteServer implements Server
    private static final String GET_SHINYAPPS_DEPLOYMENTS = "get_shinyapps_deployments";
 
    private static final String RENDER_RMD = "render_rmd";
+   private static final String RENDER_RMD_SOURCE = "render_rmd_source";
    private static final String TERMINATE_RENDER_RMD = "terminate_render_rmd";
    private static final String CONVERT_TO_YAML = "convert_to_yaml";
    private static final String CONVERT_FROM_YAML = "convert_from_yaml";

@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane
 
 public class RenderRmdOutputPresenter extends BasePresenter
    implements RenderRmdEvent.Handler,
+              RenderRmdSourceEvent.Handler,
               RmdRenderStartedEvent.Handler,
               RmdRenderOutputEvent.Handler,
               RmdRenderCompletedEvent.Handler
@@ -105,6 +107,13 @@ public class RenderRmdOutputPresenter extends BasePresenter
                         event.getSourceLine(),
                         event.getEncoding(), 
             new SimpleRequestCallback<Boolean>());
+   }
+   
+   @Override
+   public void onRenderRmdSource(RenderRmdSourceEvent event)
+   {
+      server_.renderRmdSource(event.getSource(),
+                              new SimpleRequestCallback<Boolean>()); 
    }
 
    @Override

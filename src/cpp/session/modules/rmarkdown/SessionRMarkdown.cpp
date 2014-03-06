@@ -513,15 +513,11 @@ Error installRMarkdown(const json::JsonRpcRequest&,
    return Success();
 }
 
-Error renderRmd(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
+void doRenderRmd(const std::string& file,
+                 int line,
+                 const std::string& encoding,
+                 json::JsonRpcResponse* pResponse)
 {
-   int line = -1;
-   std::string file, encoding;
-   Error error = json::readParams(request.params, &file, &line, &encoding);
-   if (error)
-      return error;
-
    if (s_pCurrentRender_ &&
        s_pCurrentRender_->isRunning())
    {
@@ -535,9 +531,41 @@ Error renderRmd(const json::JsonRpcRequest& request,
                encoding);
       pResponse->setResult(true);
    }
+}
+
+Error renderRmd(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   int line = -1;
+   std::string file, encoding;
+   Error error = json::readParams(request.params, &file, &line, &encoding);
+   if (error)
+      return error;
+
+   doRenderRmd(file, line, encoding, pResponse);
 
    return Success();
 }
+
+Error renderRmdSource(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string source;
+   Error error = json::readParams(request.params, &source);
+   if (error)
+      return error;
+
+   // create temp file
+   FilePath rmdTempFile = module_context::tempFile("Rmd-Preview", "Rmd");
+   error = core::writeStringToFile(rmdTempFile, source);
+   if (error)
+      return error;
+
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "UTF-8", pResponse);
+
+   return Success();
+}
+
 
 Error terminateRenderRmd(const json::JsonRpcRequest&,
                          json::JsonRpcResponse*)
@@ -663,6 +691,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_rmarkdown_context", getRMarkdownContext))
       (bind(registerRpcMethod, "install_rmarkdown", installRMarkdown))
       (bind(registerRpcMethod, "render_rmd", renderRmd))
+      (bind(registerRpcMethod, "render_rmd_source", renderRmdSource))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));

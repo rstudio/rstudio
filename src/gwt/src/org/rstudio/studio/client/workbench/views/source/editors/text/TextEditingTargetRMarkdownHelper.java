@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
@@ -165,6 +166,17 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+   public void renderRMarkdownSource(final String source)
+   {
+      withRMarkdownPackage("Rendering R Markdown documents", 
+            new CommandWithArg<RMarkdownContext>() {
+         @Override
+         public void execute(RMarkdownContext arg)
+         {
+            eventBus_.fireEvent(new RenderRmdSourceEvent(source));
+         }
+      });
+   }
    
    public boolean verifyPrerequisites(WarningBarDisplay display,
                                       TextFileType fileType)
