@@ -18,7 +18,9 @@
    # hint that every non-list element of the hierarchical list l
    # is a scalar value
    l <- lapply(l, function(ele) {
-      if (is.list(ele)) 
+      if (is.null(ele))
+         NULL
+      else if (is.list(ele)) 
          .rs.scalarListFromList(ele)
       else
          .rs.scalar(ele)

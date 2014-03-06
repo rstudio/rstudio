@@ -19,7 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -87,6 +89,11 @@ public class RmdTemplateOptionsWidget extends Composite
       }
       updateFormatOptions(getSelectedFormat());
    }
+   
+   public void setDocument(FileSystemItem document)
+   {
+      document_ = document;
+   }
 
    public String getSelectedFormat()
    {
@@ -101,7 +108,10 @@ public class RmdTemplateOptionsWidget extends Composite
          return null;
       frontMatter_.setOutputOption(
             getSelectedFormat(), 
-            RmdFormatOptionsHelper.optionsListToJson(optionWidgets_));
+            RmdFormatOptionsHelper.optionsListToJson(
+                  optionWidgets_, 
+                  document_, 
+                  frontMatter_.getOutputOption(getSelectedFormat())));
       return frontMatter_;
    }
    
@@ -119,7 +129,11 @@ public class RmdTemplateOptionsWidget extends Composite
    
    public JavaScriptObject getOptionsJSON()
    {
-      return RmdFormatOptionsHelper.optionsListToJson(optionWidgets_);
+      return RmdFormatOptionsHelper.optionsListToJson(
+            optionWidgets_,
+            document_, 
+            frontMatter_ == null ? 
+                  null : frontMatter_.getOutputOption(getSelectedFormat()));
    }
    
    private void updateFormatOptions(String format)
@@ -176,6 +190,18 @@ public class RmdTemplateOptionsWidget extends Composite
          else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT))
          {
             optionWidget = new RmdFloatOption(option, initialValue);
+         }
+         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FILE))
+         {
+            // if we have a document and a relative path, resolve the path
+            // relative to the document
+            if (document_ != null && !initialValue.equals("null") &&
+                FilePathUtils.pathIsRelative(initialValue))
+            {
+               initialValue = 
+                     document_.getParentPath().completePath(initialValue);
+            }
+            optionWidget = new RmdFileOption(option, initialValue);
          }
          else
             continue;
@@ -267,7 +293,7 @@ public class RmdTemplateOptionsWidget extends Composite
          // matter? (don't transfer options into formats explicitly defined
          // in the front matter)
          JsArrayString frontMatterFormats = frontMatter_.getFormatList();
-         if ((!StringUtil.jsArrayStringContains(frontMatterFormats, formatName)) 
+         if ((!JsArrayUtil.jsArrayStringContains(frontMatterFormats, formatName)) 
                &&
              frontMatterCache_.containsKey(optionName))
          {
@@ -296,6 +322,7 @@ public class RmdTemplateOptionsWidget extends Composite
    private List<RmdFormatOption> optionWidgets_;
    private boolean forCreate_ = false;
    private RmdFrontMatter frontMatter_;
+   private FileSystemItem document_;
    
    // Cache of options present in the template (ignores those options that 
    // are specifically marked for a format)

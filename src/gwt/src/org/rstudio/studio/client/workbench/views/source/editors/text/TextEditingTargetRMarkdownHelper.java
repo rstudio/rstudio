@@ -18,10 +18,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -38,9 +40,11 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
@@ -258,15 +262,9 @@ public class TextEditingTargetRMarkdownHelper
       JsArray<RmdTemplate> templates = RmdTemplateData.getTemplates();
       for (int i = 0; i < templates.length(); i++)
       {
-         JsArray<RmdTemplateFormat> formats = 
-               templates.get(i).getFormats();
-         for (int j = 0; j < formats.length(); j++)
-         {
-            if (formats.get(j).getName().equals(outFormat))
-            {
-               return templates.get(i);
-            }
-         }
+         RmdTemplateFormat format = templates.get(i).getFormat(outFormat);
+         if (format != null)
+            return templates.get(i);
       }
       // No template found
       return null;
@@ -278,21 +276,98 @@ public class TextEditingTargetRMarkdownHelper
       YamlTree tree = new YamlTree(yaml);
       
       // Find the template appropriate to the first output format listed
-      String outFormat = null;
-      List<String> outputs = tree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
-      if (outputs == null)
+      List<String> outFormats = getOutputFormats(tree);
+      if (outFormats == null)
          return null;
-      if (outputs.isEmpty())
-         outFormat = tree.getKeyValue(RmdFrontMatter.OUTPUT_KEY);
-      else
-         outFormat = outputs.get(0);
+      String outFormat = outFormats.get(0);
       
       RmdTemplate template = getTemplateForFormat(outFormat);
       if (template == null)
          return null;
       return new RmdSelectedTemplate(template, outFormat);
    }
-  
+   
+   // Parses YAML, adds the given format option with any transferable
+   // defaults, and returns the resulting YAML
+   public void setOutputFormat(String yaml, final String format, 
+                               final CommandWithArg<String> onCompleted)
+   {
+      convertFromYaml(yaml, new CommandWithArg<RmdYamlData>()
+      {
+         @Override
+         public void execute(RmdYamlData arg)
+         {
+            if (!arg.parseSucceeded())
+               onCompleted.execute(null);
+            else
+               setOutputFormat(arg.getFrontMatter(), format, onCompleted);
+         }
+      });
+   }
+   
+   private void setOutputFormat(RmdFrontMatter frontMatter, String format, 
+                                final CommandWithArg<String> onCompleted)
+   {
+      // If the format list doesn't already contain the given format, add it
+      // to the list and transfer any applicable options
+      if (!JsArrayUtil.jsArrayStringContains(frontMatter.getFormatList(), 
+                                             format))
+      {
+         RmdTemplate template = getTemplateForFormat(format);
+         RmdFrontMatterOutputOptions opts = RmdFrontMatterOutputOptions.create();
+         if (template != null)
+         {
+            opts = transferOptions(frontMatter, template, format);
+         }
+         frontMatter.setOutputOption(format, opts);
+      }
+      frontMatterToYAML(frontMatter, format, onCompleted);
+   }
+   
+   private RmdFrontMatterOutputOptions transferOptions(
+         RmdFrontMatter frontMatter, 
+         RmdTemplate template,
+         String format)
+   {
+      RmdFrontMatterOutputOptions result = RmdFrontMatterOutputOptions.create();
+
+      // loop over each option applicable to the new format; if it's
+      // transferable, try to find it in one of the other formats 
+      JsArrayString options = template.getFormat(format).getOptions();
+      for (int i = 0; i < options.length(); i++)
+      {
+         String optionName = options.get(i);
+         RmdTemplateFormatOption option = template.getOption(optionName);
+         if (!option.isTransferable())
+            continue;
+         
+         // option is transferable, is it present in another front matter entry?
+         JsArrayString formats = frontMatter.getFormatList();
+         for (int j = 0; j < formats.length(); j++)
+         {
+            RmdFrontMatterOutputOptions outOptions = 
+                  frontMatter.getOutputOption(formats.get(j));
+            if (outOptions == null)
+               continue;
+            String val = outOptions.getOptionValue(optionName);
+            if (val != null)
+               result.setOptionValue(option, val);
+         }
+      }
+      
+      return result;
+   }
+      
+   private List<String> getOutputFormats(YamlTree tree)
+   {
+      List<String> outputs = tree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
+      if (outputs == null)
+         return null;
+      if (outputs.isEmpty())
+         outputs.add(tree.getKeyValue(RmdFrontMatter.OUTPUT_KEY));
+      return outputs;
+   }
+   
    private void installRMarkdownPackage(String action,
                                         final Command onInstalled)
    {

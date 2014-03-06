@@ -269,6 +269,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.debugBreakpoint());
       dynamicCommands_.add(commands.vcsViewOnGitHub());
       dynamicCommands_.add(commands.vcsBlameOnGitHub());
+      dynamicCommands_.add(commands.editRmdFormatOptions());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -2077,6 +2078,9 @@ public class Source implements InsertSourceHandler,
       // manage ShinyApps commands
       manageShinyAppsCommands();
       
+      // manage R Markdown commands
+      manageRMarkdownCommands();
+
       activeCommands_ = newCommands;
 
       assert verifyNoUnsupportedCommands(newCommands)
@@ -2162,6 +2166,17 @@ public class Source implements InsertSourceHandler,
             activeEditor_.getExtendedFileType() == "shiny";
       commands_.shinyAppsDeploy().setVisible(shinyCommandsAvailable);
       commands_.shinyAppsTerminate().setVisible(shinyCommandsAvailable);
+   }
+   
+   private void manageRMarkdownCommands()
+   {
+      boolean rmdCommandsAvailable = 
+            session_.getSessionInfo().getRMarkdownPackageAvailable() &&
+            (activeEditor_ != null) &&
+            (activeEditor_.getPath() != null) &&
+            activeEditor_.getExtendedFileType() == "rmarkdown";
+      commands_.editRmdFormatOptions().setVisible(rmdCommandsAvailable);
+      commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);
    }
    
    private void manageSaveCommands()

@@ -38,16 +38,26 @@ public class FilePathUtils
             fileName;
    }
    
-   public static String normalizePath (String path, String workingDirectory)
+   public static boolean pathIsAbsolute(String path)
    {
       // Examine the path to see if it appears to be absolute. An absolute path
       // - begins with ~ , or 
       // - begins with / (Unix-like systems), or
       // - begins with F:/ (Windows systems), where F is an alphabetic drive 
       //   letter.
-      if (path.startsWith(FileSystemItem.HOME_PREFIX) || 
-          path.startsWith("/") ||                        
-          path.matches("^[a-zA-Z]:\\/.*"))
+      return path.startsWith(FileSystemItem.HOME_PREFIX) || 
+             path.startsWith("/") ||                        
+             path.matches("^[a-zA-Z]:\\/.*");
+   }
+   
+   public static boolean pathIsRelative(String path)
+   {
+      return !pathIsAbsolute(path);
+   }
+
+   public static String normalizePath (String path, String workingDirectory)
+   {
+      if (pathIsAbsolute(path))
       {
          return path;
       }

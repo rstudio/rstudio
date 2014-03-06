@@ -21,14 +21,22 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.ListBox;
 
-public class RmdChoiceOption extends RmdBaseOption
+public class RmdChoiceOption extends RmdNullableOption
 {
    public RmdChoiceOption(RmdTemplateFormatOption option, String initialValue)
    {
-      super(option);
-      HTMLPanel panel = new HTMLPanel("");
+      super(option, initialValue);
       defaultValue_ = option.getDefaultValue();
-      panel.add(new InlineLabel(option.getUiName() + ":"));
+
+      HTMLPanel panel = new HTMLPanel("");
+      if (option.isNullable())
+      {
+         panel.add(nonNullCheckBox());
+      }
+      else
+      {
+         panel.add(new InlineLabel(option.getUiName() + ":"));
+      }
       choices_ = new ListBox();
       
       JsArrayString choiceList = option.getChoiceList();
@@ -44,6 +52,7 @@ public class RmdChoiceOption extends RmdBaseOption
       choices_.setSelectedIndex(selectedIdx);
       panel.add(choices_);
 
+      updateNull();
       initWidget(panel);
    }
 
@@ -56,7 +65,17 @@ public class RmdChoiceOption extends RmdBaseOption
    @Override
    public String getValue()
    {
+      if (valueIsNull())
+      {
+         return null;
+      }
       return choices_.getValue(choices_.getSelectedIndex());
+   }
+   
+   @Override
+   public void updateNull()
+   {
+      choices_.setEnabled(!valueIsNull());
    }
    
    private final String defaultValue_;

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -40,6 +41,7 @@ public class RmdTemplateOptionsDialog
    public RmdTemplateOptionsDialog(RmdTemplate template,
          String initialFormat,
          RmdFrontMatter frontMatter, 
+         FileSystemItem document,
          OperationWithInput<RmdTemplateOptionsDialog.Result> onSaved,
          Operation onCancelled)
    {
@@ -48,6 +50,7 @@ public class RmdTemplateOptionsDialog
       setWidth("350px");
       setHeight("400px");
       templateOptions_ = new RmdTemplateOptionsWidget();
+      templateOptions_.setDocument(document);
       templateOptions_.setTemplate(template, false, frontMatter);
       templateOptions_.setSelectedFormat(initialFormat);
       templateOptions_.setHeight("300px");

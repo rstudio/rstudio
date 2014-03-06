@@ -24,6 +24,10 @@ public class RmdFrontMatterOutputOptions extends JavaScriptObject
    {
    }
    
+   public final static native RmdFrontMatterOutputOptions create() /*-{
+      return {};
+   }-*/;
+   
    public final native JsArrayString getOptionList() /*-{
       return Object.getOwnPropertyNames(this);
    }-*/;
@@ -32,7 +36,28 @@ public class RmdFrontMatterOutputOptions extends JavaScriptObject
       var option = this[optionName];
       if (typeof option === "undefined")
          return null;
+      else if (option === null)
+         return "null";
       else 
          return option.toString();
+   }-*/;
+   
+   public final native void removeOption(String optionName) /*-{
+      delete this[optionName];
+   }-*/;
+   
+   public final native void setOptionValue(RmdTemplateFormatOption option,
+                                           String value) /*-{
+      switch (option.option_type)
+      {
+         case "boolean":
+            this[option.option_name] = (value === "true");
+            break;
+         case "float":
+            this[option.option_name] = parseFloat(value);
+            break;
+         default:
+            this[option.option_name] = value;
+      }
    }-*/;
 }
