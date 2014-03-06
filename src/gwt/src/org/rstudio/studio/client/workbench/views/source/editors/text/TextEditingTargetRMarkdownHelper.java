@@ -212,15 +212,11 @@ public class TextEditingTargetRMarkdownHelper
          {
             YamlTree yamlTree = new YamlTree(yamlResult.getYaml());
             
-            String title = yamlTree.getKeyValue("title");
-
-            // The title string should be quoted--if it isn't, apply quotes
-            // manually (consider: do we need to deal with multi-line titles 
-            // here?)
-            if (!((title.startsWith("\"") && title.endsWith("\"")) ||
-                  (title.startsWith("'") && title.endsWith("'"))))
-               yamlTree.setKeyValue("title", "\"" + title + "\"");
-
+            // quote fields
+            quoteField(yamlTree, "title");
+            quoteField(yamlTree, "author");
+            quoteField(yamlTree, "date");
+            
             // Order the fields more semantically
             yamlTree.reorder(
                   Arrays.asList("title", "author", "date", "output"));
@@ -234,6 +230,19 @@ public class TextEditingTargetRMarkdownHelper
          public void onError(ServerError error)
          {
             onFinished.execute("");
+         }
+         private void quoteField(YamlTree yamlTree, String field)
+         {
+            String value = yamlTree.getKeyValue(field);
+            if (value.length() > 0)
+            {
+               // The string should be quoted--if it isn't, apply quotes
+               // manually (consider: do we need to deal with multi-line titles 
+               // here?)
+               if (!((value.startsWith("\"") && value.endsWith("\"")) ||
+                     (value.startsWith("'") && value.endsWith("'"))))
+                  yamlTree.setKeyValue(field, "\"" + value + "\"");
+            }
          }
       });
    }
