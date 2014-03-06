@@ -3215,10 +3215,16 @@ public class TextEditingTarget implements
    {
       if (docUpdateSentinel_.getPath() != null)
       {
-         rmarkdownHelper_.renderRMarkdown(
-            docUpdateSentinel_.getPath(),
-            docDisplay_.getCursorPosition().getRow() + 1,
-            docUpdateSentinel_.getEncoding());
+         saveThenExecute(null, new Command() {
+            @Override
+            public void execute()
+            {
+               rmarkdownHelper_.renderRMarkdown(
+                  docUpdateSentinel_.getPath(),
+                  docDisplay_.getCursorPosition().getRow() + 1,
+                  docUpdateSentinel_.getEncoding());
+            }
+         });
       }
       else
       {
