@@ -296,6 +296,9 @@ public class TextEditingTargetRMarkdownHelper
    {
       YamlTree tree = new YamlTree(yaml);
       
+      if (tree.getKeyValue("render").length() >  0)
+         return null;
+      
       // Find the template appropriate to the first output format listed
       List<String> outFormats = getOutputFormats(tree);
       if (outFormats == null)

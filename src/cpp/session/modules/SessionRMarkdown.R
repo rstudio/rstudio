@@ -34,6 +34,15 @@
   .Call("rs_installPackage",  archive, dirname(pkgDir))
 })
 
+.rs.addFunction("getCustomRenderFunction", function(file) {
+  lines <- readLines(file)
+  yamlFrontMatter <- rmarkdown:::parse_yaml_front_matter(lines)
+  if (is.character(yamlFrontMatter$render))
+    yamlFrontMatter$render[[1]]
+  else
+    ""
+})
+
 .rs.addJsonRpcHandler("convert_to_yaml", function(input)
 {
    list(yaml = .rs.scalar(yaml::as.yaml(input)))
@@ -57,3 +66,4 @@
         parse_succeeded = .rs.scalar(parseSucceeded),
         parse_error = .rs.scalar(parseError))
 })
+

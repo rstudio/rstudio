@@ -126,9 +126,26 @@ private:
       args.push_back("--no-restore");
       args.push_back("-e");
 
+      // see if the input file has a custom render function
+      std::string renderFunc;
+      error = r::exec::RFunction(
+         ".rs.getCustomRenderFunction",
+         string_utils::utf8ToSystem(targetFile_.absolutePath())).call(
+                                                               &renderFunc);
+      if (error)
+         LOG_ERROR(error);
+
+      if (renderFunc.empty())
+         renderFunc = "rmarkdown::render";
+
       // render command
-      boost::format fmt("rmarkdown::render('%1%', encoding='%2%');");
-      std::string cmd = boost::str(fmt % targetFile_.filename() % encoding);
+      boost::format fmt("%1%('%2%', encoding='%3%');");
+      std::string cmd = boost::str(fmt %
+                                   renderFunc %
+                                   targetFile_.filename() %
+                                   encoding);
+
+
       args.push_back(cmd);
 
       // options
