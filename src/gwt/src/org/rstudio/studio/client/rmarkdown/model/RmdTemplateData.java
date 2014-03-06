@@ -78,7 +78,17 @@ public class RmdTemplateData
             option_ui_name: "Syntax highlighting", 
             option_type: "choice", 
             option_for_create: false,
-            option_transferable: true,
+            option_nullable: true,
+            option_default: "default",
+            option_list: [ "default", "tango", "pygments", "kate", "monochrome",
+                           "espresso", "zenburn", "haddock"]
+            },
+            {
+            option_name: "highlight",
+            option_ui_name: "Syntax highlighting", 
+            option_format: "html_document",
+            option_type: "choice", 
+            option_for_create: false,
             option_nullable: true,
             option_default: "default",
             option_list: [ "default", "tango", "pygments", "kate", "monochrome",
@@ -328,7 +338,7 @@ public class RmdTemplateData
             option_transferable: true,
             option_default: "default",
             option_list: [ "default", "tango", "pygments", "kate", "monochrome",
-                           "espresso", "zenburn", "haddock", "textmate" ]
+                           "espresso", "zenburn", "haddock"]
             },
             {
             option_name: "toc",
