@@ -2173,7 +2173,6 @@ public class Source implements InsertSourceHandler,
       boolean rmdCommandsAvailable = 
             session_.getSessionInfo().getRMarkdownPackageAvailable() &&
             (activeEditor_ != null) &&
-            (activeEditor_.getPath() != null) &&
             activeEditor_.getExtendedFileType() == "rmarkdown";
       commands_.editRmdFormatOptions().setVisible(rmdCommandsAvailable);
       commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);

@@ -269,6 +269,7 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.knitDocument());
          results.add(commands.usingRMarkdownHelp());
+         results.add(commands.editRmdFormatOptions());
       }
       if (canPreviewHTML())
       {
