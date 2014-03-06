@@ -633,12 +633,12 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   public JWildcardType getWildcardType(
       com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType boundType,
       com.google.gwt.core.ext.typeinfo.JClassType extTypeBound) {
-    // Special fast case for <? extends Object>
-    // TODO(amitmanjhi): make sure this actually does speed things up!
+    // Special case for <? extends Object>
     JClassType typeBound = (JClassType) extTypeBound;
-    if (typeBound == getJavaLangObject() && boundType == BoundType.UNBOUND) {
+    if (typeBound == getJavaLangObject()
+        && (boundType == BoundType.UNBOUND || boundType == BoundType.EXTENDS)) {
       if (unboundWildCardType == null) {
-        unboundWildCardType = new JWildcardType(boundType, typeBound);
+        unboundWildCardType = new JWildcardType(BoundType.UNBOUND, typeBound);
       }
       return unboundWildCardType;
     }

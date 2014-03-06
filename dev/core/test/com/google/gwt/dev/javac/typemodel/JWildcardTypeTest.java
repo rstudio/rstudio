@@ -17,8 +17,8 @@ package com.google.gwt.dev.javac.typemodel;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dev.javac.typemodel.test.CA;
 import com.google.gwt.dev.javac.typemodel.test.CB;
 import com.google.gwt.dev.javac.typemodel.test.CC;
@@ -138,7 +138,6 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
         oracle.getType(Number.class.getName()));
     JClassType[] subtypes = lowerBoundWildcard.getSubtypes();
     assertEquals(0, subtypes.length);
-    // assertEquals(oracle.getJavaLangObject(), subtypes[0]);
   }
 
   public void testGetSubtypes_UpperBound() throws NotFoundException {
@@ -223,6 +222,25 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
 
     assertTrue(numberWildcard.isAssignableFrom(integerWildcard));
     assertFalse(integerWildcard.isAssignableFrom(numberWildcard));
+  }
+
+  public void testUnboundIsSameAsExtendsObject() {
+    TypeOracle oracle = moduleContext.getOracle();
+
+    JClassType javaLangObject = oracle.getJavaLangObject();
+
+    // ?
+    JWildcardType unbound = oracle.getWildcardType(BoundType.UNBOUND, javaLangObject);
+
+    // ? extends Object
+    JWildcardType upperWildcard = oracle.getWildcardType(BoundType.EXTENDS, javaLangObject);
+
+    assertSame(unbound, upperWildcard);
+
+    // ? super Object
+    JWildcardType lowerWildcard = oracle.getWildcardType(BoundType.SUPER, javaLangObject);
+
+    assertNotSame(unbound, lowerWildcard);
   }
 
   /**
