@@ -17,7 +17,6 @@ package com.google.web.bindery.requestfactory.gwt.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.javac.testing.GeneratorContextBuilder;
 import com.google.gwt.dev.javac.testing.JavaSource;
@@ -46,11 +45,6 @@ public class RequestFactoryGeneratorTest extends TestCase {
       "java.util.Set",
       "package java.util;",
       "public interface Set<V> {}");
-
-  private static final JavaSource LIST = createMockJavaSource(
-      "java.util.List",
-      "package java.util;",
-      "public interface List<V> {}");
 
   private static final JavaSource AUTH_SCOPE = createMockJavaSource(
       "com.google.api.gwt.shared.AuthScope",
@@ -115,7 +109,6 @@ public class RequestFactoryGeneratorTest extends TestCase {
     generator = new RequestFactoryGenerator();
     contextBuilder = GeneratorContextBuilder.newCoreBasedBuilder();
     contextBuilder.add(SET);
-    contextBuilder.add(LIST);
     contextBuilder.add(AUTH_SCOPE);
     contextBuilder.add(SPLITTABLE);
     contextBuilder.add(PROPERTY_NAME);

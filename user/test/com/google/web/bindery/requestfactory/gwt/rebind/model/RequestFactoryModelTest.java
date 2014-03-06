@@ -15,7 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.gwt.rebind.model;
 
-import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
@@ -27,6 +26,7 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.web.bindery.requestfactory.server.TestContextImpl;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
@@ -268,16 +268,6 @@ public class RequestFactoryModelTest extends TestCase {
         code.append("interface ProxyWithRepeatedGetters extends EntityProxy {\n");
         code.append("  boolean getFoo();");
         code.append("  boolean isFoo();");
-        code.append("}");
-        return code;
-      }
-    }, new MockJavaResource("java.util.List") {
-        // Tests a Driver interface that extends more than RFED
-      @Override
-      public CharSequence getContent() {
-        StringBuilder code = new StringBuilder();
-        code.append("package java.util;\n");
-        code.append("public interface List<T> extends Collection<T> {\n");
         code.append("}");
         return code;
       }

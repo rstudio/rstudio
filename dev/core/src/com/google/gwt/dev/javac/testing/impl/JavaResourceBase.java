@@ -113,7 +113,7 @@ public class JavaResourceBase {
   public static final MockJavaResource COMPARABLE =
       createMockJavaResource("java.lang.Comparable",
           "package java.lang;",
-          "public interface Comparable<T extends Comparable<T> > {",
+          "public interface Comparable<T> {",
           "  public int compareTo(T other);",
           "}");
 
@@ -199,6 +199,11 @@ public class JavaResourceBase {
           "  protected JavaScriptObject() { }",
           "  public final String toString() { return \"JavaScriptObject\"; }",
           "}");
+
+  public static final MockJavaResource LIST =
+      createMockJavaResource("java.util.List",
+          "package java.util;",
+          "public interface List<T> extends Collection<T> {}");
 
   public static final MockJavaResource LONG =
       createMockJavaResource("java.lang.Long",
@@ -314,8 +319,8 @@ public class JavaResourceBase {
     return new MockJavaResource[]{
         AUTOCLOSEABLE, ANNOTATION, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
         CLASS_NOT_FOUND_EXCEPTION, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT,
-        INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER,
-        OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE};
+        INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR,
+        NUMBER, OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE};
   }
 
   /**

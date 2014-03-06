@@ -969,16 +969,6 @@ public class EditorModelTest extends TestCase {
         code.append("}");
         return code;
       }
-    }, new MockJavaResource("java.util.List") {
-        // Tests a Driver interface that extends more than RFED
-      @Override
-      public CharSequence getContent() {
-        StringBuilder code = new StringBuilder();
-        code.append("package java.util;\n");
-        code.append("public interface List<T> {\n");
-        code.append("}");
-        return code;
-      }
     }};
 
     Set<Resource> toReturn = new HashSet<Resource>(Arrays.asList(javaFiles));
