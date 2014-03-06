@@ -40,10 +40,10 @@ public class BrowserInfo {
     String lcAgent = userAgent.toLowerCase(Locale.ENGLISH);
     if (lcAgent.contains("msie")) {
       return IE;
+    } else if (lcAgent.contains("opr")) {
+      return OPERA;
     } else if (lcAgent.contains("chrome")) {
       return CHROME;
-    } else if (lcAgent.contains("opera")) {
-      return OPERA;
     } else if (lcAgent.contains("webkit") || lcAgent.contains("safari")) {
       return SAFARI;
     } else if (lcAgent.contains("firefox") || lcAgent.contains("minefield")) {

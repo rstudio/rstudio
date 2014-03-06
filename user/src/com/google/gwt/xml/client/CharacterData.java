@@ -15,11 +15,6 @@
  */
 package com.google.gwt.xml.client;
 
-/*
- * Implementation notes: Opera has a length limit of 32k on any <code>CharacterData</code>
- * nodes.
- */
-
 /**
  * This interface describes <code>CharacterData</code> XML nodes. These can be
  * either <code>Text</code>, <code>CDATASection</code> or

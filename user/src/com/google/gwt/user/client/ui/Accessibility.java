@@ -19,11 +19,7 @@ import com.google.gwt.dom.client.Element;
 
 /**
  * <p>Allows ARIA attributes to be added to widgets so that they can be
- * identified by assistive technologies. Firefox 3, Firefox 2 (via FireVox),
- * and Opera 9.5 are the only released browsers that currently support this
- * feature, but in the near future it will be available in Safari and Internet
- * Explorer 8. Individual screen reader applications may also support ARIA, to
- * varying extents.</p>
+ * identified by assistive technologies.
  *
  * <p>A 'role' describes the role a widget plays in a page: i.e. a checkbox
  * widget is assigned a "checkbox" role.</p>

@@ -17,7 +17,7 @@
 /*
  * Cross-browser implementation of the "display: inline-block" CSS property.
  * See http://www.w3.org/TR/CSS21/visuren.html#propdef-display for details.
- * Tested on IE 6 & 7, FF 2.0 & 3.0, Safari 2 & 3, Webkit, Chrome and Opera 9.
+ * Tested on IE 6 & 7, FF 2.0 & 3.0, Safari 2 & 3, Webkit and Chrome.
  *
  * Original author: attila@google.com (Attila Bodis)
  */
@@ -38,7 +38,7 @@
   }
 }
 
-/* Default rule; only Safari, Webkit, Opera, FF3 handle it without hacks. */
+/* Default rule; only Safari, Webkit, FF3 handle it without hacks. */
 .inlineBlock {
   position: relative;
   display: inline-block;

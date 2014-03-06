@@ -54,11 +54,6 @@ public class ClientSupportTest extends GWTTestCase {
       assertEquals("FF" + majorVers, majorVers >= 4, isSupported);
       return;
     }
-    if (ua.contains("opera")) {
-      // which versions support typed arrays?
-      assertTrue(isSupported);
-      return;
-    }
     if (ua.contains("webkit")) {
       // which versions support typed arrays?
       assertTrue(isSupported);

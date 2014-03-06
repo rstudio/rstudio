@@ -5,9 +5,8 @@ such as mobile devices.
 
 Currently, Elemental is generated from the WebKit project's WebIDL binding definitions which are used also
 by the Dart project. Because of this, vendor prefixed APIs also show up (webkit specific). These APIs are
-often also available on Firefox, Opera, and IE. A future version of Elemental will generate these
-as well, either as Mozilla/Opera/IE vendor prefixed calls, or as standardized non-prefix calls backed by 
-multibrowser shim.
+often also available on Firefox and IE. A future version of Elemental will generate these as well, either
+as Mozilla/IE vendor prefixed calls, or as standardized non-prefix calls backed by multibrowser shim.
 
 To see Elemental and SuperDevMode in action, run 'ant dist-dev' to build gwt-dev and gwt-user jars. Then
 cd to examples/silvercomet and run 'ant demo'

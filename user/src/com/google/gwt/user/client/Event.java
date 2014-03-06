@@ -330,12 +330,6 @@ public class Event extends NativeEvent {
 
   /**
    * Fired when the user pastes text into an input element.
-   * 
-   * <p>
-   * Note: This event is <em>not</em> supported on Firefox 2 and earlier, or
-   * Opera 10 and earlier. Be aware that it will not fire on these browser
-   * versions.
-   * </p>
    */
   public static final int ONPASTE = 0x80000;
 
@@ -366,8 +360,6 @@ public class Event extends NativeEvent {
   /**
    * Fired when the user requests an element's context menu (usually by
    * right-clicking).
-   * 
-   * Note that not all browsers will fire this event (notably Opera, as of 9.5).
    */
   public static final int ONCONTEXTMENU = 0x40000;
 
