@@ -41,7 +41,12 @@ public class RmdFormatOptionsHelper
          else
          {
             String type = option.getOption().getType();
-            if (type.equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
+            if (option.getValue() == null)
+            {
+               // all nulls are written identically
+               addOption(optionList, option.getOption(), null);
+            }
+            else if (type.equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
             {
                addOption(optionList, option.getOption(), 
                          Boolean.parseBoolean(option.getValue()));

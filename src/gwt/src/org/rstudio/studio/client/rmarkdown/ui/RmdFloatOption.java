@@ -22,19 +22,27 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class RmdFloatOption extends RmdBaseOption
+public class RmdFloatOption extends RmdNullableOption
 {
    public RmdFloatOption(RmdTemplateFormatOption option, String initialValue)
    {
-      super(option);
+      super(option, initialValue);
       HTMLPanel panel = new HTMLPanel("");
       defaultValue_ = Float.parseFloat(option.getDefaultValue());
-      panel.add(new InlineLabel(option.getUiName() + ":"));
+      if (option.isNullable())
+         panel.add(nonNullCheckBox());
+      else
+         panel.add(new InlineLabel(option.getUiName() + ":"));
       txtValue_ = new NumericTextBox();
-      txtValue_.setValue(initialValue);
+      if (initialValue.equals("null"))
+         txtValue_.setValue(option.getDefaultValue());
+      else
+         txtValue_.setValue(initialValue);
       txtValue_.setWidth("40px");
       txtValue_.getElement().getStyle().setMarginLeft(5, Unit.PX);
       panel.add(txtValue_);
+
+      updateNull();
 
       initWidget(panel);
    }
@@ -42,16 +50,27 @@ public class RmdFloatOption extends RmdBaseOption
    @Override
    public boolean valueIsDefault()
    {
+      if (valueIsNull())
+         return defaultValue_.equals("null");
       return defaultValue_ == Float.parseFloat(txtValue_.getText());
    }
 
    @Override
    public String getValue()
    {
+      if (valueIsNull())
+         return null;
       Float val = Float.parseFloat(txtValue_.getText());
       return val.toString();
+   }
+
+   @Override
+   public void updateNull()
+   {
+      txtValue_.setEnabled(!valueIsNull());
    }
    
    private final Float defaultValue_;
    private TextBox txtValue_;
+
 }

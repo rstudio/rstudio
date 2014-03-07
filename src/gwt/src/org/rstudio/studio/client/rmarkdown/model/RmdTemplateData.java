@@ -204,7 +204,7 @@ public class RmdTemplateData
             format_ui_name: "HTML (ioslides)",
             format_extension: "html",
             format_options: [ "logo", "fig_width", "fig_height", "fig_caption", 
-                              "incremental", "transition", "smaller",
+                              "fig_retina", "incremental", "transition", "smaller",
                               "widescreen",
                               "highlight", "self_contained", "smart" ],
             format_notes: "Recommended format for HTML presentations (you can also print ioslides to PDF with Chrome)."
@@ -221,9 +221,9 @@ public class RmdTemplateData
             format_name: "beamer_presentation",
             format_ui_name: "PDF (Beamer)",
             format_extension: "pdf",
-            format_options: [ "incremental", "theme", "colortheme", 
+            format_options: [ "toc", "incremental", "theme", "colortheme", 
                               "fonttheme", "fig_width", "fig_height", 
-                              "fig_crop", "fig_caption", "toc", "highlight" ],
+                              "fig_crop", "fig_caption", "highlight" ],
             format_notes: "PDF output requires an installation of TeX"
             }
          ],
@@ -406,6 +406,14 @@ public class RmdTemplateData
             option_type: "file", 
             option_nullable: true,
             option_default: "null"
+            },
+            {
+            option_name: "fig_retina",
+            option_ui_name: "Figure scaling for Retina displays", 
+            option_type: "float", 
+            option_nullable: true,
+            option_category: "Figures",
+            option_default: "2"
             },
          ]
          }
