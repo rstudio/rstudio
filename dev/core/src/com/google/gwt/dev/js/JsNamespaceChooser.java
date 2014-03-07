@@ -143,7 +143,7 @@ public class JsNamespaceChooser {
     }
 
     // Convert the function statement into an assignment taking a named function expression:
-    // var a.b = function b() { ... }
+    // a.b = function b() { ... }
     // The function also keeps its unqualified name for better stack traces in some browsers.
     // Note: for reserving names, currently we pretend that 'b' is in global scope to avoid
     // any name conflicts. It is actually two different names in two scopes; the 'b' in 'a.b'

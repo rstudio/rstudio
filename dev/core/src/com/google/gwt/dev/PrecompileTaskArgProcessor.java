@@ -39,6 +39,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerFragmentMerge;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerJsonSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
+import com.google.gwt.dev.util.arg.ArgHandlerNamespace;
 import com.google.gwt.dev.util.arg.ArgHandlerOptimize;
 import com.google.gwt.dev.util.arg.ArgHandlerSaveSource;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
@@ -74,6 +75,7 @@ class PrecompileTaskArgProcessor extends CompileArgProcessor {
     registerHandler(new ArgHandlerFragmentMerge(options));
     registerHandler(new ArgHandlerGenDir(options));
     registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
+    registerHandler(new ArgHandlerNamespace(options));
     registerHandler(new ArgHandlerOptimize(options));
     registerHandler(new ArgHandlerSaveSource(options));
     registerHandler(new ArgHandlerScriptStyle(options));
