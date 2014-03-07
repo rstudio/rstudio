@@ -74,7 +74,7 @@ import java.util.Map;
  * This transform may NOT be run multiple times; it will create ever-expanding replacement
  * expressions.
  */
-public class JsoDevirtualizer {
+public class Devirtualizer {
   // TODO(rluble): rename the class as Devirtualizer as it deals with all three instances of
   // devirtualization (arrays, strings and JSOs).
 
@@ -97,7 +97,7 @@ public class JsoDevirtualizer {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      if (!mightBeJsoMethod(x)) {
+      if (!mightNeedDevirtualization(x)) {
         return;
       }
       // The pruning pass will discard devirtualized methods that have not been called in
@@ -108,7 +108,7 @@ public class JsoDevirtualizer {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      if (!mightBeJsoMethod(method)) {
+      if (!mightNeedDevirtualization(method)) {
         return;
       }
       JType instanceType = ((JReferenceType) x.getInstance().getType()).getUnderlyingType();
@@ -158,7 +158,7 @@ public class JsoDevirtualizer {
       // Separate compilation treats all JSOs as if they are "dualImpl", as the interface might
       // be implemented by a regular Java object in a separate module.
 
-      // TODO(rluble): (Separate compilation) JsoDevirtualizer should be run before optimizations
+      // TODO(rluble): (Separate compilation) Devirtualizer should be run before optimizations
       // and optimizations need to be strong enough to perform the same kind of size reductions
       // achieved by keeping track of singleImpls.
 
@@ -191,7 +191,7 @@ public class JsoDevirtualizer {
       }
     }
 
-    private boolean mightBeJsoMethod(JMethod method) {
+    private boolean mightNeedDevirtualization(JMethod method) {
       JDeclaredType targetType = method.getEnclosingType();
 
       if (targetType == null || !method.needsVtable()) {
@@ -210,7 +210,7 @@ public class JsoDevirtualizer {
   }
 
   public static void exec(JProgram program) {
-    new JsoDevirtualizer(program).execImpl();
+    new Devirtualizer(program).execImpl();
   }
 
   /**
@@ -286,7 +286,7 @@ public class JsoDevirtualizer {
     return devirtualMethod;
   }
 
-  private JsoDevirtualizer(JProgram program) {
+  private Devirtualizer(JProgram program) {
     this.program = program;
     this.isJavaStringMethod = program.getIndexedMethod("Cast.isJavaString");
     this.isRegularJavaObjectMethod = program.getIndexedMethod("Cast.isRegularJavaObject");

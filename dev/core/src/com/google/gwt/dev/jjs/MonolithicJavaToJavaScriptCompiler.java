@@ -41,12 +41,12 @@ import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
+import com.google.gwt.dev.jjs.impl.Devirtualizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
-import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
 import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
@@ -98,7 +98,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
     @Override
     protected Map<JType, JLiteral> normalizeSemantics() {
-      JsoDevirtualizer.exec(jprogram);
+      Devirtualizer.exec(jprogram);
       CatchBlockNormalizer.exec(jprogram);
       PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
       LongCastNormalizer.exec(jprogram);

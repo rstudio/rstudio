@@ -48,7 +48,7 @@ import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
-import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
+import com.google.gwt.dev.jjs.impl.Devirtualizer;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
 import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
@@ -103,7 +103,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
 
     @Override
     protected Map<JType, JLiteral> normalizeSemantics() {
-      JsoDevirtualizer.exec(jprogram);
+      Devirtualizer.exec(jprogram);
       CatchBlockNormalizer.exec(jprogram);
       PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
       LongCastNormalizer.exec(jprogram);

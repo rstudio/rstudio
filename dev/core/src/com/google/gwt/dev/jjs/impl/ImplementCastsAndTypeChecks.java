@@ -38,7 +38,7 @@ import java.util.Comparator;
 /**
  * Replace cast and instanceof operations with calls to the Cast class. Depends
  * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer},
- * {@link JsoDevirtualizer}, and {@link LongCastNormalizer} having already run.
+ * {@link Devirtualizer}, and {@link LongCastNormalizer} having already run.
  */
 public class ImplementCastsAndTypeChecks {
   /**

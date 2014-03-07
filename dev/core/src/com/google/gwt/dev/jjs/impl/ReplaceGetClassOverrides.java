@@ -25,7 +25,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 
 /**
  * Prune all overrides of Object.getClass() except when the enclosing class is JavaScriptObject
- * (to permit getClass() devirtualization in JsoDevirtualizer to continue to work).
+ * (to permit getClass() devirtualization in Devirtualizer to continue to work).
  * Also Inline all method calls to Object.getClass() as Object.clazz.
  */
 public class ReplaceGetClassOverrides {
@@ -48,7 +48,7 @@ public class ReplaceGetClassOverrides {
     @Override
     public void endVisit(JMethod x, Context ctx) {
       // Don't prune getClass() for objects where it is devirtualized (String, JSOs for now)
-      if (JsoDevirtualizer.isGetClassDevirtualized(program, x.getEnclosingType())) {
+      if (Devirtualizer.isGetClassDevirtualized(program, x.getEnclosingType())) {
         return;
       }
       if (x.getOverrides().contains(getClassMethod)) {
@@ -59,7 +59,7 @@ public class ReplaceGetClassOverrides {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       // Don't inline getClass() for objects where it is devirtualized (String, JSOs for now)
-      if (JsoDevirtualizer.isGetClassDevirtualized(program, x.getTarget().getEnclosingType())) {
+      if (Devirtualizer.isGetClassDevirtualized(program, x.getTarget().getEnclosingType())) {
         return;
       }
       // replace overridden getClass() with reference to Object.clazz field

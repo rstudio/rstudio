@@ -84,7 +84,7 @@ public final class String implements Comparable<String>, CharSequence,
    * syntax by mapping it into equivalent JS patterns, or emulating them.
    *
    * IMPORTANT NOTE: if newer JREs add new interfaces to String, please update
-   * {@link JsoDevirtualizer} and {@link JavaResourceBase}
+   * {@link Devirtualizer} and {@link JavaResourceBase}
    */
 
   /**

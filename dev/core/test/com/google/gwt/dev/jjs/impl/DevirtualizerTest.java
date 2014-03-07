@@ -23,9 +23,9 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 /**
- * Tests for the {@link JsoDevirtualizer} visitor.
+ * Tests for the {@link Devirtualizer} visitor.
  */
-public class JsoDevirtualizerTest extends OptimizerTestBase {
+public class DevirtualizerTest extends OptimizerTestBase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -47,7 +47,7 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
   }
 
   /**
-   * JsoDevirtualizer should allow dual Java/JSO implementations of the same
+   * Devirtualizer should allow dual Java/JSO implementations of the same
    * interface, so long as there is only one of each. If there are multiple
    * methods with the same method name, it should distinguish between them.
    */
@@ -96,8 +96,8 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
     expected.append("int result = ");
     expected.append("EntryPoint$Jso1.a__devirtual$(EntryPoint.val1) + ");
     expected.append("EntryPoint$Jso1.a__devirtual$(EntryPoint.val2) + ");
-    expected.append("EntryPoint$Jso2.a1__devirtual$(EntryPoint.val3) + ");
-    expected.append("EntryPoint$Jso2.a1__devirtual$(EntryPoint.val4);");
+    expected.append("EntryPoint$Jso2.a0__devirtual$(EntryPoint.val3) + ");
+    expected.append("EntryPoint$Jso2.a0__devirtual$(EntryPoint.val4);");
 
     Result result = optimize("void", code.toString());
     // Asserts that a() method calls were redirected to the devirtualized version.
@@ -146,7 +146,7 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
         "String.compareTo__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + " +
         "String.compareTo__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + " +
         "String.length__devirtual$(EntryPoint.stringCharSeq) + " +
-        "String.length1__devirtual$(EntryPoint.aString);");
+        "String.length0__devirtual$(EntryPoint.aString);");
 
     Result result = optimize("void", code.toString());
     result.intoString(expected.toString());
@@ -154,7 +154,7 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
-    JsoDevirtualizer.exec(program);
+    Devirtualizer.exec(program);
     return true;
   }
 }

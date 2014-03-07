@@ -48,7 +48,7 @@ import java.util.TreeSet;
 /**
  * Builds minimal cast maps to cover cast and instanceof operations. Depends
  * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer},
- * {@link JsoDevirtualizer}, and {@link LongCastNormalizer} having already run.
+ * {@link Devirtualizer}, and {@link LongCastNormalizer} having already run.
  */
 public class ComputeCastabilityInformation {
   private class AssignTypeCastabilityVisitor extends JVisitor {
