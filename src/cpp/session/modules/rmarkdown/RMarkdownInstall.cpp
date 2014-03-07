@@ -163,7 +163,7 @@ Error installWithProgress(
    {
       std::string pkgList = boost::algorithm::join(cranPackages, ",");
       cmd += "utils::install.packages(c(" + pkgList + "), " +
-             "repos = '"+ userSettings().cranMirror().url + "');";
+             "repos = '"+ module_context::CRANReposURL() + "');";
    }
    cmd += "utils::install.packages('" + rmarkdownPackageArchive() + "', "
                                    "repos = NULL, type = 'source');";

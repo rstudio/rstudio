@@ -465,6 +465,8 @@ core::json::Object compileOutputAsJson(const CompileOutput& compileOutput);
 
 std::string previousRpubsUploadId(const core::FilePath& filePath);
 
+std::string CRANReposURL();
+
 } // namespace module_context
 } // namespace session
 
