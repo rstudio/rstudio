@@ -29,7 +29,7 @@ public class RmdTemplateData
             format_extension: "html",
             format_options: [ "toc", "theme", "css", "highlight", "fig_width", 
                               "fig_height", "fig_caption", "smart", 
-                              "self_contained" ],
+                              "self_contained", "pandoc_args" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
@@ -39,15 +39,15 @@ public class RmdTemplateData
             format_options: [ "toc", "toc_depth", "fig_width", "fig_height",
                               "fig_caption", "fig_crop", "number_sections", 
                               "latex_engine", "highlight", "natbib", 
-                              "biblatex" ],
-            format_notes: "PDF output requires an installation of TeX"
+                              "biblatex", "pandoc_args" ],
+            format_notes: "PDF output requires an installation of TeX."
             },
             {
             format_name: "word_document", 
             format_ui_name: "Word",
             format_extension: "docx",
             format_options: [ "highlight", "fig_width", "fig_height", 
-                              "fig_caption" ]
+                              "fig_caption", "pandoc_args" ]
             } 
          ],
          template_options: [ 
@@ -194,6 +194,14 @@ public class RmdTemplateData
             option_type: "boolean", 
             option_default: "false"
             },
+            {
+            option_name: "pandoc_args",
+            option_ui_name: "Pass additional command line options to Pandoc", 
+            option_category: "Advanced",
+            option_type: "string", 
+            option_nullable: true, 
+            option_default: "null"
+            },
          ]
          },
          {
@@ -204,18 +212,19 @@ public class RmdTemplateData
             format_ui_name: "HTML (ioslides)",
             format_extension: "html",
             format_options: [ "logo", "fig_width", "fig_height", "fig_caption", 
-                              "fig_retina", "incremental", "transition", "smaller",
-                              "widescreen",
-                              "highlight", "self_contained", "smart" ],
+                              "fig_retina", "incremental", "smaller",
+                              "widescreen", "highlight", "transition", 
+                              "self_contained", "smart", "pandoc_args" ],
             format_notes: "Recommended format for HTML presentations (you can also print ioslides to PDF with Chrome)."
             },
             {
             format_name: "revealjs_presentation",
             format_ui_name: "HTML (reveal.js)",
             format_extension: "html",
-            format_options: ["center", "incremental", "transition", "theme", 
-                             "fig_width", "fig_height", "fig_caption",
-                             "highlight", "self_contained", "smart" ]
+            format_options: ["center", "incremental", "highlight", "transition", 
+                             "theme", "fig_width", "fig_height", "fig_caption",
+                             "fig_retina", "self_contained", "smart", 
+                             "pandoc_args" ]
             },
             {
             format_name: "beamer_presentation",
@@ -223,7 +232,8 @@ public class RmdTemplateData
             format_extension: "pdf",
             format_options: [ "toc", "incremental", "theme", "colortheme", 
                               "fonttheme", "fig_width", "fig_height", 
-                              "fig_crop", "fig_caption", "highlight" ],
+                              "fig_crop", "fig_caption", "highlight", 
+                              "pandoc_args" ],
             format_notes: "PDF output requires an installation of TeX"
             }
          ],
@@ -350,6 +360,7 @@ public class RmdTemplateData
             option_ui_name: "Syntax highlighting", 
             option_type: "choice", 
             option_transferable: true,
+            option_nullable: true,
             option_default: "default",
             option_list: [ "default", "tango", "pygments", "kate", "monochrome",
                            "espresso", "zenburn", "haddock"]
@@ -414,6 +425,14 @@ public class RmdTemplateData
             option_nullable: true,
             option_category: "Figures",
             option_default: "2"
+            },
+            {
+            option_name: "pandoc_args",
+            option_ui_name: "Pass additional command line options to Pandoc", 
+            option_category: "Advanced",
+            option_type: "string", 
+            option_nullable: true, 
+            option_default: "null"
             },
          ]
          }

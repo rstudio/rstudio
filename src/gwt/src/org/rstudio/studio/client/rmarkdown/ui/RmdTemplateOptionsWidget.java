@@ -189,6 +189,10 @@ public class RmdTemplateOptionsWidget extends Composite
          {
             optionWidget = new RmdChoiceOption(option, initialValue);
          }
+         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_STRING))
+         {
+            optionWidget = new RmdStringOption(option, initialValue);
+         }
          else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT) ||
                   option.getType().equals(RmdTemplateFormatOption.TYPE_INTEGER))
          {

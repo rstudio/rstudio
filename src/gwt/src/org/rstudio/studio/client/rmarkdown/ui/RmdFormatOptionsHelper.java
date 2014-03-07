@@ -61,7 +61,8 @@ public class RmdFormatOptionsHelper
                addOption(optionList, option.getOption(), 
                          Integer.parseInt(option.getValue()));
             }
-            else if (type.equals(RmdTemplateFormatOption.TYPE_CHOICE))
+            else if (type.equals(RmdTemplateFormatOption.TYPE_CHOICE) ||
+                     type.equals(RmdTemplateFormatOption.TYPE_STRING))
             {
                addOption(optionList, option.getOption(), option.getValue());
             }

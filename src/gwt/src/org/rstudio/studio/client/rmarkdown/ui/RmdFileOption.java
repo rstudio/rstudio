@@ -20,7 +20,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 
 public class RmdFileOption extends RmdNullableOption
 {
@@ -30,15 +29,7 @@ public class RmdFileOption extends RmdNullableOption
       defaultValue_ = option.getDefaultValue();
 
       HTMLPanel panel = new HTMLPanel("");
-
-      if (option.isNullable())
-      {
-         panel.add(nonNullCheckBox());
-      }
-      else
-      {
-         panel.add(new InlineLabel(option.getUiName() + ": "));
-      }
+      panel.add(getOptionLabelWidget());
       
       fileChooser_ = new FileChooserTextBox("", null);
       if (!initialValue.equals("null"))

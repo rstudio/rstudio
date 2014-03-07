@@ -18,7 +18,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.ListBox;
 
 public class RmdChoiceOption extends RmdNullableOption
@@ -29,14 +28,7 @@ public class RmdChoiceOption extends RmdNullableOption
       defaultValue_ = option.getDefaultValue();
 
       HTMLPanel panel = new HTMLPanel("");
-      if (option.isNullable())
-      {
-         panel.add(nonNullCheckBox());
-      }
-      else
-      {
-         panel.add(new InlineLabel(option.getUiName() + ":"));
-      }
+      panel.add(getOptionLabelWidget());
       choices_ = new ListBox();
       
       JsArrayString choiceList = option.getChoiceList();
