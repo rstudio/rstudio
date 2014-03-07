@@ -92,7 +92,7 @@ void ammendResults(const std::string& formatName,
    boost::regex reTitle("^title\\:(.*)$");
    boost::regex reCode("^`{3,}.*$");
    boost::regex reTitledSlide("^#(#)?([^|\\{]+).*$");
-   boost::regex reUntitledSlide("^(\\-{4,}|\\*{4,})\\w*$");
+   boost::regex reUntitledSlide("^(\\-{3,}|\\*{3,})\\w*$");
    for (unsigned i = 0; i<lines.size(); i++)
    {
       // alias line
@@ -106,23 +106,29 @@ void ammendResults(const std::string& formatName,
       if (inCode)
          continue;
 
-      // toggle yaml state
-      if (boost::regex_search(line, reYaml))
-      {
-         if (!inYaml)
-         {
-            inYaml = true;
-         }
-         else if (inYaml && !haveTitle) // no title found in first
-                                        // yaml block, bail
-         {
-            break;
-         }
-      }
-
       // look for a title if we don't have one
-      if (!haveTitle)
+      if (!haveTitle || inYaml)
       {
+         if (boost::regex_search(line, reYaml))
+         {
+            if (!inYaml)
+            {
+               inYaml = true;
+            }
+            else if (inYaml)
+            {
+               // bail if there was no title
+               if (!haveTitle)
+               {
+                  break;
+               }
+               else
+               {
+                  inYaml = false;
+               }
+            }
+         }
+
          // titles only valid in yaml
          if (inYaml)
          {
@@ -137,7 +143,6 @@ void ammendResults(const std::string& formatName,
                SlideNavigationItem item(title, 0, totalSlides++, 1);
                slideNavigationItems.push_back(item);
                haveTitle = true;
-
             }
          }
       }
