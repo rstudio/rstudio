@@ -25,6 +25,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -509,6 +510,7 @@ public class TextEditingTargetWidget
    public void setFormatOptions(TextFileType fileType,
                                 List<String> options, 
                                 List<String> values, 
+                                List<String> extensions, 
                                 String selectedOption)
    {
       rmdFormatButton_.clearMenu();
@@ -519,7 +521,19 @@ public class TextEditingTargetWidget
       String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit ";
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
-         rmdFormatButton_.addMenuItem(prefix + options.get(i), values.get(i));
+         MenuItem item = new MenuItem(options.get(i), (ScheduledCommand) null);
+         SafeHtmlBuilder sb = new SafeHtmlBuilder();
+         ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
+                     extensions.get(i));
+         if (img != null)
+         {
+            sb.appendHtmlConstant("<img src=\"" + img.getSafeUri().asString() +
+                                  "\" style=\"vertical-align: middle; " + 
+                                  "margin-right: 5px;\" />");
+         }
+         sb.appendEscaped(prefix + options.get(i));
+         item.setHTML(sb.toSafeHtml().asString());
+         rmdFormatButton_.addMenuItem(item, values.get(i));
       }
       setFormatOptionsVisible(true);
    }

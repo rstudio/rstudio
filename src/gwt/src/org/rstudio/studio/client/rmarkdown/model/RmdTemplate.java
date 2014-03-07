@@ -56,4 +56,10 @@ public class RmdTemplate extends JavaScriptObject
       return JsArrayUtil.jsFindInCollection(getOptions(), "option_name", 
                                             option);
    }
+   
+   public final static RmdTemplate getTemplate(JsArray<RmdTemplate> haystack,
+                                               String needle) 
+   {
+      return JsArrayUtil.jsFindInCollection(haystack, "template_name", needle);
+   }
 }

@@ -39,9 +39,10 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RmdTemplateOptionsWidget extends Composite
@@ -80,7 +81,6 @@ public class RmdTemplateOptionsWidget extends Composite
       options_ = template.getOptions();
       if (frontMatter != null)
          applyFrontMatter(frontMatter);
-      forCreate_ = forCreate;
       listFormats_.clear();
       for (int i = 0; i < formats_.length(); i++)
       {
@@ -138,7 +138,8 @@ public class RmdTemplateOptionsWidget extends Composite
    
    private void updateFormatOptions(String format)
    {
-      panelOptions_.clear();
+      tabs_ = new HashMap<String, FlowPanel>();
+      optionsTabs_.clear();
       for (int i = 0; i < formats_.length(); i++)
       {
          if (formats_.get(i).getName().equals(format))
@@ -206,8 +207,22 @@ public class RmdTemplateOptionsWidget extends Composite
          else
             continue;
          
+         FlowPanel panel = null;
+         String category = option.getCategory();
+         if (tabs_.containsKey(category))
+         {
+            panel = tabs_.get(category);
+         }
+         else
+         {
+            panel = new FlowPanel();
+            optionsTabs_.add(panel, new Label(category));
+            tabs_.put(category, panel);
+         }
+         
+         panel.add(optionWidget);
+         
          optionWidgets_.add(optionWidget);
-         panelOptions_.add(optionWidget);
          Style optionStyle = optionWidget.asWidget().getElement().getStyle();
          optionStyle.setMarginTop(3, Unit.PX);
          optionStyle.setMarginBottom(5, Unit.PX);
@@ -224,9 +239,6 @@ public class RmdTemplateOptionsWidget extends Composite
          
          // Not the option we're looking for 
          if (!option.getName().equals(optionName))
-            continue;
-
-         if (forCreate_ && !option.showForCreate())
             continue;
 
          String optionFormatName = option.getFormatName();
@@ -320,7 +332,6 @@ public class RmdTemplateOptionsWidget extends Composite
    private JsArray<RmdTemplateFormat> formats_;
    private JsArray<RmdTemplateFormatOption> options_;
    private List<RmdFormatOption> optionWidgets_;
-   private boolean forCreate_ = false;
    private RmdFrontMatter frontMatter_;
    private FileSystemItem document_;
    
@@ -334,8 +345,10 @@ public class RmdTemplateOptionsWidget extends Composite
    // from an option name to its default, e.g.
    // "toc" => "true"
    private Map<String, String> frontMatterCache_;
+   
+   private Map<String, FlowPanel> tabs_;
 
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;
-   @UiField VerticalPanel panelOptions_;
+   @UiField TabLayoutPanel optionsTabs_;
 }
