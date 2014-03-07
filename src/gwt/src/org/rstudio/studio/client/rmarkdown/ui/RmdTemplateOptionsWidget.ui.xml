@@ -39,15 +39,16 @@
      -moz-border-radius-topright: 4px;
      border-top-left-radius: 4px;
      border-top-right-radius: 4px;
-	  border: 1px solid #b0b0b0;
+	  border: 1px solid #d0d0d0;
 	  background-color: #f5f5f5;
 	  top: 1px;
 	  color: #808080;
+	  font-weight: bold;
 	}
 	
 	.root .gwt-TabLayoutPanelTabs
 	{
-	  border-bottom: 1px solid #a0a0a0;
+	  border-bottom: 1px solid #c0c0c0;
 	}
 
 	.root .gwt-TabLayoutPanelTab-selected
@@ -62,7 +63,7 @@
      padding: 10px;
      width: 100%;
      height: 100%;
-     border: 1px solid #a0a0a0;
+     border: 1px solid #c0c0c0;
      border-top: none;
      box-sizing: border-box;
      -moz-box-sizing: border-box;

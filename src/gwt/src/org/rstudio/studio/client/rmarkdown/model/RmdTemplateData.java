@@ -27,19 +27,19 @@ public class RmdTemplateData
             format_name: "html_document",
             format_ui_name: "HTML",
             format_extension: "html",
-            format_options: [ "theme", "highlight", "fig_width", 
-                              "fig_height", "fig_caption", "toc", "smart", 
-                              "self_contained", "css" ],
+            format_options: [ "toc", "theme", "css", "highlight", "fig_width", 
+                              "fig_height", "fig_caption", "smart", 
+                              "self_contained" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
             format_name: "pdf_document", 
             format_ui_name: "PDF",
             format_extension: "pdf",
-            format_options: [ "highlight", 
-                              "latex_engine", "fig_crop", "fig_width", 
-                              "fig_height" ,"fig_caption",
-                              "toc", "number_sections" ],
+            format_options: [ "toc", "toc_depth", "fig_width", "fig_height",
+                              "fig_caption", "fig_crop", "number_sections", 
+                              "latex_engine", "highlight", "natbib", 
+                              "biblatex" ],
             format_notes: "PDF output requires an installation of TeX"
             },
             {
@@ -57,6 +57,12 @@ public class RmdTemplateData
             option_type: "boolean", 
             option_transferable: true,
             option_default: "false"
+            },
+            {
+            option_name: "toc_depth",
+            option_ui_name: "Depth of headers for table of contents", 
+            option_type: "integer", 
+            option_default: "2"
             },
             {
             option_name: "self_contained",
@@ -174,6 +180,20 @@ public class RmdTemplateData
             option_nullable: true,
             option_default: "null"
             },
+            {
+            option_name: "natbib",
+            option_ui_name: "Use natbib for citations in LaTeX output", 
+            option_category: "Advanced",
+            option_type: "boolean", 
+            option_default: "false"
+            },
+            {
+            option_name: "biblatex",
+            option_ui_name: "Use biblatex for citations in LaTeX output", 
+            option_category: "Advanced",
+            option_type: "boolean", 
+            option_default: "false"
+            },
          ]
          },
          {
@@ -193,7 +213,7 @@ public class RmdTemplateData
             format_name: "revealjs_presentation",
             format_ui_name: "HTML (reveal.js)",
             format_extension: "html",
-            format_options: ["center", "incremental", "theme", "transition", 
+            format_options: ["center", "incremental", "transition", "theme", 
                              "fig_width", "fig_height", "fig_caption",
                              "highlight", "self_contained", "smart" ]
             },
@@ -225,6 +245,7 @@ public class RmdTemplateData
             option_name: "self_contained",
             option_ui_name: "Create a standalone HTML presentation", 
             option_type: "boolean", 
+            option_category: "Advanced",
             option_default: "true"
             },
             {
@@ -255,12 +276,14 @@ public class RmdTemplateData
             option_name: "smart",
             option_ui_name: "Use smart punctuation", 
             option_type: "boolean", 
+            option_category: "Advanced",
             option_default: "true"
             },
             {
             option_name: "widescreen",
             option_ui_name: "Use widescreen dimensions", 
             option_type: "boolean", 
+            option_category: "Advanced",
             option_default: "false"
             },
             {
@@ -273,17 +296,20 @@ public class RmdTemplateData
             option_name: "fig_caption",
             option_ui_name: "Render figures with captions", 
             option_type: "boolean", 
+            option_category: "Figures",
             option_default: "false"
             },
             {
             option_name: "fig_width",
             option_ui_name: "Default figure width (in inches)", 
+            option_category: "Figures",
             option_type: "float", 
             option_default: "7.5"
             },
             {
             option_name: "fig_height",
             option_ui_name: "Default figure width (in inches)", 
+            option_category: "Figures",
             option_type: "float", 
             option_default: "4.5"
             },
@@ -291,6 +317,7 @@ public class RmdTemplateData
             option_name: "fig_width",
             option_format: "revealjs_presentation",
             option_ui_name: "Default figure width (in inches)", 
+            option_category: "Figures",
             option_type: "float", 
             option_default: "8"
             },
@@ -298,6 +325,7 @@ public class RmdTemplateData
             option_name: "fig_height",
             option_format: "revealjs_presentation",
             option_ui_name: "Default figure width (in inches)", 
+            option_category: "Figures",
             option_type: "float", 
             option_default: "6"
             },
@@ -305,6 +333,7 @@ public class RmdTemplateData
             option_name: "fig_width",
             option_format: "beamer_presentation",
             option_ui_name: "Default figure width (in inches)", 
+            option_category: "Figures",
             option_type: "float", 
             option_default: "10"
             },
@@ -312,6 +341,7 @@ public class RmdTemplateData
             option_name: "fig_height",
             option_format: "beamer_presentation",
             option_ui_name: "Default figure width (in inches)", 
+            option_category: "Figures",
             option_type: "float", 
             option_default: "7"
             },
@@ -334,6 +364,7 @@ public class RmdTemplateData
             option_name: "fig_crop",
             option_ui_name: "Crop figures with pdfcrop (if available)", 
             option_type: "boolean", 
+            option_category: "Figures",
             option_default: "true"
             },
             {

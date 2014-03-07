@@ -42,6 +42,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -188,7 +189,8 @@ public class RmdTemplateOptionsWidget extends Composite
          {
             optionWidget = new RmdChoiceOption(option, initialValue);
          }
-         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT))
+         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT) ||
+                  option.getType().equals(RmdTemplateFormatOption.TYPE_INTEGER))
          {
             optionWidget = new RmdFloatOption(option, initialValue);
          }
@@ -215,8 +217,10 @@ public class RmdTemplateOptionsWidget extends Composite
          }
          else
          {
+            ScrollPanel scrollPanel = new ScrollPanel();
             panel = new FlowPanel();
-            optionsTabs_.add(panel, new Label(category));
+            scrollPanel.add(panel);
+            optionsTabs_.add(scrollPanel, new Label(category));
             tabs_.put(category, panel);
          }
          
