@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style>
+	<ui:style type="org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsWidget.OptionsStyle">
    @external gwt-TabLayoutPanelTab, gwt-TabLayoutPanelTab-selected;
    @external gwt-TabLayoutPanelContent, gwt-TabLayoutPanelTabs;
 
@@ -68,6 +68,12 @@
      box-sizing: border-box;
      -moz-box-sizing: border-box;
      -webkit-box-sizing: border-box;
+	}
+	
+	.optionWidget
+	{
+	  margin-top: 5px;
+	  margin-bottom: 7px;
 	}
 	</ui:style>
    <g:HeaderPanel styleName="{style.root}">

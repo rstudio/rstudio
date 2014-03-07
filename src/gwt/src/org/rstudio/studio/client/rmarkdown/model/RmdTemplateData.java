@@ -27,7 +27,7 @@ public class RmdTemplateData
             format_name: "html_document",
             format_ui_name: "HTML",
             format_extension: "html",
-            format_options: [ "toc", "theme", "css", "highlight", "fig_width", 
+            format_options: [ "toc", "highlight", "theme", "css", "fig_width", 
                               "fig_height", "fig_caption", "smart", 
                               "self_contained", "pandoc_args" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."

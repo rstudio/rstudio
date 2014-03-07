@@ -36,6 +36,7 @@ public class RmdStringOption extends RmdNullableOption
          txtValue_.setValue(initialValue);
       txtValue_.getElement().getStyle().setDisplay(Display.BLOCK);
       txtValue_.getElement().getStyle().setMarginLeft(20, Unit.PX);
+      txtValue_.getElement().getStyle().setMarginTop(3, Unit.PX);
       txtValue_.setWidth("75%");
       panel.add(txtValue_);
 

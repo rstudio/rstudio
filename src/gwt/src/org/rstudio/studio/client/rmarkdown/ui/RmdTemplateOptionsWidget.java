@@ -32,10 +32,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -56,10 +55,16 @@ public class RmdTemplateOptionsWidget extends Composite
          UiBinder<Widget, RmdTemplateOptionsWidget>
    {
    }
+   
+   interface OptionsStyle extends CssResource
+   {
+      String optionWidget();
+   }
 
    public RmdTemplateOptionsWidget()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      style.ensureInjected();
       listFormats_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -181,38 +186,12 @@ public class RmdTemplateOptionsWidget extends Composite
          if (frontMatterValue != null)
             initialValue = frontMatterValue;
          
-         if (option.getType().equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
-         {
-            optionWidget = new RmdBooleanOption(option, initialValue);
-         } 
-         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_CHOICE))
-         {
-            optionWidget = new RmdChoiceOption(option, initialValue);
-         }
-         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_STRING))
-         {
-            optionWidget = new RmdStringOption(option, initialValue);
-         }
-         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT) ||
-                  option.getType().equals(RmdTemplateFormatOption.TYPE_INTEGER))
-         {
-            optionWidget = new RmdFloatOption(option, initialValue);
-         }
-         else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FILE))
-         {
-            // if we have a document and a relative path, resolve the path
-            // relative to the document
-            if (document_ != null && !initialValue.equals("null") &&
-                FilePathUtils.pathIsRelative(initialValue))
-            {
-               initialValue = 
-                     document_.getParentPath().completePath(initialValue);
-            }
-            optionWidget = new RmdFileOption(option, initialValue);
-         }
-         else
+         optionWidget = createWidgetForOption(option, initialValue);
+         if (optionWidget == null)
             continue;
          
+         optionWidget.asWidget().addStyleName(style.optionWidget());
+
          FlowPanel panel = null;
          String category = option.getCategory();
          if (tabs_.containsKey(category))
@@ -227,14 +206,46 @@ public class RmdTemplateOptionsWidget extends Composite
             optionsTabs_.add(scrollPanel, new Label(category));
             tabs_.put(category, panel);
          }
-         
+
          panel.add(optionWidget);
-         
          optionWidgets_.add(optionWidget);
-         Style optionStyle = optionWidget.asWidget().getElement().getStyle();
-         optionStyle.setMarginTop(3, Unit.PX);
-         optionStyle.setMarginBottom(5, Unit.PX);
       }
+   }
+   
+   private RmdFormatOption createWidgetForOption(RmdTemplateFormatOption option,
+                                                 String initialValue)
+   {
+      RmdFormatOption optionWidget = null;
+      if (option.getType().equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
+      {
+         optionWidget = new RmdBooleanOption(option, initialValue);
+      } 
+      else if (option.getType().equals(RmdTemplateFormatOption.TYPE_CHOICE))
+      {
+         optionWidget = new RmdChoiceOption(option, initialValue);
+      }
+      else if (option.getType().equals(RmdTemplateFormatOption.TYPE_STRING))
+      {
+         optionWidget = new RmdStringOption(option, initialValue);
+      }
+      else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT) ||
+               option.getType().equals(RmdTemplateFormatOption.TYPE_INTEGER))
+      {
+         optionWidget = new RmdFloatOption(option, initialValue);
+      }
+      else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FILE))
+      {
+         // if we have a document and a relative path, resolve the path
+         // relative to the document
+         if (document_ != null && !initialValue.equals("null") &&
+             FilePathUtils.pathIsRelative(initialValue))
+         {
+            initialValue = 
+                  document_.getParentPath().completePath(initialValue);
+         }
+         optionWidget = new RmdFileOption(option, initialValue);
+      }
+      return optionWidget;
    }
    
    private RmdTemplateFormatOption findOption(String formatName, 
@@ -359,4 +370,5 @@ public class RmdTemplateOptionsWidget extends Composite
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;
    @UiField TabLayoutPanel optionsTabs_;
+   @UiField OptionsStyle style;
 }
