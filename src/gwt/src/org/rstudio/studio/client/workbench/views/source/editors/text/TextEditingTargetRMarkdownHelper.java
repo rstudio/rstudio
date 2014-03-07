@@ -296,7 +296,7 @@ public class TextEditingTargetRMarkdownHelper
    {
       YamlTree tree = new YamlTree(yaml);
       
-      if (tree.getKeyValue("render").length() >  0)
+      if (tree.getKeyValue("knit").length() >  0)
          return null;
       
       // Find the template appropriate to the first output format listed
