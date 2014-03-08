@@ -81,7 +81,8 @@ class SourceMap {
     Set<String> directories = new HashSet<String>();
     for (int i = 0; i < sources.getLength(); i++) {
       String filename = sources.get(i).asString().getString();
-      directories.add(new File(filename).getParent());
+      int lastSlashPos = filename.lastIndexOf('/');
+      directories.add(lastSlashPos < 0 ? "" : filename.substring(0, lastSlashPos));
     }
 
     List<String> result = new ArrayList<String>();
@@ -102,9 +103,13 @@ class SourceMap {
 
     List<String> result = new ArrayList<String>();
     for (int i = 0; i < sources.getLength(); i++) {
-      File candidate = new File(sources.get(i).asString().getString());
-      if (parent.equals(candidate.getParent() + "/")) {
-        result.add(candidate.getName());
+      String candidate = sources.get(i).asString().getString();
+      if (!candidate.startsWith(parent)) {
+        continue;
+      }
+      int nameStart = candidate.lastIndexOf('/') + 1;
+      if (nameStart == parent.length()) {
+        result.add(candidate.substring(nameStart));
       }
     }
 
