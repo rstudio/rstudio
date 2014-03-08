@@ -21,16 +21,23 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdOptionDefaults;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
@@ -40,7 +47,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class RmdOutput implements RmdRenderStartedEvent.Handler,
-                                  RmdRenderCompletedEvent.Handler
+                                  RmdRenderCompletedEvent.Handler,
+                                  SessionInitHandler
 {
    public interface Binder
    extends CommandBinder<Commands, RmdOutput> {}
@@ -49,14 +57,17 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    public RmdOutput(EventBus eventBus, 
                     Commands commands,
                     GlobalDisplay globalDisplay,
+                    Session session,
                     Binder binder,
                     final SatelliteManager satelliteManager)
    {
       satelliteManager_ = satelliteManager;
       globalDisplay_ = globalDisplay;
+      session_ = session;
       
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
+      eventBus.addHandler(SessionInitEvent.TYPE, this);
 
       binder.bind(commands, this);
       
@@ -108,6 +119,55 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
    }
    
+   @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      new JSObjectStateValue(
+            "rmarkdown", 
+            "option_defaults", 
+            ClientState.PERSISTENT, 
+            session_.getSessionInfo().getClientState(), 
+            false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            optionDefaults_ = value == null ?
+                  RmdOptionDefaults.create() : (RmdOptionDefaults) value.cast();
+         }
+         
+         @Override
+         protected JsObject getValue()
+         {
+            optionDefaultsDirty_ = false;
+            return optionDefaults_.cast();
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            return optionDefaultsDirty_;
+         }
+      };
+   }
+   
+   public boolean formatOptionHasDefault(String format, String option)
+   {
+      return optionDefaults_.optionHasDefault(format, option);
+   }
+   
+   public String getFormatOptionDefault(String format, String option)
+   {
+      return optionDefaults_.getOptionDefault(format, option);
+   }
+   
+   public void setFormatOptionDefault(String format, String option, 
+                                      String value)
+   {
+      optionDefaults_.setOptionDefault(format, option, value);
+      optionDefaultsDirty_ = true;
+   }
+
    private void displayRenderResult(RmdRenderResult result)
    {
       // find the last known position for this file
@@ -242,6 +302,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
    private final SatelliteManager satelliteManager_;
    private final GlobalDisplay globalDisplay_;
+   private final Session session_;
 
    // stores the last scroll position of each document we know about: map
    // of path to position
@@ -250,4 +311,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final Map<String, String> anchors_ = 
          new HashMap<String, String>();
    private RmdRenderResult result_;
+   
+   private RmdOptionDefaults optionDefaults_;
+   private boolean optionDefaultsDirty_ = false;
 }

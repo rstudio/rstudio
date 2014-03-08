@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import java.util.Map;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 
@@ -28,12 +31,15 @@ public class RmdTemplateOptionsDialog
 {
    public class Result
    {
-      public Result(RmdFrontMatter frontMatter, String format)
+      public Result(RmdFrontMatter frontMatter, String format, 
+                    Map<String, String> nonDefaultOptionValues)
       {
+         this.nonDefaultOptionValues = nonDefaultOptionValues;
          this.frontMatter = frontMatter;
          this.format = format;
       }
 
+      public Map<String, String> nonDefaultOptionValues;
       public RmdFrontMatter frontMatter;
       public String format;
    }
@@ -51,6 +57,7 @@ public class RmdTemplateOptionsDialog
       setHeight("400px");
       templateOptions_ = new RmdTemplateOptionsWidget();
       templateOptions_.setDocument(document);
+      templateOptions_.setRmdOutput(RStudioGinjector.INSTANCE.getRmdOutput());
       templateOptions_.setTemplate(template, false, frontMatter);
       templateOptions_.setSelectedFormat(initialFormat);
       templateOptions_.setHeight("300px");
@@ -67,7 +74,8 @@ public class RmdTemplateOptionsDialog
    protected RmdTemplateOptionsDialog.Result collectInput()
    {
       return new Result(templateOptions_.getFrontMatter(), 
-                        templateOptions_.getSelectedFormat());
+                        templateOptions_.getSelectedFormat(),
+                        templateOptions_.getNonDefaultOptionValues());
    }
 
    @Override

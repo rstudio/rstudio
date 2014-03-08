@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -25,7 +27,21 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class RmdFormatOptionsHelper
 {
-   public final static JavaScriptObject optionsListToJson(
+   public final static RmdFrontMatterOutputOptions optionsListToJson(
+         Map<RmdTemplateFormatOption, String> optionVals, 
+         FileSystemItem document)
+   {
+      Set<RmdTemplateFormatOption> options = optionVals.keySet();
+      RmdFrontMatterOutputOptions optionList = 
+            RmdFrontMatterOutputOptions.create();
+      for (RmdTemplateFormatOption option: options)
+      {
+         addOption(document, optionList, option, optionVals.get(option));
+      }
+      return optionList;
+   }
+
+   public final static RmdFrontMatterOutputOptions optionsListToJson(
          List<RmdFormatOption> options, 
          FileSystemItem document, 
          RmdFrontMatterOutputOptions optionList)
@@ -40,58 +56,61 @@ public class RmdFormatOptionsHelper
          }
          else
          {
-            String type = option.getOption().getType();
-            if (option.getValue() == null)
-            {
-               // all nulls are written identically
-               addOption(optionList, option.getOption(), null);
-            }
-            else if (type.equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
-            {
-               addOption(optionList, option.getOption(), 
-                         Boolean.parseBoolean(option.getValue()));
-            }
-            else if (type.equals(RmdTemplateFormatOption.TYPE_FLOAT))
-            {
-               addOption(optionList, option.getOption(), 
-                         Float.parseFloat(option.getValue()));
-            }
-            else if (type.equals(RmdTemplateFormatOption.TYPE_INTEGER))
-            {
-               addOption(optionList, option.getOption(), 
-                         Integer.parseInt(option.getValue()));
-            }
-            else if (type.equals(RmdTemplateFormatOption.TYPE_CHOICE) ||
-                     type.equals(RmdTemplateFormatOption.TYPE_STRING))
-            {
-               addOption(optionList, option.getOption(), option.getValue());
-            }
-            else if (type.equals(RmdTemplateFormatOption.TYPE_FILE))
-            {
-               // For file options, compute the path relative to the document
-               // if we're starting with an absolute path
-               if (document != null && 
-                   option.getValue() != null && 
-                   FilePathUtils.pathIsAbsolute(option.getValue()))
-               {
-                  FileSystemItem selFile = 
-                        FileSystemItem.createFile(option.getValue());
-                  // this will be null if no relative path can be found; if
-                  // this is the case, we'll use the absolute path as-is
-                  String relativePath = 
-                        selFile.getPathRelativeTo(document.getParentPath());
-                  addOption(optionList, option.getOption(), 
-                            relativePath == null ? option.getValue() : 
-                                                   relativePath);
-               }
-               else
-               {
-                  addOption(optionList, option.getOption(), option.getValue());
-               }
-            }
+            addOption(document, optionList, option.getOption(), 
+                      option.getValue());
          }
       }
       return optionList;
+   }
+  
+   private static void addOption(FileSystemItem document, 
+                          JavaScriptObject optionList, 
+                          RmdTemplateFormatOption option, String value)
+   {
+      String type = option.getType();
+      if (value == null)
+      {
+         // all nulls are written identically
+         addOption(optionList, option, null);
+      }
+      else if (type.equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
+      {
+         addOption(optionList, option, Boolean.parseBoolean(value));
+      }
+      else if (type.equals(RmdTemplateFormatOption.TYPE_FLOAT))
+      {
+         addOption(optionList, option, Float.parseFloat(value));
+      }
+      else if (type.equals(RmdTemplateFormatOption.TYPE_INTEGER))
+      {
+         addOption(optionList, option, Integer.parseInt(value));
+      }
+      else if (type.equals(RmdTemplateFormatOption.TYPE_CHOICE) ||
+               type.equals(RmdTemplateFormatOption.TYPE_STRING))
+      {
+         addOption(optionList, option, value);
+      }
+      else if (type.equals(RmdTemplateFormatOption.TYPE_FILE))
+      {
+         // For file options, compute the path relative to the document
+         // if we're starting with an absolute path
+         if (document != null && value != null && 
+             FilePathUtils.pathIsAbsolute(value))
+         {
+            FileSystemItem selFile = 
+                  FileSystemItem.createFile(value);
+            // this will be null if no relative path can be found; if
+            // this is the case, we'll use the absolute path as-is
+            String relativePath = 
+                  selFile.getPathRelativeTo(document.getParentPath());
+            addOption(optionList, option,
+                      relativePath == null ? value : relativePath);
+         }
+         else
+         {
+            addOption(optionList, option, value);
+         }
+      }
    }
    
    // We need one of these per type since JSNI doesn't unbox templated types

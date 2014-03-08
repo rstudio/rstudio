@@ -22,6 +22,7 @@ import java.util.Map;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -29,7 +30,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -100,6 +100,11 @@ public class RmdTemplateOptionsWidget extends Composite
    {
       document_ = document;
    }
+   
+   public void setRmdOutput(RmdOutput output)
+   {
+      rmdOutput_ = output;
+   }
 
    public String getSelectedFormat()
    {
@@ -121,6 +126,20 @@ public class RmdTemplateOptionsWidget extends Composite
       return frontMatter_;
    }
    
+   public Map<String, String> getNonDefaultOptionValues()
+   {
+      Map<String, String> result = new HashMap<String, String>();
+      for (RmdFormatOption optionWidget: optionWidgets_)
+      {
+         if (!optionWidget.valueIsDefault())
+         {
+            result.put(optionWidget.getOption().getName(), 
+                       optionWidget.getValue());
+         }
+      }
+      return result;
+   }
+   
    public void setSelectedFormat(String format)
    {
       for (int i = 0; i < listFormats_.getItemCount(); i++)
@@ -131,15 +150,6 @@ public class RmdTemplateOptionsWidget extends Composite
             updateFormatOptions(format);
          }
       }
-   }
-   
-   public JavaScriptObject getOptionsJSON()
-   {
-      return RmdFormatOptionsHelper.optionsListToJson(
-            optionWidgets_,
-            document_, 
-            frontMatter_ == null ? 
-                  null : frontMatter_.getOutputOption(getSelectedFormat()));
    }
    
    private void updateFormatOptions(String format)
@@ -177,16 +187,8 @@ public class RmdTemplateOptionsWidget extends Composite
          if (option == null)
             continue;
          
-         String initialValue = option.getDefaultValue();
-
-         // check to see whether a value for this format and option were
-         // specified in the front matter
-         String frontMatterValue = getFrontMatterDefault(
-               format.getName(), option.getName());
-         if (frontMatterValue != null)
-            initialValue = frontMatterValue;
-         
-         optionWidget = createWidgetForOption(option, initialValue);
+         optionWidget = createWidgetForOption(option, 
+               getOptionInitialValue(option, format.getName()));
          if (optionWidget == null)
             continue;
          
@@ -307,6 +309,16 @@ public class RmdTemplateOptionsWidget extends Composite
          }
       }
    }
+
+   private String getRmdOutputDefault(String formatName, String optionName)
+   {
+      if (rmdOutput_ != null &&
+          rmdOutput_.formatOptionHasDefault(formatName, optionName))
+      {
+         return rmdOutput_.getFormatOptionDefault(formatName, optionName);
+      }
+      return null;
+   }
    
    private String getFrontMatterDefault(String formatName, String optionName)
    {
@@ -334,6 +346,29 @@ public class RmdTemplateOptionsWidget extends Composite
       return null;
    }
    
+   private String getOptionInitialValue(RmdTemplateFormatOption option, 
+                                        String format)
+   {
+      String initialValue = option.getDefaultValue();
+
+      // check to see whether a value for this format and option were
+      // specified in the front matter
+      String frontMatterValue = getFrontMatterDefault(format, option.getName());
+      if (frontMatterValue != null)
+      {
+         initialValue = frontMatterValue;
+      }
+      else
+      {
+         // no default found in front matter, check client state
+         String clientValue = getRmdOutputDefault(format, option.getName());
+         if (clientValue != null)
+            initialValue = clientValue;
+      }
+      
+      return initialValue;
+   }
+   
    private void ensureOptionsCache()
    {
       if (optionCache_ != null)
@@ -347,6 +382,8 @@ public class RmdTemplateOptionsWidget extends Composite
          optionCache_.put(option.getName(), option);
       }
    }
+
+   private RmdOutput rmdOutput_;
 
    private JsArray<RmdTemplateFormat> formats_;
    private JsArray<RmdTemplateFormatOption> options_;

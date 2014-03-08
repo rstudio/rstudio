@@ -15,7 +15,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -36,6 +39,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
@@ -48,6 +52,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
+import org.rstudio.studio.client.rmarkdown.ui.RmdFormatOptionsHelper;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -77,6 +82,7 @@ public class TextEditingTargetRMarkdownHelper
                           GlobalDisplay globalDisplay,
                           EventBus eventBus,
                           FileTypeCommands fileTypeCommands,
+                          RmdOutput rmdOutput,
                           RMarkdownServerOperations server)
    {
       session_ = session;
@@ -84,6 +90,7 @@ public class TextEditingTargetRMarkdownHelper
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       server_ = server;
+      rmdOutput_ = rmdOutput;
    }
    
    public String detectExtendedType(String contents,
@@ -314,6 +321,48 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+   public void saveRmdFormatDefaults(String format, 
+                                     Map<String, String> defaults)
+   {
+      Set<String> options = defaults.keySet();
+      for (String option: options)
+      {
+         rmdOutput_.setFormatOptionDefault(format, option, 
+                                           defaults.get(option));
+      }
+   }
+   
+   public RmdFrontMatterOutputOptions getDefaultOutputOptions(String formatName)
+   {
+      RmdTemplate template = getTemplateForFormat(formatName);
+      if (template == null)
+         return null;
+      
+      RmdTemplateFormat format = template.getFormat(formatName);
+      if (format == null)
+         return null;
+
+      Map<RmdTemplateFormatOption, String> defaultVals = 
+            new HashMap<RmdTemplateFormatOption, String>();
+      JsArrayString options = format.getOptions();
+      for (int i = 0; i < options.length(); i++)
+      {
+         String optionName = options.get(i);
+         RmdTemplateFormatOption option = template.getOption(optionName);
+         if (option == null)
+            continue;
+         
+         if (rmdOutput_.formatOptionHasDefault(formatName, options.get(i)))
+         {
+            defaultVals.put(option, rmdOutput_.getFormatOptionDefault(
+                  formatName, optionName));
+         }
+      }
+      return RmdFormatOptionsHelper.optionsListToJson(defaultVals, null);
+   }
+   
+   // Private methods ---------------------------------------------------------
+   
    private void setOutputFormat(RmdFrontMatter frontMatter, String format, 
                                 final CommandWithArg<String> onCompleted)
    {
@@ -450,4 +499,5 @@ public class TextEditingTargetRMarkdownHelper
    private EventBus eventBus_;
    private FileTypeCommands fileTypeCommands_;
    private RMarkdownServerOperations server_;
+   private RmdOutput rmdOutput_;
 }

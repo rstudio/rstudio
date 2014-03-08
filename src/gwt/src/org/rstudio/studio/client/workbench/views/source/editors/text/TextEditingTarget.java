@@ -2304,6 +2304,10 @@ public class TextEditingTarget implements
                   // when the dialog is completed successfully, apply the new
                   // front matter
                   applyRmdFrontMatter(in);
+                  
+                  // save any format options changed
+                  rmarkdownHelper_.saveRmdFormatDefaults(
+                        in.format, in.nonDefaultOptionValues);
                }
             }, 
             new Operation()
