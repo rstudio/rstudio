@@ -29,7 +29,7 @@ public class RmdTemplateData
             format_extension: "html",
             format_options: [ "toc", "highlight", "theme", "css", "fig_width", 
                               "fig_height", "fig_caption", "smart", 
-                              "self_contained", "pandoc_args" ],
+                              "self_contained" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
@@ -39,7 +39,7 @@ public class RmdTemplateData
             format_options: [ "toc", "toc_depth", "fig_width", "fig_height",
                               "fig_caption", "fig_crop", "number_sections", 
                               "latex_engine", "highlight", "natbib", 
-                              "biblatex", "pandoc_args" ],
+                              "biblatex" ],
             format_notes: "PDF output requires TeX (MiKTeX on Windows, MacTeX 2013+ on OS X, TeX Live 2013+ on Linux)."
             },
             {
@@ -47,7 +47,7 @@ public class RmdTemplateData
             format_ui_name: "Word",
             format_extension: "docx",
             format_options: [ "highlight", "fig_width", "fig_height", 
-                              "fig_caption", "pandoc_args" ],
+                              "fig_caption" ],
             format_notes: "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)."
             } 
          ],
@@ -195,14 +195,6 @@ public class RmdTemplateData
             option_type: "boolean", 
             option_default: "false"
             },
-            {
-            option_name: "pandoc_args",
-            option_ui_name: "Pass additional command line options to Pandoc", 
-            option_category: "Advanced",
-            option_type: "string", 
-            option_nullable: true, 
-            option_default: "null"
-            },
          ]
          },
          {
@@ -215,7 +207,7 @@ public class RmdTemplateData
             format_options: [ "logo", "fig_width", "fig_height", "fig_caption", 
                               "fig_retina", "incremental", "smaller",
                               "widescreen", "highlight", "transition", 
-                              "self_contained", "smart", "pandoc_args" ],
+                              "self_contained", "smart" ],
             format_notes: "Recommended format for HTML presentations (you can also print ioslides to PDF with Chrome)."
             },
             {
@@ -224,8 +216,7 @@ public class RmdTemplateData
             format_extension: "html",
             format_options: ["center", "incremental", "highlight", "transition", 
                              "theme", "fig_width", "fig_height", "fig_caption",
-                             "fig_retina", "self_contained", "smart", 
-                             "pandoc_args" ],
+                             "fig_retina", "self_contained", "smart" ],
             format_notes: "HTML presentation format with less features but additional options for theming and transitions." 
             },
             {
@@ -234,8 +225,7 @@ public class RmdTemplateData
             format_extension: "pdf",
             format_options: [ "toc", "incremental", "theme", "colortheme", 
                               "fonttheme", "fig_width", "fig_height", 
-                              "fig_crop", "fig_caption", "highlight", 
-                              "pandoc_args" ],
+                              "fig_crop", "fig_caption", "highlight" ],
             format_notes: "PDF output requires TeX (MiKTeX on Windows, MacTeX 2013+ on OS X, TeX Live 2013+ on Linux)."
             }
          ],
@@ -427,14 +417,6 @@ public class RmdTemplateData
             option_nullable: true,
             option_category: "Figures",
             option_default: "2"
-            },
-            {
-            option_name: "pandoc_args",
-            option_ui_name: "Pass additional command line options to Pandoc", 
-            option_category: "Advanced",
-            option_type: "string", 
-            option_nullable: true, 
-            option_default: "null"
             },
          ]
          }
