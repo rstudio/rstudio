@@ -56,7 +56,10 @@ public class YamlTree
       
       public String getIndent()
       {
-         RegExp whitespace = RegExp.compile("^\\s*");
+         // consider the list element indicator (-) to be part of the node's
+         // indentation, to prevent list continuations from being treated as
+         // sibling nodes
+         RegExp whitespace = RegExp.compile("^\\s*-?\\s*");
          MatchResult result = whitespace.exec(yamlLine);
          if (result == null)
             return "";
