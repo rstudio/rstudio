@@ -106,9 +106,5 @@
         <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
      </g:HTMLPanel>
 	</g:HorizontalPanel>
-	<g:HTMLPanel width="425px">
-	<g:Image resource="{resources.optionsIcon}" styleName="{style.optionsIcon}"></g:Image>
-	<g:Label text="Click the settings icon in the editor toolbar to change output formats and options at any time."></g:Label>
-   </g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
