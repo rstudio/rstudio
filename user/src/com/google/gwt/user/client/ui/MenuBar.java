@@ -183,7 +183,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     public MenuPopup() {
       super(true, false, "menuPopup");
       setAnimationType(AnimationType.ONE_WAY_CORNER);
-      setAnimationEnabled(true);
+      setAnimationEnabled(isAnimationEnabled);
       setStyleName(STYLENAME_DEFAULT + "Popup");
       String primaryStyleName = MenuBar.this.getStylePrimaryName();
       if (!STYLENAME_DEFAULT.equals(primaryStyleName)) {
@@ -254,8 +254,10 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     private void selectDirection(int overflowIfTowardsEast, int overflowIfTowardsWest) {
       if (overflowIfTowardsEast <= 0 && overflowIfTowardsWest <= 0) {
-        // Fits both sides, use the direction from parent
-        towardsEast = parentMenu.popup.towardsEast;
+        // Fits both sides, use the direction from parent - if there is one
+        if (parentMenu != null && parentMenu.popup != null) {
+          towardsEast = parentMenu.popup.towardsEast;
+        }
       } else {
         // Doesn't fit both sides, use the side with less or no overflow
         towardsEast = (overflowIfTowardsEast < overflowIfTowardsWest);

@@ -285,6 +285,27 @@ public class MenuBarTest extends WidgetTestBase {
     return $doc.activeElement == element;
   }-*/;
 
+  public void testPopupAnimationEnabled() {
+    // Create a menu bar with children.
+    MenuBar l0 = new MenuBar();
+    l0.setAutoOpen(true);
+    MenuBar l1 = new MenuBar();
+    l1.setAutoOpen(true);
+    l1.setAnimationEnabled(true);
+    MenuBar l2 = new MenuBar();
+    l2.setAutoOpen(true);
+    MenuItem item2 = l2.addItem("l2", BLANK_COMMAND);
+    MenuItem item1 = l1.addItem("l1", l2);
+    MenuItem item0 = l0.addItem("l0", l1);
+    RootPanel.get().add(l0);
+
+    l0.itemOver(item0, true);
+    assertFalse(l0.getPopup().isAnimationEnabled());
+
+    l1.itemOver(item1, true);
+    assertTrue(l1.getPopup().isAnimationEnabled());
+  }
+
   public void testDebugId() {
     // Create a sub menu
     MenuBar subMenu = new MenuBar(true);
