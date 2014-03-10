@@ -211,6 +211,7 @@ public class FileTypeRegistry
 
       registerIcon(".pdf", icons.iconPdf());
       registerIcon(".csv", icons.iconCsv());
+      registerIcon(".docx", icons.iconWord());
 
       for (FileType fileType : FileType.ALL_FILE_TYPES)
       {

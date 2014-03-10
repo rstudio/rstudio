@@ -51,4 +51,5 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconRpresentation();
    ImageResource iconSourceViewer();
    ImageResource iconProfiler();
+   ImageResource iconWord();
 }
