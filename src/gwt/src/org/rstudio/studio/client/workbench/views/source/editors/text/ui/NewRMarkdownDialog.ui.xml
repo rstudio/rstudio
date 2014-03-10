@@ -60,8 +60,6 @@
 	
 	.outputFormatChoice
 	{
-	  font-weight: bold;
-     color: #707070;
      font-size: 110%;
 	}
 	
@@ -69,6 +67,7 @@
 	{
      margin-top: 3px;
      margin-left: 5px;
+     color: #3c474d;
 	}
 	
 	.outputFormatIcon
