@@ -94,12 +94,12 @@
 	<g:InlineLabel styleName="{style.topLabel}" text="Title:"></g:InlineLabel>
 	<g:TextBox styleName="{style.textBox}" width="225px" ui:field="txtTitle_"></g:TextBox>
 	<g:InlineLabel styleName="{style.topLabel} {style.authorLabel}" text="Author:"></g:InlineLabel>
-	<g:TextBox styleName="{style.textBox}" width="125px" ui:field="txtAuthor_"></g:TextBox>
+	<g:TextBox styleName="{style.textBox}" width="150px" ui:field="txtAuthor_"></g:TextBox>
 	<g:HorizontalPanel height="300px" styleName="{style.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
                 width="150px"></rw:WidgetListBox>
-     <g:HTMLPanel height="100%" width="300px" 
+     <g:HTMLPanel height="100%" width="325px" 
                   styleName="{style.templateDetails}">
         <g:Label styleName="{style.defaultOutputLabel}" 
                  text="Default Output Format:"></g:Label>
