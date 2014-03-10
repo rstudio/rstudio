@@ -1,5 +1,5 @@
 /*
- * RmdNumberOption.java
+ * RmdStringOption.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -14,41 +14,43 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
-import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class RmdFloatOption extends RmdNullableOption
+public class RmdStringOption extends RmdNullableOption
 {
-   public RmdFloatOption(RmdTemplateFormatOption option, String initialValue)
+
+   public RmdStringOption(RmdTemplateFormatOption option, String initialValue)
    {
       super(option, initialValue);
+      defaultValue_ = option.getDefaultValue();
+
       HTMLPanel panel = new HTMLPanel("");
-      defaultValue_ = Float.parseFloat(option.getDefaultValue());
       panel.add(getOptionLabelWidget());
-      txtValue_ = new NumericTextBox();
-      if (initialValue.equals("null"))
-         txtValue_.setValue(option.getDefaultValue());
-      else
+      txtValue_ = new TextBox();
+      if (!initialValue.equals("null"))
          txtValue_.setValue(initialValue);
-      txtValue_.setWidth("40px");
-      txtValue_.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      txtValue_.getElement().getStyle().setDisplay(Display.BLOCK);
+      txtValue_.getElement().getStyle().setMarginLeft(20, Unit.PX);
+      txtValue_.getElement().getStyle().setMarginTop(3, Unit.PX);
+      txtValue_.setWidth("75%");
       panel.add(txtValue_);
 
       updateNull();
-
       initWidget(panel);
    }
-
+   
    @Override
    public boolean valueIsDefault()
    {
-      if (valueIsNull())
+      if (getValue() == null)
          return defaultValue_.equals("null");
-      return defaultValue_ == Float.parseFloat(txtValue_.getText());
+      else 
+         return defaultValue_.equals(txtValue_.getValue());
    }
 
    @Override
@@ -56,8 +58,10 @@ public class RmdFloatOption extends RmdNullableOption
    {
       if (valueIsNull())
          return null;
-      Float val = Float.parseFloat(txtValue_.getText());
-      return val.toString();
+      else if (getOption().isNullable() && txtValue_.getValue().trim().isEmpty())
+         return null;
+      else
+         return txtValue_.getValue().trim();
    }
 
    @Override
@@ -65,8 +69,8 @@ public class RmdFloatOption extends RmdNullableOption
    {
       txtValue_.setEnabled(!valueIsNull());
    }
-   
-   private final Float defaultValue_;
-   private TextBox txtValue_;
 
+   private TextBox txtValue_;
+   
+   private String defaultValue_;
 }

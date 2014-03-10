@@ -19,6 +19,8 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.InlineLabel;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class RmdNullableOption extends RmdBaseOption
 {
@@ -47,9 +49,12 @@ public abstract class RmdNullableOption extends RmdBaseOption
       return nonNullCheck_ != null && !nonNullCheck_.getValue();
    }
    
-   protected CheckBox nonNullCheckBox()
+   protected Widget getOptionLabelWidget()
    {
-      return nonNullCheck_;
+      if (nonNullCheck_ != null)
+         return nonNullCheck_;
+      else
+         return new InlineLabel(getOption().getUiName() + ": ");
    }
    
    private CheckBox nonNullCheck_;

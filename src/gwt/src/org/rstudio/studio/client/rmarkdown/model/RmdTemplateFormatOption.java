@@ -47,10 +47,6 @@ public class RmdTemplateFormatOption extends JavaScriptObject
       return this.option_format || "";
    }-*/;
    
-   public final native boolean showForCreate() /*-{
-      return this.option_for_create;
-   }-*/;
-
    public final native boolean isTransferable() /*-{
       return this.option_transferable || false;
    }-*/;
@@ -58,9 +54,15 @@ public class RmdTemplateFormatOption extends JavaScriptObject
    public final native boolean isNullable() /*-{
       return this.option_nullable || false;
    }-*/;
+   public final native String getCategory() /*-{
+      return this.option_category || "General";
+   }-*/;
+
 
    public final static String TYPE_BOOLEAN = "boolean";
    public final static String TYPE_CHOICE = "choice";
    public final static String TYPE_FLOAT = "float";
    public final static String TYPE_FILE = "file";
+   public final static String TYPE_INTEGER = "integer";
+   public final static String TYPE_STRING = "string";
 }

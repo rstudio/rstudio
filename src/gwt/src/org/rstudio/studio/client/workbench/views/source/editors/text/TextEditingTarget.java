@@ -178,6 +178,7 @@ public class TextEditingTarget implements
       void setFormatOptions(TextFileType fileType,
                             List<String> options, 
                             List<String> values, 
+                            List<String> extensions, 
                             String selected);
       void setFormatOptionsVisible(boolean visible);
       HandlerRegistration addRmdFormatChangedHandler(
@@ -2422,17 +2423,20 @@ public class TextEditingTarget implements
       JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
       List<String> formatList = new ArrayList<String>();
       List<String> valueList = new ArrayList<String>();
+      List<String> extensionList = new ArrayList<String>();
       for (int i = 0; i < formats.length(); i++)
       {
          String uiName = formats.get(i).getUiName();
          formatList.add(uiName);
          valueList.add(formats.get(i).getName());
+         extensionList.add(formats.get(i).getExtension());
          if (formats.get(i).getName().equals(selTemplate.format))
          {
             formatUiName = uiName;
          }
       }
-      view_.setFormatOptions(fileType_, formatList, valueList, formatUiName);
+      view_.setFormatOptions(fileType_, formatList, valueList, extensionList,
+                             formatUiName);
    }
    
    private void setRmdFormat(String formatName)

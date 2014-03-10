@@ -1,7 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style>
+	<ui:style type="org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsWidget.OptionsStyle">
+   @external gwt-TabLayoutPanelTab, gwt-TabLayoutPanelTab-selected;
+   @external gwt-TabLayoutPanelContent, gwt-TabLayoutPanelTabs;
 
 	.formatPanel
 	{
@@ -20,20 +22,66 @@
 	  font-weight: bold;
 	}
 	
-	.fillArea
+	.root
 	{
      width: 100%;
      height: 100%;
 	}
+	
+	.root .gwt-TabLayoutPanelTab
+	{
+	  margin-left: 3px;
+	  margin-right: 3px;
+	  padding: 5px;
+     -webkit-border-top-left-radius: 4px;
+     -webkit-border-top-right-radius: 4px;
+     -moz-border-radius-topleft: 4px;
+     -moz-border-radius-topright: 4px;
+     border-top-left-radius: 4px;
+     border-top-right-radius: 4px;
+	  border: 1px solid #d0d0d0;
+	  background-color: #f5f5f5;
+	  top: 1px;
+	  color: #808080;
+	  font-weight: bold;
+	}
+	
+	.root .gwt-TabLayoutPanelTabs
+	{
+	  border-bottom: 1px solid #c0c0c0;
+	}
+
+	.root .gwt-TabLayoutPanelTab-selected
+	{
+	  border-bottom: none;
+	  top: 2px;
+	  color: black;
+	}
+	
+	.root .gwt-TabLayoutPanelContent 
+	{
+     padding: 10px;
+     width: 100%;
+     height: 100%;
+     border: 1px solid #c0c0c0;
+     border-top: none;
+     box-sizing: border-box;
+     -moz-box-sizing: border-box;
+     -webkit-box-sizing: border-box;
+	}
+	
+	.optionWidget
+	{
+	  margin-top: 5px;
+	  margin-bottom: 7px;
+	}
 	</ui:style>
-   <g:HeaderPanel styleName="{style.fillArea}">
+   <g:HeaderPanel styleName="{style.root}">
       <g:FlowPanel styleName="{style.formatPanel}">
          <g:InlineLabel styleName="{style.topLabel}" text="Output Format:"></g:InlineLabel>
          <g:ListBox ui:field="listFormats_"></g:ListBox>
          <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"></g:Label>
       </g:FlowPanel>
-      <g:ScrollPanel height="100%">
-         <g:VerticalPanel ui:field="panelOptions_"></g:VerticalPanel>
-      </g:ScrollPanel>
+      <g:TabLayoutPanel height="100%" barHeight="30" ui:field="optionsTabs_"></g:TabLayoutPanel>
    </g:HeaderPanel>
 </ui:UiBinder> 

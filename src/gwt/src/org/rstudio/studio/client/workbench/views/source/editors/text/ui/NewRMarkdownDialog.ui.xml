@@ -49,9 +49,46 @@
 	{
 	  vertical-align: middle;
 	  float: left;
-	  margin-right: 5px;
+	  margin-right: 20px;
 	}
 	
+	.defaultOutputLabel
+	{
+	  font-weight: bold;
+     margin-bottom: 10px;
+	}
+	
+	.outputFormatChoice
+	{
+	  font-weight: bold;
+     color: #707070;
+     font-size: 110%;
+	}
+	
+	.outputFormatDetails
+	{
+     margin-top: 3px;
+     margin-left: 5px;
+	}
+	
+	.outputFormatIcon
+	{
+	  vertical-align: middle;
+	  margin-right: 15px;
+	  float: right;
+	}
+	
+	.outputFormat
+	{
+	  margin-bottom: 10px;
+     padding-top: 5px;
+     padding-bottom: 5px;
+	}
+	
+	.outputFormatName
+	{
+	  margin-left: 3px;
+	}
 	</ui:style>
 	<g:HTMLPanel>
 	<g:InlineLabel styleName="{style.topLabel}" text="Title:"></g:InlineLabel>
@@ -62,13 +99,16 @@
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
                 width="150px"></rw:WidgetListBox>
-     <rmd:RmdTemplateOptionsWidget ui:field="templateOptions_"
-                styleName="{style.templateDetails}" width="300px" height="100%">
-     </rmd:RmdTemplateOptionsWidget>
+     <g:HTMLPanel height="100%" width="300px" 
+                  styleName="{style.templateDetails}">
+        <g:Label styleName="{style.defaultOutputLabel}" 
+                 text="Default Output Format:"></g:Label>
+        <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+     </g:HTMLPanel>
 	</g:HorizontalPanel>
 	<g:HTMLPanel width="425px">
 	<g:Image resource="{resources.optionsIcon}" styleName="{style.optionsIcon}"></g:Image>
-	<g:Label text="You don't need to decide about the various options now. Click the settings icon in the editor toolbar to change them at any time."></g:Label>
+	<g:Label text="Click the settings icon in the editor toolbar to change output formats and options at any time."></g:Label>
    </g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
