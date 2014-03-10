@@ -40,14 +40,15 @@ public class RmdTemplateData
                               "fig_caption", "fig_crop", "number_sections", 
                               "latex_engine", "highlight", "natbib", 
                               "biblatex", "pandoc_args" ],
-            format_notes: "PDF output requires an installation of TeX."
+            format_notes: "PDF output requires TeX (MiKTeX on Windows, MacTeX 2013+ on OS X, TeX Live 2013+ on Linux)."
             },
             {
             format_name: "word_document", 
             format_ui_name: "Word",
             format_extension: "docx",
             format_options: [ "highlight", "fig_width", "fig_height", 
-                              "fig_caption", "pandoc_args" ]
+                              "fig_caption", "pandoc_args" ],
+            format_notes: "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)."
             } 
          ],
          template_options: [ 
@@ -224,7 +225,8 @@ public class RmdTemplateData
             format_options: ["center", "incremental", "highlight", "transition", 
                              "theme", "fig_width", "fig_height", "fig_caption",
                              "fig_retina", "self_contained", "smart", 
-                             "pandoc_args" ]
+                             "pandoc_args" ],
+            format_notes: "HTML presentation format with less features but additional options for theming and transitions." 
             },
             {
             format_name: "beamer_presentation",
@@ -234,7 +236,7 @@ public class RmdTemplateData
                               "fonttheme", "fig_width", "fig_height", 
                               "fig_crop", "fig_caption", "highlight", 
                               "pandoc_args" ],
-            format_notes: "PDF output requires an installation of TeX"
+            format_notes: "PDF output requires TeX (MiKTeX on Windows, MacTeX 2013+ on OS X, TeX Live 2013+ on Linux)."
             }
          ],
          template_options: [
