@@ -10,10 +10,12 @@ public class ImageMenuItem
 {
    public static MenuItem create(ImageResource res, 
                                  String text, 
-                                 ScheduledCommand command)
+                                 ScheduledCommand command, 
+                                 Integer iconOffsetY)
    {
       
-      return new MenuItem(AppCommand.formatMenuLabel(res, text, null), 
+      return new MenuItem(AppCommand.formatMenuLabel(res, text, null, 
+                                                     iconOffsetY), 
                           true, 
                           command);
    }

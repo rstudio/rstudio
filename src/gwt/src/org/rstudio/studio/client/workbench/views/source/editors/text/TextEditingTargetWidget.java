@@ -525,7 +525,7 @@ public class TextEditingTargetWidget
                      extensions.get(i));
          MenuItem item = ImageMenuItem.create(img, 
                                               prefix + options.get(i), 
-                                              null);
+                                              null, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
       setFormatOptionsVisible(true);

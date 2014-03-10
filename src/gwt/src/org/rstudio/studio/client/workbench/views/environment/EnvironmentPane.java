@@ -479,7 +479,7 @@ public class EnvironmentPane extends WorkbenchPane
                      {
                         loadEnvironmentFrame(frame);
                      }
-                  }));
+                  }, 2));
       }
    }
    
@@ -538,7 +538,7 @@ public class EnvironmentPane extends WorkbenchPane
                {
                   setObjectDisplayType(type);
                }
-            });
+            }, 2);
    }
    
    // An extension of the toolbar popup menu that gets environment names from
