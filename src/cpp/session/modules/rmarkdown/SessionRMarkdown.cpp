@@ -15,6 +15,7 @@
 
 #include "SessionRMarkdown.hpp"
 #include "../SessionHTMLPreview.hpp"
+#include "../build/SessionBuildErrors.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filter/regex.hpp>
@@ -253,6 +254,7 @@ private:
 
       std::string outputFile = module_context::createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
+      resultJson["knitr_errors"] = build::compileErrorsAsJson(knitrErrors_);
 
       // A component of the output URL is the full (aliased) path of the output
       // file, on which the renderer bases requests. This path is a URL
@@ -366,10 +368,30 @@ private:
       }
    }
 
-   static void enqueRenderOutput(int type,
-                                 const std::string& output)
+   void enqueRenderOutput(int type,
+                          const std::string& output)
    {
       using namespace module_context;
+      if (type == module_context::kCompileOutputError)
+      {
+         // this is an error, parse it to see if it looks like a knitr error
+         const boost::regex knitrErr(
+                  "^Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)");
+         boost::smatch matches;
+         if (boost::regex_match(output, matches, knitrErr))
+         {
+            // looks like a knitr error; compose a compile error object and
+            // emit it to the client when the render is complete
+            build::CompileError err(
+                     build::CompileError::Error,
+                     targetFile_.parent().complete(matches[3].str()),
+                     boost::lexical_cast<int>(matches[1].str()),
+                     1,
+                     matches[4].str(),
+                     true);
+            knitrErrors_.push_back(err);
+         }
+      }
       CompileOutput compileOutput(type, output);
       ClientEvent event(client_events::kRmdRenderOutput,
                         compileOutputAsJson(compileOutput));
@@ -383,6 +405,7 @@ private:
    FilePath outputFile_;
    std::string encoding_;
    json::Object outputFormat_;
+   std::vector<build::CompileError> knitrErrors_;
 };
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;

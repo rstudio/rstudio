@@ -20,9 +20,15 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
@@ -65,6 +71,19 @@ public class RenderRmdOutputPresenter extends BasePresenter
          }
       });
       
+      view_.errorList().addSelectionCommitHandler(
+                              new SelectionCommitHandler<CodeNavigationTarget>() {
+
+         @Override
+         public void onSelectionCommit(
+                              SelectionCommitEvent<CodeNavigationTarget> event)
+         {
+            CodeNavigationTarget target = event.getSelectedItem();
+            FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
+            RStudioGinjector.INSTANCE.getFileTypeRegistry()
+               .editFile(fsi, target.getPosition());
+         }
+      });
       globalDisplay_ = globalDisplay;
    }
    
@@ -144,6 +163,11 @@ public class RenderRmdOutputPresenter extends BasePresenter
       else if (!event.getResult().getSucceeded())
       {
          view_.ensureVisible(true);
+      }
+      if (!event.getResult().getSucceeded() && 
+          CompileError.showErrorList(event.getResult().getKnitrErrors()))
+      {
+         view_.showErrors(event.getResult().getKnitrErrors());
       }
    }
    
