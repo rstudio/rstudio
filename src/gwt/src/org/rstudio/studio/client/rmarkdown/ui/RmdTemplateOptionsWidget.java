@@ -32,6 +32,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.CssResource;
@@ -210,6 +212,14 @@ public class RmdTemplateOptionsWidget extends Composite
          panel.add(optionWidget);
          optionWidgets_.add(optionWidget);
       }
+      
+      // we need to center the tabs and overlay them on the top edge of the
+      // content; to do this, it is necessary to nuke a couple of the inline
+      // styles used by the default GWT tab panel. 
+      Element tabOuter = (Element) optionsTabs_.getElement().getChild(1);
+      tabOuter.getStyle().setOverflow(Overflow.VISIBLE);
+      Element tabInner = (Element) tabOuter.getFirstChild();
+      tabInner.getStyle().clearWidth();
    }
    
    private RmdFormatOption createWidgetForOption(RmdTemplateFormatOption option,
