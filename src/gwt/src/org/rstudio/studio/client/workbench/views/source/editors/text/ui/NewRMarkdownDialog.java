@@ -238,15 +238,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       HTMLPanel formatWrapper = new HTMLPanel("");
       formatWrapper.setStyleName(style.outputFormat());
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      ImageResource icon = fileTypeRegistry_.getIconForFilename(
-            "output." + format.getExtension());
-      if (icon != null)
-      {
-         sb.appendHtmlConstant("<img src=\"");
-         sb.appendHtmlConstant(icon.getSafeUri().asString());
-         sb.appendHtmlConstant("\" class=\"" + style.outputFormatIcon() +
-                               "\" />");
-      }
       sb.appendHtmlConstant("<span class=\"" + style.outputFormatName() + 
                             "\">");
       sb.appendEscaped(format.getUiName());
@@ -273,9 +264,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private List<RadioButton> formatOptions_;
    private JsArray<RmdTemplate> templates_;
    private RmdTemplate currentTemplate_;
-   
-   private static final FileTypeRegistry fileTypeRegistry_ =
-                              RStudioGinjector.INSTANCE.getFileTypeRegistry();
 
    @SuppressWarnings("unused")
    private final RMarkdownContext context_;
