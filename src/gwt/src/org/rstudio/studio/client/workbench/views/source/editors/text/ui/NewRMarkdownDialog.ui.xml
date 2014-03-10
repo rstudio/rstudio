@@ -60,8 +60,6 @@
 	
 	.outputFormatChoice
 	{
-	  font-weight: bold;
-     color: #707070;
      font-size: 110%;
 	}
 	
@@ -69,6 +67,7 @@
 	{
      margin-top: 3px;
      margin-left: 5px;
+     color: #3c474d;
 	}
 	
 	.outputFormatIcon
@@ -94,21 +93,17 @@
 	<g:InlineLabel styleName="{style.topLabel}" text="Title:"></g:InlineLabel>
 	<g:TextBox styleName="{style.textBox}" width="225px" ui:field="txtTitle_"></g:TextBox>
 	<g:InlineLabel styleName="{style.topLabel} {style.authorLabel}" text="Author:"></g:InlineLabel>
-	<g:TextBox styleName="{style.textBox}" width="125px" ui:field="txtAuthor_"></g:TextBox>
+	<g:TextBox styleName="{style.textBox}" width="150px" ui:field="txtAuthor_"></g:TextBox>
 	<g:HorizontalPanel height="300px" styleName="{style.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
                 width="150px"></rw:WidgetListBox>
-     <g:HTMLPanel height="100%" width="300px" 
+     <g:HTMLPanel height="100%" width="325px" 
                   styleName="{style.templateDetails}">
         <g:Label styleName="{style.defaultOutputLabel}" 
                  text="Default Output Format:"></g:Label>
         <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
      </g:HTMLPanel>
 	</g:HorizontalPanel>
-	<g:HTMLPanel width="425px">
-	<g:Image resource="{resources.optionsIcon}" styleName="{style.optionsIcon}"></g:Image>
-	<g:Label text="Click the settings icon in the editor toolbar to change output formats and options at any time."></g:Label>
-   </g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
