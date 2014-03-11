@@ -99,7 +99,17 @@ public class JavaClassHierarchySetupUtil {
    */
   public static native void patchIsArray() /*-{
     if (!Array.isArray) {
-        Array.isArray = function (vArg) { return Object.prototype.toString.call(vArg) === "[object Array]"; };
+        Array.isArray = function (vArg) {
+          return Object.prototype.toString.call(vArg) === "[object Array]"; };
     }
+  }-*/;
+
+  /**
+   * Retrieves the prototype for a type if it exists, null otherwise.
+   */
+  public static native JavaScriptObject getClassPrototype(JavaScriptObject typeId) /*-{
+    var prototypeForTypeId =
+        @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[typeId];
+    return prototypeForTypeId;
   }-*/;
 }

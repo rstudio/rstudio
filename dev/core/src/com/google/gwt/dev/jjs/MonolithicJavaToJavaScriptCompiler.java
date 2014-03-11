@@ -49,7 +49,6 @@ import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
 import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
-import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
@@ -212,8 +211,6 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     private void optimizeJavaForDraft() {
       Event draftOptimizeEvent = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE);
       Finalizer.exec(jprogram);
-      MakeCallsStatic.exec(options, jprogram);
-      jprogram.typeOracle.recomputeAfterOptimizations();
       // needed for certain libraries that depend on dead stripping to work
       DeadCodeElimination.exec(jprogram);
       Pruner.exec(jprogram, true);

@@ -121,7 +121,10 @@ public class Devirtualizer {
           // not an array
           && !(instanceType instanceof JArrayType)
           // not an interface of String, e.g. CharSequence or Comparable
-          && !program.getTypeJavaLangString().getImplements().contains(instanceType)) {
+          && !program.getTypeJavaLangString().getImplements().contains(instanceType)
+          // it is a super.m() call and the superclass is not a JSO. (this case is NOT reached if
+          // MakeCallsStatic was called).
+          || x.isStaticDispatchOnly() && !program.isJavaScriptObject(method.getEnclosingType())) {
         return;
       }
 
