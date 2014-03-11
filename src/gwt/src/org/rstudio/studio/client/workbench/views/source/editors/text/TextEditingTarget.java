@@ -82,7 +82,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
-import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -133,7 +132,6 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitH
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -180,7 +178,9 @@ public class TextEditingTarget implements
       void setFormatOptions(TextFileType fileType,
                             List<String> options, 
                             List<String> values, 
+                            List<String> extensions, 
                             String selected);
+      void setFormatOptionsVisible(boolean visible);
       HandlerRegistration addRmdFormatChangedHandler(
             ValueChangeHandler<String> handler);
    }
@@ -2295,6 +2295,7 @@ public class TextEditingTarget implements
       RmdTemplateOptionsDialog dialog = 
          new RmdTemplateOptionsDialog(template, format,
             data.getFrontMatter(),
+            getPath() == null ? null : FileSystemItem.createFile(getPath()),
             new OperationWithInput<RmdTemplateOptionsDialog.Result>()
             {
                @Override
@@ -2411,7 +2412,10 @@ public class TextEditingTarget implements
    {
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
       if (selTemplate == null)
+      {
+         view_.setFormatOptionsVisible(false);
          return;
+      }
       
       // we know which template this doc is using--populate the format list
       // with the formats available in the template
@@ -2419,17 +2423,20 @@ public class TextEditingTarget implements
       JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
       List<String> formatList = new ArrayList<String>();
       List<String> valueList = new ArrayList<String>();
+      List<String> extensionList = new ArrayList<String>();
       for (int i = 0; i < formats.length(); i++)
       {
          String uiName = formats.get(i).getUiName();
          formatList.add(uiName);
          valueList.add(formats.get(i).getName());
+         extensionList.add(formats.get(i).getExtension());
          if (formats.get(i).getName().equals(selTemplate.format))
          {
             formatUiName = uiName;
          }
       }
-      view_.setFormatOptions(fileType_, formatList, valueList, formatUiName);
+      view_.setFormatOptions(fileType_, formatList, valueList, extensionList,
+                             formatUiName);
    }
    
    private void setRmdFormat(String formatName)
@@ -2445,34 +2452,19 @@ public class TextEditingTarget implements
          return;
       }
       
-      // examine the YAML tree and rearrange it as necessary to make the
-      // document render in the desired format
-      YamlTree yamlTree = new YamlTree(getRmdFrontMatter());
-      List<String> outputFormats = 
-            yamlTree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
-      if (outputFormats == null)
-         return;
-      
-      if (outputFormats.isEmpty())
+      rmarkdownHelper_.setOutputFormat(getRmdFrontMatter(), formatName, 
+            new CommandWithArg<String>()
       {
-         yamlTree.setKeyValue(RmdFrontMatter.OUTPUT_KEY, formatName);
-      }
-      else if (!outputFormats.contains(formatName))
-      {
-         // we need to add this format to the yaml
-         yamlTree.addYamlValue(RmdFrontMatter.OUTPUT_KEY, 
-               formatName,
-               RmdFrontMatter.DEFAULT_FORMAT);
-      }
-
-      // if there are multiple formats, move this format to the top of the list
-      if (!outputFormats.isEmpty())
-         yamlTree.reorder(Arrays.asList(formatName));
-
-      applyRmdFrontMatter(yamlTree.toString());
-      
-      // re-knit the document
-      renderRmd();
+         @Override
+         public void execute(String yaml)
+         {
+            if (yaml != null)
+               applyRmdFrontMatter(yaml);
+            
+            // re-knit the document
+            renderRmd();
+         }
+      });
    }
    
    void doReflowComment(String commentPrefix)
@@ -3225,16 +3217,23 @@ public class TextEditingTarget implements
    
    void renderRmd()
    {
-      saveThenExecute(null, new Command() {
-         @Override
-         public void execute()
-         {
-            rmarkdownHelper_.renderRMarkdown(
-               docUpdateSentinel_.getPath(),
-               docDisplay_.getCursorPosition().getRow() + 1,
-               docUpdateSentinel_.getEncoding());
-         }
-      });
+      if (docUpdateSentinel_.getPath() != null)
+      {
+         saveThenExecute(null, new Command() {
+            @Override
+            public void execute()
+            {
+               rmarkdownHelper_.renderRMarkdown(
+                  docUpdateSentinel_.getPath(),
+                  docDisplay_.getCursorPosition().getRow() + 1,
+                  docUpdateSentinel_.getEncoding());
+            }
+         });
+      }
+      else
+      {
+         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode());
+      }
    }
    
    void previewHTML()

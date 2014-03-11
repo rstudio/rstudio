@@ -21,6 +21,8 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -80,7 +82,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
-      RmdRenderResult result = event.getResult();
+      final RmdRenderResult result = event.getResult();
       if (!result.getSucceeded())
          return;
         
@@ -100,7 +102,33 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
       else if (".docx".equals(extension))
       {
-         globalDisplay_.showWordDoc(result.getOutputFile());
+         if (Desktop.isDesktop())
+            globalDisplay_.showWordDoc(result.getOutputFile());
+         
+         // it's not possible to show Word docs inline in a useful way from
+         // within the browser, so just offer to download the file.
+         else
+         {
+            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO, 
+                  "R Markdown Render Completed", 
+                  "R Markdown has finished rendering " + 
+                  result.getTargetFile() + " to " + 
+                  result.getOutputFile() + ".", 
+                  false, 
+                  new ProgressOperation()
+                  {
+                     @Override
+                     public void execute(ProgressIndicator indicator)
+                     {
+                        globalDisplay_.showWordDoc(result.getOutputFile());
+                        indicator.onCompleted();
+                     }
+                  },
+                  null, 
+                  "Download File", 
+                  "OK", 
+                  false);
+         }
       }
       else
       {

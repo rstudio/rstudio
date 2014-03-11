@@ -18,7 +18,9 @@
    # hint that every non-list element of the hierarchical list l
    # is a scalar value
    l <- lapply(l, function(ele) {
-      if (is.list(ele)) 
+      if (is.null(ele))
+         NULL
+      else if (is.list(ele)) 
          .rs.scalarListFromList(ele)
       else
          .rs.scalar(ele)
@@ -30,6 +32,15 @@
   pkgDir <- find.package("rmarkdown")
   .rs.forceUnloadPackage("rmarkdown")
   .Call("rs_installPackage",  archive, dirname(pkgDir))
+})
+
+.rs.addFunction("getCustomRenderFunction", function(file) {
+  lines <- readLines(file)
+  yamlFrontMatter <- rmarkdown:::parse_yaml_front_matter(lines)
+  if (is.character(yamlFrontMatter$knit))
+    yamlFrontMatter$knit[[1]]
+  else
+    ""
 })
 
 .rs.addJsonRpcHandler("convert_to_yaml", function(input)
@@ -55,3 +66,4 @@
         parse_succeeded = .rs.scalar(parseSucceeded),
         parse_error = .rs.scalar(parseError))
 })
+

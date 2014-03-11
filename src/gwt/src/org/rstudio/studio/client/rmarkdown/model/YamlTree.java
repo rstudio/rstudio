@@ -28,6 +28,12 @@ public class YamlTree
    {
       public YamlTreeNode(String line)
       {
+         // the YAML package outputs tildes to represent null values; these 
+         // are valid YAML but "null" is easier to read for R users 
+         if (line.endsWith(": ~"))
+         {
+            line = line.substring(0, line.length() - 1) + "null";
+         }
          yamlLine = line;
          key = getKey(line);
          indentLevel = getIndentLevel();
@@ -50,7 +56,10 @@ public class YamlTree
       
       public String getIndent()
       {
-         RegExp whitespace = RegExp.compile("^\\s*");
+         // consider the list element indicator (-) to be part of the node's
+         // indentation, to prevent list continuations from being treated as
+         // sibling nodes
+         RegExp whitespace = RegExp.compile("^\\s*-?\\s*");
          MatchResult result = whitespace.exec(yamlLine);
          if (result == null)
             return "";

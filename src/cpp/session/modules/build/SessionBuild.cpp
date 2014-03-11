@@ -40,6 +40,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RUtil.hpp>
 #include <r/session/RSessionUtils.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
@@ -599,6 +600,14 @@ private:
          {
             if (!boost::algorithm::contains(extraArgs, "--preclean"))
                rCmd << "--preclean";
+         }
+
+         // remove --with-keep.source if this is R < 2.14
+         if (!r::util::hasRequiredVersion("2.14"))
+         {
+            using namespace boost::algorithm;
+            replace_all(extraArgs, "--with-keep.source", "");
+            replace_all(extraArgs, "--without-keep.source", "");
          }
 
          // add extra args if provided

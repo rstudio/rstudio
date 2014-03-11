@@ -36,6 +36,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -509,21 +510,48 @@ public class TextEditingTargetWidget
    public void setFormatOptions(TextFileType fileType,
                                 List<String> options, 
                                 List<String> values, 
+                                List<String> extensions, 
                                 String selectedOption)
    {
       rmdFormatButton_.clearMenu();
       int parenPos = selectedOption.indexOf('(');
       if (parenPos != -1)
          selectedOption = selectedOption.substring(0, parenPos).trim();
-      knitCommandText_ = "Knit " + selectedOption;
-      knitDocumentButton_.setText(knitCommandText_);
-      previewCommandText_ = "Preview " + selectedOption;
-      previewHTMLButton_.setText(previewCommandText_);
+      setFormatText(selectedOption);
       String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit ";
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
-         rmdFormatButton_.addMenuItem(prefix + options.get(i), values.get(i));
+         ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
+                     extensions.get(i));
+         MenuItem item = ImageMenuItem.create(img, 
+                                              prefix + options.get(i), 
+                                              null, 2);
+         rmdFormatButton_.addMenuItem(item, values.get(i));
       }
+      setFormatOptionsVisible(true);
+   }
+
+   @Override
+   public void setFormatOptionsVisible(boolean visible)
+   {
+      if (!visible)
+      {
+         setFormatText("");
+      }
+      rmdFormatButton_.setVisible(visible);
+      editRmdFormatButton_.setVisible(visible);
+      rmdFormatButton_.setEnabled(visible);
+      editRmdFormatButton_.setEnabled(visible);
+   }
+   
+   private void setFormatText(String text)
+   {
+      if (text.length() > 0)
+         text = " " + text;
+      knitCommandText_ = "Knit" + text;
+      knitDocumentButton_.setText(knitCommandText_);
+      previewCommandText_ = "Preview" + text;
+      previewHTMLButton_.setText(previewCommandText_);
    }
 
    public void setSourceButtonFromShinyState()

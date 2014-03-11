@@ -14,14 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
-import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsWidget;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -31,8 +35,12 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,12 +48,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 {
    public static class Result
    {  
-      public Result(String template, String author, String title, String format, 
-                    JavaScriptObject options)
+      public Result(String template, String author, String title, String format)
       {
          template_ = template;
          author_ = author;
-         result_ = toJSO(author, title, format, options);
+         result_ = toJSO(author, title, format);
       }
       
       public String getTemplate()
@@ -65,8 +72,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       private final JavaScriptObject toJSO(String author, 
                                            String title, 
-                                           String format, 
-                                           JavaScriptObject options)
+                                           String format)
       {
          RmdFrontMatter result = RmdFrontMatter.create(title);
          if (author.length() > 0)
@@ -74,7 +80,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             result.setAuthor(author);
             result.addDate();
          }
-         result.setOutputOption(format, options);
+         result.setOutputOption(format, RmdFrontMatterOutputOptions.create());
          return result;
       }
 
@@ -89,7 +95,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    public interface NewRmdStyle extends CssResource
    {
-      // Stub to ensure style is injected during construction
+      String outputFormat();
+      String outputFormatName();
+      String outputFormatChoice();
+      String outputFormatDetails();
+      String outputFormatIcon();
    }
 
    public interface Resources extends ClientBundle
@@ -112,6 +122,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       super("New R Markdown", operation);
       context_ = context;
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      formatOptions_ = new ArrayList<RadioButton>();
       style.ensureInjected();
       txtAuthor_.setText(author);
       txtTitle_.setText("Untitled");
@@ -166,11 +177,19 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @Override
    protected Result collectInput()
    {
+      String formatName = "";
+      for (int i = 0; i < formatOptions_.size(); i++)
+      {
+         if (formatOptions_.get(i).getValue())
+         {
+            formatName = currentTemplate_.getFormats().get(i).getName();
+               break;
+         }
+      }
       return new Result(getSelectedTemplate(), 
                         txtAuthor_.getText().trim(), 
                         txtTitle_.getText().trim(),
-                        templateOptions_.getSelectedFormat(), 
-                        templateOptions_.getOptionsJSON());
+                        formatName);
    }
 
    @Override
@@ -192,27 +211,58 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private void updateOptions(String selectedTemplate)
    {
-      for (int i = 0; i < templates_.length(); i++)
+      currentTemplate_ = RmdTemplate.getTemplate(templates_,
+                                                     selectedTemplate);
+      if (currentTemplate_ == null)
+         return;
+      
+      templateFormatPanel_.clear();
+      formatOptions_.clear();
+      
+      // Add each format to the dialog
+      JsArray<RmdTemplateFormat> formats = currentTemplate_.getFormats();
+      for (int i = 0; i < formats.length(); i++)
       {
-         if (templates_.get(i).getName().equals(selectedTemplate))
-         {
-            templateOptions_.setTemplate(templates_.get(i), true);
-            break;
-         }
+         templateFormatPanel_.add(createFormatOption(formats.get(i)));
       }
+      
+      // Select the first format by default
+      if (formatOptions_.size() > 0)
+         formatOptions_.get(0).setValue(true);
+   }
+   
+   private Widget createFormatOption(RmdTemplateFormat format)
+   {
+      HTMLPanel formatWrapper = new HTMLPanel("");
+      formatWrapper.setStyleName(style.outputFormat());
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      sb.appendHtmlConstant("<span class=\"" + style.outputFormatName() + 
+                            "\">");
+      sb.appendEscaped(format.getUiName());
+      sb.appendHtmlConstant("</span>");
+      RadioButton button = new RadioButton("DefaultOutputFormat", 
+                                           sb.toSafeHtml().asString(), true);
+      button.setStyleName(style.outputFormatChoice());
+      formatOptions_.add(button);
+      formatWrapper.add(button);
+      Label label = new Label(format.getNotes());
+      label.setStyleName(style.outputFormatDetails());
+      formatWrapper.add(label);
+      return formatWrapper;
    }
    
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
    @UiField WidgetListBox listTemplates_;
-   @UiField RmdTemplateOptionsWidget templateOptions_;
    @UiField NewRmdStyle style;
    @UiField Resources resources;
+   @UiField HTMLPanel templateFormatPanel_;
 
    private final Widget mainWidget_;
-
+   private List<RadioButton> formatOptions_;
    private JsArray<RmdTemplate> templates_;
-   
+   private RmdTemplate currentTemplate_;
+
    @SuppressWarnings("unused")
    private final RMarkdownContext context_;
 }

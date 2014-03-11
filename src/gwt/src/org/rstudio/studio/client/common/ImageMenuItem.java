@@ -1,23 +1,22 @@
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.command.AppCommand;
+
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.MenuItem;
 
 public class ImageMenuItem 
 {
    public static MenuItem create(ImageResource res, 
                                  String text, 
-                                 ScheduledCommand command)
+                                 ScheduledCommand command, 
+                                 Integer iconOffsetY)
    {
-      SafeHtmlBuilder shb = new SafeHtmlBuilder();
-      shb.appendHtmlConstant("<img src=\"" +
-                             res.getSafeUri().asString() +
-                             "\" style=\"vertical-align: middle; " + 
-                             "margin-right: 4px;\" />");
-      shb.appendEscaped(text);
-         
-      return new MenuItem(shb.toSafeHtml(), command);
+      
+      return new MenuItem(AppCommand.formatMenuLabel(res, text, null, 
+                                                     iconOffsetY), 
+                          true, 
+                          command);
    }
 }

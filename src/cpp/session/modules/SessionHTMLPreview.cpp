@@ -977,12 +977,28 @@ void handlePreviewRequest(const http::Request& request,
    else
    {
       FilePath filePath = s_pCurrentPreview_->targetDirectory().childPath(path);
+      addFileSpecificHeaders(filePath, pResponse);
       pResponse->setFile(filePath, request);
    }
 }
 
    
 } // anonymous namespace
+   
+
+void addFileSpecificHeaders(const FilePath& filePath, http::Response* pResponse)
+{
+   std::string videoExts(".mov|.mp4|.m4v|.3gp|.avi");
+   std::string ext = filePath.extensionLowerCase();
+   if (ext.length() == 4 &&
+       videoExts.find(ext) != std::string::npos &&
+       session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      // mp4 and QuickTime files served in IFrames cause problems on
+      // some desktop configurations (see case 3828)
+      pResponse->addHeader("X-Frame-Options", "deny");
+   }
+}
 
 core::json::Object capabilitiesAsJson()
 {

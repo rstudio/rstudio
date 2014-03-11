@@ -328,15 +328,27 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return formatMenuLabel(
             getImageResource(), label, shortcut);
    }
-   
+
    public static String formatMenuLabel(ImageResource icon, 
                                          String label,
                                          String shortcut)
    {
+      return formatMenuLabel(icon, label, shortcut, null);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+                                         String label,
+                                         String shortcut, 
+                                         Integer iconOffsetY)
+   {
       StringBuilder text = new StringBuilder();
+      int topOffset = -10;
+      if (iconOffsetY != null)
+         topOffset += iconOffsetY;
       text.append("<table border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
 
-      text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: -10px; margin-bottom: -10px\">");
+      text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: " +
+                  topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
       {
          text.append(AbstractImagePrototype.create(icon).getHTML());

@@ -1063,7 +1063,8 @@ Error launchChildProcess(std::string path,
            ++it)
       {
          argVector.push_back(it->first);
-         argVector.push_back(it->second);
+         if (!it->second.empty())
+            argVector.push_back(it->second);
       }
 
       // allocate ProcessArgs on heap so memory stays around after we exec

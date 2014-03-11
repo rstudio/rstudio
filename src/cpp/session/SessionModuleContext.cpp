@@ -1458,5 +1458,14 @@ core::json::Object compileOutputAsJson(const CompileOutput& compileOutput)
    return compileOutputJson;
 }
 
+std::string CRANReposURL()
+{
+   std::string url;
+   r::exec::evaluateString("getOption('repos')[['CRAN']]", &url);
+   if (url.empty())
+      url = userSettings().cranMirror().url;
+   return url;
+}
+
 } // namespace module_context         
 } // namespace session

@@ -2880,10 +2880,11 @@ int main (int argc, char * const argv[])
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
-      // CRAN repos: user setting first then global server option
-      rOptions.rCRANRepos = userSettings().cranMirror().url;
-      if (rOptions.rCRANRepos.empty())
+      // CRAN repos: global server option trumps user setting
+      if (!options.rCRANRepos().empty())
          rOptions.rCRANRepos = options.rCRANRepos();
+      else
+         rOptions.rCRANRepos = userSettings().cranMirror().url;
       rOptions.useInternet2 = userSettings().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();

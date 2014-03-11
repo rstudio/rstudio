@@ -95,21 +95,9 @@ Status status()
          LOG_ERROR(error);
 
       if (idePackageRequiresUpdate)
-      {
          return InstalledRequiresUpdate;
-      }
-      else // not from the IDE, check version
-      {
-         if (module_context::isPackageVersionInstalled("rmarkdown",
-                                                       s_currentVersion))
-         {
-            return Installed;
-         }
-         else
-         {
-            return InstalledRequiresUpdate;
-         }
-      }
+      else
+         return Installed;
    }
    else
    {
@@ -163,7 +151,7 @@ Error installWithProgress(
    {
       std::string pkgList = boost::algorithm::join(cranPackages, ",");
       cmd += "utils::install.packages(c(" + pkgList + "), " +
-             "repos = '"+ userSettings().cranMirror().url + "');";
+             "repos = '"+ module_context::CRANReposURL() + "');";
    }
    cmd += "utils::install.packages('" + rmarkdownPackageArchive() + "', "
                                    "repos = NULL, type = 'source');";

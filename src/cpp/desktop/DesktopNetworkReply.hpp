@@ -60,7 +60,6 @@ private:
    void onResponse(const core::http::Response& response);
    void onError(const core::Error& error);
 
-   void handleRedirect(QString location);
    void executeRequest(const core::http::Request& request);
 
 private:
@@ -68,7 +67,6 @@ private:
    boost::scoped_ptr<Impl> pImpl_;
    std::string localPeer_;
    QString secret_;
-   int redirects_;
 };
 
 } // namespace desktop

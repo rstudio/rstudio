@@ -15,6 +15,7 @@
 
 #include "SessionRMarkdown.hpp"
 #include "../SessionHTMLPreview.hpp"
+#include "../build/SessionBuildErrors.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filter/regex.hpp>
@@ -126,9 +127,26 @@ private:
       args.push_back("--no-restore");
       args.push_back("-e");
 
+      // see if the input file has a custom render function
+      std::string renderFunc;
+      error = r::exec::RFunction(
+         ".rs.getCustomRenderFunction",
+         string_utils::utf8ToSystem(targetFile_.absolutePath())).call(
+                                                               &renderFunc);
+      if (error)
+         LOG_ERROR(error);
+
+      if (renderFunc.empty())
+         renderFunc = "rmarkdown::render";
+
       // render command
-      boost::format fmt("rmarkdown::render('%1%', encoding='%2%');");
-      std::string cmd = boost::str(fmt % targetFile_.filename() % encoding);
+      boost::format fmt("%1%('%2%', encoding='%3%');");
+      std::string cmd = boost::str(fmt %
+                                   renderFunc %
+                                   targetFile_.filename() %
+                                   encoding);
+
+
       args.push_back(cmd);
 
       // options
@@ -236,6 +254,7 @@ private:
 
       std::string outputFile = module_context::createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
+      resultJson["knitr_errors"] = build::compileErrorsAsJson(knitrErrors_);
 
       // A component of the output URL is the full (aliased) path of the output
       // file, on which the renderer bases requests. This path is a URL
@@ -349,10 +368,30 @@ private:
       }
    }
 
-   static void enqueRenderOutput(int type,
-                                 const std::string& output)
+   void enqueRenderOutput(int type,
+                          const std::string& output)
    {
       using namespace module_context;
+      if (type == module_context::kCompileOutputError)
+      {
+         // this is an error, parse it to see if it looks like a knitr error
+         const boost::regex knitrErr(
+                  "^Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)");
+         boost::smatch matches;
+         if (boost::regex_match(output, matches, knitrErr))
+         {
+            // looks like a knitr error; compose a compile error object and
+            // emit it to the client when the render is complete
+            build::CompileError err(
+                     build::CompileError::Error,
+                     targetFile_.parent().complete(matches[3].str()),
+                     boost::lexical_cast<int>(matches[1].str()),
+                     1,
+                     matches[4].str(),
+                     true);
+            knitrErrors_.push_back(err);
+         }
+      }
       CompileOutput compileOutput(type, output);
       ClientEvent event(client_events::kRmdRenderOutput,
                         compileOutputAsJson(compileOutput));
@@ -366,6 +405,7 @@ private:
    FilePath outputFile_;
    std::string encoding_;
    json::Object outputFormat_;
+   std::vector<build::CompileError> knitrErrors_;
 };
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
@@ -513,15 +553,11 @@ Error installRMarkdown(const json::JsonRpcRequest&,
    return Success();
 }
 
-Error renderRmd(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
+void doRenderRmd(const std::string& file,
+                 int line,
+                 const std::string& encoding,
+                 json::JsonRpcResponse* pResponse)
 {
-   int line = -1;
-   std::string file, encoding;
-   Error error = json::readParams(request.params, &file, &line, &encoding);
-   if (error)
-      return error;
-
    if (s_pCurrentRender_ &&
        s_pCurrentRender_->isRunning())
    {
@@ -535,9 +571,41 @@ Error renderRmd(const json::JsonRpcRequest& request,
                encoding);
       pResponse->setResult(true);
    }
+}
+
+Error renderRmd(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   int line = -1;
+   std::string file, encoding;
+   Error error = json::readParams(request.params, &file, &line, &encoding);
+   if (error)
+      return error;
+
+   doRenderRmd(file, line, encoding, pResponse);
 
    return Success();
 }
+
+Error renderRmdSource(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string source;
+   Error error = json::readParams(request.params, &source);
+   if (error)
+      return error;
+
+   // create temp file
+   FilePath rmdTempFile = module_context::tempFile("Untitled", "Rmd");
+   error = core::writeStringToFile(rmdTempFile, source);
+   if (error)
+      return error;
+
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "UTF-8", pResponse);
+
+   return Success();
+}
+
 
 Error terminateRenderRmd(const json::JsonRpcRequest&,
                          json::JsonRpcResponse*)
@@ -624,6 +692,7 @@ void handleRmdOutputRequest(const http::Request& request,
    {
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
+      html_preview::addFileSpecificHeaders(filePath, pResponse);
       pResponse->setCacheableFile(filePath, request);
    }
 }
@@ -662,6 +731,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_rmarkdown_context", getRMarkdownContext))
       (bind(registerRpcMethod, "install_rmarkdown", installRMarkdown))
       (bind(registerRpcMethod, "render_rmd", renderRmd))
+      (bind(registerRpcMethod, "render_rmd_source", renderRmdSource))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));

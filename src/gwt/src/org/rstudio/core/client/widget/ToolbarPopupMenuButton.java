@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import org.rstudio.studio.client.common.icons.StandardIcons;
 
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -49,21 +50,28 @@ public class ToolbarPopupMenuButton extends ToolbarButton
 
    public void addMenuItem(String text, final String value)
    {
-      ToolbarPopupMenu menu = getMenu();
-
-      menu.addItem(new MenuItem(text, new Command()
-      {
-         @Override
-         public void execute()
-         {
-            setText(value);
-         }
-      }));
+      addMenuItem(new MenuItem(text, (ScheduledCommand) null), value);
    }
 
    public void addMenuItem(final String value)
    {
       addMenuItem(value, value);
+   }
+
+   public void addMenuItem(final MenuItem item, final String value)
+   {
+      final ScheduledCommand cmd = item.getScheduledCommand();
+      item.setScheduledCommand(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            setText(value);
+            if (cmd != null)
+               cmd.execute();
+         }
+      });
+      getMenu().addItem(item);
    }
    
    public void clearMenu()
