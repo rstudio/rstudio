@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -54,7 +54,7 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   /**
    * Ensure a number is displayed with two digits.
-   * 
+   *
    * @return a two-character base 10 representation of the number
    */
   protected static String padTwo(int number) {
@@ -240,27 +240,42 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
         + minuteOffset + " " + jsdate.getFullYear();
   }
 
+  private static final long ONE_HOUR_IN_MILLISECONDS = 60 * 60 * 1000;
+
   /*
    * Some browsers have the following behavior:
-   * 
+   *
+   * GAP
    * // Assume a U.S. time zone with daylight savings
    * // Set a non-existent time: 2:00 am Sunday March 8, 2009
    * var date = new Date(2009, 2, 8, 2, 0, 0);
    * var hours = date.getHours(); // returns 1
-   * 
-   * The equivalent Java code will return 3. To compensate, we determine the
-   * amount of daylight savings adjustment by comparing the time zone offsets
-   * for the requested time and a time one day later, and add the adjustment to
-   * the hours and minutes of the requested time.
+   *
+   * The equivalent Java code will return 3.
+   *
+   * OVERLAP
+   * // Assume a U.S. time zone with daylight savings
+   * // Set to an ambiguous time: 1:30 am Sunday November 1, 2009
+   * var date = new Date(2009, 10, 1, 1, 30, 0);
+   * var nextHour = new Date(date.getTime() + 60*60*1000);
+   * var hours = nextHour.getHours(); // returns 1
+   *
+   * The equivalent Java code will return 2.
+   *
+   * To compensate, fixDaylightSavings adjusts the date to match Java semantics.
    */
 
   /**
-   * Detects if the requested time falls into a non-existent time range due to
-   * local time advancing into daylight savings time. If so, push the requested
-   * time forward out of the non-existent range.
+   * Detects if the requested time falls into a non-existent time range due to local time advancing
+   * into daylight savings time or is ambiguous due to going out of daylight savings. If so, adjust
+   * accordingly.
    */
-  private void fixDaylightSavings(int hours) {
-    if ((jsdate.getHours() % 24) != (hours % 24)) {
+  private void fixDaylightSavings(int requestedHours) {
+    int hours = jsdate.getHours();
+    if ((hours % 24) != (requestedHours % 24)) {
+      // Hours passed to the constructor don't match the hours in the created JavaScript Date; this
+      // might be due either because they are outside 0-24 range, there was overflow from
+      // minutes:secs:millis or because we are in the situation GAP and has to be fixed.
       JsDate copy = JsDate.create(jsdate.getTime());
       copy.setDate(copy.getDate() + 1);
       int timeDiff = jsdate.getTimezoneOffset() - copy.getTimezoneOffset();
@@ -268,6 +283,9 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
       // If the time zone offset is changing, advance the hours and
       // minutes from the initially requested time by the change amount
       if (timeDiff > 0) {
+        // The requested time falls into a non-existent time range due to
+        // local time advancing into daylight savings time. If so, push the requested
+        // time forward out of the non-existent range.
         int timeDiffHours = timeDiff / 60;
         int timeDiffMinutes = timeDiff % 60;
         int day = jsdate.getDate();
@@ -276,10 +294,20 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
           day++;
         }
         JsDate newTime = JsDate.create(jsdate.getFullYear(), jsdate.getMonth(),
-            day, hours + timeDiffHours, jsdate.getMinutes() + timeDiffMinutes,
+            day, requestedHours + timeDiffHours, jsdate.getMinutes() + timeDiffMinutes,
             jsdate.getSeconds(), jsdate.getMilliseconds());
         jsdate.setTime(newTime.getTime());
       }
+      return;
+    }
+
+    // Check for situation OVERLAP by advancing the clock by 1 hour and see if getHours() returns
+    // the same.
+    double originalTimeInMillis = jsdate.getTime();
+    jsdate.setTime(originalTimeInMillis + ONE_HOUR_IN_MILLISECONDS);
+    if (hours != jsdate.getHours()) {
+      // We are not in the duplicated hour, so revert the change.
+     jsdate.setTime(originalTimeInMillis);
     }
   }
 }
