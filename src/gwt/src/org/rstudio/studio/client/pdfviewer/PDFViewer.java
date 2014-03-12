@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -23,9 +24,11 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerHandler;
 import org.rstudio.studio.client.pdfviewer.model.PdfJsWindow;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -33,7 +36,9 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class PDFViewer implements CompilePdfCompletedEvent.Handler,
-                                  ShowPDFViewerHandler
+                                  ShowPDFViewerHandler,
+                                  SynctexViewPdfEvent.Handler,
+                                  PDFLoadEvent.Handler
 {
    @Inject
    public PDFViewer(EventBus eventBus,
@@ -46,6 +51,9 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       
       eventBus.addHandler(ShowPDFViewerEvent.TYPE, this);
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
+      eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
+      eventBus.addHandler(PDFLoadEvent.TYPE, this);
+      PdfJsWindow.addPDFLoadHandler(this);
    }
 
    @Override
@@ -63,22 +71,38 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                pdfJsWindow_ = win.cast();
             }
          });
-         display_.openMinimalWindow(url, false, 800, 1000, options);
+         display_.openMinimalWindow(url, false, 1000, 1000, options);
       }
    }
-   
+
+   @Override
+   public void onPDFLoad(PDFLoadEvent event)
+   {
+      Debug.devlog("PDF has finished loading.");
+   } 
+
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
       if (pdfJsWindow_ == null)
          return;
       
+      pdfJsWindow_.initializeEvents();
+
       FileSystemItem pdf = FileSystemItem.createFile(
             event.getResult().getPdfPath());
       pdfJsWindow_.openPdf(server_.getFileUrl(pdf), 1);
    }
+
+   @Override
+   public void onSynctexViewPdf(SynctexViewPdfEvent event)
+   {
+      pdfJsWindow_.navigateTo(event.getPdfLocation());
+   }
+   
    
    private PdfJsWindow pdfJsWindow_;
    
    private final GlobalDisplay display_;
    private final ApplicationServerOperations server_;
+
 }
