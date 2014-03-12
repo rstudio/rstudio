@@ -78,6 +78,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
@@ -2224,7 +2225,16 @@ public class TextEditingTarget implements
    @Handler 
    void onEditRmdFormatOptions()
    {
-      showFrontMatterEditor();
+      rmarkdownHelper_.withRMarkdownPackage(
+          "Editing R Markdown options", 
+          new CommandWithArg<RMarkdownContext>() {
+
+            @Override
+            public void execute(RMarkdownContext arg)
+            {
+               showFrontMatterEditor();
+            }
+          });
    }
    
    private void showFrontMatterEditor()
