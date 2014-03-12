@@ -14,13 +14,16 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
-import org.rstudio.core.client.Size;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerHandler;
-import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -29,6 +32,8 @@ public class PDFViewer
 {
    @Inject
    public PDFViewer(EventBus eventBus,
+                    final ApplicationServerOperations server,
+                    final GlobalDisplay display,
                     final SatelliteManager satelliteManager)
    {  
       eventBus.addHandler(ShowPDFViewerEvent.TYPE, 
@@ -37,13 +42,21 @@ public class PDFViewer
          @Override
          public void onShowPDFViewer(ShowPDFViewerEvent event)
          {
-            // setup params
-            PDFViewerParams params = PDFViewerParams.create();
-                         
-            // open the window 
-            satelliteManager.openSatellite(PDFViewerApplication.NAME,     
-                                            params,
-                                            new Size(1070,1200));
+         }
+      });
+
+      eventBus.addHandler(CompilePdfCompletedEvent.TYPE, 
+            new CompilePdfCompletedEvent.Handler()
+      {
+         @Override
+         public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
+         {
+            FileSystemItem pdf = FileSystemItem.createFile(
+                  event.getResult().getPdfPath());
+            String url = GWT.getHostPageBaseURL() + 
+                  "pdf_js/viewer.html?file=" + 
+                  server.getFileUrl(pdf);
+            display.openWindow(url);
          }
       });
    }

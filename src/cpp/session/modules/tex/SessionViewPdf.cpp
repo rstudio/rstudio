@@ -23,6 +23,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#define kPdfJsPath "/pdf_js/"
+
 using namespace core;
 
 namespace session {
@@ -48,6 +50,19 @@ void handleViewPdf(const http::Request& request, http::Response* pResponse)
    pResponse->setContentType("application/pdf");
 }
 
+void handlePdfJs(const http::Request& request, http::Response* pResponse)
+{
+   std::string path("pdfjs/");
+   path.append(http::util::pathAfterPrefix(request, kPdfJsPath));
+
+   core::FilePath pdfJsResource = options().rResourcesPath().childPath(path);
+   if (pdfJsResource.exists())
+   {
+      pResponse->setFile(pdfJsResource, request);
+      return;
+   }
+}
+
 } // anonymous namespace
 
 std::string createViewPdfUrl(const core::FilePath& filePath)
@@ -64,6 +79,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerUriHandler, "/view_pdf", handleViewPdf))
+      (bind(registerUriHandler, kPdfJsPath, handlePdfJs))
    ;
    return initBlock.execute();
 }

@@ -22,22 +22,28 @@ minify () {
   echo "Minifying $1.js => $1.min.js"
   CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
   if [ "$2" = "debug" ]; then
-    cp ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.min.js
+    cp ../../cpp/session/resources/pdfjs/$1.js ../../cpp/session/resources/pdfjs/$1.min.js
   else
-    java -jar "compiler/compiler.jar" $CC_OPTS --js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.js --js_output_file ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.min.js
+    java -jar "compiler/compiler.jar" $CC_OPTS --js ../../cpp/session/resources/pdfjs/$1.js --js_output_file ../../cpp/session/resources/pdfjs/$1.min.js
   fi
 }
 
-cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.js
-cp pdfjs/build/generic/web/compatibility.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/build/generic/web/debugger.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/build/generic/web/viewer.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.js
-cp pdfjs/build/generic/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/external/webL10n/l10n.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/webl10n.js
+cp pdfjs/build/generic/build/pdf.js ../../cpp/session/resources/pdfjs/
+cp pdfjs/build/generic/build/pdf.worker.js ../../cpp/session/resources/pdfjs/
+cp pdfjs/build/generic/web/compatibility.js ../../cpp/session/resources/pdfjs/
+cp pdfjs/build/generic/web/debugger.js ../../cpp/session/resources/pdfjs/
+cp pdfjs/build/generic/web/viewer.js ../../cpp/session/resources/pdfjs/
+cp pdfjs/build/generic/web/viewer.css ../../cpp/session/resources/pdfjs/
+cp pdfjs/build/generic/web/viewer.html ../../cpp/session/resources/pdfjs/
+cp pdfjs/build/generic/web/images/*.png ../../cpp/session/resources/pdfjs/images
+cp pdfjs/build/generic/web/images/*.svg ../../cpp/session/resources/pdfjs/images
+cp pdfjs/external/webL10n/l10n.js ../../cpp/session/resources/pdfjs/
+cp pdfjs/build/generic/web/locale/locale.properties ../../cpp/session/resources/pdfjs/
 
 minify pdf $1
+minify pdf.worker $1
 minify compatibility $1
 minify debugger $1
 minify viewer $1
-minify webl10n $1
+minify l10n $1
 

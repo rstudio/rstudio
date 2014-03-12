@@ -322,7 +322,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES ${R_MODULE_SRC_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/modules)
 
-
    # install hunspell dictionaries
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
@@ -341,6 +340,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
    install(FILES ${RMARKDOWN_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+
+   # install PDF.js 
+   file(GLOB_RECURSE PDFJS_RESOURCE_FILES "pdfjs/*")
+   install(FILES ${PDFJS_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources/pdfjs)
 
    # install 64 bit binaries if we are on win64
    if(WIN32)
