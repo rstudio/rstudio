@@ -33,7 +33,6 @@ import org.rstudio.studio.client.pdfviewer.model.PdfJsWindow;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -119,8 +118,10 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onSynctexViewPdf(SynctexViewPdfEvent event)
    {
+      pdfJsWindow_.goToPage(event.getPdfLocation().getPage());
       pdfJsWindow_.navigateTo(event.getPdfLocation());
    }
+   
    
    private PdfJsWindow pdfJsWindow_;
    private Command executeOnLoad_;
