@@ -198,8 +198,13 @@ Error createProject(const json::JsonRpcRequest& request,
       // copy ui.R and server.R into the project
       const char * const kUI = "ui.R";
       const char * const kServer = "server.R";
+      std::string shinyVer;
+      if (module_context::isPackageVersionInstalled("shiny", "0.9"))
+         shinyVer = "shiny-0.9";
+      else
+         shinyVer = "shiny";
       FilePath shinyDir = session::options().rResourcesPath().childPath(
-                                                         "templates/shiny");
+                                                     "templates/" + shinyVer);
       error = shinyDir.childPath(kUI).copy(appDir.childPath(kUI));
       if (error)
          LOG_ERROR(error);
