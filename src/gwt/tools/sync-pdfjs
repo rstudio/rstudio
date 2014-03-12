@@ -3,17 +3,14 @@
 set -e
 
 if [ ! -d "./pdfjs" ]; then
-    git clone git://github.com/rstudio/pdf.js.git pdfjs
-    cd pdfjs
-    git remote add upstream git://github.com/mozilla/pdf.js.git
-    cd ..
+    git clone git://github.com/mozilla/pdf.js.git pdfjs
 fi
 
 cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout a2e85a7
+git checkout c132a99
 
 node make generic singlefile
 cd ..
@@ -40,7 +37,7 @@ cp pdfjs/build/generic/web/debugger.js ../../cpp/session/resources/pdfjs/web
 cp pdfjs/build/generic/web/viewer.js ../../cpp/session/resources/pdfjs/web
 cp pdfjs/build/generic/web/l10n.js ../../cpp/session/resources/pdfjs/web
 
-if [ "$2" != "debug" ]; then
+if [ "$1" != "debug" ]; then
    echo "Minifying scripts"
    minify build/pdf $1
    minify build/pdf.worker $1
