@@ -327,8 +327,7 @@ NSString* resolveAliasedPath(NSString* path)
    FSRef wordRef;
    NSString* wordBundleId = @"com.microsoft.Word";
    OSStatus status =
-      LSFindApplicationForInfo(kLSUnknownCreator,
-                               (__bridge CFStringRef) wordBundleId,
+      LSFindApplicationForInfo(kLSUnknownCreator, (CFStringRef) wordBundleId,
                                NULL, &wordRef, NULL);
    
    if (status == noErr)
