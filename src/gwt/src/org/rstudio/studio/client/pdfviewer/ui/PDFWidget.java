@@ -16,10 +16,7 @@ package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
-
-import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
 
 public class PDFWidget extends Composite
 {
@@ -36,15 +33,6 @@ public class PDFWidget extends Composite
       if (!initialized_)
       {
          initialized_ = true;
-
-         PdfJs.load(new Command()
-         {
-            @Override
-            public void execute()
-            {
-               loadPdf(pdfUrl_, canvas_.getContext2d());
-            }
-         });
       }
    }
 
