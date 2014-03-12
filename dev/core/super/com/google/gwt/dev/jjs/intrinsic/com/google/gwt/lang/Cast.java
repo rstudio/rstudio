@@ -61,6 +61,13 @@ final class Cast {
     return src;
   }
 
+  static Object dynamicCastToString(Object src) {
+    if (src != null && !isJavaString(src)) {
+      throw new ClassCastException();
+    }
+    return src;
+  }
+
   /**
    * Allow a dynamic cast to an object, always succeeding if it's a JSO.
    */
@@ -281,7 +288,7 @@ final class Cast {
   // Visible for getIndexedMethod()
   static native boolean isJavaString(Object src) /*-{
     // TODO(rluble): This might need to be specialized by browser.
-    return typeof(src) == "string" || src instanceof String;
+    return typeof(src) === "string" || src instanceof String;
   }-*/;
 
   /**

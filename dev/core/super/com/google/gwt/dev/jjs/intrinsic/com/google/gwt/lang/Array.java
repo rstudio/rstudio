@@ -29,9 +29,11 @@ public final class Array {
   private static final int TYPE_JAVA_OBJECT_OR_JSO = 1;
   private static final int TYPE_JSO = 2;
   private static final int TYPE_JAVA_LANG_OBJECT = 3;
-  private static final int TYPE_PRIMITIVE_LONG = 4;
-  private static final int TYPE_PRIMITIVE_NUMBER = 5;
-  private static final int TYPE_PRIMITIVE_BOOLEAN = 6;
+  private static final int TYPE_JAVA_LANG_STRING = 4;
+  private static final int TYPE_JS_INTERFACE = 5;
+  private static final int TYPE_PRIMITIVE_LONG = 6;
+  private static final int TYPE_PRIMITIVE_NUMBER = 7;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 8;
 
   /**
    * Creates a copy of the specified array.
@@ -47,7 +49,7 @@ public final class Array {
     Array a = asArrayType(array);
     Array result = arraySlice(a, fromIndex, toIndex);
     initValues(a.getClass(), Util.getCastableTypeMap(a), Array.getElementTypeId(a),
-        Array.getElementTypeClass(a), result);
+        Array.getElementTypeCategory(a), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -71,7 +73,7 @@ public final class Array {
     // the meaning clearer.
     Array result = initializeArrayElementsWithDefaults(TYPE_JAVA_OBJECT, length);
     initValues(a.getClass(), Util.getCastableTypeMap(a), Array.getElementTypeId(a),
-        Array.getElementTypeClass(a), result);
+        Array.getElementTypeCategory(a), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -84,7 +86,7 @@ public final class Array {
    * @param castableTypeMap the map of types to which this array can be casted,
    *          in the form of a JSON map object
    * @param elementTypeId the typeId of array elements
-   * @param elementTypeClass whether the element type is java.lang.Object
+   * @param elementTypeCategory whether the element type is java.lang.Object
    *        ({@link TYPE_JAVA_LANG_OBJECT}), is guaranteed to be a java object
    *        ({@link TYPE_JAVA_OBJECT}), is guaranteed to be a JSO
    *        ({@link TYPE_JSO}), can be either ({@link TYPE_JAVA_OBJECT_OR_JSO}) or
@@ -94,9 +96,9 @@ public final class Array {
    * @return the new array
    */
   public static Array initDim(Class<?> arrayClass, JavaScriptObject castableTypeMap,
-      JavaScriptObject elementTypeId, int length, int elementTypeClass) {
-    Array result = initializeArrayElementsWithDefaults(elementTypeClass, length);
-    initValues(arrayClass, castableTypeMap, elementTypeId, elementTypeClass, result);
+      JavaScriptObject elementTypeId, int length, int elementTypeCategory) {
+    Array result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
+    initValues(arrayClass, castableTypeMap, elementTypeId, elementTypeCategory, result);
     return result;
   }
 
@@ -108,7 +110,7 @@ public final class Array {
    * @param castableTypeMapExprs the JSON castableTypeMap of each dimension,
    *          from highest to lowest
    * @param elementTypeIds the elementTypeId of each dimension, from highest to lowest
-   * @param leafElementTypeClass whether the element type is java.lang.Object
+   * @param leafElementTypeCategory whether the element type is java.lang.Object
    *        ({@link TYPE_JAVA_LANG_OBJECT}), is guaranteed to be a java object
    *        ({@link TYPE_JAVA_OBJECT}), is guaranteed to be a JSO
    *        ({@link TYPE_JSO}), can be either ({@link TYPE_JAVA_OBJECT_OR_JSO}) or
@@ -118,8 +120,8 @@ public final class Array {
    * @return the new array
    */
   public static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
-      JavaScriptObject[] elementTypeIds, int leafElementTypeClass, int[] dimExprs, int count) {
-    return initDims(arrayClasses, castableTypeMapExprs, elementTypeIds, leafElementTypeClass,
+      JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs, int count) {
+    return initDims(arrayClasses, castableTypeMapExprs, elementTypeIds, leafElementTypeCategory,
         dimExprs, 0, count);
   }
 
@@ -131,7 +133,7 @@ public final class Array {
    * @param castableTypeMap the map of types to which this array can be casted,
    *          in the form of a JSON map object
    * @param elementTypeId the typeId of array elements
-   * @param elementTypeClass whether the element type is java.lang.Object
+   * @param elementTypeCategory whether the element type is java.lang.Object
    *        ({@link TYPE_JAVA_LANG_OBJECT}), is guaranteed to be a java object
    *        ({@link TYPE_JAVA_OBJECT}), is guaranteed to be a JSO
    *        ({@link TYPE_JSO}), can be either ({@link TYPE_JAVA_OBJECT_OR_JSO}) or
@@ -141,22 +143,22 @@ public final class Array {
    * @return values; having wrapped it for GWT
    */
   public static Array initValues(Class<?> arrayClass, JavaScriptObject castableTypeMap,
-      JavaScriptObject elementTypeId, int elementTypeClass, Array array) {
+      JavaScriptObject elementTypeId, int elementTypeCategory, Array array) {
     setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
     Util.setTypeMarker(array);
     Array.setElementTypeId(array, elementTypeId);
-    Array.setElementTypeClass(array, elementTypeClass);
+    Array.setElementTypeCategory(array, elementTypeCategory);
     return array;
   }
 
   /**
    * Performs an array assignment, after validating the type of the value being
-   * stored. The form of the type check depends on the value of elementTypeId and elementTypeClass
-   * as follows:
+   * stored. The form of the type check depends on the value of elementTypeId and
+   * elementTypeCategory as follows:
    * <p>
-   * If the elementTypeClass is {@link TYPE_JAVA_OBJECT}, this indicates a normal cast check should
-   * be performed, using the elementTypeId as the cast destination type.
+   * If the elementTypeCategory is {@link TYPE_JAVA_OBJECT}, this indicates a normal cast check
+   * should be performed, using the elementTypeId as the cast destination type.
    * JavaScriptObjects cannot be stored in this case.
    * <p>
    * If the elementTypeId is {@link TYPE_JAVA_LANG_OBJECT}, this is the cast target for the Object
@@ -177,19 +179,34 @@ public final class Array {
    */
   public static Object setCheck(Array array, int index, Object value) {
     if (value != null) {
-      int elementTypeClass = Array.getElementTypeClass(array);
+      int elementTypeCategory = Array.getElementTypeCategory(array);
       JavaScriptObject elementTypeId = Array.getElementTypeId(array);
-      if (elementTypeClass == TYPE_JAVA_OBJECT && !Cast.canCast(value, elementTypeId)) {
-        // value must be castable to elementType.
-        throw new ArrayStoreException();
-      } else if (elementTypeClass == TYPE_JSO && !Cast.isJavaScriptObject(value)) {
-        // value must be a JavaScriptObject
-        throw new ArrayStoreException();
-      } else if (elementTypeClass == TYPE_JAVA_OBJECT_OR_JSO
-          && !Cast.isJavaScriptObject(value)
-          && !Cast.canCast(value, elementTypeId)) {
-        // value must be a JavaScriptObject, or else castable to the elementType.
-        throw new ArrayStoreException();
+      switch (elementTypeCategory) {
+        case TYPE_JAVA_LANG_STRING:
+          if (!Cast.isJavaString(value)) {
+            // value must be a string.
+            throw new ArrayStoreException();
+          }
+          break;
+        case TYPE_JAVA_OBJECT:
+          if (!Cast.canCast(value, elementTypeId)) {
+          // value must be castable to elementType.
+            throw new ArrayStoreException();
+          }
+          break;
+        case TYPE_JSO:
+          if (!Cast.isJavaScriptObject(value)) {
+            // value must be a JavaScriptObject
+            throw new ArrayStoreException();
+          }
+          break;
+        case TYPE_JAVA_OBJECT_OR_JSO:
+          if (!Cast.isJavaScriptObject(value)
+            && !Cast.canCast(value, elementTypeId)) {
+            // value must be a JavaScriptObject, or else castable to the elementType.
+            throw new ArrayStoreException();
+          }
+          break;
       }
     }
     return set(array, index, value);
@@ -217,16 +234,10 @@ public final class Array {
    * Creates a primitive JSON array of a given the element type class.
    */
   private static native Array initializeArrayElementsWithDefaults(
-      int elementTypeClass, int length) /*-{
+      int elementTypeCategory, int length) /*-{
     var array = new Array(length);
     var initValue;
-    switch (elementTypeClass) {
-      case @com.google.gwt.lang.Array::TYPE_JAVA_OBJECT:
-      case @com.google.gwt.lang.Array::TYPE_JAVA_OBJECT_OR_JSO:
-      case @com.google.gwt.lang.Array::TYPE_JAVA_LANG_OBJECT:
-      case @com.google.gwt.lang.Array::TYPE_JSO:
-        // Do not initialize as undefined is equivalent to null
-        return array;
+    switch (elementTypeCategory) {
       case @com.google.gwt.lang.Array::TYPE_PRIMITIVE_LONG:
         // Fill array with the type used by LongLib
         // TODO(rluble): This should refer to the zero long value defined in LongLib
@@ -238,6 +249,9 @@ public final class Array {
       case @com.google.gwt.lang.Array::TYPE_PRIMITIVE_BOOLEAN:
         initValue = false;
         break;
+      default:
+        // Do not initialize as undefined is equivalent to null
+        return array;
     }
 
     for ( var i = 0; i < length; ++i) {
@@ -247,23 +261,23 @@ public final class Array {
   }-*/;
 
   private static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
-      JavaScriptObject[] elementTypeIds, int leafElementTypeClass, int[] dimExprs,
+      JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs,
       int index, int count) {
     int length = dimExprs[index];
     boolean isLastDim = (index == (count - 1));
     // All dimensions but the last are plain reference types.
-    int elementTypeClass = isLastDim ? leafElementTypeClass : TYPE_JAVA_OBJECT;
+    int elementTypeCategory = isLastDim ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
-    Array result = initializeArrayElementsWithDefaults(elementTypeClass, length);
+    Array result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
     initValues(arrayClasses[index], castableTypeMapExprs[index],
-        elementTypeIds[index], elementTypeClass, result);
+        elementTypeIds[index], elementTypeCategory, result);
 
     if (!isLastDim) {
       // Recurse to next dimension.
       ++index;
       for (int i = 0; i < length; ++i) {
         set(result, i, initDims(arrayClasses, castableTypeMapExprs,
-            elementTypeIds, leafElementTypeClass, dimExprs, index, count));
+            elementTypeIds, leafElementTypeCategory, dimExprs, index, count));
       }
     }
     return result;
@@ -289,12 +303,12 @@ public final class Array {
     return array.__elementTypeId$;
   }-*/;
 
-  private static native void setElementTypeClass(Object array, int elementTypeClass) /*-{
-    array.__elementTypeClass$ = elementTypeClass;
+  private static native void setElementTypeCategory(Object array, int elementTypeCategory) /*-{
+    array.__elementTypeCategory$ = elementTypeCategory;
   }-*/;
 
-  private static native int getElementTypeClass(Object array) /*-{
-    return array.__elementTypeClass$;
+  private static native int getElementTypeCategory(Object array) /*-{
+    return array.__elementTypeCategory$;
   }-*/;
 }
 
