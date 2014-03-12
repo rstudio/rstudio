@@ -100,14 +100,10 @@ var MarkdownHighlightRules = function() {
         }, { // $ escape
             token : "text",
             regex : "\\\\\\$"
-        }, { // MathJax $$(?:latex)?
+        }, { // MathJax $$
             token : "markup.list",
-            regex : "\\${2}(?:latex(?:\\s|$))?",
+            regex : "\\${2}",
             next  : "mathjaxdisplay"
-        }, { // MathJax $latex
-            token : "markup.list",
-            regex : "\\$latex\\s",
-            next  : "mathjaxinline"
         }, { // MathJax $...$ (org-mode style)
             token : ["markup.list","support.function","markup.list"],
             regex : "(\\$)" + "((?!\\s)[^$]*[^$\\s])" + "(\\$)" + "(?![\\w\\d`])"
