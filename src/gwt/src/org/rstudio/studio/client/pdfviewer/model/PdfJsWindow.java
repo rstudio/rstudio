@@ -35,8 +35,12 @@ public class PdfJsWindow extends WindowEx
       if (dest == null)
          return;
 
-      // this.PDFView.parseScale(dest.scale);
+      // this.PDFView.setScale(dest.scale);
       this.scrollTo(dest.x, dest.y);
+   }-*/;
+
+   public final native void goToPage(int page) /*-{
+      this.PDFView.page = page;
    }-*/;
 
    public final native JavaScriptObject getNavigateDest() /*-{
@@ -47,6 +51,10 @@ public class PdfJsWindow extends WindowEx
          x: this.scrollX,
          y: this.scrollY
       };
+   }-*/;
+   
+   public final native float getCurrentScale() /*-{
+      return this.PDFView.currentScaleValue;
    }-*/;
    
    public final native void initializeEvents() /*-{
