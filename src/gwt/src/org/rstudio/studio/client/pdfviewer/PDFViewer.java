@@ -54,7 +54,7 @@ public class PDFViewer
             FileSystemItem pdf = FileSystemItem.createFile(
                   event.getResult().getPdfPath());
             String url = GWT.getHostPageBaseURL() + 
-                  "pdf_js/viewer.html?file=" + 
+                  "pdf_js/web/viewer.html?file=" + 
                   server.getFileUrl(pdf);
             display.openWindow(url);
          }
