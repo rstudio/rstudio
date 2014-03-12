@@ -38,7 +38,7 @@ public class RmdTemplateData
             format_extension: "pdf",
             format_options: [ "toc", "toc_depth", "fig_width", "fig_height",
                               "fig_caption", "fig_crop", "number_sections", 
-                              "latex_engine", "highlight", "natbib", 
+                              "latex_engine", "keep_tex", "highlight", "natbib", 
                               "biblatex" ],
             format_notes: "PDF output requires TeX (MiKTeX on Windows, MacTeX 2013+ on OS X, TeX Live 2013+ on Linux)."
             },
@@ -121,6 +121,14 @@ public class RmdTemplateData
             option_category: "Advanced",
             option_default: "pdflatex",
             option_list: [ "pdflatex", "lualatex", "xelatex" ]
+            },
+            {
+            option_name: "keep_tex",
+            option_ui_name: "Keep tex source file used to produce PDF", 
+            option_type: "boolean", 
+            option_for_create: false,
+            option_category: "Advanced",
+            option_default: "false",
             },
             {
             option_name: "fig_width",
@@ -225,7 +233,8 @@ public class RmdTemplateData
             format_extension: "pdf",
             format_options: [ "toc", "incremental", "theme", "colortheme", 
                               "fonttheme", "fig_width", "fig_height", 
-                              "fig_crop", "fig_caption", "highlight" ],
+                              "fig_crop", "fig_caption", "highlight", 
+                              "keep_tex"],
             format_notes: "PDF output requires TeX (MiKTeX on Windows, MacTeX 2013+ on OS X, TeX Live 2013+ on Linux)."
             }
          ],
@@ -417,6 +426,13 @@ public class RmdTemplateData
             option_nullable: true,
             option_category: "Figures",
             option_default: "2"
+            },
+            {
+            option_name: "keep_tex",
+            option_ui_name: "Keep tex source file used to produce PDF", 
+            option_type: "boolean", 
+            option_category: "Advanced",
+            option_default: "false",
             },
          ]
          }
