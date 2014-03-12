@@ -2851,6 +2851,19 @@ public class TextEditingTarget implements
       
       executeSweaveChunk(scopeHelper_.getNextSweaveChunk(), true);
    }
+   
+   @Handler
+   void onExecutePreviousChunks()
+   {
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
+      
+      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks();
+      for (Scope scope : previousScopes)
+         executeSweaveChunk(scope, false);
+   }
 
    private void executeSweaveChunk(Scope chunk, boolean scrollNearTop)
    {

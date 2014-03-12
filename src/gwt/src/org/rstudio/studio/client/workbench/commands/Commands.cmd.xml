@@ -156,6 +156,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
          <menu label="Run Regi_on">
+            <cmd refid="executePreviousChunks"/>
             <cmd refid="executeCurrentChunk"/>
             <cmd refid="executeNextChunk"/>
             <cmd refid="executeToCurrentLine"/>
@@ -478,6 +479,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
          <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
          <shortcut refid="executeCurrentSection" value="Cmd+Alt+T"/>
+         <shortcut refid="executePreviousChunks" value="Cmd+Alt+P"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
       </shortcutgroup>
@@ -803,6 +805,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="insertSection"
         menuLabel="_Insert Section..."
         desc="Insert a new code section"/>
+   <cmd id="executePreviousChunks"
+        menuLabel="Run _Previous Chunks"
+        desc="Run all previous code chunks"/>
    <cmd id="executeCurrentChunk"
         menuLabel="Run _Current Chunk"
         desc="Run the current code chunk"/>

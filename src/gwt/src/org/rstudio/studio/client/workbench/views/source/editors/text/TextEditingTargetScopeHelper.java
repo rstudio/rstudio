@@ -116,6 +116,25 @@ public class TextEditingTargetScopeHelper
       return Range.fromPoints(start, end);
    }
 
+   public Scope[] getPreviousSweaveChunks()
+   {
+      ScopeList scopeList = new ScopeList(docDisplay_);
+      scopeList.selectAll(ScopeList.CHUNK);
+      final Position selectionStart = docDisplay_.getSelectionStart();
+      scopeList.selectAll(new ScopePredicate() {
+
+         @Override
+         public boolean test(Scope scope)
+         {
+            return scope.isChunk() && 
+                   (scope.getEnd().compareTo(selectionStart) < 0);
+         }
+         
+      });
+      
+      return scopeList.getScopes();   
+   }
+   
    public Scope getNextSweaveChunk()
    {
       ScopeList scopeList = new ScopeList(docDisplay_);
