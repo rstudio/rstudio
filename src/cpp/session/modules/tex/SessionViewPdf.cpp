@@ -54,6 +54,16 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
 {
    std::string path("pdfjs/");
    path.append(http::util::pathAfterPrefix(request, kPdfJsPath));
+   if (request.queryString().find("file=") != std::string::npos &&
+       request.queryString() != "file=")
+   {
+      // when a file is specified, we expect it to be empty; deny requests for
+      // specific files (we don't want arbitrary URLs to be loaded)
+      pResponse->setError(
+               http::status::InternalServerError,
+               "Incorrect parameters");
+      return;
+   }
 
    core::FilePath pdfJsResource = options().rResourcesPath().childPath(path);
    if (pdfJsResource.exists())
