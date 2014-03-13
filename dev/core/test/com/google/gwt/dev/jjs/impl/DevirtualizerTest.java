@@ -96,8 +96,8 @@ public class DevirtualizerTest extends OptimizerTestBase {
     expected.append("int result = ");
     expected.append("EntryPoint$Jso1.a__devirtual$(EntryPoint.val1) + ");
     expected.append("EntryPoint$Jso1.a__devirtual$(EntryPoint.val2) + ");
-    expected.append("EntryPoint$Jso2.a0__devirtual$(EntryPoint.val3) + ");
-    expected.append("EntryPoint$Jso2.a0__devirtual$(EntryPoint.val4);");
+    expected.append("EntryPoint$Jso2.a1__devirtual$(EntryPoint.val3) + ");
+    expected.append("EntryPoint$Jso2.a1__devirtual$(EntryPoint.val4);");
 
     Result result = optimize("void", code.toString());
     // Asserts that a() method calls were redirected to the devirtualized version.
@@ -146,7 +146,7 @@ public class DevirtualizerTest extends OptimizerTestBase {
         "String.compareTo__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + " +
         "String.compareTo__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + " +
         "String.length__devirtual$(EntryPoint.stringCharSeq) + " +
-        "String.length0__devirtual$(EntryPoint.aString);");
+        "String.length1__devirtual$(EntryPoint.aString);");
 
     Result result = optimize("void", code.toString());
     result.intoString(expected.toString());
