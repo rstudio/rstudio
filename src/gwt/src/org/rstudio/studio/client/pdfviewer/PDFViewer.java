@@ -72,6 +72,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
             public void execute(WindowEx win)
             {
                pdfJsWindow_ = win.cast();
+               pdfJsWindow_.injectUiOnLoad();
             }
          });
          display_.openMinimalWindow(url, false, 1000, 1000, options);

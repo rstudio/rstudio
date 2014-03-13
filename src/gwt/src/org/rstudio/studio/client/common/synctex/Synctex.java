@@ -209,9 +209,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       // use internal viewer
       else
       {
-         // execute the forward search
          doForwardSearch(targetFile_, sourceLocation);
-     
          return true;
       }
    }

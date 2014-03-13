@@ -27,6 +27,35 @@ public class PdfJsWindow extends WindowEx
    {
    }
    
+   public final native void injectUiOnLoad() /*-{
+      var win = this;
+      this.addEventListener("load", function() {
+         // hide the Open File button; we don't need it
+         var openFileButton = win.document.getElementById("openFile");
+         if (openFileButton) {
+            openFileButton.style.display = "none";
+         }
+         
+         // change the behavior of the Bookmark button to sync to the
+         // appropriate location in the code
+         var bookmarkButton = win.document.getElementById("viewBookmark");
+         if (bookmarkButton) {
+            bookmarkButton.title = "Sync editor location to PDF view";
+         }
+         
+         // make the sidebar open by default
+         var container = win.document.getElementById("outerContainer");
+         if (container) {
+            container.className += " sidebarOpen";
+            win.PDFView.sidebarOpen = true;
+         }
+         var sidebarToggle = win.document.getElementById("sidebarToggle");
+         if (sidebarToggle) {
+            sidebarToggle.className += " toggled";
+         }
+      });
+   }-*/;
+   
    public final native void openPdf(String path, float scale) /*-{
       this.PDFView.open(path, scale);
    }-*/;
