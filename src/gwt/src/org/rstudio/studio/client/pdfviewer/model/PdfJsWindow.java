@@ -14,12 +14,15 @@
  */
 package org.rstudio.studio.client.pdfviewer.model;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 
@@ -65,11 +68,17 @@ public class PdfJsWindow extends WindowEx
             sidebarToggle.className += " toggled";
          }
          
+         // will be overridden by pdf.js with the title once a PDF has finished
+         // loading
          win.title = "RStudio: Compile PDF";
       });
       
       this.addEventListener("beforeunload", function() {
-         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()()();
+         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()();
+      });
+      
+      this.addEventListener("click", function(evt) {
+         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
       });
    }-*/;
    
@@ -144,6 +153,48 @@ public class PdfJsWindow extends WindowEx
          PdfJsWindowClosedEvent.Handler handler)
    {
       return handlers_.addHandler(PdfJsWindowClosedEvent.TYPE, handler);
+   }
+
+   private static void fireClickEvent(PdfJsWindow win, NativeEvent nativeEvent, Element el)
+   {
+      if (!DomUtils.isCommandClick(nativeEvent))
+         return;
+      
+      Element pageEl = el;
+      while (pageEl != null)
+      {
+         if (pageEl.getId().matches("^pageContainer([\\d]+)$"))
+         {
+            break;
+         }
+
+         pageEl = pageEl.getParentElement();
+      }
+
+      if (pageEl == null)
+         return;
+
+      int page = getContainerPageNum(pageEl);
+
+      int pageX = nativeEvent.getClientX() +
+                  win.getDocument().getScrollLeft() +
+                  win.getDocument().getBody().getScrollLeft() -
+                  pageEl.getAbsoluteLeft();
+      int pageY = nativeEvent.getClientY() +
+                  win.getDocument().getDocumentElement().getScrollTop() +
+                  win.getDocument().getBody().getScrollTop() -
+                  pageEl.getAbsoluteTop();
+
+      handlers_.fireEvent(new PageClickEvent(new SyncTexCoordinates(
+            page,
+            (int) ((pageX / win.getCurrentScale() / 96) * 72),
+            (int) ((pageY / win.getCurrentScale() / 96) * 72))));
+   }
+
+   private static int getContainerPageNum(Element container)
+   {
+      return Integer.parseInt(
+            container.getId().substring("pageContainer".length()));
    }
 
    private static final HandlerManager handlers_ = 
