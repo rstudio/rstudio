@@ -61,6 +61,8 @@ public class PdfJsWindow extends WindowEx
          if (sidebarToggle) {
             sidebarToggle.className += " toggled";
          }
+         
+         win.title = "RStudio: Compile PDF";
       });
    }-*/;
    

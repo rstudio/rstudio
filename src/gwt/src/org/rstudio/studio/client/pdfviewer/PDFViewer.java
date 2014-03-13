@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;

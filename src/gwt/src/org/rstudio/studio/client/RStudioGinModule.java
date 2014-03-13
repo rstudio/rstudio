@@ -63,10 +63,6 @@ import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationView;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationWindow;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewPanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
-import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
-import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationView;
-import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationWindow;
-import org.rstudio.studio.client.pdfviewer.ui.PDFViewerPanel;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -230,7 +226,6 @@ public class RStudioGinModule extends AbstractGinModule
             .in(Singleton.class);
       bind(ReviewPresenter.class).to(ReviewPresenterImpl.class);
       
-      bind(PDFViewerApplicationView.class).to(PDFViewerApplicationWindow.class);
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
@@ -286,7 +281,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HistoryPresenter.DisplayBuilder.class).to(
                                                     HistoryPanel.Builder.class);
       
-      bind(PDFViewerPresenter.Display.class).to(PDFViewerPanel.class);
       bind(HTMLPreviewPresenter.Display.class).to(HTMLPreviewPanel.class);
       bind(ShinyApplicationPresenter.Display.class).to(ShinyApplicationPanel.class);
       bind(RmdOutputPresenter.Display.class).to(RmdOutputPanel.class);

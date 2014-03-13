@@ -35,7 +35,6 @@ import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
-import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -335,9 +334,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    private boolean isCurrentWindowPdfViewerSatellite()
    {
-      return satellite_.isCurrentWindowSatellite() && 
-             satellite_.getSatelliteName().equals(PDFViewerApplication.NAME);
-            
+      return false;
    }
    
    private boolean handleDesktopSynctex()
