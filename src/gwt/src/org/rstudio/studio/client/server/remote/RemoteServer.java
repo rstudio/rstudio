@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONUtils;
+import org.rstudio.studio.client.common.URLUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -267,8 +268,16 @@ public class RemoteServer implements Server
       // suspended ensure that events flow right away
       ensureListeningForEvents();
       
-      // return the url
-      return GWT.getHostPageBaseURL() + pathName;
+      // return the url and include the project in it
+      String project = null;
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      if (sessionInfo != null)
+      {
+         FileSystemItem fsi = sessionInfo.getActiveProjectDir();
+         if (fsi != null)
+            project = fsi.getPath();
+      }
+      return URLUtils.getApplicationURL(project,  pathName);
    }
    
    public void suspendForRestart(SuspendOptions options,
@@ -809,7 +818,8 @@ public class RemoteServer implements Server
       {
          if (file.isWithinHome())
          {
-            return getApplicationURL(FILES_SCOPE) + "/" + file.homeRelativePath();
+            return getApplicationURL(
+                           FILES_SCOPE + "/" + file.homeRelativePath());
          }
          else
          {
@@ -862,17 +872,19 @@ public class RemoteServer implements Server
       }
          
       // return url
-      return getApplicationURL(EXPORT_SCOPE) + "/" + URL.encodePathSegment(name) + "?" +
-        "name=" + URL.encodeQueryString(name) + "&" +
-        "parent=" + URL.encodeQueryString(parentDirectory.getPath()) + "&" +
-         files.toString();
+      String url = getApplicationURL(EXPORT_SCOPE + "/" + 
+                                     URL.encodePathSegment(name));
+      url = URLUtils.appendQueryParam(url, "name", name);
+      url = URLUtils.appendQueryParam(url, "parent", parentDirectory.getPath());
+      url += ("&" + files.toString());
+      return url;
    }
    
    
    // get graphics url
    public String getGraphicsUrl(String filename)
    {
-      return getApplicationURL(GRAPHICS_SCOPE) + "/" + filename;
+      return getApplicationURL(GRAPHICS_SCOPE + "/" + filename);
    }
    
    public String getPlotExportUrl(String type, 
@@ -1188,7 +1200,7 @@ public class RemoteServer implements Server
    public String getProgressUrl(String message)
    {
       String url = getApplicationURL(SOURCE_SCOPE + "/" + "progress");
-      url += "?message=" + URL.encodeQueryString(message);
+      url = URLUtils.appendQueryParam(url, "message", message);
       return url;
    }
    
@@ -1992,7 +2004,7 @@ public class RemoteServer implements Server
       ensureListeningForEvents();
 
       // create request
-      String rserverURL = getApplicationURL(scope) + "/" + method;
+      String rserverURL = getApplicationURL(scope + "/" + method);
       RpcRequest rpcRequest = new RpcRequest(rserverURL,
                                              method,
                                              params,

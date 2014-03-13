@@ -327,6 +327,10 @@ public class SessionInfo extends JavaScriptObject
    public final native String getSwitchToProject() /*-{
       return this.switch_to_project;
    }-*/;
+   
+   public final native String getProjectRedirect() /*-{
+      return this.project_redirect;
+   }-*/;
 
    public final native EnvironmentContextData getEnvironmentState() /*-{
       return this.environment_state;

@@ -18,7 +18,6 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -58,7 +57,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
                      WizardPage<NewProjectInput,NewProjectResult> page,
                      boolean okButtonVisible)
    {
-      openInNewWindow_.setVisible(Desktop.isDesktop() && okButtonVisible);
+      openInNewWindow_.setVisible(okButtonVisible);
    }
    
    @Override

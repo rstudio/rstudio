@@ -243,7 +243,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                   OperationWithInput<WindowEx> openOperation)
    {
       String url = server_.getApplicationURL("progress");
-      url += "?message=" + URL.encodeQueryString(message);
+      url = URLUtils.appendQueryParam(url, "message", message);
       NewWindowOptions options = new NewWindowOptions();
       options.setName(name);
       options.setCallback(openOperation);

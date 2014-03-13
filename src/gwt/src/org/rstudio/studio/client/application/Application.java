@@ -52,6 +52,7 @@ import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.URLUtils;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
@@ -153,17 +154,17 @@ public class Application implements ApplicationEventHandlers
 
                   session_.setSessionInfo(sessionInfo);
                   
-                  // hide the workbench if we have a project parameter 
-                  // (since we are going to redirect anyway)
-                  if (haveProjectParameter()) 
+                  // hide the workbench if we are going to redirect anyway
+                  String projectRedirect = sessionInfo.getProjectRedirect();
+                  if (projectRedirect.length() > 0) 
                      hideWorkbench(rootPanel);
                   
                   // initialize workbench
                   initializeWorkbench();
                   
-                  // reload application if we have a project parameter
-                  if (haveProjectParameter())
-                     reloadApplication(sessionInfo.getSwitchToProject());
+                  // redirect to project if necessary
+                  if (projectRedirect.length() > 0)
+                     redirectToProject(projectRedirect);
                }
             }); 
          }
@@ -177,9 +178,9 @@ public class Application implements ApplicationEventHandlers
                                             error.getUserMessage());
          }
       }) ;
-   }  
+   }
    
-   private void reloadApplication(final String switchToProject)
+   private void redirectToProject(final String project)
    {
       // use a last chance save barrier since we typically call this very
       // early in the lifetime of the application before client/server
@@ -189,10 +190,7 @@ public class Application implements ApplicationEventHandlers
          @Override
          public void onBarrierReleased(BarrierReleasedEvent event)
          { 
-            if (switchToProject.length() > 0)
-               pApplicationQuit_.get().forceSwitchProject(switchToProject);
-            else
-               reloadWindowWithDelay(true);
+            reloadWindowWithDelay(project);
          }
       });
       
@@ -440,7 +438,7 @@ public class Application implements ApplicationEventHandlers
    {
       cleanupWorkbench();
       
-      reloadWindowWithDelay(false);
+      reloadWindowWithDelay();
    }
    
    public void onQuit(QuitEvent event)
@@ -455,7 +453,7 @@ public class Application implements ApplicationEventHandlers
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
          {
-            reloadWindowWithDelay(true);
+            reloadWindowWithDelay();
          }
          else
          {
@@ -464,19 +462,23 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   private void reloadWindowWithDelay()
+   {
+      reloadWindowWithDelay(null);
+   }
    
-   private void reloadWindowWithDelay(final boolean baseUrlOnly)
+   private void reloadWindowWithDelay(final String project)
    {
       new Timer() {
          @Override
          public void run()
          { 
-            if (baseUrlOnly)
-               Window.Location.replace(GWT.getHostPageBaseURL());
+            if (project != null)
+               Window.Location.replace(URLUtils.getProjectURL(project));
             else
-               Window.Location.reload();
+               Window.Location.reload(); 
          }
-      }.schedule(100);
+      }.schedule(250);
    }
    
    public void onSuicide(SuicideEvent event)
@@ -698,9 +700,10 @@ public class Application implements ApplicationEventHandlers
       navigateWindowTo("auth-sign-in");
    }
    
-   private boolean haveProjectParameter()
+   private boolean projectRedirectPending()
    {
-      return Window.Location.getParameter("project") != null; 
+      return !Desktop.isDesktop() && 
+             (Window.Location.getParameter("project") == null); 
    }
    
    private final ApplicationView view_ ;

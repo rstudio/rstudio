@@ -29,6 +29,7 @@ struct SessionLaunchProfile
 {
    std::string username;
    std::string password;
+   std::string project;
    std::string executablePath;
    core::system::ProcessConfig config;
 };

@@ -27,6 +27,8 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
+#include <core/r_util/RProjectFile.hpp>
+
 #include <monitor/MonitorConstants.hpp>
 
 #include <r/session/RSession.hpp>
@@ -269,7 +271,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "user identity" )
       (kShowUserIdentitySessionOption,
        value<bool>(&showUserIdentity_)->default_value(true),
-       "show the user identity");
+       "show the user identity")
+      (kProjectSessionOption "," kProjectSessionOptionShort,
+       value<std::string>(&project_)->default_value(""),
+       "project" );
 
    // overlay options
    options_description overlay("overlay");
@@ -427,9 +432,21 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    initialEnvironmentFileOverride_ = core::system::getenv("RS_INITIAL_ENV");
    core::system::unsetenv("RS_INITIAL_ENV");
 
-   // initial project
-   initialProjectPath_ = core::system::getenv("RS_INITIAL_PROJECT");
-   core::system::unsetenv("RS_INITIAL_PROJECT");
+   // initial project (can either be a command line param or via env)
+   if (!project().empty())
+   {
+      FilePath projectDir =
+         FilePath::resolveAliasedPath(project_, FilePath(userHomePath_));
+
+      FilePath projectPath = r_util::projectFromDirectory(projectDir);
+      if (projectPath.exists())
+         initialProjectPath_ = projectPath.absolutePath();
+   }
+   else
+   {
+      initialProjectPath_ = core::system::getenv("RS_INITIAL_PROJECT");
+      core::system::unsetenv("RS_INITIAL_PROJECT");
+   }
 
    // limit rpc client uid
    limitRpcClientUid_ = -1;

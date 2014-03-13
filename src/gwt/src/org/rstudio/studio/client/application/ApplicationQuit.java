@@ -107,21 +107,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       void onReadyToQuit(boolean saveChanges);
    }
    
-   public void forceSwitchProject(final String switchToProject)
-   {
-      ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-                                    sourceShim_.getUnsavedChanges();
-      sourceShim_.handleUnsavedChangesBeforeExit(
-            unsavedSourceDocs,                                     
-            new Command() {
-               @Override
-               public void execute()
-               {
-                  performQuit(true, switchToProject);
-               }
-            });
-   }
-   
    public void prepareForQuit(final String caption,
                               final QuitContext quitContext)
    {

@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.URLUtils;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
@@ -148,10 +149,6 @@ public class Projects implements OpenProjectFileHandler,
                   commands.vcsCleanup().remove();
                }
             }
-            
-            // disable the open project in new window command in web mode
-            if (!Desktop.isDesktop())
-               commands.openProjectInNewWindow().remove();
             
             // maintain mru
             if (hasProject)
@@ -405,8 +402,17 @@ public class Projects implements OpenProjectFileHandler,
             @Override
             public void onExecute(Command continuation)
             {
-               Desktop.getFrame().openProjectInNewWindow(
-                                             newProject.getProjectFile());
+               FileSystemItem project = FileSystemItem.createFile(
+                                                newProject.getProjectFile());
+               if (Desktop.isDesktop())
+               {
+                  Desktop.getFrame().openProjectInNewWindow(project.getPath());
+               }
+               else
+               {
+                  globalDisplay_.openWindow(
+                     URLUtils.getProjectURL(project.getParentPathString()));
+               }
                continuation.execute();
                
             }
@@ -474,11 +480,19 @@ public class Projects implements OpenProjectFileHandler,
                if (input == null)
                   return;
                
-               // call the desktop to open the project (since it is
-               // a conventional foreground gui application it has
-               // less chance of running afowl of desktop app creation
-               // & activation restrictions)
-               Desktop.getFrame().openProjectInNewWindow(input.getPath());
+               if (Desktop.isDesktop())
+               {
+                  // call the desktop to open the project (since it is
+                  // a conventional foreground gui application it has
+                  // less chance of running afowl of desktop app creation
+                  // & activation restrictions)
+                  Desktop.getFrame().openProjectInNewWindow(input.getPath());
+               }
+               else
+               {
+                  globalDisplay_.openWindow(
+                     URLUtils.getProjectURL(input.getParentPathString()));
+               }
             }   
          });
    }

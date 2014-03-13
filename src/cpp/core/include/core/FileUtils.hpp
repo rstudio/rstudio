@@ -22,12 +22,16 @@
 
 namespace core {
 
+class Error;
 class FilePath;
 
 namespace file_utils {
 
 FilePath uniqueFilePath(const core::FilePath& parent,
                         const std::string& prefix = "");
+
+Error copyDirectory(const FilePath& sourceDirectory,
+                    const FilePath& targetDirectory);
 
 
 } // namespace file_utils

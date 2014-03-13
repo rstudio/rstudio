@@ -334,8 +334,13 @@ FilePath getInitialWorkingDirectory()
    }
 }
 
-std::string switchToProject(const http::Request& request)
+std::string projectRedirect(const http::Request& request)
 {
+   // don't do this at all for desktop mode
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+      return std::string();
+
+   // get the project parameter
    std::string referrer = request.headerValue("referer");
    std::string baseURL, queryString;
    http::URL(referrer).split(&baseURL, &queryString);
@@ -343,36 +348,22 @@ std::string switchToProject(const http::Request& request)
    http::util::parseQueryString(queryString, &fields);
    std::string project = http::util::fieldValue(fields, "project");
 
-   if (!project.empty())
+   // if it's empty then get the current project (if we have one) and
+   // return it so the client can redirect to that project
+   if (project.empty())
    {
-      // resolve project
-      FilePath projectPath = module_context::resolveAliasedPath(project);
-      if ((projectPath.extensionLowerCase() != ".rproj") &&
-          projectPath.isDirectory())
-      {
-         FilePath discoveredPath = r_util::projectFromDirectory(projectPath);
-         if (!discoveredPath.empty())
-            projectPath = discoveredPath;
-      }
-      project = module_context::createAliasedPath(projectPath);
-
-      // check if we're already in this project
       if (projects::projectContext().hasProject())
       {
          std::string currentProject = module_context::createAliasedPath(
-                                          projects::projectContext().file());
-         if (project != currentProject)
-            return project;
-         else
-            return std::string();
+                                     projects::projectContext().directory());
+         return currentProject;
       }
-      // no project active so need to switch
       else
       {
-         return project;
+         return std::string();
       }
    }
-   // no project in the query string
+   // if a project is specified
    else
    {
       return std::string();
@@ -603,8 +594,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
    sessionInfo["allow_rpubs_publish"] = options.allowRpubsPublish();
 
-   // check whether a switch project is required
-   sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
+   // check whether a project redirect is required on the client
+   sessionInfo["project_redirect"] = projectRedirect(ptrConnection->request());
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();

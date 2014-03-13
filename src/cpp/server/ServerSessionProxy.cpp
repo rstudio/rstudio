@@ -42,6 +42,7 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/Util.hpp>
+#include <core/http/URL.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 
@@ -64,35 +65,35 @@ namespace session_proxy {
    
 namespace {
 
-void launchSessionRecovery(const std::string& username)
+void launchSessionRecovery(const SessionContext& context)
 {
    // recreate streams dir if necessary
    Error error = session::local_streams::ensureStreamsDir();
    if (error)
       LOG_ERROR(error);
 
-   error = sessionManager().launchSession(username);
+   error = sessionManager().launchSession(context);
    if (error)
       LOG_ERROR(error);
 }
 
-http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
+http::ConnectionRetryProfile sessionRetryProfile(const SessionContext& context)
 {
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(10);
-   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery, username);
+   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery, context);
    return retryProfile;
 }
 
 
 void handleProxyResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      std::string username,
+      const SessionContext& context,
       const http::Response& response)
 {
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(username);
+   sessionManager().removePendingLaunch(context);
 
    // write the response
    ptrConnection->writeResponse(response);
@@ -236,11 +237,11 @@ void logIfNotConnectionTerminated(const Error& error,
 
 void handleContentError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      std::string username,
+      const SessionContext& context,
       const Error& error)
 {   
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(username);
+   sessionManager().removePendingLaunch(context);
 
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
@@ -264,11 +265,11 @@ void handleContentError(
 
 void handleRpcError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-       std::string username,
+      const SessionContext& context,
       const Error& error)
 {
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(username);
+   sessionManager().removePendingLaunch(context);
 
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
@@ -316,14 +317,17 @@ void handleEventsError(
 }
 
 void proxyRequest(
-      const std::string& username,
+      const SessionContext& context,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::ErrorHandler& errorHandler,
       const http::ConnectionRetryProfile& connectionRetryProfile =
                                              http::ConnectionRetryProfile())
-{
+{  
    // calculate stream path
-   FilePath streamPath = session::local_streams::streamPath(username);
+   std::string streamFile =
+         context.username + kProjectSessionDelimiter + context.project;
+   streamFile = http::util::urlEncode(streamFile);
+   FilePath streamPath = session::local_streams::streamPath(streamFile);
 
    // create async client
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
@@ -338,7 +342,7 @@ void proxyRequest(
 
    // execute
    pClient->execute(
-         boost::bind(handleProxyResponse, ptrConnection, username, _1),
+         boost::bind(handleProxyResponse, ptrConnection, context, _1),
          errorHandler);
 }
 
@@ -371,6 +375,28 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
    }
 }
 
+SessionContext contextForRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   SessionContext context(username);
+
+   // look for the project designator either in the URL parameter
+   // or in the HTTP referrer
+   std::string project = ptrConnection->request().queryParamValue("project");
+   if (project.empty())
+   {
+      http::URL refererURL(ptrConnection->request().headerValue("Referer"));
+      std::string baseURL, queryParams;
+      refererURL.split(&baseURL, &queryParams);
+      http::Fields queryFields;
+      http::util::parseQueryString(queryParams, &queryFields);
+   }
+   context.project = project;
+
+   return context;
+}
+
 } // anonymous namespace
 
 
@@ -391,7 +417,9 @@ Error runVerifyInstallationSession()
    core::system::Options args;
    args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
    PidType sessionPid;
-   error = server::launchSession(user.username, args, &sessionPid);
+   error = server::launchSession(SessionContext(user.username),
+                                 args,
+                                 &sessionPid);
    if (error)
       return error;
 
@@ -403,10 +431,12 @@ void proxyContentRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
-   proxyRequest(username,
+   SessionContext context = contextForRequest(username, ptrConnection);
+
+   proxyRequest(context,
                 ptrConnection,
-                boost::bind(handleContentError, ptrConnection, username, _1),
-                sessionRetryProfile(username));
+                boost::bind(handleContentError, ptrConnection, context, _1),
+                sessionRetryProfile(context));
 }
 
 void proxyRpcRequest(
@@ -421,10 +451,12 @@ void proxyRpcRequest(
          return;
    }
 
-   proxyRequest(username,
+   SessionContext context = contextForRequest(username, ptrConnection);
+
+   proxyRequest(context,
                 ptrConnection,
-                boost::bind(handleRpcError, ptrConnection, username, _1),
-                sessionRetryProfile(username));
+                boost::bind(handleRpcError, ptrConnection, context, _1),
+                sessionRetryProfile(context));
 }
    
 void proxyEventsRequest(
@@ -435,7 +467,9 @@ void proxyEventsRequest(
    if (!validateUser(ptrConnection, username))
       return;
 
-   proxyRequest(username,
+   SessionContext context = contextForRequest(username, ptrConnection);
+
+   proxyRequest(context,
                 ptrConnection,
                 boost::bind(handleEventsError, ptrConnection, _1));
 }

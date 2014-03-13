@@ -562,9 +562,10 @@ public class Presentation extends BasePresenter
    
    private String buildPresentationUrl(String extraPath)
    {
-      String url = server_.getApplicationURL("presentation/");
+      String path = "presentation/";
       if (extraPath != null)
-         url = url + extraPath;
+         path = path + extraPath; 
+      String url = server_.getApplicationURL(path);
       url = url + "#/" + currentState_.getSlideIndex();
       return url;
    }
