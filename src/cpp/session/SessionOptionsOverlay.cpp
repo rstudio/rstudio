@@ -33,4 +33,9 @@ void Options::resolveOverlayOptions()
 {
 }
 
+bool Options::allowOverlay() const
+{
+   return true;
+}
+
 } // namespace session
