@@ -34,7 +34,3 @@ viewer <- function(url, height = NULL) {
   invisible(.Call(getNativeSymbolInfo("rs_viewer", PACKAGE=""), url, height))     
 }
 
-shinyViewer <- function(url, path) {
-
-  invisible(.Call(getNativeSymbolInfo("rs_shinyviewer", PACKAGE=""), url, path))     
-}
