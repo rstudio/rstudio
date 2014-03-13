@@ -19,17 +19,16 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.LinkerContext;
 
 /**
- * A linker that adds a script tag to the iframe rather than downloading the
- * code as a string and then installing it into the iframe.
+ * A linker that adds a script tag directly to the iframe rather than downloading the
+ * JavaScript code as a list of strings and then installing it into the iframe.
+ *
+ * <p>(This linker is exactly like CrossSiteIframeLinker except that it defaults to
+ * installCode=false.)
  */
 public class DirectInstallLinker extends CrossSiteIframeLinker {
-  @Override
-  protected String getJsInstallScript(LinkerContext context) {
-    return "com/google/gwt/core/ext/linker/impl/installScriptDirect.js";
-  }
-  
+
   @Override
   protected boolean shouldInstallCode(LinkerContext context) {
-    return false;
+    return getBooleanConfigurationProperty(context, "installCode", false);
   }
 }

@@ -301,18 +301,18 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   /**
-   * Returns the name of the {@code JsInstallScript} script.  By default,
-   * returns {@code "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js"}.
+   * Returns the name of the {@code JsInstallScript} script.  The default is chosen
+   * based on the value of {@link #shouldInstallCode}.
    *
-   * <p> If you override this to return {@code installScriptDirect.js}, then you
-   * should also override {@link #shouldInstallCode(LinkerContext)} to return
-   * {@code false}.
-   *
-   * @param context a LinkerContext
+   * <p> If you override this, verify that {@link #shouldInstallCode} is
+   * set consistently or fragment loading won't work.
    */
   protected String getJsInstallScript(LinkerContext context) {
-    return getStringConfigurationProperty(context, "installScriptJs",
-        "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js");
+    String defaultScript = "com/google/gwt/core/ext/linker/impl/installScriptDirect.js";
+    if (shouldInstallCode(context)) {
+      defaultScript = "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js";
+    }
+    return getStringConfigurationProperty(context, "installScriptJs", defaultScript);
   }
 
   /**
@@ -622,6 +622,12 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     return false;
   }
 
+  /**
+   * Determines the strategy for installing JavaScript code into the iframe.
+   * If set to false, a &lt;script&gt; tag pointing to the js file is added
+   * directly to the iframe. Otherwise, GWT downloads the JavaScript code
+   * as a list of strings and then adds it to the iframe.
+   */
   protected boolean shouldInstallCode(LinkerContext context) {
     return getBooleanConfigurationProperty(context, "installCode", true);
   }

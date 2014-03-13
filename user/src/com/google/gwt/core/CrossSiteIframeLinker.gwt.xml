@@ -47,7 +47,10 @@
   <replace-with class="com.google.gwt.core.client.impl.ScriptTagLoadingStrategy">
     <when-type-is
       class="com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy" />
-    <when-linker-added name="xsiframe" />
+    <any>
+      <when-linker-added name="xsiframe" />
+      <when-linker-added name="direct_install" />
+    </any>
   </replace-with>
 
 

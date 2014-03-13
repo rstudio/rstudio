@@ -239,13 +239,14 @@ class Recompiler {
     // (There is another check in the JavaScript, but just in case.)
     overrideConfig(moduleDef, "devModeRedirectEnabled", "false");
 
-    // Normally the GWT bootstrap script installs GWT code by calling eval() with a string of
-    // JavaScript, so that it can control the scope that the code runs in. Sourcemaps don't seem
-    // to be working in Chrome when we do this, so turn it off for now.
-    // TODO(cromwellian) remove when Chrome is fixed.
-    overrideConfig(moduleDef, "installScriptJs",
-        "com/google/gwt/core/ext/linker/impl/installScriptDirect.js");
-    overrideConfig(moduleDef, "installCode", "false");
+    // Turn off "installCode" if it's on because it makes debugging harder.
+    // (If it's already off, don't change anything.)
+    if (getBooleanConfig(moduleDef, "installCode", true)) {
+      overrideConfig(moduleDef, "installCode", "false");
+      // Make sure installScriptJs is set to the default for compiling without installCode.
+      overrideConfig(moduleDef, "installScriptJs",
+          "com/google/gwt/core/ext/linker/impl/installScriptDirect.js");
+    }
 
     // override computeScriptBase.js to enable the "Compile" button
     overrideConfig(moduleDef, "computeScriptBaseJs",
@@ -298,6 +299,26 @@ class Recompiler {
       BindingProperty binding = (BindingProperty) prop;
       binding.setAllowedValues(binding.getRootCondition(), newValue);
     }
+  }
+
+  /**
+   * Returns a boolean configuration property. If not defined, returns the default.
+   */
+  private static boolean getBooleanConfig(ModuleDef module, String propName,
+      boolean defaultValue) {
+    Property prop = module.getProperties().find(propName);
+    if (prop instanceof ConfigurationProperty) {
+      ConfigurationProperty config = (ConfigurationProperty) prop;
+      String value = config.getValue();
+      if (value != null) {
+        if (value.equalsIgnoreCase("true")) {
+          return true;
+        } else if (value.equalsIgnoreCase("false")) {
+          return false;
+        }
+      }
+    }
+    return defaultValue;
   }
 
   private static boolean maybeOverrideConfig(ModuleDef module, String propName, String newValue) {
