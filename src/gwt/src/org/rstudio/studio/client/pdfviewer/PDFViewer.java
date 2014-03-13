@@ -72,22 +72,28 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onShowPDFViewer(ShowPDFViewerEvent event)
    {
-      if (pdfJsWindow_ == null || pdfJsWindow_.isClosed())
+      int width = 1070;
+      int height = 1200;
+      if (pdfJsWindow_ != null && !pdfJsWindow_.isClosed())
       {
-         String url = GWT.getHostPageBaseURL() + "pdf_js/web/viewer.html?file=";
-         NewWindowOptions options = new NewWindowOptions();
-         options.setCallback(new OperationWithInput<WindowEx>() 
-         {
-            @Override
-            public void execute(WindowEx win)
-            {
-               pdfJsWindow_ = win.cast();
-               pdfJsWindow_.injectUiOnLoad();
-            }
-         });
-         display_.openMinimalWindow(url, false, 1000, 1000, options);
+         width = pdfJsWindow_.getOuterWidth();
+         height = pdfJsWindow_.getOuterHeight();
+         pdfJsWindow_.close();
       }
+      String url = GWT.getHostPageBaseURL() + "pdf_js/web/viewer.html?file=";
+      NewWindowOptions options = new NewWindowOptions();
+      options.setCallback(new OperationWithInput<WindowEx>() 
+      {
+         @Override
+         public void execute(WindowEx win)
+         {
+            pdfJsWindow_ = win.cast();
+            pdfJsWindow_.injectUiOnLoad();
+         }
+      });
+      display_.openMinimalWindow(url, false, width, height, options);
    }
+    
 
    @Override
    public void onPDFLoad(PDFLoadEvent event)
