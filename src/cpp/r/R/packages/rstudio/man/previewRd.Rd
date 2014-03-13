@@ -7,6 +7,10 @@ Preview an Rd topic in the Help pane
 \description{
 Preview an Rd topic in the Help pane
 }
+\note{
+The \code{previewRd} function was added in version 0.98.191 of RStudio.
+}
+
 \usage{
 previewRd(rdFile)
 }

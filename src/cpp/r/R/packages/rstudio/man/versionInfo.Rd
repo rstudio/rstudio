@@ -6,6 +6,9 @@ RStudio Version Information
 \description{
 Provides information about the currently running version of RStudio, including it's specific version number and whether it is running in desktop or server mode.
 }
+\note{
+The \code{versionInfo} function was added in version 0.97.124 of RStudio.
+}
 \usage{
 versionInfo()
 }

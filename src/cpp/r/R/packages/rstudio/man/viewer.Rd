@@ -26,6 +26,10 @@ The \code{height} parameter specifies a desired height, however it's possible th
 
 }
 
+\note{
+The \code{viewer} function was added in version 0.98.423 of RStudio.
+}
+
 \section{Viewer Detection}{
 
 When a page is displayed within the Viewer it's possible that the user will choose to pop it out into a standalone browser window. When rendering inside a standard browser you may want to make different choices about how content is laid out or scaled. Web pages can detect that they are running inside the Viewer pane by looking for the \code{viewer_pane} query parameter, which is automatically injected into URLs when they are shown in the Viewer. For example, the following URL:
