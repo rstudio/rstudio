@@ -16,13 +16,14 @@ package org.rstudio.studio.client.pdfviewer.model;
 
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
+import org.rstudio.studio.client.pdfviewer.events.LookupSynctexSourceEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 
@@ -50,10 +51,7 @@ public class PdfJsWindow extends WindowEx
             bookmarkButton.title = "Sync editor location to PDF view";
             bookmarkButton.href = "";
             bookmarkButton.addEventListener("click", function(evt) {
-               var page = win.PDFView.page;
-               var x = win.scrollX;
-               var y = win.scrollY;
-               @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(III)(page, x, y);
+               @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLookupCurrentViewEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;)(win);
             });
          }
          
@@ -78,7 +76,7 @@ public class PdfJsWindow extends WindowEx
       });
       
       this.addEventListener("click", function(evt) {
-         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
+         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
       });
    }-*/;
    
@@ -126,17 +124,17 @@ public class PdfJsWindow extends WindowEx
       handlers_.fireEvent(new PDFLoadEvent());
    }
    
-   private static void firePageClickEvent(int page, int x, int y)
+   private static void fireLookupCurrentViewEvent(PdfJsWindow win)
    {
-      SyncTexCoordinates coords = new SyncTexCoordinates(page, x, y);
-      handlers_.fireEvent(new PageClickEvent(coords));
+      SyncTexCoordinates coords = getBoundaryCoordinates(win, true);
+      handlers_.fireEvent(new LookupSynctexSourceEvent(coords, false));
    }
    
    private static void fireWindowClosedEvent()
    {
       handlers_.fireEvent(new PdfJsWindowClosedEvent());
    }
-
+   
    public static HandlerRegistration addPDFLoadHandler(
          PDFLoadEvent.Handler handler)
    {
@@ -144,9 +142,9 @@ public class PdfJsWindow extends WindowEx
    }
 
    public static HandlerRegistration addPageClickHandler(
-         PageClickEvent.Handler handler)
+         LookupSynctexSourceEvent.Handler handler)
    {
-      return handlers_.addHandler(PageClickEvent.TYPE, handler);
+      return handlers_.addHandler(LookupSynctexSourceEvent.TYPE, handler);
    }
 
    public static HandlerRegistration addWindowClosedHandler(
@@ -155,7 +153,9 @@ public class PdfJsWindow extends WindowEx
       return handlers_.addHandler(PdfJsWindowClosedEvent.TYPE, handler);
    }
 
-   private static void fireClickEvent(PdfJsWindow win, NativeEvent nativeEvent, Element el)
+   private static void firePageClickEvent(PdfJsWindow win, 
+                                          NativeEvent nativeEvent, 
+                                          Element el)
    {
       if (!DomUtils.isCommandClick(nativeEvent))
          return;
@@ -185,10 +185,45 @@ public class PdfJsWindow extends WindowEx
                   win.getDocument().getBody().getScrollTop() -
                   pageEl.getAbsoluteTop();
 
-      handlers_.fireEvent(new PageClickEvent(new SyncTexCoordinates(
+      handlers_.fireEvent(new LookupSynctexSourceEvent(new SyncTexCoordinates(
             page,
             (int) ((pageX / win.getCurrentScale() / 96) * 72),
-            (int) ((pageY / win.getCurrentScale() / 96) * 72))));
+            (int) ((pageY / win.getCurrentScale() / 96) * 72)), true));
+   }
+
+   private static SyncTexCoordinates getBoundaryCoordinates(
+         PdfJsWindow win, 
+         boolean top)
+   {
+      int scrollY = win.getDocument().getScrollTop();
+
+      // linear probe our way to the current page
+      Element viewerEl = win.getDocument().getElementById("viewer");
+      for (int i = 1; i < viewerEl.getChildCount(); i+=2)
+      {
+         Node childNode = viewerEl.getChild(i);
+         if (Element.is(childNode))
+         {
+            Element el = Element.as(childNode);
+
+            if (el.getAbsoluteBottom() > scrollY)
+            {
+               int pageNum = getContainerPageNum(el);
+               int pageY = scrollY - el.getAbsoluteTop();
+               if (pageY < 0)
+                  pageY = 0;
+
+               if (!top)
+                  pageY += win.getDocument().getClientHeight();
+               
+               return new SyncTexCoordinates(
+                     pageNum,
+                     0,
+                     (int) ((pageY / win.getCurrentScale() / 96) * 72));
+            }
+         }
+      }
+      return null;
    }
 
    private static int getContainerPageNum(Element container)

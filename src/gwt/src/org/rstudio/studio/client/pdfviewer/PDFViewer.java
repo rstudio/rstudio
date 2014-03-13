@@ -30,7 +30,7 @@ import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerHandler;
-import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
+import org.rstudio.studio.client.pdfviewer.events.LookupSynctexSourceEvent;
 import org.rstudio.studio.client.pdfviewer.model.PdfJsWindow;
 import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
@@ -46,7 +46,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                                   ShowPDFViewerHandler,
                                   SynctexViewPdfEvent.Handler,
                                   PDFLoadEvent.Handler,
-                                  PageClickEvent.Handler,
+                                  LookupSynctexSourceEvent.Handler,
                                   PdfJsWindowClosedEvent.Handler
 {
    @Inject
@@ -140,10 +140,10 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    }
    
    @Override
-   public void onPageClick(PageClickEvent event)
+   public void onLookupSynctexSource(LookupSynctexSourceEvent event)
    {
       focusMainWindow();
-      synctexInverseSearch(event.getCoordinates(), true);
+      synctexInverseSearch(event.getCoordinates(), event.fromClick());
    }
 
    @Override

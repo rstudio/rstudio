@@ -16,29 +16,30 @@ package org.rstudio.studio.client.pdfviewer.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 
-public class PageClickEvent extends GwtEvent<PageClickEvent.Handler>
+public class LookupSynctexSourceEvent extends GwtEvent<LookupSynctexSourceEvent.Handler>
 {
-   public interface HasPageClickHandlers
-   {
-      HandlerRegistration addPageClickHandler(PageClickEvent.Handler handler);
-   }
-
    public interface Handler extends EventHandler
    {
-      void onPageClick(PageClickEvent event);
+      void onLookupSynctexSource(LookupSynctexSourceEvent event);
    }
 
-   public PageClickEvent(SyncTexCoordinates coordinates)
+   public LookupSynctexSourceEvent(SyncTexCoordinates coordinates, 
+                         boolean fromClick)
    {
       coordinates_ = coordinates;
+      fromClick_ = fromClick;
    }
 
    public SyncTexCoordinates getCoordinates()
    {
       return coordinates_;
+   }
+   
+   public boolean fromClick()
+   {
+      return fromClick_;
    }
 
    @Override
@@ -50,10 +51,11 @@ public class PageClickEvent extends GwtEvent<PageClickEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onPageClick(this);
+      handler.onLookupSynctexSource(this);
    }
 
    private final SyncTexCoordinates coordinates_;
+   private final boolean fromClick_;
 
    public static Type<Handler> TYPE = new Type<Handler>();
 }
