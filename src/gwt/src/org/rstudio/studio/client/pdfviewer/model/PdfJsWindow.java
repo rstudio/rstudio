@@ -34,8 +34,9 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler;
 
-// This class wraps a reference to the window hosting PDF.js. Any coupling 
-// with the UI or internals of PDF.js goes here. 
+// This class wraps a reference to the window hosting PDF.js, and is intended to
+// encapsulate its interface. Any coupling with the UI or internals of PDF.js
+// goes here.
 public class PdfJsWindow extends WindowEx
 {
    protected PdfJsWindow() 
@@ -194,7 +195,8 @@ public class PdfJsWindow extends WindowEx
          PdfJsWindow win, 
          boolean top)
    {
-      int scrollY = win.getDocument().getScrollTop();
+      Element container = getViewerContainer(win);
+      int scrollY = container.getScrollTop();
 
       // linear probe our way to the current page
       Element viewerEl = win.getDocument().getElementById("viewer");
@@ -205,15 +207,15 @@ public class PdfJsWindow extends WindowEx
          {
             Element el = Element.as(childNode);
 
-            if (el.getAbsoluteBottom() > scrollY)
+            if (DomUtils.bottomRelativeTo(container, el) > scrollY)
             {
                int pageNum = getContainerPageNum(el);
-               int pageY = scrollY - el.getAbsoluteTop();
+               int pageY = scrollY - DomUtils.topRelativeTo(container, el);
                if (pageY < 0)
                   pageY = 0;
 
                if (!top)
-                  pageY += win.getDocument().getClientHeight();
+                  pageY += container.getClientHeight();
                
                return new SyncTexCoordinates(
                      pageNum,
@@ -285,10 +287,16 @@ public class PdfJsWindow extends WindowEx
             win.goToPage(pdfLocation.getPage());
 
             // if the target isn't on-screen then scroll to it
-            if (pdfLocation.getY() > getBoundaryCoordinates(win, false).getY())
+            SyncTexCoordinates boundary = getBoundaryCoordinates(win, false);
+            if (boundary != null && 
+                pdfLocation.getY() > boundary.getY())
             {
-               win.scrollTo(win.getScrollLeft(),
-                  Math.max(0, pageContainer.getAbsoluteTop() + (int) y - 180));
+               Element container = getViewerContainer(win);
+               container.setScrollTop(Math.max(
+                     0, 
+                     DomUtils.topRelativeTo(
+                           getViewerContainer(win), 
+                           pageContainer) + (int) y - 180));
             }
 
             return false;
@@ -300,6 +308,11 @@ public class PdfJsWindow extends WindowEx
    {
       return Integer.parseInt(
             container.getId().substring("pageContainer".length()));
+   }
+   
+   private static Element getViewerContainer(PdfJsWindow win)
+   {
+      return win.getDocument().getElementById("viewerContainer");
    }
 
    private static final HandlerManager handlers_ = 

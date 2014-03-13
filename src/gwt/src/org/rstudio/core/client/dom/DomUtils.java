@@ -724,6 +724,27 @@ public class DomUtils
       return (nativeEvt.getButton() == NativeEvent.BUTTON_LEFT) && commandKey;
    }
    
+   // Returns the relative vertical position of a child to its parent. 
+   // Presumes that the parent is one of the elements from which the child's
+   // position is computed; if this is not the case, the child's position
+   // relative to the body is returned.
+   public static int topRelativeTo(Element parent, Element child)
+   {
+      int top = 0;
+      Element el = child;
+      while (el != null && el != parent)
+      {
+         top += el.getOffsetTop();
+         el = el.getOffsetParent();
+      }
+      return top;
+   }
+   
+   public static int bottomRelativeTo(Element parent, Element child)
+   {
+      return topRelativeTo(parent, child) + child.getOffsetHeight();
+   }
+   
    public static final native void setStyle(Element element, 
                                             String name, 
                                             String value) /*-{

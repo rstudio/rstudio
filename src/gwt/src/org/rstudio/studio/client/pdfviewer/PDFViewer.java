@@ -18,6 +18,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -37,7 +38,10 @@ import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -67,6 +71,18 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       PdfJsWindow.addPDFLoadHandler(this);
       PdfJsWindow.addPageClickHandler(this);
       PdfJsWindow.addWindowClosedHandler(this);
+
+      // when this window is closed, automatically close the PDF.js window,
+      // if it's open
+      Window.addCloseHandler(new CloseHandler<Window>()
+      {
+         @Override
+         public void onClose(CloseEvent<Window> event)
+         {
+            if (pdfJsWindow_ != null)
+               pdfJsWindow_.close();
+         }
+      });
    }
 
    @Override
@@ -79,6 +95,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
          width = pdfJsWindow_.getOuterWidth();
          height = pdfJsWindow_.getOuterHeight();
          pdfJsWindow_.close();
+         pdfJsWindow_ = null;
       }
       String url = GWT.getHostPageBaseURL() + "pdf_js/web/viewer.html?file=";
       NewWindowOptions options = new NewWindowOptions();
@@ -141,7 +158,14 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onLookupSynctexSource(LookupSynctexSourceEvent event)
    {
-      focusMainWindow();
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().bringMainFrameToFront();
+      }
+      else
+      {
+         focusMainWindow();
+      }
       synctexInverseSearch(event.getCoordinates(), event.fromClick());
    }
 
