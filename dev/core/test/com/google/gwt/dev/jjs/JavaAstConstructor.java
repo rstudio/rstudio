@@ -84,6 +84,10 @@ public class JavaAstConstructor {
           "  public static native String charToString(char x) /*-{ }-*/;",
           "  public static Object dynamicCast(Object src, int dstId) { return src;}",
           "  public static boolean instanceOf(Object src, int dstId) { return false;}",
+          "  public static boolean hasJavaObjectVirtualDispatch(Object o) { return true; }",
+          "  public static boolean isJavaArray(Object o) { return false; }",
+          "  public static boolean isJavaString(Object o) { return true; }",
+          "  public static boolean isJavaScriptObject(Object o) { return true; }",
           "  public static native boolean isNull(Object a) /*-{ }-*/;",
           "  public static native boolean isNotNull(Object a) /*-{ }-*/;",
           "  public static native boolean jsEquals(Object a, Object b) /*-{ }-*/;",
@@ -242,7 +246,7 @@ public class JavaAstConstructor {
               "  public static Object defineClass(int typeId, int superTypeId, Object map) {",
               "    return null;",
               "  }",
-              "  public static void patchIsArray() {}",
+              "  public static void modernizeBrowser() {}",
               "}"
           );
         }

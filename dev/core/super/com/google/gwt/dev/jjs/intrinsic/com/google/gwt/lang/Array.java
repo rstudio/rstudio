@@ -19,8 +19,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 
 /**
- * This is a magic class the compiler uses as a base class for injected array
- * classes.
+ * This is an intrinsic class that contains the implementation details for Java arrays. <p>
+ *
+ * This class should contain only static methods or fields.
  */
 public final class Array {
   // Array element type classes
@@ -45,8 +46,8 @@ public final class Array {
   public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
     Array a = asArrayType(array);
     Array result = arraySlice(a, fromIndex, toIndex);
-    initValues(a.getClass(), Util.getCastableTypeMap(a), a.elementTypeId,
-        a.elementTypeClass, result);
+    initValues(a.getClass(), Util.getCastableTypeMap(a), Array.getElementTypeId(a),
+        Array.getElementTypeClass(a), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -69,8 +70,8 @@ public final class Array {
     // might have performace penalty. Maybe rename to createUninitializedFrom(), to make
     // the meaning clearer.
     Array result = initializeArrayElementsWithDefaults(TYPE_JAVA_OBJECT, length);
-    initValues(a.getClass(), Util.getCastableTypeMap(a), a.elementTypeId,  a.elementTypeClass,
-        result);
+    initValues(a.getClass(), Util.getCastableTypeMap(a), Array.getElementTypeId(a),
+        Array.getElementTypeClass(a), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -144,8 +145,8 @@ public final class Array {
     setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
     Util.setTypeMarker(array, Cast.getNullMethod());
-    array.elementTypeId = elementTypeId;
-    array.elementTypeClass = elementTypeClass;
+    Array.setElementTypeId(array, elementTypeId);
+    Array.setElementTypeClass(array, elementTypeClass);
     return array;
   }
 
@@ -176,16 +177,17 @@ public final class Array {
    */
   public static Object setCheck(Array array, int index, Object value) {
     if (value != null) {
-      if (array.elementTypeClass == TYPE_JAVA_OBJECT
-          && !Cast.canCast(value, array.elementTypeId)) {
+      int elementTypeClass = Array.getElementTypeClass(array);
+      JavaScriptObject elementTypeId = Array.getElementTypeId(array);
+      if (elementTypeClass == TYPE_JAVA_OBJECT && !Cast.canCast(value, elementTypeId)) {
         // value must be castable to elementType.
         throw new ArrayStoreException();
-      } else if (array.elementTypeClass == TYPE_JSO && Cast.isJavaObject(value)) {
+      } else if (elementTypeClass == TYPE_JSO && !Cast.isJavaScriptObject(value)) {
         // value must be a JavaScriptObject
         throw new ArrayStoreException();
-      } else if (array.elementTypeClass == TYPE_JAVA_OBJECT_OR_JSO
+      } else if (elementTypeClass == TYPE_JAVA_OBJECT_OR_JSO
           && !Cast.isJavaScriptObject(value)
-          && !Cast.canCast(value, array.elementTypeId)) {
+          && !Cast.canCast(value, elementTypeId)) {
         // value must be a JavaScriptObject, or else castable to the elementType.
         throw new ArrayStoreException();
       }
@@ -279,12 +281,20 @@ public final class Array {
     o.@java.lang.Object::___clazz = clazz;
   }-*/;
 
-  /**
-   * A representation of the necessary cast target for objects stored into this
-   * array.
-   *
-   * @see #setCheck
-   */
-  protected JavaScriptObject elementTypeId = null;
-  protected int elementTypeClass = 0;
+  private static native void setElementTypeId(Object array, JavaScriptObject elementTypeId) /*-{
+    array.__elementTypeId$ = elementTypeId;
+  }-*/;
+
+  private static native JavaScriptObject getElementTypeId(Object array) /*-{
+    return array.__elementTypeId$;
+  }-*/;
+
+  private static native void setElementTypeClass(Object array, int elementTypeClass) /*-{
+    array.__elementTypeClass$ = elementTypeClass;
+  }-*/;
+
+  private static native int getElementTypeClass(Object array) /*-{
+    return array.__elementTypeClass$;
+  }-*/;
 }
+

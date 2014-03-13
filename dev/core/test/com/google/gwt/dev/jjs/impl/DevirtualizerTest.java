@@ -17,7 +17,6 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -26,25 +25,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Lists;
  * Tests for the {@link Devirtualizer} visitor.
  */
 public class DevirtualizerTest extends OptimizerTestBase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Cast") {
-      @Override
-      public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package com.google.gwt.lang;");
-        code.append("public class Cast {");
-        code.append("  public static boolean isRegularJavaObject(Object o) { return true; }");
-        code.append("  public static boolean instanceofArray(Object o) { return false; }");
-        code.append("  public static boolean isJavaString(Object o) { return true; }");
-        code.append("  public static boolean isJavaScriptObject(Object o) { return true; }");
-        code.append("}");
-        return code;
-      }
-    });
-
-  }
 
   /**
    * Devirtualizer should allow dual Java/JSO implementations of the same

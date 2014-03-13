@@ -217,7 +217,9 @@ public class Devirtualizer {
   }
 
   /**
-   * Returns true if getClass() is devirtualized for {@code type}.
+   * Returns true if getClass() is devirtualized for {@code type}; used in
+   * {@link ReplaceGetClassOverrides} to avoid replacing getClass() methods that need
+   * trampolines.
    */
   public static boolean isGetClassDevirtualized(JProgram program, JType type) {
     return type == program.getJavaScriptObject() || type == program.getTypeJavaLangString();
@@ -230,9 +232,9 @@ public class Devirtualizer {
   protected Map<JMethod, JMethod> devirtualMethodByMethod = Maps.newHashMap();
 
   /**
-   * Contains the Cast.isRegularJavaObject method.
+   * Contains the Cast.hasJavaObjectVirtualDispatch method.
    */
-  private final JMethod isRegularJavaObjectMethod;
+  private final JMethod hasJavaObjectVirtualDispatch;
 
   /**
    * Contains the Cast.isJavaString method.
@@ -242,7 +244,7 @@ public class Devirtualizer {
   /**
    * Contains the Cast.instanceofArray method.
    */
-  private final JMethod instanceofArrayMethod;
+  private final JMethod isJavaArray;
   /**
    * Key is the method signature, value is the number of unique instances with
    * the same signature.
@@ -292,8 +294,9 @@ public class Devirtualizer {
   private Devirtualizer(JProgram program) {
     this.program = program;
     this.isJavaStringMethod = program.getIndexedMethod("Cast.isJavaString");
-    this.isRegularJavaObjectMethod = program.getIndexedMethod("Cast.isRegularJavaObject");
-    this.instanceofArrayMethod = program.getIndexedMethod("Cast.instanceofArray");
+    this.hasJavaObjectVirtualDispatch =
+        program.getIndexedMethod("Cast.hasJavaObjectVirtualDispatch");
+    this.isJavaArray = program.getIndexedMethod("Cast.isJavaArray");
     // TODO: consider turning on null checks for "this"?
     // However, for JSO's there is existing code that relies on nulls being okay.
     this.converter = new StaticCallConverter(program, false);
@@ -382,8 +385,8 @@ public class Devirtualizer {
   // Byte mask used by {@link ::getÓrCreateDevirtualMethod} to determine possible dispatches of a
   // method.
   private static final byte STRING = 0x01;
-  private static final byte REGULAR_JAVA_OBJECT = 0x02;
-  private static final byte ARRAY = 0x04;
+  private static final byte HAS_JAVA_VIRTUAL_DISPATCH = 0x02;
+  private static final byte JAVA_ARRAY = 0x04;
   private static final byte JSO = 0x08;
 
   /**
@@ -393,7 +396,7 @@ public class Devirtualizer {
    * <pre>
    * static boolean equals__devirtual$(Object this, Object other) {
    *   return Cast.isJavaString() ? String.equals(other) :
-   *       Cast.isRegularJavaObjectMethod(this) ?
+   *       Cast.hasJavaObjectVirtualDispatch(this) ?
    *       this.equals(other) : JavaScriptObject.equals$(this, other);
    * }
    * </pre>
@@ -411,7 +414,7 @@ public class Devirtualizer {
     JReferenceType enclosingType = method.getEnclosingType();
     if (enclosingType == program.getTypeJavaLangObject()) {
       // Object methods can be dispatched to all four possible classes.
-      possibleTargetTypes = STRING | REGULAR_JAVA_OBJECT | ARRAY | JSO;
+      possibleTargetTypes = STRING | HAS_JAVA_VIRTUAL_DISPATCH | JAVA_ARRAY | JSO;
     } else if (enclosingType == program.getTypeJavaLangString()) {
       // String is final and can not be extended.
       possibleTargetTypes |= STRING;
@@ -419,7 +422,7 @@ public class Devirtualizer {
 
     if (program.typeOracle.isDualJsoInterface(enclosingType)) {
       // If it is an interface implemented both by JSOs and regular Java Objects;
-      possibleTargetTypes = REGULAR_JAVA_OBJECT | JSO;
+      possibleTargetTypes = HAS_JAVA_VIRTUAL_DISPATCH | JSO;
     } else if (program.typeOracle.isSingleJsoImpl(enclosingType) ||
         program.isJavaScriptObject(enclosingType)) {
       // If it is either an interface implemented by JSOs or JavaScriptObject or one of its
@@ -429,7 +432,7 @@ public class Devirtualizer {
 
     if (program.getTypeJavaLangString().getImplements().contains(enclosingType)) {
       // If it is an interface implemented by String.
-      possibleTargetTypes |= STRING | REGULAR_JAVA_OBJECT;
+      possibleTargetTypes |= STRING | HAS_JAVA_VIRTUAL_DISPATCH;
     }
 
     /////////////////////////////////////////////////////////////////
@@ -452,15 +455,15 @@ public class Devirtualizer {
           method.getName() + " not overriden by JavaScriptObject";
       dispatchToMethodByTargetType.put(JSO, getStaticImpl(overridingMethod));
     }
-    if ((possibleTargetTypes & ARRAY) != 0) {
+    if ((possibleTargetTypes & JAVA_ARRAY) != 0) {
       // Arrays only implement Object methods as the Clonable interface is not supported in GWT.
       JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangObject());
       assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
           method.getName() + " not overriden by Object";
-      dispatchToMethodByTargetType.put(ARRAY, getStaticImpl(overridingMethod));
+      dispatchToMethodByTargetType.put(JAVA_ARRAY, getStaticImpl(overridingMethod));
     }
-    if ((possibleTargetTypes & REGULAR_JAVA_OBJECT) != 0) {
-      dispatchToMethodByTargetType.put(REGULAR_JAVA_OBJECT, method);
+    if ((possibleTargetTypes & HAS_JAVA_VIRTUAL_DISPATCH) != 0) {
+      dispatchToMethodByTargetType.put(HAS_JAVA_VIRTUAL_DISPATCH, method);
     }
 
     /////////////////////////////////////////////////////////////////
@@ -511,17 +514,17 @@ public class Devirtualizer {
 
     // Dispatch to array
     dispatchExpression = constructMinimalCondition(
-        instanceofArrayMethod,
+        isJavaArray,
         new JParameterRef(thisParam.getSourceInfo(), thisParam),
-        maybeCreateDispatch(dispatchToMethodByTargetType.get(ARRAY), devirtualMethod),
+        maybeCreateDispatch(dispatchToMethodByTargetType.get(JAVA_ARRAY), devirtualMethod),
         dispatchExpression);
 
     // Dispatch to regular object
     dispatchExpression = constructMinimalCondition(
-        isRegularJavaObjectMethod,
+        hasJavaObjectVirtualDispatch,
         new JParameterRef(thisParam.getSourceInfo(), thisParam),
         maybeCreateDispatch(
-            dispatchToMethodByTargetType.get(REGULAR_JAVA_OBJECT), devirtualMethod),
+            dispatchToMethodByTargetType.get(HAS_JAVA_VIRTUAL_DISPATCH), devirtualMethod),
         dispatchExpression);
 
     // Dispatch to regular string

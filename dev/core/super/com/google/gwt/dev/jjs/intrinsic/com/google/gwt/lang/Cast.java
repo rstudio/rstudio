@@ -38,9 +38,9 @@ final class Cast {
   private static JavaScriptObject stringCastMap;
 
   static native boolean canCast(Object src, JavaScriptObject dstId) /*-{
-    return src.@java.lang.Object::castableTypeMap && !!src.@java.lang.Object::castableTypeMap[dstId]
-        || @com.google.gwt.lang.Cast::isJavaString(Ljava/lang/Object;)(src) &&
-        !!@com.google.gwt.lang.Cast::stringCastMap[dstId];
+    return @com.google.gwt.lang.Cast::isJavaString(*)(src) &&
+        !!@com.google.gwt.lang.Cast::stringCastMap[dstId] ||
+        src.@java.lang.Object::castableTypeMap && !!src.@java.lang.Object::castableTypeMap[dstId];
   }-*/;
 
   static native boolean canCastClass(Class<?> srcClazz, Class<?> dstClass) /*-{
@@ -65,8 +65,7 @@ final class Cast {
    * Allow a dynamic cast to an object, always succeeding if it's a JSO.
    */
   static Object dynamicCastAllowJso(Object src, JavaScriptObject dstId) {
-    if (src != null && !isJavaScriptObject(src) &&
-        !canCast(src, dstId)) {
+    if (src != null && !isJavaScriptObject(src) && !canCast(src, dstId)) {
       throw new ClassCastException();
     }
     return src;
@@ -76,7 +75,7 @@ final class Cast {
    * Allow a cast to JSO only if there's no type ID.
    */
   static Object dynamicCastJso(Object src) {
-    if (src != null && isJavaObject(src)) {
+    if (src != null && !isJavaScriptObject(src)) {
       throw new ClassCastException();
     }
     return src;
@@ -99,16 +98,12 @@ final class Cast {
         (isJavaScriptObject(src) || canCast(src, dstId));
   }
 
-  static boolean isJavaObject(Object src) {
-    return isRegularJavaObject(src) || isJavaString(src);
-  }
-
   static boolean isJavaScriptObject(Object src) {
-    return !isRegularJavaObject(src) && !isJavaString(src);
+    return !isJavaString(src) && !hasTypeMarker(src);
   }
 
   static boolean isJavaScriptObjectOrString(Object src) {
-    return !isRegularJavaObject(src);
+    return !hasTypeMarker(src);
   }
 
   /**
@@ -228,17 +223,34 @@ final class Cast {
   }-*/;
 
   /**
-   * Returns whether the Object is a Java Object but not a String.
+   * Returns true if Object can dispatch instance methods and does not need a compiler
+   * provided trampoline.
    *
-   * Depends on all Java Objects (except for String and Arrays) having the typeMarker field
-   * generated, and set to the nullMethod for the current GWT module.  Note this
-   * test essentially tests whether an Object is a java object for the current
-   * GWT module.  Java Objects from external GWT modules are not recognizable as
-   * Java Objects in this context.
+   * Java non primitive objects fall into 3 classes: Strings, arrays (of primitive or non primitive
+   * types) and regular Java Objects (all others).
+   *
+   * Only regular Java object have dynamic instance dispatch, strings and arrays need compiler
+   * generated trampolines to implement instance dispatch.
    */
   // Visible for getIndexedMethod()
-  static boolean isRegularJavaObject(Object src) {
-    return Util.getTypeMarker(src) == getNullMethod() && !instanceofArray(src);
+  static boolean hasJavaObjectVirtualDispatch(Object src) {
+    return !instanceofArray(src) && hasTypeMarker(src);
+  }
+
+  /**
+   * Returns true if the object is tagged and can respond to cast queries.
+   *
+   * All regular Java objects and arrays are tagged.
+   */
+  static boolean hasTypeMarker(Object src) {
+    return Util.getTypeMarker(src) == getNullMethod();
+  }
+
+  /**
+   * Returns true if {@code src} is a Java array.
+   */
+  static boolean isJavaArray(Object src) {
+    return instanceofArray(src) && hasTypeMarker(src);
   }
 
   /**

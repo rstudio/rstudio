@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -343,6 +344,21 @@ public class MiscellaneousTest extends GWTTestCase {
     assertEquals(13, c.length());
     assertEquals("ello", c.subSequence(1, 5));
     assertTrue(c instanceof String);
+  }
+
+  /**
+   * Ensures that dispatch to JavaScript native arrays that are NOT Java arrays works properly.
+   */
+  public void testNativeJavaScriptArray() {
+    Object jsoArray = FALSE ? new Object() : JavaScriptObject.createArray();
+    assertEquals(JavaScriptObject.class, jsoArray.getClass());
+    assertFalse(jsoArray instanceof Object[]);
+
+    Object objectArray = FALSE ? new Object() : new Object[10];
+    assertEquals(Object[].class, objectArray.getClass());
+    assertTrue(objectArray instanceof Object[]);
+
+    assertFalse(jsoArray.toString().equals(objectArray.toString()));
   }
 
   @Override

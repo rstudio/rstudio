@@ -95,12 +95,14 @@ public class JavaClassHierarchySetupUtil {
   }-*/;
 
   /**
-   * Patch up Array.isArray for browsers that don't support the fast native check.
+   * Do polyfills for all methods expected in a modern browser.
    */
-  public static native void patchIsArray() /*-{
+  public static native void modernizeBrowser() /*-{
+    // Patch up Array.isArray for browsers that don't support the fast native check.
     if (!Array.isArray) {
         Array.isArray = function (vArg) {
-          return Object.prototype.toString.call(vArg) === "[object Array]"; };
+          return Object.prototype.toString.call(vArg) === "[object Array]";
+        };
     }
   }-*/;
 

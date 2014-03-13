@@ -1948,12 +1948,13 @@ public class GenerateJavaScriptAST {
         // Set up the artificial castmap for string.
         setupStringCastMap(program.getTypeJavaLangString(), globalStmts);
 
-        // Patch Array.isArray
-        JsFunction patchFunc = indexedFunctions.get("JavaClassHierarchySetupUtil.patchIsArray");
-        JsName patchFuncName = patchFunc.getName();
-        JsInvocation callPatchFunc = new JsInvocation(x.getSourceInfo());
-        callPatchFunc.setQualifier(patchFuncName.makeRef(x.getSourceInfo()));
-        globalStmts.add(callPatchFunc.makeStmt());
+        //  Perform necessary polyfills.
+        JsFunction modernizerFn =
+            indexedFunctions.get("JavaClassHierarchySetupUtil.modernizeBrowser");
+        JsName modernizerFnName = modernizerFn.getName();
+        JsInvocation callModernizerFn = new JsInvocation(x.getSourceInfo());
+        callModernizerFn.setQualifier(modernizerFnName.makeRef(x.getSourceInfo()));
+        globalStmts.add(callModernizerFn.makeStmt());
       }
     }
 
@@ -2915,13 +2916,8 @@ public class GenerateJavaScriptAST {
     namesToIdents.put("typeMarker", "tM");
     namesToIdents.put("castableTypeMap", "cM");
     namesToIdents.put("___clazz", "cZ");
-    // Array magic field
-    namesToIdents.put("elementTypeId", "tI");
-    namesToIdents.put("elementTypeClass", "eT");
 
-    List<JField> fields = Lists.newArrayList(program.getTypeJavaLangObject().getFields());
-    fields.addAll(program.getIndexedType("Array").getFields());
-    for (JField field : fields) {
+    for (JField field : program.getTypeJavaLangObject().getFields()) {
       if (!field.isStatic()) {
         String ident = namesToIdents.get(field.getName());
         assert ident != null : field.getEnclosingType().getName() + "::" + field.getName() +
