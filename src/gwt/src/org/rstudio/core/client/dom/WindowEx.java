@@ -140,6 +140,18 @@ public class WindowEx extends JavaScriptObject
    public final native int getOuterWidth() /*-{
       return this.outerWidth;
    }-*/;
+   
+   public final native void scrollTo(int x, int y) /*-{
+      this.scrollTo(x, y);
+   }-*/;
+
+   public final native int getScrollLeft() /*-{
+      return this.scrollX;
+   }-*/;
+
+   public final native int getScrollTop() /*-{
+      return this.scrollY;
+   }-*/;
 
    public static HandlerRegistration addFocusHandler(FocusHandler handler)
    {

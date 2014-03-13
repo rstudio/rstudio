@@ -135,8 +135,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onSynctexViewPdf(SynctexViewPdfEvent event)
    {
-      pdfJsWindow_.goToPage(event.getPdfLocation().getPage());
-      pdfJsWindow_.navigateTo(event.getPdfLocation());
+      PdfJsWindow.navigateTo(pdfJsWindow_, event.getPdfLocation());
    }
    
    @Override

@@ -16,16 +16,23 @@ package org.rstudio.studio.client.pdfviewer.model;
 
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.LookupSynctexSourceEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler;
 
 // This class wraps a reference to the window hosting PDF.js. Any coupling 
 // with the UI or internals of PDF.js goes here. 
@@ -84,14 +91,6 @@ public class PdfJsWindow extends WindowEx
       this.PDFView.open(path, scale);
    }-*/;
    
-   public final native void navigateTo(JavaScriptObject dest) /*-{
-      if (dest == null)
-         return;
-
-      // this.PDFView.setScale(dest.scale);
-      this.scrollTo(dest.x, dest.y);
-   }-*/;
-
    public final native void goToPage(int page) /*-{
       this.PDFView.page = page;
    }-*/;
@@ -224,6 +223,77 @@ public class PdfJsWindow extends WindowEx
          }
       }
       return null;
+   }
+
+   public static void navigateTo(final PdfJsWindow win, 
+                                 final PdfLocation pdfLocation)
+   {
+      double factor = win.getCurrentScale()* 96 / 72;
+
+      final double x = pdfLocation.getX() * factor;
+      final double y = pdfLocation.getY() * factor;
+      final double w = pdfLocation.getWidth() * factor;
+      final double h = pdfLocation.getHeight() * factor;
+
+      final Value<Integer> retries = new Value<Integer>(0);
+
+      // Sometimes pageContainer is null during load, so retry every 100ms
+      // until it's not, or we've tried 40 times.
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         @Override
+         public boolean execute()
+         {
+            Element pageContainer = win.getDocument().getElementById(
+                  "pageContainer" + pdfLocation.getPage());
+
+            if (pageContainer == null)
+            {
+               retries.setValue(retries.getValue() + 1);
+               return retries.getValue() < 40;
+            }
+
+            if (pdfLocation.isFromClick())
+            {
+               final DivElement div = win.getDocument().createDivElement();
+               div.getStyle().setPosition(Style.Position.ABSOLUTE);
+               div.getStyle().setTop(y, Unit.PX);
+               div.getStyle().setLeft(x, Unit.PX);
+               div.getStyle().setWidth(w, Unit.PX);
+               div.getStyle().setHeight(h, Unit.PX);
+               div.getStyle().setBackgroundColor("rgba(0, 126, 246, 0.1)");
+               div.getStyle().setProperty("transition", "opacity 4s");
+               // use DomUtils to set transition styles so gwt doesn't assert
+               // an invalid style name (no camelCase) in debug mode
+               DomUtils.setStyle(div, "-moz-transition", "opacity 4s");
+               DomUtils.setStyle(div, "-webkit-transition", "opacity 4s");
+
+               pageContainer.appendChild(div);
+
+               Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
+               {
+                  @Override
+                  public boolean execute()
+                  {
+                     div.getStyle().setOpacity(0.0);
+                     return false;
+                  }
+               }, 2000);
+            }
+
+            // scroll to the page
+            win.goToPage(pdfLocation.getPage());
+
+            // if the target isn't on-screen then scroll to it
+            if (pdfLocation.getY() > getBoundaryCoordinates(win, false).getY())
+            {
+               win.scrollTo(win.getScrollLeft(),
+                  Math.max(0, pageContainer.getAbsoluteTop() + (int) y - 180));
+            }
+
+            return false;
+         }
+      }, 100);
    }
 
    private static int getContainerPageNum(Element container)
