@@ -17,6 +17,8 @@ package com.google.gwt.junit.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 
 import junit.framework.AssertionFailedError;
 
@@ -110,6 +112,12 @@ public class GWTTestCaseUncaughtExceptionHandlerTest extends GWTTestCaseTestBase
   }
 
   public void testFailViaUncaughtException_optsOut() {
+    failViaUncaughtException("should not fail");
+  }
+
+  @DoNotRunWith(Platform.Devel) // Broken for htmlunit devmode
+  public void testFailViaUncaughtExceptionEscapesBrowser_optsOut() {
+    GWT.setUncaughtExceptionHandler(null);
     failViaUncaughtException("should not fail");
   }
 

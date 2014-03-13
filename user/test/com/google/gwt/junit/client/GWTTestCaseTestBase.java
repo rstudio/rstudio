@@ -15,8 +15,6 @@
  */
 package com.google.gwt.junit.client;
 
-
-import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.DOM;
@@ -50,10 +48,6 @@ abstract class GWTTestCaseTestBase extends GWTTestCase {
     };
 
     DOM.setEventListener(btn, listener);
-    try {
-      btn.click();
-    } catch (JavaScriptException ignored) {
-      // In HtmlUnit exception thrown by event handlers are propagated to #click() call.
-    }
+    btn.click();
   }
 }

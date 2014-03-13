@@ -98,7 +98,10 @@ public class RunStyleHtmlUnit extends RunStyle {
       webClient.setAlertHandler(this);
       webClient.setIncorrectnessListener(this);
       webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
-      webClient.getOptions().setThrowExceptionOnScriptError(true);
+      // To receive exceptions from js side in the development mode, we need set this to 'true'.
+      // However, as htmlunit dies after throwing the exception, we still want it to be 'false'
+      // for web mode.
+      webClient.getOptions().setThrowExceptionOnScriptError(developmentMode);
       webClient.setOnbeforeunloadHandler(this);
       webClient.setJavaScriptErrorListener(new JavaScriptErrorListener() {
 
