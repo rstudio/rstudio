@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -25,11 +26,14 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerHandler;
+import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
 import org.rstudio.studio.client.pdfviewer.model.PdfJsWindow;
+import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -41,22 +45,26 @@ import com.google.inject.Singleton;
 public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                                   ShowPDFViewerHandler,
                                   SynctexViewPdfEvent.Handler,
-                                  PDFLoadEvent.Handler
+                                  PDFLoadEvent.Handler,
+                                  PageClickEvent.Handler
 {
    @Inject
    public PDFViewer(EventBus eventBus,
                     final ApplicationServerOperations server,
                     final GlobalDisplay display,
-                    final SatelliteManager satelliteManager)
+                    final SatelliteManager satelliteManager,
+                    final Synctex synctex)
    {  
       display_ = display;
       server_ = server;
+      synctex_ = synctex;
       
       eventBus.addHandler(ShowPDFViewerEvent.TYPE, this);
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
       eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
       eventBus.addHandler(PDFLoadEvent.TYPE, this);
       PdfJsWindow.addPDFLoadHandler(this);
+      PdfJsWindow.addPageClickHandler(this);
    }
 
    @Override
@@ -123,12 +131,38 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       pdfJsWindow_.navigateTo(event.getPdfLocation());
    }
    
+   @Override
+   public void onPageClick(PageClickEvent event)
+   {
+      focusMainWindow();
+      synctexInverseSearch(event.getCoordinates(), true);
+   }
+
+   private void synctexInverseSearch(SyncTexCoordinates coord, 
+                                     boolean fromClick)
+   {
+      String pdfPath = lastSuccessfulPdfPath_;
+      if (pdfPath != null)
+      {
+         synctex_.inverseSearch(PdfLocation.create(pdfPath,
+                                                   coord.getPageNum(),
+                                                   coord.getX(), 
+                                                   coord.getY(), 
+                                                   0, 
+                                                   0,
+                                                   fromClick));
+      }
+   }
    
+   private final native void focusMainWindow() /*-{
+      $wnd.focus();
+   }-*/;
+
    private PdfJsWindow pdfJsWindow_;
    private Command executeOnLoad_;
    private String lastSuccessfulPdfPath_;
 
    private final GlobalDisplay display_;
    private final ApplicationServerOperations server_;
-
+   private final Synctex synctex_;
 }

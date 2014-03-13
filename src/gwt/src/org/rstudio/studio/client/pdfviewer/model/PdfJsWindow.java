@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.pdfviewer.model;
 
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -41,6 +42,13 @@ public class PdfJsWindow extends WindowEx
          var bookmarkButton = win.document.getElementById("viewBookmark");
          if (bookmarkButton) {
             bookmarkButton.title = "Sync editor location to PDF view";
+            bookmarkButton.href = "";
+            bookmarkButton.addEventListener("click", function(evt) {
+               var page = win.PDFView.page;
+               var x = win.scrollX;
+               var y = win.scrollY;
+               @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(III)(page, x, y);
+            });
          }
          
          // make the sidebar open by default
@@ -100,10 +108,22 @@ public class PdfJsWindow extends WindowEx
       handlers_.fireEvent(new PDFLoadEvent());
    }
    
+   private static void firePageClickEvent(int page, int x, int y)
+   {
+      SyncTexCoordinates coords = new SyncTexCoordinates(page, x, y);
+      handlers_.fireEvent(new PageClickEvent(coords));
+   }
+
    public static HandlerRegistration addPDFLoadHandler(
          PDFLoadEvent.Handler handler)
    {
       return handlers_.addHandler(PDFLoadEvent.TYPE, handler);
+   }
+
+   public static HandlerRegistration addPageClickHandler(
+         PageClickEvent.Handler handler)
+   {
+      return handlers_.addHandler(PageClickEvent.TYPE, handler);
    }
 
    private static final HandlerManager handlers_ = 

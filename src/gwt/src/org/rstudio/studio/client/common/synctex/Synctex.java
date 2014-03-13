@@ -216,15 +216,22 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    public void inverseSearch(PdfLocation pdfLocation)
    {
-      // switch back to the main window 
-      satellite_.focusMainWindow();
-      
-      // warn firefox users that this doesn't really work in Firefox
-      if (BrowseCap.isFirefox())
-         SynctexUtils.maybeShowFirefoxWarning("source editor");
-      
-      // do the inverse search
-      callInverseSearch(pdfLocation);
+      if (satellite_.isCurrentWindowSatellite())
+      {
+         // switch back to the main window 
+         satellite_.focusMainWindow();
+         
+         // warn firefox users that this doesn't really work in Firefox
+         if (BrowseCap.isFirefox())
+            SynctexUtils.maybeShowFirefoxWarning("source editor");
+         
+         // do the inverse search
+         callInverseSearch(pdfLocation);
+      }
+      else
+      {
+         doInverseSearch(pdfLocation);
+      }
    }
    
    
