@@ -17,11 +17,14 @@ package org.rstudio.studio.client.pdfviewer.model;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 
+// This class wraps a reference to the window hosting PDF.js. Any coupling 
+// with the UI or internals of PDF.js goes here. 
 public class PdfJsWindow extends WindowEx
 {
    protected PdfJsWindow() 
@@ -63,6 +66,10 @@ public class PdfJsWindow extends WindowEx
          }
          
          win.title = "RStudio: Compile PDF";
+      });
+      
+      this.addEventListener("beforeunload", function() {
+         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()()();
       });
    }-*/;
    
@@ -115,6 +122,11 @@ public class PdfJsWindow extends WindowEx
       SyncTexCoordinates coords = new SyncTexCoordinates(page, x, y);
       handlers_.fireEvent(new PageClickEvent(coords));
    }
+   
+   private static void fireWindowClosedEvent()
+   {
+      handlers_.fireEvent(new PdfJsWindowClosedEvent());
+   }
 
    public static HandlerRegistration addPDFLoadHandler(
          PDFLoadEvent.Handler handler)
@@ -126,6 +138,12 @@ public class PdfJsWindow extends WindowEx
          PageClickEvent.Handler handler)
    {
       return handlers_.addHandler(PageClickEvent.TYPE, handler);
+   }
+
+   public static HandlerRegistration addWindowClosedHandler(
+         PdfJsWindowClosedEvent.Handler handler)
+   {
+      return handlers_.addHandler(PdfJsWindowClosedEvent.TYPE, handler);
    }
 
    private static final HandlerManager handlers_ = 

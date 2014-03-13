@@ -233,6 +233,10 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       }
    }
    
+   public void notifyPdfViewerClosed(String pdfFile)
+   {
+      setNoSynctexStatus();
+   }
    
    private void doForwardSearch(String rootDocument,
                                 JavaScriptObject sourceLocationObject)
@@ -326,11 +330,6 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                       position);
    }
     
-   
-   private void notifyPdfViewerClosed(String pdfFile)
-   {
-      setNoSynctexStatus();
-   }
    
    private boolean isCurrentWindowPdfViewerSatellite()
    {

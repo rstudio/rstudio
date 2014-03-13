@@ -34,6 +34,7 @@ import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
 import org.rstudio.studio.client.pdfviewer.model.PdfJsWindow;
 import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
@@ -45,7 +46,8 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                                   ShowPDFViewerHandler,
                                   SynctexViewPdfEvent.Handler,
                                   PDFLoadEvent.Handler,
-                                  PageClickEvent.Handler
+                                  PageClickEvent.Handler,
+                                  PdfJsWindowClosedEvent.Handler
 {
    @Inject
    public PDFViewer(EventBus eventBus,
@@ -64,6 +66,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       eventBus.addHandler(PDFLoadEvent.TYPE, this);
       PdfJsWindow.addPDFLoadHandler(this);
       PdfJsWindow.addPageClickHandler(this);
+      PdfJsWindow.addWindowClosedHandler(this);
    }
 
    @Override
@@ -136,6 +139,14 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       focusMainWindow();
       synctexInverseSearch(event.getCoordinates(), true);
    }
+
+   @Override
+   public void onPdfJsWindowClosed(PdfJsWindowClosedEvent event)
+   {
+      synctex_.notifyPdfViewerClosed(lastSuccessfulPdfPath_);
+   }
+   
+   // Private methods ---------------------------------------------------------
 
    private void synctexInverseSearch(SyncTexCoordinates coord, 
                                      boolean fromClick)
