@@ -46,21 +46,41 @@ public class PdfJsWindow extends WindowEx
    public final native void injectUiOnLoad() /*-{
       var win = this;
       this.addEventListener("load", function() {
-         // hide the Open File button; we don't need it
+         // inject our own CSS
+         var rstudioCss = win.document.createElement("link");
+         rstudioCss.rel = "stylesheet";
+         rstudioCss.href = "viewer-rstudio.css";
+         win.document.head.appendChild(rstudioCss);
+      
+         // hide the Open File and Bookmark buttons; these don't make sense in
+         // our context
          var openFileButton = win.document.getElementById("openFile");
          if (openFileButton) {
             openFileButton.style.display = "none";
          }
-         
-         // change the behavior of the Bookmark button to sync to the
-         // appropriate location in the code
          var bookmarkButton = win.document.getElementById("viewBookmark");
          if (bookmarkButton) {
-            bookmarkButton.title = "Sync editor location to PDF view";
-            bookmarkButton.href = "";
-            bookmarkButton.addEventListener("click", function(evt) {
-               @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLookupCurrentViewEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;)(win);
-            });
+            bookmarkButton.style.display = "none";
+         }
+
+         // create a Jump to Source toolbar button (image and style are applied
+         // in viewer-rstudio.css)
+         var jumpToSource = win.document.createElement("button");
+         jumpToSource.className = "toolbarButton";
+         jumpToSource.id = "jumpToSource";
+         jumpToSource.title = "Sync editor location to PDF view";
+         jumpToSource.addEventListener("click", function(evt) {
+            @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLookupCurrentViewEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;)(win);
+         });
+
+         var jumpToSourceContent = win.document.createElement("span");
+         jumpToSourceContent.innerText = "Jump to Source Location";
+         jumpToSource.appendChild(jumpToSourceContent);
+
+         // put the Jump to Source button on the right toolbar
+         var toolbarRight = win.document.getElementById("toolbarViewerRight");
+         if (toolbarRight) {
+            toolbarRight.insertBefore(jumpToSource, toolbarRight.firstChild);
          }
          
          // make the sidebar open by default
