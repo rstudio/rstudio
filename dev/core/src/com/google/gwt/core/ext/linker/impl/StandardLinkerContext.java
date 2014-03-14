@@ -525,7 +525,10 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       } catch (IOException e) {
         artifactLogger.log(TreeLogger.ERROR,
             "Fatal error emitting artifact: " + artifact.getPartialPath(), e);
-        throw new UnableToCompleteException();
+        // Do not fail for Private artifacts, just log the error
+        if (visibility != Visibility.Private) {
+          throw new UnableToCompleteException();
+        }
       }
     }
   }
