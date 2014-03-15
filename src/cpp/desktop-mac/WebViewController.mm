@@ -13,6 +13,7 @@
 #import "Utils.hpp"
 #import "WebViewWithKeyEquiv.h"
 #import "FileDownloader.h"
+#import "MainFrameController.h"
 
 struct PendingSatelliteWindow
 {
@@ -569,6 +570,25 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
       return;
    
    [data writeToURL: [dlSavePanel URL] atomically: FALSE];
+}
+
+- (id) evaluateJavaScript: (NSString*) js
+{
+   id win = [webView_ windowScriptObject];
+   return [win evaluateWebScript: js];
+}
+
+- (void) webView: (WebView *) sender
+      didClearWindowObject:(WebScriptObject *)windowObject
+                  forFrame:(WebFrame *)frame
+{
+   // on the desktop, the main frame needs to be notified when a child window
+   // is opened in order to communicate with the child window's window object
+   id windowObj = [windowObject evaluateWebScript: @"window;"];
+   NSString* windowName = name_;
+   NSArray *args = [NSArray arrayWithObjects: windowName, windowObj, nil];
+   [[[[MainFrameController instance] webView] windowScriptObject]
+    callWebScriptMethod: @"registerDesktopChildWindow" withArguments: args];
 }
 
 @end

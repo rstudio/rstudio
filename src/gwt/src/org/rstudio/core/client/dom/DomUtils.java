@@ -745,6 +745,18 @@ public class DomUtils
       return topRelativeTo(parent, child) + child.getOffsetHeight();
    }
    
+   public static int leftRelativeTo(Element parent, Element child)
+   {
+      int left = 0;
+      Element el = child;
+      while (el != null && el != parent)
+      {
+         left += el.getOffsetLeft();
+         el = el.getOffsetParent();
+      }
+      return left;
+   }
+
    public static final native void setStyle(Element element, 
                                             String name, 
                                             String value) /*-{

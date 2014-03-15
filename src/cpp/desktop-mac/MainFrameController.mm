@@ -206,12 +206,6 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 }
 
 
-- (id) evaluateJavaScript: (NSString*) js
-{
-   id win = [webView_ windowScriptObject];
-   return [win evaluateWebScript: js];
-}
-
 - (id) invokeCommand: (NSString*) command
 {
    static NSArray* noRefocusCommands = [[NSArray alloc] initWithObjects:

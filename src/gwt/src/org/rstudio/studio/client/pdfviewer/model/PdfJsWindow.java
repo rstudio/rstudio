@@ -106,8 +106,14 @@ public class PdfJsWindow extends WindowEx
       this.addEventListener("click", function(evt) {
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
       });
+      
+      this.rstudioUIIsInjected = true;
    }-*/;
    
+   public final native boolean rstudioUIIsInjected() /*-{
+      return rstudioUIIsInjected || false;
+   }-*/;
+
    public final native void openPdf(String path, float scale) /*-{
       this.PDFView.open(path, scale);
    }-*/;

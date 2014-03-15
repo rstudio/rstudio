@@ -44,5 +44,9 @@
 
 // subclass methods for registering javascript callbacks
 - (void) registerDesktopObject;
+
+// evaluate javascript
+- (id) evaluateJavaScript: (NSString*) js;
+
 @end
 

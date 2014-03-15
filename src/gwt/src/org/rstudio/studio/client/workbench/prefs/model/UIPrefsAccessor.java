@@ -245,13 +245,16 @@ public class UIPrefsAccessor extends Prefs
       // get the underlying value
       String pdfPreview = pdfPreview().getValue();
       
-      // the internal viewer has stability issues on the mac 
-      // so re-route to system viewer
+      // historically pdf.js (PDF_PREVIEW_RSTUDIO) has had problems on the Mac,
+      // but now that we're using Safari and a newer drop of pdf.js, there's
+      // no need to adjust this preference
+      /*
       if (BrowseCap.isMacintoshDesktop())
       {
          if (pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
             pdfPreview = PDF_PREVIEW_SYSTEM;
       }
+      */
       
       // return the (potentially) adjusted value
       return pdfPreview;
