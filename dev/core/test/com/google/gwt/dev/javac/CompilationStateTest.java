@@ -180,7 +180,6 @@ public class CompilationStateTest extends CompilationStateTestBase {
             JavaResourceBase.FOO,
             new TweakedMockJavaResource(JavaResourceBase.BAR)},
         Collections.singleton(JavaResourceBase.FOO.getTypeName()));
-
   }
 
   public void testInitialization() {

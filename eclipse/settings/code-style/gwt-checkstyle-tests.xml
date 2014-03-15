@@ -10,7 +10,19 @@ A more lenient set of style checks for test cases, needed because test often nee
 <!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN" "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 <module name="Checker">
     <property name="severity" value="warning"/>
+    <module name="RegexpHeader">
+       <property name="fileExtensions" value="java"/> 
+       <property name="severity" value="error"/>
+       <property name="header" value="^/\*[ ]*$\n^ \* Copyright 20(0[6789]|[12][0-9]) Google Inc\.$\n^ \*[ ]*$\n^ \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\); you may not( use this file except)?$\n^ \* (use this file except )?in compliance with the License\. You may obtain a copy of( the License at)?$\n^ \* the License at$\n^ \*[ ]*$\n^ \* http://www\.apache\.org/licenses/LICENSE-2\.0$\n^ \*[ ]*\n \* Unless required by applicable law or agreed to in writing, software( distributed under the License)?$\n^ \* (distributed under the License )?is distributed on an &quot;AS IS&quot; BASIS, WITHOUT( WARRANTIES OR CONDITIONS OF ANY KIND, either express)?$\n^ \* (WARRANTIES OR CONDITIONS OF ANY KIND, either express )?or implied\. See the( License for the specific language governing permissions and limitations under)?$\n^ \* License for the specific language governing permissions and limitations under$\n^ \* the License\.$\n^ \*/$"/>
+       <property name="multiLines" value="6,13"/>
+    </module>
+    <module name="FileTabCharacter">
+       <property name="fileExtensions" value="java"/> 
+        <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="no tabs"/>
+        <property name="severity" value="error"/>
+    </module>
     <module name="TreeWalker">
+        <property name="fileExtensions" value="java"/> 
         <module name="FileContentsHolder"/>
         <module name="InterfaceIsType">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.lastEnabledSeverity" value="error"/>
@@ -25,6 +37,7 @@ A more lenient set of style checks for test cases, needed because test often nee
         <module name="JavadocType">
             <property name="severity" value="error"/>
             <property name="scope" value="protected"/>
+            <property name="allowMissingParamTags" value="true"/>
         </module>
         <module name="PackageName">
             <property name="severity" value="error"/>
@@ -87,20 +100,12 @@ A more lenient set of style checks for test cases, needed because test often nee
             <property name="logLoadErrors" value="true"/>
             <property name="tokens" value="METHOD_DEF"/>
         </module>
-        <module name="RegexpHeader">
-           <property name="severity" value="error"/>
-           <property name="header" value="^/\*[ ]*$\n^ \* Copyright 20(0[6789]|[12][0-9]) Google Inc\.$\n^ \*[ ]*$\n^ \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\); you may not( use this file except)?$\n^ \* (use this file except )?in compliance with the License\. You may obtain a copy of( the License at)?$\n^ \* the License at$\n^ \*[ ]*$\n^ \* http://www\.apache\.org/licenses/LICENSE-2\.0$\n^ \*[ ]*\n \* Unless required by applicable law or agreed to in writing, software( distributed under the License)?$\n^ \* (distributed under the License )?is distributed on an &quot;AS IS&quot; BASIS, WITHOUT( WARRANTIES OR CONDITIONS OF ANY KIND, either express)?$\n^ \* (WARRANTIES OR CONDITIONS OF ANY KIND, either express )?or implied\. See the( License for the specific language governing permissions and limitations under)?$\n^ \* License for the specific language governing permissions and limitations under$\n^ \* the License\.$\n^ \*/$"/>
-           <property name="multiLines" value="6,13"/>
-       </module>
         <module name="ImportOrder">
             <property name="severity" value="error"/>
             <property name="groups" value="com.google, com,  junit, net,org, java,javax"/>
-            <property name="ordered" value="false"/>
+            <property name="ordered" value="true"/>
             <property name="separated" value="true"/>
-        </module>
-        <module name="TabCharacter">
-            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="no tabs"/>
-            <property name="severity" value="error"/>
+            <property name="option" value="top"/>
         </module>
         <module name="DefaultComesLast">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.lastEnabledSeverity" value="error"/>
@@ -153,15 +158,11 @@ A more lenient set of style checks for test cases, needed because test often nee
         <module name="AvoidStarImport">
             <property name="severity" value="error"/>
         </module>
-        <module name="GenericIllegalRegexp">
+        <module name="RegexpSinglelineJava">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="bad // comment"/>
             <property name="severity" value="error"/>
             <property name="format" value="  [/][/][A-z]"/>
             <property name="message" value="// comments must be followed by a space and be on their own line"/>
-        </module>
-        <module name="DoubleCheckedLocking">
-            <metadata name="com.atlassw.tools.eclipse.checkstyle.lastEnabledSeverity" value="error"/>
-            <property name="severity" value="ignore"/>
         </module>
         <module name="EmptyStatement">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.lastEnabledSeverity" value="error"/>
@@ -195,6 +196,11 @@ A more lenient set of style checks for test cases, needed because test often nee
             <property name="severity" value="ignore"/>
             <property name="format" value="^[a-z_][a-zA-Z0-9_]*$"/>
         </module>
+        <module name="NoWhitespaceAfter">
+            <property name="severity" value="error"/>
+            <property name="allowLineBreaks" value="false"/>
+            <property name="tokens" value="BNOT,DEC,DOT,INC,LNOT,UNARY_MINUS,UNARY_PLUS"/>
+        </module>
         <module name="WhitespaceAfter">
             <property name="tokens" value="TYPECAST"/>
         </module>
@@ -216,7 +222,7 @@ A more lenient set of style checks for test cases, needed because test often nee
         <module name="RedundantModifier"/>
         <module name="EqualsHashCode"/>
     </module>
-    <module name="PackageHtml">
+    <module name="JavadocPackage">
         <property name="severity" value="ignore"/>
     </module>
     <module name="SuppressionCommentFilter">
@@ -224,10 +230,21 @@ A more lenient set of style checks for test cases, needed because test often nee
         <property name="onCommentFormat" value="CHECKSTYLE_ON"/>
     </module>
     <module name="SuppressionCommentFilter">
-        <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
-        <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
-        <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
-        <property name="checkFormat" value=".*Name.*"/>
-        <property name="messageFormat" value=".*name.*"/>
+       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
+      <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
+      <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
+      <property name="checkFormat" value="MethodName"/>
+    </module>
+    <module name="SuppressionCommentFilter">
+       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
+      <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
+      <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
+      <property name="checkFormat" value="MemberName"/>
+    </module>
+    <module name="SuppressionCommentFilter">
+       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
+      <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
+      <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
+      <property name="checkFormat" value="ParameterName"/>
     </module>
 </module>

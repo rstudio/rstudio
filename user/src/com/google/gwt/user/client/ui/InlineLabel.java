@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-
 import com.google.gwt.i18n.shared.DirectionEstimator;
 
 /**
@@ -107,7 +106,7 @@ public class InlineLabel extends Label {
     setDirectionEstimator(directionEstimator);
     setText(text);
   }
-  
+
   /**
    * This constructor may be used by subclasses to explicitly use an existing
    * element. This element must be either a &lt;div&gt; &lt;span&gt; element.

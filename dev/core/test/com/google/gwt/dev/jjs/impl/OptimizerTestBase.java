@@ -49,6 +49,9 @@ import java.util.regex.Pattern;
 public abstract class OptimizerTestBase extends JJSTestBase {
   protected boolean runDeadCodeElimination = false;
 
+  /**
+   * Holds the result of optimization to compare agains expected results.
+   */
   protected final class Result {
     private final String returnType;
     private final String originalCode;
@@ -93,23 +96,23 @@ public abstract class OptimizerTestBase extends JJSTestBase {
       String expectedSource =
         OptimizerTestBase.findMethod(program, methodName).getBody().toSource();
       String actualSource =
-        OptimizerTestBase.findMethod(optimizedProgram, methodName).
-        getBody().toSource();
+        OptimizerTestBase.findMethod(optimizedProgram, methodName)
+            .getBody().toSource();
       assertEquals(originalCode, expectedSource, actualSource);
     }
 
     public void intoString(String... expected) {
       String expectedSource = Joiner.on("\n").join(expected);
       String actualSource =
-        OptimizerTestBase.findMethod(optimizedProgram, methodName).
-        getBody().toSource();
+        OptimizerTestBase.findMethod(optimizedProgram, methodName)
+            .getBody().toSource();
 
       // Trim surrounding {} and unindent body once
       assertTrue(actualSource.startsWith("{"));
       assertTrue(actualSource.endsWith("}"));
       actualSource = actualSource.substring(1, actualSource.length() - 2).trim();
-      actualSource = Pattern.compile("^  ", Pattern.MULTILINE).
-          matcher(actualSource).replaceAll("");
+      actualSource = Pattern.compile("^  ", Pattern.MULTILINE)
+          .matcher(actualSource).replaceAll("");
 
       assertEquals(originalCode, expectedSource, actualSource);
     }

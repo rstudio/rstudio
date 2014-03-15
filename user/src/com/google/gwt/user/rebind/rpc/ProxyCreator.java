@@ -18,8 +18,8 @@ package com.google.gwt.user.rebind.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.CachedPropertyInformation;
 import com.google.gwt.core.ext.CachedGeneratorResult;
+import com.google.gwt.core.ext.CachedPropertyInformation;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
@@ -311,13 +311,13 @@ public class ProxyCreator {
           writer.write("====================================\n\n");
           writer.flush();
           typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
-  
+
           writer.write("===================================\n");
           writer.write("Types potentially sent from server:\n");
           writer.write("===================================\n\n");
           writer.flush();
           typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
-          
+
           writer.close();
           rpcLog = stringWriter.toString();
         } else {

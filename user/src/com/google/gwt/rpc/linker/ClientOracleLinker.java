@@ -22,10 +22,10 @@ import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
-import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.rpc.server.WebModeClientOracle.Builder;
 
 import java.io.ByteArrayOutputStream;

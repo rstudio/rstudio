@@ -19,7 +19,6 @@ import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.user.client.rpc.LoggingRPCTest;
 
-
 import junit.framework.Test;
 
 /**

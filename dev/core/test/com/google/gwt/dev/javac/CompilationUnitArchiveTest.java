@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Tests for {@link CompilationUnitArchive}.
+ */
 public class CompilationUnitArchiveTest extends CompilationStateTestBase {
 
   public void testReadWrite() throws IOException, ClassNotFoundException {

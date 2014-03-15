@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,11 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.util.TemporaryBufferStream;
-import com.google.gwt.dev.shell.BrowserChannel.MessageType;
-import com.google.gwt.dev.shell.BrowserChannel.Value;
-import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.SpecialDispatchId;
-import com.google.gwt.dev.shell.BrowserChannel.Value.ValueType;
 import com.google.gwt.dev.shell.BrowserChannel.CheckVersionsMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ChooseTransportMessage;
 import com.google.gwt.dev.shell.BrowserChannel.FatalErrorMessage;
@@ -30,13 +25,18 @@ import com.google.gwt.dev.shell.BrowserChannel.InvokeSpecialMessage;
 import com.google.gwt.dev.shell.BrowserChannel.JavaObjectRef;
 import com.google.gwt.dev.shell.BrowserChannel.LoadJsniMessage;
 import com.google.gwt.dev.shell.BrowserChannel.LoadModuleMessage;
+import com.google.gwt.dev.shell.BrowserChannel.MessageType;
 import com.google.gwt.dev.shell.BrowserChannel.OldLoadModuleMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ProtocolVersionMessage;
 import com.google.gwt.dev.shell.BrowserChannel.QuitMessage;
 import com.google.gwt.dev.shell.BrowserChannel.RequestIconMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
+import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.SpecialDispatchId;
 import com.google.gwt.dev.shell.BrowserChannel.SwitchTransportMessage;
 import com.google.gwt.dev.shell.BrowserChannel.UserAgentIconMessage;
+import com.google.gwt.dev.shell.BrowserChannel.Value;
+import com.google.gwt.dev.shell.BrowserChannel.Value.ValueType;
+import com.google.gwt.dev.util.TemporaryBufferStream;
 
 import junit.framework.TestCase;
 
@@ -50,7 +50,7 @@ import java.util.Arrays;
  */
 public class BrowserChannelTest extends TestCase {
   // TODO(jat): add more tests for Value types
-  
+
   private TemporaryBufferStream bufferStream = new TemporaryBufferStream();
 
   private DataInputStream iStr = new DataInputStream(
@@ -124,7 +124,7 @@ public class BrowserChannelTest extends TestCase {
     Value thisRef = new Value();
     thisRef.setJavaObject(new JavaObjectRef(42));
     Value[] args = new Value[] {
-      new Value(), new Value(),  
+      new Value(), new Value(),
     };
     args[0].setInt(0);
     args[1].setInt(1);
@@ -150,7 +150,7 @@ public class BrowserChannelTest extends TestCase {
     Value thisRef = new Value();
     thisRef.setJavaObject(new JavaObjectRef(42));
     Value[] args = new Value[] {
-      new Value(), new Value(),  
+      new Value(), new Value(),
     };
     args[0].setInt(0);
     args[1].setInt(1);
@@ -173,7 +173,7 @@ public class BrowserChannelTest extends TestCase {
   public void testInvokeSpecialMessage() throws IOException,
       BrowserChannelException {
     Value[] args = new Value[] {
-      new Value(), new Value(),  
+      new Value(), new Value(),
     };
     args[0].setInt(0);
     args[1].setInt(1);
@@ -232,13 +232,13 @@ public class BrowserChannelTest extends TestCase {
     assertEquals(sessionKey, message.getSessionKey());
     assertEquals(moduleName, message.getModuleName());
     assertEquals(userAgent, message.getUserAgent());
-    
+
     // create a separate channel so we don't cause problems with partial
     // messages written to the stream
     TemporaryBufferStream tempBufferStream = new TemporaryBufferStream();
     TestBrowserChannel trashableChannel = new TestBrowserChannel(
         tempBufferStream.getInputStream(),
-          tempBufferStream.getOutputStream()); 
+          tempBufferStream.getOutputStream());
 
     try {
       new LoadModuleMessage(trashableChannel, null, tabKey, sessionKey, moduleName,
@@ -392,6 +392,6 @@ public class BrowserChannelTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     channel = new TestBrowserChannel(bufferStream.getInputStream(),
-        bufferStream.getOutputStream()); 
+        bufferStream.getOutputStream());
   }
 }

@@ -19,6 +19,9 @@ import junit.framework.Assert;
 
 import java.io.InputStream;
 
+/**
+ * Mock for {@link AbstractResource}.
+ */
 public final class MockAbstractResource extends AbstractResource {
 
   private final MockClassPathEntry mockClassPathEntry;

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,10 +21,10 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.protobuf.ByteString;
 import com.google.gwt.dev.shell.remoteui.MessageTransport.RequestException;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request;
-import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.RequestType;
+import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability;
 import com.google.gwt.dev.util.Callback;
@@ -36,7 +36,7 @@ import java.util.concurrent.Future;
 
 /**
  * Used for making requests to a remote ViewerService server.
- * 
+ *
  * TODO: If this becomes part of the public API, we'll need to provide a level
  * of indirection in front of the protobuf classes; We're going to be rebasing
  * the protobuf library, and we don't want to expose the rebased API as public.
@@ -48,7 +48,7 @@ public class ViewerServiceClient {
 
   /**
    * Create a new instance.
-   * 
+   *
    * @param processor A MessageProcessor that is used to communicate with the
    *          ViewerService server.
    */
@@ -60,7 +60,7 @@ public class ViewerServiceClient {
 
   /**
    * Add an entry that also serves as a log branch.
-   * 
+   *
    * @param indexInParent The index of this entry/branch within the parent
    *          logger
    * @param type The severity of the log message.
@@ -106,7 +106,7 @@ public class ViewerServiceClient {
 
   /**
    * Add a log entry.
-   * 
+   *
    * @param indexInParent The index of this entry within the parent logger
    * @param type The severity of the log message.
    * @param msg The message.
@@ -149,7 +149,7 @@ public class ViewerServiceClient {
    * Add a new Module logger. This method should not be called multiple times
    * with the exact same arguments (as there should only be one logger
    * associated with that set of arguments).
-   * 
+   *
    * @param remoteSocket name of remote socket endpoint in host:port format
    * @param url URL of top-level window
    * @param tabKey stable browser tab identifier, or the empty string if no such
@@ -194,7 +194,7 @@ public class ViewerServiceClient {
    * Check the capabilities of the ViewerService. Ensures that the ViewerService
    * supports: adding a log, adding a log branch, adding a log entry, and
    * disconnecting a log.
-   * 
+   *
    * TODO: Should we be checking the specific capability of the
    * ViewerService to support logs of type MAIN, SERVER, and MODULE? Right now,
    * we assume that if they can support the addition of logs, they can handle
@@ -230,9 +230,9 @@ public class ViewerServiceClient {
   /**
    * Disconnect the log. Indicate to the log that the process which was logging
    * messages to it is now dead, and no more messages will be logged to it.
-   * 
+   *
    * Note that the log handle should refer to a top-level log, not a branch log.
-   * 
+   *
    * @param logHandle the handle of the top-level log to disconnect
    */
   public void disconnectLog(int logHandle) {
@@ -327,10 +327,10 @@ public class ViewerServiceClient {
 
   /**
    * Waits for response and throws a checked exception if the request failed.
-   * 
+   *
    * Requests can fail if the other side does not understand the message -- for
    * example, if it is running an older version.
-   * 
+   *
    * @throws RequestException if the request failed
    */
   private Response waitForResponse(Future<Response> future)

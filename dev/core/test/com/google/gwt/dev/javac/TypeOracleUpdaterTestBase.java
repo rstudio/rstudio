@@ -87,6 +87,9 @@ import java.util.Set;
  */
 public abstract class TypeOracleUpdaterTestBase extends TestCase {
 
+  /**
+   * A Java resource that provides a check() method.
+   */
   protected static abstract class CheckedJavaResource extends MutableJavaResource {
     private final String[] shortTypeNames;
 
@@ -114,6 +117,9 @@ public abstract class TypeOracleUpdaterTestBase extends TestCase {
     }
   }
 
+  /**
+   * A mutable Java resource.
+   */
   protected static abstract class MutableJavaResource extends MockJavaResource {
     private static byte[] getByteCode(Class<?> aClass) {
       String resourcePath = aClass.getName().replace(".", "/") + ".class";
@@ -358,7 +364,6 @@ public abstract class TypeOracleUpdaterTestBase extends TestCase {
 
     private void checkNested(JClassType type) {
       assertEquals(getTypeName() + ".Nested", type.getQualifiedSourceName());
-
     }
   };
 

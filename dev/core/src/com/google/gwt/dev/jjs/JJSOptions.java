@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.jjs;
 
-import com.google.gwt.dev.util.arg.OptionCheckedMode;
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
+import com.google.gwt.dev.util.arg.OptionCheckedMode;
 import com.google.gwt.dev.util.arg.OptionClusterSimilarFunctions;
 import com.google.gwt.dev.util.arg.OptionDisableCastChecking;
 import com.google.gwt.dev.util.arg.OptionDisableClassMetadata;

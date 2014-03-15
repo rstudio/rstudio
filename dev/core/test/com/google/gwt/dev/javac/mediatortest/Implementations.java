@@ -1,9 +1,32 @@
-/**
- * This code must be kept in sync with {@link com.google.gwt.dev.javac.TypeOracleUpdaterTestBase}
+/*
+ * Copyright 2011 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.google.gwt.dev.javac.mediatortest;
 
+/**
+ * A class containing static inner classes that implement outer and inner interfaces. <p>
+ *
+ * This code must be kept in sync with {@link com.google.gwt.dev.javac.TypeOracleUpdaterTestBase}.
+ */
 public class Implementations {
-  public static class OuterImpl<K,V> implements OuterInt<K,V> {}
-  public static class InnerImpl<V> implements OuterInt.InnerInt<V> {}
+  /**
+   * Class that implements a top level interface.
+   */
+  public static class OuterImpl<K,V> implements OuterInt<K,V> { }
+  /**
+   * Class that implements an inner interface.
+   */
+  public static class InnerImpl<V> implements OuterInt.InnerInt<V> { }
 }

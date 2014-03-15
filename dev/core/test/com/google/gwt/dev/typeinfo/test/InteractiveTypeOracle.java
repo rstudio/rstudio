@@ -36,9 +36,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Command line tool to query a TypeOracle.
+ */
 public class InteractiveTypeOracle {
 
-  public static interface CommandHandler {
+  static interface CommandHandler {
     /**
      * Specifies the keyword causes this handler to be invoked.
      */

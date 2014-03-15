@@ -27,6 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Tests for {@link CompilationUnitInvalidator}.
+ */
 public class CompilationUnitInvalidatorTest extends TestCase {
 
   public void testRetainValidUnits() {

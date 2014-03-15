@@ -16,9 +16,9 @@
 package com.google.gwt.view.client;
 
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.view.client.CellPreviewEvent.Handler;
 
 import java.util.ArrayList;

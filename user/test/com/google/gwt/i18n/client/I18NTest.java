@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,14 +23,14 @@ import com.google.gwt.i18n.client.gen.TestMessages;
 import com.google.gwt.i18n.client.resolutiontest.Inners;
 import com.google.gwt.i18n.client.resolutiontest.Inners.ExtendsInnerInner;
 import com.google.gwt.i18n.client.resolutiontest.Inners.HasInner;
-import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass;
-import com.google.gwt.i18n.client.resolutiontest.Inners.LocalizableSimpleInner;
-import com.google.gwt.i18n.client.resolutiontest.Inners.OuterLoc;
-import com.google.gwt.i18n.client.resolutiontest.Inners.SimpleInner;
 import com.google.gwt.i18n.client.resolutiontest.Inners.HasInner.IsInner;
+import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass;
 import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass.InnerInner;
 import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass.InnerInnerMessages;
 import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass.LocalizableInnerInner;
+import com.google.gwt.i18n.client.resolutiontest.Inners.LocalizableSimpleInner;
+import com.google.gwt.i18n.client.resolutiontest.Inners.OuterLoc;
+import com.google.gwt.i18n.client.resolutiontest.Inners.SimpleInner;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SimpleHtmlSanitizer;
 
@@ -146,7 +146,7 @@ public class I18NTest extends GWTTestCase {
     assertEquals("Too many widgets to count (150) in pig-latin",
         m.pluralWidgetsOther(150));
     assertEquals("PL: A widget", m.pluralWidgetsOther(1));
-    
+
     assertEquals("PL: A thingy", m.twoParamPlural("thingy", 1));
     assertEquals("PL: 42 thingies", m.twoParamPlural("thingies", 42));
     assertEquals("PL: Tons (249) of thingies", m.twoParamPlural("thingies", 249));

@@ -17,8 +17,8 @@ package com.google.gwt.validation.client.impl.metadata;
 
 import junit.framework.TestCase;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 import javax.validation.groups.Default;
 
@@ -40,7 +40,7 @@ public class ValidationGroupsMetadataTest extends TestCase {
   public void testDefaultGroupExists() {
     assertTrue(ValidationGroupsMetadata.builder().build().containsGroup(Default.class));
   }
-  
+
   public void testFindAllExtendedGroups() {
     // should get all of the groups and all of their parents recursively
     ValidationGroupsMetadata groupsMetadata = createWithTestGroups();
@@ -84,16 +84,16 @@ public class ValidationGroupsMetadataTest extends TestCase {
 
   private interface Part1 extends MiniPart {
   }
-  
+
   private interface MiniPart extends SuperSmall {
   }
-  
+
   private interface SuperSmall {
   }
-  
+
   private interface Part2 {
   }
-  
+
   private interface Big extends Part1, Part2 {
   }
 }

@@ -10,9 +10,21 @@ Description:
 <!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN" "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 <module name="Checker">
     <property name="severity" value="warning"/>
+    <module name="RegexpHeader">
+       <property name="fileExtensions" value="java"/>
+       <property name="severity" value="error"/>
+       <property name="header" value="^/\*[ ]*$\n^ \* Copyright 20(0[6789]|[12][0-9]) Google Inc\.$\n^ \*[ ]*$\n^ \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\); you may not( use this file except)?$\n^ \* (use this file except )?in compliance with the License\. You may obtain a copy of( the License at)?$\n^ \* the License at$\n^ \*[ ]*$\n^ \* http://www\.apache\.org/licenses/LICENSE-2\.0$\n^ \*[ ]*\n \* Unless required by applicable law or agreed to in writing, software( distributed under the License)?$\n^ \* (distributed under the License )?is distributed on an &quot;AS IS&quot; BASIS, WITHOUT( WARRANTIES OR CONDITIONS OF ANY KIND, either express)?$\n^ \* (WARRANTIES OR CONDITIONS OF ANY KIND, either express )?or implied\. See the( License for the specific language governing permissions and limitations under)?$\n^ \* License for the specific language governing permissions and limitations under$\n^ \* the License\.$\n^ \*/$"/>
+       <property name="multiLines" value="6,13"/>
+    </module>
+    <module name="FileTabCharacter">
+        <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="no tabs"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="severity" value="error"/>
+    </module>
     <module name="TreeWalker">
-        <module name="FileContentsHolder"/>
-        <module name="InterfaceIsType">
+       <property name="fileExtensions" value="java"/>
+       <module name="FileContentsHolder" />
+       <module name="InterfaceIsType">
             <property name="severity" value="ignore"/>
         </module>
         <module name="RedundantImport">
@@ -80,20 +92,12 @@ Description:
             <property name="logLoadErrors" value="true"/>
             <property name="tokens" value="METHOD_DEF"/>
         </module>
-        <module name="RegexpHeader">
-           <property name="severity" value="error"/>
-           <property name="header" value="^/\*[ ]*$\n^ \* Copyright 20(0[6789]|[12][0-9]) Google Inc\.$\n^ \*[ ]*$\n^ \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\); you may not( use this file except)?$\n^ \* (use this file except )?in compliance with the License\. You may obtain a copy of( the License at)?$\n^ \* the License at$\n^ \*[ ]*$\n^ \* http://www\.apache\.org/licenses/LICENSE-2\.0$\n^ \*[ ]*\n \* Unless required by applicable law or agreed to in writing, software( distributed under the License)?$\n^ \* (distributed under the License )?is distributed on an &quot;AS IS&quot; BASIS, WITHOUT( WARRANTIES OR CONDITIONS OF ANY KIND, either express)?$\n^ \* (WARRANTIES OR CONDITIONS OF ANY KIND, either express )?or implied\. See the( License for the specific language governing permissions and limitations under)?$\n^ \* License for the specific language governing permissions and limitations under$\n^ \* the License\.$\n^ \*/$"/>
-           <property name="multiLines" value="6,13"/>
-       </module>
         <module name="ImportOrder">
             <property name="severity" value="error"/>
             <property name="groups" value="com.google, com,  junit, net,org, java,javax"/>
-            <property name="ordered" value="false"/>
+            <property name="ordered" value="true"/>
             <property name="separated" value="true"/>
-        </module>
-        <module name="TabCharacter">
-            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="no tabs"/>
-            <property name="severity" value="error"/>
+            <property name="option" value="top"/>
         </module>
         <module name="DefaultComesLast">
             <property name="severity" value="error"/>
@@ -141,14 +145,11 @@ Description:
         <module name="AvoidStarImport">
             <property name="severity" value="error"/>
         </module>
-        <module name="GenericIllegalRegexp">
+        <module name="RegexpSinglelineJava">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="bad // comment"/>
             <property name="severity" value="error"/>
             <property name="format" value="  [/][/][A-z]"/>
             <property name="message" value="// comments must be followed by a space and be on their own line"/>
-        </module>
-        <module name="DoubleCheckedLocking">
-            <property name="severity" value="error"/>
         </module>
         <module name="EmptyStatement">
             <property name="severity" value="error"/>
@@ -199,18 +200,29 @@ Description:
         <module name="RedundantModifier"/>
         <module name="EqualsHashCode"/>
     </module>
-    <module name="PackageHtml">
+    <module name="JavadocPackage">
         <property name="severity" value="ignore"/>
     </module>
-    <module name="SuppressionCommentFilter">
-        <property name="offCommentFormat" value="CHECKSTYLE_OFF"/>
-        <property name="onCommentFormat" value="CHECKSTYLE_ON"/>
+        <module name="SuppressionCommentFilter">
+       <property name="offCommentFormat" value="CHECKSTYLE_OFF"/>
+       <property name="onCommentFormat" value="CHECKSTYLE_ON"/>
     </module>
     <module name="SuppressionCommentFilter">
-        <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
-        <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
-        <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
-        <property name="checkFormat" value=".*Name.*"/>
-        <property name="messageFormat" value=".*name.*"/>
+       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
+      <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
+      <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
+      <property name="checkFormat" value="MethodName"/>
+    </module>
+    <module name="SuppressionCommentFilter">
+       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
+      <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
+      <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
+      <property name="checkFormat" value="MemberName"/>
+    </module>
+    <module name="SuppressionCommentFilter">
+       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
+      <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
+      <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
+      <property name="checkFormat" value="ParameterName"/>
     </module>
 </module>

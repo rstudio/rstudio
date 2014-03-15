@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,8 +25,8 @@ import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Creator for methods of the form Map getX() .
@@ -37,7 +37,7 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
 
   /**
    * Constructor for localizable returnType method creator.
-   * 
+   *
    * @param classCreator
    */
   public ConstantsMapMethodCreator(AbstractGeneratorClassCreator classCreator) {
@@ -46,7 +46,7 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
 
   /**
    * Generates Map of key/value pairs for a list of keys.
-   * 
+   *
    * @param logger TreeLogger instance for logging
    * @param method method body to create
    * @param mapName name to create map from

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,13 +25,11 @@ import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
-import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumption;
-import com.google.gwt.dev.jjs.impl.gflow.constants.ExpressionEvaluator;
 
 import java.util.List;
 
 /**
- * Tests for ExpressionEvaluator - testing evaluation expressions based on 
+ * Tests for ExpressionEvaluator - testing evaluation expressions based on
  * assumptions.
  */
 public class ExpressionEvaluatorTest extends JJSTestBase {
@@ -45,7 +43,7 @@ public class ExpressionEvaluatorTest extends JJSTestBase {
     assertThat("i", "int",
              "int i = 1;").evaluatesInto("1");
   }
-  
+
   public void testEq() throws Exception {
     assertThat("i == 1", "boolean",
              "int i = 1;").evaluatesInto("true");
@@ -73,7 +71,7 @@ public class ExpressionEvaluatorTest extends JJSTestBase {
     assertThat("i / 0", "int", "int i = 1;").evaluatesInto("<null>");
     assertThat("4 / 0", "int", "int i = 0;").evaluatesInto("<null>");
   }
-  
+
   private static class Result {
     private final JValueLiteral literal;
 
@@ -86,10 +84,10 @@ public class ExpressionEvaluatorTest extends JJSTestBase {
       assertEquals(string, actual);
     }
   }
-  
-  private Result assertThat(String expr, String type, 
+
+  private Result assertThat(String expr, String type,
       String decls) throws UnableToCompleteException {
-    ConstantsAssumption.Updater updater = 
+    ConstantsAssumption.Updater updater =
       new ConstantsAssumption.Updater(new ConstantsAssumption());
 
     String codeSnippet = decls;
@@ -106,14 +104,14 @@ public class ExpressionEvaluatorTest extends JJSTestBase {
       }
       JDeclarationStatement decl = (JDeclarationStatement) stmt;
       if (decl.getInitializer() != null) {
-        updater.set(decl.getVariableRef().getTarget(), 
+        updater.set(decl.getVariableRef().getTarget(),
             (JValueLiteral) decl.getInitializer());
       }
     }
 
-    JReturnStatement returnStatement = 
+    JReturnStatement returnStatement =
       (JReturnStatement) statements.get(statements.size() - 1);
-    return new Result(ExpressionEvaluator.evaluate(returnStatement.getExpr(), 
+    return new Result(ExpressionEvaluator.evaluate(returnStatement.getExpr(),
         updater.unwrap()));
   }
 }

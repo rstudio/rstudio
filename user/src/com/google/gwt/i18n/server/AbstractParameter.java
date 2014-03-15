@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.server;
 
 import com.google.gwt.i18n.client.Localizable;
-import com.google.gwt.i18n.client.PluralRule;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.i18n.client.Messages.PluralCount;
 import com.google.gwt.i18n.client.Messages.Select;
+import com.google.gwt.i18n.client.PluralRule;
 import com.google.gwt.i18n.client.impl.plurals.DefaultRule;
 import com.google.gwt.i18n.shared.AlternateMessageSelector;
 import com.google.gwt.i18n.shared.GwtLocale;
@@ -34,7 +34,7 @@ public abstract class AbstractParameter implements Parameter {
 
   /**
    * Instantiate a plural rule class.
-   * 
+   *
    * @param pluralClass base plural rule class
    * @param locale
    * @return {@link PluralRule} instance for the specified locale
@@ -42,7 +42,7 @@ public abstract class AbstractParameter implements Parameter {
   public static PluralRule getLocalizedPluralRule(
       Class<? extends PluralRule> pluralClass, GwtLocale locale) {
     // TODO(jat): is this the right place for this method?
-  
+
     // Handle annotation default value
     if (PluralRule.class == pluralClass) {
       pluralClass = DefaultRule.class;

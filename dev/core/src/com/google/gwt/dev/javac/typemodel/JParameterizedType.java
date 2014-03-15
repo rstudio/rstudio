@@ -16,8 +16,8 @@
 package com.google.gwt.dev.javac.typemodel;
 
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;

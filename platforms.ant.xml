@@ -1,31 +1,31 @@
 <project name="platforms">
-  <import file="${gwt.root}/common.ant.xml" />
+  <import file="${gwt.root}/common.ant.xml"/>
 
   <!-- "build" is the default when subprojects are directly targetted -->
-  <property name="target" value="build" />
+  <property name="target" value="build"/>
 
-  <available file="core/build.xml" type="file" property="core.exists" />
+  <available file="core/build.xml" type="file" property="core.exists"/>
   <target name="core" description="Run core" if="core.exists">
-    <gwt.ant dir="core" />
+    <gwt.ant dir="core"/>
   </target>
 
-  <target name="-do" depends="core" description="Run all platforms" />
+  <target name="-do" depends="core" description="Run all platforms"/>
 
   <target name="build" description="Build each platforms">
     <antcall target="-do">
-      <param name="target" value="build" />
+      <param name="target" value="build"/>
     </antcall>
   </target>
 
   <target name="checkstyle" description="Static analysis of source for each platform">
     <antcall target="-do">
-      <param name="target" value="checkstyle" />
+      <param name="target" value="checkstyle"/>
     </antcall>
   </target>
 
   <target name="test" description="Test each platform">
     <antcall target="-do">
-      <param name="target" value="test" />
+      <param name="target" value="test"/>
     </antcall>
   </target>
 

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,9 +14,6 @@
  * the License.
  */
 package com.google.gwt.dev.util.editdistance;
-
-import com.google.gwt.dev.util.editdistance.GeneralEditDistance;
-import com.google.gwt.dev.util.editdistance.MyersBitParallelEditDistance;
 
 import junit.framework.TestCase;
 
@@ -43,7 +40,7 @@ public class MyersBitParallelEditDistanceTest extends TestCase {
                                                 s1, s2,
                                                 1);
     GeneralEditDistanceTest.genericVerification(generate(s1),
-                                                s1, s2+"x",
+                                                s1, s2 + "x",
                                                 1);
   }
 
@@ -65,7 +62,7 @@ public class MyersBitParallelEditDistanceTest extends TestCase {
                                                 s1, s2,
                                                 5 /*fN@05*/);
   }
-  
+
   /*
    * Some tests with strings exactly 32 characters long -- just enough
    * for an "int" bitmap.
@@ -78,7 +75,7 @@ public class MyersBitParallelEditDistanceTest extends TestCase {
                                                 s1, s2,
                                                 1);
     GeneralEditDistanceTest.genericVerification(generate(s1),
-                                                s1, s2+"x",
+                                                s1, s2 + "x",
                                                 1);
   }
 
@@ -96,30 +93,30 @@ public class MyersBitParallelEditDistanceTest extends TestCase {
   public void test64end() {
     String s1 = "abcdefghijklmnopqrstuvwxyz0123456";
     String s2 = "abcdefghijklmnopqrstuvwxyz012345";
-    GeneralEditDistanceTest.genericVerification(generate(s1+s1),
-                                                s1+s1, s1+s2,
+    GeneralEditDistanceTest.genericVerification(generate(s1 + s1),
+                                                s1 + s1, s1 + s2,
                                                 1);
-    GeneralEditDistanceTest.genericVerification(generate(s1+s1),
-                                                s1+s1, s1+s2+"x",
+    GeneralEditDistanceTest.genericVerification(generate(s1 + s1),
+                                                s1 + s1, s1 + s2 + "x",
                                                 1);
   }
 
   public void test64middle() {
     String s1 = "abcdefghijklmnopqrstuvwxyz0123456";
     String s2 = "abcdefghijklmnopqrstuvwxyz012345";
-    GeneralEditDistanceTest.genericVerification(generate(s1+s1),
-                                                s1+s1, s1+"x"+s2,
+    GeneralEditDistanceTest.genericVerification(generate(s1 + s1),
+                                                s1 + s1, s1 + "x" + s2,
                                                 2);
-    GeneralEditDistanceTest.genericVerification(generate(s1+s1),
-                                                s1+s1, s2+"x"+s1,
+    GeneralEditDistanceTest.genericVerification(generate(s1 + s1),
+                                                s1 + s1, s2 + "x" + s1,
                                                 1);
   }
 
   public void test64start() {
     String s1 = "abcdefghijklmnopqrstuvwxyz0123456";
     String s2 = "Abcdefghijklmnopqrstuvwxyz0123456";
-    GeneralEditDistanceTest.genericVerification(generate(s1+s1),
-                                                s1+s1, s2+s1,
+    GeneralEditDistanceTest.genericVerification(generate(s1 + s1),
+                                                s1 + s1, s2 + s1,
                                                 1);
     GeneralEditDistanceTest.genericVerification(generate(s1),
                                                 s1, s2.substring(1),
@@ -137,7 +134,7 @@ public class MyersBitParallelEditDistanceTest extends TestCase {
 
     GeneralEditDistanceTest.genericVerification(generate(s1),
                                                 s1, s2, 
-                                                5+4 /*fN@05, aG$6*/);
+                                                5 + 4 /*fN@05, aG$6*/);
   }
 
   /** Verifies the choice of bit array sizing */
@@ -147,11 +144,11 @@ public class MyersBitParallelEditDistanceTest extends TestCase {
                  MyersBitParallelEditDistance.Empty.class);
     assertEquals(generate(thirtyTwo).getClass(),
                  MyersBitParallelEditDistance.TYPEint.class);
-    assertEquals(generate(thirtyTwo+"x").getClass(),
+    assertEquals(generate(thirtyTwo + "x").getClass(),
                  MyersBitParallelEditDistance.TYPElong.class);
-    assertEquals(generate(thirtyTwo+thirtyTwo).getClass(),
+    assertEquals(generate(thirtyTwo + thirtyTwo).getClass(),
                  MyersBitParallelEditDistance.TYPElong.class);
-    assertEquals(generate(thirtyTwo+thirtyTwo+"x").getClass(),
+    assertEquals(generate(thirtyTwo + thirtyTwo + "x").getClass(),
                  MyersBitParallelEditDistance.Multi.class);
   }
 

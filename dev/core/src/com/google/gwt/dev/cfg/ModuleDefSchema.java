@@ -45,6 +45,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 // CHECKSTYLE_NAMING_OFF
+
 /**
  * Configures a module definition object using XML.
  */

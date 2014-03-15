@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
@@ -45,7 +46,6 @@ import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HasAnimation;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.TreeViewModel;
-import com.google.gwt.aria.client.Roles;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -134,7 +134,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
     /**
      * Set the duration of the animation in milliseconds.
-     * 
+     *
      * @param duration the duration in milliseconds
      * @see #getDuration()
      */
@@ -775,7 +775,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    * <p>
    * Setting the key to (int) 0 will disable the access key.
    * </p>
-   * 
+   *
    * @see #getAccessKey()
    */
   public void setAccessKey(char key) {
@@ -987,7 +987,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
   /**
    * Get the HTML representation of an image.
-   * 
+   *
    * @param res the {@link ImageResource} to render as HTML
    * @param isTop true if the image is for a top level element.
    * @return the rendered HTML

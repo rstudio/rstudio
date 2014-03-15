@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,12 +15,12 @@
  */
 package com.google.gwt.sample.validation.server;
 
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.validation.client.GreetingService;
 import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.sample.validation.shared.ServerGroup;
+import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.hibernate.validator.engine.ValidationSupport;
 

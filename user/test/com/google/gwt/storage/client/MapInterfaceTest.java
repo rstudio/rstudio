@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,10 +16,10 @@
 
 package com.google.gwt.storage.client;
 
+import static java.util.Collections.singleton;
+
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
-
-import static java.util.Collections.singleton;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,19 +27,19 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Tests representing the contract of {@link Map}. Concrete subclasses of this
  * base class test conformance of concrete {@link Map} subclasses to that
  * contract.
- * 
- * TODO: Descriptive assertion messages, with hints as to probable fixes. 
- * TODO: Add another constructor parameter indicating whether the class under 
+ *
+ * TODO: Descriptive assertion messages, with hints as to probable fixes.
+ * TODO: Add another constructor parameter indicating whether the class under
  * test is ordered, and check the order if so.
  * TODO: Refactor to share code with SetTestBuilder.
- * 
+ *
  * @param <K> the type of keys used by the maps under test
  * @param <V> the type of mapped values used the maps under test
  */
@@ -54,7 +54,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
 
   /**
    * Creates a new, empty instance of the class under test.
-   * 
+   *
    * @return a new, empty map instance.
    * @throws UnsupportedOperationException if it's not possible to make an empty
    *           instance of the class under test.
@@ -64,7 +64,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
 
   /**
    * Creates a new, non-empty instance of the class under test.
-   * 
+   *
    * @return a new, non-empty map instance.
    * @throws UnsupportedOperationException if it's not possible to make a
    *           non-empty instance of the class under test.
@@ -75,7 +75,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
   /**
    * Creates a new key that is not expected to be found in
    * {@link #makePopulatedMap()}.
-   * 
+   *
    * @return a key.
    * @throws UnsupportedOperationException if it's not possible to make a key
    *           that will not be found in the map.
@@ -86,7 +86,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
   /**
    * Creates a new value that is not expected to be found in
    * {@link #makePopulatedMap()}.
-   * 
+   *
    * @return a value.
    * @throws UnsupportedOperationException if it's not possible to make a value
    *           that will not be found in the map.
@@ -121,7 +121,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
   /**
    * Used by tests that require a map, but don't care whether it's populated or
    * not.
-   * 
+   *
    * @return a new map instance.
    */
   protected Map<K, V> makeEitherMap() {
@@ -152,7 +152,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
    * Checks all the properties that should always hold of a map. Also calls
    * {@link #assertMoreInvariants} to check invariants that are peculiar to
    * specific implementations.
-   * 
+   *
    * @see #assertMoreInvariants
    * @param map the map to check.
    */
@@ -245,7 +245,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
    * Override this to check invariants which should hold true for a particular
    * implementation, but which are not generally applicable to every instance of
    * Map.
-   * 
+   *
    * @param map the map whose additional invariants to check.
    */
   protected void assertMoreInvariants(Map<K, V> map) {
@@ -723,7 +723,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     try {
       map = makeEitherMap();
     } catch (UnsupportedOperationException e) {
-      return; 
+      return;
     }
 
     Set<Entry<K, V>> entrySet = map.entrySet();
@@ -815,7 +815,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
   }
 
   /*
-   * equals does not apply to Storage because there's only one instance so two 
+   * equals does not apply to Storage because there's only one instance so two
    * maps will always be equal.
    */
   public void disabled_testEqualsForLargerMap() {
@@ -837,7 +837,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
   }
 
   /*
-   * equals does not apply to Storage because there's only one instance so two 
+   * equals does not apply to Storage because there's only one instance so two
    * maps will always be equal.
    */
   public void disabled_testEqualsForSmallerMap() {
@@ -854,7 +854,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     } catch (UnsupportedOperationException e) {
       return;
     }
-    
+
     assertFalse(map.equals(smallerMap));
   }
 
@@ -912,9 +912,9 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     try {
       map = makeEitherMap();
     } catch (UnsupportedOperationException e) {
-      return; 
+      return;
     }
-    
+
     if (allowsNullKeys) {
       if (allowsNullValues) {
         // TODO: decide what to test here.
@@ -956,9 +956,9 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     try {
       map = makeEitherMap();
     } catch (UnsupportedOperationException e) {
-      return; 
+      return;
     }
-    
+
     final K keyToPut;
     final V valueToPut;
     try {
@@ -1023,7 +1023,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     try {
       map = makeEitherMap();
     } catch (UnsupportedOperationException e) {
-      return; 
+      return;
     }
     final V valueToPut;
     try {
@@ -1057,7 +1057,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     try {
       map = makeEitherMap();
     } catch (UnsupportedOperationException e) {
-      return; 
+      return;
     }
     final K keyToPut;
     try {
@@ -1122,7 +1122,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     try {
       map = makeEitherMap();
     } catch (UnsupportedOperationException e) {
-      return; 
+      return;
     }
     final K keyToPut;
     final V valueToPut;
@@ -1237,7 +1237,7 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     try {
       map = makeEitherMap();
     } catch (UnsupportedOperationException e) {
-      return; 
+      return;
     }
     assertInvariants(map);
   }

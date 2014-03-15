@@ -29,8 +29,8 @@ import java.util.Set;
 
 import javax.validation.groups.Default;
 import javax.validation.metadata.ConstraintDescriptor;
-import javax.validation.metadata.Scope;
 import javax.validation.metadata.ElementDescriptor.ConstraintFinder;
+import javax.validation.metadata.Scope;
 
 /**
  * Finds constraints declared on an element using specified criteria.
@@ -44,7 +44,7 @@ public final class ConstraintFinderImpl implements ConstraintFinder {
   private BeanMetadata beanMetadata;
 
   public ConstraintFinderImpl(BeanMetadata beanMetadata,
-      ValidationGroupsMetadata validationGroupsMetadata, 
+      ValidationGroupsMetadata validationGroupsMetadata,
       Set<ConstraintDescriptorImpl<?>> constraintDescriptors) {
     this.validationGroupsMetadata = validationGroupsMetadata;
     this.constraintDescriptors = constraintDescriptors;

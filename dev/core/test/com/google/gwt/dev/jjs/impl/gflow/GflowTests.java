@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,11 +16,11 @@
 package com.google.gwt.dev.jjs.impl.gflow;
 
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgBuilderTest;
-import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumptionTest;
-import com.google.gwt.dev.jjs.impl.gflow.constants.ExpressionEvaluatorTest;
 import com.google.gwt.dev.jjs.impl.gflow.constants.AssumptionsDeducerTest;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAnalysisTest;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAnalysisTransformationTest;
+import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumptionTest;
+import com.google.gwt.dev.jjs.impl.gflow.constants.ExpressionEvaluatorTest;
 import com.google.gwt.dev.jjs.impl.gflow.copy.CopyAnalysisTest;
 import com.google.gwt.dev.jjs.impl.gflow.copy.CopyAnalysisTransformationTest;
 import com.google.gwt.dev.jjs.impl.gflow.liveness.LivenessAnalysisTest;

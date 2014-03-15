@@ -25,8 +25,8 @@ import com.google.gwt.i18n.server.impl.ReflectionMessageInterface;
 import com.google.gwt.i18n.server.keygen.MD5KeyGenerator;
 import com.google.gwt.i18n.server.testing.Child;
 import com.google.gwt.i18n.shared.AlternateMessageSelector;
-import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.AlternateMessageSelector.AlternateForm;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import junit.framework.TestCase;
 

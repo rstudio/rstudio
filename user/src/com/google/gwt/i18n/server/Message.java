@@ -16,8 +16,8 @@
 package com.google.gwt.i18n.server;
 
 import com.google.gwt.i18n.server.MessageFormatUtils.MessageStyle;
-import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.AlternateMessageSelector.AlternateForm;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -28,13 +28,13 @@ import java.util.List;
 public interface Message extends Comparable<Message>, MessageTranslation {
 
   /**
-   * Mapping for a group of particular alternate forms to the message to use. 
+   * Mapping for a group of particular alternate forms to the message to use.
    */
   public static class AlternateFormMapping
       implements Comparable<AlternateFormMapping> {
     private final List<AlternateForm> forms;
     private final String message;
-    
+
     public AlternateFormMapping(List<AlternateForm> forms, String message) {
       this.forms = forms;
       this.message = message;
@@ -95,7 +95,7 @@ public interface Message extends Comparable<Message>, MessageTranslation {
 
   /**
    * Messages are ordered by their keys.
-   * 
+   *
    * @return -1 if this message is before {@code o}, 0 if they are equal, or
    *     1 if this is message is after {code o}
    */
@@ -105,7 +105,7 @@ public interface Message extends Comparable<Message>, MessageTranslation {
    * Get the list of all possible messages.  If there are not alternate
    * message selectors, there will be a single entry with an empty list and
    * the default value.
-   * 
+   *
    * @return a list of all message forms, lexicographically sorted by the
    *    alternate forms for each message
    */
@@ -114,7 +114,7 @@ public interface Message extends Comparable<Message>, MessageTranslation {
   /**
    * Return the requested annotation present on this message, including parents
    * if the annotation is inherited.
-   * 
+   *
    * @param annotClass
    * @return an annotation instance or null if not found
    */
@@ -122,42 +122,42 @@ public interface Message extends Comparable<Message>, MessageTranslation {
 
   /**
    * Return the default form of this message.
-   * 
+   *
    * @return default message or null if not provided
    */
   String getDefaultMessage();
 
   /**
    * Return the description of this message.
-   * 
+   *
    * @return description or null if not provided
    */
   String getDescription();
 
   /**
    * Return the key associated with this message.
-   * 
+   *
    * @return key to use for message lookups
    */
   String getKey();
 
   /**
    * Return the meaning of this message.
-   * 
+   *
    * @return meaning or null if not provided
    */
   String getMeaning();
 
   /**
    * Return the {@link MessageInterface} this message is associated with.
-   * 
+   *
    * @return a {@link MessageInterface} instance
    */
   MessageInterface getMessageInterface();
 
   /**
    * Return the message style (ie, quoting and argument rules) of this message.
-   * 
+   *
    * @return MessageStyle instance for this message
    */
   MessageStyle getMessageStyle();
@@ -165,14 +165,14 @@ public interface Message extends Comparable<Message>, MessageTranslation {
   /**
    * Return the name of the method for this message - this should generally only
    * be used in providing error messages.
-   * 
+   *
    * @return default message or null if not provided
    */
   String getMethodName();
 
   /**
    * Get the parameters defined for this message.
-   * 
+   *
    * @return a possibly empty list of parameters
    */
   List<Parameter> getParameters();
@@ -186,7 +186,7 @@ public interface Message extends Comparable<Message>, MessageTranslation {
 
   /**
    * Get the list of parameters controlling alternate message selection.
-   * 
+   *
    * @return possibly empty array of indices into the list returned by
    *     {@link #getParameters()}
    */
@@ -194,7 +194,7 @@ public interface Message extends Comparable<Message>, MessageTranslation {
 
   /**
    * Get an appropriate translation for this message for a given locale.
-   * 
+   *
    * @param locale a locale to get a translation for, or null to retrieve the
    *    message in the source
    * @return a non-null {@link MessageTranslation} instance - if locale is null,
@@ -205,7 +205,7 @@ public interface Message extends Comparable<Message>, MessageTranslation {
   /**
    * Check if a specified annotation is present on this message (including
    * via inheritance if the annotation is inherited).
-   * 
+   *
    * @param annotClass
    * @return true if the annotation is present
    */

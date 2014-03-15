@@ -15,7 +15,6 @@
  */
 package com.google.gwt.cell.client;
 
-import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
 
 import java.util.HashMap;
@@ -88,7 +87,7 @@ public abstract class AbstractEditableCell<C, V> extends AbstractCell<C> {
    * given element and key. While a cell is editing, widgets containing the cell
    * may choose to pass keystrokes directly to the cell rather than using them
    * for navigation purposes.
-   * 
+   *
    * @param context the {@link Context} of the cell
    * @param parent the parent Element
    * @param value the value associated with the cell

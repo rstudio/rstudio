@@ -214,7 +214,6 @@ public class Options {
     protected String getName() {
       return CodeServer.class.getName();
     }
-
   }
 
   private class NoPrecompileFlag extends ArgHandlerFlag {
@@ -285,8 +284,8 @@ public class Options {
     @Override
     public boolean setString(String newValue) {
       try {
-        InetAddress bindAddress = InetAddress.getByName(newValue);
-        if (bindAddress.isAnyLocalAddress()) {
+        InetAddress newBindAddress = InetAddress.getByName(newValue);
+        if (newBindAddress.isAnyLocalAddress()) {
           preferredHost = InetAddress.getLocalHost().getHostName();
         } else {
           preferredHost = newValue;

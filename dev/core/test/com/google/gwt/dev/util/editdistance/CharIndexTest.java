@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,22 +15,19 @@
  */
 package com.google.gwt.dev.util.editdistance;
 
-import com.google.gwt.dev.util.editdistance.CharIndex;
-
 import junit.framework.TestCase;
 
 /**
  * Tests for {@link CharIndex}.
  */
 public class CharIndexTest extends TestCase {
-  
   /**
    * Tests a mapping where the masked reduction fails (where
    * the low-order bits of several characters overlap.
    */
   public void testFullHash() throws Exception {
     String string = "abc\u0001\u0101\u0201\u0301";
-    CharIndex idx = CharIndex.getInstance(string+string);
+    CharIndex idx = CharIndex.getInstance(string + string);
     assertEquals(idx.getClass(), CharIndex.FullHash.class);
     assertEquals(idx.lookup('c'), 3);
     assertEquals(idx.nullElement(), 0);
@@ -54,10 +51,10 @@ public class CharIndexTest extends TestCase {
    */
   public void testMasked() throws Exception {
     String string = "\u0141\u0142\u0171\u0131";
-    CharIndex idx = CharIndex.getInstance(string+string);
+    CharIndex idx = CharIndex.getInstance(string + string);
     assertEquals(idx.getClass(), CharIndex.Masked.class);
     assertEquals(idx.lookup('\u0141'), 0x0041);
-    assertEquals(idx.size(), (idx.nullElement()+1));
+    assertEquals(idx.size(), (idx.nullElement() + 1));
     generalVerify(idx, string, "xyz012\u0123\u1234");
   }
 
@@ -67,10 +64,10 @@ public class CharIndexTest extends TestCase {
    */
   public void testStraight() throws Exception {
     String string = "abcdandmore";
-    CharIndex idx = CharIndex.getInstance(string+string);
+    CharIndex idx = CharIndex.getInstance(string + string);
     assertEquals(idx.getClass(), CharIndex.Straight.class);
     assertEquals(idx.lookup('a'), 'a');
-    assertEquals(idx.size(), (idx.nullElement()+1));
+    assertEquals(idx.size(), (idx.nullElement() + 1));
     generalVerify(idx, string, "xyz012\u0123\u1234");
   }
 

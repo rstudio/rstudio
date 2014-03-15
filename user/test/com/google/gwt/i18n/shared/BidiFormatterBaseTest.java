@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,15 @@
  */
 package com.google.gwt.i18n.shared;
 
-import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.*;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.LEFT;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.LRE;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.LRM;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.LRM_STRING;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.PDF;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.RIGHT;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.RLE;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.RLM;
+import static com.google.gwt.i18n.shared.BidiFormatterBase.Format.RLM_STRING;
 
 import com.google.gwt.i18n.client.HasDirection.Direction;
 

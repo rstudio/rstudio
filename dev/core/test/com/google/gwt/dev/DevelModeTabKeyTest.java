@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,7 +21,7 @@ import junit.framework.TestCase;
  * Tests for DevelModeTabKey.
  */
 public class DevelModeTabKeyTest extends TestCase {
-  
+
   public void testConstructor() {
     DevelModeTabKey key = new DevelModeTabKey("ua1",
         "http://example.org/foo.html", "tabkey1", "host:9999");
@@ -32,7 +32,7 @@ public class DevelModeTabKeyTest extends TestCase {
     key = new DevelModeTabKey("ua1",
         "http://example.org/foo.html?param=value#hash", "tabkey1", "host:9999");
     assertEquals("http://example.org/foo.html", key.getUrl());
-    
+
     // check acceptance/rejection of nulls
     try {
       key = new DevelModeTabKey(null,
@@ -53,14 +53,14 @@ public class DevelModeTabKeyTest extends TestCase {
     } catch (IllegalArgumentException expected) {
     }
   }
-  
+
   public void testEquals() {
     DevelModeTabKey key1 = new DevelModeTabKey("ua1",
         "http://example.org/foo.html", "tabkey1", "host:9999");
     DevelModeTabKey key2 = new DevelModeTabKey("ua1",
         "http://example.org/foo.html", "tabkey1", "host:9999");
     assertEquals(key1, key2);
-    
+
     // query parameters and the history token don't matter
     key2 = new DevelModeTabKey("ua1",
         "http://example.org/foo.html?param=value#hash", "tabkey1", "host:9999");

@@ -33,7 +33,10 @@ package_group(
 # Note: ant_test.sh replaces this build.xml file with its own stub.
 filegroup(
     name = "ant",
-    srcs = ["build.xml"],
+    srcs = glob([
+        "build.xml",
+        "**/*.java",
+    ]),
 )
 
 Zip(

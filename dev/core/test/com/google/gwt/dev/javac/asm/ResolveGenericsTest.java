@@ -49,6 +49,9 @@ import java.util.Map;
  */
 public class ResolveGenericsTest extends AsmTestCase {
 
+  /**
+   * A logger that fails the tests if an error is logged.
+   */
   public static class FailErrorTreeLogger extends TreeLogger {
     @Override
     public TreeLogger branch(com.google.gwt.core.ext.TreeLogger.Type type,

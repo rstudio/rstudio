@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,8 +18,8 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.dev.shell.BrowserChannel.InvokeOnServerMessage;
 import com.google.gwt.dev.shell.BrowserChannel.JavaObjectRef;
 import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
-import com.google.gwt.dev.shell.BrowserChannel.Value;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.ExceptionOrReturnValue;
+import com.google.gwt.dev.shell.BrowserChannel.Value;
 
 import net.sourceforge.htmlunit.corejs.javascript.Context;
 import net.sourceforge.htmlunit.corejs.javascript.Function;
@@ -108,7 +108,7 @@ public class JavaObject extends ScriptableObject implements Function {
     /**
      * Called when the JavaObject is invoked as a function. We ignore the
      * thisObj argument, which is usually the window object.
-     * 
+     *
      * Returns a JS array, with the first element being a boolean indicating
      * that an exception occured, and the second element is either the return
      * value or the exception which was thrown. In this case, we always return

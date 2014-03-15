@@ -270,7 +270,10 @@ public abstract class JJSTestBase extends TestCase {
     return new Result("void", codeSnippet, mainMethod.getBody().toSource());
   }
 
-  public final class Result {
+  /**
+   * Holds the result of a optimizations to compare with expected results.
+   */
+  protected final class Result {
     private final String optimized;
     private final String returnType;
     private final String userCode;

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,10 +34,10 @@ import com.google.gwt.i18n.rebind.AnnotationsResource.AnnotationsError;
 import com.google.gwt.i18n.rebind.format.MessageCatalogFormat;
 import com.google.gwt.i18n.server.KeyGenerator;
 import com.google.gwt.i18n.server.MessageCatalogFactory;
-import com.google.gwt.i18n.server.MessageInterface;
-import com.google.gwt.i18n.server.MessageProcessingException;
 import com.google.gwt.i18n.server.MessageCatalogFactory.Context;
 import com.google.gwt.i18n.server.MessageCatalogFactory.Writer;
+import com.google.gwt.i18n.server.MessageInterface;
+import com.google.gwt.i18n.server.MessageProcessingException;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.GwtLocaleFactory;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
@@ -345,7 +345,7 @@ abstract class AbstractLocalizableImplCreator extends
    * @return true if an error occurred (already logged)
    * @throws UnableToCompleteException
    */
-  
+
   private static boolean generateToLegacyMsgCatFormat(TreeLogger logger,
       GeneratorContext context, GwtLocale locale, JClassType targetClass,
       boolean seenError, ResourceList resourceList, String className,
@@ -384,7 +384,7 @@ abstract class AbstractLocalizableImplCreator extends
    *
    * @param logger
    * @param context
-   * @param locale 
+   * @param locale
    * @param targetClass
    * @param seenError
    * @param resourceList
@@ -448,7 +448,7 @@ abstract class AbstractLocalizableImplCreator extends
 
   /**
    * Constructor for <code>AbstractLocalizableImplCreator</code>.
-   * 
+   *
    * @param writer writer
    * @param targetClass current target
    * @param resourceList backing resource
@@ -468,7 +468,7 @@ abstract class AbstractLocalizableImplCreator extends
 
   /**
    * Gets the resource associated with this class.
-   * 
+   *
    * @return the resource
    */
   public ResourceList getResourceBundle() {
@@ -483,7 +483,7 @@ abstract class AbstractLocalizableImplCreator extends
   /**
    * Find the creator associated with the given method, and delegate the
    * creation of the method body to it.
-   * 
+   *
    * @param logger TreeLogger instance for logging
    * @param method method to be generated
    * @param locale locale to generate
@@ -503,7 +503,7 @@ abstract class AbstractLocalizableImplCreator extends
 
   /**
    * Returns a resource key given a method name.
-   * 
+   *
    * @param logger TreeLogger instance for logging
    * @param method method to get key for
    * @return the key to use for resource lookups or null if unable to get or

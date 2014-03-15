@@ -15,11 +15,11 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import static org.easymock.EasyMock.expect;
+
 import com.google.gwt.core.ext.typeinfo.JClassType;
 
 import junit.framework.TestCase;
-
-import static org.easymock.EasyMock.expect;
 
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;

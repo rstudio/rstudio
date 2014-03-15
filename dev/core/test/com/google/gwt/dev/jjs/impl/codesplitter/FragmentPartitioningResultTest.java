@@ -35,7 +35,7 @@ public class FragmentPartitioningResultTest extends TestCase {
   @Override
   public void setUp() {
     // Create some runAsyncs.
-    for (int i=1; i <= NUM_RUNASYNCS; i++) {
+    for (int i = 1; i <= NUM_RUNASYNCS; i++) {
       runAsyncs[i] = new JRunAsync(SourceOrigin.UNKNOWN, i, "runAsync" + i, false,
           JNullLiteral.INSTANCE, JNullLiteral.INSTANCE);
     }

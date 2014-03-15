@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,21 +21,17 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Generic class.
- * 
- * @param <T>
- * 
- *          NOTE: It seems that the JDT 3.1 will not allow:
- *          GenericClass<Integer> if the definition of GenericClass is as
- *          follows: class GenericClass<T extends Serializable & Comparable<T>>
- *          implements Comparable<T> { ... }
+ * Generic class. <p>
+ *
+ * NOTE: It seems that the JDT 3.1 will not allow:
+ * GenericClass<Integer> if the definition of GenericClass is as
+ * follows: class GenericClass<T extends Serializable & Comparable<T>>
+ * implements Comparable<T> { ... }
  */
 public class GenericClass<T extends Serializable> implements Comparable<T>,
     Serializable {
   /**
    * Non-static, generic inner class.
-   * 
-   * @param <U>
    */
   public class GenericInnerClass<U> {
     T t2;
@@ -50,7 +46,13 @@ public class GenericClass<T extends Serializable> implements Comparable<T>,
     T t3;
   }
 
+  /**
+   * A class with a inner class.
+   */
   public class Foo {
+    /**
+     * An inner class.
+     */
     public class Bar {
       T t4;
     }

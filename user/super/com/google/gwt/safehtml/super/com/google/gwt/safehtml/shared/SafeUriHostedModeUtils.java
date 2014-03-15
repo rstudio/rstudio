@@ -17,18 +17,20 @@ package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.core.client.GwtScriptOnly;
 
-// This is the super-source peer of this class.
+/**
+ * Supersource (webonly) version of SafeUrilHostedModeUtils.
+ */
 @GwtScriptOnly
 public class SafeUriHostedModeUtils {
 
   // Unused in super-source; only defined to avoid compiler warnings
   public static final String FORCE_CHECK_VALID_URI = null;
   static final String HREF_DISCRETE_UCSCHAR = null;
-  
+
   public static void maybeCheckValidUri(String uri) {
     // This check is a noop in web mode.
   }
-  
+
   // Unused in super-source; only defined to avoid compiler warnings
   public static boolean isValidUriCharset(String uri) { return true; }
   public static void setForceCheckValidUri(boolean check) { }

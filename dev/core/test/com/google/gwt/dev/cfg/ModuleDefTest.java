@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,8 +21,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.LinkerOrder;
-import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.Shardable;
 
 import junit.framework.TestCase;
 
@@ -244,15 +244,15 @@ public class ModuleDefTest extends TestCase {
     assertFalse(ModuleDef.isValidModuleName("com..Foo"));
     assertFalse(ModuleDef.isValidModuleName("com.7.Foo"));
     assertFalse(ModuleDef.isValidModuleName("com.7foo.Foo"));
-    
+
     assertTrue(ModuleDef.isValidModuleName("com.foo.Foo"));
     assertTrue(ModuleDef.isValidModuleName("com.$foo.Foo"));
     assertTrue(ModuleDef.isValidModuleName("com._foo.Foo"));
     assertTrue(ModuleDef.isValidModuleName("com.foo7.Foo"));
-    
-    // For legacy reasons, allow the last part of the name is not 
-    // required to be a valid ident.  In the past, naming rules 
-    // were enforced for top level modules, but not nested modules.    
+
+    // For legacy reasons, allow the last part of the name is not
+    // required to be a valid ident.  In the past, naming rules
+    // were enforced for top level modules, but not nested modules.
     assertTrue(ModuleDef.isValidModuleName("com.foo.F-oo"));
     assertTrue(ModuleDef.isValidModuleName("com.foo.7Foo"));
     assertTrue(ModuleDef.isValidModuleName("com.foo.+Foo"));

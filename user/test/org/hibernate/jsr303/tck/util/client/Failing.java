@@ -15,10 +15,10 @@
  */
 package org.hibernate.jsr303.tck.util.client;
 
-import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
-
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

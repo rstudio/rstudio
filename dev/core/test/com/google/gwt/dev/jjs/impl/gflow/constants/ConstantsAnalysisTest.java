@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,9 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 
+/**
+ * Tests for {@link ConstantAnalysis} dataflow analysis.
+ */
 public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumption> {
   @Override
   protected void setUp() throws Exception {
@@ -87,7 +90,7 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
         "WRITE(j, 2) -> [* {i = 1, j = 2}]",
         "END");
   }
-  
+
   public void testSequence() throws Exception {
     analyze("void", "int i = 1; int j = i; int k = j; int l = k;").into(
         "BLOCK -> [* T]",
@@ -104,7 +107,7 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
         "WRITE(l, k) -> [* {i = 1, j = 1, k = 1, l = 1}]",
         "END");
   }
-  
+
   public void testIfStatement() throws Exception {
     analyze("void", "int i = k; if (i == 1) { int j = i; } else { int j = i; } ").into(
         "BLOCK -> [* T]",
@@ -156,7 +159,7 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
         "GOTO -> [* T]",
         "2: END");
   }
-  
+
   public void testWhileLoop1() throws Exception {
     analyze("void", "int j = 1; while (j > 0) ++j;").into(
         "BLOCK -> [* T]",
@@ -169,7 +172,7 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
         "READWRITE(j, null) -> [1 T]",
         "2: END");
   }
-  
+
   public void testWhileLoop2() throws Exception {
     analyze("void", "int j = 0; while (j > 0) {};").into(
         "BLOCK -> [* T]",
@@ -181,7 +184,7 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
         "BLOCK -> [1 {j = 0}]",
         "2: END");
   }
-  
+
   public void testConditionalExpressions() throws Exception {
     analyze("void", "boolean b1 = false; boolean b2 = false; if (b1 && (b2 = true)) b1 = true;").into(
         "BLOCK -> [* T]",
@@ -202,12 +205,12 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
   // Various real-world stuff
   public void testVariousStuff() throws Exception {
     addSnippetClassDecl("static Object f = null;");
-    
-    analyze("void", 
+
+    analyze("void",
         "Object e = null;" +
-    		"if (f != null) if (e == null)" +
-    		"  return;" +
-    		"boolean b = e == null;").into(
+        "if (f != null) if (e == null)" +
+        "  return;" +
+        "boolean b = e == null;").into(
         "BLOCK -> [* T]",
         "STMT -> [* T]",
         "WRITE(e, null) -> [* {e = null}]",

@@ -15,8 +15,8 @@
  */
 package com.google.gwt.uibinder.test.client;
 
-import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
+import com.google.gwt.i18n.client.Messages;
 
 /**
  * Base messages to prove we can override the default.

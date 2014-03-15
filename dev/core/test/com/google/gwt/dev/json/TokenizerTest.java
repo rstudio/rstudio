@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,12 +14,6 @@
  * the License.
  */
 package com.google.gwt.dev.json;
-
-import com.google.gwt.dev.json.JsonArray;
-import com.google.gwt.dev.json.JsonException;
-import com.google.gwt.dev.json.JsonObject;
-import com.google.gwt.dev.json.JsonValue;
-import com.google.gwt.dev.json.Tokenizer;
 
 import junit.framework.TestCase;
 
@@ -36,8 +30,6 @@ public class TokenizerTest extends TestCase {
 
   /**
    * Tests {@link Tokenizer#back(char)}.
-   * 
-   * @throws IOException
    */
   public void testBack() throws IOException {
     final Tokenizer tokenizer = tokenizerFor("ab c");
@@ -52,8 +44,6 @@ public class TokenizerTest extends TestCase {
 
   /**
    * Tests {@link Tokenizer#next()}.
-   * 
-   * @throws IOException
    */
   public void testNext() throws IOException {
     final Tokenizer tokenizer = tokenizerFor("abc");
@@ -66,8 +56,6 @@ public class TokenizerTest extends TestCase {
 
   /**
    * Tests {@link Tokenizer#nextNonWhitespace()}.
-   * 
-   * @throws IOException
    */
   public void testNextNonWhite() throws IOException {
     final Tokenizer tokenizer = tokenizerFor("  a\n\tbc   ");
@@ -80,9 +68,6 @@ public class TokenizerTest extends TestCase {
 
   /**
    * Tests {@link Tokenizer#nextString()}.
-   * 
-   * @throws IOException
-   * @throws JsonException
    */
   public void testNextString() throws IOException, JsonException {
     assertEquals("json json", tokenizerFor("\"json json\"").nextString());
@@ -93,9 +78,6 @@ public class TokenizerTest extends TestCase {
 
   /**
    * Tests {@link Tokenizer#nextValue()} for array values.
-   * 
-   * @throws IOException
-   * @throws JsonException
    */
   public void testNextValueForArrays() throws IOException, JsonException {
     final JsonValue a = tokenizerFor("[]").nextValue();
@@ -116,9 +98,6 @@ public class TokenizerTest extends TestCase {
 
   /**
    * Tests {@link Tokenizer#nextValue()} for literals.
-   * 
-   * @throws IOException
-   * @throws JsonException
    */
   public void testNextValueForLiterals() throws IOException, JsonException {
     final JsonValue a = tokenizerFor("null").nextValue();
@@ -153,9 +132,6 @@ public class TokenizerTest extends TestCase {
 
   /**
    * Tests {@link Tokenizer#nextValue()} for object values.
-   * 
-   * @throws IOException
-   * @throws JsonException
    */
   public void testNextValueForObjects() throws IOException, JsonException {
     final JsonValue a = tokenizerFor("{}").nextValue();

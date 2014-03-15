@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,18 +21,18 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.event.shared.HandlerManager;
 
 /**
  * Legacy listener support hierarchy root.
- * 
+ *
  * Note, this class and its subtypes all assume that the handlers are stored in
  * handler managers.
- * 
+ *
  * This class, and its children are used to gather the bulk of the legacy glue
  * code in one place, for easy deletion when Listener methods are deleted.
- * 
+ *
  * @param <T> listener type to be wrapped
  * @deprecated will be removed in GWT 2.7 with the handler listeners themselves
  */
@@ -114,7 +114,7 @@ public abstract class BaseListenerWrapper<T> implements EventHandler {
 
   /**
    * Helper method to remove all wrapped listeners from the given event types.
-   * 
+   *
    * @param manager the manager to remove the listener from
    * @param listener the listener
    * @param types the event types to remove the listener from
@@ -147,7 +147,7 @@ public abstract class BaseListenerWrapper<T> implements EventHandler {
 
   /**
    * Creates a new listener wrapper.
-   * 
+   *
    * @param listener the listener to wrap
    */
   protected BaseListenerWrapper(T listener) {
@@ -156,7 +156,7 @@ public abstract class BaseListenerWrapper<T> implements EventHandler {
 
   /**
    * Gets the listener being wrapped.
-   * 
+   *
    * @return the wrapped listener
    */
   protected T getListener() {

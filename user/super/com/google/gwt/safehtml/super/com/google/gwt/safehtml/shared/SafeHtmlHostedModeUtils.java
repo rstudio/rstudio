@@ -17,17 +17,19 @@ package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.core.client.GwtScriptOnly;
 
-// This is the super-source peer of this class.
+/**
+ * Supersource (webonly) version of SafeHtmlHostedModeUtils.
+ */
 @GwtScriptOnly
 public class SafeHtmlHostedModeUtils {
 
   // Unused in super-source; only defined to avoid compiler warnings
   public static final String FORCE_CHECK_COMPLETE_HTML = null;
-  
+
   public static void maybeCheckCompleteHtml(String html) {
     // This check is a noop in web mode.
   }
-  
+
   // Unused in super-source; only defined to avoid compiler warnings
   public static void setForceCheckCompleteHtml(boolean check) { }
   static void setForceCheckCompleteHtmlFromProperty() { }

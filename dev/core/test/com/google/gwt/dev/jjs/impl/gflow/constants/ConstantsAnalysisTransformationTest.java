@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,10 +23,10 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 
 /**
- * 
+ * Test for {@link CfgTransformer}.
  */
 public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTestBase<ConstantsAssumption> {
-  
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -51,14 +51,14 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
         "i = 1 + 1;",
         "int j = 2;");
   }
-  
+
   public void testSequence() throws Exception {
     transform("void", "int i = 1; int j = i; int k = j;").into(
         "int i = 1;",
         "int j = 1;",
         "int k = 1;");
   }
-  
+
   public void testIfStatement() throws Exception {
     transform("void", "int i = 1; if (i_ == i) { i = 2; int j = i;} ").into(
         "int i = 1;",
@@ -74,13 +74,13 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
         "  int j = i;",
         "}");
   }
-  
+
   public void testReplaceInMethodCall() throws Exception {
     transform("void", "int i = 1; bar(i);").into(
         "int i = 1;",
         "EntryPoint.bar(1);");
   }
-  
+
   public void testExpressionEvaluation() throws Exception {
     transform("void", "int i = 1; int j = i + 1;").into(
         "int i = 1;",
@@ -92,18 +92,16 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
         "int i = 1;",
         "boolean b = 1 == 1;");
   }
-  
+
   public void testWhile() throws Exception {
     transform("void", "int j = 0; while (j > 0) { }").intoString(
         "int j = 0;");
-
   }
 
   public void testConstantCondition() throws Exception {
     transform("void", "while (true) { }").into(
         "while (true) {",
         "}" );
-
   }
 
   public void testNullValue() throws Exception {
@@ -115,7 +113,7 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
         "Object e = null;",
         "boolean b = false;" );
   }
-  
+
   public void testIncDec() throws Exception {
     transform("void",
         "int i = 0;",
@@ -129,29 +127,29 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
             "++i;"
         );
   }
-  
+
   public void testNotNull() throws Exception {
     transform("boolean", "String s = baz(); if (s == null) return false; return s != null;").into(
         "String s = EntryPoint.baz();", "if (s == null)", "  return false;", "return s != null;");
   }
-  
+
   public void testImplicitCasts() throws Exception {
-    transform("long", 
+    transform("long",
         "int bar = 0x12345678;",
         "bar = bar * 1234;",
         "long lng = bar;",
         "long lng8 = lng << 8;",
         "return lng8;"
         ).into(
-            "  int bar = 305419896;", 
+            "  int bar = 305419896;",
             "  bar = -1068970384;",
-            "  long lng = -1068970384;", 
-            "  long lng8 = lng << 8;", 
+            "  long lng = -1068970384;",
+            "  long lng8 = lng << 8;",
             "  return lng8;");
   }
 
   @Override
-  protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, 
+  protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg,
   ConstantsAssumption> createIntegratedAnalysis() {
     return new ConstantsAnalysis();
   }

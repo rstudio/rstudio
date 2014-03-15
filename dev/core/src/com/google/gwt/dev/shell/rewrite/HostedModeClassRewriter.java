@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,8 +20,8 @@ import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.asm.commons.Method;
+import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -54,7 +54,7 @@ import java.util.SortedSet;
  * <li>JavaScriptObject$ implements all the interface types and is the only
  * instantiable type.</li>
  * </ol>
- * 
+ *
  * @see RewriteJsniMethods
  * @see RewriteRefsToJsoClasses
  * @see WriteJsoInterface
@@ -79,7 +79,7 @@ public class HostedModeClassRewriter {
      * JSO subtype), find the class in which that method was originally
      * declared. Methods declared on Object will return "java/lang/Object".
      * Static methods will always return <code>declaredClass</code>.
-     * 
+     *
      * @param declaredClass a descriptor of the static type of the qualifier
      * @param signature the binary signature of the method
      * @return the descriptor of the class in which that method was declared,
@@ -162,7 +162,7 @@ public class HostedModeClassRewriter {
   /**
    * Creates a new {@link HostedModeClassRewriter} for a specified set of
    * subclasses of JavaScriptObject.
-   * 
+   *
    * @param jsoSubtypes a set of binary type names representing JavaScriptObject
    *          and all of its subtypes of
    * @param mapper maps methods to the class in which they are declared
@@ -212,7 +212,7 @@ public class HostedModeClassRewriter {
 
   /**
    * Performs rewriting transformations on a class.
-   * 
+   *
    * @param typeOracle a typeOracle modeling the user classes
    * @param className the name of the class
    * @param classBytes the bytes of the class
@@ -233,7 +233,7 @@ public class HostedModeClassRewriter {
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
     v = new UseMirroredClasses(v, className);
-    
+
     v = new RewriteSingleJsoImplDispatches(v, typeOracle, jsoData);
 
     v = new RewriteRefsToJsoClasses(v, jsoIntfDescs, mapper);

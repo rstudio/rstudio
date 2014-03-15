@@ -15,7 +15,8 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import static com.google.gwt.uibinder.rebind.TypeOracleUtils.*;
+import static com.google.gwt.uibinder.rebind.TypeOracleUtils.hasCompatibleConstructor;
+import static com.google.gwt.uibinder.rebind.TypeOracleUtils.typeIsCompatible;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;

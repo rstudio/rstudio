@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,30 +18,29 @@ package com.google.gwt.logging.impl;
 
 import com.google.gwt.core.client.GWT;
 
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * This class is used by the byte code rewriting which happens in DevMode only.
- * We rewrite all calls that create and access loggers by name to include a 
+ * We rewrite all calls that create and access loggers by name to include a
  * magic, thread specific prefix, which creates a separate tree of loggers for
- * each thread in DevMode. This works around the issue where DevMode root 
+ * each thread in DevMode. This works around the issue where DevMode root
  * loggers are shared between threads and between client/server. These functions
  * will never be used in Production compiles.
- * 
+ *
  * TODO(unnurg): Move this class into gwt-dev
- * 
+ *
  * @see UseMirroredClasses
  */
 public class DevModeLoggingFixes {
   private static Logger root = null;
-  
+
   /**
    * Replaces all logRecord.getLoggerName() calls, removing a thread specific
    * prefix which is appended to all logger names in dev mode in order to
@@ -53,7 +52,7 @@ public class DevModeLoggingFixes {
     }
     return null;
   }
-  
+
   /**
    * Replaces all logger.getName() calls, removing a thread specific prefix
    * which is appended to all logger names in dev mode in order to maintain
@@ -65,7 +64,7 @@ public class DevModeLoggingFixes {
     }
     return null;
   }
-  
+
   /**
    * Replaces all Logger.getLogger(name) calls, adding a thread specific prefix
    * which is appended to all logger names in dev mode in order to maintain
@@ -82,7 +81,7 @@ public class DevModeLoggingFixes {
     }
     return Logger.getLogger(addLoggerPrefix(name));
   }
-  
+
   /**
    * Replaces all LogManager.getLogger(name) calls, adding a thread specific
    * prefix which is appended to all logger names in dev mode in order to
@@ -110,19 +109,19 @@ public class DevModeLoggingFixes {
     }
     return Collections.enumeration(newList);
   }
-  
+
   private static String addLoggerPrefix(String name) {
     return getLoggerPrefix() + name;
   }
-  
+
   private static String getLoggerPrefix() {
     return getPrefixName() + ".";
   }
-  
+
   private static String getPrefixName() {
     return GWT.getUniqueThreadId();
   }
-  
+
   private static String removeLoggerPrefix(String name) {
     return name.replaceFirst("^" + getLoggerPrefix(), "");
   }

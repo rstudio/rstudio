@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,10 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -66,9 +66,9 @@ public abstract class SerializerBase implements Serializer {
   }
 
   private final Map<String, TypeHandler> handlerCache;
-  
+
   private final Map<String, String> methodMapJava;
-  
+
   private final MethodMap methodMapNative;
 
   private final Map<String, String> signatureMapJava;
@@ -154,7 +154,7 @@ public abstract class SerializerBase implements Serializer {
     }
 
     TypeHandler typeHandler = handlerCache.get(typeHandlerClass);
-    
+
     if (typeHandler == null) {
       try {
         Class<?> klass = ReflectionHelper.loadClass(typeHandlerClass);

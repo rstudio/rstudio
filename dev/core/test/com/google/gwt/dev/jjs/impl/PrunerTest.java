@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,9 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 
+/**
+ * Test for {@link Pruner}.
+ */
 public class PrunerTest extends OptimizerTestBase {
   @Override
   protected void setUp() throws Exception {
@@ -66,7 +69,7 @@ public class PrunerTest extends OptimizerTestBase {
     addSnippetClassDecl("interface UnusedInterface { void foo(); }");
 
     Result result;
-    (result = optimize("void", 
+    (result = optimize("void",
         "usedMethod();",
         "unreadField = 1;",  // should be pruned because it's not read.
         "foo(unassignedField);",
@@ -89,7 +92,7 @@ public class PrunerTest extends OptimizerTestBase {
             "new EntryPoint$UsedClass();",
             "new EntryPoint$UsedClass((EntryPoint.returnUninstantiatedClass(), EntryPoint.returnUninstantiatedClass()));"
             );
-    
+
     assertNotNull(result.findMethod("usedMethod"));
     // We do not assign to the field, but we use its default value.
     // Shouldn't be pruned.
@@ -116,27 +119,27 @@ public class PrunerTest extends OptimizerTestBase {
         "  return null;\n" +
         "}",
         result.findMethod("returnUninstantiatedClass").toSource());
-    
+
     assertEquals(
         "static void methodWithUninstantiatedParam(){\n" +
         "}",
         result.findMethod("methodWithUninstantiatedParam").toSource());
 
     assertEquals(
-        "[final null nullField, int field2]", 
-        ((JsniMethodBody) result.findMethod("usedNativeMethod").getBody()).
-        getJsniFieldRefs().toString());
+        "[final null nullField, int field2]",
+        ((JsniMethodBody) result.findMethod("usedNativeMethod").getBody())
+            .getJsniFieldRefs().toString());
     assertEquals(
-        "[public final null nullMethod(), public void method2()]", 
-        ((JsniMethodBody) result.findMethod("usedNativeMethod").getBody()).
-        getJsniMethodRefs().toString());
+        "[public final null nullMethod(), public void method2()]",
+        ((JsniMethodBody) result.findMethod("usedNativeMethod").getBody())
+            .getJsniMethodRefs().toString());
 
     assertEquals(
         "interface EntryPoint$UsedInterface {\n" +
         "  private static final void $clinit(){\n" +
         "  }\n" +
         "\n" +
-        "}", 
+        "}",
         result.findClass("EntryPoint$UsedInterface").toSource());
   }
 

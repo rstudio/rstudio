@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -44,7 +44,7 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
       this.startTimeNanos = startTimeNanos;
       this.durationNanos = durationNanos;
     }
-    
+
     public DevModeEvent(Event e) {
       this.session = e.getDevModeSession();
       this.eventType = e.getType().getName();
@@ -55,7 +55,7 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
     public DevModeSession getDevModeSession() {
       return session;
     }
-    
+
     @Override
     public boolean equals(Object o) {
       if (o != null && o instanceof DevModeEvent) {
@@ -69,14 +69,14 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
     @Override
     public int hashCode() {
       int hash = 37;
-      hash = hash*19 + session.hashCode();
-      hash = hash*19 + eventType.hashCode();
-      hash = hash*19 + Long.valueOf(startTimeNanos).hashCode();
-      hash = hash*19 + Long.valueOf(durationNanos).hashCode();
+      hash = hash * 19 + session.hashCode();
+      hash = hash * 19 + eventType.hashCode();
+      hash = hash * 19 + Long.valueOf(startTimeNanos).hashCode();
+      hash = hash * 19 + Long.valueOf(durationNanos).hashCode();
       return hash;
     }
   }
-  
+
   /**
    * Activates this mock object. After calling this, the notifier factory will
    * be setup so that dashboard notifications are enabled and the notifier
@@ -100,7 +100,7 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
         + "before call DashboardNotifier.devModeEventEnd()", started);
     started = true;
   }
-  
+
   @Override
   public void devModeEventEnd(DevModeSession session, String eventType, long startTimeNanos,
       long durationNanos) {
@@ -129,7 +129,7 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
    * Returns the sequence of events posted to the notifier. Also validates that
    * the notifier is in a valid state (i.e. not between calls to beginning and
    * ending an event).
-   * 
+   *
    * @return the sequence of events posted to the notifier
    */
   public LinkedList<DevModeEvent> getEventSequence() {

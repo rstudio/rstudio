@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,10 +22,10 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HTMLTable.Cell;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
 /**
  * A composite that displays a list of emails that can be selected.
@@ -33,7 +33,7 @@ import com.google.gwt.user.client.ui.HTMLTable.Cell;
 public class MailList extends ResizeComposite {
 
   /**
-   * Callback when mail items are selected. 
+   * Callback when mail items are selected.
    */
   public interface Listener {
     void onItemSelected(MailItem item);
@@ -135,7 +135,7 @@ public class MailList extends ResizeComposite {
 
   /**
    * Selects the given row (relative to the current page).
-   * 
+   *
    * @param row the row to be selected
    */
   private void selectRow(int row) {

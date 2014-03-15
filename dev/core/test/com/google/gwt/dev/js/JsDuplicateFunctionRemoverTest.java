@@ -16,7 +16,6 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceOrigin;
-
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -28,11 +27,11 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.TextOutput;
 
-import java.lang.reflect.Method;
 import java.io.StringReader;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +87,7 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
     String firstName = new MockNameGenerator().getFreshName();
     assertEquals("_.method1=" + firstName + ";_.method2=" + firstName +
         ";_.method1();_.method2();function " + firstName + "(){}\n",
-		    optimize(program, JsSymbolResolver.class, JsDuplicateFunctionRemoverProxy.class));
+        optimize(program, JsSymbolResolver.class, JsDuplicateFunctionRemoverProxy.class));
   }
 
 
@@ -195,7 +194,6 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
     // the same.
     assertTrue(assignments.get("_.b") != assignments.get("_.c") ||
         topScope_a.getShortIdent().equals(f2_a.getShortIdent()));
-
   }
 
   private static void setAllFromJava(JsProgram program) {

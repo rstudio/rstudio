@@ -15,14 +15,14 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import static org.easymock.EasyMock.expect;
+
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 import junit.framework.TestCase;
-
-import static org.easymock.EasyMock.expect;
 
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
@@ -67,7 +67,7 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
 
     control.replay();
     try {
-      FieldWriter field = new FieldWriterOfLazyDomElement(null, 
+      FieldWriter field = new FieldWriterOfLazyDomElement(null,
           templateFieldType, ownerField, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {

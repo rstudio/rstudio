@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,13 @@
  */
 package com.google.gwt.dev.util.editdistance;
 
-import com.google.gwt.dev.util.editdistance.CharIndex;
-import com.google.gwt.dev.util.editdistance.PatternBitmap;
-
 import junit.framework.TestCase;
 
 /**
  * Tests for {@link PatternBitmap}.
  */
 public class PatternBitmapTest extends TestCase {
-  
+
   /** Reverses a string */
   public static String reverse(String s) {
     StringBuilder b = new StringBuilder();
@@ -55,7 +52,7 @@ public class PatternBitmapTest extends TestCase {
       int where = string.indexOf(c);
       if (where >= 0) {
         assertTrue("Map for pattern character '" + c + "' should be non-zero",
-                     (map[idx.lookup(c)] & (1<<where)) != 0);
+                     (map[idx.lookup(c)] & (1 << where)) != 0);
       } else {
         assertEquals("Map for unused character '" + c + "' should be zero",
                      0, map[idx.lookup(c)]);
@@ -78,9 +75,9 @@ public class PatternBitmapTest extends TestCase {
                                      wordSize);
 
     /* Spot check some */
-    assertEquals(1<<0,  map[idx.lookup('x')][0]);
-    assertEquals(1<<20, map[idx.lookup('x')][1]);
-    assertEquals(1<<5,  map[idx.lookup('x')][2]);
+    assertEquals(1 << 0,  map[idx.lookup('x')][0]);
+    assertEquals(1 << 20, map[idx.lookup('x')][1]);
+    assertEquals(1 << 5,  map[idx.lookup('x')][2]);
 
     /* Check all others for null element/not */
     int[] notThere = map[idx.lookup('\u0000')];
@@ -91,7 +88,7 @@ public class PatternBitmapTest extends TestCase {
         assertTrue("Map for pattern character '" + c + "'"
                    + " should be non-zero",
                    (map[idx.lookup(c)] != notThere));
-        int bit = map[idx.lookup(c)][where/wordSize] & (1 << (where%wordSize));
+        int bit = map[idx.lookup(c)][where / wordSize] & (1 << (where % wordSize));
         assertTrue("Map for pattern character '" + c + "'"
                    + " should have " + where + " bit on",
                    (bit != 0));
@@ -127,7 +124,7 @@ public class PatternBitmapTest extends TestCase {
       int where = string.indexOf(c);
       if (where >= 0) {
         assertTrue("Map for pattern character '" + c + "' should be non-zero",
-                   (map[idx.lookup(c)] & (1L<<where)) != 0);
+                   (map[idx.lookup(c)] & (1L << where)) != 0);
       } else {
         assertEquals("Map for unused character '" + c + "' should be zero",
                      0, map[idx.lookup(c)]);

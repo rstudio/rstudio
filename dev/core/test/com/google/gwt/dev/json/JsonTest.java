@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,14 +14,6 @@
  * the License.
  */
 package com.google.gwt.dev.json;
-
-import com.google.gwt.dev.json.JsonArray;
-import com.google.gwt.dev.json.JsonBoolean;
-import com.google.gwt.dev.json.JsonException;
-import com.google.gwt.dev.json.JsonNumber;
-import com.google.gwt.dev.json.JsonObject;
-import com.google.gwt.dev.json.JsonString;
-import com.google.gwt.dev.json.JsonValue;
 
 import junit.framework.TestCase;
 
@@ -54,9 +46,6 @@ public class JsonTest extends TestCase {
 
   /**
    * Tests updating elements in a {@link JsonArray}.
-   * 
-   * @throws IOException
-   * @throws JsonException
    */
   public void testWriteArray() throws IOException, JsonException {
     final JsonArray a = new JsonArray();
@@ -72,7 +61,7 @@ public class JsonTest extends TestCase {
 
     final JsonArray b = JsonArray.parse(new StringReader(json));
     assertEquals(6, b.getLength());
-    
+
     assertTrue(b.get(0).asBoolean().getBoolean());
     assertEquals("foo", b.get(1).asString().getString());
     assertEquals(230, b.get(2).asNumber().getInteger());
@@ -83,9 +72,6 @@ public class JsonTest extends TestCase {
 
   /**
    * Tests updating properties in a {@link JsonObject}.
-   * 
-   * @throws IOException
-   * @throws JsonException
    */
   public void testWriteObject() throws IOException, JsonException {
     final JsonObject a = new JsonObject();
@@ -108,7 +94,7 @@ public class JsonTest extends TestCase {
     assertTrue(b.get("f").asBoolean().getBoolean());
     assertFalse(b.get("g").asBoolean().getBoolean());
   }
-  
+
   /**
    * Tests {@link JsonValue#copyDeeply()}.
    */
@@ -121,7 +107,7 @@ public class JsonTest extends TestCase {
     a.put("e", new JsonArray());
     a.put("f", true);
     a.put("g", JsonValue.NULL);
-    
+
     // Get JsonValues for all of a's properties.
     final JsonNumber aa = a.get("a").asNumber();
     final JsonNumber ab = a.get("b").asNumber();
@@ -137,7 +123,7 @@ public class JsonTest extends TestCase {
     final JsonObject bd = b.get("d").asObject();
     final JsonArray be = b.get("e").asArray();
     final JsonBoolean bf = b.get("f").asBoolean();
-    final JsonValue bg = b.get("g");    
+    final JsonValue bg = b.get("g");
 
     // Test non-interned types.
     // Integer
@@ -151,20 +137,20 @@ public class JsonTest extends TestCase {
     // String
     assertEquals("json\n\r\f\t\b\u8730", bc.getString());
     assertNotSame(ac, bc);
-    
+
     // Object
     assertTrue(bd.isEmpty());
     assertNotSame(ad, bd);
-    
+
     // Array
     assertEquals(0, be.getLength());
     assertNotSame(ae, be);
-    
+
 
     // Test interned types.
     // Boolean
     assertTrue(bf.getBoolean());
-    
+
     // NULL
     assertEquals(bg, JsonValue.NULL);
   }

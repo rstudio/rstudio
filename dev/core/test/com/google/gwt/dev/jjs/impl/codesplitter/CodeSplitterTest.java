@@ -95,7 +95,6 @@ public class CodeSplitterTest extends FullCompileTestBase {
         new ConfigurationProperty[]{initialSequenceProp});
     super.setUp();
     jsProgram = new JsProgram();
-
   }
 
   public void testSimple() throws UnableToCompleteException {
@@ -105,7 +104,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
     code.append("public class EntryPoint {\n");
     code.append("static {");
-    //code.append("  functionC();");
+    // code.append("  functionC();");
     code.append("}");
     code.append(functionA);
     code.append(functionB);
@@ -347,8 +346,8 @@ public class CodeSplitterTest extends FullCompileTestBase {
 
     // This is a non negative number always
     assertEquals(0, CodeSplitters.getNumberOfExclusiveFragmentFromExpectedFragmentCount(2, 1));
-
   }
+
   public void testDontMergeLeftOvers() throws UnableToCompleteException {
     StringBuffer code = new StringBuffer();
     code.append("package test;\n");
@@ -494,7 +493,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
 
   private static String createRunAsync(String cast, String body) {
     StringBuffer code = new StringBuffer();
-    code.append("GWT.runAsync(" + cast + "new "+ "RunAsyncCallback() {\n");
+    code.append("GWT.runAsync(" + cast + "new " + "RunAsyncCallback() {\n");
     code.append("  public void onFailure(Throwable reason) {}\n");
     code.append("  public void onSuccess() {\n");
     code.append("    " + body);

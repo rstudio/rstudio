@@ -33,13 +33,13 @@ import java.util.Set;
 
 /**
  * In-memory representation of a SourceMap.
- *
- * @author skybrian@google.com (Brian Slesinsky)
  */
 class SourceMap {
   private final JsonObject json;
 
-  /** @see #load */
+  /**
+   *@see #load
+   */
   private SourceMap(JsonObject json) {
     this.json = json;
   }

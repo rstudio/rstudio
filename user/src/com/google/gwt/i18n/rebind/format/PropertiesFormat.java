@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,8 +18,8 @@ package com.google.gwt.i18n.rebind.format;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.i18n.client.PluralRule.PluralForm;
-import com.google.gwt.i18n.rebind.AnnotationsResource;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.rebind.AnnotationsResource;
 import com.google.gwt.i18n.rebind.AnnotationsResource.ArgumentInfo;
 
 import java.io.PrintWriter;
@@ -42,7 +42,7 @@ public class PropertiesFormat implements MessageCatalogFormat {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.gwt.i18n.rebind.format.MessageCatalogFormat#write(com.google.gwt.i18n.rebind.util.AbstractResource,
    *      java.io.File, com.google.gwt.core.ext.typeinfo.JClassType)
    */
@@ -65,7 +65,7 @@ public class PropertiesFormat implements MessageCatalogFormat {
         // Write comments from the annotations.
         writeAnnotComments(out, annotResource, key);
       }
-      
+
       // Collect plural forms for this locale.
       PluralForm[] pluralForms = resourceList.getPluralForms(key);
       if (pluralForms != null) {
@@ -98,9 +98,9 @@ public class PropertiesFormat implements MessageCatalogFormat {
 
   /**
    * Quote keys for use in a properties file.
-   * 
+   *
    * In addition to the usual quoting, all spaces are backslash-quoted.
-   * 
+   *
    * @param str key to quote
    * @return quoted key
    */
@@ -109,22 +109,22 @@ public class PropertiesFormat implements MessageCatalogFormat {
     str = str.replace(" ", "\\ ");
     return quoteSpecial(str);
   }
-  
+
   /**
    * Quote strings for use in a properties file.
-   * 
+   *
    * @param str string to quote
    * @return quoted string
    */
   private String quoteSpecial(String str) {
     return str.replaceAll("([\f\t\n\r$!=:#])", "\\\\$1");
   }
-  
+
   /**
    * Quote values for use in a properties file.
-   * 
+   *
    * In addition to the usual quoting, leading spaces are backslash-quoted.
-   * 
+   *
    * @param str value to quote
    * @return quoted value
    */
@@ -142,10 +142,10 @@ public class PropertiesFormat implements MessageCatalogFormat {
     }
     return quoteSpecial(str);
   }
-  
+
   /**
    * Write a key-value pair to a properties file with proper quoting.
-   * 
+   *
    * @param out PrintWriter to output to
    * @param key property key
    * @param value property value
@@ -155,11 +155,11 @@ public class PropertiesFormat implements MessageCatalogFormat {
     out.print('=');
     out.println(quoteValue(value));
   }
-  
+
   /**
    * Write comments before a line, pulled from the annotations on a
    * given method.
-   * 
+   *
    * @param out PrintWriter stream to write to
    * @param annotResource AnnotationsResource to get annotation data from
    * @param key key of method for lookup in annotResource
@@ -227,7 +227,7 @@ public class PropertiesFormat implements MessageCatalogFormat {
 
   /**
    * Write a comment to a properties file.
-   * 
+   *
    * @param out PrintWriter to output to
    * @param comment comment to write
    */

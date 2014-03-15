@@ -17,7 +17,9 @@ package com.google.gwt.safecss.shared;
 
 import com.google.gwt.core.client.GwtScriptOnly;
 
-// This is the super-source peer of this class.
+/**
+ * Supersource (webmode only) version of SafeStyleHosedModeUtils.
+ */
 @GwtScriptOnly
 public class SafeStylesHostedModeUtils {
 

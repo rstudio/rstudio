@@ -22,7 +22,6 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.junit.client.GWTTestCase;
-
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.AutoHorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 

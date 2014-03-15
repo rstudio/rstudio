@@ -453,8 +453,8 @@ public class SourceMapTest extends TestCase {
           } else if (kind.equals("method")) {
             String[] fullName = ref.split("::");
             checkInFragments(size,
-                clsMap.get(fullName[0]).
-                    getMethod(unSynthMethodSignature(fullName[1])).getFragments());
+                clsMap.get(fullName[0])
+                    .getMethod(unSynthMethodSignature(fullName[1])).getFragments());
           } else if (kind.equals("field")) {
             String[] fullName = ref.split("::");
             checkInFragments(size,
@@ -500,8 +500,9 @@ public class SourceMapTest extends TestCase {
               super.startElement(uri, localName, qName, attributes);
               try {
                 if (localName.equals("splipoint")) {
-                  JSONArray runAsyncs = fragmentById.get(Integer.parseInt(attributes.getValue("id"))).
-                      getJSONArray(EntityRecorder.FRAGMENT_POINTS);
+                  JSONArray runAsyncs = fragmentById
+                      .get(Integer.parseInt(attributes.getValue("id")))
+                      .getJSONArray(EntityRecorder.FRAGMENT_POINTS);
                   boolean present = false;
                   String runAsync = attributes.getValue("location");
                   for (int i = 0; i < runAsyncs.length(); i++) {

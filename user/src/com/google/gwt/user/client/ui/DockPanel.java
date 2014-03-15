@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,8 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.user.client.DOM;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,25 +26,25 @@ import java.util.Map;
 /**
  * A panel that lays its child widgets out "docked" at its outer edges, and
  * allows its last widget to take up the remaining space in its center.
- * 
+ *
  * <p>
  * This widget has limitations in standards mode that did not exist in quirks
  * mode. The child Widgets contained within a DockPanel cannot be sized using
  * percentages. Setting a child widget's height to <code>100%</code> will
  * <em>NOT</em> cause the child to fill the available height.
  * </p>
- * 
+ *
  * <p>
  * If you need to work around these limitations, use {@link DockLayoutPanel}
  * instead, but understand that it is not a drop in replacement for this class.
  * It requires standards mode, and is most easily used under a
  * {@link RootLayoutPanel} (as opposed to a {@link RootPanel}).
  * </p>
- * 
+ *
  * <p>
  * <img class='gallery' src='doc-files/DockPanel.png'/>
  * </p>
- * 
+ *
  * @see DockLayoutPanel
  */
 public class DockPanel extends CellPanel implements HasAlignment {
@@ -119,7 +119,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
   /**
    * Generate a debug ID for the {@link Widget} given the direction and number
    * of occurrences of the direction.
-   * 
+   *
    * @param direction the direction of the widget
    * @param count the number of widgets in that direction
    */
@@ -133,14 +133,14 @@ public class DockPanel extends CellPanel implements HasAlignment {
     } else if (direction == EAST) {
       return "east" + count;
     } else if (direction == LINE_START) {
-        return "linestart" + count;      
+        return "linestart" + count;
     } else if (direction == LINE_END) {
-        return "lineend" + count;      
-    } else {    
+        return "lineend" + count;
+    } else {
       return "center";
     }
   }
-  
+
   private HorizontalAlignmentConstant horzAlign = ALIGN_DEFAULT;
   private VerticalAlignmentConstant vertAlign = ALIGN_TOP;
   private Widget center;
@@ -157,10 +157,10 @@ public class DockPanel extends CellPanel implements HasAlignment {
    * Adds a widget to the specified edge of the dock. If the widget is already a
    * child of this panel, this method behaves as though {@link #remove(Widget)}
    * had already been called.
-   * 
+   *
    * @param widget the widget to be added
    * @param direction the widget's direction in the dock
-   * 
+   *
    * @throws IllegalArgumentException when adding to the {@link #CENTER} and
    *           there is already a different widget there
    */
@@ -196,16 +196,16 @@ public class DockPanel extends CellPanel implements HasAlignment {
     // Adopt.
     adopt(widget);
   }
-  
+
   /**
    * Overloaded version for IsWidget.
-   * 
+   *
    * @see #add(Widget,DockLayoutConstant)
    */
   public void add(IsWidget widget, DockLayoutConstant direction) {
    this.add(widget.asWidget(), direction);
   }
-  
+
   public HorizontalAlignmentConstant getHorizontalAlignment() {
     return horzAlign;
   }
@@ -216,7 +216,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
 
   /**
    * Gets the layout direction of the given child widget.
-   * 
+   *
    * @param w the widget to be queried
    * @return the widget's layout direction, or <code>null</code> if it is not
    *         a child of this panel
@@ -281,7 +281,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
   /**
    * Sets the default horizontal alignment to be used for widgets added to this
    * panel. It only applies to widgets added after this property is set.
-   * 
+   *
    * @see HasHorizontalAlignment#setHorizontalAlignment(HasHorizontalAlignment.HorizontalAlignmentConstant)
    */
   public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
@@ -291,7 +291,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
   /**
    * Sets the default vertical alignment to be used for widgets added to this
    * panel. It only applies to widgets added after this property is set.
-   * 
+   *
    * @see HasVerticalAlignment#setVerticalAlignment(HasVerticalAlignment.VerticalAlignmentConstant)
    */
   public void setVerticalAlignment(VerticalAlignmentConstant align) {
@@ -303,11 +303,11 @@ public class DockPanel extends CellPanel implements HasAlignment {
    * integer will be appended to the end of the debug id. For example, the first
    * north cell is labeled "north1", the second is "north2", and the third is
    * "north3".
-   * 
+   *
    * This widget recreates its structure every time a {@link Widget} is added,
    * so you must call this method after adding a new {@link Widget} or all debug
    * IDs will be lost.
-   * 
+   *
    * <p>
    * <b>Affected Elements:</b>
    * <ul>
@@ -318,7 +318,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
    * <li>-west# = the western cell.</li>
    * </ul>
    * </p>
-   * 
+   *
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override
@@ -398,7 +398,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
       } else if (layout.direction == CENTER) {
         // Defer adding the center widget, so that it can be added after all
         // the others are complete.
-        centerTd = td; 
+        centerTd = td;
       } else if (shouldAddToLogicalLeftOfTable(layout.direction)) {
         TmpRow row = rows[northRow];
         DOM.insertChild(row.tr, td, row.center++);
@@ -411,7 +411,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
         DOM.appendChild(td, child.getElement());
         td.setPropertyInt("rowSpan", southRow - northRow + 1);
         --logicalRightCol;
-      } 
+      }
     }
 
     // If there is a center widget, add it at the end (centerTd is guaranteed
@@ -423,29 +423,29 @@ public class DockPanel extends CellPanel implements HasAlignment {
       DOM.appendChild(centerTd, center.getElement());
     }
   }
-  
+
   private boolean shouldAddToLogicalLeftOfTable(DockLayoutConstant widgetDirection) {
-    
-    assert (widgetDirection == LINE_START || widgetDirection == LINE_END || 
+
+    assert (widgetDirection == LINE_START || widgetDirection == LINE_END ||
         widgetDirection == EAST || widgetDirection == WEST);
-    
+
     // In a bidi-sensitive environment, adding a widget to the logical left
     // column (think DOM order) means that it will be displayed at the start
     // of the line direction for the current layout. This is because HTML
-    // tables are bidi-sensitive; the column order switches depending on 
+    // tables are bidi-sensitive; the column order switches depending on
     // the line direction.
-    if (widgetDirection == LINE_START) {  
+    if (widgetDirection == LINE_START) {
       return true;
     }
-    
+
     if (LocaleInfo.getCurrentLocale().isRTL()) {
-      // In an RTL layout, the logical left columns will be displayed on the right hand 
-      // side. When the direction for the widget is EAST, adding the widget to the logical 
-      // left columns will have the desired effect of displaying the widget on the 'eastern' 
+      // In an RTL layout, the logical left columns will be displayed on the right hand
+      // side. When the direction for the widget is EAST, adding the widget to the logical
+      // left columns will have the desired effect of displaying the widget on the 'eastern'
       // side of the screen.
-      return (widgetDirection == EAST);          
+      return (widgetDirection == EAST);
     }
-    
+
     // In an LTR layout, the logical left columns are displayed on the left hand
     // side. When the direction for the widget is WEST, adding the widget to the
     // logical left columns will have the desired effect of displaying the widget on the
@@ -454,9 +454,9 @@ public class DockPanel extends CellPanel implements HasAlignment {
   }
 
   private boolean shouldAddToLogicalRightOfTable(DockLayoutConstant widgetDirection) {
-    
+
     // See comments for shouldAddToLogicalLeftOfTable for clarification
-    
+
     assert (widgetDirection == LINE_START || widgetDirection == LINE_END ||
         widgetDirection == EAST || widgetDirection == WEST);
 
@@ -464,10 +464,10 @@ public class DockPanel extends CellPanel implements HasAlignment {
       return true;
     }
 
-    if (LocaleInfo.getCurrentLocale().isRTL()) {   
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
       return (widgetDirection == WEST);
     }
-    
+
     return (widgetDirection == EAST);
   }
 }

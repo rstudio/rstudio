@@ -22,6 +22,9 @@ import junit.framework.TestCase;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
+/**
+ * Test for {@link CompiledClass}.
+ */
 public class CompiledClassTest extends TestCase {
   static byte[] dummyByteCode = {
     (byte) 0xDE, (byte) 0xAD, (byte)0xBE, (byte)0xEF
@@ -36,7 +39,7 @@ public class CompiledClassTest extends TestCase {
     CompiledClass readObject = Util.readStreamAsObject(inputStream, CompiledClass.class);
     assertEquals(4, readObject.getBytes().length);
     byte[] readBytes = readObject.getBytes();
-    for (int i = 0; i < 4 ; ++i) {
+    for (int i = 0; i < 4; ++i) {
       assertEquals(dummyByteCode[i], readBytes[i]);
     }
   }

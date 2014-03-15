@@ -37,8 +37,6 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Static utility methods for sending web pages.
- *
- * @author skybrian@google.com (Brian Slesinsky)
  */
 class PageUtil {
 

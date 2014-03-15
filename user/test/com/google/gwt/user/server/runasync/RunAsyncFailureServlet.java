@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,8 +18,8 @@ package com.google.gwt.user.server.runasync;
 import com.google.gwt.dev.util.Util;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.HashMap;
 
@@ -65,7 +65,7 @@ public class RunAsyncFailureServlet extends HttpServlet {
     String realContents = getRealContents(req, uri);
     String fragment = uri.substring(uri.lastIndexOf('/') + 1);
       if (!realContents.contains("DOWNLOAD_FAILURE_TEST")
-          || response == HttpServletResponse.SC_OK) {      
+          || response == HttpServletResponse.SC_OK) {
       int bytes = 0;
       if (!realContents.contains("INSTALL_FAILURE_TEST")) {
         OutputStream os = resp.getOutputStream();
@@ -73,7 +73,7 @@ public class RunAsyncFailureServlet extends HttpServlet {
         bytes = realContents.getBytes().length;
         os.close();
       }
-      
+
       resp.setContentType("text/javascript");
       resp.setHeader("Cache-Control", "no-cache");
       resp.setContentLength(bytes);
@@ -100,7 +100,7 @@ public class RunAsyncFailureServlet extends HttpServlet {
     if (realContentsCache.containsKey(uri)) {
       return realContentsCache.get(uri);
     }
-    
+
     // Delegate the actual data fetch to the main servlet
     String host = req.getLocalName();
     int port = req.getLocalPort();

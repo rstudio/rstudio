@@ -17,13 +17,13 @@ package com.google.gwt.emultest.java.util;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.EnumMap;
 
 /**
  * Tests EnumMap.
@@ -132,7 +132,7 @@ public class EnumMapTest extends GWTTestCase {
     Map.Entry<E, Integer> entryCopy = new Map.Entry<E, Integer>() {
       E key = entry.getKey();
       Integer value = entry.getValue();
-      
+
       @Override
       public E getKey() {
         return key;

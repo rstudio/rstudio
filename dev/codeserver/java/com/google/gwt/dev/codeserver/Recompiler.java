@@ -223,7 +223,7 @@ class Recompiler {
 
     // Check that we have a compatible linker.
     Class<? extends Linker> linker = moduleDef.getActivePrimaryLinker();
-    if (! CrossSiteIframeLinker.class.isAssignableFrom(linker)) {
+    if (!CrossSiteIframeLinker.class.isAssignableFrom(linker)) {
       logger.log(TreeLogger.ERROR,
           "linkers other than CrossSiteIFrameLinker aren't supported. Found: " + linker.getName());
       throw new UnableToCompleteException();

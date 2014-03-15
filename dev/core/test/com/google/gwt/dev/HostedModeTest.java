@@ -30,7 +30,7 @@ import java.net.BindException;
  */
 public class HostedModeTest extends ArgProcessorTestBase {
 
-  public static class MySCL extends ServletContainerLauncher {
+  static class MySCL extends ServletContainerLauncher {
     @Override
     public ServletContainer start(TreeLogger logger, int port, File appRootDir)
         throws BindException, Exception {

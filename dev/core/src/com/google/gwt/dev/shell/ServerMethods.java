@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,8 +18,8 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.dev.shell.BrowserChannel.FreeMessage;
 import com.google.gwt.dev.shell.BrowserChannel.InvokeSpecialMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
-import com.google.gwt.dev.shell.BrowserChannel.Value;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.SpecialDispatchId;
+import com.google.gwt.dev.shell.BrowserChannel.Value;
 import com.google.gwt.dev.shell.BrowserChannelClient.SessionHandlerClient;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class ServerMethods {
   /**
    * Tell the server that the client no longer has any references to the
    * specified Java object.
-   * 
+   *
    * @param ids IDs of objects to free
    * @return false if an error occurred
    */
@@ -50,7 +50,7 @@ public class ServerMethods {
 
   /**
    * Get the value of a property on an object.
-   * 
+   *
    * @param objectRef ID of object to fetch field on
    * @param dispatchId dispatch ID of field
    * @return the value of the property, undef if none (or on error)
@@ -80,10 +80,10 @@ public class ServerMethods {
     }
     return new Value();
   }
- 
+
   /**
    * Set the value of a property on an object.
-   * 
+   *
    * @param objectRef ID of object to fetch field on
    * @param dispatchId dispatch ID of field
    * @param value value to store in the property

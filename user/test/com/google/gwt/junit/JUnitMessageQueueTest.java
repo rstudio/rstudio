@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,9 +18,9 @@ package com.google.gwt.junit;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.junit.JUnitMessageQueue.ClientInfoExt;
 import com.google.gwt.junit.JUnitMessageQueue.ClientStatus;
-import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
+import com.google.gwt.junit.client.impl.JUnitResult;
 
 import junit.framework.TestCase;
 
@@ -465,7 +465,7 @@ public class JUnitMessageQueueTest extends TestCase {
   /**
    * Assert that two arrays are the same size and contain the same elements.
    * Ordering does not matter.
-   * 
+   *
    * @param expected the expected array
    * @param actual the actual array
    */
@@ -480,7 +480,7 @@ public class JUnitMessageQueueTest extends TestCase {
 
   /**
    * Create a {@link JUnitMessageQueue} with the specified number of blocks.
-   * 
+   *
    * @param numClients the number of remote clients
    * @param numBlocks the number of test blocks to add
    * @param testsPerBlock the number of tests per block
@@ -495,7 +495,7 @@ public class JUnitMessageQueueTest extends TestCase {
 
   /**
    * Create a list of test blocks.
-   * 
+   *
    * @param numBlocks the number of test blocks to add
    * @param testsPerBlock the number of tests per block
    * @return the test blocks
@@ -515,7 +515,7 @@ public class JUnitMessageQueueTest extends TestCase {
 
   /**
    * Create some fake test results.
-   * 
+   *
    * @param numTests the number of results to generate
    * @return the test results
    */

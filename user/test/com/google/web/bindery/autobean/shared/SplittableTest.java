@@ -15,6 +15,8 @@
  */
 package com.google.web.bindery.autobean.shared;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.client.GWTTestCase;
 import com.google.web.bindery.autobean.gwt.client.impl.JsoSplittable;
 import com.google.web.bindery.autobean.shared.impl.AutoBeanCodexImpl;
 import com.google.web.bindery.autobean.shared.impl.AutoBeanCodexImpl.Coder;
@@ -22,8 +24,6 @@ import com.google.web.bindery.autobean.shared.impl.AutoBeanCodexImpl.EncodeState
 import com.google.web.bindery.autobean.shared.impl.SplittableList;
 import com.google.web.bindery.autobean.shared.impl.SplittableSimpleMap;
 import com.google.web.bindery.autobean.shared.impl.StringQuoter;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Arrays;
 import java.util.HashSet;

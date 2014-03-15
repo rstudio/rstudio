@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,9 +14,6 @@
  * the License.
  */
 package com.google.gwt.dev.util.editdistance;
-
-import com.google.gwt.dev.util.editdistance.GeneralEditDistance;
-import com.google.gwt.dev.util.editdistance.GeneralEditDistances;
 
 import junit.framework.TestCase;
 
@@ -143,7 +140,7 @@ public class GeneralEditDistanceTest extends TestCase {
    * the results of better algorithms.
    */
   public static int dynamicProgrammingLevenshtein(String s1, String s2) {
-    int[] lastRow = new int[s1.length()+1];
+    int[] lastRow = new int[s1.length() + 1];
     for (int i = 0; i < lastRow.length; i++) {
       lastRow[i] = i;
     }
@@ -152,12 +149,12 @@ public class GeneralEditDistanceTest extends TestCase {
       thisRow[0] = j + 1;
       char s2c = s2.charAt(j);
       for (int i = 1; i < thisRow.length; i++) {
-        thisRow[i] = Math.min(Math.min(lastRow[i]+1,thisRow[i-1]+1),
-                              lastRow[i-1] + ((s2c == s1.charAt(i-1)) ? 0 : 1));
+        thisRow[i] = Math.min(Math.min(lastRow[i] + 1,thisRow[i - 1] + 1),
+                              lastRow[i - 1] + ((s2c == s1.charAt(i - 1)) ? 0 : 1));
       }
       lastRow = thisRow;
     }
-    return lastRow[lastRow.length-1];
+    return lastRow[lastRow.length - 1];
   }
 
   /**
@@ -189,7 +186,7 @@ public class GeneralEditDistanceTest extends TestCase {
     }
     return edits;
   }
-  
+
   /**
    * Generates a long random alphabetic string,
    * suitable for use with testSomeEdits (using digits for the alphabet).
@@ -216,7 +213,7 @@ public class GeneralEditDistanceTest extends TestCase {
 
     if (s1.length() < 500) {
       /*
-       * For small strings, try every limit 
+       * For small strings, try every limit
        */
       int max = Math.max(s1.length(), s2.length()) + 2;
       for (int k = 0; k < max; k++) {
@@ -243,7 +240,7 @@ public class GeneralEditDistanceTest extends TestCase {
     }
 
     /* Always try near MAX_VALUE */
-    assertEquals(ed.getDistance(s2, Integer.MAX_VALUE-1), expectedResult);
+    assertEquals(ed.getDistance(s2, Integer.MAX_VALUE - 1), expectedResult);
     assertEquals(ed.getDistance(s2, Integer.MAX_VALUE), expectedResult);
   }
 
@@ -316,7 +313,7 @@ public class GeneralEditDistanceTest extends TestCase {
     assertEquals(
         GeneralEditDistances.atMostOneError("unchanged", un.append("changed")),
         0);
-    
+
     assertEquals(GeneralEditDistances.atMostOneError("shirt", "short"), 1);
     assertEquals(GeneralEditDistances.atMostOneError("shirt", "shirts"), 1);
     assertEquals(GeneralEditDistances.atMostOneError("sort", "short"), 1);

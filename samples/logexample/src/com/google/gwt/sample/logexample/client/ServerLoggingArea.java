@@ -17,10 +17,10 @@
 package com.google.gwt.sample.logexample.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.sample.logexample.shared.MyService;
 import com.google.gwt.sample.logexample.shared.MyServiceAsync;
 import com.google.gwt.sample.logexample.shared.SharedClass;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Window;

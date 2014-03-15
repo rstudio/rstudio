@@ -856,7 +856,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  // CHECKSTYLE_NAMING_OFF
+// CHECKSTYLE_NAMING_OFF
+
   protected void _newline() {
     p.newline();
   }
@@ -1266,7 +1267,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     p.print(CHARS_WHILE);
   }
 
-  // CHECKSTYLE_NAMING_ON
+// CHECKSTYLE_NAMING_ON
 
   private void indent() {
     p.indentIn();

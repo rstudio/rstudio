@@ -16,8 +16,8 @@
 package com.google.gwt.i18n.server;
 
 import com.google.gwt.i18n.server.Message.AlternateFormMapping;
-import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.AlternateMessageSelector.AlternateForm;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import java.util.Arrays;
 import java.util.Iterator;

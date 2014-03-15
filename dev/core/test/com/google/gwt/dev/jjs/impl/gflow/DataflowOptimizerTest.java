@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl.gflow;
 
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -6,11 +21,14 @@ import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.OptimizerTestBase;
 
+/**
+ * Tests for {@link DataflowOptimizer}
+ */
 public class DataflowOptimizerTest extends OptimizerTestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    
+
     /*
      * TODO: Each of these snippets shouldn't be setup for every test, and thus should be moved
      * to the individual test cases they are needed for (or to shared methods if needed).
@@ -24,18 +42,18 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
     addSnippetClassDecl("static class CheckedException extends Exception {}");
     addSnippetClassDecl("static class UncheckedException1 extends RuntimeException {}");
     addSnippetClassDecl("static class UncheckedException2 extends RuntimeException {}");
-    
+
     addSnippetClassDecl("static void throwUncheckedException1() " +
         "throws UncheckedException1 {}");
     addSnippetClassDecl("static void throwCheckedException() " +
         "throws CheckedException {}");
     addSnippetClassDecl("static void throwSeveralExceptions() " +
         "throws CheckedException, UncheckedException1 {}");
-    
+
     addSnippetClassDecl("static class Foo { int i; int j; int k; }");
     addSnippetClassDecl("static Foo createFoo() {return null;}");
     addSnippetClassDecl("static Foo staticFooInstance;");
-    
+
     runMethodInliner = false;
     runDCE = false;
   }
@@ -105,10 +123,10 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
         "int i = 1; int j = 0; if (i != 1) { j = 2; } else { j = 3; } return j;").into(
         "int i; int j; return 3; ");
   }
-  
+
   public void testDeadIfBranch4() throws Exception {
     addSnippetClassDecl("static Object f = null;");
-    optimize("void", 
+    optimize("void",
         "Object e = null;" +
         "if (e == null && f == null) {" +
         "  return;" +
@@ -130,13 +148,13 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
         "int i = 1; int j = 0; while (j > 0) { if (i != 1) { i++; j++; } } return i;").into(
         "int i; int j; return 1;");
   }
-  
+
   public void testComplexCode2() throws Exception {
     optimize("void",
         "boolean b = bar(); if (b) { baz(b); return; }").into(
         "boolean b = bar(); if (b) { baz(true); return; }");
   }
-  
+
   public void testAssert() throws Exception {
     optimize("void",
         "boolean b = true;",
@@ -170,7 +188,7 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
         "foo.i = 1;"
         ).noChange();
   }
-  
+
   public void testSwapValues() throws Exception {
     optimize("int",
         "int i = genInt(); int j = genInt(); int t;",
@@ -187,9 +205,9 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
     addSnippetClassDecl("int calculate(int i, int j) {" +
         "int t;" +
         "if (i > j) { t = i; i = j; j = t; }" +
-        "return multiply(i, j);" + 
+        "return multiply(i, j);" +
         "}");
-    
+
     optimizeMethod("calculate", "int", "return 1;"
         ).intoString(
             "int t;",
@@ -209,18 +227,18 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
     addSnippetClassDecl("static String getCsvString() { return null; }");
 
     addSnippetClassDecl(
-        "static class JsArrayString {" + 
+        "static class JsArrayString {" +
         "  static JsArrayString createArray() { return null; }" +
         "  JsArrayString cast() { return this; }" +
         "  void push(String s) { }" +
         "}");
 
     addSnippetClassDecl(
-        "static class StringBuilder {" + 
+        "static class StringBuilder {" +
         "  void append(char c) { }" +
         "}");
 
-    optimize("JsArrayString", 
+    optimize("JsArrayString",
        "int state;",
        "String csvString = getCsvString();",
        "JsArrayString results = JsArrayString.createArray().cast();",
@@ -377,33 +395,33 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
   }
 
   public void testImplicitConversion() throws Exception {
-    optimize("long", 
+    optimize("long",
         "int bar = 0x12345678;",
         "bar = bar * 1234;",
         "long lng = bar;",
         "long lng8 = lng << 8;",
         "return lng8;"
         ).into(
-            "  int bar;", 
-            "  long lng = -1068970384;", 
-            "  long lng8 = lng << 8;", 
+            "  int bar;",
+            "  long lng = -1068970384;",
+            "  long lng8 = lng << 8;",
             "  return lng8;");
   }
-   
+
   /*
    * This test is a regression for an issue where inlined multiexpressions were getting removed
    * by the ConstantsTransformationFunction, based on the constant value of the multi-expression,
    * despite there being side-effects of the multi-expression.  So, we want to test that inlining
    * proceeds, but not further constant transformation.
-   * 
+   *
    * TODO(rluble): This test may need to evolve over time, as the specifics of the
    * optimizers change.
    */
   public void testInlinedConstantExpressionWithSideEffects() throws Exception {
-    
+
     runDCE = true;
     runMethodInliner = true;
-    
+
     addSnippetClassDecl("static void fail() {" +
                         "  throw new RuntimeException();" +
                         "}");
@@ -412,7 +430,7 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
                         "  x = (Integer) n;" +
                         "  return true;" +
                         "}");
-    
+
     optimize("int",
               "Integer n = new Integer(1);",
               "if (!copy(n)) {",
@@ -422,9 +440,8 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
         .into("Integer n = new Integer(1);",
                "x = n;",
                "return x;");
-    
   }
-  
+
   private boolean runDCE;
   private boolean runMethodInliner;
 

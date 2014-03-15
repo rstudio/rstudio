@@ -33,7 +33,10 @@ import java.util.List;
  */
 public class CollectClassDataTest extends AsmTestCase {
 
-  public static class LongDoubleArgs {
+  /**
+   * Test class used in {@link CollectClassData#testLongDoubleArgs}.
+   */
+  static class LongDoubleArgs {
 
     @SuppressWarnings("unused")
     public LongDoubleArgs(int x, long y, double z, Object o) {
@@ -44,6 +47,9 @@ public class CollectClassDataTest extends AsmTestCase {
     }
   }
 
+  /**
+   * Test class used in {@link CollectClassData#testOne}.
+   */
   public static class One extends EmptyVisitor {
 
     @Override
@@ -58,15 +64,24 @@ public class CollectClassDataTest extends AsmTestCase {
     }
   }
 
+  /**
+   * Test class used in {@link CollectClassData#testPseudoInner}.
+   */
   protected static class Pseudo$Inner {
 
-    public static class Deepest {
+    static class Deepest {
     }
   }
 
+  /**
+   * Test class used in {@link CollectClassData#testTwo}.
+   */
   @PrimitiveValuesAnnotation(b = 42, i = 42)
   protected static class Two {
 
+    /**
+     * Test class used in {@link CollectClassData#testTwoInner}.
+     */
     public class TwoInner {
     }
 

@@ -18,10 +18,10 @@ package com.google.gwt.validation.client.impl.metadata;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Set;
 import java.util.Stack;
 
@@ -66,7 +66,7 @@ public class ValidationGroupsMetadata {
       sequenceMap.put(groupSequence, Arrays.asList(sequenceGroups));
       return this;
     }
-    
+
     public ValidationGroupsMetadata build() {
       return new ValidationGroupsMetadata(inheritanceinheritanceMap, sequenceMap);
     }
@@ -110,7 +110,7 @@ public class ValidationGroupsMetadata {
 
   /**
    * Finds all of the validation groups extended by an intial set of groups.
-   * @param baseGroups The initial set of groups to find parents of. These groups must have been 
+   * @param baseGroups The initial set of groups to find parents of. These groups must have been
    * added to the inheritance map already.
    * @return A unified set of groups and their parents.
    * @throws IllegalArgumentException If an initial group has not been added to the map before
@@ -168,7 +168,7 @@ public class ValidationGroupsMetadata {
   /**
    * If the group has been added to the map then its parent groups (of one level above) are
    * retrieved. Otherwise null is returned.
-   * 
+   *
    * @see #containsGroup(Class)
    * @see #findAllExtendedGroups(Collection)
    */

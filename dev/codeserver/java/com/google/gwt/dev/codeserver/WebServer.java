@@ -26,7 +26,6 @@ import com.google.gwt.thirdparty.org.eclipse.jetty.server.AbstractHttpConnection
 import com.google.gwt.thirdparty.org.eclipse.jetty.server.Request;
 import com.google.gwt.thirdparty.org.eclipse.jetty.server.Server;
 import com.google.gwt.thirdparty.org.eclipse.jetty.server.nio.SelectChannelConnector;
-import com.google.gwt.thirdparty.org.eclipse.jetty.servlet.FilterHolder;
 import com.google.gwt.thirdparty.org.eclipse.jetty.servlet.ServletContextHandler;
 import com.google.gwt.thirdparty.org.eclipse.jetty.servlet.ServletHolder;
 import com.google.gwt.thirdparty.org.eclipse.jetty.servlets.GzipFilter;
@@ -44,8 +43,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletException;
 import javax.servlet.DispatcherType;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -113,27 +112,27 @@ public class WebServer {
     connector.setReuseAddress(false);
     connector.setSoLingerTime(0);
 
-    Server server = new Server();
-    server.addConnector(connector);
+    Server newServer = new Server();
+    newServer.addConnector(connector);
 
-    ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
-    handler.setContextPath("/");
-    handler.addServlet(new ServletHolder(new HttpServlet() {
+    ServletContextHandler newHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
+    newHandler.setContextPath("/");
+    newHandler.addServlet(new ServletHolder(new HttpServlet() {
       @Override
       protected void doGet(HttpServletRequest request, HttpServletResponse response)
           throws ServletException, IOException {
         handleRequest(request.getPathInfo(), request, response);
       }
     }), "/*");
-    handler.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
-    server.setHandler(handler);
+    newHandler.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+    newServer.setHandler(newHandler);
     try {
-      server.start();
+      newServer.start();
     } catch (Exception e) {
       logger.log(TreeLogger.ERROR, "cannot start web server", e);
       throw new UnableToCompleteException();
     }
-    this.server = server;
+    this.server = newServer;
   }
 
   public int getPort() {

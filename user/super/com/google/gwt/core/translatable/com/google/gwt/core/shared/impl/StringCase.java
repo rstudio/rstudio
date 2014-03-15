@@ -17,8 +17,6 @@ package com.google.gwt.core.shared.impl;
 
 import com.google.gwt.core.client.GwtScriptOnly;
 
-import java.util.Locale;
-
 /**
  * Provides {@link Locale} independent {@link String#toLowerCase()} and {@link String#toLowerCase()}
  * functions.

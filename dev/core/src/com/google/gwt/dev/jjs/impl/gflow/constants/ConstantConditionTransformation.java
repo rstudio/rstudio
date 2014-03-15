@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,21 +21,21 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.impl.gflow.TransformationFunction.Transformation;
+import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgCaseNode;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgConditionalNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNopNode;
+import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Transformation to be applied when CfgConditionalNode's condition is constant
- * value. Transformation replaces conditional node with CfgNop node depending 
+ * value. Transformation replaces conditional node with CfgNop node depending
  * on condition value. It leaves the edge, which will be never executed
  * unconnected at source, thus making sure that it will be unreachable.
- * 
+ *
  * Doesn't try to optimize unreachable branches, since this is subject to other
  * optimizations.
  */
@@ -62,7 +62,7 @@ final class ConstantConditionTransformation implements
           // TODO: support case node optimization
           return false;
         }
-        
+
         final JExpression oldCondition = node.getCondition();
         final JExpression newCondition = JBooleanLiteral.get(conditionValue);
         JModVisitor visitor = new JModVisitor() {
@@ -80,7 +80,7 @@ final class ConstantConditionTransformation implements
         Preconditions.checkState(visitor.didChange(),
             "Couldn't replace %s with %s in %s",
             oldCondition, newCondition, startNode);
-        
+
         return visitor.didChange();
       }
     };
@@ -91,7 +91,7 @@ final class ConstantConditionTransformation implements
     Cfg newSubgraph = new Cfg();
     CfgNode<?> newNode = new CfgNopNode(node.getParent(), node.getJNode());
     newSubgraph.addNode(newNode);
-    
+
     // Add all incoming edges.
     for (int i = 0; i < graph.getInEdges(node).size(); ++i) {
       CfgEdge edge = new CfgEdge();
@@ -104,7 +104,7 @@ final class ConstantConditionTransformation implements
       newSubgraph.addGraphOutEdge(edge);
 
       if (e.getRole() != null
-          && ((e.getRole().equals(CfgConditionalNode.ELSE) && conditionValue) || 
+          && ((e.getRole().equals(CfgConditionalNode.ELSE) && conditionValue) ||
               (e.getRole().equals(CfgConditionalNode.THEN) && !conditionValue))) {
         // Do not connect this edge due to constant condition.
       } else {
@@ -117,7 +117,7 @@ final class ConstantConditionTransformation implements
 
   @Override
   public String toString() {
-    return "ConstantConditionTransformation(node=" + node + 
+    return "ConstantConditionTransformation(node=" + node +
         ", conditionValue=" + conditionValue + ")";
   }
 }

@@ -1,11 +1,11 @@
 <project name="GWT" default="dist" basedir=".">
-  <property name="gwt.root" location="." />
-  <property name="project.tail" value="" />
-  <import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location="."/>
+  <property name="project.tail" value=""/>
+  <import file="${gwt.root}/common.ant.xml"/>
 
   <!-- "build" is the default when subprojects are directly targetted  -->
-  <property name="target" value="build" />
-  <property name="emma.merged.out" value="${project.build}/emma-coverage" />
+  <property name="target" value="build"/>
+  <property name="emma.merged.out" value="${project.build}/emma-coverage"/>
 
   <!--
      Convenience for the lateral calls we make.  Use gwt.ant to
@@ -21,99 +21,107 @@
      In other words, DO NOT USE DEPENDS=... IN A TARGET WITH GWT.ANT.
     -->
   <macrodef name="call-subproject">
-    <attribute name="subproject" />
-    <attribute name="subtarget" />
+    <attribute name="subproject"/>
+    <attribute name="subtarget"/>
     <sequential>
       <antcall target="@{subproject}">
-        <param name="target" value="@{subtarget}" />
+        <param name="target" value="@{subtarget}"/>
       </antcall>
     </sequential>
   </macrodef>
 
   <property name="gwt.apicheck.config"
-    location="tools/api-checker/config/gwt26_27userApi.conf"/>
+            location="tools/api-checker/config/gwt26_27userApi.conf"/>
   <property name="gwt.apicheck.referencelibs"
-    value="${gwt.tools}/api-checker-reference/2.6.0/gwt-dev-modified.jar:${gwt.tools}/api-checker-reference/2.6.0/gwt-user-modified.jar"/>
+            value="${gwt.tools}/api-checker-reference/2.6.0/gwt-dev-modified.jar:${gwt.tools}/api-checker-reference/2.6.0/gwt-user-modified.jar"/>
 
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
-    <call-subproject subproject="dev" subtarget="build" />
-    <call-subproject subproject="codeserver" subtarget="build" />
-    <call-subproject subproject="user" subtarget="build" />
-    <call-subproject subproject="requestfactory" subtarget="build" />
-    <call-subproject subproject="servlet" subtarget="build" />
-    <call-subproject subproject="jni" subtarget="build" />
+    <call-subproject subproject="dev" subtarget="build"/>
+    <call-subproject subproject="codeserver" subtarget="build"/>
+    <call-subproject subproject="user" subtarget="build"/>
+    <call-subproject subproject="requestfactory" subtarget="build"/>
+    <call-subproject subproject="servlet" subtarget="build"/>
+    <call-subproject subproject="jni" subtarget="build"/>
   </target>
 
   <target name="dist" depends="build, doc" description="[action] Make all the distributions">
-    <gwt.ant dir="distro-source" />
+    <gwt.ant dir="distro-source"/>
   </target>
 
-  <target name="dist-dev" depends="buildonly" description="[action] Make this platform's distribution, minus doc and samples">
-    <gwt.ant dir="distro-source" target="build" />
+  <target name="dist-dev" depends="buildonly"
+          description="[action] Make this platform's distribution, minus doc and samples">
+    <gwt.ant dir="distro-source" target="build"/>
   </target>
 
   <target name="dev" description="[subdir] Builds (or runs ${target} if set) all the dev libraries">
-    <call-subproject subproject="buildtools" subtarget="build" />
-    <gwt.ant dir="dev" />
+    <call-subproject subproject="buildtools" subtarget="build"/>
+    <gwt.ant dir="dev"/>
   </target>
 
-  <target name="codeserver" description="[subdir] Builds (or runs ${target} if set) only the SuperDevMode">
-    <call-subproject subproject="dev" subtarget="build" />
-    <gwt.ant dir="dev/codeserver" />
-  </target>
-
-  <target name="user" description="[subdir] Builds (or runs ${target} if set) only the user library">
+  <target name="codeserver"
+          description="[subdir] Builds (or runs ${target} if set) only the SuperDevMode">
     <call-subproject subproject="dev" subtarget="build"/>
-    <gwt.ant dir="user" />
+    <gwt.ant dir="dev/codeserver"/>
   </target>
 
-  <target name="elemental" description="[subdir] Builds (or runs ${target} if set) only the elemental library">
+  <target name="user"
+          description="[subdir] Builds (or runs ${target} if set) only the user library">
+    <call-subproject subproject="dev" subtarget="build"/>
+    <gwt.ant dir="user"/>
+  </target>
+
+  <target name="elemental"
+          description="[subdir] Builds (or runs ${target} if set) only the elemental library">
     <call-subproject subproject="user" subtarget="build"/>
-    <gwt.ant dir="elemental" />
+    <gwt.ant dir="elemental"/>
   </target>
 
-  <target name="soyc" description="[subdir] Builds (or runs ${target} if set) only the soyc library">
+  <target name="soyc"
+          description="[subdir] Builds (or runs ${target} if set) only the soyc library">
     <call-subproject subproject="dev" subtarget="build"/>
     <call-subproject subproject="user" subtarget="build"/>
-    <gwt.ant dir="tools/soyc-vis" />
+    <gwt.ant dir="tools/soyc-vis"/>
   </target>
 
   <target name="tools" description="[subdir] Builds (or runs ${target} if set) only the tools">
     <call-subproject subproject="user" subtarget="build"/>
-    <gwt.ant dir="tools" />
+    <gwt.ant dir="tools"/>
   </target>
 
-  <target name="requestfactory" description="[subdir] Builds (or runs ${target} if set) only the requestfactory jars">
-    <call-subproject subproject="user" subtarget="build" />
-    <gwt.ant dir="requestfactory" />
+  <target name="requestfactory"
+          description="[subdir] Builds (or runs ${target} if set) only the requestfactory jars">
+    <call-subproject subproject="user" subtarget="build"/>
+    <gwt.ant dir="requestfactory"/>
   </target>
 
-  <target name="servlet" description="[subdir] Builds (or runs ${target} if set) only the servlet jar">
-    <call-subproject subproject="user" subtarget="build" />
-    <gwt.ant dir="servlet" />
+  <target name="servlet"
+          description="[subdir] Builds (or runs ${target} if set) only the servlet jar">
+    <call-subproject subproject="user" subtarget="build"/>
+    <gwt.ant dir="servlet"/>
   </target>
 
   <target name="jni" description="[subdir] Builds (or runs ${target} if set) jni for all platforms">
-    <gwt.ant dir="jni" />
+    <gwt.ant dir="jni"/>
   </target>
 
   <target name="doc" description="[subdir] Builds (or runs ${target} if set) the doc">
-    <call-subproject subproject="user" subtarget="build" />
-    <gwt.ant dir="doc" />
+    <call-subproject subproject="user" subtarget="build"/>
+    <gwt.ant dir="doc"/>
   </target>
 
   <target name="samples" description="[subdir] Builds (or runs ${target} if set) the samples">
-    <call-subproject subproject="user" subtarget="build" />
-    <call-subproject subproject="codeserver" subtarget="build" />
-    <gwt.ant dir="samples" />
+    <call-subproject subproject="user" subtarget="build"/>
+    <call-subproject subproject="codeserver" subtarget="build"/>
+    <gwt.ant dir="samples"/>
   </target>
 
   <target name="buildtools" description="[subdir] Build (or runs ${target} if set) the build tools">
-    <gwt.ant dir="build_tools" />
+    <gwt.ant dir="build_tools"/>
   </target>
 
-  <target name="build" description="[action] Builds GWT, including samples, but without distro packaging">
+  <target name="build"
+          description="[action] Builds GWT, including samples, but without distro packaging">
     <call-subproject subproject="dev" subtarget="build"/>
     <call-subproject subproject="codeserver" subtarget="build"/>
     <call-subproject subproject="user" subtarget="build"/>
@@ -125,51 +133,51 @@
   </target>
 
   <target name="checkstyle" description="[action] Does static analysis of GWT source">
-    <call-subproject subproject="buildtools" subtarget="checkstyle" />
-    <call-subproject subproject="dev" subtarget="checkstyle" />
-    <call-subproject subproject="codeserver" subtarget="checkstyle" />
-    <call-subproject subproject="user" subtarget="checkstyle" />
-    <call-subproject subproject="requestfactory" subtarget="checkstyle" />
-    <call-subproject subproject="servlet" subtarget="checkstyle" />
+    <call-subproject subproject="buildtools" subtarget="checkstyle"/>
+    <call-subproject subproject="dev" subtarget="checkstyle"/>
+    <call-subproject subproject="codeserver" subtarget="checkstyle"/>
+    <call-subproject subproject="user" subtarget="checkstyle"/>
+    <call-subproject subproject="requestfactory" subtarget="checkstyle"/>
+    <call-subproject subproject="servlet" subtarget="checkstyle"/>
     <!-- servlet needed for tools/benchmark-viewer -->
-    <call-subproject subproject="servlet" subtarget="build" />
-    <call-subproject subproject="tools" subtarget="checkstyle" />
-    <call-subproject subproject="samples" subtarget="checkstyle" />
+    <call-subproject subproject="servlet" subtarget="build"/>
+    <call-subproject subproject="tools" subtarget="checkstyle"/>
+    <call-subproject subproject="samples" subtarget="checkstyle"/>
   </target>
 
   <target name="test" depends="dist-dev,apicheck,checkstyle"
           description="[action] Runs all the GWT tests, including checkstyle and apicheck">
-    <call-subproject subproject="buildtools" subtarget="test" />
-    <call-subproject subproject="dev" subtarget="test" />
-    <call-subproject subproject="codeserver" subtarget="test" />
-    <call-subproject subproject="user" subtarget="test" />
-    <call-subproject subproject="requestfactory" subtarget="test" />
-    <call-subproject subproject="servlet" subtarget="test" />
-    <call-subproject subproject="tools" subtarget="test" />
+    <call-subproject subproject="buildtools" subtarget="test"/>
+    <call-subproject subproject="dev" subtarget="test"/>
+    <call-subproject subproject="codeserver" subtarget="test"/>
+    <call-subproject subproject="user" subtarget="test"/>
+    <call-subproject subproject="requestfactory" subtarget="test"/>
+    <call-subproject subproject="servlet" subtarget="test"/>
+    <call-subproject subproject="tools" subtarget="test"/>
   </target>
 
   <target name="testrf" depends="dist-dev"
           description="[action] Runs the GWT RequestFactory tests">
-    <call-subproject subproject="dev" subtarget="compile.tests" />
-    <call-subproject subproject="user" subtarget="compile.tests" />
-    <call-subproject subproject="requestfactory" subtarget="test" />
+    <call-subproject subproject="dev" subtarget="compile.tests"/>
+    <call-subproject subproject="user" subtarget="compile.tests"/>
+    <call-subproject subproject="requestfactory" subtarget="test"/>
   </target>
 
   <path id="emma.classpath.src">
-    <pathelement location="${gwt.root}/user/src" />
-    <pathelement location="${gwt.root}/dev/**/src/com/google" />
-    <pathelement location="${gwt.root}/build_tools/**/src/com/google" />
-    <pathelement location="${gwt.root}/tools/**/src/com/google" />
+    <pathelement location="${gwt.root}/user/src"/>
+    <pathelement location="${gwt.root}/dev/**/src/com/google"/>
+    <pathelement location="${gwt.root}/build_tools/**/src/com/google"/>
+    <pathelement location="${gwt.root}/tools/**/src/com/google"/>
   </path>
 
   <target name="emma.merge" description="Merges coverage data for all projects">
-    <delete dir="${emma.merged.out}" />
-    <mkdir dir="${emma.merged.out}" />
+    <delete dir="${emma.merged.out}"/>
+    <mkdir dir="${emma.merged.out}"/>
     <emma>
-      <merge outfile="${emma.merged.out}/merged.emma" >
+      <merge outfile="${emma.merged.out}/merged.emma">
         <fileset dir="${project.build}">
-          <include name="**/*.emma" />
-          <exclude name="**/merged.emma" />
+          <include name="**/*.emma"/>
+          <exclude name="**/merged.emma"/>
         </fileset>
       </merge>
     </emma>
@@ -180,33 +188,34 @@
             <include name="**/metadata.emma"/>
           </patternset>
         </fileset>
-        <fileset file="${emma.merged.out}/merged.emma" />
-        <txt outfile="${emma.merged.out}/coverage.txt" />
-        <html outfile="${emma.merged.out}/coverage.html" />
-        <xml outfile="${emma.merged.out}/coverage.xml" />
+        <fileset file="${emma.merged.out}/merged.emma"/>
+        <txt outfile="${emma.merged.out}/coverage.txt"/>
+        <html outfile="${emma.merged.out}/coverage.html"/>
+        <xml outfile="${emma.merged.out}/coverage.xml"/>
       </report>
     </emma>
   </target>
 
   <target name="clean" description="[action] Cleans the entire GWT build">
-    <delete dir="${gwt.build}" />
-    <delete file="${gwt.root}/doc/packages.properties" />
+    <delete dir="${gwt.build}"/>
+    <delete file="${gwt.root}/doc/packages.properties"/>
   </target>
 
-  <target name ="presubmit" description="[action] Deprecated for test, which now does checkstyle and apicheck"
+  <target name="presubmit"
+          description="[action] Deprecated for test, which now does checkstyle and apicheck"
           depends="test">
   </target>
 
   <target name="apicheck-nobuild"
-    description="[action] Checks API compatibility to prior GWT revision">
+          description="[action] Checks API compatibility to prior GWT revision">
     <java failonerror="true" fork="true"
           classname="com.google.gwt.tools.apichecker.ApiCompatibilityChecker">
-      <jvmarg line="-Xmx512m" />
+      <jvmarg line="-Xmx512m"/>
       <classpath>
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
-        <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev.jar" />
+        <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev.jar"/>
         <pathelement path="${java.class.path}"/>
-        <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
+        <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar"/>
       </classpath>
       <arg value="-refJar"/>
       <arg path="${gwt.apicheck.referencelibs}"/>
@@ -215,8 +224,8 @@
       <arg value="-logLevel"/>
       <arg value="ERROR"/>
       <!-- Needed for checking types that include validation APIs -->
-      <arg value="-validationSourceJars" />
-      <arg path="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
+      <arg value="-validationSourceJars"/>
+      <arg path="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
     </java>
   </target>
 

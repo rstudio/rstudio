@@ -48,7 +48,7 @@ public class FragmentExtractorTest extends JJSTestBase {
   private static class MockSourceInfo implements SourceInfo {
 
     @Override
-    public void addCorrelation(Correlation c) {}
+    public void addCorrelation(Correlation c) { }
 
     @Override
     public Correlation getCorrelation(Axis axis) {

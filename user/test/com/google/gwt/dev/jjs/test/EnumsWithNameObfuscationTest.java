@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,13 +16,12 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.dev.jjs.test.EnumsTest.BasicWithOverloadedValueOf;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 
 /**
  * Tests enum with names obfuscated functionality.
- * 
+ *
  * Note: If running in an environment with WARN logging enabled, check to see
  * that calls to name(), toString(), and valueOf() below, are logged in the
  * precompile phase.
@@ -49,31 +48,31 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
     assertEquals(0, Fruit.APPLE.ordinal());
     assertEquals(1, Fruit.BERRY.ordinal());
     assertEquals(2, Fruit.CHERRY.ordinal());
-    
+
     assertFalse(Fruit.CHERRY.toString().equals("CHERRY"));
     assertFalse(Fruit.CHERRY.name().equals("CHERRY"));
-    
+
     assertTrue(Fruit.CHERRY.toString().equals("" + Fruit.CHERRY.ordinal()));
     assertTrue(Fruit.CHERRY.name().equals("" + Fruit.CHERRY.ordinal()));
-    
+
     try {
       Fruit.valueOf("CHERRIESONTOP");
       fail("Enum.valueOf(), expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-    
+
     try {
       Fruit.valueOf("CHERRY");
       fail("Enum.valueOf(), expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-    
+
     try {
       Enum.valueOf(Fruit.class,"CHERRIESONTOP");
       fail("Enum.valueOf(), expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-    
+
     try {
       Enum.valueOf(Fruit.class,"CHERRY");
       fail("Enum.valueOf(), expected IllegalArgumentException");
@@ -83,13 +82,13 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
 
   @Override
   public void testCompareTo() {
-    
+
     try {
       assertTrue(Basic.A.compareTo(Basic.valueOf("A")) == 0);
       fail("Basic.valueOf(), expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-      
+
     assertTrue(Basic.B.compareTo(Basic.A) > 0);
     assertTrue(Basic.A.compareTo(Basic.B) < 0);
 
@@ -98,7 +97,7 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
       fail("Complex.valueOf(), expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-      
+
     assertTrue(Complex.B.compareTo(Complex.A) > 0);
     assertTrue(Complex.A.compareTo(Complex.B) < 0);
 
@@ -107,7 +106,7 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
       fail("Subclassing.valueOf(), expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-      
+
     assertTrue(Subclassing.B.compareTo(Subclassing.A) > 0);
     assertTrue(Subclassing.A.compareTo(Subclassing.B) < 0);
   }
@@ -126,17 +125,17 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
     assertFalse("B".equals(Subclassing.B.name()));
     assertFalse("C".equals(Subclassing.C.name()));
   }
-  
+
   @Override
   @SuppressWarnings("unchecked")
   public void testValueOf() {
-    
+
     try {
       Basic.valueOf("D");
       fail("Basic.valueOf(\"D\") -- expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-    
+
     try {
       Complex.valueOf("D");
       fail("Complex.valueOf(\"D\") -- expected IllegalArgumentException");
@@ -148,26 +147,26 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
       fail("Subclassing.valueOf(\"D\") -- expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-    
+
     enumValuesTest(Basic.class);
     enumValuesTest(Complex.class);
     enumValuesTest(Subclassing.class);
-    
+
     try {
       Enum.valueOf(Basic.class, "foo");
       fail("Passed an invalid enum constant name to Enum.valueOf; expected "
           + "IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
-    
+
     try {
       Class fakeEnumClass = String.class;
       Enum.valueOf(fakeEnumClass, "foo");
-      fail("Passed a non enum class to Enum.valueOf; expected " 
+      fail("Passed a non enum class to Enum.valueOf; expected "
               + "IllegalArgumentException");
-    } catch (IllegalArgumentException expected) {       
+    } catch (IllegalArgumentException expected) {
     }
-     
+
     try {
       Class<Basic> nullEnumClass = null;
       Enum.valueOf(nullEnumClass, "foo");
@@ -176,7 +175,7 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
     } catch (JavaScriptException expected) {
     } catch (NullPointerException expected) {
     }
-      
+
     try {
       Enum.valueOf(Basic.class, null);
       fail("Passed a null enum constant to Enum.valueOf; expected "
@@ -184,7 +183,7 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
     } catch (NullPointerException expected) {
     }
   }
-  
+
   @Override
   public void testValueOfOverload() {
     BasicWithOverloadedValueOf valById1 = BasicWithOverloadedValueOf.valueOf(1);
@@ -192,7 +191,7 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
     assertEquals(valById1.ordinal(),0);
     assertEquals(valById2.ordinal(),1);
   }
-  
+
   private <T extends Enum<T>> void enumValuesTest(Class<T> enumClass) {
     T[] constants = enumClass.getEnumConstants();
     for (T constant : constants) {

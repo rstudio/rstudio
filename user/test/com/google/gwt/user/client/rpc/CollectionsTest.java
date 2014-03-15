@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,8 +25,8 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnumMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapKey;
@@ -44,8 +44,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -106,7 +106,7 @@ public class CollectionsTest extends RpcTestBase {
           }
         });
   }
-  
+
   public void testArrayListVoid() {
     CollectionsTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
@@ -161,11 +161,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Boolean[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Boolean(false)));
-        
+
         finishTest();
       }
     });
@@ -185,11 +185,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Byte[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Byte((byte) 0)));
-        
+
         finishTest();
       }
     });
@@ -209,16 +209,16 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Character[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Character('0')));
-        
+
         finishTest();
       }
     });
   }
-  
+
   public void testDateArray() {
     CollectionsTestServiceAsync service = getServiceAsync();
     final Date[] expected = TestSetFactory.createDateArray();
@@ -233,16 +233,16 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Date[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Date()));
-        
+
         finishTest();
       }
     });
   }
-  
+
   public void testDoubleArray() {
     CollectionsTestServiceAsync service = getServiceAsync();
     final Double[] expected = TestSetFactory.createDoubleArray();
@@ -257,11 +257,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Double[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Double(0.0)));
-        
+
         finishTest();
       }
     });
@@ -287,7 +287,7 @@ public class CollectionsTest extends RpcTestBase {
         }
     });
   }
-  
+
   public void testEmptyList() {
     CollectionsTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
@@ -359,11 +359,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Enum<?>[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, TestSetFactory.MarkerTypeEnum.C));
-        
+
         finishTest();
       }
     });
@@ -425,11 +425,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Float[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Float(0.0)));
-        
+
         finishTest();
       }
     });
@@ -533,11 +533,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Integer[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Integer(0)));
-        
+
         finishTest();
       }
     });
@@ -651,11 +651,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Long[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Long(0L)));
-        
+
         finishTest();
       }
     });
@@ -825,11 +825,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Short[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Short((short) 0)));
-         
+
         finishTest();
       }
     });
@@ -868,11 +868,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(java.sql.Date[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new java.sql.Date(0L)));
-         
+
         finishTest();
       }
     });
@@ -892,11 +892,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Time[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Time(0L)));
-         
+
         finishTest();
       }
     });
@@ -916,11 +916,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(Timestamp[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new Timestamp(0L)));
-         
+
         finishTest();
       }
     });
@@ -940,11 +940,11 @@ public class CollectionsTest extends RpcTestBase {
       public void onSuccess(String[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new String("")));
-         
+
         finishTest();
       }
     });
@@ -964,11 +964,11 @@ public class CollectionsTest extends RpcTestBase {
       @Override
       public void onSuccess(String[][] result) {
         assertNotNull(result);
-        
+
         // ensure result preserves meta-data for array store type checking
         assertTrue(TestSetValidator.checkObjectArrayElementAssignment(
             result, 0, new String[4]));
-         
+
         finishTest();
       }
     });

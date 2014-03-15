@@ -153,7 +153,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
   private static void checkOnModuleLoad(JsProgram program, String expectedJavascript) {
     JsName onModuleLoad = program.getScope().findExistingName("test_EntryPoint_onModuleLoad__V");
     assertNotNull(onModuleLoad);
-    assert(onModuleLoad.getStaticRef() instanceof JsFunction);
+    assert onModuleLoad.getStaticRef() instanceof JsFunction;
     assertEquals(expectedJavascript, serializeJs(onModuleLoad.getStaticRef()));
   }
 

@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,19 +16,19 @@
 package com.google.gwt.core.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.impl.AsyncFragmentLoader.HttpInstallFailure;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy;
-import com.google.gwt.core.client.impl.AsyncFragmentLoader.HttpInstallFailure;
 
 /**
  * Base for a standard loading strategy used in a web browser. Subclasses
  * provide an implementation of DownloadStrategy, thereby controlling how
  * the download of the code will be done, while the base class controls how
  * to interact with the linker, handle download failures, etc.
- * 
- * The linker it is used with should provide JavaScript-level functions to 
+ *
+ * The linker it is used with should provide JavaScript-level functions to
  * indicate how to handle downloading and installing code.
- * 
+ *
  * Linkers should always provide a function
  * <code>__gwtStartLoadingFragment</code>. This function is called by
  * this class with two arguments: an integer fragment number that needs
@@ -36,13 +36,13 @@ import com.google.gwt.core.client.impl.AsyncFragmentLoader.HttpInstallFailure;
  * fails, that function should be called with a descriptive exception as the
  * argument. If the load succeeds, that function may also be called, so long as
  * it isn't called until the downloaded code has been installed.
- * 
+ *
  * If the mechanism for loading the contents of fragments is provided by the
  * linker, the <code>__gwtStartLoadingFragment</code> function should return
  * <code>null</code> or <code>undefined</code>, and the linker should handle
  * installing the code as well.  Note that in this case, all the code in this
  * class is pretty much moot.
- * 
+ *
  * Alternatively, the function can return a URL designating from where the code
  * for the requested fragment can be downloaded. In that case, the linker should
  * also provide a function <code>__gwtInstallCode</code> for actually installing
@@ -60,7 +60,7 @@ public class LoadingStrategyBase implements LoadingStrategy {
   protected interface DownloadStrategy {
     void tryDownload(final RequestData request);
   }
-  
+
   /**
    * A trivial JavaScript map from ints to ints.  Used to keep a global count of
    * how many times a user has manually retried fetching a fragment.
@@ -71,17 +71,17 @@ public class LoadingStrategyBase implements LoadingStrategy {
     }
 
     protected FragmentReloadTracker() { }
-    
+
     public native int get(int x) /*-{
       return this[x] ? this[x] : 0;
     }-*/;
-    
+
     public native void put(int x, int y) /*-{
       this[x] = y;
     }-*/;
   }
-  
-  /**    
+
+  /**
    * Since LoadingStrategy must support concurrent requests, we keep most of the
    * relevant info in the RequestData, and pass it around.  Once created, a
    * RequestData interacts primarily with it's DownloadStrategy, which will
@@ -163,7 +163,7 @@ public class LoadingStrategyBase implements LoadingStrategy {
    * fails, we do not retry, since there's no reason to expect a different result.
    */
   public static int MAX_AUTO_RETRY_COUNT = 3;
-  
+
   /**
    * Call the linker-supplied <code>__gwtInstallCode</code> method. This method
    * will attempt to install the code, and throw a runtime exception if it fails,
@@ -187,7 +187,7 @@ public class LoadingStrategyBase implements LoadingStrategy {
     }
     return __gwtStartLoadingFragment(fragment, $entry(loadFailed));
   }-*/;
-  
+
   private DownloadStrategy downloadStrategy;
   private final FragmentReloadTracker manualRetryNumbers = FragmentReloadTracker.create();
 
@@ -216,9 +216,9 @@ public class LoadingStrategyBase implements LoadingStrategy {
     int manualRetry = getManualRetryNum(fragment);
     if (manualRetry > 0) {
       char connector = url.contains("?") ? '&' : '?';
-      url += connector + "manualRetry=" + manualRetry; 
+      url += connector + "manualRetry=" + manualRetry;
     }
-    RequestData request = new RequestData(url, loadErrorHandler, 
+    RequestData request = new RequestData(url, loadErrorHandler,
         fragment, downloadStrategy, getMaxAutoRetryCount());
     request.tryDownload();
   }

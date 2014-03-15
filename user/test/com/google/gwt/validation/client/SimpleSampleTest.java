@@ -34,9 +34,9 @@ public class SimpleSampleTest extends ValidationClientGwtTestCase {
   public void testConstraintViolation_compiles() throws Exception {
     // Only tests that Violation Compiles which will also compile Path, Node
     // and ConstraintDescriptor
-    ConstraintViolation<NotNull> violation = ConstraintViolationImpl.<NotNull> builder().
-        setLeafBean(sample).
-        build();
+    ConstraintViolation<NotNull> violation = ConstraintViolationImpl.<NotNull> builder()
+        .setLeafBean(sample)
+        .build();
     assertEquals(sample, violation.getLeafBean());
   }
 

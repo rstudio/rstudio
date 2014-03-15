@@ -32,5 +32,8 @@ public interface ValidationMessages extends
    */
   @DefaultStringValue("Name must be at least {min} characters long.")
   @Key("custom.name.size.message")
+
+// CHECKSTYLE_NAMING_OFF
   String custom_name_size_message();
+// CHECKSTYLE_NAMING_ON
 }

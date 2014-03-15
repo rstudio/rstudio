@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,10 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.builtinconstraints;
 
-import com.google.gwt.junit.client.GWTTestCase;
-
 import static org.hibernate.jsr303.tck.util.TestUtil.assertCorrectNumberOfViolations;
 import static org.hibernate.jsr303.tck.util.TestUtil.assertCorrectPropertyPaths;
+
+import com.google.gwt.junit.client.GWTTestCase;
 
 import org.hibernate.jsr303.tck.util.TestUtil;
 
@@ -32,7 +32,7 @@ import javax.validation.constraints.Past;
 
 /**
  * Test wrapper for {@link BuiltinConstraintsTest}.
- * 
+ *
  * <p>
  * NOTE: Test the Future and Past constraints here by hand because Hibernate
  * does not use the super source version when creating the beanDescriptor for

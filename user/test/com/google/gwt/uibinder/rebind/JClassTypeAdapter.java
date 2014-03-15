@@ -15,6 +15,9 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+
 import com.google.gwt.core.ext.typeinfo.HasAnnotations;
 import com.google.gwt.core.ext.typeinfo.HasTypeParameters;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
@@ -26,11 +29,8 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-
-import org.easymock.IAnswer;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;

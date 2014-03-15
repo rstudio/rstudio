@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,9 +27,9 @@ import com.google.gwt.event.dom.client.DragEndHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
 import com.google.gwt.event.dom.client.DragEnterHandler;
 import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragLeaveEvent;
 import com.google.gwt.event.dom.client.DragLeaveHandler;
-import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
 import com.google.gwt.event.dom.client.DragStartEvent;
@@ -95,7 +95,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   /**
    * Gets the FocusImpl instance.
-   * 
+   *
    * @return impl
    */
   protected static FocusImpl getFocusImpl() {
@@ -111,7 +111,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   /**
    * Creates a new focus widget that wraps the specified browser element.
-   * 
+   *
    * @param elem the element to be wrapped
    */
   protected FocusWidget(Element elem) {
@@ -271,7 +271,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   /**
    * Gets the tab index.
-   * 
+   *
    * @return the tab index
    */
   public int getTabIndex() {
@@ -280,7 +280,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   /**
    * Gets whether this widget is enabled.
-   * 
+   *
    * @return <code>true</code> if the widget is enabled
    */
   public boolean isEnabled() {
@@ -288,7 +288,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on
    * the object returned by {@link #addClickHandler} instead
    */
   @Deprecated
@@ -297,7 +297,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on
    * the object returned by {@link #addFocusHandler} instead
    */
   @Deprecated
@@ -338,7 +338,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   /**
    * Sets whether this widget is enabled.
-   * 
+   *
    * @param enabled <code>true</code> to enable the widget, <code>false</code>
    *          to disable it
    */

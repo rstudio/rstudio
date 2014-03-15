@@ -29,9 +29,9 @@ import com.google.gwt.event.dom.client.DragEndHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
 import com.google.gwt.event.dom.client.DragEnterHandler;
 import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragLeaveEvent;
 import com.google.gwt.event.dom.client.DragLeaveHandler;
-import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
 import com.google.gwt.event.dom.client.DragStartEvent;
@@ -154,7 +154,7 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
 
   /**
    * Creates a label with the specified text and direction.
-   * 
+   *
    * @param text the new label's text
    * @param dir the text's direction. Note that {@code DEFAULT} means direction
    *          should be inherited from the widget's parent element.
@@ -166,7 +166,7 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
 
   /**
    * Creates a label with the specified text and a default direction estimator.
-   * 
+   *
    * @param text the new label's text
    * @param directionEstimator A DirectionEstimator object used for automatic
    *          direction adjustment. For convenience,
@@ -312,7 +312,7 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
   public HandlerRegistration addTouchStartHandler(TouchStartHandler handler) {
     return addDomHandler(handler, TouchStartEvent.getType());
   }
-  
+
   public LeafValueEditor<String> asEditor() {
     if (editor == null) {
       editor = HasTextEditor.of(this);
@@ -382,7 +382,7 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
    * directionEstimator} is null. Otherwise, the widget's direction is set using
    * the estimator, and its alignment may therefore change as described in
    * {@link #setText(String, com.google.gwt.i18n.client.HasDirection.Direction) setText(String, Direction)}.
-   * 
+   *
    * @param text the widget's new text
    */
   public void setText(String text) {

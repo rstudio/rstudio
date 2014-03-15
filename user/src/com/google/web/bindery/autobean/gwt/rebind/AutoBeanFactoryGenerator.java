@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,21 +15,6 @@
  */
 package com.google.web.bindery.autobean.gwt.rebind;
 
-import com.google.web.bindery.autobean.gwt.client.impl.AbstractAutoBeanFactory;
-import com.google.web.bindery.autobean.gwt.client.impl.ClientPropertyContext;
-import com.google.web.bindery.autobean.gwt.client.impl.JsniCreatorMap;
-import com.google.web.bindery.autobean.gwt.rebind.model.AutoBeanFactoryMethod;
-import com.google.web.bindery.autobean.gwt.rebind.model.AutoBeanFactoryModel;
-import com.google.web.bindery.autobean.gwt.rebind.model.AutoBeanMethod;
-import com.google.web.bindery.autobean.gwt.rebind.model.AutoBeanType;
-import com.google.web.bindery.autobean.gwt.rebind.model.JBeanMethod;
-import com.google.web.bindery.autobean.shared.AutoBean;
-import com.google.web.bindery.autobean.shared.AutoBeanFactory;
-import com.google.web.bindery.autobean.shared.AutoBeanUtils;
-import com.google.web.bindery.autobean.shared.AutoBeanVisitor;
-import com.google.web.bindery.autobean.shared.Splittable;
-import com.google.web.bindery.autobean.shared.impl.AbstractAutoBean;
-import com.google.web.bindery.autobean.shared.impl.AbstractAutoBean.OneShotContext;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.impl.WeakMapping;
@@ -48,6 +33,21 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+import com.google.web.bindery.autobean.gwt.client.impl.AbstractAutoBeanFactory;
+import com.google.web.bindery.autobean.gwt.client.impl.ClientPropertyContext;
+import com.google.web.bindery.autobean.gwt.client.impl.JsniCreatorMap;
+import com.google.web.bindery.autobean.gwt.rebind.model.AutoBeanFactoryMethod;
+import com.google.web.bindery.autobean.gwt.rebind.model.AutoBeanFactoryModel;
+import com.google.web.bindery.autobean.gwt.rebind.model.AutoBeanMethod;
+import com.google.web.bindery.autobean.gwt.rebind.model.AutoBeanType;
+import com.google.web.bindery.autobean.gwt.rebind.model.JBeanMethod;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
+import com.google.web.bindery.autobean.shared.AutoBeanVisitor;
+import com.google.web.bindery.autobean.shared.Splittable;
+import com.google.web.bindery.autobean.shared.impl.AbstractAutoBean;
+import com.google.web.bindery.autobean.shared.impl.AbstractAutoBean.OneShotContext;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;

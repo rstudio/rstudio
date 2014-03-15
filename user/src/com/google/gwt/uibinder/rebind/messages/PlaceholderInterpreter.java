@@ -17,9 +17,9 @@ package com.google.gwt.uibinder.rebind.messages;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.rebind.Tokenator;
+import com.google.gwt.uibinder.rebind.Tokenator.Resolver;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
-import com.google.gwt.uibinder.rebind.Tokenator.Resolver;
 import com.google.gwt.uibinder.rebind.XMLElement.PostProcessingInterpreter;
 
 /**

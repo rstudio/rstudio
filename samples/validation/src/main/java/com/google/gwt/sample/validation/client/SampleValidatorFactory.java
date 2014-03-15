@@ -18,8 +18,8 @@ package com.google.gwt.sample.validation.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.validation.shared.ClientGroup;
 import com.google.gwt.sample.validation.shared.Person;
-import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
+import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import javax.validation.Validator;

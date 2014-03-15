@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -78,8 +78,8 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.user.client.BaseListenerWrapper;
 import com.google.gwt.user.client.Event;
 
@@ -89,8 +89,8 @@ import java.util.EventListener;
  * Legacy listener support hierarchy for
  * <code>com.google.gwt.user.client.ui</code>. Gathers the bulk of the legacy
  * glue code in one place, for easy deletion when Listener methods are deleted.
- * 
- * 
+ *
+ *
  * @param <T> listener type
  * @deprecated will be removed in GWT 2.7 with the handler listeners themselves
  */
@@ -105,13 +105,13 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param <S> the source of the events
-     * 
+     *
      * @param source the event source
      * @param listener the listener
      * @return the wrapped listener
-     * 
+     *
      * @deprecated will be removed in GWT 2.0 along with the listener classes
      */
     @Deprecated
@@ -125,7 +125,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -151,7 +151,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
   }
   /**
    * Wrapper for a {@link ChangeListener}.
-   * 
+   *
    * @deprecated will be removed in GWT 2.0 along with the listeners being
    *             wrapped
    */
@@ -161,11 +161,11 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param source the event source
      * @param listener the listener
      * @return the wrapped listener
-     * 
+     *
      * @deprecated will be removed in GWT 2.0 along with the listener classes
      */
     @Deprecated
@@ -178,7 +178,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -200,7 +200,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
   /**
    * Wrapper for a {@link ClickListener}.
-   * 
+   *
    * @deprecated will be removed in GWT 2.0 along with the listeners being
    *             wrapped
    */
@@ -210,11 +210,11 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param source the event source
      * @param listener the listener
      * @return the wrapped listener
-     * 
+     *
      * @deprecated will be removed in GWT 2.0 along with the listener classes
      */
     @Deprecated
@@ -227,7 +227,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -254,12 +254,12 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param eventSource the event source
      * @param listener the listener
-     * 
+     *
      * @return the wrapped listener
-     * 
+     *
      * @deprecated will be removed in GWT 2.0 along with the listener classes
      */
     @Deprecated
@@ -272,7 +272,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -306,11 +306,11 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param source the event source
      * @param listener the listener
      * @return the wrapped listener
-     * 
+     *
      * @deprecated will be removed in GWT 2.0 along with the listener classes
      */
     @Deprecated
@@ -323,7 +323,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -365,9 +365,9 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
   /**
    * Wrapper for a {@link ChangeListener} being converted to a logical
    * {@link ValueChangeHandler}.
-   * 
+   *
    * @param <V> the type of the value changed
-   * 
+   *
    * @deprecated will be removed in GWT 2.0 along with the listeners being
    *             wrapped
    */
@@ -377,13 +377,13 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param <V> the type of value changed
-     * 
+     *
      * @param source the event source
      * @param listener the listener
      * @return the wrapped listener
-     * 
+     *
      * @deprecated will be removed in GWT 2.0 along with the listener classes
      */
     @Deprecated
@@ -397,7 +397,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -424,7 +424,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
       MouseUpHandler, MouseOutHandler, MouseOverHandler, MouseMoveHandler {
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param source the event source
      * @param listener the listener
      * @return the wrapped listener
@@ -445,7 +445,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -492,11 +492,11 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
       ListenerWrapper<MouseWheelListener> implements MouseWheelHandler {
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param source the event source
      * @param listener the listener
      * @return the wrapped listener
-     * 
+     *
      * @deprecated will be removed in GWT 2.0 along with the listener classes
      */
     @Deprecated
@@ -509,7 +509,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -537,11 +537,11 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Adds the wrapped listener.
-     * 
+     *
      * @param source the event source
      * @param listener the listener
      * @return the wrapped listener
-     * 
+     *
      * @deprecated will be removed in GWT 2.0 along with the listener classes
      */
     @Deprecated
@@ -554,7 +554,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     /**
      * Removes the wrapped listener.
-     * 
+     *
      * @param eventSource the event source from which to remove the wrapped
      *          listener
      * @param listener the listener to remove
@@ -795,7 +795,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
   /**
    * Convenience method to remove wrapped handlers from a widget.
-   * 
+   *
    * @param <H> event handler type
    * @param eventSource the event source
    * @param listener the listener to remove

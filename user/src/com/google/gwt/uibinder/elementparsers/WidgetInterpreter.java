@@ -16,9 +16,9 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.uibinder.client.LazyDomElement;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
-import com.google.gwt.uibinder.client.LazyDomElement;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 

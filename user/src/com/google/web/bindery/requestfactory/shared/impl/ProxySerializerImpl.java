@@ -27,8 +27,8 @@ import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.ProxySerializer;
 import com.google.web.bindery.requestfactory.shared.ProxyStore;
 import com.google.web.bindery.requestfactory.shared.messages.IdMessage;
-import com.google.web.bindery.requestfactory.shared.messages.OperationMessage;
 import com.google.web.bindery.requestfactory.shared.messages.IdMessage.Strength;
+import com.google.web.bindery.requestfactory.shared.messages.OperationMessage;
 
 import java.util.Collection;
 import java.util.HashMap;

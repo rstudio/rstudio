@@ -16,8 +16,8 @@
 package com.google.gwt.i18n.server.testing;
 
 import com.google.gwt.i18n.client.Constants;
-import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
+import com.google.gwt.i18n.client.Messages;
 
 import java.util.Map;
 

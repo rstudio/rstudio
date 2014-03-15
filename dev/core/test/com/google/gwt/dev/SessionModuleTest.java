@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,7 +21,7 @@ import junit.framework.TestCase;
  * Tests for SessionModule.
  */
 public class SessionModuleTest extends TestCase {
-  
+
   public static final Disconnectable mockDisc1 = new Disconnectable() {
     @Override
     public void disconnect() {
@@ -32,7 +32,7 @@ public class SessionModuleTest extends TestCase {
       return false;
     }
   };
-  
+
   public static final Disconnectable mockDisc2 = new Disconnectable() {
     @Override
     public void disconnect() {
@@ -43,7 +43,7 @@ public class SessionModuleTest extends TestCase {
       return false;
     }
   };
-  
+
   public void testInstanceCache() {
     String sessionKey1 = "session1";
     String moduleName1 = "module1";

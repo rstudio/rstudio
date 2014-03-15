@@ -22,8 +22,8 @@ import com.google.gwt.junit.JUnitShell.Strategy;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.GWTTestCase.TestModuleInfo;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Strategy that compiles all modules before returning results. Optimizes test

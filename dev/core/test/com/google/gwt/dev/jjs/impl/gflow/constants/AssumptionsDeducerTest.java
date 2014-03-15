@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,28 +24,30 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
-import com.google.gwt.dev.jjs.impl.gflow.constants.AssumptionDeducer;
-import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumption;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumption.Updater;
 
 import java.util.List;
 
+/**
+ * Test for {@Link AssumptionsDeducer} dataflow analysis.
+ */
 public class AssumptionsDeducerTest extends JJSTestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    
-    addSnippetClassDecl("static class Foo { " +
-    		"public int i;" +
-    		"public Object o;" +
-    		"}");
+
+    addSnippetClassDecl(
+        "static class Foo { " +
+        "  public int i;" +
+        "  public Object o;" +
+        "}");
   }
 
   public void testBooleanVar() throws Exception {
     from("boolean b = false;", "b", true).deduce("{b = true}");
     from("boolean b = false;", "b", false).deduce("{b = false}");
   }
-  
+
   public void testEq() throws Exception {
     from("int i = 0;", "i == 10", true).deduce("{i = 10}");
     from("int i = 0;", "i == 10", false).deduce("T");
@@ -107,13 +109,13 @@ public class AssumptionsDeducerTest extends JJSTestBase {
     JBlock block = ((JMethodBody) mainMethod.getBody()).getBlock();
     List<JStatement> statements = block.getStatements();
     JIfStatement ifStatement = (JIfStatement) statements.get(statements.size() - 1);
-    
+
     Updater assumptions = new Updater(ConstantsAssumption.TOP);
-    AssumptionDeducer.deduceAssumption(ifStatement.getIfExpr(), 
+    AssumptionDeducer.deduceAssumption(ifStatement.getIfExpr(),
         JBooleanLiteral.get(b), assumptions);
     return new Result(assumptions.unwrap());
   }
-  
+
   private class Result {
     private final ConstantsAssumption assumptions;
 
@@ -124,6 +126,5 @@ public class AssumptionsDeducerTest extends JJSTestBase {
     public void deduce(String expected) {
       assertEquals(expected, assumptions.toDebugString());
     }
-    
   }
 }

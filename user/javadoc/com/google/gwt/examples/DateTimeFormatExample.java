@@ -1,9 +1,10 @@
 package com.google.gwt.examples;
 
-import java.util.Date;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
+
+import java.util.Date;
 
 public class DateTimeFormatExample implements EntryPoint {
 
@@ -27,7 +28,7 @@ public class DateTimeFormatExample implements EntryPoint {
 
     // prints Dec 18, 2007 12:01:26 PM in the default locale
     GWT.log(DateTimeFormat.getMediumDateTimeFormat().format(today));
-    
+
     // A custom date format
     DateTimeFormat fmt = DateTimeFormat.getFormat("EEEE, MMMM dd, yyyy");
     // prints Monday, December 17, 2007 in the default locale

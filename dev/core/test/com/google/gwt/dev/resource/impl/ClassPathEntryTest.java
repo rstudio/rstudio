@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Set;
 
+/**
+ * Resource realted tests.
+ */
 public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
 
   public void testAllCpe1FilesFound() throws URISyntaxException, IOException {
@@ -46,11 +49,11 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     testPathPrefixSetChanges(cpe1jar, cpe2jar);
     testPathPrefixSetChanges(cpe1dir, cpe2jar);
     testPathPrefixSetChanges(cpe1zip, cpe2jar);
-    
+
     testPathPrefixSetChanges(cpe1dir, cpe2dir);
     testPathPrefixSetChanges(cpe1jar, cpe2dir);
     testPathPrefixSetChanges(cpe1zip, cpe2dir);
-    
+
     testPathPrefixSetChanges(cpe1dir, cpe2zip);
     testPathPrefixSetChanges(cpe1jar, cpe2zip);
     testPathPrefixSetChanges(cpe1zip, cpe2zip);
@@ -69,11 +72,11 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     testUseOfPrefixesWithFiltering(cpe1jar, cpe2jar);
     testUseOfPrefixesWithFiltering(cpe1dir, cpe2jar);
     testUseOfPrefixesWithFiltering(cpe1zip, cpe2jar);
-    
+
     testUseOfPrefixesWithFiltering(cpe1dir, cpe2dir);
     testUseOfPrefixesWithFiltering(cpe1jar, cpe2dir);
     testUseOfPrefixesWithFiltering(cpe1zip, cpe2dir);
-    
+
     testUseOfPrefixesWithFiltering(cpe1dir, cpe2zip);
     testUseOfPrefixesWithFiltering(cpe1jar, cpe2zip);
     testUseOfPrefixesWithFiltering(cpe1zip, cpe2zip);
@@ -92,11 +95,11 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     testUseOfPrefixesWithoutFiltering(cpe1jar, cpe2jar);
     testUseOfPrefixesWithoutFiltering(cpe1dir, cpe2jar);
     testUseOfPrefixesWithoutFiltering(cpe1zip, cpe2jar);
-    
+
     testUseOfPrefixesWithoutFiltering(cpe1dir, cpe2dir);
     testUseOfPrefixesWithoutFiltering(cpe1jar, cpe2dir);
     testUseOfPrefixesWithoutFiltering(cpe1zip, cpe2dir);
-    
+
     testUseOfPrefixesWithoutFiltering(cpe1dir, cpe2zip);
     testUseOfPrefixesWithoutFiltering(cpe1jar, cpe2zip);
     testUseOfPrefixesWithoutFiltering(cpe1zip, cpe2zip);

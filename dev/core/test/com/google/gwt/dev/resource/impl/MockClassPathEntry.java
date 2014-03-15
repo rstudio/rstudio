@@ -24,6 +24,9 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+/**
+ * Mock for {@link ClassPathEntry}.
+ */
 public class MockClassPathEntry extends ClassPathEntry {
 
   final String pathRoot;
