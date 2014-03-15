@@ -122,7 +122,7 @@ public class StackTraceCreator {
   /**
    * Collaborates with JsStackEmulator.
    */
-  static class CollectorEmulated extends Collector {
+  static final class CollectorEmulated extends Collector {
 
     @Override
     public JsArrayString collect() {
@@ -187,14 +187,19 @@ public class StackTraceCreator {
      * <code>caller</code> since Mozilla provides proper activation records.
      */
     @Override
-    public JsArrayString collect() {
-      return splice(inferFrom(makeException()), toSplice());
+    public final JsArrayString collect() {
+      return collect(makeException());
+    }
+
+    public JsArrayString collect(JavaScriptObject ex) {
+      final int numberOfFramesToDrop = 2; // # of frames added by the StackTraceCreator
+      return splice(inferFrom(ex), numberOfFramesToDrop);
     }
 
     /**
      * Raise an exception and return it.
      */
-    protected native JavaScriptObject makeException() /*-{
+    private static native JavaScriptObject makeException() /*-{
       try {
         null.a();
       } catch (e) {
@@ -215,10 +220,6 @@ public class StackTraceCreator {
     private native JsArrayString getStack(JavaScriptObject e) /*-{
       return (e && e.stack) ? e.stack.split('\n') : [];
     }-*/;
-
-    protected int toSplice() {
-      return 2;
-    }
   }
 
   /**
@@ -249,8 +250,8 @@ public class StackTraceCreator {
     }-*/;
 
     @Override
-    public JsArrayString collect() {
-      JsArrayString res = super.collect();
+    public JsArrayString collect(JavaScriptObject ex) {
+      JsArrayString res = super.collect(ex);
       if (res.length() == 0) {
         /*
          * Ensure Safari falls back to default Collector implementation.
@@ -328,11 +329,6 @@ public class StackTraceCreator {
 
     protected int replaceIfNoSourceMap(int line) {
          return line;
-    }
-
-    @Override
-    protected int toSplice() {
-      return 3;
     }
 
     @Override
