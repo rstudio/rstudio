@@ -161,7 +161,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onWindowOpened(WindowOpenedEvent event)
    {
-      if (event.getName().equals(WINDOW_NAME + "_minimal"))
+      if (event.getName().equals(WINDOW_NAME))
       {
          completePdfJsWindowLoad(event.getWindow());
       }

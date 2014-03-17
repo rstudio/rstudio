@@ -10,6 +10,7 @@
           NSWindowController<NSWindowDelegate,GwtCallbacksUIDelegate> {
    WebViewWithKeyEquiv* webView_;
    NSString* name_;
+   NSString* clientName_;
    NSURL* baseUrl_;
    NSString* viewerUrl_;
 }
@@ -25,7 +26,8 @@
 
 // The designated initializer
 - (id)initWithURLRequest: (NSURLRequest*) request
-                    name: (NSString*) name;
+                    name: (NSString*) name
+              clientName: (NSString*) clientName;
 
 // load a new url
 - (void) loadURL: (NSURL*) url;

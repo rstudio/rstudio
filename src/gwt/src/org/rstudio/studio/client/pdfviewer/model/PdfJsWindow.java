@@ -94,9 +94,7 @@ public class PdfJsWindow extends WindowEx
             sidebarToggle.className += " toggled";
          }
          
-         // will be overridden by pdf.js with the title once a PDF has finished
-         // loading
-         win.title = "RStudio: Compile PDF";
+         win.document.title = "RStudio: View PDF";
       });
       
       this.addEventListener("beforeunload", function() {
@@ -139,10 +137,16 @@ public class PdfJsWindow extends WindowEx
    public final native void initializeEvents() /*-{
       var _pdfView = this.PDFView;
       var _setInitialView = _pdfView.setInitialView;
+      // override the set initial view function so we know when the PDF has 
+      // finished loading
       _pdfView.setInitialView = function(storedHash, scale) {
          _setInitialView.call(_pdfView, storedHash, scale);
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePDFLoadEvent()();
       };
+      
+      // stub out the set-title functions so our window title sticks
+      _pdfView.setTitle = function() {};
+      _pdfView.setTitleUsingUrl = function() {};
    }-*/;
 
    private static void firePDFLoadEvent()

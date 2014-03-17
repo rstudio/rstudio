@@ -25,8 +25,11 @@
 
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name
+              clientName: (NSString*) clientName
 {
-   if (self = [super initWithURLRequest: request name: name])
+   if (self = [super initWithURLRequest: request
+                                   name: name
+                             clientName: clientName])
    {
       toolbarItems_ = [[NSArray alloc] initWithObjects: kBackCommand,
                                                         kForwardCommand,

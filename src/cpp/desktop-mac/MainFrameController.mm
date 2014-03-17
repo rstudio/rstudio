@@ -44,7 +44,8 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 - (id) initWithURL: (NSURL*) url openFile: (NSString*) openFile
 {
    if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
-                                   name: nil])
+                                   name: nil
+                             clientName: nil])
    {
       // initialize the global instance
       instance_ = self;

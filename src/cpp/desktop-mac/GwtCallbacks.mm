@@ -409,10 +409,10 @@ NSString* resolveAliasedPath(NSString* path)
                      width: (int) width height: (int) height
 {
    // adjust name to scope within minimal windows
-   name = [name stringByAppendingString: @"_minimal"];
+   NSString* windowName = [name stringByAppendingString: @"_minimal"];
    
    // check for an existing window with this name
-   WebViewController* controller = [WebViewController windowNamed: name];
+   WebViewController* controller = [WebViewController windowNamed: windowName];
    
    // create a new window if necessary
    if (!controller)
@@ -420,7 +420,8 @@ NSString* resolveAliasedPath(NSString* path)
       // self-freeing so don't auto-release
       controller = [[WebViewController alloc] initWithURLRequest:
                   [NSURLRequest requestWithURL: [NSURL URLWithString: url]]
-                                              name: name];
+                                          name: windowName
+                                    clientName: name];
    }
    
    // reset window size (adjust for title bar height)
