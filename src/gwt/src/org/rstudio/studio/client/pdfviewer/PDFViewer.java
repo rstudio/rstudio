@@ -135,7 +135,13 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    public void onSynctexViewPdf(SynctexViewPdfEvent event)
    {
       if (event.getPdfLocation().getFile().equals(lastSuccessfulPdfPath_))
+      {
          PdfJsWindow.navigateTo(pdfJsWindow_, event.getPdfLocation());
+         if (Desktop.isDesktop())
+         {
+            Desktop.getFrame().activateMinimalWindow(WINDOW_NAME);
+         }
+      }
    }
    
    @Override

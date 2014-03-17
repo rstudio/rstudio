@@ -16,6 +16,8 @@
 
 #import "MainFrameController.h"
 
+#define kMinimalSuffix @"_minimal"
+
 using namespace core;
 using namespace desktop;
 
@@ -409,7 +411,7 @@ NSString* resolveAliasedPath(NSString* path)
                      width: (int) width height: (int) height
 {
    // adjust name to scope within minimal windows
-   NSString* windowName = [name stringByAppendingString: @"_minimal"];
+   NSString* windowName = [name stringByAppendingString: kMinimalSuffix];
    
    // check for an existing window with this name
    WebViewController* controller = [WebViewController windowNamed: windowName];
@@ -441,7 +443,13 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) activateSatelliteWindow: (NSString*) name
 {
-   [WebViewController activateSatelliteWindow: name];
+   [WebViewController activateNamedWindow: name];
+}
+
+- (void) activateMinimalWindow: (NSString*) name
+{
+   name = [name stringByAppendingString: kMinimalSuffix];
+   [WebViewController activateNamedWindow: name];
 }
 
 - (void) prepareForSatelliteWindow: (NSString*) name
@@ -850,6 +858,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"showPDF";
    else if (sel == @selector(openMinimalWindow:url:width:height:))
       return @"openMinimalWindow";
+   else if (sel == @selector(activateMinimalWindow:))
+      return @"activateMinimalWindow";
    else if (sel == @selector(activateSatelliteWindow:))
       return @"activateSatelliteWindow";
    else if (sel == @selector(prepareForSatelliteWindow:width:height:))

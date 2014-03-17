@@ -17,7 +17,7 @@
 
 + (WebViewController*) windowNamed: (NSString*) name;
 
-+ (void) activateSatelliteWindow: (NSString*) name;
++ (void) activateNamedWindow: (NSString*) name;
 
 + (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width

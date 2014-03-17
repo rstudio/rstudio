@@ -52,13 +52,6 @@ static PendingSatelliteWindow pendingWindow_;
    pendingWindow_ = PendingSatelliteWindow();
 }
 
-+ (void) activateSatelliteWindow: (NSString*) name
-{
-   WebViewController* controller = [namedWindows_ objectForKey: name];
-   if (controller)
-      [[controller window] makeKeyAndOrderFront: self];
-}
-
 + (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width
                             height: (int) height
@@ -70,6 +63,14 @@ static PendingSatelliteWindow pendingWindow_;
 {
    return [namedWindows_ objectForKey: name];
 }
+
++ (void) activateNamedWindow: (NSString*) name
+{
+   WebViewController* controller = [self windowNamed: name];
+   if (controller)
+      [[controller window] makeKeyAndOrderFront: self];
+}
+
 
 - (WebView*) webView
 {
