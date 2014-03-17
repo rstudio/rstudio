@@ -427,6 +427,7 @@ MimeType s_mimeTypes[] =
    { "mml",   "text/mathml" },
    { "log",   "text/plain" },
    { "out",   "text/plain" },
+   { "csl",   "text/x-csl" },
    { "R",     "text/x-r-source"},
    { "Rd",    "text/x-r-doc"},
    { "Rnw",   "text/x-r-sweave"},
