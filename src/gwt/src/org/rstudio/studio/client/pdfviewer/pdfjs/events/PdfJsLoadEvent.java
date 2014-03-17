@@ -1,5 +1,5 @@
 /*
- * PDFLoadEvent.java
+ * PdfJsLoadEvent.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -17,11 +17,11 @@ package org.rstudio.studio.client.pdfviewer.pdfjs.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class PDFLoadEvent extends GwtEvent<PDFLoadEvent.Handler>
+public class PdfJsLoadEvent extends GwtEvent<PdfJsLoadEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onPDFLoad(PDFLoadEvent event);
+      void onPdfJsLoad(PdfJsLoadEvent event);
    }
 
    @Override
@@ -33,7 +33,7 @@ public class PDFLoadEvent extends GwtEvent<PDFLoadEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onPDFLoad(this);
+      handler.onPdfJsLoad(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

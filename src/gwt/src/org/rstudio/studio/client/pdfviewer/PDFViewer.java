@@ -16,7 +16,7 @@ package org.rstudio.studio.client.pdfviewer;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -30,28 +30,26 @@ import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
-import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
-import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerHandler;
 import org.rstudio.studio.client.pdfviewer.events.LookupSynctexSourceEvent;
 import org.rstudio.studio.client.pdfviewer.model.PdfJsWindow;
 import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class PDFViewer implements CompilePdfCompletedEvent.Handler,
-                                  ShowPDFViewerHandler,
                                   SynctexViewPdfEvent.Handler,
                                   PDFLoadEvent.Handler,
                                   LookupSynctexSourceEvent.Handler,
+                                  PdfJsLoadEvent.Handler,
                                   PdfJsWindowClosedEvent.Handler,
                                   WindowOpenedEvent.Handler
 {
@@ -66,7 +64,6 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       server_ = server;
       synctex_ = synctex;
       
-      eventBus.addHandler(ShowPDFViewerEvent.TYPE, this);
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
       eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
       eventBus.addHandler(PDFLoadEvent.TYPE, this);
@@ -74,6 +71,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       PdfJsWindow.addPDFLoadHandler(this);
       PdfJsWindow.addPageClickHandler(this);
       PdfJsWindow.addWindowClosedHandler(this);
+      PdfJsWindow.addPdfJsLoadHandler(this);
 
       // when this window is closed, automatically close the PDF.js window,
       // if it's open
@@ -89,35 +87,26 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    }
 
    @Override
-   public void onShowPDFViewer(ShowPDFViewerEvent event)
-   {
-      openPdfJsWindow();
-   }
-    
-   @Override
    public void onPDFLoad(PDFLoadEvent event)
    {
-      if (executeOnLoad_ != null)
+      if (executeOnPdfLoad_ != null)
       {
-         executeOnLoad_.execute();
-         executeOnLoad_ = null;
+         executeOnPdfLoad_.execute();
+         executeOnPdfLoad_ = null;
       }
    } 
 
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
-      CompilePdfResult result = event.getResult();
+      final CompilePdfResult result = event.getResult();
       if (!result.getSucceeded())
          return;
-      
-      pdfJsWindow_.initializeEvents();
 
+      // set up a command to navigate to the destination once we've got the
+      // window open
       final PdfLocation pdfLocation = result.getPdfLocation();
-      pdfJsWindow_.openPdf("/" + result.getViewPdfUrl(),
-            result.getPdfPath().equals(StringUtil.notNull(lastSuccessfulPdfPath_))
-            ? pdfJsWindow_.getCurrentScale() : 1);
-      executeOnLoad_ = new Command()
+      executeOnPdfLoad_ = new Operation()
       {
          @Override
          public void execute()
@@ -128,7 +117,21 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
             }
          }
       };
-      lastSuccessfulPdfPath_ = result.getPdfPath();
+      
+      // open the window for the PDF 
+      lastSuccessfulPdfPath_ = null;
+      withPdfJsWindow(new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            pdfJsWindow_.openPdf("/" + result.getViewPdfUrl(),
+                  result.getPdfPath().equals(
+                        StringUtil.notNull(lastSuccessfulPdfPath_))
+                        ? scale_ : 0);
+            lastSuccessfulPdfPath_ = result.getPdfPath();
+         }
+      });
    }
 
    @Override
@@ -169,13 +172,37 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    {
       if (event.getName().equals(WINDOW_NAME))
       {
-         completePdfJsWindowLoad(event.getWindow());
+         initializePdfJsWindow(event.getWindow());
       }
+   }
+   
+   @Override
+   public void onPdfJsLoad(PdfJsLoadEvent event)
+   {
+      if (executeOnPdfJsLoad_ != null)
+      {
+         executeOnPdfJsLoad_.execute();
+         executeOnPdfJsLoad_ = null;
+      }
+   }
+   
+   public void viewPdfUrl(final String url)
+   {
+      lastSuccessfulPdfPath_ = null;
+      withPdfJsWindow(new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            pdfJsWindow_.openPdf("/" + url, 0);
+            lastSuccessfulPdfPath_ = url;
+         }
+      });
    }
   
    // Private methods ---------------------------------------------------------
    
-   private void openPdfJsWindow()
+   private void withPdfJsWindow(final Operation onLoaded)
    {
       int width = 1070;
       int height = 1200;
@@ -183,6 +210,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       {
          width = pdfJsWindow_.getOuterWidth();
          height = pdfJsWindow_.getOuterHeight();
+         scale_ = pdfJsWindow_.getCurrentScale();
          pdfJsWindow_.close();
          pdfJsWindow_ = null;
       }
@@ -194,17 +222,16 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
          @Override
          public void execute(WindowEx win)
          {
-            completePdfJsWindowLoad(win);
+            initializePdfJsWindow(win);
          }
       });
+      executeOnPdfJsLoad_ = onLoaded;
       display_.openMinimalWindow(url, false, width, height, options);
-      lastSuccessfulPdfPath_ = null;
    }
    
-   private void completePdfJsWindowLoad(WindowEx win)
+   private void initializePdfJsWindow(WindowEx win)
    {
-      PdfJsWindow pdfJs = win.cast();
-      pdfJsWindow_ = pdfJs;
+      pdfJsWindow_ = win.cast();
       pdfJsWindow_.injectUiOnLoad();
    }
 
@@ -229,8 +256,13 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    }-*/;
 
    private PdfJsWindow pdfJsWindow_;
-   private Command executeOnLoad_;
    private String lastSuccessfulPdfPath_;
+   private float scale_;
+
+   // continuation operations for asynchronous operations: 
+   // pdf.js loaded, PDF loaded in pdf.js
+   private Operation executeOnPdfJsLoad_;
+   private Operation executeOnPdfLoad_;
 
    private final GlobalDisplay display_;
    private final ApplicationServerOperations server_;

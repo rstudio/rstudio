@@ -27,12 +27,14 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
@@ -52,10 +54,14 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                     Commands commands,
                     GlobalDisplay globalDisplay,
                     Binder binder,
+                    UIPrefs prefs,
+                    PDFViewer pdfViewer,
                     final SatelliteManager satelliteManager)
    {
       satelliteManager_ = satelliteManager;
       globalDisplay_ = globalDisplay;
+      prefs_ = prefs;
+      pdfViewer_ = pdfViewer;
       
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
@@ -95,9 +101,16 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             Desktop.getFrame().showPDF(result.getOutputFile(),
                                        result.getPreviewSlide());
          }
-         else // browsers we target can all now show pdfs inline
+         else 
          {
-            globalDisplay_.showHtmlFile(result.getOutputFile());
+            if (prefs_.getPdfPreviewValue().equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
+            {
+               pdfViewer_.viewPdfUrl(result.getOutputUrl());
+            }
+            else
+            {
+               globalDisplay_.showHtmlFile(result.getOutputFile());
+            }
          }
       }
       else if (".docx".equals(extension))
@@ -270,6 +283,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
    private final SatelliteManager satelliteManager_;
    private final GlobalDisplay globalDisplay_;
+   private final UIPrefs prefs_;
+   private final PDFViewer pdfViewer_;
 
    // stores the last scroll position of each document we know about: map
    // of path to position

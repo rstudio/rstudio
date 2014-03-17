@@ -31,7 +31,6 @@ import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.application.Desktop;
 
 /**
  * Helper methods that are mostly useful for interacting with 

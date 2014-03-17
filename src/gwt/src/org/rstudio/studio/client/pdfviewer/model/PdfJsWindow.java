@@ -20,6 +20,7 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.LookupSynctexSourceEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -95,6 +96,22 @@ public class PdfJsWindow extends WindowEx
          }
          
          win.document.title = "RStudio: View PDF";
+
+         var _pdfView = win.PDFView;
+         var _setInitialView = _pdfView.setInitialView;
+         // override the set initial view function so we know when the PDF has 
+         // finished loading
+         _pdfView.setInitialView = function(storedHash, scale) {
+            _setInitialView.call(_pdfView, storedHash, scale);
+            @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePDFLoadEvent()();
+         };
+         
+         // stub out the set-title functions so our window title sticks
+         _pdfView.setTitle = function() {};
+         _pdfView.setTitleUsingUrl = function() {};
+         
+         // fire the load event
+         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLoadEvent()();
       });
       
       this.addEventListener("beforeunload", function() {
@@ -104,14 +121,8 @@ public class PdfJsWindow extends WindowEx
       this.addEventListener("click", function(evt) {
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
       });
-      
-      this.rstudioUIIsInjected = true;
    }-*/;
    
-   public final native boolean rstudioUIIsInjected() /*-{
-      return rstudioUIIsInjected || false;
-   }-*/;
-
    public final native void openPdf(String path, float scale) /*-{
       this.PDFView.open(path, scale);
    }-*/;
@@ -134,21 +145,6 @@ public class PdfJsWindow extends WindowEx
       return this.PDFView.currentScaleValue;
    }-*/;
    
-   public final native void initializeEvents() /*-{
-      var _pdfView = this.PDFView;
-      var _setInitialView = _pdfView.setInitialView;
-      // override the set initial view function so we know when the PDF has 
-      // finished loading
-      _pdfView.setInitialView = function(storedHash, scale) {
-         _setInitialView.call(_pdfView, storedHash, scale);
-         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePDFLoadEvent()();
-      };
-      
-      // stub out the set-title functions so our window title sticks
-      _pdfView.setTitle = function() {};
-      _pdfView.setTitleUsingUrl = function() {};
-   }-*/;
-
    private static void firePDFLoadEvent()
    {
       handlers_.fireEvent(new PDFLoadEvent());
@@ -163,6 +159,11 @@ public class PdfJsWindow extends WindowEx
    private static void fireWindowClosedEvent()
    {
       handlers_.fireEvent(new PdfJsWindowClosedEvent());
+   }
+   
+   private static void fireLoadEvent()
+   {
+      handlers_.fireEvent(new PdfJsLoadEvent());
    }
    
    public static HandlerRegistration addPDFLoadHandler(
@@ -181,6 +182,12 @@ public class PdfJsWindow extends WindowEx
          PdfJsWindowClosedEvent.Handler handler)
    {
       return handlers_.addHandler(PdfJsWindowClosedEvent.TYPE, handler);
+   }
+
+   public static HandlerRegistration addPdfJsLoadHandler(
+         PdfJsLoadEvent.Handler handler)
+   {
+      return handlers_.addHandler(PdfJsLoadEvent.TYPE, handler);
    }
 
    private static void firePageClickEvent(PdfJsWindow win, 
