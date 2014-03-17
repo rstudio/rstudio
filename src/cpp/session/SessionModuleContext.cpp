@@ -774,7 +774,8 @@ bool hasTextMimeType(const FilePath& filePath)
       return false;
 
    return boost::algorithm::starts_with(mimeType, "text/") ||
-          boost::algorithm::ends_with(mimeType, "+xml");
+          boost::algorithm::ends_with(mimeType, "+xml") ||
+          boost::algorithm::ends_with(mimeType, "/xml");
 }
 
 bool hasBinaryMimeType(const FilePath& filePath)
@@ -829,6 +830,7 @@ bool isTextFile(const FilePath& targetPath)
    // check value
    return boost::algorithm::starts_with(fileType, "text/") ||
           boost::algorithm::ends_with(fileType, "+xml") ||
+          boost::algorithm::ends_with(fileType, "/xml") ||
           boost::algorithm::ends_with(fileType, "x-empty") ||
           boost::algorithm::equals(fileType, "application/postscript");
 #else
