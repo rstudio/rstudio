@@ -158,7 +158,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
    
    private String getFormat()
    {
-      return "pdf_document";
+      return "html_document";
    }
    
    private void setType(String type)
