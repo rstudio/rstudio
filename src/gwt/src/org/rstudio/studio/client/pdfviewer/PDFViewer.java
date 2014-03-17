@@ -114,8 +114,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       pdfJsWindow_.initializeEvents();
 
       final PdfLocation pdfLocation = result.getPdfLocation();
-      FileSystemItem pdf = FileSystemItem.createFile(result.getPdfPath());
-      pdfJsWindow_.openPdf(server_.getFileUrl(pdf), 
+      pdfJsWindow_.openPdf("/" + result.getViewPdfUrl(),
             result.getPdfPath().equals(StringUtil.notNull(lastSuccessfulPdfPath_))
             ? pdfJsWindow_.getCurrentScale() : 1);
       executeOnLoad_ = new Command()
