@@ -3282,6 +3282,7 @@ public class TextEditingTarget implements
                rmarkdownHelper_.renderRMarkdown(
                   docUpdateSentinel_.getPath(),
                   docDisplay_.getCursorPosition().getRow() + 1,
+                  null,
                   docUpdateSentinel_.getEncoding());
             }
          });
@@ -3477,6 +3478,7 @@ public class TextEditingTarget implements
                      rmarkdownHelper_.renderRMarkdown(
                                            notebook,
                                            1,
+                                           null,
                                            docUpdateSentinel_.getEncoding());
                   }
                });

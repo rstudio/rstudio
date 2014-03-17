@@ -27,10 +27,12 @@ public class RenderRmdEvent extends GwtEvent<RenderRmdEvent.Handler>
 
    public RenderRmdEvent(String sourceFile, 
                          int sourceLine,
+                         String format,
                          String encoding)
    {
       sourceFile_ = sourceFile;
       sourceLine_ = sourceLine;
+      format_ = format;
       encoding_ = encoding;
    }
 
@@ -42,6 +44,11 @@ public class RenderRmdEvent extends GwtEvent<RenderRmdEvent.Handler>
    public int getSourceLine()
    {
       return sourceLine_;
+   }
+   
+   public String getFormat()
+   {
+      return format_;
    }
    
    public String getEncoding()
@@ -63,6 +70,7 @@ public class RenderRmdEvent extends GwtEvent<RenderRmdEvent.Handler>
    
    private final String sourceFile_;
    private final int sourceLine_;
+   private final String format_;
    private final String encoding_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();

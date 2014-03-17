@@ -129,6 +129,10 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
       
+      notebookSeparatorWidget_ = toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(notebookToolbarButton_ = 
+            commands_.compileNotebook().createToolbarButton());
+      
       texSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
       
@@ -194,9 +198,7 @@ public class TextEditingTargetWidget
       ToolbarPopupMenu sourceMenu = new ToolbarPopupMenu();
       sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
-      sourceMenu.addSeparator();
-      sourceMenu.addItem(commands_.compileNotebook().createMenuItem(false));
-      
+         
       sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);  
 
@@ -277,6 +279,7 @@ public class TextEditingTargetWidget
    {
       editor_.setFileType(fileType);
       boolean canCompilePdf = fileType.canCompilePDF();
+      boolean canCompileNotebook = fileType.canCompileNotebook();
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
       boolean canSourceOnSave = fileType.canSourceOnSave();
@@ -309,6 +312,9 @@ public class TextEditingTargetWidget
       texToolbarButton_.setVisible(canCompilePdf);
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
+      
+      notebookSeparatorWidget_.setVisible(canCompileNotebook);
+      notebookToolbarButton_.setVisible(canCompileNotebook);
       
       rmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setVisible(isRMarkdown2);
@@ -632,6 +638,8 @@ public class TextEditingTargetWidget
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;
+   private Widget notebookSeparatorWidget_;
+   private ToolbarButton notebookToolbarButton_;
    private Label srcOnSaveLabel_;
 
    private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;

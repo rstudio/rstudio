@@ -124,6 +124,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
    {
       server_.renderRmd(event.getSourceFile(), 
                         event.getSourceLine(),
+                        event.getFormat(),
                         event.getEncoding(), 
             new SimpleRequestCallback<Boolean>());
    }

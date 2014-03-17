@@ -152,6 +152,7 @@ public class TextEditingTargetRMarkdownHelper
    
    public void renderRMarkdown(final String sourceFile, 
                                final int sourceLine,
+                               final String format,
                                final String encoding)
    {
       withRMarkdownPackage("Rendering R Markdown documents", 
@@ -161,6 +162,7 @@ public class TextEditingTargetRMarkdownHelper
          {
             eventBus_.fireEvent(new RenderRmdEvent(sourceFile,
                                                    sourceLine,
+                                                   format,
                                                    encoding));
          }
       });
