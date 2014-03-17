@@ -994,6 +994,31 @@ public class TextEditingTarget implements
             .getActiveProjectDir();
       return getPath().startsWith(projectDir.getPath() + "/R");
    }
+   
+   private boolean isPackageDocumentationFile()
+   {
+      if (getPath() == null)
+      {
+         return false;
+      }
+      
+      String type = session_.getSessionInfo().getBuildToolsType();
+      if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      {
+         return false;
+      }
+      
+      FileSystemItem srcFile = FileSystemItem.createFile(getPath());
+      FileSystemItem projectDir = session_.getSessionInfo()
+            .getActiveProjectDir();
+      if (srcFile.getPath().startsWith(projectDir.getPath() + "/vignettes"))
+         return true;
+      else if (srcFile.getParentPathString().equals(projectDir.getPath()) &&
+               srcFile.getExtension().toLowerCase().equals(".md"))
+         return true;
+      else
+         return false;
+   }
       
    private void checkCompilePdfDependencies()
    {
@@ -3239,8 +3264,16 @@ public class TextEditingTarget implements
    }
    
    void renderRmd()
-   {
-      if (docUpdateSentinel_.getPath() != null)
+   { 
+      boolean renderSourceOnly = (docUpdateSentinel_.getPath() == null) ||
+                                 isPackageDocumentationFile();
+          
+      if (renderSourceOnly)
+      {
+         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode());
+      }
+      
+      else
       {
          saveThenExecute(null, new Command() {
             @Override
@@ -3253,10 +3286,7 @@ public class TextEditingTarget implements
             }
          });
       }
-      else
-      {
-         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode());
-      }
+      
    }
    
    void previewHTML()
