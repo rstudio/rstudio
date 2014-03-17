@@ -709,10 +709,7 @@ public class DomUtils
    public static boolean isCommandClick(NativeEvent nativeEvt)
    {
       boolean commandKey;
-      
-      // NOTE: on mac desktop we still check for CtrlKey because under Qt 4.8
-      // on the mac the reporting of Ctrl and Meta keys is inverted)
-      if (BrowseCap.isMacintosh() && !Desktop.isDesktop())
+      if (BrowseCap.isMacintosh())
       {
          commandKey = nativeEvt.getMetaKey();
       }
