@@ -14,6 +14,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.dev.cfg.CombinedResourceOracle;
+import com.google.gwt.dev.cfg.ImmutableLibraryGroup;
 import com.google.gwt.dev.cfg.LibraryGroup;
 import com.google.gwt.dev.cfg.LibraryGroupBuildResourceOracle;
 import com.google.gwt.dev.cfg.LibraryGroupPublicResourceOracle;
@@ -41,7 +42,7 @@ public class CompilerContext {
 
     private ResourceOracle buildResourceOracle;
     private boolean compileMonolithic = true;
-    private LibraryGroup libraryGroup;
+    private LibraryGroup libraryGroup = new ImmutableLibraryGroup();
     private LibraryWriter libraryWriter = new NullLibraryWriter();
     private ModuleDef module;
     private PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
@@ -150,7 +151,7 @@ public class CompilerContext {
    * they should be grouped together instead of floating free here.
    */
   private boolean compileMonolithic = true;
-  private LibraryGroup libraryGroup;
+  private LibraryGroup libraryGroup = new ImmutableLibraryGroup();
   private LibraryWriter libraryWriter = new NullLibraryWriter();
 
   private ModuleDef module;

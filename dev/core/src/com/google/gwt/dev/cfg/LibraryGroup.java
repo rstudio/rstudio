@@ -46,7 +46,9 @@ import java.util.Set;
  * Analyzes the library dependency tree to provide link ordering and property and rebound type
  * change analysis for partial generator execution.<br />
  *
- * Combines library resource lists for easy iteration over the complete set.
+ * Combines library resource lists for easy iteration over the complete set.<br />
+ *
+ * Is mostly immutable, its contained set of libraries can only be set at time of construction.
  */
 public class LibraryGroup {
 
@@ -112,7 +114,7 @@ public class LibraryGroup {
 
   private Set<String> superSourceCompilationUnitTypeSourceNames;
 
-  private LibraryGroup() {
+  protected LibraryGroup() {
     // Private to force class construction via one of the public factory functions.
   }
 

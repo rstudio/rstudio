@@ -460,10 +460,6 @@ public class JdtCompiler {
     }
 
     private NameEnvironmentAnswer findTypeInLibraryGroup(String internalName) {
-      if (compilerContext.getLibraryGroup() == null) {
-        return null;
-      }
-
       InputStream classFileStream =
           compilerContext.getLibraryGroup().getClassFileStream(internalName);
       if (classFileStream == null) {
