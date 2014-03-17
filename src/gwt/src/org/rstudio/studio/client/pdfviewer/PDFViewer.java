@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -103,21 +102,26 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       if (!result.getSucceeded())
          return;
 
-      // set up a command to navigate to the destination once we've got the
-      // window open
+      // when the PDF is finished rendering, optionally navigate to the desired
+      // location, or set and restore the current location
       final PdfLocation pdfLocation = result.getPdfLocation();
-      executeOnPdfLoad_ = new Operation()
+      if (pdfLocation != null)
       {
-         @Override
-         public void execute()
+         executeOnPdfLoad_ = new Operation()
          {
-            if (pdfLocation != null)
+            @Override
+            public void execute()
             {
                PdfJsWindow.navigateTo(pdfJsWindow_, pdfLocation);
             }
-         }
-      };
-      
+         };
+      }
+      else if (haveActivePdfJsWindow() &&
+               event.getResult().getPdfPath().equals(lastSuccessfulPdfPath_))
+      {
+         executeOnPdfLoad_ = createRestorePositionOperation();
+      }
+         
       // open the window for the PDF 
       lastSuccessfulPdfPath_ = null;
       withPdfJsWindow(new Operation()
@@ -125,10 +129,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
          @Override
          public void execute()
          {
-            pdfJsWindow_.openPdf("/" + result.getViewPdfUrl(),
-                  result.getPdfPath().equals(
-                        StringUtil.notNull(lastSuccessfulPdfPath_))
-                        ? scale_ : 0);
+            pdfJsWindow_.openPdf("/" + result.getViewPdfUrl(), 0);
             lastSuccessfulPdfPath_ = result.getPdfPath();
          }
       });
@@ -188,6 +189,12 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    
    public void viewPdfUrl(final String url)
    {
+      if (haveActivePdfJsWindow() && 
+          url.equals(lastSuccessfulPdfPath_))
+      {
+         executeOnPdfLoad_ = createRestorePositionOperation();
+      }
+
       lastSuccessfulPdfPath_ = null;
       withPdfJsWindow(new Operation()
       {
@@ -206,11 +213,10 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    {
       int width = 1070;
       int height = 1200;
-      if (pdfJsWindow_ != null && !pdfJsWindow_.isClosed())
+      if (haveActivePdfJsWindow())
       {
          width = pdfJsWindow_.getOuterWidth();
          height = pdfJsWindow_.getOuterHeight();
-         scale_ = pdfJsWindow_.getCurrentScale();
          pdfJsWindow_.close();
          pdfJsWindow_ = null;
       }
@@ -227,6 +233,11 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       });
       executeOnPdfJsLoad_ = onLoaded;
       display_.openMinimalWindow(url, false, width, height, options);
+   }
+   
+   private boolean haveActivePdfJsWindow()
+   {
+      return pdfJsWindow_ != null && !pdfJsWindow_.isClosed();
    }
    
    private void initializePdfJsWindow(WindowEx win)
@@ -251,13 +262,27 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       }
    }
    
+   private Operation createRestorePositionOperation()
+   {
+      locationHash_ = pdfJsWindow_.getLocationHash();
+      return new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            pdfJsWindow_.applyLocationHash(locationHash_);
+            locationHash_ = null;
+         }
+      };
+   }
+   
    private final native void focusMainWindow() /*-{
       $wnd.focus();
    }-*/;
 
    private PdfJsWindow pdfJsWindow_;
    private String lastSuccessfulPdfPath_;
-   private float scale_;
+   private String locationHash_;
 
    // continuation operations for asynchronous operations: 
    // pdf.js loaded, PDF loaded in pdf.js

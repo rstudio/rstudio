@@ -23,7 +23,6 @@ import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -131,20 +130,30 @@ public class PdfJsWindow extends WindowEx
       this.PDFView.page = page;
    }-*/;
 
-   public final native JavaScriptObject getNavigateDest() /*-{
-      if (this.PDFView.pages.length == 0)
-         return null;
-      return {
-         scale: this.PDFView.currentScaleValue,
-         x: this.scrollX,
-         y: this.scrollY
-      };
+   public final native int getCurrentPage () /*-{
+      return this.PDFView.page;
+   }-*/;
+
+   public final native String getLocationHash() /*-{
+      var store = this.PDFView.store;
+      return "page=" + store.get("page") + "&zoom=" + store.get("zoom") +
+            "," + store.get("scrollLeft")
+            "," + store.get("scrollTop");
+   }-*/;
+   
+   public final native void applyLocationHash(String hash) /*-{
+      if (hash !== null)
+         this.PDFView.setHash(hash);
    }-*/;
    
    public final native float getCurrentScale() /*-{
       return this.PDFView.currentScaleValue;
    }-*/;
-   
+
+   public final native String getScaleDescription() /*-{
+      return this.PDFView.currentScale;
+   }-*/;
+
    private static void firePDFLoadEvent()
    {
       handlers_.fireEvent(new PDFLoadEvent());
