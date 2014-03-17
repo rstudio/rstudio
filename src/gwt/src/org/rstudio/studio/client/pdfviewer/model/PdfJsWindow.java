@@ -135,10 +135,12 @@ public class PdfJsWindow extends WindowEx
    }-*/;
 
    public final native String getLocationHash() /*-{
-      var store = this.PDFView.store;
-      return "page=" + store.get("page") + "&zoom=" + store.get("zoom") +
-            "," + store.get("scrollLeft")
-            "," + store.get("scrollTop");
+      var bookmark = this.document.getElementById("viewBookmark");
+      if (bookmark !== null)
+      {
+         return bookmark.href.substring(bookmark.href.indexOf("#") + 1);
+      }
+      return null;
    }-*/;
    
    public final native void applyLocationHash(String hash) /*-{
