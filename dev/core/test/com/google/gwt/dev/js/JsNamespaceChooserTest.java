@@ -50,8 +50,11 @@ public class JsNamespaceChooserTest extends TestCase {
   private JsProgram program;
 
   // components of the jjsmap
-  private JClassType javaType =
+  private JClassType comExampleFooClass =
       new JClassType(SourceOrigin.UNKNOWN, "com.example.Foo", false, false);
+  private JClassType defaultPackageBarClass =
+      new JClassType(SourceOrigin.UNKNOWN, "Bar", false, false);
+
   private Map<HasName, JsName> javaToName = Maps.newHashMap();
 
   public void testMoveJavaField() throws Exception {
@@ -66,6 +69,13 @@ public class JsNamespaceChooserTest extends TestCase {
     mapJavaField("x");
     checkResult("var ce={};ce.x=1;");
     checkNamespaceEquals("ce", "x");
+  }
+
+  public void testSkipDefaultPackageMember() throws Exception {
+    program = parseJs("var x = 1; x = 2;");
+    mapJavaField("x", defaultPackageBarClass);
+    checkResult("var x=1;x=2;");
+    checkNamespaceEquals(null, "x");
   }
 
   public void testSkipNonJavaGlobal() throws Exception {
@@ -106,17 +116,22 @@ public class JsNamespaceChooserTest extends TestCase {
 
   /** Adds a mapping from a JavaScript global to a Java field. */
   private void mapJavaField(String name) {
-    JField field = new JField(SourceOrigin.UNKNOWN, name, javaType, JPrimitiveType.INT, true,
+    mapJavaField(name, comExampleFooClass);
+  }
+
+  /** Adds a mapping from a JavaScript global to a Java field. */
+  private void mapJavaField(String name, JClassType clazz) {
+    JField field = new JField(SourceOrigin.UNKNOWN, name, clazz, JPrimitiveType.INT, true,
         Disposition.NONE);
-    javaType.addField(field);
+    clazz.addField(field);
     javaToName.put(field, program.getScope().findExistingName(name));
   }
 
   /** Adds a mapping from a JavaScript global to a Java method. */
   private void mapJavaMethod(String name) {
-    JMethod method = new JMethod(SourceOrigin.UNKNOWN, name, javaType, JPrimitiveType.VOID, false,
+    JMethod method = new JMethod(SourceOrigin.UNKNOWN, name, comExampleFooClass, JPrimitiveType.VOID, false,
         true, false, AccessModifier.DEFAULT);
-    javaType.addMethod(method);
+    comExampleFooClass.addMethod(method);
     javaToName.put(method, program.getScope().findExistingName(name));
   }
 
@@ -139,7 +154,7 @@ public class JsNamespaceChooserTest extends TestCase {
     JsSymbolResolver.exec(program);
 
     // Build the jjsmap.
-    List<JDeclaredType> types = ImmutableList.<JDeclaredType>of(javaType);
+    List<JDeclaredType> types = ImmutableList.<JDeclaredType>of(comExampleFooClass);
     Map<JsStatement, JClassType> typeForStatement = ImmutableMap.of();
     Map<JsStatement, JMethod> vtableInitForMethod = ImmutableMap.of();
     JavaToJavaScriptMapImpl jjsmap = new JavaToJavaScriptMapImpl(types, javaToName,

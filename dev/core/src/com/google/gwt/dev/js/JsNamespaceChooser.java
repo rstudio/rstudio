@@ -235,7 +235,9 @@ public class JsNamespaceChooser {
   }
 
   private static String findPackage(JDeclaredType type) {
-    return Util.getPackageName(type.getName());
+    String packageName = Util.getPackageName(type.getName());
+    // Return null for the default package.
+    return packageName.isEmpty() ? null : packageName;
   }
 
   /**
