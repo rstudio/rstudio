@@ -121,6 +121,14 @@ var MarkdownHighlightRules = function() {
                       "(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+"+
                     ")(>)"
         }, {
+            // embedded latex command
+            token : "keyword",
+            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
+        }, {
+            // embedded latex arg
+            token : ["paren.keyword.operator", "text", "paren.keyword.operator"],
+            regex : "(\\{)([^\\}]*)(\\})"
+        } , {
             token : "text",
             regex : "[^\\*_%$`\\[#<>\\\\]+"
         } , {
