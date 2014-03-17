@@ -24,16 +24,20 @@ public class CompileNotebookPrefs extends JavaScriptObject
    
    public static final CompileNotebookPrefs createDefault()
    {
-      return create("", CompileNotebookOptions.TYPE_DEFAULT);
+      return create("", 
+                    CompileNotebookOptions.TYPE_DEFAULT,
+                    CompileNotebookOptions.FORMAT_DEFAULT);
    }
    
    public static final native CompileNotebookPrefs create(String author,
-                                                          String type)
+                                                          String type,
+                                                          String format)
          
    /*-{
       var prefs = new Object();
       prefs.author = author;
       prefs.type = type;
+      prefs.format = format;
       return prefs;
    }-*/;
    
@@ -44,6 +48,10 @@ public class CompileNotebookPrefs extends JavaScriptObject
    public native final String getType() /*-{
       return this.type;
    }-*/;
+   
+   public native final String getFormat() /*-{
+      return this.format;
+   }-*/;
   
    public static native boolean areEqual(CompileNotebookPrefs a, 
                                          CompileNotebookPrefs b) /*-{
@@ -52,7 +60,8 @@ public class CompileNotebookPrefs extends JavaScriptObject
       if (a === null)
          return true;
       return a.author === b.author &&
-             a.type === b.type;    
+             a.type === b.type &&
+             a.format === b.format;    
    }-*/;
    
 }

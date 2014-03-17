@@ -199,7 +199,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<CompileNotebookPrefs> compileNotebookOptions()
    {
-      return object("compile_notebook_options",
+      return object("compile_notebook_options_v2",
                     CompileNotebookPrefs.createDefault());
    }
    

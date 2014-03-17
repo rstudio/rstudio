@@ -22,13 +22,19 @@ public class CompileNotebookOptions extends JavaScriptObject
    public static final String TYPE_STITCH = "stitch";
    public static final String TYPE_SPIN = "spin";
    
+   public static final String FORMAT_DEFAULT = "html_document";
+   public static final String FORMAT_HTML = "html_document";
+   public static final String FORMAT_PDF = "pdf_document";
+   public static final String FORMAT_WORD = "word_document";
+   
    public static native CompileNotebookOptions create(String id,
                                                       String prefix,
                                                       String suffix,
                                                       boolean sessionInfo,
                                                       String notebookTitle,
                                                       String notebookAuthor,
-                                                      String notebookType)
+                                                      String notebookType,
+                                                      String notebookFormat)
    /*-{
       return {
          id: id,
@@ -37,7 +43,8 @@ public class CompileNotebookOptions extends JavaScriptObject
          session_info: sessionInfo,
          notebook_title: notebookTitle,
          notebook_author: notebookAuthor,
-         notebook_type: notebookType
+         notebook_type: notebookType,
+         notebook_format: notebookFormat
       };
    }-*/;
 
@@ -70,5 +77,9 @@ public class CompileNotebookOptions extends JavaScriptObject
    
    public native final String getNotebookType() /*-{
       return this.notebook_type;
+   }-*/;
+   
+   public native final String getNotebookFormat() /*-{
+      return this.notebook_format;
    }-*/;
 }
