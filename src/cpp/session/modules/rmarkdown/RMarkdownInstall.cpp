@@ -95,9 +95,21 @@ Status status()
          LOG_ERROR(error);
 
       if (idePackageRequiresUpdate)
+      {
          return InstalledRequiresUpdate;
-      else
-         return Installed;
+      }
+      else // not from the IDE, check version
+      {
+         if (module_context::isPackageVersionInstalled("rmarkdown",
+                                                       s_currentVersion))
+         {
+            return Installed;
+         }
+         else
+         {
+            return InstalledRequiresUpdate;
+         }
+      }
    }
    else
    {
