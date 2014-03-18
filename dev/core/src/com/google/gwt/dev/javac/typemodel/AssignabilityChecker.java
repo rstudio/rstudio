@@ -17,6 +17,8 @@ package com.google.gwt.dev.javac.typemodel;
 
 import com.google.gwt.core.ext.typeinfo.JType;
 
+import java.util.Set;
+
 /**
  * A helper class to check assignability of types.
  */
@@ -164,9 +166,19 @@ class AssignabilityChecker {
       return true;
     }
 
-    for (JClassType jClassType : from.getFlattenedSupertypeHierarchy()) {
-      if (jClassType.getErasedType() == to.getErasedType()) {
-        return true;
+    Set<JClassType> fromSuperTypeHierarchy = from.getFlattenedSupertypeHierarchy();
+
+    // Shortcut: 'to' is one of the parents.
+    if (fromSuperTypeHierarchy.contains(to)) {
+      return true;
+    }
+
+    // Fallback to checking erased types if it is raw.
+    if (to.isRawType() != null) {
+      for (JClassType fromSuper : fromSuperTypeHierarchy) {
+        if (fromSuper.getErasedType() == to.getErasedType()) {
+          return true;
+        }
       }
     }
 
