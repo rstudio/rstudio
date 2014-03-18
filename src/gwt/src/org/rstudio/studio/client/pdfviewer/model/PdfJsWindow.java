@@ -96,10 +96,10 @@ public class PdfJsWindow extends WindowEx
          
          win.document.title = "RStudio: View PDF";
 
-         var _pdfView = win.PDFView;
-         var _setInitialView = _pdfView.setInitialView;
          // override the set initial view function so we know when the PDF has 
          // finished loading
+         var _pdfView = win.PDFView;
+         var _setInitialView = _pdfView.setInitialView;
          _pdfView.setInitialView = function(storedHash, scale) {
             _setInitialView.call(_pdfView, storedHash, scale);
             @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePDFLoadEvent()();
@@ -113,7 +113,7 @@ public class PdfJsWindow extends WindowEx
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLoadEvent()();
       });
       
-      this.addEventListener("beforeunload", function() {
+      this.addEventListener("unload", function() {
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()();
       });
       
