@@ -36,6 +36,7 @@ import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -58,11 +59,13 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                     final ApplicationServerOperations server,
                     final GlobalDisplay display,
                     final SatelliteManager satelliteManager,
-                    final Synctex synctex)
+                    final Synctex synctex,
+                    final UIPrefs prefs)
    {  
       display_ = display;
       server_ = server;
       synctex_ = synctex;
+      prefs_ = prefs;
       
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
       eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
@@ -100,6 +103,11 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
+      // only handle PDF compile events when we're the preferred viewer
+      if (!prefs_.getPdfPreviewValue().equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
+         return;
+      
+      // only handle successful compiles
       final CompilePdfResult result = event.getResult();
       if (!result.getSucceeded())
          return;
@@ -312,6 +320,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    private final GlobalDisplay display_;
    private final ApplicationServerOperations server_;
    private final Synctex synctex_;
+   private final UIPrefs prefs_;
    
    private final static String WINDOW_NAME = "rstudio_pdfjs";
 }
