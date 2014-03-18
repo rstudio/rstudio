@@ -233,6 +233,13 @@ public class UIPrefsAccessor extends Prefs
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";
    public static final String PDF_PREVIEW_SYSTEM = "system";
    
+   public static boolean internalPdfPreviewSupported()
+   {
+      // PDF.js doesn't play nicely with Qt and is therefore only supported
+      // on Cocoa desktop or in server mode
+      return BrowseCap.isCocoaDesktop() || !Desktop.isDesktop();
+   }
+
    public PrefValue<String> pdfPreview()
    {
       return string("pdf_previewer", getDefaultPdfPreview());
@@ -245,16 +252,13 @@ public class UIPrefsAccessor extends Prefs
       // get the underlying value
       String pdfPreview = pdfPreview().getValue();
       
-      // historically pdf.js (PDF_PREVIEW_RSTUDIO) has had problems on the Mac,
-      // but now that we're using Safari and a newer drop of pdf.js, there's
-      // no need to adjust this preference
-      /*
-      if (BrowseCap.isMacintoshDesktop())
+      // if this system doesn't support the internal previewer, silently map
+      // that option to the system previewer
+      if (!internalPdfPreviewSupported() && 
+          pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
       {
-         if (pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
-            pdfPreview = PDF_PREVIEW_SYSTEM;
+         pdfPreview = PDF_PREVIEW_SYSTEM;
       }
-      */
       
       // return the (potentially) adjusted value
       return pdfPreview;

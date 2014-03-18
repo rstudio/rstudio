@@ -26,6 +26,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
@@ -157,8 +158,11 @@ public class CompilePdfPreferencesPane extends PreferencesPane
                                UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
       }
       
-      pdfPreview_.addChoice("RStudio Viewer", 
-                            UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+      if (UIPrefsAccessor.internalPdfPreviewSupported())
+      {
+         pdfPreview_.addChoice("RStudio Viewer", 
+                               UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+      }
       
       pdfPreview_.addChoice("System Viewer",
                             UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
