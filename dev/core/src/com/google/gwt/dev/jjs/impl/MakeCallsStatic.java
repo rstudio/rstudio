@@ -267,7 +267,10 @@ public class MakeCallsStatic {
         // The target method was already pruned (TypeTightener will fix this).
         return;
       }
-  
+
+      if (program.typeOracle.isJsInterfaceMethod(method)) {
+          return;
+      }
       // Let's do it!
       toBeMadeStatic.add(method);
     }

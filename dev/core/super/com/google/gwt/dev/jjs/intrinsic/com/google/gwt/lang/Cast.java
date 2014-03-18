@@ -81,8 +81,22 @@ final class Cast {
     return src;
   }
 
+  /**
+   * A dynamic cast that optionally checks for JsInterface prototypes.
+   */
+  static Object dynamicCastWithPrototype(Object src, JavaScriptObject dstId, String jsType) {
+    if (src != null && !canCast(src, dstId) && !jsInstanceOf(src, jsType)) {
+      throw new ClassCastException();
+    }
+    return src;
+  }
+
   static boolean instanceOf(Object src, JavaScriptObject dstId) {
     return (src != null) && canCast(src, dstId);
+  }
+
+  static boolean instanceOfJsInterface(Object src, JavaScriptObject dstId, String jsType) {
+    return instanceOf(src, dstId) || jsInstanceOf(src, jsType);
   }
 
   static boolean instanceOfJso(Object src) {
@@ -125,6 +139,58 @@ final class Cast {
 
   static native boolean jsEquals(Object a, Object b) /*-{
     return a == b;
+  }-*/;
+
+  /**
+   * Determine if object is an instanceof jsType regardless of window or frame.
+   */
+  static native boolean jsInstanceOf(Object obj, String jsType) /*-{
+    if (!obj) {
+        return false;
+    }
+
+    // fast check for $wnd versions when CastNormalizer can pass function refs directly
+    // TODO(cromwellian) restore JSymbolLiteral to allow JS reference literals to be passed through
+    if (typeof(jsType) === 'function'  && obj instanceof jsType) {
+        return true;
+    }
+
+    // early out for non-Java types because this check is expensive
+    if (typeof(obj) === 'string' || @com.google.gwt.lang.Cast::hasTypeMarker(Ljava/lang/Object;)(obj)) {
+        return false;
+    }
+
+    // hack workaround for HtmlUnit and fast early exit
+    // This *ONLY* works for functions in JS that are non-anonymous and doesn't obey hierarchy
+    // TODO(cromwellian) TEMPORARY: fix HtmlUnit patch upstream and remove this
+    if (obj.constructor && obj.constructor.name == jsType) {
+        return true;
+    }
+
+    // More general check, works on all browsers
+    if (obj.constructor) {
+      // TODO: remove support for $wnd
+      var isMainWindow = jsType.substring(0, 5) == '$wnd.';
+      var jsFunction = obj.constructor;
+      var jsTypeInContext = $wnd;
+      if (!isMainWindow) {
+        // Find native 'Function' function
+        while (jsFunction != jsFunction.constructor) {
+          jsFunction = jsFunction.constructor;
+        }
+        // eval 'return this' in context to get global scope which defines obj's constructor
+        var jsTypeInContext = jsFunction("return window || self;")();
+      } else {
+          // strip of $wnd.
+          jsType = jsType.substring(5);
+      }
+      // build up contextWindow.some.type.Path
+      for (var parts = jsType.split("."), i = 0, l = parts.length; i < l && jsTypeInContext; i++) {
+          jsTypeInContext = jsTypeInContext[parts[i]];
+      }
+      return obj instanceof jsTypeInContext;
+    }
+    return false;
   }-*/;
 
   static native boolean jsNotEquals(Object a, Object b) /*-{

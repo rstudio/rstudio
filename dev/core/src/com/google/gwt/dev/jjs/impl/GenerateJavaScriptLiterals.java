@@ -141,4 +141,16 @@ public class GenerateJavaScriptLiterals extends JVisitor {
   protected final <T extends JsVisitable> void push(T node) {
     nodeStack.push(node);
   }
+
+  public JsNameRef convertQualifiedPrototypeToNameRef(SourceInfo sourceInfo, String jsPrototype) {
+    String parts[] = jsPrototype.split("\\.");
+    JsNameRef toReturn = new JsNameRef(sourceInfo, parts[parts.length - 1]);
+    JsNameRef ref = toReturn;
+    for (int i = parts.length - 2; i >= 0; i--) {
+      JsNameRef qualifier = new JsNameRef(sourceInfo, parts[i]);
+      ref.setQualifier(qualifier);
+      ref = qualifier;
+    }
+    return toReturn;
+  }
 }

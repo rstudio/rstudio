@@ -25,6 +25,39 @@ import java.io.Serializable;
  */
 public class JInterfaceType extends JDeclaredType {
 
+  private final String jsPrototype;
+  private final JsInteropType jsInteropType;
+
+  /**
+   * The type of JsInterface this can be: NONE, NO_PROTOTYPE, JS_PROTOTYPE, NATIVE_PROTOTYPE (e.g. DOM element), and
+   * WEB_COMPONENT.
+   */
+  public enum JsInteropType {
+    NONE,
+    NO_PROTOTYPE,
+    JS_PROTOTYPE,
+    NATIVE_PROTOTYPE,
+    WEB_COMPONENT
+  }
+
+  public JInterfaceType(SourceInfo info, String name, JsInteropType interopType, String jsPrototype) {
+    super(info, name);
+    this.jsInteropType = interopType;
+    this.jsPrototype = jsPrototype;
+  }
+
+  public boolean isJsInterface() {
+    return jsInteropType != JsInteropType.NONE;
+  }
+
+  public JsInteropType getJsInteropType() {
+    return jsInteropType;
+  }
+
+  public String getJsPrototype() {
+    return jsPrototype;
+  }
+
   private static class ExternalSerializedForm implements Serializable {
     private final String name;
 
@@ -38,14 +71,14 @@ public class JInterfaceType extends JDeclaredType {
   }
 
   public JInterfaceType(SourceInfo info, String name) {
-    super(info, name);
+    this(info, name, JsInteropType.NONE, null);
   }
 
   /**
    * Construct a bare-bones deserialized external interface.
    */
   private JInterfaceType(String name) {
-    super(SourceOrigin.UNKNOWN, name);
+    this(SourceOrigin.UNKNOWN, name, JsInteropType.NONE, null);
     setExternal(true);
   }
 

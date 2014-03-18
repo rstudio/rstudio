@@ -79,7 +79,7 @@ public class StandardGeneratorContext implements GeneratorContext {
    * that source isn't requested until the generator has finished writing it.
    * This version is backed by {@link StandardGeneratorContext#diskCache}.
    */
-  private static class GeneratedUnitImpl implements Generated {
+  public static class GeneratedUnitImpl implements Generated {
 
     /**
      * A token to retrieve this object's bytes from the disk cache.

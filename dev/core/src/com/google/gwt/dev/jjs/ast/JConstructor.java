@@ -49,6 +49,19 @@ public class JConstructor extends JMethod {
    */
   private boolean isEmpty = false;
 
+  private boolean defaultConstructor;
+
+  public void setDefaultConstructor() {
+    defaultConstructor = true;
+  }
+
+  /**
+   * True if the constructor is default, auto-synthesized.
+   */
+  public boolean isDefaultConstructor() {
+    return defaultConstructor;
+  }
+
   public JConstructor(SourceInfo info, JClassType enclosingType) {
     // Access only matters for virtual methods, just use public.
     super(info, enclosingType.getShortName(), enclosingType, JPrimitiveType.VOID, false, false,
@@ -140,5 +153,4 @@ public class JConstructor extends JMethod {
       return this;
     }
   }
-
 }

@@ -47,6 +47,16 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     }
   }
 
+  private String exportName;
+
+  public void setExportName(String exportName) {
+    this.exportName = exportName;
+  }
+
+  public String getExportName() {
+    return exportName;
+  }
+
   private static class ExternalSerializedForm implements Serializable {
 
     private final JDeclaredType enclosingType;

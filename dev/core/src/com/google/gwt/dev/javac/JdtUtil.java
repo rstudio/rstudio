@@ -20,9 +20,17 @@ import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.compiler.ast.Annotation;
+import org.eclipse.jdt.internal.compiler.impl.BooleanConstant;
+import org.eclipse.jdt.internal.compiler.impl.StringConstant;
+import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
+import org.eclipse.jdt.internal.compiler.lookup.Binding;
+import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
+import org.eclipse.jdt.internal.compiler.lookup.ElementValuePair;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
+import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
@@ -117,5 +125,70 @@ public final class JdtUtil {
   }
 
   private JdtUtil() {
+  }
+
+  public static String getAnnotationParameterString(AnnotationBinding a, String paramName) {
+    if (a != null) {
+      for (ElementValuePair maybeValue : a.getElementValuePairs()) {
+        if (maybeValue.getValue() instanceof StringConstant &&
+            paramName.equals(String.valueOf(maybeValue.getName()))) {
+          return ((StringConstant) maybeValue.getValue()).stringValue();
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean getAnnotationParameterBoolean(AnnotationBinding a, String paramName) {
+    if (a != null) {
+      for (ElementValuePair maybeValue : a.getElementValuePairs()) {
+        if (maybeValue.getValue() instanceof BooleanConstant &&
+            paramName.equals(String.valueOf(maybeValue.getName()))) {
+          return ((BooleanConstant) maybeValue.getValue()).booleanValue();
+        }
+      }
+    }
+    return false;
+  }
+
+  static AnnotationBinding getAnnotation(AnnotationBinding[] annotations, String nameToFind) {
+    if (annotations != null) {
+      for (AnnotationBinding a : annotations) {
+        ReferenceBinding annBinding = a.getAnnotationType();
+        String annName = CharOperation.toString(annBinding.compoundName);
+        if (nameToFind.equals(annName)) {
+          return a;
+        }
+      }
+    }
+    return null;
+  }
+
+  static AnnotationBinding getAnnotation(Annotation[] annotations, String nameToFind) {
+    if (annotations != null) {
+      for (Annotation a : annotations) {
+        AnnotationBinding annBinding = a.getCompilerAnnotation();
+        if (annBinding != null) {
+          String annName = CharOperation.toString(annBinding.getAnnotationType().compoundName);
+          if (nameToFind.equals(annName)) {
+            return annBinding;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static AnnotationBinding getAnnotation(Binding binding, String nameToFind) {
+    if (binding instanceof SourceTypeBinding) {
+      ClassScope scope = ((SourceTypeBinding) binding).scope;
+      return scope != null ? getAnnotation(scope.referenceType().annotations, nameToFind) : null;
+    } else if (binding instanceof ReferenceBinding) {
+      return getAnnotation(((ReferenceBinding) binding).getAnnotations(), nameToFind);
+    } else if (binding instanceof MethodBinding) {
+      return getAnnotation(((MethodBinding) binding).sourceMethod().annotations, nameToFind);
+    } else {
+      return null;
+    }
   }
 }

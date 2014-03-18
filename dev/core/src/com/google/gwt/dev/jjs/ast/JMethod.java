@@ -36,6 +36,25 @@ import java.util.Set;
 public class JMethod extends JNode implements HasEnclosingType, HasName, HasType, CanBeAbstract,
     CanBeSetFinal, CanBeNative, CanBeStatic {
 
+  private String exportName;
+  private boolean jsProperty;
+
+  public void setExportName(String exportName) {
+    this.exportName = exportName;
+  }
+
+  public String getExportName() {
+    return exportName;
+  }
+
+  public void setJsProperty(boolean jsProperty) {
+    this.jsProperty = jsProperty;
+  }
+
+  public boolean isJsProperty() {
+    return jsProperty;
+  }
+
   private static class ExternalSerializedForm implements Serializable {
 
     private final JDeclaredType enclosingType;

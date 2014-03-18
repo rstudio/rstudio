@@ -39,6 +39,10 @@ public class RemoveEmptySuperCalls {
         JMethodCall call = (JMethodCall) x.getExpr();
         if (call.getTarget() instanceof JConstructor) {
           JConstructor ctor = (JConstructor) call.getTarget();
+          if (JProgram.isJsInterfacePrototype(ctor.getEnclosingType())) {
+            // don't remove calls to JsInterface super-constructors;
+            return;
+          }
           if (ctor.isEmpty()) {
             // TODO: move this 3-way into Simplifier.
             if (call.getArgs().isEmpty()) {

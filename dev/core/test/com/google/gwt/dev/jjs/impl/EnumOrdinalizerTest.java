@@ -997,6 +997,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
      */
     if (performCastReplacement) {
       ComputeCastabilityInformation.exec(program, false);
+      ComputeInstantiatedJsoInterfaces.exec(program);
       ImplementCastsAndTypeChecks.exec(program, false);
     }
     if (runEqualityNormalizer) {

@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
+import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -70,6 +71,7 @@ import java.util.Set;
  * execution at a specified location.
  */
 public class ControlFlowAnalyzer {
+
   /**
    * A callback for recording control-flow dependencies as they are discovered.
    * See {@link ControlFlowAnalyzer#setDependencyRecorder(DependencyRecorder)}.
@@ -90,6 +92,19 @@ public class ControlFlowAnalyzer {
    */
   private class RescueVisitor extends JVisitor {
     private final ArrayList<JMethod> curMethodStack = new ArrayList<JMethod>();
+
+    private RescueVisitor() {
+      /*
+       * Rescue any types that would have been rescued by JCastOperation/JInstanceOf
+       * after normalization.
+       */
+      if (rescuedViaCast != null) {
+        for (JReferenceType type : rescuedViaCast) {
+          rescue(type, true, true);
+        }
+        rescuedViaCast.clear();
+      }
+    }
 
     @Override
     public boolean visit(JArrayType type, Context ctx) {
@@ -186,23 +201,29 @@ public class ControlFlowAnalyzer {
     public boolean visit(JCastOperation x, Context ctx) {
       // Rescue any JavaScriptObject type that is the target of a cast.
       JType targetType = x.getCastType();
-      if (program.typeOracle.canBeJavaScriptObject(targetType)) {
+      if (program.typeOracle.canBeInstantiatedInJavascript(targetType)) {
         rescue((JReferenceType) targetType, true, true);
         JType exprType = x.getExpr().getType();
         if (program.typeOracle.isSingleJsoImpl(targetType)) {
           /*
-           * It's a JSO interface, check if the source expr can be a live JSO 1)
-           * source is java.lang.Object (JSO could have been assigned to it) 2)
-           * source is JSO 3) source is SingleJSO interface whose implementor is
-           * live
+           * It's a JSO interface, check if the source expr can be a live JSO:
+           * 1) source is java.lang.Object (JSO could have been assigned to it)
+           * 2) source is JSO
+           * 3) source is SingleJSO interface whose implementor is live
            */
           if (program.getTypeJavaLangObject() == exprType
               || program.typeOracle.canBeJavaScriptObject(exprType)) {
             // source is JSO or SingleJso interface whose implementor is live
             JClassType jsoImplementor =
                 program.typeOracle.getSingleJsoImpl((JReferenceType) targetType);
-            rescue(jsoImplementor, true, true);
+            if (jsoImplementor != null) {
+              rescue(jsoImplementor, true, true);
+            }
           }
+        } else if (program.typeOracle.isJsInterface(targetType)
+            && ((JInterfaceType) targetType).getJsPrototype() != null) {
+          // keep alive JsInterface with prototype used in cast so it can used in cast checks against JS objects later
+          rescue((JReferenceType) targetType, true, true);
         }
       }
       return true;
@@ -292,6 +313,17 @@ public class ControlFlowAnalyzer {
         if (!liveFieldsAndMethods.contains(target)) {
           membersToRescueIfTypeIsInstantiated.add(target);
         }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visit(JInstanceOf x, Context ctx) {
+      JReferenceType targetType = x.getTestType();
+      if (program.typeOracle.isJsInterface(targetType)
+          && ((JInterfaceType) targetType).getJsPrototype() != null) {
+        // keep alive JsInterface with prototype used in cast so it can used in cast checks against JS objects later
+        rescue((JReferenceType) targetType, true, true);
       }
       return true;
     }
@@ -540,7 +572,8 @@ public class ControlFlowAnalyzer {
      */
     private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
       boolean doIt = false;
-      if (program.typeOracle.canBeJavaScriptObject(type) || program.isJavaLangString(type)) {
+      if (program.typeOracle.canBeInstantiatedInJavascript(type)
+          || program.isJavaLangString(type)) {
         doIt = true;
       } else if (type instanceof JArrayType) {
         /*
@@ -550,15 +583,18 @@ public class ControlFlowAnalyzer {
         JArrayType arrayType = (JArrayType) type;
         JType elementType = arrayType.getElementType();
         if (elementType instanceof JPrimitiveType || program.isJavaLangString(elementType)
-            || program.typeOracle.canBeJavaScriptObject(elementType)) {
+            || program.typeOracle.canBeInstantiatedInJavascript(elementType)) {
           doIt = true;
         }
       }
       if (doIt) {
         rescue((JReferenceType) type, true, true);
         if (program.typeOracle.isSingleJsoImpl(type)) {
-          // Cast of JSO into SingleJso interface, rescue the implementor
-          rescue(program.typeOracle.getSingleJsoImpl((JReferenceType) type), true, true);
+          // Cast of JSO into SingleJso interface, rescue the implementor if exists
+          JClassType singleJsoImpl = program.typeOracle.getSingleJsoImpl((JReferenceType) type);
+          if (singleJsoImpl != null) {
+            rescue(singleJsoImpl, true, true);
+          }
         }
       }
     }
@@ -586,6 +622,12 @@ public class ControlFlowAnalyzer {
           rescueOverridingMethods(method);
           if (method == getClassMethod) {
             rescueClassLiteralsIfGetClassIsLive();
+          }
+          if (JProgram.isJsInterfacePrototype(method.getEnclosingType())) {
+            // for JsInterface Prototype methods, rescue all parameters
+            for (JParameter param : method.getParams()) {
+              rescue(param);
+            }
           }
           return true;
         }
@@ -619,7 +661,27 @@ public class ControlFlowAnalyzer {
 
       if (doVisit) {
         accept(type);
+        if (type instanceof JInterfaceType) {
+          /*
+           * For @JsInterface with a Java implementor, we rescue all interface
+           * methods because we don't know if they'll be called from JS or not.
+           * That is, the Java implementor may be called because the interface
+           * was passed into JS, or it may be called via exported functions.
+           *
+           * We may be able to tighten this to check for @JsExport as well,
+           * since if there is no @JsExport, the only way for JS code to get a
+           * reference to the interface is by it being constructed in Java
+           * and passed via JSNI into JS, and in that mechanism, the
+           * rescue would happen automatically.
+           */
+          JInterfaceType intfType = (JInterfaceType) type;
 
+          if (intfType.isJsInterface()) {
+            for (JMethod method : intfType.getMethods()) {
+              rescue(method);
+            }
+          }
+        }
         if (type instanceof JDeclaredType) {
           for (JNode artificial : ((JDeclaredType) type).getArtificialRescues()) {
             if (artificial instanceof JReferenceType) {
@@ -707,7 +769,10 @@ public class ControlFlowAnalyzer {
       for (int c = params.size(); i < c; ++i) {
         JExpression arg = args.get(i);
         JParameter param = params.get(i);
-        if (arg.hasSideEffects() || liveFieldsAndMethods.contains(param)) {
+        if (arg.hasSideEffects() || liveFieldsAndMethods.contains(param)
+            // rescue any args of JsInterface Prototype methods or JsInterface
+            || program.typeOracle.isJsInterfaceMethod(method)
+            || program.isJsInterfacePrototype(method.getEnclosingType())) {
           this.accept(arg);
           continue;
         }
@@ -870,6 +935,7 @@ public class ControlFlowAnalyzer {
   private final JProgram program;
   private Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
   private final RescueVisitor rescuer = new RescueVisitor();
+  private final Set<JReferenceType> rescuedViaCast = new HashSet<JReferenceType>();
   private final JMethod runAsyncOnsuccess;
   private JMethod stringValueOfChar = null;
 
@@ -902,6 +968,7 @@ public class ControlFlowAnalyzer {
     baseArrayType = program.getIndexedType("Array");
     getClassField = program.getIndexedField("Object.___clazz");
     getClassMethod = program.getIndexedMethod("Object.getClass");
+    rescuedViaCast.addAll(program.typeOracle.getInstantiatedJsoTypesViaCast());
     buildMethodsOverriding();
   }
 
@@ -962,6 +1029,17 @@ public class ControlFlowAnalyzer {
     for (JMethod method : program.getEntryMethods()) {
       traverseFrom(method);
     }
+
+    /*
+     * All exported methods must be treated as entry points. We need to invent a way to
+     * scope this down via flags or module properties.
+     */
+    for (JMethod method : program.typeOracle.getExportedMethods()) {
+      // treat class as instantiated, since a ctor may be called from JS export
+      rescuer.rescue(method.getEnclosingType(), true, true);
+      traverseFrom(method);
+    }
+
     if (program.getRunAsyncs().size() > 0) {
       /*
        * Explicitly rescue AsyncFragmentLoader.onLoad(). It is never explicitly

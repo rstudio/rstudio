@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
+import com.google.gwt.dev.jjs.impl.ComputeInstantiatedJsoInterfaces;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.Devirtualizer;
@@ -93,6 +94,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
       LongEmulationNormalizer.exec(jprogram);
       TypeCoercionNormalizer.exec(jprogram);
       ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+      ComputeInstantiatedJsoInterfaces.exec(jprogram);
       ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled());
       ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
       EqualityNormalizer.exec(jprogram);

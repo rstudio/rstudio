@@ -35,7 +35,7 @@ public abstract class CompilationUnitBuilder {
   static class GeneratedCompilationUnitBuilder extends CompilationUnitBuilder {
     private final GeneratedUnit generatedUnit;
 
-    private GeneratedCompilationUnitBuilder(GeneratedUnit generatedUnit) {
+    public GeneratedCompilationUnitBuilder(GeneratedUnit generatedUnit) {
       this.generatedUnit = generatedUnit;
     }
 

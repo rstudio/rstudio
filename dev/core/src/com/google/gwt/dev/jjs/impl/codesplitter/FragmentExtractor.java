@@ -440,7 +440,11 @@ public class FragmentExtractor {
       JsNameRef func = (JsNameRef) call.getQualifier();
       JsFunction defineClassJsFunc =
           jsprogram.getIndexedFunction("JavaClassHierarchySetupUtil.defineClass");
-      if (func.getName() != defineClassJsFunc.getName()) {
+      JsFunction defineClassJsProtoFunc =
+          jsprogram.getIndexedFunction(
+              "JavaClassHierarchySetupUtil.defineClassWithPrototype");
+      if (func.getName() != defineClassJsFunc.getName() && func.getName() !=
+          defineClassJsProtoFunc.getName()) {
         return null;
       }
       return map.typeForStatement(stat);

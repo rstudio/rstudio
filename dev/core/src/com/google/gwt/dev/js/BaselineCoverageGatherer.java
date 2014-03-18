@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -90,7 +91,8 @@ public class BaselineCoverageGatherer {
         // there isn't really a way to detect that they're synthetic, and the
         // strategy below of comparing source info with that of the enclosing type
         // doesn't work because the enclosing type is set to be that of the superclass.
-        if (x.getTarget().isSynthetic() || x.toSource().equals("super()")) {
+        if (x.getTarget().isSynthetic()
+            || (x.getTarget() instanceof JConstructor && ((JConstructor) x.getTarget()).isDefaultConstructor())) {
           return;
         }
         endVisit((JExpression) x, ctx);

@@ -206,7 +206,13 @@ public class ImplementClassLiteralsAsFields {
 
       JLiteral superclassLiteral;
       if (classType.getSuperClass() != null) {
-        superclassLiteral = createDependentClassLiteral(info, classType.getSuperClass());
+        if (JProgram.isJsInterfacePrototype(classType)) {
+          JInterfaceType jsInterface = program.typeOracle.getNearestJsInterface(classType, true);
+          assert jsInterface != null;
+          superclassLiteral = createDependentClassLiteral(info, jsInterface);
+        } else {
+          superclassLiteral = createDependentClassLiteral(info, classType.getSuperClass());
+        }
       } else {
         superclassLiteral = JNullLiteral.INSTANCE;
       }

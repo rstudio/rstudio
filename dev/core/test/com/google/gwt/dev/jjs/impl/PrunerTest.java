@@ -67,6 +67,33 @@ public class PrunerTest extends OptimizerTestBase {
         "}-*/;");
     addSnippetClassDecl("static void methodWithUninstantiatedParam(UninstantiatedClass c) { }");
     addSnippetClassDecl("interface UnusedInterface { void foo(); }");
+    addSnippetImport("com.google.gwt.core.client.js.JsInterface");
+    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetImport("com.google.gwt.core.client.js.impl"
+        + ".PrototypeOfJsInterface");
+    addSnippetClassDecl("interface Callback { void go(); }");
+    addSnippetImport("com.google.gwt.core.client.js.JsInterface");
+    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+
+
+    addSnippetClassDecl("@JsInterface interface Js { void doIt(Callback cb); }");
+    addSnippetClassDecl("@JsInterface(prototype=\"Foo\") interface JsProto { " +
+        "@PrototypeOfJsInterface static class Prototype implements JsProto {" +
+        "public Prototype(int arg) {}" +
+        "}" +
+        "}");
+    addSnippetClassDecl("static class JsProtoImpl "
+        + "extends JsProto.Prototype {" +
+        "public JsProtoImpl() { super(10); }" +
+        "}");
+
+    addSnippetClassDecl("static class JsProtoImpl2 extends JsProto.Prototype {" +
+        "@JsExport(\"foo\") public JsProtoImpl2() { super(10); }" +
+        "}");
+
+    addSnippetClassDecl("static class JsProtoImpl3 extends JsProto.Prototype {" +
+        "public JsProtoImpl3() { super(10); }" +
+        "}");
 
     Result result;
     (result = optimize("void",
@@ -80,7 +107,8 @@ public class PrunerTest extends OptimizerTestBase {
         "methodWithUninstantiatedParam(null);",
         "new UsedClass(null);",
         "new UsedClass(returnUninstantiatedClass(), returnUninstantiatedClass());",
-        "UninstantiatedClass localUninstantiated = null;"
+        "UninstantiatedClass localUninstantiated = null;",
+        "JsProtoImpl jsp = new JsProtoImpl();"
         )).intoString(
             "EntryPoint.usedMethod();",
             "EntryPoint.foo(EntryPoint.unassignedField);",
@@ -90,7 +118,8 @@ public class PrunerTest extends OptimizerTestBase {
             "null.nullMethod();",
             "EntryPoint.methodWithUninstantiatedParam();",
             "new EntryPoint$UsedClass();",
-            "new EntryPoint$UsedClass((EntryPoint.returnUninstantiatedClass(), EntryPoint.returnUninstantiatedClass()));"
+            "new EntryPoint$UsedClass((EntryPoint.returnUninstantiatedClass(), EntryPoint.returnUninstantiatedClass()));",
+            "new EntryPoint$JsProtoImpl();"
             );
 
     assertNotNull(result.findMethod("usedMethod"));
@@ -141,6 +170,20 @@ public class PrunerTest extends OptimizerTestBase {
         "\n" +
         "}",
         result.findClass("EntryPoint$UsedInterface").toSource());
+
+    // Neither super ctor call, nor super call's param is pruned
+    assertEquals(
+        "public EntryPoint$JsProtoImpl(){\n" +
+            "  super(10);\n" +
+            "  this.$init();\n" +
+            "}",
+        findMethod(result.findClass("EntryPoint$JsProtoImpl"), "EntryPoint$JsProtoImpl").toSource());
+
+    // Not exported, and not instantiated, so should be pruned
+    assertNull(result.findClass("EntryPoint$JsProtoImpl3"));
+
+    // Should be rescued because of @JsExport
+    assertNotNull(result.findClass("EntryPoint$JsProtoImpl2"));
   }
 
   @Override

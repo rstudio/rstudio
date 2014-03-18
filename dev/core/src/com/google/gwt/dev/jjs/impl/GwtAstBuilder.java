@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.javac.JSORestrictionsChecker;
 import com.google.gwt.dev.javac.JdtUtil;
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
@@ -3184,6 +3185,7 @@ public class GwtAstBuilder {
               getFieldDisposition(binding));
     }
     enclosingType.addField(field);
+    JsInteropUtil.maybeSetExportedField(x, field);
     typeMap.setField(binding, field);
   }
 
@@ -3279,6 +3281,9 @@ public class GwtAstBuilder {
     boolean isNested = JdtUtil.isInnerClass(declaringClass);
     if (x.isConstructor()) {
       method = new JConstructor(info, (JClassType) enclosingType);
+      if (x.isDefaultConstructor()) {
+        ((JConstructor) method).setDefaultConstructor();
+      }
       if (x.binding.declaringClass.isEnum()) {
         // Enums have hidden arguments for name and value
         method.addParam(new JParameter(info, "enum$name", typeMap.get(x.scope.getJavaLangString()),
@@ -3335,6 +3340,7 @@ public class GwtAstBuilder {
       method.setSynthetic();
     }
     enclosingType.addMethod(method);
+    JsInteropUtil.maybeSetJsinteropMethodProperties(x, method);
     typeMap.setMethod(b, method);
   }
 
@@ -3395,8 +3401,13 @@ public class GwtAstBuilder {
       JDeclaredType type;
       if (binding.isClass()) {
         type = new JClassType(info, name, binding.isAbstract(), binding.isFinal());
+        JsInteropUtil.maybeSetJsPrototypeFlag(x, (JClassType) type);
       } else if (binding.isInterface() || binding.isAnnotationType()) {
-        type = new JInterfaceType(info, name);
+        String jsPrototype = "";
+        JInterfaceType.JsInteropType interopType = JInterfaceType.JsInteropType.NONE;
+        jsPrototype = JsInteropUtil.maybeGetJsInterfacePrototype(x, jsPrototype);
+        interopType = JsInteropUtil.maybeGetJsInterfaceType(x, jsPrototype, interopType);
+        type = new JInterfaceType(info, name, interopType, jsPrototype);
       } else if (binding.isEnum()) {
         if (binding.isAnonymousType()) {
           // Don't model an enum subclass as a JEnumType.

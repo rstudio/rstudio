@@ -40,6 +40,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   private final boolean isAbstract;
   private boolean isFinal;
   private JClassType superClass;
+  private boolean isJsPrototype = false;
 
   public JClassType(SourceInfo info, String name, boolean isAbstract, boolean isFinal) {
     super(info, name);
@@ -93,6 +94,14 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
    */
   public final void setSuperClass(JClassType superClass) {
     this.superClass = superClass;
+  }
+
+  public boolean isJsPrototypeStub() {
+    return isJsPrototype;
+  }
+
+  public void setJsPrototypeStub(boolean isJsPrototype) {
+    this.isJsPrototype = isJsPrototype;
   }
 
   @Override

@@ -330,13 +330,40 @@ public class JavaResourceBase {
           "  public void addSuppressed(Throwable ex) { }",
           "}");
 
+  // TODO: move JS* annotations to intrinsic mock resource base
+  public static final MockJavaResource JSINTERFACE =
+      createMockJavaResource("com.google.gwt.core.client.js.JsInterface",
+          "package com.google.gwt.core.client.js;",
+          "public @interface JsInterface {\n",
+          "  String prototype() default \"\";\n" +
+              "  boolean isNative() default false;\n",
+          "}"
+      );
+  public static final MockJavaResource JSINTERFACEPROTOTYPE =
+      createMockJavaResource("com.google.gwt.core.client.js.impl.PrototypeOfJsInterface",
+          "package com.google.gwt.core.client.js.impl;",
+          "public @interface PrototypeOfJsInterface {\n",
+          "}");
+  public static final MockJavaResource JSEXPORT =
+      createMockJavaResource("com.google.gwt.core.client.js.JsExport",
+          "package com.google.gwt.core.client.js;",
+          "public @interface JsExport {\n",
+          "  String value() default \"\";\n",
+          "}");
+  public static final MockJavaResource JSPROPERTY =
+      createMockJavaResource("com.google.gwt.core.client.js.JsProperty",
+          "package com.google.gwt.core.client.js;",
+          "public @interface JsProperty {\n",
+          "  String value() default \"\";\n",
+          "}");
+
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[]{
         AUTOCLOSEABLE, ANNOTATION, ARRAY_LIST, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
         CLASS_NOT_FOUND_EXCEPTION, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT,
-        INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR,
-        NUMBER, OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,
-        SUPPRESS_WARNINGS, THROWABLE};
+        INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER,
+        OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE,
+        JSINTERFACE, JSINTERFACEPROTOTYPE, JSEXPORT, JSPROPERTY};
   }
 
   /**

@@ -17,6 +17,8 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
+import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
@@ -27,9 +29,11 @@ import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
+import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
@@ -37,6 +41,7 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -55,6 +60,44 @@ import java.util.Stack;
  * @see jsoRestrictions.html
  */
 public class JSORestrictionsChecker {
+
+  public static final String ERR_JSINTERFACE_ONLY_ON_INTERFACES = "@JsInterface only permitted on interfaces";
+  public static final String ERR_JSINTERFACE_OVERLOADS_NOT_ALLOWED =
+      "JsInterface methods cannot overload another method.";
+  public static final String ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS =
+      "@JsExport may only be applied to constructors and static methods.";
+  public static final String ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING =
+      "@JsProperty is only allowed on JavaBean-style or fluent-style named methods";
+  public static final String ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS =
+      "Classes implementing @JsInterface with a prototype must extend that interface's Prototype class";
+  public static final String ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE =
+      "Classes implementing a @JsInterface without a prototype should not extend the Prototype class";
+  public static final String ERR_JSEXPORT_USED_ON_JSINTERFACE =
+      "@JsExport used on @JsInterface interface, instead of implementing class";
+  public static final String ERR_JSPROPERTY_ONLY_ON_INTERFACES =
+      "@JsProperty not allowed on concrete class methods";
+  public static final String ERR_CONSTRUCTOR_WITH_PARAMETERS =
+      "Constructors must not have parameters in subclasses of JavaScriptObject";
+  public static final String ERR_INSTANCE_FIELD = "Instance fields cannot be used in subclasses of JavaScriptObject";
+  public static final String ERR_INSTANCE_METHOD_NONFINAL =
+      "Instance methods must be 'final' in non-final subclasses of JavaScriptObject";
+  public static final String ERR_IS_NONSTATIC_NESTED = "Nested classes must be 'static' if they extend JavaScriptObject";
+  public static final String ERR_NEW_JSO =
+      "'new' cannot be used to create instances of JavaScriptObject subclasses; instances must originate in JavaScript";
+  public static final String ERR_NONEMPTY_CONSTRUCTOR =
+      "Constructors must be totally empty in subclasses of JavaScriptObject";
+  public static final String ERR_NONPROTECTED_CONSTRUCTOR =
+      "Constructors must be 'protected' in subclasses of JavaScriptObject";
+  public static final String ERR_OVERRIDDEN_METHOD =
+      "Methods cannot be overridden in JavaScriptObject subclasses";
+  public static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
+  public static final String ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSINTERFACE = "@JsInterface subtype extends magic _Prototype class, but _Prototype class doesn't implement JsInterface";
+  public static final String ERR_SUBCLASSING_NATIVE_NOT_ALLOWED = "Subclassing prototypes of native browser prototypes not allowed.";
+  static boolean LINT_MODE = false;
+
+  private enum ClassState {
+    NORMAL, JSO, JSINTERFACE, JSINTERFACE_IMPL;
+  }
 
   /**
    * The order in which the checker will process types is undefined, so this
@@ -106,7 +149,7 @@ public class JSORestrictionsChecker {
   private class JSORestrictionsVisitor extends SafeASTVisitor implements
       ClassFileConstants {
 
-    private final Stack<Boolean> isJsoStack = new Stack<Boolean>();
+    private final Stack<ClassState> classStateStack = new Stack<ClassState>();
 
     @Override
     public void endVisit(AllocationExpression exp, BlockScope scope) {
@@ -176,41 +219,147 @@ public class JSORestrictionsChecker {
 
     @Override
     public void endVisit(TypeDeclaration type, ClassScope scope) {
-      popIsJso();
+      popState();
     }
 
     @Override
     public void endVisit(TypeDeclaration type, CompilationUnitScope scope) {
-      popIsJso();
+      popState();
     }
 
     @Override
     public void endVisitValid(TypeDeclaration type, BlockScope scope) {
-      popIsJso();
+      popState();
     }
 
     @Override
     public boolean visit(TypeDeclaration type, ClassScope scope) {
-      pushIsJso(checkType(type));
+      pushState(checkType(type));
       return true;
     }
 
     @Override
     public boolean visit(TypeDeclaration type, CompilationUnitScope scope) {
-      pushIsJso(checkType(type));
+      pushState(checkType(type));
       return true;
     }
 
     @Override
     public boolean visitValid(TypeDeclaration type, BlockScope scope) {
-      pushIsJso(checkType(type));
+      pushState(checkType(type));
       return true;
     }
 
-    private boolean checkType(TypeDeclaration type) {
+    private void checkJsInterface(TypeDeclaration type, TypeBinding typeBinding) {
+      ReferenceBinding binding = (ReferenceBinding) typeBinding;
+      if (!binding.isInterface()) {
+        errorOn(type, ERR_JSINTERFACE_ONLY_ON_INTERFACES);
+      }
+
+      Set<String> methodNames = new HashSet<String>();
+      checkJsInterfaceMethodsForOverloads(methodNames, binding);
+      for (MethodBinding mb : binding.methods()) {
+        checkJsProperty(mb, true);
+        checkJsExport(mb, false);
+      }
+    }
+
+    private void checkJsExport(MethodBinding mb, boolean allowed) {
+      AnnotationBinding jsExport = JdtUtil.getAnnotation(mb, JsInteropUtil.JSEXPORT_CLASS);
+      if (jsExport != null && allowed) {
+        if (!mb.isConstructor() && !mb.isStatic()) {
+          errorOn(mb.sourceMethod(), ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS);
+        }
+      }
+      if (jsExport != null && !allowed) {
+        errorOn(mb.sourceMethod(), ERR_JSEXPORT_USED_ON_JSINTERFACE);
+      }
+    }
+
+    private void checkJsProperty(MethodBinding mb, boolean allowed) {
+      AnnotationBinding jsProperty = JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS);
+      if (jsProperty != null) {
+        if (!allowed) {
+          errorOn(mb.sourceMethod(), ERR_JSPROPERTY_ONLY_ON_INTERFACES);
+          return;
+        }
+        String methodName = String.valueOf(mb.selector);
+        if (!isGetter(methodName, mb) && !isSetter(methodName, mb) && !isHas(methodName, mb)) {
+          errorOn(mb.sourceMethod(), ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+        }
+      }
+    }
+
+    private boolean isGetter(String name, MethodBinding mb) {
+      // zero arg non-void getX()
+      if (name.length() > 3 && name.startsWith("get") && Character.isUpperCase(name.charAt(3)) &&
+         mb.returnType == TypeBinding.VOID && mb.parameters.length == 0) {
+        return true;
+      } else  if (name.length() > 3 && name.startsWith("is")
+          && Character.isUpperCase(name.charAt(2)) &&  mb.returnType == TypeBinding.BOOLEAN
+          && mb.parameters.length == 0) {
+        return true;
+      } else if (mb.parameters.length == 0 && mb.returnType != TypeBinding.VOID) {
+        return true;
+      }
+      return false;
+    }
+
+    private boolean isSetter(String name, MethodBinding mb) {
+      if (mb.returnType == TypeBinding.VOID || mb.returnType == mb.declaringClass) {
+        if (name.length() > 3 && name.startsWith("set") && Character.isUpperCase(name.charAt(3))
+            && mb.parameters.length == 1) {
+          return true;
+        } else if (mb.parameters.length == 1) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private boolean isHas(String name, MethodBinding mb) {
+      if (name.length() > 3 && name.startsWith("has") && Character.isUpperCase(name.charAt(3))
+          && mb.parameters.length == 0 && mb.returnType == TypeBinding.BOOLEAN) {
+        return true;
+      }
+      return false;
+    }
+
+    private void checkJsInterfaceMethodsForOverloads(Set<String> methodNames, ReferenceBinding binding) {
+      for (MethodBinding mb : binding.methods()) {
+        String methodName = String.valueOf(mb.selector);
+        if (mb.isConstructor()) {
+          continue;
+        }
+        if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS) != null) {
+          if (isGetter(methodName, mb) || isSetter(methodName, mb) || isHas(methodName, mb)) {
+            // js properties are allowed to be overloaded (setter/getter)
+            continue;
+          }
+        }
+        if (!methodNames.add(methodName)) {
+          errorOn(mb.sourceMethod(), ERR_JSINTERFACE_OVERLOADS_NOT_ALLOWED);
+        }
+      }
+      for (ReferenceBinding rb : binding.superInterfaces()) {
+        checkJsInterfaceMethodsForOverloads(methodNames, rb);
+      }
+    }
+
+    private ClassState checkType(TypeDeclaration type) {
       SourceTypeBinding binding = type.binding;
+
+      if (isJsInterface(type.binding)) {
+        checkJsInterface(type, type.binding);
+        return ClassState.JSINTERFACE;
+      }
+
+      if (checkClassImplementingJsInterface(type)) {
+        return ClassState.JSINTERFACE_IMPL;
+      }
+
       if (!isJsoSubclass(binding)) {
-        return false;
+        return ClassState.NORMAL;
       }
 
       if (type.enclosingType != null && !binding.isStatic()) {
@@ -235,31 +384,120 @@ public class JSORestrictionsChecker {
         }
       }
 
+      return ClassState.JSO;
+    }
+
+    private boolean checkClassImplementingJsInterface(TypeDeclaration type) {
+      ReferenceBinding jsInterface = findNearestJsInterfaceRecursive(type.binding);
+      if (jsInterface == null) {
+        return false;
+      }
+
+      for (MethodBinding mb : type.binding.methods()) {
+        checkJsExport(mb, true);
+        checkJsProperty(mb, false);
+      }
+
+      AnnotationBinding jsinterfaceAnn = JdtUtil.getAnnotation(jsInterface,
+          JsInteropUtil.JSINTERFACE_CLASS);
+      String jsPrototype = JdtUtil.getAnnotationParameterString(jsinterfaceAnn, "prototype");
+      boolean isNative = JdtUtil.getAnnotationParameterBoolean(jsinterfaceAnn, "isNative");
+      if (!Strings.isNullOrEmpty(jsPrototype)) {
+        checkClassExtendsMagicPrototype(type, jsInterface, !isNative, isNative);
+      } else {
+        checkClassExtendsMagicPrototype(type, jsInterface, false, isNative);
+      }
+
+      // TODO(cromwellian) add multiple-inheritance checks when ambiguity in spec is resolved
       return true;
     }
 
+    private void checkClassExtendsMagicPrototype(TypeDeclaration type, ReferenceBinding jsInterface,
+                                                 boolean shouldExtend, boolean isNative) {
+      ReferenceBinding superClass = type.binding.superclass();
+      // if type is the _Prototype stub (implements JsInterface) exit
+      if (isMagicPrototype(type.binding, jsInterface)) {
+        return;
+      } else if (isMagicPrototypeStub(type)) {
+        errorOn(type, ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSINTERFACE);
+      }
+
+      if (shouldExtend) {
+        // super class should be SomeInterface.Prototype, so enclosing type should match the jsInterface
+        if (LINT_MODE && (superClass == null || !isMagicPrototype(superClass, jsInterface))) {
+          errorOn(type, ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS);
+        }
+      } else {
+        if (superClass != null && isMagicPrototype(superClass, jsInterface)) {
+          if (!isNative) {
+            errorOn(type, ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE);
+          } else {
+            errorOn(type, ERR_SUBCLASSING_NATIVE_NOT_ALLOWED);
+          }
+        }
+      }
+    }
+
+    // Roughly parallels JProgram.isJsInterfacePrototype()
+    private boolean isMagicPrototype(ReferenceBinding type, ReferenceBinding jsInterface) {
+      if (isMagicPrototypeStub(type)) {
+        for (ReferenceBinding intf : type.superInterfaces()) {
+          if (intf == jsInterface) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private boolean isMagicPrototypeStub(TypeDeclaration type) {
+      return isMagicPrototypeStub(type.binding);
+    }
+
+    private boolean isMagicPrototypeStub(ReferenceBinding binding) {
+      return JdtUtil.getAnnotation(binding, JsInteropUtil.JSINTERFACEPROTOTYPE_CLASS) != null;
+    }
+
+    /**
+     * Walks up chain of interfaces and superinterfaces to find the first one marked with @JsInterface.
+     */
+    private ReferenceBinding findNearestJsInterface(ReferenceBinding binding, boolean mustHavePrototype) {
+      if (isJsInterface(binding)) {
+        return binding;
+      }
+
+      for (ReferenceBinding intb : binding.superInterfaces()) {
+        ReferenceBinding checkSuperInt = findNearestJsInterface(intb, false);
+        if (checkSuperInt != null) {
+          return checkSuperInt;
+        }
+      }
+      return null;
+    }
+
+    private ReferenceBinding findNearestJsInterfaceRecursive(ReferenceBinding binding) {
+      ReferenceBinding nearest = findNearestJsInterface(binding, false);
+      if (nearest != null) {
+        return nearest;
+      } else if (binding.superclass() != null) {
+        return findNearestJsInterfaceRecursive(binding.superclass());
+      }
+      return null;
+    }
+
     private boolean isJso() {
-      return isJsoStack.peek();
+      return classStateStack.peek() == ClassState.JSO;
     }
 
-    private void popIsJso() {
-      isJsoStack.pop();
+    private void popState() {
+      classStateStack.pop();
     }
 
-    private void pushIsJso(boolean isJso) {
-      isJsoStack.push(isJso);
+    private void pushState(ClassState cstate) {
+      classStateStack.push(cstate);
     }
   }
 
-  static final String ERR_CONSTRUCTOR_WITH_PARAMETERS = "Constructors must not have parameters in subclasses of JavaScriptObject";
-  static final String ERR_INSTANCE_FIELD = "Instance fields cannot be used in subclasses of JavaScriptObject";
-  static final String ERR_INSTANCE_METHOD_NONFINAL = "Instance methods must be 'final' in non-final subclasses of JavaScriptObject";
-  static final String ERR_IS_NONSTATIC_NESTED = "Nested classes must be 'static' if they extend JavaScriptObject";
-  static final String ERR_NEW_JSO = "'new' cannot be used to create instances of JavaScriptObject subclasses; instances must originate in JavaScript";
-  static final String ERR_NONEMPTY_CONSTRUCTOR = "Constructors must be totally empty in subclasses of JavaScriptObject";
-  static final String ERR_NONPROTECTED_CONSTRUCTOR = "Constructors must be 'protected' in subclasses of JavaScriptObject";
-  static final String ERR_OVERRIDDEN_METHOD = "Methods cannot be overridden in JavaScriptObject subclasses";
-  static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
 
   /**
    * Checks an entire
@@ -287,6 +525,19 @@ public class JSORestrictionsChecker {
       binding = binding.superclass();
     }
     return false;
+  }
+
+  /**
+   * Returns the first JsInterface annotation encountered traversing the type hierarchy upwards from the type.
+   */
+  private boolean isJsInterface(TypeBinding typeBinding) {
+
+    if (!(typeBinding instanceof ReferenceBinding) || !(typeBinding instanceof SourceTypeBinding)) {
+      return false;
+    }
+
+    AnnotationBinding jsInterface = JdtUtil.getAnnotation(typeBinding, JsInteropUtil.JSINTERFACE_CLASS);
+    return jsInterface != null;
   }
 
   /**

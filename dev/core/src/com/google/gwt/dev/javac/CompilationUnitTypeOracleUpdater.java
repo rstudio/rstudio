@@ -739,8 +739,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
         Type valueType = (Type) value;
         // See if we can use a binary only class here
         try {
-          return Class.forName(
-              valueType.getClassName(), false, Thread.currentThread().getContextClassLoader());
+          return forName(valueType.getClassName());
         } catch (ClassNotFoundException e) {
           logger.log(
               TreeLogger.ERROR, "Annotation error: cannot resolve " + valueType.getClassName(), e);
@@ -750,6 +749,34 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
       // TODO(jat) asserts about other acceptable types
       return value;
     }
+  }
+
+  private static final Map<String, Class> BUILT_IN_PRIMITIVE_MAP =
+      new HashMap<String, Class>() { {
+        put("Z",  boolean.class);
+        put("B", byte.class);
+        put("C", char.class);
+        put("S", short.class);
+        put("I", int.class);
+        put("F", float.class);
+        put("D", double.class);
+        put("J", long.class);
+        put("V", void.class);
+      } };
+
+  static {
+    for (Class c : new Class[] { void.class, boolean.class, byte.class, char.class,
+        short.class, int.class, float.class, double.class, long.class }) {
+      BUILT_IN_PRIMITIVE_MAP.put(c.getName(), c);
+    }
+  }
+
+  public static Class forName(String name) throws ClassNotFoundException {
+    Class c = BUILT_IN_PRIMITIVE_MAP.get(name);
+    if (c == null) {
+      c = Class.forName(name, false, Thread.currentThread().getContextClassLoader());
+    }
+    return c;
   }
 
   private JType resolveArray(Type type) {

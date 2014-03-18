@@ -40,6 +40,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeExhaustiveCastabilityInformation;
+import com.google.gwt.dev.jjs.impl.ComputeInstantiatedJsoInterfaces;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.Devirtualizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
@@ -79,8 +80,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 
-import javax.annotation.Nullable;
-
 /**
  * Compiles the Java <code>JProgram</code> representation into its corresponding library Js source.
  * <br />
@@ -108,6 +107,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
       LongEmulationNormalizer.exec(jprogram);
       TypeCoercionNormalizer.exec(jprogram);
       ComputeExhaustiveCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+      ComputeInstantiatedJsoInterfaces.exec(jprogram);
       ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled());
       ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
       EqualityNormalizer.exec(jprogram);
@@ -413,7 +413,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
       newReboundTypeNames.removeAll(
           Sets.newHashSet(Sets.filter(newReboundTypeNames, new Predicate<String>() {
             @Override
-            public boolean apply(@Nullable String newReboundTypeName) {
+            public boolean apply(String newReboundTypeName) {
               return generatorNamesByPreviouslyReboundTypeName.containsEntry(
                   newReboundTypeName, generatorName);
             }

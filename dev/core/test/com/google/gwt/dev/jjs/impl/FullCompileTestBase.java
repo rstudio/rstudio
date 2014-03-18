@@ -84,6 +84,7 @@ public abstract class FullCompileTestBase extends JJSTestBase {
 
     optimizeJava();
     ComputeCastabilityInformation.exec(jProgram, false);
+    ComputeInstantiatedJsoInterfaces.exec(jProgram);
     ImplementCastsAndTypeChecks.exec(jProgram, false);
     ArrayNormalizer.exec(jProgram, false);
     TypeTightener.exec(jProgram);

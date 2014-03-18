@@ -18,11 +18,13 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.impl.HasNameSort;
 import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.IdentitySets;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -31,6 +33,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,6 +43,21 @@ import java.util.Set;
  * Oracle that can answer questions regarding the types in a program.
  */
 public class JTypeOracle implements Serializable {
+
+  private LinkedHashSet<JMethod> exportedMethods = new LinkedHashSet<JMethod>();
+  private Set<JReferenceType> instantiatedJsoTypesViaCast = new HashSet<JReferenceType>();
+
+  public LinkedHashSet<JMethod> getExportedMethods() {
+    return exportedMethods;
+  }
+
+  public void setInstantiatedJsoTypesViaCast(Set<JReferenceType> instantiatedJsoTypesViaCast) {
+    this.instantiatedJsoTypesViaCast = instantiatedJsoTypesViaCast;
+  }
+
+  public Set<JReferenceType> getInstantiatedJsoTypesViaCast() {
+    return instantiatedJsoTypesViaCast;
+  }
 
   /**
    * Checks a clinit method to find out a few things.
@@ -254,6 +272,11 @@ public class JTypeOracle implements Serializable {
       new IdentityHashMap<JInterfaceType, JClassType>();
 
   /**
+   * A set of all JsInterfaces.
+   */
+  private final Set<JInterfaceType> jsInterfaces = new IdentityHashSet<JInterfaceType>();
+
+  /**
    * The associated {@link JProgram}.
    */
   private final JProgram program;
@@ -313,15 +336,52 @@ public class JTypeOracle implements Serializable {
 
   /**
    * True if the type is a JSO or interface implemented by JSO..
-   *
-   * @param type
-   * @return
    */
   public boolean canBeJavaScriptObject(JType type) {
     if (type instanceof JNonNullType) {
       type = ((JNonNullType) type).getUnderlyingType();
     }
     return program.isJavaScriptObject(type) || program.typeOracle.isSingleJsoImpl(type);
+  }
+
+  /**
+   * True if the type is a JSO or interface implemented by JSO or a JsInterface without
+   * prototype.
+   */
+  public boolean canCrossCastLikeJso(JType type) {
+    JInterfaceType intf = getNearestJsInterface(type, false);
+    return canBeJavaScriptObject(type) ||
+        (isOrExtendsJsInterface(type, false) && !isOrExtendsJsInterface(type, true));
+  }
+
+  /**
+   * True if the type is a JSO or JSO Interface that is not dually implemented, or is a JsInterface
+   * without the prototype that is not implemented by a Java class.
+   */
+  public boolean willCrossCastLikeJso(JType type) {
+    return isEffectivelyJavaScriptObject(type) || canCrossCastLikeJso(type) &&
+        !hasLiveImplementors(type);
+  }
+
+  private boolean hasLiveImplementors(JType type) {
+    if (!hasWholeWorldKnowledge) {
+      return true;
+    }
+    if (type instanceof JInterfaceType && isImplementedMap.get(type) != null) {
+      for (JClassType impl : isImplementedMap.get(type)) {
+        if (isInstantiatedType(impl)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * True if the type is a JSO or interface implemented by a JSO, or a JsInterface.
+   */
+  public boolean canBeInstantiatedInJavascript(JType type) {
+    return canBeJavaScriptObject(type) || isOrExtendsJsInterface(type, false);
   }
 
   public boolean canTheoreticallyCast(JReferenceType type, JReferenceType qType) {
@@ -343,10 +403,11 @@ public class JTypeOracle implements Serializable {
      * Cross-cast allowed in theory, prevents TypeTightener from turning
      * cross-casts into null-casts.
      */
-    if (canBeJavaScriptObject(type) && canBeJavaScriptObject(qType)) {
+    if (canCrossCastLikeJso(type) && canCrossCastLikeJso(qType)) {
       return true;
     }
 
+    // TODO (cromwellian): handle case where types S and T have identical Js Prototypes
     if (canTriviallyCast(type, qType)) {
       return true;
     }
@@ -489,6 +550,7 @@ public class JTypeOracle implements Serializable {
     isImplementedMap.clear();
     couldBeImplementedMap.clear();
     jsoSingleImpls.clear();
+    jsInterfaces.clear();
     dualImpls.clear();
 
     for (JDeclaredType type : program.getDeclaredTypes()) {
@@ -496,6 +558,15 @@ public class JTypeOracle implements Serializable {
         recordSuperSubInfo((JClassType) type);
       } else {
         recordSuperSubInfo((JInterfaceType) type);
+        if (((JInterfaceType) type).isJsInterface()) {
+          jsInterfaces.add((JInterfaceType) type);
+        }
+      }
+      // first time through, record all exported methods
+      for (JMethod method : type.getMethods()) {
+        if (method.getExportName() != null) {
+          exportedMethods.add(method);
+        }
       }
     }
 
@@ -588,6 +659,34 @@ public class JTypeOracle implements Serializable {
 
   public Set<JReferenceType> getInstantiatedTypes() {
     return instantiatedTypes;
+  }
+
+  /**
+   * Get the nearest JS interface.
+   */
+  public JInterfaceType getNearestJsInterface(JType type,
+      boolean mustHavePrototype) {
+    if (type instanceof JNonNullType) {
+      type = ((JNonNullType) type).getUnderlyingType();
+    }
+    if (type instanceof JInterfaceType) {
+      JInterfaceType intf = (JInterfaceType) type;
+      if (isJsInterface(type)) {
+        if (!mustHavePrototype || !Strings.isNullOrEmpty(intf.getJsPrototype())) {
+          return intf;
+        }
+      }
+    }
+    if (type instanceof JDeclaredType) {
+      for (JInterfaceType superIntf : ((JDeclaredType) type).getImplements()) {
+        JInterfaceType jsIntf = getNearestJsInterface(superIntf,
+            mustHavePrototype);
+        if (jsIntf != null) {
+          return jsIntf;
+        }
+      }
+    }
+    return null;
   }
 
   public JMethod getMethodBySignature(JClassType type, String signature) {
@@ -700,12 +799,40 @@ public class JTypeOracle implements Serializable {
     return false;
   }
 
+  public boolean isJsInterfaceMethod(JMethod x) {
+    if (isJsInterface(x.getEnclosingType())) {
+      return true;
+    }
+    for (JMethod om : getAllOverriddenMethods(x)) {
+      if (isJsInterface(om.getEnclosingType())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isSameOrSuper(JClassType type, JClassType qType) {
     return (type == qType || isSuperClass(type, qType));
   }
 
   public boolean isSingleJsoImpl(JType type) {
     return type instanceof JReferenceType && getSingleJsoImpl((JReferenceType) type) != null;
+  }
+
+  /**
+   * Whether the type is a JS interface (does not check supertypes).
+   */
+  public boolean isJsInterface(JType type) {
+    return (type instanceof JInterfaceType && ((JInterfaceType) type).isJsInterface());
+  }
+
+  /**
+   * Whether the type or any supertypes is a JS interface, optionally, only return true if
+   * one of the types has a js prototype.
+   */
+  public boolean isOrExtendsJsInterface(JType type, boolean mustHavePrototype) {
+    JInterfaceType intf = getNearestJsInterface(type, mustHavePrototype);
+    return intf != null;
   }
 
   /**

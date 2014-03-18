@@ -106,6 +106,11 @@ public class MethodInliner {
 
       boolean possibleToInline = false;
 
+      if (JProgram.isJsInterfacePrototype(method.getEnclosingType())) {
+        // don't inline calls to JsInterface Prototype methods, since these are merely stubs to preserve super calls
+        possibleToInline = false;
+      }
+
       if (method.isStatic() && !method.isNative()) {
         JMethodBody body = (JMethodBody) method.getBody();
         List<JStatement> stmts = body.getStatements();
