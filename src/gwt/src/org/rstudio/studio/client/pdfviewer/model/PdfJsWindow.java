@@ -123,8 +123,14 @@ public class PdfJsWindow extends WindowEx
       });
    }-*/;
    
-   public final native void openPdf(String path, float scale) /*-{
+   public final native void openPdf(String path, float scale, 
+                                    boolean synctex) /*-{
       this.PDFView.open(path, scale);
+      var jumpToSource = this.document.getElementById("jumpToSource");
+      if (jumpToSource)
+      {
+         jumpToSource.style.display = synctex ? "inline-block" : "none";
+      }
    }-*/;
    
    public final native void goToPage(int page) /*-{

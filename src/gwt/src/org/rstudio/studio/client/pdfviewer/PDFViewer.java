@@ -120,7 +120,8 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       }
          
       lastSuccessfulPdfPath_ = result.getPdfPath();
-      openPdfUrl(result.getViewPdfUrl(), pdfLocation == null);
+      openPdfUrl(result.getViewPdfUrl(), result.isSynctexAvailable(), 
+                 pdfLocation == null);
    }
 
    @Override
@@ -139,15 +140,18 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onLookupSynctexSource(LookupSynctexSourceEvent event)
    {
-      if (Desktop.isDesktop())
+      if (lastSuccessfulPdfPath_ != null)
       {
-         Desktop.getFrame().bringMainFrameToFront();
+         if (Desktop.isDesktop())
+         {
+            Desktop.getFrame().bringMainFrameToFront();
+         }
+         else
+         {
+            focusMainWindow();
+         }
+         synctexInverseSearch(event.getCoordinates(), event.fromClick());
       }
-      else
-      {
-         focusMainWindow();
-      }
-      synctexInverseSearch(event.getCoordinates(), event.fromClick());
    }
 
    @Override
@@ -179,12 +183,14 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    
    public void viewPdfUrl(final String url)
    {
-      openPdfUrl(url, true);
+      lastSuccessfulPdfPath_ = null;
+      openPdfUrl(url, false, true);
    }
   
    // Private methods ---------------------------------------------------------
    
-   private void openPdfUrl(final String url, boolean restorePosition)
+   private void openPdfUrl(final String url, final boolean synctex, 
+                           boolean restorePosition)
    {
       int width = 1070;
       int height = 1200;
@@ -206,7 +212,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
          @Override
          public void execute()
          {
-            pdfJsWindow_.openPdf(pdfUrl, 0);
+            pdfJsWindow_.openPdf(pdfUrl, 0, synctex);
             lastSuccessfulPdfUrl_ = url;
          }
       };
@@ -266,17 +272,13 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    private void synctexInverseSearch(SyncTexCoordinates coord, 
                                      boolean fromClick)
    {
-      String pdfPath = lastSuccessfulPdfPath_;
-      if (pdfPath != null)
-      {
-         synctex_.inverseSearch(PdfLocation.create(pdfPath,
-                                                   coord.getPageNum(),
-                                                   coord.getX(), 
-                                                   coord.getY(), 
-                                                   0, 
-                                                   0,
-                                                   fromClick));
-      }
+      synctex_.inverseSearch(PdfLocation.create(lastSuccessfulPdfPath_,
+                                                coord.getPageNum(),
+                                                coord.getX(), 
+                                                coord.getY(), 
+                                                0, 
+                                                0,
+                                                fromClick));
    }
    
    private Operation createRestorePositionOperation()
