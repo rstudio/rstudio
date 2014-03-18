@@ -166,6 +166,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    public void onPdfJsWindowClosed(PdfJsWindowClosedEvent event)
    {
       synctex_.notifyPdfViewerClosed(lastSuccessfulPdfPath_);
+      locationHash_ = pdfJsWindow_.getLocationHash();
       pdfJsWindow_ = null;
       lastSuccessfulPdfPath_ = null;
    }
@@ -207,9 +208,12 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       
       // if there's a window open, restore the position when we're done
       if (restorePosition && 
-          haveActivePdfJsWindow() && 
           url.equals(lastSuccessfulPdfUrl_))
       {
+         // if we don't have an active window, we'll use the hash stored when
+         // the window closed
+         if (haveActivePdfJsWindow())
+            locationHash_ = pdfJsWindow_.getLocationHash();
          executeOnPdfLoad_ = createRestorePositionOperation();
       }
       
@@ -291,7 +295,6 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    
    private Operation createRestorePositionOperation()
    {
-      locationHash_ = pdfJsWindow_.getLocationHash();
       return new Operation()
       {
          @Override
