@@ -90,6 +90,7 @@ struct ProcessConfig
 
    core::system::Options args;
    core::system::Options environment;
+   std::string stdInput;
    StdStreamBehavior stdStreamBehavior;
    RLimitType memoryLimitBytes;
    RLimitType stackLimitBytes;

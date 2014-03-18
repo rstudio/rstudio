@@ -59,6 +59,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    json::Object configJson;
    configJson["args"] = optionsAsJson(profile.config.args);
    configJson["environment"] = optionsAsJson(profile.config.environment);
+   configJson["stdInput"] = profile.config.stdInput;
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
    profileJson["config"] = configJson;
    return profileJson;
@@ -82,10 +83,12 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
 
    // read config object
    json::Object argsJson, envJson;
+   std::string stdInput;
    int stdStreamBehavior = 0;
    error = json::readObject(configJson,
                            "args", &argsJson,
                            "environment", &envJson,
+                           "stdInput", &stdInput,
                            "stdStreamBehavior", &stdStreamBehavior);
    if (error)
       LOG_ERROR(error);
@@ -93,6 +96,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    // populate config
    profile.config.args = optionsFromJson(argsJson);
    profile.config.environment = optionsFromJson(envJson);
+   profile.config.stdInput = stdInput;
    profile.config.stdStreamBehavior =
             static_cast<core::system::StdStreamBehavior>(stdStreamBehavior);
 

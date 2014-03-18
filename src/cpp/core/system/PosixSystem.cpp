@@ -1040,6 +1040,9 @@ Error launchChildProcess(std::string path,
          core::system::setenv(&env, it->first, it->second);
       }
 
+      // NOTE: this implemenentation ignores the config.stdInput field (that
+      // was put in for another consumer)
+
       // format as ProcessArgs expects
       boost::format fmt("%1%=%2%");
       std::vector<std::string> envVars;
