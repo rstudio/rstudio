@@ -3281,6 +3281,7 @@ public class TextEditingTarget implements
                rmarkdownHelper_.renderRMarkdown(
                   docUpdateSentinel_.getPath(),
                   docDisplay_.getCursorPosition().getRow() + 1,
+                  null,
                   docUpdateSentinel_.getEncoding());
             }
          });
@@ -3461,24 +3462,7 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               generateNotebook(new Command()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     // notebook path for script path
-                     FileSystemItem script = FileSystemItem.createFile(
-                                             docUpdateSentinel_.getPath());
-                     FileSystemItem scriptDir = script.getParentPath();
-                     String notebook = scriptDir.completePath(
-                                                   script.getStem() + ".Rmd");
-                     
-                     rmarkdownHelper_.renderRMarkdown(
-                                           notebook,
-                                           1,
-                                           docUpdateSentinel_.getEncoding());
-                  }
-               });
+               rmarkdownHelper_.renderNotebookv2(docUpdateSentinel_);
             }
          });
       }

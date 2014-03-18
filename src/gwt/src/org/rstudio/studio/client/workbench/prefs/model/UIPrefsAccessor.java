@@ -19,6 +19,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
+import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
@@ -201,6 +202,12 @@ public class UIPrefsAccessor extends Prefs
    {
       return object("compile_notebook_options",
                     CompileNotebookPrefs.createDefault());
+   }
+   
+   public PrefValue<CompileNotebookv2Prefs> compileNotebookv2Options()
+   {
+      return object("compile_notebookv2_options",
+                    CompileNotebookv2Prefs.createDefault());
    }
    
    public PrefValue<Boolean> newProjGitInit()

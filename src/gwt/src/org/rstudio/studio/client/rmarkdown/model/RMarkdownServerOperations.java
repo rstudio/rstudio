@@ -29,7 +29,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    void installRMarkdown(
          ServerRequestCallback<ConsoleProcess> requestCallback);
    
-   void renderRmd(String file, int line, String encoding,
+   void renderRmd(String file, int line, String format, String encoding,
                   ServerRequestCallback<Boolean> requestCallback);
    
    void renderRmdSource(String source,

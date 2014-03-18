@@ -22,6 +22,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
+import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
@@ -193,6 +194,13 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          {
             compileNotebookOptions().setGlobalValue(
                         newUiPrefs.compileNotebookOptions().getGlobalValue());
+         }
+         if (!CompileNotebookv2Prefs.areEqual(
+               newUiPrefs.compileNotebookv2Options().getGlobalValue(),
+               compileNotebookv2Options().getGlobalValue()))
+         {
+            compileNotebookv2Options().setGlobalValue(
+                        newUiPrefs.compileNotebookv2Options().getGlobalValue());
          }
          
          // default sweave engine

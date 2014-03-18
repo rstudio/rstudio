@@ -66,7 +66,21 @@ Error initialize()
    Error error = archivesDir.children(&children);
    if (error)
       return error;
-   boost::regex re("rmarkdown_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
+
+   // we saw the regex with explicit character class ranges fail to match
+   // on a windows 8.1 system so we are falling back to a simpler regex
+   //
+   // (note see below for another approach involving setting the locale
+   // of the regex directly -- this assumes that the matching issue is
+   // somehow related to locales)
+   boost::regex re("rmarkdown_([^_]+)_([^\\.]+)\\.tar\\.gz");
+
+   /* another approach (which we didn't try) based on setting the regex locale
+   boost::regex re;
+   re.imbue(std::locale("en_US.UTF-8"));
+   re.assign("rmarkdown_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
+   */
+
    BOOST_FOREACH(const FilePath& child, children)
    {
       boost::smatch match;

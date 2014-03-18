@@ -57,11 +57,12 @@ class RenderRmd : boost::noncopyable,
 public:
    static boost::shared_ptr<RenderRmd> create(const FilePath& targetFile,
                                               int sourceLine,
+                                              const std::string& format,
                                               const std::string& encoding)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine));
-      pRender->start(encoding);
+      pRender->start(format, encoding);
       return pRender;
    }
 
@@ -93,7 +94,7 @@ private:
       sourceLine_(sourceLine)
    {}
 
-   void start(const std::string& encoding)
+   void start(const std::string& format, const std::string& encoding)
    {
       json::Object dataJson;
       getOutputFormat(targetFile_.absolutePath(), encoding, &outputFormat_);
@@ -103,10 +104,11 @@ private:
       module_context::enqueClientEvent(event);
       isRunning_ = true;
 
-      performRender(encoding);
+      performRender(format, encoding);
    }
 
-   void performRender(const std::string& encoding)
+   void performRender(const std::string& format,
+                      const std::string& encoding)
    {
       // save encoding
       encoding_ = encoding;
@@ -139,11 +141,16 @@ private:
       if (renderFunc.empty())
          renderFunc = "rmarkdown::render";
 
+      std::string extraParams;
+      if (!format.empty())
+         extraParams = "output_format = rmarkdown::" + format + "(), ";
+
       // render command
-      boost::format fmt("%1%('%2%', encoding='%3%');");
+      boost::format fmt("%1%('%2%', %3% encoding='%4%');");
       std::string cmd = boost::str(fmt %
                                    renderFunc %
                                    targetFile_.filename() %
+                                   extraParams %
                                    encoding);
 
 
@@ -555,6 +562,7 @@ Error installRMarkdown(const json::JsonRpcRequest&,
 
 void doRenderRmd(const std::string& file,
                  int line,
+                 const std::string& format,
                  const std::string& encoding,
                  json::JsonRpcResponse* pResponse)
 {
@@ -568,6 +576,7 @@ void doRenderRmd(const std::string& file,
       s_pCurrentRender_ = RenderRmd::create(
                module_context::resolveAliasedPath(file),
                line,
+               format,
                encoding);
       pResponse->setResult(true);
    }
@@ -577,12 +586,16 @@ Error renderRmd(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    int line = -1;
-   std::string file, encoding;
-   Error error = json::readParams(request.params, &file, &line, &encoding);
+   std::string file, format, encoding;
+   Error error = json::readParams(request.params,
+                                  &file,
+                                  &line,
+                                  &format,
+                                  &encoding);
    if (error)
       return error;
 
-   doRenderRmd(file, line, encoding, pResponse);
+   doRenderRmd(file, line, format, encoding, pResponse);
 
    return Success();
 }
@@ -601,7 +614,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(rmdTempFile.absolutePath(), -1, "UTF-8", pResponse);
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", pResponse);
 
    return Success();
 }
