@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.Debug;
+
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 
@@ -143,15 +145,26 @@ public class YamlTree
 
    public List<String> getChildKeys(String parentKey)
    {
-      if (!keyMap_.containsKey(parentKey))
-         return null;
-      YamlTreeNode parent = keyMap_.get(parentKey);
-      ArrayList<String> result = new ArrayList<String>();
-      for (YamlTreeNode child: parent.children)
+      try
       {
-         result.add(child.key);
+         if (!keyMap_.containsKey(parentKey))
+            return null;
+         YamlTreeNode parent = keyMap_.get(parentKey);
+         ArrayList<String> result = new ArrayList<String>();
+         for (YamlTreeNode child: parent.children)
+         {
+            result.add(child.key);
+         }
+         return result;
       }
-      return result;
+      catch (Exception e)
+      {
+         // case 3826: it's not clear why but we've seen an exception thrown
+         // from the above in non-reproducible circumstances; handle gracefully
+         Debug.log("YamlTree: Couldn't get child keys for " + parentKey + 
+                   " (" + e.getMessage() + ")");
+      }
+      return null;
    }
    
    public void addYamlValue(String parentKey, String key, String value)
