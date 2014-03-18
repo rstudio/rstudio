@@ -149,10 +149,6 @@ public class PdfJsWindow extends WindowEx
    }-*/;
    
    public final native float getCurrentScale() /*-{
-      return this.PDFView.currentScaleValue;
-   }-*/;
-
-   public final native String getScaleDescription() /*-{
       return this.PDFView.currentScale;
    }-*/;
 
