@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -81,6 +82,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
          {
             if (pdfJsWindow_ != null)
                pdfJsWindow_.close();
+            pdfJsWindow_ = null;
          }
       });
    }
@@ -116,23 +118,9 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
             }
          };
       }
-      else if (haveActivePdfJsWindow() &&
-               event.getResult().getPdfPath().equals(lastSuccessfulPdfPath_))
-      {
-         executeOnPdfLoad_ = createRestorePositionOperation();
-      }
          
-      // open the window for the PDF 
-      lastSuccessfulPdfPath_ = null;
-      withPdfJsWindow(new Operation()
-      {
-         @Override
-         public void execute()
-         {
-            pdfJsWindow_.openPdf("/" + result.getViewPdfUrl(), 0);
-            lastSuccessfulPdfPath_ = result.getPdfPath();
-         }
-      });
+      lastSuccessfulPdfPath_ = result.getPdfPath();
+      openPdfUrl(result.getViewPdfUrl(), pdfLocation == null);
    }
 
    @Override
@@ -166,6 +154,8 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    public void onPdfJsWindowClosed(PdfJsWindowClosedEvent event)
    {
       synctex_.notifyPdfViewerClosed(lastSuccessfulPdfPath_);
+      pdfJsWindow_ = null;
+      lastSuccessfulPdfPath_ = null;
    }
    
    @Override
@@ -189,50 +179,77 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    
    public void viewPdfUrl(final String url)
    {
-      if (haveActivePdfJsWindow() && 
-          url.equals(lastSuccessfulPdfPath_))
-      {
-         executeOnPdfLoad_ = createRestorePositionOperation();
-      }
-
-      lastSuccessfulPdfPath_ = null;
-      withPdfJsWindow(new Operation()
-      {
-         @Override
-         public void execute()
-         {
-            pdfJsWindow_.openPdf("/" + url, 0);
-            lastSuccessfulPdfPath_ = url;
-         }
-      });
+      openPdfUrl(url, true);
    }
   
    // Private methods ---------------------------------------------------------
    
-   private void withPdfJsWindow(final Operation onLoaded)
+   private void openPdfUrl(final String url, boolean restorePosition)
    {
       int width = 1070;
       int height = 1200;
-      if (haveActivePdfJsWindow())
+      Point pos = null;
+      final String pdfUrl = url.startsWith("/") ? url : "/" + url;
+      
+      // if there's a window open, restore the position when we're done
+      if (restorePosition && 
+          haveActivePdfJsWindow() && 
+          url.equals(lastSuccessfulPdfUrl_))
+      {
+         executeOnPdfLoad_ = createRestorePositionOperation();
+      }
+      
+      // create the operation to load the PDF--we'll call this when the window
+      // is finished opening, or immediately if there's already a window open
+      Operation loadPdf = new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            pdfJsWindow_.openPdf(pdfUrl, 0);
+            lastSuccessfulPdfUrl_ = url;
+         }
+      };
+
+      // in the browser we need to close and reopen the window
+      if (haveActivePdfJsWindow() && !Desktop.isDesktop())
       {
          width = pdfJsWindow_.getOuterWidth();
          height = pdfJsWindow_.getOuterHeight();
+         pos = new Point(pdfJsWindow_.getLeft(), pdfJsWindow_.getTop());
          pdfJsWindow_.close();
          pdfJsWindow_ = null;
       }
-      String url = GWT.getHostPageBaseURL() + "pdf_js/web/viewer.html?file=";
-      NewWindowOptions options = new NewWindowOptions();
-      options.setName(WINDOW_NAME);
-      options.setCallback(new OperationWithInput<WindowEx>() 
+      
+      lastSuccessfulPdfUrl_ = null;
+      if (pdfJsWindow_ == null)
       {
-         @Override
-         public void execute(WindowEx win)
-         {
-            initializePdfJsWindow(win);
-         }
-      });
-      executeOnPdfJsLoad_ = onLoaded;
-      display_.openMinimalWindow(url, false, width, height, options);
+          // open the window and continue
+          String viewerUrl = GWT.getHostPageBaseURL() + 
+                             "pdf_js/web/viewer.html?file=";
+          NewWindowOptions options = new NewWindowOptions();
+          options.setName(WINDOW_NAME);
+          if (pos != null)
+             options.setPosition(pos);
+          options.setCallback(new OperationWithInput<WindowEx>() 
+          {
+             @Override
+             public void execute(WindowEx win)
+             {
+                initializePdfJsWindow(win);
+             }
+          });
+          executeOnPdfJsLoad_ = loadPdf;
+          display_.openMinimalWindow(viewerUrl, false, width, height, options);
+      }
+      else
+      {
+         // we already have an open window, activate it
+         if (Desktop.isDesktop()) 
+            Desktop.getFrame().activateMinimalWindow(WINDOW_NAME);
+         
+         loadPdf.execute();
+      }
    }
    
    private boolean haveActivePdfJsWindow()
@@ -282,6 +299,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
 
    private PdfJsWindow pdfJsWindow_;
    private String lastSuccessfulPdfPath_;
+   private String lastSuccessfulPdfUrl_;
    private String locationHash_;
 
    // continuation operations for asynchronous operations: 
