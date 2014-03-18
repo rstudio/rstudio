@@ -78,6 +78,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
@@ -992,6 +993,31 @@ public class TextEditingTarget implements
       FileSystemItem projectDir = session_.getSessionInfo()
             .getActiveProjectDir();
       return getPath().startsWith(projectDir.getPath() + "/R");
+   }
+   
+   private boolean isPackageDocumentationFile()
+   {
+      if (getPath() == null)
+      {
+         return false;
+      }
+      
+      String type = session_.getSessionInfo().getBuildToolsType();
+      if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      {
+         return false;
+      }
+      
+      FileSystemItem srcFile = FileSystemItem.createFile(getPath());
+      FileSystemItem projectDir = session_.getSessionInfo()
+            .getActiveProjectDir();
+      if (srcFile.getPath().startsWith(projectDir.getPath() + "/vignettes"))
+         return true;
+      else if (srcFile.getParentPathString().equals(projectDir.getPath()) &&
+               srcFile.getExtension().toLowerCase().equals(".md"))
+         return true;
+      else
+         return false;
    }
       
    private void checkCompilePdfDependencies()
@@ -2224,7 +2250,16 @@ public class TextEditingTarget implements
    @Handler 
    void onEditRmdFormatOptions()
    {
-      showFrontMatterEditor();
+      rmarkdownHelper_.withRMarkdownPackage(
+          "Editing R Markdown options", 
+          new CommandWithArg<RMarkdownContext>() {
+
+            @Override
+            public void execute(RMarkdownContext arg)
+            {
+               showFrontMatterEditor();
+            }
+          });
    }
    
    private void showFrontMatterEditor()
@@ -2851,6 +2886,19 @@ public class TextEditingTarget implements
       
       executeSweaveChunk(scopeHelper_.getNextSweaveChunk(), true);
    }
+   
+   @Handler
+   void onExecutePreviousChunks()
+   {
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
+      
+      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks();
+      for (Scope scope : previousScopes)
+         executeSweaveChunk(scope, false);
+   }
 
    private void executeSweaveChunk(Scope chunk, boolean scrollNearTop)
    {
@@ -3216,8 +3264,16 @@ public class TextEditingTarget implements
    }
    
    void renderRmd()
-   {
-      if (docUpdateSentinel_.getPath() != null)
+   { 
+      boolean renderSourceOnly = (docUpdateSentinel_.getPath() == null) ||
+                                 isPackageDocumentationFile();
+          
+      if (renderSourceOnly)
+      {
+         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode());
+      }
+      
+      else
       {
          saveThenExecute(null, new Command() {
             @Override
@@ -3230,10 +3286,7 @@ public class TextEditingTarget implements
             }
          });
       }
-      else
-      {
-         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode());
-      }
+      
    }
    
    void previewHTML()

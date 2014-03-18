@@ -329,8 +329,7 @@ NSString* resolveAliasedPath(NSString* path)
    FSRef wordRef;
    NSString* wordBundleId = @"com.microsoft.Word";
    OSStatus status =
-      LSFindApplicationForInfo(kLSUnknownCreator,
-                               (__bridge CFStringRef) wordBundleId,
+      LSFindApplicationForInfo(kLSUnknownCreator, (CFStringRef) wordBundleId,
                                NULL, &wordRef, NULL);
    
    if (status == noErr)
@@ -339,24 +338,26 @@ NSString* resolveAliasedPath(NSString* path)
       // already open, while preserving its scroll position; if it isn't already
       // open, open it.
       NSString *openDocScript = [NSString stringWithFormat:
-        @"tell application \"Microsoft Word\"\n"
-         "	activate\n"
-         "	set reopened to false\n"
-         "	repeat with i from 1 to (count of documents)\n"
-         "		set docPath to path of document i\n"
-         "		if POSIX path of docPath is not equal to \"%@\" then exit repeat\n"
-         "		set w to active window of document i\n"
-         "		set h to horizontal percent scrolled of w\n"
-         "		set v to vertical percent scrolled of w\n"
-         "		close document i\n"
-         "		set d to open file name docPath with read only\n"
-         "		set reopened to true\n"
-         "		set w to active window of d\n"
-         "		set horizontal percent scrolled of w to h\n"
-         "		set vertical percent scrolled of w to v\n"
-         "	end repeat\n"
-         "	if not reopened then open file name POSIX file \"%@\" with read only\n"
-         "end tell\n", path, path];
+         @"tell application \"Microsoft Word\"\n"
+         "  activate\n"
+         "  set reopened to false\n"
+         "  repeat with i from 1 to (count of documents)\n"
+         "     set docPath to path of document i\n"
+         "     if POSIX path of docPath is equal to \"%@\" then\n"
+         "        set w to active window of document i\n"
+         "        set h to horizontal percent scrolled of w\n"
+         "        set v to vertical percent scrolled of w\n"
+         "        close document i\n"
+         "        set d to open file name docPath with read only\n"
+         "        set reopened to true\n"
+         "        set w to active window of d\n"
+         "        set horizontal percent scrolled of w to h\n"
+         "        set vertical percent scrolled of w to v\n"
+         "        exit repeat\n"
+         "     end if\n"
+         "  end repeat\n"
+         "  if not reopened then open file name POSIX file \"%@\" with read only\n"
+         "end tell\n" , path, path];
 
       NSAppleScript *openDoc =
          [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];

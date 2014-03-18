@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
@@ -26,7 +27,6 @@ import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
@@ -42,16 +42,13 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    @Override 
    protected void initToolbar(Toolbar toolbar, Commands commands)
    {
-      if (Desktop.isDesktop())
-      {
-         urlBox_ = new Label("");
-         Style style = urlBox_.getElement().getStyle();
-         style.setColor("#606060");
-         urlBox_.addStyleName(ThemeStyles.INSTANCE.selectableText());
-         urlBox_.getElement().getStyle().setMarginRight(7, Unit.PX);
-         toolbar.addLeftWidget(urlBox_);
-         toolbar.addLeftSeparator();
-      }
+      urlBox_ = new Label("");
+      Style style = urlBox_.getElement().getStyle();
+      style.setColor("#606060");
+      urlBox_.addStyleName(ThemeStyles.INSTANCE.selectableText());
+      urlBox_.getElement().getStyle().setMarginRight(7, Unit.PX);
+      toolbar.addLeftWidget(urlBox_);
+      toolbar.addLeftSeparator();  
 
       ToolbarButton popoutButton = 
             commands.viewerPopout().createToolbarButton();
@@ -70,11 +67,14 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    {
       appParams_ = params;
 
-      // We don't show the URL in server mode
-      if (urlBox_ != null)
-         urlBox_.setText(params.getUrl());
+      String url = params.getUrl();
+      
+      // ensure that we display a full url in server mode
+      if (!url.startsWith("http"))
+         url = GWT.getHostPageBaseURL() + url;
+      urlBox_.setText(url);
 
-      showUrl(params.getUrl());
+      showUrl(url);
    }
    
    @Override

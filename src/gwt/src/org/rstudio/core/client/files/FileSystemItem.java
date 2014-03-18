@@ -360,6 +360,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "mml",   "text/mathml" );
       MIME_TYPES.put( "log",   "text/plain");
       MIME_TYPES.put( "out",   "text/plain");
+      MIME_TYPES.put( "csl",   "text/x-csl");
       MIME_TYPES.put( "r",     "text/x-r-source");
       MIME_TYPES.put( "rd",    "text/x-r-doc");
       MIME_TYPES.put( "rnw",   "text/x-r-sweave");

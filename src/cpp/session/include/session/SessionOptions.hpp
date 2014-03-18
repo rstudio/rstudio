@@ -248,42 +248,42 @@ public:
 
    bool allowFileDownloads() const
    {
-      return allowFileDownloads_;
+      return allowOverlay() || allowFileDownloads_;
    }
 
    bool allowShell() const
    {
-      return allowShell_;
+      return allowOverlay() || allowShell_;
    }
 
    bool allowPackageInstallation() const
    {
-      return allowPackageInstallation_;
+      return allowOverlay() || allowPackageInstallation_;
    }
 
    bool allowVcs() const
    {
-      return allowVcs_;
+      return allowOverlay() || allowVcs_;
    }
 
    bool allowCRANReposEdit() const
    {
-      return allowCRANReposEdit_;
+      return allowOverlay() || allowCRANReposEdit_;
    }
 
    bool allowVcsExecutableEdit() const
    {
-      return allowVcsExecutableEdit_;
+      return allowOverlay() || allowVcsExecutableEdit_;
    }
 
    bool allowRemovePublicFolder() const
    {
-      return allowRemovePublicFolder_;
+      return allowOverlay() || allowRemovePublicFolder_;
    }
 
    bool allowRpubsPublish() const
    {
-      return allowRpubsPublish_;
+      return allowOverlay() || allowRpubsPublish_;
    }
 
    // user info
@@ -380,6 +380,7 @@ private:
    void addOverlayOptions(boost::program_options::options_description* pOpt);
    bool validateOverlayOptions(std::string* pErrMsg);
    void resolveOverlayOptions();
+   bool allowOverlay() const;
 
 private:
    // verify

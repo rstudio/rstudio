@@ -596,7 +596,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
       return error;
 
    // create temp file
-   FilePath rmdTempFile = module_context::tempFile("Untitled", "Rmd");
+   FilePath rmdTempFile = module_context::tempFile("Preview-", "Rmd");
    error = core::writeStringToFile(rmdTempFile, source);
    if (error)
       return error;

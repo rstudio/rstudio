@@ -74,6 +74,12 @@
                                                                 repos = getOption("repos"),
                                                                 ...) 
    {
+      if (!.Call("rs_canInstallPackages"))
+      {
+        stop("Package installation is disabled in this version of RStudio",
+             call. = FALSE)
+      }
+      
       if (!is.null(repos) && .rs.loadedPackageUpdates(pkgs)) {
 
          # attempt to determine the install command

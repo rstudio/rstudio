@@ -191,6 +191,13 @@ SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
    return R_NilValue;
 }
 
+SEXP rs_canInstallPackages()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(session::options().allowPackageInstallation(),
+                          &rProtect);
+}
+
 void initializeRStudioPackages(bool newSession)
 {
 #ifdef RSTUDIO_UNVERSIONED_BUILD
@@ -230,6 +237,13 @@ Error initialize()
    methodDef.fun = (DL_FUNC) rs_enqueLoadedPackageUpdates ;
    methodDef.numArgs = 1;
    r::routines::addCallMethod(methodDef);
+
+   R_CallMethodDef methodDef2 ;
+   methodDef2.name = "rs_canInstallPackages" ;
+   methodDef2.fun = (DL_FUNC) rs_canInstallPackages ;
+   methodDef2.numArgs = 0;
+   r::routines::addCallMethod(methodDef2);
+
 
    using boost::bind;
    using namespace module_context;
