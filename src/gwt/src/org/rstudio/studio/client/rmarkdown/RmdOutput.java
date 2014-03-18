@@ -99,7 +99,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          String previewer = prefs_.getPdfPreviewValue();
          if (previewer.equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
          {
-            pdfViewer_.viewPdfUrl(result.getOutputUrl());
+            pdfViewer_.viewPdfUrl(
+                  result.getOutputUrl(), 
+                  result.getPreviewSlide() >= 0 ? 
+                        result.getPreviewSlide() : null);
          }
          else if (!previewer.equals(UIPrefs.PDF_PREVIEW_NONE))
          {

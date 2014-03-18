@@ -190,10 +190,21 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       }
    }
    
-   public void viewPdfUrl(final String url)
+   public void viewPdfUrl(final String url, final Integer initialPage)
    {
+      if (initialPage != null)
+      {
+         executeOnPdfLoad_ = new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               pdfJsWindow_.goToPage(initialPage.intValue());
+            }
+         };
+      }
       lastSuccessfulPdfPath_ = null;
-      openPdfUrl(url, false, true);
+      openPdfUrl(url, false, initialPage == null);
    }
   
    // Private methods ---------------------------------------------------------
