@@ -106,8 +106,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
                                            true,
                                            txtTitle_.getValue().trim(),
                                            txtAuthor_.getValue().trim(),
-                                           getType(),
-                                           getFormat());
+                                           getType());
    }
 
    private String createPrefix()
@@ -154,11 +153,6 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
    private String getType()
    {
       return listType_.getValue(listType_.getSelectedIndex());
-   }
-   
-   private String getFormat()
-   {
-      return "html_document";
    }
    
    private void setType(String type)

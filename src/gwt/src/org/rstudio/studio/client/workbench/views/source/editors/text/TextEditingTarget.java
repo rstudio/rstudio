@@ -149,7 +149,6 @@ public class TextEditingTarget implements
    private static final String NOTEBOOK_TITLE = "notebook_title";
    private static final String NOTEBOOK_AUTHOR = "notebook_author";
    private static final String NOTEBOOK_TYPE = "notebook_type";
-   private static final String NOTEBOOK_FORMAT = "notebook_format";
 
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -3340,10 +3339,10 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               generateNotebook(new CommandWithArg<String>()
+               generateNotebook(new Command()
                {
                   @Override
-                  public void execute(String input)
+                  public void execute()
                   {
                      showPreviewWindowCommand.execute();
                      runPreviewCommand.execute();
@@ -3375,7 +3374,7 @@ public class TextEditingTarget implements
       }
    }
 
-   private void generateNotebook(final CommandWithArg<String> executeOnSuccess)
+   private void generateNotebook(final Command executeOnSuccess)
    {
       // default title
       String defaultTitle = docUpdateSentinel_.getProperty(NOTEBOOK_TITLE);
@@ -3400,15 +3399,6 @@ public class TextEditingTarget implements
             defaultType = CompileNotebookOptions.TYPE_DEFAULT;
       }
       
-      // default format
-      String defaultFormat = docUpdateSentinel_.getProperty(NOTEBOOK_FORMAT);
-      if (StringUtil.isNullOrEmpty(defaultFormat))
-      {
-         defaultFormat = prefs_.compileNotebookOptions().getValue().getFormat();
-         if (StringUtil.isNullOrEmpty(defaultFormat))
-            defaultFormat = CompileNotebookOptions.FORMAT_DEFAULT;
-      }
-      
       CompileNotebookOptionsDialog dialog = new CompileNotebookOptionsDialog(
             getId(), 
             defaultTitle, 
@@ -3417,7 +3407,7 @@ public class TextEditingTarget implements
             new OperationWithInput<CompileNotebookOptions>()
       {
          @Override
-         public void execute(final CompileNotebookOptions input)
+         public void execute(CompileNotebookOptions input)
          { 
             server_.createNotebook(
                           input, 
@@ -3428,7 +3418,7 @@ public class TextEditingTarget implements
                {
                   if (response.getSucceeded())
                   {
-                     executeOnSuccess.execute(input.getNotebookFormat());
+                     executeOnSuccess.execute();
                   }
                   else
                   {
@@ -3444,14 +3434,12 @@ public class TextEditingTarget implements
             changedProperties.put(NOTEBOOK_TITLE, input.getNotebookTitle());
             changedProperties.put(NOTEBOOK_AUTHOR, input.getNotebookAuthor());
             changedProperties.put(NOTEBOOK_TYPE, input.getNotebookType());
-            changedProperties.put(NOTEBOOK_FORMAT, input.getNotebookFormat());
             docUpdateSentinel_.modifyProperties(changedProperties, null);
 
             // save global prefs
             CompileNotebookPrefs prefs = CompileNotebookPrefs.create(
                                           input.getNotebookAuthor(), 
-                                          input.getNotebookType(),
-                                          input.getNotebookFormat());
+                                          input.getNotebookType());
             if (!CompileNotebookPrefs.areEqual(
                                   prefs, 
                                   prefs_.compileNotebookOptions().getValue()))
@@ -3475,10 +3463,10 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               generateNotebook(new CommandWithArg<String>()
+               generateNotebook(new Command()
                {
                   @Override
-                  public void execute(String format)
+                  public void execute()
                   {
                      // notebook path for script path
                      FileSystemItem script = FileSystemItem.createFile(
@@ -3490,7 +3478,7 @@ public class TextEditingTarget implements
                      rmarkdownHelper_.renderRMarkdown(
                                            notebook,
                                            1,
-                                           "rmarkdown::" + format,
+                                           null,
                                            docUpdateSentinel_.getEncoding());
                   }
                });
