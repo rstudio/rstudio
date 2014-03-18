@@ -143,7 +143,7 @@ private:
 
       std::string extraParams;
       if (!format.empty())
-         extraParams = "output_format = " + format + "(), ";
+         extraParams = "output_format = rmarkdown::" + format + "(), ";
 
       // render command
       boost::format fmt("%1%('%2%', %3% encoding='%4%');");
