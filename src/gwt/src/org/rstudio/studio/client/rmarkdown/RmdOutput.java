@@ -96,21 +96,18 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                                 result.getOutputFile()); 
       if (".pdf".equals(extension))
       {
-         if (Desktop.isDesktop())
+         String previewer = prefs_.getPdfPreviewValue();
+         if (previewer.equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
          {
-            Desktop.getFrame().showPDF(result.getOutputFile(),
-                                       result.getPreviewSlide());
+            pdfViewer_.viewPdfUrl(result.getOutputUrl());
          }
-         else 
+         else if (!previewer.equals(UIPrefs.PDF_PREVIEW_NONE))
          {
-            if (prefs_.getPdfPreviewValue().equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
-            {
-               pdfViewer_.viewPdfUrl(result.getOutputUrl());
-            }
-            else
-            {
+            if (Desktop.isDesktop())
+               Desktop.getFrame().showPDF(result.getOutputFile(),
+                                          result.getPreviewSlide());
+            else 
                globalDisplay_.showHtmlFile(result.getOutputFile());
-            }
          }
       }
       else if (".docx".equals(extension))
