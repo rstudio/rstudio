@@ -160,9 +160,8 @@ public class CompilePdfOutputPresenter extends BasePresenter
       // tab was already visible
       switchToConsoleOnSuccessfulCompile_ = !view_.isEffectivelyVisible();
       
-      // activate the compile pdf tab if we aren't using the internal previewer
-      boolean activate = !event.useInternalPreview();
-      view_.ensureVisible(activate);
+      // activate the compile pdf tab 
+      view_.ensureVisible(true);
       
       // run the compile
       compilePdf(event.getTargetFile(),

@@ -43,7 +43,7 @@ public class PdfJsWindow extends WindowEx
    {
    }
    
-   public final native void injectUiOnLoad() /*-{
+   public final native void injectUiOnLoad(boolean forDesktop) /*-{
       var win = this;
       this.addEventListener("load", function() {
          // inject our own CSS
@@ -113,7 +113,8 @@ public class PdfJsWindow extends WindowEx
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLoadEvent()();
       });
       
-      this.addEventListener("unload", function() {
+      var unloadEvt = forDesktop ? "unload" : "beforeunload";
+      this.addEventListener(unloadEvt, function() {
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()();
       });
       

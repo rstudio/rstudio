@@ -243,7 +243,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    private void initializePdfJsWindow(WindowEx win)
    {
       pdfJsWindow_ = win.cast();
-      pdfJsWindow_.injectUiOnLoad();
+      pdfJsWindow_.injectUiOnLoad(Desktop.isDesktop());
    }
 
    private void synctexInverseSearch(SyncTexCoordinates coord, 
