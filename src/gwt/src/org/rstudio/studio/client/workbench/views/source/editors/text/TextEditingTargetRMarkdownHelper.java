@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.gwt.core.client.JsArray;
@@ -24,8 +25,10 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -36,6 +39,9 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.notebookv2.CompileNotebookv2Options;
+import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
+import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
@@ -52,6 +58,8 @@ import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class TextEditingTargetRMarkdownHelper
@@ -77,6 +85,7 @@ public class TextEditingTargetRMarkdownHelper
    public void initialize(Session session,
                           GlobalDisplay globalDisplay,
                           EventBus eventBus,
+                          UIPrefs prefs,
                           FileTypeCommands fileTypeCommands,
                           RMarkdownServerOperations server)
    {
@@ -84,6 +93,7 @@ public class TextEditingTargetRMarkdownHelper
       fileTypeCommands_ = fileTypeCommands;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
+      prefs_ = prefs;
       server_ = server;
    }
    
@@ -148,6 +158,63 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+   public void renderNotebookv2(final DocUpdateSentinel sourceDoc)
+   {
+      final String NOTEBOOK_FORMAT = "notebook_format";
+      
+      withRMarkdownPackage("Compiling notebooks from R scripts",
+         new CommandWithArg<RMarkdownContext>() {
+            @Override
+            public void execute(RMarkdownContext arg)
+            {
+               // default format
+               String format = sourceDoc.getProperty(NOTEBOOK_FORMAT);
+               if (StringUtil.isNullOrEmpty(format))
+               {
+                  format = prefs_.compileNotebookv2Options()
+                                                      .getValue().getFormat();
+                  if (StringUtil.isNullOrEmpty(format))
+                     format = CompileNotebookv2Options.FORMAT_DEFAULT;
+               }
+               
+               CompileNotebookv2OptionsDialog dialog = 
+                     new CompileNotebookv2OptionsDialog(
+                           format,
+                           new OperationWithInput<CompileNotebookv2Options>()
+               {
+                  @Override
+                  public void execute(CompileNotebookv2Options input)
+                  { 
+                     // kickoff the render
+                     eventBus_.fireEvent(new RenderRmdEvent(
+                                                sourceDoc.getPath(), 
+                                                1, 
+                                                input.getFormat(), 
+                                                sourceDoc.getEncoding()));
+                     
+                     // save options for this document
+                     HashMap<String, String> changedProperties 
+                                          = new HashMap<String, String>();
+                     changedProperties.put(NOTEBOOK_FORMAT, input.getFormat());
+                     sourceDoc.modifyProperties(changedProperties, null);
+
+                     // save global prefs
+                     CompileNotebookv2Prefs prefs = 
+                           CompileNotebookv2Prefs.create(input.getFormat());
+                     if (!CompileNotebookv2Prefs.areEqual(
+                               prefs, 
+                               prefs_.compileNotebookv2Options().getValue()))
+                     {
+                        prefs_.compileNotebookv2Options().setGlobalValue(prefs);
+                        prefs_.writeUIPrefs();
+                     }
+                  }
+               }
+               );
+               dialog.showModal();
+            }
+          });
+   }
   
    
    public void renderRMarkdown(final String sourceFile, 
@@ -465,6 +532,7 @@ public class TextEditingTargetRMarkdownHelper
    private Session session_;
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;
+   private UIPrefs prefs_;
    private FileTypeCommands fileTypeCommands_;
    private RMarkdownServerOperations server_;
 }
