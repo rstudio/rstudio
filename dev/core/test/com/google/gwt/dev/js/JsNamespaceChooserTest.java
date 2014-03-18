@@ -129,8 +129,8 @@ public class JsNamespaceChooserTest extends TestCase {
 
   /** Adds a mapping from a JavaScript global to a Java method. */
   private void mapJavaMethod(String name) {
-    JMethod method = new JMethod(SourceOrigin.UNKNOWN, name, comExampleFooClass, JPrimitiveType.VOID, false,
-        true, false, AccessModifier.DEFAULT);
+    JMethod method = new JMethod(SourceOrigin.UNKNOWN, name, comExampleFooClass,
+        JPrimitiveType.VOID, false, true, false, AccessModifier.DEFAULT);
     comExampleFooClass.addMethod(method);
     javaToName.put(method, program.getScope().findExistingName(name));
   }
@@ -154,7 +154,8 @@ public class JsNamespaceChooserTest extends TestCase {
     JsSymbolResolver.exec(program);
 
     // Build the jjsmap.
-    List<JDeclaredType> types = ImmutableList.<JDeclaredType>of(comExampleFooClass);
+    List<JDeclaredType> types = ImmutableList.<JDeclaredType>of(comExampleFooClass,
+        defaultPackageBarClass);
     Map<JsStatement, JClassType> typeForStatement = ImmutableMap.of();
     Map<JsStatement, JMethod> vtableInitForMethod = ImmutableMap.of();
     JavaToJavaScriptMapImpl jjsmap = new JavaToJavaScriptMapImpl(types, javaToName,
