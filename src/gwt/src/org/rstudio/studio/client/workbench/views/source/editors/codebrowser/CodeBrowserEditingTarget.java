@@ -554,6 +554,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void forceSaveCommandActive()
+   {
+   }
+   
+   @Override
    public void save(Command onCompleted)
    {
       onCompleted.execute();

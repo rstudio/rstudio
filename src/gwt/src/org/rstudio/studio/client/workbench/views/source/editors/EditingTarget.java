@@ -98,6 +98,7 @@ public interface EditingTarget extends IsWidget,
    ReadOnlyValue<Boolean> dirtyState();
    
    boolean isSaveCommandActive();
+   void forceSaveCommandActive();
    
    /**
     * Save the document, prompting only if the file is dirty and untitled

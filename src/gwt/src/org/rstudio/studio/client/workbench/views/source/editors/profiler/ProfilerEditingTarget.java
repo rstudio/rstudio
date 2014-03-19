@@ -231,6 +231,11 @@ public class ProfilerEditingTarget implements EditingTarget
       return dirtyState().getValue();
    }
    
+   @Override
+   public void forceSaveCommandActive()
+   {
+   }
+   
    public void save(Command onCompleted)
    {
       onCompleted.execute();

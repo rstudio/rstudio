@@ -219,6 +219,7 @@ public class TextEditingTarget implements
          if (file_ != null)
          {
             ignoreDeletes_ = false;
+            forceSaveCommandActive_ = false;
             commands_.reopenSourceDocWithEncoding().setEnabled(true);
             name_.setValue(file_.getName(), true);
             // Make sure tooltip gets updated, even if name hasn't changed
@@ -1799,6 +1800,9 @@ public class TextEditingTarget implements
    public boolean isSaveCommandActive()
    {
       return 
+         // force active?
+         forceSaveCommandActive_ ||
+            
          // standard check of dirty state   
          (dirtyState().getValue() == true) ||
          
@@ -1807,6 +1811,12 @@ public class TextEditingTarget implements
          
          // source on save is active 
          (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave());
+   }
+   
+   @Override
+   public void forceSaveCommandActive()
+   {
+      forceSaveCommandActive_ = true;
    }
 
    public Widget asWidget()
@@ -4196,6 +4206,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private boolean ignoreDeletes_;
+   private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private BreakpointManager breakpointManager_;

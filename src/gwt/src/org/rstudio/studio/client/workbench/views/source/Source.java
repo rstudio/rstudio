@@ -985,7 +985,7 @@ public class Source implements InsertSourceHandler,
    }
    
    private void newDoc(EditableFileType fileType,
-                       String contents,
+                       final String contents,
                        final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
@@ -1000,6 +1000,13 @@ public class Source implements InsertSourceHandler,
                public void onResponseReceived(SourceDocument newDoc)
                {
                   EditingTarget target = addTab(newDoc);
+                  
+                  if (contents != null)
+                  {
+                     target.forceSaveCommandActive();
+                     manageSaveCommands();
+                  }
+                  
                   if (resultCallback != null)
                      resultCallback.onSuccess(target);
                }
