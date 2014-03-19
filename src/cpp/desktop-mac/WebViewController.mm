@@ -606,6 +606,37 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
     callWebScriptMethod: @"registerDesktopChildWindow" withArguments: args];
 }
 
+- (void)webView: (WebView *) sender
+  runOpenPanelForFileButtonWithResultListener:
+                 (id<WebOpenPanelResultListener>) resultListener
+{
+   // WebView doesn't natively launch a file browser for HTML file inputs,
+   // so launch one as a modal sheet here and pass the result back to the
+   // listener
+   NSOpenPanel* panel = [NSOpenPanel openPanel];
+   
+   [panel setCanChooseFiles: true];
+   [panel setCanChooseDirectories: false];
+   [panel beginSheetModalForWindow: [self uiWindow]
+                 completionHandler: nil];
+   long int result = [panel runModal];
+   @try
+   {
+      if (result == NSOKButton)
+      {
+         [resultListener chooseFilename: [[panel URL] relativePath]];
+      }
+   }
+   @catch (NSException* e)
+   {
+      throw e;
+   }
+   @finally
+   {
+      [NSApp endSheet: panel];
+   }
+}
+
 @end
 
 
