@@ -38,6 +38,11 @@ public class StackTraceCreator {
   private static final String ANONYMOUS = "anonymous";
 
   /**
+   * Replacement for class or file names that cannot be extracted from a stack.
+   */
+  private static final String UNKNOWN = "Unknown";
+
+  /**
    * This class acts as a deferred-binding hook point to allow more optimal
    * versions to be substituted. This base version simply crawls
    * <code>arguments.callee.caller</code>.
@@ -74,9 +79,10 @@ public class StackTraceCreator {
     }-*/;
 
     protected StackTraceElement[] getStackTrace(JsArrayString stack) {
-      StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
-      for (int i = 0, j = stackTrace.length; i < j; i++) {
-        stackTrace[i] = new StackTraceElement("Unknown", stack.get(i), null,
+      int length = stack.length();
+      StackTraceElement[] stackTrace = new StackTraceElement[length];
+      for (int i = 0; i < length; i++) {
+        stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i), null,
             LINE_NUMBER_UNKNOWN);
       }
       return stackTrace;
@@ -154,12 +160,12 @@ public class StackTraceCreator {
           int idx = location.indexOf(':');
           if (idx != -1) {
             fileName = location.substring(0, idx);
-            lineNumber = Integer.parseInt(location.substring(idx + 1));
+            lineNumber = parseInt(location.substring(idx + 1));
           } else {
-            lineNumber = Integer.parseInt(location);
+            lineNumber = parseInt(location);
           }
         }
-        stackTrace[i] = new StackTraceElement("Unknown", stack.get(i),
+        stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i),
             fileName, lineNumber);
       }
       return stackTrace;
@@ -333,13 +339,14 @@ public class StackTraceCreator {
 
     @Override
     protected StackTraceElement[] getStackTrace(JsArrayString stack) {
-      StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
-      for (int i = 0, j = stackTrace.length; i < j; i++) {
+      int length = stack.length();
+      StackTraceElement[] stackTrace = new StackTraceElement[length];
+      for (int i = 0; i < length; i++) {
         String stackElements[] = stack.get(i).split("@@");
 
         int line = LINE_NUMBER_UNKNOWN;
         int col = -1;
-        String fileName = "Unknown";
+        String fileName = UNKNOWN;
         if (stackElements.length == 2 && stackElements[1] != null) {
           String location = stackElements[1];
           // colon between line and column
@@ -353,8 +360,8 @@ public class StackTraceCreator {
               col = parseInt(location.substring(lastColon + 1));
           }
         }
-        stackTrace[i] = new StackTraceElement("Unknown", stackElements[0], fileName + "@" + col,
-            replaceIfNoSourceMap(line < 0 ? -1 : line));
+        stackTrace[i] = new StackTraceElement(UNKNOWN, stackElements[0], fileName + "@" + col,
+            replaceIfNoSourceMap(line < 0 ? LINE_NUMBER_UNKNOWN : line));
       }
       return stackTrace;
     }
@@ -365,13 +372,15 @@ public class StackTraceCreator {
    * disabled.
    */
   static class CollectorChromeNoSourceMap extends CollectorChrome {
+    @Override
     protected int replaceIfNoSourceMap(int line) {
-      return -1;
+      return LINE_NUMBER_UNKNOWN;
     }
   }
 
   private static native int parseInt(String number) /*-{
-    return parseInt(number) || -1;
+    return parseInt(number)
+        || @com.google.gwt.core.client.impl.StackTraceCreator::LINE_NUMBER_UNKNOWN;
   }-*/;
 
   /**
@@ -394,12 +403,7 @@ public class StackTraceCreator {
    * only be called in Production Mode.
    */
   public static void createStackTrace(JavaScriptException e) {
-    if (!GWT.isScript()) {
-      throw new RuntimeException(
-          "StackTraceCreator should only be called in Production Mode");
-    }
-
-    Collector collector = GWT.<Collector> create(Collector.class);
+    Collector collector = newCollector();
     JsArrayString stack = collector.inferFrom(e.getThrown());
     StackTraceElement[] stackTrace = collector.getStackTrace(stack);
     if (stackTrace != null) {
@@ -412,17 +416,21 @@ public class StackTraceCreator {
    * should only be called in Production Mode.
    */
   public static void fillInStackTrace(Throwable t) {
-    if (!GWT.isScript()) {
-      throw new RuntimeException(
-          "StackTraceCreator should only be called in Production Mode");
-    }
-
-    Collector collector = GWT.<Collector> create(Collector.class);
+    Collector collector = newCollector();
     JsArrayString stack = collector.collect();
     StackTraceElement[] stackTrace = collector.getStackTrace(stack);
     if (stackTrace != null) {
       t.setStackTrace(stackTrace);
     }
+  }
+
+  private static Collector newCollector() {
+    if (!GWT.isScript()) {
+      throw new RuntimeException(
+          "StackTraceCreator should only be called in Production Mode");
+    }
+
+    return GWT.create(Collector.class);
   }
 
   private static native JsArrayString splice(JsArrayString arr, int length) /*-{
