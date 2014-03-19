@@ -35,6 +35,7 @@ import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
@@ -155,7 +156,9 @@ class Recompiler {
       File outputDir = new File(
           compileDir.getWarDir().getCanonicalPath() + "/" + getModuleName());
       if (!outputDir.exists()) {
-        outputDir.mkdir();
+        if (!outputDir.mkdir()) {
+          compileLogger.log(TreeLogger.Type.WARN, "cannot create directory: " + outputDir);
+        }
       }
 
       // Creates a "module_name.nocache.js" that just forces a recompile.
@@ -267,8 +270,7 @@ class Recompiler {
     for (Map.Entry<String, String> entry : bindingProperties.entrySet()) {
       String propName = entry.getKey();
       String propValue = entry.getValue();
-      logger.log(TreeLogger.Type.INFO, "binding: " + propName + "=" + propValue);
-      maybeSetBinding(moduleDef, propName, propValue);
+      maybeSetBinding(logger, moduleDef, propName, propValue);
     }
 
     overrideBinding(moduleDef, "compiler.useSourceMaps", "true");
@@ -277,17 +279,58 @@ class Recompiler {
   }
 
   /**
-   * Sets a binding unless it's hard-coded in the GWT application.
+   * Attempts to set a binding property to the given value.
+   * If the value is not allowed, see if we can find a value that will work.
+   * There is a special case for "locale".
    */
-  private static void maybeSetBinding(ModuleDef module, String propName, String newValue) {
-    Property prop = module.getProperties().find(propName);
-    if (prop instanceof BindingProperty) {
-      BindingProperty binding = (BindingProperty) prop;
+  private static void maybeSetBinding(TreeLogger logger, ModuleDef module, String propName,
+      String newValue) {
 
-      if (binding.isAllowedValue(newValue)) {
-        binding.setAllowedValues(binding.getRootCondition(), newValue);
+    logger = logger.branch(TreeLogger.Type.INFO, "binding: " + propName + "=" + newValue);
+
+    Property prop = module.getProperties().find(propName);
+    if (!(prop instanceof BindingProperty)) {
+      logger.log(TreeLogger.Type.WARN, "undefined property: '" + propName + "'");
+      return;
+    }
+
+    BindingProperty binding = (BindingProperty) prop;
+    if (!binding.isAllowedValue(newValue)) {
+
+      String[] allowedValues = binding.getAllowedValues(binding.getRootCondition());
+      logger.log(TreeLogger.Type.WARN, "property '" + propName +
+          "' cannot be set to '" + newValue + "'");
+      logger.log(TreeLogger.Type.INFO, "allowed values: " +
+          Joiner.on(", ").join(allowedValues));
+
+      // See if we can fall back on a reasonable default.
+      if (allowedValues.length == 1) {
+        // There is only one possibility, so use it.
+        newValue = allowedValues[0];
+      } else if (binding.getName().equals("locale")) {
+        // TODO: come up with a more general solution. Perhaps fail
+        // the compile and give the user a way to override the property?
+        newValue = chooseDefault(binding, "default", "en", "en_US");
+      } else {
+        // There is more than one. Continue and possibly compile multiple permutations.
+        logger.log(TreeLogger.Type.INFO, "continuing without " + propName +
+            ". Sourcemaps may not work.");
+        return;
+      }
+
+      logger.log(TreeLogger.Type.INFO, "recovered with " + propName + "=" + newValue);
+    }
+
+    binding.setAllowedValues(binding.getRootCondition(), newValue);
+  }
+
+  private static String chooseDefault(BindingProperty property, String... candidates) {
+    for (String candidate : candidates) {
+      if (property.isAllowedValue(candidate)) {
+        return candidate;
       }
     }
+    return property.getFirstLegalValue();
   }
 
   /**
