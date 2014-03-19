@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.resource.impl.testdata.cpe2.com.google.gwt.i18n.rebind;
+package com.google.gwt.dev.resource.impl.testdata.cpe2.com.google.gwt.i18n.client;
 
 /**
  * Classes for testing resource infrastructure.

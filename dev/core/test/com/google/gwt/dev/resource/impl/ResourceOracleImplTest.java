@@ -566,7 +566,13 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
         InputStream is = res.openContents();
         assertNotNull(is);
         rdr = new BufferedReader(new InputStreamReader(is));
-        assertTrue(rdr.readLine().indexOf(
+
+        // Skip lines until package line is found.
+        String line = rdr.readLine();
+        while (line != null && !line.startsWith("package")) {
+          line = rdr.readLine();
+        }
+        assertTrue(line != null && line.indexOf(
             "package com.google.gwt.dev.resource.impl.testdata.cpe1.com.google.gwt.user.client;") >= 0);
       } finally {
         Utility.close(rdr);
@@ -583,7 +589,12 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
         InputStream is = res.openContents();
         assertNotNull(is);
         rdr = new BufferedReader(new InputStreamReader(is));
-        assertTrue(rdr.readLine().indexOf(
+        // Skip lines until package line is found.
+        String line = rdr.readLine();
+        while (line != null && !line.startsWith("package")) {
+          line = rdr.readLine();
+        }
+        assertTrue(line != null && line.indexOf(
             "package com.google.gwt.dev.resource.impl.testdata.cpe2.com.google.gwt.i18n.client;") >= 0);
       } finally {
         Utility.close(rdr);
