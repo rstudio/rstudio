@@ -431,11 +431,11 @@ void GwtCallback::activateMinimalWindow(QString name)
 {
    // We currently only activate minimal windows on Cocoa, so this isn't
    // implemented on Qt desktop, and we don't expect it to be called.
-   std::string warning("Window '");
-   warning.append(name.toStdString());
-   warning.append("' could not be activated (not implemented on Qt desktop)");
-   core::system::log(
-      core::system::kLogLevelWarning, warning);
+   std::string message = "Could not activate window '" + name.toStdString() +
+                          "'.";
+   QMessageBox::warning(pOwner_->asWidget(),
+                        QString::fromUtf8("Window Activation Failed"),
+                        QString::fromUtf8(message.c_str()));
 }
 
 void GwtCallback::prepareForSatelliteWindow(QString name,
