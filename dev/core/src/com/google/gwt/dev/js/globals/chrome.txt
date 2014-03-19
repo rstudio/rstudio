@@ -312,6 +312,7 @@ SVGFontFaceSrcElement
 SVGFontFaceUriElement
 SVGForeignObjectElement
 SVGGElement
+SVGGeometryElement
 SVGGlyphElement
 SVGGlyphRefElement
 SVGGradientElement
@@ -392,6 +393,7 @@ SecurityPolicy
 Selection
 SharedWorker
 SpeechInputEvent
+SpeechSynthesisUtterance
 Storage
 StorageEvent
 String
@@ -420,6 +422,7 @@ Uint16Array
 Uint32Array
 Uint8Array
 Uint8ClampedArray
+VTTCue
 ValidityState
 WaveShaperNode
 WebGLActiveInfo
@@ -516,6 +519,7 @@ scrollY
 scrollbars
 self
 sessionStorage
+speechSynthesis
 status
 statusbar
 styleMedia
