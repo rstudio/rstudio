@@ -26,6 +26,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
+
 import org.rstudio.core.client.Point;
 
 public class WindowEx extends JavaScriptObject
@@ -131,6 +132,26 @@ public class WindowEx extends JavaScriptObject
    public final native int getTop() /*-{
       return this.screenY;
    }-*/;
+   
+   public final native int getOuterHeight() /*-{
+      return this.outerHeight;
+   }-*/;
+
+   public final native int getOuterWidth() /*-{
+      return this.outerWidth;
+   }-*/;
+   
+   public final native void scrollTo(int x, int y) /*-{
+      this.scrollTo(x, y);
+   }-*/;
+
+   public final native int getScrollLeft() /*-{
+      return this.scrollX;
+   }-*/;
+
+   public final native int getScrollTop() /*-{
+      return this.scrollY;
+   }-*/;
 
    public static HandlerRegistration addFocusHandler(FocusHandler handler)
    {
@@ -165,7 +186,7 @@ public class WindowEx extends JavaScriptObject
          }
       });
    }
-
+   
    static {
       registerNativeListeners();
    }

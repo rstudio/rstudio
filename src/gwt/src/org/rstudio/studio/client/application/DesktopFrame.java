@@ -45,6 +45,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showPDF(String path, int pdfPage);
    void prepareShowWordDoc();
    void openMinimalWindow(String name, String url, int width, int height);
+   void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int width, int height);
    void copyImageToClipboard(int clientLeft,

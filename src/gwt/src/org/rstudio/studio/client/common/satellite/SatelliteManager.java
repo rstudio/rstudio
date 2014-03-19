@@ -30,7 +30,9 @@ import org.rstudio.core.client.layout.ScreenUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -47,9 +49,11 @@ public class SatelliteManager implements CloseHandler<Window>
    @Inject
    public SatelliteManager(
          Session session,
+         EventBus events,
          Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler)
    {
       session_ = session;
+      events_ = events;
       pUncaughtExceptionHandler_ = pUncaughtExceptionHandler;
    }
    
@@ -369,7 +373,16 @@ public class SatelliteManager implements CloseHandler<Window>
       if (params != null)
          callSetParams(satelliteWnd, params);
    }
-
+   
+   
+   // called to register child windows (not necessarily full-fledged 
+   // satellites). only used in desktop mode, since in server mode we have the
+   // child window object as a return value from window.open.
+   private void registerDesktopChildWindow (String name, JavaScriptObject window)
+   {
+      events_.fireEvent(new WindowOpenedEvent(name, (WindowEx) window.cast()));
+   }
+   
    private void flushPendingEvents(String name)
    {
       ArrayList<JavaScriptObject> events =
@@ -410,6 +423,11 @@ public class SatelliteManager implements CloseHandler<Window>
       $wnd.flushPendingEvents = $entry(
          function(name) {
             manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::flushPendingEvents(Ljava/lang/String;)(name);
+         }
+      );
+      $wnd.registerDesktopChildWindow = $entry(
+         function(name, wnd) {
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerDesktopChildWindow(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(name, wnd);
          }
       );
    }-*/;
@@ -474,6 +492,7 @@ public class SatelliteManager implements CloseHandler<Window>
    //}-*/;
    
    private final Session session_;
+   private final EventBus events_;
    private final Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler_;
    private final ArrayList<ActiveSatellite> satellites_ = 
                                           new ArrayList<ActiveSatellite>();

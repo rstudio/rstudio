@@ -44,7 +44,8 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 - (id) initWithURL: (NSURL*) url openFile: (NSString*) openFile
 {
    if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
-                                   name: nil])
+                                   name: nil
+                             clientName: nil])
    {
       // initialize the global instance
       instance_ = self;
@@ -205,12 +206,6 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
 }
 
-
-- (id) evaluateJavaScript: (NSString*) js
-{
-   id win = [webView_ windowScriptObject];
-   return [win evaluateWebScript: js];
-}
 
 - (id) invokeCommand: (NSString*) command
 {

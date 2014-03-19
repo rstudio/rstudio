@@ -13,6 +13,7 @@
 #import "Utils.hpp"
 #import "WebViewWithKeyEquiv.h"
 #import "FileDownloader.h"
+#import "MainFrameController.h"
 
 struct PendingSatelliteWindow
 {
@@ -51,13 +52,6 @@ static PendingSatelliteWindow pendingWindow_;
    pendingWindow_ = PendingSatelliteWindow();
 }
 
-+ (void) activateSatelliteWindow: (NSString*) name
-{
-   WebViewController* controller = [namedWindows_ objectForKey: name];
-   if (controller)
-      [[controller window] makeKeyAndOrderFront: self];
-}
-
 + (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width
                             height: (int) height
@@ -69,6 +63,14 @@ static PendingSatelliteWindow pendingWindow_;
 {
    return [namedWindows_ objectForKey: name];
 }
+
++ (void) activateNamedWindow: (NSString*) name
+{
+   WebViewController* controller = [self windowNamed: name];
+   if (controller)
+      [[controller window] makeKeyAndOrderFront: self];
+}
+
 
 - (WebView*) webView
 {
@@ -92,6 +94,7 @@ static PendingSatelliteWindow pendingWindow_;
 
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name
+              clientName: (NSString*) clientName
 {
    // record base url
    baseUrl_ = [[request URL] retain];
@@ -141,6 +144,14 @@ static PendingSatelliteWindow pendingWindow_;
          // track it (for reactivation)
          name_ = [name copy];
          [namedWindows_ setValue: self forKey: name_];
+      }
+      
+      if (clientName)
+      {
+         // keep track of the name requested by the client (used to report the
+         // name of the created window back to the client; see
+         // handler for didClearWindowObject)
+         clientName_ = [clientName copy];
       }
       
       // set fullscreen mode (defualt to non-primary)
@@ -429,7 +440,8 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
          // self-freeing so don't auto-release
          SatelliteController* satelliteController =
          [[SatelliteController alloc] initWithURLRequest: request
-                                                    name: name];
+                                                    name: name
+                                              clientName: name];
          
          // return it
          return [satelliteController webView];
@@ -440,7 +452,8 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
       // self-freeing so don't auto-release
       SecondaryWindowController * controller =
          [[SecondaryWindowController alloc] initWithURLRequest: request
-                                                  name: nil];
+                                                          name: nil
+                                                    clientName: nil];
       return [controller webView];
    }
 }
@@ -569,6 +582,28 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
       return;
    
    [data writeToURL: [dlSavePanel URL] atomically: FALSE];
+}
+
+- (id) evaluateJavaScript: (NSString*) js
+{
+   id win = [webView_ windowScriptObject];
+   return [win evaluateWebScript: js];
+}
+
+- (void) webView: (WebView *) sender
+      didClearWindowObject: (WebScriptObject *) windowObject
+                  forFrame: (WebFrame *) frame
+{
+   // on the desktop, the main frame needs to be notified when a child window
+   // is opened in order to communicate with the child window's window object.
+   // extract the window object from the child...
+   id windowObj = [windowObject evaluateWebScript: @"window;"];
+   NSString* windowName = clientName_;
+   
+   // ... and inject it in the main frame.
+   NSArray* args = [NSArray arrayWithObjects: windowName, windowObj, nil];
+   [[[[MainFrameController instance] webView] windowScriptObject]
+    callWebScriptMethod: @"registerDesktopChildWindow" withArguments: args];
 }
 
 @end

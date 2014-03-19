@@ -31,7 +31,6 @@ import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.application.Desktop;
 
 /**
  * Helper methods that are mostly useful for interacting with 
@@ -709,10 +708,7 @@ public class DomUtils
    public static boolean isCommandClick(NativeEvent nativeEvt)
    {
       boolean commandKey;
-      
-      // NOTE: on mac desktop we still check for CtrlKey because under Qt 4.8
-      // on the mac the reporting of Ctrl and Meta keys is inverted)
-      if (BrowseCap.isMacintosh() && !Desktop.isDesktop())
+      if (BrowseCap.isMacintosh())
       {
          commandKey = nativeEvt.getMetaKey();
       }
@@ -724,6 +720,39 @@ public class DomUtils
       return (nativeEvt.getButton() == NativeEvent.BUTTON_LEFT) && commandKey;
    }
    
+   // Returns the relative vertical position of a child to its parent. 
+   // Presumes that the parent is one of the elements from which the child's
+   // position is computed; if this is not the case, the child's position
+   // relative to the body is returned.
+   public static int topRelativeTo(Element parent, Element child)
+   {
+      int top = 0;
+      Element el = child;
+      while (el != null && el != parent)
+      {
+         top += el.getOffsetTop();
+         el = el.getOffsetParent();
+      }
+      return top;
+   }
+   
+   public static int bottomRelativeTo(Element parent, Element child)
+   {
+      return topRelativeTo(parent, child) + child.getOffsetHeight();
+   }
+   
+   public static int leftRelativeTo(Element parent, Element child)
+   {
+      int left = 0;
+      Element el = child;
+      while (el != null && el != parent)
+      {
+         left += el.getOffsetLeft();
+         el = el.getOffsetParent();
+      }
+      return left;
+   }
+
    public static final native void setStyle(Element element, 
                                             String name, 
                                             String value) /*-{

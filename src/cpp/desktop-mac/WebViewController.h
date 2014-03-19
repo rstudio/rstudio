@@ -10,13 +10,14 @@
           NSWindowController<NSWindowDelegate,GwtCallbacksUIDelegate> {
    WebViewWithKeyEquiv* webView_;
    NSString* name_;
+   NSString* clientName_;
    NSURL* baseUrl_;
    NSString* viewerUrl_;
 }
 
 + (WebViewController*) windowNamed: (NSString*) name;
 
-+ (void) activateSatelliteWindow: (NSString*) name;
++ (void) activateNamedWindow: (NSString*) name;
 
 + (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width
@@ -25,7 +26,8 @@
 
 // The designated initializer
 - (id)initWithURLRequest: (NSURLRequest*) request
-                    name: (NSString*) name;
+                    name: (NSString*) name
+              clientName: (NSString*) clientName;
 
 // load a new url
 - (void) loadURL: (NSURL*) url;
@@ -44,5 +46,9 @@
 
 // subclass methods for registering javascript callbacks
 - (void) registerDesktopObject;
+
+// evaluate javascript
+- (id) evaluateJavaScript: (NSString*) js;
+
 @end
 

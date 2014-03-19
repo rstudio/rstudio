@@ -59,7 +59,6 @@ import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
-import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
@@ -162,12 +161,6 @@ public class RStudio implements EntryPoint
                   {
                      RStudioGinjector.INSTANCE.getVCSApplication().go(
                            RootLayoutPanel.get(),
-                           dismissProgressAnimation);
-                  }
-                  else if (PDFViewerApplication.NAME.equals(view))
-                  {
-                     RStudioGinjector.INSTANCE.getPDFViewerApplication().go(
-                           RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }
                   else if (HTMLPreviewApplication.NAME.equals(view))

@@ -1,0 +1,14 @@
+/*
+ * RStudio-specific extensions to the PDF.js viewer CSS.
+ */
+
+.toolbarButton#jumpToSource::before {
+  content: url(images/toolbarButton-jumpToSource.png);
+}
+
+@media screen and (min-resolution: 2dppx) {
+   .toolbarButton#jumpToSource::before {
+      content: url(images/toolbarButton-jumpToSource@2x.png);
+   }
+}
+

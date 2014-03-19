@@ -427,6 +427,17 @@ void GwtCallback::openMinimalWindow(QString name,
    browser->activateWindow();
 }
 
+void GwtCallback::activateMinimalWindow(QString name)
+{
+   // We currently only activate minimal windows on Cocoa, so this isn't
+   // implemented on Qt desktop, and we don't expect it to be called.
+   std::string warning("Window '");
+   warning.append(name.toStdString());
+   warning.append("' could not be activated (not implemented on Qt desktop)");
+   core::system::log(
+      core::system::kLogLevelWarning, warning);
+}
+
 void GwtCallback::prepareForSatelliteWindow(QString name,
                                             int width,
                                             int height)
