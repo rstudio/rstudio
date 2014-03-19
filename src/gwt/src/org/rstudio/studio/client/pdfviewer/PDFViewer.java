@@ -254,8 +254,8 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       if (pdfJsWindow_ == null)
       {
           // open the window and continue
-          String viewerUrl = GWT.getHostPageBaseURL() + 
-                             "pdf_js/web/viewer.html?file=";
+          String viewerUrl = 
+                server_.getApplicationURL("pdf_js/web/viewer.html?file=");
           NewWindowOptions options = new NewWindowOptions();
           options.setName(WINDOW_NAME);
           if (pos != null)

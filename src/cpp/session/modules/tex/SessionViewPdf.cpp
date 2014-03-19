@@ -60,7 +60,7 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
       // when a file is specified, we expect it to be empty; deny requests for
       // specific files (we don't want arbitrary URLs to be loaded)
       pResponse->setError(
-               http::status::InternalServerError,
+               http::status::BadRequest,
                "Incorrect parameters");
       return;
    }
@@ -68,7 +68,7 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
    core::FilePath pdfJsResource = options().rResourcesPath().childPath(path);
    if (pdfJsResource.exists())
    {
-      pResponse->setFile(pdfJsResource, request);
+      pResponse->setCacheableFile(pdfJsResource, request);
       return;
    }
 }

@@ -167,7 +167,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       pdfPreview_.addChoice("System Viewer",
                             UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
       
-      pdfPreview_.setValue(prefs_.pdfPreview().getValue());
+      pdfPreview_.setValue(prefs_.getPdfPreviewValue());
       
       // workaround qt crash on mac desktop
       if (BrowseCap.isMacintoshDesktop())
