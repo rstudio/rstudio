@@ -26,8 +26,6 @@ import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
@@ -79,6 +77,7 @@ import java.io.InputStream;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -277,9 +276,7 @@ public class JdtCompiler {
         GwtIncompatiblePreprocessor.preproccess(decl);
       }
       if (decl.imports != null) {
-        for (ImportReference importReference : decl.imports) {
-          originalImportsByCud.put(decl, importReference);
-        }
+        originalImportsByCud.putAll(decl, Arrays.asList(decl.imports));
       }
       if (removeUnusedImports) {
         // Lastly remove any unused imports
@@ -390,7 +387,7 @@ public class JdtCompiler {
         assert enclosingClass != null;
       }
       String internalName = CharOperation.charToString(classFile.fileName());
-      String sourceName = getSourceName(classFile.referenceBinding);
+      String sourceName = JdtUtil.getSourceName(classFile.referenceBinding);
       CompiledClass result = new CompiledClass(classFile.getBytes(), enclosingClass,
           isLocalType(classFile), internalName, sourceName);
       results.put(classFile, result);
@@ -875,7 +872,7 @@ public class JdtCompiler {
       }
 
       private void addReference(ReferenceBinding referencedType) {
-        apiRefs.add(getSourceName(referencedType));
+        apiRefs.add(JdtUtil.getSourceName(referencedType));
       }
 
       /**
@@ -1028,11 +1025,5 @@ public class JdtCompiler {
         break;
       }
     }
-  }
-
-  private static String getSourceName(ReferenceBinding classBinding) {
-    return Joiner.on(".").skipNulls().join(new String[] {
-        Strings.emptyToNull(CharOperation.charToString(classBinding.qualifiedPackageName())),
-        CharOperation.charToString(classBinding.qualifiedSourceName())});
   }
 }

@@ -15,22 +15,38 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
+
+import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
+
 /**
  * Utility functions to interact with JDT classes.
  */
-public class JdtUtil {
+public final class JdtUtil {
   /**
    * Returns a source name from an array of names.
    */
-  public static String sourceNameFromNamesArray(char[][] name) {
-    StringBuffer result = new StringBuffer();
-    for (int i = 0; i < name.length; ++i) {
-      if (i > 0) {
-        result.append('.');
-      }
+  public static String asDottedString(char[][] name) {
+    StringBuilder result = new StringBuilder();
+    if (name.length > 0) {
+      result.append(name[0]);
+    }
 
+    for (int i = 1; i < name.length; ++i) {
+      result.append('.');
       result.append(name[i]);
     }
     return result.toString();
+  }
+
+  public static String getSourceName(ReferenceBinding classBinding) {
+    return Joiner.on(".").skipNulls().join(new String[] {
+        Strings.emptyToNull(CharOperation.charToString(classBinding.qualifiedPackageName())),
+        CharOperation.charToString(classBinding.qualifiedSourceName())});
+  }
+
+  private JdtUtil() {
   }
 }

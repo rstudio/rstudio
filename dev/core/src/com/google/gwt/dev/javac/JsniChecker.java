@@ -25,7 +25,9 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.collect.Sets;
+import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
@@ -58,9 +60,7 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -218,6 +218,13 @@ public class JsniChecker {
     }
 
     private void resolveClassReference(JsniRef jsniRef) {
+      // Precedence rules as of JLS 6.4.1.
+      // 1. Enclosing type.
+      // 2. Visible type in same compilation unit.
+      // 3. Named import.
+      // 4. Same package.
+      // 5. Import on demand.
+
       String originalName = jsniRef.className();
       String importedClassName = originalName;
       if (importedClassName.contains(".")) {
@@ -226,29 +233,29 @@ public class JsniChecker {
         importedClassName = importedClassName.substring(0,importedClassName.indexOf("."));
       }
 
-      // 1. Check to see if this name refers to the enclosing class or is directly accessible
+      // 1 & 2. Check to see if this name refers to the enclosing class or is directly accessible
       // from it.
       ReferenceBinding declaringClass = method.binding.declaringClass;
       while (declaringClass != null) {
-        String declaringClassName =
-            JdtUtil.sourceNameFromNamesArray(declaringClass.compoundName);
+        String declaringClassName = JdtUtil.getSourceName(declaringClass);
         if (declaringClassName.equals(importedClassName) ||
             declaringClassName.endsWith("." + importedClassName)) {
           // Referring to declaring class name using unqualified name.
-          jsniRef.setClassName(declaringClassName + originalName.substring(importedClassName.length()));
+          jsniRef.setClassName(declaringClassName +
+              originalName.substring(importedClassName.length()));
           return;
         }
         String fullClassName = declaringClassName + "." + originalName;
         if (typeResolver.resolveType(fullClassName) != null) {
-          jsniRef.setClassName(fullClassName);
+          jsniRef.setClassName(StringInterner.get().intern(fullClassName));
           return;
         }
         declaringClass = declaringClass.enclosingTypeAt(1);
       }
 
-      // 2. Check to see if this name is one of the named imports.
+      // 3. Check to see if this name is one of the named imports.
       for (ImportReference importReference : cudImports) {
-        String nameFromImport = JdtUtil.sourceNameFromNamesArray(importReference.getImportName());
+        String nameFromImport = JdtUtil.asDottedString(importReference.getImportName());
         if (!importReference.isStatic()  && importReference.trailingStarPosition == 0 &&
            nameFromImport.endsWith("." + importedClassName)) {
           jsniRef.setClassName(nameFromImport + originalName.substring(importedClassName.length()));
@@ -256,9 +263,9 @@ public class JsniChecker {
         }
       }
 
-      // 3. Check to see if this name is resolvable from the current package.
+      // 4. Check to see if this name is resolvable from the current package.
       String currentPackageClassName =
-          JdtUtil.sourceNameFromNamesArray(method.binding.declaringClass.getPackage().compoundName);
+          String.valueOf(method.binding.declaringClass.qualifiedPackageName());
       currentPackageClassName += (currentPackageClassName.isEmpty() ? "" : ".") +  originalName;
 
       if (typeResolver.resolveType(currentPackageClassName) != null) {
@@ -266,12 +273,12 @@ public class JsniChecker {
         return;
       }
 
-      // 4. Check to see if this name is resolvable as an import on demand.
+      // 5. Check to see if this name is resolvable as an import on demand.
       for (ImportReference importReference : cudImports) {
         if (importReference.isStatic() || importReference.trailingStarPosition == 0) {
           continue;
         }
-        String fullClassName = JdtUtil.sourceNameFromNamesArray(importReference.getImportName())
+        String fullClassName = JdtUtil.asDottedString(importReference.getImportName())
             + "." + originalName;
         if (typeResolver.resolveType(fullClassName) != null) {
           jsniRef.setClassName(fullClassName);
@@ -544,7 +551,7 @@ public class JsniChecker {
 
     private List<MethodBinding> getMatchingMethods(ReferenceBinding clazz, JsniRef jsniRef) {
       assert jsniRef.isMethod();
-      List<MethodBinding> foundMethods = new ArrayList<MethodBinding>();
+      List<MethodBinding> foundMethods = Lists.newArrayList();
       String methodName = jsniRef.memberName();
       if ("new".equals(methodName)) {
         MethodBinding constructorBinding = getMatchingConstructor(clazz, jsniRef);
@@ -552,13 +559,18 @@ public class JsniChecker {
           foundMethods.add(constructorBinding);
         }
       } else {
-        Queue<ReferenceBinding> work = new LinkedList<ReferenceBinding>();
+        Queue<ReferenceBinding> work = Lists.newLinkedList();
         work.add(clazz);
-        MethodBinding currentFind = null;
+        // Allow private methods from the current class, but not from its supers.
+        boolean allowPrivate = true;
         while (!work.isEmpty()) {
           clazz = work.remove();
           NEXT_METHOD:
           for (MethodBinding findMethod : clazz.getMethods(methodName.toCharArray())) {
+            // TODO(rluble): restructure into collecting and checking ambiguity.
+            if (!allowPrivate && findMethod.isPrivate()) {
+              continue;
+            }
             if (!paramTypesMatch(findMethod, jsniRef)) {
               continue;
             }
@@ -571,6 +583,7 @@ public class JsniChecker {
             }
             foundMethods.add(findMethod);
           }
+          allowPrivate = false;
           ReferenceBinding[] superInterfaces = clazz.superInterfaces();
           if (superInterfaces != null) {
             work.addAll(Arrays.asList(superInterfaces));
@@ -675,7 +688,7 @@ public class JsniChecker {
 
   Set<String> getSuppressedWarnings(Annotation[] annotations) {
     if (annotations == null) {
-      return Sets.create();
+      return ImmutableSet.of();
     }
 
     for (Annotation a : annotations) {
@@ -690,30 +703,30 @@ public class JsniChecker {
         Expression valueExpr = pair.value;
         if (valueExpr instanceof StringLiteral) {
           // @SuppressWarnings("Foo")
-          return Sets.create(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(
+          return ImmutableSet.of(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(
               Locale.ENGLISH));
         } else if (valueExpr instanceof ArrayInitializer) {
           // @SuppressWarnings({ "Foo", "Bar"})
           ArrayInitializer ai = (ArrayInitializer) valueExpr;
-          String[] values = new String[ai.expressions.length];
-          for (int i = 0, j = values.length; i < j; i++) {
+          ImmutableSet.Builder valuesSetBuilder = ImmutableSet.builder();
+          for (int i = 0, j = ai.expressions.length; i < j; i++) {
             if ((ai.expressions[i]) instanceof StringLiteral) {
               StringLiteral expression = (StringLiteral) ai.expressions[i];
-              values[i] = expression.constant.stringValue().toLowerCase(Locale.ENGLISH);
+              valuesSetBuilder.add(expression.constant.stringValue().toLowerCase(Locale.ENGLISH));
             } else {
               suppressionAnnotationWarning(a,
                   "Unable to analyze SuppressWarnings annotation, " +
                       ai.expressions[i].toString() + " not a string constant.");
             }
           }
-          return Sets.create(values);
+          return valuesSetBuilder.build();
         } else {
           suppressionAnnotationWarning(a, "Unable to analyze SuppressWarnings annotation, " +
               valueExpr.toString() + " not a string constant.");
         }
       }
     }
-    return Sets.create();
+    return ImmutableSet.of();
   }
 
   private final CheckerState checkerState;

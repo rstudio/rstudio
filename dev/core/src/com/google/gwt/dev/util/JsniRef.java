@@ -16,8 +16,9 @@
 package com.google.gwt.dev.util;
 
 import com.google.gwt.core.ext.typeinfo.JniConstants;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,14 +80,14 @@ public class JsniRef {
   }
 
   private static String[] computeParamTypes(String paramTypesString) {
-    ArrayList<String> types = new ArrayList<String>();
+    List<String> types = Lists.newArrayList();
     StringBuilder nextType = new StringBuilder();
     boolean inRef = false;
     for (char c : paramTypesString.toCharArray()) {
       nextType.append(c);
       if (inRef) {
         if (c == JniConstants.DESC_REF_END) {
-          types.add(nextType.toString());
+          types.add(StringInterner.get().intern(nextType.toString()));
           nextType.setLength(0);
           inRef = false;
         }
@@ -101,7 +102,7 @@ public class JsniRef {
           case JniConstants.DESC_LONG:
           case JniConstants.DESC_SHORT:
           case JniConstants.DESC_VOID:
-            types.add(nextType.toString());
+            types.add(StringInterner.get().intern(nextType.toString()));
             nextType.setLength(0);
             break;
 
@@ -193,7 +194,7 @@ public class JsniRef {
   }
 
   public void setClassName(String className) {
-    this.className = className;
+    this.className = StringInterner.get().intern(className);
   }
 
   @Override

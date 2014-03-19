@@ -33,6 +33,7 @@ import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Interner;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -154,8 +155,7 @@ public class CompilationStateBuilder {
             Dependencies dependencies =
                 new Dependencies(packageName, unresolvedQualified, unresolvedSimple, apiRefs);
 
-            List<JDeclaredType> types = Lists.newArrayList();
-
+            List<JDeclaredType> types = ImmutableList.of();
             if (!cud.compilationResult().hasErrors()) {
               // The above checks might have recorded errors.
               // So only construct the GWT AST if no JDT errors and no errors from our checks.
@@ -166,8 +166,13 @@ public class CompilationStateBuilder {
             for (CompiledClass cc : compiledClasses) {
               allValidClasses.put(cc.getSourceName(), cc);
             }
-            builder.setTypes(types).setDependencies(dependencies)
-                .setJsniMethods(jsniMethods.values()).setMethodArgs(methodArgs);
+            builder
+                .setTypes(types)
+                .setDependencies(dependencies)
+                .setJsniMethods(jsniMethods.values())
+                .setMethodArgs(methodArgs)
+                .setClasses(compiledClasses)
+                .setProblems(cud.compilationResult().getProblems());
           } else {
             // Compilation unit already has errors from JDT, make an empty builder so that the
             // error state is retained and can be reported later.
@@ -175,9 +180,10 @@ public class CompilationStateBuilder {
                 .setTypes(Collections.<JDeclaredType>emptyList())
                 .setDependencies(new Dependencies())
                 .setJsniMethods(Collections.<JsniMethod>emptyList())
-                .setMethodArgs(new MethodArgNamesLookup());
+                .setMethodArgs(new MethodArgNamesLookup())
+                .setClasses(compiledClasses)
+                .setProblems(cud.compilationResult().getProblems());
           }
-          builder.setClasses(compiledClasses).setProblems(cud.compilationResult().getProblems());
           buildQueue.add(builder);
         } finally {
           event.end();
