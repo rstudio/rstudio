@@ -110,7 +110,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append(functionA);
     code.append(functionB);
     code.append(functionC);
-    code.append("  public static void onModuleLoad() {\n");
+    code.append("  public static void main() {\n");
     code.append("functionC();");
     // Fragment #1
     code.append(createRunAsync("functionA();"));
@@ -154,7 +154,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append(createNamedRunAsyncCallback("RunAsyncCallBack2", "functionB(); functionD();"));
     code.append(createNamedRunAsyncCallback("RunAsyncCallBack3", "functionC();"));
 
-    code.append("  public static void onModuleLoad() {\n");
+    code.append("  public static void main() {\n");
     // Fragment #1
     code.append("createCallBack1();");
     // Fragment #2
@@ -219,7 +219,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append(createNamedRunAsyncCallback("InitialRunAsyncCallBack1", "initialA();"));
     code.append(createNamedRunAsyncCallback("InitialRunAsyncCallBack2", "initialB();"));
 
-    code.append("  public static void onModuleLoad() {\n");
+    code.append("  public static void main() {\n");
     code.append("functionC();");
     // Fragment #3
     code.append(createRunAsync("functionA();"));
@@ -274,7 +274,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append("  " + functionA);
     code.append("  " + functionB);
     code.append("  " + functionC);
-    code.append("  public static void onModuleLoad() {\n");
+    code.append("  public static void main() {\n");
     code.append("    functionC();");
     code.append("    " + createRunAsync("(RunAsyncCallback)", "functionA();"));
     code.append("    " + createRunAsync("(RunAsyncCallback)", "functionB();"));
@@ -304,7 +304,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append(functionA);
     code.append(functionB);
     code.append(functionC);
-    code.append("  public static void onModuleLoad() {\n");
+    code.append("  public static void main() {\n");
     // Fragment #1
     code.append(createRunAsync("functionA();"));
     // Fragment #2
@@ -358,7 +358,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append(functionA);
     code.append(functionB);
     code.append(functionC);
-    code.append("  public static void onModuleLoad() {\n");
+    code.append("  public static void main() {\n");
     // Fragment #1
     code.append(createRunAsync("functionA();"));
     // Fragment #2
@@ -389,7 +389,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append(functionA);
     code.append(functionB);
     code.append(functionC);
-    code.append("  public static void onModuleLoad() {\n");
+    code.append("  public static void main() {\n");
     // Fragment #1
     code.append(createRunAsync("functionA();"));
     // Fragment #2
@@ -417,7 +417,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append(functionA);
     code.append(functionB);
     code.append(functionC);
-    code.append("  public static void onModuleLoad() {\n");
+    code.append("  public static void main() {\n");
     // Fragment #1
     code.append(createRunAsync("functionA();"));
     // Fragment #1

@@ -61,6 +61,8 @@ public abstract class FullCompileTestBase extends JJSTestBase {
 
   /**
    * Compiles a Java class <code>test.EntryPoint</code> and use the code splitter on it.
+   * <p>
+   * The class isn't actually an EntryPoint but test infrastructure expects the name.
    */
   protected Pair<JavaToJavaScriptMap, Set<JsNode>> compileSnippet(final String code)
       throws UnableToCompleteException {
@@ -80,7 +82,7 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     jProgram =
         JavaAstConstructor.construct(logger, state, compilerContext.getOptions(), properties,
             "test.EntryPoint", "com.google.gwt.lang.Exceptions");
-    jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
+    jProgram.addEntryMethod(findMethod(jProgram, "main"));
 
     optimizeJava();
     ComputeCastabilityInformation.exec(jProgram, false);
