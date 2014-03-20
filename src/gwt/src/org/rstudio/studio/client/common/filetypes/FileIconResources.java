@@ -37,6 +37,7 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconTex();
    ImageResource iconText();
    ImageResource iconPython();
+   ImageResource iconSql();
    ImageResource iconMarkdown();
    ImageResource iconH();
    ImageResource iconC();

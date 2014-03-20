@@ -57,6 +57,8 @@ public class EditorLanguage
          "mode/c_cpp", true);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
          "mode/python", true);
+   public static final EditorLanguage LANG_SQL = new EditorLanguage(
+         "mode/sql", true);
 
    /**
     *

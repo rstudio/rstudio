@@ -120,6 +120,12 @@ public class FileTypeRegistry
                           ICONS.iconPython(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
    
+   public static final TextFileType SQL =
+         new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
+                          ICONS.iconSql(), false, false, false, false, false,
+                          false, false, false, false, false, false, false);
+   
+   
    
    
    public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), false);

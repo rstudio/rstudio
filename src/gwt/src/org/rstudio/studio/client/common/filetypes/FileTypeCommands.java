@@ -93,6 +93,7 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.JS);
       types.add(FileTypeRegistry.CPP);
       types.add(FileTypeRegistry.PYTHON);
+      types.add(FileTypeRegistry.SQL);
       
       return (TextFileType[])types.toArray(new TextFileType[0]);
    }

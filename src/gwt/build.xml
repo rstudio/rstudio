@@ -78,6 +78,8 @@
             <file name="python_highlight_rules.js"/>
             <file name="python.js"/>
             <file name="pythonic_fold_mode.js"/>
+            <file name="sql_highlight_rules.js"/>
+            <file name="sql.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>
