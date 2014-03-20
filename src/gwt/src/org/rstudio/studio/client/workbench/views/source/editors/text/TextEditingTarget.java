@@ -1733,7 +1733,7 @@ public class TextEditingTarget implements
             docDisplay_.setCode(strippedCode, true);
       }
       
-      if (prefs_.autoAppendNewline().getValue())
+      if (prefs_.autoAppendNewline().getValue() || fileType_.isPython())
       {
          String lastLine = docDisplay_.getLine(lineCount - 1);
          if (lastLine.length() != 0)

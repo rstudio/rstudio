@@ -222,6 +222,11 @@ public class TextFileType extends EditableFileType
       return EditorLanguage.LANG_CPP.equals(getEditorLanguage());
    }
    
+   public boolean isPython()
+   {
+      return EditorLanguage.LANG_PYTHON.equals(getEditorLanguage());
+   }
+   
    public boolean isCpp()
    {
       return false;
