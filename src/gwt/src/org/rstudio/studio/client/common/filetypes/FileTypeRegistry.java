@@ -115,6 +115,12 @@ public class FileTypeRegistry
                           true,
                           false, false, false, false, false, false, false, false, false, false, false);
 
+   public static final TextFileType PYTHON =
+         new TextFileType("python", "Python", EditorLanguage.LANG_PYTHON, ".py",
+                          ICONS.iconPython(), false, false, false, false, false,
+                          false, false, false, false, false, false, false);
+   
+   
    
    public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), false);
    public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false);
@@ -200,6 +206,7 @@ public class FileTypeRegistry
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
       register("*.dcf", DCF, icons.iconText());
+      register("*.py", PYTHON, icons.iconPython());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());

@@ -92,6 +92,7 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.CSS);
       types.add(FileTypeRegistry.JS);
       types.add(FileTypeRegistry.CPP);
+      types.add(FileTypeRegistry.PYTHON);
       
       return (TextFileType[])types.toArray(new TextFileType[0]);
    }

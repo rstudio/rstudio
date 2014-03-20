@@ -55,6 +55,8 @@ public class EditorLanguage
          "ace/mode/javascript", true);
    public static final EditorLanguage LANG_CPP = new EditorLanguage(
          "mode/c_cpp", true);
+   public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
+         "mode/python", true);
 
    /**
     *
