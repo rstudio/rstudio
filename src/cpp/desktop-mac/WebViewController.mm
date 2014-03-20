@@ -281,6 +281,15 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    if (name_)
       [namedWindows_ removeObjectForKey: name_];
    
+   // if we have a client-supplied name, let the client know the window is gone
+   if (clientName_)
+   {
+      NSString* windowName = clientName_;
+      NSArray* args = [NSArray arrayWithObjects: windowName, nil];
+      [[[[MainFrameController instance] webView] windowScriptObject]
+       callWebScriptMethod: @"unregisterDesktopChildWindow" withArguments: args];
+   }
+
    // unsubscribe observers
    [[self window] setDelegate: nil];
    [webView_ setUIDelegate: nil];
@@ -636,6 +645,8 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
    [[[[MainFrameController instance] webView] windowScriptObject]
     callWebScriptMethod: @"registerDesktopChildWindow" withArguments: args];
 }
+
+
 
 - (void)webView: (WebView *) sender
   runOpenPanelForFileButtonWithResultListener:

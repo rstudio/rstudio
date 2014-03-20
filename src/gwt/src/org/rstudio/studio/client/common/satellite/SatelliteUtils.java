@@ -18,6 +18,18 @@ public class SatelliteUtils
 {
    public static String getSatelliteWindowName(String mode)
    {
-      return "_rstudio_satellite_" + mode;
+      return SATELLITE_PREFIX + mode;
    }
+   
+   public static String getWindowNameFromSatelliteName(String windowName)
+   {
+      return windowName.substring(SATELLITE_PREFIX.length());
+   }
+   
+   public static boolean windowNameIsSatellite(String windowName)
+   {
+      return windowName.startsWith(SATELLITE_PREFIX);
+   }
+   
+   private final static String SATELLITE_PREFIX = "_rstudio_satellite_";
 }

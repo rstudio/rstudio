@@ -26,6 +26,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -49,7 +50,8 @@ import com.google.inject.Singleton;
 public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                                          ConsoleBusyEvent.Handler,
                                          DebugModeChangedEvent.Handler,
-                                         RestartStatusEvent.Handler
+                                         RestartStatusEvent.Handler, 
+                                         WindowClosedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, ShinyApplication> {}
@@ -78,10 +80,13 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       eventBus_.addHandler(ConsoleBusyEvent.TYPE, this);
       eventBus_.addHandler(DebugModeChangedEvent.TYPE, this);
       eventBus_.addHandler(RestartStatusEvent.TYPE, this);
+      eventBus_.addHandler(WindowClosedEvent.TYPE, this);
 
       binder.bind(commands, this);
       exportShinyAppClosedCallback();
    }
+   
+   // Event handlers ----------------------------------------------------------
    
    @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
@@ -138,6 +143,23 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
    }
 
+   @Override
+   public void onWindowClosed(WindowClosedEvent event)
+   {
+      // we get this event on the desktop (currently only Cocoa); it lets us
+      // know that the satellite has been shut down even in the case where the
+      // script window that ordinarily would let us know has been disconnected.
+      if (!event.getName().equals(ShinyApplicationSatellite.NAME))
+         return;
+      if (params_ != null)
+      {
+         params_.setState(ShinyApplicationParams.STATE_STOPPING);
+         notifyShinyAppClosed(params_);
+      }
+   }
+
+   // Command handlers --------------------------------------------------------
+
    @Handler
    public void onShinyRunInPane()
    {
@@ -156,6 +178,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       setShinyViewerType(ShinyViewerType.SHINY_VIEWER_BROWSER);
    }
    
+   // Public methods ----------------------------------------------------------
+
    public void launchShinyApplication(String filePath)
    {
       final String dir = filePath.substring(0, filePath.lastIndexOf("/"));
@@ -193,9 +217,16 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
    }
 
+   // Private methods ---------------------------------------------------------
+
    private void notifyShinyAppClosed(JavaScriptObject params)
    {
       ShinyApplicationParams appState = params.cast();
+      
+      // if we don't know that an app is running, ignore this event
+      if (currentAppFilePath_ == null)
+         return;
+      
       // If the application is stopping, then the user initiated the stop by
       // closing the app window. Interrupt R to stop the Shiny app.
       if (appState.getState().equals(ShinyApplicationParams.STATE_STOPPING))
