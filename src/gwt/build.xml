@@ -80,6 +80,8 @@
             <file name="pythonic_fold_mode.js"/>
             <file name="sql_highlight_rules.js"/>
             <file name="sql.js"/>
+            <file name="sh_highlight_rules.js"/>
+            <file name="sh.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>

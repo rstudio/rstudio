@@ -59,6 +59,8 @@ public class EditorLanguage
          "mode/python", true);
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
          "mode/sql", true);
+   public static final EditorLanguage LANG_SH = new EditorLanguage(
+         "mode/sh", true);
 
    /**
     *

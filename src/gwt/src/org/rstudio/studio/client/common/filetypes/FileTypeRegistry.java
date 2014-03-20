@@ -125,7 +125,11 @@ public class FileTypeRegistry
                           ICONS.iconSql(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
    
-   
+   public static final TextFileType SH =
+         new TextFileType("sh", "Shell", EditorLanguage.LANG_SH, ".sh",
+                          ICONS.iconSh(), false, false, false, false, false,
+                          false, false, false, false, false, false, false);
+    
    
    
    public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), false);
@@ -213,6 +217,7 @@ public class FileTypeRegistry
       register("*.Rproj", RPROJECT, icons.iconRproject());
       register("*.dcf", DCF, icons.iconText());
       register("*.py", PYTHON, icons.iconPython());
+      register("*.sh", SH, icons.iconSh());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());
