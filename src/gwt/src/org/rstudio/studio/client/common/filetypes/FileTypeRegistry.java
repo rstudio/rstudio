@@ -135,6 +135,11 @@ public class FileTypeRegistry
                           ICONS.iconYaml(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
     
+   public static final TextFileType XML =
+         new TextFileType("xml", "XML", EditorLanguage.LANG_XML, ".xml",
+                          ICONS.iconXml(), false, false, false, false, false,
+                          false, false, false, false, false, false, false);
+    
   
     
    
@@ -227,6 +232,7 @@ public class FileTypeRegistry
       register("*.sql", SQL, icons.iconSql());
       register("*.sh", SH, icons.iconSh());
       register("*.yaml", YAML, icons.iconYaml());
+      register("*.xml", XML, icons.iconXml());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());

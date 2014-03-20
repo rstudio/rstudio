@@ -87,9 +87,10 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.TEXT);
       types.add(FileTypeRegistry.TEX);
       types.add(FileTypeRegistry.MARKDOWN);
+      types.add(FileTypeRegistry.XML);
+      types.add(FileTypeRegistry.YAML);
       types.add(FileTypeRegistry.DCF);
       types.add(FileTypeRegistry.SH);
-      types.add(FileTypeRegistry.YAML);
       types.add(FileTypeRegistry.HTML);
       types.add(FileTypeRegistry.CSS);
       types.add(FileTypeRegistry.JS);

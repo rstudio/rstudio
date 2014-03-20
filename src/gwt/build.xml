@@ -84,6 +84,11 @@
             <file name="sh.js"/>
             <file name="yaml_highlight_rules.js"/>
             <file name="yaml.js"/>
+            <file name="xml.js"/>
+            <file name="xml_behavior.js"/>
+            <file name="xml_fold_mode.js"/>
+            <file name="xml_highlight_rules.js"/>
+            <file name="xml_util.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>

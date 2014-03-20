@@ -63,6 +63,8 @@ public class EditorLanguage
          "mode/sh", true);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
          "mode/yaml", true);
+   public static final EditorLanguage LANG_XML = new EditorLanguage(
+         "mode/xml", true);
 
    /**
     *
