@@ -79,15 +79,15 @@ public class FileTypeCommands
    {
       ArrayList<TextFileType> types = new ArrayList<TextFileType>();
       types.add(FileTypeRegistry.R);
-      types.add(FileTypeRegistry.SWEAVE);
       types.add(FileTypeRegistry.RMARKDOWN);
+      types.add(FileTypeRegistry.SWEAVE);
       types.add(FileTypeRegistry.RHTML);
       types.add(FileTypeRegistry.RPRESENTATION);
       types.add(FileTypeRegistry.RD);
       types.add(FileTypeRegistry.TEXT);
-      types.add(FileTypeRegistry.DCF);
       types.add(FileTypeRegistry.TEX);
       types.add(FileTypeRegistry.MARKDOWN);
+      types.add(FileTypeRegistry.DCF);
       types.add(FileTypeRegistry.SH);
       types.add(FileTypeRegistry.HTML);
       types.add(FileTypeRegistry.CSS);
@@ -95,6 +95,7 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.CPP);
       types.add(FileTypeRegistry.PYTHON);
       types.add(FileTypeRegistry.SQL);
+
       
       return (TextFileType[])types.toArray(new TextFileType[0]);
    }
