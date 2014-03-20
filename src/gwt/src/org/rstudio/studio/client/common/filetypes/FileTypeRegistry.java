@@ -224,6 +224,7 @@ public class FileTypeRegistry
       register("*.Rproj", RPROJECT, icons.iconRproject());
       register("*.dcf", DCF, icons.iconText());
       register("*.py", PYTHON, icons.iconPython());
+      register("*.sql", SQL, icons.iconSql());
       register("*.sh", SH, icons.iconSh());
       register("*.yaml", YAML, icons.iconYaml());
 
