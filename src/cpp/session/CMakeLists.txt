@@ -341,10 +341,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES ${RMARKDOWN_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
-   # install PDF.js 
-   file(GLOB_RECURSE PDFJS_RESOURCE_FILES "pdfjs/*")
-   install(FILES ${PDFJS_RESOURCE_FILES}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources/pdfjs)
+   # install PDF.js
+   install(DIRECTORY "resources/pdfjs"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install 64 bit binaries if we are on win64
    if(WIN32)
