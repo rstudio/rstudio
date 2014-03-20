@@ -977,6 +977,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
    *
    * @deprecated please use {@link Builder}
    */
+  @Deprecated
   public <T> CellBrowser(TreeViewModel viewModel, T rootValue) {
     this(new Builder<T>(viewModel, rootValue));
   }
@@ -991,6 +992,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
    *
    * @deprecated please use {@link Builder}
    */
+  @Deprecated
   public <T> CellBrowser(TreeViewModel viewModel, T rootValue, Resources resources) {
     this(new Builder<T>(viewModel, rootValue).resources(resources));
   }

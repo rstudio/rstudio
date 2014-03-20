@@ -80,6 +80,7 @@ public class About {
    *         determined at build time.
    * @deprecated See {@link #getGwtGitRev()}.
    */
+  @Deprecated
   public static String getGwtSvnRev() {
     return gwtGitRev;
   }

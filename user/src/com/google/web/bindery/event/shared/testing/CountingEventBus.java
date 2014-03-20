@@ -75,6 +75,7 @@ public class CountingEventBus extends EventBus {
    *
    * @deprecated Please use {@code getHandlerCount}.
    */
+  @Deprecated
   public int getCount(Type<?> type) {
     return getHandlerCount(type);
   }

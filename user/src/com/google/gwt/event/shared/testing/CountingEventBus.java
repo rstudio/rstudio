@@ -81,6 +81,7 @@ public class CountingEventBus extends com.google.gwt.event.shared.EventBus {
    *
    * @deprecated Please use {@code getHandlerCount}.
    */
+  @Deprecated
   public int getCount(GwtEvent.Type<?> type) {
     return real.getCount(type);
   }
