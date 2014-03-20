@@ -19,5 +19,6 @@
 namespace desktop {
    
 void downloadAndShowFile(NSURLRequest* request);
-
+void downloadAndSaveFile(NSURLRequest* request, NSString* destination);
+   
 } // namespace desktop
