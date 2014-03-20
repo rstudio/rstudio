@@ -373,7 +373,8 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
       }
       else
       {
-         // show urls that aren't in iframes externall
+         
+         // show urls that aren't in iframes externally
          if (!iframe)
             desktop::utils::browseURL(url);
       }
@@ -395,17 +396,42 @@ decidePolicyForNewWindowAction: (NSDictionary *) actionInformation
         decisionListener: listener];
 }
 
-- (void)                webView:(WebView *) webView
+- (void)                webView: (WebView *) webView
 decidePolicyForNavigationAction: (NSDictionary *) actionInformation
                         request: (NSURLRequest *) request
                           frame: (WebFrame *) frame
-               decisionListener:(id < WebPolicyDecisionListener >)listener
+               decisionListener: (id < WebPolicyDecisionListener >)listener
 {
    [self decidePolicyFor: webView
        actionInformation: actionInformation
                  request: request
                   iframe: frame != [webView_ mainFrame]
         decisionListener: listener];
+}
+
+- (void)        webView: (WebView *) webView
+decidePolicyForMIMEType: (NSDictionary *) actionInformation
+                request: (NSURLRequest *) request
+                  frame: (WebFrame *) frame
+       decisionListener: (id < WebPolicyDecisionListener >)listener
+{
+   // get the Content-Disposition header to see if this file is intended to be
+   // downloaded
+   NSHTTPURLResponse* response = (NSHTTPURLResponse*)
+      [[frame provisionalDataSource] response];
+   NSDictionary* headers = [response allHeaderFields];
+   NSString* disposition =
+      (NSString*)[headers objectForKey:@"Content-Disposition"];
+   NSString* filename = [response suggestedFilename];
+   if ([[disposition lowercaseString] hasPrefix: @"attachment"])
+   {
+      NSSavePanel* attSavePanel = [NSSavePanel savePanel];
+      if ([self runSavePanelForFilename: attSavePanel filename: filename])
+      {
+         desktop::downloadAndSaveFile(request,
+                                      [[attSavePanel URL] path]);
+      }
+   }
 }
 
 - (NSWindow*) uiWindow
@@ -572,22 +598,27 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    }
 
    NSSavePanel* dlSavePanel = [NSSavePanel savePanel];
-   [dlSavePanel setNameFieldStringValue: filename];
-
-   [dlSavePanel beginSheetModalForWindow: [self window] completionHandler: nil];
-   long int result = [dlSavePanel runModal];
-   [NSApp endSheet: dlSavePanel];
-   
-   if (result != NSFileHandlingPanelOKButton)
-      return;
-   
-   [data writeToURL: [dlSavePanel URL] atomically: FALSE];
+   if ([self runSavePanelForFilename: dlSavePanel filename: filename])
+   {
+      [data writeToURL: [dlSavePanel URL] atomically: FALSE];
+   }
 }
 
 - (id) evaluateJavaScript: (NSString*) js
 {
    id win = [webView_ windowScriptObject];
    return [win evaluateWebScript: js];
+}
+
+- (bool) runSavePanelForFilename: (NSSavePanel*) panel
+                        filename: (NSString*) filename
+{
+   [panel setNameFieldStringValue: filename];
+   [panel beginSheetModalForWindow: [self window] completionHandler: nil];
+   long int result = [panel runModal];
+   [NSApp endSheet: panel];
+   
+   return result == NSFileHandlingPanelOKButton;
 }
 
 - (void) webView: (WebView *) sender
