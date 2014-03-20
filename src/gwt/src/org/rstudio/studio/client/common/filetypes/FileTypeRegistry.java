@@ -129,6 +129,13 @@ public class FileTypeRegistry
          new TextFileType("sh", "Shell", EditorLanguage.LANG_SH, ".sh",
                           ICONS.iconSh(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
+   
+   public static final TextFileType YAML =
+         new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yaml",
+                          ICONS.iconYaml(), false, false, false, false, false,
+                          false, false, false, false, false, false, false);
+    
+  
     
    
    
@@ -218,6 +225,7 @@ public class FileTypeRegistry
       register("*.dcf", DCF, icons.iconText());
       register("*.py", PYTHON, icons.iconPython());
       register("*.sh", SH, icons.iconSh());
+      register("*.yaml", YAML, icons.iconYaml());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());

@@ -61,6 +61,8 @@ public class EditorLanguage
          "mode/sql", true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
          "mode/sh", true);
+   public static final EditorLanguage LANG_YAML = new EditorLanguage(
+         "mode/yaml", true);
 
    /**
     *

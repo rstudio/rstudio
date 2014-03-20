@@ -82,6 +82,8 @@
             <file name="sql.js"/>
             <file name="sh_highlight_rules.js"/>
             <file name="sh.js"/>
+            <file name="yaml_highlight_rules.js"/>
+            <file name="yaml.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>
