@@ -56,6 +56,7 @@ public class JavaCompilationSuite {
     suite.addTestSuite(JSORestrictionsTest.class);
     suite.addTestSuite(MemoryUnitCacheTest.class);
     suite.addTestSuite(PersistentUnitCacheTest.class);
+    suite.addTestSuite(CompilationStateBuilderTest.class);
     suite.addTestSuite(CompilationUnitTypeOracleUpdaterFromByteCodeTest.class);
     suite.addTestSuite(CompilationUnitTypeOracleUpdaterFromSourceTest.class);
     suite.addTestSuite(LibraryCompilationUnitTypeOracleUpdaterFromSourceTest.class);

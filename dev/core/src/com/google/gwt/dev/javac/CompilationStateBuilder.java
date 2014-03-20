@@ -34,6 +34,9 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 import com.google.gwt.thirdparty.guava.common.collect.Interner;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -44,12 +47,8 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -80,88 +79,105 @@ public class CompilationStateBuilder {
           List<CompiledClass> compiledClasses) {
         Event event = SpeedTracerLogger.start(DevModeEventType.CSB_PROCESS);
         try {
-          Map<MethodDeclaration, JsniMethod> jsniMethods =
-              JsniCollector.collectJsniMethods(cud, builder.getSourceMapPath(),
-                  builder.getSource(), JsRootScope.INSTANCE, DummyCorrelationFactory.INSTANCE);
-
-          JSORestrictionsChecker.check(jsoState, cud);
-
-          // JSNI check + collect dependencies.
-          final Set<String> jsniDeps = new HashSet<String>();
-          Map<String, Binding> jsniRefs = new HashMap<String, Binding>();
-          JsniChecker.check(cud, cudOriginaImports, jsoState, jsniMethods, jsniRefs,
-              new JsniChecker.TypeResolver() {
-                @Override
-                public ReferenceBinding resolveType(String sourceOrBinaryName) {
-                  ReferenceBinding resolveType = compiler.resolveType(sourceOrBinaryName);
-                  if (resolveType != null) {
-                    jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
-                  }
-                  return resolveType;
-                }
-              });
-
-          Map<TypeDeclaration, Binding[]> artificialRescues =
-              new HashMap<TypeDeclaration, Binding[]>();
-          ArtificialRescueChecker.check(cud, builder.isGenerated(), artificialRescues);
-          if (compilerContext.shouldCompileMonolithic()) {
-            // GWT drives JDT in a way that allows missing references in the source to be resolved
-            // to precompiled bytecode on disk (see INameEnvironment). This is done so that
-            // annotations can be supplied in bytecode form only. But since no AST is available for
-            // these types it creates the danger that some functional class (not just an annotation)
-            // gets filled in but is missing AST. This would cause later compiler stages to fail.
-            //
-            // Library compilation needs to ignore this check since it is expected behavior for the
-            // source being compiled in a library to make references to other types which are only
-            // available as bytecode coming out of dependency libraries.
-            //
-            // But if the referenced bytecode did not come from a dependency library but instead was
-            // free floating in the classpath, then there is no guarrantee that AST for it was ever
-            // seen and translated to JS anywhere in the dependency tree. This would be a mistake.
-            //
-            // TODO(stalcup): add a more specific check for library compiles such that binary types
-            // can be referenced but only if they are an Annotation or if the binary type comes from
-            // a dependency library.
-            BinaryTypeReferenceRestrictionsChecker.check(cud);
-          }
-
-          MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud,
-              builder.getSourceMapPath());
-
-          Interner<String> interner = StringInterner.get();
-          String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
-          List<String> unresolvedQualified = new ArrayList<String>();
-          List<String> unresolvedSimple = new ArrayList<String>();
-          for (char[] simpleRef : cud.compilationResult().simpleNameReferences) {
-            unresolvedSimple.add(interner.intern(String.valueOf(simpleRef)));
-          }
-          for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
-            unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef)));
-          }
-          for (String jsniDep : jsniDeps) {
-            unresolvedQualified.add(interner.intern(jsniDep));
-          }
-          ArrayList<String> apiRefs = compiler.collectApiRefs(cud);
-          for (int i = 0; i < apiRefs.size(); ++i) {
-            apiRefs.set(i, interner.intern(apiRefs.get(i)));
-          }
-          Dependencies dependencies =
-              new Dependencies(packageName, unresolvedQualified, unresolvedSimple, apiRefs);
-
-          List<JDeclaredType> types = Collections.emptyList();
           if (!cud.compilationResult().hasErrors()) {
-            // Make a GWT AST.
-            types = astBuilder.process(cud, builder.getSourceMapPath(), artificialRescues,
-                jsniMethods, jsniRefs);
-          }
+            // Only collect jsniMethod, artificial rescues, etc if the compilation unit
+            // does not have errors.
+            Map<MethodDeclaration, JsniMethod> jsniMethods =
+                JsniCollector.collectJsniMethods(cud, builder.getSourceMapPath(),
+                    builder.getSource(), JsRootScope.INSTANCE, DummyCorrelationFactory.INSTANCE);
 
-          for (CompiledClass cc : compiledClasses) {
-            allValidClasses.put(cc.getSourceName(), cc);
-          }
+            JSORestrictionsChecker.check(jsoState, cud);
 
-          builder.setClasses(compiledClasses).setTypes(types).setDependencies(dependencies)
-              .setJsniMethods(jsniMethods.values()).setMethodArgs(methodArgs).setProblems(
-                  cud.compilationResult().getProblems());
+            // JSNI check + collect dependencies.
+            final Set<String> jsniDeps = Sets.newHashSet();
+            final Map<String, Binding> jsniRefs = Maps.newHashMap();
+            JsniChecker.check(cud, cudOriginaImports, jsoState, jsniMethods, jsniRefs,
+                new JsniChecker.TypeResolver() {
+                  @Override
+                  public ReferenceBinding resolveType(String sourceOrBinaryName) {
+                    ReferenceBinding resolveType = compiler.resolveType(sourceOrBinaryName);
+                    if (resolveType != null) {
+                      jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
+                    }
+                    return resolveType;
+                  }
+                });
+
+            final Map<TypeDeclaration, Binding[]> artificialRescues = Maps.newHashMap();
+            ArtificialRescueChecker.check(cud, builder.isGenerated(), artificialRescues);
+            if (compilerContext.shouldCompileMonolithic()) {
+              // GWT drives JDT in a way that allows missing references in the source to be
+              // resolved to precompiled bytecode on disk (see INameEnvironment). This is
+              // done so that annotations can be supplied in bytecode form only. But since no
+              // AST is available for these types it creates the danger that some functional
+              // class (not just an annotation) gets filled in but is missing AST. This would
+              // cause later compiler stages to fail.
+              //
+              // Library compilation needs to ignore this check since it is expected behavior
+              // for the source being compiled in a library to make references to other types
+              // which are only available as bytecode coming out of dependency libraries.
+              //
+              // But if the referenced bytecode did not come from a dependency library but
+              // instead was free floating in the classpath, then there is no guarantee that
+              // AST for it was ever seen and translated to JS anywhere in the dependency tree.
+              // This would be a mistake.
+              //
+              // TODO(stalcup): add a more specific check for library compiles such that binary
+              // types can be referenced but only if they are an Annotation or if the binary
+              // type comes from a dependency library.
+              BinaryTypeReferenceRestrictionsChecker.check(cud);
+            }
+
+            MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud,
+                builder.getSourceMapPath());
+
+            final Interner<String> interner = StringInterner.get();
+            String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
+
+            List<String> unresolvedSimple = Lists.newArrayList();
+            for (char[] simpleRef : cud.compilationResult().simpleNameReferences) {
+              unresolvedSimple.add(interner.intern(String.valueOf(simpleRef)));
+            }
+
+            List<String> unresolvedQualified = Lists.newArrayList();
+            for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
+              unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef)));
+            }
+            for (String jsniDep : jsniDeps) {
+              unresolvedQualified.add(interner.intern(jsniDep));
+            }
+            List<String> apiRefs = compiler.collectApiRefs(cud);
+            for (int i = 0; i < apiRefs.size(); ++i) {
+              apiRefs.set(i, interner.intern(apiRefs.get(i)));
+            }
+
+            Dependencies dependencies =
+                new Dependencies(packageName, unresolvedQualified, unresolvedSimple, apiRefs);
+
+            List<JDeclaredType> types = Lists.newArrayList();
+
+            if (!cud.compilationResult().hasErrors()) {
+              // The above checks might have recorded errors.
+              // So only construct the GWT AST if no JDT errors and no errors from our checks.
+              types = astBuilder.process(cud, builder.getSourceMapPath(), artificialRescues,
+                  jsniMethods, jsniRefs);
+            }
+
+            for (CompiledClass cc : compiledClasses) {
+              allValidClasses.put(cc.getSourceName(), cc);
+            }
+            builder.setTypes(types).setDependencies(dependencies)
+                .setJsniMethods(jsniMethods.values()).setMethodArgs(methodArgs);
+          } else {
+            // Compilation unit already has errors from JDT, make an empty builder so that the
+            // error state is retained and can be reported later.
+            builder
+                .setTypes(Collections.<JDeclaredType>emptyList())
+                .setDependencies(new Dependencies())
+                .setJsniMethods(Collections.<JsniMethod>emptyList())
+                .setMethodArgs(new MethodArgNamesLookup());
+          }
+          builder.setClasses(compiledClasses).setProblems(cud.compilationResult().getProblems());
           buildQueue.add(builder);
         } finally {
           event.end();
@@ -174,7 +190,7 @@ public class CompilationStateBuilder {
      * This is used to validate dependencies when reusing previously cached
      * units, to make sure they can be recompiled if necessary.
      */
-    private final Map<String, CompiledClass> allValidClasses = new HashMap<String, CompiledClass>();
+    private final Map<String, CompiledClass> allValidClasses = Maps.newHashMap();
 
     private final GwtAstBuilder astBuilder = new GwtAstBuilder();
 
@@ -266,12 +282,12 @@ public class CompilationStateBuilder {
         }
       }
 
-      ArrayList<CompilationUnit> resultUnits = new ArrayList<CompilationUnit>();
+      List<CompilationUnit> resultUnits = Lists.newArrayList();
       do {
         final TreeLogger branch = logger.branch(TreeLogger.TRACE, "Compiling...");
         // Compile anything that needs to be compiled.
         buildQueue = new LinkedBlockingQueue<CompilationUnitBuilder>();
-        final ArrayList<CompilationUnit> newlyBuiltUnits = new ArrayList<CompilationUnit>();
+        final List<CompilationUnit> newlyBuiltUnits = Lists.newArrayList();
         final CompilationUnitBuilder sentinel = CompilationUnitBuilder.create((GeneratedUnit) null);
         final Throwable[] workerException = new Throwable[1];
         final ProgressLogger progressLogger =
@@ -342,7 +358,7 @@ public class CompilationStateBuilder {
         /*
          * Invalidate any cached units with invalid refs.
          */
-        Collection<CompilationUnit> invalidatedUnits = new ArrayList<CompilationUnit>();
+        Collection<CompilationUnit> invalidatedUnits = Lists.newArrayList();
         for (Iterator<Entry<CompilationUnitBuilder, CompilationUnit>> it =
             cachedUnits.entrySet().iterator(); it.hasNext();) {
           Entry<CompilationUnitBuilder, CompilationUnit> entry = it.next();
@@ -482,11 +498,10 @@ public class CompilationStateBuilder {
     UnitCache unitCache = compilerContext.getUnitCache();
 
     // Units we definitely want to build.
-    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
+    List<CompilationUnitBuilder> builders = Lists.newArrayList();
 
     // Units we don't want to rebuild unless we have to.
-    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits =
-        new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
+    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits = Maps.newIdentityHashMap();
 
     CompileMoreLater compileMoreLater = new CompileMoreLater(compilerContext, compilerDelegate);
 
@@ -559,11 +574,10 @@ public class CompilationStateBuilder {
     UnitCache unitCache = compilerContext.getUnitCache();
 
     // Units we definitely want to build.
-    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
+    List<CompilationUnitBuilder> builders = Lists.newArrayList();
 
     // Units we don't want to rebuild unless we have to.
-    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits =
-        new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
+    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits = Maps.newIdentityHashMap();
 
     // For each incoming generated Java source file...
     for (GeneratedUnit generatedUnit : generatedUnits) {
