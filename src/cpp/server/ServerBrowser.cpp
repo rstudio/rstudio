@@ -42,6 +42,9 @@ bool supportedBrowserFilter(const http::Request& request,
        contains(userAgent, "chromeframe") ||
        contains(userAgent, "Firefox")     ||
        contains(userAgent, "Safari")      ||
+       contains(userAgent, "Trident/6.0") ||
+       contains(userAgent, "Trident/7.0") ||
+       contains(userAgent, "Gecko")       ||
        contains(userAgent, "AppleWebKit"))
    {
       return true;
