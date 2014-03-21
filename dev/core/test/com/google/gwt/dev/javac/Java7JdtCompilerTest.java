@@ -27,18 +27,15 @@ import com.google.gwt.dev.util.arg.SourceLevel;
 public class Java7JdtCompilerTest extends JdtCompilerTestBase {
 
   public void testCompileNewStyleLiterals() throws Exception {
-    assertResourcesCompileSuccessfully(Java7MockResources.LIST_T, Java7MockResources.ARRAYLIST_T,
-        Java7MockResources.NEW_INTEGER_LITERALS_TEST);
+    assertResourcesCompileSuccessfully(Java7MockResources.NEW_INTEGER_LITERALS_TEST);
   }
 
   public void testCompileSwitchWithStrings() throws Exception {
-    assertResourcesCompileSuccessfully(Java7MockResources.LIST_T, Java7MockResources.ARRAYLIST_T,
-        Java7MockResources.SWITCH_ON_STRINGS_TEST);
+    assertResourcesCompileSuccessfully(Java7MockResources.SWITCH_ON_STRINGS_TEST);
   }
 
   public void testCompileDiamondOperator() throws Exception {
-    assertResourcesCompileSuccessfully(Java7MockResources.LIST_T, Java7MockResources.ARRAYLIST_T,
-        Java7MockResources.DIAMOND_OPERATOR_TEST);
+    assertResourcesCompileSuccessfully(Java7MockResources.DIAMOND_OPERATOR_TEST);
   }
 
   public void testCompileTryWithResources() throws Exception {

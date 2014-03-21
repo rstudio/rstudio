@@ -202,7 +202,16 @@ public class JavaResourceBase {
   public static final MockJavaResource LIST =
       createMockJavaResource("java.util.List",
           "package java.util;",
-          "public interface List<T> extends Collection<T> {}");
+          "public interface List<T> extends Collection<T> {",
+          "  public T get(int i);",
+          "}");
+
+  public static final MockJavaResource ARRAY_LIST =
+      createMockJavaResource("java.util.ArrayList",
+          "package java.util;",
+          "public class ArrayList<T> implements List<T> {",
+          "  public T get(int i) { return null; }",
+          "}");
 
   public static final MockJavaResource LONG =
       createMockJavaResource("java.lang.Long",
@@ -321,7 +330,7 @@ public class JavaResourceBase {
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[]{
-        AUTOCLOSEABLE, ANNOTATION, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
+        AUTOCLOSEABLE, ANNOTATION, ARRAY_LIST, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
         CLASS_NOT_FOUND_EXCEPTION, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT,
         INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR,
         NUMBER, OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,

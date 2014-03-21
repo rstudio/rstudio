@@ -91,10 +91,10 @@ public abstract class JdtCompilerTestBase extends TestCase {
   protected static void assertUnitsCompiled(Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
       if (unit.isError()) {
-        String[] messages = new String[unit.getProblems().length];
-        int i = 0;
-        for (CategorizedProblem pb : unit.getProblems()) {
-          messages[i] = pb.getMessage();
+        CategorizedProblem[] problems = unit.getProblems();
+        String[] messages = new String[problems.length];
+        for (int i = 0; i < messages.length; i++) {
+          messages[i] = problems[i].getMessage();
         }
         fail(Joiner.on("\n").join(messages));
       }

@@ -46,8 +46,8 @@ public class Java7MockResources {
   public static final MockJavaResource DIAMOND_OPERATOR_TEST =
       JavaResourceBase.createMockJavaResource("com.google.gwt.DiamondOperatorTest",
           "package com.google.gwt;",
-          "import com.google.gwt.List;",
-          "import com.google.gwt.ArrayList;",
+          "import java.util.List;",
+          "import java.util.ArrayList;",
           "public class DiamondOperatorTest {",
           "  void test() {",
           "    List<String> list = new ArrayList<>();",
@@ -83,21 +83,6 @@ public class Java7MockResources {
           "    } catch (Exception1 | Exception2 e) { ",
           "    }",
           "  } ",
-          "}");
-
-  public static final MockJavaResource LIST_T =
-      JavaResourceBase.createMockJavaResource("com.google.gwt.List",
-          "package com.google.gwt;",
-          "public interface List<T> {",
-          "  T method1();",
-          "}");
-
-  public static final MockJavaResource ARRAYLIST_T =
-      JavaResourceBase.createMockJavaResource("com.google.gwt.ArrayList",
-          "package com.google.gwt;",
-          "import com.google.gwt.List;",
-          "public class ArrayList<T> implements List<T> {",
-          "  public T method1() { return null; }",
           "}");
 
   public static final MockJavaResource TEST_RESOURCE =

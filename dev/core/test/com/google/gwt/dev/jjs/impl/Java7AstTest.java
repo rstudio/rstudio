@@ -37,8 +37,7 @@ public class Java7AstTest extends JJSTestBase {
   @Override
   public void setUp() {
     sourceLevel = SourceLevel.JAVA7;
-    addAll(Java7MockResources.LIST_T, Java7MockResources.ARRAYLIST_T,
-        JavaResourceBase.AUTOCLOSEABLE, Java7MockResources.TEST_RESOURCE,
+    addAll(JavaResourceBase.AUTOCLOSEABLE, Java7MockResources.TEST_RESOURCE,
         Java7MockResources.EXCEPTION1, Java7MockResources.EXCEPTION2);
   }
 
@@ -64,8 +63,8 @@ public class Java7AstTest extends JJSTestBase {
 
 
   public void testCompileDiamondOperator() throws Exception {
-    addSnippetImport("com.google.gwt.List");
-    addSnippetImport("com.google.gwt.ArrayList");
+    addSnippetImport("java.util.List");
+    addSnippetImport("java.util.ArrayList");
     assertEqualBlock(
         "List l = new ArrayList();",
         "List<String> l = new ArrayList<>();");
