@@ -18,7 +18,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.application.Desktop;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Frame;
 
@@ -62,16 +61,14 @@ public class ImageFrame extends Frame
 
    public void setMarginWidth(int width)
    {
-      DOM.setElementAttribute(getElement(), 
-                              "marginwidth", 
-                              Integer.toString(width));
+      getElement().setAttribute("marginwidth", 
+                                Integer.toString(width));
    }
    
    public void setMarginHeight(int height)
    {
-      DOM.setElementAttribute(getElement(), 
-                              "marginheight", 
-                              Integer.toString(height));
+      getElement().setAttribute("marginheight", 
+                                Integer.toString(height));
    }
    
    public void setImageUrl(String url)

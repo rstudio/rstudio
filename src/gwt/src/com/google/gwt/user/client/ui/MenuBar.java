@@ -1092,7 +1092,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     this.vertical = vertical;
 
-    Element outer = FocusPanel.impl.createFocusable();
+    com.google.gwt.dom.client.Element outer = FocusPanel.impl.createFocusable();
     DOM.appendChild(outer, table);
     setElement(outer);
 

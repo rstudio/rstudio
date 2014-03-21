@@ -17,11 +17,11 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -574,12 +574,13 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
      Element td = DOM.eventGetTarget(event);
      for (; td != null; td = DOM.getParent(td)) {
        // If it's a TD, it might be the one we're looking for.
-       if (DOM.getElementProperty(td, "tagName").equalsIgnoreCase("td")) {
+       if (td.getPropertyString("tagName").equalsIgnoreCase("td")) {
          // Make sure it's directly a part of this table before returning
          // it.
-         Element tr = DOM.getParent(td);
-         Element body = DOM.getParent(tr);
-         Element table = DOM.getParent(body);
+         
+         Element tr = td.getParentElement();
+         Element body = tr.getParentElement();
+         Element table = body.getParentElement();
          if (table == getElement()) {
            return td;
          }

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.widgetideas.client;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * An interface that defines the methods required to support automatic resizing

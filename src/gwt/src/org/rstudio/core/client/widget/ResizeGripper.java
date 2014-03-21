@@ -67,8 +67,8 @@ public class ResizeGripper extends Composite
          {
             startResizing();
             
-            lastX_ = DOM.eventGetClientX(event);
-            lastY_ = DOM.eventGetClientY(event);
+            lastX_ = event.getClientX();
+            lastY_ = event.getClientY();
             
             DOM.setCapture(getElement());
             
@@ -83,14 +83,14 @@ public class ResizeGripper extends Composite
          {
             if (isResizing())
             {      
-               int x = DOM.eventGetClientX(event);
-               int y = DOM.eventGetClientY(event);
+               int x = event.getClientX();
+               int y = event.getClientY();
                
                int xDelta = x - lastX_;
                int yDelta = y - lastY_;
             
-               lastX_ = DOM.eventGetClientX(event);
-               lastY_ = DOM.eventGetClientY(event);
+               lastX_ = event.getClientX();
+               lastY_ = event.getClientY();
                
                observer_.onResizing(xDelta, yDelta);
                
