@@ -42,7 +42,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
 
    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/,
-                                   /^`{3,}\s*\{r(.*)\}\s*$/);
+                                   /^(?:[ ]{4})?`{3,}\s*\{r(.*)\}\s*$/);
 
    var markdownFoldingRules = new MarkdownFoldMode();
 
@@ -66,8 +66,8 @@ var Mode = function(suppressHighlighting, doc, session) {
 
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
-         /^`{3,}\s*\{r(?:.*)\}\s*$/,
-         /^`{3,}\s*$/,
+         /^(?:[ ]{4})?`{3,}\s*\{r(?:.*)\}\s*$/,
+         /^(?:[ ]{4})?`{3,}\s*$/,
          true);
 };
 oop.inherits(Mode, MarkdownMode);
