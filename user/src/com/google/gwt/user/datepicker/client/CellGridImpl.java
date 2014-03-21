@@ -74,7 +74,9 @@ abstract class CellGridImpl<V> extends Grid {
       addDomHandler(new ClickHandler() {
           @Override
           public void onClick(ClickEvent event) {
-            setSelected(Cell.this);
+            if (isActive(Cell.this)) {
+              setSelected(Cell.this);
+            }
           }
         }, ClickEvent.getType());
     }
