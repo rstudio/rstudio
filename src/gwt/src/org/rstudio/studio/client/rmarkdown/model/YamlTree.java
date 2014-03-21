@@ -41,7 +41,9 @@ public class YamlTree
          indentLevel = getIndentLevel();
       }
       
-      public void addChild(YamlTreeNode child)
+      // add a child node; returns true iff the node was added (we may choose
+      // to treat the child as a continuation)
+      public boolean addChild(YamlTreeNode child)
       {
          // if this node has a key, add it as a tree node; otherwise, add its
          // line data to this node (as a multi-line continuation)
@@ -49,11 +51,11 @@ public class YamlTree
          {
             children.add(child);
             child.parent = this;
+            return true;
          }
-         else
-         {
-            yamlLine += ("\n" + child.yamlLine);
-         }
+
+         yamlLine += ("\n" + child.yamlLine);
+         return false;
       }
       
       public String getIndent()
@@ -217,12 +219,17 @@ public class YamlTree
             {
                currentParent = currentParent.parent;
             }
-            while (currentParent.indentLevel >= child.indentLevel);
+            while (currentParent != null &&
+                   currentParent.indentLevel >= child.indentLevel);
+            
+            // if we unwound all the way to the top, use the root as the parent
+            if (currentParent == null)
+               currentParent = root;
          }
 
          currentIndentLevel = child.indentLevel;
-         currentParent.addChild(child);
-         lastNode = child;
+         if (currentParent.addChild(child))
+            lastNode = child;
       }
       return root;
    }

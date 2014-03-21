@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -363,21 +364,32 @@ public class TextEditingTargetRMarkdownHelper
    // Return the selected template and format given the YAML front matter
    public RmdSelectedTemplate getTemplateFormat(String yaml)
    {
-      YamlTree tree = new YamlTree(yaml);
-      
-      if (tree.getKeyValue("knit").length() >  0)
-         return null;
-      
-      // Find the template appropriate to the first output format listed
-      List<String> outFormats = getOutputFormats(tree);
-      if (outFormats == null)
-         return null;
-      String outFormat = outFormats.get(0);
-      
-      RmdTemplate template = getTemplateForFormat(outFormat);
-      if (template == null)
-         return null;
-      return new RmdSelectedTemplate(template, outFormat);
+      // This is in the editor load path, so guard against exceptions and log
+      // any we find without bringing down the editor. Failing to find a 
+      // template here just turns off the template-specific UI format editor.
+      try
+      {
+         YamlTree tree = new YamlTree(yaml);
+         
+         if (tree.getKeyValue("knit").length() > 0)
+            return null;
+         
+         // Find the template appropriate to the first output format listed
+         List<String> outFormats = getOutputFormats(tree);
+         if (outFormats == null)
+            return null;
+         String outFormat = outFormats.get(0);
+         
+         RmdTemplate template = getTemplateForFormat(outFormat);
+         if (template == null)
+            return null;
+         return new RmdSelectedTemplate(template, outFormat);
+      }
+      catch (Exception e)
+      {
+         Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+      }
+      return null;
    }
    
    // Parses YAML, adds the given format option with any transferable
