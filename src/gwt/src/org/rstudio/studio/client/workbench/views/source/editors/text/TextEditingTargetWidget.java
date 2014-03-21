@@ -289,6 +289,7 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
+      boolean isScript = fileType.isScript();
       boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
       
       // don't show the run buttons for cpp files, or R files in Shiny
@@ -306,7 +307,9 @@ public class TextEditingTargetWidget
             fileType.isCpp());   
      
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
-      sourceMenuButton_.setVisible(canSourceWithEcho && !isPlainMarkdown);
+      sourceMenuButton_.setVisible(canSourceWithEcho && 
+                                   !isPlainMarkdown && 
+                                   !isScript);
    
       texSeparatorWidget_.setVisible(canCompilePdf);
       texToolbarButton_.setVisible(canCompilePdf);
@@ -331,6 +334,10 @@ public class TextEditingTargetWidget
          chunksButton_.setVisible(false);
          shinyLaunchButton_.setVisible(true);
          setSourceButtonFromShinyState();
+      }
+      else
+      {
+         setSourceButtonFromScriptState(isScript);
       }
       
       toolbar_.invalidateSeparators();
@@ -559,6 +566,22 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(knitCommandText_);
       previewCommandText_ = "Preview" + text;
       previewHTMLButton_.setText(previewCommandText_);
+   }
+   
+   private void setSourceButtonFromScriptState(boolean isScript)
+   {
+      sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
+      String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
+      if (isScript)
+      {
+         sourceCommandText_ = "Run Script";
+         sourceCommandDesc = "Save changes and run the current script";
+         sourceButton_.setLeftImage(
+                           commands_.debugContinue().getImageResource());
+      }
+      
+      sourceButton_.setTitle(sourceCommandDesc);
+      sourceButton_.setText(sourceCommandText_);
    }
 
    public void setSourceButtonFromShinyState()

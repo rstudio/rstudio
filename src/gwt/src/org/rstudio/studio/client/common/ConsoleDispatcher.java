@@ -63,7 +63,12 @@ public class ConsoleDispatcher
    
    public void executeCommand(String command, FileSystemItem targetFile)
    {
-      String code = command + "(\"" + targetFile.getPath() + "\")";
+      executeCommand(command, targetFile.getPath());
+   }
+   
+   public void executeCommand(String command, String argument)
+   {
+      String code = command + "(\"" + argument + "\")";
       eventBus_.fireEvent(new SendToConsoleEvent(code, true));
    }
    

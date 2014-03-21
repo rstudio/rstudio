@@ -1282,6 +1282,17 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void getScriptRunCommand(String interpreter,
+                                   String path,
+                                   ServerRequestCallback<String> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(interpreter)));
+      params.set(1, new JSONString(path));
+      sendRequest(RPC_SCOPE, "get_script_run_command", params, callback);
+   }
+   
+   @Override
    public void getShinyCapabilities(
          ServerRequestCallback<ShinyCapabilities> requestCallback)
    {

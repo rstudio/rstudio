@@ -115,20 +115,18 @@ public class FileTypeRegistry
                           true,
                           false, false, false, false, false, false, false, false, false, false, false);
 
-   public static final TextFileType PYTHON =
-         new TextFileType("python", "Python", EditorLanguage.LANG_PYTHON, ".py",
-                          ICONS.iconPython(), false, false, false, false, false,
-                          false, false, false, false, false, false, false);
+   public static final TextFileType PYTHON = new ScriptFileType(
+     "python", "Python", EditorLanguage.LANG_PYTHON, ".py",ICONS.iconPython(),
+     "python", true);
    
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
                           ICONS.iconSql(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
    
-   public static final TextFileType SH =
-         new TextFileType("sh", "Shell", EditorLanguage.LANG_SH, ".sh",
-                          ICONS.iconSh(), false, false, false, false, false,
-                          false, false, false, false, false, false, false);
+   public static final TextFileType SH = new ScriptFileType(
+         "sh", "Shell", EditorLanguage.LANG_SH, ".sh", ICONS.iconSh(),
+         null, false);
    
    public static final TextFileType YAML =
          new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yaml",

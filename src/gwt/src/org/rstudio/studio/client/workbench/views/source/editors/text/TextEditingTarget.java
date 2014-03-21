@@ -3043,6 +3043,13 @@ public class TextEditingTarget implements
          runShinyApp();
          return;
       }
+      
+      // If the document being sourced is a script then use that codepath
+      if (fileType_.isScript())
+      {
+         runScript();
+         return;
+      }
 
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
@@ -3132,6 +3139,27 @@ public class TextEditingTarget implements
                                      .launchShinyApplication(getPath());
          }
       }, "Run Shiny Application");
+   }
+   
+   private void runScript()
+   {
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            String interpreter = fileType_.getScriptInterpreter();
+            server_.getScriptRunCommand(
+               interpreter, 
+               getPath(), 
+               new SimpleRequestCallback<String>() {
+                  @Override
+                  public void onResponseReceived(String cmd)
+                  {
+                     events_.fireEvent(new SendToConsoleEvent(cmd, true));
+                  }
+               });
+         }   
+      });
    }
 
    private boolean activeCodeIsAscii()

@@ -231,6 +231,16 @@ public class TextFileType extends EditableFileType
    {
       return false;
    }
+   
+   public boolean isScript()
+   {
+      return false;
+   }
+   
+   public String getScriptInterpreter()
+   {
+      return null;
+   }
 
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {

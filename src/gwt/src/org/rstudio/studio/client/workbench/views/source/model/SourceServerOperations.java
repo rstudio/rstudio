@@ -182,4 +182,8 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    void isReadOnlyFile(String path, 
                        ServerRequestCallback<Boolean> requestCallback);
+   
+   void getScriptRunCommand(String interpreter,
+                            String path,
+                            ServerRequestCallback<String> requestCallback);
 }
