@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -45,24 +45,35 @@ public final class GWT {
 
   /**
    * Instantiates a class via deferred binding.
-   * 
+   *
    * <p>
    * The argument to {@link #create(Class)}&#160;<i>must</i> be a class literal
    * because the Production Mode compiler must be able to statically determine
    * the requested type at compile-time. This can be tricky because using a
    * {@link Class} variable may appear to work correctly in Development Mode.
    * </p>
-   * 
+   *
    * @param classLiteral a class literal specifying the base class to be
    *          instantiated
    * @return the new instance, which must be cast to the requested class
    */
   public static <T> T create(Class<?> classLiteral) {
+    /*
+     * In Production Mode, the compiler directly replaces calls to this method
+     * with a new Object() type expression of the correct rebound type.
+     */
+    return createImpl(classLiteral);
+  }
+
+  /**
+   * Instantiates a class via deferred binding.
+   *
+   * @param classLiteral a class literal specifying the base class to be
+   *          instantiated
+   * @return the new instance, which must be cast to the requested class
+   */
+  public static <T> T createImpl(Class<?> classLiteral) {
     if (sGWTBridge == null) {
-      /*
-       * In Production Mode, the compiler directly replaces calls to this method
-       * with a new Object() type expression of the correct rebound type.
-       */
       throw new UnsupportedOperationException(
           "ERROR: GWT.create() is only usable in client code!  It cannot be called, "
               + "for example, from server code.  If you are running a unit test, "
@@ -93,7 +104,7 @@ public final class GWT {
   /**
    * Get a human-readable representation of the GWT version used, or null if
    * this is running on the client.
-   * 
+   *
    * @return a human-readable version number, such as {@code "2.5"}
    */
   public static String getVersion() {

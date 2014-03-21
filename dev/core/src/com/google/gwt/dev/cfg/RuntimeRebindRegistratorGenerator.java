@@ -40,13 +40,13 @@ public class RuntimeRebindRegistratorGenerator extends Generator {
   public static final String RUNTIME_REBIND_REGISTRATOR_SUFFIX = "RuntimeRebindRegistrator";
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context, String moduleName) {
+  public String generate(TreeLogger logger, GeneratorContext context, String canonicalModuleName) {
     Map<String, String> runtimeRebindRuleSourcesByShortName =
         RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;
 
     // Creates a new class definition unique per module to avoid collision.
-    String typeShortName =
-        moduleName.replace(".", "_").replace("-", "_") + "_" + RUNTIME_REBIND_REGISTRATOR_SUFFIX;
+    String typeShortName = canonicalModuleName.replace(".", "_").replace("-", "_") + "_"
+        + RUNTIME_REBIND_REGISTRATOR_SUFFIX;
     PrintWriter out = context.tryCreate(logger, PACKAGE_PATH, typeShortName);
 
     if (out != null) {

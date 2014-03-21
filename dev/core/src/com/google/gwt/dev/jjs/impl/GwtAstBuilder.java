@@ -2833,7 +2833,11 @@ public class GwtAstBuilder {
         newTypes.add(mapClass);
 
         MethodBinding[] createValueOfMapBindings = enumType.getMethods(CREATE_VALUE_OF_MAP);
-        assert createValueOfMapBindings.length == 1;
+        if (createValueOfMapBindings.length == 0) {
+          throw new RuntimeException(
+              "Unexpectedly unable to access Enum.createValueOfMap via reflection. "
+              + "Likely a dependency on the com.google.gwt.user.User module is missing.");
+        }
         MethodBinding createValueOfMapBinding = createValueOfMapBindings[0];
         mapType = createValueOfMapBinding.returnType;
 

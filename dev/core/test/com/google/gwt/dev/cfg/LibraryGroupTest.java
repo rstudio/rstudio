@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.dev.cfg.LibraryGroup.CollidingCompilationUnitException;
 import com.google.gwt.dev.cfg.LibraryGroup.DuplicateLibraryNameException;
 import com.google.gwt.dev.cfg.LibraryGroup.UnresolvedLibraryException;
 import com.google.gwt.dev.javac.CompiledClass;
@@ -239,28 +240,26 @@ public class LibraryGroupTest extends TestCase {
     return libraryGroup;
   }
 
-  public void testSuperSourceOverridesRegularCompilationUnitAccess() {
-    // Create regular/super source compilation units.
-    MockCompilationUnit regularCompilationUnit =
-        new MockCompilationUnit("com.google.gwt.Regular", "blah");
-    MockCompilationUnit superSourceCompilationUnit =
-        new MockCompilationUnit("com.google.gwt.Regular", "blah");
+  public void testEnforcesUniqueCompilationUnits() {
+    MockCompilationUnit compilationUnit = new MockCompilationUnit("com.google.gwt.Regular", "blah");
 
-    // Create regular/super source libraries.
-    MockLibrary regularLibrary = new MockLibrary("LibraryA");
-    regularLibrary.addCompilationUnit(regularCompilationUnit);
-    MockLibrary superSourceLibrary = new MockLibrary("LibraryB");
-    superSourceLibrary.addSuperSourceCompilationUnit(superSourceCompilationUnit);
+    // Creates libraries with colliding compilation units.
+    MockLibrary libraryA = new MockLibrary("LibraryA");
+    libraryA.addCompilationUnit(compilationUnit);
+    MockLibrary libraryB = new MockLibrary("LibraryB");
+    libraryB.addCompilationUnit(compilationUnit);
 
     // Stick them in a library group.
-    LibraryGroup libraryGroup = LibraryGroup.fromLibraries(
-        Lists.<Library> newArrayList(regularLibrary, superSourceLibrary), true);
+    LibraryGroup libraryGroup =
+        LibraryGroup.fromLibraries(Lists.<Library> newArrayList(libraryA, libraryB), true);
 
-    // Show that the library group prefers to return the super source version.
-    assertEquals(libraryGroup.getCompilationUnitByTypeSourceName("com.google.gwt.Regular"),
-        superSourceCompilationUnit);
-    assertEquals(libraryGroup.getCompilationUnitByTypeBinaryName("com.google.gwt.Regular"),
-        superSourceCompilationUnit);
+    // Show that the library group catches the duplication.
+    try {
+      libraryGroup.getCompilationUnitByTypeSourceName("com.google.gwt.Regular");
+      fail("The library group should have detected and rejected the duplicate compilation unit.");
+    } catch (CollidingCompilationUnitException e) {
+      // expected behavior
+    }
   }
 
   public void testUnresolvedLibraryReference() {

@@ -349,9 +349,14 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
       CollectClassData classData = typeData.getCollectClassData();
       // skip any classes that can't be referenced by name outside of
       // their local scope, such as anonymous classes and method-local classes
-      if (!classData.hasNoExternalName()) {
-        context.classDataByInternalName.put(typeData.internalName, classData);
+      if (classData.hasNoExternalName()) {
+        continue;
       }
+      // skip classes that have been previously added
+      if (typesByInternalName.containsKey(classData.getInternalName())) {
+        continue;
+      }
+      context.classDataByInternalName.put(typeData.internalName, classData);
     }
     visitClassFileEvent.end();
 
@@ -363,6 +368,10 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
       CollectClassData classData = context.classDataByInternalName.get(typeData.internalName);
       if (classData == null) {
         // ignore classes that were skipped earlier
+        continue;
+      }
+      if (typesByInternalName.containsKey(classData.getInternalName())) {
+        // skip classes that have been previously added
         continue;
       }
       JRealClassType type = createType(typeData, unresolvedTypes, context);

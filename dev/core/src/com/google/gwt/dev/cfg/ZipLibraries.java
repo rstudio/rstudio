@@ -23,5 +23,5 @@ public class ZipLibraries {
    * example adding an entry, removing an entry and changing the format of existing entries are all
    * incompatible changes.
    */
-  public static int versionNumber = 1;
+  public static int versionNumber = 2;
 }

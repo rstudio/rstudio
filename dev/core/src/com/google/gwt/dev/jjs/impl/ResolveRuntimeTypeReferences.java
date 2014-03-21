@@ -28,11 +28,13 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMultiset;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 import com.google.gwt.thirdparty.guava.common.collect.Multisets;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Assigns and replaces JRuntimeTypeReference nodes with a type id literal.
@@ -75,7 +77,7 @@ public abstract class ResolveRuntimeTypeReferences {
 
       ImmutableMultiset<JReferenceType> typesOrderedByFrequency =
           Multisets.copyHighestCountFirst(typesWithReferenceCounts);
-      for (JType type : typesOrderedByFrequency) {
+      for (JType type : typesOrderedByFrequency.elementSet()) {
         assignId(type);
       }
     }
@@ -97,7 +99,7 @@ public abstract class ResolveRuntimeTypeReferences {
 
     @Override
     protected void assignTypes(Multiset<JReferenceType> typesWithReferenceCounts) {
-      for (JType type : typesWithReferenceCounts) {
+      for (JType type : typesWithReferenceCounts.elementSet()) {
         assignId(type);
       }
     }
@@ -152,16 +154,28 @@ public abstract class ResolveRuntimeTypeReferences {
 
   protected Map<JType, JLiteral> execImpl() {
     RuntimeTypeCollectorVisitor runtimeTypeCollector = new RuntimeTypeCollectorVisitor();
+    // Collects runtime type references visible from types in the program that are part of the
+    // current compile.
     runtimeTypeCollector.accept(program);
+    // Collects runtime type references that are missed (inside of annotations) in a normal AST
+    // traversal.
+    runtimeTypeCollector.accept(Lists.newArrayList(program.getCastMap().values()));
+    // Collects runtime type references in the ClassLiteralHolder even if the ClassLiteralHolder
+    // isn't part of the current compile.
+    runtimeTypeCollector.accept(program.getIndexedType("ClassLiteralHolder"));
+    // TODO(stalcup): each module should have it's own ClassLiteralHolder or some agreed upon
+    // location that is default accessible to all.
 
     assignTypes(runtimeTypeCollector.typesRequiringRuntimeIds);
 
     ReplaceRuntimeTypeReferencesVisitor replaceTypeIdsVisitor = new ReplaceRuntimeTypeReferencesVisitor();
     replaceTypeIdsVisitor.accept(program);
+    replaceTypeIdsVisitor.accept(program.getIndexedType("ClassLiteralHolder"));
     // TODO(rluble): Improve the code so that things are not scattered all over; here cast maps
     // that appear as parameters to soon to be generated
     // {@link JavaClassHierarchySetup::defineClass()} are NOT traversed when traversing the program.
-    for (JCastMap castMap : program.getCastMaps()) {
+    for (Entry<JReferenceType, JCastMap> entry : program.getCastMap().entrySet()) {
+      JCastMap castMap = entry.getValue();
       replaceTypeIdsVisitor.accept(castMap);
     }
 

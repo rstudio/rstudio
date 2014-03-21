@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -66,14 +66,14 @@ public final class GWT {
 
   /**
    * Instantiates a class via deferred binding.
-   * 
+   *
    * <p>
    * The argument to {@link #create(Class)}&#160;<i>must</i> be a class literal
    * because the Production Mode compiler must be able to statically determine
    * the requested type at compile-time. This can be tricky because using a
    * {@link Class} variable may appear to work correctly in Development Mode.
    * </p>
-   * 
+   *
    * @param classLiteral a class literal specifying the base class to be
    *          instantiated
    * @return the new instance, which must be cast to the requested class
@@ -83,7 +83,7 @@ public final class GWT {
      * In Production Mode, the compiler directly replaces calls to this method
      * with a new Object() type expression of the correct rebound type.
      */
-    return com.google.gwt.core.shared.GWT.<T>create(classLiteral);
+    return com.google.gwt.core.shared.GWT.<T>createImpl(classLiteral);
   }
 
   public static void exportUnloadModule() {
@@ -95,7 +95,7 @@ public final class GWT {
    * paths of resources which may be relative to the host page. Typically, you
    * should use {@link #getModuleBaseURL()} unless you have a specific reason to
    * load a resource relative to the host page.
-   * 
+   *
    * @return if non-empty, the base URL is guaranteed to end with a slash
    */
   public static String getHostPageBaseURL() {
@@ -320,8 +320,8 @@ public final class GWT {
    * If enabled via &lt;set-property name="gwt.unloadEnabled" value="true"/> invoking this method causes the module
    * to be removed from memory and all {@link com.google.gwt.core.client.impl.Disposable} instances to be
    * cleaned up. This method is not typically called by the GWT module itself, but exported so that another module
-   * may call it. 
-   * @see com.google.gwt.core.client.GWT#exportUnloadModule() 
+   * may call it.
+   * @see com.google.gwt.core.client.GWT#exportUnloadModule()
    */
   private static void unloadModule() {
     Impl.unloadModule();

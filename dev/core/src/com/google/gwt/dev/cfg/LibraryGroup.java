@@ -53,6 +53,17 @@ import java.util.Set;
 public class LibraryGroup {
 
   /**
+   * An exception that indicates that a single Compilation Unit is being provided by more than one
+   * library.
+   */
+  public static class CollidingCompilationUnitException extends InternalCompilerException {
+
+    public CollidingCompilationUnitException(String message) {
+      super(message);
+    }
+  }
+
+  /**
    * An exception that indicates that more than one library has the same name, thus making name
    * based references ambiguous.
    */
@@ -534,6 +545,7 @@ public class LibraryGroup {
       for (Library library : libraries) {
         for (String compilationUnitTypeSourceName :
             library.getRegularCompilationUnitTypeSourceNames()) {
+          checkCompilationUnitUnique(library, compilationUnitTypeSourceName);
           librariesByCompilationUnitTypeSourceName.put(compilationUnitTypeSourceName, library);
 
           Collection<String> nestedTypeSourceNames = library
@@ -548,6 +560,7 @@ public class LibraryGroup {
       for (Library library : libraries) {
         for (String superSourceCompilationUnitTypeSourceName :
             library.getSuperSourceCompilationUnitTypeSourceNames()) {
+          checkCompilationUnitUnique(library, superSourceCompilationUnitTypeSourceName);
           librariesByCompilationUnitTypeSourceName.put(superSourceCompilationUnitTypeSourceName,
               library);
 
@@ -561,6 +574,18 @@ public class LibraryGroup {
       }
     }
     return Collections.unmodifiableMap(librariesByCompilationUnitTypeSourceName);
+  }
+
+  private void checkCompilationUnitUnique(Library newLibrary,
+      String compilationUnitTypeSourceName) {
+    if (librariesByCompilationUnitTypeSourceName.containsKey(compilationUnitTypeSourceName)) {
+      Library oldLibrary =
+          librariesByCompilationUnitTypeSourceName.get(compilationUnitTypeSourceName);
+      throw new CollidingCompilationUnitException(String.format(
+          "Compilation units must be unique but '%s' is being "
+          + "provided by both the '%s' and '%s' library.", compilationUnitTypeSourceName,
+          oldLibrary.getLibraryName(), newLibrary.getLibraryName()));
+    }
   }
 
   private Map<String, Library> getLibrariesByPublicResourcePath() {

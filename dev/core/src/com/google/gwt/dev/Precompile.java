@@ -255,7 +255,8 @@ public class Precompile {
       long moduleLoadFinished = System.currentTimeMillis();
 
       String[] declEntryPts = module.getEntryPointTypeNames();
-      if (compilerContext.shouldCompileMonolithic() && declEntryPts.length == 0) {
+      boolean compileMonolithic = compilerContext.shouldCompileMonolithic();
+      if (compileMonolithic && declEntryPts.length == 0) {
         logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
         throw new UnableToCompleteException();
       }
@@ -288,23 +289,32 @@ public class Precompile {
       List<Permutation> permutations =
           new ArrayList<Permutation>(Arrays.asList(rpo.getPermutations()));
 
-      mergeCollapsedPermutations(permutations);
+      // Monolithic compiles have multiple permutations but library compiles do not (since the
+      // library output contains runtime rebind logic that will find implementations for any
+      // supported browser).
+      if (compileMonolithic) {
+        mergeCollapsedPermutations(permutations);
 
-      // Sort the permutations by an ordered key to ensure determinism.
-      SortedMap<RebindAnswersPermutationKey, Permutation> merged =
-          new TreeMap<RebindAnswersPermutationKey, Permutation>();
-      SortedSet<String> liveRebindRequests = unifiedAst.getRebindRequests();
-      for (Permutation permutation : permutations) {
-        // Construct a key for the live rebind answers.
-        RebindAnswersPermutationKey key =
-            new RebindAnswersPermutationKey(permutation, liveRebindRequests);
-        if (merged.containsKey(key)) {
-          Permutation existing = merged.get(key);
-          existing.mergeFrom(permutation, liveRebindRequests);
-        } else {
-          merged.put(key, permutation);
+        // Sort the permutations by an ordered key to ensure determinism.
+        SortedMap<RebindAnswersPermutationKey, Permutation> merged =
+            new TreeMap<RebindAnswersPermutationKey, Permutation>();
+        SortedSet<String> liveRebindRequests = unifiedAst.getRebindRequests();
+        for (Permutation permutation : permutations) {
+          // Construct a key for the live rebind answers.
+          RebindAnswersPermutationKey key =
+              new RebindAnswersPermutationKey(permutation, liveRebindRequests);
+          if (merged.containsKey(key)) {
+            Permutation existing = merged.get(key);
+            existing.mergeFrom(permutation, liveRebindRequests);
+          } else {
+            merged.put(key, permutation);
+          }
         }
+
+        permutations.clear();
+        permutations.addAll(merged.values());
       }
+
       if (jjsOptions.isCompilerMetricsEnabled()) {
         int[] ids = new int[allPermutations.size()];
         for (int i = 0; i < allPermutations.size(); i++) {
@@ -319,7 +329,7 @@ public class Precompile {
             - startTimeMilliseconds);
         unifiedAst.setPrecompilationMetrics(precompilationMetrics);
       }
-      return new Precompilation(unifiedAst, merged.values(), permutationBase, generatedArtifacts);
+      return new Precompilation(unifiedAst, permutations, permutationBase, generatedArtifacts);
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.

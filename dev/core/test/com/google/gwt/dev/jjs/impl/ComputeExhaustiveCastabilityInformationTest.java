@@ -46,17 +46,18 @@ public class ComputeExhaustiveCastabilityInformationTest extends JJSTestBase {
     JArrayType stringArrayType = program.getTypeArray(stringType);
 
     // Verifies that String[] casts to the exhaustive list of related array types and Object.
-    assertSourceCastsToTargets(program, stringArrayType, Sets.newHashSet("java.lang.CharSequence[]",
-        "java.lang.Comparable[]", "java.lang.Object[]", "java.io.Serializable[]",
-        "java.lang.Object"));
+    assertSourceCastsToTargets(program, stringArrayType, Sets.newHashSet("java.lang.String[]",
+        "java.lang.CharSequence[]", "java.lang.Comparable[]", "java.lang.Object[]",
+        "java.io.Serializable[]", "java.lang.Object"));
   }
 
   public void testRegularClassCastabilityIsExhaustive() throws UnableToCompleteException {
     registerCompilableResources();
 
     // Compiles and verifies that the String type casts to the exhaustive list of related types.
-    assertSourceCastsToTargets("String", Sets.newHashSet("java.lang.CharSequence",
-        "java.lang.Comparable", "java.lang.Object", "java.io.Serializable"));
+    assertSourceCastsToTargets("String", Sets.newHashSet("java.lang.String",
+        "java.lang.CharSequence", "java.lang.Comparable", "java.lang.Object",
+        "java.io.Serializable"));
   }
 
   private void assertSourceCastsToTargets(JProgram program, JReferenceType sourceType,

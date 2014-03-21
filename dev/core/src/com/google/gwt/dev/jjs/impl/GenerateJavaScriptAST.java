@@ -1478,9 +1478,6 @@ public class GenerateJavaScriptAST {
     public void endVisit(JProgram x, Context ctx) {
       List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
-      // Generate entry methods
-      generateGwtOnLoad(entryFunctions, globalStmts);
-
       // Add a few things onto the beginning.
 
       // Reserve the "_" identifier.
@@ -1501,6 +1498,10 @@ public class GenerateJavaScriptAST {
           globalStmts.add(vars);
         }
       }
+
+      // Generate entry methods. Needs to be after class literal insertion since class literal will
+      // be referenced by runtime rebind and property provider bootstrapping.
+      generateGwtOnLoad(entryFunctions, globalStmts);
 
       if (program.getRunAsyncs().size() > 0) {
         // Prevent onLoad from being pruned.

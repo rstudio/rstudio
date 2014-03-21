@@ -217,31 +217,32 @@ public class JjsTypeTest extends TestCase {
   }
 
   public void testGetSuperHierarchy() {
-    assertSuperHierarchy(classObject);
-    assertSuperHierarchy(classString, classObject);
-    assertSuperHierarchy(classJso, classObject);
-    assertSuperHierarchy(intfSerializable);
-    assertSuperHierarchy(intfCloneable);
-    assertSuperHierarchy(intfIBase);
-    assertSuperHierarchy(intfI, intfIBase);
-    assertSuperHierarchy(intfJ);
-    assertSuperHierarchy(intfK);
-    assertSuperHierarchy(classBase, classObject);
-    assertSuperHierarchy(classA, classObject, classBase);
-    assertSuperHierarchy(classB, classObject, classBase, intfIBase, intfI);
-    assertSuperHierarchy(classC, classObject, intfIBase, intfI);
-    assertSuperHierarchy(classBSub, classObject, classBase, classB, intfIBase, intfI);
-    assertSuperHierarchy(classJso1, classObject, classJso, intfJ);
-    assertSuperHierarchy(classJso2, classObject, classJso, intfK);
-    assertSuperHierarchy(intfIterable);
-    assertSuperHierarchy(intfCollection, intfIterable);
-    assertSuperHierarchy(intfList, intfIterable, intfCollection);
-    assertSuperHierarchy(classArrayList, intfList, classObject, intfIterable, intfCollection);
-    assertSuperHierarchy(arrayOfB, arrayOfBase, arrayOfObject, arrayOfIntfI, arrayOfIntfIBase,
-        classObject);
-    assertSuperHierarchy(arrayOfArrayOfB, arrayOfArrayOfBase, arrayOfArrayOfObject,
+    assertSuperHierarchy(classObject, classObject);
+    assertSuperHierarchy(classString, classString, classObject);
+    assertSuperHierarchy(classJso, classJso, classObject);
+    assertSuperHierarchy(intfSerializable, intfSerializable);
+    assertSuperHierarchy(intfCloneable, intfCloneable);
+    assertSuperHierarchy(intfIBase, intfIBase);
+    assertSuperHierarchy(intfI, intfI, intfIBase);
+    assertSuperHierarchy(intfJ, intfJ);
+    assertSuperHierarchy(intfK, intfK);
+    assertSuperHierarchy(classBase, classBase, classObject);
+    assertSuperHierarchy(classA, classA, classObject, classBase);
+    assertSuperHierarchy(classB, classB, classObject, classBase, intfIBase, intfI);
+    assertSuperHierarchy(classC, classC, classObject, intfIBase, intfI);
+    assertSuperHierarchy(classBSub, classBSub, classObject, classBase, classB, intfIBase, intfI);
+    assertSuperHierarchy(classJso1, classJso1, classObject, classJso, intfJ);
+    assertSuperHierarchy(classJso2, classJso2, classObject, classJso, intfK);
+    assertSuperHierarchy(intfIterable, intfIterable);
+    assertSuperHierarchy(intfCollection, intfCollection, intfIterable);
+    assertSuperHierarchy(intfList, intfList, intfIterable, intfCollection);
+    assertSuperHierarchy(classArrayList, classArrayList, intfList, classObject, intfIterable,
+        intfCollection);
+    assertSuperHierarchy(arrayOfB, arrayOfB, arrayOfBase, arrayOfObject, arrayOfIntfI,
+        arrayOfIntfIBase, classObject);
+    assertSuperHierarchy(arrayOfArrayOfB, arrayOfArrayOfB, arrayOfArrayOfBase, arrayOfArrayOfObject,
         arrayOfArrayOfIntfI, arrayOfArrayOfIntfIBase, classObject);
-    assertSuperHierarchy(arrayOfInt, classObject);
+    assertSuperHierarchy(arrayOfInt, arrayOfInt, classObject);
   }
 
   public void testJavahSignatures() {

@@ -20,10 +20,12 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
+import com.google.gwt.dev.cfg.Library;
 import com.google.gwt.dev.cfg.LibraryGroup;
 import com.google.gwt.dev.cfg.LibraryWriter;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.cfg.ZipLibrary;
 import com.google.gwt.dev.cfg.ZipLibraryWriter;
 import com.google.gwt.dev.javac.LibraryGroupUnitCache;
 import com.google.gwt.dev.jjs.JsOutputOption;
@@ -40,11 +42,13 @@ import com.google.gwt.dev.util.arg.ArgHandlerOutputLibrary;
 import com.google.gwt.dev.util.arg.ArgHandlerSaveSourceOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
+import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.util.tools.Utility;
 
@@ -118,13 +122,12 @@ public class LibraryCompiler {
   private ArtifactSet generatedArtifacts;
   private LibraryGroup libraryGroup;
   private ModuleDef module;
-  private List<PersistenceBackedObject<PermutationResult>> permutationResultFiles;
   private Permutation[] permutations;
 
   public LibraryCompiler(CompilerOptions compilerOptions) {
     this.compilerOptions = new CompilerOptionsImpl(compilerOptions);
     this.compilerContext =
-        compilerContextBuilder.options(compilerOptions).compileMonolithic(false).build();
+        compilerContextBuilder.options(this.compilerOptions).compileMonolithic(false).build();
   }
 
   private void compileModule(TreeLogger logger) throws UnableToCompleteException {
@@ -133,35 +136,38 @@ public class LibraryCompiler {
         logger.branch(TreeLogger.INFO, "Compiling module " + module.getCanonicalName());
     LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
 
-    if (compilerOptions.isValidateOnly()) {
-      boolean valid = Precompile.validate(logger, compilerContext);
-      if (!valid) {
-        // The real cause has been logged.
-        throw new UnableToCompleteException();
+    try {
+      if (compilerOptions.isValidateOnly()) {
+        boolean valid = Precompile.validate(logger, compilerContext);
+        if (!valid) {
+          // The real cause has been logged.
+          throw new UnableToCompleteException();
+        }
       }
+
+      Precompilation precompilation = Precompile.precompile(branch, compilerContext);
+      // TODO(stalcup): move to precompile() after params are refactored
+      if (!compilerOptions.shouldSaveSource()) {
+        precompilation.removeSourceArtifacts(logger);
+      }
+
+      Event compilePermutationsEvent =
+          SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
+      permutations = new Permutation[] {precompilation.getPermutations()[0]};
+      List<PersistenceBackedObject<PermutationResult>> permutationResultFiles =
+          new ArrayList<PersistenceBackedObject<PermutationResult>>();
+      permutationResultFiles.add(libraryWriter.getPermutationResultHandle());
+      CompilePerms.compile(
+          branch, compilerContext, precompilation, permutations, compilerOptions.getLocalWorkers(),
+          permutationResultFiles);
+      compilePermutationsEvent.end();
+
+      generatedArtifacts = precompilation.getGeneratedArtifacts();
+      libraryWriter.addGeneratedArtifacts(generatedArtifacts);
+    } finally {
+      // Even if a compile problem occurs, close the library cleanly so that it can be examined.
+      libraryWriter.write();
     }
-
-    Precompilation precompilation = Precompile.precompile(branch, compilerContext);
-    // TODO(stalcup): move to precompile() after params are refactored
-    if (!compilerOptions.shouldSaveSource()) {
-      precompilation.removeSourceArtifacts(logger);
-    }
-
-    Event compilePermutationsEvent =
-        SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
-    permutations = new Permutation[] {precompilation.getPermutations()[0]};
-    permutationResultFiles = new ArrayList<PersistenceBackedObject<PermutationResult>>();
-    permutationResultFiles.add(libraryWriter.getPermutationResultHandle());
-    CompilePerms.compile(
-        branch, compilerContext, precompilation, permutations, compilerOptions.getLocalWorkers(),
-        permutationResultFiles);
-    compilePermutationsEvent.end();
-
-    generatedArtifacts = precompilation.getGeneratedArtifacts();
-    libraryWriter.addGeneratedArtifacts(generatedArtifacts);
-
-    // Save and close the current library.
-    libraryWriter.write();
 
     long durationMs = System.currentTimeMillis() - beforeCompileMs;
     branch.log(TreeLogger.INFO,
@@ -172,9 +178,20 @@ public class LibraryCompiler {
     long beforeLinkMs = System.currentTimeMillis();
     Event linkEvent = SpeedTracerLogger.start(CompilerEventType.LINK);
 
+    // Load up the library that was just created so that it's possible to get a read-reference to
+    // its contained PermutationResult.
+    Library resultLibrary;
+    try {
+      resultLibrary = new ZipLibrary(compilerOptions.getOutputLibraryPath());
+    } catch (IncompatibleLibraryVersionException e) {
+      logger.log(TreeLogger.ERROR, e.getMessage());
+      throw new UnableToCompleteException();
+    }
     generatedArtifacts.addAll(libraryGroup.getGeneratedArtifacts());
 
     Set<PermutationResult> libraryPermutationResults = Sets.newLinkedHashSet();
+    List<PersistenceBackedObject<PermutationResult>> resultFiles = Lists.newArrayList();
+    resultFiles.add(resultLibrary.getPermutationResultHandle());
     List<PersistenceBackedObject<PermutationResult>> permutationResultHandles =
         libraryGroup.getPermutationResultHandlesInLinkOrder();
     for (PersistenceBackedObject<PermutationResult> permutationResultHandle :
@@ -195,7 +212,7 @@ public class LibraryCompiler {
     try {
       Link.link(branch,
           module, compilerContext.getPublicResourceOracle(), generatedArtifacts, permutations,
-          permutationResultFiles, libraryPermutationResults, compilerOptions, compilerOptions);
+          resultFiles, libraryPermutationResults, compilerOptions, compilerOptions);
     } catch (IOException e) {
       // The real cause has been logged.
       throw new UnableToCompleteException();
@@ -228,7 +245,15 @@ public class LibraryCompiler {
   private void normalizeOptions(TreeLogger logger) throws UnableToCompleteException {
     Preconditions.checkArgument(compilerOptions.getModuleNames().size() == 1);
 
+    // Fail early on errors to avoid confusion later.
+    compilerOptions.setStrict(true);
+    // Current optimization passes are not safe with only partial data.
+    compilerOptions.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
+    // Protects against rampant overlapping source inclusion.
+    compilerOptions.setEnforceStrictResources(true);
+    // Ensures that output JS identifiers are named consistently in all modules.
     compilerOptions.setOutput(JsOutputOption.DETAILED);
+    // Code splitting isn't possible when you can't trace the entire control flow.
     compilerOptions.setRunAsyncEnabled(false);
     compilerOptions.setClosureCompilerEnabled(false);
     if (compilerOptions.getWorkDir() == null) {

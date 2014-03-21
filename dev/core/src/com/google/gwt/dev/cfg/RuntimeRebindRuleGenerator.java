@@ -42,9 +42,9 @@ public class RuntimeRebindRuleGenerator {
     typeBody.append("  public native Object createInstance() /*-{\n");
     typeBody.append("    " + jsniCreateInstanceExpression + "\n");
     typeBody.append("  }-*/;\n");
-    typeBody.append("  public boolean matches(Class<?> requestTypeClass) {\n");
+    typeBody.append("  public native boolean matches(Class<?> requestTypeClass) /*-{\n");
     typeBody.append("    " + matchesExpression + "\n");
-    typeBody.append("  }\n");
+    typeBody.append("  }-*/;\n");
     typeBody.append("}\n");
 
     RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME.put(typeShortName, typeBody.toString());

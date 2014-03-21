@@ -56,6 +56,13 @@ import java.util.zip.ZipOutputStream;
 // depending on human-readability constraints).
 public class ZipLibraryWriter implements LibraryWriter {
 
+  private static String keyValueSeparatorString = Libraries.KEY_VALUE_SEPARATOR + "";
+  private static String valueSeparatorString = Libraries.VALUE_SEPARATOR + "";
+  private static String lineSeparatorString = Libraries.LINE_SEPARATOR + "";
+  private static byte[] keyValueSeparatorBytes = keyValueSeparatorString.getBytes();
+  private static byte[] valueSeparatorBytes = valueSeparatorString.getBytes();
+  private static byte[] lineSeparatorBytes = lineSeparatorString.getBytes();
+
   private class ZipWriter {
 
     private boolean fileReady;
@@ -115,12 +122,6 @@ public class ZipLibraryWriter implements LibraryWriter {
     private ZipEntryBackedObject<PermutationResult> getPermutationResultHandle() {
       return new ZipEntryBackedObject<PermutationResult>(zipOutputStream, zipFile.getPath(),
           Libraries.PERMUTATION_RESULT_ENTRY_NAME, PermutationResult.class);
-    }
-
-    private boolean isTriviallySerializable(String string) {
-      return !string.contains(Libraries.KEY_VALUE_SEPARATOR)
-          && !string.contains(Libraries.VALUE_SEPARATOR)
-          && !string.contains(Libraries.LINE_SEPARATOR);
     }
 
     private void startEntry(String entryName) {
@@ -308,29 +309,27 @@ public class ZipLibraryWriter implements LibraryWriter {
 
       Iterator<Entry<String, Collection<String>>> entryIterator =
           stringListsByString.entrySet().iterator();
+
       try {
         while (entryIterator.hasNext()) {
           Entry<String, Collection<String>> entry = entryIterator.next();
-          String key = entry.getKey();
-          assert isTriviallySerializable(key) : String.format(
-              "Nonserializable characters in key '%s'.", key);
+          String key = encode(entry.getKey());
           zipOutputStream.write(key.getBytes());
 
           boolean first = true;
-          for (String value : entry.getValue()) {
-            assert isTriviallySerializable(value) : String.format(
-                "Nonserializable characters in value '%s'.", value);
+          Collection<String> values = entry.getValue();
+          for (String value : values) {
             if (first) {
               first = false;
-              zipOutputStream.write(Libraries.KEY_VALUE_SEPARATOR.getBytes());
+              zipOutputStream.write(keyValueSeparatorBytes);
             } else {
-              zipOutputStream.write(Libraries.VALUE_SEPARATOR.getBytes());
+              zipOutputStream.write(valueSeparatorBytes);
             }
-            zipOutputStream.write(value.getBytes());
+            zipOutputStream.write(encode(value).getBytes());
           }
 
           if (entryIterator.hasNext()) {
-            zipOutputStream.write(Libraries.LINE_SEPARATOR.getBytes());
+            zipOutputStream.write(lineSeparatorBytes);
           }
         }
       } catch (IOException e) {
@@ -338,14 +337,27 @@ public class ZipLibraryWriter implements LibraryWriter {
       }
     }
 
+    private String encode(String string) {
+      string = encodeCharacter(string, Libraries.ENCODE_PREFIX);
+      string = encodeCharacter(string, Libraries.KEY_VALUE_SEPARATOR);
+      string = encodeCharacter(string, Libraries.LINE_SEPARATOR);
+      string = encodeCharacter(string, Libraries.VALUE_SEPARATOR);
+      return string;
+    }
+
+    private String encodeCharacter(String string, char character) {
+      return string.replace(character + "", Libraries.ENCODE_PREFIX + Integer.toString(character));
+    }
+
     private void writeStringSet(String entryName, Set<String> stringSet) {
       createZipEntry(entryName);
+      Set<String> encodedStringSet = Sets.newHashSet();
+      for (String string : stringSet) {
+        encodedStringSet.add(encode(string));
+      }
       try {
-        for (String string : stringSet) {
-          assert isTriviallySerializable(string) : String.format(
-              "Nonserializable characters in string '%s'.", string);
-        }
-        zipOutputStream.write(Joiner.on(Libraries.LINE_SEPARATOR).join(stringSet).getBytes());
+        zipOutputStream.write(
+            Joiner.on(Libraries.LINE_SEPARATOR).join(encodedStringSet).getBytes());
       } catch (IOException e) {
         throw new CompilerIoException("Failed to write " + entryName + " as a String set.", e);
       }

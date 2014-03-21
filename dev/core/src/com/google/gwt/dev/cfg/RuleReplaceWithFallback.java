@@ -22,12 +22,12 @@ package com.google.gwt.dev.cfg;
  */
 public class RuleReplaceWithFallback extends RuleReplaceWith {
 
-  public RuleReplaceWithFallback(String typeName) {
-    super(typeName);
+  public RuleReplaceWithFallback(String typeSourceName) {
+    super(typeSourceName);
   }
 
   @Override
   protected String generateMatchesExpression() {
-    return String.format("return requestTypeName.equals(\"%s\");", getReplacementTypeName());
+    return String.format("return requestTypeClass == @%s::class;", getReplacementTypeName());
   }
 }

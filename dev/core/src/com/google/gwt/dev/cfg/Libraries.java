@@ -52,9 +52,10 @@ public class Libraries {
   public static final String EXTENSION_CLASS_FILE = ".class";
   public static final String EXTENSION_COMPILATION_UNITS = ".compilationUnit";
   public static final String GENERATED_ARTIFACT_NAMES_ENTRY_NAME = "generatedArtifactNames.txt";
-  public static final String KEY_VALUE_SEPARATOR = "->";
+  public static final char ENCODE_PREFIX = '%';
+  public static final char KEY_VALUE_SEPARATOR = ':';
   public static final String LIBRARY_NAME_ENTRY_NAME = "libraryName.txt";
-  public static final String LINE_SEPARATOR = "\n";
+  public static final char LINE_SEPARATOR = '\n';
   public static final String NESTED_BINARY_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME =
       "nestedBinaryNamesByEnclosingName.txt";
   public static final String NESTED_SOURCE_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME =
@@ -74,7 +75,7 @@ public class Libraries {
       "superSourceClassFilePaths.txt";
   public static final String SUPER_SOURCE_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME =
       "superSourceCompilationUnitTypeSourceNames.txt";
-  public static final String VALUE_SEPARATOR = ",";
+  public static final char VALUE_SEPARATOR = ',';
   public static final String VERSION_NUMBER_ENTRY_NAME = "versionNumber.txt";
 
   /**

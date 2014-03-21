@@ -114,7 +114,7 @@ public class ConditionTest extends TestCase {
     }
 
     // Compound conditions collapse effectively empty slots.
-    assertEquals("((requestTypeClass == com.google.gwt.Foo.class))", new ConditionAll(
+    assertEquals("((requestTypeClass == @com.google.gwt.Foo::class))", new ConditionAll(
         new ConditionAny(), new ConditionWhenTypeIs("com.google.gwt.Foo")).toSource());
 
     // Exercise it all.
@@ -122,10 +122,10 @@ public class ConditionTest extends TestCase {
         new ConditionWhenPropertyIs("user.agent", "webkit")), new ConditionAll(
         new ConditionWhenTypeIs("com.google.gwt.HasFocus"),
         new ConditionWhenPropertyIs("user.agent", "ie9"))).toSource();
-    assertEquals("!(((((requestTypeClass == com.google.gwt.Foo.class) && (RuntimePropertyRegistry."
-        + "getPropertyValue(\"user.agent\").equals(\"webkit\")))) || (((requestTypeClass == "
-        + "com.google.gwt.HasFocus.class) && (RuntimePropertyRegistry.getPropertyValue("
-        + "\"user.agent\").equals(\"ie9\"))))))", a);
+    assertEquals("!(((((requestTypeClass == @com.google.gwt.Foo::class) && (@com.google.gwt.lang."
+        + "RuntimePropertyRegistry::getPropertyValue(*)(\"user.agent\") == \"webkit\"))) || "
+        + "(((requestTypeClass == @com.google.gwt.HasFocus::class) && (@com.google.gwt.lang."
+        + "RuntimePropertyRegistry::getPropertyValue(*)(\"user.agent\") == \"ie9\")))))", a);
   }
 
   private boolean isTrue(Condition cond, String testType)

@@ -542,7 +542,6 @@ public class UnifyAst {
 
   private static final String GWT_DEBUGGER_CLIENT = "com.google.gwt.core.client.GWT.debugger()V";
 
-
   private static final String GWT_IS_CLIENT = "com.google.gwt.core.shared.GWT.isClient()Z";
 
   private static final String GWT_IS_PROD_MODE = "com.google.gwt.core.shared.GWT.isProdMode()Z";
@@ -693,9 +692,9 @@ public class UnifyAst {
     // If this is a library compile.
     if (!compilerContext.shouldCompileMonolithic()) {
       // Trace execution from all types supplied as source and resolve references.
-      Set<String> sourceNames = ImmutableSet.copyOf(compiledClassesBySourceName.keySet());
-      for (String sourceTypeName : sourceNames) {
-        JDeclaredType type = findType(sourceTypeName, sourceNameBasedTypeLocator);
+      Set<String> internalNames = ImmutableSet.copyOf(compiledClassesByInternalName.keySet());
+      for (String internalName : internalNames) {
+        JDeclaredType type = findType(internalName, internalNameBasedTypeLocator);
         instantiate(type);
         for (JField field : type.getFields()) {
           flowInto(field);
@@ -800,14 +799,16 @@ public class UnifyAst {
     compilerContext.getUnitCache().add(referencedCompilationUnit);
     compilationState.addReferencedCompilationUnits(logger, Lists.create(referencedCompilationUnit));
     // Record the types in the JProgram but do *not* flow into them and resolve their internal
-    // references. There's no need since they're not part of this library.
-    for (JDeclaredType referenceOnlyType : referencedCompilationUnit.getTypes()) {
+    // references. There's no need since they're not part of this library. It's important to call
+    // getTypes() only ONCE since each call returns a new copy.
+    List<JDeclaredType> types = referencedCompilationUnit.getTypes();
+    for (JDeclaredType referenceOnlyType : types) {
       program.addType(referenceOnlyType);
       program.addReferenceOnlyType(referenceOnlyType);
     }
     // Flow into the signature of each contained method, so that method call references from
     // inside this library to functions on these external types can resolve.
-    for (JDeclaredType t : referencedCompilationUnit.getTypes()) {
+    for (JDeclaredType t : types) {
       for (JMethod method : t.getMethods()) {
         flowInto(method);
       }

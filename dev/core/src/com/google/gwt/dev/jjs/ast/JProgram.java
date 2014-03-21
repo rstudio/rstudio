@@ -78,8 +78,7 @@ public class JProgram extends JNode {
 
   public static final Set<String> CODEGEN_TYPES_SET = Sets.newLinkedHashSet(Arrays.asList(
       "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
-      "com.google.gwt.core.client.RuntimePropertyRegistry",
-      "com.google.gwt.lang.Exceptions",
+      "com.google.gwt.lang.RuntimePropertyRegistry", "com.google.gwt.lang.Exceptions",
       "com.google.gwt.lang.LongLib", "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util"));
 
   /*
@@ -627,8 +626,8 @@ public class JProgram extends JNode {
     return result;
   }
 
-  public Collection<JCastMap> getCastMaps() {
-    return Collections.unmodifiableCollection(castMaps.values());
+  public Map<JReferenceType, JCastMap> getCastMap() {
+    return Collections.unmodifiableMap(castMaps);
   }
 
   public JCastMap getCastMap(JReferenceType referenceType) {
@@ -1068,8 +1067,8 @@ public class JProgram extends JNode {
         "java.lang.AssertionError", "java.lang.Boolean", "java.lang.Byte", "java.lang.Character",
         "java.lang.Short", "java.lang.Integer", "java.lang.Long", "java.lang.Float",
         "java.lang.Double", "java.lang.Throwable", "com.google.gwt.core.client.GWT",
-        JProgram.JAVASCRIPTOBJECT, "com.google.gwt.lang.ClassLiteralHolder",
-        "com.google.gwt.core.client.RunAsyncCallback",
+        JProgram.JAVASCRIPTOBJECT, "com.google.gwt.lang.RuntimeRebinder",
+        "com.google.gwt.lang.ClassLiteralHolder", "com.google.gwt.core.client.RunAsyncCallback",
         "com.google.gwt.core.client.impl.AsyncFragmentLoader",
         "com.google.gwt.core.client.impl.Impl",
         "com.google.gwt.core.client.prefetch.RunAsyncCode"));

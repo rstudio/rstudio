@@ -23,7 +23,6 @@ import com.google.gwt.core.client.JavaScriptObjectTest;
 import com.google.gwt.core.client.JsArrayMixedTest;
 import com.google.gwt.core.client.JsArrayTest;
 import com.google.gwt.core.client.JsIdentityTest;
-import com.google.gwt.core.client.RuntimePropertyRegistryTest;
 import com.google.gwt.core.client.SchedulerTest;
 import com.google.gwt.core.client.ScriptInjectorTest;
 import com.google.gwt.core.client.impl.AsyncFragmentLoaderTest;
@@ -34,6 +33,7 @@ import com.google.gwt.core.client.testing.StubSchedulerTest;
 import com.google.gwt.core.shared.SerializableThrowableTest;
 import com.google.gwt.dev.StrictModeTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.lang.RuntimePropertyRegistryTest;
 
 import junit.framework.Test;
 

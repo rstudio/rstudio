@@ -25,25 +25,25 @@ import com.google.gwt.core.ext.TreeLogger;
 //like String and Array.
 public class ConditionWhenTypeIs extends Condition {
 
-  private final String exactTypeName;
+  private final String exactTypeSourceName;
 
-  public ConditionWhenTypeIs(String exactTypeName) {
-    this.exactTypeName = exactTypeName;
+  public ConditionWhenTypeIs(String exactTypeSourceName) {
+    this.exactTypeSourceName = exactTypeSourceName;
   }
 
   @Override
   public String toSource() {
-    return String.format("requestTypeClass == %s.class", exactTypeName);
+    return String.format("requestTypeClass == @%s::class", exactTypeSourceName);
   }
 
   @Override
   public String toString() {
-    return "<when-type-is class='" + exactTypeName + "'/>";
+    return "<when-type-is class='" + exactTypeSourceName + "'/>";
   }
 
   @Override
   protected boolean doEval(TreeLogger logger, DeferredBindingQuery query) {
-    return exactTypeName.equals(query.getTestType());
+    return exactTypeSourceName.equals(query.getTestType());
   }
 
   @Override

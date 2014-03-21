@@ -11,9 +11,9 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.client;
+package com.google.gwt.lang;
 
-import com.google.gwt.core.client.RuntimePropertyRegistry.PropertyValueProvider;
+import com.google.gwt.lang.RuntimePropertyRegistry.PropertyValueProvider;
 
 import junit.framework.TestCase;
 

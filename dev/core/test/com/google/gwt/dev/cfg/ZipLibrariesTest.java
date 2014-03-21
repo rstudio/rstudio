@@ -90,7 +90,7 @@ public class ZipLibrariesTest extends CompilationStateTestBase {
     Set<String> expectedRanGeneratorNames =
         Sets.newHashSet("UiBinderGenerator", "PlatinumGenerator");
     Set<String> expectedUserAgentConfigurationValues = Sets.newHashSet("webkit");
-    Set<String> expectedLocaleConfigurationValues = Sets.newHashSet("en", "fr");
+    Set<String> expectedLocaleConfigurationValues = Sets.newHashSet("en,default,en_US", "fr");
     Set<String> expectedDependencyLibraryNames = Sets.newHashSet("FooLib", "BarLib");
     oracle.add(BAR, SUPER_FOO, JdtCompilerTest.OUTER_INNER);
     rebuildCompilationState();

@@ -41,6 +41,7 @@ import java.io.ObjectInputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -49,7 +50,7 @@ import java.util.zip.ZipFile;
 /**
  * A library that lazily reads and caches data from a zip file.
  */
-class ZipLibrary implements Library {
+public class ZipLibrary implements Library {
 
   private class ZipLibraryReader {
 
@@ -219,12 +220,28 @@ class ZipLibrary implements Library {
         LinkedList<String> entry = Lists.newLinkedList(
             Splitter.on(Libraries.KEY_VALUE_SEPARATOR).omitEmptyStrings().split(line));
 
-        String key = entry.getFirst();
+        String key = decode(entry.getFirst());
         Iterable<String> values =
             Splitter.on(Libraries.VALUE_SEPARATOR).omitEmptyStrings().split(entry.getLast());
-        stringMultimap.putAll(key, values);
+        List<String> decodedValues = Lists.newArrayList();
+        for (String value : values) {
+          decodedValues.add(decode(value));
+        }
+        stringMultimap.putAll(key, decodedValues);
       }
       return stringMultimap;
+    }
+
+    private String decode(String string) {
+      string = decodeCharacter(string, Libraries.VALUE_SEPARATOR);
+      string = decodeCharacter(string, Libraries.LINE_SEPARATOR);
+      string = decodeCharacter(string, Libraries.KEY_VALUE_SEPARATOR);
+      string = decodeCharacter(string, Libraries.ENCODE_PREFIX);
+      return string;
+    }
+
+    private String decodeCharacter(String string, char character) {
+      return string.replace(Libraries.ENCODE_PREFIX + Integer.toString(character), character + "");
     }
 
     private Set<String> readStringSet(String entryName) {
@@ -277,7 +294,7 @@ class ZipLibrary implements Library {
   private Set<String> superSourceCompilationUnitTypeSourceNames;
   private final ZipLibraryReader zipLibraryReader;
 
-  ZipLibrary(String fileName) throws IncompatibleLibraryVersionException {
+  public ZipLibrary(String fileName) throws IncompatibleLibraryVersionException {
     zipLibraryReader = new ZipLibraryReader(fileName);
     if (ZipLibraries.versionNumber != zipLibraryReader.readVersionNumber()) {
       throw new IncompatibleLibraryVersionException(

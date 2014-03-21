@@ -609,6 +609,7 @@ public class JTypeOracle implements Serializable {
     if (implementsMap.containsKey(type)) {
       superHierarchyTypes.addAll(implementsMap.get(type));
     }
+    superHierarchyTypes.add(type);
 
     return superHierarchyTypes;
   }

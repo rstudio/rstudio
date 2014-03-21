@@ -306,7 +306,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     // CanvasElement when a CanvasElement is requested.
     String runtimeRebindRule0 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule0");
     assertTrue(runtimeRebindRule0.contains("@CanvasElement::new()()"));
-    assertTrue(runtimeRebindRule0.contains("requestTypeName.equals(\"CanvasElement\")"));
+    assertTrue(runtimeRebindRule0.contains("requestTypeClass == @CanvasElement::class"));
   }
 
   public void testBuildLocalRuntimeRebindRules() throws UnableToCompleteException {
@@ -335,18 +335,18 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     // Expects to see the created fallback rule first.
     String runtimeRebindRule0 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule0");
     assertTrue(runtimeRebindRule0.contains("@CanvasElement::new()()"));
-    assertTrue(runtimeRebindRule0.contains("requestTypeName.equals(\"CanvasElement\")"));
+    assertTrue(runtimeRebindRule0.contains("requestTypeClass == @CanvasElement::class"));
 
     // Expects to see the created replace with rule second.
     String runtimeRebindRule1 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule1");
     assertTrue(runtimeRebindRule1.contains("@WebkitCanvasElement::new()()"));
-    assertTrue(runtimeRebindRule1.contains("requestTypeClass == CanvasElement.class"));
+    assertTrue(runtimeRebindRule1.contains("requestTypeClass == @CanvasElement::class"));
 
     // Expects to see the created fail rule third.
     String runtimeRebindRule2 = runtimeRebindRuleSourcesByShortName.get("RuntimeRebindRule2");
     assertTrue(runtimeRebindRule2.contains("Deferred binding request failed for type"));
     assertTrue(runtimeRebindRule2.contains(
-        "RuntimePropertyRegistry.getPropertyValue(\"foo\").equals(\"bar\")"));
+        "RuntimePropertyRegistry::getPropertyValue(*)(\"foo\") == \"bar\""));
 
     // Now that runtime rebind rules have been generated, create a registrator for them.
     precompiler.buildRuntimeRebindRegistrator(allRootTypes);
