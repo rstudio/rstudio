@@ -424,10 +424,16 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
                   frame: (WebFrame *) frame
        decisionListener: (id < WebPolicyDecisionListener >)listener
 {
+   
+   // get the response; if it isn't a NSHTTPURLResponse, ignore it (we need
+   // access to the headers below)
+   NSHTTPURLResponse* response = (NSHTTPURLResponse*)
+                                 [[frame provisionalDataSource] response];
+   if (![response isKindOfClass: [NSHTTPURLResponse class]])
+      return;
+
    // get the Content-Disposition header to see if this file is intended to be
    // downloaded
-   NSHTTPURLResponse* response = (NSHTTPURLResponse*)
-      [[frame provisionalDataSource] response];
    NSDictionary* headers = [response allHeaderFields];
    NSString* disposition =
       (NSString*)[headers objectForKey:@"Content-Disposition"];
@@ -645,8 +651,6 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
    [[[[MainFrameController instance] webView] windowScriptObject]
     callWebScriptMethod: @"registerDesktopChildWindow" withArguments: args];
 }
-
-
 
 - (void)webView: (WebView *) sender
   runOpenPanelForFileButtonWithResultListener:
