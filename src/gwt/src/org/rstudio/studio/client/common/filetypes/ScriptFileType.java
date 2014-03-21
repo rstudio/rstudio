@@ -44,13 +44,13 @@ public class ScriptFileType extends TextFileType
    @Override
    public boolean canSource()
    {
-      return true;
+      return isScript();
    }
  
    @Override
    public boolean canSourceWithEcho()
    {
-      return true;
+      return isScript();
    }
    
    @Override
@@ -73,8 +73,11 @@ public class ScriptFileType extends TextFileType
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
       result.add(commands.commentUncomment());
-      result.add(commands.sourceActiveDocument());
-      result.add(commands.sourceActiveDocumentWithEcho());
+      if (isScript())
+      {
+         result.add(commands.sourceActiveDocument());
+         result.add(commands.sourceActiveDocumentWithEcho());
+      }
       return result;
    }
    
