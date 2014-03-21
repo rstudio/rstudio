@@ -902,7 +902,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
 
    // quote if necessary
    if (path.find_first_of(' ') != std::string::npos)
-      path = "'" + path + "'";
+      path = "\\\"" + path + "\\\"";
 
    // if there's no interpreter then we may need to do a chmod
 #ifndef _WINDOWS
