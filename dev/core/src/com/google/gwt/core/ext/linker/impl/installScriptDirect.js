@@ -9,9 +9,14 @@ function installScript(filename) {
     var script = getInstallLocationDoc().createElement('script');
     script.language='javascript';
     script.src = code;
-    sendStats('moduleStartup', 'moduleRequested');
     docbody.appendChild(script);
+    sendStats('moduleStartup', 'scriptTagAdded');
   }
+
+  // Start measuring from the time the caller asked for this file,
+  // for consistency with installScriptEarlyDownload.js.
+  // The elapsed time will include waiting for the body.
+  sendStats('moduleStartup', 'moduleRequested');
 
   // Just pass along the filename so that a script tag can be installed in the
   // iframe to download it.  Since we will be adding the iframe to the body,
