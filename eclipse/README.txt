@@ -21,6 +21,11 @@ Create a variable named "GWT_TOOLS" pointing to your "tools" folder.
 Create a variable named "JDK_HOME" pointing to the root of your JDK install
   (for example, C:\Program Files\jdk1.6 or /usr/lib/j2sdk1.6-sun)
 
+---------------- Encoding -----------------
+
+Window->Preferences->General->Workspace->Text file encoding
+Use "UTF-8"
+
 ---------------- Spelling -----------------
 
 Window->Preferences->General->Editors->Text Editors->Spelling
