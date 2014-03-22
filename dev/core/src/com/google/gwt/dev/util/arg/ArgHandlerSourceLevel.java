@@ -48,7 +48,7 @@ public class ArgHandlerSourceLevel extends ArgHandlerString {
   @Override
   public String[] getTagArgs() {
     return new String[]{"[" + Joiner.on(", ").skipNulls().join(AUTO_SELECT, null,
-        SourceLevel.values()) + "]"};
+        (Object[]) SourceLevel.values()) + "]"};
   }
 
   @Override
@@ -60,7 +60,7 @@ public class ArgHandlerSourceLevel extends ArgHandlerString {
     SourceLevel level = SourceLevel.fromString(value);
     if (level == null) {
       System.err.println("Source level must be one of [" +
-          Joiner.on(", ").skipNulls().join(AUTO_SELECT, null, SourceLevel.values()) + "].");
+          Joiner.on(", ").skipNulls().join(AUTO_SELECT, null, (Object[]) SourceLevel.values()) + "].");
       return false;
     }
     options.setSourceLevel(level);
