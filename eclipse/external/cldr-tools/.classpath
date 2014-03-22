@@ -5,7 +5,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cup/java-cup-11a.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1-nocup.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.7.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/50.1.1/icu4j.jar" sourcepath="/GWT_TOOLS/lib/icu4j/50.1.1/icu4j-src.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/50.1.1/utilities.jar" sourcepath="/GWT_TOOLS/lib/icu4j/50.1.1/utilities-src.jar"/>
+	<classpathentry kind="var" path="CLDR_ROOT/tools/java/libs/icu4j.jar" sourcepath="/CLDR_ROOT/tools/java/libs/icu4j-src.jar"/>
+	<classpathentry kind="var" path="CLDR_ROOT/tools/java/libs/utilities.jar" sourcepath="/CLDR_ROOT/tools/java/libs/utilities-src.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

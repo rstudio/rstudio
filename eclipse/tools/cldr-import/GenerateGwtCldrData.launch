@@ -10,5 +10,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.tools.cldr.GenerateGwtCldrData"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--sourcedir ${resource_loc:cldr-data/common}/main&#10;--outdir ${resource_loc:gwt-user/core}/.."/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="cldr-import"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1024m"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1024m -DCLDR_DIR=${CLDR_ROOT}"/>
 </launchConfiguration>

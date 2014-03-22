@@ -4,12 +4,11 @@
 	<classpathentry kind="src" path="core/test"/>
 	<classpathentry kind="src" path="generated"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-        <classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
+	<classpathentry exported="true" kind="var" path="CLDR_ROOT/tools/java/libs/icu4j.jar" sourcepath="/CLDR_ROOT/tools/java/libs/icu4j-src.jar"/>
+	<classpathentry exported="true" kind="var" path="CLDR_ROOT/tools/java/libs/utilities.jar" sourcepath="/CLDR_ROOT/tools/java/libs/utilities-src.jar"/>
+	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/gwt-user"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/cldr-tools"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
-        <classpathentry kind="var" path="GWT_TOOLS/lib/cldr/21/cldr.jar" />
-        <classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/50.1.1/icu4j.jar" />
-        <classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/50.1.1/utilities.jar" />
 	<classpathentry kind="output" path="bin"/>
 </classpath>
