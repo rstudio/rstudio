@@ -27,6 +27,7 @@ import com.google.gwt.i18n.shared.DateTimeFormatInfo;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.impl.cldr.DateTimeFormatInfoImpl;
 
+import org.unicode.cldr.util.CLDRFile;
 import org.unicode.cldr.util.Factory;
 
 import java.io.File;
@@ -450,6 +451,7 @@ public class DateTimeFormatInfoProcessor extends Processor {
     pw.println(";");
     pw.println();
     pw.println("// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA");
+    pw.println("//  cldrVersion=" + CLDRFile.GEN_VERSION);
     Map<String, String> map = localeData.getEntries("version", locale);
     for (Map.Entry<String, String> entry : map.entrySet()) {
       pw.println("//  " + entry.getKey() + "=" + entry.getValue());
@@ -539,6 +541,24 @@ public class DateTimeFormatInfoProcessor extends Processor {
     // write weekend boundaries
     generateDayNumber(pw, locale, "weekendEnd", "weekendEnd");
     generateDayNumber(pw, locale, "weekendStart", "weekendStart");
+
+    if (locale.isDefault()) {
+      pw.println();
+      pw.println("  @Override");
+      pw.println("  public String dateFormat() {");
+      pw.println("    return dateFormatMedium();");
+      pw.println("  }");
+      pw.println();
+      pw.println("  @Override");
+      pw.println("  public String dateTime(String timePattern, String datePattern) {");
+      pw.println("    return datePattern + \" \" + timePattern;");
+      pw.println("  }");
+      pw.println();
+      pw.println("  @Override");
+      pw.println("  public String timeFormat() {");
+      pw.println("    return timeFormatMedium();");
+      pw.println("  }");
+    }
 
     pw.println("}");
     pw.close();

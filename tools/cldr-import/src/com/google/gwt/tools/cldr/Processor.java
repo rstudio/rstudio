@@ -20,6 +20,7 @@ import com.google.gwt.codegen.server.JavaSourceWriterBuilder;
 import com.google.gwt.codegen.server.LoggingCodeGenContext;
 import com.google.gwt.i18n.shared.GwtLocale;
 
+import org.unicode.cldr.util.CLDRFile;
 import org.unicode.cldr.util.Factory;
 
 import java.io.BufferedWriter;
@@ -271,6 +272,7 @@ public abstract class Processor {
 
   protected void printVersion(PrintWriter pw, GwtLocale locale, String prefix) {
     pw.println(prefix + "DO NOT EDIT - GENERATED FROM CLDR DATA:");
+    pw.println(prefix + " cldrVersion=" + CLDRFile.GEN_VERSION);
     Map<String, String> map = localeData.getEntries("version", locale);
     for (Map.Entry<String, String> entry : map.entrySet()) {
       pw.println(prefix + " " + entry.getKey() + "=" + entry.getValue());

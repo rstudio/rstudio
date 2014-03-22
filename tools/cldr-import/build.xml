@@ -8,16 +8,27 @@
   <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
   <property.ensure name="gwt.servlet.jar" location="${gwt.build.lib}/gwt-servlet.jar" />
 
-  <property name="CLDR_TOOLS" location="${gwt.tools}/lib/cldr/21" />
-  <property name="ICU" location="${CLDR_TOOLS}" />
+  <condition property="CLDR_TOOLS" value="${env.CLDR_ROOT}/tools/java"
+      else="${gwt.tools}/lib/cldr/21">
+    <isset property="env.CLDR_ROOT" />
+  </condition>
+
+  <condition property="ICU" value="${env.CLDR_ROOT}/tools/java/libs"
+      else="${gwt.tools}/lib/cldr/21">
+    <isset property="env.CLDR_ROOT" />
+  </condition>
 
   <property.ensure name="ICU_CORE_PATH" location="${ICU}/icu4j.jar" />
 
-  <condition property="cldr.root.check" value="${env.CLDR_ROOT}"
+  <condition property="cldr.root" value="${env.CLDR_ROOT}"
       else="${gwt.root}/../CLDR">
     <isset property="env.CLDR_ROOT" />
   </condition>
-  <property name="cldr.root" location="${cldr.root.check}" />
+
+  <condition property="cldr.locales" value="--restrictLocales ${env.LOCALES}"
+      else="">
+    <isset property="env.LOCALES" />
+  </condition>
 
   <condition property="tmpdir" value="${env.CLDR_TEMP}"
       else="/tmp/cldr-import">
@@ -25,11 +36,11 @@
   </condition>
 
   <path id="project.class.path">
-    <pathelement location="${gwt.user.jar}"/>
-    <pathelement location="${gwt.dev.jar}"/>
     <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
     <pathelement location="${ICU}/icu4j.jar"/>
     <pathelement location="${ICU}/utilities.jar"/>
+    <pathelement location="${gwt.user.jar}"/>
+    <pathelement location="${gwt.dev.jar}"/>
   </path>
 
   <target name="compile" description="Compile java source">
@@ -53,13 +64,9 @@
         source="${javac.source}" target="${javac.target}"
         nowarn="${javac.nowarn}" encoding="${javac.encoding}">
       <classpath>
-        <pathelement location="${gwt.dev.jar}" />
-        <pathelement location="${gwt.user.jar}" />
-        <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
         <pathelement location="${javac.out}"/>
-        <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
-        <pathelement location="${ICU}/icu4j.jar"/>
-        <pathelement location="${ICU}/utilities.jar"/>
+      <path refid="project.class.path"/>
+        <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
       </classpath>
     </javac>
     <copy todir="${javac.junit.out}">
@@ -92,9 +99,6 @@
       <extraclasspaths>
         <pathelement location="${gwt.dev.jar}" />
         <pathelement location="${gwt.user.jar}" />
-        <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
-        <pathelement location="${ICU}/icu4j.jar"/>
-        <pathelement location="${ICU}/utilities.jar"/>
       </extraclasspaths>
     </gwt.junit>
   </target>
@@ -104,38 +108,35 @@
       message="common/main missing under ${cldr.root} (set using CLDR_ROOT)" />
   </target>
 
-  <target name="gen.temp" depends="build, cldrdata"
+  <target name="cldrjar" description="Verifies CLDR has been compiled">
+    <property.ensure name="cldr.jar" location="${CLDR_TOOLS}/cldr.jar"
+      message="${CLDR_TOOLS}/cldr.jar missing (maybe you should run 'ant jar' on ${CLDR_TOOLS})" />
+  </target>
+
+  <target name="gen.temp" depends="cldrjar, cldrdata, clean, build"
     description="Generate GWT classes/property files in a temporary directory">
     <delete dir="${tmpdir}" quiet="true"/>
     <mkdir dir="${tmpdir}"/>
     <java classname="com.google.gwt.tools.cldr.GenerateGwtCldrData"
       fork="true" maxmemory="2048m" failonerror="true">
-      <arg line="--sourcedir ${cldr.data} --outdir ${tmpdir}"/>
+      <arg line="--sourcedir ${cldr.data} --outdir ${tmpdir} ${cldr.locales}"/>
       <sysproperty key="CLDR_DIR" value="${cldr.root}"/>
       <classpath>
         <pathelement location="${javac.out}"/>
-        <pathelement location="${gwt.user.jar}"/>
-        <pathelement location="${gwt.dev.jar}"/>
-        <pathelement location="${ICU}/icu4j.jar"/>
-        <pathelement location="${ICU}/utilities.jar"/>
-        <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
+        <path refid="project.class.path"/>
       </classpath>
     </java>
   </target>
 
-  <target name="gen" depends="build, cldrdata"
+  <target name="gen" depends="cldrjar, cldrdata, clean, build"
       description="Generate GWT classes/property files">
     <java classname="com.google.gwt.tools.cldr.GenerateGwtCldrData"
       fork="true" maxmemory="2048m" failonerror="true">
-      <arg line="--sourcedir ${cldr.data} --outdir ${gwt.root}"/>
+      <arg line="--sourcedir ${cldr.data} --outdir ${gwt.root} ${cldr.locales}"/>
       <sysproperty key="CLDR_DIR" value="${cldr.root}"/>
       <classpath>
         <pathelement location="${javac.out}"/>
-        <pathelement location="${gwt.user.jar}"/>
-        <pathelement location="${gwt.dev.jar}"/>
-        <pathelement location="${ICU}/icu4j.jar"/>
-        <pathelement location="${ICU}/utilities.jar"/>
-        <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
+        <path refid="project.class.path"/>
       </classpath>
     </java>
   </target>

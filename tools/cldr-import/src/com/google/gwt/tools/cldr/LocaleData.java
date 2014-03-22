@@ -344,16 +344,27 @@ public class LocaleData {
    * @param attribute
    */
   public void addAttributeEntry(String category, GwtLocale locale, Factory cldrFactory,
-      String path, String tag, String key, String attribute) {
+      String path, String tag, String key, String attribute, String defaultValue) {
     Map<String, String> map = getMap(category, locale);
     CLDRFile cldr = cldrFactory.make(allLocales.get(locale), true);
     XPathParts parts = new XPathParts();
-    parts.set(cldr.getFullXPath(path));
-    Map<String, String> attr = parts.findAttributes(tag);
-    if (attr == null) {
+    String fullPath = cldr.getFullXPath(path);
+
+    Map<String, String> attr = null;
+    if (fullPath != null) {
+      parts.set(fullPath);
+      attr = parts.findAttributes(tag);
+    }
+
+    String value;
+    if (attr != null) {
+      value = attr.get(attribute);
+    } else if (defaultValue != null) {
+      value = defaultValue;
+    } else {
       return;
     }
-    String value = attr.get(attribute);
+
     map.put(key, value);
   }
 
@@ -387,7 +398,7 @@ public class LocaleData {
 
   public void addDateTimeFormatEntries(String group, Factory cldrFactory) {
     addAttributeEntries(group, cldrFactory, "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/"
-        + group + "Formats/default", "default", "default", "choice");
+        + group + "Formats/default", "default", "default", "choice", "medium");
     addDateTimeFormatEntries(group, "full", cldrFactory);
     addDateTimeFormatEntries(group, "long", cldrFactory);
     addDateTimeFormatEntries(group, "medium", cldrFactory);
@@ -897,9 +908,9 @@ public class LocaleData {
   }
 
   private void addAttributeEntries(String category, Factory cldrFactory, String prefix, String tag,
-      String key, String attribute) {
+      String key, String attribute, String defaultValue) {
     for (GwtLocale locale : allLocales.keySet()) {
-      addAttributeEntry(category, locale, cldrFactory, prefix, tag, key, attribute);
+      addAttributeEntry(category, locale, cldrFactory, prefix, tag, key, attribute, defaultValue);
     }
   }
 
