@@ -40,9 +40,6 @@ var MarkdownHighlightRules = function() {
         }, { // code span `
             token : ["support.function", "support.function", "support.function"],
             regex : "(`+)([^\\r]*?[^`])(\\1)"
-        }, { // code block
-            token : "support.function",
-            regex : "^[ ]{4}.+"
         }, { // h1 with equals
             token: "markup.heading.1",
             regex: "^\\={3,}\\s*$",
