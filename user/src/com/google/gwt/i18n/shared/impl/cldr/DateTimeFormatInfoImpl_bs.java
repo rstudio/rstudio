@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6472 Google $
-//  type=root
-//  date=$Date: 2012-01-27 18:53:35 -0500 (Fri, 27 Jan 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=bs
 
 /**
  * Implementation of DateTimeFormatInfo for the "bs" locale.
@@ -224,19 +224,6 @@ public class DateTimeFormatInfoImpl_bs extends DateTimeFormatInfoImpl {
         "četvrtak",
         "petak",
         "subota"
-    };
-  }
-
-  @Override
-  public String[] weekdaysNarrow() {
-    return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
     };
   }
 

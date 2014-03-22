@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
+//  type=kl
 
 /**
  * Localized names for the "kl" locale.
@@ -32,55 +31,56 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "AC",
         "AE",
         "AF",
-        "AI",
         "AX",
         "AL",
         "DZ",
         "AD",
         "AO",
+        "AI",
         "AG",
         "AR",
         "AM",
         "AW",
         "AS",
+        "AC",
         "AU",
+        "SD",
         "AZ",
         "BS",
         "BH",
-        "BB",
         "BD",
+        "BB",
         "BE",
         "BZ",
-        "BM",
         "BJ",
-        "BL",
+        "BM",
+        "BT",
         "BO",
         "BA",
         "BW",
+        "BV",
         "BQ",
         "BR",
         "BN",
-        "BT",
         "BG",
         "BF",
         "MM",
         "BI",
-        "BV",
         "CA",
         "CV",
-        "CC",
+        "KY",
         "EA",
         "CF",
         "TD",
-        "CI",
-        "CK",
         "CL",
+        "CI",
         "CP",
-        "CM",
+        "CC",
         "CO",
+        "KM",
+        "CK",
         "CR",
         "CW",
         "CY",
@@ -100,6 +100,7 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "FJ",
         "FI",
         "FR",
+        "MF",
         "GA",
         "GM",
         "GE",
@@ -122,9 +123,7 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "NL",
         "HN",
         "HK",
-        "HR",
         "BY",
-        "IM",
         "IN",
         "ID",
         "IO",
@@ -132,6 +131,7 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "IR",
         "IE",
         "IS",
+        "IM",
         "IL",
         "IT",
         "JM",
@@ -142,20 +142,23 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "CX",
         "GL",
         "KH",
+        "CM",
         "IC",
         "KZ",
         "KE",
         "KG",
         "CN",
         "KI",
-        "KM",
         "CG",
         "CD",
         "KP",
         "KR",
+        "XK",
+        "HR",
         "CU",
+        "ZA",
+        "SS",
         "KW",
-        "KY",
         "LA",
         "LS",
         "LV",
@@ -222,10 +225,10 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "RU",
         "RW",
         "EH",
+        "BL",
         "SH",
         "KN",
         "LC",
-        "MF",
         "PM",
         "WS",
         "SM",
@@ -244,8 +247,6 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
-        "SS",
-        "SD",
         "SR",
         "SJ",
         "SE",
@@ -285,7 +286,6 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "VI",
         "VN",
         "WF",
-        "ZA",
         "ZM",
         "ZW",
         "AT",
@@ -304,34 +304,41 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
     namesMap.put("014", "Afrika Kangilliit");
     namesMap.put("015", "Afrika Avannarleq");
     namesMap.put("017", "Afrika Qitiusumik");
+    namesMap.put("018", "Afrika Kujalleq");
     namesMap.put("019", "Amerika");
     namesMap.put("030", "Asia Kangilliit");
     namesMap.put("034", "Asia Kujalleq");
     namesMap.put("039", "Europa Kujalleq");
-    namesMap.put("053", "Australia aamma Nutaaq Zeeland");
+    namesMap.put("053", "Australia aamma Nutaaq Zeelandi");
     namesMap.put("143", "Asia Qitiusumik");
     namesMap.put("145", "Asia Killiit");
     namesMap.put("150", "Europa");
     namesMap.put("151", "Europa Kangilliit");
     namesMap.put("154", "Europa Avannarleq");
     namesMap.put("155", "Europa Killiit");
-    namesMap.put("419", "America Latin");
+    namesMap.put("419", "America Latin aamma Karibia");
+    namesMap.put("AC", "Ascension qeqertaq");
+    namesMap.put("AF", "Afghanistani");
     namesMap.put("AG", "Antigua aamma Barbuda");
     namesMap.put("AQ", "Qalasersuaq Kujalleq");
     namesMap.put("AT", "Østrigi");
     namesMap.put("AX", "Ålandi");
     namesMap.put("BA", "Bosnia aamma Herzegovina");
     namesMap.put("BE", "Belgia");
-    namesMap.put("BR", "Brasilien");
+    namesMap.put("BV", "Bouvet qeqertaq");
     namesMap.put("BY", "Hvideruslandi");
+    namesMap.put("CC", "Cocos qeqertaq");
     namesMap.put("CD", "Kongo-Kinshasa");
     namesMap.put("CG", "Kongo-Brazzaville");
     namesMap.put("CH", "Schweizi");
+    namesMap.put("CK", "Cook qeqertaq");
+    namesMap.put("CM", "Kamerun");
     namesMap.put("CN", "Kina");
     namesMap.put("CP", "Clipperton qeqertaq");
     namesMap.put("CU", "Kuba");
     namesMap.put("CV", "Cap Verde");
     namesMap.put("CX", "Jul-qeqertaq");
+    namesMap.put("CY", "Cypern");
     namesMap.put("CZ", "Tjekkia");
     namesMap.put("DE", "Tysklandi");
     namesMap.put("DK", "Danmarki");
@@ -350,23 +357,27 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
     namesMap.put("GL", "Kalaallit Nunaat");
     namesMap.put("GR", "Grækenlandi");
     namesMap.put("HK", "Hongkong");
+    namesMap.put("HR", "Kroatia");
     namesMap.put("HU", "Ungarni");
     namesMap.put("IC", "Kanaria qeqertaq");
     namesMap.put("IE", "Irlandi");
     namesMap.put("IQ", "Irak");
     namesMap.put("IS", "Islandi");
     namesMap.put("IT", "Italia");
+    namesMap.put("JO", "Jordani");
     namesMap.put("JP", "Japani");
     namesMap.put("KH", "Kambodia");
     namesMap.put("KN", "Saint Kitts aamma Nevis");
     namesMap.put("KP", "Korea Avannarleq");
     namesMap.put("KR", "Korea Kujalleq");
+    namesMap.put("KY", "Cayman qeqertaq");
     namesMap.put("KZ", "Kasakhstani");
     namesMap.put("LB", "Libanon");
+    namesMap.put("LI", "Liechtensteini");
     namesMap.put("LT", "Litaueni");
     namesMap.put("LV", "Letlandi");
     namesMap.put("MA", "Marocko");
-    namesMap.put("MD", "Moldavia");
+    namesMap.put("MF", "Frankrigi Saint Martin");
     namesMap.put("MG", "Madagaskar");
     namesMap.put("MK", "Makedonia");
     namesMap.put("MM", "Burma");
@@ -376,19 +387,23 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
     namesMap.put("NC", "Nutaaq Caledonia");
     namesMap.put("NL", "Hollandi");
     namesMap.put("NO", "Norge");
-    namesMap.put("NZ", "Nutaaq Zeeland");
+    namesMap.put("NZ", "Nutaaq Zeelandi");
     namesMap.put("PG", "Papua Nutaaq Guinea");
+    namesMap.put("PK", "Pakistani");
     namesMap.put("PL", "Poleni");
     namesMap.put("PM", "Saint Pierre aamma Miquelon");
     namesMap.put("PT", "Portugali");
     namesMap.put("QA", "Quatar");
     namesMap.put("RO", "Rumænia");
     namesMap.put("RU", "Ruslandi");
+    namesMap.put("SD", "Avannarleqsudan");
     namesMap.put("SE", "Sverige");
     namesMap.put("SJ", "Svalbard aamma Jan Mayen");
+    namesMap.put("SS", "Kujalleqsudan");
     namesMap.put("ST", "São Tomé aamma Príncipe");
     namesMap.put("SZ", "Swazilandi");
     namesMap.put("TH", "Thailandi");
+    namesMap.put("TJ", "Tajikistani");
     namesMap.put("TL", "Timor Kangilliit");
     namesMap.put("TM", "Turkmenistani");
     namesMap.put("TR", "Tyrkia");
@@ -399,7 +414,8 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
     namesMap.put("VA", "Vatikani");
     namesMap.put("WF", "Wallis aamma Futuna");
     namesMap.put("YE", "Jemen");
-    namesMap.put("ZZ", "atorsinnaanngitsoq sinerissap ilaa aalajangersimasoq");
+    namesMap.put("ZA", "Kujalleqafrika");
+    namesMap.put("ZZ", "(atorsinnaanngitsoq nunap imartaa nunataalu)");
   }
 
   @Override
@@ -418,34 +434,41 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "014": "Afrika Kangilliit",
         "015": "Afrika Avannarleq",
         "017": "Afrika Qitiusumik",
+        "018": "Afrika Kujalleq",
         "019": "Amerika",
         "030": "Asia Kangilliit",
         "034": "Asia Kujalleq",
         "039": "Europa Kujalleq",
-        "053": "Australia aamma Nutaaq Zeeland",
+        "053": "Australia aamma Nutaaq Zeelandi",
         "143": "Asia Qitiusumik",
         "145": "Asia Killiit",
         "150": "Europa",
         "151": "Europa Kangilliit",
         "154": "Europa Avannarleq",
         "155": "Europa Killiit",
-        "419": "America Latin",
+        "419": "America Latin aamma Karibia",
+        "AC": "Ascension qeqertaq",
+        "AF": "Afghanistani",
         "AG": "Antigua aamma Barbuda",
         "AQ": "Qalasersuaq Kujalleq",
         "AT": "Østrigi",
         "AX": "Ålandi",
         "BA": "Bosnia aamma Herzegovina",
         "BE": "Belgia",
-        "BR": "Brasilien",
+        "BV": "Bouvet qeqertaq",
         "BY": "Hvideruslandi",
+        "CC": "Cocos qeqertaq",
         "CD": "Kongo-Kinshasa",
         "CG": "Kongo-Brazzaville",
         "CH": "Schweizi",
+        "CK": "Cook qeqertaq",
+        "CM": "Kamerun",
         "CN": "Kina",
         "CP": "Clipperton qeqertaq",
         "CU": "Kuba",
         "CV": "Cap Verde",
         "CX": "Jul-qeqertaq",
+        "CY": "Cypern",
         "CZ": "Tjekkia",
         "DE": "Tysklandi",
         "DK": "Danmarki",
@@ -464,23 +487,27 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "GL": "Kalaallit Nunaat",
         "GR": "Grækenlandi",
         "HK": "Hongkong",
+        "HR": "Kroatia",
         "HU": "Ungarni",
         "IC": "Kanaria qeqertaq",
         "IE": "Irlandi",
         "IQ": "Irak",
         "IS": "Islandi",
         "IT": "Italia",
+        "JO": "Jordani",
         "JP": "Japani",
         "KH": "Kambodia",
         "KN": "Saint Kitts aamma Nevis",
         "KP": "Korea Avannarleq",
         "KR": "Korea Kujalleq",
+        "KY": "Cayman qeqertaq",
         "KZ": "Kasakhstani",
         "LB": "Libanon",
+        "LI": "Liechtensteini",
         "LT": "Litaueni",
         "LV": "Letlandi",
         "MA": "Marocko",
-        "MD": "Moldavia",
+        "MF": "Frankrigi Saint Martin",
         "MG": "Madagaskar",
         "MK": "Makedonia",
         "MM": "Burma",
@@ -490,19 +517,23 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "NC": "Nutaaq Caledonia",
         "NL": "Hollandi",
         "NO": "Norge",
-        "NZ": "Nutaaq Zeeland",
+        "NZ": "Nutaaq Zeelandi",
         "PG": "Papua Nutaaq Guinea",
+        "PK": "Pakistani",
         "PL": "Poleni",
         "PM": "Saint Pierre aamma Miquelon",
         "PT": "Portugali",
         "QA": "Quatar",
         "RO": "Rumænia",
         "RU": "Ruslandi",
+        "SD": "Avannarleqsudan",
         "SE": "Sverige",
         "SJ": "Svalbard aamma Jan Mayen",
+        "SS": "Kujalleqsudan",
         "ST": "São Tomé aamma Príncipe",
         "SZ": "Swazilandi",
         "TH": "Thailandi",
+        "TJ": "Tajikistani",
         "TL": "Timor Kangilliit",
         "TM": "Turkmenistani",
         "TR": "Tyrkia",
@@ -513,7 +544,8 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "VA": "Vatikani",
         "WF": "Wallis aamma Futuna",
         "YE": "Jemen",
-        "ZZ": "atorsinnaanngitsoq sinerissap ilaa aalajangersimasoq"
+        "ZA": "Kujalleqafrika",
+        "ZZ": "(atorsinnaanngitsoq nunap imartaa nunataalu)"
     };
   }-*/;
 }

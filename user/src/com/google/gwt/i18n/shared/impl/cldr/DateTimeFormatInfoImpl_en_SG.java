@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,34 +16,67 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=GB
+//  cldrVersion=25
+//  date=$Date: 2013-12-05 00:53:48 +0100 (Thu, 05 Dec 2013) $
+//  number=$Revision: 9535 $
+//  type=001
 
 /**
  * Implementation of DateTimeFormatInfo for the "en_SG" locale.
  */
-public class DateTimeFormatInfoImpl_en_SG extends DateTimeFormatInfoImpl_en {
+public class DateTimeFormatInfoImpl_en_SG extends DateTimeFormatInfoImpl_en_001 {
+
+  @Override
+  public String[] ampms() {
+    return new String[] {
+        "am",
+        "pm"
+    };
+  }
 
   @Override
   public String dateFormatFull() {
-    return "EEEE, d MMMM, y";
+    return "EEEE, d MMMM y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "d MMMM, y";
+    return "d MMMM y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "d MMM, y";
+    return "d MMM y";
   }
 
   @Override
   public String dateFormatShort() {
     return "d/M/yy";
+  }
+
+  @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return datePattern + " " + timePattern;
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return datePattern + " " + timePattern;
+  }
+
+  @Override
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return datePattern + " " + timePattern;
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return datePattern + " " + timePattern;
+  }
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 0;
   }
 
   @Override
@@ -63,16 +96,31 @@ public class DateTimeFormatInfoImpl_en_SG extends DateTimeFormatInfoImpl_en {
 
   @Override
   public String formatMonthNumDay() {
-    return "d/M";
+    return "dd/MM";
+  }
+
+  @Override
+  public String formatYearMonthAbbrevDay() {
+    return "d MMM y";
   }
 
   @Override
   public String formatYearMonthFullDay() {
-    return "d MMMM, y";
+    return "d MMMM y";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "MM/y";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d/M/yyyy";
+    return "dd/MM/y";
+  }
+
+  @Override
+  public String formatYearMonthWeekdayDay() {
+    return "EEE, d MMM y";
   }
 }

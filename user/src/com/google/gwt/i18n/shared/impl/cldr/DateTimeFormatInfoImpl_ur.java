@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=ur
 
 /**
  * Implementation of DateTimeFormatInfo for the "ur" locale.
@@ -29,24 +29,24 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
   @Override
   public String[] ampms() {
     return new String[] {
-        "دن",
-        "رات"
+        "قبل دوپہر",
+        "بعد دوپہر"
     };
   }
 
   @Override
   public String dateFormatFull() {
-    return "EEEE؍ d؍ MMMM y";
+    return "EEEE، d MMMM، y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "d؍ MMMM y";
+    return "d MMMM، y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "d؍ MMM y";
+    return "d MMM، y";
   }
 
   @Override
@@ -57,8 +57,8 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasFull() {
     return new String[] {
-        "قبل مسيح",
-        "عيسوی سن"
+        "قبل مسیح",
+        "عیسوی سن"
     };
   }
 
@@ -66,7 +66,7 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
   public String[] erasShort() {
     return new String[] {
         "ق م",
-        "عيسوی سن"
+        "عیسوی سن"
     };
   }
 
@@ -76,8 +76,68 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatMonthAbbrevDay() {
+    return "d MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "d MMMM";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE، d MMMM";
+  }
+
+  @Override
+  public String formatMonthNumDay() {
+    return "d/M";
+  }
+
+  @Override
+  public String formatYearMonthAbbrev() {
+    return "MMM y";
+  }
+
+  @Override
+  public String formatYearMonthAbbrevDay() {
+    return "d MMM، y";
+  }
+
+  @Override
+  public String formatYearMonthFull() {
+    return "MMMM y";
+  }
+
+  @Override
   public String formatYearMonthFullDay() {
-    return "d؍ MMMM y";
+    return "d MMMM، y";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "M/y";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "d/M/y";
+  }
+
+  @Override
+  public String formatYearMonthWeekdayDay() {
+    return "EEE، d MMM، y";
+  }
+
+  @Override
+  public String formatYearQuarterFull() {
+    return "QQQQ y";
+  }
+
+  @Override
+  public String formatYearQuarterShort() {
+    return "Q y";
   }
 
   @Override
@@ -86,10 +146,10 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
         "جنوری",
         "فروری",
         "مارچ",
-        "اپريل",
-        "مئ",
+        "اپریل",
+        "مئی",
         "جون",
-        "جولائ",
+        "جولائی",
         "اگست",
         "ستمبر",
         "اکتوبر",
@@ -99,33 +159,15 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrow() {
-    return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
-    };
-  }
-
-  @Override
   public String[] monthsShort() {
     return new String[] {
         "جنوری",
         "فروری",
         "مارچ",
-        "اپريل",
-        "مئ",
+        "اپریل",
+        "مئی",
         "جون",
-        "جولائ",
+        "جولائی",
         "اگست",
         "ستمبر",
         "اکتوبر",
@@ -139,7 +181,7 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
     return new String[] {
         "پہلی سہ ماہی",
         "دوسری سہ ماہی",
-        "تيسری سہ ماہی",
+        "تیسری سہ ماہی",
         "چوتهی سہ ماہی"
     };
   }
@@ -149,7 +191,7 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
     return new String[] {
         "پہلی سہ ماہی",
         "دوسری سہ ماہی",
-        "تيسری سہ ماہی",
+        "تیسری سہ ماہی",
         "چوتهی سہ ماہی"
     };
   }
@@ -178,9 +220,9 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
   public String[] weekdaysFull() {
     return new String[] {
         "اتوار",
-        "پير",
+        "سوموار",
         "منگل",
-        "بده",
+        "بدھ",
         "جمعرات",
         "جمعہ",
         "ہفتہ"
@@ -188,25 +230,12 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrow() {
-    return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
-    };
-  }
-
-  @Override
   public String[] weekdaysShort() {
     return new String[] {
         "اتوار",
-        "پير",
+        "سوموار",
         "منگل",
-        "بده",
+        "بدھ",
         "جمعرات",
         "جمعہ",
         "ہفتہ"

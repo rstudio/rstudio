@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+//  number=$Revision: 9862 $
+//  type=ru
 
 /**
  * Implementation of DateTimeFormatInfo for the "ru" locale.
@@ -27,26 +27,18 @@ package com.google.gwt.i18n.client.impl.cldr;
 public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
-  public String[] ampms() {
-    return new String[] {
-        "до полудня",
-        "после полудня"
-    };
-  }
-
-  @Override
   public String dateFormatFull() {
-    return "EEEE, d MMMM y 'г'.";
+    return "EEEE, d MMMM y 'г'.";
   }
 
   @Override
   public String dateFormatLong() {
-    return "d MMMM y 'г'.";
+    return "d MMMM y 'г'.";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "dd.MM.yyyy";
+    return "d MMM y 'г'.";
   }
 
   @Override
@@ -85,8 +77,8 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasShort() {
     return new String[] {
-        "до н.э.",
-        "н.э."
+        "до н. э.",
+        "н. э."
     };
   }
 
@@ -117,7 +109,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthNumDay() {
-    return "d.M";
+    return "dd.MM";
   }
 
   @Override
@@ -127,7 +119,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "d MMM y 'г'.";
+    return "d MMM y 'г'.";
   }
 
   @Override
@@ -137,17 +129,17 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthFullDay() {
-    return "d MMMM y 'г'.";
+    return "d MMMM y 'г'.";
   }
 
   @Override
   public String formatYearMonthNum() {
-    return "M.y";
+    return "MM.y";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d.M.y";
+    return "dd.MM.y";
   }
 
   @Override
@@ -157,12 +149,12 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQ y 'г'.";
+    return "QQQQ y 'г'.";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "QQQ y 'г'.";
+    return "Q y 'г'.";
   }
 
   @Override
@@ -324,13 +316,13 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysNarrow() {
     return new String[] {
-        "В",
-        "Пн",
-        "Вт",
-        "С",
-        "Ч",
-        "П",
-        "С"
+        "вс",
+        "пн",
+        "вт",
+        "ср",
+        "чт",
+        "пт",
+        "сб"
     };
   }
 

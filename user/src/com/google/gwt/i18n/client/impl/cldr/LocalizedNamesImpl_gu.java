@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=gu
 
 /**
  * Localized names for the "gu" locale.
@@ -39,10 +38,6 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "BQ",
-        "CW",
-        "SS",
-        "SX",
         "AO",
         "AZ",
         "AF",
@@ -88,6 +83,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "KI",
         "KG",
         "CK",
+        "CW",
         "KW",
         "IC",
         "CV",
@@ -95,11 +91,13 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "CA",
         "KE",
         "KY",
+        "BQ",
         "CD",
         "CG",
         "CC",
         "KM",
         "CO",
+        "XK",
         "CR",
         "CU",
         "CX",
@@ -153,6 +151,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "ZA",
         "KR",
         "GS",
+        "SS",
         "NE",
         "NG",
         "NA",
@@ -264,11 +263,11 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "UM",
         "WS",
         "RS",
-        "CS",
         "SA",
         "ST",
         "CY",
         "SG",
+        "SX",
         "SL",
         "SY",
         "SD",
@@ -322,7 +321,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("034", "દક્ષિણી એશિયા");
     namesMap.put("035", "દક્ષિણ- પૂર્વ એશિયા");
     namesMap.put("039", "દક્ષિણી યૂરોપ");
-    namesMap.put("053", "ઑસ્ટ્રેલિયા અને ન્યુઝીલેન્ડ");
+    namesMap.put("053", "ઓસ્ટ્રેલિયા");
     namesMap.put("054", "મેલાનેશિયા");
     namesMap.put("057", "માઇક્રોનેશિયન રીજન");
     namesMap.put("061", "પોલિનેશિયા");
@@ -333,7 +332,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("151", "પૂર્વી યૂરોપ");
     namesMap.put("154", "ઉતરીય યૂરોપ");
     namesMap.put("155", "પશ્ચિમ યૂરોપ");
-    namesMap.put("419", "લેટિન અમેરિકા અને કેરીબિયન");
+    namesMap.put("419", "લેટિન અમેરિકા");
     namesMap.put("AC", "એસેન્શન આઇલેન્ડ");
     namesMap.put("AD", "ઍંડોરા");
     namesMap.put("AE", "યુનાઇટેડ અરબ એમિરેટ્સ");
@@ -365,6 +364,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("BM", "બર્મુડા");
     namesMap.put("BN", "બ્રુનેઇ");
     namesMap.put("BO", "બોલિવિયા");
+    namesMap.put("BQ", "કેરેબિયન નેધરલેન્ડ્ઝ");
     namesMap.put("BR", "બ્રાઝિલ");
     namesMap.put("BS", "બહામાસ");
     namesMap.put("BT", "ભૂટાન");
@@ -386,9 +386,9 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("CO", "કોલમ્બિયા");
     namesMap.put("CP", "ક્લિપરટન આઇલેન્ડ");
     namesMap.put("CR", "કોસ્ટા રિકા");
-    namesMap.put("CS", "સર્બિયા અને મોન્ટેનેગ્રો");
     namesMap.put("CU", "ક્યુબા");
     namesMap.put("CV", "કૅપ વર્ડે");
+    namesMap.put("CW", "કુરાકાઓ");
     namesMap.put("CX", "ક્રિસમસ આઇલેંડ");
     namesMap.put("CY", "સાયપ્રસ");
     namesMap.put("CZ", "ચેક રીપબ્લિક");
@@ -433,7 +433,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("GU", "ગ્વામ");
     namesMap.put("GW", "ગિની-બિસાઉ");
     namesMap.put("GY", "ગયાના");
-    namesMap.put("HK", "હોંગ કોંગ");
+    namesMap.put("HK", "હોંગકોંગ સાર ચીન");
     namesMap.put("HM", "હર્ડ આઇલૅંડ એંડ મેકડોનાલ્ડ આઇલૅંડ્સ");
     namesMap.put("HN", "હોન્ડુરસ");
     namesMap.put("HR", "ક્રોએશિયા");
@@ -487,7 +487,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("ML", "માલી");
     namesMap.put("MM", "મ્યાંમાર");
     namesMap.put("MN", "મંગોલિયા");
-    namesMap.put("MO", "મકાઓ");
+    namesMap.put("MO", "મકાઉ SAR ચીન");
     namesMap.put("MP", "ઉતરીય મારિયાના આઇલેન્ડ્સ");
     namesMap.put("MQ", "માર્ટીનીક");
     namesMap.put("MR", "મૌરિટાનિયા");
@@ -548,8 +548,10 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("SN", "સેનેગલ");
     namesMap.put("SO", "સોમાલિયા");
     namesMap.put("SR", "સુરીનામ");
+    namesMap.put("SS", "દક્ષિણ સુદાન");
     namesMap.put("ST", "સાઓ ટૉમ અને પ્રિંસિપે");
     namesMap.put("SV", "એલ સેલ્વાડોર");
+    namesMap.put("SX", "સિંટ માર્ટેન");
     namesMap.put("SY", "સીરિયા");
     namesMap.put("SZ", "સ્વાઝિલેન્ડ");
     namesMap.put("TA", "ટ્રિસ્ટન ડે કુના");
@@ -571,7 +573,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("TZ", "તાંઝાનિયા");
     namesMap.put("UA", "યૂક્રેન");
     namesMap.put("UG", "યુગાંડા");
-    namesMap.put("UM", "સંયુક્ત રાજ્ય માઇનર આઉટલાઇંગ આયલેન્ડ");
+    namesMap.put("UM", "સંયુક્ત રાજ્ય આઉટલાઇંગ આયલેન્ડ્સ");
     namesMap.put("US", "સંયુકત રાજ્ય/ અમેરિકા");
     namesMap.put("UY", "ઉરુગ્વે");
     namesMap.put("UZ", "ઉઝ્બેકિસ્તાન");
@@ -584,12 +586,13 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("VU", "વાનુઆતુ");
     namesMap.put("WF", "વૉલિસ એંડ ફ્યુચુના આઇલેન્ડ્સ");
     namesMap.put("WS", "સમોઆ");
+    namesMap.put("XK", "કોસોવો");
     namesMap.put("YE", "યેમેન");
     namesMap.put("YT", "મેયોટ");
     namesMap.put("ZA", "દક્ષિણ આફ્રિકા");
     namesMap.put("ZM", "ઝામ્બિયા");
     namesMap.put("ZW", "ઝિમ્બાબ્વે");
-    namesMap.put("ZZ", "અજ્ઞાત અથવા અમાન્ય પ્રદેશ");
+    namesMap.put("ZZ", "અજ્ઞાત પ્રદેશ");
   }
 
   @Override
@@ -617,7 +620,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "034": "દક્ષિણી એશિયા",
         "035": "દક્ષિણ- પૂર્વ એશિયા",
         "039": "દક્ષિણી યૂરોપ",
-        "053": "ઑસ્ટ્રેલિયા અને ન્યુઝીલેન્ડ",
+        "053": "ઓસ્ટ્રેલિયા",
         "054": "મેલાનેશિયા",
         "057": "માઇક્રોનેશિયન રીજન",
         "061": "પોલિનેશિયા",
@@ -628,7 +631,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "151": "પૂર્વી યૂરોપ",
         "154": "ઉતરીય યૂરોપ",
         "155": "પશ્ચિમ યૂરોપ",
-        "419": "લેટિન અમેરિકા અને કેરીબિયન",
+        "419": "લેટિન અમેરિકા",
         "AC": "એસેન્શન આઇલેન્ડ",
         "AD": "ઍંડોરા",
         "AE": "યુનાઇટેડ અરબ એમિરેટ્સ",
@@ -660,6 +663,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "BM": "બર્મુડા",
         "BN": "બ્રુનેઇ",
         "BO": "બોલિવિયા",
+        "BQ": "કેરેબિયન નેધરલેન્ડ્ઝ",
         "BR": "બ્રાઝિલ",
         "BS": "બહામાસ",
         "BT": "ભૂટાન",
@@ -681,9 +685,9 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "CO": "કોલમ્બિયા",
         "CP": "ક્લિપરટન આઇલેન્ડ",
         "CR": "કોસ્ટા રિકા",
-        "CS": "સર્બિયા અને મોન્ટેનેગ્રો",
         "CU": "ક્યુબા",
         "CV": "કૅપ વર્ડે",
+        "CW": "કુરાકાઓ",
         "CX": "ક્રિસમસ આઇલેંડ",
         "CY": "સાયપ્રસ",
         "CZ": "ચેક રીપબ્લિક",
@@ -728,7 +732,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "GU": "ગ્વામ",
         "GW": "ગિની-બિસાઉ",
         "GY": "ગયાના",
-        "HK": "હોંગ કોંગ",
+        "HK": "હોંગકોંગ સાર ચીન",
         "HM": "હર્ડ આઇલૅંડ એંડ મેકડોનાલ્ડ આઇલૅંડ્સ",
         "HN": "હોન્ડુરસ",
         "HR": "ક્રોએશિયા",
@@ -782,7 +786,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "ML": "માલી",
         "MM": "મ્યાંમાર",
         "MN": "મંગોલિયા",
-        "MO": "મકાઓ",
+        "MO": "મકાઉ SAR ચીન",
         "MP": "ઉતરીય મારિયાના આઇલેન્ડ્સ",
         "MQ": "માર્ટીનીક",
         "MR": "મૌરિટાનિયા",
@@ -843,8 +847,10 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "SN": "સેનેગલ",
         "SO": "સોમાલિયા",
         "SR": "સુરીનામ",
+        "SS": "દક્ષિણ સુદાન",
         "ST": "સાઓ ટૉમ અને પ્રિંસિપે",
         "SV": "એલ સેલ્વાડોર",
+        "SX": "સિંટ માર્ટેન",
         "SY": "સીરિયા",
         "SZ": "સ્વાઝિલેન્ડ",
         "TA": "ટ્રિસ્ટન ડે કુના",
@@ -866,7 +872,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "TZ": "તાંઝાનિયા",
         "UA": "યૂક્રેન",
         "UG": "યુગાંડા",
-        "UM": "સંયુક્ત રાજ્ય માઇનર આઉટલાઇંગ આયલેન્ડ",
+        "UM": "સંયુક્ત રાજ્ય આઉટલાઇંગ આયલેન્ડ્સ",
         "US": "સંયુકત રાજ્ય/ અમેરિકા",
         "UY": "ઉરુગ્વે",
         "UZ": "ઉઝ્બેકિસ્તાન",
@@ -879,12 +885,13 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "VU": "વાનુઆતુ",
         "WF": "વૉલિસ એંડ ફ્યુચુના આઇલેન્ડ્સ",
         "WS": "સમોઆ",
+        "XK": "કોસોવો",
         "YE": "યેમેન",
         "YT": "મેયોટ",
         "ZA": "દક્ષિણ આફ્રિકા",
         "ZM": "ઝામ્બિયા",
         "ZW": "ઝિમ્બાબ્વે",
-        "ZZ": "અજ્ઞાત અથવા અમાન્ય પ્રદેશ"
+        "ZZ": "અજ્ઞાત પ્રદેશ"
     };
   }-*/;
 }

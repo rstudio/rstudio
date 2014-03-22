@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=sr
 
 /**
  * Localized names for the "sr" locale.
@@ -32,10 +31,6 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "BQ",
-        "CW",
-        "SS",
-        "SX",
         "AF",
         "AZ",
         "AX",
@@ -124,6 +119,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "JO",
         "KR",
         "GS",
+        "SS",
         "ZA",
         "KZ",
         "KY",
@@ -132,6 +128,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "CA",
         "IC",
         "CV",
+        "BQ",
         "QA",
         "KE",
         "CN",
@@ -143,10 +140,12 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "KM",
         "CG",
         "CD",
+        "XK",
         "CR",
         "CU",
         "KW",
         "CK",
+        "CW",
         "LA",
         "LS",
         "LV",
@@ -223,6 +222,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "SJ",
         "SH",
         "BL",
+        "SX",
         "KP",
         "MP",
         "SC",
@@ -242,7 +242,6 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "SB",
         "SO",
         "RS",
-        "CS",
         "SD",
         "SR",
         "TW",
@@ -358,6 +357,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("BM", "Бермуда");
     namesMap.put("BN", "Брунеј");
     namesMap.put("BO", "Боливија");
+    namesMap.put("BQ", "Карипска Холандија");
     namesMap.put("BR", "Бразил");
     namesMap.put("BS", "Бахами");
     namesMap.put("BT", "Бутан");
@@ -379,9 +379,9 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("CO", "Колумбија");
     namesMap.put("CP", "Острво Клипертон");
     namesMap.put("CR", "Костарика");
-    namesMap.put("CS", "Србија и Црна Гора");
     namesMap.put("CU", "Куба");
     namesMap.put("CV", "Капе Верде");
+    namesMap.put("CW", "Курасао");
     namesMap.put("CX", "Божићна острва");
     namesMap.put("CY", "Кипар");
     namesMap.put("CZ", "Чешка");
@@ -426,7 +426,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("GU", "Гуам");
     namesMap.put("GW", "Гвинеја-Бисао");
     namesMap.put("GY", "Гвајана");
-    namesMap.put("HK", "Хонг Конг");
+    namesMap.put("HK", "Хонг Конг С. А. Р. Кина");
     namesMap.put("HM", "Херд и Мекдоналд Острва");
     namesMap.put("HN", "Хондурас");
     namesMap.put("HR", "Хрватска");
@@ -478,9 +478,9 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("MH", "Маршалска Острва");
     namesMap.put("MK", "Македонија");
     namesMap.put("ML", "Мали");
-    namesMap.put("MM", "Мијанмар [Бурма]");
+    namesMap.put("MM", "Мијанмар (Бурма)");
     namesMap.put("MN", "Монголија");
-    namesMap.put("MO", "Макао");
+    namesMap.put("MO", "Макао С. А. Р. Кина");
     namesMap.put("MP", "Северна Маријанска Острва");
     namesMap.put("MQ", "Мартиник");
     namesMap.put("MR", "Мауританија");
@@ -541,8 +541,10 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("SN", "Сенегал");
     namesMap.put("SO", "Сомалија");
     namesMap.put("SR", "Суринам");
+    namesMap.put("SS", "Јужни Судан");
     namesMap.put("ST", "Сао Томе и Принципе");
     namesMap.put("SV", "Салвадор");
+    namesMap.put("SX", "Свети Мартин");
     namesMap.put("SY", "Сирија");
     namesMap.put("SZ", "Свазиленд");
     namesMap.put("TA", "Тристан да Куња");
@@ -577,6 +579,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("VU", "Вануату");
     namesMap.put("WF", "Валис и Футуна Острва");
     namesMap.put("WS", "Самоа");
+    namesMap.put("XK", "Косово");
     namesMap.put("YE", "Јемен");
     namesMap.put("YT", "Мајоте");
     namesMap.put("ZA", "Јужноафричка Република");
@@ -653,6 +656,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "BM": "Бермуда",
         "BN": "Брунеј",
         "BO": "Боливија",
+        "BQ": "Карипска Холандија",
         "BR": "Бразил",
         "BS": "Бахами",
         "BT": "Бутан",
@@ -674,9 +678,9 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "CO": "Колумбија",
         "CP": "Острво Клипертон",
         "CR": "Костарика",
-        "CS": "Србија и Црна Гора",
         "CU": "Куба",
         "CV": "Капе Верде",
+        "CW": "Курасао",
         "CX": "Божићна острва",
         "CY": "Кипар",
         "CZ": "Чешка",
@@ -721,7 +725,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "GU": "Гуам",
         "GW": "Гвинеја-Бисао",
         "GY": "Гвајана",
-        "HK": "Хонг Конг",
+        "HK": "Хонг Конг С. А. Р. Кина",
         "HM": "Херд и Мекдоналд Острва",
         "HN": "Хондурас",
         "HR": "Хрватска",
@@ -773,9 +777,9 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "MH": "Маршалска Острва",
         "MK": "Македонија",
         "ML": "Мали",
-        "MM": "Мијанмар [Бурма]",
+        "MM": "Мијанмар (Бурма)",
         "MN": "Монголија",
-        "MO": "Макао",
+        "MO": "Макао С. А. Р. Кина",
         "MP": "Северна Маријанска Острва",
         "MQ": "Мартиник",
         "MR": "Мауританија",
@@ -836,8 +840,10 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "SN": "Сенегал",
         "SO": "Сомалија",
         "SR": "Суринам",
+        "SS": "Јужни Судан",
         "ST": "Сао Томе и Принципе",
         "SV": "Салвадор",
+        "SX": "Свети Мартин",
         "SY": "Сирија",
         "SZ": "Свазиленд",
         "TA": "Тристан да Куња",
@@ -872,6 +878,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "VU": "Вануату",
         "WF": "Валис и Футуна Острва",
         "WS": "Самоа",
+        "XK": "Косово",
         "YE": "Јемен",
         "YT": "Мајоте",
         "ZA": "Јужноафричка Република",

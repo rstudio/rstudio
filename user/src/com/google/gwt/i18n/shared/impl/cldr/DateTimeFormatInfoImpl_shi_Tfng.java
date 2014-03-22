@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+//  number=$Revision: 9061 $
+//  type=Tfng
 
 /**
  * Implementation of DateTimeFormatInfo for the "shi_Tfng" locale.
@@ -27,142 +27,8 @@ package com.google.gwt.i18n.shared.impl.cldr;
 public class DateTimeFormatInfoImpl_shi_Tfng extends DateTimeFormatInfoImpl_shi {
 
   @Override
-  public String[] ampms() {
-    return new String[] {
-        "ⵜⵉⴼⴰⵡⵜ",
-        "ⵜⴰⴷⴳⴳⵯⴰⵜ"
-    };
-  }
-
-  @Override
-  public String[] erasFull() {
-    return new String[] {
-        "ⴷⴰⵜ ⵏ ⵄⵉⵙⴰ",
-        "ⴷⴼⴼⵉⵔ ⵏ ⵄⵉⵙⴰ"
-    };
-  }
-
-  @Override
-  public String[] erasShort() {
-    return new String[] {
-        "ⴷⴰⵄ",
-        "ⴷⴼⵄ"
-    };
-  }
-
-  @Override
   public int firstDayOfTheWeek() {
     return 6;
-  }
-
-  @Override
-  public String formatYearQuarterFull() {
-    return "ⴰⴽQQQQ y";
-  }
-
-  @Override
-  public String formatYearQuarterShort() {
-    return "ⴰⴽQ y";
-  }
-
-  @Override
-  public String[] monthsFull() {
-    return new String[] {
-        "ⵉⵏⵏⴰⵢⵔ",
-        "ⴱⵕⴰⵢⵕ",
-        "ⵎⴰⵕⵚ",
-        "ⵉⴱⵔⵉⵔ",
-        "ⵎⴰⵢⵢⵓ",
-        "ⵢⵓⵏⵢⵓ",
-        "ⵢⵓⵍⵢⵓⵣ",
-        "ⵖⵓⵛⵜ",
-        "ⵛⵓⵜⴰⵏⴱⵉⵔ",
-        "ⴽⵜⵓⴱⵔ",
-        "ⵏⵓⵡⴰⵏⴱⵉⵔ",
-        "ⴷⵓⵊⴰⵏⴱⵉⵔ"
-    };
-  }
-
-  @Override
-  public String[] monthsNarrow() {
-    return new String[] {
-        "ⵉ",
-        "ⴱ",
-        "ⵎ",
-        "ⵉ",
-        "ⵎ",
-        "ⵢ",
-        "ⵢ",
-        "ⵖ",
-        "ⵛ",
-        "ⴽ",
-        "ⵏ",
-        "ⴷ"
-    };
-  }
-
-  @Override
-  public String[] monthsShort() {
-    return new String[] {
-        "ⵉⵏⵏ",
-        "ⴱⵕⴰ",
-        "ⵎⴰⵕ",
-        "ⵉⴱⵔ",
-        "ⵎⴰⵢ",
-        "ⵢⵓⵏ",
-        "ⵢⵓⵍ",
-        "ⵖⵓⵛ",
-        "ⵛⵓⵜ",
-        "ⴽⵜⵓ",
-        "ⵏⵓⵡ",
-        "ⴷⵓⵊ"
-    };
-  }
-
-  @Override
-  public String[] quartersFull() {
-    return new String[] {
-        "ⴰⴽⵕⴰⴹⵢⵓⵔ 1",
-        "ⴰⴽⵕⴰⴹⵢⵓⵔ 2",
-        "ⴰⴽⵕⴰⴹⵢⵓⵔ 3",
-        "ⴰⴽⵕⴰⴹⵢⵓⵔ 4"
-    };
-  }
-
-  @Override
-  public String[] quartersShort() {
-    return new String[] {
-        "ⴰⴽ 1",
-        "ⴰⴽ 2",
-        "ⴰⴽ 3",
-        "ⴰⴽ 4"
-    };
-  }
-
-  @Override
-  public String[] weekdaysFull() {
-    return new String[] {
-        "ⴰⵙⴰⵎⴰⵙ",
-        "ⴰⵢⵏⴰⵙ",
-        "ⴰⵙⵉⵏⴰⵙ",
-        "ⴰⴽⵕⴰⵙ",
-        "ⴰⴽⵡⴰⵙ",
-        "ⵙⵉⵎⵡⴰⵙ",
-        "ⴰⵙⵉⴹⵢⴰⵙ"
-    };
-  }
-
-  @Override
-  public String[] weekdaysShort() {
-    return new String[] {
-        "ⴰⵙⴰ",
-        "ⴰⵢⵏ",
-        "ⴰⵙⵉ",
-        "ⴰⴽⵕ",
-        "ⴰⴽⵡ",
-        "ⴰⵙⵉⵎ",
-        "ⴰⵙⵉⴹ"
-    };
   }
 
   @Override

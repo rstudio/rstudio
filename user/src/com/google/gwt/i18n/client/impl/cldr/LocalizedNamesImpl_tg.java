@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 5806 $
-//  date=$Date: 2011-05-02 14:42:02 -0400 (Mon, 02 May 2011) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
+//  type=tg
 
 /**
  * Localized names for the "tg" locale.
@@ -257,7 +256,6 @@ public class LocalizedNamesImpl_tg extends LocalizedNamesImpl {
         "TF",
         "TG",
         "TH",
-        "TJ",
         "TK",
         "TL",
         "TM",
@@ -282,6 +280,7 @@ public class LocalizedNamesImpl_tg extends LocalizedNamesImpl {
         "VU",
         "WF",
         "WS",
+        "XK",
         "YE",
         "YT",
         "ZA",
@@ -289,6 +288,7 @@ public class LocalizedNamesImpl_tg extends LocalizedNamesImpl {
         "ZW",
         "AF",
         "TO",
+        "TJ",
     };
   }
 
@@ -296,6 +296,7 @@ public class LocalizedNamesImpl_tg extends LocalizedNamesImpl {
   protected void loadNameMapJava() {
     super.loadNameMapJava();
     namesMap.put("AF", "Афғонистан");
+    namesMap.put("TJ", "Тоҷикистон");
     namesMap.put("TO", "Тонга");
   }
 
@@ -307,6 +308,7 @@ public class LocalizedNamesImpl_tg extends LocalizedNamesImpl {
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
         "AF": "Афғонистан",
+        "TJ": "Тоҷикистон",
         "TO": "Тонга"
     };
   }-*/;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-01-09 06:53:23 +0100 (Thu, 09 Jan 2014) $
+//  number=$Revision: 9625 $
+//  type=ar
 
 /**
  * Implementation of DateTimeFormatInfo for the "ar_TN" locale.
@@ -28,12 +28,12 @@ public class DateTimeFormatInfoImpl_ar_TN extends DateTimeFormatInfoImpl_ar_001 
 
   @Override
   public String dateFormatMedium() {
-    return "yyyy/MM/dd";
+    return "y/MM/dd";
   }
 
   @Override
   public String dateFormatShort() {
-    return "yyyy/M/d";
+    return "y/M/d";
   }
 
   @Override
@@ -48,7 +48,66 @@ public class DateTimeFormatInfoImpl_ar_TN extends DateTimeFormatInfoImpl_ar_001 
 
   @Override
   public String formatYearMonthNum() {
-    return "yyyy/M";
+    return "y/M";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "y/M/d";
+  }
+
+  @Override
+  public String[] monthsFull() {
+    return new String[] {
+        "جانفي",
+        "فيفري",
+        "مارس",
+        "أفريل",
+        "ماي",
+        "جوان",
+        "جويلية",
+        "أوت",
+        "سبتمبر",
+        "أكتوبر",
+        "نوفمبر",
+        "ديسمبر"
+    };
+  }
+
+  @Override
+  public String[] monthsNarrow() {
+    return new String[] {
+        "ج",
+        "ف",
+        "م",
+        "أ",
+        "م",
+        "ج",
+        "ج",
+        "أ",
+        "س",
+        "أ",
+        "ن",
+        "د"
+    };
+  }
+
+  @Override
+  public String[] monthsShort() {
+    return new String[] {
+        "جانفي",
+        "فيفري",
+        "مارس",
+        "أفريل",
+        "ماي",
+        "جوان",
+        "جويلية",
+        "أوت",
+        "سبتمبر",
+        "أكتوبر",
+        "نوفمبر",
+        "ديسمبر"
+    };
   }
 
   @Override

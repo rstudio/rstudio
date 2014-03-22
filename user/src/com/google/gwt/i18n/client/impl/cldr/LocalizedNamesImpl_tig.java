@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "tig" locale.
@@ -159,6 +158,7 @@ public class LocalizedNamesImpl_tig extends LocalizedNamesImpl {
         "VU",
         "WF",
         "WS",
+        "XK",
         "YT",
         "ZW",
         "HU",
@@ -185,7 +185,6 @@ public class LocalizedNamesImpl_tig extends LocalizedNamesImpl {
         "RU",
         "RO",
         "KR",
-        "CS",
         "SO",
         "SD",
         "SY",
@@ -324,7 +323,6 @@ public class LocalizedNamesImpl_tig extends LocalizedNamesImpl {
     namesMap.put("CM", "ካሜሩን");
     namesMap.put("CN", "ቻይና");
     namesMap.put("CO", "ኮሎምቢያ");
-    namesMap.put("CS", "ሰርቢያ");
     namesMap.put("CV", "ኬፕ ቬርዴ");
     namesMap.put("CY", "ሳይፕረስ");
     namesMap.put("CZ", "ቼክ ሪፑብሊክ");
@@ -463,7 +461,6 @@ public class LocalizedNamesImpl_tig extends LocalizedNamesImpl {
         "CM": "ካሜሩን",
         "CN": "ቻይና",
         "CO": "ኮሎምቢያ",
-        "CS": "ሰርቢያ",
         "CV": "ኬፕ ቬርዴ",
         "CY": "ሳይፕረስ",
         "CZ": "ቼክ ሪፑብሊክ",

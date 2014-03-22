@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 5953 $
+//  cldrVersion=25
+//  date=$Date: 2013-08-10 08:39:57 +0200 (Sat, 10 Aug 2013) $
+//  number=$Revision: 9196 $
 //  type=sah
-//  date=$Date: 2011-07-04 19:22:55 -0400 (Mon, 04 Jul 2011) $
-
 
 /**
  * Localized names for the "sah" locale.
@@ -283,6 +282,7 @@ public class LocalizedNamesImpl_sah extends LocalizedNamesImpl {
         "VU",
         "WF",
         "WS",
+        "XK",
         "YE",
         "YT",
         "ZA",

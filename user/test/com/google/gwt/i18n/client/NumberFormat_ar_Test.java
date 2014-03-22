@@ -33,17 +33,19 @@ public class NumberFormat_ar_Test extends GWTTestCase {
   
   public void testDefault() {
     NumberFormat fmt = NumberFormat.getDecimalFormat();
+
     assertEquals("\u0663\u066B\u0661\u0664", fmt.format(3.14));
-    assertEquals("\u0663\u066B\u0661\u0664-", fmt.format(-3.14));
+    assertEquals("\u200F-\u0663\u066B\u0661\u0664", fmt.format(-3.14));
   }
   
   public void testExponent() {
     NumberFormat fmt = NumberFormat.getScientificFormat();
+
     assertEquals("\u0663\u0627\u0633\u0660",
         fmt.format(3.14));
     assertEquals("\u0663\u0627\u0633\u0662",
         fmt.format(314.0));
-    assertEquals("-\u0663\u0627\u0633\u0662",
+    assertEquals("\u200F-\u0663\u0627\u0633\u0662",
         fmt.format(-314.0));
   }
   
@@ -52,8 +54,8 @@ public class NumberFormat_ar_Test extends GWTTestCase {
     NumberFormat.setForcedLatinDigits(true);
     assertTrue(NumberFormat.forcedLatinDigits());
     NumberFormat decLatin = NumberFormat.getDecimalFormat();
-    assertEquals("1003,14", decLatin.format(1003.14));
-    assertEquals("1003,14-", decLatin.format(-1003.14));
+    assertEquals("1\u00A0003,14", decLatin.format(1003.14));
+    assertEquals("\u200F-1\u00A0003,14", decLatin.format(-1003.14));
     NumberFormat.setForcedLatinDigits(false);
     assertFalse(NumberFormat.forcedLatinDigits());
     assertEquals("3,14", decLatin.format(3.14));
@@ -63,8 +65,9 @@ public class NumberFormat_ar_Test extends GWTTestCase {
   
   public void testParse() {
     NumberFormat fmt = NumberFormat.getDecimalFormat();
+
     assertEquals(3.14, fmt.parse("\u0663\u066B\u0661\u0664"));
-    assertEquals(-3.14, fmt.parse("\u0663\u066B\u0661\u0664-"));
+    assertEquals(-3.14, fmt.parse("\u200F-\u0663\u066B\u0661\u0664"));
     assertEquals(314.0, fmt.parse("\u0663\u0661\u0664"));
   }
 }

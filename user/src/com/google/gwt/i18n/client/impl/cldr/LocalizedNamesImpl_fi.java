@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=fi
 
 /**
  * Localized names for the "fi" locale.
@@ -71,9 +70,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
-        "BQ",
         "BR",
-        "GB",
         "IO",
         "VG",
         "BN",
@@ -99,6 +96,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "ZA",
         "GS",
         "KR",
+        "SS",
         "ET",
         "EU",
         "FK",
@@ -145,6 +143,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "CA",
         "IC",
         "CV",
+        "BQ",
         "KZ",
         "KE",
         "CF",
@@ -156,6 +155,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "CD",
         "CG",
         "CC",
+        "XK",
         "GR",
         "HR",
         "CU",
@@ -222,7 +222,6 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "GQ",
         "QA",
         "FR",
-        "FX",
         "GF",
         "PF",
         "TF",
@@ -246,21 +245,19 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "SA",
         "SN",
         "RS",
-        "CS",
         "SC",
         "SL",
         "SG",
+        "SX",
         "SK",
         "SI",
         "SO",
         "LK",
-        "SS",
         "SD",
         "FI",
         "SR",
         "SZ",
         "CH",
-        "SX",
         "SY",
         "TJ",
         "TW",
@@ -295,9 +292,10 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "RU",
         "VN",
         "EE",
+        "GB",
         "US",
-        "VI",
         "UM",
+        "VI",
         "ZW",
     };
   }
@@ -323,7 +321,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("034", "Etelä-Aasia");
     namesMap.put("035", "Kaakkois-Aasia");
     namesMap.put("039", "Etelä-Eurooppa");
-    namesMap.put("053", "Australia ja Uusi-Seelanti");
+    namesMap.put("053", "Australaasia");
     namesMap.put("057", "Mikronesia");
     namesMap.put("142", "Aasia");
     namesMap.put("143", "Keski-Aasia");
@@ -347,12 +345,13 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("BA", "Bosnia ja Hertsegovina");
     namesMap.put("BE", "Belgia");
     namesMap.put("BL", "Saint-Barthélemy");
+    namesMap.put("BQ", "Karibian Alankomaat");
     namesMap.put("BR", "Brasilia");
     namesMap.put("BS", "Bahama");
     namesMap.put("BV", "Bouvet’nsaari");
     namesMap.put("BY", "Valko-Venäjä");
     namesMap.put("CA", "Kanada");
-    namesMap.put("CC", "Kookossaaret");
+    namesMap.put("CC", "Kookossaaret (Keelingsaaret)");
     namesMap.put("CD", "Kongon demokraattinen tasavalta");
     namesMap.put("CF", "Keski-Afrikan tasavalta");
     namesMap.put("CG", "Kongon tasavalta");
@@ -363,7 +362,6 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("CN", "Kiina");
     namesMap.put("CO", "Kolumbia");
     namesMap.put("CP", "Clippertoninsaari");
-    namesMap.put("CS", "Serbia ja Montenegro");
     namesMap.put("CU", "Kuuba");
     namesMap.put("CV", "Kap Verde");
     namesMap.put("CX", "Joulusaari");
@@ -378,21 +376,21 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("EH", "Länsi-Sahara");
     namesMap.put("ES", "Espanja");
     namesMap.put("ET", "Etiopia");
+    namesMap.put("EU", "Euroopan unioni");
     namesMap.put("FI", "Suomi");
     namesMap.put("FJ", "Fidži");
     namesMap.put("FK", "Falklandinsaaret");
     namesMap.put("FM", "Mikronesian liittovaltio");
     namesMap.put("FO", "Färsaaret");
     namesMap.put("FR", "Ranska");
-    namesMap.put("FX", "Ranskan Eurooppaan kuuluvat osat");
-    namesMap.put("GB", "Britannia");
+    namesMap.put("GB", "Yhdistynyt kuningaskunta");
     namesMap.put("GF", "Ranskan Guayana");
     namesMap.put("GL", "Grönlanti");
     namesMap.put("GQ", "Päiväntasaajan Guinea");
     namesMap.put("GR", "Kreikka");
     namesMap.put("GS", "Etelä-Georgia ja Eteläiset Sandwichsaaret");
-    namesMap.put("HK", "Hongkong");
-    namesMap.put("HM", "Heard- ja McDonaldinsaaret");
+    namesMap.put("HK", "Hongkong – Kiinan e.h.a.");
+    namesMap.put("HM", "Heard ja McDonaldinsaaret");
     namesMap.put("HR", "Kroatia");
     namesMap.put("HU", "Unkari");
     namesMap.put("IC", "Kanariansaaret");
@@ -423,7 +421,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("MG", "Madagaskar");
     namesMap.put("MH", "Marshallinsaaret");
     namesMap.put("MK", "Makedonia");
-    namesMap.put("MO", "Macao");
+    namesMap.put("MO", "Macao – Kiinan e.h.a.");
     namesMap.put("MP", "Pohjois-Mariaanit");
     namesMap.put("MV", "Malediivit");
     namesMap.put("MX", "Meksiko");
@@ -440,7 +438,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("PL", "Puola");
     namesMap.put("PM", "Saint-Pierre ja Miquelon");
     namesMap.put("PN", "Pitcairn");
-    namesMap.put("PS", "Palestiina");
+    namesMap.put("PS", "Palestiinalaisalueet");
     namesMap.put("PT", "Portugali");
     namesMap.put("QO", "ulkomeri");
     namesMap.put("RU", "Venäjä");
@@ -451,6 +449,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("SE", "Ruotsi");
     namesMap.put("SJ", "Huippuvuoret ja Jan Mayen");
     namesMap.put("SR", "Surinam");
+    namesMap.put("SS", "Etelä-Sudan");
     namesMap.put("ST", "São Tomé ja Príncipe");
     namesMap.put("SY", "Syyria");
     namesMap.put("SZ", "Swazimaa");
@@ -464,7 +463,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("TT", "Trinidad ja Tobago");
     namesMap.put("TZ", "Tansania");
     namesMap.put("UA", "Ukraina");
-    namesMap.put("UM", "Yhdysvaltain pienet erillissaaret");
+    namesMap.put("UM", "Yhdysvaltain erillissaaret");
     namesMap.put("US", "Yhdysvallat");
     namesMap.put("VA", "Vatikaani");
     namesMap.put("VC", "Saint Vincent ja Grenadiinit");
@@ -474,7 +473,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
     namesMap.put("YE", "Jemen");
     namesMap.put("ZA", "Etelä-Afrikka");
     namesMap.put("ZM", "Sambia");
-    namesMap.put("ZZ", "tuntematon tai virheellinen alue");
+    namesMap.put("ZZ", "tuntematon alue");
   }
 
   @Override
@@ -502,7 +501,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "034": "Etelä-Aasia",
         "035": "Kaakkois-Aasia",
         "039": "Etelä-Eurooppa",
-        "053": "Australia ja Uusi-Seelanti",
+        "053": "Australaasia",
         "057": "Mikronesia",
         "142": "Aasia",
         "143": "Keski-Aasia",
@@ -526,12 +525,13 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "BA": "Bosnia ja Hertsegovina",
         "BE": "Belgia",
         "BL": "Saint-Barthélemy",
+        "BQ": "Karibian Alankomaat",
         "BR": "Brasilia",
         "BS": "Bahama",
         "BV": "Bouvet’nsaari",
         "BY": "Valko-Venäjä",
         "CA": "Kanada",
-        "CC": "Kookossaaret",
+        "CC": "Kookossaaret (Keelingsaaret)",
         "CD": "Kongon demokraattinen tasavalta",
         "CF": "Keski-Afrikan tasavalta",
         "CG": "Kongon tasavalta",
@@ -542,7 +542,6 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "CN": "Kiina",
         "CO": "Kolumbia",
         "CP": "Clippertoninsaari",
-        "CS": "Serbia ja Montenegro",
         "CU": "Kuuba",
         "CV": "Kap Verde",
         "CX": "Joulusaari",
@@ -557,21 +556,21 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "EH": "Länsi-Sahara",
         "ES": "Espanja",
         "ET": "Etiopia",
+        "EU": "Euroopan unioni",
         "FI": "Suomi",
         "FJ": "Fidži",
         "FK": "Falklandinsaaret",
         "FM": "Mikronesian liittovaltio",
         "FO": "Färsaaret",
         "FR": "Ranska",
-        "FX": "Ranskan Eurooppaan kuuluvat osat",
-        "GB": "Britannia",
+        "GB": "Yhdistynyt kuningaskunta",
         "GF": "Ranskan Guayana",
         "GL": "Grönlanti",
         "GQ": "Päiväntasaajan Guinea",
         "GR": "Kreikka",
         "GS": "Etelä-Georgia ja Eteläiset Sandwichsaaret",
-        "HK": "Hongkong",
-        "HM": "Heard- ja McDonaldinsaaret",
+        "HK": "Hongkong – Kiinan e.h.a.",
+        "HM": "Heard ja McDonaldinsaaret",
         "HR": "Kroatia",
         "HU": "Unkari",
         "IC": "Kanariansaaret",
@@ -602,7 +601,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "MG": "Madagaskar",
         "MH": "Marshallinsaaret",
         "MK": "Makedonia",
-        "MO": "Macao",
+        "MO": "Macao – Kiinan e.h.a.",
         "MP": "Pohjois-Mariaanit",
         "MV": "Malediivit",
         "MX": "Meksiko",
@@ -619,7 +618,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "PL": "Puola",
         "PM": "Saint-Pierre ja Miquelon",
         "PN": "Pitcairn",
-        "PS": "Palestiina",
+        "PS": "Palestiinalaisalueet",
         "PT": "Portugali",
         "QO": "ulkomeri",
         "RU": "Venäjä",
@@ -630,6 +629,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "SE": "Ruotsi",
         "SJ": "Huippuvuoret ja Jan Mayen",
         "SR": "Surinam",
+        "SS": "Etelä-Sudan",
         "ST": "São Tomé ja Príncipe",
         "SY": "Syyria",
         "SZ": "Swazimaa",
@@ -643,7 +643,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "TT": "Trinidad ja Tobago",
         "TZ": "Tansania",
         "UA": "Ukraina",
-        "UM": "Yhdysvaltain pienet erillissaaret",
+        "UM": "Yhdysvaltain erillissaaret",
         "US": "Yhdysvallat",
         "VA": "Vatikaani",
         "VC": "Saint Vincent ja Grenadiinit",
@@ -653,7 +653,7 @@ public class LocalizedNamesImpl_fi extends LocalizedNamesImpl {
         "YE": "Jemen",
         "ZA": "Etelä-Afrikka",
         "ZM": "Sambia",
-        "ZZ": "tuntematon tai virheellinen alue"
+        "ZZ": "tuntematon alue"
     };
   }-*/;
 }

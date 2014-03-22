@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6472 Google $
-//  date=$Date: 2012-01-27 18:53:35 -0500 (Fri, 27 Jan 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
 //  type=root
 
 /**
@@ -32,6 +32,16 @@ public class DateTimeFormatInfoImpl_ne extends DateTimeFormatInfoImpl {
         "पूर्व मध्यान्ह",
         "उत्तर मध्यान्ह"
     };
+  }
+
+  @Override
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
   }
 
   @Override
@@ -65,7 +75,7 @@ public class DateTimeFormatInfoImpl_ne extends DateTimeFormatInfoImpl {
         "मे",
         "जुन",
         "जुलाई",
-        "अगस्त",
+        "अगस्ट",
         "सेप्टेम्बर",
         "अक्टोबर",
         "नोभेम्बर",
@@ -94,18 +104,18 @@ public class DateTimeFormatInfoImpl_ne extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "जन",
-        "फेब",
+        "जनवरी",
+        "फेब्रुअरी",
         "मार्च",
-        "अप्रि",
+        "अप्रिल",
         "मे",
         "जुन",
-        "जुला",
-        "अग",
-        "सेप्ट",
-        "अक्टो",
-        "नोभे",
-        "डिसे"
+        "जुलाई",
+        "अगस्ट",
+        "सेप्टेम्बर",
+        "अक्टोबर",
+        "नोभेम्बर",
+        "डिसेम्बर"
     };
   }
 
@@ -145,13 +155,13 @@ public class DateTimeFormatInfoImpl_ne extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysNarrow() {
     return new String[] {
-        "१",
-        "२",
-        "३",
-        "४",
-        "५",
-        "६",
-        "७"
+        "आ",
+        "सो",
+        "म",
+        "बु",
+        "बि",
+        "शु",
+        "श"
     };
   }
 

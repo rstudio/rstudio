@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=to
 
 /**
  * Localized names for the "to" locale.
@@ -34,21 +33,19 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     return new String[] {
         "AI",
         "AG",
-        "BQ",
-        "CW",
         "FR",
-        "GF",
         "PH",
         "FI",
         "FJ",
         "HT",
-        "HU",
         "WS",
         "AS",
         "NL",
         "HK",
         "HN",
+        "HU",
         "YE",
+        "BQ",
         "GR",
         "GM",
         "GH",
@@ -56,11 +53,11 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "GA",
         "KZ",
         "QA",
-        "KG",
         "GD",
         "CM",
         "KH",
         "KE",
+        "KG",
         "KI",
         "GN",
         "GW",
@@ -68,16 +65,20 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "KP",
         "KR",
         "CO",
+        "VA",
         "KM",
         "CD",
         "CG",
         "CR",
+        "XK",
         "GU",
         "GP",
         "GT",
         "KW",
         "GG",
         "GY",
+        "GF",
+        "CW",
         "GL",
         "HR",
         "LR",
@@ -102,7 +103,6 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "MY",
         "ML",
         "MT",
-        "MC",
         "MK",
         "CI",
         "MG",
@@ -114,6 +114,7 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "FM",
         "MA",
         "MD",
+        "MC",
         "MN",
         "ME",
         "MZ",
@@ -125,13 +126,13 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "AC",
         "MS",
         "CV",
-        "NE",
         "NG",
         "NA",
         "NR",
         "NP",
         "AN",
         "NI",
+        "NE",
         "NU",
         "NC",
         "NO",
@@ -146,7 +147,6 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "BB",
         "PG",
         "BF",
-        "BI",
         "BY",
         "BE",
         "BZ",
@@ -156,7 +156,6 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "BD",
         "BJ",
         "GB",
-        "BG",
         "PL",
         "PF",
         "BO",
@@ -168,26 +167,30 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "PS",
         "PR",
         "US",
+        "BG",
         "BN",
+        "BI",
         "BT",
         "EH",
-        "CY",
-        "JM",
-        "ST",
-        "SA",
         "SH",
+        "CY",
         "KN",
         "LC",
+        "JM",
+        "SM",
         "MF",
+        "SX",
+        "ST",
         "BL",
         "PM",
+        "TD",
+        "SA",
         "VC",
         "JE",
         "ZM",
         "SN",
-        "SM",
+        "GE",
         "RS",
-        "TD",
         "CN",
         "DE",
         "JP",
@@ -206,14 +209,12 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "SJ",
         "JO",
         "SO",
-        "GE",
-        "SS",
         "SZ",
         "SE",
         "CH",
         "SR",
+        "SS",
         "SD",
-        "SX",
         "TH",
         "TW",
         "TJ",
@@ -232,7 +233,6 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "TN",
         "TV",
         "VU",
-        "VA",
         "VE",
         "VN",
         "IE",
@@ -300,31 +300,31 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("002", "ʻAfilika");
     namesMap.put("003", "ʻAmelika tokelau");
     namesMap.put("005", "ʻAmelika tonga");
-    namesMap.put("009", "ʻOsenia");
-    namesMap.put("011", "ʻAfilika hihifo");
+    namesMap.put("009", "ʻOsēnia");
+    namesMap.put("011", "ʻAfilika fakahihifo");
     namesMap.put("013", "ʻAmelika lotoloto");
-    namesMap.put("014", "ʻAfilika hahake");
-    namesMap.put("015", "ʻAfilika tokelau");
+    namesMap.put("014", "ʻAfilika fakahahake");
+    namesMap.put("015", "ʻAfilika fakatokelau");
     namesMap.put("017", "ʻAfilika lotoloto");
     namesMap.put("018", "ʻAfilika fakatonga");
     namesMap.put("019", "Ongo ʻAmelika");
     namesMap.put("021", "ʻAmelika fakatokelau");
     namesMap.put("029", "Kalipiane");
-    namesMap.put("030", "ʻĒsia hahake");
+    namesMap.put("030", "ʻĒsia fakahahake");
     namesMap.put("034", "ʻĒsia fakatonga");
-    namesMap.put("035", "ʻĒsia tongahahake");
+    namesMap.put("035", "ʻĒsia fakatongahahake");
     namesMap.put("039", "ʻIulope fakatonga");
-    namesMap.put("053", "ʻAositelēlia mo Nuʻusila");
+    namesMap.put("053", "ʻAositelēlēsia");
     namesMap.put("054", "Melanisia");
     namesMap.put("057", "Potu fonua Mikolonisia");
     namesMap.put("061", "Polinīsia");
     namesMap.put("142", "ʻĒsia");
     namesMap.put("143", "ʻĒsia lotoloto");
-    namesMap.put("145", "ʻĒsia hihifo");
+    namesMap.put("145", "ʻĒsia fakahihifo");
     namesMap.put("150", "ʻIulope");
-    namesMap.put("151", "ʻIulope hahake");
-    namesMap.put("154", "ʻIulope tokelau");
-    namesMap.put("155", "ʻIulope hihifo");
+    namesMap.put("151", "ʻIulope fakahahake");
+    namesMap.put("154", "ʻIulope fakatokelau");
+    namesMap.put("155", "ʻIulope fakahihifo");
     namesMap.put("419", "ʻAmelika fakalatina");
     namesMap.put("AC", "Motu ʻAsenisini");
     namesMap.put("AD", "ʻEnitola");
@@ -335,7 +335,7 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("AL", "ʻAlipania");
     namesMap.put("AM", "ʻĀminia");
     namesMap.put("AN", "Netaleni ʻEnitilisi");
-    namesMap.put("AO", "ʻEnikola");
+    namesMap.put("AO", "ʻEngikola");
     namesMap.put("AQ", "ʻAnitātika");
     namesMap.put("AR", "ʻAsenitina");
     namesMap.put("AS", "Haʻamoa ʻAmelika");
@@ -344,25 +344,26 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("AW", "ʻAlupa");
     namesMap.put("AX", "ʻOtumotu ʻAlani");
     namesMap.put("AZ", "ʻAsapaisani");
-    namesMap.put("BA", "Posinia mo Hesikōvinia");
+    namesMap.put("BA", "Posinia mo Hesikōvina");
     namesMap.put("BB", "Pāpeitosi");
     namesMap.put("BD", "Pengilātesi");
     namesMap.put("BE", "Pelesiume");
     namesMap.put("BF", "Pekano Faso");
-    namesMap.put("BG", "Pokalia");
+    namesMap.put("BG", "Pulukalia");
     namesMap.put("BH", "Paleini");
-    namesMap.put("BI", "Pelaniti");
+    namesMap.put("BI", "Puluniti");
     namesMap.put("BJ", "Penini");
-    namesMap.put("BL", "Seini Pafelemi");
+    namesMap.put("BL", "Sā Patēlemi");
     namesMap.put("BM", "Pēmuta");
     namesMap.put("BN", "Pulunei");
     namesMap.put("BO", "Polīvia");
+    namesMap.put("BQ", "Kalipiane fakahōlani");
     namesMap.put("BR", "Palāsili");
     namesMap.put("BS", "Pahama");
     namesMap.put("BT", "Pūtani");
     namesMap.put("BV", "Motu Puveti");
     namesMap.put("BW", "Potisiuana");
-    namesMap.put("BY", "Pelelusi");
+    namesMap.put("BY", "Pelalusi");
     namesMap.put("BZ", "Pelise");
     namesMap.put("CA", "Kānata");
     namesMap.put("CC", "ʻOtumotu Koko");
@@ -370,7 +371,7 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("CF", "Lipapilika ʻAfilika Lotoloto");
     namesMap.put("CG", "Kongo - Palasavila");
     namesMap.put("CH", "Suisilani");
-    namesMap.put("CI", "Matafonua ʻAivili");
+    namesMap.put("CI", "Matāfonua ʻAivili");
     namesMap.put("CK", "ʻOtumotu Kuki");
     namesMap.put("CL", "Sili");
     namesMap.put("CM", "Kemaluni");
@@ -379,7 +380,8 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("CP", "Motu Kilipatoni");
     namesMap.put("CR", "Kosita Lika");
     namesMap.put("CU", "Kiupa");
-    namesMap.put("CV", "Muiʻi Veti");
+    namesMap.put("CV", "Muiʻi Vete");
+    namesMap.put("CW", "Kulasao");
     namesMap.put("CX", "Motu Kilisimasi");
     namesMap.put("CY", "Saipalesi");
     namesMap.put("CZ", "Lipapilika Seki");
@@ -397,38 +399,38 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("EH", "Sahala fakahihifo");
     namesMap.put("ER", "ʻElitulia");
     namesMap.put("ES", "Sipeini");
-    namesMap.put("ET", "ʻItiōpea");
+    namesMap.put("ET", "ʻĪtiōpia");
     namesMap.put("EU", "ʻIulope fakatahataha");
     namesMap.put("FI", "Finilani");
     namesMap.put("FJ", "Fisi");
-    namesMap.put("FK", "ʻOtumotu Fokuleni");
+    namesMap.put("FK", "ʻOtumotu Fokulani");
     namesMap.put("FM", "Mikolonisia");
-    namesMap.put("FO", "ʻOtumotu Felou");
+    namesMap.put("FO", "ʻOtumotu Faloe");
     namesMap.put("FR", "Falanisē");
     namesMap.put("GA", "Kaponi");
     namesMap.put("GB", "Pilitānia");
     namesMap.put("GD", "Kelenatā");
-    namesMap.put("GE", "Sōsia");
-    namesMap.put("GF", "Falanise Kuiana");
+    namesMap.put("GE", "Seōsia");
+    namesMap.put("GF", "Kuiana fakafalanisē");
     namesMap.put("GG", "Kuenisī");
     namesMap.put("GH", "Kana");
     namesMap.put("GI", "Sipalālitā");
-    namesMap.put("GL", "Kulinileni");
+    namesMap.put("GL", "Kulinilani");
     namesMap.put("GM", "Kamipia");
     namesMap.put("GN", "Kini");
     namesMap.put("GP", "Kuatalupe");
     namesMap.put("GQ", "ʻEkueta Kini");
     namesMap.put("GR", "Kalisi");
-    namesMap.put("GS", "ʻOtumotu Siosia-tonga mo Saniuisi-tonga");
+    namesMap.put("GS", "ʻOtumotu Seōsia-tonga mo Saniuisi-tonga");
     namesMap.put("GT", "Kuatamala");
     namesMap.put("GU", "Kuamu");
     namesMap.put("GW", "Kini-Pisau");
     namesMap.put("GY", "Kuiana");
-    namesMap.put("HK", "Hongi Kongi");
+    namesMap.put("HK", "Hongi Kongi SAR Siaina");
     namesMap.put("HM", "ʻOtumotu Heati mo Makitonali");
     namesMap.put("HN", "Honitulasi");
     namesMap.put("HR", "Kuloisia");
-    namesMap.put("HU", "Hangakalia");
+    namesMap.put("HU", "Hungakalia");
     namesMap.put("IC", "ʻOtumotu Kaneli");
     namesMap.put("ID", "ʻInitonēsia");
     namesMap.put("IE", "ʻAealani");
@@ -444,40 +446,40 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("JM", "Samaika");
     namesMap.put("JO", "Soatane");
     namesMap.put("JP", "Siapani");
-    namesMap.put("KE", "Kenia");
-    namesMap.put("KG", "Kekisiteni");
+    namesMap.put("KE", "Keniā");
+    namesMap.put("KG", "Kīkisitani");
     namesMap.put("KH", "Kemipōtia");
     namesMap.put("KI", "Kilipasi");
     namesMap.put("KM", "Komolosi");
-    namesMap.put("KN", "Seini Kitisi mo Nevisi");
+    namesMap.put("KN", "Sā Kitisi mo Nevisi");
     namesMap.put("KP", "Kōlea tokelau");
     namesMap.put("KR", "Kōlea tonga");
     namesMap.put("KW", "Kueiti");
     namesMap.put("KY", "ʻOtumotu Keimeni");
-    namesMap.put("KZ", "Kasakiteni");
+    namesMap.put("KZ", "Kasakitani");
     namesMap.put("LA", "Lau");
     namesMap.put("LB", "Lepanoni");
-    namesMap.put("LC", "Seini Lusia");
+    namesMap.put("LC", "Sā Lūsia");
     namesMap.put("LI", "Lekitenisaini");
-    namesMap.put("LK", "Silangikā");
+    namesMap.put("LK", "Sīlangikā");
     namesMap.put("LR", "Laipelia");
     namesMap.put("LS", "Lesoto");
-    namesMap.put("LT", "Lifiuenia");
+    namesMap.put("LT", "Lifiuania");
     namesMap.put("LU", "Lakisimipeki");
     namesMap.put("LV", "Lativia");
     namesMap.put("LY", "Lipia");
-    namesMap.put("MA", "Molako");
-    namesMap.put("MC", "Manako");
+    namesMap.put("MA", "Moloko");
+    namesMap.put("MC", "Monako");
     namesMap.put("MD", "Molotova");
     namesMap.put("ME", "Monitenikalo");
-    namesMap.put("MF", "Seini Matini");
+    namesMap.put("MF", "Sā Mātini (fakafalanisē)");
     namesMap.put("MG", "Matakasika");
     namesMap.put("MH", "ʻOtumotu Māsolo");
-    namesMap.put("MK", "Masitōnia");
+    namesMap.put("MK", "Masetōnia");
     namesMap.put("ML", "Māli");
     namesMap.put("MM", "Pema");
     namesMap.put("MN", "Mongokōlia");
-    namesMap.put("MO", "Makau");
+    namesMap.put("MO", "Makau SAR Siaina");
     namesMap.put("MP", "ʻOtumotu Maliana tokelau");
     namesMap.put("MQ", "Mateniki");
     namesMap.put("MR", "Maulitenia");
@@ -488,10 +490,10 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("MW", "Malaui");
     namesMap.put("MX", "Mekisikou");
     namesMap.put("MY", "Malēsia");
-    namesMap.put("MZ", "Mosenipiki");
+    namesMap.put("MZ", "Mosēmipiki");
     namesMap.put("NA", "Namipia");
     namesMap.put("NC", "Niu Kaletōnia");
-    namesMap.put("NE", "Naisia");
+    namesMap.put("NE", "Nisia");
     namesMap.put("NF", "Motu Nōfoliki");
     namesMap.put("NG", "Naisilia");
     namesMap.put("NI", "Nikalakua");
@@ -508,15 +510,15 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("PG", "Papuaniukini");
     namesMap.put("PH", "Filipaini");
     namesMap.put("PK", "Pākisitani");
-    namesMap.put("PL", "Poleni");
-    namesMap.put("PM", "Seini Piea mo Mikaloni");
+    namesMap.put("PL", "Polani");
+    namesMap.put("PM", "Sā Piea mo Mikeloni");
     namesMap.put("PN", "ʻOtumotu Pitikeni");
     namesMap.put("PR", "Pueto Liko");
     namesMap.put("PS", "Potu Palesitaine");
     namesMap.put("PT", "Potukali");
     namesMap.put("PY", "Palakuei");
     namesMap.put("QA", "Katā");
-    namesMap.put("QO", "ʻOsenia Mamaʻo");
+    namesMap.put("QO", "ʻOsēnia mamaʻo");
     namesMap.put("RE", "Liʻiunioni");
     namesMap.put("RO", "Lomēnia");
     namesMap.put("RS", "Sēpia");
@@ -528,48 +530,51 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("SD", "Sūteni");
     namesMap.put("SE", "Suēteni");
     namesMap.put("SG", "Singapoa");
-    namesMap.put("SH", "Seini Helena");
+    namesMap.put("SH", "Sā Helena");
     namesMap.put("SI", "Silōvenia");
-    namesMap.put("SJ", "Sivolopaati mo Seni Meini");
+    namesMap.put("SJ", "Sivolopāti mo Sani Maieni");
     namesMap.put("SK", "Silōvakia");
-    namesMap.put("SL", "Siela Lione");
-    namesMap.put("SM", "Seni Malino");
-    namesMap.put("SN", "Senikalo");
+    namesMap.put("SL", "Siela Leone");
+    namesMap.put("SM", "Sā Malino");
+    namesMap.put("SN", "Senekalo");
     namesMap.put("SO", "Sōmalia");
     namesMap.put("SR", "Sulinami");
-    namesMap.put("ST", "Sao Tome mo Pilinisipe");
+    namesMap.put("SS", "Sūtani fakatonga");
+    namesMap.put("ST", "Sao Tomē mo Pilinisipe");
     namesMap.put("SV", "ʻEle Salavatoa");
+    namesMap.put("SX", "Sā Mātini (fakahōlani)");
     namesMap.put("SY", "Sīlia");
-    namesMap.put("SZ", "Suasileni");
+    namesMap.put("SZ", "Suasilani");
     namesMap.put("TA", "Tulisiteni ta Kunuha");
-    namesMap.put("TC", "ʻOtumotu Teki mo Keikosi");
-    namesMap.put("TD", "Seti");
+    namesMap.put("TC", "ʻOtumotu Tuki mo Kaikosi");
+    namesMap.put("TD", "Sāti");
     namesMap.put("TF", "Potu fonua tonga fakafalanisē");
     namesMap.put("TG", "Toko");
     namesMap.put("TH", "Taileni");
     namesMap.put("TJ", "Tasikitani");
     namesMap.put("TL", "Timoa Hahake");
-    namesMap.put("TM", "Tekimenisiteni");
+    namesMap.put("TM", "Tekimenisitani");
     namesMap.put("TN", "Tunīsia");
     namesMap.put("TR", "Toake");
     namesMap.put("TT", "Tilinitati mo Topako");
     namesMap.put("TV", "Tūvalu");
     namesMap.put("TW", "Taiuani");
-    namesMap.put("TZ", "Tenisania");
+    namesMap.put("TZ", "Tenisānia");
     namesMap.put("UA", "ʻIukuleini");
     namesMap.put("UG", "ʻIukanitā");
     namesMap.put("UM", "ʻOtumotu siʻi ʻo ʻAmelika");
     namesMap.put("US", "Puleʻanga fakatahataha ʻAmelika");
     namesMap.put("UY", "ʻUlukuei");
-    namesMap.put("UZ", "ʻUsipekitēni");
-    namesMap.put("VA", "Vatikani");
-    namesMap.put("VC", "Seini Viniseni mo Kulenatini");
-    namesMap.put("VE", "Venisuela");
+    namesMap.put("UZ", "ʻUsipekitani");
+    namesMap.put("VA", "Kolo Vatikani");
+    namesMap.put("VC", "Sā Viniseni mo Kulenatini");
+    namesMap.put("VE", "Venesuela");
     namesMap.put("VG", "ʻOtumotu Vilikini fakapilitānia");
     namesMap.put("VI", "ʻOtumotu Vilikini fakaʻamelika");
     namesMap.put("VN", "Vietinemi");
     namesMap.put("WF", "ʻUvea mo Futuna");
     namesMap.put("WS", "Haʻamoa");
+    namesMap.put("XK", "Kōsovo");
     namesMap.put("YE", "Iemeni");
     namesMap.put("YT", "Meioti");
     namesMap.put("ZA", "ʻAfilika tonga");
@@ -589,31 +594,31 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "002": "ʻAfilika",
         "003": "ʻAmelika tokelau",
         "005": "ʻAmelika tonga",
-        "009": "ʻOsenia",
-        "011": "ʻAfilika hihifo",
+        "009": "ʻOsēnia",
+        "011": "ʻAfilika fakahihifo",
         "013": "ʻAmelika lotoloto",
-        "014": "ʻAfilika hahake",
-        "015": "ʻAfilika tokelau",
+        "014": "ʻAfilika fakahahake",
+        "015": "ʻAfilika fakatokelau",
         "017": "ʻAfilika lotoloto",
         "018": "ʻAfilika fakatonga",
         "019": "Ongo ʻAmelika",
         "021": "ʻAmelika fakatokelau",
         "029": "Kalipiane",
-        "030": "ʻĒsia hahake",
+        "030": "ʻĒsia fakahahake",
         "034": "ʻĒsia fakatonga",
-        "035": "ʻĒsia tongahahake",
+        "035": "ʻĒsia fakatongahahake",
         "039": "ʻIulope fakatonga",
-        "053": "ʻAositelēlia mo Nuʻusila",
+        "053": "ʻAositelēlēsia",
         "054": "Melanisia",
         "057": "Potu fonua Mikolonisia",
         "061": "Polinīsia",
         "142": "ʻĒsia",
         "143": "ʻĒsia lotoloto",
-        "145": "ʻĒsia hihifo",
+        "145": "ʻĒsia fakahihifo",
         "150": "ʻIulope",
-        "151": "ʻIulope hahake",
-        "154": "ʻIulope tokelau",
-        "155": "ʻIulope hihifo",
+        "151": "ʻIulope fakahahake",
+        "154": "ʻIulope fakatokelau",
+        "155": "ʻIulope fakahihifo",
         "419": "ʻAmelika fakalatina",
         "AC": "Motu ʻAsenisini",
         "AD": "ʻEnitola",
@@ -624,7 +629,7 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "AL": "ʻAlipania",
         "AM": "ʻĀminia",
         "AN": "Netaleni ʻEnitilisi",
-        "AO": "ʻEnikola",
+        "AO": "ʻEngikola",
         "AQ": "ʻAnitātika",
         "AR": "ʻAsenitina",
         "AS": "Haʻamoa ʻAmelika",
@@ -633,25 +638,26 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "AW": "ʻAlupa",
         "AX": "ʻOtumotu ʻAlani",
         "AZ": "ʻAsapaisani",
-        "BA": "Posinia mo Hesikōvinia",
+        "BA": "Posinia mo Hesikōvina",
         "BB": "Pāpeitosi",
         "BD": "Pengilātesi",
         "BE": "Pelesiume",
         "BF": "Pekano Faso",
-        "BG": "Pokalia",
+        "BG": "Pulukalia",
         "BH": "Paleini",
-        "BI": "Pelaniti",
+        "BI": "Puluniti",
         "BJ": "Penini",
-        "BL": "Seini Pafelemi",
+        "BL": "Sā Patēlemi",
         "BM": "Pēmuta",
         "BN": "Pulunei",
         "BO": "Polīvia",
+        "BQ": "Kalipiane fakahōlani",
         "BR": "Palāsili",
         "BS": "Pahama",
         "BT": "Pūtani",
         "BV": "Motu Puveti",
         "BW": "Potisiuana",
-        "BY": "Pelelusi",
+        "BY": "Pelalusi",
         "BZ": "Pelise",
         "CA": "Kānata",
         "CC": "ʻOtumotu Koko",
@@ -659,7 +665,7 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "CF": "Lipapilika ʻAfilika Lotoloto",
         "CG": "Kongo - Palasavila",
         "CH": "Suisilani",
-        "CI": "Matafonua ʻAivili",
+        "CI": "Matāfonua ʻAivili",
         "CK": "ʻOtumotu Kuki",
         "CL": "Sili",
         "CM": "Kemaluni",
@@ -668,7 +674,8 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "CP": "Motu Kilipatoni",
         "CR": "Kosita Lika",
         "CU": "Kiupa",
-        "CV": "Muiʻi Veti",
+        "CV": "Muiʻi Vete",
+        "CW": "Kulasao",
         "CX": "Motu Kilisimasi",
         "CY": "Saipalesi",
         "CZ": "Lipapilika Seki",
@@ -686,38 +693,38 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "EH": "Sahala fakahihifo",
         "ER": "ʻElitulia",
         "ES": "Sipeini",
-        "ET": "ʻItiōpea",
+        "ET": "ʻĪtiōpia",
         "EU": "ʻIulope fakatahataha",
         "FI": "Finilani",
         "FJ": "Fisi",
-        "FK": "ʻOtumotu Fokuleni",
+        "FK": "ʻOtumotu Fokulani",
         "FM": "Mikolonisia",
-        "FO": "ʻOtumotu Felou",
+        "FO": "ʻOtumotu Faloe",
         "FR": "Falanisē",
         "GA": "Kaponi",
         "GB": "Pilitānia",
         "GD": "Kelenatā",
-        "GE": "Sōsia",
-        "GF": "Falanise Kuiana",
+        "GE": "Seōsia",
+        "GF": "Kuiana fakafalanisē",
         "GG": "Kuenisī",
         "GH": "Kana",
         "GI": "Sipalālitā",
-        "GL": "Kulinileni",
+        "GL": "Kulinilani",
         "GM": "Kamipia",
         "GN": "Kini",
         "GP": "Kuatalupe",
         "GQ": "ʻEkueta Kini",
         "GR": "Kalisi",
-        "GS": "ʻOtumotu Siosia-tonga mo Saniuisi-tonga",
+        "GS": "ʻOtumotu Seōsia-tonga mo Saniuisi-tonga",
         "GT": "Kuatamala",
         "GU": "Kuamu",
         "GW": "Kini-Pisau",
         "GY": "Kuiana",
-        "HK": "Hongi Kongi",
+        "HK": "Hongi Kongi SAR Siaina",
         "HM": "ʻOtumotu Heati mo Makitonali",
         "HN": "Honitulasi",
         "HR": "Kuloisia",
-        "HU": "Hangakalia",
+        "HU": "Hungakalia",
         "IC": "ʻOtumotu Kaneli",
         "ID": "ʻInitonēsia",
         "IE": "ʻAealani",
@@ -733,40 +740,40 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "JM": "Samaika",
         "JO": "Soatane",
         "JP": "Siapani",
-        "KE": "Kenia",
-        "KG": "Kekisiteni",
+        "KE": "Keniā",
+        "KG": "Kīkisitani",
         "KH": "Kemipōtia",
         "KI": "Kilipasi",
         "KM": "Komolosi",
-        "KN": "Seini Kitisi mo Nevisi",
+        "KN": "Sā Kitisi mo Nevisi",
         "KP": "Kōlea tokelau",
         "KR": "Kōlea tonga",
         "KW": "Kueiti",
         "KY": "ʻOtumotu Keimeni",
-        "KZ": "Kasakiteni",
+        "KZ": "Kasakitani",
         "LA": "Lau",
         "LB": "Lepanoni",
-        "LC": "Seini Lusia",
+        "LC": "Sā Lūsia",
         "LI": "Lekitenisaini",
-        "LK": "Silangikā",
+        "LK": "Sīlangikā",
         "LR": "Laipelia",
         "LS": "Lesoto",
-        "LT": "Lifiuenia",
+        "LT": "Lifiuania",
         "LU": "Lakisimipeki",
         "LV": "Lativia",
         "LY": "Lipia",
-        "MA": "Molako",
-        "MC": "Manako",
+        "MA": "Moloko",
+        "MC": "Monako",
         "MD": "Molotova",
         "ME": "Monitenikalo",
-        "MF": "Seini Matini",
+        "MF": "Sā Mātini (fakafalanisē)",
         "MG": "Matakasika",
         "MH": "ʻOtumotu Māsolo",
-        "MK": "Masitōnia",
+        "MK": "Masetōnia",
         "ML": "Māli",
         "MM": "Pema",
         "MN": "Mongokōlia",
-        "MO": "Makau",
+        "MO": "Makau SAR Siaina",
         "MP": "ʻOtumotu Maliana tokelau",
         "MQ": "Mateniki",
         "MR": "Maulitenia",
@@ -777,10 +784,10 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "MW": "Malaui",
         "MX": "Mekisikou",
         "MY": "Malēsia",
-        "MZ": "Mosenipiki",
+        "MZ": "Mosēmipiki",
         "NA": "Namipia",
         "NC": "Niu Kaletōnia",
-        "NE": "Naisia",
+        "NE": "Nisia",
         "NF": "Motu Nōfoliki",
         "NG": "Naisilia",
         "NI": "Nikalakua",
@@ -797,15 +804,15 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "PG": "Papuaniukini",
         "PH": "Filipaini",
         "PK": "Pākisitani",
-        "PL": "Poleni",
-        "PM": "Seini Piea mo Mikaloni",
+        "PL": "Polani",
+        "PM": "Sā Piea mo Mikeloni",
         "PN": "ʻOtumotu Pitikeni",
         "PR": "Pueto Liko",
         "PS": "Potu Palesitaine",
         "PT": "Potukali",
         "PY": "Palakuei",
         "QA": "Katā",
-        "QO": "ʻOsenia Mamaʻo",
+        "QO": "ʻOsēnia mamaʻo",
         "RE": "Liʻiunioni",
         "RO": "Lomēnia",
         "RS": "Sēpia",
@@ -817,48 +824,51 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "SD": "Sūteni",
         "SE": "Suēteni",
         "SG": "Singapoa",
-        "SH": "Seini Helena",
+        "SH": "Sā Helena",
         "SI": "Silōvenia",
-        "SJ": "Sivolopaati mo Seni Meini",
+        "SJ": "Sivolopāti mo Sani Maieni",
         "SK": "Silōvakia",
-        "SL": "Siela Lione",
-        "SM": "Seni Malino",
-        "SN": "Senikalo",
+        "SL": "Siela Leone",
+        "SM": "Sā Malino",
+        "SN": "Senekalo",
         "SO": "Sōmalia",
         "SR": "Sulinami",
-        "ST": "Sao Tome mo Pilinisipe",
+        "SS": "Sūtani fakatonga",
+        "ST": "Sao Tomē mo Pilinisipe",
         "SV": "ʻEle Salavatoa",
+        "SX": "Sā Mātini (fakahōlani)",
         "SY": "Sīlia",
-        "SZ": "Suasileni",
+        "SZ": "Suasilani",
         "TA": "Tulisiteni ta Kunuha",
-        "TC": "ʻOtumotu Teki mo Keikosi",
-        "TD": "Seti",
+        "TC": "ʻOtumotu Tuki mo Kaikosi",
+        "TD": "Sāti",
         "TF": "Potu fonua tonga fakafalanisē",
         "TG": "Toko",
         "TH": "Taileni",
         "TJ": "Tasikitani",
         "TL": "Timoa Hahake",
-        "TM": "Tekimenisiteni",
+        "TM": "Tekimenisitani",
         "TN": "Tunīsia",
         "TR": "Toake",
         "TT": "Tilinitati mo Topako",
         "TV": "Tūvalu",
         "TW": "Taiuani",
-        "TZ": "Tenisania",
+        "TZ": "Tenisānia",
         "UA": "ʻIukuleini",
         "UG": "ʻIukanitā",
         "UM": "ʻOtumotu siʻi ʻo ʻAmelika",
         "US": "Puleʻanga fakatahataha ʻAmelika",
         "UY": "ʻUlukuei",
-        "UZ": "ʻUsipekitēni",
-        "VA": "Vatikani",
-        "VC": "Seini Viniseni mo Kulenatini",
-        "VE": "Venisuela",
+        "UZ": "ʻUsipekitani",
+        "VA": "Kolo Vatikani",
+        "VC": "Sā Viniseni mo Kulenatini",
+        "VE": "Venesuela",
         "VG": "ʻOtumotu Vilikini fakapilitānia",
         "VI": "ʻOtumotu Vilikini fakaʻamelika",
         "VN": "Vietinemi",
         "WF": "ʻUvea mo Futuna",
         "WS": "Haʻamoa",
+        "XK": "Kōsovo",
         "YE": "Iemeni",
         "YT": "Meioti",
         "ZA": "ʻAfilika tonga",

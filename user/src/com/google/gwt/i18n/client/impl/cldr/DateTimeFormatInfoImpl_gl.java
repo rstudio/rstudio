@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
+//  type=gl
 
 /**
  * Implementation of DateTimeFormatInfo for the "gl" locale.
@@ -87,7 +87,7 @@ public class DateTimeFormatInfoImpl_gl extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthNumDay() {
-    return "d/M";
+    return "d-M";
   }
 
   @Override
@@ -112,7 +112,7 @@ public class DateTimeFormatInfoImpl_gl extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M-yyyy";
+    return "M-y";
   }
 
   @Override
@@ -122,21 +122,39 @@ public class DateTimeFormatInfoImpl_gl extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, d MMM y";
+    return "EEE, d MMM, y";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ yyyy";
+    return "QQQQ y";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q yyyy";
+    return "Q y";
   }
 
   @Override
   public String[] monthsFull() {
+    return new String[] {
+        "xaneiro",
+        "febreiro",
+        "marzo",
+        "abril",
+        "maio",
+        "xuño",
+        "xullo",
+        "agosto",
+        "setembro",
+        "outubro",
+        "novembro",
+        "decembro"
+    };
+  }
+
+  @Override
+  public String[] monthsFullStandalone() {
     return new String[] {
         "Xaneiro",
         "Febreiro",
@@ -173,6 +191,24 @@ public class DateTimeFormatInfoImpl_gl extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsShort() {
+    return new String[] {
+        "xan",
+        "feb",
+        "mar",
+        "abr",
+        "mai",
+        "xuñ",
+        "xul",
+        "ago",
+        "set",
+        "out",
+        "nov",
+        "dec"
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
     return new String[] {
         "Xan",
         "Feb",
@@ -212,6 +248,19 @@ public class DateTimeFormatInfoImpl_gl extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysFull() {
     return new String[] {
+        "domingo",
+        "luns",
+        "martes",
+        "mércores",
+        "xoves",
+        "venres",
+        "sábado"
+    };
+  }
+
+  @Override
+  public String[] weekdaysFullStandalone() {
+    return new String[] {
         "Domingo",
         "Luns",
         "Martes",
@@ -237,6 +286,19 @@ public class DateTimeFormatInfoImpl_gl extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysShort() {
+    return new String[] {
+        "dom",
+        "lun",
+        "mar",
+        "mér",
+        "xov",
+        "ven",
+        "sáb"
+    };
+  }
+
+  @Override
+  public String[] weekdaysShortStandalone() {
     return new String[] {
         "Dom",
         "Lun",

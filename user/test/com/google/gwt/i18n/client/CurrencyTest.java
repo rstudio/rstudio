@@ -34,10 +34,10 @@ public class CurrencyTest extends GWTTestCase {
     CurrencyData currencyData = new DefaultCurrencyData("CAD", "/", 3);
     NumberFormat format = NumberFormat.getCurrencyFormat(currencyData);
     String formatted = format.format(1.23);
-    assertEquals("1,230\u00A0/", formatted);
+    assertEquals("/1.230", formatted);
     format = NumberFormat.getFormat("#0.0000\u00A4", currencyData);
     formatted = format.format(1234.23);
-    assertEquals("1234,2300/", formatted);
+    assertEquals("1234.2300/", formatted);
   }
 
   public void testIterator() {

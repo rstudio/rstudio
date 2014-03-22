@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9792 $
+//  type=vi
 
 /**
  * Localized names for the "vi" locale.
@@ -39,73 +38,67 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "AR",
-        "AM",
+        "AF",
         "EG",
-        "AZ",
         "IE",
-        "IS",
         "AL",
-        "AD",
         "DZ",
+        "AD",
+        "AO",
         "AI",
         "AG",
         "AT",
-        "AF",
         "SA",
+        "AR",
+        "AM",
         "AW",
-        "AO",
+        "AZ",
         "IN",
-        "BB",
         "BS",
-        "PL",
         "BH",
-        "KP",
-        "GL",
+        "PL",
         "BD",
-        "BM",
+        "BB",
         "BY",
         "BZ",
         "BJ",
+        "BM",
+        "BT",
         "BE",
-        "BL",
-        "PT",
         "BO",
-        "BW",
         "BA",
-        "CI",
-        "BQ",
+        "BW",
+        "PT",
         "BR",
         "BN",
         "BG",
         "BF",
         "BI",
-        "BT",
         "UM",
         "AE",
         "CM",
         "KH",
         "CA",
         "CV",
-        "QA",
+        "BQ",
         "EA",
+        "TD",
         "CL",
         "CO",
         "KM",
         "CG",
         "CD",
+        "CR",
         "DO",
         "CZ",
         "CF",
         "KW",
-        "CR",
+        "CI",
         "HR",
         "CU",
-        "KG",
         "CW",
-        "ZM",
         "DG",
-        "ZW",
+        "DJ",
         "DM",
         "TW",
         "DK",
@@ -113,50 +106,54 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "BV",
         "CP",
         "CX",
-        "GU",
         "HM",
         "IM",
         "NF",
         "AS",
-        "VG",
-        "TL",
+        "HK",
+        "MO",
         "DE",
-        "SV",
-        "EE",
         "EC",
+        "SV",
         "ER",
+        "EE",
         "ET",
+        "FJ",
         "GA",
         "GM",
+        "GE",
         "GH",
+        "GI",
+        "GL",
+        "GD",
+        "GP",
+        "GU",
+        "GT",
+        "GG",
         "GN",
         "GW",
         "GQ",
-        "GI",
-        "DJ",
-        "JO",
-        "GT",
-        "GD",
-        "GE",
-        "GP",
-        "GG",
         "GY",
         "HT",
         "NL",
-        "JM",
         "KR",
         "US",
         "HN",
-        "HK",
         "HU",
         "GR",
+        "IS",
+        "ID",
         "IR",
         "IQ",
         "IL",
+        "JM",
         "JE",
+        "JO",
         "KZ",
         "KE",
         "KI",
+        "XK",
+        "KG",
         "PS",
         "LA",
         "LV",
@@ -168,42 +165,41 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "EU",
         "LT",
         "LU",
-        "MO",
+        "MK",
         "MG",
         "MW",
         "MY",
-        "ML",
         "MV",
+        "ML",
         "MT",
         "MA",
-        "MK",
+        "MQ",
+        "MR",
+        "MU",
+        "YT",
         "MX",
-        "MF",
-        "MM",
         "FM",
+        "MD",
+        "MC",
         "ME",
         "MS",
         "MZ",
-        "MC",
-        "MD",
         "MN",
-        "MR",
-        "MU",
-        "MQ",
+        "MM",
         "AQ",
-        "ID",
         "NA",
         "ZA",
+        "SS",
         "NR",
         "NO",
-        "NC",
         "NP",
+        "NC",
+        "NZ",
         "RU",
         "JP",
         "NI",
         "NE",
         "NG",
-        "NZ",
         "NU",
         "OM",
         "PK",
@@ -214,10 +210,10 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "PE",
         "FR",
         "FI",
-        "FJ",
         "PH",
         "PF",
         "PR",
+        "QA",
         "AX",
         "MP",
         "IC",
@@ -229,75 +225,78 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "MH",
         "GS",
         "PN",
-        "TC",
-        "VI",
         "SB",
+        "TC",
+        "VG",
+        "VI",
         "GF",
         "RE",
-        "RW",
         "RO",
+        "RW",
+        "BL",
         "SH",
+        "KN",
+        "LC",
+        "MF",
         "PM",
-        "TD",
-        "CS",
-        "CY",
-        "SS",
-        "SJ",
+        "VC",
+        "WS",
+        "SM",
+        "ST",
+        "SN",
+        "RS",
+        "SC",
+        "SL",
+        "SG",
         "SX",
-        "TZ",
+        "CY",
+        "SK",
+        "SI",
+        "SO",
+        "LK",
+        "SD",
+        "SR",
+        "SJ",
+        "SZ",
+        "SY",
         "TJ",
+        "TZ",
         "AN",
         "ES",
         "EH",
         "TH",
+        "VA",
         "TR",
         "IO",
         "TF",
         "SE",
         "CH",
-        "TK",
+        "TL",
         "TG",
+        "TK",
         "TO",
+        "KP",
         "TT",
         "TA",
         "CN",
+        "TN",
         "TM",
         "TV",
-        "TN",
         "AU",
-        "UA",
-        "UZ",
         "UG",
+        "UA",
         "UY",
+        "UZ",
         "VU",
-        "VA",
         "VE",
         "VN",
         "QO",
         "GB",
         "WF",
-        "WS",
-        "KN",
-        "LC",
-        "SM",
-        "VC",
-        "ST",
-        "SC",
-        "RS",
-        "SN",
-        "SL",
-        "SG",
-        "SY",
-        "SK",
-        "SI",
-        "SZ",
-        "SO",
-        "LK",
-        "SD",
-        "SR",
         "IT",
         "YE",
-        "YT",
+        "ZM",
+        "ZW",
     };
   }
 
@@ -311,7 +310,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
     namesMap.put("009", "Châu Đại Dương");
     namesMap.put("011", "Tây Phi");
     namesMap.put("013", "Trung Mỹ");
-    namesMap.put("014", "Đông Phí");
+    namesMap.put("014", "Đông Phi");
     namesMap.put("015", "Bắc Phi");
     namesMap.put("017", "Trung Phi");
     namesMap.put("018", "Miền Nam Châu Phi");
@@ -333,235 +332,112 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
     namesMap.put("155", "Tây Âu");
     namesMap.put("419", "Châu Mỹ La-tinh");
     namesMap.put("AC", "Đảo Ascension");
-    namesMap.put("AE", "Các Tiểu Vương quốc A-rập Thống nhất");
-    namesMap.put("AF", "Áp-ga-ni-xtan");
-    namesMap.put("AG", "An-ti-gu-a và Ba-bu-đa");
-    namesMap.put("AL", "An-ba-ni");
-    namesMap.put("AM", "Ác-mê-ni-a");
+    namesMap.put("AE", "Các Tiểu Vương quốc Ả Rập Thống nhất");
+    namesMap.put("AG", "Antigua và Barbuda");
+    namesMap.put("AL", "Albani");
     namesMap.put("AN", "Tây Ấn Hà Lan");
-    namesMap.put("AO", "Ăng-gô-la");
     namesMap.put("AQ", "Nam Cực");
-    namesMap.put("AR", "Ác-hen-ti-na");
     namesMap.put("AS", "Đảo Somoa thuộc Mỹ");
     namesMap.put("AT", "Áo");
     namesMap.put("AU", "Úc");
-    namesMap.put("AX", "Quần đảo Aland");
-    namesMap.put("AZ", "Ai-déc-bai-gian");
-    namesMap.put("BA", "Bô-xni-a Héc-xê-gô-vi-na");
-    namesMap.put("BB", "Bác-ba-đốt");
-    namesMap.put("BD", "Băng-la-đét");
+    namesMap.put("AX", "Quần đảo Åland");
+    namesMap.put("BA", "Bosnia và Herzegovina");
     namesMap.put("BE", "Bỉ");
-    namesMap.put("BF", "Buốc-ki-na Pha-xô");
-    namesMap.put("BG", "Bun-ga-ri");
-    namesMap.put("BH", "Ba-ren");
-    namesMap.put("BI", "Bu-run-đi");
-    namesMap.put("BJ", "Bê-nanh");
-    namesMap.put("BN", "Bru-nây");
-    namesMap.put("BO", "Bô-li-vi-a");
-    namesMap.put("BR", "Bra-xin");
-    namesMap.put("BS", "Ba-ha-ma");
-    namesMap.put("BT", "Bu-tan (Bhutan)");
-    namesMap.put("BV", "Đảo Bouvet (Na Uy)");
-    namesMap.put("BW", "Bốt-xoa-na");
-    namesMap.put("BY", "Bê-la-rút");
-    namesMap.put("BZ", "Bê-li-xê");
-    namesMap.put("CA", "Ca-na-đa");
+    namesMap.put("BG", "Bungari");
+    namesMap.put("BQ", "Caribe Hà Lan");
+    namesMap.put("BV", "Đảo Bouvet");
     namesMap.put("CC", "Quần đảo Cocos");
-    namesMap.put("CD", "Cộng hoà dân chủ Côngô");
+    namesMap.put("CD", "Congo - Kinshasa");
     namesMap.put("CF", "Cộng hòa Trung Phi");
-    namesMap.put("CG", "Công-gô");
+    namesMap.put("CG", "Congo - Brazzaville");
     namesMap.put("CH", "Thụy Sĩ");
-    namesMap.put("CI", "Bờ Biển Ngà");
-    namesMap.put("CK", "Quần Đảo Cook");
-    namesMap.put("CL", "Chi-lê");
-    namesMap.put("CM", "Ca-mơ-run");
+    namesMap.put("CK", "Quần đảo Cook");
     namesMap.put("CN", "Trung Quốc");
-    namesMap.put("CO", "Cô-lôm-bi-a");
     namesMap.put("CP", "Đảo Clipperton");
-    namesMap.put("CR", "Cốt-xta Ri-ca");
-    namesMap.put("CS", "Séc-bia");
-    namesMap.put("CU", "Cu Ba");
-    namesMap.put("CV", "Cáp-ve");
     namesMap.put("CX", "Đảo Giáng Sinh");
     namesMap.put("CY", "Síp");
     namesMap.put("CZ", "Cộng hòa Séc");
     namesMap.put("DE", "Đức");
-    namesMap.put("DJ", "Gi-bu-ti");
     namesMap.put("DK", "Đan Mạch");
-    namesMap.put("DO", "Cộng hoà Đô-mi-ni-ca");
-    namesMap.put("DZ", "An-giê-ri");
+    namesMap.put("DO", "Cộng hòa Dominica");
     namesMap.put("EA", "Ceuta và Melilla");
-    namesMap.put("EC", "Ê-cu-a-đo");
-    namesMap.put("EE", "E-xtô-ni-a");
     namesMap.put("EG", "Ai Cập");
     namesMap.put("EH", "Tây Sahara");
-    namesMap.put("ER", "Ê-ri-tơ-rê-a");
     namesMap.put("ES", "Tây Ban Nha");
-    namesMap.put("ET", "Ê-ti-ô-pi-a");
     namesMap.put("EU", "Liên Minh Châu Âu");
     namesMap.put("FI", "Phần Lan");
-    namesMap.put("FJ", "Phi-gi");
-    namesMap.put("FK", "Quần Đảo Falkland");
-    namesMap.put("FM", "Mi-crô-nê-xi-a");
-    namesMap.put("FO", "Quần Đảo Faroe");
+    namesMap.put("FK", "Quần đảo Falkland");
+    namesMap.put("FO", "Quần đảo Faroe");
     namesMap.put("FR", "Pháp");
-    namesMap.put("GA", "Ga-bông");
     namesMap.put("GB", "Vương quốc Anh");
-    namesMap.put("GD", "Grê-na-đa");
-    namesMap.put("GE", "Gru-di-a");
     namesMap.put("GF", "Quiana thuộc Pháp");
-    namesMap.put("GH", "Gha-na");
-    namesMap.put("GL", "Băng Đảo");
-    namesMap.put("GM", "Găm-bi-a");
-    namesMap.put("GN", "Ghi-nê");
-    namesMap.put("GQ", "Ghi-nê Xích-đạo");
+    namesMap.put("GQ", "Guinea Xích Đạo");
     namesMap.put("GR", "Hy Lạp");
     namesMap.put("GS", "Quần đảo Nam Georgia và Nam Sandwich");
-    namesMap.put("GT", "Goa-tê-ma-la");
-    namesMap.put("GU", "Đảo Gu-am");
-    namesMap.put("GW", "Ghi-nê Bít-xao");
-    namesMap.put("GY", "Guy-a-na");
-    namesMap.put("HK", "Hồng Kông");
+    namesMap.put("HK", "Đặc khu hành chính Hồng Kông - Trung Quốc");
     namesMap.put("HM", "Đảo Heard và Quần đảo McDonald");
-    namesMap.put("HN", "Hôn-đu-rát");
-    namesMap.put("HR", "Crô-a-ti-a");
-    namesMap.put("HT", "Ha-i-ti");
-    namesMap.put("HU", "Hung-ga-ri");
+    namesMap.put("HU", "Hungari");
     namesMap.put("IC", "Quần đảo Canary");
-    namesMap.put("ID", "Nam Dương");
     namesMap.put("IE", "Ai-len");
-    namesMap.put("IL", "I-xra-en");
     namesMap.put("IM", "Đảo Man");
     namesMap.put("IN", "Ấn Độ");
     namesMap.put("IO", "Thuộc địa Anh tại Ấn Độ Dương");
     namesMap.put("IQ", "I-rắc");
-    namesMap.put("IR", "I-ran");
-    namesMap.put("IS", "Ai-xơ-len");
     namesMap.put("IT", "Ý");
-    namesMap.put("JM", "Ha-mai-ca");
-    namesMap.put("JO", "Gióc-đa-ni");
     namesMap.put("JP", "Nhật Bản");
-    namesMap.put("KE", "Kê-ni-a");
-    namesMap.put("KG", "Cư-rơ-gư-xtan");
     namesMap.put("KH", "Campuchia");
-    namesMap.put("KI", "Ki-ri-ba-ti");
-    namesMap.put("KM", "Cô-mô");
-    namesMap.put("KN", "Xan-kít và Nê-vi");
-    namesMap.put("KP", "Bắc Triều Tiên");
+    namesMap.put("KN", "Saint Kitts và Nevis");
+    namesMap.put("KP", "Triều Tiên");
     namesMap.put("KR", "Hàn Quốc");
     namesMap.put("KW", "Cô-oét");
-    namesMap.put("KY", "Quần Đảo Cayman");
-    namesMap.put("KZ", "Ka-dắc-xtan");
+    namesMap.put("KY", "Quần đảo Cayman");
     namesMap.put("LA", "Lào");
     namesMap.put("LB", "Li-băng");
-    namesMap.put("LC", "Xan Lu-xi");
-    namesMap.put("LI", "Lich-ten-xtên");
-    namesMap.put("LK", "Xri Lan-ca");
-    namesMap.put("LR", "Li-bê-ri-a");
-    namesMap.put("LS", "Lê-xô-thô");
-    namesMap.put("LT", "Li-tu-a-ni-a");
-    namesMap.put("LU", "Lúc-xăm-bua");
-    namesMap.put("LV", "Lát-vi-a");
+    namesMap.put("LR", "LIberia");
+    namesMap.put("LT", "Lít-va");
     namesMap.put("LY", "Li-bi");
     namesMap.put("MA", "Ma-rốc");
-    namesMap.put("MC", "Mô-na-cô");
-    namesMap.put("MD", "Môn-đô-va");
-    namesMap.put("MG", "Ma-đa-gát-xca");
-    namesMap.put("MH", "Quần đảo Mác-san");
-    namesMap.put("MK", "Ma-xê-đô-ni-a");
-    namesMap.put("ML", "Ma-li");
-    namesMap.put("MM", "Mi-an-ma");
+    namesMap.put("MH", "Quần đảo Marshall");
+    namesMap.put("MK", "Macedonia");
+    namesMap.put("MM", "Myanmar (Miến Điện)");
     namesMap.put("MN", "Mông Cổ");
-    namesMap.put("MO", "Macao");
-    namesMap.put("MP", "Quần Đảo Bắc Mariana");
-    namesMap.put("MR", "Mô-ri-ta-ni");
-    namesMap.put("MT", "Man-ta");
-    namesMap.put("MU", "Mô-ri-xơ");
-    namesMap.put("MV", "Man-đi-vơ");
-    namesMap.put("MW", "Ma-la-uy");
-    namesMap.put("MX", "Mê-hi-cô");
-    namesMap.put("MY", "Ma-lay-xi-a");
-    namesMap.put("MZ", "Mô-dăm-bích");
-    namesMap.put("NA", "Nam-mi-bi-a");
-    namesMap.put("NE", "Ni-giê");
+    namesMap.put("MO", "Đặc khu hành chính Macao - Trung Quốc");
+    namesMap.put("MP", "Quần đảo Bắc Mariana");
     namesMap.put("NF", "Đảo Norfolk");
-    namesMap.put("NG", "Ni-giê-ri-a");
-    namesMap.put("NI", "Ni-ca-ra-goa");
     namesMap.put("NL", "Hà Lan");
     namesMap.put("NO", "Na Uy");
-    namesMap.put("NP", "Nê-pan");
-    namesMap.put("NZ", "Niu Di-lân");
-    namesMap.put("OM", "Ô-man");
-    namesMap.put("PA", "Pa-na-ma");
-    namesMap.put("PE", "Pê-ru");
     namesMap.put("PF", "Polynesia thuộc Pháp");
-    namesMap.put("PG", "Pa-pu-a Niu Ghi-nê");
-    namesMap.put("PH", "Phi-lip-pin");
-    namesMap.put("PK", "Pa-ki-xtan");
+    namesMap.put("PH", "Philippin");
     namesMap.put("PL", "Ba Lan");
     namesMap.put("PM", "Saint Pierre và Miquelon");
     namesMap.put("PN", "Quần đảo Pitcairn");
     namesMap.put("PS", "Lãnh thổ Palestine");
     namesMap.put("PT", "Bồ Đào Nha");
-    namesMap.put("PY", "Pa-ra-goay");
-    namesMap.put("QA", "Ca-ta");
     namesMap.put("QO", "Vùng xa xôi thuộc Châu Đại Dương");
-    namesMap.put("RO", "Ru-ma-ni");
-    namesMap.put("RS", "Xéc-bi");
     namesMap.put("RU", "Nga");
-    namesMap.put("RW", "Ru-an-đa");
-    namesMap.put("SA", "A-rập Xê-út");
-    namesMap.put("SB", "Quần đảo Xô-lô-mông");
-    namesMap.put("SC", "Xây-sen");
-    namesMap.put("SD", "Xu-đăng");
+    namesMap.put("SA", "Ả Rập Xê-út");
+    namesMap.put("SB", "Quần đảo Solomon");
     namesMap.put("SE", "Thụy Điển");
-    namesMap.put("SG", "Xin-ga-po");
-    namesMap.put("SI", "Xlô-ven-ni-a");
     namesMap.put("SJ", "Svalbard và Jan Mayen");
-    namesMap.put("SK", "Xlô-va-ki-a");
-    namesMap.put("SL", "Xi-ê-ra Lê-ôn");
-    namesMap.put("SM", "Xan Ma-ri-nô");
-    namesMap.put("SN", "Xê-nê-gan");
-    namesMap.put("SO", "Xô-ma-li");
-    namesMap.put("SR", "Xu-ri-nam");
-    namesMap.put("ST", "Xao Tô-mê và Prin-xi-pê");
-    namesMap.put("SV", "En-san-va-đo");
-    namesMap.put("SY", "Xi-ri");
-    namesMap.put("SZ", "Xoa-di-len");
-    namesMap.put("TC", "Quần Đảo Turk và Caicos");
-    namesMap.put("TD", "Sát");
-    namesMap.put("TF", "Thuộc Địa Nam của Pháp");
-    namesMap.put("TG", "Tô-gô");
+    namesMap.put("SO", "Somali");
+    namesMap.put("SS", "Nam Sudan");
+    namesMap.put("ST", "São Tomé và Príncipe");
+    namesMap.put("TC", "Quần đảo Turk và Caicos");
+    namesMap.put("TF", "Thuộc địa Miền Nam của Pháp");
     namesMap.put("TH", "Thái Lan");
-    namesMap.put("TJ", "Tát-gi-ki-xtan");
-    namesMap.put("TL", "Đông Ti-mo");
-    namesMap.put("TM", "Tuốc-mê-ni-xtan");
-    namesMap.put("TN", "Tuy-ni-di");
-    namesMap.put("TO", "Tông-ga");
     namesMap.put("TR", "Thổ Nhĩ Kỳ");
-    namesMap.put("TT", "Tri-ni-đát và Tô-ba-gô");
-    namesMap.put("TV", "Tu-va-lu");
+    namesMap.put("TT", "Trinidad và Tobago");
     namesMap.put("TW", "Đài Loan");
-    namesMap.put("TZ", "Tan-da-ni-a");
-    namesMap.put("UA", "U-crai-na");
-    namesMap.put("UG", "U-gan-đa");
+    namesMap.put("UA", "Ukraina");
     namesMap.put("UM", "Các đảo nhỏ xa trung tâm thuộc Mỹ");
     namesMap.put("US", "Hoa Kỳ");
-    namesMap.put("UY", "U-ru-goay");
-    namesMap.put("UZ", "U-dơ-bê-ki-xtan");
-    namesMap.put("VA", "Va-ti-căng");
-    namesMap.put("VC", "Xan Vin-xen và Grê-na-din");
-    namesMap.put("VE", "Vê-nê-zu-ê-la");
-    namesMap.put("VG", "Đảo Virgin, thuộc Anh");
-    namesMap.put("VI", "Quần đảo Virgin, Mỹ");
+    namesMap.put("VA", "Thành Vatican");
+    namesMap.put("VC", "Saint Vincent và Grenadines");
+    namesMap.put("VG", "Quần đảo Virgin thuộc Anh");
+    namesMap.put("VI", "Quần đảo Virgin thuộc Mỹ");
     namesMap.put("VN", "Việt Nam");
-    namesMap.put("VU", "Va-nu-a-tu");
     namesMap.put("WF", "Wallis và Futuna");
-    namesMap.put("WS", "Xa-moa");
-    namesMap.put("YE", "Y-ê-men");
     namesMap.put("ZA", "Nam Phi");
-    namesMap.put("ZM", "Dăm-bi-a");
-    namesMap.put("ZW", "Dim-ba-bu-ê");
     namesMap.put("ZZ", "Vùng Chưa biết hoặc không Hợp lệ");
   }
 
@@ -579,7 +455,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "009": "Châu Đại Dương",
         "011": "Tây Phi",
         "013": "Trung Mỹ",
-        "014": "Đông Phí",
+        "014": "Đông Phi",
         "015": "Bắc Phi",
         "017": "Trung Phi",
         "018": "Miền Nam Châu Phi",
@@ -601,235 +477,112 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "155": "Tây Âu",
         "419": "Châu Mỹ La-tinh",
         "AC": "Đảo Ascension",
-        "AE": "Các Tiểu Vương quốc A-rập Thống nhất",
-        "AF": "Áp-ga-ni-xtan",
-        "AG": "An-ti-gu-a và Ba-bu-đa",
-        "AL": "An-ba-ni",
-        "AM": "Ác-mê-ni-a",
+        "AE": "Các Tiểu Vương quốc Ả Rập Thống nhất",
+        "AG": "Antigua và Barbuda",
+        "AL": "Albani",
         "AN": "Tây Ấn Hà Lan",
-        "AO": "Ăng-gô-la",
         "AQ": "Nam Cực",
-        "AR": "Ác-hen-ti-na",
         "AS": "Đảo Somoa thuộc Mỹ",
         "AT": "Áo",
         "AU": "Úc",
-        "AX": "Quần đảo Aland",
-        "AZ": "Ai-déc-bai-gian",
-        "BA": "Bô-xni-a Héc-xê-gô-vi-na",
-        "BB": "Bác-ba-đốt",
-        "BD": "Băng-la-đét",
+        "AX": "Quần đảo Åland",
+        "BA": "Bosnia và Herzegovina",
         "BE": "Bỉ",
-        "BF": "Buốc-ki-na Pha-xô",
-        "BG": "Bun-ga-ri",
-        "BH": "Ba-ren",
-        "BI": "Bu-run-đi",
-        "BJ": "Bê-nanh",
-        "BN": "Bru-nây",
-        "BO": "Bô-li-vi-a",
-        "BR": "Bra-xin",
-        "BS": "Ba-ha-ma",
-        "BT": "Bu-tan (Bhutan)",
-        "BV": "Đảo Bouvet (Na Uy)",
-        "BW": "Bốt-xoa-na",
-        "BY": "Bê-la-rút",
-        "BZ": "Bê-li-xê",
-        "CA": "Ca-na-đa",
+        "BG": "Bungari",
+        "BQ": "Caribe Hà Lan",
+        "BV": "Đảo Bouvet",
         "CC": "Quần đảo Cocos",
-        "CD": "Cộng hoà dân chủ Côngô",
+        "CD": "Congo - Kinshasa",
         "CF": "Cộng hòa Trung Phi",
-        "CG": "Công-gô",
+        "CG": "Congo - Brazzaville",
         "CH": "Thụy Sĩ",
-        "CI": "Bờ Biển Ngà",
-        "CK": "Quần Đảo Cook",
-        "CL": "Chi-lê",
-        "CM": "Ca-mơ-run",
+        "CK": "Quần đảo Cook",
         "CN": "Trung Quốc",
-        "CO": "Cô-lôm-bi-a",
         "CP": "Đảo Clipperton",
-        "CR": "Cốt-xta Ri-ca",
-        "CS": "Séc-bia",
-        "CU": "Cu Ba",
-        "CV": "Cáp-ve",
         "CX": "Đảo Giáng Sinh",
         "CY": "Síp",
         "CZ": "Cộng hòa Séc",
         "DE": "Đức",
-        "DJ": "Gi-bu-ti",
         "DK": "Đan Mạch",
-        "DO": "Cộng hoà Đô-mi-ni-ca",
-        "DZ": "An-giê-ri",
+        "DO": "Cộng hòa Dominica",
         "EA": "Ceuta và Melilla",
-        "EC": "Ê-cu-a-đo",
-        "EE": "E-xtô-ni-a",
         "EG": "Ai Cập",
         "EH": "Tây Sahara",
-        "ER": "Ê-ri-tơ-rê-a",
         "ES": "Tây Ban Nha",
-        "ET": "Ê-ti-ô-pi-a",
         "EU": "Liên Minh Châu Âu",
         "FI": "Phần Lan",
-        "FJ": "Phi-gi",
-        "FK": "Quần Đảo Falkland",
-        "FM": "Mi-crô-nê-xi-a",
-        "FO": "Quần Đảo Faroe",
+        "FK": "Quần đảo Falkland",
+        "FO": "Quần đảo Faroe",
         "FR": "Pháp",
-        "GA": "Ga-bông",
         "GB": "Vương quốc Anh",
-        "GD": "Grê-na-đa",
-        "GE": "Gru-di-a",
         "GF": "Quiana thuộc Pháp",
-        "GH": "Gha-na",
-        "GL": "Băng Đảo",
-        "GM": "Găm-bi-a",
-        "GN": "Ghi-nê",
-        "GQ": "Ghi-nê Xích-đạo",
+        "GQ": "Guinea Xích Đạo",
         "GR": "Hy Lạp",
         "GS": "Quần đảo Nam Georgia và Nam Sandwich",
-        "GT": "Goa-tê-ma-la",
-        "GU": "Đảo Gu-am",
-        "GW": "Ghi-nê Bít-xao",
-        "GY": "Guy-a-na",
-        "HK": "Hồng Kông",
+        "HK": "Đặc khu hành chính Hồng Kông - Trung Quốc",
         "HM": "Đảo Heard và Quần đảo McDonald",
-        "HN": "Hôn-đu-rát",
-        "HR": "Crô-a-ti-a",
-        "HT": "Ha-i-ti",
-        "HU": "Hung-ga-ri",
+        "HU": "Hungari",
         "IC": "Quần đảo Canary",
-        "ID": "Nam Dương",
         "IE": "Ai-len",
-        "IL": "I-xra-en",
         "IM": "Đảo Man",
         "IN": "Ấn Độ",
         "IO": "Thuộc địa Anh tại Ấn Độ Dương",
         "IQ": "I-rắc",
-        "IR": "I-ran",
-        "IS": "Ai-xơ-len",
         "IT": "Ý",
-        "JM": "Ha-mai-ca",
-        "JO": "Gióc-đa-ni",
         "JP": "Nhật Bản",
-        "KE": "Kê-ni-a",
-        "KG": "Cư-rơ-gư-xtan",
         "KH": "Campuchia",
-        "KI": "Ki-ri-ba-ti",
-        "KM": "Cô-mô",
-        "KN": "Xan-kít và Nê-vi",
-        "KP": "Bắc Triều Tiên",
+        "KN": "Saint Kitts và Nevis",
+        "KP": "Triều Tiên",
         "KR": "Hàn Quốc",
         "KW": "Cô-oét",
-        "KY": "Quần Đảo Cayman",
-        "KZ": "Ka-dắc-xtan",
+        "KY": "Quần đảo Cayman",
         "LA": "Lào",
         "LB": "Li-băng",
-        "LC": "Xan Lu-xi",
-        "LI": "Lich-ten-xtên",
-        "LK": "Xri Lan-ca",
-        "LR": "Li-bê-ri-a",
-        "LS": "Lê-xô-thô",
-        "LT": "Li-tu-a-ni-a",
-        "LU": "Lúc-xăm-bua",
-        "LV": "Lát-vi-a",
+        "LR": "LIberia",
+        "LT": "Lít-va",
         "LY": "Li-bi",
         "MA": "Ma-rốc",
-        "MC": "Mô-na-cô",
-        "MD": "Môn-đô-va",
-        "MG": "Ma-đa-gát-xca",
-        "MH": "Quần đảo Mác-san",
-        "MK": "Ma-xê-đô-ni-a",
-        "ML": "Ma-li",
-        "MM": "Mi-an-ma",
+        "MH": "Quần đảo Marshall",
+        "MK": "Macedonia",
+        "MM": "Myanmar (Miến Điện)",
         "MN": "Mông Cổ",
-        "MO": "Macao",
-        "MP": "Quần Đảo Bắc Mariana",
-        "MR": "Mô-ri-ta-ni",
-        "MT": "Man-ta",
-        "MU": "Mô-ri-xơ",
-        "MV": "Man-đi-vơ",
-        "MW": "Ma-la-uy",
-        "MX": "Mê-hi-cô",
-        "MY": "Ma-lay-xi-a",
-        "MZ": "Mô-dăm-bích",
-        "NA": "Nam-mi-bi-a",
-        "NE": "Ni-giê",
+        "MO": "Đặc khu hành chính Macao - Trung Quốc",
+        "MP": "Quần đảo Bắc Mariana",
         "NF": "Đảo Norfolk",
-        "NG": "Ni-giê-ri-a",
-        "NI": "Ni-ca-ra-goa",
         "NL": "Hà Lan",
         "NO": "Na Uy",
-        "NP": "Nê-pan",
-        "NZ": "Niu Di-lân",
-        "OM": "Ô-man",
-        "PA": "Pa-na-ma",
-        "PE": "Pê-ru",
         "PF": "Polynesia thuộc Pháp",
-        "PG": "Pa-pu-a Niu Ghi-nê",
-        "PH": "Phi-lip-pin",
-        "PK": "Pa-ki-xtan",
+        "PH": "Philippin",
         "PL": "Ba Lan",
         "PM": "Saint Pierre và Miquelon",
         "PN": "Quần đảo Pitcairn",
         "PS": "Lãnh thổ Palestine",
         "PT": "Bồ Đào Nha",
-        "PY": "Pa-ra-goay",
-        "QA": "Ca-ta",
         "QO": "Vùng xa xôi thuộc Châu Đại Dương",
-        "RO": "Ru-ma-ni",
-        "RS": "Xéc-bi",
         "RU": "Nga",
-        "RW": "Ru-an-đa",
-        "SA": "A-rập Xê-út",
-        "SB": "Quần đảo Xô-lô-mông",
-        "SC": "Xây-sen",
-        "SD": "Xu-đăng",
+        "SA": "Ả Rập Xê-út",
+        "SB": "Quần đảo Solomon",
         "SE": "Thụy Điển",
-        "SG": "Xin-ga-po",
-        "SI": "Xlô-ven-ni-a",
         "SJ": "Svalbard và Jan Mayen",
-        "SK": "Xlô-va-ki-a",
-        "SL": "Xi-ê-ra Lê-ôn",
-        "SM": "Xan Ma-ri-nô",
-        "SN": "Xê-nê-gan",
-        "SO": "Xô-ma-li",
-        "SR": "Xu-ri-nam",
-        "ST": "Xao Tô-mê và Prin-xi-pê",
-        "SV": "En-san-va-đo",
-        "SY": "Xi-ri",
-        "SZ": "Xoa-di-len",
-        "TC": "Quần Đảo Turk và Caicos",
-        "TD": "Sát",
-        "TF": "Thuộc Địa Nam của Pháp",
-        "TG": "Tô-gô",
+        "SO": "Somali",
+        "SS": "Nam Sudan",
+        "ST": "São Tomé và Príncipe",
+        "TC": "Quần đảo Turk và Caicos",
+        "TF": "Thuộc địa Miền Nam của Pháp",
         "TH": "Thái Lan",
-        "TJ": "Tát-gi-ki-xtan",
-        "TL": "Đông Ti-mo",
-        "TM": "Tuốc-mê-ni-xtan",
-        "TN": "Tuy-ni-di",
-        "TO": "Tông-ga",
         "TR": "Thổ Nhĩ Kỳ",
-        "TT": "Tri-ni-đát và Tô-ba-gô",
-        "TV": "Tu-va-lu",
+        "TT": "Trinidad và Tobago",
         "TW": "Đài Loan",
-        "TZ": "Tan-da-ni-a",
-        "UA": "U-crai-na",
-        "UG": "U-gan-đa",
+        "UA": "Ukraina",
         "UM": "Các đảo nhỏ xa trung tâm thuộc Mỹ",
         "US": "Hoa Kỳ",
-        "UY": "U-ru-goay",
-        "UZ": "U-dơ-bê-ki-xtan",
-        "VA": "Va-ti-căng",
-        "VC": "Xan Vin-xen và Grê-na-din",
-        "VE": "Vê-nê-zu-ê-la",
-        "VG": "Đảo Virgin, thuộc Anh",
-        "VI": "Quần đảo Virgin, Mỹ",
+        "VA": "Thành Vatican",
+        "VC": "Saint Vincent và Grenadines",
+        "VG": "Quần đảo Virgin thuộc Anh",
+        "VI": "Quần đảo Virgin thuộc Mỹ",
         "VN": "Việt Nam",
-        "VU": "Va-nu-a-tu",
         "WF": "Wallis và Futuna",
-        "WS": "Xa-moa",
-        "YE": "Y-ê-men",
         "ZA": "Nam Phi",
-        "ZM": "Dăm-bi-a",
-        "ZW": "Dim-ba-bu-ê",
         "ZZ": "Vùng Chưa biết hoặc không Hợp lệ"
     };
   }-*/;

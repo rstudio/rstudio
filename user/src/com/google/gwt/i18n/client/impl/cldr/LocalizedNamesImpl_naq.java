@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
 //  type=root
-
 
 /**
  * Localized names for the "naq" locale.
@@ -239,7 +238,6 @@ public class LocalizedNamesImpl_naq extends LocalizedNamesImpl {
         "ST",
         "SA",
         "SN",
-        "CS",
         "SC",
         "SL",
         "SG",
@@ -287,6 +285,7 @@ public class LocalizedNamesImpl_naq extends LocalizedNamesImpl {
         "VE",
         "VN",
         "WF",
+        "XK",
         "GR",
         "YE",
         "ZM",
@@ -332,7 +331,6 @@ public class LocalizedNamesImpl_naq extends LocalizedNamesImpl {
     namesMap.put("CM", "Cameroonni");
     namesMap.put("CN", "Chinab");
     namesMap.put("CO", "Colombiab");
-    namesMap.put("CS", "Serbiab tsî Montenegrob");
     namesMap.put("CU", "Cubab");
     namesMap.put("CV", "Cape Verde Islands");
     namesMap.put("CZ", "Czech Republiki");
@@ -429,6 +427,7 @@ public class LocalizedNamesImpl_naq extends LocalizedNamesImpl {
     namesMap.put("US", "Amerikab");
     namesMap.put("UY", "Uruguaib");
     namesMap.put("VA", "Vatican State");
+    namesMap.put("VC", "Saint Vincent and the Grenadines");
     namesMap.put("VE", "Venezuelab");
     namesMap.put("VN", "Vietnammi");
     namesMap.put("ZA", "Suid Afrikab");
@@ -478,7 +477,6 @@ public class LocalizedNamesImpl_naq extends LocalizedNamesImpl {
         "CM": "Cameroonni",
         "CN": "Chinab",
         "CO": "Colombiab",
-        "CS": "Serbiab tsî Montenegrob",
         "CU": "Cubab",
         "CV": "Cape Verde Islands",
         "CZ": "Czech Republiki",
@@ -575,6 +573,7 @@ public class LocalizedNamesImpl_naq extends LocalizedNamesImpl {
         "US": "Amerikab",
         "UY": "Uruguaib",
         "VA": "Vatican State",
+        "VC": "Saint Vincent and the Grenadines",
         "VE": "Venezuelab",
         "VN": "Vietnammi",
         "ZA": "Suid Afrikab",

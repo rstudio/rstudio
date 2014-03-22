@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=es
+//  cldrVersion=25
+//  date=$Date: 2014-01-09 06:02:40 +0100 (Thu, 09 Jan 2014) $
+//  number=$Revision: 9624 $
+//  type=419
 
 /**
  * Implementation of DateTimeFormatInfo for the "es_419" locale.
@@ -29,18 +29,5 @@ public class DateTimeFormatInfoImpl_es_419 extends DateTimeFormatInfoImpl_es {
   @Override
   public int firstDayOfTheWeek() {
     return 1;
-  }
-
-  @Override
-  public String[] weekdaysNarrow() {
-    return new String[] {
-        "D",
-        "L",
-        "M",
-        "M",
-        "J",
-        "V",
-        "S"
-    };
   }
 }

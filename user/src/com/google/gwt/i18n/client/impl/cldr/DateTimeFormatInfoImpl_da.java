@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,15 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=da
 
 /**
  * Implementation of DateTimeFormatInfo for the "da" locale.
  */
 public class DateTimeFormatInfoImpl_da extends DateTimeFormatInfoImpl {
-
-  @Override
-  public String[] ampms() {
-    return new String[] {
-        "f.m.",
-        "e.m."
-    };
-  }
 
   @Override
   public String dateFormatFull() {
@@ -46,12 +38,22 @@ public class DateTimeFormatInfoImpl_da extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatMedium() {
-    return "dd/MM/yyyy";
+    return "dd/MM/y";
   }
 
   @Override
   public String dateFormatShort() {
     return "dd/MM/yy";
+  }
+
+  @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return datePattern + " 'kl.' " + timePattern;
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return datePattern + " 'kl.' " + timePattern;
   }
 
   @Override
@@ -122,7 +124,7 @@ public class DateTimeFormatInfoImpl_da extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, d. MMMM";
+    return "EEEE d. MMMM";
   }
 
   @Override
@@ -162,17 +164,17 @@ public class DateTimeFormatInfoImpl_da extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE. d. MMM y";
+    return "EEE d. MMM y";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ yyyy";
+    return "QQQQ y";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q yyyy";
+    return "Q y";
   }
 
   @Override
@@ -297,6 +299,19 @@ public class DateTimeFormatInfoImpl_da extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysShort() {
+    return new String[] {
+        "søn.",
+        "man.",
+        "tir.",
+        "ons.",
+        "tor.",
+        "fre.",
+        "lør."
+    };
+  }
+
+  @Override
+  public String[] weekdaysShortStandalone() {
     return new String[] {
         "søn",
         "man",

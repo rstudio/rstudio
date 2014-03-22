@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "eu" locale.
@@ -40,6 +39,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "DZ",
         "AS",
         "US",
+        "UM",
         "AD",
         "AI",
         "AO",
@@ -65,13 +65,11 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "BY",
         "VI",
         "VG",
-        "MM",
-        "BO",
         "CI",
+        "BO",
         "BA",
         "BW",
         "BV",
-        "BQ",
         "BR",
         "BN",
         "BG",
@@ -80,10 +78,10 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "CV",
         "EA",
         "CX",
+        "CP",
         "CC",
         "CK",
         "CR",
-        "CP",
         "CW",
         "DK",
         "DG",
@@ -102,7 +100,6 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "SK",
         "SI",
         "ES",
-        "UM",
         "EE",
         "ET",
         "EU",
@@ -111,7 +108,6 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "PH",
         "FI",
         "FR",
-        "TF",
         "GA",
         "GM",
         "GE",
@@ -132,11 +128,13 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "HM",
         "ZA",
         "GS",
+        "TF",
         "KR",
+        "SS",
         "NL",
-        "HK",
         "AN",
         "HN",
+        "HK",
         "HU",
         "IN",
         "IO",
@@ -159,7 +157,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "CA",
         "IC",
         "KH",
-        "QA",
+        "BQ",
         "KZ",
         "KE",
         "KG",
@@ -168,6 +166,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "KM",
         "CG",
         "CD",
+        "XK",
         "HR",
         "CU",
         "KW",
@@ -180,10 +179,10 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "LI",
         "LT",
         "LU",
-        "MG",
         "MO",
-        "MY",
+        "MG",
         "MW",
+        "MY",
         "MV",
         "ML",
         "MT",
@@ -206,6 +205,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "MS",
         "MZ",
         "QO",
+        "MM",
         "NA",
         "NR",
         "NP",
@@ -228,6 +228,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "PL",
         "PT",
         "PR",
+        "QA",
         "RE",
         "RW",
         "SH",
@@ -244,30 +245,28 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "SA",
         "SN",
         "RS",
-        "CS",
         "SC",
         "SL",
         "SG",
+        "SX",
         "SY",
         "SO",
         "LK",
-        "SS",
         "SD",
         "SE",
         "CH",
         "SR",
         "SJ",
         "SZ",
-        "SX",
-        "TA",
         "TJ",
-        "TH",
         "TW",
         "TZ",
+        "TH",
         "TG",
         "TK",
         "TO",
         "TT",
+        "TA",
         "TN",
         "TC",
         "TR",
@@ -315,8 +314,6 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("034", "Asia hegoaldea");
     namesMap.put("035", "Asia hego-ekialdea");
     namesMap.put("039", "Europa hegoaldea");
-    namesMap.put("053", "Australia eta Zeelanda Berria");
-    namesMap.put("054", "Melanesiera");
     namesMap.put("057", "Mikronesia eskualdea");
     namesMap.put("061", "Polinesia");
     namesMap.put("143", "Asia erdialdea");
@@ -326,7 +323,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("154", "Europa iparraldea");
     namesMap.put("155", "Europa mendebaldea");
     namesMap.put("419", "Latinoamerika");
-    namesMap.put("AC", "Ascension Uhartea");
+    namesMap.put("AC", "Ascension uhartea");
     namesMap.put("AE", "Arabiar Emirrerri Batuak");
     namesMap.put("AF", "Afganistan");
     namesMap.put("AG", "Antigua eta Barbuda");
@@ -334,20 +331,20 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("AN", "Holandarren Antillak");
     namesMap.put("AQ", "Antartika");
     namesMap.put("AS", "Amerikar Samoa");
-    namesMap.put("AX", "Aland Uharteak");
+    namesMap.put("AX", "Aland uharteak");
     namesMap.put("BA", "Bosnia-Herzegovina");
     namesMap.put("BE", "Belgika");
     namesMap.put("BL", "San Bartolome");
-    namesMap.put("BO", "Bolibia");
+    namesMap.put("BQ", "Karibeko Herbehereak");
     namesMap.put("BR", "Brasil");
     namesMap.put("BS", "Bahamak");
     namesMap.put("BV", "Bouvet Uhartea");
     namesMap.put("BY", "Bielorrusia");
     namesMap.put("CA", "Kanada");
-    namesMap.put("CC", "Cocos uharteak");
+    namesMap.put("CC", "Cocos (Keeling) uharteak");
     namesMap.put("CD", "Kongoko Errepublika Demokratikoa");
     namesMap.put("CF", "Afrika Erdiko Errepublika");
-    namesMap.put("CG", "Kongo");
+    namesMap.put("CG", "Kongo (Brazzaville)");
     namesMap.put("CH", "Suitza");
     namesMap.put("CI", "Boli Kosta");
     namesMap.put("CK", "Cook uharteak");
@@ -355,12 +352,12 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("CM", "Kamerun");
     namesMap.put("CN", "Txina");
     namesMap.put("CO", "Kolonbia");
-    namesMap.put("CS", "Serbia eta Montenegro");
+    namesMap.put("CP", "Clipperton uhartea");
     namesMap.put("CU", "Kuba");
     namesMap.put("CV", "Cabo Verde");
     namesMap.put("CX", "Christmas uhartea");
     namesMap.put("CY", "Zipre");
-    namesMap.put("CZ", "Txekiar errepublika");
+    namesMap.put("CZ", "Txekiar Errepublika");
     namesMap.put("DE", "Alemania");
     namesMap.put("DJ", "Djibuti");
     namesMap.put("DK", "Danimarka");
@@ -377,7 +374,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("FI", "Finlandia");
     namesMap.put("FK", "Malvinak");
     namesMap.put("FM", "Mikronesia");
-    namesMap.put("FO", "Faroe Uharteak");
+    namesMap.put("FO", "Faroe uharteak");
     namesMap.put("FR", "Frantzia");
     namesMap.put("GB", "Erresuma Batua");
     namesMap.put("GF", "Guyana Frantsesa");
@@ -388,27 +385,27 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("GR", "Grezia");
     namesMap.put("GS", "Hegoaldeko Georgia eta Hegoaldeko Sandwich uharteak");
     namesMap.put("GW", "Ginea-Bissau");
-    namesMap.put("HM", "Heard eta McDonald Uharteak");
+    namesMap.put("HK", "Hong Kong AEB Txina");
+    namesMap.put("HM", "Heard eta McDonald uharteak");
     namesMap.put("HR", "Kroazia");
     namesMap.put("HU", "Hungaria");
     namesMap.put("IC", "Kanariak");
     namesMap.put("IE", "Irlanda");
     namesMap.put("IM", "Man uhartea");
-    namesMap.put("IO", "Indiako Ozeanoko Britainiar Lurraldea");
+    namesMap.put("IO", "Indiako Ozeanoko lurralde britainiarra");
     namesMap.put("IQ", "Irak");
     namesMap.put("IS", "Islandia");
     namesMap.put("IT", "Italia");
     namesMap.put("JM", "Jamaika");
     namesMap.put("JO", "Jordania");
     namesMap.put("JP", "Japonia");
-    namesMap.put("KE", "Kenia");
     namesMap.put("KG", "Kirgizistan");
     namesMap.put("KH", "Kanbodia");
     namesMap.put("KM", "Komoreak");
     namesMap.put("KN", "Saint Kitts eta Nevis");
     namesMap.put("KP", "Ipar Korea");
     namesMap.put("KR", "Hego Korea");
-    namesMap.put("KY", "Kaiman Uharteak");
+    namesMap.put("KY", "Kaiman uharteak");
     namesMap.put("LB", "Libano");
     namesMap.put("LC", "Santa Luzia");
     namesMap.put("LT", "Lituania");
@@ -421,14 +418,13 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("MG", "Madagaskar");
     namesMap.put("MH", "Marshall uharteak");
     namesMap.put("MK", "Mazedonia");
-    namesMap.put("MM", "Birmania");
-    namesMap.put("MO", "Makau");
+    namesMap.put("MM", "Myanmar");
+    namesMap.put("MO", "Macau AEB Txina");
     namesMap.put("MP", "Iparraldeko Mariana uharteak");
     namesMap.put("MQ", "Martinika");
     namesMap.put("MU", "Maurizio");
     namesMap.put("MV", "Maldivak");
     namesMap.put("MX", "Mexiko");
-    namesMap.put("MY", "Malasia");
     namesMap.put("MZ", "Mozambike");
     namesMap.put("NC", "Kaledonia Berria");
     namesMap.put("NF", "Norfolk uhartea");
@@ -442,9 +438,8 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("PL", "Polonia");
     namesMap.put("PM", "Saint-Pierre eta Mikelune");
     namesMap.put("PN", "Pitcairn uharteak");
-    namesMap.put("PS", "Palestina");
+    namesMap.put("PS", "Palestinako Lurraldeak");
     namesMap.put("PY", "Paraguai");
-    namesMap.put("QA", "Katar");
     namesMap.put("QO", "Mugaz kanpoko Ozeania");
     namesMap.put("RE", "Reunion");
     namesMap.put("RO", "Errumania");
@@ -459,19 +454,20 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("SK", "Eslovakia");
     namesMap.put("SL", "Sierra Leona");
     namesMap.put("SR", "Surinam");
+    namesMap.put("SS", "Hego Sudan");
     namesMap.put("ST", "Sao Tome eta Principe");
     namesMap.put("SY", "Siria");
     namesMap.put("SZ", "Swazilandia");
     namesMap.put("TC", "Turk eta Caicos uharteak");
     namesMap.put("TD", "Txad");
-    namesMap.put("TF", "Frantziaren Lurralde Australak");
-    namesMap.put("TH", "Tailandia");
+    namesMap.put("TF", "Hegoaldeko lurralde frantsesak");
+    namesMap.put("TH", "Thailandia");
     namesMap.put("TJ", "Tadjikistan");
     namesMap.put("TL", "Ekialdeko Timor");
     namesMap.put("TR", "Turkia");
     namesMap.put("TT", "Trinidad eta Tobago");
     namesMap.put("UA", "Ukraina");
-    namesMap.put("UM", "Estatu Batuetatik urruti dauden uharte txikiak");
+    namesMap.put("UM", "Ameriketako Estatu Batuetako Kanpoaldeko Uharte Txikiak");
     namesMap.put("US", "Ameriketako Estatu Batuak");
     namesMap.put("UY", "Uruguai");
     namesMap.put("VA", "Vatikano Hiria");
@@ -480,6 +476,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
     namesMap.put("VI", "Birjina uharte amerikarrak");
     namesMap.put("WF", "Wallis eta Futuna");
     namesMap.put("ZA", "Hegoafrika");
+    namesMap.put("ZZ", "Eskualde ezezaguna");
   }
 
   @Override
@@ -507,8 +504,6 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "034": "Asia hegoaldea",
         "035": "Asia hego-ekialdea",
         "039": "Europa hegoaldea",
-        "053": "Australia eta Zeelanda Berria",
-        "054": "Melanesiera",
         "057": "Mikronesia eskualdea",
         "061": "Polinesia",
         "143": "Asia erdialdea",
@@ -518,7 +513,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "154": "Europa iparraldea",
         "155": "Europa mendebaldea",
         "419": "Latinoamerika",
-        "AC": "Ascension Uhartea",
+        "AC": "Ascension uhartea",
         "AE": "Arabiar Emirrerri Batuak",
         "AF": "Afganistan",
         "AG": "Antigua eta Barbuda",
@@ -526,20 +521,20 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "AN": "Holandarren Antillak",
         "AQ": "Antartika",
         "AS": "Amerikar Samoa",
-        "AX": "Aland Uharteak",
+        "AX": "Aland uharteak",
         "BA": "Bosnia-Herzegovina",
         "BE": "Belgika",
         "BL": "San Bartolome",
-        "BO": "Bolibia",
+        "BQ": "Karibeko Herbehereak",
         "BR": "Brasil",
         "BS": "Bahamak",
         "BV": "Bouvet Uhartea",
         "BY": "Bielorrusia",
         "CA": "Kanada",
-        "CC": "Cocos uharteak",
+        "CC": "Cocos (Keeling) uharteak",
         "CD": "Kongoko Errepublika Demokratikoa",
         "CF": "Afrika Erdiko Errepublika",
-        "CG": "Kongo",
+        "CG": "Kongo (Brazzaville)",
         "CH": "Suitza",
         "CI": "Boli Kosta",
         "CK": "Cook uharteak",
@@ -547,12 +542,12 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "CM": "Kamerun",
         "CN": "Txina",
         "CO": "Kolonbia",
-        "CS": "Serbia eta Montenegro",
+        "CP": "Clipperton uhartea",
         "CU": "Kuba",
         "CV": "Cabo Verde",
         "CX": "Christmas uhartea",
         "CY": "Zipre",
-        "CZ": "Txekiar errepublika",
+        "CZ": "Txekiar Errepublika",
         "DE": "Alemania",
         "DJ": "Djibuti",
         "DK": "Danimarka",
@@ -569,7 +564,7 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "FI": "Finlandia",
         "FK": "Malvinak",
         "FM": "Mikronesia",
-        "FO": "Faroe Uharteak",
+        "FO": "Faroe uharteak",
         "FR": "Frantzia",
         "GB": "Erresuma Batua",
         "GF": "Guyana Frantsesa",
@@ -580,27 +575,27 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "GR": "Grezia",
         "GS": "Hegoaldeko Georgia eta Hegoaldeko Sandwich uharteak",
         "GW": "Ginea-Bissau",
-        "HM": "Heard eta McDonald Uharteak",
+        "HK": "Hong Kong AEB Txina",
+        "HM": "Heard eta McDonald uharteak",
         "HR": "Kroazia",
         "HU": "Hungaria",
         "IC": "Kanariak",
         "IE": "Irlanda",
         "IM": "Man uhartea",
-        "IO": "Indiako Ozeanoko Britainiar Lurraldea",
+        "IO": "Indiako Ozeanoko lurralde britainiarra",
         "IQ": "Irak",
         "IS": "Islandia",
         "IT": "Italia",
         "JM": "Jamaika",
         "JO": "Jordania",
         "JP": "Japonia",
-        "KE": "Kenia",
         "KG": "Kirgizistan",
         "KH": "Kanbodia",
         "KM": "Komoreak",
         "KN": "Saint Kitts eta Nevis",
         "KP": "Ipar Korea",
         "KR": "Hego Korea",
-        "KY": "Kaiman Uharteak",
+        "KY": "Kaiman uharteak",
         "LB": "Libano",
         "LC": "Santa Luzia",
         "LT": "Lituania",
@@ -613,14 +608,13 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "MG": "Madagaskar",
         "MH": "Marshall uharteak",
         "MK": "Mazedonia",
-        "MM": "Birmania",
-        "MO": "Makau",
+        "MM": "Myanmar",
+        "MO": "Macau AEB Txina",
         "MP": "Iparraldeko Mariana uharteak",
         "MQ": "Martinika",
         "MU": "Maurizio",
         "MV": "Maldivak",
         "MX": "Mexiko",
-        "MY": "Malasia",
         "MZ": "Mozambike",
         "NC": "Kaledonia Berria",
         "NF": "Norfolk uhartea",
@@ -634,9 +628,8 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "PL": "Polonia",
         "PM": "Saint-Pierre eta Mikelune",
         "PN": "Pitcairn uharteak",
-        "PS": "Palestina",
+        "PS": "Palestinako Lurraldeak",
         "PY": "Paraguai",
-        "QA": "Katar",
         "QO": "Mugaz kanpoko Ozeania",
         "RE": "Reunion",
         "RO": "Errumania",
@@ -651,19 +644,20 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "SK": "Eslovakia",
         "SL": "Sierra Leona",
         "SR": "Surinam",
+        "SS": "Hego Sudan",
         "ST": "Sao Tome eta Principe",
         "SY": "Siria",
         "SZ": "Swazilandia",
         "TC": "Turk eta Caicos uharteak",
         "TD": "Txad",
-        "TF": "Frantziaren Lurralde Australak",
-        "TH": "Tailandia",
+        "TF": "Hegoaldeko lurralde frantsesak",
+        "TH": "Thailandia",
         "TJ": "Tadjikistan",
         "TL": "Ekialdeko Timor",
         "TR": "Turkia",
         "TT": "Trinidad eta Tobago",
         "UA": "Ukraina",
-        "UM": "Estatu Batuetatik urruti dauden uharte txikiak",
+        "UM": "Ameriketako Estatu Batuetako Kanpoaldeko Uharte Txikiak",
         "US": "Ameriketako Estatu Batuak",
         "UY": "Uruguai",
         "VA": "Vatikano Hiria",
@@ -671,7 +665,8 @@ public class LocalizedNamesImpl_eu extends LocalizedNamesImpl {
         "VG": "Birjina uharte britainiarrak",
         "VI": "Birjina uharte amerikarrak",
         "WF": "Wallis eta Futuna",
-        "ZA": "Hegoafrika"
+        "ZA": "Hegoafrika",
+        "ZZ": "Eskualde ezezaguna"
     };
   }-*/;
 }

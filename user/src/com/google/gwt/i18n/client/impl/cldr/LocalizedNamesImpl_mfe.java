@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6450 $
-//  type=mfe
-//  date=$Date: 2012-01-25 19:20:54 -0500 (Wed, 25 Jan 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+//  number=$Revision: 9728 $
+//  type=root
 
 /**
  * Localized names for the "mfe" locale.
@@ -233,7 +232,6 @@ public class LocalizedNamesImpl_mfe extends LocalizedNamesImpl {
         "AS",
         "ST",
         "SN",
-        "CS",
         "SC",
         "CL",
         "ZA",
@@ -274,6 +272,7 @@ public class LocalizedNamesImpl_mfe extends LocalizedNamesImpl {
         "VE",
         "VN",
         "WF",
+        "XK",
         "YE",
         "JM",
         "ZM",
@@ -332,7 +331,6 @@ public class LocalizedNamesImpl_mfe extends LocalizedNamesImpl {
     namesMap.put("CM", "Kamerounn");
     namesMap.put("CN", "Lasinn");
     namesMap.put("CO", "Kolonbi");
-    namesMap.put("CS", "Serbi-ek-Montenegro");
     namesMap.put("CV", "Kap-Ver");
     namesMap.put("CZ", "Repiblik Chek");
     namesMap.put("DE", "Almagn");
@@ -511,7 +509,6 @@ public class LocalizedNamesImpl_mfe extends LocalizedNamesImpl {
         "CM": "Kamerounn",
         "CN": "Lasinn",
         "CO": "Kolonbi",
-        "CS": "Serbi-ek-Montenegro",
         "CV": "Kap-Ver",
         "CZ": "Repiblik Chek",
         "DE": "Almagn",

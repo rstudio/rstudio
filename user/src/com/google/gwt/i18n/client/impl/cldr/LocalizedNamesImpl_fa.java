@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
+//  type=fa
 
 /**
  * Localized names for the "fa" locale.
@@ -40,10 +39,6 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "BQ",
-        "CW",
-        "SS",
-        "SX",
         "AW",
         "AR",
         "AL",
@@ -90,6 +85,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "BM",
         "BN",
         "GB",
+        "BY",
         "BG",
         "BE",
         "BZ",
@@ -101,7 +97,6 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "BF",
         "BA",
         "BO",
-        "BY",
         "TJ",
         "TZ",
         "TH",
@@ -122,6 +117,8 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "AC",
         "AX",
         "TC",
+        "GS",
+        "UM",
         "SB",
         "FO",
         "FK",
@@ -131,14 +128,14 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "VI",
         "VG",
         "PN",
+        "BQ",
         "CP",
-        "UM",
         "CK",
         "CC",
         "KY",
         "BV",
-        "IM",
         "NF",
+        "IM",
         "HM",
         "CX",
         "AZ",
@@ -146,15 +143,14 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "DO",
         "CZ",
         "AQ",
-        "GS",
         "DJ",
         "DK",
         "DM",
         "DG",
+        "RE",
         "RW",
         "RU",
         "RO",
-        "RE",
         "ZM",
         "NZ",
         "ZW",
@@ -162,23 +158,25 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "CI",
         "WS",
         "AS",
-        "SM",
         "EA",
         "PS",
         "LK",
         "BL",
         "LC",
+        "SX",
         "MF",
         "SH",
         "VC",
-        "PM",
         "KN",
+        "SM",
+        "PM",
         "SN",
         "SG",
         "SE",
         "CH",
         "SZ",
         "SD",
+        "SS",
         "SR",
         "SY",
         "SO",
@@ -187,7 +185,6 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "CL",
         "EH",
         "RS",
-        "CS",
         "IQ",
         "SA",
         "OM",
@@ -200,6 +197,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "KG",
         "KZ",
         "QA",
+        "IO",
         "LA",
         "LB",
         "LV",
@@ -221,7 +219,6 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "YT",
         "HU",
         "MA",
-        "IO",
         "TF",
         "EG",
         "MN",
@@ -274,19 +271,21 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "KR",
         "KP",
         "HR",
-        "KI",
         "CO",
         "CG",
         "CD",
         "KE",
         "CU",
+        "CW",
+        "XK",
         "KM",
         "KW",
+        "KI",
         "CV",
         "GA",
         "GM",
-        "GD",
         "GE",
+        "GD",
         "GG",
         "GL",
         "GT",
@@ -321,9 +320,9 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("029", "کارائیب");
     namesMap.put("030", "شرق آسیا");
     namesMap.put("034", "جنوب آسیا");
-    namesMap.put("035", "جنوب شرقی آسیا");
+    namesMap.put("035", "جنوب شرق آسیا");
     namesMap.put("039", "جنوب اروپا");
-    namesMap.put("053", "استرالیا و زلاند نو");
+    namesMap.put("053", "استرالزی");
     namesMap.put("054", "ملانزی");
     namesMap.put("057", "ناحیهٔ میکرونزی");
     namesMap.put("061", "پلی‌نزی");
@@ -340,18 +339,18 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("AE", "امارات متحدهٔ عربی");
     namesMap.put("AF", "افغانستان");
     namesMap.put("AG", "آنتیگوا و باربودا");
-    namesMap.put("AI", "آنگیل");
+    namesMap.put("AI", "آنگویلا");
     namesMap.put("AL", "آلبانی");
     namesMap.put("AM", "ارمنستان");
     namesMap.put("AN", "آنتیل هلند");
     namesMap.put("AO", "آنگولا");
     namesMap.put("AQ", "جنوبگان");
     namesMap.put("AR", "آرژانتین");
-    namesMap.put("AS", "ساموای امریکا");
+    namesMap.put("AS", "ساموآی آمریکا");
     namesMap.put("AT", "اتریش");
     namesMap.put("AU", "استرالیا");
     namesMap.put("AW", "آروبا");
-    namesMap.put("AX", "جزایر آلاند");
+    namesMap.put("AX", "جزایر اُلند");
     namesMap.put("AZ", "جمهوری آذربایجان");
     namesMap.put("BA", "بوسنی و هرزگوین");
     namesMap.put("BB", "باربادوس");
@@ -362,19 +361,20 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("BH", "بحرین");
     namesMap.put("BI", "بوروندی");
     namesMap.put("BJ", "بنین");
-    namesMap.put("BL", "سنت بارتیلمی");
+    namesMap.put("BL", "سن بارتلمی");
     namesMap.put("BM", "برمودا");
     namesMap.put("BN", "برونئی");
     namesMap.put("BO", "بولیوی");
+    namesMap.put("BQ", "جزایر کارائیب هلند");
     namesMap.put("BR", "برزیل");
     namesMap.put("BS", "باهاما");
     namesMap.put("BT", "بوتان");
-    namesMap.put("BV", "جزیره بووت");
+    namesMap.put("BV", "جزیره بووه");
     namesMap.put("BW", "بوتسوانا");
-    namesMap.put("BY", "بیلوروسی");
+    namesMap.put("BY", "بلاروس");
     namesMap.put("BZ", "بلیز");
     namesMap.put("CA", "کانادا");
-    namesMap.put("CC", "جزایر کوکوس [کیلینگ]");
+    namesMap.put("CC", "جزایر کوکوس (کیلینگ)");
     namesMap.put("CD", "کنگو - کینشاسا");
     namesMap.put("CF", "جمهوری افریقای مرکزی");
     namesMap.put("CG", "کنگو - برازویل");
@@ -387,9 +387,9 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("CO", "کلمبیا");
     namesMap.put("CP", "جزایر کلیپرتون");
     namesMap.put("CR", "کاستاریکا");
-    namesMap.put("CS", "صربستان و مونته‌نگرو");
     namesMap.put("CU", "کوبا");
     namesMap.put("CV", "کیپ‌ورد");
+    namesMap.put("CW", "کوراسائو");
     namesMap.put("CX", "جزیرهٔ کریسمس");
     namesMap.put("CY", "قبرس");
     namesMap.put("CZ", "جمهوری چک");
@@ -397,7 +397,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("DG", "دیه‌گو گارسیا");
     namesMap.put("DJ", "جیبوتی");
     namesMap.put("DK", "دانمارک");
-    namesMap.put("DM", "دومینیک");
+    namesMap.put("DM", "دومینیکا");
     namesMap.put("DO", "جمهوری دومینیکن");
     namesMap.put("DZ", "الجزایر");
     namesMap.put("EA", "سبته و ملیله");
@@ -415,9 +415,9 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("FM", "میکرونزی");
     namesMap.put("FO", "جزایر فارو");
     namesMap.put("FR", "فرانسه");
-    namesMap.put("GA", "گابون");
+    namesMap.put("GA", "گابن");
     namesMap.put("GB", "بریتانیا");
-    namesMap.put("GD", "گرانادا");
+    namesMap.put("GD", "گرنادا");
     namesMap.put("GE", "گرجستان");
     namesMap.put("GF", "گویان فرانسه");
     namesMap.put("GG", "گرنزی");
@@ -429,12 +429,12 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("GP", "گوادلوپ");
     namesMap.put("GQ", "گینهٔ استوایی");
     namesMap.put("GR", "یونان");
-    namesMap.put("GS", "جورجیای جنوبی و جزایر ساندویچ جنوبی");
+    namesMap.put("GS", "جزایر جورجیای جنوبی و ساندویچ جنوبی");
     namesMap.put("GT", "گواتمالا");
     namesMap.put("GU", "گوام");
     namesMap.put("GW", "گینهٔ بیسائو");
     namesMap.put("GY", "گویان");
-    namesMap.put("HK", "هنگ‌کنگ");
+    namesMap.put("HK", "هنگ‌کنگ، ناحیهٔ ویژهٔ حکومتی چین");
     namesMap.put("HM", "جزیرهٔ هرد و جزایر مک‌دونالد");
     namesMap.put("HN", "هندوراس");
     namesMap.put("HR", "کرواسی");
@@ -446,7 +446,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("IL", "اسرائیل");
     namesMap.put("IM", "جزیرهٔ من");
     namesMap.put("IN", "هند");
-    namesMap.put("IO", "مستعمره‌های بریتانیا در اقیانوس هند");
+    namesMap.put("IO", "قلمرو بریتانیا در اقیانوس هند");
     namesMap.put("IQ", "عراق");
     namesMap.put("IR", "ایران");
     namesMap.put("IS", "ایسلند");
@@ -458,8 +458,8 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("KE", "کنیا");
     namesMap.put("KG", "قرقیزستان");
     namesMap.put("KH", "کامبوج");
-    namesMap.put("KI", "کریباتی");
-    namesMap.put("KM", "کومورو");
+    namesMap.put("KI", "کیریباتی");
+    namesMap.put("KM", "کومور");
     namesMap.put("KN", "سنت کیتس و نویس");
     namesMap.put("KP", "کرهٔ شمالی");
     namesMap.put("KR", "کرهٔ جنوبی");
@@ -486,9 +486,9 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("MH", "جزایر مارشال");
     namesMap.put("MK", "مقدونیه");
     namesMap.put("ML", "مالی");
-    namesMap.put("MM", "میانمار [برمه]");
+    namesMap.put("MM", "میانمار (برمه)");
     namesMap.put("MN", "مغولستان");
-    namesMap.put("MO", "ماکائو");
+    namesMap.put("MO", "ماکائو، ناحیهٔ ویژهٔ حکومتی چین");
     namesMap.put("MP", "جزایر ماریانای شمالی");
     namesMap.put("MQ", "مارتینیک");
     namesMap.put("MR", "موریتانی");
@@ -503,7 +503,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("NA", "نامیبیا");
     namesMap.put("NC", "کالدونیای جدید");
     namesMap.put("NE", "نیجر");
-    namesMap.put("NF", "جزیرهٔ نورفولک");
+    namesMap.put("NF", "جزیره نورفک");
     namesMap.put("NG", "نیجریه");
     namesMap.put("NI", "نیکاراگوئه");
     namesMap.put("NL", "هلند");
@@ -520,7 +520,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("PH", "فیلیپین");
     namesMap.put("PK", "پاکستان");
     namesMap.put("PL", "لهستان");
-    namesMap.put("PM", "سنت پیر و میکلون");
+    namesMap.put("PM", "سن پیر و میکلن");
     namesMap.put("PN", "جزایر پیت‌کرن");
     namesMap.put("PR", "پورتوریکو");
     namesMap.put("PS", "سرزمین‌های فلسطینی");
@@ -529,7 +529,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("PY", "پاراگوئه");
     namesMap.put("QA", "قطر");
     namesMap.put("QO", "بخش‌های دورافتادهٔ اقیانوسیه");
-    namesMap.put("RE", "ریونیون");
+    namesMap.put("RE", "رئونیون");
     namesMap.put("RO", "رومانی");
     namesMap.put("RS", "صربستان");
     namesMap.put("RU", "روسیه");
@@ -545,23 +545,25 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("SJ", "اسوالبارد و جان‌ماین");
     namesMap.put("SK", "اسلواکی");
     namesMap.put("SL", "سیرالئون");
-    namesMap.put("SM", "سان‌مارینو");
+    namesMap.put("SM", "سن مارینو");
     namesMap.put("SN", "سنگال");
     namesMap.put("SO", "سومالی");
     namesMap.put("SR", "سورینام");
-    namesMap.put("ST", "سائوتومه و پرینسیپه");
+    namesMap.put("SS", "سودان جنوبی");
+    namesMap.put("ST", "سائوتومه و پرینسیپ");
     namesMap.put("SV", "السالوادور");
+    namesMap.put("SX", "سنت مارتن");
     namesMap.put("SY", "سوریه");
     namesMap.put("SZ", "سوازیلند");
     namesMap.put("TA", "تریستان دا کونا");
-    namesMap.put("TC", "جزایر ترک و کایکوس");
+    namesMap.put("TC", "جزایر تورکس و کایکوس");
     namesMap.put("TD", "چاد");
     namesMap.put("TF", "مستعمره‌های جنوبی فرانسه");
     namesMap.put("TG", "توگو");
     namesMap.put("TH", "تایلند");
     namesMap.put("TJ", "تاجیکستان");
     namesMap.put("TK", "توکلائو");
-    namesMap.put("TL", "تیمور لسته");
+    namesMap.put("TL", "تیمور شرقی");
     namesMap.put("TM", "ترکمنستان");
     namesMap.put("TN", "تونس");
     namesMap.put("TO", "تونگا");
@@ -572,19 +574,20 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
     namesMap.put("TZ", "تانزانیا");
     namesMap.put("UA", "اوکراین");
     namesMap.put("UG", "اوگاندا");
-    namesMap.put("UM", "جزایر کوچک دورافتادهٔ ایالات متحده");
+    namesMap.put("UM", "جزایر دورافتادهٔ ایالات متحده");
     namesMap.put("US", "ایالات متحدهٔ امریکا");
     namesMap.put("UY", "اروگوئه");
     namesMap.put("UZ", "ازبکستان");
     namesMap.put("VA", "واتیکان");
-    namesMap.put("VC", "سنت وینسنت و گرنادین");
+    namesMap.put("VC", "سنت وینسنت و گرنادین‌ها");
     namesMap.put("VE", "ونزوئلا");
     namesMap.put("VG", "جزایر ویرجین بریتانیا");
     namesMap.put("VI", "جزایر ویرجین ایالات متحده");
     namesMap.put("VN", "ویتنام");
     namesMap.put("VU", "وانواتو");
-    namesMap.put("WF", "والیس و فیوتونا");
-    namesMap.put("WS", "ساموا");
+    namesMap.put("WF", "والیس و فوتونا");
+    namesMap.put("WS", "ساموآ");
+    namesMap.put("XK", "کوزووو");
     namesMap.put("YE", "یمن");
     namesMap.put("YT", "مایوت");
     namesMap.put("ZA", "افریقای جنوبی");
@@ -616,9 +619,9 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "029": "کارائیب",
         "030": "شرق آسیا",
         "034": "جنوب آسیا",
-        "035": "جنوب شرقی آسیا",
+        "035": "جنوب شرق آسیا",
         "039": "جنوب اروپا",
-        "053": "استرالیا و زلاند نو",
+        "053": "استرالزی",
         "054": "ملانزی",
         "057": "ناحیهٔ میکرونزی",
         "061": "پلی‌نزی",
@@ -635,18 +638,18 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "AE": "امارات متحدهٔ عربی",
         "AF": "افغانستان",
         "AG": "آنتیگوا و باربودا",
-        "AI": "آنگیل",
+        "AI": "آنگویلا",
         "AL": "آلبانی",
         "AM": "ارمنستان",
         "AN": "آنتیل هلند",
         "AO": "آنگولا",
         "AQ": "جنوبگان",
         "AR": "آرژانتین",
-        "AS": "ساموای امریکا",
+        "AS": "ساموآی آمریکا",
         "AT": "اتریش",
         "AU": "استرالیا",
         "AW": "آروبا",
-        "AX": "جزایر آلاند",
+        "AX": "جزایر اُلند",
         "AZ": "جمهوری آذربایجان",
         "BA": "بوسنی و هرزگوین",
         "BB": "باربادوس",
@@ -657,19 +660,20 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "BH": "بحرین",
         "BI": "بوروندی",
         "BJ": "بنین",
-        "BL": "سنت بارتیلمی",
+        "BL": "سن بارتلمی",
         "BM": "برمودا",
         "BN": "برونئی",
         "BO": "بولیوی",
+        "BQ": "جزایر کارائیب هلند",
         "BR": "برزیل",
         "BS": "باهاما",
         "BT": "بوتان",
-        "BV": "جزیره بووت",
+        "BV": "جزیره بووه",
         "BW": "بوتسوانا",
-        "BY": "بیلوروسی",
+        "BY": "بلاروس",
         "BZ": "بلیز",
         "CA": "کانادا",
-        "CC": "جزایر کوکوس [کیلینگ]",
+        "CC": "جزایر کوکوس (کیلینگ)",
         "CD": "کنگو - کینشاسا",
         "CF": "جمهوری افریقای مرکزی",
         "CG": "کنگو - برازویل",
@@ -682,9 +686,9 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "CO": "کلمبیا",
         "CP": "جزایر کلیپرتون",
         "CR": "کاستاریکا",
-        "CS": "صربستان و مونته‌نگرو",
         "CU": "کوبا",
         "CV": "کیپ‌ورد",
+        "CW": "کوراسائو",
         "CX": "جزیرهٔ کریسمس",
         "CY": "قبرس",
         "CZ": "جمهوری چک",
@@ -692,7 +696,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "DG": "دیه‌گو گارسیا",
         "DJ": "جیبوتی",
         "DK": "دانمارک",
-        "DM": "دومینیک",
+        "DM": "دومینیکا",
         "DO": "جمهوری دومینیکن",
         "DZ": "الجزایر",
         "EA": "سبته و ملیله",
@@ -710,9 +714,9 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "FM": "میکرونزی",
         "FO": "جزایر فارو",
         "FR": "فرانسه",
-        "GA": "گابون",
+        "GA": "گابن",
         "GB": "بریتانیا",
-        "GD": "گرانادا",
+        "GD": "گرنادا",
         "GE": "گرجستان",
         "GF": "گویان فرانسه",
         "GG": "گرنزی",
@@ -724,12 +728,12 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "GP": "گوادلوپ",
         "GQ": "گینهٔ استوایی",
         "GR": "یونان",
-        "GS": "جورجیای جنوبی و جزایر ساندویچ جنوبی",
+        "GS": "جزایر جورجیای جنوبی و ساندویچ جنوبی",
         "GT": "گواتمالا",
         "GU": "گوام",
         "GW": "گینهٔ بیسائو",
         "GY": "گویان",
-        "HK": "هنگ‌کنگ",
+        "HK": "هنگ‌کنگ، ناحیهٔ ویژهٔ حکومتی چین",
         "HM": "جزیرهٔ هرد و جزایر مک‌دونالد",
         "HN": "هندوراس",
         "HR": "کرواسی",
@@ -741,7 +745,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "IL": "اسرائیل",
         "IM": "جزیرهٔ من",
         "IN": "هند",
-        "IO": "مستعمره‌های بریتانیا در اقیانوس هند",
+        "IO": "قلمرو بریتانیا در اقیانوس هند",
         "IQ": "عراق",
         "IR": "ایران",
         "IS": "ایسلند",
@@ -753,8 +757,8 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "KE": "کنیا",
         "KG": "قرقیزستان",
         "KH": "کامبوج",
-        "KI": "کریباتی",
-        "KM": "کومورو",
+        "KI": "کیریباتی",
+        "KM": "کومور",
         "KN": "سنت کیتس و نویس",
         "KP": "کرهٔ شمالی",
         "KR": "کرهٔ جنوبی",
@@ -781,9 +785,9 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "MH": "جزایر مارشال",
         "MK": "مقدونیه",
         "ML": "مالی",
-        "MM": "میانمار [برمه]",
+        "MM": "میانمار (برمه)",
         "MN": "مغولستان",
-        "MO": "ماکائو",
+        "MO": "ماکائو، ناحیهٔ ویژهٔ حکومتی چین",
         "MP": "جزایر ماریانای شمالی",
         "MQ": "مارتینیک",
         "MR": "موریتانی",
@@ -798,7 +802,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "NA": "نامیبیا",
         "NC": "کالدونیای جدید",
         "NE": "نیجر",
-        "NF": "جزیرهٔ نورفولک",
+        "NF": "جزیره نورفک",
         "NG": "نیجریه",
         "NI": "نیکاراگوئه",
         "NL": "هلند",
@@ -815,7 +819,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "PH": "فیلیپین",
         "PK": "پاکستان",
         "PL": "لهستان",
-        "PM": "سنت پیر و میکلون",
+        "PM": "سن پیر و میکلن",
         "PN": "جزایر پیت‌کرن",
         "PR": "پورتوریکو",
         "PS": "سرزمین‌های فلسطینی",
@@ -824,7 +828,7 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "PY": "پاراگوئه",
         "QA": "قطر",
         "QO": "بخش‌های دورافتادهٔ اقیانوسیه",
-        "RE": "ریونیون",
+        "RE": "رئونیون",
         "RO": "رومانی",
         "RS": "صربستان",
         "RU": "روسیه",
@@ -840,23 +844,25 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "SJ": "اسوالبارد و جان‌ماین",
         "SK": "اسلواکی",
         "SL": "سیرالئون",
-        "SM": "سان‌مارینو",
+        "SM": "سن مارینو",
         "SN": "سنگال",
         "SO": "سومالی",
         "SR": "سورینام",
-        "ST": "سائوتومه و پرینسیپه",
+        "SS": "سودان جنوبی",
+        "ST": "سائوتومه و پرینسیپ",
         "SV": "السالوادور",
+        "SX": "سنت مارتن",
         "SY": "سوریه",
         "SZ": "سوازیلند",
         "TA": "تریستان دا کونا",
-        "TC": "جزایر ترک و کایکوس",
+        "TC": "جزایر تورکس و کایکوس",
         "TD": "چاد",
         "TF": "مستعمره‌های جنوبی فرانسه",
         "TG": "توگو",
         "TH": "تایلند",
         "TJ": "تاجیکستان",
         "TK": "توکلائو",
-        "TL": "تیمور لسته",
+        "TL": "تیمور شرقی",
         "TM": "ترکمنستان",
         "TN": "تونس",
         "TO": "تونگا",
@@ -867,19 +873,20 @@ public class LocalizedNamesImpl_fa extends LocalizedNamesImpl {
         "TZ": "تانزانیا",
         "UA": "اوکراین",
         "UG": "اوگاندا",
-        "UM": "جزایر کوچک دورافتادهٔ ایالات متحده",
+        "UM": "جزایر دورافتادهٔ ایالات متحده",
         "US": "ایالات متحدهٔ امریکا",
         "UY": "اروگوئه",
         "UZ": "ازبکستان",
         "VA": "واتیکان",
-        "VC": "سنت وینسنت و گرنادین",
+        "VC": "سنت وینسنت و گرنادین‌ها",
         "VE": "ونزوئلا",
         "VG": "جزایر ویرجین بریتانیا",
         "VI": "جزایر ویرجین ایالات متحده",
         "VN": "ویتنام",
         "VU": "وانواتو",
-        "WF": "والیس و فیوتونا",
-        "WS": "ساموا",
+        "WF": "والیس و فوتونا",
+        "WS": "ساموآ",
+        "XK": "کوزووو",
         "YE": "یمن",
         "YT": "مایوت",
         "ZA": "افریقای جنوبی",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
+//  type=si
 
 /**
  * Implementation of DateTimeFormatInfo for the "si" locale.
@@ -32,16 +32,6 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
         "පෙ.ව.",
         "ප.ව."
     };
-  }
-
-  @Override
-  public String dateFormatFull() {
-    return "y MMMM d, EEEE";
-  }
-
-  @Override
-  public String dateFormatShort() {
-    return "yyyy/MM/dd";
   }
 
   @Override
@@ -81,8 +71,18 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatYearMonthWeekdayDay() {
-    return "y MMM d, EEE";
+  public String formatMonthNumDay() {
+    return "M-d";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "y-M";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "y-M-d";
   }
 
   @Override
@@ -116,7 +116,7 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
         "අ",
         "සැ",
         "ඔ",
-        "නො",
+        "නෙ",
         "දෙ"
     };
   }
@@ -179,12 +179,12 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
 
   @Override
   public String timeFormatFull() {
-    return "h:mm:ss a zzzz";
+    return "a h.mm.ss zzzz";
   }
 
   @Override
   public String timeFormatLong() {
-    return "h:mm:ss a z";
+    return "a h.mm.ss z";
   }
 
   @Override
@@ -226,11 +226,11 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "ඉරි",
-        "සඳු",
-        "අඟ",
-        "බදා",
-        "බ්‍රහ",
+        "ඉරිදා",
+        "සඳුදා",
+        "අඟහ",
+        "බදාදා",
+        "බ්‍රහස්",
         "සිකු",
         "සෙන"
     };

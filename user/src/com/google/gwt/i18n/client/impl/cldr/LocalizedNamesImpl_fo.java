@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "fo" locale.
@@ -60,7 +59,6 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
-        "BQ",
         "BR",
         "IO",
         "BN",
@@ -97,6 +95,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "FR",
         "PF",
         "GF",
+        "MF",
         "FO",
         "GA",
         "GM",
@@ -151,6 +150,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "KM",
         "CG",
         "CD",
+        "XK",
         "CR",
         "HR",
         "CU",
@@ -194,12 +194,15 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "NP",
         "AN",
         "NL",
+        "BQ",
+        "SX",
         "NE",
         "NG",
         "NI",
         "NU",
         "KP",
         "MP",
+        "SD",
         "NO",
         "NF",
         "NC",
@@ -225,7 +228,6 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "SH",
         "KN",
         "LC",
-        "MF",
         "PM",
         "VC",
         "SB",
@@ -248,19 +250,17 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
-        "SS",
         "GB",
         "VG",
-        "SD",
         "ZA",
         "GS",
         "KR",
+        "SS",
         "SR",
         "SJ",
         "SZ",
         "CH",
         "SE",
-        "SX",
         "SY",
         "TJ",
         "TZ",
@@ -336,9 +336,10 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
     namesMap.put("BA", "Bosnia-Hersegovina");
     namesMap.put("BD", "Bangladesj");
     namesMap.put("BE", "Belgia");
+    namesMap.put("BQ", "Niðurlonds Karibia");
     namesMap.put("BR", "Brasilia");
     namesMap.put("BT", "Butan");
-    namesMap.put("BV", "Bouvetoy");
+    namesMap.put("BV", "Bouvetoyggjin");
     namesMap.put("BW", "Botsvana");
     namesMap.put("BY", "Hvítarussland");
     namesMap.put("BZ", "Belis");
@@ -399,6 +400,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
     namesMap.put("IS", "Ísland");
     namesMap.put("IT", "Italia");
     namesMap.put("JM", "Jameika");
+    namesMap.put("JO", "Jordania");
     namesMap.put("KE", "Kenja");
     namesMap.put("KG", "Kirgisia");
     namesMap.put("KH", "Kambodja");
@@ -418,6 +420,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
     namesMap.put("LV", "Lettland");
     namesMap.put("MA", "Marokko");
     namesMap.put("MC", "Monako");
+    namesMap.put("MF", "Fransk Saint Martin");
     namesMap.put("MG", "Madagaskar");
     namesMap.put("MH", "Marshalloyggjarnar");
     namesMap.put("MK", "Makedónia");
@@ -453,11 +456,14 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
     namesMap.put("SA", "Saudi-Arábia");
     namesMap.put("SB", "Sálomonoyggjarnar");
     namesMap.put("SC", "Seyskelloyggjarnar");
+    namesMap.put("SD", "Norðursudan");
     namesMap.put("SE", "Svøríki");
     namesMap.put("SG", "Singapor");
     namesMap.put("SJ", "Svalbard og Jan Mayen");
     namesMap.put("SR", "Surinam");
+    namesMap.put("SS", "Suðursudan");
     namesMap.put("ST", "Sao Tome og Prinsipi");
+    namesMap.put("SX", "Niðurlonds Saint Martin");
     namesMap.put("SZ", "Svasiland");
     namesMap.put("TC", "Turks- og Caicosoyggjarnar");
     namesMap.put("TD", "Kjad");
@@ -481,9 +487,10 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
     namesMap.put("WF", "Wallis og Futuna");
     namesMap.put("WS", "Sámoa");
     namesMap.put("YE", "Jemen");
-    namesMap.put("ZA", "Suðurafrika");
+    namesMap.put("ZA", "Suðurafrikalýðveldið");
     namesMap.put("ZM", "Sambia");
     namesMap.put("ZW", "Simbabvi");
+    namesMap.put("ZZ", "(ukendt område)");
   }
 
   @Override
@@ -533,9 +540,10 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "BA": "Bosnia-Hersegovina",
         "BD": "Bangladesj",
         "BE": "Belgia",
+        "BQ": "Niðurlonds Karibia",
         "BR": "Brasilia",
         "BT": "Butan",
-        "BV": "Bouvetoy",
+        "BV": "Bouvetoyggjin",
         "BW": "Botsvana",
         "BY": "Hvítarussland",
         "BZ": "Belis",
@@ -596,6 +604,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "IS": "Ísland",
         "IT": "Italia",
         "JM": "Jameika",
+        "JO": "Jordania",
         "KE": "Kenja",
         "KG": "Kirgisia",
         "KH": "Kambodja",
@@ -615,6 +624,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "LV": "Lettland",
         "MA": "Marokko",
         "MC": "Monako",
+        "MF": "Fransk Saint Martin",
         "MG": "Madagaskar",
         "MH": "Marshalloyggjarnar",
         "MK": "Makedónia",
@@ -650,11 +660,14 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "SA": "Saudi-Arábia",
         "SB": "Sálomonoyggjarnar",
         "SC": "Seyskelloyggjarnar",
+        "SD": "Norðursudan",
         "SE": "Svøríki",
         "SG": "Singapor",
         "SJ": "Svalbard og Jan Mayen",
         "SR": "Surinam",
+        "SS": "Suðursudan",
         "ST": "Sao Tome og Prinsipi",
+        "SX": "Niðurlonds Saint Martin",
         "SZ": "Svasiland",
         "TC": "Turks- og Caicosoyggjarnar",
         "TD": "Kjad",
@@ -678,9 +691,10 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "WF": "Wallis og Futuna",
         "WS": "Sámoa",
         "YE": "Jemen",
-        "ZA": "Suðurafrika",
+        "ZA": "Suðurafrikalýðveldið",
         "ZM": "Sambia",
-        "ZW": "Simbabvi"
+        "ZW": "Simbabvi",
+        "ZZ": "(ukendt område)"
     };
   }-*/;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=ro
 
 /**
  * Localized names for the "ro" locale.
@@ -60,16 +59,15 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "BH",
         "BD",
         "BB",
+        "BY",
         "BE",
         "BZ",
         "BJ",
         "BM",
         "BT",
-        "BY",
         "BO",
         "BA",
         "BW",
-        "BQ",
         "BR",
         "BN",
         "BG",
@@ -84,13 +82,13 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "CN",
         "TD",
         "CY",
-        "CI",
         "CO",
         "KM",
         "CG",
         "KP",
         "KR",
         "CR",
+        "CI",
         "HR",
         "CU",
         "CW",
@@ -110,7 +108,6 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "PH",
         "FI",
         "FR",
-        "FX",
         "GA",
         "GM",
         "GE",
@@ -132,7 +129,6 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "GF",
         "HT",
         "HN",
-        "HK",
         "IN",
         "ID",
         "AC",
@@ -143,6 +139,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "IM",
         "AX",
         "IC",
+        "BQ",
         "KY",
         "CC",
         "CK",
@@ -152,6 +149,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "MH",
         "UM",
         "NF",
+        "PN",
         "SB",
         "TC",
         "VG",
@@ -170,6 +168,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "KZ",
         "KE",
         "KI",
+        "XK",
         "KW",
         "LA",
         "LS",
@@ -180,7 +179,6 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "LI",
         "LT",
         "LU",
-        "MO",
         "MK",
         "MG",
         "MY",
@@ -188,7 +186,6 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "MV",
         "ML",
         "MT",
-        "GB",
         "MA",
         "MQ",
         "MR",
@@ -213,7 +210,6 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "NC",
         "NZ",
         "QO",
-        "NL",
         "OM",
         "PK",
         "PW",
@@ -221,12 +217,14 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "PG",
         "PY",
         "PE",
-        "PN",
         "PF",
         "PL",
-        "PR",
         "PT",
+        "PR",
         "QA",
+        "HK",
+        "MO",
+        "GB",
         "CZ",
         "CF",
         "CD",
@@ -237,43 +235,44 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "RU",
         "RW",
         "EH",
+        "KN",
+        "PM",
+        "VC",
         "WS",
         "AS",
         "SM",
         "ST",
         "SN",
         "RS",
-        "CS",
         "SC",
         "SH",
         "LC",
         "BL",
-        "KN",
         "MF",
-        "PM",
-        "VC",
         "SL",
         "SG",
+        "SX",
         "SY",
         "SK",
         "SI",
         "SO",
         "ES",
         "LK",
-        "SS",
         "US",
+        "VA",
         "SD",
+        "SS",
         "SE",
         "SR",
         "SJ",
         "SZ",
-        "SX",
         "TJ",
         "TW",
         "TZ",
+        "NL",
         "TF",
-        "IO",
         "PS",
+        "IO",
         "TH",
         "TL",
         "TG",
@@ -292,7 +291,6 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "UY",
         "UZ",
         "VU",
-        "VA",
         "VE",
         "VN",
         "WF",
@@ -321,7 +319,6 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("034", "Asia Meridională");
     namesMap.put("035", "Asia de Sud-Est");
     namesMap.put("039", "Europa Meridională");
-    namesMap.put("053", "Australia și Noua Zeelandă");
     namesMap.put("054", "Melanezia");
     namesMap.put("057", "Regiunea Micronezia");
     namesMap.put("061", "Polinezia");
@@ -338,25 +335,23 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("AG", "Antigua și Barbuda");
     namesMap.put("AN", "Antilele Olandeze");
     namesMap.put("AS", "Samoa Americană");
-    namesMap.put("AX", "Insulele Aland");
+    namesMap.put("AX", "Insulele Åland");
     namesMap.put("AZ", "Azerbaidjan");
     namesMap.put("BA", "Bosnia și Herțegovina");
     namesMap.put("BE", "Belgia");
     namesMap.put("BL", "Sfântul Bartolomeu");
+    namesMap.put("BQ", "Insulele Caraibe Olandeze");
     namesMap.put("BR", "Brazilia");
     namesMap.put("BV", "Insula Bouvet");
-    namesMap.put("BY", "Bielorusia");
-    namesMap.put("CC", "Insulele Cocos");
+    namesMap.put("CC", "Insulele Cocos (Keeling)");
     namesMap.put("CD", "Republica Democrată Congo");
     namesMap.put("CF", "Republica Centrafricană");
     namesMap.put("CG", "Congo");
     namesMap.put("CH", "Elveția");
-    namesMap.put("CI", "Coasta de Fildeș");
     namesMap.put("CK", "Insulele Cook");
     namesMap.put("CM", "Camerun");
     namesMap.put("CO", "Columbia");
     namesMap.put("CP", "Insula Clipperton");
-    namesMap.put("CS", "Serbia și Muntenegru");
     namesMap.put("CV", "Capul Verde");
     namesMap.put("CX", "Insula Christmas");
     namesMap.put("CY", "Cipru");
@@ -364,7 +359,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("DE", "Germania");
     namesMap.put("DK", "Danemarca");
     namesMap.put("DO", "Republica Dominicană");
-    namesMap.put("EA", "Ceuta şi Melilla");
+    namesMap.put("EA", "Ceuta și Melilla");
     namesMap.put("EG", "Egipt");
     namesMap.put("EH", "Sahara Occidentală");
     namesMap.put("ER", "Eritreea");
@@ -376,16 +371,16 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("FM", "Micronezia");
     namesMap.put("FO", "Insulele Feroe");
     namesMap.put("FR", "Franța");
-    namesMap.put("FX", "Franța metropolitană");
-    namesMap.put("GB", "Marea Britanie");
+    namesMap.put("GB", "Regatul Unit");
     namesMap.put("GF", "Guyana Franceză");
     namesMap.put("GL", "Groenlanda");
     namesMap.put("GN", "Guineea");
     namesMap.put("GP", "Guadelupa");
     namesMap.put("GQ", "Guineea Ecuatorială");
     namesMap.put("GR", "Grecia");
-    namesMap.put("GS", "Georgia de Sud şi Insulele Sandwich de Sud");
+    namesMap.put("GS", "Georgia de Sud și Insulele Sandwich de Sud");
     namesMap.put("GW", "Guineea-Bissau");
+    namesMap.put("HK", "R.A.S. Hong Kong a Chinei");
     namesMap.put("HM", "Insula Heard și Insulele McDonald");
     namesMap.put("HR", "Croația");
     namesMap.put("HU", "Ungaria");
@@ -402,7 +397,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("KG", "Kârgâzstan");
     namesMap.put("KH", "Cambodgia");
     namesMap.put("KM", "Comore");
-    namesMap.put("KN", "Sfântul Kitts și Nevis");
+    namesMap.put("KN", "Saint Kitts și Nevis");
     namesMap.put("KP", "Coreea de Nord");
     namesMap.put("KR", "Coreea de Sud");
     namesMap.put("KW", "Kuweit");
@@ -420,8 +415,8 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("MF", "Sfântul Martin");
     namesMap.put("MH", "Insulele Marshall");
     namesMap.put("MK", "Macedonia");
-    namesMap.put("MM", "Myanmar");
-    namesMap.put("MO", "Macao");
+    namesMap.put("MM", "Myanmar (Birmania)");
+    namesMap.put("MO", "R.A.S. Macao a Chinei");
     namesMap.put("MP", "Insulele Mariane de Nord");
     namesMap.put("MQ", "Martinica");
     namesMap.put("MV", "Maldive");
@@ -430,20 +425,18 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("MZ", "Mozambic");
     namesMap.put("NC", "Noua Caledonie");
     namesMap.put("NF", "Insulele Norfolk");
-    namesMap.put("NL", "Olanda");
+    namesMap.put("NL", "Țările de Jos");
     namesMap.put("NO", "Norvegia");
     namesMap.put("NZ", "Noua Zeelandă");
     namesMap.put("PF", "Polinezia Franceză");
-    namesMap.put("PG", "Papua Noua Guinee");
+    namesMap.put("PG", "Papua-Noua Guinee");
     namesMap.put("PH", "Filipine");
     namesMap.put("PL", "Polonia");
-    namesMap.put("PM", "Sfântul Pierre și Miquelon");
-    namesMap.put("PN", "Pitcairn");
-    namesMap.put("PR", "Porto Rico");
-    namesMap.put("PS", "Teritoriul Palestinian");
+    namesMap.put("PM", "Saint-Pierre și Miquelon");
+    namesMap.put("PN", "Insulele Pitcairn");
+    namesMap.put("PS", "Teritoriile Palestiniene");
     namesMap.put("PT", "Portugalia");
     namesMap.put("QO", "Oceania Periferică");
-    namesMap.put("RE", "Reunion");
     namesMap.put("RO", "România");
     namesMap.put("RU", "Rusia");
     namesMap.put("SA", "Arabia Saudită");
@@ -453,7 +446,9 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("SJ", "Svalbard și Jan Mayen");
     namesMap.put("SK", "Slovacia");
     namesMap.put("SR", "Surinam");
+    namesMap.put("SS", "Sudanul de Sud");
     namesMap.put("ST", "Sao Tome și Principe");
+    namesMap.put("SX", "Sint-Maarten");
     namesMap.put("SY", "Siria");
     namesMap.put("TC", "Insulele Turks și Caicos");
     namesMap.put("TD", "Ciad");
@@ -462,12 +457,12 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("TJ", "Tadjikistan");
     namesMap.put("TL", "Timorul de Est");
     namesMap.put("TR", "Turcia");
-    namesMap.put("TT", "Trinidad-Tobago");
+    namesMap.put("TT", "Trinidad și Tobago");
     namesMap.put("UA", "Ucraina");
     namesMap.put("UM", "Insulele Minore Îndepărtate ale Statelor Unite ale Americii");
     namesMap.put("US", "Statele Unite ale Americii");
-    namesMap.put("VA", "Vatican");
-    namesMap.put("VC", "Sfântul Vincent și Grenadine");
+    namesMap.put("VA", "Statul Cetății Vaticanului");
+    namesMap.put("VC", "Saint Vincent și Grenadine");
     namesMap.put("VG", "Insulele Virgine Britanice");
     namesMap.put("VI", "Insulele Virgine S.U.A.");
     namesMap.put("WF", "Wallis și Futuna");
@@ -498,7 +493,6 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "034": "Asia Meridională",
         "035": "Asia de Sud-Est",
         "039": "Europa Meridională",
-        "053": "Australia și Noua Zeelandă",
         "054": "Melanezia",
         "057": "Regiunea Micronezia",
         "061": "Polinezia",
@@ -515,25 +509,23 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "AG": "Antigua și Barbuda",
         "AN": "Antilele Olandeze",
         "AS": "Samoa Americană",
-        "AX": "Insulele Aland",
+        "AX": "Insulele Åland",
         "AZ": "Azerbaidjan",
         "BA": "Bosnia și Herțegovina",
         "BE": "Belgia",
         "BL": "Sfântul Bartolomeu",
+        "BQ": "Insulele Caraibe Olandeze",
         "BR": "Brazilia",
         "BV": "Insula Bouvet",
-        "BY": "Bielorusia",
-        "CC": "Insulele Cocos",
+        "CC": "Insulele Cocos (Keeling)",
         "CD": "Republica Democrată Congo",
         "CF": "Republica Centrafricană",
         "CG": "Congo",
         "CH": "Elveția",
-        "CI": "Coasta de Fildeș",
         "CK": "Insulele Cook",
         "CM": "Camerun",
         "CO": "Columbia",
         "CP": "Insula Clipperton",
-        "CS": "Serbia și Muntenegru",
         "CV": "Capul Verde",
         "CX": "Insula Christmas",
         "CY": "Cipru",
@@ -541,7 +533,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "DE": "Germania",
         "DK": "Danemarca",
         "DO": "Republica Dominicană",
-        "EA": "Ceuta şi Melilla",
+        "EA": "Ceuta și Melilla",
         "EG": "Egipt",
         "EH": "Sahara Occidentală",
         "ER": "Eritreea",
@@ -553,16 +545,16 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "FM": "Micronezia",
         "FO": "Insulele Feroe",
         "FR": "Franța",
-        "FX": "Franța metropolitană",
-        "GB": "Marea Britanie",
+        "GB": "Regatul Unit",
         "GF": "Guyana Franceză",
         "GL": "Groenlanda",
         "GN": "Guineea",
         "GP": "Guadelupa",
         "GQ": "Guineea Ecuatorială",
         "GR": "Grecia",
-        "GS": "Georgia de Sud şi Insulele Sandwich de Sud",
+        "GS": "Georgia de Sud și Insulele Sandwich de Sud",
         "GW": "Guineea-Bissau",
+        "HK": "R.A.S. Hong Kong a Chinei",
         "HM": "Insula Heard și Insulele McDonald",
         "HR": "Croația",
         "HU": "Ungaria",
@@ -579,7 +571,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "KG": "Kârgâzstan",
         "KH": "Cambodgia",
         "KM": "Comore",
-        "KN": "Sfântul Kitts și Nevis",
+        "KN": "Saint Kitts și Nevis",
         "KP": "Coreea de Nord",
         "KR": "Coreea de Sud",
         "KW": "Kuweit",
@@ -597,8 +589,8 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "MF": "Sfântul Martin",
         "MH": "Insulele Marshall",
         "MK": "Macedonia",
-        "MM": "Myanmar",
-        "MO": "Macao",
+        "MM": "Myanmar (Birmania)",
+        "MO": "R.A.S. Macao a Chinei",
         "MP": "Insulele Mariane de Nord",
         "MQ": "Martinica",
         "MV": "Maldive",
@@ -607,20 +599,18 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "MZ": "Mozambic",
         "NC": "Noua Caledonie",
         "NF": "Insulele Norfolk",
-        "NL": "Olanda",
+        "NL": "Țările de Jos",
         "NO": "Norvegia",
         "NZ": "Noua Zeelandă",
         "PF": "Polinezia Franceză",
-        "PG": "Papua Noua Guinee",
+        "PG": "Papua-Noua Guinee",
         "PH": "Filipine",
         "PL": "Polonia",
-        "PM": "Sfântul Pierre și Miquelon",
-        "PN": "Pitcairn",
-        "PR": "Porto Rico",
-        "PS": "Teritoriul Palestinian",
+        "PM": "Saint-Pierre și Miquelon",
+        "PN": "Insulele Pitcairn",
+        "PS": "Teritoriile Palestiniene",
         "PT": "Portugalia",
         "QO": "Oceania Periferică",
-        "RE": "Reunion",
         "RO": "România",
         "RU": "Rusia",
         "SA": "Arabia Saudită",
@@ -630,7 +620,9 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "SJ": "Svalbard și Jan Mayen",
         "SK": "Slovacia",
         "SR": "Surinam",
+        "SS": "Sudanul de Sud",
         "ST": "Sao Tome și Principe",
+        "SX": "Sint-Maarten",
         "SY": "Siria",
         "TC": "Insulele Turks și Caicos",
         "TD": "Ciad",
@@ -639,12 +631,12 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "TJ": "Tadjikistan",
         "TL": "Timorul de Est",
         "TR": "Turcia",
-        "TT": "Trinidad-Tobago",
+        "TT": "Trinidad și Tobago",
         "UA": "Ucraina",
         "UM": "Insulele Minore Îndepărtate ale Statelor Unite ale Americii",
         "US": "Statele Unite ale Americii",
-        "VA": "Vatican",
-        "VC": "Sfântul Vincent și Grenadine",
+        "VA": "Statul Cetății Vaticanului",
+        "VC": "Saint Vincent și Grenadine",
         "VG": "Insulele Virgine Britanice",
         "VI": "Insulele Virgine S.U.A.",
         "WF": "Wallis și Futuna",

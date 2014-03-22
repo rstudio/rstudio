@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9792 $
+//  type=vi
 
 /**
  * Implementation of DateTimeFormatInfo for the "vi" locale.
@@ -41,17 +41,17 @@ public class DateTimeFormatInfoImpl_vi extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatLong() {
-    return "'Ngày' dd 'tháng' M 'năm' y";
+    return "'Ngày' dd 'tháng' MM 'năm' y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "dd-MM-yyyy";
+    return "dd-MM-y";
   }
 
   @Override
   public String dateFormatShort() {
-    return "dd/MM/yyyy";
+    return "dd/MM/y";
   }
 
   @Override
@@ -91,28 +91,23 @@ public class DateTimeFormatInfoImpl_vi extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatDay() {
-    return "'Ngày' d";
-  }
-
-  @Override
   public String formatMonthAbbrevDay() {
-    return "d MMM";
+    return "dd MMM";
   }
 
   @Override
   public String formatMonthFullDay() {
-    return "d MMMM";
+    return "dd MMMM";
   }
 
   @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, d MMMM";
+    return "EEEE, dd MMMM";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "d-M";
+    return "dd-M";
   }
 
   @Override
@@ -127,7 +122,7 @@ public class DateTimeFormatInfoImpl_vi extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "d MMM, y";
+    return "dd MMM, y";
   }
 
   @Override
@@ -137,12 +132,12 @@ public class DateTimeFormatInfoImpl_vi extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthFullDay() {
-    return "d MMMM, y";
+    return "dd MMMM, y";
   }
 
   @Override
   public String formatYearMonthNum() {
-    return "M/yyyy";
+    return "M/y";
   }
 
   @Override
@@ -152,34 +147,52 @@ public class DateTimeFormatInfoImpl_vi extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, d MMM y";
+    return "EEE, dd MMM y";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ yyyy";
+    return "QQQQ y";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q yyyy";
+    return "Q y";
   }
 
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "tháng một",
-        "tháng hai",
-        "tháng ba",
-        "tháng tư",
-        "tháng năm",
-        "tháng sáu",
-        "tháng bảy",
-        "tháng tám",
-        "tháng chín",
-        "tháng mười",
-        "tháng mười một",
-        "tháng mười hai"
+        "tháng 1",
+        "tháng 2",
+        "tháng 3",
+        "tháng 4",
+        "tháng 5",
+        "tháng 6",
+        "tháng 7",
+        "tháng 8",
+        "tháng 9",
+        "tháng 10",
+        "tháng 11",
+        "tháng 12"
+    };
+  }
+
+  @Override
+  public String[] monthsFullStandalone() {
+    return new String[] {
+        "Tháng 1",
+        "Tháng 2",
+        "Tháng 3",
+        "Tháng 4",
+        "Tháng 5",
+        "Tháng 6",
+        "Tháng 7",
+        "Tháng 8",
+        "Tháng 9",
+        "Tháng 10",
+        "Tháng 11",
+        "Tháng 12"
     };
   }
 
@@ -220,6 +233,24 @@ public class DateTimeFormatInfoImpl_vi extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String[] monthsShortStandalone() {
+    return new String[] {
+        "Thg 1",
+        "Thg 2",
+        "Thg 3",
+        "Thg 4",
+        "Thg 5",
+        "Thg 6",
+        "Thg 7",
+        "Thg 8",
+        "Thg 9",
+        "Thg 10",
+        "Thg 11",
+        "Thg 12"
+    };
+  }
+
+  @Override
   public String[] quartersFull() {
     return new String[] {
         "Quý 1",
@@ -232,13 +263,13 @@ public class DateTimeFormatInfoImpl_vi extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysFull() {
     return new String[] {
-        "Chủ nhật",
-        "Thứ hai",
-        "Thứ ba",
-        "Thứ tư",
-        "Thứ năm",
-        "Thứ sáu",
-        "Thứ bảy"
+        "Chủ Nhật",
+        "Thứ Hai",
+        "Thứ Ba",
+        "Thứ Tư",
+        "Thứ Năm",
+        "Thứ Sáu",
+        "Thứ Bảy"
     };
   }
 

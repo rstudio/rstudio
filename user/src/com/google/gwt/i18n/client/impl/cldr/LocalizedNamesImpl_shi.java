@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
+//  cldrVersion=25
+//  date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+//  number=$Revision: 9728 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "shi" locale.
@@ -33,112 +32,104 @@ public class LocalizedNamesImpl_shi extends LocalizedNamesImpl {
   public String[] loadSortedRegionCodes() {
     return new String[] {
         "AC",
+        "AQ",
+        "AX",
+        "BL",
+        "BQ",
+        "BV",
+        "CC",
+        "CP",
+        "CW",
+        "CX",
+        "DG",
+        "EA",
+        "EH",
+        "EU",
+        "FO",
+        "GG",
+        "GS",
+        "HK",
+        "HM",
+        "IC",
+        "IM",
+        "JE",
+        "ME",
+        "MF",
+        "MO",
+        "QO",
+        "RS",
+        "SJ",
+        "SS",
+        "SX",
+        "TA",
+        "TF",
+        "UM",
+        "XK",
+        "PS",
         "AZ",
         "GI",
         "ZA",
         "AF",
-        "PS",
         "AL",
         "DE",
-        "ID",
-        "AD",
         "AI",
         "AO",
+        "ID",
+        "AD",
         "AG",
         "AN",
-        "AQ",
         "AR",
         "AM",
         "AW",
         "VA",
-        "AX",
         "PG",
-        "BS",
         "PK",
+        "BS",
         "PW",
         "PA",
         "BD",
         "PY",
         "BB",
-        "BH",
         "BT",
+        "BH",
         "BY",
         "BZ",
         "BJ",
         "PE",
         "PN",
-        "BL",
         "BE",
         "BG",
-        "BQ",
-        "BR",
-        "BM",
-        "PT",
-        "BN",
         "BO",
         "PF",
         "PL",
         "BF",
-        "PR",
         "BI",
+        "PR",
         "BA",
         "BW",
-        "BV",
-        "CC",
-        "CL",
-        "CN",
-        "CP",
-        "CO",
-        "KM",
-        "CW",
-        "CX",
+        "BR",
+        "BM",
+        "BN",
+        "PT",
+        "GA",
+        "GM",
+        "GL",
+        "GP",
+        "GU",
+        "GT",
+        "GY",
+        "GF",
         "DK",
-        "DG",
         "DJ",
         "DM",
         "DZ",
-        "EA",
-        "EH",
-        "EU",
         "VU",
         "FJ",
         "PH",
         "FI",
         "VE",
         "VN",
-        "FO",
         "FR",
-        "GA",
-        "GM",
-        "GG",
-        "GL",
-        "GS",
-        "GP",
-        "GU",
-        "GT",
-        "GY",
-        "GF",
-        "HT",
-        "HK",
-        "HM",
-        "HU",
-        "NL",
-        "HN",
-        "IC",
-        "EC",
-        "IM",
-        "IR",
-        "ER",
-        "IE",
-        "IS",
-        "IL",
-        "EE",
-        "IT",
-        "ET",
-        "US",
-        "JM",
-        "JE",
-        "GE",
         "NC",
         "KH",
         "CM",
@@ -147,30 +138,51 @@ public class LocalizedNamesImpl_shi extends LocalizedNamesImpl {
         "KE",
         "KI",
         "KG",
-        "HR",
         "CU",
+        "CO",
         "CG",
         "KR",
         "KP",
         "CR",
         "CI",
+        "HR",
+        "HT",
+        "HU",
+        "NL",
+        "HN",
+        "OM",
+        "QA",
+        "CY",
+        "KM",
+        "EC",
+        "IR",
+        "ER",
+        "IE",
+        "IS",
+        "IL",
+        "EE",
+        "ET",
+        "IT",
+        "US",
+        "JM",
+        "GE",
         "LV",
         "LA",
+        "KW",
         "IN",
+        "IQ",
         "LR",
         "LY",
         "LI",
         "AE",
         "LS",
         "LT",
-        "KW",
         "MA",
         "LB",
         "LU",
         "JO",
         "JP",
         "GR",
-        "IQ",
         "MG",
         "MW",
         "MV",
@@ -180,13 +192,10 @@ public class LocalizedNamesImpl_shi extends LocalizedNamesImpl {
         "MQ",
         "MK",
         "YT",
-        "ME",
-        "MF",
         "FM",
         "MX",
         "EG",
         "MN",
-        "MO",
         "MD",
         "MC",
         "MS",
@@ -197,21 +206,27 @@ public class LocalizedNamesImpl_shi extends LocalizedNamesImpl {
         "NA",
         "NR",
         "NP",
-        "NG",
         "NI",
+        "NG",
         "NU",
         "NE",
         "AT",
         "NO",
         "NZ",
-        "QA",
-        "QO",
-        "CY",
+        "UA",
+        "UY",
+        "UG",
+        "AU",
+        "UZ",
         "RE",
-        "RS",
         "RO",
         "RU",
         "RW",
+        "GH",
+        "GN",
+        "GW",
+        "GQ",
+        "GD",
         "SV",
         "WS",
         "AS",
@@ -223,38 +238,30 @@ public class LocalizedNamesImpl_shi extends LocalizedNamesImpl {
         "LC",
         "ST",
         "ES",
-        "CS",
-        "SJ",
         "SK",
         "SI",
         "SG",
-        "LK",
-        "SS",
-        "SA",
-        "SC",
-        "SN",
-        "SL",
-        "SD",
-        "SO",
-        "SE",
         "SR",
         "SY",
+        "LK",
+        "SA",
+        "SN",
+        "SL",
+        "SC",
+        "SD",
+        "SE",
         "SZ",
         "CH",
-        "SX",
-        "TA",
-        "TJ",
+        "SO",
+        "CL",
+        "CN",
         "CD",
         "DO",
         "CF",
         "CZ",
         "GB",
+        "TJ",
         "IO",
-        "TZ",
-        "TH",
-        "TW",
-        "TD",
-        "TF",
         "CV",
         "KY",
         "CK",
@@ -267,262 +274,253 @@ public class LocalizedNamesImpl_shi extends LocalizedNamesImpl {
         "VI",
         "VG",
         "TL",
-        "TT",
         "TV",
-        "TG",
-        "TK",
-        "TO",
         "TN",
         "TM",
         "TR",
-        "UA",
-        "UM",
-        "UY",
-        "AU",
-        "UZ",
-        "UG",
+        "TT",
+        "TD",
+        "TZ",
+        "TH",
+        "TW",
+        "TG",
+        "TK",
+        "TO",
         "WF",
         "YE",
         "ZM",
         "ZW",
-        "OM",
-        "GH",
-        "GN",
-        "GW",
-        "GQ",
-        "GD",
     };
   }
 
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
-    namesMap.put("AD", "andura");
-    namesMap.put("AE", "limarat");
-    namesMap.put("AF", "afɣanistan");
-    namesMap.put("AG", "antiga d brbuda");
-    namesMap.put("AI", "angila");
-    namesMap.put("AL", "albanya");
-    namesMap.put("AM", "arminya");
-    namesMap.put("AN", "antiy n hulanda");
-    namesMap.put("AO", "angula");
-    namesMap.put("AR", "arjantin");
-    namesMap.put("AS", "samwa tamirikanit");
-    namesMap.put("AT", "nnmsa");
-    namesMap.put("AU", "ustralya");
-    namesMap.put("AW", "aruba");
-    namesMap.put("AZ", "adrabijan");
-    namesMap.put("BA", "busna d hirsik");
-    namesMap.put("BB", "barbad");
-    namesMap.put("BD", "bangladic");
-    namesMap.put("BE", "bljika");
-    namesMap.put("BF", "burkina fasu");
-    namesMap.put("BG", "blɣara");
-    namesMap.put("BH", "bḥrayn");
-    namesMap.put("BI", "burundi");
-    namesMap.put("BJ", "binin");
-    namesMap.put("BM", "brmuda");
-    namesMap.put("BN", "bruni");
-    namesMap.put("BO", "bulibya");
-    namesMap.put("BR", "brazil");
-    namesMap.put("BS", "bahamas");
-    namesMap.put("BT", "bhutan");
-    namesMap.put("BW", "butswana");
-    namesMap.put("BY", "bilarusya");
-    namesMap.put("BZ", "biliz");
-    namesMap.put("CA", "kanada");
-    namesMap.put("CD", "tagdudant tadimukratit n Kongo");
-    namesMap.put("CF", "tagdudant tanammast n ifriqya");
-    namesMap.put("CG", "kungu");
-    namesMap.put("CH", "swisra");
-    namesMap.put("CI", "kut difwar");
-    namesMap.put("CK", "tigzirin n kuk");
-    namesMap.put("CL", "ccili");
-    namesMap.put("CM", "kamirun");
-    namesMap.put("CN", "ccinwa");
-    namesMap.put("CO", "culumbya");
-    namesMap.put("CR", "kusta rika");
-    namesMap.put("CS", "sirbya d muntinigru");
-    namesMap.put("CU", "kuba");
-    namesMap.put("CV", "tigzirin n kabbirdi");
-    namesMap.put("CY", "qubrus");
-    namesMap.put("CZ", "tagdudant tatcikit");
-    namesMap.put("DE", "almanya");
-    namesMap.put("DJ", "djibuti");
-    namesMap.put("DK", "danmark");
-    namesMap.put("DM", "duminik");
-    namesMap.put("DO", "tagdudant taduminikt");
-    namesMap.put("DZ", "dzayr");
-    namesMap.put("EC", "ikwadur");
-    namesMap.put("EE", "istunya");
-    namesMap.put("EG", "miṣṛ");
-    namesMap.put("ER", "iritirya");
-    namesMap.put("ES", "sbanya");
-    namesMap.put("ET", "ityubya");
-    namesMap.put("FI", "fillanda");
-    namesMap.put("FJ", "fidji");
-    namesMap.put("FK", "tigzirin n malawi");
-    namesMap.put("FM", "mikrunizya");
-    namesMap.put("FR", "fransa");
-    namesMap.put("GA", "gabun");
-    namesMap.put("GB", "tagldit imunn");
-    namesMap.put("GD", "ɣrnaṭa");
-    namesMap.put("GE", "jurjya");
-    namesMap.put("GF", "gwiyan tafransist");
-    namesMap.put("GH", "ɣana");
-    namesMap.put("GI", "adrar n ṭaṛiq");
-    namesMap.put("GL", "griland");
-    namesMap.put("GM", "gambya");
-    namesMap.put("GN", "ɣinya");
-    namesMap.put("GP", "gwadalub");
-    namesMap.put("GQ", "ɣinya n ikwadur");
-    namesMap.put("GR", "lyunan");
-    namesMap.put("GT", "gwatimala");
-    namesMap.put("GU", "gwam");
-    namesMap.put("GW", "ɣinya bisaw");
-    namesMap.put("GY", "gwiyana");
-    namesMap.put("HN", "hunduras");
-    namesMap.put("HR", "krwatya");
-    namesMap.put("HT", "hayti");
-    namesMap.put("HU", "hnɣarya");
-    namesMap.put("ID", "andunisya");
-    namesMap.put("IE", "irlanda");
-    namesMap.put("IL", "israyil");
-    namesMap.put("IN", "lhind");
-    namesMap.put("IO", "tamnaḍt tanglizit n ugaru ahindi");
-    namesMap.put("IQ", "lɛiraq");
-    namesMap.put("IR", "iran");
-    namesMap.put("IS", "island");
-    namesMap.put("IT", "iṭalya");
-    namesMap.put("JM", "jamayka");
-    namesMap.put("JO", "lurdun");
-    namesMap.put("JP", "lyaban");
-    namesMap.put("KE", "kinya");
-    namesMap.put("KG", "kirɣizistan");
-    namesMap.put("KH", "kambudya");
-    namesMap.put("KI", "kiribati");
-    namesMap.put("KM", "cumur");
-    namesMap.put("KN", "sankris d nifis");
-    namesMap.put("KP", "kurya n iẓẓlmḍ");
-    namesMap.put("KR", "kurya n iffus");
-    namesMap.put("KW", "lkwit");
-    namesMap.put("KY", "tigzirin n kayman");
-    namesMap.put("KZ", "kazaxstan");
-    namesMap.put("LA", "laws");
-    namesMap.put("LB", "lubnan");
-    namesMap.put("LC", "santlusi");
-    namesMap.put("LI", "likinctayn");
-    namesMap.put("LK", "srilanka");
-    namesMap.put("LR", "libirya");
-    namesMap.put("LS", "liṣuṭu");
-    namesMap.put("LT", "litwanya");
-    namesMap.put("LU", "luksanburg");
-    namesMap.put("LV", "latfya");
-    namesMap.put("LY", "libya");
-    namesMap.put("MA", "lmɣrib");
-    namesMap.put("MC", "munaku");
-    namesMap.put("MD", "muldufya");
-    namesMap.put("MG", "madaɣacqar");
-    namesMap.put("MH", "tigzirin n marcal");
-    namesMap.put("MK", "masidunya");
-    namesMap.put("ML", "mali");
-    namesMap.put("MM", "myanmar");
-    namesMap.put("MN", "mnɣulya");
-    namesMap.put("MP", "tigzirin n maryan n iẓẓlmḍ");
-    namesMap.put("MQ", "martinik");
-    namesMap.put("MR", "muṛiṭanya");
-    namesMap.put("MS", "munsirat");
-    namesMap.put("MT", "malṭa");
-    namesMap.put("MU", "muris");
-    namesMap.put("MV", "maldif");
-    namesMap.put("MW", "malawi");
-    namesMap.put("MX", "miksik");
-    namesMap.put("MY", "malizya");
-    namesMap.put("MZ", "muznbiq");
-    namesMap.put("NA", "namibya");
-    namesMap.put("NC", "kalidunya tamaynut");
-    namesMap.put("NE", "nnijir");
-    namesMap.put("NF", "tigzirin n nurfulk");
-    namesMap.put("NG", "nijirya");
-    namesMap.put("NI", "nikaragwa");
-    namesMap.put("NL", "hulanda");
-    namesMap.put("NO", "nnrwij");
-    namesMap.put("NP", "nibal");
-    namesMap.put("NR", "nawru");
-    namesMap.put("NU", "niwi");
-    namesMap.put("NZ", "nyuzilanda");
-    namesMap.put("OM", "ɛuman");
-    namesMap.put("PA", "banama");
-    namesMap.put("PE", "biru");
-    namesMap.put("PF", "bulinizya tafransist");
-    namesMap.put("PG", "babwa ɣinya tamaynut");
-    namesMap.put("PH", "filibbin");
-    namesMap.put("PK", "bakistan");
-    namesMap.put("PL", "bulunya");
-    namesMap.put("PM", "sanbyir d miklun");
-    namesMap.put("PN", "bitkayrn");
-    namesMap.put("PR", "burtu riku");
-    namesMap.put("PS", "agmmaḍ n tagut d ɣzza");
-    namesMap.put("PT", "bṛṭqiz");
-    namesMap.put("PW", "balaw");
-    namesMap.put("PY", "baragway");
-    namesMap.put("QA", "qatar");
-    namesMap.put("RE", "riyunyun");
-    namesMap.put("RO", "rumanya");
-    namesMap.put("RU", "rusya");
-    namesMap.put("RW", "rwanda");
-    namesMap.put("SA", "ssaɛudiya");
-    namesMap.put("SB", "tigzirin n saluman");
-    namesMap.put("SC", "ssicil");
-    namesMap.put("SD", "ssudan");
-    namesMap.put("SE", "sswid");
-    namesMap.put("SG", "snɣafura");
-    namesMap.put("SH", "santilin");
-    namesMap.put("SI", "slufinya");
-    namesMap.put("SK", "slufakya");
-    namesMap.put("SL", "ssiralyun");
-    namesMap.put("SM", "sanmarinu");
-    namesMap.put("SN", "ssinigal");
-    namesMap.put("SO", "ṣṣumal");
-    namesMap.put("SR", "surinam");
-    namesMap.put("ST", "sawṭumi d bransib");
-    namesMap.put("SV", "salfadur");
-    namesMap.put("SY", "surya");
-    namesMap.put("SZ", "swazilanda");
-    namesMap.put("TC", "tigzirin n turkya d kayk");
-    namesMap.put("TD", "tcad");
-    namesMap.put("TG", "ṭugu");
-    namesMap.put("TH", "ṭayland");
-    namesMap.put("TJ", "tadjakistan");
-    namesMap.put("TK", "ṭuklaw");
-    namesMap.put("TL", "timur n lqblt");
-    namesMap.put("TM", "turkmanstan");
-    namesMap.put("TN", "tuns");
-    namesMap.put("TO", "ṭunga");
-    namesMap.put("TR", "turkya");
-    namesMap.put("TT", "trinidad d ṭubagu");
-    namesMap.put("TV", "tufalu");
-    namesMap.put("TW", "ṭaywan");
-    namesMap.put("TZ", "ṭanẓanya");
-    namesMap.put("UA", "ukranya");
-    namesMap.put("UG", "uɣanda");
-    namesMap.put("US", "iwunak munnin n mirikan");
-    namesMap.put("UY", "urugway");
-    namesMap.put("UZ", "uzbakistan");
-    namesMap.put("VA", "awank n fatikan");
-    namesMap.put("VC", "sanfansan d grinadin");
-    namesMap.put("VE", "finzwila");
-    namesMap.put("VG", "tigzirin timgad n nngliz");
-    namesMap.put("VI", "tigzirin timgad n iwunak munnin");
-    namesMap.put("VN", "fitnam");
-    namesMap.put("VU", "fanwaṭu");
-    namesMap.put("WF", "walis d futuna");
-    namesMap.put("WS", "samwa");
-    namesMap.put("YE", "yaman");
-    namesMap.put("YT", "mayuṭ");
-    namesMap.put("ZA", "afriqya n iffus");
-    namesMap.put("ZM", "zambya");
-    namesMap.put("ZW", "zimbabwi");
+    namesMap.put("AD", "ⴰⵏⴷⵓⵔⴰ");
+    namesMap.put("AE", "ⵍⵉⵎⴰⵔⴰⵜ");
+    namesMap.put("AF", "ⴰⴼⵖⴰⵏⵉⵙⵜⴰⵏ");
+    namesMap.put("AG", "ⴰⵏⵜⵉⴳⴰ ⴷ ⴱⵔⴱⵓⴷⴰ");
+    namesMap.put("AI", "ⴰⵏⴳⵉⵍⴰ");
+    namesMap.put("AL", "ⴰⵍⴱⴰⵏⵢⴰ");
+    namesMap.put("AM", "ⴰⵔⵎⵉⵏⵢⴰ");
+    namesMap.put("AN", "ⴰⵏⵜⵉⵢ ⵏ ⵀⵓⵍⴰⵏⴷⴰ");
+    namesMap.put("AO", "ⴰⵏⴳⵓⵍⴰ");
+    namesMap.put("AR", "ⴰⵔⵊⴰⵏⵜⵉⵏ");
+    namesMap.put("AS", "ⵙⴰⵎⵡⴰ ⵜⴰⵎⵉⵔⵉⴽⴰⵏⵉⵜ");
+    namesMap.put("AT", "ⵏⵏⵎⵙⴰ");
+    namesMap.put("AU", "ⵓⵙⵜⵔⴰⵍⵢⴰ");
+    namesMap.put("AW", "ⴰⵔⵓⴱⴰ");
+    namesMap.put("AZ", "ⴰⴷⵔⴰⴱⵉⵊⴰⵏ");
+    namesMap.put("BA", "ⴱⵓⵙⵏⴰ ⴷ ⵀⵉⵔⵙⵉⴽ");
+    namesMap.put("BB", "ⴱⴰⵔⴱⴰⴷ");
+    namesMap.put("BD", "ⴱⴰⵏⴳⵍⴰⴷⵉⵛ");
+    namesMap.put("BE", "ⴱⵍⵊⵉⴽⴰ");
+    namesMap.put("BF", "ⴱⵓⵔⴽⵉⵏⴰ ⴼⴰⵙⵓ");
+    namesMap.put("BG", "ⴱⵍⵖⴰⵔⵢⴰ");
+    namesMap.put("BH", "ⴱⵃⵔⴰⵢⵏ");
+    namesMap.put("BI", "ⴱⵓⵔⵓⵏⴷⵉ");
+    namesMap.put("BJ", "ⴱⵉⵏⵉⵏ");
+    namesMap.put("BM", "ⴱⵔⵎⵓⴷⴰ");
+    namesMap.put("BN", "ⴱⵔⵓⵏⵉ");
+    namesMap.put("BO", "ⴱⵓⵍⵉⴼⵢⴰ");
+    namesMap.put("BR", "ⴱⵔⴰⵣⵉⵍ");
+    namesMap.put("BS", "ⴱⴰⵀⴰⵎⴰⵙ");
+    namesMap.put("BT", "ⴱⵀⵓⵜⴰⵏ");
+    namesMap.put("BW", "ⴱⵓⵜⵙⵡⴰⵏⴰ");
+    namesMap.put("BY", "ⴱⵉⵍⴰⵔⵓⵙⵢⴰ");
+    namesMap.put("BZ", "ⴱⵉⵍⵉⵣ");
+    namesMap.put("CA", "ⴽⴰⵏⴰⴷⴰ");
+    namesMap.put("CD", "ⵜⴰⴳⴷⵓⴷⴰⵏⵜ ⵜⴰⴷⵉⵎⵓⵇⵔⴰⵜⵉⵜ ⵏ ⴽⵓⵏⴳⵓ");
+    namesMap.put("CF", "ⵜⴰⴳⴷⵓⴷⴰⵏⵜ ⵜⴰⵏⴰⵎⵎⴰⵙⵜ ⵏ ⵉⴼⵔⵉⵇⵢⴰ");
+    namesMap.put("CG", "ⴽⵓⵏⴳⵓ");
+    namesMap.put("CH", "ⵙⵡⵉⵙⵔⴰ");
+    namesMap.put("CI", "ⴽⵓⵜ ⴷⵉⴼⵡⴰⵔ");
+    namesMap.put("CK", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⴽⵓⴽ");
+    namesMap.put("CL", "ⵛⵛⵉⵍⵉ");
+    namesMap.put("CM", "ⴽⴰⵎⵉⵔⵓⵏ");
+    namesMap.put("CN", "ⵛⵛⵉⵏⵡⴰ");
+    namesMap.put("CO", "ⴽⵓⵍⵓⵎⴱⵢⴰ");
+    namesMap.put("CR", "ⴽⵓⵙⵜⴰ ⵔⵉⴽⴰ");
+    namesMap.put("CU", "ⴽⵓⴱⴰ");
+    namesMap.put("CV", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⴽⴰⴱⴱⵉⵔⴷⵉ");
+    namesMap.put("CY", "ⵇⵓⴱⵔⵓⵙ");
+    namesMap.put("CZ", "ⵜⴰⴳⴷⵓⴷⴰⵏⵜ ⵜⴰⵜⵛⵉⴽⵉⵜ");
+    namesMap.put("DE", "ⴰⵍⵎⴰⵏⵢⴰ");
+    namesMap.put("DJ", "ⴷⵊⵉⴱⵓⵜⵉ");
+    namesMap.put("DK", "ⴷⴰⵏⵎⴰⵔⴽ");
+    namesMap.put("DM", "ⴷⵓⵎⵉⵏⵉⴽ");
+    namesMap.put("DO", "ⵜⴰⴳⴷⵓⴷⴰⵏⵜ ⵜⴰⴷⵓⵎⵉⵏⵉⴽⵜ");
+    namesMap.put("DZ", "ⴷⵣⴰⵢⵔ");
+    namesMap.put("EC", "ⵉⴽⵡⴰⴷⵓⵔ");
+    namesMap.put("EE", "ⵉⵙⵜⵓⵏⵢⴰ");
+    namesMap.put("EG", "ⵎⵉⵚⵕ");
+    namesMap.put("ER", "ⵉⵔⵉⵜⵉⵔⵢⴰ");
+    namesMap.put("ES", "ⵙⴱⴰⵏⵢⴰ");
+    namesMap.put("ET", "ⵉⵜⵢⵓⴱⵢⴰ");
+    namesMap.put("FI", "ⴼⵉⵍⵍⴰⵏⴷⴰ");
+    namesMap.put("FJ", "ⴼⵉⴷⵊⵉ");
+    namesMap.put("FK", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵎⴰⵍⴰⵡⵉ");
+    namesMap.put("FM", "ⵎⵉⴽⵔⵓⵏⵉⵣⵢⴰ");
+    namesMap.put("FR", "ⴼⵔⴰⵏⵙⴰ");
+    namesMap.put("GA", "ⴳⴰⴱⵓⵏ");
+    namesMap.put("GB", "ⵜⴰⴳⵍⴷⵉⵜ ⵉⵎⵓⵏⵏ");
+    namesMap.put("GD", "ⵖⵔⵏⴰⵟⴰ");
+    namesMap.put("GE", "ⵊⵓⵔⵊⵢⴰ");
+    namesMap.put("GF", "ⴳⵡⵉⵢⴰⵏ ⵜⴰⴼⵔⴰⵏⵙⵉⵙⵜ");
+    namesMap.put("GH", "ⵖⴰⵏⴰ");
+    namesMap.put("GI", "ⴰⴷⵔⴰⵔ ⵏ ⵟⴰⵕⵉⵇ");
+    namesMap.put("GL", "ⴳⵔⵉⵍⴰⵏⴷ");
+    namesMap.put("GM", "ⴳⴰⵎⴱⵢⴰ");
+    namesMap.put("GN", "ⵖⵉⵏⵢⴰ");
+    namesMap.put("GP", "ⴳⵡⴰⴷⴰⵍⵓⴱ");
+    namesMap.put("GQ", "ⵖⵉⵏⵢⴰ ⵏ ⵉⴽⵡⴰⴷⵓⵔ");
+    namesMap.put("GR", "ⵍⵢⵓⵏⴰⵏ");
+    namesMap.put("GT", "ⴳⵡⴰⵜⵉⵎⴰⵍⴰ");
+    namesMap.put("GU", "ⴳⵡⴰⵎ");
+    namesMap.put("GW", "ⵖⵉⵏⵢⴰ ⴱⵉⵙⴰⵡ");
+    namesMap.put("GY", "ⴳⵡⵉⵢⴰⵏⴰ");
+    namesMap.put("HN", "ⵀⵓⵏⴷⵓⵔⴰⵙ");
+    namesMap.put("HR", "ⴽⵔⵡⴰⵜⵢⴰ");
+    namesMap.put("HT", "ⵀⴰⵢⵜⵉ");
+    namesMap.put("HU", "ⵀⵏⵖⴰⵔⵢⴰ");
+    namesMap.put("ID", "ⴰⵏⴷⵓⵏⵉⵙⵢⴰ");
+    namesMap.put("IE", "ⵉⵔⵍⴰⵏⴷⴰ");
+    namesMap.put("IL", "ⵉⵙⵔⴰⵢⵉⵍ");
+    namesMap.put("IN", "ⵍⵀⵉⵏⴷ");
+    namesMap.put("IO", "ⵜⴰⵎⵏⴰⴹⵜ ⵜⴰⵏⴳⵍⵉⵣⵉⵜ ⵏ ⵓⴳⴰⵔⵓ ⴰⵀⵉⵏⴷⵉ");
+    namesMap.put("IQ", "ⵍⵄⵉⵔⴰⵇ");
+    namesMap.put("IR", "ⵉⵔⴰⵏ");
+    namesMap.put("IS", "ⵉⵙⵍⴰⵏⴷ");
+    namesMap.put("IT", "ⵉⵟⴰⵍⵢⴰ");
+    namesMap.put("JM", "ⵊⴰⵎⴰⵢⴽⴰ");
+    namesMap.put("JO", "ⵍⵓⵔⴷⵓⵏ");
+    namesMap.put("JP", "ⵍⵢⴰⴱⴰⵏ");
+    namesMap.put("KE", "ⴽⵉⵏⵢⴰ");
+    namesMap.put("KG", "ⴽⵉⵔⵖⵉⵣⵉⵙⵜⴰⵏ");
+    namesMap.put("KH", "ⴽⴰⵎⴱⵓⴷⵢⴰ");
+    namesMap.put("KI", "ⴽⵉⵔⵉⴱⴰⵜⵉ");
+    namesMap.put("KM", "ⵇⵓⵎⵓⵔ");
+    namesMap.put("KN", "ⵙⴰⵏⴽⵔⵉⵙ ⴷ ⵏⵉⴼⵉⵙ");
+    namesMap.put("KP", "ⴽⵓⵔⵢⴰ ⵏ ⵉⵥⵥⵍⵎⴹ");
+    namesMap.put("KR", "ⴽⵓⵔⵢⴰ ⵏ ⵉⴼⴼⵓⵙ");
+    namesMap.put("KW", "ⵍⴽⵡⵉⵜ");
+    namesMap.put("KY", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⴽⴰⵢⵎⴰⵏ");
+    namesMap.put("KZ", "ⴽⴰⵣⴰⵅⵙⵜⴰⵏ");
+    namesMap.put("LA", "ⵍⴰⵡⵙ");
+    namesMap.put("LB", "ⵍⵓⴱⵏⴰⵏ");
+    namesMap.put("LC", "ⵙⴰⵏⵜⵍⵓⵙⵉ");
+    namesMap.put("LI", "ⵍⵉⴽⵉⵏⵛⵜⴰⵢⵏ");
+    namesMap.put("LK", "ⵙⵔⵉⵍⴰⵏⴽⴰ");
+    namesMap.put("LR", "ⵍⵉⴱⵉⵔⵢⴰ");
+    namesMap.put("LS", "ⵍⵉⵚⵓⵟⵓ");
+    namesMap.put("LT", "ⵍⵉⵜⵡⴰⵏⵢⴰ");
+    namesMap.put("LU", "ⵍⵓⴽⵙⴰⵏⴱⵓⵔⴳ");
+    namesMap.put("LV", "ⵍⴰⵜⴼⵢⴰ");
+    namesMap.put("LY", "ⵍⵉⴱⵢⴰ");
+    namesMap.put("MA", "ⵍⵎⵖⵔⵉⴱ");
+    namesMap.put("MC", "ⵎⵓⵏⴰⴽⵓ");
+    namesMap.put("MD", "ⵎⵓⵍⴷⵓⴼⵢⴰ");
+    namesMap.put("MG", "ⵎⴰⴷⴰⵖⴰⵛⵇⴰⵔ");
+    namesMap.put("MH", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵎⴰⵔⵛⴰⵍ");
+    namesMap.put("MK", "ⵎⴰⵙⵉⴷⵓⵏⵢⴰ");
+    namesMap.put("ML", "ⵎⴰⵍⵉ");
+    namesMap.put("MM", "ⵎⵢⴰⵏⵎⴰⵔ");
+    namesMap.put("MN", "ⵎⵏⵖⵓⵍⵢⴰ");
+    namesMap.put("MP", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵎⴰⵔⵢⴰⵏ ⵏ ⵉⵥⵥⵍⵎⴹ");
+    namesMap.put("MQ", "ⵎⴰⵔⵜⵉⵏⵉⴽ");
+    namesMap.put("MR", "ⵎⵓⵕⵉⵟⴰⵏⵢⴰ");
+    namesMap.put("MS", "ⵎⵓⵏⵙⵉⵔⴰⵜ");
+    namesMap.put("MT", "ⵎⴰⵍⵟⴰ");
+    namesMap.put("MU", "ⵎⵓⵔⵉⵙ");
+    namesMap.put("MV", "ⵎⴰⵍⴷⵉⴼ");
+    namesMap.put("MW", "ⵎⴰⵍⴰⵡⵉ");
+    namesMap.put("MX", "ⵎⵉⴽⵙⵉⴽ");
+    namesMap.put("MY", "ⵎⴰⵍⵉⵣⵢⴰ");
+    namesMap.put("MZ", "ⵎⵓⵣⵏⴱⵉⵇ");
+    namesMap.put("NA", "ⵏⴰⵎⵉⴱⵢⴰ");
+    namesMap.put("NC", "ⴽⴰⵍⵉⴷⵓⵏⵢⴰ ⵜⴰⵎⴰⵢⵏⵓⵜ");
+    namesMap.put("NE", "ⵏⵏⵉⵊⵉⵔ");
+    namesMap.put("NF", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵏⵓⵔⴼⵓⵍⴽ");
+    namesMap.put("NG", "ⵏⵉⵊⵉⵔⵢⴰ");
+    namesMap.put("NI", "ⵏⵉⴽⴰⵔⴰⴳⵡⴰ");
+    namesMap.put("NL", "ⵀⵓⵍⴰⵏⴷⴰ");
+    namesMap.put("NO", "ⵏⵏⵔⵡⵉⵊ");
+    namesMap.put("NP", "ⵏⵉⴱⴰⵍ");
+    namesMap.put("NR", "ⵏⴰⵡⵔⵓ");
+    namesMap.put("NU", "ⵏⵉⵡⵉ");
+    namesMap.put("NZ", "ⵏⵢⵓⵣⵉⵍⴰⵏⴷⴰ");
+    namesMap.put("OM", "ⵄⵓⵎⴰⵏ");
+    namesMap.put("PA", "ⴱⴰⵏⴰⵎⴰ");
+    namesMap.put("PE", "ⴱⵉⵔⵓ");
+    namesMap.put("PF", "ⴱⵓⵍⵉⵏⵉⵣⵢⴰ ⵜⴰⴼⵔⴰⵏⵙⵉⵙⵜ");
+    namesMap.put("PG", "ⴱⴰⴱⵡⴰ ⵖⵉⵏⵢⴰ ⵜⴰⵎⴰⵢⵏⵓⵜ");
+    namesMap.put("PH", "ⴼⵉⵍⵉⴱⴱⵉⵏ");
+    namesMap.put("PK", "ⴱⴰⴽⵉⵙⵜⴰⵏ");
+    namesMap.put("PL", "ⴱⵓⵍⵓⵏⵢⴰ");
+    namesMap.put("PM", "ⵙⴰⵏⴱⵢⵉⵔ ⴷ ⵎⵉⴽⵍⵓⵏ");
+    namesMap.put("PN", "ⴱⵉⵜⴽⴰⵢⵔⵏ");
+    namesMap.put("PR", "ⴱⵓⵔⵜⵓ ⵔⵉⴽⵓ");
+    namesMap.put("PS", "ⴰⴳⵎⵎⴰⴹ ⵏ ⵜⴰⴳⵓⵜ ⴷ ⵖⵣⵣⴰ");
+    namesMap.put("PT", "ⴱⵕⵟⵇⵉⵣ");
+    namesMap.put("PW", "ⴱⴰⵍⴰⵡ");
+    namesMap.put("PY", "ⴱⴰⵔⴰⴳⵡⴰⵢ");
+    namesMap.put("QA", "ⵇⴰⵜⴰⵔ");
+    namesMap.put("RE", "ⵔⵉⵢⵓⵏⵢⵓⵏ");
+    namesMap.put("RO", "ⵔⵓⵎⴰⵏⵢⴰ");
+    namesMap.put("RU", "ⵔⵓⵙⵢⴰ");
+    namesMap.put("RW", "ⵔⵡⴰⵏⴷⴰ");
+    namesMap.put("SA", "ⵙⵙⴰⵄⵓⴷⵉⵢⴰ");
+    namesMap.put("SB", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵙⴰⵍⵓⵎⴰⵏ");
+    namesMap.put("SC", "ⵙⵙⵉⵛⵉⵍ");
+    namesMap.put("SD", "ⵙⵙⵓⴷⴰⵏ");
+    namesMap.put("SE", "ⵙⵙⵡⵉⴷ");
+    namesMap.put("SG", "ⵙⵏⵖⴰⴼⵓⵔⴰ");
+    namesMap.put("SH", "ⵙⴰⵏⵜⵉⵍⵉⵏ");
+    namesMap.put("SI", "ⵙⵍⵓⴼⵉⵏⵢⴰ");
+    namesMap.put("SK", "ⵙⵍⵓⴼⴰⴽⵢⴰ");
+    namesMap.put("SL", "ⵙⵙⵉⵔⴰⵍⵢⵓⵏ");
+    namesMap.put("SM", "ⵙⴰⵏⵎⴰⵔⵉⵏⵓ");
+    namesMap.put("SN", "ⵙⵙⵉⵏⵉⴳⴰⵍ");
+    namesMap.put("SO", "ⵚⵚⵓⵎⴰⵍ");
+    namesMap.put("SR", "ⵙⵓⵔⵉⵏⴰⵎ");
+    namesMap.put("ST", "ⵙⴰⵡⵟⵓⵎⵉ ⴷ ⴱⵔⴰⵏⵙⵉⴱ");
+    namesMap.put("SV", "ⵙⴰⵍⴼⴰⴷⵓⵔ");
+    namesMap.put("SY", "ⵙⵓⵔⵢⴰ");
+    namesMap.put("SZ", "ⵙⵡⴰⵣⵉⵍⴰⵏⴷⴰ");
+    namesMap.put("TC", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵜⵓⵔⴽⵢⴰ ⴷ ⴽⴰⵢⴽ");
+    namesMap.put("TD", "ⵜⵛⴰⴷ");
+    namesMap.put("TG", "ⵟⵓⴳⵓ");
+    namesMap.put("TH", "ⵟⴰⵢⵍⴰⵏⴷ");
+    namesMap.put("TJ", "ⵜⴰⴷⵊⴰⴽⵉⵙⵜⴰⵏ");
+    namesMap.put("TK", "ⵟⵓⴽⵍⴰⵡ");
+    namesMap.put("TL", "ⵜⵉⵎⵓⵔ ⵏ ⵍⵇⴱⵍⵜ");
+    namesMap.put("TM", "ⵜⵓⵔⴽⵎⴰⵏⵙⵜⴰⵏ");
+    namesMap.put("TN", "ⵜⵓⵏⵙ");
+    namesMap.put("TO", "ⵟⵓⵏⴳⴰ");
+    namesMap.put("TR", "ⵜⵓⵔⴽⵢⴰ");
+    namesMap.put("TT", "ⵜⵔⵉⵏⵉⴷⴰⴷ ⴷ ⵟⵓⴱⴰⴳⵓ");
+    namesMap.put("TV", "ⵜⵓⴼⴰⵍⵓ");
+    namesMap.put("TW", "ⵟⴰⵢⵡⴰⵏ");
+    namesMap.put("TZ", "ⵟⴰⵏⵥⴰⵏⵢⴰ");
+    namesMap.put("UA", "ⵓⴽⵔⴰⵏⵢⴰ");
+    namesMap.put("UG", "ⵓⵖⴰⵏⴷⴰ");
+    namesMap.put("US", "ⵉⵡⵓⵏⴰⴽ ⵎⵓⵏⵏⵉⵏ ⵏ ⵎⵉⵔⵉⴽⴰⵏ");
+    namesMap.put("UY", "ⵓⵔⵓⴳⵡⴰⵢ");
+    namesMap.put("UZ", "ⵓⵣⴱⴰⴽⵉⵙⵜⴰⵏ");
+    namesMap.put("VA", "ⴰⵡⴰⵏⴽ ⵏ ⴼⴰⵜⵉⴽⴰⵏ");
+    namesMap.put("VC", "ⵙⴰⵏⴼⴰⵏⵙⴰⵏ ⴷ ⴳⵔⵉⵏⴰⴷⵉⵏ");
+    namesMap.put("VE", "ⴼⵉⵏⵣⵡⵉⵍⴰ");
+    namesMap.put("VG", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵜⵉⵎⴳⴰⴷ ⵏ ⵏⵏⴳⵍⵉⵣ");
+    namesMap.put("VI", "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵜⵉⵎⴳⴰⴷ ⵏ ⵉⵡⵓⵏⴰⴽ ⵎⵓⵏⵏⵉⵏ");
+    namesMap.put("VN", "ⴼⵉⵜⵏⴰⵎ");
+    namesMap.put("VU", "ⴼⴰⵏⵡⴰⵟⵓ");
+    namesMap.put("WF", "ⵡⴰⵍⵉⵙ ⴷ ⴼⵓⵜⵓⵏⴰ");
+    namesMap.put("WS", "ⵙⴰⵎⵡⴰ");
+    namesMap.put("YE", "ⵢⴰⵎⴰⵏ");
+    namesMap.put("YT", "ⵎⴰⵢⵓⵟ");
+    namesMap.put("ZA", "ⴰⴼⵔⵉⵇⵢⴰ ⵏ ⵉⴼⴼⵓⵙ");
+    namesMap.put("ZM", "ⵣⴰⵎⴱⵢⴰ");
+    namesMap.put("ZW", "ⵣⵉⵎⴱⴰⴱⵡⵉ");
   }
 
   @Override
@@ -532,232 +530,231 @@ public class LocalizedNamesImpl_shi extends LocalizedNamesImpl {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
-        "AD": "andura",
-        "AE": "limarat",
-        "AF": "afɣanistan",
-        "AG": "antiga d brbuda",
-        "AI": "angila",
-        "AL": "albanya",
-        "AM": "arminya",
-        "AN": "antiy n hulanda",
-        "AO": "angula",
-        "AR": "arjantin",
-        "AS": "samwa tamirikanit",
-        "AT": "nnmsa",
-        "AU": "ustralya",
-        "AW": "aruba",
-        "AZ": "adrabijan",
-        "BA": "busna d hirsik",
-        "BB": "barbad",
-        "BD": "bangladic",
-        "BE": "bljika",
-        "BF": "burkina fasu",
-        "BG": "blɣara",
-        "BH": "bḥrayn",
-        "BI": "burundi",
-        "BJ": "binin",
-        "BM": "brmuda",
-        "BN": "bruni",
-        "BO": "bulibya",
-        "BR": "brazil",
-        "BS": "bahamas",
-        "BT": "bhutan",
-        "BW": "butswana",
-        "BY": "bilarusya",
-        "BZ": "biliz",
-        "CA": "kanada",
-        "CD": "tagdudant tadimukratit n Kongo",
-        "CF": "tagdudant tanammast n ifriqya",
-        "CG": "kungu",
-        "CH": "swisra",
-        "CI": "kut difwar",
-        "CK": "tigzirin n kuk",
-        "CL": "ccili",
-        "CM": "kamirun",
-        "CN": "ccinwa",
-        "CO": "culumbya",
-        "CR": "kusta rika",
-        "CS": "sirbya d muntinigru",
-        "CU": "kuba",
-        "CV": "tigzirin n kabbirdi",
-        "CY": "qubrus",
-        "CZ": "tagdudant tatcikit",
-        "DE": "almanya",
-        "DJ": "djibuti",
-        "DK": "danmark",
-        "DM": "duminik",
-        "DO": "tagdudant taduminikt",
-        "DZ": "dzayr",
-        "EC": "ikwadur",
-        "EE": "istunya",
-        "EG": "miṣṛ",
-        "ER": "iritirya",
-        "ES": "sbanya",
-        "ET": "ityubya",
-        "FI": "fillanda",
-        "FJ": "fidji",
-        "FK": "tigzirin n malawi",
-        "FM": "mikrunizya",
-        "FR": "fransa",
-        "GA": "gabun",
-        "GB": "tagldit imunn",
-        "GD": "ɣrnaṭa",
-        "GE": "jurjya",
-        "GF": "gwiyan tafransist",
-        "GH": "ɣana",
-        "GI": "adrar n ṭaṛiq",
-        "GL": "griland",
-        "GM": "gambya",
-        "GN": "ɣinya",
-        "GP": "gwadalub",
-        "GQ": "ɣinya n ikwadur",
-        "GR": "lyunan",
-        "GT": "gwatimala",
-        "GU": "gwam",
-        "GW": "ɣinya bisaw",
-        "GY": "gwiyana",
-        "HN": "hunduras",
-        "HR": "krwatya",
-        "HT": "hayti",
-        "HU": "hnɣarya",
-        "ID": "andunisya",
-        "IE": "irlanda",
-        "IL": "israyil",
-        "IN": "lhind",
-        "IO": "tamnaḍt tanglizit n ugaru ahindi",
-        "IQ": "lɛiraq",
-        "IR": "iran",
-        "IS": "island",
-        "IT": "iṭalya",
-        "JM": "jamayka",
-        "JO": "lurdun",
-        "JP": "lyaban",
-        "KE": "kinya",
-        "KG": "kirɣizistan",
-        "KH": "kambudya",
-        "KI": "kiribati",
-        "KM": "cumur",
-        "KN": "sankris d nifis",
-        "KP": "kurya n iẓẓlmḍ",
-        "KR": "kurya n iffus",
-        "KW": "lkwit",
-        "KY": "tigzirin n kayman",
-        "KZ": "kazaxstan",
-        "LA": "laws",
-        "LB": "lubnan",
-        "LC": "santlusi",
-        "LI": "likinctayn",
-        "LK": "srilanka",
-        "LR": "libirya",
-        "LS": "liṣuṭu",
-        "LT": "litwanya",
-        "LU": "luksanburg",
-        "LV": "latfya",
-        "LY": "libya",
-        "MA": "lmɣrib",
-        "MC": "munaku",
-        "MD": "muldufya",
-        "MG": "madaɣacqar",
-        "MH": "tigzirin n marcal",
-        "MK": "masidunya",
-        "ML": "mali",
-        "MM": "myanmar",
-        "MN": "mnɣulya",
-        "MP": "tigzirin n maryan n iẓẓlmḍ",
-        "MQ": "martinik",
-        "MR": "muṛiṭanya",
-        "MS": "munsirat",
-        "MT": "malṭa",
-        "MU": "muris",
-        "MV": "maldif",
-        "MW": "malawi",
-        "MX": "miksik",
-        "MY": "malizya",
-        "MZ": "muznbiq",
-        "NA": "namibya",
-        "NC": "kalidunya tamaynut",
-        "NE": "nnijir",
-        "NF": "tigzirin n nurfulk",
-        "NG": "nijirya",
-        "NI": "nikaragwa",
-        "NL": "hulanda",
-        "NO": "nnrwij",
-        "NP": "nibal",
-        "NR": "nawru",
-        "NU": "niwi",
-        "NZ": "nyuzilanda",
-        "OM": "ɛuman",
-        "PA": "banama",
-        "PE": "biru",
-        "PF": "bulinizya tafransist",
-        "PG": "babwa ɣinya tamaynut",
-        "PH": "filibbin",
-        "PK": "bakistan",
-        "PL": "bulunya",
-        "PM": "sanbyir d miklun",
-        "PN": "bitkayrn",
-        "PR": "burtu riku",
-        "PS": "agmmaḍ n tagut d ɣzza",
-        "PT": "bṛṭqiz",
-        "PW": "balaw",
-        "PY": "baragway",
-        "QA": "qatar",
-        "RE": "riyunyun",
-        "RO": "rumanya",
-        "RU": "rusya",
-        "RW": "rwanda",
-        "SA": "ssaɛudiya",
-        "SB": "tigzirin n saluman",
-        "SC": "ssicil",
-        "SD": "ssudan",
-        "SE": "sswid",
-        "SG": "snɣafura",
-        "SH": "santilin",
-        "SI": "slufinya",
-        "SK": "slufakya",
-        "SL": "ssiralyun",
-        "SM": "sanmarinu",
-        "SN": "ssinigal",
-        "SO": "ṣṣumal",
-        "SR": "surinam",
-        "ST": "sawṭumi d bransib",
-        "SV": "salfadur",
-        "SY": "surya",
-        "SZ": "swazilanda",
-        "TC": "tigzirin n turkya d kayk",
-        "TD": "tcad",
-        "TG": "ṭugu",
-        "TH": "ṭayland",
-        "TJ": "tadjakistan",
-        "TK": "ṭuklaw",
-        "TL": "timur n lqblt",
-        "TM": "turkmanstan",
-        "TN": "tuns",
-        "TO": "ṭunga",
-        "TR": "turkya",
-        "TT": "trinidad d ṭubagu",
-        "TV": "tufalu",
-        "TW": "ṭaywan",
-        "TZ": "ṭanẓanya",
-        "UA": "ukranya",
-        "UG": "uɣanda",
-        "US": "iwunak munnin n mirikan",
-        "UY": "urugway",
-        "UZ": "uzbakistan",
-        "VA": "awank n fatikan",
-        "VC": "sanfansan d grinadin",
-        "VE": "finzwila",
-        "VG": "tigzirin timgad n nngliz",
-        "VI": "tigzirin timgad n iwunak munnin",
-        "VN": "fitnam",
-        "VU": "fanwaṭu",
-        "WF": "walis d futuna",
-        "WS": "samwa",
-        "YE": "yaman",
-        "YT": "mayuṭ",
-        "ZA": "afriqya n iffus",
-        "ZM": "zambya",
-        "ZW": "zimbabwi"
+        "AD": "ⴰⵏⴷⵓⵔⴰ",
+        "AE": "ⵍⵉⵎⴰⵔⴰⵜ",
+        "AF": "ⴰⴼⵖⴰⵏⵉⵙⵜⴰⵏ",
+        "AG": "ⴰⵏⵜⵉⴳⴰ ⴷ ⴱⵔⴱⵓⴷⴰ",
+        "AI": "ⴰⵏⴳⵉⵍⴰ",
+        "AL": "ⴰⵍⴱⴰⵏⵢⴰ",
+        "AM": "ⴰⵔⵎⵉⵏⵢⴰ",
+        "AN": "ⴰⵏⵜⵉⵢ ⵏ ⵀⵓⵍⴰⵏⴷⴰ",
+        "AO": "ⴰⵏⴳⵓⵍⴰ",
+        "AR": "ⴰⵔⵊⴰⵏⵜⵉⵏ",
+        "AS": "ⵙⴰⵎⵡⴰ ⵜⴰⵎⵉⵔⵉⴽⴰⵏⵉⵜ",
+        "AT": "ⵏⵏⵎⵙⴰ",
+        "AU": "ⵓⵙⵜⵔⴰⵍⵢⴰ",
+        "AW": "ⴰⵔⵓⴱⴰ",
+        "AZ": "ⴰⴷⵔⴰⴱⵉⵊⴰⵏ",
+        "BA": "ⴱⵓⵙⵏⴰ ⴷ ⵀⵉⵔⵙⵉⴽ",
+        "BB": "ⴱⴰⵔⴱⴰⴷ",
+        "BD": "ⴱⴰⵏⴳⵍⴰⴷⵉⵛ",
+        "BE": "ⴱⵍⵊⵉⴽⴰ",
+        "BF": "ⴱⵓⵔⴽⵉⵏⴰ ⴼⴰⵙⵓ",
+        "BG": "ⴱⵍⵖⴰⵔⵢⴰ",
+        "BH": "ⴱⵃⵔⴰⵢⵏ",
+        "BI": "ⴱⵓⵔⵓⵏⴷⵉ",
+        "BJ": "ⴱⵉⵏⵉⵏ",
+        "BM": "ⴱⵔⵎⵓⴷⴰ",
+        "BN": "ⴱⵔⵓⵏⵉ",
+        "BO": "ⴱⵓⵍⵉⴼⵢⴰ",
+        "BR": "ⴱⵔⴰⵣⵉⵍ",
+        "BS": "ⴱⴰⵀⴰⵎⴰⵙ",
+        "BT": "ⴱⵀⵓⵜⴰⵏ",
+        "BW": "ⴱⵓⵜⵙⵡⴰⵏⴰ",
+        "BY": "ⴱⵉⵍⴰⵔⵓⵙⵢⴰ",
+        "BZ": "ⴱⵉⵍⵉⵣ",
+        "CA": "ⴽⴰⵏⴰⴷⴰ",
+        "CD": "ⵜⴰⴳⴷⵓⴷⴰⵏⵜ ⵜⴰⴷⵉⵎⵓⵇⵔⴰⵜⵉⵜ ⵏ ⴽⵓⵏⴳⵓ",
+        "CF": "ⵜⴰⴳⴷⵓⴷⴰⵏⵜ ⵜⴰⵏⴰⵎⵎⴰⵙⵜ ⵏ ⵉⴼⵔⵉⵇⵢⴰ",
+        "CG": "ⴽⵓⵏⴳⵓ",
+        "CH": "ⵙⵡⵉⵙⵔⴰ",
+        "CI": "ⴽⵓⵜ ⴷⵉⴼⵡⴰⵔ",
+        "CK": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⴽⵓⴽ",
+        "CL": "ⵛⵛⵉⵍⵉ",
+        "CM": "ⴽⴰⵎⵉⵔⵓⵏ",
+        "CN": "ⵛⵛⵉⵏⵡⴰ",
+        "CO": "ⴽⵓⵍⵓⵎⴱⵢⴰ",
+        "CR": "ⴽⵓⵙⵜⴰ ⵔⵉⴽⴰ",
+        "CU": "ⴽⵓⴱⴰ",
+        "CV": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⴽⴰⴱⴱⵉⵔⴷⵉ",
+        "CY": "ⵇⵓⴱⵔⵓⵙ",
+        "CZ": "ⵜⴰⴳⴷⵓⴷⴰⵏⵜ ⵜⴰⵜⵛⵉⴽⵉⵜ",
+        "DE": "ⴰⵍⵎⴰⵏⵢⴰ",
+        "DJ": "ⴷⵊⵉⴱⵓⵜⵉ",
+        "DK": "ⴷⴰⵏⵎⴰⵔⴽ",
+        "DM": "ⴷⵓⵎⵉⵏⵉⴽ",
+        "DO": "ⵜⴰⴳⴷⵓⴷⴰⵏⵜ ⵜⴰⴷⵓⵎⵉⵏⵉⴽⵜ",
+        "DZ": "ⴷⵣⴰⵢⵔ",
+        "EC": "ⵉⴽⵡⴰⴷⵓⵔ",
+        "EE": "ⵉⵙⵜⵓⵏⵢⴰ",
+        "EG": "ⵎⵉⵚⵕ",
+        "ER": "ⵉⵔⵉⵜⵉⵔⵢⴰ",
+        "ES": "ⵙⴱⴰⵏⵢⴰ",
+        "ET": "ⵉⵜⵢⵓⴱⵢⴰ",
+        "FI": "ⴼⵉⵍⵍⴰⵏⴷⴰ",
+        "FJ": "ⴼⵉⴷⵊⵉ",
+        "FK": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵎⴰⵍⴰⵡⵉ",
+        "FM": "ⵎⵉⴽⵔⵓⵏⵉⵣⵢⴰ",
+        "FR": "ⴼⵔⴰⵏⵙⴰ",
+        "GA": "ⴳⴰⴱⵓⵏ",
+        "GB": "ⵜⴰⴳⵍⴷⵉⵜ ⵉⵎⵓⵏⵏ",
+        "GD": "ⵖⵔⵏⴰⵟⴰ",
+        "GE": "ⵊⵓⵔⵊⵢⴰ",
+        "GF": "ⴳⵡⵉⵢⴰⵏ ⵜⴰⴼⵔⴰⵏⵙⵉⵙⵜ",
+        "GH": "ⵖⴰⵏⴰ",
+        "GI": "ⴰⴷⵔⴰⵔ ⵏ ⵟⴰⵕⵉⵇ",
+        "GL": "ⴳⵔⵉⵍⴰⵏⴷ",
+        "GM": "ⴳⴰⵎⴱⵢⴰ",
+        "GN": "ⵖⵉⵏⵢⴰ",
+        "GP": "ⴳⵡⴰⴷⴰⵍⵓⴱ",
+        "GQ": "ⵖⵉⵏⵢⴰ ⵏ ⵉⴽⵡⴰⴷⵓⵔ",
+        "GR": "ⵍⵢⵓⵏⴰⵏ",
+        "GT": "ⴳⵡⴰⵜⵉⵎⴰⵍⴰ",
+        "GU": "ⴳⵡⴰⵎ",
+        "GW": "ⵖⵉⵏⵢⴰ ⴱⵉⵙⴰⵡ",
+        "GY": "ⴳⵡⵉⵢⴰⵏⴰ",
+        "HN": "ⵀⵓⵏⴷⵓⵔⴰⵙ",
+        "HR": "ⴽⵔⵡⴰⵜⵢⴰ",
+        "HT": "ⵀⴰⵢⵜⵉ",
+        "HU": "ⵀⵏⵖⴰⵔⵢⴰ",
+        "ID": "ⴰⵏⴷⵓⵏⵉⵙⵢⴰ",
+        "IE": "ⵉⵔⵍⴰⵏⴷⴰ",
+        "IL": "ⵉⵙⵔⴰⵢⵉⵍ",
+        "IN": "ⵍⵀⵉⵏⴷ",
+        "IO": "ⵜⴰⵎⵏⴰⴹⵜ ⵜⴰⵏⴳⵍⵉⵣⵉⵜ ⵏ ⵓⴳⴰⵔⵓ ⴰⵀⵉⵏⴷⵉ",
+        "IQ": "ⵍⵄⵉⵔⴰⵇ",
+        "IR": "ⵉⵔⴰⵏ",
+        "IS": "ⵉⵙⵍⴰⵏⴷ",
+        "IT": "ⵉⵟⴰⵍⵢⴰ",
+        "JM": "ⵊⴰⵎⴰⵢⴽⴰ",
+        "JO": "ⵍⵓⵔⴷⵓⵏ",
+        "JP": "ⵍⵢⴰⴱⴰⵏ",
+        "KE": "ⴽⵉⵏⵢⴰ",
+        "KG": "ⴽⵉⵔⵖⵉⵣⵉⵙⵜⴰⵏ",
+        "KH": "ⴽⴰⵎⴱⵓⴷⵢⴰ",
+        "KI": "ⴽⵉⵔⵉⴱⴰⵜⵉ",
+        "KM": "ⵇⵓⵎⵓⵔ",
+        "KN": "ⵙⴰⵏⴽⵔⵉⵙ ⴷ ⵏⵉⴼⵉⵙ",
+        "KP": "ⴽⵓⵔⵢⴰ ⵏ ⵉⵥⵥⵍⵎⴹ",
+        "KR": "ⴽⵓⵔⵢⴰ ⵏ ⵉⴼⴼⵓⵙ",
+        "KW": "ⵍⴽⵡⵉⵜ",
+        "KY": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⴽⴰⵢⵎⴰⵏ",
+        "KZ": "ⴽⴰⵣⴰⵅⵙⵜⴰⵏ",
+        "LA": "ⵍⴰⵡⵙ",
+        "LB": "ⵍⵓⴱⵏⴰⵏ",
+        "LC": "ⵙⴰⵏⵜⵍⵓⵙⵉ",
+        "LI": "ⵍⵉⴽⵉⵏⵛⵜⴰⵢⵏ",
+        "LK": "ⵙⵔⵉⵍⴰⵏⴽⴰ",
+        "LR": "ⵍⵉⴱⵉⵔⵢⴰ",
+        "LS": "ⵍⵉⵚⵓⵟⵓ",
+        "LT": "ⵍⵉⵜⵡⴰⵏⵢⴰ",
+        "LU": "ⵍⵓⴽⵙⴰⵏⴱⵓⵔⴳ",
+        "LV": "ⵍⴰⵜⴼⵢⴰ",
+        "LY": "ⵍⵉⴱⵢⴰ",
+        "MA": "ⵍⵎⵖⵔⵉⴱ",
+        "MC": "ⵎⵓⵏⴰⴽⵓ",
+        "MD": "ⵎⵓⵍⴷⵓⴼⵢⴰ",
+        "MG": "ⵎⴰⴷⴰⵖⴰⵛⵇⴰⵔ",
+        "MH": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵎⴰⵔⵛⴰⵍ",
+        "MK": "ⵎⴰⵙⵉⴷⵓⵏⵢⴰ",
+        "ML": "ⵎⴰⵍⵉ",
+        "MM": "ⵎⵢⴰⵏⵎⴰⵔ",
+        "MN": "ⵎⵏⵖⵓⵍⵢⴰ",
+        "MP": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵎⴰⵔⵢⴰⵏ ⵏ ⵉⵥⵥⵍⵎⴹ",
+        "MQ": "ⵎⴰⵔⵜⵉⵏⵉⴽ",
+        "MR": "ⵎⵓⵕⵉⵟⴰⵏⵢⴰ",
+        "MS": "ⵎⵓⵏⵙⵉⵔⴰⵜ",
+        "MT": "ⵎⴰⵍⵟⴰ",
+        "MU": "ⵎⵓⵔⵉⵙ",
+        "MV": "ⵎⴰⵍⴷⵉⴼ",
+        "MW": "ⵎⴰⵍⴰⵡⵉ",
+        "MX": "ⵎⵉⴽⵙⵉⴽ",
+        "MY": "ⵎⴰⵍⵉⵣⵢⴰ",
+        "MZ": "ⵎⵓⵣⵏⴱⵉⵇ",
+        "NA": "ⵏⴰⵎⵉⴱⵢⴰ",
+        "NC": "ⴽⴰⵍⵉⴷⵓⵏⵢⴰ ⵜⴰⵎⴰⵢⵏⵓⵜ",
+        "NE": "ⵏⵏⵉⵊⵉⵔ",
+        "NF": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵏⵓⵔⴼⵓⵍⴽ",
+        "NG": "ⵏⵉⵊⵉⵔⵢⴰ",
+        "NI": "ⵏⵉⴽⴰⵔⴰⴳⵡⴰ",
+        "NL": "ⵀⵓⵍⴰⵏⴷⴰ",
+        "NO": "ⵏⵏⵔⵡⵉⵊ",
+        "NP": "ⵏⵉⴱⴰⵍ",
+        "NR": "ⵏⴰⵡⵔⵓ",
+        "NU": "ⵏⵉⵡⵉ",
+        "NZ": "ⵏⵢⵓⵣⵉⵍⴰⵏⴷⴰ",
+        "OM": "ⵄⵓⵎⴰⵏ",
+        "PA": "ⴱⴰⵏⴰⵎⴰ",
+        "PE": "ⴱⵉⵔⵓ",
+        "PF": "ⴱⵓⵍⵉⵏⵉⵣⵢⴰ ⵜⴰⴼⵔⴰⵏⵙⵉⵙⵜ",
+        "PG": "ⴱⴰⴱⵡⴰ ⵖⵉⵏⵢⴰ ⵜⴰⵎⴰⵢⵏⵓⵜ",
+        "PH": "ⴼⵉⵍⵉⴱⴱⵉⵏ",
+        "PK": "ⴱⴰⴽⵉⵙⵜⴰⵏ",
+        "PL": "ⴱⵓⵍⵓⵏⵢⴰ",
+        "PM": "ⵙⴰⵏⴱⵢⵉⵔ ⴷ ⵎⵉⴽⵍⵓⵏ",
+        "PN": "ⴱⵉⵜⴽⴰⵢⵔⵏ",
+        "PR": "ⴱⵓⵔⵜⵓ ⵔⵉⴽⵓ",
+        "PS": "ⴰⴳⵎⵎⴰⴹ ⵏ ⵜⴰⴳⵓⵜ ⴷ ⵖⵣⵣⴰ",
+        "PT": "ⴱⵕⵟⵇⵉⵣ",
+        "PW": "ⴱⴰⵍⴰⵡ",
+        "PY": "ⴱⴰⵔⴰⴳⵡⴰⵢ",
+        "QA": "ⵇⴰⵜⴰⵔ",
+        "RE": "ⵔⵉⵢⵓⵏⵢⵓⵏ",
+        "RO": "ⵔⵓⵎⴰⵏⵢⴰ",
+        "RU": "ⵔⵓⵙⵢⴰ",
+        "RW": "ⵔⵡⴰⵏⴷⴰ",
+        "SA": "ⵙⵙⴰⵄⵓⴷⵉⵢⴰ",
+        "SB": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵙⴰⵍⵓⵎⴰⵏ",
+        "SC": "ⵙⵙⵉⵛⵉⵍ",
+        "SD": "ⵙⵙⵓⴷⴰⵏ",
+        "SE": "ⵙⵙⵡⵉⴷ",
+        "SG": "ⵙⵏⵖⴰⴼⵓⵔⴰ",
+        "SH": "ⵙⴰⵏⵜⵉⵍⵉⵏ",
+        "SI": "ⵙⵍⵓⴼⵉⵏⵢⴰ",
+        "SK": "ⵙⵍⵓⴼⴰⴽⵢⴰ",
+        "SL": "ⵙⵙⵉⵔⴰⵍⵢⵓⵏ",
+        "SM": "ⵙⴰⵏⵎⴰⵔⵉⵏⵓ",
+        "SN": "ⵙⵙⵉⵏⵉⴳⴰⵍ",
+        "SO": "ⵚⵚⵓⵎⴰⵍ",
+        "SR": "ⵙⵓⵔⵉⵏⴰⵎ",
+        "ST": "ⵙⴰⵡⵟⵓⵎⵉ ⴷ ⴱⵔⴰⵏⵙⵉⴱ",
+        "SV": "ⵙⴰⵍⴼⴰⴷⵓⵔ",
+        "SY": "ⵙⵓⵔⵢⴰ",
+        "SZ": "ⵙⵡⴰⵣⵉⵍⴰⵏⴷⴰ",
+        "TC": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵏ ⵜⵓⵔⴽⵢⴰ ⴷ ⴽⴰⵢⴽ",
+        "TD": "ⵜⵛⴰⴷ",
+        "TG": "ⵟⵓⴳⵓ",
+        "TH": "ⵟⴰⵢⵍⴰⵏⴷ",
+        "TJ": "ⵜⴰⴷⵊⴰⴽⵉⵙⵜⴰⵏ",
+        "TK": "ⵟⵓⴽⵍⴰⵡ",
+        "TL": "ⵜⵉⵎⵓⵔ ⵏ ⵍⵇⴱⵍⵜ",
+        "TM": "ⵜⵓⵔⴽⵎⴰⵏⵙⵜⴰⵏ",
+        "TN": "ⵜⵓⵏⵙ",
+        "TO": "ⵟⵓⵏⴳⴰ",
+        "TR": "ⵜⵓⵔⴽⵢⴰ",
+        "TT": "ⵜⵔⵉⵏⵉⴷⴰⴷ ⴷ ⵟⵓⴱⴰⴳⵓ",
+        "TV": "ⵜⵓⴼⴰⵍⵓ",
+        "TW": "ⵟⴰⵢⵡⴰⵏ",
+        "TZ": "ⵟⴰⵏⵥⴰⵏⵢⴰ",
+        "UA": "ⵓⴽⵔⴰⵏⵢⴰ",
+        "UG": "ⵓⵖⴰⵏⴷⴰ",
+        "US": "ⵉⵡⵓⵏⴰⴽ ⵎⵓⵏⵏⵉⵏ ⵏ ⵎⵉⵔⵉⴽⴰⵏ",
+        "UY": "ⵓⵔⵓⴳⵡⴰⵢ",
+        "UZ": "ⵓⵣⴱⴰⴽⵉⵙⵜⴰⵏ",
+        "VA": "ⴰⵡⴰⵏⴽ ⵏ ⴼⴰⵜⵉⴽⴰⵏ",
+        "VC": "ⵙⴰⵏⴼⴰⵏⵙⴰⵏ ⴷ ⴳⵔⵉⵏⴰⴷⵉⵏ",
+        "VE": "ⴼⵉⵏⵣⵡⵉⵍⴰ",
+        "VG": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵜⵉⵎⴳⴰⴷ ⵏ ⵏⵏⴳⵍⵉⵣ",
+        "VI": "ⵜⵉⴳⵣⵉⵔⵉⵏ ⵜⵉⵎⴳⴰⴷ ⵏ ⵉⵡⵓⵏⴰⴽ ⵎⵓⵏⵏⵉⵏ",
+        "VN": "ⴼⵉⵜⵏⴰⵎ",
+        "VU": "ⴼⴰⵏⵡⴰⵟⵓ",
+        "WF": "ⵡⴰⵍⵉⵙ ⴷ ⴼⵓⵜⵓⵏⴰ",
+        "WS": "ⵙⴰⵎⵡⴰ",
+        "YE": "ⵢⴰⵎⴰⵏ",
+        "YT": "ⵎⴰⵢⵓⵟ",
+        "ZA": "ⴰⴼⵔⵉⵇⵢⴰ ⵏ ⵉⴼⴼⵓⵙ",
+        "ZM": "ⵣⴰⵎⴱⵢⴰ",
+        "ZW": "ⵣⵉⵎⴱⴰⴱⵡⵉ"
     };
   }-*/;
 }

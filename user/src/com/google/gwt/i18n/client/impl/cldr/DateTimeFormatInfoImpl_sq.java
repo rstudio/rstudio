@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=sq
 
 /**
  * Implementation of DateTimeFormatInfo for the "sq" locale.
@@ -29,8 +29,8 @@ public class DateTimeFormatInfoImpl_sq extends DateTimeFormatInfoImpl {
   @Override
   public String[] ampms() {
     return new String[] {
-        "PD",
-        "MD"
+        "paradite",
+        "pasdite"
     };
   }
 
@@ -46,19 +46,29 @@ public class DateTimeFormatInfoImpl_sq extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatMedium() {
-    return "yyyy-MM-dd";
+    return "dd/MM/y";
   }
 
   @Override
   public String dateFormatShort() {
-    return "yy-MM-dd";
+    return "dd/MM/yy";
+  }
+
+  @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return datePattern + " 'në' " + timePattern;
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return datePattern + " 'në' " + timePattern;
   }
 
   @Override
   public String[] erasFull() {
     return new String[] {
-        "p.e.r.",
-        "n.e.r."
+        "para erës së re",
+        "erës së re"
     };
   }
 
@@ -66,33 +76,8 @@ public class DateTimeFormatInfoImpl_sq extends DateTimeFormatInfoImpl {
   public String[] erasShort() {
     return new String[] {
         "p.e.r.",
-        "n.e.r."
+        "e.r."
     };
-  }
-
-  @Override
-  public String formatHour12Minute() {
-    return "h.mm.a";
-  }
-
-  @Override
-  public String formatHour12MinuteSecond() {
-    return "h.mm.ss.a";
-  }
-
-  @Override
-  public String formatHour24Minute() {
-    return "H.mm";
-  }
-
-  @Override
-  public String formatHour24MinuteSecond() {
-    return "H.mm.ss";
-  }
-
-  @Override
-  public String formatMinuteSecond() {
-    return "mm.ss";
   }
 
   @Override
@@ -111,8 +96,18 @@ public class DateTimeFormatInfoImpl_sq extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatMonthNumDay() {
+    return "d/M";
+  }
+
+  @Override
   public String formatYearMonthAbbrev() {
     return "MMM y";
+  }
+
+  @Override
+  public String formatYearMonthAbbrevDay() {
+    return "d MMM y";
   }
 
   @Override
@@ -127,12 +122,27 @@ public class DateTimeFormatInfoImpl_sq extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M.yyyy";
+    return "M/y";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "dd/MM/y";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
     return "EEE, d MMM y";
+  }
+
+  @Override
+  public String formatYearQuarterFull() {
+    return "QQQQ y";
+  }
+
+  @Override
+  public String formatYearQuarterShort() {
+    return "Q y";
   }
 
   @Override
@@ -192,31 +202,21 @@ public class DateTimeFormatInfoImpl_sq extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "Q1",
-        "Q2",
-        "Q3",
-        "Q4"
+        "tremujori i parë",
+        "tremujori i dytë",
+        "tremujori i tretë",
+        "tremujori i katërt"
     };
   }
 
   @Override
-  public String timeFormatFull() {
-    return "h.mm.ss.a zzzz";
-  }
-
-  @Override
-  public String timeFormatLong() {
-    return "h.mm.ss.a z";
-  }
-
-  @Override
-  public String timeFormatMedium() {
-    return "h.mm.ss.a";
-  }
-
-  @Override
-  public String timeFormatShort() {
-    return "h.mm.a";
+  public String[] quartersShort() {
+    return new String[] {
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+    };
   }
 
   @Override

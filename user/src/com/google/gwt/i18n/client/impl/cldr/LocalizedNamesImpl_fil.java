@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
+//  type=fil
 
 /**
  * Localized names for the "fil" locale.
@@ -43,7 +42,6 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "AF",
         "AX",
         "AL",
-        "DE",
         "DZ",
         "AS",
         "AD",
@@ -71,7 +69,6 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
-        "BQ",
         "BR",
         "IO",
         "VG",
@@ -84,6 +81,7 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "CA",
         "IC",
         "CV",
+        "BQ",
         "KY",
         "CF",
         "EA",
@@ -115,7 +113,6 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "SV",
         "GQ",
         "ER",
-        "ES",
         "US",
         "EE",
         "ET",
@@ -131,6 +128,7 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "GA",
         "GM",
         "GE",
+        "DE",
         "GH",
         "GI",
         "GR",
@@ -164,6 +162,7 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "KZ",
         "KE",
         "KI",
+        "XK",
         "KW",
         "KG",
         "LA",
@@ -179,7 +178,6 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "MK",
         "MG",
         "MW",
-        "QO",
         "MY",
         "MV",
         "ML",
@@ -190,7 +188,6 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "MU",
         "YT",
         "MX",
-        "UM",
         "FM",
         "MD",
         "MC",
@@ -216,6 +213,7 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "KP",
         "NO",
         "OM",
+        "QO",
         "PK",
         "PW",
         "PS",
@@ -234,6 +232,7 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "RU",
         "RW",
         "BL",
+        "SH",
         "KN",
         "LC",
         "MF",
@@ -245,10 +244,10 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "SA",
         "SN",
         "RS",
-        "CS",
         "SC",
         "SL",
         "SG",
+        "SX",
         "SK",
         "SI",
         "SB",
@@ -256,16 +255,15 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "ZA",
         "GS",
         "KR",
-        "LK",
         "SS",
-        "SH",
+        "ES",
+        "LK",
         "SD",
         "SR",
         "SJ",
         "SZ",
         "SE",
         "CH",
-        "SX",
         "SY",
         "TW",
         "TJ",
@@ -282,6 +280,7 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
         "TM",
         "TC",
         "TV",
+        "UM",
         "VI",
         "UG",
         "UA",
@@ -305,54 +304,21 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
   protected void loadNameMapJava() {
     super.loadNameMapJava();
     namesMap.put("001", "Mundo");
-    namesMap.put("011", "Kanlurang Africa");
-    namesMap.put("013", "Gitnang Amerika");
-    namesMap.put("014", "Silangang Africa");
-    namesMap.put("015", "Hilagang Africa");
-    namesMap.put("017", "Gitnang Africa");
-    namesMap.put("018", "Katimugang Africa");
-    namesMap.put("021", "Hilagang Amerika");
     namesMap.put("029", "Carribbean");
-    namesMap.put("030", "Silangang Asya");
-    namesMap.put("034", "Katimugang Asya");
-    namesMap.put("035", "Timog-Silangang Asya");
-    namesMap.put("039", "Katimugang Europa");
-    namesMap.put("053", "Australia at New Zealand");
-    namesMap.put("057", "Rehiyong Micronesia");
-    namesMap.put("142", "Asya");
-    namesMap.put("143", "Gitnang Asya");
-    namesMap.put("145", "Kanlurang Asya");
-    namesMap.put("150", "Europa");
-    namesMap.put("151", "Silangang Europa");
-    namesMap.put("154", "Hilagang Europa");
-    namesMap.put("155", "Kanlurang Europa");
     namesMap.put("AC", "Acsencion island");
-    namesMap.put("AQ", "Antartica");
-    namesMap.put("AX", "Aland Islands");
     namesMap.put("CD", "Congo - Kinshasa");
+    namesMap.put("CG", "Congo - Brazzaville");
     namesMap.put("CI", "Côte d'Ivoire");
-    namesMap.put("CS", "Serbia at Montenegro");
-    namesMap.put("DE", "Alemanya");
-    namesMap.put("ES", "Espanya");
     namesMap.put("FK", "Falkland Islands");
-    namesMap.put("GS", "South Georgia and The South Sandwich Islands");
+    namesMap.put("GS", "South Georgia and the South Sandwich Islands");
+    namesMap.put("HM", "Heard Island and McDonald Islands");
     namesMap.put("IC", "Canary Island");
-    namesMap.put("IT", "Italya");
     namesMap.put("MK", "Macedonia");
-    namesMap.put("MM", "Myanmar");
     namesMap.put("PH", "Pilipinas");
-    namesMap.put("PN", "Pitcairn");
-    namesMap.put("PS", "Palestinian Territory");
-    namesMap.put("QO", "Malayong bahagi ng Oceania");
-    namesMap.put("RU", "Russian Federation");
-    namesMap.put("SH", "St. Helena");
-    namesMap.put("SJ", "Svalbard and Jan Mayen Islands");
-    namesMap.put("ST", "Sao Tome and Principe");
     namesMap.put("TA", "Tristan de Cunha");
-    namesMap.put("UM", "Mga Minor Outlying Island ng Estados Unidos");
     namesMap.put("US", "Estados Unidos");
-    namesMap.put("WF", "Wallis and the Futuna Islands");
-    namesMap.put("ZZ", "Hindi kilala o Hindi wastong Rehiyon");
+    namesMap.put("VC", "Saint Vincent and the Grenadines");
+    namesMap.put("ZZ", "Hindi Kilalang Rehiyon");
   }
 
   @Override
@@ -363,54 +329,21 @@ public class LocalizedNamesImpl_fil extends LocalizedNamesImpl {
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
         "001": "Mundo",
-        "011": "Kanlurang Africa",
-        "013": "Gitnang Amerika",
-        "014": "Silangang Africa",
-        "015": "Hilagang Africa",
-        "017": "Gitnang Africa",
-        "018": "Katimugang Africa",
-        "021": "Hilagang Amerika",
         "029": "Carribbean",
-        "030": "Silangang Asya",
-        "034": "Katimugang Asya",
-        "035": "Timog-Silangang Asya",
-        "039": "Katimugang Europa",
-        "053": "Australia at New Zealand",
-        "057": "Rehiyong Micronesia",
-        "142": "Asya",
-        "143": "Gitnang Asya",
-        "145": "Kanlurang Asya",
-        "150": "Europa",
-        "151": "Silangang Europa",
-        "154": "Hilagang Europa",
-        "155": "Kanlurang Europa",
         "AC": "Acsencion island",
-        "AQ": "Antartica",
-        "AX": "Aland Islands",
         "CD": "Congo - Kinshasa",
+        "CG": "Congo - Brazzaville",
         "CI": "Côte d'Ivoire",
-        "CS": "Serbia at Montenegro",
-        "DE": "Alemanya",
-        "ES": "Espanya",
         "FK": "Falkland Islands",
-        "GS": "South Georgia and The South Sandwich Islands",
+        "GS": "South Georgia and the South Sandwich Islands",
+        "HM": "Heard Island and McDonald Islands",
         "IC": "Canary Island",
-        "IT": "Italya",
         "MK": "Macedonia",
-        "MM": "Myanmar",
         "PH": "Pilipinas",
-        "PN": "Pitcairn",
-        "PS": "Palestinian Territory",
-        "QO": "Malayong bahagi ng Oceania",
-        "RU": "Russian Federation",
-        "SH": "St. Helena",
-        "SJ": "Svalbard and Jan Mayen Islands",
-        "ST": "Sao Tome and Principe",
         "TA": "Tristan de Cunha",
-        "UM": "Mga Minor Outlying Island ng Estados Unidos",
         "US": "Estados Unidos",
-        "WF": "Wallis and the Futuna Islands",
-        "ZZ": "Hindi kilala o Hindi wastong Rehiyon"
+        "VC": "Saint Vincent and the Grenadines",
+        "ZZ": "Hindi Kilalang Rehiyon"
     };
   }-*/;
 }

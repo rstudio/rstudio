@@ -53,9 +53,9 @@ public class I18N2Test extends GWTTestCase {
         m.invertedArguments("first", "second"));
     assertEquals("Don't tell me I can't {quote things in braces}", m.quotedText());
     assertEquals("This {0} would be an argument if not quoted", m.quotedArg());
-    assertEquals("Total is US$11,305.01", m.currencyFormat(11305.01));
+    assertEquals("Total is $11,305.01", m.currencyFormat(11305.01));
     assertEquals("Default number format is 1,017.1", m.defaultNumberFormat(1017.1));
-    assertEquals("It is 12:01 on Saturday, 2007 December 01",
+    assertEquals("It is 12:01 on 2007 December 1, Saturday",
         m.getTimeDate(new Date(107, 11, 1, 12, 1, 2)));
     assertEquals("13 widgets", m.pluralWidgetsOther(13));
 //    assertEquals("A widget", m.pluralWidgetsOther(1));
@@ -141,11 +141,11 @@ public class I18N2Test extends GWTTestCase {
 
   public void testDynamicCurrency() {
     TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
-    assertEquals("The total is AU$1,001.02", m.totalAmount(1001.02, "AUD"));
-    assertEquals("The total is US$1,001.02", m.totalAmount(1001.02, "USD"));
+    assertEquals("The total is $1,001.02", m.totalAmount(1001.02, "AUD"));
+    assertEquals("The total is $1,001.02", m.totalAmount(1001.02, "USD"));
 
-    assertEquals("The total is AU$1,001.02", m.totalAmountAsSafeHtml(1001.02, "AUD").asString());
-    assertEquals("The total is US$1,001.02", m.totalAmountAsSafeHtml(1001.02, "USD").asString());
+    assertEquals("The total is $1,001.02", m.totalAmountAsSafeHtml(1001.02, "AUD").asString());
+    assertEquals("The total is $1,001.02", m.totalAmountAsSafeHtml(1001.02, "USD").asString());
   }
 
   @SuppressWarnings("deprecation")
@@ -503,9 +503,9 @@ public class I18N2Test extends GWTTestCase {
 
   public void testStaticCurrency() {
     TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
-    assertEquals("The total is AU$1,001.02", m.australianDollars(1001.02));
+    assertEquals("The total is $1,001.02", m.australianDollars(1001.02));
 
-    assertEquals("The total is AU$1,001.02", m.australianDollarsAsSafeHtml(
+    assertEquals("The total is $1,001.02", m.australianDollarsAsSafeHtml(
         1001.02).asString());
   }
 

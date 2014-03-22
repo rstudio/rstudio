@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=dz
 
 /**
  * Implementation of DateTimeFormatInfo for the "dz" locale.
@@ -36,17 +36,17 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatFull() {
-    return "སྤྱི་ལོ་y ཟླ་ MMMM ཚེས་ dd";
+    return "EEEE, སྤྱི་ལོ་y MMMM ཚེས་dd";
   }
 
   @Override
   public String dateFormatLong() {
-    return "སྤྱི་ལོ་y ཟླ་ MMMM ཚེས་ dd";
+    return "སྤྱི་ལོ་y MMMM ཚེས་ dd";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "སྤྱི་ལོ་y ཟླ་ MMM ཚེས་ dd";
+    return "སྤྱི་ལོ་y ཟླ་MMM ཚེས་dd";
   }
 
   @Override
@@ -71,111 +71,180 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatHour12Minute() {
+    return "ཆུ་ཚོད་ h སྐར་མ་ mm a";
+  }
+
+  @Override
+  public String formatHour12MinuteSecond() {
+    return "ཆུ་ཚོད་h:mm:ss a";
+  }
+
+  @Override
+  public String formatMonthAbbrev() {
+    return "སྤྱི་LLL";
+  }
+
+  @Override
+  public String formatMonthAbbrevDay() {
+    return "སྤྱི་LLL ཚེ་d";
+  }
+
+  @Override
+  public String formatMonthFull() {
+    return "སྤྱི་LLLL";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "སྤྱི་LLLL ཚེ་d";
+  }
+
+  @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, MMMM d";
+    return "EEEE, སྤྱི་LLLL ཚེ་d";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "M/d";
+    return "M-d";
   }
 
   @Override
   public String formatYearMonthAbbrev() {
-    return "MMM y";
-  }
-
-  @Override
-  public String formatYearMonthAbbrevDay() {
-    return "MMM d, y";
+    return "y སྤྱི་ཟླ་MMM";
   }
 
   @Override
   public String formatYearMonthFull() {
-    return "MMMM y";
+    return "y སྤྱི་ཟླ་MMMM";
   }
 
   @Override
   public String formatYearMonthFullDay() {
-    return "MMMM d, y";
+    return "སྤྱི་ལོ་y MMMM ཚེས་ d";
   }
 
   @Override
   public String formatYearMonthNum() {
-    return "M/y";
+    return "y-M";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "M/d/y";
+    return "y-M-d";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, MMM d, y";
-  }
-
-  @Override
-  public String formatYearQuarterFull() {
-    return "QQQQ y";
-  }
-
-  @Override
-  public String formatYearQuarterShort() {
-    return "Q y";
+    return "གཟའ་EEE, ལོy ཟླ་MMM ཚེ་d";
   }
 
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "སྤྱི་ཟླཝ་དངཔ་",
-        "སྤྱི་ཟླཝ་གཉིས་པ་",
-        "སྤྱི་ཟླཝ་གསུམ་པ་",
-        "སྤྱི་ཟླཝ་བཞི་པ་",
-        "སྤྱི་ཟླཝ་ལྔ་པ་",
-        "སྤྱི་ཟླཝ་དྲུག་པ་",
-        "སྤྱི་ཟླཝ་བདུན་པ་",
-        "སྤྱི་ཟླཝ་བརྒྱད་པ་",
-        "སྤྱི་ཟླཝ་དགུ་པ་",
-        "སྤྱི་ཟླཝ་བཅུ་པ་",
-        "སྤྱི་ཟླཝ་བཅུ་གཅིག་པ་",
-        "སྤྱི་ཟླཝ་བཅུ་གཉིས་པ་"
+        "ཟླ་དངཔ་",
+        "ཟླ་གཉིས་པ་",
+        "ཟླ་གསུམ་པ་",
+        "ཟླ་བཞི་པ་",
+        "ཟླ་ལྔ་པ་",
+        "ཟླ་དྲུག་པ",
+        "ཟླ་བདུན་པ་",
+        "ཟླ་བརྒྱད་པ་",
+        "ཟླ་དགུ་པ་",
+        "ཟླ་བཅུ་པ་",
+        "ཟླ་བཅུ་གཅིག་པ་",
+        "ཟླ་བཅུ་གཉིས་པ་"
+    };
+  }
+
+  @Override
+  public String[] monthsFullStandalone() {
+    return new String[] {
+        "སྤྱི་ཟླ་དངཔ་",
+        "སྤྱི་ཟླ་གཉིས་པ་",
+        "སྤྱི་ཟླ་གསུམ་པ་",
+        "སྤྱི་ཟླ་བཞི་པ",
+        "སྤྱི་ཟླ་ལྔ་པ་",
+        "སྤྱི་ཟླ་དྲུག་པ",
+        "སྤྱི་ཟླ་བདུན་པ་",
+        "སྤྱི་ཟླ་བརྒྱད་པ་",
+        "སྤྱི་ཟླ་དགུ་པ་",
+        "སྤྱི་ཟླ་བཅུ་པ་",
+        "སྤྱི་ཟླ་བཅུ་གཅིག་པ་",
+        "སྤྱི་ཟླ་བཅུ་གཉིས་པ་"
     };
   }
 
   @Override
   public String[] monthsNarrow() {
     return new String[] {
-        "1",
-        "2",
-        "3",
+        "༡",
+        "༢",
+        "༣",
         "4",
-        "5",
-        "6",
-        "7",
-        "8",
+        "༥",
+        "༦",
+        "༧",
+        "༨",
         "9",
-        "10",
-        "11",
-        "12"
+        "༡༠",
+        "༡༡",
+        "༡༢"
+    };
+  }
+
+  @Override
+  public String[] monthsNarrowStandalone() {
+    return new String[] {
+        "༡",
+        "༢",
+        "༣",
+        "༤",
+        "༥",
+        "༦",
+        "༧",
+        "༨",
+        "༩",
+        "༡༠",
+        "༡༡",
+        "༡༢"
     };
   }
 
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "ཟླ་ ༡",
-        "ཟླ་ ༢",
-        "ཟླ་ ༣",
-        "ཟླ་ ༤",
-        "ཟླ་ ༥",
-        "ཟླ་ ༦",
-        "ཟླ་ ༧",
-        "ཟླ་ ༨",
-        "ཟླ་ ༩",
-        "ཟླ་ ༡༠",
-        "ཟླ་ ༡༡",
-        "ཟླ་ ༡༢"
+        "༡",
+        "༢",
+        "༣",
+        "༤",
+        "༥",
+        "༦",
+        "༧",
+        "༨",
+        "༩",
+        "༡༠",
+        "༡༡",
+        "12"
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
+    return new String[] {
+        "ཟླ་༡",
+        "ཟླ་༢",
+        "ཟླ་༣",
+        "ཟླ་༤",
+        "ཟླ་༥",
+        "ཟླ་༦",
+        "ཟླ་༧",
+        "ཟླ་༨",
+        "ཟླ་༩",
+        "ཟླ་༡༠",
+        "ཟླ་༡༡",
+        "ཟླ་༡༢"
     };
   }
 
@@ -200,18 +269,13 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String timeFormat() {
-    return timeFormatLong();
-  }
-
-  @Override
   public String timeFormatFull() {
-    return "ཆུ་ཚོད་ h སྐར་མ་ mm སྐར་ཆཱ་ ss a zzzz";
+    return "ཆུ་ཚོད་ h སྐར་མ་ mm:ss a zzzz";
   }
 
   @Override
   public String timeFormatLong() {
-    return "ཆུ་ཚོད་ h སྐར་མ་ mm སྐར་ཆཱ་ ss a z";
+    return "ཆུ་ཚོད་ h སྐར་མ་ mm:ss a z";
   }
 
   @Override
@@ -240,13 +304,13 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysNarrow() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+        "ཟླ",
+        "མིར",
+        "ལྷག",
+        "ཕུར",
+        "སངྶ",
+        "སྤེན",
+        "ཉི"
     };
   }
 

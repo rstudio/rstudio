@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=hi
 
 /**
  * Implementation of DateTimeFormatInfo for the "hi" locale.
@@ -29,8 +29,8 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
   @Override
   public String[] ampms() {
     return new String[] {
-        "am",
-        "pm"
+        "पूर्व",
+        "अपर"
     };
   }
 
@@ -46,7 +46,7 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatMedium() {
-    return "dd-MM-yyyy";
+    return "dd-MM-y";
   }
 
   @Override
@@ -55,18 +55,38 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return datePattern + " को " + timePattern;
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return datePattern + " को " + timePattern;
+  }
+
+  @Override
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
+  }
+
+  @Override
   public String[] erasFull() {
     return new String[] {
-        "ईसापूर्व",
-        "सन"
+        "ईसा-पूर्व",
+        "ईस्वी"
     };
   }
 
   @Override
   public String[] erasShort() {
     return new String[] {
-        "ईसापूर्व",
-        "सन"
+        "ईसा-पूर्व",
+        "ईस्वी"
     };
   }
 
@@ -76,18 +96,8 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatMonthAbbrev() {
-    return "MMM";
-  }
-
-  @Override
   public String formatMonthAbbrevDay() {
     return "d MMM";
-  }
-
-  @Override
-  public String formatMonthFull() {
-    return "MMMM";
   }
 
   @Override
@@ -102,7 +112,7 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthNumDay() {
-    return "d-M";
+    return "d/M";
   }
 
   @Override
@@ -127,7 +137,7 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M-y";
+    return "M/y";
   }
 
   @Override
@@ -141,20 +151,30 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatYearQuarterFull() {
+    return "QQQQ y";
+  }
+
+  @Override
+  public String formatYearQuarterShort() {
+    return "Q y";
+  }
+
+  @Override
   public String[] monthsFull() {
     return new String[] {
         "जनवरी",
-        "फरवरी",
+        "फ़रवरी",
         "मार्च",
         "अप्रैल",
         "मई",
         "जून",
         "जुलाई",
         "अगस्त",
-        "सितम्बर",
-        "अक्तूबर",
-        "नवम्बर",
-        "दिसम्बर"
+        "सितंबर",
+        "अक्टूबर",
+        "नवंबर",
+        "दिसंबर"
     };
   }
 
@@ -179,25 +199,25 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "जनवरी",
-        "फरवरी",
+        "जन",
+        "फ़र",
         "मार्च",
-        "अप्रैल",
+        "अप्रै",
         "मई",
         "जून",
-        "जुलाई",
-        "अगस्त",
-        "सितम्बर",
-        "अक्तूबर",
-        "नवम्बर",
-        "दिसम्बर"
+        "जुला",
+        "अग",
+        "सितं",
+        "अक्टू",
+        "नवं",
+        "दिसं"
     };
   }
 
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "तिमाही",
+        "पहली तिमाही",
         "दूसरी तिमाही",
         "तीसरी तिमाही",
         "चौथी तिमाही"
@@ -207,10 +227,10 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersShort() {
     return new String[] {
-        "तिमाही",
-        "दूसरी तिमाही",
-        "तीसरी तिमाही",
-        "चौथी तिमाही"
+        "ति1",
+        "ति2",
+        "ति3",
+        "ति4"
     };
   }
 
@@ -241,7 +261,7 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
         "सोमवार",
         "मंगलवार",
         "बुधवार",
-        "बृहस्पतिवार",
+        "गुरुवार",
         "शुक्रवार",
         "शनिवार"
     };
@@ -263,13 +283,13 @@ public class DateTimeFormatInfoImpl_hi extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "रवि.",
-        "सोम.",
-        "मंगल.",
-        "बुध.",
-        "बृह.",
-        "शुक्र.",
-        "शनि."
+        "रवि",
+        "सोम",
+        "मंगल",
+        "बुध",
+        "गुरु",
+        "शुक्र",
+        "शनि"
     };
   }
 

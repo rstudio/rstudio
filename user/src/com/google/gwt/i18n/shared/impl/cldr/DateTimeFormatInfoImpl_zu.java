@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
+//  type=zu
 
 /**
  * Implementation of DateTimeFormatInfo for the "zu" locale.
@@ -166,10 +166,10 @@ public class DateTimeFormatInfoImpl_zu extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "ikota yoku-1",
-        "ikota yesi-2",
-        "ikota yesi-3",
-        "ikota yesi-4"
+        "ikota engu-1",
+        "ikota engu-2",
+        "ikota engu-3",
+        "ikota engu-4"
     };
   }
 
@@ -200,7 +200,7 @@ public class DateTimeFormatInfoImpl_zu extends DateTimeFormatInfoImpl {
         "Msombuluko",
         "Lwesibili",
         "Lwesithathu",
-        "uLwesine",
+        "Lwesine",
         "Lwesihlanu",
         "Mgqibelo"
     };
@@ -208,6 +208,19 @@ public class DateTimeFormatInfoImpl_zu extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysNarrow() {
+    return new String[] {
+        "S",
+        "M",
+        "T",
+        "T",
+        "S",
+        "H",
+        "M"
+    };
+  }
+
+  @Override
+  public String[] weekdaysNarrowStandalone() {
     return new String[] {
         "S",
         "M",

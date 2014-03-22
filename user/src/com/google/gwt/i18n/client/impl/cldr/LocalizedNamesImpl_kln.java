@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
+//  type=kln
 
 /**
  * Localized names for the "kln" locale.
@@ -218,7 +217,6 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
         "ST",
         "SA",
         "SN",
-        "CS",
         "SC",
         "SL",
         "SG",
@@ -291,6 +289,7 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
         "TA",
         "TF",
         "UM",
+        "XK",
     };
   }
 
@@ -342,7 +341,6 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
     namesMap.put("CN", "Emetab China");
     namesMap.put("CO", "Emetab Colombia");
     namesMap.put("CR", "Emetab Costa Rica");
-    namesMap.put("CS", "Emetab Serbia and Montenegro");
     namesMap.put("CU", "Emetab Cuba");
     namesMap.put("CV", "Ikwembeyotab Cape Verde");
     namesMap.put("CY", "Emetab Cyprus");
@@ -577,7 +575,6 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
         "CN": "Emetab China",
         "CO": "Emetab Colombia",
         "CR": "Emetab Costa Rica",
-        "CS": "Emetab Serbia and Montenegro",
         "CU": "Emetab Cuba",
         "CV": "Ikwembeyotab Cape Verde",
         "CY": "Emetab Cyprus",

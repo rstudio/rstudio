@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6450 $
+//  cldrVersion=25
+//  date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+//  number=$Revision: 9061 $
 //  type=root
-//  date=$Date: 2012-01-25 19:20:54 -0500 (Wed, 25 Jan 2012) $
-
 
 /**
  * Localized names for the "mgh" locale.
@@ -251,7 +250,6 @@ public class LocalizedNamesImpl_mgh extends LocalizedNamesImpl {
         "SN",
         "SC",
         "LI",
-        "CS",
         "SG",
         "SY",
         "LK",
@@ -289,6 +287,7 @@ public class LocalizedNamesImpl_mgh extends LocalizedNamesImpl {
         "VG",
         "VI",
         "IQ",
+        "XK",
         "YT",
     };
   }
@@ -310,7 +309,6 @@ public class LocalizedNamesImpl_mgh extends LocalizedNamesImpl {
     namesMap.put("CL", "Uchile");
     namesMap.put("CN", "Uchina");
     namesMap.put("CO", "Ukolombia");
-    namesMap.put("CS", "Usiera Leoni");
     namesMap.put("CU", "Ukuba");
     namesMap.put("CY", "Ukuprosi");
     namesMap.put("CZ", "Ucheki");
@@ -457,7 +455,6 @@ public class LocalizedNamesImpl_mgh extends LocalizedNamesImpl {
         "CL": "Uchile",
         "CN": "Uchina",
         "CO": "Ukolombia",
-        "CS": "Usiera Leoni",
         "CU": "Ukuba",
         "CY": "Ukuprosi",
         "CZ": "Ucheki",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=cs
 
 /**
  * Implementation of DateTimeFormatInfo for the "cs" locale.
@@ -27,16 +27,8 @@ package com.google.gwt.i18n.client.impl.cldr;
 public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
-  public String[] ampms() {
-    return new String[] {
-        "dop.",
-        "odp."
-    };
-  }
-
-  @Override
   public String dateFormatFull() {
-    return "EEEE, d. MMMM y";
+    return "EEEE d. MMMM y";
   }
 
   @Override
@@ -46,7 +38,7 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatMedium() {
-    return "d. M. yyyy";
+    return "d. M. y";
   }
 
   @Override
@@ -87,7 +79,7 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthAbbrevDay() {
-    return "d. MMM";
+    return "d. M.";
   }
 
   @Override
@@ -97,22 +89,22 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, d. MMMM";
+    return "EEEE d. MMMM";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "d.M";
+    return "d. M.";
   }
 
   @Override
   public String formatYearMonthAbbrev() {
-    return "LLL y";
+    return "LLLL y";
   }
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "d. MMM y";
+    return "d. M. y";
   }
 
   @Override
@@ -127,27 +119,27 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M.y";
+    return "M/y";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d.M.y";
+    return "d. M. y";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, d. MMM y";
+    return "EEE d. M. y";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ yyyy";
+    return "QQQQ y";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q yyyy";
+    return "Q y";
   }
 
   @Override
@@ -225,36 +217,18 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "Led",
-        "Úno",
-        "Bře",
-        "Dub",
-        "Kvě",
-        "Čer",
-        "Čvc",
-        "Srp",
-        "Zář",
-        "Říj",
-        "Lis",
-        "Pro"
-    };
-  }
-
-  @Override
-  public String[] monthsShortStandalone() {
-    return new String[] {
-        "1.",
-        "2.",
-        "3.",
-        "4.",
-        "5.",
-        "6.",
-        "7.",
-        "8.",
-        "9.",
-        "10.",
-        "11.",
-        "12."
+        "led",
+        "úno",
+        "bře",
+        "dub",
+        "kvě",
+        "čvn",
+        "čvc",
+        "srp",
+        "zář",
+        "říj",
+        "lis",
+        "pro"
     };
   }
 

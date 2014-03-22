@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=te
 
 /**
  * Implementation of DateTimeFormatInfo for the "te" locale.
@@ -27,16 +27,8 @@ package com.google.gwt.i18n.shared.impl.cldr;
 public class DateTimeFormatInfoImpl_te extends DateTimeFormatInfoImpl {
 
   @Override
-  public String[] ampms() {
-    return new String[] {
-        "am",
-        "pm"
-    };
-  }
-
-  @Override
   public String dateFormatFull() {
-    return "EEEE d MMMM y";
+    return "d MMMM y EEEE";
   }
 
   @Override
@@ -65,8 +57,8 @@ public class DateTimeFormatInfoImpl_te extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasShort() {
     return new String[] {
-        "ఈసాపూర్వ.",
-        "సన్."
+        "క్రీపూ",
+        "క్రీశ"
     };
   }
 
@@ -92,7 +84,7 @@ public class DateTimeFormatInfoImpl_te extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthNumDay() {
-    return "d-M";
+    return "d/M";
   }
 
   @Override
@@ -149,6 +141,24 @@ public class DateTimeFormatInfoImpl_te extends DateTimeFormatInfoImpl {
         "ఎప్రిల్",
         "మే",
         "జూన్",
+        "జులై",
+        "ఆగస్టు",
+        "సెప్టెంబర్",
+        "అక్టోబర్",
+        "నవంబర్",
+        "డిసెంబర్"
+    };
+  }
+
+  @Override
+  public String[] monthsFullStandalone() {
+    return new String[] {
+        "జనవరి",
+        "ఫిబ్రవరి",
+        "మార్చి",
+        "ఎప్రిల్",
+        "మే",
+        "జూన్",
         "జూలై",
         "ఆగస్టు",
         "సెప్టెంబర్",
@@ -165,26 +175,8 @@ public class DateTimeFormatInfoImpl_te extends DateTimeFormatInfoImpl {
         "ఫి",
         "మా",
         "ఏ",
-        "మె",
-        "జు",
-        "జు",
-        "ఆ",
-        "సె",
-        "అ",
-        "న",
-        "డి"
-    };
-  }
-
-  @Override
-  public String[] monthsNarrowStandalone() {
-    return new String[] {
-        "జ",
-        "ఫి",
-        "మ",
-        "ఎ",
-        "మె",
-        "జు",
+        "మే",
+        "జూ",
         "జు",
         "ఆ",
         "సె",
@@ -203,32 +195,50 @@ public class DateTimeFormatInfoImpl_te extends DateTimeFormatInfoImpl {
         "ఏప్రి",
         "మే",
         "జూన్",
-        "జూలై",
+        "జులై",
+        "ఆగ",
+        "సెప్టెం",
+        "అక్టో",
+        "నవం",
+        "డిసెం"
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
+    return new String[] {
+        "జన",
+        "ఫిబ్ర",
+        "మార్చి",
+        "ఏప్రి",
+        "మే",
+        "జూన్",
+        "జులై",
         "ఆగస్టు",
-        "సెప్టెంబర్",
-        "అక్టోబర్",
-        "నవంబర్",
-        "డిసెంబర్"
+        "సెప్టెం",
+        "అక్టో",
+        "నవం",
+        "డిసెం"
     };
   }
 
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "ఒకటి 1",
-        "రెండు 2",
-        "మూడు 3",
-        "నాలుగు 4"
+        "1వ త్రైమాసం",
+        "2వ త్రైమాసం",
+        "3వ త్రైమాసం",
+        "4వ త్రైమాసం"
     };
   }
 
   @Override
   public String[] quartersShort() {
     return new String[] {
-        "ఒకటి 1",
-        "రెండు 2",
-        "మూడు 3",
-        "నాలుగు 4"
+        "త్రై1",
+        "త్రై2",
+        "త్రై3",
+        "త్రై4"
     };
   }
 

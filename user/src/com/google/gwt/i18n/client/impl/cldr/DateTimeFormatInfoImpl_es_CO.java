@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5884 $
-//  date=$Date: 2011-05-10 16:58:32 -0400 (Tue, 10 May 2011) $
-//  type=es
+//  cldrVersion=25
+//  date=$Date: 2013-08-14 08:51:50 +0200 (Wed, 14 Aug 2013) $
+//  number=$Revision: 9208 $
+//  type=CO
 
 /**
  * Implementation of DateTimeFormatInfo for the "es_CO" locale.
@@ -28,7 +28,7 @@ public class DateTimeFormatInfoImpl_es_CO extends DateTimeFormatInfoImpl_es_419 
 
   @Override
   public String dateFormatMedium() {
-    return "d/MM/yyyy";
+    return "d/MM/y";
   }
 
   @Override
@@ -42,27 +42,22 @@ public class DateTimeFormatInfoImpl_es_CO extends DateTimeFormatInfoImpl_es_419 
   }
 
   @Override
-  public String formatHour24Minute() {
-    return "H:mm";
-  }
-
-  @Override
-  public String formatHour24MinuteSecond() {
-    return "H:mm:ss";
+  public String timeFormatFull() {
+    return "h:mm:ss a (zzzz)";
   }
 
   @Override
   public String timeFormatLong() {
-    return "H:mm:ss z";
+    return "h:mm:ss a z";
   }
 
   @Override
   public String timeFormatMedium() {
-    return "H:mm:ss";
+    return "h:mm:ss a";
   }
 
   @Override
   public String timeFormatShort() {
-    return "H:mm";
+    return "h:mm a";
   }
 }

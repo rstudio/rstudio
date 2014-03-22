@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=pa
 
 /**
  * Implementation of DateTimeFormatInfo for the "pa" locale.
@@ -27,16 +27,8 @@ package com.google.gwt.i18n.shared.impl.cldr;
 public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
 
   @Override
-  public String[] ampms() {
-    return new String[] {
-        "ਪੂਰਵ ਦੁਪਹਿਰ",
-        "ਬਾਅਦ ਦੁਪਹਿਰ"
-    };
-  }
-
-  @Override
   public String dateFormatFull() {
-    return "EEEE, dd MMMM y";
+    return "EEEE, d MMMM y";
   }
 
   @Override
@@ -51,14 +43,19 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatShort() {
-    return "dd/MM/yyyy";
+    return "d/M/yy";
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
   }
 
   @Override
   public String[] erasFull() {
     return new String[] {
         "ਈ. ਪੂ.",
-        "ਸਾਲ"
+        "ਸੰਨ"
     };
   }
 
@@ -66,8 +63,23 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   public String[] erasShort() {
     return new String[] {
         "ਈ. ਪੂ.",
-        "ਸਾਲ"
+        "ਸੰਨ"
     };
+  }
+
+  @Override
+  public String formatMonthAbbrevDay() {
+    return "d MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "d MMMM";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE, d MMMM";
   }
 
   @Override
@@ -81,6 +93,11 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatYearMonthAbbrevDay() {
+    return "d MMM y";
+  }
+
+  @Override
   public String formatYearMonthFull() {
     return "MMMM y";
   }
@@ -88,6 +105,21 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   @Override
   public String formatYearMonthFullDay() {
     return "d MMMM y";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "M-y";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "d/M/y";
+  }
+
+  @Override
+  public String formatYearMonthWeekdayDay() {
+    return "EEE, d MMM y";
   }
 
   @Override
@@ -122,7 +154,7 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   public String[] monthsNarrow() {
     return new String[] {
         "ਜ",
-        "ਫ",
+        "ਫ਼",
         "ਮਾ",
         "ਅ",
         "ਮ",
@@ -157,7 +189,7 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "ਇਕ ਚੌਥਾਈ",
+        "ਪਊਆ",
         "ਅੱਧਾ",
         "ਪੌਣਾ",
         "ਪੂਰਾ"
@@ -167,7 +199,7 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersShort() {
     return new String[] {
-        "ਇਕ ਚੌਥਾਈ",
+        "ਪਊਆ",
         "ਅੱਧਾ",
         "ਪੌਣਾ",
         "ਪੂਰਾ"
@@ -203,7 +235,7 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
         "ਬੁਧਵਾਰ",
         "ਵੀਰਵਾਰ",
         "ਸ਼ੁੱਕਰਵਾਰ",
-        "ਸ਼ਨੀਚਰਵਾਰ"
+        "ਸ਼ਨੀਵਾਰ"
     };
   }
 
@@ -228,7 +260,7 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
         "ਮੰਗਲ.",
         "ਬੁਧ.",
         "ਵੀਰ.",
-        "ਸ਼ੁਕਰ.",
+        "ਸ਼ੁੱਕਰ.",
         "ਸ਼ਨੀ."
     };
   }

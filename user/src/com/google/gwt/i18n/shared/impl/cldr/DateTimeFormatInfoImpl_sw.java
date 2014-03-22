@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,15 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-02-26 21:43:57 +0100 (Wed, 26 Feb 2014) $
+//  number=$Revision: 9813 $
+//  type=sw
 
 /**
  * Implementation of DateTimeFormatInfo for the "sw" locale.
  */
 public class DateTimeFormatInfoImpl_sw extends DateTimeFormatInfoImpl {
-
-  @Override
-  public String[] ampms() {
-    return new String[] {
-        "asubuhi",
-        "alasiri"
-    };
-  }
 
   @Override
   public String dateFormatFull() {
@@ -51,7 +43,7 @@ public class DateTimeFormatInfoImpl_sw extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatShort() {
-    return "dd/MM/yyyy";
+    return "dd/MM/y";
   }
 
   @Override
@@ -71,13 +63,23 @@ public class DateTimeFormatInfoImpl_sw extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatMonthAbbrevDay() {
+    return "d MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "d MMMM";
+  }
+
+  @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, MMMM d";
+    return "EEEE, d MMMM";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "M/d";
+    return "d-M";
   }
 
   @Override
@@ -172,16 +174,6 @@ public class DateTimeFormatInfoImpl_sw extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] quartersShort() {
-    return new String[] {
-        "R1",
-        "R2",
-        "R3",
-        "R4"
-    };
-  }
-
-  @Override
   public String timeFormatFull() {
     return "h:mm:ss a zzzz";
   }
@@ -230,13 +222,13 @@ public class DateTimeFormatInfoImpl_sw extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "J2",
-        "J3",
-        "J4",
-        "J5",
-        "Alh",
-        "Ij",
-        "J1"
+        "Jumapili",
+        "Jumatatu",
+        "Jumanne",
+        "Jumatano",
+        "Alhamisi",
+        "Ijumaa",
+        "Jumamosi"
     };
   }
 }

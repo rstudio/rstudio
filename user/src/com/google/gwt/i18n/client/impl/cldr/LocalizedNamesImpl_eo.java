@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 5806 $
-//  type=root
-//  date=$Date: 2011-05-02 14:42:02 -0400 (Mon, 02 May 2011) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
+//  type=eo
 
 /**
  * Localized names for the "eo" locale.
@@ -240,7 +239,6 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "LC",
         "PM",
         "VC",
-        "CS",
         "SL",
         "SG",
         "SY",
@@ -248,11 +246,11 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "SI",
         "SO",
         "LK",
-        "SS",
         "ZA",
         "SD",
         "GS",
         "KR",
+        "SS",
         "SR",
         "SJ",
         "SZ",
@@ -289,6 +287,7 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "VA",
         "VE",
         "VN",
+        "XK",
         "ZM",
         "ZW",
     };
@@ -341,7 +340,6 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
     namesMap.put("CN", "Ĉinujo");
     namesMap.put("CO", "Kolombio");
     namesMap.put("CR", "Kostariko");
-    namesMap.put("CS", "Serbujo");
     namesMap.put("CU", "Kubo");
     namesMap.put("CV", "Kabo-Verdo");
     namesMap.put("CY", "Kipro");
@@ -486,6 +484,7 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
     namesMap.put("SN", "Senegalo");
     namesMap.put("SO", "Somalujo");
     namesMap.put("SR", "Surinamo");
+    namesMap.put("SS", "Sud-Sudano");
     namesMap.put("ST", "Sao-Tomeo kaj Principeo");
     namesMap.put("SV", "Salvadoro");
     namesMap.put("SY", "Sirio");
@@ -575,7 +574,6 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "CN": "Ĉinujo",
         "CO": "Kolombio",
         "CR": "Kostariko",
-        "CS": "Serbujo",
         "CU": "Kubo",
         "CV": "Kabo-Verdo",
         "CY": "Kipro",
@@ -720,6 +718,7 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "SN": "Senegalo",
         "SO": "Somalujo",
         "SR": "Surinamo",
+        "SS": "Sud-Sudano",
         "ST": "Sao-Tomeo kaj Principeo",
         "SV": "Salvadoro",
         "SY": "Sirio",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
+//  cldrVersion=25
+//  date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
+//  number=$Revision: 9967 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "bn" locale.
@@ -57,7 +57,7 @@ public class DateTimeFormatInfoImpl_bn extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasFull() {
     return new String[] {
-        "খৃষ্টপূর্ব",
+        "খ্রিস্টপূর্ব",
         "খৃষ্টাব্দ"
     };
   }
@@ -65,7 +65,7 @@ public class DateTimeFormatInfoImpl_bn extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasShort() {
     return new String[] {
-        "খৃষ্টপূর্ব",
+        "খ্রিস্টপূর্ব",
         "খৃষ্টাব্দ"
     };
   }
@@ -92,7 +92,7 @@ public class DateTimeFormatInfoImpl_bn extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthNumDay() {
-    return "d-M";
+    return "d/M";
   }
 
   @Override
@@ -117,7 +117,7 @@ public class DateTimeFormatInfoImpl_bn extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M/yyyy";
+    return "M/y";
   }
 
   @Override

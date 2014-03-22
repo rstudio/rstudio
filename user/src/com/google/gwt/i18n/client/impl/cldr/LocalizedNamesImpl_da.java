@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=da
 
 /**
  * Localized names for the "da" locale.
@@ -42,6 +41,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "AF",
         "AL",
         "DZ",
+        "UM",
         "AS",
         "AD",
         "AO",
@@ -67,7 +67,6 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
-        "BQ",
         "BR",
         "BN",
         "BG",
@@ -88,13 +87,16 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "CD",
         "CK",
         "CR",
+        "CI",
         "CU",
         "CW",
         "CY",
         "DK",
         "VI",
         "VG",
+        "TF",
         "DO",
+        "EU",
         "PS",
         "IO",
         "DG",
@@ -102,20 +104,16 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "DM",
         "EC",
         "EG",
-        "CI",
         "SV",
         "ER",
         "EE",
         "ET",
-        "EU",
-        "FX",
         "FK",
         "FJ",
         "PH",
         "FI",
         "AE",
         "FR",
-        "TF",
         "GF",
         "PF",
         "FO",
@@ -162,6 +160,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "CN",
         "KG",
         "KI",
+        "XK",
         "HR",
         "KW",
         "LA",
@@ -189,7 +188,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "YT",
         "MX",
         "FM",
-        "UM",
+        "MD",
         "MC",
         "MN",
         "ME",
@@ -198,6 +197,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "MM",
         "NA",
         "NR",
+        "BQ",
         "NP",
         "NZ",
         "NI",
@@ -221,7 +221,6 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "PT",
         "PR",
         "QA",
-        "MD",
         "RE",
         "RO",
         "RU",
@@ -231,6 +230,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "LC",
         "MF",
         "PM",
+        "VC",
         "SB",
         "WS",
         "SM",
@@ -239,28 +239,26 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "CH",
         "SN",
         "RS",
-        "CS",
         "SC",
         "SL",
         "SG",
+        "SX",
         "SK",
         "SI",
         "SO",
         "GS",
         "ES",
         "LK",
-        "SS",
         "SH",
-        "VC",
         "GB",
         "SD",
         "SR",
         "SJ",
         "SE",
         "SZ",
-        "SX",
         "ZA",
         "KR",
+        "SS",
         "SY",
         "TJ",
         "TW",
@@ -323,7 +321,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("034", "Sydasien");
     namesMap.put("035", "Sydøstasien");
     namesMap.put("039", "Sydeuropa");
-    namesMap.put("053", "Australien og New Zealand");
+    namesMap.put("053", "Australasien");
     namesMap.put("054", "Melanesien");
     namesMap.put("057", "Mikronesien");
     namesMap.put("061", "Polynesien");
@@ -345,26 +343,24 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("AS", "Amerikansk Samoa");
     namesMap.put("AT", "Østrig");
     namesMap.put("AU", "Australien");
-    namesMap.put("AX", "Åland");
+    namesMap.put("AX", "Ålandsøerne");
     namesMap.put("AZ", "Aserbajdsjan");
     namesMap.put("BA", "Bosnien-Hercegovina");
     namesMap.put("BE", "Belgien");
     namesMap.put("BG", "Bulgarien");
-    namesMap.put("BN", "Brunei Darussalam");
+    namesMap.put("BQ", "Nederlandske antiller");
     namesMap.put("BR", "Brasilien");
-    namesMap.put("BV", "Bouvetø");
+    namesMap.put("BV", "Bouvetøen");
     namesMap.put("BY", "Hviderusland");
     namesMap.put("CC", "Cocosøerne");
     namesMap.put("CD", "Congo-Kinshasa");
     namesMap.put("CF", "Centralafrikanske Republik");
-    namesMap.put("CG", "Congo – Brazzaville");
+    namesMap.put("CG", "Congo-Brazzaville");
     namesMap.put("CH", "Schweiz");
-    namesMap.put("CI", "Elfenbenskysten");
-    namesMap.put("CK", "Cook-øerne");
+    namesMap.put("CK", "Cookøerne");
     namesMap.put("CM", "Cameroun");
     namesMap.put("CN", "Kina");
     namesMap.put("CP", "Clippertonøen");
-    namesMap.put("CS", "Serbien og Montenegro");
     namesMap.put("CV", "Kap Verde");
     namesMap.put("CX", "Juleøen");
     namesMap.put("CY", "Cypern");
@@ -379,12 +375,11 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("EH", "Vestsahara");
     namesMap.put("ES", "Spanien");
     namesMap.put("ET", "Etiopien");
-    namesMap.put("FJ", "Fiji-øerne");
+    namesMap.put("EU", "Den Europæiske Union");
     namesMap.put("FK", "Falklandsøerne");
     namesMap.put("FM", "Mikronesiens Forenede Stater");
     namesMap.put("FO", "Færøerne");
     namesMap.put("FR", "Frankrig");
-    namesMap.put("FX", "Europæiske Frankrig");
     namesMap.put("GB", "Storbritannien");
     namesMap.put("GE", "Georgien");
     namesMap.put("GF", "Fransk Guyana");
@@ -392,7 +387,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("GQ", "Ækvatorialguinea");
     namesMap.put("GR", "Grækenland");
     namesMap.put("GS", "South Georgia og De Sydlige Sandwichøer");
-    namesMap.put("HK", "Hongkong");
+    namesMap.put("HK", "Hongkong SAR");
     namesMap.put("HM", "Heard- og McDonald-øerne");
     namesMap.put("HR", "Kroatien");
     namesMap.put("HU", "Ungarn");
@@ -400,7 +395,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("ID", "Indonesien");
     namesMap.put("IE", "Irland");
     namesMap.put("IN", "Indien");
-    namesMap.put("IO", "Det Britiske Territorium i Det Indiske Ocean");
+    namesMap.put("IO", "Det britiske territorium i Det Indiske Ocean");
     namesMap.put("IQ", "Irak");
     namesMap.put("IS", "Island");
     namesMap.put("IT", "Italien");
@@ -417,17 +412,16 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("LV", "Letland");
     namesMap.put("LY", "Libyen");
     namesMap.put("MA", "Marokko");
-    namesMap.put("MD", "Republikken Moldova");
     namesMap.put("MG", "Madagaskar");
     namesMap.put("MH", "Marshalløerne");
     namesMap.put("MK", "Makedonien");
-    namesMap.put("MM", "Myanmar");
     namesMap.put("MN", "Mongoliet");
-    namesMap.put("MO", "Macao");
+    namesMap.put("MO", "Macao SAR");
     namesMap.put("MP", "Nordmarianerne");
     namesMap.put("MR", "Mauretanien");
     namesMap.put("MV", "Maldiverne");
     namesMap.put("NC", "Ny Caledonien");
+    namesMap.put("NF", "Norfolkøen");
     namesMap.put("NL", "Holland");
     namesMap.put("NO", "Norge");
     namesMap.put("PF", "Fransk Polynesien");
@@ -438,7 +432,6 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("PN", "Pitcairn");
     namesMap.put("PS", "De palæstinensiske områder");
     namesMap.put("QO", "Ydre Oceanien");
-    namesMap.put("RE", "Reunion");
     namesMap.put("RO", "Rumænien");
     namesMap.put("RS", "Serbien");
     namesMap.put("RU", "Rusland");
@@ -451,23 +444,24 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("SJ", "Svalbard og Jan Mayen");
     namesMap.put("SK", "Slovakiet");
     namesMap.put("SR", "Surinam");
+    namesMap.put("SS", "Sydsudan");
     namesMap.put("ST", "Sao Tome og Principe");
     namesMap.put("SY", "Syrien");
     namesMap.put("TC", "Turks- og Caicosøerne");
     namesMap.put("TD", "Tchad");
-    namesMap.put("TF", "Franske Besiddelser i Det Sydlige Indiske Ocean");
+    namesMap.put("TF", "De franske besiddelser i Det Sydlige Indiske Ocean");
     namesMap.put("TJ", "Tadsjikistan");
     namesMap.put("TN", "Tunesien");
     namesMap.put("TR", "Tyrkiet");
     namesMap.put("TT", "Trinidad og Tobago");
-    namesMap.put("UM", "Mindre amerikanske oversøiske øer");
+    namesMap.put("UM", "Amerikanske oversøiske øer");
     namesMap.put("US", "USA");
     namesMap.put("UZ", "Usbekistan");
     namesMap.put("VA", "Vatikanstaten");
-    namesMap.put("VC", "St. Vincent og Grenadinerne");
-    namesMap.put("VG", "De britiske jomfruøer");
-    namesMap.put("VI", "De amerikanske jomfruøer");
-    namesMap.put("WF", "Wallis og Futunaøerne");
+    namesMap.put("VC", "Saint Vincent og Grenadinerne");
+    namesMap.put("VG", "De Britiske Jomfruøer");
+    namesMap.put("VI", "De Amerikanske Jomfruøer");
+    namesMap.put("WF", "Wallis og Futuna");
     namesMap.put("ZA", "Sydafrika");
     namesMap.put("ZZ", "Ukendt område");
   }
@@ -497,7 +491,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "034": "Sydasien",
         "035": "Sydøstasien",
         "039": "Sydeuropa",
-        "053": "Australien og New Zealand",
+        "053": "Australasien",
         "054": "Melanesien",
         "057": "Mikronesien",
         "061": "Polynesien",
@@ -519,26 +513,24 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "AS": "Amerikansk Samoa",
         "AT": "Østrig",
         "AU": "Australien",
-        "AX": "Åland",
+        "AX": "Ålandsøerne",
         "AZ": "Aserbajdsjan",
         "BA": "Bosnien-Hercegovina",
         "BE": "Belgien",
         "BG": "Bulgarien",
-        "BN": "Brunei Darussalam",
+        "BQ": "Nederlandske antiller",
         "BR": "Brasilien",
-        "BV": "Bouvetø",
+        "BV": "Bouvetøen",
         "BY": "Hviderusland",
         "CC": "Cocosøerne",
         "CD": "Congo-Kinshasa",
         "CF": "Centralafrikanske Republik",
-        "CG": "Congo – Brazzaville",
+        "CG": "Congo-Brazzaville",
         "CH": "Schweiz",
-        "CI": "Elfenbenskysten",
-        "CK": "Cook-øerne",
+        "CK": "Cookøerne",
         "CM": "Cameroun",
         "CN": "Kina",
         "CP": "Clippertonøen",
-        "CS": "Serbien og Montenegro",
         "CV": "Kap Verde",
         "CX": "Juleøen",
         "CY": "Cypern",
@@ -553,12 +545,11 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "EH": "Vestsahara",
         "ES": "Spanien",
         "ET": "Etiopien",
-        "FJ": "Fiji-øerne",
+        "EU": "Den Europæiske Union",
         "FK": "Falklandsøerne",
         "FM": "Mikronesiens Forenede Stater",
         "FO": "Færøerne",
         "FR": "Frankrig",
-        "FX": "Europæiske Frankrig",
         "GB": "Storbritannien",
         "GE": "Georgien",
         "GF": "Fransk Guyana",
@@ -566,7 +557,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "GQ": "Ækvatorialguinea",
         "GR": "Grækenland",
         "GS": "South Georgia og De Sydlige Sandwichøer",
-        "HK": "Hongkong",
+        "HK": "Hongkong SAR",
         "HM": "Heard- og McDonald-øerne",
         "HR": "Kroatien",
         "HU": "Ungarn",
@@ -574,7 +565,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "ID": "Indonesien",
         "IE": "Irland",
         "IN": "Indien",
-        "IO": "Det Britiske Territorium i Det Indiske Ocean",
+        "IO": "Det britiske territorium i Det Indiske Ocean",
         "IQ": "Irak",
         "IS": "Island",
         "IT": "Italien",
@@ -591,17 +582,16 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "LV": "Letland",
         "LY": "Libyen",
         "MA": "Marokko",
-        "MD": "Republikken Moldova",
         "MG": "Madagaskar",
         "MH": "Marshalløerne",
         "MK": "Makedonien",
-        "MM": "Myanmar",
         "MN": "Mongoliet",
-        "MO": "Macao",
+        "MO": "Macao SAR",
         "MP": "Nordmarianerne",
         "MR": "Mauretanien",
         "MV": "Maldiverne",
         "NC": "Ny Caledonien",
+        "NF": "Norfolkøen",
         "NL": "Holland",
         "NO": "Norge",
         "PF": "Fransk Polynesien",
@@ -612,7 +602,6 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "PN": "Pitcairn",
         "PS": "De palæstinensiske områder",
         "QO": "Ydre Oceanien",
-        "RE": "Reunion",
         "RO": "Rumænien",
         "RS": "Serbien",
         "RU": "Rusland",
@@ -625,23 +614,24 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "SJ": "Svalbard og Jan Mayen",
         "SK": "Slovakiet",
         "SR": "Surinam",
+        "SS": "Sydsudan",
         "ST": "Sao Tome og Principe",
         "SY": "Syrien",
         "TC": "Turks- og Caicosøerne",
         "TD": "Tchad",
-        "TF": "Franske Besiddelser i Det Sydlige Indiske Ocean",
+        "TF": "De franske besiddelser i Det Sydlige Indiske Ocean",
         "TJ": "Tadsjikistan",
         "TN": "Tunesien",
         "TR": "Tyrkiet",
         "TT": "Trinidad og Tobago",
-        "UM": "Mindre amerikanske oversøiske øer",
+        "UM": "Amerikanske oversøiske øer",
         "US": "USA",
         "UZ": "Usbekistan",
         "VA": "Vatikanstaten",
-        "VC": "St. Vincent og Grenadinerne",
-        "VG": "De britiske jomfruøer",
-        "VI": "De amerikanske jomfruøer",
-        "WF": "Wallis og Futunaøerne",
+        "VC": "Saint Vincent og Grenadinerne",
+        "VG": "De Britiske Jomfruøer",
+        "VI": "De Amerikanske Jomfruøer",
+        "WF": "Wallis og Futuna",
         "ZA": "Sydafrika",
         "ZZ": "Ukendt område"
     };

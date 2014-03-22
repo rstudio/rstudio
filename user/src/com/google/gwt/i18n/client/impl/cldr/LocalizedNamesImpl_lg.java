@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
 //  type=root
-
 
 /**
  * Localized names for the "lg" locale.
@@ -245,7 +244,6 @@ public class LocalizedNamesImpl_lg extends LocalizedNamesImpl {
         "LC",
         "PM",
         "VC",
-        "CS",
         "SC",
         "SG",
         "ES",
@@ -287,6 +285,7 @@ public class LocalizedNamesImpl_lg extends LocalizedNamesImpl {
         "WF",
         "UY",
         "UZ",
+        "XK",
         "YE",
         "ID",
         "IQ",
@@ -345,7 +344,6 @@ public class LocalizedNamesImpl_lg extends LocalizedNamesImpl {
     namesMap.put("CN", "Cayina");
     namesMap.put("CO", "Kolombya");
     namesMap.put("CR", "Kosita Rika");
-    namesMap.put("CS", "Seribya ne Monteneguro");
     namesMap.put("CV", "Bizinga by'e Kepu Veredi");
     namesMap.put("CY", "Sipuriya");
     namesMap.put("CZ", "Lipubulika ya Ceeka");
@@ -561,7 +559,6 @@ public class LocalizedNamesImpl_lg extends LocalizedNamesImpl {
         "CN": "Cayina",
         "CO": "Kolombya",
         "CR": "Kosita Rika",
-        "CS": "Seribya ne Monteneguro",
         "CV": "Bizinga by'e Kepu Veredi",
         "CY": "Sipuriya",
         "CZ": "Lipubulika ya Ceeka",

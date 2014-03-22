@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "nl_BE" locale.
@@ -62,7 +61,6 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "BA",
         "BW",
         "BV",
-        "BQ",
         "BR",
         "IO",
         "VG",
@@ -73,6 +71,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "KH",
         "CA",
         "IC",
+        "BQ",
         "KY",
         "CF",
         "EA",
@@ -103,7 +102,6 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "ER",
         "EE",
         "ET",
-        "FX",
         "EU",
         "FO",
         "FK",
@@ -157,6 +155,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "KI",
         "UM",
         "KW",
+        "XK",
         "HR",
         "LA",
         "LS",
@@ -231,6 +230,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "BL",
         "KN",
         "LC",
+        "MF",
         "PM",
         "VC",
         "SB",
@@ -240,22 +240,19 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "ST",
         "SN",
         "RS",
-        "CS",
         "SC",
         "SL",
         "SG",
         "SH",
         "SX",
-        "MF",
         "SI",
         "SK",
         "SD",
         "SO",
         "ES",
-        "LK",
-        "SS",
-        "SR",
         "SJ",
+        "LK",
+        "SR",
         "SZ",
         "SY",
         "TJ",
@@ -290,6 +287,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "ZA",
         "GS",
         "KR",
+        "SS",
         "SE",
         "CH",
     };

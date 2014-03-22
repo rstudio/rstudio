@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+//  number=$Revision: 9862 $
+//  type=nmg
 
 /**
  * Localized names for the "nmg" locale.
@@ -256,7 +255,6 @@ public class LocalizedNamesImpl_nmg extends LocalizedNamesImpl {
         "CH",
         "SX",
         "SY",
-        "CS",
         "TA",
         "TH",
         "TW",
@@ -284,6 +282,7 @@ public class LocalizedNamesImpl_nmg extends LocalizedNamesImpl {
         "VN",
         "VE",
         "WF",
+        "XK",
         "YE",
         "ZM",
         "NZ",
@@ -331,7 +330,6 @@ public class LocalizedNamesImpl_nmg extends LocalizedNamesImpl {
     namesMap.put("CN", "Shine");
     namesMap.put("CO", "Kɔlɔ́mbia");
     namesMap.put("CR", "Kosta Ríka");
-    namesMap.put("CS", "Sɛrbia ba Mɔntenegro");
     namesMap.put("CU", "Kuba");
     namesMap.put("CV", "Maŋ́ má Kapvɛr");
     namesMap.put("CY", "Sipria");
@@ -510,7 +508,6 @@ public class LocalizedNamesImpl_nmg extends LocalizedNamesImpl {
         "CN": "Shine",
         "CO": "Kɔlɔ́mbia",
         "CR": "Kosta Ríka",
-        "CS": "Sɛrbia ba Mɔntenegro",
         "CU": "Kuba",
         "CV": "Maŋ́ má Kapvɛr",
         "CY": "Sipria",

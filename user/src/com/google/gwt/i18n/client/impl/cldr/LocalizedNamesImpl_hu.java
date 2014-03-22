@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
 //  type=root
-
 
 /**
  * Localized names for the "hu" locale.
@@ -70,7 +69,6 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
-        "BQ",
         "BR",
         "IO",
         "VG",
@@ -92,6 +90,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "ZA",
         "GS",
         "KR",
+        "SS",
         "DG",
         "DM",
         "DO",
@@ -138,6 +137,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "HM",
         "AN",
         "NL",
+        "BQ",
         "HN",
         "HK",
         "HR",
@@ -170,6 +170,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "CO",
         "CG",
         "CD",
+        "XK",
         "CF",
         "CU",
         "KW",
@@ -249,20 +250,18 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "ST",
         "SC",
         "SL",
+        "SX",
         "ES",
         "SJ",
         "LK",
-        "SS",
         "SR",
         "CH",
         "SE",
-        "SX",
         "WS",
         "SA",
         "SN",
         "SH",
         "RS",
-        "CS",
         "SG",
         "SY",
         "SK",
@@ -322,7 +321,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("034", "Dél-Ázsia");
     namesMap.put("035", "Délkelet-Ázsia");
     namesMap.put("039", "Dél-Európa");
-    namesMap.put("053", "Ausztrália és Új-Zéland");
+    namesMap.put("053", "Ausztrálázsia");
     namesMap.put("054", "Melanézia");
     namesMap.put("057", "Mikronéziai régió");
     namesMap.put("061", "Polinézia");
@@ -346,13 +345,14 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("AS", "Amerikai Szamoa");
     namesMap.put("AT", "Ausztria");
     namesMap.put("AU", "Ausztrália");
-    namesMap.put("AX", "Aland-szigetek");
+    namesMap.put("AX", "Åland-szigetek");
     namesMap.put("AZ", "Azerbajdzsán");
     namesMap.put("BA", "Bosznia-Hercegovina");
     namesMap.put("BD", "Banglades");
     namesMap.put("BG", "Bulgária");
     namesMap.put("BH", "Bahrein");
     namesMap.put("BO", "Bolívia");
+    namesMap.put("BQ", "Holland Karib-térség");
     namesMap.put("BR", "Brazília");
     namesMap.put("BS", "Bahama-szigetek");
     namesMap.put("BT", "Bhután");
@@ -370,10 +370,9 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("CN", "Kína");
     namesMap.put("CO", "Kolumbia");
     namesMap.put("CP", "Clipperton-sziget");
-    namesMap.put("CS", "Szerbia és Montenegró");
     namesMap.put("CU", "Kuba");
     namesMap.put("CV", "Zöld-foki Köztársaság");
-    namesMap.put("CX", "Karácsony-szigetek");
+    namesMap.put("CX", "Karácsony-sziget");
     namesMap.put("CY", "Ciprus");
     namesMap.put("CZ", "Csehország");
     namesMap.put("DE", "Németország");
@@ -390,7 +389,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("ET", "Etiópia");
     namesMap.put("EU", "Európai Unió");
     namesMap.put("FI", "Finnország");
-    namesMap.put("FJ", "Fidzsi");
+    namesMap.put("FJ", "Fidzsi-szigetek");
     namesMap.put("FK", "Falkland-szigetek");
     namesMap.put("FM", "Mikronézia");
     namesMap.put("FO", "Feröer-szigetek");
@@ -403,9 +402,9 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("GL", "Grönland");
     namesMap.put("GQ", "Egyenlítői-Guinea");
     namesMap.put("GR", "Görögország");
-    namesMap.put("GS", "Dél Grúzia és a Déli Szendvics-szigetek");
-    namesMap.put("HK", "Hongkong");
-    namesMap.put("HM", "Heard és McDonald Szigetek");
+    namesMap.put("GS", "Déli-Georgia és Déli-Sandwich-szigetek");
+    namesMap.put("HK", "Hongkong SAR Kína");
+    namesMap.put("HM", "Heard-sziget és McDonald-szigetek");
     namesMap.put("HR", "Horvátország");
     namesMap.put("HU", "Magyarország");
     namesMap.put("IC", "Kanári-szigetek");
@@ -443,9 +442,9 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("MG", "Madagaszkár");
     namesMap.put("MH", "Marshall-szigetek");
     namesMap.put("MK", "Macedónia");
-    namesMap.put("MM", "Mianmar [Burma]");
+    namesMap.put("MM", "Mianmar (Burma)");
     namesMap.put("MN", "Mongólia");
-    namesMap.put("MO", "Makaó");
+    namesMap.put("MO", "Makaó SAR Kína");
     namesMap.put("MP", "Északi Mariana-szigetek");
     namesMap.put("MR", "Mauritánia");
     namesMap.put("MT", "Málta");
@@ -476,7 +475,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("RE", "Reunion");
     namesMap.put("RO", "Románia");
     namesMap.put("RS", "Szerbia");
-    namesMap.put("RU", "Oroszországi Föderáció");
+    namesMap.put("RU", "Oroszország");
     namesMap.put("RW", "Ruanda");
     namesMap.put("SA", "Szaúd-Arábia");
     namesMap.put("SB", "Salamon-szigetek");
@@ -484,12 +483,13 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("SD", "Szudán");
     namesMap.put("SE", "Svédország");
     namesMap.put("SG", "Szingapúr");
-    namesMap.put("SH", "Szent Helena");
+    namesMap.put("SH", "Szent Ilona");
     namesMap.put("SI", "Szlovénia");
     namesMap.put("SJ", "Spitzbergák és Jan Mayen-szigetek");
     namesMap.put("SK", "Szlovákia");
     namesMap.put("SN", "Szenegál");
     namesMap.put("SO", "Szomália");
+    namesMap.put("SS", "Dél-Szudán");
     namesMap.put("ST", "Sao Tomé és Príncipe");
     namesMap.put("SV", "Salvador");
     namesMap.put("SY", "Szíria");
@@ -498,7 +498,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("TD", "Csád");
     namesMap.put("TF", "Francia Déli Területek");
     namesMap.put("TH", "Thaiföld");
-    namesMap.put("TJ", "Tadzsikisztán");
+    namesMap.put("TJ", "Tádzsikisztán");
     namesMap.put("TL", "Kelet-Timor");
     namesMap.put("TM", "Türkmenisztán");
     namesMap.put("TN", "Tunézia");
@@ -516,9 +516,10 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("VI", "Amerikai Virgin-szigetek");
     namesMap.put("WF", "Wallis- és Futuna-szigetek");
     namesMap.put("WS", "Szamoa");
+    namesMap.put("XK", "Koszovó");
     namesMap.put("YE", "Jemen");
     namesMap.put("ZA", "Dél-afrikai Köztársaság");
-    namesMap.put("ZZ", "Ismeretlen vagy érvénytelen körzet");
+    namesMap.put("ZZ", "Ismeretlen körzet");
   }
 
   @Override
@@ -546,7 +547,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "034": "Dél-Ázsia",
         "035": "Délkelet-Ázsia",
         "039": "Dél-Európa",
-        "053": "Ausztrália és Új-Zéland",
+        "053": "Ausztrálázsia",
         "054": "Melanézia",
         "057": "Mikronéziai régió",
         "061": "Polinézia",
@@ -570,13 +571,14 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "AS": "Amerikai Szamoa",
         "AT": "Ausztria",
         "AU": "Ausztrália",
-        "AX": "Aland-szigetek",
+        "AX": "Åland-szigetek",
         "AZ": "Azerbajdzsán",
         "BA": "Bosznia-Hercegovina",
         "BD": "Banglades",
         "BG": "Bulgária",
         "BH": "Bahrein",
         "BO": "Bolívia",
+        "BQ": "Holland Karib-térség",
         "BR": "Brazília",
         "BS": "Bahama-szigetek",
         "BT": "Bhután",
@@ -594,10 +596,9 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "CN": "Kína",
         "CO": "Kolumbia",
         "CP": "Clipperton-sziget",
-        "CS": "Szerbia és Montenegró",
         "CU": "Kuba",
         "CV": "Zöld-foki Köztársaság",
-        "CX": "Karácsony-szigetek",
+        "CX": "Karácsony-sziget",
         "CY": "Ciprus",
         "CZ": "Csehország",
         "DE": "Németország",
@@ -614,7 +615,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "ET": "Etiópia",
         "EU": "Európai Unió",
         "FI": "Finnország",
-        "FJ": "Fidzsi",
+        "FJ": "Fidzsi-szigetek",
         "FK": "Falkland-szigetek",
         "FM": "Mikronézia",
         "FO": "Feröer-szigetek",
@@ -627,9 +628,9 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "GL": "Grönland",
         "GQ": "Egyenlítői-Guinea",
         "GR": "Görögország",
-        "GS": "Dél Grúzia és a Déli Szendvics-szigetek",
-        "HK": "Hongkong",
-        "HM": "Heard és McDonald Szigetek",
+        "GS": "Déli-Georgia és Déli-Sandwich-szigetek",
+        "HK": "Hongkong SAR Kína",
+        "HM": "Heard-sziget és McDonald-szigetek",
         "HR": "Horvátország",
         "HU": "Magyarország",
         "IC": "Kanári-szigetek",
@@ -667,9 +668,9 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "MG": "Madagaszkár",
         "MH": "Marshall-szigetek",
         "MK": "Macedónia",
-        "MM": "Mianmar [Burma]",
+        "MM": "Mianmar (Burma)",
         "MN": "Mongólia",
-        "MO": "Makaó",
+        "MO": "Makaó SAR Kína",
         "MP": "Északi Mariana-szigetek",
         "MR": "Mauritánia",
         "MT": "Málta",
@@ -700,7 +701,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "RE": "Reunion",
         "RO": "Románia",
         "RS": "Szerbia",
-        "RU": "Oroszországi Föderáció",
+        "RU": "Oroszország",
         "RW": "Ruanda",
         "SA": "Szaúd-Arábia",
         "SB": "Salamon-szigetek",
@@ -708,12 +709,13 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "SD": "Szudán",
         "SE": "Svédország",
         "SG": "Szingapúr",
-        "SH": "Szent Helena",
+        "SH": "Szent Ilona",
         "SI": "Szlovénia",
         "SJ": "Spitzbergák és Jan Mayen-szigetek",
         "SK": "Szlovákia",
         "SN": "Szenegál",
         "SO": "Szomália",
+        "SS": "Dél-Szudán",
         "ST": "Sao Tomé és Príncipe",
         "SV": "Salvador",
         "SY": "Szíria",
@@ -722,7 +724,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "TD": "Csád",
         "TF": "Francia Déli Területek",
         "TH": "Thaiföld",
-        "TJ": "Tadzsikisztán",
+        "TJ": "Tádzsikisztán",
         "TL": "Kelet-Timor",
         "TM": "Türkmenisztán",
         "TN": "Tunézia",
@@ -740,9 +742,10 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "VI": "Amerikai Virgin-szigetek",
         "WF": "Wallis- és Futuna-szigetek",
         "WS": "Szamoa",
+        "XK": "Koszovó",
         "YE": "Jemen",
         "ZA": "Dél-afrikai Köztársaság",
-        "ZZ": "Ismeretlen vagy érvénytelen körzet"
+        "ZZ": "Ismeretlen körzet"
     };
   }-*/;
 }

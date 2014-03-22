@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=to
 
 /**
  * Implementation of DateTimeFormatInfo for the "to" locale.
@@ -44,6 +44,21 @@ public class DateTimeFormatInfoImpl_to extends DateTimeFormatInfoImpl {
   @Override
   public String dateFormatShort() {
     return "d/M/yy";
+  }
+
+  @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
+  }
+
+  @Override
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
   }
 
   @Override
@@ -88,6 +103,11 @@ public class DateTimeFormatInfoImpl_to extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatYearMonthAbbrevDay() {
+    return "d MMM y";
+  }
+
+  @Override
   public String formatYearMonthFull() {
     return "MMMM y";
   }
@@ -99,22 +119,17 @@ public class DateTimeFormatInfoImpl_to extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M-yyyy";
+    return "M/y";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "d/M/y";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
     return "EEE d MMM y";
-  }
-
-  @Override
-  public String formatYearQuarterFull() {
-    return "yyyy QQQQ";
-  }
-
-  @Override
-  public String formatYearQuarterShort() {
-    return "yyyy Q";
   }
 
   @Override
@@ -129,24 +144,6 @@ public class DateTimeFormatInfoImpl_to extends DateTimeFormatInfoImpl {
         "Siulai",
         "ʻAokosi",
         "Sepitema",
-        "ʻOkatopa",
-        "Nōvema",
-        "Tīsema"
-    };
-  }
-
-  @Override
-  public String[] monthsFullStandalone() {
-    return new String[] {
-        "Sānuali",
-        "Fēpueli",
-        "Maʻasi",
-        "ʻEpeleli",
-        "Mē",
-        "Sune",
-        "Siulai",
-        "ʻAokosi",
-        "Sēpitema",
         "ʻOkatopa",
         "Nōvema",
         "Tīsema"
@@ -190,24 +187,6 @@ public class DateTimeFormatInfoImpl_to extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return new String[] {
-        "Sān",
-        "Fēp",
-        "Maʻa",
-        "ʻEpe",
-        "Mē",
-        "Sun",
-        "Siu",
-        "ʻAok",
-        "Sēp",
-        "ʻOka",
-        "Nōv",
-        "Tīs"
-    };
-  }
-
-  @Override
   public String[] quartersFull() {
     return new String[] {
         "kuata ʻuluaki",
@@ -225,6 +204,21 @@ public class DateTimeFormatInfoImpl_to extends DateTimeFormatInfoImpl {
         "K3",
         "K4"
     };
+  }
+
+  @Override
+  public String timeFormatFull() {
+    return "h:mm:ss a zzzz";
+  }
+
+  @Override
+  public String timeFormatMedium() {
+    return "h:mm:ss a";
+  }
+
+  @Override
+  public String timeFormatShort() {
+    return "h:mm a";
   }
 
   @Override

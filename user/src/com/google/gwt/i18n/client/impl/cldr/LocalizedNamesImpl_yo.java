@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "yo" locale.
@@ -56,6 +55,7 @@ public class LocalizedNamesImpl_yo extends LocalizedNamesImpl {
         "FO",
         "GG",
         "GS",
+        "SS",
         "HK",
         "HM",
         "IC",
@@ -253,7 +253,6 @@ public class LocalizedNamesImpl_yo extends LocalizedNamesImpl {
         "ST",
         "SZ",
         "SA",
-        "CS",
         "CZ",
         "SN",
         "SC",
@@ -293,11 +292,11 @@ public class LocalizedNamesImpl_yo extends LocalizedNamesImpl {
         "RS",
         "AS",
         "SJ",
-        "SS",
         "SX",
         "TA",
         "TF",
         "UM",
+        "XK",
     };
   }
 
@@ -349,7 +348,6 @@ public class LocalizedNamesImpl_yo extends LocalizedNamesImpl {
     namesMap.put("CN", "Orílẹ́ède ṣáínà");
     namesMap.put("CO", "Orílẹ́ède Kòlómíbìa");
     namesMap.put("CR", "Orílẹ́ède Kuusita Ríkà");
-    namesMap.put("CS", "Orílẹ́ède sẹbia ati Mọtinegoro");
     namesMap.put("CU", "Orílẹ́ède Kúbà");
     namesMap.put("CV", "Orílẹ́ède Etíokun Kápé féndè");
     namesMap.put("CY", "Orílẹ́ède Kúrúsì");
@@ -492,6 +490,7 @@ public class LocalizedNamesImpl_yo extends LocalizedNamesImpl {
     namesMap.put("SN", "Orílẹ́ède Sẹnẹga");
     namesMap.put("SO", "Orílẹ́ède Somalia");
     namesMap.put("SR", "Orílẹ́ède Surinami");
+    namesMap.put("SS", "Gúúsù Sudan");
     namesMap.put("ST", "Orílẹ́ède Sao tomi ati piriiṣipi");
     namesMap.put("SV", "Orílẹ́ède Ẹẹsáfádò");
     namesMap.put("SY", "Orílẹ́ède Siria");
@@ -584,7 +583,6 @@ public class LocalizedNamesImpl_yo extends LocalizedNamesImpl {
         "CN": "Orílẹ́ède ṣáínà",
         "CO": "Orílẹ́ède Kòlómíbìa",
         "CR": "Orílẹ́ède Kuusita Ríkà",
-        "CS": "Orílẹ́ède sẹbia ati Mọtinegoro",
         "CU": "Orílẹ́ède Kúbà",
         "CV": "Orílẹ́ède Etíokun Kápé féndè",
         "CY": "Orílẹ́ède Kúrúsì",
@@ -727,6 +725,7 @@ public class LocalizedNamesImpl_yo extends LocalizedNamesImpl {
         "SN": "Orílẹ́ède Sẹnẹga",
         "SO": "Orílẹ́ède Somalia",
         "SR": "Orílẹ́ède Surinami",
+        "SS": "Gúúsù Sudan",
         "ST": "Orílẹ́ède Sao tomi ati piriiṣipi",
         "SV": "Orílẹ́ède Ẹẹsáfádò",
         "SY": "Orílẹ́ède Siria",

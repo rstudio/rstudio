@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,15 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=it
 
 /**
  * Implementation of DateTimeFormatInfo for the "it" locale.
  */
 public class DateTimeFormatInfoImpl_it extends DateTimeFormatInfoImpl {
-
-  @Override
-  public String[] ampms() {
-    return new String[] {
-        "m.",
-        "p."
-    };
-  }
 
   @Override
   public String dateFormatFull() {
@@ -58,7 +50,7 @@ public class DateTimeFormatInfoImpl_it extends DateTimeFormatInfoImpl {
   public String[] erasFull() {
     return new String[] {
         "a.C.",
-        "d.C"
+        "d.C."
     };
   }
 
@@ -137,12 +129,12 @@ public class DateTimeFormatInfoImpl_it extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ-yyyy";
+    return "QQQQ y";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q-yyyy";
+    return "Q y";
   }
 
   @Override
@@ -220,10 +212,10 @@ public class DateTimeFormatInfoImpl_it extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "1o trimestre",
-        "2o trimestre",
-        "3o trimestre",
-        "4o trimestre"
+        "1º trimestre",
+        "2º trimestre",
+        "3º trimestre",
+        "4º trimestre"
     };
   }
 

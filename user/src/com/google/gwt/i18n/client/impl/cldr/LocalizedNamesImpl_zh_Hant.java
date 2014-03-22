@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=Hant
 
 /**
  * Localized names for the "zh_Hant" locale.
@@ -41,10 +40,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "BQ",
-        "CW",
-        "SS",
-        "SX",
         "AF",
         "AR",
         "AE",
@@ -59,7 +54,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "AO",
         "AI",
         "AU",
-        "MO",
         "PG",
         "BS",
         "PK",
@@ -101,23 +95,26 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "PF",
         "GF",
         "TF",
+        "MF",
         "FO",
         "PH",
         "FI",
         "FK",
         "GM",
-        "GP",
         "CR",
         "CO",
         "GL",
         "GD",
         "GG",
         "CU",
+        "GP",
         "GT",
         "KZ",
         "HT",
         "AN",
+        "SX",
         "NL",
+        "BQ",
         "HM",
         "HN",
         "DJ",
@@ -131,6 +128,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "CM",
         "QA",
         "KM",
+        "XK",
         "CI",
         "KW",
         "CC",
@@ -147,9 +145,9 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "IM",
         "MR",
         "US",
+        "UM",
         "VI",
         "AS",
-        "UM",
         "MN",
         "MS",
         "ME",
@@ -166,6 +164,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "ZA",
         "GS",
         "AQ",
+        "SS",
         "KR",
         "NP",
         "NI",
@@ -181,7 +180,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "SC",
         "SN",
         "RS",
-        "CS",
         "SA",
         "ZM",
         "SZ",
@@ -206,7 +204,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "ES",
         "EH",
         "GR",
-        "HK",
         "ZW",
         "SG",
         "NC",
@@ -227,6 +224,8 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "CL",
         "CF",
         "CN",
+        "MO",
+        "HK",
         "BN",
         "LA",
         "GH",
@@ -234,14 +233,15 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "FJ",
         "AM",
         "AZ",
-        "AX",
         "CG",
         "CD",
         "GE",
         "AT",
+        "AX",
         "GN",
         "GW",
         "CK",
+        "CW",
         "EE",
         "IE",
         "SY",
@@ -265,14 +265,13 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "RO",
         "IT",
         "BL",
-        "PM",
         "ST",
         "SH",
         "KN",
         "LC",
+        "PM",
         "VC",
         "CX",
-        "MF",
         "SM",
         "VU",
         "YE",
@@ -310,6 +309,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("014", "東非");
     namesMap.put("018", "非洲南部");
     namesMap.put("021", "北美");
+    namesMap.put("029", "加勒比海");
     namesMap.put("030", "東亞");
     namesMap.put("034", "南亞");
     namesMap.put("035", "東南亞");
@@ -338,7 +338,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("AT", "奧地利");
     namesMap.put("AU", "澳洲");
     namesMap.put("AW", "阿路巴");
-    namesMap.put("AX", "亞蘭群島");
+    namesMap.put("AX", "奧蘭群島");
     namesMap.put("AZ", "亞塞拜然");
     namesMap.put("BA", "波士尼亞與赫塞格維納");
     namesMap.put("BB", "巴貝多");
@@ -347,11 +347,12 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("BF", "布吉納法索");
     namesMap.put("BG", "保加利亞");
     namesMap.put("BI", "蒲隆地");
-    namesMap.put("BJ", "貝南");
+    namesMap.put("BJ", "貝寧");
     namesMap.put("BL", "聖巴瑟米");
     namesMap.put("BM", "百慕達");
     namesMap.put("BN", "汶萊");
     namesMap.put("BO", "玻利維亞");
+    namesMap.put("BQ", "荷蘭加勒比區");
     namesMap.put("BS", "巴哈馬");
     namesMap.put("BV", "布威島");
     namesMap.put("BW", "波札那");
@@ -367,8 +368,8 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("CO", "哥倫比亞");
     namesMap.put("CP", "克里派頓島");
     namesMap.put("CR", "哥斯大黎加");
-    namesMap.put("CS", "塞爾維亞和蒙特尼哥羅");
     namesMap.put("CV", "維德角");
+    namesMap.put("CW", "庫拉索");
     namesMap.put("CX", "聖誕島");
     namesMap.put("CY", "賽普勒斯");
     namesMap.put("CZ", "捷克共和國");
@@ -376,7 +377,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("DG", "迪亞哥加西亞島");
     namesMap.put("DJ", "吉布地");
     namesMap.put("DK", "丹麥");
-    namesMap.put("DM", "多明尼加");
     namesMap.put("DO", "多明尼加共和國");
     namesMap.put("DZ", "阿爾及利亞");
     namesMap.put("EA", "休達與梅利利亞");
@@ -393,7 +393,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("FR", "法國");
     namesMap.put("GA", "加彭");
     namesMap.put("GB", "英國");
-    namesMap.put("GD", "格瑞納達");
+    namesMap.put("GD", "格瑞那達");
     namesMap.put("GE", "喬治亞共和國");
     namesMap.put("GF", "法屬圭亞那");
     namesMap.put("GG", "根西島");
@@ -402,14 +402,15 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("GL", "格陵蘭");
     namesMap.put("GM", "甘比亞");
     namesMap.put("GN", "幾內亞");
-    namesMap.put("GP", "哥德普洛");
+    namesMap.put("GP", "瓜地洛普");
     namesMap.put("GQ", "赤道幾內亞");
     namesMap.put("GR", "希臘");
     namesMap.put("GS", "南喬治亞與南三明治群島");
     namesMap.put("GT", "瓜地馬拉");
     namesMap.put("GU", "關島");
-    namesMap.put("GW", "幾內亞比索");
+    namesMap.put("GW", "幾內亞比紹");
     namesMap.put("GY", "蓋亞納");
+    namesMap.put("HK", "中華人民共和國香港特別行政區");
     namesMap.put("HM", "赫德與麥克當諾群島");
     namesMap.put("HN", "宏都拉斯");
     namesMap.put("HR", "克羅埃西亞");
@@ -434,7 +435,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("KZ", "哈薩克");
     namesMap.put("LA", "寮國");
     namesMap.put("LC", "聖露西亞");
-    namesMap.put("LI", "列支敦斯登");
     namesMap.put("LK", "斯里蘭卡");
     namesMap.put("LR", "賴比瑞亞");
     namesMap.put("LS", "賴索扥");
@@ -444,17 +444,17 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("MC", "摩納哥");
     namesMap.put("MD", "摩爾多瓦");
     namesMap.put("ME", "蒙特內哥羅");
-    namesMap.put("MF", "聖馬丁");
+    namesMap.put("MF", "法屬聖馬丁");
     namesMap.put("MG", "馬達加斯加");
     namesMap.put("MH", "馬紹爾群島");
     namesMap.put("MK", "馬其頓");
     namesMap.put("ML", "馬利");
     namesMap.put("MM", "緬甸");
-    namesMap.put("MO", "澳門");
+    namesMap.put("MO", "中華人民共和國澳門特別行政區");
     namesMap.put("MP", "北馬里亞納群島");
     namesMap.put("MQ", "馬丁尼克島");
     namesMap.put("MR", "茅利塔尼亞");
-    namesMap.put("MS", "蒙特色拉特島");
+    namesMap.put("MS", "蒙塞拉特島");
     namesMap.put("MT", "馬爾他");
     namesMap.put("MU", "模里西斯");
     namesMap.put("MV", "馬爾地夫");
@@ -478,9 +478,9 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("PG", "巴布亞紐幾內亞");
     namesMap.put("PH", "菲律賓");
     namesMap.put("PL", "波蘭");
-    namesMap.put("PM", "聖彼德與密啟崙");
-    namesMap.put("PN", "皮特康");
-    namesMap.put("PS", "巴勒斯坦");
+    namesMap.put("PM", "聖皮埃爾和密克隆群島");
+    namesMap.put("PN", "皮特肯群島");
+    namesMap.put("PS", "巴勒斯坦自治區");
     namesMap.put("PW", "帛琉");
     namesMap.put("QA", "卡達");
     namesMap.put("QO", "大洋洲邊疆群島");
@@ -501,8 +501,10 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("SN", "塞內加爾");
     namesMap.put("SO", "索馬利亞");
     namesMap.put("SR", "蘇利南");
+    namesMap.put("SS", "南蘇丹");
     namesMap.put("ST", "聖多美及普林西比");
     namesMap.put("SV", "薩爾瓦多");
+    namesMap.put("SX", "荷屬聖馬丁");
     namesMap.put("SY", "敘利亞");
     namesMap.put("SZ", "史瓦濟蘭");
     namesMap.put("TA", "特里斯坦達庫尼亞群島");
@@ -523,7 +525,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("TZ", "坦尚尼亞");
     namesMap.put("UA", "烏克蘭");
     namesMap.put("UG", "烏干達");
-    namesMap.put("UM", "美屬邊疆群島");
+    namesMap.put("UM", "美國本土外小島嶼");
     namesMap.put("US", "美國");
     namesMap.put("UY", "烏拉圭");
     namesMap.put("UZ", "烏茲別克");
@@ -533,13 +535,13 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("VG", "英屬維京群島");
     namesMap.put("VI", "美屬維京群島");
     namesMap.put("VU", "萬那杜");
-    namesMap.put("WF", "瓦利斯和福杜納群島");
+    namesMap.put("WF", "瓦利斯和富圖納群島");
     namesMap.put("WS", "薩摩亞群島");
     namesMap.put("YE", "葉門");
     namesMap.put("YT", "馬約特");
     namesMap.put("ZM", "尚比亞");
     namesMap.put("ZW", "辛巴威");
-    namesMap.put("ZZ", "未確定的區域");
+    namesMap.put("ZZ", "未知區域");
   }
 
   @Override
@@ -553,6 +555,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "014": "東非",
         "018": "非洲南部",
         "021": "北美",
+        "029": "加勒比海",
         "030": "東亞",
         "034": "南亞",
         "035": "東南亞",
@@ -581,7 +584,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "AT": "奧地利",
         "AU": "澳洲",
         "AW": "阿路巴",
-        "AX": "亞蘭群島",
+        "AX": "奧蘭群島",
         "AZ": "亞塞拜然",
         "BA": "波士尼亞與赫塞格維納",
         "BB": "巴貝多",
@@ -590,11 +593,12 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "BF": "布吉納法索",
         "BG": "保加利亞",
         "BI": "蒲隆地",
-        "BJ": "貝南",
+        "BJ": "貝寧",
         "BL": "聖巴瑟米",
         "BM": "百慕達",
         "BN": "汶萊",
         "BO": "玻利維亞",
+        "BQ": "荷蘭加勒比區",
         "BS": "巴哈馬",
         "BV": "布威島",
         "BW": "波札那",
@@ -610,8 +614,8 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "CO": "哥倫比亞",
         "CP": "克里派頓島",
         "CR": "哥斯大黎加",
-        "CS": "塞爾維亞和蒙特尼哥羅",
         "CV": "維德角",
+        "CW": "庫拉索",
         "CX": "聖誕島",
         "CY": "賽普勒斯",
         "CZ": "捷克共和國",
@@ -619,7 +623,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "DG": "迪亞哥加西亞島",
         "DJ": "吉布地",
         "DK": "丹麥",
-        "DM": "多明尼加",
         "DO": "多明尼加共和國",
         "DZ": "阿爾及利亞",
         "EA": "休達與梅利利亞",
@@ -636,7 +639,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "FR": "法國",
         "GA": "加彭",
         "GB": "英國",
-        "GD": "格瑞納達",
+        "GD": "格瑞那達",
         "GE": "喬治亞共和國",
         "GF": "法屬圭亞那",
         "GG": "根西島",
@@ -645,14 +648,15 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "GL": "格陵蘭",
         "GM": "甘比亞",
         "GN": "幾內亞",
-        "GP": "哥德普洛",
+        "GP": "瓜地洛普",
         "GQ": "赤道幾內亞",
         "GR": "希臘",
         "GS": "南喬治亞與南三明治群島",
         "GT": "瓜地馬拉",
         "GU": "關島",
-        "GW": "幾內亞比索",
+        "GW": "幾內亞比紹",
         "GY": "蓋亞納",
+        "HK": "中華人民共和國香港特別行政區",
         "HM": "赫德與麥克當諾群島",
         "HN": "宏都拉斯",
         "HR": "克羅埃西亞",
@@ -677,7 +681,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "KZ": "哈薩克",
         "LA": "寮國",
         "LC": "聖露西亞",
-        "LI": "列支敦斯登",
         "LK": "斯里蘭卡",
         "LR": "賴比瑞亞",
         "LS": "賴索扥",
@@ -687,17 +690,17 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "MC": "摩納哥",
         "MD": "摩爾多瓦",
         "ME": "蒙特內哥羅",
-        "MF": "聖馬丁",
+        "MF": "法屬聖馬丁",
         "MG": "馬達加斯加",
         "MH": "馬紹爾群島",
         "MK": "馬其頓",
         "ML": "馬利",
         "MM": "緬甸",
-        "MO": "澳門",
+        "MO": "中華人民共和國澳門特別行政區",
         "MP": "北馬里亞納群島",
         "MQ": "馬丁尼克島",
         "MR": "茅利塔尼亞",
-        "MS": "蒙特色拉特島",
+        "MS": "蒙塞拉特島",
         "MT": "馬爾他",
         "MU": "模里西斯",
         "MV": "馬爾地夫",
@@ -721,9 +724,9 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "PG": "巴布亞紐幾內亞",
         "PH": "菲律賓",
         "PL": "波蘭",
-        "PM": "聖彼德與密啟崙",
-        "PN": "皮特康",
-        "PS": "巴勒斯坦",
+        "PM": "聖皮埃爾和密克隆群島",
+        "PN": "皮特肯群島",
+        "PS": "巴勒斯坦自治區",
         "PW": "帛琉",
         "QA": "卡達",
         "QO": "大洋洲邊疆群島",
@@ -744,8 +747,10 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "SN": "塞內加爾",
         "SO": "索馬利亞",
         "SR": "蘇利南",
+        "SS": "南蘇丹",
         "ST": "聖多美及普林西比",
         "SV": "薩爾瓦多",
+        "SX": "荷屬聖馬丁",
         "SY": "敘利亞",
         "SZ": "史瓦濟蘭",
         "TA": "特里斯坦達庫尼亞群島",
@@ -766,7 +771,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "TZ": "坦尚尼亞",
         "UA": "烏克蘭",
         "UG": "烏干達",
-        "UM": "美屬邊疆群島",
+        "UM": "美國本土外小島嶼",
         "US": "美國",
         "UY": "烏拉圭",
         "UZ": "烏茲別克",
@@ -776,13 +781,13 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "VG": "英屬維京群島",
         "VI": "美屬維京群島",
         "VU": "萬那杜",
-        "WF": "瓦利斯和福杜納群島",
+        "WF": "瓦利斯和富圖納群島",
         "WS": "薩摩亞群島",
         "YE": "葉門",
         "YT": "馬約特",
         "ZM": "尚比亞",
         "ZW": "辛巴威",
-        "ZZ": "未確定的區域"
+        "ZZ": "未知區域"
     };
   }-*/;
 }

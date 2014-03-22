@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=nb
 
 /**
  * Implementation of DateTimeFormatInfo for the "nb" locale.
@@ -55,23 +55,18 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String dateTimeFull(String timePattern, String datePattern) {
-    return timePattern + " " + datePattern;
-  }
-
-  @Override
   public String dateTimeLong(String timePattern, String datePattern) {
-    return timePattern + " " + datePattern;
+    return datePattern + " 'kl.' " + timePattern;
   }
 
   @Override
   public String dateTimeMedium(String timePattern, String datePattern) {
-    return timePattern + " " + datePattern;
+    return datePattern + ", " + timePattern;
   }
 
   @Override
   public String dateTimeShort(String timePattern, String datePattern) {
-    return timePattern + " " + datePattern;
+    return datePattern + ", " + timePattern;
   }
 
   @Override
@@ -93,6 +88,26 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
   @Override
   public String formatDay() {
     return "d.";
+  }
+
+  @Override
+  public String formatHour12Minute() {
+    return "h.mm a";
+  }
+
+  @Override
+  public String formatHour12MinuteSecond() {
+    return "h.mm.ss a";
+  }
+
+  @Override
+  public String formatHour24Minute() {
+    return "HH.mm";
+  }
+
+  @Override
+  public String formatHour24MinuteSecond() {
+    return "HH.mm.ss";
   }
 
   @Override
@@ -142,12 +157,12 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M y";
+    return "M.y";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d.M.yyyy";
+    return "d.M.y";
   }
 
   @Override
@@ -157,12 +172,12 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ yyyy";
+    return "QQQQ y";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q yyyy";
+    return "Q y";
   }
 
   @Override
@@ -188,11 +203,11 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
     return new String[] {
         "jan.",
         "feb.",
-        "mars",
+        "mar.",
         "apr.",
         "mai",
-        "juni",
-        "juli",
+        "jun.",
+        "jul.",
         "aug.",
         "sep.",
         "okt.",
@@ -241,7 +256,22 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
 
   @Override
   public String timeFormatFull() {
-    return "'kl'. HH:mm:ss zzzz";
+    return "HH.mm.ss zzzz";
+  }
+
+  @Override
+  public String timeFormatLong() {
+    return "HH.mm.ss z";
+  }
+
+  @Override
+  public String timeFormatMedium() {
+    return "HH.mm.ss";
+  }
+
+  @Override
+  public String timeFormatShort() {
+    return "HH.mm";
   }
 
   @Override

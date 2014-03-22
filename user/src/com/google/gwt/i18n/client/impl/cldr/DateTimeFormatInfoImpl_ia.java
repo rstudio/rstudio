@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5798 $
-//  date=$Date: 2011-05-02 02:05:34 -0400 (Mon, 02 May 2011) $
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
 //  type=root
 
 /**
@@ -32,6 +32,11 @@ public class DateTimeFormatInfoImpl_ia extends DateTimeFormatInfoImpl {
         "a.m.",
         "p.m."
     };
+  }
+
+  @Override
+  public String dateFormatFull() {
+    return "EEEE, y MMMM dd";
   }
 
   @Override
@@ -194,19 +199,6 @@ public class DateTimeFormatInfoImpl_ia extends DateTimeFormatInfoImpl {
         "jovedi",
         "venerdi",
         "sabbato"
-    };
-  }
-
-  @Override
-  public String[] weekdaysNarrow() {
-    return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
     };
   }
 

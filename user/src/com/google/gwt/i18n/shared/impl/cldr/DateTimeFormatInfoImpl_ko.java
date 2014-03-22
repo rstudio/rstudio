@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
+//  cldrVersion=25
+//  date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
+//  number=$Revision: 9967 $
 //  type=ko
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "ko" locale.
@@ -46,7 +46,7 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatMedium() {
-    return "yyyy. M. d.";
+    return "y. M. d.";
   }
 
   @Override
@@ -102,12 +102,12 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthFullWeekdayDay() {
-    return "MMMM d일 (EEEE)";
+    return "MMMM d일 EEEE";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "M. d";
+    return "M. d.";
   }
 
   @Override
@@ -137,27 +137,27 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "yyyy. M.";
+    return "y. M.";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "yyyy. M. d.";
+    return "y. M. d.";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "y년 MMM d일 EEE";
+    return "y년 MMM d일 (EEE)";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "y년 QQQQ분기";
+    return "y년 QQQQ";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "y년 Q분기";
+    return "y년 Q";
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+//  number=$Revision: 9862 $
 //  type=root
 
 /**
@@ -51,7 +51,7 @@ public class DateTimeFormatInfoImpl_ps extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatShort() {
-    return "yyyy/M/d";
+    return "y/M/d";
   }
 
   @Override
@@ -86,8 +86,48 @@ public class DateTimeFormatInfoImpl_ps extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatYearMonthAbbrev() {
+    return "G y MMM";
+  }
+
+  @Override
+  public String formatYearMonthAbbrevDay() {
+    return "G y MMM d";
+  }
+
+  @Override
+  public String formatYearMonthFull() {
+    return "G y MMMM";
+  }
+
+  @Override
   public String formatYearMonthFullDay() {
-    return "د y د MMMM d";
+    return "G y MMMM d";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "GGGGG y-MM";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "GGGGG y-MM-dd";
+  }
+
+  @Override
+  public String formatYearMonthWeekdayDay() {
+    return "G y MMM d, EEE";
+  }
+
+  @Override
+  public String formatYearQuarterFull() {
+    return "G y QQQQ";
+  }
+
+  @Override
+  public String formatYearQuarterShort() {
+    return "G y Q";
   }
 
   @Override
@@ -184,19 +224,6 @@ public class DateTimeFormatInfoImpl_ps extends DateTimeFormatInfoImpl {
         "پنجشنبه",
         "جمعه",
         "شنبه"
-    };
-  }
-
-  @Override
-  public String[] weekdaysNarrow() {
-    return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
     };
   }
 

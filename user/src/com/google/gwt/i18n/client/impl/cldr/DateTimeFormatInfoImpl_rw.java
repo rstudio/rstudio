@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,20 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6355 $
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
 //  type=root
-//  date=$Date: 2012-01-14 00:15:06 -0500 (Sat, 14 Jan 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "rw" locale.
  */
 public class DateTimeFormatInfoImpl_rw extends DateTimeFormatInfoImpl {
+
+  @Override
+  public String dateFormatFull() {
+    return "EEEE, y MMMM dd";
+  }
 
   @Override
   public String dateFormatShort() {
@@ -131,19 +136,6 @@ public class DateTimeFormatInfoImpl_rw extends DateTimeFormatInfoImpl {
         "Kuwa kane",
         "Kuwa gatanu",
         "Kuwa gatandatu"
-    };
-  }
-
-  @Override
-  public String[] weekdaysNarrow() {
-    return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
     };
   }
 

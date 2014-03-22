@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=ee
 
 /**
  * Localized names for the "ee" locale.
@@ -48,6 +47,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "TF",
         "GS",
         "KR",
+        "SS",
         "AR",
         "AM",
         "AW",
@@ -69,7 +69,6 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
-        "BQ",
         "BR",
         "IO",
         "VG",
@@ -77,7 +76,6 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "BG",
         "BF",
         "BI",
-        "CW",
         "DK",
         "DG",
         "DM",
@@ -137,6 +135,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "CA",
         "IC",
         "CV",
+        "BQ",
         "QA",
         "KY",
         "KZ",
@@ -156,6 +155,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "CX",
         "HR",
         "CU",
+        "CW",
         "KW",
         "LA",
         "LV",
@@ -217,7 +217,6 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "PR",
         "RE",
         "RO",
-        "RS",
         "RU",
         "RW",
         "BL",
@@ -233,10 +232,11 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "ST",
         "SA",
         "SN",
-        "CS",
+        "RS",
         "SC",
         "SL",
         "SG",
+        "SX",
         "SY",
         "SK",
         "SI",
@@ -244,14 +244,12 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
-        "SS",
         "SD",
         "SR",
         "SJ",
         "SZ",
         "SE",
         "CH",
-        "SX",
         "TH",
         "TW",
         "TJ",
@@ -286,6 +284,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "VE",
         "VN",
         "WF",
+        "XK",
         "YE",
         "JO",
         "ZM",
@@ -358,6 +357,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
     namesMap.put("BM", "Bermuda nutome");
     namesMap.put("BN", "Brunei nutome");
     namesMap.put("BO", "Bolivia nutome");
+    namesMap.put("BQ", "Karibbeatɔwo ƒe Nedalanɖs nutome");
     namesMap.put("BR", "Brazil nutome");
     namesMap.put("BS", "Bahamas nutome");
     namesMap.put("BT", "Bhutan nutome");
@@ -366,7 +366,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
     namesMap.put("BY", "Belarus nutome");
     namesMap.put("BZ", "Belize nutome");
     namesMap.put("CA", "Kanada nutome");
-    namesMap.put("CC", "Kokos [Kiling] fudomekpo nutome");
+    namesMap.put("CC", "Kokos (Kiling) fudomekpo nutome");
     namesMap.put("CD", "Kongo Kinshasa nutome");
     namesMap.put("CF", "Titina Afrika repɔblik nutome");
     namesMap.put("CG", "Kongo Brazzaville nutome");
@@ -379,9 +379,9 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
     namesMap.put("CO", "Kolombia nutome");
     namesMap.put("CP", "Klipaton ƒudomekpo nutome");
     namesMap.put("CR", "Kosta Rika nutome");
-    namesMap.put("CS", "Serbia kple Montenegro nutome");
     namesMap.put("CU", "Kuba nutome");
     namesMap.put("CV", "Kape Verde nutome");
+    namesMap.put("CW", "Kurakao nutome");
     namesMap.put("CX", "Kristmas ƒudomekpo nutome");
     namesMap.put("CY", "Saiprus nutome");
     namesMap.put("CZ", "Tsɛk repɔblik nutome");
@@ -478,7 +478,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
     namesMap.put("MH", "Marshal ƒudomekpowo nutome");
     namesMap.put("MK", "Makedonia nutome");
     namesMap.put("ML", "Mali nutome");
-    namesMap.put("MM", "Myanmar [Burma] nutome");
+    namesMap.put("MM", "Myanmar (Burma) nutome");
     namesMap.put("MN", "Mongolia nutome");
     namesMap.put("MO", "Macau SAR Tsaina nutome");
     namesMap.put("MP", "Dziehe Marina ƒudomekpowo nutome");
@@ -523,6 +523,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
     namesMap.put("QO", "Outlaying Oceania nutome");
     namesMap.put("RE", "Réunion nutome");
     namesMap.put("RO", "Romania nutome");
+    namesMap.put("RS", "Serbia nutome");
     namesMap.put("RU", "Russia nutome");
     namesMap.put("RW", "Rwanda nutome");
     namesMap.put("SA", "Saudi Arabia nutome");
@@ -540,8 +541,10 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
     namesMap.put("SN", "Senegal nutome");
     namesMap.put("SO", "Somalia nutome");
     namesMap.put("SR", "Suriname nutome");
+    namesMap.put("SS", "Anyiehe Sudan nutome");
     namesMap.put("ST", "São Tomé kple Príncipe nutome");
     namesMap.put("SV", "El Salvadɔ nutome");
+    namesMap.put("SX", "Sint Maarten nutome");
     namesMap.put("SY", "Siria nutome");
     namesMap.put("SZ", "Swaziland nutome");
     namesMap.put("TA", "Tristan da Kunha nutome");
@@ -652,6 +655,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "BM": "Bermuda nutome",
         "BN": "Brunei nutome",
         "BO": "Bolivia nutome",
+        "BQ": "Karibbeatɔwo ƒe Nedalanɖs nutome",
         "BR": "Brazil nutome",
         "BS": "Bahamas nutome",
         "BT": "Bhutan nutome",
@@ -660,7 +664,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "BY": "Belarus nutome",
         "BZ": "Belize nutome",
         "CA": "Kanada nutome",
-        "CC": "Kokos [Kiling] fudomekpo nutome",
+        "CC": "Kokos (Kiling) fudomekpo nutome",
         "CD": "Kongo Kinshasa nutome",
         "CF": "Titina Afrika repɔblik nutome",
         "CG": "Kongo Brazzaville nutome",
@@ -673,9 +677,9 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "CO": "Kolombia nutome",
         "CP": "Klipaton ƒudomekpo nutome",
         "CR": "Kosta Rika nutome",
-        "CS": "Serbia kple Montenegro nutome",
         "CU": "Kuba nutome",
         "CV": "Kape Verde nutome",
+        "CW": "Kurakao nutome",
         "CX": "Kristmas ƒudomekpo nutome",
         "CY": "Saiprus nutome",
         "CZ": "Tsɛk repɔblik nutome",
@@ -772,7 +776,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "MH": "Marshal ƒudomekpowo nutome",
         "MK": "Makedonia nutome",
         "ML": "Mali nutome",
-        "MM": "Myanmar [Burma] nutome",
+        "MM": "Myanmar (Burma) nutome",
         "MN": "Mongolia nutome",
         "MO": "Macau SAR Tsaina nutome",
         "MP": "Dziehe Marina ƒudomekpowo nutome",
@@ -817,6 +821,7 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "QO": "Outlaying Oceania nutome",
         "RE": "Réunion nutome",
         "RO": "Romania nutome",
+        "RS": "Serbia nutome",
         "RU": "Russia nutome",
         "RW": "Rwanda nutome",
         "SA": "Saudi Arabia nutome",
@@ -834,8 +839,10 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "SN": "Senegal nutome",
         "SO": "Somalia nutome",
         "SR": "Suriname nutome",
+        "SS": "Anyiehe Sudan nutome",
         "ST": "São Tomé kple Príncipe nutome",
         "SV": "El Salvadɔ nutome",
+        "SX": "Sint Maarten nutome",
         "SY": "Siria nutome",
         "SZ": "Swaziland nutome",
         "TA": "Tristan da Kunha nutome",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,23 +18,15 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
+//  cldrVersion=25
+//  date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+//  number=$Revision: 9728 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "bm" locale.
  */
 public class LocalizedNamesImpl_bm extends LocalizedNamesImpl {
-
-  @Override
-  public String[] loadLikelyRegionCodes() {
-    return new String[] {
-        "ML",
-    };
-  }
 
   @Override
   public String[] loadSortedRegionCodes() {
@@ -239,7 +231,6 @@ public class LocalizedNamesImpl_bm extends LocalizedNamesImpl {
         "CF",
         "ST",
         "SN",
-        "CS",
         "SC",
         "CL",
         "CN",
@@ -286,6 +277,7 @@ public class LocalizedNamesImpl_bm extends LocalizedNamesImpl {
         "VN",
         "ZA",
         "KR",
+        "XK",
         "YE",
         "JM",
         "ZM",
@@ -346,7 +338,6 @@ public class LocalizedNamesImpl_bm extends LocalizedNamesImpl {
     namesMap.put("CN", "Siniwajamana");
     namesMap.put("CO", "Kolombi");
     namesMap.put("CR", "Kɔsitarika");
-    namesMap.put("CS", "Serbi-ni-Mɔntenegro");
     namesMap.put("CU", "Kuba");
     namesMap.put("CV", "Capivɛrdi");
     namesMap.put("CY", "Cipri");
@@ -568,7 +559,6 @@ public class LocalizedNamesImpl_bm extends LocalizedNamesImpl {
         "CN": "Siniwajamana",
         "CO": "Kolombi",
         "CR": "Kɔsitarika",
-        "CS": "Serbi-ni-Mɔntenegro",
         "CU": "Kuba",
         "CV": "Capivɛrdi",
         "CY": "Cipri",

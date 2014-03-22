@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6472 Google $
-//  date=$Date: 2012-01-27 18:53:35 -0500 (Fri, 27 Jan 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
 //  type=root
-
 
 /**
  * Localized names for the "ne" locale.
@@ -40,17 +39,6 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "AC",
-        "BQ",
-        "CP",
-        "CW",
-        "DG",
-        "EA",
-        "GS",
-        "IC",
-        "SS",
-        "SX",
-        "TA",
         "AO",
         "AZ",
         "AQ",
@@ -65,14 +53,14 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "AU",
         "IM",
         "CI",
-        "IE",
         "IS",
         "AI",
+        "IE",
         "AW",
         "AM",
         "EC",
-        "EG",
         "IL",
+        "EG",
         "IT",
         "ET",
         "ID",
@@ -82,9 +70,11 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "UZ",
         "KP",
         "MP",
+        "UY",
         "AG",
         "ER",
         "SV",
+        "AC",
         "OM",
         "QA",
         "KH",
@@ -92,6 +82,7 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "KI",
         "KG",
         "CK",
+        "CW",
         "KW",
         "CF",
         "KE",
@@ -103,11 +94,15 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "KM",
         "CO",
         "CR",
+        "XK",
         "CA",
+        "IC",
         "CM",
+        "BQ",
         "CU",
         "CX",
         "HR",
+        "CP",
         "GM",
         "GA",
         "GN",
@@ -126,19 +121,22 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "CN",
         "CZ",
         "JM",
+        "GE",
         "DE",
         "JE",
         "JP",
         "ZM",
         "GI",
         "ZW",
-        "GE",
         "JO",
         "TR",
-        "TN",
+        "TL",
         "TO",
         "TG",
+        "TN",
+        "TA",
         "DJ",
+        "DG",
         "DK",
         "DO",
         "DM",
@@ -153,6 +151,8 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "TH",
         "ZA",
         "KR",
+        "GS",
+        "SS",
         "NC",
         "NO",
         "NE",
@@ -172,13 +172,12 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "EH",
         "PK",
         "PN",
-        "TL",
+        "PR",
         "PE",
         "PT",
         "PL",
         "PY",
         "PS",
-        "PR",
         "FK",
         "FO",
         "FJ",
@@ -191,14 +190,15 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "BD",
         "BF",
         "BM",
-        "BG",
+        "BH",
         "BS",
         "BB",
         "QO",
-        "BH",
         "BV",
         "BI",
+        "BG",
         "BJ",
+        "GB",
         "VG",
         "IO",
         "BY",
@@ -241,7 +241,6 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "MM",
         "UA",
         "UG",
-        "UY",
         "EU",
         "YE",
         "RW",
@@ -259,7 +258,6 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "LS",
         "WF",
         "LK",
-        "GB",
         "AE",
         "US",
         "UM",
@@ -271,8 +269,10 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "ST",
         "SM",
         "WS",
+        "EA",
         "SL",
         "SG",
+        "SX",
         "SY",
         "SD",
         "SR",
@@ -317,12 +317,12 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("018", "दक्षिणी अफ्रिका");
     namesMap.put("019", "अमेरिकास");
     namesMap.put("021", "उत्तरी अमेरिका");
-    namesMap.put("029", "क्यारिबिएन");
+    namesMap.put("029", "क्यारिबियन");
     namesMap.put("030", "पूर्वी एशिया");
     namesMap.put("034", "दक्षिणी एशिया");
     namesMap.put("035", "दक्षिण पूर्वी एशिया");
     namesMap.put("039", "दक्षिणी युरोप");
-    namesMap.put("053", "अष्ट्रेलिया र न्युजिल्याण्ड");
+    namesMap.put("053", "अष्ट्रालासिया");
     namesMap.put("054", "मेलानेसिया");
     namesMap.put("057", "माइक्रोनेसियाली क्षेत्र");
     namesMap.put("061", "पोलिनेशिया");
@@ -333,10 +333,11 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("151", "पूर्वी युरोप");
     namesMap.put("154", "उत्तरी युरोप");
     namesMap.put("155", "पश्चिमी युरोप");
-    namesMap.put("419", "ल्याटिन अमेरिका तथा क्यारिबियन");
+    namesMap.put("419", "ल्याटिन अमेरिका");
+    namesMap.put("AC", "एस्केन्सन टापु");
     namesMap.put("AD", "अन्डोर्रा");
     namesMap.put("AE", "संयुक्त अरब इमिराट्स");
-    namesMap.put("AF", "अफ्गानिष्तान");
+    namesMap.put("AF", "अफगानिस्तान");
     namesMap.put("AG", "एन्टिगुआ र बारबुडा");
     namesMap.put("AI", "आङ्गुइला");
     namesMap.put("AL", "अल्बानिया");
@@ -344,26 +345,27 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("AN", "नेदरल्याण्ड्स एण्टिलिस");
     namesMap.put("AO", "अङ्गोला");
     namesMap.put("AQ", "अन्टारतिका");
-    namesMap.put("AR", "अर्जेण्टिना");
+    namesMap.put("AR", "अर्जेन्टिना");
     namesMap.put("AS", "अमेरिकी समोआ");
     namesMap.put("AT", "अष्ट्रिया");
     namesMap.put("AU", "अष्ट्रेलिया");
     namesMap.put("AW", "आरूबा");
-    namesMap.put("AX", "अलान्ड टापु");
+    namesMap.put("AX", "अलान्ड टापुहरु");
     namesMap.put("AZ", "अजरबैजान");
-    namesMap.put("BA", "बोस्निया र हर्जगोभिनिया");
+    namesMap.put("BA", "बोस्निया एण्ड हर्जगोभिनिया");
     namesMap.put("BB", "बार्बाडोस");
     namesMap.put("BD", "बङ्गलादेश");
     namesMap.put("BE", "बेल्जियम");
     namesMap.put("BF", "बर्किना फासो");
-    namesMap.put("BG", "बल्गेरिया");
-    namesMap.put("BH", "बाह्रेन");
+    namesMap.put("BG", "बुल्गेरिया");
+    namesMap.put("BH", "बहराइन");
     namesMap.put("BI", "बुरूण्डी");
     namesMap.put("BJ", "बेनिन");
     namesMap.put("BL", "सेन्ट बार्थालेमी");
     namesMap.put("BM", "बर्मुडा");
     namesMap.put("BN", "ब्रुनाइ");
     namesMap.put("BO", "बोलिभिया");
+    namesMap.put("BQ", "क्यारिवियन नेदरल्याण्ड्स");
     namesMap.put("BR", "ब्राजिल");
     namesMap.put("BS", "बहामास");
     namesMap.put("BT", "भुटान");
@@ -372,47 +374,51 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("BY", "बेलारूस");
     namesMap.put("BZ", "बेलिज");
     namesMap.put("CA", "क्यानाडा");
-    namesMap.put("CC", "कोकोस टापु");
+    namesMap.put("CC", "कोकोस (किलिंग) टापुहरु");
     namesMap.put("CD", "कोङ्गो-किन्शासा");
     namesMap.put("CF", "केन्द्रीय अफ्रिकी गणतन्त्र");
     namesMap.put("CG", "कोङ्गो - ब्राज्जाभिल्ले");
     namesMap.put("CH", "स्विजरल्याण्ड");
-    namesMap.put("CI", "आइभोरी कोष्ट");
-    namesMap.put("CK", "कुक टापु");
+    namesMap.put("CI", "आइभरी कोस्ट");
+    namesMap.put("CK", "कुक टापुहरु");
     namesMap.put("CL", "चिली");
-    namesMap.put("CM", "क्यामेरून");
+    namesMap.put("CM", "क्यामरून");
     namesMap.put("CN", "चीन");
     namesMap.put("CO", "कोलोम्बिया");
+    namesMap.put("CP", "क्लिप्पेर्टन टापु");
     namesMap.put("CR", "कोष्टारिका");
     namesMap.put("CU", "क्युबा");
     namesMap.put("CV", "केप भर्डे");
+    namesMap.put("CW", "कुराकाओ");
     namesMap.put("CX", "क्रिष्टमस टापु");
     namesMap.put("CY", "साइप्रस");
-    namesMap.put("CZ", "चेख गणतन्त्र");
+    namesMap.put("CZ", "चेक गणतन्त्र");
     namesMap.put("DE", "जर्मनी");
+    namesMap.put("DG", "डियगो गार्सिया");
     namesMap.put("DJ", "डिजिबुटी");
-    namesMap.put("DK", "डेन्मार्क");
+    namesMap.put("DK", "डेनमार्क");
     namesMap.put("DM", "डोमिनिका");
     namesMap.put("DO", "डोमिनिकन गणतन्त्र");
     namesMap.put("DZ", "अल्जेरिया");
+    namesMap.put("EA", "सिउटा र मेलिला");
     namesMap.put("EC", "इक्वडेर");
     namesMap.put("EE", "इस्टोनिया");
     namesMap.put("EG", "इजिप्ट");
     namesMap.put("EH", "पश्चिमी साहारा");
     namesMap.put("ER", "एरित्रिया");
     namesMap.put("ES", "स्पेन");
-    namesMap.put("ET", "इथोपिया");
+    namesMap.put("ET", "इथियोपिया");
     namesMap.put("EU", "युरोपियन युनियन");
     namesMap.put("FI", "फिन्ल्याण्ड");
     namesMap.put("FJ", "फिजी");
-    namesMap.put("FK", "फकल्याण्ड टापु");
+    namesMap.put("FK", "फकल्याण्ड टापुहरु");
     namesMap.put("FM", "माइक्रोनेसिया");
-    namesMap.put("FO", "फारोर टापु");
+    namesMap.put("FO", "फारोर टापुहरु");
     namesMap.put("FR", "फ्रान्स");
     namesMap.put("GA", "गावोन");
-    namesMap.put("GB", "संयुक्त अधिराज्य");
+    namesMap.put("GB", "बेलायत");
     namesMap.put("GD", "ग्रेनाडा");
-    namesMap.put("GE", "जोर्जिया");
+    namesMap.put("GE", "जर्जिया");
     namesMap.put("GF", "फ्रान्सेली गायना");
     namesMap.put("GG", "गुएर्नसे");
     namesMap.put("GH", "घाना");
@@ -422,20 +428,22 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("GN", "गिनी");
     namesMap.put("GP", "ग्वाडेलुप");
     namesMap.put("GQ", "भू-मध्यीय गिनी");
-    namesMap.put("GR", "ग्रिश");
+    namesMap.put("GR", "ग्रिस");
+    namesMap.put("GS", "दक्षिण जर्जिया र दक्षिण स्यान्डवीच टापुहरू");
     namesMap.put("GT", "ग्वाटेमाला");
     namesMap.put("GU", "गुवाम");
     namesMap.put("GW", "गिनी-बिसाउ");
     namesMap.put("GY", "गुयाना");
-    namesMap.put("HK", "हङकङ");
-    namesMap.put("HM", "हर्ड टापु र म्याकडोनाल्ड टापु");
+    namesMap.put("HK", "हङकङ चिनिया समाजवादी स्वायत्त क्षेत्र");
+    namesMap.put("HM", "हर्ड टापु एण्ड म्याकडोनाल्ड टापुहरु");
     namesMap.put("HN", "हन्डुरास");
     namesMap.put("HR", "क्रोएशिया");
     namesMap.put("HT", "हैटी");
     namesMap.put("HU", "हङ्गेरी");
+    namesMap.put("IC", "क्यानारी टापुहरू");
     namesMap.put("ID", "इन्डोनेशिया");
-    namesMap.put("IE", "आइरल्याण्ड");
-    namesMap.put("IL", "इज्रायल");
+    namesMap.put("IE", "आयरल्याण्ड");
+    namesMap.put("IL", "इजरायल");
     namesMap.put("IM", "आइज्ले अफ् म्यान");
     namesMap.put("IN", "भारत");
     namesMap.put("IO", "बेलायती हिन्द महासागर क्षेत्र");
@@ -457,9 +465,9 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("KR", "दक्षिण कोरिया");
     namesMap.put("KW", "कुवेत");
     namesMap.put("KY", "केयमान टापु");
-    namesMap.put("KZ", "काजाकस्थान");
+    namesMap.put("KZ", "काजाकस्तान");
     namesMap.put("LA", "लाओस");
-    namesMap.put("LB", "लेबनोन");
+    namesMap.put("LB", "लेबनन");
     namesMap.put("LC", "सेन्ट लुसिया");
     namesMap.put("LI", "लिएखटेन्स्टाइन");
     namesMap.put("LK", "श्रीलङ्का");
@@ -475,12 +483,12 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("ME", "मोन्टेनेग्रो");
     namesMap.put("MF", "सेन्ट मार्टिन");
     namesMap.put("MG", "मडागास्कर");
-    namesMap.put("MH", "मार्शल टापु");
+    namesMap.put("MH", "मार्शल टापुहरु");
     namesMap.put("MK", "म्याकेडोनिया");
     namesMap.put("ML", "माली");
-    namesMap.put("MM", "म्यान्मार");
+    namesMap.put("MM", "म्यान्मार (बर्मा)");
     namesMap.put("MN", "मङ्गोलिया");
-    namesMap.put("MO", "मकावो");
+    namesMap.put("MO", "मकावो चिनिँया स्वशासित क्षेत्र");
     namesMap.put("MP", "उत्तरी मारिआना टापु");
     namesMap.put("MQ", "मार्टिनिक");
     namesMap.put("MR", "माउरिटानिया");
@@ -513,13 +521,13 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("PK", "पाकिस्तान");
     namesMap.put("PL", "पोल्याण्ड");
     namesMap.put("PM", "सेन्ट पिर्रे र मिक्केलोन");
-    namesMap.put("PN", "पिटकाइर्न");
-    namesMap.put("PR", "प्युर्टोरिको");
-    namesMap.put("PS", "प्यालेस्टनी भू-भाग");
-    namesMap.put("PT", "पोर्तुगल");
+    namesMap.put("PN", "पिटकाइर्न टापुहरु");
+    namesMap.put("PR", "पुएर्टो रिको");
+    namesMap.put("PS", "प्यालेस्टनी भू-भागहरु");
+    namesMap.put("PT", "पोर्चुगल");
     namesMap.put("PW", "पलाउ");
-    namesMap.put("PY", "प्यारागुये");
-    namesMap.put("QA", "कटार");
+    namesMap.put("PY", "प्याराग्वे");
+    namesMap.put("QA", "कतार");
     namesMap.put("QO", "बाह्य ओसनिया");
     namesMap.put("RE", "रियुनियन");
     namesMap.put("RO", "रोमानिया");
@@ -527,7 +535,7 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("RU", "रूस");
     namesMap.put("RW", "रवाण्डा");
     namesMap.put("SA", "साउदी अरब");
-    namesMap.put("SB", "सोलोमोन टापु");
+    namesMap.put("SB", "सोलोमोन टापुहरु");
     namesMap.put("SC", "सेचेलेस");
     namesMap.put("SD", "सुडान");
     namesMap.put("SE", "स्विडेन");
@@ -541,47 +549,51 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("SN", "सेनेगाल");
     namesMap.put("SO", "सोमालिया");
     namesMap.put("SR", "सुरिनेम");
+    namesMap.put("SS", "दक्षिणी सुडान");
     namesMap.put("ST", "साओ टोमे र प्रिन्सिप");
     namesMap.put("SV", "एल् साल्भाडोर");
+    namesMap.put("SX", "सिन्ट मार्टेन");
     namesMap.put("SY", "सिरिया");
     namesMap.put("SZ", "स्वाजिल्याण्ड");
+    namesMap.put("TA", "ट्रिस्टान डा कुन्हा");
     namesMap.put("TC", "तुर्क र काइकोस टापु");
     namesMap.put("TD", "चाड");
-    namesMap.put("TF", "फ्रान्सेली दक्षिणी क्षेत्र");
+    namesMap.put("TF", "फ्रान्सेली दक्षिणी क्षेत्रहरु");
     namesMap.put("TG", "टोगो");
     namesMap.put("TH", "थाइल्याण्ड");
     namesMap.put("TJ", "ताजिकिस्तान");
-    namesMap.put("TK", "तोगो");
-    namesMap.put("TL", "पूर्वी टिमोर");
+    namesMap.put("TK", "तोकेलाउ");
+    namesMap.put("TL", "टिमोर-लेस्टे");
     namesMap.put("TM", "तुर्कमेनिस्तान");
-    namesMap.put("TN", "टुनिसिया");
+    namesMap.put("TN", "ट्युनिसिया");
     namesMap.put("TO", "टोंगा");
     namesMap.put("TR", "टर्की");
-    namesMap.put("TT", "त्रिनिडाड र तोबागो");
+    namesMap.put("TT", "त्रिनिडाड एण्ड टोबागो");
     namesMap.put("TV", "तुभालु");
     namesMap.put("TW", "ताइवान");
     namesMap.put("TZ", "तान्जानिया");
     namesMap.put("UA", "युक्रेन");
     namesMap.put("UG", "युगाण्डा");
-    namesMap.put("UM", "संयुक्त राज्य अल्प बाह्य टापु");
+    namesMap.put("UM", "संयुक्त राज्य बाह्य टापुहरु");
     namesMap.put("US", "संयुक्त राज्य");
-    namesMap.put("UY", "युरूगुए");
+    namesMap.put("UY", "उरूग्वे");
     namesMap.put("UZ", "उज्बेकिस्तान");
-    namesMap.put("VA", "भेटिकन");
+    namesMap.put("VA", "भेटिकन सिटी");
     namesMap.put("VC", "सेन्ट भिन्सेन्ट र ग्रेनाडिन्स");
     namesMap.put("VE", "भेनेजुएला");
-    namesMap.put("VG", "बेलायती भर्जिन टापु");
-    namesMap.put("VI", "संयुक्त राज्य भर्जिन टापु");
+    namesMap.put("VG", "बेलायती भर्जिन टापुहरु");
+    namesMap.put("VI", "संयुक्त राज्य भर्जिन टापुहरु");
     namesMap.put("VN", "भिएतनाम");
     namesMap.put("VU", "भानुआतु");
     namesMap.put("WF", "वालिस र फुटुना");
     namesMap.put("WS", "सामोआ");
+    namesMap.put("XK", "कोसोवो");
     namesMap.put("YE", "येमेन");
     namesMap.put("YT", "मायोट्ट");
     namesMap.put("ZA", "दक्षिण अफ्रिका");
     namesMap.put("ZM", "जाम्बिया");
     namesMap.put("ZW", "जिम्बाबे");
-    namesMap.put("ZZ", "अपरिचित वा अवैध क्षेत्र");
+    namesMap.put("ZZ", "अपरिचित क्षेत्र");
   }
 
   @Override
@@ -604,12 +616,12 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "018": "दक्षिणी अफ्रिका",
         "019": "अमेरिकास",
         "021": "उत्तरी अमेरिका",
-        "029": "क्यारिबिएन",
+        "029": "क्यारिबियन",
         "030": "पूर्वी एशिया",
         "034": "दक्षिणी एशिया",
         "035": "दक्षिण पूर्वी एशिया",
         "039": "दक्षिणी युरोप",
-        "053": "अष्ट्रेलिया र न्युजिल्याण्ड",
+        "053": "अष्ट्रालासिया",
         "054": "मेलानेसिया",
         "057": "माइक्रोनेसियाली क्षेत्र",
         "061": "पोलिनेशिया",
@@ -620,10 +632,11 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "151": "पूर्वी युरोप",
         "154": "उत्तरी युरोप",
         "155": "पश्चिमी युरोप",
-        "419": "ल्याटिन अमेरिका तथा क्यारिबियन",
+        "419": "ल्याटिन अमेरिका",
+        "AC": "एस्केन्सन टापु",
         "AD": "अन्डोर्रा",
         "AE": "संयुक्त अरब इमिराट्स",
-        "AF": "अफ्गानिष्तान",
+        "AF": "अफगानिस्तान",
         "AG": "एन्टिगुआ र बारबुडा",
         "AI": "आङ्गुइला",
         "AL": "अल्बानिया",
@@ -631,26 +644,27 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "AN": "नेदरल्याण्ड्स एण्टिलिस",
         "AO": "अङ्गोला",
         "AQ": "अन्टारतिका",
-        "AR": "अर्जेण्टिना",
+        "AR": "अर्जेन्टिना",
         "AS": "अमेरिकी समोआ",
         "AT": "अष्ट्रिया",
         "AU": "अष्ट्रेलिया",
         "AW": "आरूबा",
-        "AX": "अलान्ड टापु",
+        "AX": "अलान्ड टापुहरु",
         "AZ": "अजरबैजान",
-        "BA": "बोस्निया र हर्जगोभिनिया",
+        "BA": "बोस्निया एण्ड हर्जगोभिनिया",
         "BB": "बार्बाडोस",
         "BD": "बङ्गलादेश",
         "BE": "बेल्जियम",
         "BF": "बर्किना फासो",
-        "BG": "बल्गेरिया",
-        "BH": "बाह्रेन",
+        "BG": "बुल्गेरिया",
+        "BH": "बहराइन",
         "BI": "बुरूण्डी",
         "BJ": "बेनिन",
         "BL": "सेन्ट बार्थालेमी",
         "BM": "बर्मुडा",
         "BN": "ब्रुनाइ",
         "BO": "बोलिभिया",
+        "BQ": "क्यारिवियन नेदरल्याण्ड्स",
         "BR": "ब्राजिल",
         "BS": "बहामास",
         "BT": "भुटान",
@@ -659,47 +673,51 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "BY": "बेलारूस",
         "BZ": "बेलिज",
         "CA": "क्यानाडा",
-        "CC": "कोकोस टापु",
+        "CC": "कोकोस (किलिंग) टापुहरु",
         "CD": "कोङ्गो-किन्शासा",
         "CF": "केन्द्रीय अफ्रिकी गणतन्त्र",
         "CG": "कोङ्गो - ब्राज्जाभिल्ले",
         "CH": "स्विजरल्याण्ड",
-        "CI": "आइभोरी कोष्ट",
-        "CK": "कुक टापु",
+        "CI": "आइभरी कोस्ट",
+        "CK": "कुक टापुहरु",
         "CL": "चिली",
-        "CM": "क्यामेरून",
+        "CM": "क्यामरून",
         "CN": "चीन",
         "CO": "कोलोम्बिया",
+        "CP": "क्लिप्पेर्टन टापु",
         "CR": "कोष्टारिका",
         "CU": "क्युबा",
         "CV": "केप भर्डे",
+        "CW": "कुराकाओ",
         "CX": "क्रिष्टमस टापु",
         "CY": "साइप्रस",
-        "CZ": "चेख गणतन्त्र",
+        "CZ": "चेक गणतन्त्र",
         "DE": "जर्मनी",
+        "DG": "डियगो गार्सिया",
         "DJ": "डिजिबुटी",
-        "DK": "डेन्मार्क",
+        "DK": "डेनमार्क",
         "DM": "डोमिनिका",
         "DO": "डोमिनिकन गणतन्त्र",
         "DZ": "अल्जेरिया",
+        "EA": "सिउटा र मेलिला",
         "EC": "इक्वडेर",
         "EE": "इस्टोनिया",
         "EG": "इजिप्ट",
         "EH": "पश्चिमी साहारा",
         "ER": "एरित्रिया",
         "ES": "स्पेन",
-        "ET": "इथोपिया",
+        "ET": "इथियोपिया",
         "EU": "युरोपियन युनियन",
         "FI": "फिन्ल्याण्ड",
         "FJ": "फिजी",
-        "FK": "फकल्याण्ड टापु",
+        "FK": "फकल्याण्ड टापुहरु",
         "FM": "माइक्रोनेसिया",
-        "FO": "फारोर टापु",
+        "FO": "फारोर टापुहरु",
         "FR": "फ्रान्स",
         "GA": "गावोन",
-        "GB": "संयुक्त अधिराज्य",
+        "GB": "बेलायत",
         "GD": "ग्रेनाडा",
-        "GE": "जोर्जिया",
+        "GE": "जर्जिया",
         "GF": "फ्रान्सेली गायना",
         "GG": "गुएर्नसे",
         "GH": "घाना",
@@ -709,20 +727,22 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "GN": "गिनी",
         "GP": "ग्वाडेलुप",
         "GQ": "भू-मध्यीय गिनी",
-        "GR": "ग्रिश",
+        "GR": "ग्रिस",
+        "GS": "दक्षिण जर्जिया र दक्षिण स्यान्डवीच टापुहरू",
         "GT": "ग्वाटेमाला",
         "GU": "गुवाम",
         "GW": "गिनी-बिसाउ",
         "GY": "गुयाना",
-        "HK": "हङकङ",
-        "HM": "हर्ड टापु र म्याकडोनाल्ड टापु",
+        "HK": "हङकङ चिनिया समाजवादी स्वायत्त क्षेत्र",
+        "HM": "हर्ड टापु एण्ड म्याकडोनाल्ड टापुहरु",
         "HN": "हन्डुरास",
         "HR": "क्रोएशिया",
         "HT": "हैटी",
         "HU": "हङ्गेरी",
+        "IC": "क्यानारी टापुहरू",
         "ID": "इन्डोनेशिया",
-        "IE": "आइरल्याण्ड",
-        "IL": "इज्रायल",
+        "IE": "आयरल्याण्ड",
+        "IL": "इजरायल",
         "IM": "आइज्ले अफ् म्यान",
         "IN": "भारत",
         "IO": "बेलायती हिन्द महासागर क्षेत्र",
@@ -744,9 +764,9 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "KR": "दक्षिण कोरिया",
         "KW": "कुवेत",
         "KY": "केयमान टापु",
-        "KZ": "काजाकस्थान",
+        "KZ": "काजाकस्तान",
         "LA": "लाओस",
-        "LB": "लेबनोन",
+        "LB": "लेबनन",
         "LC": "सेन्ट लुसिया",
         "LI": "लिएखटेन्स्टाइन",
         "LK": "श्रीलङ्का",
@@ -762,12 +782,12 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "ME": "मोन्टेनेग्रो",
         "MF": "सेन्ट मार्टिन",
         "MG": "मडागास्कर",
-        "MH": "मार्शल टापु",
+        "MH": "मार्शल टापुहरु",
         "MK": "म्याकेडोनिया",
         "ML": "माली",
-        "MM": "म्यान्मार",
+        "MM": "म्यान्मार (बर्मा)",
         "MN": "मङ्गोलिया",
-        "MO": "मकावो",
+        "MO": "मकावो चिनिँया स्वशासित क्षेत्र",
         "MP": "उत्तरी मारिआना टापु",
         "MQ": "मार्टिनिक",
         "MR": "माउरिटानिया",
@@ -800,13 +820,13 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "PK": "पाकिस्तान",
         "PL": "पोल्याण्ड",
         "PM": "सेन्ट पिर्रे र मिक्केलोन",
-        "PN": "पिटकाइर्न",
-        "PR": "प्युर्टोरिको",
-        "PS": "प्यालेस्टनी भू-भाग",
-        "PT": "पोर्तुगल",
+        "PN": "पिटकाइर्न टापुहरु",
+        "PR": "पुएर्टो रिको",
+        "PS": "प्यालेस्टनी भू-भागहरु",
+        "PT": "पोर्चुगल",
         "PW": "पलाउ",
-        "PY": "प्यारागुये",
-        "QA": "कटार",
+        "PY": "प्याराग्वे",
+        "QA": "कतार",
         "QO": "बाह्य ओसनिया",
         "RE": "रियुनियन",
         "RO": "रोमानिया",
@@ -814,7 +834,7 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "RU": "रूस",
         "RW": "रवाण्डा",
         "SA": "साउदी अरब",
-        "SB": "सोलोमोन टापु",
+        "SB": "सोलोमोन टापुहरु",
         "SC": "सेचेलेस",
         "SD": "सुडान",
         "SE": "स्विडेन",
@@ -828,47 +848,51 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "SN": "सेनेगाल",
         "SO": "सोमालिया",
         "SR": "सुरिनेम",
+        "SS": "दक्षिणी सुडान",
         "ST": "साओ टोमे र प्रिन्सिप",
         "SV": "एल् साल्भाडोर",
+        "SX": "सिन्ट मार्टेन",
         "SY": "सिरिया",
         "SZ": "स्वाजिल्याण्ड",
+        "TA": "ट्रिस्टान डा कुन्हा",
         "TC": "तुर्क र काइकोस टापु",
         "TD": "चाड",
-        "TF": "फ्रान्सेली दक्षिणी क्षेत्र",
+        "TF": "फ्रान्सेली दक्षिणी क्षेत्रहरु",
         "TG": "टोगो",
         "TH": "थाइल्याण्ड",
         "TJ": "ताजिकिस्तान",
-        "TK": "तोगो",
-        "TL": "पूर्वी टिमोर",
+        "TK": "तोकेलाउ",
+        "TL": "टिमोर-लेस्टे",
         "TM": "तुर्कमेनिस्तान",
-        "TN": "टुनिसिया",
+        "TN": "ट्युनिसिया",
         "TO": "टोंगा",
         "TR": "टर्की",
-        "TT": "त्रिनिडाड र तोबागो",
+        "TT": "त्रिनिडाड एण्ड टोबागो",
         "TV": "तुभालु",
         "TW": "ताइवान",
         "TZ": "तान्जानिया",
         "UA": "युक्रेन",
         "UG": "युगाण्डा",
-        "UM": "संयुक्त राज्य अल्प बाह्य टापु",
+        "UM": "संयुक्त राज्य बाह्य टापुहरु",
         "US": "संयुक्त राज्य",
-        "UY": "युरूगुए",
+        "UY": "उरूग्वे",
         "UZ": "उज्बेकिस्तान",
-        "VA": "भेटिकन",
+        "VA": "भेटिकन सिटी",
         "VC": "सेन्ट भिन्सेन्ट र ग्रेनाडिन्स",
         "VE": "भेनेजुएला",
-        "VG": "बेलायती भर्जिन टापु",
-        "VI": "संयुक्त राज्य भर्जिन टापु",
+        "VG": "बेलायती भर्जिन टापुहरु",
+        "VI": "संयुक्त राज्य भर्जिन टापुहरु",
         "VN": "भिएतनाम",
         "VU": "भानुआतु",
         "WF": "वालिस र फुटुना",
         "WS": "सामोआ",
+        "XK": "कोसोवो",
         "YE": "येमेन",
         "YT": "मायोट्ट",
         "ZA": "दक्षिण अफ्रिका",
         "ZM": "जाम्बिया",
         "ZW": "जिम्बाबे",
-        "ZZ": "अपरिचित वा अवैध क्षेत्र"
+        "ZZ": "अपरिचित क्षेत्र"
     };
   }-*/;
 }

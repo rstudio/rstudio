@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,38 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5806 $
-//  date=$Date: 2011-05-02 14:42:02 -0400 (Mon, 02 May 2011) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
 //  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "mn" locale.
  */
 public class DateTimeFormatInfoImpl_mn extends DateTimeFormatInfoImpl {
+
+  @Override
+  public String[] ampms() {
+    return new String[] {
+        "ҮӨ",
+        "ҮХ"
+    };
+  }
+
+  @Override
+  public String dateFormatFull() {
+    return "EEEE, y 'оны' MMMM 'сарын' dd";
+  }
+
+  @Override
+  public String dateFormatLong() {
+    return "y 'оны' MMMM 'сарын' d";
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
+  }
 
   @Override
   public String[] erasFull() {
@@ -37,81 +60,61 @@ public class DateTimeFormatInfoImpl_mn extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasShort() {
     return new String[] {
-        "м.э.ө",
-        "м.э."
+        "МЭӨ",
+        "МЭ"
     };
   }
 
   @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, MMMM d";
+    return "EEEE MMMM d";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "M/d";
-  }
-
-  @Override
-  public String formatYearMonthAbbrev() {
-    return "MMM y";
-  }
-
-  @Override
-  public String formatYearMonthAbbrevDay() {
-    return "MMM d, y";
-  }
-
-  @Override
-  public String formatYearMonthFull() {
-    return "MMMM y";
+    return "M-d";
   }
 
   @Override
   public String formatYearMonthFullDay() {
-    return "MMMM d, y";
+    return "y 'оны' MMMM 'сарын' d";
   }
 
   @Override
   public String formatYearMonthNum() {
-    return "M/y";
+    return "y-M";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "M/d/y";
+    return "y-M-d";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, MMM d, y";
+    return "EEE, y MMM d";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ y";
-  }
-
-  @Override
-  public String formatYearQuarterShort() {
-    return "Q y";
+    return "y 'оны' QQQQ";
   }
 
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "Хулгана",
-        "Үхэр",
-        "Бар",
-        "Туулай",
-        "Луу",
-        "Могой",
-        "Морь",
-        "Хонь",
-        "Бич",
-        "Тахиа",
-        "Нохой",
-        "Гахай"
+        "Нэгдүгээр сар",
+        "Хоёрдугаар сар",
+        "Гуравдугаар сар",
+        "Дөрөвдүгээр сар",
+        "Тавдугаар сар",
+        "Зургадугаар сар",
+        "Долдугаар сар",
+        "Наймдугаар сар",
+        "Есдүгээр сар",
+        "Аравдугаар сар",
+        "Арван нэгдүгээр сар",
+        "Арван хоёрдугаар сар"
     };
   }
 
@@ -136,38 +139,38 @@ public class DateTimeFormatInfoImpl_mn extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "хул",
-        "үхэ",
-        "бар",
-        "туу",
-        "луу",
-        "мог",
-        "мор",
-        "хон",
-        "бич",
-        "тах",
-        "нох",
-        "гах"
+        "1-р сар",
+        "2-р сар",
+        "3-р сар",
+        "4-р сар",
+        "5-р сар",
+        "6-р сар",
+        "7-р сар",
+        "8-р сар",
+        "9-р сар",
+        "10-р сар",
+        "11-р сар",
+        "12-р сар"
     };
   }
 
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "дөрөвний нэг",
-        "дөрөвний хоёр",
-        "дөрөвний гурав",
-        "дөрөвний дөрөв"
+        "1-р улирал",
+        "2-р улирал",
+        "3-р улирал",
+        "4-р улирал"
     };
   }
 
   @Override
   public String[] quartersShort() {
     return new String[] {
-        "1/4",
-        "2/4",
-        "3/4",
-        "4/4"
+        "У1",
+        "У2",
+        "У3",
+        "У4"
     };
   }
 

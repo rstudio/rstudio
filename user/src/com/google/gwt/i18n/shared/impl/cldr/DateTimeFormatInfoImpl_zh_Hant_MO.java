@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6255 $
+//  cldrVersion=25
+//  date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+//  number=$Revision: 9280 $
 //  type=MO
-//  date=$Date: 2011-11-24 04:07:30 -0500 (Thu, 24 Nov 2011) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "zh_Hant_MO" locale.
@@ -37,11 +37,6 @@ public class DateTimeFormatInfoImpl_zh_Hant_MO extends DateTimeFormatInfoImpl_zh
   }
 
   @Override
-  public String dateFormatMedium() {
-    return "y年M月d日";
-  }
-
-  @Override
   public String dateFormatShort() {
     return "yy年M月d日";
   }
@@ -52,18 +47,58 @@ public class DateTimeFormatInfoImpl_zh_Hant_MO extends DateTimeFormatInfoImpl_zh
   }
 
   @Override
-  public String dateTimeLong(String timePattern, String datePattern) {
-    return datePattern + " " + timePattern;
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return datePattern + timePattern;
   }
 
   @Override
-  public String formatHour12MinuteSecond() {
-    return "ahh:mm:ss";
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return datePattern + timePattern;
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "M月d日 (EEEE)";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "d-M";
+    return "M-d";
+  }
+
+  @Override
+  public String formatYearMonthAbbrev() {
+    return "y 年 M 月";
+  }
+
+  @Override
+  public String formatYearMonthAbbrevDay() {
+    return "y 年 M 月 d 日";
+  }
+
+  @Override
+  public String formatYearMonthFull() {
+    return "y 年 M 月";
+  }
+
+  @Override
+  public String formatYearMonthFullDay() {
+    return "y 年 M 月 d 日";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "M/y";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "d/M/y";
+  }
+
+  @Override
+  public String formatYearMonthWeekdayDay() {
+    return "y 年 M 月 d 日 (EEE)";
   }
 
   @Override
@@ -74,10 +109,5 @@ public class DateTimeFormatInfoImpl_zh_Hant_MO extends DateTimeFormatInfoImpl_zh
   @Override
   public String timeFormatLong() {
     return "ah:mm:ss [z]";
-  }
-
-  @Override
-  public String timeFormatMedium() {
-    return "ahh:mm:ss";
   }
 }

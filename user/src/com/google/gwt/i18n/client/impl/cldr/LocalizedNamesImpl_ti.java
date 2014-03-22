@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
+//  type=ti
 
 /**
  * Localized names for the "ti" locale.
@@ -52,6 +51,7 @@ public class LocalizedNamesImpl_ti extends LocalizedNamesImpl {
         "SS",
         "SX",
         "TA",
+        "XK",
         "HU",
         "HT",
         "IN",
@@ -96,7 +96,6 @@ public class LocalizedNamesImpl_ti extends LocalizedNamesImpl {
         "RO",
         "SB",
         "KP",
-        "CS",
         "SO",
         "SR",
         "SZ",
@@ -302,7 +301,6 @@ public class LocalizedNamesImpl_ti extends LocalizedNamesImpl {
     namesMap.put("005", "ደቡባዊ አሜሪካ");
     namesMap.put("009", "ኦሽኒያ");
     namesMap.put("011", "ምዕራባዊ አፍሪካ");
-    namesMap.put("013", "መካከለኛ አሜሪካ [013]");
     namesMap.put("014", "ምስራቃዊ አፍሪካ");
     namesMap.put("015", "ሰሜናዊ አፍሪካ");
     namesMap.put("017", "መካከለኛ አፍሪካ");
@@ -310,16 +308,12 @@ public class LocalizedNamesImpl_ti extends LocalizedNamesImpl {
     namesMap.put("019", "አሜሪካዎች");
     namesMap.put("021", "ሰሜናዊ አሜሪካ");
     namesMap.put("029", "ካሪቢያን");
-    namesMap.put("030", "ደቡብ-ምሥራቃዊ እስያ [030]");
     namesMap.put("034", "ምሥራቃዊ እስያ");
-    namesMap.put("035", "ደቡብ-ምሥራቃዊ እስያ [035]");
     namesMap.put("039", "ደቡባዊ አውሮፓ");
     namesMap.put("053", "አውስትራሊያ እና ኒው ዚላንድ");
     namesMap.put("054", "ሜላኔሲያ");
-    namesMap.put("057", "ሚክሮኔዢያ [057]");
     namesMap.put("061", "ፖሊኔዢያ");
     namesMap.put("142", "እስያ");
-    namesMap.put("143", "መካከለኛ አሜሪካ [143]");
     namesMap.put("145", "ምዕራባዊ እስያ");
     namesMap.put("150", "አውሮፓ");
     namesMap.put("151", "ምስራቃዊ አውሮፓ");
@@ -374,7 +368,6 @@ public class LocalizedNamesImpl_ti extends LocalizedNamesImpl {
     namesMap.put("CN", "ቻይና");
     namesMap.put("CO", "ኮሎምቢያ");
     namesMap.put("CR", "ኮስታ ሪካ");
-    namesMap.put("CS", "ሰርቢያ");
     namesMap.put("CU", "ኩባ");
     namesMap.put("CV", "ኬፕ ቬርዴ");
     namesMap.put("CX", "የገና ደሴቶች");
@@ -578,7 +571,6 @@ public class LocalizedNamesImpl_ti extends LocalizedNamesImpl {
         "005": "ደቡባዊ አሜሪካ",
         "009": "ኦሽኒያ",
         "011": "ምዕራባዊ አፍሪካ",
-        "013": "መካከለኛ አሜሪካ [013]",
         "014": "ምስራቃዊ አፍሪካ",
         "015": "ሰሜናዊ አፍሪካ",
         "017": "መካከለኛ አፍሪካ",
@@ -586,16 +578,12 @@ public class LocalizedNamesImpl_ti extends LocalizedNamesImpl {
         "019": "አሜሪካዎች",
         "021": "ሰሜናዊ አሜሪካ",
         "029": "ካሪቢያን",
-        "030": "ደቡብ-ምሥራቃዊ እስያ [030]",
         "034": "ምሥራቃዊ እስያ",
-        "035": "ደቡብ-ምሥራቃዊ እስያ [035]",
         "039": "ደቡባዊ አውሮፓ",
         "053": "አውስትራሊያ እና ኒው ዚላንድ",
         "054": "ሜላኔሲያ",
-        "057": "ሚክሮኔዢያ [057]",
         "061": "ፖሊኔዢያ",
         "142": "እስያ",
-        "143": "መካከለኛ አሜሪካ [143]",
         "145": "ምዕራባዊ እስያ",
         "150": "አውሮፓ",
         "151": "ምስራቃዊ አውሮፓ",
@@ -650,7 +638,6 @@ public class LocalizedNamesImpl_ti extends LocalizedNamesImpl {
         "CN": "ቻይና",
         "CO": "ኮሎምቢያ",
         "CR": "ኮስታ ሪካ",
-        "CS": "ሰርቢያ",
         "CU": "ኩባ",
         "CV": "ኬፕ ቬርዴ",
         "CX": "የገና ደሴቶች",

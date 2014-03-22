@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5798 $
-//  type=root
-//  date=$Date: 2011-05-02 02:05:34 -0400 (Mon, 02 May 2011) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=ky
 
 /**
  * Implementation of DateTimeFormatInfo for the "ky" locale.
@@ -27,176 +27,250 @@ package com.google.gwt.i18n.client.impl.cldr;
 public class DateTimeFormatInfoImpl_ky extends DateTimeFormatInfoImpl {
 
   @Override
+  public String[] ampms() {
+    return new String[] {
+        "түшкө чейинки",
+        "түштөн кийинки"
+    };
+  }
+
+  @Override
+  public String dateFormatFull() {
+    return "EEEE, d-MMMM, y-'ж'.";
+  }
+
+  @Override
+  public String dateFormatLong() {
+    return "d-MMMM, y-'ж'.";
+  }
+
+  @Override
+  public String dateFormatMedium() {
+    return "dd.MM.y";
+  }
+
+  @Override
+  public String dateFormatShort() {
+    return "dd.MM.yy";
+  }
+
+  @Override
   public String[] erasFull() {
     return new String[] {
-        "BCE",
-        "CE"
+        "б.з. чейин",
+        "б.з."
     };
   }
 
   @Override
   public String[] erasShort() {
     return new String[] {
-        "BCE",
-        "CE"
+        "б.з. ч.",
+        "б.з."
     };
   }
 
   @Override
+  public String formatHour12Minute() {
+    return "a h:mm";
+  }
+
+  @Override
+  public String formatHour12MinuteSecond() {
+    return "a h:mm:ss";
+  }
+
+  @Override
+  public String formatMonthAbbrevDay() {
+    return "d-MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "d-MMMM";
+  }
+
+  @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, MMMM d";
+    return "d-MMMM, EEEE";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "M/d";
+    return "dd-MM";
   }
 
   @Override
   public String formatYearMonthAbbrev() {
-    return "MMM y";
+    return "y-'ж'. MMM";
   }
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "MMM d, y";
+    return "y-'ж'. d-MMM";
   }
 
   @Override
   public String formatYearMonthFull() {
-    return "MMMM y";
+    return "y-'ж'. MMMM";
   }
 
   @Override
   public String formatYearMonthFullDay() {
-    return "MMMM d, y";
-  }
-
-  @Override
-  public String formatYearMonthNum() {
-    return "M/y";
-  }
-
-  @Override
-  public String formatYearMonthNumDay() {
-    return "M/d/y";
+    return "d-MMMM, y-'ж'.";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, MMM d, y";
+    return "y-'ж'. d-MMM, EEE";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ y";
+    return "y-'ж'., QQQQ";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q y";
+    return "y-'ж'., Q";
   }
 
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
+        "январь",
+        "февраль",
+        "март",
+        "апрель",
+        "май",
+        "июнь",
+        "июль",
+        "август",
+        "сентябрь",
+        "октябрь",
+        "ноябрь",
+        "декабрь"
     };
   }
 
   @Override
   public String[] monthsNarrow() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
+        "Я",
+        "Ф",
+        "М",
+        "А",
+        "М",
+        "И",
+        "И",
+        "А",
+        "С",
+        "О",
+        "Н",
+        "Д"
     };
   }
 
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
+        "янв.",
+        "фев.",
+        "мар.",
+        "апр.",
+        "май",
+        "июн.",
+        "июл.",
+        "авг.",
+        "сен.",
+        "окт.",
+        "ноя.",
+        "дек."
     };
   }
 
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "Q1",
-        "Q2",
-        "Q3",
-        "Q4"
+        "1-чейрек",
+        "2-чейрек",
+        "3-чейрек",
+        "4-чейрек"
+    };
+  }
+
+  @Override
+  public String[] quartersShort() {
+    return new String[] {
+        "1-чей.",
+        "2-чей.",
+        "3-чей.",
+        "4-чей."
     };
   }
 
   @Override
   public String[] weekdaysFull() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+        "Жек",
+        "Дүй",
+        "Шей",
+        "Шар",
+        "Бей",
+        "Жум",
+        "Ишм"
+    };
+  }
+
+  @Override
+  public String[] weekdaysFullStandalone() {
+    return new String[] {
+        "Жекшемби",
+        "Дүйшөмбү",
+        "Шейшемби",
+        "Шаршемби",
+        "Бейшемби",
+        "Жума",
+        "Ишемби"
     };
   }
 
   @Override
   public String[] weekdaysNarrow() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+        "Ж",
+        "Д",
+        "Ш",
+        "Ш",
+        "Б",
+        "Ж",
+        "И"
     };
   }
 
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+        "Жк",
+        "Дш",
+        "Ше",
+        "Ша",
+        "Бш",
+        "Жм",
+        "Иш"
+    };
+  }
+
+  @Override
+  public String[] weekdaysShortStandalone() {
+    return new String[] {
+        "Жек",
+        "Дүй",
+        "Шей",
+        "Шар",
+        "Бей",
+        "Жум",
+        "Ишм"
     };
   }
 }

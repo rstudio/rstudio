@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9792 $
+//  type=gd
 
 /**
  * Localized names for the "gd" locale.
@@ -40,7 +39,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "HR",
         "GM",
         "DE",
-        "DD",
         "GL",
         "GR",
         "MK",
@@ -76,7 +74,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "NO",
         "AT",
         "GB",
-        "NT",
         "RU",
         "SV",
         "ES",
@@ -85,7 +82,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "TD",
         "JP",
         "RS",
-        "CS",
         "CL",
         "CN",
         "ZW",
@@ -95,7 +91,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "TR",
         "UA",
         "HU",
-        "SU",
         "SA",
         "AW",
         "AZ",
@@ -166,7 +161,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "PN",
         "IE",
         "FJ",
-        "FX",
         "GA",
         "GH",
         "GG",
@@ -247,7 +241,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "PA",
         "PY",
         "PE",
-        "YD",
         "CF",
         "CZ",
         "PF",
@@ -296,6 +289,7 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "UY",
         "UZ",
         "VU",
+        "XK",
     };
   }
 
@@ -367,7 +361,7 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
     namesMap.put("BW", "Botsuana");
     namesMap.put("BY", "A' Bhealaruis");
     namesMap.put("BZ", "Beilìs");
-    namesMap.put("CC", "Na h-Eileanan Cocos [Keeling]");
+    namesMap.put("CC", "Na h-Eileanan Cocos (Keeling)");
     namesMap.put("CD", "Congo-Kinshasa");
     namesMap.put("CF", "Poblachd Meadhan Afraga");
     namesMap.put("CG", "Congo-Brazzaville");
@@ -379,13 +373,11 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
     namesMap.put("CO", "Coloimbia");
     namesMap.put("CP", "Eilean Clipperton");
     namesMap.put("CR", "Costa Rìcea");
-    namesMap.put("CS", "An t-Sèirb is am Monadh Neagrach");
     namesMap.put("CU", "Cùba");
     namesMap.put("CV", "An Ceap Uaine");
     namesMap.put("CX", "Eilean na Nollaig");
     namesMap.put("CY", "Cìopras");
     namesMap.put("CZ", "Poblachd na Seice");
-    namesMap.put("DD", "A' Ghearmailt an Ear");
     namesMap.put("DE", "A' Ghearmailt");
     namesMap.put("DJ", "Diobùtaidh");
     namesMap.put("DK", "An Danmhairg");
@@ -407,7 +399,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
     namesMap.put("FM", "Na Meanbh-Eileanan");
     namesMap.put("FO", "Na h-Eileanan Fàro");
     namesMap.put("FR", "An Fhraing");
-    namesMap.put("FX", "Fraing na Roinn-Eòrpa");
     namesMap.put("GB", "An Rìoghachd Aonaichte");
     namesMap.put("GD", "Greanàda");
     namesMap.put("GE", "A' Chairtbheil");
@@ -474,7 +465,7 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
     namesMap.put("MH", "Eileanan Mharshall");
     namesMap.put("MK", "A' Mhasadon");
     namesMap.put("ML", "Màili");
-    namesMap.put("MM", "Miànmar [Burma]");
+    namesMap.put("MM", "Miànmar (Burma)");
     namesMap.put("MN", "Dùthaich nam Mongol");
     namesMap.put("MO", "Macàthu SAR na Sìne");
     namesMap.put("MP", "Na h-Eileanan Mairianach a Tuath");
@@ -497,7 +488,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
     namesMap.put("NO", "An Nirribhidh");
     namesMap.put("NP", "Neapàl");
     namesMap.put("NR", "Nabhru");
-    namesMap.put("NT", "An Roinn Neodrach");
     namesMap.put("NZ", "Sealainn Nuadh");
     namesMap.put("OM", "Omàn");
     namesMap.put("PE", "Pearù");
@@ -533,7 +523,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
     namesMap.put("SO", "Somàilia");
     namesMap.put("SR", "Suranam");
     namesMap.put("ST", "São Tomé is Príncipe");
-    namesMap.put("SU", "Aonadh nam Poblachdan Sòisealach Sovietach");
     namesMap.put("SV", "An Salbhador");
     namesMap.put("SY", "Siridhea");
     namesMap.put("SZ", "Dùthaich nan Suasaidh");
@@ -562,7 +551,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
     namesMap.put("VN", "Bhiet-Nam");
     namesMap.put("WF", "Uallas agus Futuna");
     namesMap.put("WS", "Samotha");
-    namesMap.put("YD", "Poblachd Dheamocratach Muinntir na h-Eamaine");
     namesMap.put("YE", "An Eaman");
     namesMap.put("ZA", "Afraga a Deas");
     namesMap.put("ZM", "Sàimbia");
@@ -642,7 +630,7 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "BW": "Botsuana",
         "BY": "A' Bhealaruis",
         "BZ": "Beilìs",
-        "CC": "Na h-Eileanan Cocos [Keeling]",
+        "CC": "Na h-Eileanan Cocos (Keeling)",
         "CD": "Congo-Kinshasa",
         "CF": "Poblachd Meadhan Afraga",
         "CG": "Congo-Brazzaville",
@@ -654,13 +642,11 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "CO": "Coloimbia",
         "CP": "Eilean Clipperton",
         "CR": "Costa Rìcea",
-        "CS": "An t-Sèirb is am Monadh Neagrach",
         "CU": "Cùba",
         "CV": "An Ceap Uaine",
         "CX": "Eilean na Nollaig",
         "CY": "Cìopras",
         "CZ": "Poblachd na Seice",
-        "DD": "A' Ghearmailt an Ear",
         "DE": "A' Ghearmailt",
         "DJ": "Diobùtaidh",
         "DK": "An Danmhairg",
@@ -682,7 +668,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "FM": "Na Meanbh-Eileanan",
         "FO": "Na h-Eileanan Fàro",
         "FR": "An Fhraing",
-        "FX": "Fraing na Roinn-Eòrpa",
         "GB": "An Rìoghachd Aonaichte",
         "GD": "Greanàda",
         "GE": "A' Chairtbheil",
@@ -749,7 +734,7 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "MH": "Eileanan Mharshall",
         "MK": "A' Mhasadon",
         "ML": "Màili",
-        "MM": "Miànmar [Burma]",
+        "MM": "Miànmar (Burma)",
         "MN": "Dùthaich nam Mongol",
         "MO": "Macàthu SAR na Sìne",
         "MP": "Na h-Eileanan Mairianach a Tuath",
@@ -772,7 +757,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "NO": "An Nirribhidh",
         "NP": "Neapàl",
         "NR": "Nabhru",
-        "NT": "An Roinn Neodrach",
         "NZ": "Sealainn Nuadh",
         "OM": "Omàn",
         "PE": "Pearù",
@@ -808,7 +792,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "SO": "Somàilia",
         "SR": "Suranam",
         "ST": "São Tomé is Príncipe",
-        "SU": "Aonadh nam Poblachdan Sòisealach Sovietach",
         "SV": "An Salbhador",
         "SY": "Siridhea",
         "SZ": "Dùthaich nan Suasaidh",
@@ -837,7 +820,6 @@ public class LocalizedNamesImpl_gd extends LocalizedNamesImpl {
         "VN": "Bhiet-Nam",
         "WF": "Uallas agus Futuna",
         "WS": "Samotha",
-        "YD": "Poblachd Dheamocratach Muinntir na h-Eamaine",
         "YE": "An Eaman",
         "ZA": "Afraga a Deas",
         "ZM": "Sàimbia",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=ksh
 
 /**
  * Localized names for the "ksh" locale.
@@ -62,7 +61,6 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
-        "BQ",
         "BR",
         "IO",
         "BN",
@@ -70,7 +68,6 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "BG",
         "BI",
         "BT",
-        "BV",
         "CW",
         "BJ",
         "CG",
@@ -80,48 +77,42 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "BS",
         "BM",
         "VG",
+        "BV",
         "DG",
         "DO",
         "BB",
         "SJ",
         "TC",
         "IM",
+        "SH",
         "LC",
         "EU",
         "FK",
         "FO",
         "FJ",
-        "PH",
         "HM",
         "KY",
         "IC",
         "CV",
+        "BQ",
         "CP",
         "CC",
         "KM",
         "CK",
         "MH",
-        "MV",
-        "MN",
         "NL",
         "AN",
         "MP",
         "NF",
         "AX",
         "PN",
-        "IQ",
-        "YE",
-        "LB",
-        "OM",
+        "ZA",
         "SN",
         "AQ",
-        "SD",
         "TD",
         "VA",
         "CH",
         "SC",
-        "SH",
-        "MF",
         "SB",
         "TR",
         "CZ",
@@ -131,11 +122,12 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "CX",
         "CF",
         "BL",
-        "SK",
+        "MF",
         "DM",
         "DE",
         "DJ",
         "ME",
+        "PH",
         "FI",
         "FR",
         "TF",
@@ -146,6 +138,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "HK",
         "IN",
         "ID",
+        "IQ",
         "IE",
         "IS",
         "IL",
@@ -154,6 +147,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "GA",
         "GM",
         "JM",
+        "YE",
         "JP",
         "GE",
         "GI",
@@ -179,12 +173,14 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "KI",
         "KG",
         "CO",
+        "XK",
         "CR",
         "HR",
         "CU",
         "KW",
         "LA",
         "LV",
+        "LB",
         "LS",
         "LY",
         "LR",
@@ -198,15 +194,17 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "MO",
         "MY",
         "MW",
+        "MV",
         "MT",
         "MA",
         "MU",
         "MR",
-        "MK",
         "MX",
+        "MK",
         "FM",
         "MD",
         "MC",
+        "MN",
         "MS",
         "MZ",
         "NA",
@@ -219,7 +217,9 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "NI",
         "NU",
         "KP",
+        "SD",
         "NO",
+        "OM",
         "AT",
         "TL",
         "QO",
@@ -250,17 +250,13 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "ZW",
         "SG",
         "SL",
-        "ZA",
         "GS",
         "KR",
+        "SS",
         "SO",
         "LK",
-        "SS",
-        "SI",
-        "SZ",
         "SY",
         "SR",
-        "SX",
         "TJ",
         "TH",
         "TW",
@@ -286,10 +282,14 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "BY",
         "EA",
         "KN",
+        "SX",
         "PM",
         "ST",
         "VC",
         "CY",
+        "SK",
+        "SI",
+        "SZ",
     };
   }
 
@@ -314,7 +314,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("034", "Söd-Aasije");
     namesMap.put("035", "Söd-Oß-Aasije");
     namesMap.put("039", "Söd-Europpa");
-    namesMap.put("053", "de Rejjohn Austraalije");
+    namesMap.put("053", "de Rejjohn öm Austraalije");
     namesMap.put("054", "Mellaneesije");
     namesMap.put("057", "de Rejohn vun Mikroneeseje");
     namesMap.put("061", "Polineesije");
@@ -342,7 +342,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("AU", "Austraalije");
     namesMap.put("AX", "de Ohland-Enselle");
     namesMap.put("AZ", "Asserbaidschahn");
-    namesMap.put("BA", "Boßnije");
+    namesMap.put("BA", "Boßnije un Herzegovina");
     namesMap.put("BB", "de Ensel Barbados");
     namesMap.put("BD", "Bangladesch");
     namesMap.put("BE", "Bellje");
@@ -353,13 +353,14 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("BL", "de Zint Battälmi-Enselle");
     namesMap.put("BM", "de Bermudas");
     namesMap.put("BO", "Bolliivije");
+    namesMap.put("BQ", "de karribbesche Nederläng");
     namesMap.put("BR", "Brasilije");
     namesMap.put("BS", "de Bahamas");
     namesMap.put("BT", "Buttaan");
-    namesMap.put("BV", "Buvee-Ensel");
+    namesMap.put("BV", "de Buvee-Ensel");
     namesMap.put("BW", "Bozwaana");
     namesMap.put("BY", "Wießrußland");
-    namesMap.put("CA", "Kannada");
+    namesMap.put("CA", "Kanada");
     namesMap.put("CC", "de Kokkos-Enselle");
     namesMap.put("CD", "dä Konggo (Kinschasa)");
     namesMap.put("CF", "de Zäntraalaffrikaanesche Republik");
@@ -374,7 +375,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("CP", "de Klipperton-Ensel");
     namesMap.put("CR", "Kostarika");
     namesMap.put("CU", "Kuba");
-    namesMap.put("CV", "de Kapvärdesche Enselle");
+    namesMap.put("CV", "de kapvärdesche Enselle");
     namesMap.put("CX", "de Weihnaachs-Ensel");
     namesMap.put("CY", "Züppere");
     namesMap.put("CZ", "de Tschäschei");
@@ -393,7 +394,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("ER", "Äritreja");
     namesMap.put("ES", "Schpaanije");
     namesMap.put("ET", "Ättijoopije");
-    namesMap.put("EU", "de Eurppäesche Unijon");
+    namesMap.put("EU", "de Europäjesche Unijon");
     namesMap.put("FI", "Finnland");
     namesMap.put("FJ", "de Fidschi-Endelle");
     namesMap.put("FK", "de Falkland-Enselle");
@@ -419,7 +420,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("GU", "Juham");
     namesMap.put("GW", "Jinneha_Bißau");
     namesMap.put("GY", "Jujaana");
-    namesMap.put("HK", "Hong-Kong");
+    namesMap.put("HK", "Hongkong");
     namesMap.put("HM", "de Heart Ensel un de McDonald-Enselle");
     namesMap.put("HR", "Krowazije");
     namesMap.put("HT", "Ha'itti");
@@ -431,27 +432,27 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("IM", "de Ensel Män");
     namesMap.put("IN", "Indije");
     namesMap.put("IO", "Brettesche Besezunge em indesche Oozejahn");
-    namesMap.put("IQ", "der Irak");
+    namesMap.put("IQ", "Irak");
     namesMap.put("IR", "Persije");
     namesMap.put("IS", "Ißland");
     namesMap.put("IT", "Itaalije");
     namesMap.put("JE", "Jööseh");
     namesMap.put("JM", "Jammaika");
-    namesMap.put("JO", "Jordaanija");
+    namesMap.put("JO", "Jordaanije");
     namesMap.put("KE", "Keenija");
     namesMap.put("KG", "Kirrjiisije");
     namesMap.put("KH", "Kambodscha");
     namesMap.put("KM", "de Kommoore");
-    namesMap.put("KN", "Zimt Kitts un Nevis");
+    namesMap.put("KN", "Zint Kitts un Nevis");
     namesMap.put("KP", "Nood-Koreja");
     namesMap.put("KR", "Söd-Koreja");
     namesMap.put("KW", "Kuweit");
     namesMap.put("KY", "de Kaiman-Enselle");
     namesMap.put("KZ", "Kassakstahn");
     namesMap.put("LA", "La'os");
-    namesMap.put("LB", "der Lebbannon");
+    namesMap.put("LB", "Lebbannon");
     namesMap.put("LC", "de Ensel Zint-Lutscha");
-    namesMap.put("LI", "Lischtestein");
+    namesMap.put("LI", "Lischteschtein");
     namesMap.put("LR", "Libeerija");
     namesMap.put("LS", "Lesooto");
     namesMap.put("LT", "Littaue");
@@ -462,20 +463,21 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("MC", "Monakko");
     namesMap.put("MD", "Moldaavije");
     namesMap.put("ME", "et Monteneejro");
-    namesMap.put("MF", "de Sint-Määtes-Ensel");
+    namesMap.put("MF", "de Zint-Määtes-Ensel");
     namesMap.put("MG", "Maddajaska");
     namesMap.put("MH", "de Machschall-Enselle");
     namesMap.put("MK", "Mazedoonije");
     namesMap.put("ML", "Maali");
     namesMap.put("MM", "Birma");
-    namesMap.put("MN", "de Mongjolei");
+    namesMap.put("MN", "Mongjolei");
     namesMap.put("MO", "Makau");
     namesMap.put("MP", "de nöödlijje Marijanne-Enselle");
     namesMap.put("MQ", "Machtinik");
     namesMap.put("MR", "Mautitaanije");
     namesMap.put("MS", "Mongßerrat");
     namesMap.put("MU", "Maurizijus");
-    namesMap.put("MV", "de Mallediive");
+    namesMap.put("MV", "Mallediive");
+    namesMap.put("MX", "Mäxiko");
     namesMap.put("MY", "Malaisije");
     namesMap.put("MZ", "Mosambik");
     namesMap.put("NA", "Namiibije");
@@ -488,12 +490,11 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("NO", "Norrweeje");
     namesMap.put("NP", "Nepall");
     namesMap.put("NZ", "Neuseeland");
-    namesMap.put("OM", "der Oman");
     namesMap.put("PA", "Pannama");
     namesMap.put("PE", "Perruh");
     namesMap.put("PF", "Franzüüsesch Pollineesije");
     namesMap.put("PG", "Papuwa Neujineeja");
-    namesMap.put("PH", "de Fillipiine");
+    namesMap.put("PH", "Fillipiine");
     namesMap.put("PK", "Pakistahn");
     namesMap.put("PL", "Pole");
     namesMap.put("PM", "Zint Pjäär un Mikelong");
@@ -513,22 +514,24 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("SA", "Saudi Arraabije");
     namesMap.put("SB", "de Solomone-Enselle");
     namesMap.put("SC", "de Seischälle");
-    namesMap.put("SD", "der Sudahn");
+    namesMap.put("SD", "Noodsudahn");
     namesMap.put("SE", "Schweede");
     namesMap.put("SG", "Singjapuur");
-    namesMap.put("SH", "de Sint-Hellena-Ensel");
-    namesMap.put("SI", "ßloveenije");
+    namesMap.put("SH", "de Ensel Zint Hellena");
+    namesMap.put("SI", "ẞloveenije");
     namesMap.put("SJ", "de Enselle Svalbard un Jan Mayen");
-    namesMap.put("SK", "de ẞlovakei");
+    namesMap.put("SK", "ẞlovakei");
     namesMap.put("SL", "Sjärra Lejone");
     namesMap.put("SM", "San-Marino");
     namesMap.put("SN", "der Sennejall");
     namesMap.put("SO", "Somaalije");
     namesMap.put("SR", "Sürinamm");
+    namesMap.put("SS", "Södsudahn");
     namesMap.put("ST", "Zint Tommeh un Printschipe");
     namesMap.put("SV", "Äl Slavadoor");
+    namesMap.put("SX", "Zint Maarten");
     namesMap.put("SY", "Sürije");
-    namesMap.put("SZ", "ßwaasiland");
+    namesMap.put("SZ", "ẞwaasiland");
     namesMap.put("TA", "Tristan da Cunja");
     namesMap.put("TC", "de Enselle Turks un Kaikos");
     namesMap.put("TD", "der Tschadd");
@@ -545,8 +548,8 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("TZ", "Tansanija");
     namesMap.put("UA", "de Ukra'iine");
     namesMap.put("UG", "Ujanda");
-    namesMap.put("UM", "de Vereineschte Schtaate vun Amärrika ier klein Enselsche ußerhallef");
-    namesMap.put("US", "de Vereineschte Schtaate vun Ammärrika");
+    namesMap.put("UM", "de Vereineschte Schtaate vun Amärrika ier ußerhallef jelääje Enselsche");
+    namesMap.put("US", "de vereineschte Schtaate vun Ammärrika");
     namesMap.put("UY", "Urrujwai");
     namesMap.put("UZ", "Ußbeekistahn");
     namesMap.put("VA", "der Vattikahn");
@@ -556,9 +559,9 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
     namesMap.put("VN", "Vijätnamm");
     namesMap.put("WF", "Wallis un Futuna");
     namesMap.put("WS", "Sammoha");
-    namesMap.put("YE", "der Jämme");
+    namesMap.put("YE", "Jämme");
     namesMap.put("YT", "Majott");
-    namesMap.put("ZA", "Södaffrika");
+    namesMap.put("ZA", "de Republik Södaffrika");
     namesMap.put("ZM", "Sambija");
     namesMap.put("ZW", "Simbabwe");
     namesMap.put("ZZ", "- Jääjend onbikannt -");
@@ -589,7 +592,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "034": "Söd-Aasije",
         "035": "Söd-Oß-Aasije",
         "039": "Söd-Europpa",
-        "053": "de Rejjohn Austraalije",
+        "053": "de Rejjohn öm Austraalije",
         "054": "Mellaneesije",
         "057": "de Rejohn vun Mikroneeseje",
         "061": "Polineesije",
@@ -617,7 +620,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "AU": "Austraalije",
         "AX": "de Ohland-Enselle",
         "AZ": "Asserbaidschahn",
-        "BA": "Boßnije",
+        "BA": "Boßnije un Herzegovina",
         "BB": "de Ensel Barbados",
         "BD": "Bangladesch",
         "BE": "Bellje",
@@ -628,13 +631,14 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "BL": "de Zint Battälmi-Enselle",
         "BM": "de Bermudas",
         "BO": "Bolliivije",
+        "BQ": "de karribbesche Nederläng",
         "BR": "Brasilije",
         "BS": "de Bahamas",
         "BT": "Buttaan",
-        "BV": "Buvee-Ensel",
+        "BV": "de Buvee-Ensel",
         "BW": "Bozwaana",
         "BY": "Wießrußland",
-        "CA": "Kannada",
+        "CA": "Kanada",
         "CC": "de Kokkos-Enselle",
         "CD": "dä Konggo (Kinschasa)",
         "CF": "de Zäntraalaffrikaanesche Republik",
@@ -649,7 +653,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "CP": "de Klipperton-Ensel",
         "CR": "Kostarika",
         "CU": "Kuba",
-        "CV": "de Kapvärdesche Enselle",
+        "CV": "de kapvärdesche Enselle",
         "CX": "de Weihnaachs-Ensel",
         "CY": "Züppere",
         "CZ": "de Tschäschei",
@@ -668,7 +672,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "ER": "Äritreja",
         "ES": "Schpaanije",
         "ET": "Ättijoopije",
-        "EU": "de Eurppäesche Unijon",
+        "EU": "de Europäjesche Unijon",
         "FI": "Finnland",
         "FJ": "de Fidschi-Endelle",
         "FK": "de Falkland-Enselle",
@@ -694,7 +698,7 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "GU": "Juham",
         "GW": "Jinneha_Bißau",
         "GY": "Jujaana",
-        "HK": "Hong-Kong",
+        "HK": "Hongkong",
         "HM": "de Heart Ensel un de McDonald-Enselle",
         "HR": "Krowazije",
         "HT": "Ha'itti",
@@ -706,27 +710,27 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "IM": "de Ensel Män",
         "IN": "Indije",
         "IO": "Brettesche Besezunge em indesche Oozejahn",
-        "IQ": "der Irak",
+        "IQ": "Irak",
         "IR": "Persije",
         "IS": "Ißland",
         "IT": "Itaalije",
         "JE": "Jööseh",
         "JM": "Jammaika",
-        "JO": "Jordaanija",
+        "JO": "Jordaanije",
         "KE": "Keenija",
         "KG": "Kirrjiisije",
         "KH": "Kambodscha",
         "KM": "de Kommoore",
-        "KN": "Zimt Kitts un Nevis",
+        "KN": "Zint Kitts un Nevis",
         "KP": "Nood-Koreja",
         "KR": "Söd-Koreja",
         "KW": "Kuweit",
         "KY": "de Kaiman-Enselle",
         "KZ": "Kassakstahn",
         "LA": "La'os",
-        "LB": "der Lebbannon",
+        "LB": "Lebbannon",
         "LC": "de Ensel Zint-Lutscha",
-        "LI": "Lischtestein",
+        "LI": "Lischteschtein",
         "LR": "Libeerija",
         "LS": "Lesooto",
         "LT": "Littaue",
@@ -737,20 +741,21 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "MC": "Monakko",
         "MD": "Moldaavije",
         "ME": "et Monteneejro",
-        "MF": "de Sint-Määtes-Ensel",
+        "MF": "de Zint-Määtes-Ensel",
         "MG": "Maddajaska",
         "MH": "de Machschall-Enselle",
         "MK": "Mazedoonije",
         "ML": "Maali",
         "MM": "Birma",
-        "MN": "de Mongjolei",
+        "MN": "Mongjolei",
         "MO": "Makau",
         "MP": "de nöödlijje Marijanne-Enselle",
         "MQ": "Machtinik",
         "MR": "Mautitaanije",
         "MS": "Mongßerrat",
         "MU": "Maurizijus",
-        "MV": "de Mallediive",
+        "MV": "Mallediive",
+        "MX": "Mäxiko",
         "MY": "Malaisije",
         "MZ": "Mosambik",
         "NA": "Namiibije",
@@ -763,12 +768,11 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "NO": "Norrweeje",
         "NP": "Nepall",
         "NZ": "Neuseeland",
-        "OM": "der Oman",
         "PA": "Pannama",
         "PE": "Perruh",
         "PF": "Franzüüsesch Pollineesije",
         "PG": "Papuwa Neujineeja",
-        "PH": "de Fillipiine",
+        "PH": "Fillipiine",
         "PK": "Pakistahn",
         "PL": "Pole",
         "PM": "Zint Pjäär un Mikelong",
@@ -788,22 +792,24 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "SA": "Saudi Arraabije",
         "SB": "de Solomone-Enselle",
         "SC": "de Seischälle",
-        "SD": "der Sudahn",
+        "SD": "Noodsudahn",
         "SE": "Schweede",
         "SG": "Singjapuur",
-        "SH": "de Sint-Hellena-Ensel",
-        "SI": "ßloveenije",
+        "SH": "de Ensel Zint Hellena",
+        "SI": "ẞloveenije",
         "SJ": "de Enselle Svalbard un Jan Mayen",
-        "SK": "de ẞlovakei",
+        "SK": "ẞlovakei",
         "SL": "Sjärra Lejone",
         "SM": "San-Marino",
         "SN": "der Sennejall",
         "SO": "Somaalije",
         "SR": "Sürinamm",
+        "SS": "Södsudahn",
         "ST": "Zint Tommeh un Printschipe",
         "SV": "Äl Slavadoor",
+        "SX": "Zint Maarten",
         "SY": "Sürije",
-        "SZ": "ßwaasiland",
+        "SZ": "ẞwaasiland",
         "TA": "Tristan da Cunja",
         "TC": "de Enselle Turks un Kaikos",
         "TD": "der Tschadd",
@@ -820,8 +826,8 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "TZ": "Tansanija",
         "UA": "de Ukra'iine",
         "UG": "Ujanda",
-        "UM": "de Vereineschte Schtaate vun Amärrika ier klein Enselsche ußerhallef",
-        "US": "de Vereineschte Schtaate vun Ammärrika",
+        "UM": "de Vereineschte Schtaate vun Amärrika ier ußerhallef jelääje Enselsche",
+        "US": "de vereineschte Schtaate vun Ammärrika",
         "UY": "Urrujwai",
         "UZ": "Ußbeekistahn",
         "VA": "der Vattikahn",
@@ -831,9 +837,9 @@ public class LocalizedNamesImpl_ksh extends LocalizedNamesImpl {
         "VN": "Vijätnamm",
         "WF": "Wallis un Futuna",
         "WS": "Sammoha",
-        "YE": "der Jämme",
+        "YE": "Jämme",
         "YT": "Majott",
-        "ZA": "Södaffrika",
+        "ZA": "de Republik Södaffrika",
         "ZM": "Sambija",
         "ZW": "Simbabwe",
         "ZZ": "- Jääjend onbikannt -"

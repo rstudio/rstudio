@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6465 $
-//  type=root
-//  date=$Date: 2012-01-27 12:47:35 -0500 (Fri, 27 Jan 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-01-09 06:53:23 +0100 (Thu, 09 Jan 2014) $
+//  number=$Revision: 9625 $
+//  type=Hans
 
 /**
  * Localized names for the "zh_Hans_HK" locale.
@@ -32,10 +31,6 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "BQ",
-        "CW",
-        "SS",
-        "SX",
         "GN",
         "GW",
         "YE",
@@ -45,6 +40,8 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "BT",
         "CF",
         "CN",
+        "HK",
+        "MO",
         "DK",
         "EC",
         "ER",
@@ -98,8 +95,8 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "DJ",
         "KG",
         "GY",
-        "DM",
         "DO",
+        "DM",
         "TG",
         "AI",
         "AO",
@@ -132,6 +129,7 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "GF",
         "PF",
         "TF",
+        "MF",
         "FO",
         "GI",
         "KE",
@@ -150,6 +148,7 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "ZA",
         "AQ",
         "GS",
+        "SS",
         "KZ",
         "KH",
         "HN",
@@ -158,6 +157,7 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "KW",
         "CC",
         "CI",
+        "XK",
         "KM",
         "TN",
         "US",
@@ -168,14 +168,13 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "IO",
         "VG",
         "DG",
-        "HK",
         "CR",
         "CO",
         "EG",
         "ET",
         "NO",
-        "GD",
         "GG",
+        "GD",
         "GL",
         "GE",
         "TH",
@@ -193,7 +192,9 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "VA",
         "MZ",
         "NL",
+        "BQ",
         "AN",
+        "SX",
         "BW",
         "CM",
         "FJ",
@@ -212,7 +213,6 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "CY",
         "SN",
         "RS",
-        "CS",
         "TJ",
         "IT",
         "SG",
@@ -233,7 +233,6 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "LB",
         "MX",
         "AU",
-        "MO",
         "BL",
         "VC",
         "PM",
@@ -242,7 +241,6 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "SH",
         "LC",
         "CX",
-        "MF",
         "SM",
         "TL",
         "UG",
@@ -261,6 +259,7 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "AT",
         "AX",
         "CK",
+        "CW",
         "KY",
         "EU",
         "TO",
@@ -297,12 +296,9 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
-    namesMap.put("CC", "科科斯（基林）群岛");
-    namesMap.put("LA", "老挝");
+    namesMap.put("GP", "瓜德罗普岛");
     namesMap.put("ME", "黑山");
-    namesMap.put("MQ", "马提尼克");
-    namesMap.put("MS", "蒙特塞拉特");
-    namesMap.put("SC", "塞舌尔");
+    namesMap.put("PM", "圣皮埃尔和密克隆");
   }
 
   @Override
@@ -312,12 +308,9 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
-        "CC": "科科斯（基林）群岛",
-        "LA": "老挝",
+        "GP": "瓜德罗普岛",
         "ME": "黑山",
-        "MQ": "马提尼克",
-        "MS": "蒙特塞拉特",
-        "SC": "塞舌尔"
+        "PM": "圣皮埃尔和密克隆"
     };
   }-*/;
 }

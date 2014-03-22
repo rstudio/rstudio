@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,18 +16,13 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5798 $
-//  type=root
-//  date=$Date: 2011-05-02 02:05:34 -0400 (Mon, 02 May 2011) $
+//  cldrVersion=25
+//  date=$Date: 2013-08-08 06:47:50 +0200 (Thu, 08 Aug 2013) $
+//  number=$Revision: 9170 $
+//  type=BM
 
 /**
  * Implementation of DateTimeFormatInfo for the "en_BM" locale.
  */
-public class DateTimeFormatInfoImpl_en_BM extends DateTimeFormatInfoImpl_en {
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
-  }
+public class DateTimeFormatInfoImpl_en_BM extends DateTimeFormatInfoImpl_en_001 {
 }

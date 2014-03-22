@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
 //  type=id
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "id" locale.
@@ -28,17 +28,17 @@ public class DateTimeFormatInfoImpl_id extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatFull() {
-    return "EEEE, dd MMMM yyyy";
+    return "EEEE, dd MMMM y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "d MMMM yyyy";
+    return "d MMMM y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "d MMM yyyy";
+    return "d MMM y";
   }
 
   @Override
@@ -65,6 +65,31 @@ public class DateTimeFormatInfoImpl_id extends DateTimeFormatInfoImpl {
   @Override
   public int firstDayOfTheWeek() {
     return 0;
+  }
+
+  @Override
+  public String formatHour12Minute() {
+    return "h.mm a";
+  }
+
+  @Override
+  public String formatHour12MinuteSecond() {
+    return "h.mm.ss a";
+  }
+
+  @Override
+  public String formatHour24Minute() {
+    return "HH.mm";
+  }
+
+  @Override
+  public String formatHour24MinuteSecond() {
+    return "HH.mm.ss";
+  }
+
+  @Override
+  public String formatMinuteSecond() {
+    return "mm.ss";
   }
 
   @Override
@@ -171,10 +196,10 @@ public class DateTimeFormatInfoImpl_id extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "kuartal pertama",
-        "kuartal kedua",
-        "kuartal ketiga",
-        "kuartal keempat"
+        "Kuartal ke-1",
+        "Kuartal ke-2",
+        "Kuartal ke-3",
+        "Kuartal ke-4"
     };
   }
 
@@ -190,7 +215,22 @@ public class DateTimeFormatInfoImpl_id extends DateTimeFormatInfoImpl {
 
   @Override
   public String timeFormatFull() {
-    return "H:mm:ss zzzz";
+    return "HH.mm.ss zzzz";
+  }
+
+  @Override
+  public String timeFormatLong() {
+    return "HH.mm.ss z";
+  }
+
+  @Override
+  public String timeFormatMedium() {
+    return "HH.mm.ss";
+  }
+
+  @Override
+  public String timeFormatShort() {
+    return "HH.mm";
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 5798 $
-//  date=$Date: 2011-05-02 02:05:34 -0400 (Mon, 02 May 2011) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+//  number=$Revision: 9061 $
+//  type=PT
 
 /**
  * Localized names for the "pt_MZ" locale.
@@ -47,14 +46,13 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "AR",
         "AM",
         "AW",
-        "AC",
         "AU",
         "AT",
         "AZ",
         "BS",
-        "BH",
         "BD",
         "BB",
+        "BH",
         "BE",
         "BZ",
         "BJ",
@@ -63,7 +61,6 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "BO",
         "BA",
         "BW",
-        "BQ",
         "BR",
         "BN",
         "BG",
@@ -74,12 +71,14 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "CM",
         "KH",
         "CA",
+        "QA",
         "KZ",
         "EA",
         "TD",
         "CL",
         "CN",
         "CY",
+        "VA",
         "CO",
         "KM",
         "CG",
@@ -93,7 +92,6 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "CW",
         "DG",
         "DK",
-        "DJ",
         "DM",
         "EG",
         "SV",
@@ -103,7 +101,6 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "SK",
         "SI",
         "ES",
-        "FM",
         "US",
         "EE",
         "ET",
@@ -111,12 +108,10 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "PH",
         "FI",
         "FR",
-        "FX",
         "GA",
         "GM",
         "GH",
         "GE",
-        "GS",
         "GI",
         "GD",
         "GR",
@@ -136,21 +131,23 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "HU",
         "YE",
         "BV",
+        "AC",
         "CP",
         "IM",
         "CX",
-        "HM",
         "NF",
         "AX",
         "KY",
         "IC",
         "CC",
         "CK",
+        "UM",
         "FK",
         "FO",
+        "GS",
+        "HM",
         "MP",
         "MH",
-        "UM",
         "SB",
         "TC",
         "VG",
@@ -166,7 +163,9 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "JM",
         "JP",
         "JE",
+        "DJ",
         "JO",
+        "XK",
         "KW",
         "LA",
         "LS",
@@ -180,6 +179,7 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "MO",
         "MK",
         "MG",
+        "YT",
         "MY",
         "MW",
         "MV",
@@ -189,9 +189,9 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "MQ",
         "MU",
         "MR",
-        "YT",
         "MX",
         "MM",
+        "FM",
         "MZ",
         "MD",
         "MC",
@@ -211,6 +211,7 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "QO",
         "OM",
         "NL",
+        "BQ",
         "PW",
         "PA",
         "PG",
@@ -222,7 +223,6 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "PL",
         "PR",
         "PT",
-        "QA",
         "KE",
         "KG",
         "KI",
@@ -234,35 +234,34 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "RO",
         "RW",
         "RU",
-        "KN",
+        "EH",
         "PM",
         "WS",
         "AS",
         "SH",
         "LC",
         "BL",
+        "KN",
         "SM",
         "MF",
         "ST",
         "VC",
-        "EH",
         "SC",
         "SN",
         "SL",
         "RS",
-        "CS",
         "SG",
+        "SX",
         "SY",
         "SO",
         "LK",
-        "SS",
         "SZ",
         "SD",
+        "SS",
         "SE",
         "CH",
         "SR",
         "SJ",
-        "SX",
         "TH",
         "TW",
         "TJ",
@@ -272,8 +271,8 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "TF",
         "TL",
         "TG",
-        "TK",
         "TO",
+        "TK",
         "TT",
         "TA",
         "TN",
@@ -286,7 +285,6 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "UY",
         "UZ",
         "VU",
-        "VA",
         "VE",
         "VN",
         "WF",
@@ -300,55 +298,50 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
     super.loadNameMapJava();
     namesMap.put("009", "Oceânia");
     namesMap.put("015", "Norte de África");
+    namesMap.put("029", "Caraíbas");
     namesMap.put("035", "Sudeste Asiático");
     namesMap.put("154", "Europa do Norte");
-    namesMap.put("AC", "Ascensão");
-    namesMap.put("AE", "Emiratos Árabes Unidos");
     namesMap.put("AI", "Anguila");
     namesMap.put("AM", "Arménia");
-    namesMap.put("AQ", "Antárctica");
-    namesMap.put("AX", "Ilhas Åland");
-    namesMap.put("BF", "Burkina-Faso");
-    namesMap.put("BH", "Bahrein");
+    namesMap.put("BH", "Barém");
     namesMap.put("BJ", "Benim");
     namesMap.put("BW", "Botswana");
-    namesMap.put("BY", "Bielorrússia");
     namesMap.put("CC", "Ilhas Cocos");
+    namesMap.put("CD", "Congo-Kinshasa");
     namesMap.put("CG", "Congo-Brazzaville");
     namesMap.put("CM", "Camarões");
+    namesMap.put("CW", "Curaçau");
     namesMap.put("CX", "Ilha do Natal");
     namesMap.put("CZ", "República Checa");
+    namesMap.put("DJ", "Jibuti");
+    namesMap.put("DM", "Domínica");
     namesMap.put("EE", "Estónia");
     namesMap.put("EG", "Egipto");
-    namesMap.put("EH", "Sara Ocidental");
     namesMap.put("FK", "Ilhas Falkland");
-    namesMap.put("FM", "Estados Federados da Micronésia");
     namesMap.put("FO", "Ilhas Faroé");
-    namesMap.put("FX", "França (continental)");
     namesMap.put("GL", "Gronelândia");
+    namesMap.put("GS", "Ilhas Geórgia do Sul e Sandwich do Sul");
+    namesMap.put("GU", "Guame");
     namesMap.put("GW", "Guiné-Bissau");
+    namesMap.put("HM", "Ilhas Heard e McDonald");
     namesMap.put("IR", "Irão");
     namesMap.put("KE", "Quénia");
     namesMap.put("KG", "Quirguizistão");
-    namesMap.put("KN", "Saint Kitts e Nevis");
+    namesMap.put("KM", "Comoros");
+    namesMap.put("KN", "São Cristóvão e Nevis");
     namesMap.put("KY", "Ilhas Caimão");
-    namesMap.put("KZ", "Cazaquistão");
-    namesMap.put("LA", "Laos, República Popular Democrática do");
+    namesMap.put("LK", "Sri Lanca");
     namesMap.put("LV", "Letónia");
     namesMap.put("MC", "Mónaco");
-    namesMap.put("MD", "Moldávia, República da");
     namesMap.put("MG", "Madagáscar");
     namesMap.put("MK", "Macedónia");
-    namesMap.put("MM", "Mianmar");
-    namesMap.put("MP", "Ilhas Mariana do Norte");
     namesMap.put("MS", "Monserrate");
-    namesMap.put("MU", "Maurícias");
+    namesMap.put("MU", "Maurícia");
     namesMap.put("NC", "Nova Caledónia");
     namesMap.put("NL", "Países Baixos");
-    namesMap.put("PG", "Papuásia-Nova Guiné");
     namesMap.put("PL", "Polónia");
+    namesMap.put("PN", "Pitcairn");
     namesMap.put("PS", "Território Palestiniano");
-    namesMap.put("QA", "Qatar");
     namesMap.put("QO", "Oceânia Insular");
     namesMap.put("RO", "Roménia");
     namesMap.put("SC", "Seicheles");
@@ -357,13 +350,14 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
     namesMap.put("SM", "São Marino");
     namesMap.put("TC", "Ilhas Turcas e Caicos");
     namesMap.put("TJ", "Tajiquistão");
+    namesMap.put("TK", "Toquelau");
     namesMap.put("TM", "Turquemenistão");
     namesMap.put("TT", "Trindade e Tobago");
-    namesMap.put("UZ", "Usbequistão");
-    namesMap.put("VI", "Ilhas Virgens E.U.A.");
     namesMap.put("VN", "Vietname");
     namesMap.put("YE", "Iémen");
-    namesMap.put("ZW", "Zimbabwe");
+    namesMap.put("YT", "Maiote");
+    namesMap.put("ZW", "Zimbabué");
+    namesMap.put("ZZ", "Região desconhecida ou inválida");
   }
 
   @Override
@@ -375,55 +369,50 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
     return {
         "009": "Oceânia",
         "015": "Norte de África",
+        "029": "Caraíbas",
         "035": "Sudeste Asiático",
         "154": "Europa do Norte",
-        "AC": "Ascensão",
-        "AE": "Emiratos Árabes Unidos",
         "AI": "Anguila",
         "AM": "Arménia",
-        "AQ": "Antárctica",
-        "AX": "Ilhas Åland",
-        "BF": "Burkina-Faso",
-        "BH": "Bahrein",
+        "BH": "Barém",
         "BJ": "Benim",
         "BW": "Botswana",
-        "BY": "Bielorrússia",
         "CC": "Ilhas Cocos",
+        "CD": "Congo-Kinshasa",
         "CG": "Congo-Brazzaville",
         "CM": "Camarões",
+        "CW": "Curaçau",
         "CX": "Ilha do Natal",
         "CZ": "República Checa",
+        "DJ": "Jibuti",
+        "DM": "Domínica",
         "EE": "Estónia",
         "EG": "Egipto",
-        "EH": "Sara Ocidental",
         "FK": "Ilhas Falkland",
-        "FM": "Estados Federados da Micronésia",
         "FO": "Ilhas Faroé",
-        "FX": "França (continental)",
         "GL": "Gronelândia",
+        "GS": "Ilhas Geórgia do Sul e Sandwich do Sul",
+        "GU": "Guame",
         "GW": "Guiné-Bissau",
+        "HM": "Ilhas Heard e McDonald",
         "IR": "Irão",
         "KE": "Quénia",
         "KG": "Quirguizistão",
-        "KN": "Saint Kitts e Nevis",
+        "KM": "Comoros",
+        "KN": "São Cristóvão e Nevis",
         "KY": "Ilhas Caimão",
-        "KZ": "Cazaquistão",
-        "LA": "Laos, República Popular Democrática do",
+        "LK": "Sri Lanca",
         "LV": "Letónia",
         "MC": "Mónaco",
-        "MD": "Moldávia, República da",
         "MG": "Madagáscar",
         "MK": "Macedónia",
-        "MM": "Mianmar",
-        "MP": "Ilhas Mariana do Norte",
         "MS": "Monserrate",
-        "MU": "Maurícias",
+        "MU": "Maurícia",
         "NC": "Nova Caledónia",
         "NL": "Países Baixos",
-        "PG": "Papuásia-Nova Guiné",
         "PL": "Polónia",
+        "PN": "Pitcairn",
         "PS": "Território Palestiniano",
-        "QA": "Qatar",
         "QO": "Oceânia Insular",
         "RO": "Roménia",
         "SC": "Seicheles",
@@ -432,13 +421,14 @@ public class LocalizedNamesImpl_pt_MZ extends LocalizedNamesImpl_pt {
         "SM": "São Marino",
         "TC": "Ilhas Turcas e Caicos",
         "TJ": "Tajiquistão",
+        "TK": "Toquelau",
         "TM": "Turquemenistão",
         "TT": "Trindade e Tobago",
-        "UZ": "Usbequistão",
-        "VI": "Ilhas Virgens E.U.A.",
         "VN": "Vietname",
         "YE": "Iémen",
-        "ZW": "Zimbabwe"
+        "YT": "Maiote",
+        "ZW": "Zimbabué",
+        "ZZ": "Região desconhecida ou inválida"
     };
   }-*/;
 }

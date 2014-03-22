@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
+//  type=fa
 
 /**
  * Implementation of DateTimeFormatInfo for the "fa" locale.
@@ -32,11 +32,6 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
         "قبل‌ازظهر",
         "بعدازظهر"
     };
-  }
-
-  @Override
-  public String dateFormat() {
-    return dateFormatLong();
   }
 
   @Override
@@ -56,7 +51,7 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatShort() {
-    return "yyyy/M/d";
+    return "y/M/d";
   }
 
   @Override
@@ -131,48 +126,53 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatYear() {
+    return "y G";
+  }
+
+  @Override
   public String formatYearMonthAbbrev() {
-    return "MMM y";
+    return "MMM y G";
   }
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "d MMM y";
+    return "d MMM y G";
   }
 
   @Override
   public String formatYearMonthFull() {
-    return "MMMM y";
+    return "MMMM y G";
   }
 
   @Override
   public String formatYearMonthFullDay() {
-    return "d MMMM y";
+    return "d MMMM y G";
   }
 
   @Override
   public String formatYearMonthNum() {
-    return "y/M";
+    return "y/M G";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "y/M/d";
+    return "y/M/d G";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE d MMM y";
+    return "EEE d MMM y G";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ y";
+    return "QQQQ y G";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q y";
+    return "Q y G";
   }
 
   @Override

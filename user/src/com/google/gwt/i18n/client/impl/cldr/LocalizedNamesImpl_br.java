@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6444 $
-//  date=$Date: 2012-01-25 16:40:58 -0500 (Wed, 25 Jan 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=br
 
 /**
  * Localized names for the "br" locale.
@@ -63,7 +62,6 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
-        "BQ",
         "BR",
         "BN",
         "BG",
@@ -196,6 +194,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "MM",
         "NA",
         "NR",
+        "BQ",
         "NP",
         "NI",
         "NE",
@@ -245,6 +244,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "SL",
         "CN",
         "SG",
+        "SX",
         "SY",
         "SK",
         "SI",
@@ -252,15 +252,14 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "SD",
         "ES",
         "LK",
-        "SS",
         "US",
         "ZA",
         "CH",
         "SR",
+        "SS",
         "SJ",
         "SE",
         "SZ",
-        "SX",
         "TJ",
         "TW",
         "TZ",
@@ -286,6 +285,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "VE",
         "VN",
         "WF",
+        "XK",
         "YE",
         "ZM",
         "NZ",
@@ -296,13 +296,13 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
-    namesMap.put("001", "bed");
+    namesMap.put("001", "Bed");
     namesMap.put("002", "Afrika");
-    namesMap.put("003", "Norzh Amerika");
-    namesMap.put("005", "Su Amerika");
+    namesMap.put("003", "Norzhamerika");
+    namesMap.put("005", "Suamerika");
     namesMap.put("009", "Oseania");
     namesMap.put("011", "Afrika ar Cʼhornôg");
-    namesMap.put("013", "Kreiz Amerika");
+    namesMap.put("013", "Kreizamerika");
     namesMap.put("014", "Afrika ar Reter");
     namesMap.put("015", "Afrika an Norzh");
     namesMap.put("017", "Afrika ar Cʼhreiz");
@@ -314,7 +314,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
     namesMap.put("034", "Azia ar Su");
     namesMap.put("035", "Azia ar Gevred");
     namesMap.put("039", "Europa ar Su");
-    namesMap.put("053", "Aostralia ha Zeland-Nevez");
+    namesMap.put("053", "Aostralazia");
     namesMap.put("054", "Melanezia");
     namesMap.put("057", "Rannved Mikronezia");
     namesMap.put("061", "Polinezia");
@@ -340,6 +340,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
     namesMap.put("BA", "Bosnia ha Herzegovina");
     namesMap.put("BE", "Belgia");
     namesMap.put("BH", "Bahrein");
+    namesMap.put("BQ", "Nederlandat Karib");
     namesMap.put("BT", "Bhoutan");
     namesMap.put("BV", "Enez Bouvet");
     namesMap.put("CA", "Kanada");
@@ -416,7 +417,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
     namesMap.put("MG", "Madagaskar");
     namesMap.put("MH", "Inizi Marshall");
     namesMap.put("MK", "Makedonia");
-    namesMap.put("MM", "Myanmar [Birmania]");
+    namesMap.put("MM", "Myanmar (Birmania)");
     namesMap.put("MO", "Macau RMD Sina");
     namesMap.put("MP", "Inizi Mariana an Norzh");
     namesMap.put("MQ", "Martinik");
@@ -451,6 +452,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
     namesMap.put("SG", "Singapour");
     namesMap.put("SJ", "Svalbard");
     namesMap.put("SR", "Surinam");
+    namesMap.put("SS", "Su Soudan");
     namesMap.put("ST", "São Tomé ha Príncipe");
     namesMap.put("SV", "Salvador");
     namesMap.put("SY", "Siria");
@@ -483,13 +485,13 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
-        "001": "bed",
+        "001": "Bed",
         "002": "Afrika",
-        "003": "Norzh Amerika",
-        "005": "Su Amerika",
+        "003": "Norzhamerika",
+        "005": "Suamerika",
         "009": "Oseania",
         "011": "Afrika ar Cʼhornôg",
-        "013": "Kreiz Amerika",
+        "013": "Kreizamerika",
         "014": "Afrika ar Reter",
         "015": "Afrika an Norzh",
         "017": "Afrika ar Cʼhreiz",
@@ -501,7 +503,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "034": "Azia ar Su",
         "035": "Azia ar Gevred",
         "039": "Europa ar Su",
-        "053": "Aostralia ha Zeland-Nevez",
+        "053": "Aostralazia",
         "054": "Melanezia",
         "057": "Rannved Mikronezia",
         "061": "Polinezia",
@@ -527,6 +529,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "BA": "Bosnia ha Herzegovina",
         "BE": "Belgia",
         "BH": "Bahrein",
+        "BQ": "Nederlandat Karib",
         "BT": "Bhoutan",
         "BV": "Enez Bouvet",
         "CA": "Kanada",
@@ -603,7 +606,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "MG": "Madagaskar",
         "MH": "Inizi Marshall",
         "MK": "Makedonia",
-        "MM": "Myanmar [Birmania]",
+        "MM": "Myanmar (Birmania)",
         "MO": "Macau RMD Sina",
         "MP": "Inizi Mariana an Norzh",
         "MQ": "Martinik",
@@ -638,6 +641,7 @@ public class LocalizedNamesImpl_br extends LocalizedNamesImpl {
         "SG": "Singapour",
         "SJ": "Svalbard",
         "SR": "Surinam",
+        "SS": "Su Soudan",
         "ST": "São Tomé ha Príncipe",
         "SV": "Salvador",
         "SY": "Siria",

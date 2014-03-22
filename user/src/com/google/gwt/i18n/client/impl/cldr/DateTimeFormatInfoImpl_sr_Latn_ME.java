@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5695 $
-//  date=$Date: 2011-04-26 14:39:31 -0400 (Tue, 26 Apr 2011) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+//  number=$Revision: 9061 $
+//  type=sr
 
 /**
  * Implementation of DateTimeFormatInfo for the "sr_Latn_ME" locale.
@@ -28,6 +28,6 @@ public class DateTimeFormatInfoImpl_sr_Latn_ME extends DateTimeFormatInfoImpl_sr
 
   @Override
   public String dateFormatLong() {
-    return "d.MM.yyyy.";
+    return "d.MM.y.";
   }
 }

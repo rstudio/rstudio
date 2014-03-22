@@ -129,7 +129,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
     str = NumberFormat.getSimpleCurrencyFormat().format(1234.75);
     assertEquals("$1,234.75", str);
     str = NumberFormat.getSimpleCurrencyFormat().format(-1234.75);
-    assertEquals("($1,234.75)", str);
+    assertEquals("-$1,234.75", str);
     str = NumberFormat.getSimpleCurrencyFormat("CAD").format(1234.75);
     assertEquals("$1,234.75", str);
     str = NumberFormat.getSimpleCurrencyFormat("AUD").format(1234.75);
@@ -143,7 +143,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
     str = NumberFormat.getGlobalCurrencyFormat().format(1234.75);
     assertEquals("$1,234.75 USD", str);
     str = NumberFormat.getGlobalCurrencyFormat().format(-1234.75);
-    assertEquals("($1,234.75) USD", str);
+    assertEquals("-$1,234.75 USD", str);
     str = NumberFormat.getGlobalCurrencyFormat("CAD").format(1234.75);
     assertEquals("$1,234.75 CAD", str);
     str = NumberFormat.getGlobalCurrencyFormat("AUD").format(1234.75);

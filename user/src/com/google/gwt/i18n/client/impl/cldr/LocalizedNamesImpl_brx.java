@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=brx
 
 /**
  * Localized names for the "brx" locale.
@@ -38,11 +37,11 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "CW",
         "DG",
         "EA",
-        "EU",
         "IC",
         "SS",
         "SX",
         "TA",
+        "XK",
         "AO",
         "AQ",
         "AZ",
@@ -65,7 +64,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "IL",
         "IQ",
         "IR",
-        "DD",
         "UZ",
         "KP",
         "MP",
@@ -157,7 +155,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "NP",
         "NF",
         "NO",
-        "NT",
         "NC",
         "NZ",
         "PA",
@@ -219,7 +216,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "MT",
         "EG",
         "MX",
-        "FX",
         "YT",
         "MK",
         "MS",
@@ -232,14 +228,12 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "MD",
         "MM",
         "YE",
-        "YD",
-        "SU",
         "VI",
         "UG",
         "UM",
         "UY",
         "UA",
-        "QU",
+        "EU",
         "RW",
         "RU",
         "RE",
@@ -264,7 +258,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "SA",
         "WS",
         "RS",
-        "CS",
         "CY",
         "ST",
         "SG",
@@ -383,13 +376,11 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
     namesMap.put("CN", "चीन");
     namesMap.put("CO", "कोलम्बिया");
     namesMap.put("CR", "कोस्टारीका");
-    namesMap.put("CS", "सर्बिया एवं मॉण्टेनेग्रो");
     namesMap.put("CU", "क्यूबा");
     namesMap.put("CV", "कैप वेर्दे");
     namesMap.put("CX", "क्रिस्मस द्वीप");
     namesMap.put("CY", "साइप्रस");
     namesMap.put("CZ", "चेक गणराज्य");
-    namesMap.put("DD", "ईस्ट जर्मनी");
     namesMap.put("DE", "जर्मनी");
     namesMap.put("DJ", "द्जिबूती");
     namesMap.put("DK", "डेनमार्क");
@@ -403,13 +394,13 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
     namesMap.put("ER", "एरिट्रिया");
     namesMap.put("ES", "स्पेन");
     namesMap.put("ET", "इथिओपिया");
+    namesMap.put("EU", "यूरोपीय संघ");
     namesMap.put("FI", "फिनलैंड");
     namesMap.put("FJ", "फिजी");
     namesMap.put("FK", "फ़ॉल्कलैंड द्वीप");
     namesMap.put("FM", "माइक्रोनेशिया");
     namesMap.put("FO", "फरो द्वीप");
     namesMap.put("FR", "फ्राँस");
-    namesMap.put("FX", "मैट्रोपोलिटन फ्राँस");
     namesMap.put("GA", "गैबॉन");
     namesMap.put("GB", "ब्रितन");
     namesMap.put("GD", "ग्रेनडा");
@@ -504,7 +495,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
     namesMap.put("NO", "नॉर्वे");
     namesMap.put("NP", "नेपाल");
     namesMap.put("NR", "नाउरू");
-    namesMap.put("NT", "न्युट्रल क्षेत्र");
     namesMap.put("NU", "नीयूए");
     namesMap.put("NZ", "न्यूज़ीलैंड");
     namesMap.put("OM", "ओमान");
@@ -524,7 +514,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
     namesMap.put("PY", "पारागुए");
     namesMap.put("QA", "क़तार");
     namesMap.put("QO", "बाहरिय ओशेआनिया");
-    namesMap.put("QU", "यूरोपीय संघ");
     namesMap.put("RE", "रेयूनियॉं");
     namesMap.put("RO", "रोमानिया");
     namesMap.put("RS", "सर्बिया");
@@ -546,7 +535,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
     namesMap.put("SO", "सोमालिया");
     namesMap.put("SR", "सुरिनाम");
     namesMap.put("ST", "साउँ-तोमे एवं प्रिंसिप");
-    namesMap.put("SU", "यु.एस.एस.आर");
     namesMap.put("SV", "ऍल साल्वाडोर");
     namesMap.put("SY", "सीरिया");
     namesMap.put("SZ", "स्वाज़ीलैंड");
@@ -581,7 +569,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
     namesMap.put("VU", "वानाऊटु");
     namesMap.put("WF", "वॉलेस एवं फ़्यूचूना");
     namesMap.put("WS", "समोआ");
-    namesMap.put("YD", "यमनी गनराज्य");
     namesMap.put("YE", "यमन");
     namesMap.put("YT", "मैयौट");
     namesMap.put("ZA", "दक्षिण अफ्रीका");
@@ -677,13 +664,11 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "CN": "चीन",
         "CO": "कोलम्बिया",
         "CR": "कोस्टारीका",
-        "CS": "सर्बिया एवं मॉण्टेनेग्रो",
         "CU": "क्यूबा",
         "CV": "कैप वेर्दे",
         "CX": "क्रिस्मस द्वीप",
         "CY": "साइप्रस",
         "CZ": "चेक गणराज्य",
-        "DD": "ईस्ट जर्मनी",
         "DE": "जर्मनी",
         "DJ": "द्जिबूती",
         "DK": "डेनमार्क",
@@ -697,13 +682,13 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "ER": "एरिट्रिया",
         "ES": "स्पेन",
         "ET": "इथिओपिया",
+        "EU": "यूरोपीय संघ",
         "FI": "फिनलैंड",
         "FJ": "फिजी",
         "FK": "फ़ॉल्कलैंड द्वीप",
         "FM": "माइक्रोनेशिया",
         "FO": "फरो द्वीप",
         "FR": "फ्राँस",
-        "FX": "मैट्रोपोलिटन फ्राँस",
         "GA": "गैबॉन",
         "GB": "ब्रितन",
         "GD": "ग्रेनडा",
@@ -798,7 +783,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "NO": "नॉर्वे",
         "NP": "नेपाल",
         "NR": "नाउरू",
-        "NT": "न्युट्रल क्षेत्र",
         "NU": "नीयूए",
         "NZ": "न्यूज़ीलैंड",
         "OM": "ओमान",
@@ -818,7 +802,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "PY": "पारागुए",
         "QA": "क़तार",
         "QO": "बाहरिय ओशेआनिया",
-        "QU": "यूरोपीय संघ",
         "RE": "रेयूनियॉं",
         "RO": "रोमानिया",
         "RS": "सर्बिया",
@@ -840,7 +823,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "SO": "सोमालिया",
         "SR": "सुरिनाम",
         "ST": "साउँ-तोमे एवं प्रिंसिप",
-        "SU": "यु.एस.एस.आर",
         "SV": "ऍल साल्वाडोर",
         "SY": "सीरिया",
         "SZ": "स्वाज़ीलैंड",
@@ -875,7 +857,6 @@ public class LocalizedNamesImpl_brx extends LocalizedNamesImpl {
         "VU": "वानाऊटु",
         "WF": "वॉलेस एवं फ़्यूचूना",
         "WS": "समोआ",
-        "YD": "यमनी गनराज्य",
         "YE": "यमन",
         "YT": "मैयौट",
         "ZA": "दक्षिण अफ्रीका",

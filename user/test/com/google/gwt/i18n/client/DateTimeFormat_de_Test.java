@@ -40,7 +40,7 @@ public class DateTimeFormat_de_Test extends DateTimeFormatTestBase {
 
   public void test_EEEMMMddyy() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("Do., Jul 27, 06",
+    assertEquals("Do., Juli 27, 06",
         DateTimeFormat.getFormat("EEE, MMM d, yy").format(date));
   }
 
@@ -219,7 +219,7 @@ public class DateTimeFormat_de_Test extends DateTimeFormatTestBase {
   public void testCustomFormats() {
     MyFormats m = GWT.create(MyFormats.class);
     Date d = new Date(2010 - 1900, 1, 15, 12, 0, 0);
-    assertEquals("15. Feb 2010", m.yearMonthDayAbbrev().format(d));
+    assertEquals("15. Feb. 2010", m.yearMonthDayAbbrev().format(d));
     assertEquals("15. Februar 2010", m.yearMonthDayFull().format(d));
     assertEquals("15. Februar 2010", m.yearMonthDayFull2().format(d));
   }
@@ -227,6 +227,6 @@ public class DateTimeFormat_de_Test extends DateTimeFormatTestBase {
   public void testMessageDateTime() {
     MyMessages m = GWT.create(MyMessages.class);
     Date d = new Date(2010 - 1900, 1, 15, 12, 0, 0);
-    assertEquals("Es ist 15. Feb 2010", m.getCustomizedDate(d));
+    assertEquals("Es ist 15. Feb. 2010", m.getCustomizedDate(d));
   }
 }

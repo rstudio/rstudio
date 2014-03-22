@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "nyn" locale.
@@ -233,7 +232,6 @@ public class LocalizedNamesImpl_nyn extends LocalizedNamesImpl {
         "RU",
         "RS",
         "RW",
-        "CS",
         "CY",
         "SM",
         "WS",
@@ -287,6 +285,7 @@ public class LocalizedNamesImpl_nyn extends LocalizedNamesImpl {
         "VE",
         "VN",
         "WF",
+        "XK",
         "YE",
         "JO",
         "ZM",
@@ -337,7 +336,6 @@ public class LocalizedNamesImpl_nyn extends LocalizedNamesImpl {
     namesMap.put("CM", "Kameruuni");
     namesMap.put("CO", "Korombiya");
     namesMap.put("CR", "Kositarika");
-    namesMap.put("CS", "Saabiya na Monteneguro");
     namesMap.put("CV", "Ebizinga bya Kepuvade");
     namesMap.put("CY", "Saipurasi");
     namesMap.put("CZ", "Ripaaburika ya Zeeki");
@@ -542,7 +540,6 @@ public class LocalizedNamesImpl_nyn extends LocalizedNamesImpl {
         "CM": "Kameruuni",
         "CO": "Korombiya",
         "CR": "Kositarika",
-        "CS": "Saabiya na Monteneguro",
         "CV": "Ebizinga bya Kepuvade",
         "CY": "Saipurasi",
         "CZ": "Ripaaburika ya Zeeki",

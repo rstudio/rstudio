@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=th
 
 /**
  * Localized names for the "th" locale.
@@ -39,10 +38,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "BQ",
-        "CW",
-        "SS",
-        "SX",
         "GR",
         "GL",
         "GU",
@@ -68,6 +63,8 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "HM",
         "GG",
         "GM",
+        "MO",
+        "HK",
         "CD",
         "CG",
         "KM",
@@ -76,11 +73,13 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "KI",
         "CU",
         "KG",
+        "CW",
         "KW",
         "KE",
         "CV",
         "CA",
         "CM",
+        "XK",
         "HR",
         "CO",
         "GE",
@@ -99,17 +98,18 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "SY",
         "EA",
         "SD",
+        "SS",
         "SR",
         "SC",
         "KN",
         "BL",
         "MF",
+        "SX",
         "LC",
         "VC",
         "SH",
         "SN",
         "RS",
-        "CS",
         "ST",
         "SL",
         "PM",
@@ -117,6 +117,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "SO",
         "CY",
         "JP",
+        "PS",
         "DG",
         "DK",
         "DM",
@@ -134,6 +135,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "TJ",
         "TZ",
         "TH",
+        "VA",
         "NO",
         "NA",
         "NR",
@@ -142,6 +144,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "NZ",
         "NU",
         "NL",
+        "BQ",
         "AN",
         "NP",
         "NG",
@@ -168,14 +171,12 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "PA",
         "PG",
         "PY",
-        "PS",
         "PW",
         "PE",
         "PR",
         "PT",
         "PL",
         "FR",
-        "PN",
         "FJ",
         "FI",
         "PH",
@@ -183,7 +184,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "TF",
         "PF",
         "BT",
-        "FX",
         "MN",
         "MS",
         "ME",
@@ -192,7 +192,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "MD",
         "MT",
         "MV",
-        "MO",
         "MK",
         "MG",
         "YT",
@@ -224,7 +223,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "LS",
         "LB",
         "LR",
-        "VA",
         "VU",
         "WF",
         "VE",
@@ -253,6 +251,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "TC",
         "MP",
         "VG",
+        "PN",
         "FK",
         "FO",
         "MH",
@@ -295,7 +294,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "IS",
         "IE",
         "CI",
-        "HK",
         "HN",
         "HU",
         "HT",
@@ -315,7 +313,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("014", "แอฟริกาตะวันออก");
     namesMap.put("015", "แอฟริกาเหนือ");
     namesMap.put("017", "แอฟริกากลาง");
-    namesMap.put("018", "แอฟริกาใต้ [018]");
+    namesMap.put("018", "แอฟริกาตอนใต้");
     namesMap.put("019", "อเมริกา");
     namesMap.put("021", "อเมริกาตอนเหนือ");
     namesMap.put("029", "แคริบเบียน");
@@ -323,7 +321,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("034", "เอเชียใต้");
     namesMap.put("035", "เอเชียตะวันออกเฉียงใต้");
     namesMap.put("039", "ยุโรปใต้");
-    namesMap.put("053", "ออสเตรเลียและนิวซีแลนด์");
+    namesMap.put("053", "ออสตราเลเซีย");
     namesMap.put("054", "เมลานีเซีย");
     namesMap.put("057", "เขตไมโครนีเซีย");
     namesMap.put("061", "โปลินีเซีย");
@@ -334,7 +332,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("151", "ยุโรปตะวันออก");
     namesMap.put("154", "ยุโรปเหนือ");
     namesMap.put("155", "ยุโรปตะวันตก");
-    namesMap.put("419", "ละตินอเมริกาและแคริบเบียน");
+    namesMap.put("419", "ละตินอเมริกา");
     namesMap.put("AC", "เกาะแอสเซนชัน");
     namesMap.put("AD", "อันดอร์รา");
     namesMap.put("AE", "สหรัฐอาหรับเอมิเรตส์");
@@ -366,6 +364,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("BM", "เบอร์มิวดา");
     namesMap.put("BN", "บรูไน");
     namesMap.put("BO", "โบลิเวีย");
+    namesMap.put("BQ", "เนเธอร์แลนด์แคริบเบียน");
     namesMap.put("BR", "บราซิล");
     namesMap.put("BS", "บาฮามาส");
     namesMap.put("BT", "ภูฏาน");
@@ -387,9 +386,9 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("CO", "โคลอมเบีย");
     namesMap.put("CP", "เกาะคลิปเปอร์ตัน");
     namesMap.put("CR", "คอสตาริกา");
-    namesMap.put("CS", "เซอร์เบียและมอนเตเนโกร");
     namesMap.put("CU", "คิวบา");
     namesMap.put("CV", "เคปเวิร์ด");
+    namesMap.put("CW", "คูราเซา");
     namesMap.put("CX", "เกาะคริสต์มาส");
     namesMap.put("CY", "ไซปรัส");
     namesMap.put("CZ", "สาธารณรัฐเช็ก");
@@ -415,7 +414,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("FM", "ไมโครนีเซีย");
     namesMap.put("FO", "หมู่เกาะแฟโร");
     namesMap.put("FR", "ฝรั่งเศส");
-    namesMap.put("FX", "มหานครฝรั่งเศส");
     namesMap.put("GA", "กาบอง");
     namesMap.put("GB", "สหราชอาณาจักร");
     namesMap.put("GD", "เกรเนดา");
@@ -435,7 +433,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("GU", "กวม");
     namesMap.put("GW", "กินี-บิสเซา");
     namesMap.put("GY", "กายอานา");
-    namesMap.put("HK", "ฮ่องกง");
+    namesMap.put("HK", "เขตปกครองพิเศษฮ่องกงแห่งสาธารณรัฐประชาชนจีน");
     namesMap.put("HM", "เกาะเฮิร์ดและหมู่เกาะแมกดอนัลด์");
     namesMap.put("HN", "ฮอนดูรัส");
     namesMap.put("HR", "โครเอเชีย");
@@ -487,9 +485,9 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("MH", "หมู่เกาะมาร์แชลล์");
     namesMap.put("MK", "มาซิโดเนีย");
     namesMap.put("ML", "มาลี");
-    namesMap.put("MM", "เมียนม่าร์ [พม่า]");
+    namesMap.put("MM", "เมียนม่าร์ (พม่า)");
     namesMap.put("MN", "มองโกเลีย");
-    namesMap.put("MO", "มาเก๊า");
+    namesMap.put("MO", "เขตปกครองพิเศษมาเก๊าแห่งสาธารณรัฐประชาชนจีน");
     namesMap.put("MP", "หมู่เกาะนอร์เทิร์นมาเรียนา");
     namesMap.put("MQ", "มาร์ตินีก");
     namesMap.put("MR", "มอริเตเนีย");
@@ -522,9 +520,9 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("PK", "ปากีสถาน");
     namesMap.put("PL", "โปแลนด์");
     namesMap.put("PM", "แซงปีแยร์และมีเกอลง");
-    namesMap.put("PN", "พิตแคร์น");
+    namesMap.put("PN", "หมู่เกาะพิตแคร์น");
     namesMap.put("PR", "เปอร์โตริโก");
-    namesMap.put("PS", "ปาเลสไตน์");
+    namesMap.put("PS", "ดินแดนปาเลสไตน์");
     namesMap.put("PT", "โปรตุเกส");
     namesMap.put("PW", "ปาเลา");
     namesMap.put("PY", "ปารากวัย");
@@ -550,8 +548,10 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("SN", "เซเนกัล");
     namesMap.put("SO", "โซมาเลีย");
     namesMap.put("SR", "ซูรินาเม");
+    namesMap.put("SS", "ซูดานใต้");
     namesMap.put("ST", "เซาตูเมและปรินซิปี");
     namesMap.put("SV", "เอลซัลวาดอร์");
+    namesMap.put("SX", "เซนต์มาร์ติน");
     namesMap.put("SY", "ซีเรีย");
     namesMap.put("SZ", "สวาซิแลนด์");
     namesMap.put("TA", "ทริสตัน เดอ คูนา");
@@ -562,7 +562,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("TH", "ไทย");
     namesMap.put("TJ", "ทาจิกิสถาน");
     namesMap.put("TK", "โตเกเลา");
-    namesMap.put("TL", "ติมอร์ตะวันออก");
+    namesMap.put("TL", "ติมอร์-เลสเต");
     namesMap.put("TM", "เติร์กเมนิสถาน");
     namesMap.put("TN", "ตูนิเซีย");
     namesMap.put("TO", "ตองกา");
@@ -573,11 +573,11 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("TZ", "แทนซาเนีย");
     namesMap.put("UA", "ยูเครน");
     namesMap.put("UG", "ยูกันดา");
-    namesMap.put("UM", "หมู่เกาะสหรัฐไมเนอร์เอาต์ไลอิง");
+    namesMap.put("UM", "หมู่เกาะรอบนอกของสหรัฐอเมริกา");
     namesMap.put("US", "สหรัฐอเมริกา");
     namesMap.put("UY", "อุรุกวัย");
     namesMap.put("UZ", "อุซเบกิสถาน");
-    namesMap.put("VA", "วาติกัน");
+    namesMap.put("VA", "นครวาติกัน");
     namesMap.put("VC", "เซนต์วินเซนต์และเกรนาดีนส์");
     namesMap.put("VE", "เวเนซุเอลา");
     namesMap.put("VG", "หมู่เกาะบริติชเวอร์จิน");
@@ -586,12 +586,13 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("VU", "วานูอาตู");
     namesMap.put("WF", "วาลลิสและฟุตูนา");
     namesMap.put("WS", "ซามัว");
+    namesMap.put("XK", "โคโซโว");
     namesMap.put("YE", "เยเมน");
     namesMap.put("YT", "มายอต");
     namesMap.put("ZA", "แอฟริกาใต้");
     namesMap.put("ZM", "แซมเบีย");
     namesMap.put("ZW", "ซิมบับเว");
-    namesMap.put("ZZ", "ไม่ทราบ");
+    namesMap.put("ZZ", "ภูมิภาคที่ไม่รู้จัก");
   }
 
   @Override
@@ -611,7 +612,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "014": "แอฟริกาตะวันออก",
         "015": "แอฟริกาเหนือ",
         "017": "แอฟริกากลาง",
-        "018": "แอฟริกาใต้ [018]",
+        "018": "แอฟริกาตอนใต้",
         "019": "อเมริกา",
         "021": "อเมริกาตอนเหนือ",
         "029": "แคริบเบียน",
@@ -619,7 +620,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "034": "เอเชียใต้",
         "035": "เอเชียตะวันออกเฉียงใต้",
         "039": "ยุโรปใต้",
-        "053": "ออสเตรเลียและนิวซีแลนด์",
+        "053": "ออสตราเลเซีย",
         "054": "เมลานีเซีย",
         "057": "เขตไมโครนีเซีย",
         "061": "โปลินีเซีย",
@@ -630,7 +631,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "151": "ยุโรปตะวันออก",
         "154": "ยุโรปเหนือ",
         "155": "ยุโรปตะวันตก",
-        "419": "ละตินอเมริกาและแคริบเบียน",
+        "419": "ละตินอเมริกา",
         "AC": "เกาะแอสเซนชัน",
         "AD": "อันดอร์รา",
         "AE": "สหรัฐอาหรับเอมิเรตส์",
@@ -662,6 +663,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "BM": "เบอร์มิวดา",
         "BN": "บรูไน",
         "BO": "โบลิเวีย",
+        "BQ": "เนเธอร์แลนด์แคริบเบียน",
         "BR": "บราซิล",
         "BS": "บาฮามาส",
         "BT": "ภูฏาน",
@@ -683,9 +685,9 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "CO": "โคลอมเบีย",
         "CP": "เกาะคลิปเปอร์ตัน",
         "CR": "คอสตาริกา",
-        "CS": "เซอร์เบียและมอนเตเนโกร",
         "CU": "คิวบา",
         "CV": "เคปเวิร์ด",
+        "CW": "คูราเซา",
         "CX": "เกาะคริสต์มาส",
         "CY": "ไซปรัส",
         "CZ": "สาธารณรัฐเช็ก",
@@ -711,7 +713,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "FM": "ไมโครนีเซีย",
         "FO": "หมู่เกาะแฟโร",
         "FR": "ฝรั่งเศส",
-        "FX": "มหานครฝรั่งเศส",
         "GA": "กาบอง",
         "GB": "สหราชอาณาจักร",
         "GD": "เกรเนดา",
@@ -731,7 +732,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "GU": "กวม",
         "GW": "กินี-บิสเซา",
         "GY": "กายอานา",
-        "HK": "ฮ่องกง",
+        "HK": "เขตปกครองพิเศษฮ่องกงแห่งสาธารณรัฐประชาชนจีน",
         "HM": "เกาะเฮิร์ดและหมู่เกาะแมกดอนัลด์",
         "HN": "ฮอนดูรัส",
         "HR": "โครเอเชีย",
@@ -783,9 +784,9 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "MH": "หมู่เกาะมาร์แชลล์",
         "MK": "มาซิโดเนีย",
         "ML": "มาลี",
-        "MM": "เมียนม่าร์ [พม่า]",
+        "MM": "เมียนม่าร์ (พม่า)",
         "MN": "มองโกเลีย",
-        "MO": "มาเก๊า",
+        "MO": "เขตปกครองพิเศษมาเก๊าแห่งสาธารณรัฐประชาชนจีน",
         "MP": "หมู่เกาะนอร์เทิร์นมาเรียนา",
         "MQ": "มาร์ตินีก",
         "MR": "มอริเตเนีย",
@@ -818,9 +819,9 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "PK": "ปากีสถาน",
         "PL": "โปแลนด์",
         "PM": "แซงปีแยร์และมีเกอลง",
-        "PN": "พิตแคร์น",
+        "PN": "หมู่เกาะพิตแคร์น",
         "PR": "เปอร์โตริโก",
-        "PS": "ปาเลสไตน์",
+        "PS": "ดินแดนปาเลสไตน์",
         "PT": "โปรตุเกส",
         "PW": "ปาเลา",
         "PY": "ปารากวัย",
@@ -846,8 +847,10 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "SN": "เซเนกัล",
         "SO": "โซมาเลีย",
         "SR": "ซูรินาเม",
+        "SS": "ซูดานใต้",
         "ST": "เซาตูเมและปรินซิปี",
         "SV": "เอลซัลวาดอร์",
+        "SX": "เซนต์มาร์ติน",
         "SY": "ซีเรีย",
         "SZ": "สวาซิแลนด์",
         "TA": "ทริสตัน เดอ คูนา",
@@ -858,7 +861,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "TH": "ไทย",
         "TJ": "ทาจิกิสถาน",
         "TK": "โตเกเลา",
-        "TL": "ติมอร์ตะวันออก",
+        "TL": "ติมอร์-เลสเต",
         "TM": "เติร์กเมนิสถาน",
         "TN": "ตูนิเซีย",
         "TO": "ตองกา",
@@ -869,11 +872,11 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "TZ": "แทนซาเนีย",
         "UA": "ยูเครน",
         "UG": "ยูกันดา",
-        "UM": "หมู่เกาะสหรัฐไมเนอร์เอาต์ไลอิง",
+        "UM": "หมู่เกาะรอบนอกของสหรัฐอเมริกา",
         "US": "สหรัฐอเมริกา",
         "UY": "อุรุกวัย",
         "UZ": "อุซเบกิสถาน",
-        "VA": "วาติกัน",
+        "VA": "นครวาติกัน",
         "VC": "เซนต์วินเซนต์และเกรนาดีนส์",
         "VE": "เวเนซุเอลา",
         "VG": "หมู่เกาะบริติชเวอร์จิน",
@@ -882,12 +885,13 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "VU": "วานูอาตู",
         "WF": "วาลลิสและฟุตูนา",
         "WS": "ซามัว",
+        "XK": "โคโซโว",
         "YE": "เยเมน",
         "YT": "มายอต",
         "ZA": "แอฟริกาใต้",
         "ZM": "แซมเบีย",
         "ZW": "ซิมบับเว",
-        "ZZ": "ไม่ทราบ"
+        "ZZ": "ภูมิภาคที่ไม่รู้จัก"
     };
   }-*/;
 }

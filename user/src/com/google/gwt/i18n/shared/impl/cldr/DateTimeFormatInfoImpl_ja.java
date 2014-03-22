@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+//  number=$Revision: 9862 $
 //  type=root
 
 /**
@@ -46,12 +46,12 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatMedium() {
-    return "yyyy/MM/dd";
+    return "y/MM/dd";
   }
 
   @Override
   public String dateFormatShort() {
-    return "yyyy/MM/dd";
+    return "y/MM/dd";
   }
 
   @Override
@@ -122,7 +122,7 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthFullWeekdayDay() {
-    return "M月d日(EEEE)";
+    return "M月d日EEEE";
   }
 
   @Override
@@ -172,7 +172,7 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearQuarterFull() {
-    return "y/QQQQ";
+    return "yQQQQ";
   }
 
   @Override

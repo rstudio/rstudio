@@ -16,6 +16,7 @@
 
 package com.google.gwt.i18n.client;
 
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Date;
@@ -35,8 +36,8 @@ public class DateTimeParse_zh_CN_Test extends GWTTestCase {
     Date date = new Date();
 
     {
-      String time_15_26_28 = "GMT-07:00 \u4e0b\u534803\u65f626\u520628\u79d2";
-      DateTimeFormat.getFullTimeFormat().parse(time_15_26_28, 0, date);
+      String time_15_26_28 = "GMT-07:00\u4E0A\u5348015:26:28";
+      DateTimeFormat.getFormat(PredefinedFormat.TIME_FULL).parse(time_15_26_28, 0, date);
 
       /*
        * Create the expected time as UTC. The "+7" is due to the tz offset.
@@ -47,6 +48,7 @@ public class DateTimeParse_zh_CN_Test extends GWTTestCase {
       long expectedTimeUTC = Date.UTC(date.getYear(), date.getMonth(),
           date.getDate(), 15 + 7, 26, 28);
       Date expectedDate = new Date(expectedTimeUTC);
+
       assertEquals(expectedDate.getHours(), date.getHours());
       assertEquals(expectedDate.getMinutes(), date.getMinutes());
       assertEquals(expectedDate.getSeconds(), date.getSeconds());

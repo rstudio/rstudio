@@ -202,11 +202,11 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
 
     String medFormat = DateTimeFormat.getMediumDateTimeFormat().format(date,
         usPacific);
-    assertEquals("Aug 4, 2006 1:49:24 PM", medFormat);
+    assertEquals("Aug 4, 2006, 1:49:24 PM", medFormat);
 
     String shortFormat = DateTimeFormat.getShortDateTimeFormat().format(date,
         usPacific);
-    assertEquals("8/4/06 1:49 PM", shortFormat);
+    assertEquals("8/4/06, 1:49 PM", shortFormat);
   }
   
   public void test_QQQQyy() {

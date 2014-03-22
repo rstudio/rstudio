@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
 //  type=root
-
 
 /**
  * Localized names for the "yav" locale.
@@ -252,7 +251,6 @@ public class LocalizedNamesImpl_yav extends LocalizedNamesImpl {
         "SY",
         "GE",
         "JO",
-        "CS",
         "VC",
         "KN",
         "PM",
@@ -285,6 +283,7 @@ public class LocalizedNamesImpl_yav extends LocalizedNamesImpl {
         "UM",
         "UZ",
         "WF",
+        "XK",
         "YE",
         "HN",
         "HU",
@@ -342,7 +341,6 @@ public class LocalizedNamesImpl_yav extends LocalizedNamesImpl {
     namesMap.put("CN", "Síine");
     namesMap.put("CO", "Kɔlɔ́mbía");
     namesMap.put("CR", "Kóstálíka");
-    namesMap.put("CS", "sɛlpí e mɔ́ŋténékolo");
     namesMap.put("CU", "kúpa");
     namesMap.put("CV", "Kápfɛl");
     namesMap.put("CY", "síplɛ");
@@ -576,7 +574,6 @@ public class LocalizedNamesImpl_yav extends LocalizedNamesImpl {
         "CN": "Síine",
         "CO": "Kɔlɔ́mbía",
         "CR": "Kóstálíka",
-        "CS": "sɛlpí e mɔ́ŋténékolo",
         "CU": "kúpa",
         "CV": "Kápfɛl",
         "CY": "síplɛ",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5798 $
-//  date=$Date: 2011-05-02 02:05:34 -0400 (Mon, 02 May 2011) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+//  number=$Revision: 9061 $
+//  type=tzm
 
 /**
  * Implementation of DateTimeFormatInfo for the "tzm_Latn" locale.
@@ -28,16 +28,16 @@ public class DateTimeFormatInfoImpl_tzm_Latn extends DateTimeFormatInfoImpl_tzm 
 
   @Override
   public int firstDayOfTheWeek() {
-    return 1;
+    return 6;
   }
 
   @Override
   public int weekendEnd() {
-    return 0;
+    return 6;
   }
 
   @Override
   public int weekendStart() {
-    return 6;
+    return 5;
   }
 }

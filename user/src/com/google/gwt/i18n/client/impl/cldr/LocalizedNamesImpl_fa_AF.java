@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=AF
-
+//  cldrVersion=25
+//  date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+//  number=$Revision: 9280 $
+//  type=fa
 
 /**
  * Localized names for the "fa_AF" locale.
@@ -32,10 +31,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "BQ",
-        "CW",
-        "SS",
-        "SX",
         "AW",
         "AU",
         "DE",
@@ -111,6 +106,8 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "AC",
         "AX",
         "TC",
+        "GS",
+        "UM",
         "SB",
         "FO",
         "FK",
@@ -120,14 +117,14 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "VI",
         "VG",
         "PN",
+        "BQ",
         "CP",
-        "UM",
         "CK",
         "CC",
         "KY",
         "BV",
-        "IM",
         "NF",
+        "IM",
         "HM",
         "CX",
         "AZ",
@@ -135,16 +132,15 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "DO",
         "CZ",
         "AQ",
-        "GS",
         "DJ",
         "DK",
         "DM",
         "DG",
+        "RE",
         "RW",
         "RU",
         "BY",
         "RO",
-        "RE",
         "ZM",
         "NZ",
         "ZW",
@@ -152,7 +148,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "CI",
         "WS",
         "AS",
-        "SM",
         "EA",
         "PS",
         "LK",
@@ -160,13 +155,16 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "SI",
         "BL",
         "LC",
+        "SX",
         "MF",
         "SH",
         "VC",
-        "PM",
         "KN",
+        "SM",
+        "PM",
         "SZ",
         "SD",
+        "SS",
         "SR",
         "SY",
         "SO",
@@ -178,7 +176,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "SN",
         "EH",
         "RS",
-        "CS",
         "IQ",
         "SA",
         "OM",
@@ -191,6 +188,7 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "KG",
         "KZ",
         "QA",
+        "IO",
         "LA",
         "LV",
         "LB",
@@ -211,7 +209,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "YT",
         "HU",
         "MA",
-        "IO",
         "TF",
         "EG",
         "MK",
@@ -264,13 +261,15 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "CA",
         "CG",
         "HR",
-        "KI",
         "KH",
+        "CW",
         "KR",
         "KP",
+        "XK",
         "CO",
         "KM",
         "KW",
+        "KI",
         "KE",
         "CU",
         "CV",
@@ -343,7 +342,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
     namesMap.put("KE", "کینیا");
     namesMap.put("KG", "قرغزستان");
     namesMap.put("KH", "کمپوچیا");
-    namesMap.put("KM", "کومور");
     namesMap.put("KN", "سنت کیتس و نیویس");
     namesMap.put("KP", "کوریای شمالی");
     namesMap.put("KR", "کوریای جنوبی");
@@ -388,7 +386,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
     namesMap.put("UY", "یوروگوای");
     namesMap.put("VC", "سنت وینسنت و گرینادین");
     namesMap.put("VE", "ونزویلا");
-    namesMap.put("WS", "ساموآ");
     namesMap.put("ZW", "زیمبابوی");
   }
 
@@ -445,7 +442,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "KE": "کینیا",
         "KG": "قرغزستان",
         "KH": "کمپوچیا",
-        "KM": "کومور",
         "KN": "سنت کیتس و نیویس",
         "KP": "کوریای شمالی",
         "KR": "کوریای جنوبی",
@@ -490,7 +486,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "UY": "یوروگوای",
         "VC": "سنت وینسنت و گرینادین",
         "VE": "ونزویلا",
-        "WS": "ساموآ",
         "ZW": "زیمبابوی"
     };
   }-*/;

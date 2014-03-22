@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9792 $
+//  type=mt
 
 /**
  * Localized names for the "mt" locale.
@@ -153,6 +152,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "CG",
         "KP",
         "KR",
+        "XK",
         "CR",
         "CI",
         "HR",
@@ -205,7 +205,6 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "OM",
         "PK",
         "PW",
-        "PS",
         "PA",
         "PG",
         "PY",
@@ -236,7 +235,6 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "LC",
         "ST",
         "SN",
-        "CS",
         "SC",
         "SL",
         "SG",
@@ -262,6 +260,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "TW",
         "TZ",
         "TF",
+        "PS",
         "TL",
         "TG",
         "TK",
@@ -353,7 +352,6 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
     namesMap.put("BY", "Bjelorussja");
     namesMap.put("BZ", "Beliże");
     namesMap.put("CA", "Kanada");
-    namesMap.put("CC", "Cocos (Keeling) Islands");
     namesMap.put("CD", "Democratic Republic of the Congo");
     namesMap.put("CF", "Repubblika Afrikana Ċentrali");
     namesMap.put("CG", "Kongo");
@@ -364,7 +362,6 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
     namesMap.put("CN", "Ċina");
     namesMap.put("CO", "Kolumbja");
     namesMap.put("CR", "Kosta Rika");
-    namesMap.put("CS", "Serbja u Montenegro");
     namesMap.put("CU", "Kuba");
     namesMap.put("CV", "Kape Verde");
     namesMap.put("CY", "Ċipru");
@@ -399,11 +396,13 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
     namesMap.put("GP", "Gwadelupe");
     namesMap.put("GQ", "Ginea Ekwatorjali");
     namesMap.put("GR", "Greċja");
+    namesMap.put("GS", "South Georgia and the South Sandwich Islands");
     namesMap.put("GT", "Gwatemala");
     namesMap.put("GU", "Gwam");
     namesMap.put("GW", "Ginea-Bissaw");
     namesMap.put("GY", "Gujana");
-    namesMap.put("HK", "Ħong Kong");
+    namesMap.put("HK", "Ħong Kong S.A.R. Ċina");
+    namesMap.put("HM", "Heard Island and McDonald Islands");
     namesMap.put("HN", "Ħonduras");
     namesMap.put("HR", "Kroazja");
     namesMap.put("HT", "Ħaiti");
@@ -442,7 +441,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
     namesMap.put("MK", "Maċedonja");
     namesMap.put("MM", "Mjanmar");
     namesMap.put("MN", "Mongolja");
-    namesMap.put("MO", "Macao");
+    namesMap.put("MO", "Macao S.A.R., China");
     namesMap.put("MP", "Gżejjer Marjana ta’ Fuq");
     namesMap.put("MQ", "Martinik");
     namesMap.put("MR", "Mawritanja");
@@ -461,7 +460,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
     namesMap.put("PH", "Filippini");
     namesMap.put("PL", "Polonja");
     namesMap.put("PN", "Pitcairn");
-    namesMap.put("PS", "Palestinian Territory");
+    namesMap.put("PS", "Territorju Palestinjan");
     namesMap.put("PT", "Portugall");
     namesMap.put("PY", "Paragwaj");
     namesMap.put("RO", "Rumanija");
@@ -493,6 +492,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
     namesMap.put("UY", "Urugwaj");
     namesMap.put("UZ", "Użbekistan");
     namesMap.put("VA", "Vatikan");
+    namesMap.put("VC", "Saint Vincent and the Grenadines");
     namesMap.put("VE", "Venezwela");
     namesMap.put("VN", "Vjetnam");
     namesMap.put("VU", "Vanwatu");
@@ -501,7 +501,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
     namesMap.put("ZA", "Afrika t’Isfel");
     namesMap.put("ZM", "Żambja");
     namesMap.put("ZW", "Żimbabwe");
-    namesMap.put("ZZ", "Reġjun Mhux Magħruf jew Mhux Validu");
+    namesMap.put("ZZ", "Reġjun Mhux Magħruf");
   }
 
   @Override
@@ -567,7 +567,6 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "BY": "Bjelorussja",
         "BZ": "Beliże",
         "CA": "Kanada",
-        "CC": "Cocos (Keeling) Islands",
         "CD": "Democratic Republic of the Congo",
         "CF": "Repubblika Afrikana Ċentrali",
         "CG": "Kongo",
@@ -578,7 +577,6 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "CN": "Ċina",
         "CO": "Kolumbja",
         "CR": "Kosta Rika",
-        "CS": "Serbja u Montenegro",
         "CU": "Kuba",
         "CV": "Kape Verde",
         "CY": "Ċipru",
@@ -613,11 +611,13 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "GP": "Gwadelupe",
         "GQ": "Ginea Ekwatorjali",
         "GR": "Greċja",
+        "GS": "South Georgia and the South Sandwich Islands",
         "GT": "Gwatemala",
         "GU": "Gwam",
         "GW": "Ginea-Bissaw",
         "GY": "Gujana",
-        "HK": "Ħong Kong",
+        "HK": "Ħong Kong S.A.R. Ċina",
+        "HM": "Heard Island and McDonald Islands",
         "HN": "Ħonduras",
         "HR": "Kroazja",
         "HT": "Ħaiti",
@@ -656,7 +656,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "MK": "Maċedonja",
         "MM": "Mjanmar",
         "MN": "Mongolja",
-        "MO": "Macao",
+        "MO": "Macao S.A.R., China",
         "MP": "Gżejjer Marjana ta’ Fuq",
         "MQ": "Martinik",
         "MR": "Mawritanja",
@@ -675,7 +675,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "PH": "Filippini",
         "PL": "Polonja",
         "PN": "Pitcairn",
-        "PS": "Palestinian Territory",
+        "PS": "Territorju Palestinjan",
         "PT": "Portugall",
         "PY": "Paragwaj",
         "RO": "Rumanija",
@@ -707,6 +707,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "UY": "Urugwaj",
         "UZ": "Użbekistan",
         "VA": "Vatikan",
+        "VC": "Saint Vincent and the Grenadines",
         "VE": "Venezwela",
         "VN": "Vjetnam",
         "VU": "Vanwatu",
@@ -715,7 +716,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "ZA": "Afrika t’Isfel",
         "ZM": "Żambja",
         "ZW": "Żimbabwe",
-        "ZZ": "Reġjun Mhux Magħruf jew Mhux Validu"
+        "ZZ": "Reġjun Mhux Magħruf"
     };
   }-*/;
 }

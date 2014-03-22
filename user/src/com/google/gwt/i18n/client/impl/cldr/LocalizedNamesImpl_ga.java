@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9791 $
+//  type=ga
 
 /**
  * Localized names for the "ga" locale.
@@ -32,7 +31,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "AC",
         "AG",
         "ET",
         "AF",
@@ -136,7 +134,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "JP",
         "SN",
         "RS",
-        "CS",
         "GE",
         "GS",
         "CL",
@@ -149,6 +146,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "SE",
         "SZ",
         "SD",
+        "SS",
         "TN",
         "TR",
         "TM",
@@ -161,7 +159,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "BB",
         "BJ",
         "BM",
-        "BL",
         "BQ",
         "BN",
         "BF",
@@ -195,7 +192,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "GT",
         "HT",
         "HN",
-        "HK",
         "JM",
         "IC",
         "IL",
@@ -203,7 +199,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "LS",
         "LI",
         "LU",
-        "MO",
         "MG",
         "MM",
         "ML",
@@ -247,6 +242,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "HM",
         "IM",
         "MU",
+        "AC",
         "CX",
         "NF",
         "OM",
@@ -259,8 +255,11 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "CF",
         "CZ",
         "PR",
+        "HK",
+        "MO",
         "RE",
         "RW",
+        "BL",
         "KN",
         "PM",
         "VC",
@@ -274,7 +273,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "SL",
         "SG",
         "LK",
-        "SS",
         "US",
         "SR",
         "SJ",
@@ -291,6 +289,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "VU",
         "VE",
         "VN",
+        "XK",
     };
   }
 
@@ -299,18 +298,32 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
     super.loadNameMapJava();
     namesMap.put("001", "An Domhan");
     namesMap.put("002", "An Afraic");
+    namesMap.put("003", "Meiriceá Thuaidh");
+    namesMap.put("005", "Meiriceá Theas");
     namesMap.put("009", "An Aigéine");
+    namesMap.put("011", "an Afraic Iartharach");
     namesMap.put("013", "Meiriceá Láir");
+    namesMap.put("014", "An Afraic Oirthearach");
+    namesMap.put("015", "An Afraic Thuaisceartach");
     namesMap.put("017", "An Afraic Láir");
+    namesMap.put("018", "An Afraic Dheisceartach");
     namesMap.put("019", "Na Meiriceánna");
+    namesMap.put("021", "Meiriceá Tuaisceartach");
+    namesMap.put("029", "Cairibeach");
+    namesMap.put("030", "Oirthear na hÁise");
+    namesMap.put("035", "Oirdheisceart na hÁise");
     namesMap.put("053", "An Astráil agus an Nua-Shéalainn");
     namesMap.put("054", "An Mheilinéis");
     namesMap.put("057", "An Réigiún Micrinéiseach");
     namesMap.put("061", "An Pholainéis");
     namesMap.put("142", "An Áise");
     namesMap.put("143", "An Áise Láir");
+    namesMap.put("145", "Iarthar na hÁise");
     namesMap.put("150", "An Eoraip");
+    namesMap.put("151", "Oirthear na hEorpa");
+    namesMap.put("155", "Iarthar na hEorpa");
     namesMap.put("419", "Meiriceá Laidineach agus an Mhuir Chairib");
+    namesMap.put("AC", "Oileán na Deascabhála");
     namesMap.put("AD", "Andóra");
     namesMap.put("AE", "Aontas na nÉimíríochtaí Arabacha");
     namesMap.put("AF", "An Afganastáin");
@@ -359,7 +372,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
     namesMap.put("CN", "An tSín");
     namesMap.put("CO", "An Cholóim");
     namesMap.put("CR", "Cósta Ríce");
-    namesMap.put("CS", "An tSeirbia agus Montainéagró");
     namesMap.put("CU", "Cúba");
     namesMap.put("CV", "An Rinn Ghlas");
     namesMap.put("CX", "Oileán na Nollag");
@@ -401,7 +413,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
     namesMap.put("GT", "Guatamala");
     namesMap.put("GW", "An Ghuine-Bhissau");
     namesMap.put("GY", "An Ghuáin");
-    namesMap.put("HK", "Hong Cong");
+    namesMap.put("HK", "R.R.S. na Síne Hong Cong");
     namesMap.put("HM", "Oileán Heard agus Oileáin McDonald");
     namesMap.put("HN", "Hondúras");
     namesMap.put("HR", "An Chróit");
@@ -451,7 +463,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
     namesMap.put("ML", "Mailí");
     namesMap.put("MM", "Maenmar");
     namesMap.put("MN", "An Mhongóil");
-    namesMap.put("MO", "Macáó");
+    namesMap.put("MO", "R.R.S. na Síne Macáó");
     namesMap.put("MP", "Oileáin Mariana Thuaidh");
     namesMap.put("MQ", "Martainíc");
     namesMap.put("MR", "An Mharatáin");
@@ -509,6 +521,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
     namesMap.put("SN", "An tSeineagáil");
     namesMap.put("SO", "An tSomáil");
     namesMap.put("SR", "Suranam");
+    namesMap.put("SS", "An tSúdáin Theas");
     namesMap.put("ST", "Sao Tome agus Principe");
     namesMap.put("SV", "An tSalvadóir");
     namesMap.put("SY", "An tSiria");
@@ -559,18 +572,32 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
     return {
         "001": "An Domhan",
         "002": "An Afraic",
+        "003": "Meiriceá Thuaidh",
+        "005": "Meiriceá Theas",
         "009": "An Aigéine",
+        "011": "an Afraic Iartharach",
         "013": "Meiriceá Láir",
+        "014": "An Afraic Oirthearach",
+        "015": "An Afraic Thuaisceartach",
         "017": "An Afraic Láir",
+        "018": "An Afraic Dheisceartach",
         "019": "Na Meiriceánna",
+        "021": "Meiriceá Tuaisceartach",
+        "029": "Cairibeach",
+        "030": "Oirthear na hÁise",
+        "035": "Oirdheisceart na hÁise",
         "053": "An Astráil agus an Nua-Shéalainn",
         "054": "An Mheilinéis",
         "057": "An Réigiún Micrinéiseach",
         "061": "An Pholainéis",
         "142": "An Áise",
         "143": "An Áise Láir",
+        "145": "Iarthar na hÁise",
         "150": "An Eoraip",
+        "151": "Oirthear na hEorpa",
+        "155": "Iarthar na hEorpa",
         "419": "Meiriceá Laidineach agus an Mhuir Chairib",
+        "AC": "Oileán na Deascabhála",
         "AD": "Andóra",
         "AE": "Aontas na nÉimíríochtaí Arabacha",
         "AF": "An Afganastáin",
@@ -619,7 +646,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "CN": "An tSín",
         "CO": "An Cholóim",
         "CR": "Cósta Ríce",
-        "CS": "An tSeirbia agus Montainéagró",
         "CU": "Cúba",
         "CV": "An Rinn Ghlas",
         "CX": "Oileán na Nollag",
@@ -661,7 +687,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "GT": "Guatamala",
         "GW": "An Ghuine-Bhissau",
         "GY": "An Ghuáin",
-        "HK": "Hong Cong",
+        "HK": "R.R.S. na Síne Hong Cong",
         "HM": "Oileán Heard agus Oileáin McDonald",
         "HN": "Hondúras",
         "HR": "An Chróit",
@@ -711,7 +737,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "ML": "Mailí",
         "MM": "Maenmar",
         "MN": "An Mhongóil",
-        "MO": "Macáó",
+        "MO": "R.R.S. na Síne Macáó",
         "MP": "Oileáin Mariana Thuaidh",
         "MQ": "Martainíc",
         "MR": "An Mharatáin",
@@ -769,6 +795,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "SN": "An tSeineagáil",
         "SO": "An tSomáil",
         "SR": "Suranam",
+        "SS": "An tSúdáin Theas",
         "ST": "Sao Tome agus Principe",
         "SV": "An tSalvadóir",
         "SY": "An tSiria",

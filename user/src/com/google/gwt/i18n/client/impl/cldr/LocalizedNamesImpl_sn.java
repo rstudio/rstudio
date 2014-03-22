@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
+//  type=sn
 
 /**
  * Localized names for the "sn" locale.
@@ -240,7 +239,6 @@ public class LocalizedNamesImpl_sn extends LocalizedNamesImpl {
         "ST",
         "SA",
         "SN",
-        "CS",
         "SC",
         "SL",
         "SG",
@@ -285,6 +283,7 @@ public class LocalizedNamesImpl_sn extends LocalizedNamesImpl {
         "VE",
         "VN",
         "WF",
+        "XK",
         "YE",
         "ZM",
         "ZW",
@@ -353,6 +352,7 @@ public class LocalizedNamesImpl_sn extends LocalizedNamesImpl {
     namesMap.put("TL", "East Timor");
     namesMap.put("US", "Amerika");
     namesMap.put("VA", "Vatican State");
+    namesMap.put("VC", "Saint Vincent and the Grenadines");
     namesMap.put("VG", "Zvitsuwa zveHingirandi");
     namesMap.put("VI", "Zvitsuwa zveAmerika");
   }
@@ -413,6 +413,7 @@ public class LocalizedNamesImpl_sn extends LocalizedNamesImpl {
         "TL": "East Timor",
         "US": "Amerika",
         "VA": "Vatican State",
+        "VC": "Saint Vincent and the Grenadines",
         "VG": "Zvitsuwa zveHingirandi",
         "VI": "Zvitsuwa zveAmerika"
     };

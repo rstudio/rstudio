@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
+//  cldrVersion=25
+//  date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
+//  number=$Revision: 9967 $
 //  type=lv
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "lv" locale.
@@ -97,7 +97,12 @@ public class DateTimeFormatInfoImpl_lv extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrev() {
-    return "yyyy. 'g'. MMM";
+    return "y. 'g'. MMM";
+  }
+
+  @Override
+  public String formatYearMonthAbbrevDay() {
+    return "y. 'g'. d. MMM";
   }
 
   @Override
@@ -112,22 +117,27 @@ public class DateTimeFormatInfoImpl_lv extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "MM.yyyy.";
+    return "MM.y.";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "d.M.y.";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, yyyy. 'g'. dd. MMM";
+    return "EEE, y. 'g'. d. MMM";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ yyyy";
+    return "y. 'g'. QQQQ";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q yyyy";
+    return "Q y";
   }
 
   @Override
@@ -149,6 +159,24 @@ public class DateTimeFormatInfoImpl_lv extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String[] monthsFullStandalone() {
+    return new String[] {
+        "Janvāris",
+        "Februāris",
+        "Marts",
+        "Aprīlis",
+        "Maijs",
+        "Jūnijs",
+        "Jūlijs",
+        "Augusts",
+        "Septembris",
+        "Oktobris",
+        "Novembris",
+        "Decembris"
+    };
+  }
+
+  @Override
   public String[] monthsShort() {
     return new String[] {
         "janv.",
@@ -163,6 +191,24 @@ public class DateTimeFormatInfoImpl_lv extends DateTimeFormatInfoImpl {
         "okt.",
         "nov.",
         "dec."
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
+    return new String[] {
+        "Janv.",
+        "Febr.",
+        "Marts",
+        "Apr.",
+        "Maijs",
+        "Jūn.",
+        "Jūl.",
+        "Aug.",
+        "Sept.",
+        "Okt.",
+        "Nov.",
+        "Dec."
     };
   }
 
@@ -196,6 +242,19 @@ public class DateTimeFormatInfoImpl_lv extends DateTimeFormatInfoImpl {
         "ceturtdiena",
         "piektdiena",
         "sestdiena"
+    };
+  }
+
+  @Override
+  public String[] weekdaysFullStandalone() {
+    return new String[] {
+        "Svētdiena",
+        "Pirmdiena",
+        "Otrdiena",
+        "Trešdiena",
+        "Ceturtdiena",
+        "Piektdiena",
+        "Sestdiena"
     };
   }
 

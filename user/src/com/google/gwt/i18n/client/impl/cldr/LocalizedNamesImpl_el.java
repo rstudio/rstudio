@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
 //  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "el" locale.
@@ -39,16 +38,14 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "BQ",
-        "CW",
-        "SS",
-        "SX",
         "SH",
         "LC",
         "BL",
         "VC",
         "SM",
         "MF",
+        "SX",
+        "KN",
         "AZ",
         "EG",
         "ET",
@@ -58,7 +55,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "DZ",
         "VI",
         "AS",
-        "TL",
         "AO",
         "AI",
         "AD",
@@ -79,7 +75,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "VN",
         "BO",
         "KP",
-        "MP",
         "BA",
         "BG",
         "BR",
@@ -116,7 +111,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "EU",
         "ZM",
         "ZW",
-        "SZ",
         "AE",
         "US",
         "GB",
@@ -148,9 +142,11 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "KM",
         "CD",
         "CG",
+        "XK",
         "CR",
         "CU",
         "KW",
+        "CW",
         "HR",
         "CY",
         "LA",
@@ -177,7 +173,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "MR",
         "ME",
         "MX",
-        "FX",
         "MM",
         "FM",
         "MN",
@@ -201,12 +196,14 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "NZ",
         "NC",
         "NP",
-        "AX",
+        "MP",
         "KY",
         "CC",
         "CK",
         "MH",
-        "WF",
+        "GS",
+        "AX",
+        "PN",
         "SB",
         "TC",
         "FO",
@@ -224,14 +221,16 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "NU",
         "NO",
         "ZA",
-        "GS",
         "KR",
+        "SS",
         "DG",
         "DM",
         "NL",
+        "BQ",
         "AN",
         "OM",
         "HN",
+        "WF",
         "HU",
         "UG",
         "UZ",
@@ -246,7 +245,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "MK",
         "QO",
         "PE",
-        "PN",
         "PL",
         "PT",
         "PR",
@@ -255,21 +253,20 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "RW",
         "RO",
         "RU",
-        "KN",
-        "PM",
         "WS",
         "ST",
         "SA",
         "SJ",
         "SN",
+        "PM",
         "RS",
-        "CS",
         "SC",
         "SG",
         "SL",
         "SK",
         "SI",
         "SO",
+        "SZ",
         "SD",
         "SE",
         "SR",
@@ -280,7 +277,9 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "TZ",
         "TJ",
         "JM",
+        "JE",
         "DJ",
+        "TL",
         "TG",
         "TK",
         "TO",
@@ -293,7 +292,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "CZ",
         "TN",
         "YE",
-        "JE",
         "PH",
         "FI",
         "FJ",
@@ -323,7 +321,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("034", "Νότια Ασία");
     namesMap.put("035", "Νοτιοανατολική Ασία");
     namesMap.put("039", "Νότια Ευρώπη");
-    namesMap.put("053", "Αυστραλία και Νέα Ζηλανδία");
+    namesMap.put("053", "Αυστραλασία");
     namesMap.put("054", "Μελανησία");
     namesMap.put("057", "Περιοχή Μικρονησίας");
     namesMap.put("061", "Πολυνησία");
@@ -351,7 +349,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("AT", "Αυστρία");
     namesMap.put("AU", "Αυστραλία");
     namesMap.put("AW", "Αρούμπα");
-    namesMap.put("AX", "Νήσοι Άλαντ");
+    namesMap.put("AX", "Νήσοι Όλαντ");
     namesMap.put("AZ", "Αζερμπαϊτζάν");
     namesMap.put("BA", "Βοσνία - Ερζεγοβίνη");
     namesMap.put("BB", "Μπαρμπάντος");
@@ -366,15 +364,16 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("BM", "Βερμούδες");
     namesMap.put("BN", "Μπρουνέι");
     namesMap.put("BO", "Βολιβία");
+    namesMap.put("BQ", "Ολλανδία Καραϊβικής");
     namesMap.put("BR", "Βραζιλία");
     namesMap.put("BS", "Μπαχάμες");
     namesMap.put("BT", "Μπουτάν");
     namesMap.put("BV", "Νήσος Μπουβέ");
     namesMap.put("BW", "Μποτσουάνα");
     namesMap.put("BY", "Λευκορωσία");
-    namesMap.put("BZ", "Μπελίσε");
+    namesMap.put("BZ", "Μπελίζ");
     namesMap.put("CA", "Καναδάς");
-    namesMap.put("CC", "Νήσοι Κόκος");
+    namesMap.put("CC", "Νήσοι Κόκος (Κίλινγκ)");
     namesMap.put("CD", "Κονγκό - Κινσάσα");
     namesMap.put("CF", "Κεντροαφρικανική Δημοκρατία");
     namesMap.put("CG", "Κονγκό - Μπραζαβίλ");
@@ -387,12 +386,12 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("CO", "Κολομβία");
     namesMap.put("CP", "Νήσος Κλίπερτον");
     namesMap.put("CR", "Κόστα Ρίκα");
-    namesMap.put("CS", "Σερβία και Μαυροβούνιο");
     namesMap.put("CU", "Κούβα");
     namesMap.put("CV", "Πράσινο Ακρωτήριο");
-    namesMap.put("CX", "Νήσος Χριστουγέννων");
+    namesMap.put("CW", "Κουρασάο");
+    namesMap.put("CX", "Νήσος των Χριστουγέννων");
     namesMap.put("CY", "Κύπρος");
-    namesMap.put("CZ", "Τσεχία");
+    namesMap.put("CZ", "Τσεχική Δημοκρατία");
     namesMap.put("DE", "Γερμανία");
     namesMap.put("DG", "Ντιέγκο Γκαρσία");
     namesMap.put("DJ", "Τζιμπουτί");
@@ -411,17 +410,16 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("EU", "Ευρωπαϊκή Ένωση");
     namesMap.put("FI", "Φινλανδία");
     namesMap.put("FJ", "Φίτζι");
-    namesMap.put("FK", "Νήσοι Φώκλαντ");
+    namesMap.put("FK", "Νήσοι Φόκλαντ");
     namesMap.put("FM", "Μικρονησία");
-    namesMap.put("FO", "Νήσοι Φερόε");
+    namesMap.put("FO", "Νήσοι Φερόες");
     namesMap.put("FR", "Γαλλία");
-    namesMap.put("FX", "Μητροπολιτική Γαλλία");
     namesMap.put("GA", "Γκαμπόν");
     namesMap.put("GB", "Ηνωμένο Βασίλειο");
     namesMap.put("GD", "Γρενάδα");
     namesMap.put("GE", "Γεωργία");
     namesMap.put("GF", "Γαλλική Γουιάνα");
-    namesMap.put("GG", "Γκερνσέι");
+    namesMap.put("GG", "Γκέρνζι");
     namesMap.put("GH", "Γκάνα");
     namesMap.put("GI", "Γιβραλτάρ");
     namesMap.put("GL", "Γροιλανδία");
@@ -430,12 +428,12 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("GP", "Γουαδελούπη");
     namesMap.put("GQ", "Ισημερινή Γουινέα");
     namesMap.put("GR", "Ελλάδα");
-    namesMap.put("GS", "Νότια Γεωργία και Νότιες Νήσοι Σάντουιτς");
+    namesMap.put("GS", "Νήσοι Νότια Γεωργία και Νότιες Σάντουιτς");
     namesMap.put("GT", "Γουατεμάλα");
     namesMap.put("GU", "Γκουάμ");
-    namesMap.put("GW", "Γουινέα-Μπισάου");
+    namesMap.put("GW", "Γουινέα Μπισάου");
     namesMap.put("GY", "Γουιάνα");
-    namesMap.put("HK", "Χονγκ Κονγκ");
+    namesMap.put("HK", "Χονγκ Κονγκ ΕΔΠ Κίνας");
     namesMap.put("HM", "Νήσοι Χερντ και Μακντόναλντ");
     namesMap.put("HN", "Ονδούρα");
     namesMap.put("HR", "Κροατία");
@@ -452,7 +450,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("IR", "Ιράν");
     namesMap.put("IS", "Ισλανδία");
     namesMap.put("IT", "Ιταλία");
-    namesMap.put("JE", "Υερσέη");
+    namesMap.put("JE", "Τζέρζι");
     namesMap.put("JM", "Τζαμάικα");
     namesMap.put("JO", "Ιορδανία");
     namesMap.put("JP", "Ιαπωνία");
@@ -460,12 +458,12 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("KG", "Κιργιστάν");
     namesMap.put("KH", "Καμπότζη");
     namesMap.put("KI", "Κιριμπάτι");
-    namesMap.put("KM", "Κομόρος");
-    namesMap.put("KN", "Σαιντ Κιτς και Νέβις");
+    namesMap.put("KM", "Κομόρες");
+    namesMap.put("KN", "Άγιος Χριστόφορος και Νέβις");
     namesMap.put("KP", "Βόρεια Κορέα");
     namesMap.put("KR", "Νότια Κορέα");
     namesMap.put("KW", "Κουβέιτ");
-    namesMap.put("KY", "Νήσοι Κέιμαν");
+    namesMap.put("KY", "Νήσοι Κάιμαν");
     namesMap.put("KZ", "Καζακστάν");
     namesMap.put("LA", "Λάος");
     namesMap.put("LB", "Λίβανος");
@@ -482,15 +480,15 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("MC", "Μονακό");
     namesMap.put("MD", "Μολδαβία");
     namesMap.put("ME", "Μαυροβούνιο");
-    namesMap.put("MF", "Άγιος Μαρτίνος");
+    namesMap.put("MF", "Άγιος Μαρτίνος (Γαλλικό τμήμα)");
     namesMap.put("MG", "Μαδαγασκάρη");
     namesMap.put("MH", "Νήσοι Μάρσαλ");
     namesMap.put("MK", "ΠΓΔΜ");
     namesMap.put("ML", "Μάλι");
-    namesMap.put("MM", "Μιανμάρ");
+    namesMap.put("MM", "Μιανμάρ/Βιρμανία");
     namesMap.put("MN", "Μογγολία");
-    namesMap.put("MO", "Μακάο");
-    namesMap.put("MP", "Βόρειες Μαριάνες Νήσοι");
+    namesMap.put("MO", "Μακάο ΕΔΠ Κίνας");
+    namesMap.put("MP", "Νήσοι Βόρειες Μαριάνες");
     namesMap.put("MQ", "Μαρτινίκα");
     namesMap.put("MR", "Μαυριτανία");
     namesMap.put("MS", "Μονσεράτ");
@@ -510,7 +508,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("NL", "Ολλανδία");
     namesMap.put("NO", "Νορβηγία");
     namesMap.put("NP", "Νεπάλ");
-    namesMap.put("NR", "Ναούρου");
+    namesMap.put("NR", "Ναουρού");
     namesMap.put("NU", "Νιούε");
     namesMap.put("NZ", "Νέα Ζηλανδία");
     namesMap.put("OM", "Ομάν");
@@ -521,8 +519,8 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("PH", "Φιλιππίνες");
     namesMap.put("PK", "Πακιστάν");
     namesMap.put("PL", "Πολωνία");
-    namesMap.put("PM", "Σαιντ Πιέρ και Μικελόν");
-    namesMap.put("PN", "Πίτκερν");
+    namesMap.put("PM", "Σεν Πιερ και Μικελόν");
+    namesMap.put("PN", "Νήσοι Πίτκερν");
     namesMap.put("PR", "Πουέρτο Ρίκο");
     namesMap.put("PS", "Παλαιστινιακά Εδάφη");
     namesMap.put("PT", "Πορτογαλία");
@@ -530,7 +528,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("PY", "Παραγουάη");
     namesMap.put("QA", "Κατάρ");
     namesMap.put("QO", "Περιφερειακή Ωκεανία");
-    namesMap.put("RE", "Ρεϋνιόν");
+    namesMap.put("RE", "Ρεϊνιόν");
     namesMap.put("RO", "Ρουμανία");
     namesMap.put("RS", "Σερβία");
     namesMap.put("RU", "Ρωσία");
@@ -543,26 +541,28 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("SG", "Σιγκαπούρη");
     namesMap.put("SH", "Αγία Ελένη");
     namesMap.put("SI", "Σλοβενία");
-    namesMap.put("SJ", "Σβάλμπαρντ και Νήσοι Γιάν Μέϋεν");
+    namesMap.put("SJ", "Σβάλμπαρντ και Γιαν Μαγιέν");
     namesMap.put("SK", "Σλοβακία");
     namesMap.put("SL", "Σιέρα Λεόνε");
     namesMap.put("SM", "Άγιος Μαρίνος");
     namesMap.put("SN", "Σενεγάλη");
     namesMap.put("SO", "Σομαλία");
     namesMap.put("SR", "Σουρινάμ");
+    namesMap.put("SS", "Νότιο Σουδάν");
     namesMap.put("ST", "Σάο Τομέ και Πρίνσιπε");
     namesMap.put("SV", "Ελ Σαλβαδόρ");
+    namesMap.put("SX", "Άγιος Μαρτίνος (Ολλανδικό τμήμα)");
     namesMap.put("SY", "Συρία");
-    namesMap.put("SZ", "Ζουαζηλάνδη");
+    namesMap.put("SZ", "Σουαζιλάνδη");
     namesMap.put("TA", "Τριστάν ντα Κούνια");
-    namesMap.put("TC", "Νήσοι Τερκς και Κάικος");
+    namesMap.put("TC", "Νήσοι Τερκ και Κάικος");
     namesMap.put("TD", "Τσαντ");
-    namesMap.put("TF", "Γαλλικά Νότια Εδάφη");
+    namesMap.put("TF", "Γαλλικές περιοχές του νοτίου ημισφαιρίου");
     namesMap.put("TG", "Τόγκο");
     namesMap.put("TH", "Ταϊλάνδη");
     namesMap.put("TJ", "Τατζικιστάν");
     namesMap.put("TK", "Τοκελάου");
-    namesMap.put("TL", "Ανατολικό Τιμόρ");
+    namesMap.put("TL", "Τιμόρ-Λέστε");
     namesMap.put("TM", "Τουρκμενιστάν");
     namesMap.put("TN", "Τυνησία");
     namesMap.put("TO", "Τόνγκα");
@@ -574,7 +574,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("UA", "Ουκρανία");
     namesMap.put("UG", "Ουγκάντα");
     namesMap.put("UM", "Απομακρυσμένες Νησίδες Η.Π.Α.");
-    namesMap.put("US", "Ηνωμένες Πολιτείες της Αμερικής");
+    namesMap.put("US", "Ηνωμένες Πολιτείες");
     namesMap.put("UY", "Ουρουγουάη");
     namesMap.put("UZ", "Ουζμπεκιστάν");
     namesMap.put("VA", "Βατικανό");
@@ -584,14 +584,15 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("VI", "Αμερικανικές Παρθένοι Νήσοι");
     namesMap.put("VN", "Βιετνάμ");
     namesMap.put("VU", "Βανουάτου");
-    namesMap.put("WF", "Νήσοι Ουαλλίς και Φουτουνά");
+    namesMap.put("WF", "Ουάλις και Φουτούνα");
     namesMap.put("WS", "Σαμόα");
+    namesMap.put("XK", "Κόσοβο");
     namesMap.put("YE", "Υεμένη");
     namesMap.put("YT", "Μαγιότ");
     namesMap.put("ZA", "Νότια Αφρική");
     namesMap.put("ZM", "Ζάμπια");
     namesMap.put("ZW", "Ζιμπάμπουε");
-    namesMap.put("ZZ", "Άγνωστη ή μη έγκυρη περιοχή");
+    namesMap.put("ZZ", "Άγνωστη περιοχή");
   }
 
   @Override
@@ -619,7 +620,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "034": "Νότια Ασία",
         "035": "Νοτιοανατολική Ασία",
         "039": "Νότια Ευρώπη",
-        "053": "Αυστραλία και Νέα Ζηλανδία",
+        "053": "Αυστραλασία",
         "054": "Μελανησία",
         "057": "Περιοχή Μικρονησίας",
         "061": "Πολυνησία",
@@ -647,7 +648,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "AT": "Αυστρία",
         "AU": "Αυστραλία",
         "AW": "Αρούμπα",
-        "AX": "Νήσοι Άλαντ",
+        "AX": "Νήσοι Όλαντ",
         "AZ": "Αζερμπαϊτζάν",
         "BA": "Βοσνία - Ερζεγοβίνη",
         "BB": "Μπαρμπάντος",
@@ -662,15 +663,16 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "BM": "Βερμούδες",
         "BN": "Μπρουνέι",
         "BO": "Βολιβία",
+        "BQ": "Ολλανδία Καραϊβικής",
         "BR": "Βραζιλία",
         "BS": "Μπαχάμες",
         "BT": "Μπουτάν",
         "BV": "Νήσος Μπουβέ",
         "BW": "Μποτσουάνα",
         "BY": "Λευκορωσία",
-        "BZ": "Μπελίσε",
+        "BZ": "Μπελίζ",
         "CA": "Καναδάς",
-        "CC": "Νήσοι Κόκος",
+        "CC": "Νήσοι Κόκος (Κίλινγκ)",
         "CD": "Κονγκό - Κινσάσα",
         "CF": "Κεντροαφρικανική Δημοκρατία",
         "CG": "Κονγκό - Μπραζαβίλ",
@@ -683,12 +685,12 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "CO": "Κολομβία",
         "CP": "Νήσος Κλίπερτον",
         "CR": "Κόστα Ρίκα",
-        "CS": "Σερβία και Μαυροβούνιο",
         "CU": "Κούβα",
         "CV": "Πράσινο Ακρωτήριο",
-        "CX": "Νήσος Χριστουγέννων",
+        "CW": "Κουρασάο",
+        "CX": "Νήσος των Χριστουγέννων",
         "CY": "Κύπρος",
-        "CZ": "Τσεχία",
+        "CZ": "Τσεχική Δημοκρατία",
         "DE": "Γερμανία",
         "DG": "Ντιέγκο Γκαρσία",
         "DJ": "Τζιμπουτί",
@@ -707,17 +709,16 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "EU": "Ευρωπαϊκή Ένωση",
         "FI": "Φινλανδία",
         "FJ": "Φίτζι",
-        "FK": "Νήσοι Φώκλαντ",
+        "FK": "Νήσοι Φόκλαντ",
         "FM": "Μικρονησία",
-        "FO": "Νήσοι Φερόε",
+        "FO": "Νήσοι Φερόες",
         "FR": "Γαλλία",
-        "FX": "Μητροπολιτική Γαλλία",
         "GA": "Γκαμπόν",
         "GB": "Ηνωμένο Βασίλειο",
         "GD": "Γρενάδα",
         "GE": "Γεωργία",
         "GF": "Γαλλική Γουιάνα",
-        "GG": "Γκερνσέι",
+        "GG": "Γκέρνζι",
         "GH": "Γκάνα",
         "GI": "Γιβραλτάρ",
         "GL": "Γροιλανδία",
@@ -726,12 +727,12 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "GP": "Γουαδελούπη",
         "GQ": "Ισημερινή Γουινέα",
         "GR": "Ελλάδα",
-        "GS": "Νότια Γεωργία και Νότιες Νήσοι Σάντουιτς",
+        "GS": "Νήσοι Νότια Γεωργία και Νότιες Σάντουιτς",
         "GT": "Γουατεμάλα",
         "GU": "Γκουάμ",
-        "GW": "Γουινέα-Μπισάου",
+        "GW": "Γουινέα Μπισάου",
         "GY": "Γουιάνα",
-        "HK": "Χονγκ Κονγκ",
+        "HK": "Χονγκ Κονγκ ΕΔΠ Κίνας",
         "HM": "Νήσοι Χερντ και Μακντόναλντ",
         "HN": "Ονδούρα",
         "HR": "Κροατία",
@@ -748,7 +749,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "IR": "Ιράν",
         "IS": "Ισλανδία",
         "IT": "Ιταλία",
-        "JE": "Υερσέη",
+        "JE": "Τζέρζι",
         "JM": "Τζαμάικα",
         "JO": "Ιορδανία",
         "JP": "Ιαπωνία",
@@ -756,12 +757,12 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "KG": "Κιργιστάν",
         "KH": "Καμπότζη",
         "KI": "Κιριμπάτι",
-        "KM": "Κομόρος",
-        "KN": "Σαιντ Κιτς και Νέβις",
+        "KM": "Κομόρες",
+        "KN": "Άγιος Χριστόφορος και Νέβις",
         "KP": "Βόρεια Κορέα",
         "KR": "Νότια Κορέα",
         "KW": "Κουβέιτ",
-        "KY": "Νήσοι Κέιμαν",
+        "KY": "Νήσοι Κάιμαν",
         "KZ": "Καζακστάν",
         "LA": "Λάος",
         "LB": "Λίβανος",
@@ -778,15 +779,15 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "MC": "Μονακό",
         "MD": "Μολδαβία",
         "ME": "Μαυροβούνιο",
-        "MF": "Άγιος Μαρτίνος",
+        "MF": "Άγιος Μαρτίνος (Γαλλικό τμήμα)",
         "MG": "Μαδαγασκάρη",
         "MH": "Νήσοι Μάρσαλ",
         "MK": "ΠΓΔΜ",
         "ML": "Μάλι",
-        "MM": "Μιανμάρ",
+        "MM": "Μιανμάρ/Βιρμανία",
         "MN": "Μογγολία",
-        "MO": "Μακάο",
-        "MP": "Βόρειες Μαριάνες Νήσοι",
+        "MO": "Μακάο ΕΔΠ Κίνας",
+        "MP": "Νήσοι Βόρειες Μαριάνες",
         "MQ": "Μαρτινίκα",
         "MR": "Μαυριτανία",
         "MS": "Μονσεράτ",
@@ -806,7 +807,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "NL": "Ολλανδία",
         "NO": "Νορβηγία",
         "NP": "Νεπάλ",
-        "NR": "Ναούρου",
+        "NR": "Ναουρού",
         "NU": "Νιούε",
         "NZ": "Νέα Ζηλανδία",
         "OM": "Ομάν",
@@ -817,8 +818,8 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "PH": "Φιλιππίνες",
         "PK": "Πακιστάν",
         "PL": "Πολωνία",
-        "PM": "Σαιντ Πιέρ και Μικελόν",
-        "PN": "Πίτκερν",
+        "PM": "Σεν Πιερ και Μικελόν",
+        "PN": "Νήσοι Πίτκερν",
         "PR": "Πουέρτο Ρίκο",
         "PS": "Παλαιστινιακά Εδάφη",
         "PT": "Πορτογαλία",
@@ -826,7 +827,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "PY": "Παραγουάη",
         "QA": "Κατάρ",
         "QO": "Περιφερειακή Ωκεανία",
-        "RE": "Ρεϋνιόν",
+        "RE": "Ρεϊνιόν",
         "RO": "Ρουμανία",
         "RS": "Σερβία",
         "RU": "Ρωσία",
@@ -839,26 +840,28 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "SG": "Σιγκαπούρη",
         "SH": "Αγία Ελένη",
         "SI": "Σλοβενία",
-        "SJ": "Σβάλμπαρντ και Νήσοι Γιάν Μέϋεν",
+        "SJ": "Σβάλμπαρντ και Γιαν Μαγιέν",
         "SK": "Σλοβακία",
         "SL": "Σιέρα Λεόνε",
         "SM": "Άγιος Μαρίνος",
         "SN": "Σενεγάλη",
         "SO": "Σομαλία",
         "SR": "Σουρινάμ",
+        "SS": "Νότιο Σουδάν",
         "ST": "Σάο Τομέ και Πρίνσιπε",
         "SV": "Ελ Σαλβαδόρ",
+        "SX": "Άγιος Μαρτίνος (Ολλανδικό τμήμα)",
         "SY": "Συρία",
-        "SZ": "Ζουαζηλάνδη",
+        "SZ": "Σουαζιλάνδη",
         "TA": "Τριστάν ντα Κούνια",
-        "TC": "Νήσοι Τερκς και Κάικος",
+        "TC": "Νήσοι Τερκ και Κάικος",
         "TD": "Τσαντ",
-        "TF": "Γαλλικά Νότια Εδάφη",
+        "TF": "Γαλλικές περιοχές του νοτίου ημισφαιρίου",
         "TG": "Τόγκο",
         "TH": "Ταϊλάνδη",
         "TJ": "Τατζικιστάν",
         "TK": "Τοκελάου",
-        "TL": "Ανατολικό Τιμόρ",
+        "TL": "Τιμόρ-Λέστε",
         "TM": "Τουρκμενιστάν",
         "TN": "Τυνησία",
         "TO": "Τόνγκα",
@@ -870,7 +873,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "UA": "Ουκρανία",
         "UG": "Ουγκάντα",
         "UM": "Απομακρυσμένες Νησίδες Η.Π.Α.",
-        "US": "Ηνωμένες Πολιτείες της Αμερικής",
+        "US": "Ηνωμένες Πολιτείες",
         "UY": "Ουρουγουάη",
         "UZ": "Ουζμπεκιστάν",
         "VA": "Βατικανό",
@@ -880,14 +883,15 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "VI": "Αμερικανικές Παρθένοι Νήσοι",
         "VN": "Βιετνάμ",
         "VU": "Βανουάτου",
-        "WF": "Νήσοι Ουαλλίς και Φουτουνά",
+        "WF": "Ουάλις και Φουτούνα",
         "WS": "Σαμόα",
+        "XK": "Κόσοβο",
         "YE": "Υεμένη",
         "YT": "Μαγιότ",
         "ZA": "Νότια Αφρική",
         "ZM": "Ζάμπια",
         "ZW": "Ζιμπάμπουε",
-        "ZZ": "Άγνωστη ή μη έγκυρη περιοχή"
+        "ZZ": "Άγνωστη περιοχή"
     };
   }-*/;
 }

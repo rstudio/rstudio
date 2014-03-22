@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
+//  type=chr
 
 /**
  * Localized names for the "chr" locale.
@@ -88,6 +87,7 @@ public class LocalizedNamesImpl_chr extends LocalizedNamesImpl {
         "VU",
         "WF",
         "WS",
+        "XK",
         "YE",
         "YT",
         "ZA",
@@ -336,10 +336,10 @@ public class LocalizedNamesImpl_chr extends LocalizedNamesImpl {
     namesMap.put("BY", "ᏇᎳᎷᏍ");
     namesMap.put("BZ", "ᏇᎵᏍ");
     namesMap.put("CA", "ᎨᎾᏓ");
-    namesMap.put("CC", "ᎪᎪᏍ [ᎩᎵᏂ] ᏚᎦᏚᏛ");
+    namesMap.put("CC", "ᎪᎪᏍ (ᎩᎵᏂ) ᏚᎦᏚᏛ");
     namesMap.put("CD", "ᎧᏂᎪ");
     namesMap.put("CF", "ᎬᎿᎨᏍᏛ ᎠᏰᏟ ᏍᎦᏚᎩ");
-    namesMap.put("CG", "ᎧᏂᎪ [ᏍᎦᏚᎩ]");
+    namesMap.put("CG", "ᎧᏂᎪ (ᏍᎦᏚᎩ)");
     namesMap.put("CH", "ᏍᏫᏍ");
     namesMap.put("CI", "ᎢᏬᎵ ᎾᎿ ᎠᎹᏳᎶᏗ");
     namesMap.put("CK", "ᎠᏓᏍᏓᏴᎲᏍᎩ ᎤᎦᏚᏛ");
@@ -441,7 +441,7 @@ public class LocalizedNamesImpl_chr extends LocalizedNamesImpl {
     namesMap.put("ML", "ᎹᎵ");
     namesMap.put("MM", "ᎹᏯᎹᎵ");
     namesMap.put("MN", "ᎹᏂᎪᎵᎠ");
-    namesMap.put("MO", "ᎹᎧᎣ [ᎤᏓᏤᎵᏓ ᏧᏂᎸᏫᏍᏓᏁᏗ ᎢᎬᎾᏕᎾ] ᏣᎢ");
+    namesMap.put("MO", "ᎹᎧᎣ (ᎤᏓᏤᎵᏓ ᏧᏂᎸᏫᏍᏓᏁᏗ ᎢᎬᎾᏕᎾ) ᏣᎢ");
     namesMap.put("MP", "ᎾᏍᎩ ᎤᏴᏢ ᏗᏜ ᎹᎵᎠᎾ ᏚᎦᏚᏛ");
     namesMap.put("MQ", "ᎹᏘᏂᎨ");
     namesMap.put("MR", "ᎹᏘᎢᏯ");
@@ -546,10 +546,10 @@ public class LocalizedNamesImpl_chr extends LocalizedNamesImpl {
         "BY": "ᏇᎳᎷᏍ",
         "BZ": "ᏇᎵᏍ",
         "CA": "ᎨᎾᏓ",
-        "CC": "ᎪᎪᏍ [ᎩᎵᏂ] ᏚᎦᏚᏛ",
+        "CC": "ᎪᎪᏍ (ᎩᎵᏂ) ᏚᎦᏚᏛ",
         "CD": "ᎧᏂᎪ",
         "CF": "ᎬᎿᎨᏍᏛ ᎠᏰᏟ ᏍᎦᏚᎩ",
-        "CG": "ᎧᏂᎪ [ᏍᎦᏚᎩ]",
+        "CG": "ᎧᏂᎪ (ᏍᎦᏚᎩ)",
         "CH": "ᏍᏫᏍ",
         "CI": "ᎢᏬᎵ ᎾᎿ ᎠᎹᏳᎶᏗ",
         "CK": "ᎠᏓᏍᏓᏴᎲᏍᎩ ᎤᎦᏚᏛ",
@@ -651,7 +651,7 @@ public class LocalizedNamesImpl_chr extends LocalizedNamesImpl {
         "ML": "ᎹᎵ",
         "MM": "ᎹᏯᎹᎵ",
         "MN": "ᎹᏂᎪᎵᎠ",
-        "MO": "ᎹᎧᎣ [ᎤᏓᏤᎵᏓ ᏧᏂᎸᏫᏍᏓᏁᏗ ᎢᎬᎾᏕᎾ] ᏣᎢ",
+        "MO": "ᎹᎧᎣ (ᎤᏓᏤᎵᏓ ᏧᏂᎸᏫᏍᏓᏁᏗ ᎢᎬᎾᏕᎾ) ᏣᎢ",
         "MP": "ᎾᏍᎩ ᎤᏴᏢ ᏗᏜ ᎹᎵᎠᎾ ᏚᎦᏚᏛ",
         "MQ": "ᎹᏘᏂᎨ",
         "MR": "ᎹᏘᎢᏯ",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+//  number=$Revision: 9876 $
+//  type=kn
 
 /**
  * Implementation of DateTimeFormatInfo for the "kn" locale.
@@ -27,16 +27,8 @@ package com.google.gwt.i18n.shared.impl.cldr;
 public class DateTimeFormatInfoImpl_kn extends DateTimeFormatInfoImpl {
 
   @Override
-  public String[] ampms() {
-    return new String[] {
-        "am",
-        "pm"
-    };
-  }
-
-  @Override
   public String dateFormatFull() {
-    return "EEEE d MMMM y";
+    return "d MMMM y, EEEE";
   }
 
   @Override
@@ -102,7 +94,7 @@ public class DateTimeFormatInfoImpl_kn extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthNumDay() {
-    return "d-M";
+    return "d/M";
   }
 
   @Override
@@ -137,7 +129,7 @@ public class DateTimeFormatInfoImpl_kn extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, d MMM, y";
+    return "d MMM, y EEE";
   }
 
   @Override
@@ -153,11 +145,11 @@ public class DateTimeFormatInfoImpl_kn extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "ಜನವರೀ",
-        "ಫೆಬ್ರವರೀ",
+        "ಜನವರಿ",
+        "ಫೆಬ್ರವರಿ",
         "ಮಾರ್ಚ್",
-        "ಎಪ್ರಿಲ್",
-        "ಮೆ",
+        "ಏಪ್ರಿಲ್",
+        "ಮೇ",
         "ಜೂನ್",
         "ಜುಲೈ",
         "ಆಗಸ್ಟ್",
@@ -174,7 +166,7 @@ public class DateTimeFormatInfoImpl_kn extends DateTimeFormatInfoImpl {
         "ಜ",
         "ಫೆ",
         "ಮಾ",
-        "ಎ",
+        "ಏ",
         "ಮೇ",
         "ಜೂ",
         "ಜು",
@@ -189,38 +181,38 @@ public class DateTimeFormatInfoImpl_kn extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "ಜನವರೀ",
-        "ಫೆಬ್ರವರೀ",
-        "ಮಾರ್ಚ್",
-        "ಎಪ್ರಿಲ್",
-        "ಮೆ",
-        "ಜೂನ್",
-        "ಜುಲೈ",
-        "ಆಗಸ್ಟ್",
-        "ಸಪ್ಟೆಂಬರ್",
-        "ಅಕ್ಟೋಬರ್",
-        "ನವೆಂಬರ್",
-        "ಡಿಸೆಂಬರ್"
+        "ಜನ.",
+        "ಫೆಬ್ರು.",
+        "ಮಾ",
+        "ಏಪ್ರಿ.",
+        "ಮೇ",
+        "ಜೂ",
+        "ಜು.",
+        "ಆಗ.",
+        "ಸೆಪ್ಟೆಂ.",
+        "ಅಕ್ಟೋ.",
+        "ನವೆಂ.",
+        "ಡಿಸೆಂ."
     };
   }
 
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "ಒಂದು 1",
-        "ಎರಡು 2",
-        "ಮೂರು 3",
-        "ನಾಲೃಕ 4"
+        "1 ನೇ ತ್ರೈಮಾಸಿಕ",
+        "2ನೇ ತ್ರೈಮಾಸಿಕ",
+        "3 ನೇ ತ್ರೈಮಾಸಿಕ",
+        "4 ನೇ ತ್ರೈಮಾಸಿಕ"
     };
   }
 
   @Override
   public String[] quartersShort() {
     return new String[] {
-        "ಒಂದು 1",
-        "ಎರಡು 2",
-        "ಮೂರು 3",
-        "ನಾಲೃಕ 4"
+        "ತ್ರೈ 1",
+        "ತ್ರೈ 2",
+        "ತ್ರೈ 3",
+        "ತ್ರೈ 4"
     };
   }
 
@@ -280,6 +272,19 @@ public class DateTimeFormatInfoImpl_kn extends DateTimeFormatInfoImpl {
         "ಗು.",
         "ಶು.",
         "ಶನಿ."
+    };
+  }
+
+  @Override
+  public String[] weekdaysShortStandalone() {
+    return new String[] {
+        "ರವಿ",
+        "ಸೋಮ",
+        "ಮಂಗಳ",
+        "ಬುಧ",
+        "ಗುರು",
+        "ಶುಕ್ರ",
+        "ಶನಿ"
     };
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=rm
 
 /**
  * Localized names for the "rm" locale.
@@ -104,13 +103,11 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "PH",
         "FI",
         "FR",
-        "FX",
         "GA",
         "GM",
         "GE",
         "GS",
         "DE",
-        "DD",
         "GH",
         "JM",
         "JP",
@@ -223,7 +220,6 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "MO",
         "CF",
         "CD",
-        "YD",
         "DO",
         "CZ",
         "RE",
@@ -244,7 +240,6 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "ST",
         "SN",
         "RS",
-        "CS",
         "SC",
         "SL",
         "ZW",
@@ -257,9 +252,9 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "SH",
         "ES",
         "LK",
-        "SS",
         "US",
         "SD",
+        "SS",
         "SR",
         "SJ",
         "SE",
@@ -288,14 +283,13 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "UG",
         "HU",
         "EU",
-        "SU",
         "UY",
         "UZ",
         "VU",
         "VE",
         "VN",
         "WF",
-        "NT",
+        "XK",
     };
   }
 
@@ -351,12 +345,10 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
     namesMap.put("CK", "Inslas Cook");
     namesMap.put("CM", "Camerun");
     namesMap.put("CO", "Columbia");
-    namesMap.put("CS", "Serbia e Montenegro");
     namesMap.put("CV", "Cap Verd");
     namesMap.put("CX", "Insla da Christmas");
     namesMap.put("CY", "Cipra");
     namesMap.put("CZ", "Republica Tscheca");
-    namesMap.put("DD", "Germania da l'Ost");
     namesMap.put("DE", "Germania");
     namesMap.put("DJ", "Dschibuti");
     namesMap.put("DK", "Danemarc");
@@ -371,7 +363,6 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
     namesMap.put("FK", "Inslas dal Falkland");
     namesMap.put("FO", "Inslas Feroe");
     namesMap.put("FR", "Frantscha");
-    namesMap.put("FX", "Frantscha Metropolitana");
     namesMap.put("GA", "Gabun");
     namesMap.put("GB", "Reginavel Unì");
     namesMap.put("GF", "Guyana Franzosa");
@@ -421,7 +412,6 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
     namesMap.put("NF", "Insla Norfolk");
     namesMap.put("NL", "Pajais Bass");
     namesMap.put("NO", "Norvegia");
-    namesMap.put("NT", "Zona neutrala");
     namesMap.put("NZ", "Nova Zelanda");
     namesMap.put("PF", "Polinesia Franzosa");
     namesMap.put("PG", "Papua Nova Guinea");
@@ -444,8 +434,8 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
     namesMap.put("SJ", "Svalbard e Jan Mayen");
     namesMap.put("SK", "Slovachia");
     namesMap.put("SR", "Surinam");
+    namesMap.put("SS", "Sudan dal Sid");
     namesMap.put("ST", "São Tomé e Principe");
-    namesMap.put("SU", "Uniun Sovietica");
     namesMap.put("SY", "Siria");
     namesMap.put("TC", "Inslas Turks e Caicos");
     namesMap.put("TD", "Tschad");
@@ -466,7 +456,6 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
     namesMap.put("VG", "Inslas Verginas Britannicas");
     namesMap.put("VI", "Inslas Verginas Americanas");
     namesMap.put("WF", "Wallis e Futuna");
-    namesMap.put("YD", "Republica Democratica Populara da Jemen");
     namesMap.put("YE", "Jemen");
     namesMap.put("ZA", "Africa dal Sid");
     namesMap.put("ZM", "Sambia");
@@ -530,12 +519,10 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "CK": "Inslas Cook",
         "CM": "Camerun",
         "CO": "Columbia",
-        "CS": "Serbia e Montenegro",
         "CV": "Cap Verd",
         "CX": "Insla da Christmas",
         "CY": "Cipra",
         "CZ": "Republica Tscheca",
-        "DD": "Germania da l'Ost",
         "DE": "Germania",
         "DJ": "Dschibuti",
         "DK": "Danemarc",
@@ -550,7 +537,6 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "FK": "Inslas dal Falkland",
         "FO": "Inslas Feroe",
         "FR": "Frantscha",
-        "FX": "Frantscha Metropolitana",
         "GA": "Gabun",
         "GB": "Reginavel Unì",
         "GF": "Guyana Franzosa",
@@ -600,7 +586,6 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "NF": "Insla Norfolk",
         "NL": "Pajais Bass",
         "NO": "Norvegia",
-        "NT": "Zona neutrala",
         "NZ": "Nova Zelanda",
         "PF": "Polinesia Franzosa",
         "PG": "Papua Nova Guinea",
@@ -623,8 +608,8 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "SJ": "Svalbard e Jan Mayen",
         "SK": "Slovachia",
         "SR": "Surinam",
+        "SS": "Sudan dal Sid",
         "ST": "São Tomé e Principe",
-        "SU": "Uniun Sovietica",
         "SY": "Siria",
         "TC": "Inslas Turks e Caicos",
         "TD": "Tschad",
@@ -645,7 +630,6 @@ public class LocalizedNamesImpl_rm extends LocalizedNamesImpl {
         "VG": "Inslas Verginas Britannicas",
         "VI": "Inslas Verginas Americanas",
         "WF": "Wallis e Futuna",
-        "YD": "Republica Democratica Populara da Jemen",
         "YE": "Jemen",
         "ZA": "Africa dal Sid",
         "ZM": "Sambia",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,20 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5912 $
-//  type=root
-//  date=$Date: 2011-06-19 12:53:49 -0400 (Sun, 19 Jun 2011) $
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
+//  type=uz
 
 /**
  * Implementation of DateTimeFormatInfo for the "uz" locale.
  */
 public class DateTimeFormatInfoImpl_uz extends DateTimeFormatInfoImpl {
+
+  @Override
+  public String dateFormatFull() {
+    return "EEEE, y MMMM dd";
+  }
 
   @Override
   public String dateFormatShort() {
@@ -34,119 +39,129 @@ public class DateTimeFormatInfoImpl_uz extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasFull() {
     return new String[] {
-        "BCE",
-        "CE"
+        "M.A.",
+        "E"
     };
   }
 
   @Override
   public String[] erasShort() {
     return new String[] {
-        "BCE",
-        "CE"
+        "M.A.",
+        "E"
     };
   }
 
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "Январ",
-        "Феврал",
-        "Март",
-        "Апрел",
-        "Май",
-        "Июн",
-        "Июл",
-        "Август",
-        "Сентябр",
-        "Октябр",
-        "Ноябр",
-        "Декабр"
+        "Yanvar",
+        "Fevral",
+        "Mart",
+        "Aprel",
+        "May",
+        "Iyun",
+        "Iyul",
+        "Avgust",
+        "Sentyabr",
+        "Oktyabr",
+        "Noyabr",
+        "Dekabr"
     };
   }
 
   @Override
   public String[] monthsNarrow() {
     return new String[] {
-        "Я",
-        "Ф",
-        "М",
-        "А",
-        "М",
-        "И",
-        "И",
-        "А",
-        "С",
-        "О",
-        "Н",
-        "Д"
+        "Y",
+        "F",
+        "M",
+        "A",
+        "M",
+        "I",
+        "I",
+        "A",
+        "S",
+        "O",
+        "N",
+        "D"
     };
   }
 
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "Янв",
-        "Фев",
-        "Мар",
-        "Апр",
-        "Май",
-        "Июн",
-        "Июл",
-        "Авг",
-        "Сен",
-        "Окт",
-        "Ноя",
-        "Дек"
+        "Yanv",
+        "Fev",
+        "Mar",
+        "Apr",
+        "May",
+        "Iyun",
+        "Iyul",
+        "Avg",
+        "Sen",
+        "Okt",
+        "Noya",
+        "Dek"
     };
   }
 
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "Q1",
-        "Q2",
-        "Q3",
-        "Q4"
+        "1-chorak",
+        "2-chorak",
+        "3-chorak",
+        "4-chorak"
+    };
+  }
+
+  @Override
+  public String[] quartersShort() {
+    return new String[] {
+        "1-ch",
+        "2-ch",
+        "3-ch",
+        "4-ch"
     };
   }
 
   @Override
   public String[] weekdaysFull() {
     return new String[] {
-        "якшанба",
-        "душанба",
-        "сешанба",
-        "чоршанба",
-        "пайшанба",
-        "жума",
-        "шанба"
+        "yakshanba",
+        "dushanba",
+        "seshanba",
+        "chorshanba",
+        "payshanba",
+        "juma",
+        "shanba"
     };
   }
 
   @Override
   public String[] weekdaysNarrow() {
     return new String[] {
-        "Я",
-        "Д",
-        "С",
-        "Ч",
-        "П",
-        "Ж",
-        "Ш"
+        "Y",
+        "D",
+        "S",
+        "C",
+        "P",
+        "J",
+        "S"
     };
   }
 
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "Якш",
-        "Душ",
-        "Сеш",
-        "Чор",
-        "Пай",
-        "Жум",
-        "Шан"
+        "Yaksh",
+        "Dush",
+        "Sesh",
+        "Chor",
+        "Pay",
+        "Jum",
+        "Shan"
     };
   }
 }

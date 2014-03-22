@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-//  type=root
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=cy
 
 /**
  * Localized names for the "cy" locale.
@@ -40,6 +39,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "AI",
         "AQ",
         "AG",
+        "BQ",
         "AM",
         "AW",
         "AU",
@@ -53,81 +53,77 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "BJ",
         "BM",
         "BT",
-        "BL",
         "BO",
         "BA",
         "BW",
-        "BQ",
         "BR",
         "BN",
         "BF",
         "BI",
         "BG",
+        "CV",
         "NC",
         "KH",
+        "CM",
         "CA",
-        "CV",
-        "KE",
-        "TD",
+        "EA",
         "CL",
-        "KG",
         "CU",
         "CO",
         "KM",
         "CR",
         "CI",
-        "KW",
-        "CP",
         "HR",
         "CW",
         "CY",
         "ZA",
+        "GS",
         "KR",
         "DK",
+        "SS",
         "DG",
         "DJ",
         "DM",
-        "EA",
         "EC",
         "SV",
         "AE",
         "ER",
         "EE",
         "ET",
-        "EU",
         "FR",
         "VN",
         "FJ",
+        "FO",
         "GA",
         "GM",
         "GE",
-        "GG",
         "GH",
-        "GF",
         "GI",
-        "GN",
-        "GQ",
         "KP",
         "EH",
         "GD",
         "GP",
         "GU",
         "GT",
+        "GQ",
         "GW",
+        "GN",
         "GY",
+        "GF",
         "CF",
+        "DO",
         "CZ",
         "BE",
         "GR",
         "JO",
         "PL",
+        "SZ",
         "TH",
         "IS",
         "HT",
         "HN",
         "HK",
         "HU",
-        "IC",
         "IN",
         "ID",
         "IQ",
@@ -135,9 +131,14 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "IL",
         "IE",
         "JM",
+        "JP",
         "JE",
         "KZ",
+        "KE",
         "KI",
+        "XK",
+        "KW",
+        "KG",
         "LA",
         "LV",
         "LS",
@@ -152,16 +153,13 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "MG",
         "MW",
         "MY",
-        "MV",
         "ML",
         "MT",
-        "UM",
         "MQ",
-        "MU",
         "MR",
+        "MU",
         "YT",
         "MX",
-        "MF",
         "FM",
         "MD",
         "MC",
@@ -179,6 +177,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "NG",
         "NU",
         "NO",
+        "QO",
         "OM",
         "PK",
         "PW",
@@ -187,23 +186,21 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "PY",
         "PE",
         "PH",
-        "PN",
         "PF",
         "PT",
-        "GB",
         "PR",
         "QA",
         "RE",
-        "RS",
         "RW",
         "RO",
         "RU",
+        "BL",
         "SH",
         "KN",
         "LC",
+        "MF",
         "PM",
         "VC",
-        "ZM",
         "WS",
         "AS",
         "SM",
@@ -212,84 +209,87 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "ES",
         "NZ",
         "SN",
+        "RS",
         "SC",
-        "JP",
         "SL",
-        "ZW",
         "SG",
+        "SX",
         "SK",
         "SI",
         "SO",
         "LK",
-        "SS",
-        "SJ",
-        "SZ",
-        "SE",
         "SR",
-        "SX",
+        "SJ",
+        "SD",
+        "SE",
         "SY",
-        "TA",
         "TW",
         "TJ",
         "TZ",
+        "TD",
         "TL",
-        "TF",
-        "IO",
         "PS",
-        "TN",
+        "IO",
+        "TF",
         "TG",
         "TK",
         "TO",
         "TT",
+        "TA",
         "CN",
+        "TN",
+        "TM",
         "TV",
         "TR",
-        "TM",
         "UG",
         "UY",
+        "UZ",
         "VU",
         "VE",
         "WF",
         "UA",
-        "UZ",
         "BS",
-        "CM",
         "CG",
         "CD",
+        "GB",
         "YE",
         "VA",
         "FI",
+        "MV",
+        "AC",
         "BV",
+        "CP",
         "HM",
         "IM",
         "NF",
         "AX",
-        "VI",
         "AN",
         "KY",
         "CC",
         "CK",
-        "GS",
-        "FO",
         "MP",
-        "MH",
-        "QO",
         "VG",
+        "VI",
+        "MH",
+        "UM",
+        "PN",
         "SB",
         "TC",
         "FK",
-        "AC",
+        "GG",
         "CX",
         "EG",
         "DE",
         "AR",
         "IT",
         "NL",
+        "EU",
         "US",
         "GL",
-        "SD",
+        "IC",
         "CH",
-        "DO",
+        "ZM",
+        "ZW",
     };
   }
 
@@ -305,156 +305,145 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
     namesMap.put("014", "Dwyrain Affrica");
     namesMap.put("015", "Gogledd Affrica");
     namesMap.put("017", "Canol Affrica");
-    namesMap.put("018", "De Affrica [018]");
+    namesMap.put("018", "Deheudir Affrica");
+    namesMap.put("019", "Yr Amerig");
     namesMap.put("021", "America i'r Gogledd o Mecsico");
     namesMap.put("029", "Y Caribî");
     namesMap.put("030", "Dwyrain Asia");
-    namesMap.put("035", "De ddwyrain Asia");
+    namesMap.put("034", "De Asia");
+    namesMap.put("035", "De-Ddwyrain Asia");
     namesMap.put("039", "De Ewrop");
-    namesMap.put("053", "Awstralia a Seland Newydd");
-    namesMap.put("057", "Micronesia [057]");
+    namesMap.put("053", "Awstralasia");
+    namesMap.put("057", "Rhanbarth Micronesia");
+    namesMap.put("143", "Canol Asia");
     namesMap.put("145", "Gorllewin Asia");
     namesMap.put("150", "Ewrop");
     namesMap.put("151", "Dwyrain Ewrop");
     namesMap.put("154", "Gogledd Ewrop");
     namesMap.put("155", "Gorllewin Ewrop");
     namesMap.put("419", "America Ladin");
-    namesMap.put("AC", "Ynys y Dyrchafael");
-    namesMap.put("AE", "Emiraethau Arabaidd Unedig");
-    namesMap.put("AF", "Affganistan");
-    namesMap.put("AG", "Antigwa a Barbuda");
+    namesMap.put("AC", "Ynys Ascension");
+    namesMap.put("AE", "Emiradau Arabaidd Unedig");
+    namesMap.put("AG", "Antigua a Barbuda");
     namesMap.put("AN", "Ynysoedd Caribî yr Iseldiroedd");
     namesMap.put("AR", "Yr Ariannin");
-    namesMap.put("AS", "Samoa Americanaidd");
+    namesMap.put("AS", "Samoa America");
     namesMap.put("AT", "Awstria");
     namesMap.put("AU", "Awstralia");
-    namesMap.put("AX", "Ynysoedd Aland");
-    namesMap.put("BA", "Bosnia a Herzegovina");
+    namesMap.put("AX", "Ynysoedd Åland");
+    namesMap.put("BA", "Bosnia a Hercegovina");
     namesMap.put("BE", "Gwlad Belg");
     namesMap.put("BG", "Bwlgaria");
-    namesMap.put("BM", "Bermwda");
     namesMap.put("BO", "Bolifia");
+    namesMap.put("BQ", "Antilles yr Iseldiroedd");
     namesMap.put("BR", "Brasil");
     namesMap.put("BS", "Y Bahamas");
-    namesMap.put("BT", "Bhwtan");
     namesMap.put("BV", "Ynys Bouvet");
     namesMap.put("BY", "Belarws");
-    namesMap.put("CC", "Ynysoedd Cocos [Keeling]");
+    namesMap.put("CC", "Ynysoedd Cocos (Keeling)");
     namesMap.put("CD", "Y Congo - Kinshasa");
-    namesMap.put("CF", "Gweriniaeth Canol Affrica");
+    namesMap.put("CF", "Gweriniaeth Canolbarth Affrica");
     namesMap.put("CG", "Y Congo - Brazzaville");
     namesMap.put("CH", "Y Swistir");
     namesMap.put("CK", "Ynysoedd Cook");
-    namesMap.put("CM", "Y Camerŵn");
-    namesMap.put("CN", "Tseina");
+    namesMap.put("CM", "Camerŵn");
+    namesMap.put("CN", "Tsieina");
+    namesMap.put("CP", "Ynys Clipperton");
     namesMap.put("CU", "Ciwba");
+    namesMap.put("CV", "Cabo Verde");
     namesMap.put("CX", "Ynys y Nadolig");
     namesMap.put("CZ", "Gweriniaeth Tsiec");
     namesMap.put("DE", "Yr Almaen");
     namesMap.put("DK", "Denmarc");
-    namesMap.put("DO", "Y Weriniaeth Ddominicaidd");
-    namesMap.put("EC", "Ecwador");
+    namesMap.put("DO", "Gweriniaeth Dominica");
+    namesMap.put("EA", "Ceuta a Melilla");
     namesMap.put("EG", "Yr Aifft");
-    namesMap.put("EH", "Gorllewin y Sahara");
+    namesMap.put("EH", "Gorllewin Sahara");
     namesMap.put("ES", "Sbaen");
+    namesMap.put("EU", "Yr Undeb Ewropeaidd");
     namesMap.put("FI", "Y Ffindir");
-    namesMap.put("FK", "Ynysoedd y Falkland");
-    namesMap.put("FO", "Ynysoedd Ffaröe");
+    namesMap.put("FK", "Ynysoedd y Falkland/Malvinas");
+    namesMap.put("FO", "Føroyar");
     namesMap.put("FR", "Ffrainc");
-    namesMap.put("GB", "Prydain Fawr");
-    namesMap.put("GF", "Giana Ffrengig");
+    namesMap.put("GB", "Y Deyrnas Unedig");
+    namesMap.put("GF", "Guyane Ffrengig");
+    namesMap.put("GG", "Ynys y Garn");
     namesMap.put("GL", "Yr Ynys Las");
-    namesMap.put("GN", "Gini");
-    namesMap.put("GQ", "Gini Gyhydeddol");
+    namesMap.put("GN", "Guinée");
+    namesMap.put("GQ", "Guinea Gyhydeddol");
     namesMap.put("GR", "Gwlad Groeg");
-    namesMap.put("GS", "Ynysoedd De Georgia a De Sandwich");
-    namesMap.put("HK", "Hong Kong S.A.R., Tseina");
+    namesMap.put("GS", "De Georgia ac Ynysoedd Sandwich y De");
+    namesMap.put("GW", "Guiné-Bissau");
+    namesMap.put("HK", "Hong Kong RhGA Tsieina");
     namesMap.put("HM", "Ynys Heard ac Ynysoedd McDonald");
-    namesMap.put("HN", "Hondwras");
     namesMap.put("HU", "Hwngari");
+    namesMap.put("IC", "Yr Ynysoedd Dedwydd");
     namesMap.put("IE", "Iwerddon");
     namesMap.put("IM", "Ynys Manaw");
-    namesMap.put("IO", "Tiriogaeth Cefnfor India Prydain");
+    namesMap.put("IO", "Tiriogaeth Brydeinig Cefnfor India");
     namesMap.put("IQ", "Irac");
     namesMap.put("IS", "Gwlad yr Iâ");
     namesMap.put("IT", "Yr Eidal");
     namesMap.put("JO", "Gwlad Iorddonen");
-    namesMap.put("JP", "Siapan");
-    namesMap.put("KE", "Cenia");
-    namesMap.put("KG", "Cirgistan");
     namesMap.put("KN", "Saint Kitts a Nevis");
-    namesMap.put("KP", "Gogledd Corea");
-    namesMap.put("KR", "De Corea");
-    namesMap.put("KW", "Coweit");
+    namesMap.put("KP", "Gogledd Korea");
+    namesMap.put("KR", "De Korea");
     namesMap.put("KY", "Ynysoedd Cayman");
+    namesMap.put("KZ", "Kazakstan");
     namesMap.put("LB", "Libanus");
-    namesMap.put("LT", "Lithwania");
     namesMap.put("LU", "Lwcsembwrg");
     namesMap.put("LV", "Latfia");
-    namesMap.put("LY", "Libia");
     namesMap.put("MA", "Moroco");
     namesMap.put("MD", "Moldofa");
     namesMap.put("MH", "Ynysoedd Marshall");
     namesMap.put("MK", "Macedonia");
-    namesMap.put("MM", "Myanmar");
-    namesMap.put("MO", "Macao S.A.R., Tseina");
+    namesMap.put("MO", "Macau RhGA Tsieina");
     namesMap.put("MP", "Ynysoedd Gogledd Mariana");
-    namesMap.put("MR", "Mawritania");
-    namesMap.put("MU", "Mawrisiws");
+    namesMap.put("MV", "Y Maldives");
     namesMap.put("MX", "Mecsico");
     namesMap.put("NC", "Caledonia Newydd");
     namesMap.put("NF", "Ynys Norfolk");
-    namesMap.put("NI", "Nicaragwa");
     namesMap.put("NL", "Yr Iseldiroedd");
     namesMap.put("NO", "Norwy");
-    namesMap.put("NR", "Nawrw");
     namesMap.put("NZ", "Seland Newydd");
-    namesMap.put("PE", "Perw");
-    namesMap.put("PF", "Polynesia Ffrainc");
-    namesMap.put("PG", "Papua Gini Newydd");
-    namesMap.put("PH", "Philipinau");
-    namesMap.put("PK", "Pacistan");
+    namesMap.put("PE", "Periw");
+    namesMap.put("PF", "Polynesia Ffrengig");
+    namesMap.put("PG", "Papua Guinea Newydd");
+    namesMap.put("PH", "Pilipinas");
     namesMap.put("PL", "Gwlad Pwyl");
-    namesMap.put("PM", "Saint Pierre a Miquelon");
-    namesMap.put("PN", "Pitcairn");
-    namesMap.put("PS", "Tiriogaeth Palesteina");
+    namesMap.put("PM", "Saint-Pierre-et-Miquelon");
+    namesMap.put("PN", "Ynysoedd Pitcairn");
+    namesMap.put("PS", "Tiriogaethau Palesteinaidd");
     namesMap.put("PT", "Portiwgal");
-    namesMap.put("QO", "Ynysoedd Pellenig y De");
+    namesMap.put("QO", "Oceania Bellennig");
     namesMap.put("RO", "Rwmania");
     namesMap.put("RU", "Rwsia");
-    namesMap.put("SA", "Sawdi-Arabia");
     namesMap.put("SB", "Ynysoedd Solomon");
-    namesMap.put("SD", "Y Swdan");
+    namesMap.put("SD", "Swdan");
     namesMap.put("SI", "Slofenia");
     namesMap.put("SJ", "Svalbard a Jan Mayen");
     namesMap.put("SK", "Slofacia");
-    namesMap.put("SR", "Swrinam");
-    namesMap.put("ST", "Sao Tome a Principe");
-    namesMap.put("SV", "El Salfador");
+    namesMap.put("SN", "Sénégal");
+    namesMap.put("SS", "De Swdan");
+    namesMap.put("ST", "São Tomé a Príncipe");
+    namesMap.put("SZ", "Gwlad Swazi");
     namesMap.put("TC", "Ynysoedd Turks a Caicos");
-    namesMap.put("TF", "Tiriogaethau Ffrengig y De");
+    namesMap.put("TD", "Tchad");
+    namesMap.put("TF", "Tiroedd Deheuol ac Antarctig Ffrainc");
     namesMap.put("TH", "Gwlad Thai");
-    namesMap.put("TJ", "Tajicistan");
-    namesMap.put("TM", "Tyrcmenistan");
-    namesMap.put("TN", "Tiwnisia");
     namesMap.put("TR", "Twrci");
-    namesMap.put("TT", "Trinidad a Thobago");
-    namesMap.put("TV", "Twfalw");
-    namesMap.put("TZ", "Tansanïa");
+    namesMap.put("TT", "Trinidad a Tobago");
     namesMap.put("UA", "Wcráin");
-    namesMap.put("UM", "Mân Ynysoedd Pellenig yr Unol Daleithiau");
+    namesMap.put("UM", "Ynysoedd Pellennig UDA");
     namesMap.put("US", "Yr Unol Daleithiau");
-    namesMap.put("UZ", "Wsbecistan");
     namesMap.put("VA", "Y Fatican");
     namesMap.put("VC", "Saint Vincent a’r Grenadines");
-    namesMap.put("VG", "Ynysoedd Prydeinig y Wyryf");
-    namesMap.put("VI", "Ynysoedd Americanaidd y Wyryf");
+    namesMap.put("VG", "Ynysoedd Gwyryf Prydain");
+    namesMap.put("VI", "Ynysoedd Gwyryf yr Unol Daleithiau");
     namesMap.put("VN", "Fietnam");
     namesMap.put("WF", "Wallis a Futuna");
     namesMap.put("ZA", "De Affrica");
-    namesMap.put("ZM", "Sambia");
-    namesMap.put("ZW", "Simbabwe");
-    namesMap.put("ZZ", "ardal anhysbys");
+    namesMap.put("ZZ", "Rhanbarth Anhysbys");
   }
 
   @Override
@@ -473,156 +462,145 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "014": "Dwyrain Affrica",
         "015": "Gogledd Affrica",
         "017": "Canol Affrica",
-        "018": "De Affrica [018]",
+        "018": "Deheudir Affrica",
+        "019": "Yr Amerig",
         "021": "America i'r Gogledd o Mecsico",
         "029": "Y Caribî",
         "030": "Dwyrain Asia",
-        "035": "De ddwyrain Asia",
+        "034": "De Asia",
+        "035": "De-Ddwyrain Asia",
         "039": "De Ewrop",
-        "053": "Awstralia a Seland Newydd",
-        "057": "Micronesia [057]",
+        "053": "Awstralasia",
+        "057": "Rhanbarth Micronesia",
+        "143": "Canol Asia",
         "145": "Gorllewin Asia",
         "150": "Ewrop",
         "151": "Dwyrain Ewrop",
         "154": "Gogledd Ewrop",
         "155": "Gorllewin Ewrop",
         "419": "America Ladin",
-        "AC": "Ynys y Dyrchafael",
-        "AE": "Emiraethau Arabaidd Unedig",
-        "AF": "Affganistan",
-        "AG": "Antigwa a Barbuda",
+        "AC": "Ynys Ascension",
+        "AE": "Emiradau Arabaidd Unedig",
+        "AG": "Antigua a Barbuda",
         "AN": "Ynysoedd Caribî yr Iseldiroedd",
         "AR": "Yr Ariannin",
-        "AS": "Samoa Americanaidd",
+        "AS": "Samoa America",
         "AT": "Awstria",
         "AU": "Awstralia",
-        "AX": "Ynysoedd Aland",
-        "BA": "Bosnia a Herzegovina",
+        "AX": "Ynysoedd Åland",
+        "BA": "Bosnia a Hercegovina",
         "BE": "Gwlad Belg",
         "BG": "Bwlgaria",
-        "BM": "Bermwda",
         "BO": "Bolifia",
+        "BQ": "Antilles yr Iseldiroedd",
         "BR": "Brasil",
         "BS": "Y Bahamas",
-        "BT": "Bhwtan",
         "BV": "Ynys Bouvet",
         "BY": "Belarws",
-        "CC": "Ynysoedd Cocos [Keeling]",
+        "CC": "Ynysoedd Cocos (Keeling)",
         "CD": "Y Congo - Kinshasa",
-        "CF": "Gweriniaeth Canol Affrica",
+        "CF": "Gweriniaeth Canolbarth Affrica",
         "CG": "Y Congo - Brazzaville",
         "CH": "Y Swistir",
         "CK": "Ynysoedd Cook",
-        "CM": "Y Camerŵn",
-        "CN": "Tseina",
+        "CM": "Camerŵn",
+        "CN": "Tsieina",
+        "CP": "Ynys Clipperton",
         "CU": "Ciwba",
+        "CV": "Cabo Verde",
         "CX": "Ynys y Nadolig",
         "CZ": "Gweriniaeth Tsiec",
         "DE": "Yr Almaen",
         "DK": "Denmarc",
-        "DO": "Y Weriniaeth Ddominicaidd",
-        "EC": "Ecwador",
+        "DO": "Gweriniaeth Dominica",
+        "EA": "Ceuta a Melilla",
         "EG": "Yr Aifft",
-        "EH": "Gorllewin y Sahara",
+        "EH": "Gorllewin Sahara",
         "ES": "Sbaen",
+        "EU": "Yr Undeb Ewropeaidd",
         "FI": "Y Ffindir",
-        "FK": "Ynysoedd y Falkland",
-        "FO": "Ynysoedd Ffaröe",
+        "FK": "Ynysoedd y Falkland/Malvinas",
+        "FO": "Føroyar",
         "FR": "Ffrainc",
-        "GB": "Prydain Fawr",
-        "GF": "Giana Ffrengig",
+        "GB": "Y Deyrnas Unedig",
+        "GF": "Guyane Ffrengig",
+        "GG": "Ynys y Garn",
         "GL": "Yr Ynys Las",
-        "GN": "Gini",
-        "GQ": "Gini Gyhydeddol",
+        "GN": "Guinée",
+        "GQ": "Guinea Gyhydeddol",
         "GR": "Gwlad Groeg",
-        "GS": "Ynysoedd De Georgia a De Sandwich",
-        "HK": "Hong Kong S.A.R., Tseina",
+        "GS": "De Georgia ac Ynysoedd Sandwich y De",
+        "GW": "Guiné-Bissau",
+        "HK": "Hong Kong RhGA Tsieina",
         "HM": "Ynys Heard ac Ynysoedd McDonald",
-        "HN": "Hondwras",
         "HU": "Hwngari",
+        "IC": "Yr Ynysoedd Dedwydd",
         "IE": "Iwerddon",
         "IM": "Ynys Manaw",
-        "IO": "Tiriogaeth Cefnfor India Prydain",
+        "IO": "Tiriogaeth Brydeinig Cefnfor India",
         "IQ": "Irac",
         "IS": "Gwlad yr Iâ",
         "IT": "Yr Eidal",
         "JO": "Gwlad Iorddonen",
-        "JP": "Siapan",
-        "KE": "Cenia",
-        "KG": "Cirgistan",
         "KN": "Saint Kitts a Nevis",
-        "KP": "Gogledd Corea",
-        "KR": "De Corea",
-        "KW": "Coweit",
+        "KP": "Gogledd Korea",
+        "KR": "De Korea",
         "KY": "Ynysoedd Cayman",
+        "KZ": "Kazakstan",
         "LB": "Libanus",
-        "LT": "Lithwania",
         "LU": "Lwcsembwrg",
         "LV": "Latfia",
-        "LY": "Libia",
         "MA": "Moroco",
         "MD": "Moldofa",
         "MH": "Ynysoedd Marshall",
         "MK": "Macedonia",
-        "MM": "Myanmar",
-        "MO": "Macao S.A.R., Tseina",
+        "MO": "Macau RhGA Tsieina",
         "MP": "Ynysoedd Gogledd Mariana",
-        "MR": "Mawritania",
-        "MU": "Mawrisiws",
+        "MV": "Y Maldives",
         "MX": "Mecsico",
         "NC": "Caledonia Newydd",
         "NF": "Ynys Norfolk",
-        "NI": "Nicaragwa",
         "NL": "Yr Iseldiroedd",
         "NO": "Norwy",
-        "NR": "Nawrw",
         "NZ": "Seland Newydd",
-        "PE": "Perw",
-        "PF": "Polynesia Ffrainc",
-        "PG": "Papua Gini Newydd",
-        "PH": "Philipinau",
-        "PK": "Pacistan",
+        "PE": "Periw",
+        "PF": "Polynesia Ffrengig",
+        "PG": "Papua Guinea Newydd",
+        "PH": "Pilipinas",
         "PL": "Gwlad Pwyl",
-        "PM": "Saint Pierre a Miquelon",
-        "PN": "Pitcairn",
-        "PS": "Tiriogaeth Palesteina",
+        "PM": "Saint-Pierre-et-Miquelon",
+        "PN": "Ynysoedd Pitcairn",
+        "PS": "Tiriogaethau Palesteinaidd",
         "PT": "Portiwgal",
-        "QO": "Ynysoedd Pellenig y De",
+        "QO": "Oceania Bellennig",
         "RO": "Rwmania",
         "RU": "Rwsia",
-        "SA": "Sawdi-Arabia",
         "SB": "Ynysoedd Solomon",
-        "SD": "Y Swdan",
+        "SD": "Swdan",
         "SI": "Slofenia",
         "SJ": "Svalbard a Jan Mayen",
         "SK": "Slofacia",
-        "SR": "Swrinam",
-        "ST": "Sao Tome a Principe",
-        "SV": "El Salfador",
+        "SN": "Sénégal",
+        "SS": "De Swdan",
+        "ST": "São Tomé a Príncipe",
+        "SZ": "Gwlad Swazi",
         "TC": "Ynysoedd Turks a Caicos",
-        "TF": "Tiriogaethau Ffrengig y De",
+        "TD": "Tchad",
+        "TF": "Tiroedd Deheuol ac Antarctig Ffrainc",
         "TH": "Gwlad Thai",
-        "TJ": "Tajicistan",
-        "TM": "Tyrcmenistan",
-        "TN": "Tiwnisia",
         "TR": "Twrci",
-        "TT": "Trinidad a Thobago",
-        "TV": "Twfalw",
-        "TZ": "Tansanïa",
+        "TT": "Trinidad a Tobago",
         "UA": "Wcráin",
-        "UM": "Mân Ynysoedd Pellenig yr Unol Daleithiau",
+        "UM": "Ynysoedd Pellennig UDA",
         "US": "Yr Unol Daleithiau",
-        "UZ": "Wsbecistan",
         "VA": "Y Fatican",
         "VC": "Saint Vincent a’r Grenadines",
-        "VG": "Ynysoedd Prydeinig y Wyryf",
-        "VI": "Ynysoedd Americanaidd y Wyryf",
+        "VG": "Ynysoedd Gwyryf Prydain",
+        "VI": "Ynysoedd Gwyryf yr Unol Daleithiau",
         "VN": "Fietnam",
         "WF": "Wallis a Futuna",
         "ZA": "De Affrica",
-        "ZM": "Sambia",
-        "ZW": "Simbabwe",
-        "ZZ": "ardal anhysbys"
+        "ZZ": "Rhanbarth Anhysbys"
     };
   }-*/;
 }

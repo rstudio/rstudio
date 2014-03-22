@@ -146,7 +146,11 @@ public interface TimeZoneConstants extends Constants {
 
   String americaArgentinaRioGallegos();
 
+  String americaArgentinaSalta();
+
   String americaArgentinaSanJuan();
+
+  String americaArgentinaSanLuis();
 
   String americaArgentinaTucuman();
 
@@ -157,6 +161,8 @@ public interface TimeZoneConstants extends Constants {
   String americaAsuncion();
 
   String americaBahia();
+
+  String americaBahiaBanderas();
 
   String americaBarbados();
 
@@ -197,6 +203,8 @@ public interface TimeZoneConstants extends Constants {
   String americaCordoba();
 
   String americaCostaRica();
+
+  String americaCreston();
 
   String americaCuiaba();
 
@@ -254,9 +262,13 @@ public interface TimeZoneConstants extends Constants {
 
   String americaIndianapolis();
 
+  String americaIndianaTellCity();
+
   String americaIndianaVevay();
 
   String americaIndianaVincennes();
+
+  String americaIndianaWinamac();
 
   String americaInuvik();
 
@@ -270,6 +282,8 @@ public interface TimeZoneConstants extends Constants {
 
   String americaKentuckyMonticello();
 
+  String americaKralendijk();
+
   String americaLaPaz();
 
   String americaLima();
@@ -278,13 +292,19 @@ public interface TimeZoneConstants extends Constants {
 
   String americaLouisville();
 
+  String americaLowerPrinces();
+
   String americaMaceio();
 
   String americaManagua();
 
   String americaManaus();
 
+  String americaMarigot();
+
   String americaMartinique();
+
+  String americaMatamoros();
 
   String americaMazatlan();
 
@@ -293,6 +313,8 @@ public interface TimeZoneConstants extends Constants {
   String americaMenominee();
 
   String americaMerida();
+
+  String americaMetlakatla();
 
   String americaMexicoCity();
 
@@ -303,8 +325,6 @@ public interface TimeZoneConstants extends Constants {
   String americaMonterrey();
 
   String americaMontevideo();
-
-  String americaMontreal();
 
   String americaMontserrat();
 
@@ -318,9 +338,13 @@ public interface TimeZoneConstants extends Constants {
 
   String americaNoronha();
 
+  String americaNorthDakotaBeulah();
+
   String americaNorthDakotaCenter();
 
   String americaNorthDakotaNewSalem();
+
+  String americaOjinaga();
 
   String americaPanama();
 
@@ -346,7 +370,13 @@ public interface TimeZoneConstants extends Constants {
 
   String americaRegina();
 
+  String americaResolute();
+
   String americaRioBranco();
+
+  String americaSantaIsabel();
+
+  String americaSantarem();
 
   String americaSantiago();
 
@@ -356,7 +386,9 @@ public interface TimeZoneConstants extends Constants {
 
   String americaScoresbysund();
 
-  String americaShiprock();
+  String americaSitka();
+
+  String americaStBarthelemy();
 
   String americaStJohns();
 
@@ -398,6 +430,8 @@ public interface TimeZoneConstants extends Constants {
 
   String antarcticaDumontDUrville();
 
+  String antarcticaMacquarie();
+
   String antarcticaMawson();
 
   String antarcticaMcMurdo();
@@ -409,6 +443,8 @@ public interface TimeZoneConstants extends Constants {
   String antarcticaSyowa();
 
   String antarcticaVostok();
+
+  String arcticLongyearbyen();
 
   String asiaAden();
 
@@ -501,6 +537,8 @@ public interface TimeZoneConstants extends Constants {
   String asiaMuscat();
 
   String asiaNicosia();
+
+  String asiaNovokuznetsk();
 
   String asiaNovosibirsk();
 
@@ -604,6 +642,10 @@ public interface TimeZoneConstants extends Constants {
 
   String australiaSydney();
 
+  String cST6CDT();
+
+  String eST5EDT();
+
   String europeAmsterdam();
 
   String europeAndorra();
@@ -630,9 +672,15 @@ public interface TimeZoneConstants extends Constants {
 
   String europeGibraltar();
 
+  String europeGuernsey();
+
   String europeHelsinki();
 
+  String europeIsleofMan();
+
   String europeIstanbul();
+
+  String europeJersey();
 
   String europeKaliningrad();
 
@@ -649,6 +697,8 @@ public interface TimeZoneConstants extends Constants {
   String europeMadrid();
 
   String europeMalta();
+
+  String europeMariehamn();
 
   String europeMinsk();
 
@@ -670,6 +720,8 @@ public interface TimeZoneConstants extends Constants {
 
   String europeSamara();
 
+  String europeSanMarino();
+
   String europeSarajevo();
 
   String europeSimferopol();
@@ -687,6 +739,8 @@ public interface TimeZoneConstants extends Constants {
   String europeUzhgorod();
 
   String europeVaduz();
+
+  String europeVatican();
 
   String europeVienna();
 
@@ -723,6 +777,8 @@ public interface TimeZoneConstants extends Constants {
   String indianMayotte();
 
   String indianReunion();
+
+  String mST7MDT();
 
   String pacificApia();
 
@@ -799,4 +855,6 @@ public interface TimeZoneConstants extends Constants {
   String pacificWake();
 
   String pacificWallis();
+
+  String pST8PDT();
 }

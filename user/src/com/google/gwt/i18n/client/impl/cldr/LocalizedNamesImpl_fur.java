@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  cldrVersion=25
+//  date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+//  number=$Revision: 9792 $
 //  type=root
-
 
 /**
  * Localized names for the "fur" locale.
@@ -241,7 +240,6 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "ST",
         "SN",
         "RS",
-        "CS",
         "SC",
         "SL",
         "SG",
@@ -288,6 +286,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "VE",
         "VN",
         "WF",
+        "XK",
         "YE",
         "ZM",
         "ZW",
@@ -350,6 +349,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
     namesMap.put("CC", "Isulis Cocos");
     namesMap.put("CD", "Republiche Democratiche dal Congo");
     namesMap.put("CF", "Republiche centri africane");
+    namesMap.put("CG", "Congo - Brazzaville");
     namesMap.put("CH", "Svuizare");
     namesMap.put("CI", "Cueste di Avoli");
     namesMap.put("CK", "Isulis Cook");
@@ -358,7 +358,6 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
     namesMap.put("CN", "Cine");
     namesMap.put("CO", "Colombie");
     namesMap.put("CP", "Isule Clipperton");
-    namesMap.put("CS", "Serbie e Montenegro");
     namesMap.put("CV", "Cjâf vert");
     namesMap.put("CX", "Isule Christmas");
     namesMap.put("CY", "Cipri");
@@ -554,6 +553,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "CC": "Isulis Cocos",
         "CD": "Republiche Democratiche dal Congo",
         "CF": "Republiche centri africane",
+        "CG": "Congo - Brazzaville",
         "CH": "Svuizare",
         "CI": "Cueste di Avoli",
         "CK": "Isulis Cook",
@@ -562,7 +562,6 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "CN": "Cine",
         "CO": "Colombie",
         "CP": "Isule Clipperton",
-        "CS": "Serbie e Montenegro",
         "CV": "Cjâf vert",
         "CX": "Isule Christmas",
         "CY": "Cipri",

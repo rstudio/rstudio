@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
-//  type=root
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
+//  type=gsw
 
 /**
  * Localized names for the "gsw" locale.
@@ -52,8 +51,8 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "AW",
         "AC",
         "AZ",
-        "AU",
         "ET",
+        "AU",
         "BH",
         "BS",
         "BD",
@@ -116,8 +115,8 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "GU",
         "GT",
         "HT",
+        "NL",
         "HN",
-        "HK",
         "HM",
         "IS",
         "IN",
@@ -157,7 +156,6 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "LY",
         "LU",
         "ML",
-        "MO",
         "MG",
         "YT",
         "MW",
@@ -182,7 +180,6 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "NR",
         "NP",
         "NI",
-        "NL",
         "AN",
         "NG",
         "NE",
@@ -216,12 +213,9 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "SB",
         "ZM",
         "WS",
-        "LC",
-        "VC",
         "SM",
         "ST",
         "RS",
-        "CS",
         "SA",
         "ES",
         "LK",
@@ -235,12 +229,16 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "SK",
         "SI",
         "SO",
+        "HK",
+        "MO",
         "SS",
         "BL",
         "SH",
         "KN",
+        "LC",
         "MF",
         "PM",
+        "VC",
         "SD",
         "SR",
         "ZA",
@@ -267,7 +265,6 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "CZ",
         "DJ",
         "CL",
-        "CY",
         "TN",
         "TR",
         "TM",
@@ -290,7 +287,9 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "CX",
         "VN",
         "BY",
+        "XK",
         "CF",
+        "CY",
     };
   }
 
@@ -328,7 +327,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("155", "Weschteuroopa");
     namesMap.put("419", "Latiinameerika");
     namesMap.put("AC", "Ascension");
-    namesMap.put("AE", "Veräinigti Arabischi Emiräät");
+    namesMap.put("AE", "Veräinigti Arabischi Emirate");
     namesMap.put("AF", "Afganischtan");
     namesMap.put("AG", "Antigua und Barbuda");
     namesMap.put("AL", "Albaanie");
@@ -370,11 +369,10 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("CO", "Kolumbie");
     namesMap.put("CP", "Clipperton");
     namesMap.put("CR", "Coschta Rica");
-    namesMap.put("CS", "Särbie und Monteneegro");
     namesMap.put("CU", "Kuba");
     namesMap.put("CV", "Kap Verde");
     namesMap.put("CX", "Wienachts-Insle");
-    namesMap.put("CY", "Tsüpere");
+    namesMap.put("CY", "Zypere");
     namesMap.put("CZ", "Tschechischi Republik");
     namesMap.put("DE", "Tüütschland");
     namesMap.put("DJ", "Tschibuuti");
@@ -388,7 +386,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("EH", "Weschtsahara");
     namesMap.put("ER", "Äritreea");
     namesMap.put("ES", "Schpanie");
-    namesMap.put("ET", "Äzioopie");
+    namesMap.put("ET", "Äthiopie");
     namesMap.put("EU", "Europääischi Unioon");
     namesMap.put("FI", "Finnland");
     namesMap.put("FJ", "Fitschi");
@@ -411,7 +409,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("GT", "Guatemaala");
     namesMap.put("GW", "Gineea-Bissau");
     namesMap.put("GY", "Guäjaana");
-    namesMap.put("HK", "Hongkong");
+    namesMap.put("HK", "Sonderverwaltigszone Hongkong");
     namesMap.put("HM", "Höörd- und MäcDonald-Insle");
     namesMap.put("HR", "Kroaazie");
     namesMap.put("HU", "Ungarn");
@@ -441,7 +439,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("KZ", "Kasachschtan");
     namesMap.put("LA", "Laaos");
     namesMap.put("LB", "Libanon");
-    namesMap.put("LC", "Sankta Lutschiia");
+    namesMap.put("LC", "St. Lutschiia");
     namesMap.put("LI", "Liächteschtäi");
     namesMap.put("LK", "Schri Lanka");
     namesMap.put("LR", "Libeeria");
@@ -458,9 +456,8 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("MH", "Marshallinsle");
     namesMap.put("MK", "Mazedoonie");
     namesMap.put("ML", "Maali");
-    namesMap.put("MM", "Müanmar");
     namesMap.put("MN", "Mongolei");
-    namesMap.put("MO", "Macao");
+    namesMap.put("MO", "Sonderverwaltigszone Macao");
     namesMap.put("MP", "Nördlichi Mariaane");
     namesMap.put("MQ", "Martinigg");
     namesMap.put("MR", "Mauretaanie");
@@ -469,14 +466,14 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("MV", "Malediiwe");
     namesMap.put("MW", "Malaawi");
     namesMap.put("MX", "Mexiko");
-    namesMap.put("MY", "Malaisia");
+    namesMap.put("MY", "Maläisia");
     namesMap.put("MZ", "Mosambik");
     namesMap.put("NA", "Namiibia");
     namesMap.put("NC", "Nöikaledoonie");
     namesMap.put("NF", "Norfolk-Insle");
     namesMap.put("NG", "Nigeeria");
     namesMap.put("NI", "Nicaraagua");
-    namesMap.put("NL", "Niderland");
+    namesMap.put("NL", "Holland");
     namesMap.put("NO", "Norweege");
     namesMap.put("NP", "Neepal");
     namesMap.put("NZ", "Nöiseeland");
@@ -496,7 +493,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("RE", "Reünioon");
     namesMap.put("RO", "Rumäänie");
     namesMap.put("RS", "Särbie");
-    namesMap.put("RU", "Russischi Föderazioon");
+    namesMap.put("RU", "Russland");
     namesMap.put("RW", "Ruanda");
     namesMap.put("SA", "Saudi-Araabie");
     namesMap.put("SB", "Salomoone");
@@ -509,7 +506,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("SK", "Slowakäi");
     namesMap.put("SL", "Sierra Leoone");
     namesMap.put("SM", "San Mariino");
-    namesMap.put("SO", "Somaalia");
+    namesMap.put("SO", "Somaalie");
     namesMap.put("SR", "Surinam");
     namesMap.put("ST", "Sao Tome und Prinssipe");
     namesMap.put("SY", "Süürie");
@@ -530,7 +527,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("US", "Veräinigti Schtaate");
     namesMap.put("UZ", "Uschbeekischtan");
     namesMap.put("VA", "Vatikanstadt");
-    namesMap.put("VC", "Sankt Wässä und d’Grönadiine");
+    namesMap.put("VC", "St. Vincent und d’Grönadiine");
     namesMap.put("VE", "Venezueela");
     namesMap.put("VG", "Britischi Jungfere-Insle");
     namesMap.put("VI", "Amerikaanischi Jungfere-Insle");
@@ -584,7 +581,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "155": "Weschteuroopa",
         "419": "Latiinameerika",
         "AC": "Ascension",
-        "AE": "Veräinigti Arabischi Emiräät",
+        "AE": "Veräinigti Arabischi Emirate",
         "AF": "Afganischtan",
         "AG": "Antigua und Barbuda",
         "AL": "Albaanie",
@@ -626,11 +623,10 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "CO": "Kolumbie",
         "CP": "Clipperton",
         "CR": "Coschta Rica",
-        "CS": "Särbie und Monteneegro",
         "CU": "Kuba",
         "CV": "Kap Verde",
         "CX": "Wienachts-Insle",
-        "CY": "Tsüpere",
+        "CY": "Zypere",
         "CZ": "Tschechischi Republik",
         "DE": "Tüütschland",
         "DJ": "Tschibuuti",
@@ -644,7 +640,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "EH": "Weschtsahara",
         "ER": "Äritreea",
         "ES": "Schpanie",
-        "ET": "Äzioopie",
+        "ET": "Äthiopie",
         "EU": "Europääischi Unioon",
         "FI": "Finnland",
         "FJ": "Fitschi",
@@ -667,7 +663,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "GT": "Guatemaala",
         "GW": "Gineea-Bissau",
         "GY": "Guäjaana",
-        "HK": "Hongkong",
+        "HK": "Sonderverwaltigszone Hongkong",
         "HM": "Höörd- und MäcDonald-Insle",
         "HR": "Kroaazie",
         "HU": "Ungarn",
@@ -697,7 +693,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "KZ": "Kasachschtan",
         "LA": "Laaos",
         "LB": "Libanon",
-        "LC": "Sankta Lutschiia",
+        "LC": "St. Lutschiia",
         "LI": "Liächteschtäi",
         "LK": "Schri Lanka",
         "LR": "Libeeria",
@@ -714,9 +710,8 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "MH": "Marshallinsle",
         "MK": "Mazedoonie",
         "ML": "Maali",
-        "MM": "Müanmar",
         "MN": "Mongolei",
-        "MO": "Macao",
+        "MO": "Sonderverwaltigszone Macao",
         "MP": "Nördlichi Mariaane",
         "MQ": "Martinigg",
         "MR": "Mauretaanie",
@@ -725,14 +720,14 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "MV": "Malediiwe",
         "MW": "Malaawi",
         "MX": "Mexiko",
-        "MY": "Malaisia",
+        "MY": "Maläisia",
         "MZ": "Mosambik",
         "NA": "Namiibia",
         "NC": "Nöikaledoonie",
         "NF": "Norfolk-Insle",
         "NG": "Nigeeria",
         "NI": "Nicaraagua",
-        "NL": "Niderland",
+        "NL": "Holland",
         "NO": "Norweege",
         "NP": "Neepal",
         "NZ": "Nöiseeland",
@@ -752,7 +747,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "RE": "Reünioon",
         "RO": "Rumäänie",
         "RS": "Särbie",
-        "RU": "Russischi Föderazioon",
+        "RU": "Russland",
         "RW": "Ruanda",
         "SA": "Saudi-Araabie",
         "SB": "Salomoone",
@@ -765,7 +760,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "SK": "Slowakäi",
         "SL": "Sierra Leoone",
         "SM": "San Mariino",
-        "SO": "Somaalia",
+        "SO": "Somaalie",
         "SR": "Surinam",
         "ST": "Sao Tome und Prinssipe",
         "SY": "Süürie",
@@ -786,7 +781,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "US": "Veräinigti Schtaate",
         "UZ": "Uschbeekischtan",
         "VA": "Vatikanstadt",
-        "VC": "Sankt Wässä und d’Grönadiine",
+        "VC": "St. Vincent und d’Grönadiine",
         "VE": "Venezueela",
         "VG": "Britischi Jungfere-Insle",
         "VI": "Amerikaanischi Jungfere-Insle",

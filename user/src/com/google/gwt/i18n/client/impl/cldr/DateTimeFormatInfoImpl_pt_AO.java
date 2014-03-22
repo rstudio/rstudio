@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 5798 $
-//  date=$Date: 2011-05-02 02:05:34 -0400 (Mon, 02 May 2011) $
-//  type=root
+//  cldrVersion=25
+//  date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+//  number=$Revision: 9061 $
+//  type=AO
 
 /**
  * Implementation of DateTimeFormatInfo for the "pt_AO" locale.
@@ -35,38 +35,33 @@ public class DateTimeFormatInfoImpl_pt_AO extends DateTimeFormatInfoImpl_pt {
   }
 
   @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return datePattern + " 'às' " + timePattern;
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return datePattern + " 'às' " + timePattern;
+  }
+
+  @Override
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return datePattern + ", " + timePattern;
+  }
+
+  @Override
   public int firstDayOfTheWeek() {
     return 1;
   }
 
   @Override
-  public String formatHour24Minute() {
-    return "HH:mm";
-  }
-
-  @Override
-  public String formatHour24MinuteSecond() {
-    return "HH:mm:ss";
-  }
-
-  @Override
-  public String formatMinuteSecond() {
-    return "mm:ss";
-  }
-
-  @Override
   public String formatMonthAbbrevDay() {
     return "d/MM";
-  }
-
-  @Override
-  public String formatMonthFullDay() {
-    return "d/MM";
-  }
-
-  @Override
-  public String formatMonthFullWeekdayDay() {
-    return "EEEE, d/MM";
   }
 
   @Override
@@ -80,23 +75,18 @@ public class DateTimeFormatInfoImpl_pt_AO extends DateTimeFormatInfoImpl_pt {
   }
 
   @Override
-  public String formatYearMonthFull() {
-    return "MM/y";
-  }
-
-  @Override
   public String formatYearMonthWeekdayDay() {
     return "EEE, d/MM/y";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQ 'de' yyyy";
+    return "QQQQ 'de' y";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "QQQ 'de' yyyy";
+    return "Q 'de' y";
   }
 
   @Override
@@ -142,29 +132,6 @@ public class DateTimeFormatInfoImpl_pt_AO extends DateTimeFormatInfoImpl_pt {
         "2.º trimestre",
         "3.º trimestre",
         "4.º trimestre"
-    };
-  }
-
-  @Override
-  public String timeFormatFull() {
-    return "H:mm:ss zzzz";
-  }
-
-  @Override
-  public String timeFormatLong() {
-    return "H:mm:ss z";
-  }
-
-  @Override
-  public String[] weekdaysFull() {
-    return new String[] {
-        "Domingo",
-        "Segunda-feira",
-        "Terça-feira",
-        "Quarta-feira",
-        "Quinta-feira",
-        "Sexta-feira",
-        "Sábado"
     };
   }
 }

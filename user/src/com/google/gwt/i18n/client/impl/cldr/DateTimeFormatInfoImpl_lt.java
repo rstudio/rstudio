@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=21.0
-//  number=$Revision: 6546 Google $
+//  cldrVersion=25
+//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+//  number=$Revision: 9852 $
 //  type=lt
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "lt" locale.
@@ -61,6 +61,11 @@ public class DateTimeFormatInfoImpl_lt extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatDay() {
+    return "dd";
+  }
+
+  @Override
   public String formatHour12Minute() {
     return "hh:mm a";
   }
@@ -71,23 +76,8 @@ public class DateTimeFormatInfoImpl_lt extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatMonthAbbrevDay() {
-    return "MMM-d";
-  }
-
-  @Override
-  public String formatMonthFullDay() {
-    return "MMMM-d";
-  }
-
-  @Override
-  public String formatMonthFullWeekdayDay() {
-    return "MMMM d, EEEE";
-  }
-
-  @Override
   public String formatMonthNumDay() {
-    return "M.d";
+    return "MM-d";
   }
 
   @Override
@@ -96,29 +86,9 @@ public class DateTimeFormatInfoImpl_lt extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatYearMonthNum() {
-    return "y.M";
-  }
-
-  @Override
-  public String formatYearMonthWeekdayDay() {
-    return "y MMM d, EEE";
-  }
-
-  @Override
-  public String formatYearQuarterFull() {
-    return "QQQQ y";
-  }
-
-  @Override
-  public String formatYearQuarterShort() {
-    return "Q y";
-  }
-
-  @Override
   public String[] monthsFull() {
     return new String[] {
-        "sausio",
+        "sausis",
         "vasaris",
         "kovas",
         "balandis",
@@ -130,24 +100,6 @@ public class DateTimeFormatInfoImpl_lt extends DateTimeFormatInfoImpl {
         "spalis",
         "lapkritis",
         "gruodis"
-    };
-  }
-
-  @Override
-  public String[] monthsFullStandalone() {
-    return new String[] {
-        "Sausis",
-        "Vasaris",
-        "Kovas",
-        "Balandis",
-        "Gegužė",
-        "Birželis",
-        "Liepa",
-        "Rugpjūtis",
-        "Rugsėjis",
-        "Spalis",
-        "Lapkritis",
-        "Gruodis"
     };
   }
 
@@ -172,36 +124,18 @@ public class DateTimeFormatInfoImpl_lt extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "Saus.",
-        "Vas",
-        "Kov.",
-        "Bal.",
-        "Geg.",
-        "Bir.",
-        "Liep.",
-        "Rugp.",
-        "Rugs.",
-        "Spal.",
-        "Lapkr.",
-        "Gruod."
-    };
-  }
-
-  @Override
-  public String[] monthsShortStandalone() {
-    return new String[] {
-        "Saus.",
-        "Vas.",
-        "Kov.",
-        "Bal.",
-        "Geg.",
-        "Bir.",
-        "Liep.",
-        "Rugp.",
-        "Rugs.",
-        "Spal.",
-        "Lapkr.",
-        "Gruod."
+        "saus.",
+        "vas.",
+        "kov.",
+        "bal.",
+        "geg.",
+        "birž.",
+        "liep.",
+        "rugp.",
+        "rugs.",
+        "spal.",
+        "lapkr.",
+        "gruod."
     };
   }
 
@@ -221,7 +155,7 @@ public class DateTimeFormatInfoImpl_lt extends DateTimeFormatInfoImpl {
         "I k.",
         "II k.",
         "III k.",
-        "IV ketv."
+        "IV k."
     };
   }
 
@@ -254,13 +188,13 @@ public class DateTimeFormatInfoImpl_lt extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "Sk",
-        "Pr",
-        "An",
-        "Tr",
-        "Kt",
-        "Pn",
-        "Št"
+        "sk",
+        "pr",
+        "an",
+        "tr",
+        "kt",
+        "pn",
+        "št"
     };
   }
 }

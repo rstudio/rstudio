@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2014 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,10 @@ package com.google.gwt.i18n.client.impl.cldr;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=21.0
-//  number=$Revision: 6546 $
+//  cldrVersion=25
+//  date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+//  number=$Revision: 9287 $
 //  type=kde
-//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
-
 
 /**
  * Localized names for the "kde" locale.
@@ -234,7 +233,6 @@ public class LocalizedNamesImpl_kde extends LocalizedNamesImpl {
         "VC",
         "ST",
         "SA",
-        "CS",
         "SN",
         "SC",
         "SL",
@@ -287,6 +285,7 @@ public class LocalizedNamesImpl_kde extends LocalizedNamesImpl {
         "VE",
         "VN",
         "WF",
+        "XK",
         "YE",
         "JO",
         "ZM",
@@ -335,7 +334,6 @@ public class LocalizedNamesImpl_kde extends LocalizedNamesImpl {
     namesMap.put("CM", "Kameluni");
     namesMap.put("CO", "Kolombia");
     namesMap.put("CR", "Kostalika");
-    namesMap.put("CS", "Selbia na Monteneglo");
     namesMap.put("CU", "Kuba");
     namesMap.put("CV", "Kepuvede");
     namesMap.put("CY", "Kuplosi");
@@ -529,7 +527,6 @@ public class LocalizedNamesImpl_kde extends LocalizedNamesImpl {
         "CM": "Kameluni",
         "CO": "Kolombia",
         "CR": "Kostalika",
-        "CS": "Selbia na Monteneglo",
         "CU": "Kuba",
         "CV": "Kepuvede",
         "CY": "Kuplosi",
