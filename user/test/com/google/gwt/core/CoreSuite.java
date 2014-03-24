@@ -27,6 +27,8 @@ import com.google.gwt.core.client.SchedulerTest;
 import com.google.gwt.core.client.ScriptInjectorTest;
 import com.google.gwt.core.client.impl.AsyncFragmentLoaderTest;
 import com.google.gwt.core.client.impl.SchedulerImplTest;
+import com.google.gwt.core.client.impl.StackTraceCreatorCollectorTest;
+import com.google.gwt.core.client.impl.StackTraceCreatorEmulTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorTest;
 import com.google.gwt.core.client.prefetch.RunAsyncCodeTest;
 import com.google.gwt.core.client.testing.StubSchedulerTest;
@@ -38,7 +40,7 @@ import com.google.gwt.lang.RuntimePropertyRegistryTest;
 import junit.framework.Test;
 
 /**
- * All I18N tests.
+ * All core tests.
  */
 public class CoreSuite {
   public static Test suite() {
@@ -60,6 +62,8 @@ public class CoreSuite {
     suite.addTestSuite(SchedulerTest.class);
     suite.addTestSuite(ScriptInjectorTest.class);
     suite.addTestSuite(SerializableThrowableTest.class);
+    suite.addTestSuite(StackTraceCreatorCollectorTest.class);
+    suite.addTestSuite(StackTraceCreatorEmulTest.class);
     suite.addTestSuite(StackTraceCreatorTest.class);
     suite.addTestSuite(StrictModeTest.class);
     suite.addTestSuite(StubSchedulerTest.class);
