@@ -1698,82 +1698,93 @@ public class GenerateJavaScriptAST {
 
         @Override
         public void endVisit(JsInvocation x, JsContext ctx) {
-          // Replace invocation to ctor with a new op.
-          if (x.getQualifier() instanceof JsNameRef) {
-            JsNameRef ref = (JsNameRef) x.getQualifier();
-            String ident = ref.getIdent();
-            if (isJsniIdent(ident)) {
-              JNode node = jsniMap.get(ident);
-              assert node instanceof JConstructor;
-              assert ref.getQualifier() == null;
-              JsName jsName = names.get(node);
-              assert (jsName != null);
-              ref.resolve(jsName);
-              JsNew jsNew = new JsNew(x.getSourceInfo(), ref);
-              jsNew.getArguments().addAll(x.getArguments());
-              ctx.replaceMe(jsNew);
-            }
+          // TODO(rluble): this fixup should be done during the initial JSNI processing in
+          // GwtAstBuilder.JsniReferenceCollector.
+          if (!(x.getQualifier() instanceof JsNameRef)) {
+            // If the invocation does not have a name as a qualifier (it might be an expression).
+            return;
           }
+          JsNameRef ref = (JsNameRef) x.getQualifier();
+          if (!ref.isJsniReference()) {
+            // The invocation is not to a JSNI method.
+            return;
+          }
+          // Only constructors reach this point, all other JSNI references in the method body
+          // would have already been replaced at endVisit(JsNameRef).
+
+          // Replace invocation to ctor with a new op.
+          String ident = ref.getIdent();
+          JNode node = jsniMap.get(ident);
+          assert node instanceof JConstructor;
+          assert ref.getQualifier() == null;
+          JsName jsName = names.get(node);
+          assert (jsName != null);
+          ref.resolve(jsName);
+          JsNew jsNew = new JsNew(x.getSourceInfo(), ref);
+          jsNew.getArguments().addAll(x.getArguments());
+          ctx.replaceMe(jsNew);
         }
 
         @Override
         public void endVisit(JsNameRef x, JsContext ctx) {
+          if (!x.isJsniReference()) {
+            return;
+          }
+
           String ident = x.getIdent();
-          if (isJsniIdent(ident)) {
-            JNode node = jsniMap.get(ident);
-            assert (node != null);
-            if (node instanceof JField) {
-              JField field = (JField) node;
-              JsName jsName = names.get(field);
+          JNode node = jsniMap.get(ident);
+          assert (node != null);
+          if (node instanceof JField) {
+            JField field = (JField) node;
+            JsName jsName = names.get(field);
+            assert (jsName != null);
+            x.resolve(jsName);
+
+            // See if we need to add a clinit call to a static field ref
+            JsInvocation clinitCall = maybeCreateClinitCall(field);
+            if (clinitCall != null) {
+              JsExpression commaExpr = createCommaExpression(clinitCall, x);
+              ctx.replaceMe(commaExpr);
+            }
+          } else if (node instanceof JConstructor) {
+            if (x == dontReplaceCtor) {
+              // Do nothing, parent will handle.
+            } else {
+              // Replace with a local closure function.
+              // function(a,b,c){return new Obj(a,b,c);}
+              JConstructor ctor = (JConstructor) node;
+              JsName jsName = names.get(ctor);
               assert (jsName != null);
               x.resolve(jsName);
-
-              // See if we need to add a clinit call to a static field ref
-              JsInvocation clinitCall = maybeCreateClinitCall(field);
-              if (clinitCall != null) {
-                JsExpression commaExpr = createCommaExpression(clinitCall, x);
-                ctx.replaceMe(commaExpr);
+              SourceInfo info = x.getSourceInfo();
+              JsFunction closureFunc = new JsFunction(info, jsFunc.getScope());
+              for (JParameter p : ctor.getParams()) {
+                JsName name = closureFunc.getScope().declareName(p.getName());
+                closureFunc.getParameters().add(new JsParameter(info, name));
               }
-            } else if (node instanceof JConstructor) {
-              if (x == dontReplaceCtor) {
-                // Do nothing, parent will handle.
-              } else {
-                // Replace with a local closure function.
-                // function(a,b,c){return new Obj(a,b,c);}
-                JConstructor ctor = (JConstructor) node;
-                JsName jsName = names.get(ctor);
-                assert (jsName != null);
-                x.resolve(jsName);
-                SourceInfo info = x.getSourceInfo();
-                JsFunction closureFunc = new JsFunction(info, jsFunc.getScope());
-                for (JParameter p : ctor.getParams()) {
-                  JsName name = closureFunc.getScope().declareName(p.getName());
-                  closureFunc.getParameters().add(new JsParameter(info, name));
-                }
-                JsNew jsNew = new JsNew(info, x);
-                for (JsParameter p : closureFunc.getParameters()) {
-                  jsNew.getArguments().add(p.getName().makeRef(info));
-                }
-                JsBlock block = new JsBlock(info);
-                block.getStatements().add(new JsReturn(info, jsNew));
-                closureFunc.setBody(block);
-                ctx.replaceMe(closureFunc);
+              JsNew jsNew = new JsNew(info, x);
+              for (JsParameter p : closureFunc.getParameters()) {
+                jsNew.getArguments().add(p.getName().makeRef(info));
               }
+              JsBlock block = new JsBlock(info);
+              block.getStatements().add(new JsReturn(info, jsNew));
+              closureFunc.setBody(block);
+              ctx.replaceMe(closureFunc);
+            }
+          } else {
+            JMethod method = (JMethod) node;
+            if (x.getQualifier() == null) {
+              JsName jsName = names.get(method);
+              assert (jsName != null);
+              x.resolve(jsName);
             } else {
-              JMethod method = (JMethod) node;
-              if (x.getQualifier() == null) {
-                JsName jsName = names.get(method);
-                assert (jsName != null);
-                x.resolve(jsName);
-              } else {
-                JsName jsName = polymorphicNames.get(method);
-                if (jsName == null) {
-                  // this can occur when JSNI references an instance method on a
-                  // type that was never actually instantiated.
-                  jsName = nullFunctionJsName;
-                }
-                x.resolve(jsName);
+              JsName jsName = polymorphicNames.get(method);
+              if (jsName == null) {
+                // this can occur when JSNI references an instance method on a
+                // type that was never actually instantiated.
+                jsName = nullFunctionJsName;
               }
+              x.resolve(jsName);
             }
           }
         }
@@ -1784,10 +1795,6 @@ public class GenerateJavaScriptAST {
             dontReplaceCtor = (JsNameRef) x.getQualifier();
           }
           return true;
-        }
-
-        private boolean isJsniIdent(String ident) {
-          return ident.charAt(0) == '@';
         }
       }.accept(jsFunc);
 

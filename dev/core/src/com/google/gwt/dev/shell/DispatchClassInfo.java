@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.StringInterner;
 
 import java.lang.reflect.Constructor;
@@ -71,7 +70,7 @@ public class DispatchClassInfo {
   private void addMember(
       LinkedHashMap<String, LinkedHashMap<String, Member>> members,
       Member member, String sig) {
-    String fullSig = getJsniSignature(member, false);
+    String fullSig = getJsniSignature(member);
     LinkedHashMap<String, Member> membersWithSig = members.get(sig);
     if (membersWithSig == null) {
       membersWithSig = new LinkedHashMap<String, Member>();
@@ -128,16 +127,14 @@ public class DispatchClassInfo {
     if (addConstructors) {
       for (Constructor<?> ctor : targetClass.getDeclaredConstructors()) {
         ctor.setAccessible(true);
-        addMember(members, ctor, getJsniSignature(ctor, false));
-        addMember(members, ctor, getJsniSignature(ctor, true));
+        addMember(members, ctor, getJsniSignature(ctor));
       }
     }
 
     // Get the methods on this class/interface.
     for (Method method : targetClass.getDeclaredMethods()) {
       method.setAccessible(true);
-      addMember(members, method, getJsniSignature(method, false));
-      addMember(members, method, getJsniSignature(method, true));
+      addMember(members, method, getJsniSignature(method));
     }
 
     // Get the fields on this class/interface.
@@ -151,7 +148,7 @@ public class DispatchClassInfo {
     addMember(members, new SyntheticClassMember(targetClass), "class");
   }
 
-  private String getJsniSignature(Member member, boolean wildcardParamList) {
+  private String getJsniSignature(Member member) {
     String name;
     Class<?>[] paramTypes;
 
@@ -173,19 +170,15 @@ public class DispatchClassInfo {
     StringBuffer sb = new StringBuffer();
     sb.append(name);
     sb.append("(");
-    if (wildcardParamList) {
-      sb.append(JsniRef.WILDCARD_PARAM_LIST);
-    } else {
-      for (int i = 0; i < paramTypes.length; ++i) {
-        Class<?> type = paramTypes[i];
-        String typeSig = getTypeSig(type);
-        sb.append(typeSig);
-      }
+    for (int i = 0; i < paramTypes.length; ++i) {
+      Class<?> type = paramTypes[i];
+      String typeSig = getTypeSig(type);
+      sb.append(typeSig);
     }
     sb.append(")");
 
     String mangledName = StringInterner.get().intern(sb.toString());
-    
+
     return mangledName;
   }
 

@@ -241,55 +241,57 @@ public class GwtAstBuilder {
   class AstVisitor extends SafeASTVisitor {
 
     /**
-     * Resolves local references to function parameters, and JSNI references.
+     * Collects JSNI references from native method bodies and replaces the ones referring to
+     * compile time constants by their corresponding constant value.
      */
-    private class JsniResolver extends JsModVisitor {
+    private class JsniReferenceCollector extends JsModVisitor {
       private final GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals();
       private final JsniMethodBody nativeMethodBody;
 
-      private JsniResolver(JsniMethodBody nativeMethodBody) {
+      private JsniReferenceCollector(JsniMethodBody nativeMethodBody) {
         this.nativeMethodBody = nativeMethodBody;
       }
 
       @Override
       public void endVisit(JsNameRef x, JsContext ctx) {
+        if (!x.isJsniReference()) {
+          return;
+        }
         String ident = x.getIdent();
-        if (ident.charAt(0) == '@') {
-          Binding binding = jsniRefs.get(ident);
-          SourceInfo info = x.getSourceInfo();
-          if (binding == null) {
-            assert ident.startsWith("@null::");
-            if ("@null::nullMethod()".equals(ident)) {
-              processMethod(x, info, JMethod.NULL_METHOD);
-            } else {
-              assert "@null::nullField".equals(ident);
-              processField(x, info, JField.NULL_FIELD, ctx);
-            }
-          } else if (binding instanceof TypeBinding) {
-            JType type = typeMap.get((TypeBinding) binding);
-            processClassLiteral(x, info, type, ctx);
-          } else if (binding instanceof FieldBinding) {
-            FieldBinding fieldBinding = (FieldBinding) binding;
-            /*
-             * We must replace any compile-time constants with the constant
-             * value of the field.
-             */
-            if (isCompileTimeConstant(fieldBinding)) {
-              assert !ctx.isLvalue();
-              JExpression constant = getConstant(info, fieldBinding.constant());
-              generator.accept(constant);
-              JsExpression result = generator.pop();
-              assert (result != null);
-              ctx.replaceMe(result);
-            } else {
-              // Normal: create a jsniRef.
-              JField field = typeMap.get(fieldBinding);
-              processField(x, info, field, ctx);
-            }
+        Binding binding = jsniRefs.get(ident);
+        SourceInfo info = x.getSourceInfo();
+        if (binding == null) {
+          assert ident.startsWith("@null::");
+          if ("@null::nullMethod()".equals(ident)) {
+            processMethod(x, info, JMethod.NULL_METHOD);
           } else {
-            JMethod method = typeMap.get((MethodBinding) binding);
-            processMethod(x, info, method);
+            assert "@null::nullField".equals(ident);
+            processField(x, info, JField.NULL_FIELD, ctx);
           }
+        } else if (binding instanceof TypeBinding) {
+          JType type = typeMap.get((TypeBinding) binding);
+          processClassLiteral(x, info, type, ctx);
+        } else if (binding instanceof FieldBinding) {
+          FieldBinding fieldBinding = (FieldBinding) binding;
+          /*
+           * We must replace any compile-time constants with the constant
+           * value of the field.
+           */
+          if (isCompileTimeConstant(fieldBinding)) {
+            assert !ctx.isLvalue();
+            JExpression constant = getConstant(info, fieldBinding.constant());
+            generator.accept(constant);
+            JsExpression result = generator.pop();
+            assert (result != null);
+            ctx.replaceMe(result);
+          } else {
+            // Normal: create a jsniRef.
+            JField field = typeMap.get(fieldBinding);
+            processField(x, info, field, ctx);
+          }
+        } else {
+          JMethod method = typeMap.get((MethodBinding) binding);
+          processMethod(x, info, method);
         }
       }
 
@@ -664,7 +666,7 @@ public class GwtAstBuilder {
          */
         if (!hasExplicitThis) {
           ReferenceBinding declaringClass = (ReferenceBinding) x.binding.declaringClass.erasure();
-          if (isNested(declaringClass)) {
+          if (JdtUtil.isInnerClass(declaringClass)) {
             NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
             if (nestedBinding.enclosingInstances != null) {
               for (SyntheticArgumentBinding arg : nestedBinding.enclosingInstances) {
@@ -778,7 +780,7 @@ public class GwtAstBuilder {
         if (x.isSuperAccess()) {
           JExpression qualifier = pop(x.qualification);
           ReferenceBinding superClass = x.binding.declaringClass;
-          boolean nestedSuper = isNested(superClass);
+          boolean nestedSuper = JdtUtil.isInnerClass(superClass);
           if (nestedSuper) {
             processSuperCallThisArgs(superClass, call, qualifier, x.qualification);
           }
@@ -789,7 +791,7 @@ public class GwtAstBuilder {
         } else {
           assert (x.qualification == null);
           ReferenceBinding declaringClass = x.binding.declaringClass;
-          boolean nested = isNested(declaringClass);
+          boolean nested = JdtUtil.isInnerClass(declaringClass);
           if (nested) {
             processThisCallThisArgs(declaringClass, call);
           }
@@ -1712,7 +1714,7 @@ public class GwtAstBuilder {
 
         // Map synthetic arguments for outer this.
         ReferenceBinding declaringClass = (ReferenceBinding) x.binding.declaringClass.erasure();
-        boolean isNested = isNested(declaringClass);
+        boolean isNested = JdtUtil.isInnerClass(declaringClass);
         if (isNested) {
           NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
           if (nestedBinding.enclosingInstances != null) {
@@ -2038,7 +2040,7 @@ public class GwtAstBuilder {
        * referenced until we analyze the code.
        */
       SourceTypeBinding binding = x.binding;
-      if (isNested(binding)) {
+      if (JdtUtil.isInnerClass(binding)) {
         // add synthetic fields for outer this and locals
         assert (type instanceof JClassType);
         NestedTypeBinding nestedBinding = (NestedTypeBinding) binding;
@@ -2505,8 +2507,8 @@ public class GwtAstBuilder {
       // Resolve locals, params, and JSNI.
       JsParameterResolver localResolver = new JsParameterResolver(jsFunction);
       localResolver.accept(jsFunction);
-      JsniResolver jsniResolver = new JsniResolver(body);
-      jsniResolver.accept(jsFunction);
+      JsniReferenceCollector jsniReferenceCollector = new JsniReferenceCollector(body);
+      jsniReferenceCollector.accept(jsFunction);
     }
 
     private void processSuperCallLocalArgs(ReferenceBinding superClass, JMethodCall call) {
@@ -2638,7 +2640,7 @@ public class GwtAstBuilder {
 
       // Synthetic args for inner classes
       ReferenceBinding targetBinding = (ReferenceBinding) b.declaringClass.erasure();
-      boolean isNested = isNested(targetBinding);
+      boolean isNested = JdtUtil.isInnerClass(targetBinding);
       if (isNested) {
         // Synthetic this args for inner classes
         if (targetBinding.syntheticEnclosingInstanceTypes() != null) {
@@ -2993,10 +2995,6 @@ public class GwtAstBuilder {
     return stringInterner.intern(s);
   }
 
-  static boolean isNested(ReferenceBinding binding) {
-    return binding.isNestedType() && !binding.isStatic();
-  }
-
   private static boolean isCompileTimeConstant(FieldBinding binding) {
     assert !binding.isFinal() || !binding.isVolatile();
     boolean isCompileTimeConstant =
@@ -3278,7 +3276,7 @@ public class GwtAstBuilder {
     JDeclaredType enclosingType = (JDeclaredType) typeMap.get(declaringClass);
     assert !enclosingType.isExternal();
     JMethod method;
-    boolean isNested = isNested(declaringClass);
+    boolean isNested = JdtUtil.isInnerClass(declaringClass);
     if (x.isConstructor()) {
       method = new JConstructor(info, (JClassType) enclosingType);
       if (x.binding.declaringClass.isEnum()) {

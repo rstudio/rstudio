@@ -51,8 +51,8 @@ public class JavaCompilationSuite {
     suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);
     suite.addTestSuite(Java7JdtCompilerTest.class);
-    suite.addTestSuite(JsniCheckerTest.class);
-    suite.addTestSuite(JsniCollectorTest.class);
+    suite.addTestSuite(JsniReferenceResolverTest.class);
+    suite.addTestSuite(JsniMethodCollectorTest.class);
     suite.addTestSuite(JSORestrictionsTest.class);
     suite.addTestSuite(MemoryUnitCacheTest.class);
     suite.addTestSuite(PersistentUnitCacheTest.class);
