@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.resource.impl.testdata.cpe2.org.example.foo.server;
+package com.google.gwt.dev.resource.impl.testdata.cpe1.org.example.foo.server;
 
 /**
  * Classes for testing resource infrastructure.
