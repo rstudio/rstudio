@@ -16,6 +16,7 @@
 package com.google.gwt.dev.util;
 
 import com.google.gwt.core.ext.typeinfo.JniConstants;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.List;
@@ -50,7 +51,7 @@ public class JsniRef {
    * <li>the method parameter types, excluding the parentheses
    * </ol>
    */
-  private static Pattern JsniRefPattern = Pattern.compile("@?([^:@]*)::([^(]+)(\\((.*)\\))?");
+  private static Pattern JsniRefPattern = Pattern.compile("@?([^:@\\[\\]]*)((?:\\[\\])*)::([^(]+)(\\((.*)\\))?");
 
   /**
    * Parse a Java reference from JSNI code. This parser is forgiving; it does
@@ -64,11 +65,12 @@ public class JsniRef {
     }
 
     String className = matcher.group(1);
-    String memberName = matcher.group(2);
+    int arrayDimensions = matcher.group(2).length() / 2;
+    String memberName = matcher.group(3);
     String paramTypesString = null;
     String[] paramTypes = null;
-    if (matcher.group(3) != null) {
-      paramTypesString = matcher.group(4);
+    if (matcher.group(4) != null) {
+      paramTypesString = matcher.group(5);
       if (!paramTypesString.equals(WILDCARD_PARAM_LIST)) {
         paramTypes = computeParamTypes(paramTypesString);
         if (paramTypes == null) {
@@ -76,7 +78,7 @@ public class JsniRef {
         }
       }
     }
-    return new JsniRef(className, memberName, paramTypesString, paramTypes);
+    return new JsniRef(className, arrayDimensions, memberName, paramTypesString, paramTypes);
   }
 
   private static String[] computeParamTypes(String paramTypesString) {
@@ -124,15 +126,19 @@ public class JsniRef {
     return types.toArray(Empty.STRINGS);
   }
 
-  private String className;
+  private final String className;
+  private String resolvedClassName;
+  private String resolvedNemberSignature;
   private final String memberName;
   private final String[] paramTypes;
   private final String paramTypesString;
+  private final int arrayDimensions;
 
-  protected JsniRef(String className, String memberName,
+  protected JsniRef(String className, int arrayDimensions, String memberName,
       String paramTypesString, String[] paramTypes) {
     this.className = className;
     this.memberName = memberName;
+    this.arrayDimensions = arrayDimensions;
     this.paramTypesString = paramTypesString;
     this.paramTypes = paramTypes;
   }
@@ -193,12 +199,37 @@ public class JsniRef {
     return paramTypesString;
   }
 
-  public void setClassName(String className) {
-    this.className = StringInterner.get().intern(className);
+  public void setResolvedClassName(String resolvedClassName) {
+    this.resolvedClassName = StringInterner.get().intern(resolvedClassName);
+  }
+
+  public void setResolvedMemberWithSignature(String resolvedMemberSignature) {
+    this.resolvedNemberSignature = StringInterner.get().intern(resolvedMemberSignature);
+  }
+
+  public String getResolvedClassName() {
+    return resolvedClassName;
+  }
+
+  public String getResolvedReference() {
+    return "@" + resolvedClassName + Strings.repeat("[]", arrayDimensions) + "::"
+        + resolvedNemberSignature;
+  }
+
+  public String fullClassName() {
+    return className + Strings.repeat("[]", arrayDimensions);
   }
 
   @Override
   public String toString() {
-    return "@" + className + "::" + memberSignature();
+    return "@" + fullClassName() + "::" + memberSignature();
+  }
+
+  public boolean isArray() {
+    return arrayDimensions > 0;
+  }
+
+  public int getDimensions() {
+    return arrayDimensions;
   }
 }

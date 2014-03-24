@@ -106,7 +106,6 @@ public class JsniConstructorTest extends GWTTestCase {
 
   public native void testInheritedMethodRef() /*-{
     @com.google.gwt.dev.jjs.test.JsniConstructorTest.C1::s1()();
-    @com.google.gwt.dev.jjs.test.JsniConstructorTest.C2::s1()();
     @com.google.gwt.dev.jjs.test.JsniConstructorTest.C2::s2()();
 
     var o = @com.google.gwt.dev.jjs.test.JsniConstructorTest.C2::new()();
@@ -130,6 +129,37 @@ public class JsniConstructorTest extends GWTTestCase {
     o.@java.lang.Object::toString()();
     o.@com.google.gwt.dev.jjs.test.JsniConstructorTest.C1::toString()();
     o.@com.google.gwt.dev.jjs.test.JsniConstructorTest.C2::toString()();
+  }-*/;
+
+  public native void testJsniResolution() /*-{
+    @JsniConstructorTest.C1::s1()();
+    @JsniConstructorTest.C2::s2()();
+
+    var o = @JsniConstructorTest.C2::new()();
+    o.@JsniConstructorTest.A1::a1()();
+    o.@JsniConstructorTest.A2::a1()();
+    o.@JsniConstructorTest.C1::a1()();
+    o.@JsniConstructorTest.C2::a1()();
+
+    o.@JsniConstructorTest.A2::a2()();
+    o.@JsniConstructorTest.C1::a2()();
+    o.@JsniConstructorTest.C2::a2()();
+
+    o.@JsniConstructorTest.A3::a3()();
+    o.@JsniConstructorTest.C2::a3()();
+
+    o.@JsniConstructorTest.C1::c1()();
+    o.@JsniConstructorTest.C2::c1()();
+
+    o.@JsniConstructorTest.C2::c2()();
+
+    o.@java.lang.Object::toString()();
+    o.@JsniConstructorTest.C1::toString()();
+    o.@JsniConstructorTest.C2::toString()();
+
+    this.@InstanceObject::foo(*);
+    this.@StaticObject.InstanceObject::foo(*);
+    this.@StaticObject::foo(*);
   }-*/;
 
   public void testJsniConstructors() {

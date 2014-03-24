@@ -664,7 +664,7 @@ public class GwtAstBuilder {
          */
         if (!hasExplicitThis) {
           ReferenceBinding declaringClass = (ReferenceBinding) x.binding.declaringClass.erasure();
-          if (isNested(declaringClass)) {
+          if (JdtUtil.isInnerClass(declaringClass)) {
             NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
             if (nestedBinding.enclosingInstances != null) {
               for (SyntheticArgumentBinding arg : nestedBinding.enclosingInstances) {
@@ -778,7 +778,7 @@ public class GwtAstBuilder {
         if (x.isSuperAccess()) {
           JExpression qualifier = pop(x.qualification);
           ReferenceBinding superClass = x.binding.declaringClass;
-          boolean nestedSuper = isNested(superClass);
+          boolean nestedSuper = JdtUtil.isInnerClass(superClass);
           if (nestedSuper) {
             processSuperCallThisArgs(superClass, call, qualifier, x.qualification);
           }
@@ -789,7 +789,7 @@ public class GwtAstBuilder {
         } else {
           assert (x.qualification == null);
           ReferenceBinding declaringClass = x.binding.declaringClass;
-          boolean nested = isNested(declaringClass);
+          boolean nested = JdtUtil.isInnerClass(declaringClass);
           if (nested) {
             processThisCallThisArgs(declaringClass, call);
           }
@@ -1712,7 +1712,7 @@ public class GwtAstBuilder {
 
         // Map synthetic arguments for outer this.
         ReferenceBinding declaringClass = (ReferenceBinding) x.binding.declaringClass.erasure();
-        boolean isNested = isNested(declaringClass);
+        boolean isNested = JdtUtil.isInnerClass(declaringClass);
         if (isNested) {
           NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
           if (nestedBinding.enclosingInstances != null) {
@@ -2038,7 +2038,7 @@ public class GwtAstBuilder {
        * referenced until we analyze the code.
        */
       SourceTypeBinding binding = x.binding;
-      if (isNested(binding)) {
+      if (JdtUtil.isInnerClass(binding)) {
         // add synthetic fields for outer this and locals
         assert (type instanceof JClassType);
         NestedTypeBinding nestedBinding = (NestedTypeBinding) binding;
@@ -2638,7 +2638,7 @@ public class GwtAstBuilder {
 
       // Synthetic args for inner classes
       ReferenceBinding targetBinding = (ReferenceBinding) b.declaringClass.erasure();
-      boolean isNested = isNested(targetBinding);
+      boolean isNested = JdtUtil.isInnerClass(targetBinding);
       if (isNested) {
         // Synthetic this args for inner classes
         if (targetBinding.syntheticEnclosingInstanceTypes() != null) {
@@ -2993,10 +2993,6 @@ public class GwtAstBuilder {
     return stringInterner.intern(s);
   }
 
-  static boolean isNested(ReferenceBinding binding) {
-    return binding.isNestedType() && !binding.isStatic();
-  }
-
   private static boolean isCompileTimeConstant(FieldBinding binding) {
     assert !binding.isFinal() || !binding.isVolatile();
     boolean isCompileTimeConstant =
@@ -3278,7 +3274,7 @@ public class GwtAstBuilder {
     JDeclaredType enclosingType = (JDeclaredType) typeMap.get(declaringClass);
     assert !enclosingType.isExternal();
     JMethod method;
-    boolean isNested = isNested(declaringClass);
+    boolean isNested = JdtUtil.isInnerClass(declaringClass);
     if (x.isConstructor()) {
       method = new JConstructor(info, (JClassType) enclosingType);
       if (x.binding.declaringClass.isEnum()) {

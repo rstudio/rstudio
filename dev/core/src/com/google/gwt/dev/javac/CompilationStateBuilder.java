@@ -92,17 +92,18 @@ public class CompilationStateBuilder {
             // JSNI check + collect dependencies.
             final Set<String> jsniDeps = Sets.newHashSet();
             final Map<String, Binding> jsniRefs = Maps.newHashMap();
-            JsniChecker.check(cud, cudOriginaImports, jsoState, jsniMethods, jsniRefs,
-                new JsniChecker.TypeResolver() {
-                  @Override
-                  public ReferenceBinding resolveType(String sourceOrBinaryName) {
-                    ReferenceBinding resolveType = compiler.resolveType(sourceOrBinaryName);
-                    if (resolveType != null) {
-                      jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
-                    }
-                    return resolveType;
-                  }
-                });
+            JsniReferenceResolver
+                .resolve(cud, cudOriginaImports, jsoState, jsniMethods, jsniRefs,
+                    new JsniReferenceResolver.TypeResolver() {
+                      @Override
+                      public ReferenceBinding resolveType(String sourceOrBinaryName) {
+                        ReferenceBinding resolveType = compiler.resolveType(sourceOrBinaryName);
+                        if (resolveType != null) {
+                          jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
+                        }
+                        return resolveType;
+                      }
+                    });
 
             final Map<TypeDeclaration, Binding[]> artificialRescues = Maps.newHashMap();
             ArtificialRescueChecker.check(cud, builder.isGenerated(), artificialRescues);

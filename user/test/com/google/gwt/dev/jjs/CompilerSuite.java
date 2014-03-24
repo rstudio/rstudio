@@ -40,6 +40,7 @@ import com.google.gwt.dev.jjs.test.Java7Test;
 import com.google.gwt.dev.jjs.test.JavaAccessFromJavaScriptTest;
 import com.google.gwt.dev.jjs.test.JsStaticEvalTest;
 import com.google.gwt.dev.jjs.test.JsniConstructorTest;
+import com.google.gwt.dev.jjs.test.JsniDispatchTest;
 import com.google.gwt.dev.jjs.test.JsoTest;
 import com.google.gwt.dev.jjs.test.MemberShadowingTest;
 import com.google.gwt.dev.jjs.test.MethodBindTest;
@@ -91,6 +92,7 @@ public class CompilerSuite {
     suite.addTestSuite(Java7Test.class);
     suite.addTestSuite(JavaAccessFromJavaScriptTest.class);
     suite.addTestSuite(JsniConstructorTest.class);
+    suite.addTestSuite(JsniDispatchTest.class);
     suite.addTestSuite(JsoTest.class);
     suite.addTestSuite(JsStaticEvalTest.class);
     suite.addTestSuite(JStaticEvalTest.class);
