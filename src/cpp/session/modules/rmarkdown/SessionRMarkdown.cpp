@@ -347,7 +347,7 @@ private:
       {
          LOG_ERROR(error);
          resultJson["format_name"] = "";
-         resultJson["format_options"] = json::Value();
+         resultJson["self_contained"] = false;
       }
       else
       {
@@ -359,19 +359,20 @@ private:
          resultJson["format_name"] = formatName;
 
          SEXP sexpOptions;
-         json::Value formatOptions;
+         bool selfContained = false;
          error = r::sexp::getNamedListSEXP(sexpOutputFormat, "options",
                                            &sexpOptions);
          if (error)
             LOG_ERROR(error);
          else
          {
-            error = r::json::jsonValueFromList(sexpOptions, &formatOptions);
+            error = r::sexp::getNamedListElement(sexpOptions, "self_contained",
+                                                 &selfContained, false);
             if (error)
                LOG_ERROR(error);
          }
 
-         resultJson["format_options"] = formatOptions;
+         resultJson["self_contained"] = selfContained;
       }
    }
 
