@@ -633,4 +633,14 @@ void UserSettings::setErrorHandlerType(int type)
    settings_.set("errorHandlerType", type);
 }
 
+bool UserSettings::useDevtools() const
+{
+   return settings_.getBool("useDevtools", true);
+}
+
+void UserSettings::setUseDevtools(bool useDevtools)
+{
+   settings_.set("useDevtools", useDevtools);
+}
+
 }// namespace session

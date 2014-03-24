@@ -179,8 +179,9 @@ Error createProject(const json::JsonRpcRequest& request,
 
       // create the project file (allow auto-detection of the package
       // to setup the package build type & default options)
-      r_util::RProjectConfig projConfig = ProjectContext::defaultConfig();
-      return r_util::writeProjectFile(projectFilePath, projConfig);
+      return r_util::writeProjectFile(projectFilePath,
+                                      ProjectContext::buildDefaults(),
+                                      ProjectContext::defaultConfig());
    }
 
    else if (!newShinyAppJson.is_null())
@@ -218,6 +219,7 @@ Error createProject(const json::JsonRpcRequest& request,
 
       // create the project file
       return r_util::writeProjectFile(projectFilePath,
+                                      ProjectContext::buildDefaults(),
                                       ProjectContext::defaultConfig());
    }
 
@@ -233,6 +235,7 @@ Error createProject(const json::JsonRpcRequest& request,
       if (!projectFilePath.exists())
       {
          return r_util::writeProjectFile(projectFilePath,
+                                         ProjectContext::buildDefaults(),
                                          ProjectContext::defaultConfig());
       }
       else
@@ -451,7 +454,9 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
       return error;
 
    // write the config
-   error = r_util::writeProjectFile(s_projectContext.file(), config);
+   error = r_util::writeProjectFile(s_projectContext.file(),
+                                    ProjectContext::buildDefaults(),
+                                    config);
    if (error)
       return error;
 
@@ -506,6 +511,7 @@ void syncProjectFileChanges()
    r_util::RProjectConfig config;
    Error error = r_util::readProjectFile(s_projectContext.file(),
                                          ProjectContext::defaultConfig(),
+                                         ProjectContext::buildDefaults(),
                                          &config,
                                          &providedDefaults,
                                          &userErrMsg);

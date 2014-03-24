@@ -157,6 +157,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    r_util::RProjectConfig config;
    error = r_util::readProjectFile(projectFile,
                                    defaultConfig(),
+                                   buildDefaults(),
                                    &config,
                                    &providedDefaults,
                                    pUserErrMsg);
@@ -176,7 +177,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    // with the defaults
    if (providedDefaults)
    {
-      error = r_util::writeProjectFile(projectFile, config);
+      error = r_util::writeProjectFile(projectFile, buildDefaults(), config);
       if (error)
          LOG_ERROR(error);
    }
@@ -581,6 +582,13 @@ json::Array ProjectContext::openDocs() const
    return openDocsJson;
 }
 
+r_util::RProjectBuildDefaults ProjectContext::buildDefaults()
+{
+   r_util::RProjectBuildDefaults buildDefaults;
+   buildDefaults.useDevtools = userSettings().useDevtools();
+   return buildDefaults;
+}
+
 r_util::RProjectConfig ProjectContext::defaultConfig()
 {
    // setup defaults for project file
@@ -599,6 +607,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.rootDocument = std::string();
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
+   defaultConfig.packageUseDevtools = userSettings().useDevtools();
    return defaultConfig;
 }
 

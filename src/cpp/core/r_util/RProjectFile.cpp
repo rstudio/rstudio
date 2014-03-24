@@ -149,25 +149,27 @@ bool interpretIntValue(const std::string& value, int* pValue)
 }
 
 void setBuildPackageDefaults(const std::string& packagePath,
+                             const RProjectBuildDefaults& buildDefaults,
                              RProjectConfig* pConfig)
 {
    pConfig->buildType = kBuildTypePackage;
-   pConfig->packageUseDevtools = true;
+   pConfig->packageUseDevtools = buildDefaults.useDevtools;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
 
 std::string detectBuildType(const FilePath& projectFilePath,
+                            const RProjectBuildDefaults& buildDefaults,
                             RProjectConfig* pConfig)
 {
    FilePath projectDir = projectFilePath.parent();
    if (r_util::isPackageDirectory(projectDir))
    {
-      setBuildPackageDefaults("", pConfig);
+      setBuildPackageDefaults("", buildDefaults ,pConfig);
    }
    else if (projectDir.childPath("pkg/DESCRIPTION").exists())
    {
-      setBuildPackageDefaults("pkg", pConfig);
+      setBuildPackageDefaults("pkg", buildDefaults, pConfig);
    }
    else if (projectDir.childPath("Makefile").exists())
    {
@@ -183,10 +185,11 @@ std::string detectBuildType(const FilePath& projectFilePath,
    return pConfig->buildType;
 }
 
-std::string detectBuildType(const FilePath& projectFilePath)
+std::string detectBuildType(const FilePath& projectFilePath,
+                            const RProjectBuildDefaults& buildDefaults)
 {
    RProjectConfig config;
-   return detectBuildType(projectFilePath, &config);
+   return detectBuildType(projectFilePath, buildDefaults, &config);
 }
 
 } // anonymous namespace
@@ -216,6 +219,7 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
 
 Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
+                      const RProjectBuildDefaults& buildDefaults,
                       RProjectConfig* pConfig,
                       bool* pProvidedDefaults,
                       std::string* pUserErrMsg)
@@ -528,7 +532,9 @@ Error readProjectFile(const FilePath& projectFilePath,
    if (pConfig->buildType.empty())
    {
       // try to detect the build type
-      pConfig->buildType = detectBuildType(projectFilePath, pConfig);
+      pConfig->buildType = detectBuildType(projectFilePath,
+                                           buildDefaults,
+                                           pConfig);
 
       // set *pProvidedDefaults only if we successfully auto-detected
       // (this will prevent us from writing None into the project file,
@@ -554,6 +560,7 @@ Error readProjectFile(const FilePath& projectFilePath,
 
 
 Error writeProjectFile(const FilePath& projectFilePath,
+                       const RProjectBuildDefaults& buildDefaults,
                        const RProjectConfig& config)
 {  
    // generate project file contents
@@ -616,7 +623,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       // has a chance to work in the future if the user turns this project
       // into a package or adds a Makefile)
       if (config.buildType != kBuildTypeNone ||
-          detectBuildType(projectFilePath) != kBuildTypeNone)
+          detectBuildType(projectFilePath, buildDefaults) != kBuildTypeNone)
       {
          // build type
          boost::format buildFmt("\nBuildType: %1%\n");

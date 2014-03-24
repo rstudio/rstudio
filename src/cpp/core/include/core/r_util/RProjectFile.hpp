@@ -41,6 +41,15 @@ extern const char * const kBuildTypeCustom;
 
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 
+struct RProjectBuildDefaults
+{
+   RProjectBuildDefaults()
+      : useDevtools(true)
+   {
+   }
+   bool useDevtools;
+};
+
 struct RProjectConfig
 {
    RProjectConfig()
@@ -100,11 +109,13 @@ struct RProjectConfig
 
 Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
+                      const RProjectBuildDefaults& buildDefauls,
                       RProjectConfig* pConfig,
                       bool* pProvidedDefaults,
                       std::string* pUserErrMsg);
 
 Error writeProjectFile(const FilePath& projectFilePath,
+                       const RProjectBuildDefaults& buildDefaults,
                        const RProjectConfig& config);
 
 FilePath projectFromDirectory(const FilePath& directoryPath);

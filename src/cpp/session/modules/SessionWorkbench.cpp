@@ -219,7 +219,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set packages prefs
    bool useInternet2, cleanupAfterCheckSuccess, viewDirAfterCheckFailure;
-   bool hideObjectFiles;
+   bool hideObjectFiles, useDevtools;
    json::Object cranMirrorJson;
    error = json::readObject(packagesPrefs,
                             "cran_mirror", &cranMirrorJson,
@@ -229,11 +229,13 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 */
                             "cleanup_after_check_success", &cleanupAfterCheckSuccess,
                             "viewdir_after_check_failure", &viewDirAfterCheckFailure,
-                            "hide_object_files", &hideObjectFiles);
+                            "hide_object_files", &hideObjectFiles,
+                            "use_devtools", &useDevtools);
 
    if (error)
        return error;
    userSettings().beginUpdate();
+   userSettings().setUseDevtools(useDevtools);
    userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
    userSettings().setUseInternet2(useInternet2);
    userSettings().setCleanupAfterRCmdCheck(cleanupAfterCheckSuccess);
@@ -368,6 +370,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    // get packages prefs
    json::Object packagesPrefs;
+   packagesPrefs["use_devtools"] = userSettings().useDevtools();
    packagesPrefs["cran_mirror"] = toCRANMirrorJson(
                                       userSettings().cranMirror());
    packagesPrefs["use_internet2"] = userSettings().useInternet2();

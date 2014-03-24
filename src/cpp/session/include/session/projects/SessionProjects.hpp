@@ -169,6 +169,7 @@ public:
                                const FileMonitorCallbacks& cb);
 
 public:
+   static core::r_util::RProjectBuildDefaults buildDefaults();
    static core::r_util::RProjectConfig defaultConfig();
 
 private:

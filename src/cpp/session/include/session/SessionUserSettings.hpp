@@ -164,6 +164,9 @@ public:
    int errorHandlerType() const;
    void setErrorHandlerType(int type);
 
+   bool useDevtools() const;
+   void setUseDevtools(bool useDevtools);
+
 private:
 
    void onSettingsFileChanged(
