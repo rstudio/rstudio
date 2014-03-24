@@ -13,6 +13,20 @@
 #
 #
 
+# Some R commands called during packaging-related operations (such as untar)
+# delegate to the system tar binary specified in TAR. On OS X, R may set TAR to
+# /usr/bin/gnutar, which exists prior to Mavericks (10.9) but not in later
+# rleases of the OS. In the special case wherein the TAR environment variable
+# on OS X is set to a non-existant gnutar and there exists a tar at
+# /usr/bin/tar, tell R to use that binary instead.
+if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
+    identical(Sys.getenv("TAR"), "/usr/bin/gnutar") && 
+    !file.exists("/usr/bin/gnutar") &&
+    file.exists("/usr/bin/tar"))
+{
+   Sys.setenv(TAR = "/usr/bin/tar")
+}
+
 .rs.addFunction( "updatePackageEvents", function()
 {
    reportPackageStatus <- function(status)
