@@ -51,9 +51,12 @@ import com.google.gwt.dev.jjs.UnifiedAst.AST;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -802,6 +805,10 @@ public abstract class JavaToJavaScriptCompiler {
 
     protected abstract void createJProgram();
 
+    protected abstract JMethodCall createReboundModuleLoad(SourceInfo info,
+        JDeclaredType reboundEntryType, String originalMainClassName, JDeclaredType enclosingType)
+        throws UnableToCompleteException;
+
     protected abstract void populateEntryPointRootTypes(
         String[] entryPointTypeNames, Set<String> allRootTypes) throws UnableToCompleteException;
 
@@ -840,6 +847,7 @@ public abstract class JavaToJavaScriptCompiler {
          */
 
         // (1) Initialize local state
+        Set<String> allRootTypes = new TreeSet<String>();
         createJProgram();
         jsProgram = new JsProgram();
         if (additionalRootTypes == null) {
@@ -851,7 +859,7 @@ public abstract class JavaToJavaScriptCompiler {
 
         // (3) Construct and unify the unresolved Java AST
         CompilationState compilationState =
-            constructJavaAst(entryPointTypeNames, additionalRootTypes);
+            constructJavaAst(entryPointTypeNames, additionalRootTypes, allRootTypes);
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
         logTypeOracleMetrics(precompilationMetrics, compilationState);
@@ -893,6 +901,9 @@ public abstract class JavaToJavaScriptCompiler {
       }
     }
 
+    protected abstract void rebindEntryPoint(SourceInfo info, JMethod bootStrapMethod, JBlock block,
+        String mainClassName, JDeclaredType mainType) throws UnableToCompleteException;
+
     /**
      * Creates (and returns the name for) a new class to serve as the container for the invocation
      * of registered entry point methods as part of module bootstrapping.<br />
@@ -902,10 +913,9 @@ public abstract class JavaToJavaScriptCompiler {
      * holder class can work in both monolithic and separate compilation schemes.
      */
     private String buildEntryMethodHolder(
-        StandardGeneratorContext context, String[] entryPointTypeNames, Set<String> allRootTypes)
+        StandardGeneratorContext context, Set<String> allRootTypes)
         throws UnableToCompleteException {
-      EntryMethodHolderGenerator entryMethodHolderGenerator =
-          new EntryMethodHolderGenerator(entryPointTypeNames);
+      EntryMethodHolderGenerator entryMethodHolderGenerator = new EntryMethodHolderGenerator();
       String entryMethodHolderTypeName =
           entryMethodHolderGenerator.generate(logger, context, module.getCanonicalName());
       context.finish(logger);
@@ -917,17 +927,17 @@ public abstract class JavaToJavaScriptCompiler {
       return entryMethodHolderTypeName;
     }
 
-    private CompilationState constructJavaAst(String[] entryPointTypeNames,
-        String[] additionalRootTypes) throws UnableToCompleteException {
-      Set<String> allRootTypes = new TreeSet<String>();
+    private CompilationState constructJavaAst(
+        String[] entryPointTypeNames, String[] additionalRootTypes, Set<String> allRootTypes)
+        throws UnableToCompleteException {
       CompilationState compilationState = rpo.getCompilationState();
       Memory.maybeDumpMemory("CompStateBuilt");
-      populateRootTypes(allRootTypes, entryPointTypeNames, additionalRootTypes,
-          compilationState.getTypeOracle());
+      populateRootTypes(
+          allRootTypes, entryPointTypeNames, additionalRootTypes, compilationState.getTypeOracle());
       String entryMethodHolderTypeName =
-          buildEntryMethodHolder(rpo.getGeneratorContext(), entryPointTypeNames, allRootTypes);
+          buildEntryMethodHolder(rpo.getGeneratorContext(), allRootTypes);
       beforeUnifyAst(allRootTypes);
-      unifyJavaAst(allRootTypes, entryMethodHolderTypeName);
+      unifyJavaAst(entryPointTypeNames, allRootTypes, entryMethodHolderTypeName);
       if (options.isSoycEnabled() || options.isJsonSoycEnabled()) {
         SourceInfoCorrelator.exec(jprogram);
       }
@@ -1049,15 +1059,50 @@ public abstract class JavaToJavaScriptCompiler {
       }
     }
 
-    private void unifyJavaAst(Set<String> allRootTypes, String entryMethodHolderTypeName)
+    private void rebindEntryPoints(String[] mainClassNames, String entryMethodHolderTypeName)
+        throws UnableToCompleteException {
+      Event findEntryPointsEvent = SpeedTracerLogger.start(CompilerEventType.FIND_ENTRY_POINTS);
+      JMethod bootStrapMethod = jprogram.getIndexedMethod(
+          SourceName.getShortClassName(entryMethodHolderTypeName) + ".init");
+
+      JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
+      JBlock block = body.getBlock();
+      SourceInfo info = block.getSourceInfo().makeChild();
+
+      // Also remember $entry, which we'll handle specially in GenerateJsAst
+      JMethod registerEntry = jprogram.getIndexedMethod("Impl.registerEntry");
+      jprogram.addEntryMethod(registerEntry);
+
+      for (String mainClassName : mainClassNames) {
+        block.addStmt(makeStatsCalls(info, mainClassName));
+        JDeclaredType mainType = jprogram.getFromTypeMap(mainClassName);
+
+        if (mainType == null) {
+          logger.log(TreeLogger.ERROR,
+              "Could not find module entry point class '" + mainClassName + "'", null);
+          throw new UnableToCompleteException();
+        }
+
+        JMethod mainMethod = findMainMethod(mainType);
+        if (mainMethod != null && mainMethod.isStatic()) {
+          JMethodCall onModuleLoadCall = new JMethodCall(info, null, mainMethod);
+          block.addStmt(onModuleLoadCall.makeStatement());
+          continue;
+        }
+
+        rebindEntryPoint(info, bootStrapMethod, block, mainClassName, mainType);
+      }
+
+      jprogram.addEntryMethod(bootStrapMethod);
+      findEntryPointsEvent.end();
+    }
+
+    private void unifyJavaAst(
+        String[] entryPointTypeNames, Set<String> allRootTypes, String entryMethodHolderTypeName)
         throws UnableToCompleteException {
       UnifyAst unifyAst = new UnifyAst(logger, compilerContext, jprogram, jsProgram, rpo);
-      // Makes JProgram aware of these types so they can be accessed via index.
       unifyAst.addRootTypes(allRootTypes);
-      // Ensures that unification traversal starts from these methods.
-      jprogram.addEntryMethod(jprogram.getIndexedMethod("Impl.registerEntry"));
-      jprogram.addEntryMethod(jprogram.getIndexedMethod(
-          SourceName.getShortClassName(entryMethodHolderTypeName) + ".init"));
+      rebindEntryPoints(entryPointTypeNames, entryMethodHolderTypeName);
       unifyAst.exec();
     }
   }
@@ -1190,6 +1235,17 @@ public abstract class JavaToJavaScriptCompiler {
   public abstract UnifiedAst precompile(RebindPermutationOracle rpo, String[] entryPointTypeNames,
       String[] additionalRootTypes, boolean singlePermutation,
       PrecompilationMetricsArtifact precompilationMetrics) throws UnableToCompleteException;
+
+  protected final JMethod findMainMethod(JDeclaredType declaredType) {
+    for (JMethod method : declaredType.getMethods()) {
+      if (method.getName().equals("onModuleLoad")) {
+        if (method.getParams().size() == 0) {
+          return method;
+        }
+      }
+    }
+    return null;
+  }
 
   protected final void optimizeJavaToFixedPoint() throws InterruptedException {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);

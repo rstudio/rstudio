@@ -56,14 +56,14 @@ public class GenerateJavaScriptAstTest extends FullCompileTestBase {
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
     code.append("public class EntryPoint {\n");
     code.append("  public static native void inlinableJSNI() /*-{ $wnd; }-*/; ");
-    code.append("  public static void functionA() { main(); }\n");
-    code.append("  public static void main() {\n");
+    code.append("  public static void functionA() { onModuleLoad(); }\n");
+    code.append("  public static void onModuleLoad() {\n");
     code.append("    inlinableJSNI();");
     code.append("  }\n");
     code.append("}\n");
 
     Set<JsNode> functionForJsInlining = compileSnippet(code.toString()).getRight();
-    assertContainsAll(functionForJsInlining, "main", "inlinableJSNI");
+    assertContainsAll(functionForJsInlining, "onModuleLoad", "inlinableJSNI");
     assertDoesNotContainsAny(functionForJsInlining, "functionA");
   }
 

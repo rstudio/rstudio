@@ -74,7 +74,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     JsProgram program = compileClass(
         "package test;",
         "public class EntryPoint {",
-        "  public void onModuleLoad() {",
+        "  public static void onModuleLoad() {",
         "    throw new RuntimeException();",
         "  }",
         "}");
@@ -82,6 +82,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     // Note: it's up to the catch block to fix $stackDepth.
     checkOnModuleLoad(program, "function onModuleLoad(){" +
         "var stackIndex;$stack[stackIndex=++$stackDepth]=onModuleLoad;" +
+        "$location[stackIndex]='EntryPoint.java:'+'3',$clinit_EntryPoint();" +
         "throw new ($location[stackIndex]='EntryPoint.java:'+'4',RuntimeException)" +
         "}");
   }

@@ -167,7 +167,7 @@ public class ModuleDef {
   /**
    * Names of free-standing compilable library modules that are depended upon by this module.
    */
-  private final Set<String> externalLibraryCanonicalModuleNames = Sets.newLinkedHashSet();
+  private final Set<String> externalLibraryModuleNames = Sets.newLinkedHashSet();
 
   private final Set<File> gwtXmlFiles = new HashSet<File>();
 
@@ -225,10 +225,10 @@ public class ModuleDef {
   private final Styles styles = new Styles();
 
   /**
-   * Canonical names of non-independently-compilable modules (mostly filesets) that together make up
-   * the current module.
+   * Names of non-independently-compilable modules (mostly filesets) that together make up the
+   * current module.
    */
-  private final Set<String> targetLibraryCanonicalModuleNames = Sets.newLinkedHashSet();
+  private final Set<String> targetLibraryModuleNames = Sets.newLinkedHashSet();
 
   public ModuleDef(String name) {
     this(name, ResourceLoaders.forClassLoader(Thread.currentThread()));
@@ -385,11 +385,11 @@ public class ModuleDef {
    * At the moment the ModuleDef uses it's monolithic property in combination with the entering
    * modules ModuleType to updates its idea of attribute source.
    */
-  public void enterModule(ModuleType moduleType, String canonicalModuleName) {
+  public void enterModule(ModuleType moduleType, String moduleName) {
     if (monolithic) {
       // When you're monolithic the module tree is all effectively one giant library.
       currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
-      targetLibraryCanonicalModuleNames.add(canonicalModuleName);
+      targetLibraryModuleNames.add(moduleName);
       return;
     }
 
@@ -402,7 +402,7 @@ public class ModuleDef {
     if (currentAttributeSource.isEmpty() && moduleType == ModuleType.LIBRARY) {
       // Then any attributes you see are your own.
       currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
-      targetLibraryCanonicalModuleNames.add(canonicalModuleName);
+      targetLibraryModuleNames.add(moduleName);
       return;
     }
 
@@ -412,11 +412,11 @@ public class ModuleDef {
       if (moduleType == ModuleType.FILESET) {
         // Then any attributes you see are still your own.
         currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
-        targetLibraryCanonicalModuleNames.add(canonicalModuleName);
+        targetLibraryModuleNames.add(moduleName);
       } else {
         // But if you enter a library module then any attributes you see are external.
         currentAttributeSource.push(AttributeSource.EXTERNAL_LIBRARY);
-        addExternalLibraryCanonicalModuleName(canonicalModuleName);
+        addExternalLibraryModuleName(moduleName);
       }
     } else if (currentAttributeSource.peek() == AttributeSource.EXTERNAL_LIBRARY) {
       // If your current attribute source is an external library then regardless of whether you
@@ -553,8 +553,8 @@ public class ModuleDef {
    * Returns the names of free-standing compilable library modules that are depended upon by this
    * module.
    */
-  public Set<String> getExternalLibraryCanonicalModuleNames() {
-    return externalLibraryCanonicalModuleNames;
+  public Set<String> getExternalLibraryModuleNames() {
+    return externalLibraryModuleNames;
   }
 
   public synchronized String getFunctionName() {
@@ -660,8 +660,8 @@ public class ModuleDef {
    * Returns the names of non-independently-compilable modules (mostly filesets) that together make
    * up the current module.
    */
-  public Set<String> getTargetLibraryCanonicalModuleNames() {
-    return targetLibraryCanonicalModuleNames;
+  public Set<String> getTargetLibraryModuleNames() {
+    return targetLibraryModuleNames;
   }
 
   public boolean isGwtXmlFileStale() {
@@ -795,12 +795,12 @@ public class ModuleDef {
     }
   }
 
-  private void addExternalLibraryCanonicalModuleName(String canonicalModuleName) {
+  private void addExternalLibraryModuleName(String moduleName) {
     // Ignore circular dependencies on self.
-    if (canonicalModuleName.equals(getCanonicalName())) {
+    if (moduleName.equals(getName())) {
       return;
     }
-    externalLibraryCanonicalModuleNames.add(canonicalModuleName);
+    externalLibraryModuleNames.add(moduleName);
   }
 
   private boolean attributeIsForTargetLibrary() {

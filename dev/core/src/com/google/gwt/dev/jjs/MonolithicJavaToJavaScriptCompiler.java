@@ -25,8 +25,16 @@ import com.google.gwt.core.linker.SoycReportLinker;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
+import com.google.gwt.dev.jjs.ast.JBlock;
+import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JLiteral;
+import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
@@ -64,7 +72,9 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -243,8 +253,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     }
 
     @Override
-    protected void beforeUnifyAst(Set<String> allRootTypes)
-        throws UnableToCompleteException {
+    protected void beforeUnifyAst(Set<String> allRootTypes) throws UnableToCompleteException {
     }
 
     @Override
@@ -260,6 +269,52 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     }
 
     @Override
+    protected JMethodCall createReboundModuleLoad(SourceInfo info, JDeclaredType reboundEntryType,
+        String originalMainClassName, JDeclaredType enclosingType)
+        throws UnableToCompleteException {
+      if (!(reboundEntryType instanceof JClassType)) {
+        logger.log(TreeLogger.ERROR,
+            "Module entry point class '" + originalMainClassName + "' must be a class", null);
+        throw new UnableToCompleteException();
+      }
+
+      JClassType entryClass = (JClassType) reboundEntryType;
+      if (entryClass.isAbstract()) {
+        logger.log(TreeLogger.ERROR,
+            "Module entry point class '" + originalMainClassName + "' must not be abstract", null);
+        throw new UnableToCompleteException();
+      }
+
+      JMethod entryMethod = findMainMethodRecurse(entryClass);
+      if (entryMethod == null) {
+        logger.log(TreeLogger.ERROR,
+            "Could not find entry method 'onModuleLoad()' method in entry point class '"
+            + originalMainClassName + "'", null);
+        throw new UnableToCompleteException();
+      }
+
+      if (entryMethod.isAbstract()) {
+        logger.log(TreeLogger.ERROR, "Entry method 'onModuleLoad' in entry point class '"
+            + originalMainClassName + "' must not be abstract", null);
+        throw new UnableToCompleteException();
+      }
+
+      JExpression qualifier = null;
+      if (!entryMethod.isStatic()) {
+        qualifier = JGwtCreate.createInstantiationExpression(info, entryClass, enclosingType);
+
+        if (qualifier == null) {
+          logger.log(TreeLogger.ERROR,
+              "No default (zero argument) constructor could be found in entry point class '"
+              + originalMainClassName
+              + "' to qualify a call to non-static entry method 'onModuleLoad'", null);
+          throw new UnableToCompleteException();
+        }
+      }
+      return new JMethodCall(info, qualifier, entryMethod);
+    }
+
+    @Override
     protected void populateEntryPointRootTypes(
         String[] entryPointTypeNames, Set<String> allRootTypes) throws UnableToCompleteException {
       // Find all the possible rebinds for declared entry point types.
@@ -268,6 +323,44 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         Collections.addAll(allRootTypes, all);
       }
       rpo.getGeneratorContext().finish(logger);
+    }
+
+    @Override
+    protected void rebindEntryPoint(SourceInfo info, JMethod bootStrapMethod, JBlock block,
+        String mainClassName, JDeclaredType mainType) throws UnableToCompleteException {
+      String[] resultTypeNames = rpo.getAllPossibleRebindAnswers(logger, mainClassName);
+      List<JClassType> resultTypes = new ArrayList<JClassType>();
+      List<JExpression> entryCalls = new ArrayList<JExpression>();
+      for (String resultTypeName : resultTypeNames) {
+        JDeclaredType resultType = jprogram.getFromTypeMap(resultTypeName);
+        if (resultType == null) {
+          logger.log(TreeLogger.ERROR, "Could not find module entry point class '" + resultTypeName
+              + "' after rebinding from '" + mainClassName + "'", null);
+          throw new UnableToCompleteException();
+        }
+
+        JMethodCall onModuleLoadCall = createReboundModuleLoad(
+            info, resultType, mainClassName, bootStrapMethod.getEnclosingType());
+        resultTypes.add((JClassType) resultType);
+        entryCalls.add(onModuleLoadCall);
+      }
+      if (resultTypes.size() == 1) {
+        block.addStmt(entryCalls.get(0).makeStatement());
+      } else {
+        JReboundEntryPoint reboundEntryPoint =
+            new JReboundEntryPoint(info, mainType, resultTypes, entryCalls);
+        block.addStmt(reboundEntryPoint);
+      }
+    }
+
+    private JMethod findMainMethodRecurse(JDeclaredType declaredType) {
+      for (JDeclaredType it = declaredType; it != null; it = it.getSuperClass()) {
+        JMethod result = findMainMethod(it);
+        if (result != null) {
+          return result;
+        }
+      }
+      return null;
     }
   }
 
