@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
@@ -53,6 +54,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    public RmdOutput(EventBus eventBus, 
                     Commands commands,
                     GlobalDisplay globalDisplay,
+                    FileTypeRegistry fileTypeRegistry,
                     Binder binder,
                     UIPrefs prefs,
                     PDFViewer pdfViewer,
@@ -60,6 +62,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       satelliteManager_ = satelliteManager;
       globalDisplay_ = globalDisplay;
+      fileTypeRegistry_ = fileTypeRegistry;
       prefs_ = prefs;
       pdfViewer_ = pdfViewer;
       
@@ -143,13 +146,20 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                   false);
          }
       }
+      else if (".html".equals(extension))
+      {
+         displayHTMLRenderResult(result);
+      }
       else
       {
-         displayRenderResult(result);
+         if (Desktop.isDesktop())
+            Desktop.getFrame().showFile(result.getOutputFile());
+         else
+            globalDisplay_.openWindow(result.getOutputUrl());
       }
    }
    
-   private void displayRenderResult(RmdRenderResult result)
+   private void displayHTMLRenderResult(RmdRenderResult result)
    {
       // find the last known position for this file
       int scrollPosition = 0;
@@ -283,6 +293,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
    private final SatelliteManager satelliteManager_;
    private final GlobalDisplay globalDisplay_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final UIPrefs prefs_;
    private final PDFViewer pdfViewer_;
 
