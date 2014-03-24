@@ -395,9 +395,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean checked_ = false;
    private final HandlerManager handlers_ = new HandlerManager(this);
 
-   private String label_;
-   private String buttonLabel_;
-   private String menuLabel_;
+   private String label_ = null;
+   private String buttonLabel_ = null;
+   private String menuLabel_ = null;
    private String desc_;
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
