@@ -65,7 +65,7 @@ public class BrowseCap
    
    public boolean isInternetExplorer()
    {
-      return isUserAgent("Trident");
+      return isUserAgent("trident");
    }
     
    public boolean isInternetExplorer10()
