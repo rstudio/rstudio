@@ -27,7 +27,6 @@ namespace modules {
 namespace authoring {
    
 // accessors used by SessionMain
-bool isPdfViewerSupported(const std::string& userAgent);
 core::json::Array supportedRnwWeaveTypes();
 core::json::Array supportedLatexProgramTypes();
 core::json::Object texCapabilitiesAsJson();

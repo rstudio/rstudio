@@ -26,6 +26,7 @@ set (CORE_SOURCE_FILES
    Assert.cpp
    Base64.cpp
    BoostErrors.cpp
+   BrowserUtils.cpp
    ConfigUtils.cpp
    DateTime.cpp
    Error.cpp 

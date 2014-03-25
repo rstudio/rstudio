@@ -15,9 +15,8 @@
 
 #include "ServerBrowser.hpp"
 
-#include <boost/algorithm/string/predicate.hpp>
-
 #include <core/Log.hpp>
+#include <core/BrowserUtils.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -34,22 +33,12 @@ const char * const kBrowserUnsupported = "/unsupported_browser.htm";
 bool supportedBrowserFilter(const http::Request& request,
                             http::Response* pResponse)
 {
-	using namespace boost::algorithm;
-
    std::string userAgent = request.headerValue("User-Agent");
-
-   if (contains(userAgent, "Chrome")      ||
-       contains(userAgent, "chromeframe") ||
-       contains(userAgent, "Firefox")     ||
-       contains(userAgent, "Safari")      ||
-       contains(userAgent, "Trident/6.0") ||
-       contains(userAgent, "Trident/7.0") ||
-       contains(userAgent, "Gecko")       ||
-       contains(userAgent, "AppleWebKit"))
+   if (browser_utils::hasRequiredBrowser(userAgent))
    {
       return true;
 	}
-   else // unknown browser
+   else
    {
       pResponse->setMovedTemporarily(request, kBrowserUnsupported);
       return false;

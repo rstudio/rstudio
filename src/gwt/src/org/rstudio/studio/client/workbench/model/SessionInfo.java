@@ -232,12 +232,7 @@ public class SessionInfo extends JavaScriptObject
    public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
       return this.console_processes;
    }-*/;
-   
-   public final native boolean isInternalPdfPreviewEnabled() /*-{
-      return this.internal_pdf_preview_enabled;
-   }-*/;
-   
-   
+    
    public final native String getSumatraPdfExePath() /*-{
       return this.sumatra_pdf_exe_path;
    }-*/;

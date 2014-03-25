@@ -24,6 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/BrowserUtils.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -147,24 +148,6 @@ Error compilePdfClosed(const json::JsonRpcRequest& request,
    return Success();
 }
 
-bool isBrowserSupported(const std::string& userAgent,
-                        const boost::regex& versionRegEx,
-                        double requiredVersion)
-{
-   double detectedVersion = requiredVersion;
-   boost::smatch match;
-   if (boost::regex_search(userAgent, match, versionRegEx))
-   {
-      std::string versionString = match[1];
-      detectedVersion = safe_convert::stringTo<double>(versionString,
-                                                       detectedVersion);
-      if (detectedVersion < requiredVersion)
-         return false;
-   }
-
-   return true;
-}
-
 SEXP rs_rnwTangle(SEXP filePathSEXP, SEXP rnwWeaveSEXP)
 {
    try
@@ -185,31 +168,6 @@ SEXP rs_rnwTangle(SEXP filePathSEXP, SEXP rnwWeaveSEXP)
 
 } // anonymous namespace
 
-
-bool isPdfViewerSupported(const std::string& userAgent)
-{
-   // Qt 4.7 not supported
-   bool isQt47 = userAgent.find("Qt/4.7") != std::string::npos;
-   if (isQt47)
-      return false;
-
-   // Firefox >= 6 required
-   boost::regex ffRegEx("Firefox/(\\d{1,4})");
-   if (!isBrowserSupported(userAgent, ffRegEx, 6.0))
-      return false;
-
-   // Safari >= 5.1 required (look for both Safari and not Chrome in the UA
-   // since Chrome also includes Safari in its UA)
-   if ( userAgent.find("Safari") != std::string::npos &&
-        userAgent.find("Chrome") == std::string::npos)
-   {
-      boost::regex safariRegEx("Version/(\\d{1,4}\\.\\d)");
-      if (!isBrowserSupported(userAgent, safariRegEx, 5.1))
-         return false;
-   }
-
-   return true;
-}
 
 json::Array supportedRnwWeaveTypes()
 {

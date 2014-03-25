@@ -3530,8 +3530,7 @@ public class TextEditingTarget implements
       String pdfPreview = prefs_.getPdfPreviewValue();
       boolean showPdf = !pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_NONE);
       boolean useInternalPreview = 
-            pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO) && 
-            session_.getSessionInfo().isInternalPdfPreviewEnabled();
+            pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
       boolean useDesktopSynctexPreview = 
             pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX) &&
             Desktop.isDesktop();

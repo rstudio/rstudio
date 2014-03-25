@@ -526,11 +526,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["console_processes"] =
          session::console_process::processesAsJson();
 
-   // is internal preview supported by the client browser
-   std::string userAgent = ptrConnection->request().userAgent();
-   sessionInfo["internal_pdf_preview_enabled"] =
-               modules::authoring::isPdfViewerSupported(userAgent);
-
    // send sumatra pdf exe path if we are on windows
 #ifdef _WIN32
    sessionInfo["sumatra_pdf_exe_path"] =
