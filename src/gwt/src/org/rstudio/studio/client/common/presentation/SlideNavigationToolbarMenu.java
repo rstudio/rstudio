@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.presentation;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -143,8 +144,15 @@ public class SlideNavigationToolbarMenu
       @Override
       protected int getMaxHeight()
       {
-         return Window.getClientHeight() - titleLabel_.getAbsoluteTop() -
-                titleLabel_.getOffsetHeight() - heightOffset_;
+         if (BrowseCap.INSTANCE.isInternetExplorer())
+         {
+            return 300;
+         }
+         else
+         {
+            return Window.getClientHeight() - titleLabel_.getAbsoluteTop() -
+                  titleLabel_.getOffsetHeight() - heightOffset_;
+         }
       }
    }
    
