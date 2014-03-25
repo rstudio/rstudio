@@ -71,7 +71,7 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
          @Override
          public void onLoad(LoadEvent event)
          {
-            appFrame_.getIFrame().focus();
+            appFrame_.getIFrame().setFocus();
          }
       });
       return frame;
