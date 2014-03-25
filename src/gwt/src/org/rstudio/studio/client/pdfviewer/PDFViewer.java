@@ -250,7 +250,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       }
       
       lastSuccessfulPdfUrl_ = null;
-      if (pdfJsWindow_ == null)
+      if (!haveActivePdfJsWindow())
       {
           // open the window and continue
           String viewerUrl = 

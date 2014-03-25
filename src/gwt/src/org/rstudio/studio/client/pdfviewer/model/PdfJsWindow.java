@@ -45,7 +45,9 @@ public class PdfJsWindow extends WindowEx
    
    public final native void injectUiOnLoad(boolean forDesktop) /*-{
       var win = this;
-      this.addEventListener("load", function() {
+      
+      // runs when we detect that the document has fully loaded
+      var initUi = function() {
          // inject our own CSS
          var rstudioCss = win.document.createElement("link");
          rstudioCss.rel = "stylesheet";
@@ -103,7 +105,7 @@ public class PdfJsWindow extends WindowEx
          _pdfView.setInitialView = function(storedHash, scale) {
             _setInitialView.call(_pdfView, storedHash, scale);
             @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePDFLoadEvent()();
-         };
+         }
          
          // stub out the set-title functions so our window title sticks
          _pdfView.setTitle = function() {};
@@ -111,7 +113,39 @@ public class PdfJsWindow extends WindowEx
          
          // fire the load event
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLoadEvent()();
-      });
+      };
+
+      // starts a timer that initializes the UI when the PDFView object appears
+      var startInitUiTimer = function()
+      {
+         var n = 0, t = 0;
+         var checkPDFViewAvailable = function() {
+            n++;
+            if (typeof(win.PDFView) === "object") {
+               // PDFView is available now, initialize it
+               initUi();
+               clearInterval(t);
+               return true;
+            }
+            else if (n > 100) {
+               // cap at 100 tries (~5s)
+               clearInterval(t);
+               return false;
+            }
+         }
+         if (!checkPDFViewAvailable()) {
+            // if the PDFView object isn't available yet, check every 50ms 
+            // until it is
+            t = window.setInterval(checkPDFViewAvailable, 50);
+         }
+      }
+
+      // if the document is finished loading, start watching for the PDFView
+      // object to become available; if not, we can hook the load event 
+      if (document.readyState === "complete")
+         startInitUiTimer();
+      else
+         this.addEventListener("load", initUi);
       
       var unloadEvt = forDesktop ? "unload" : "beforeunload";
       this.addEventListener(unloadEvt, function() {
