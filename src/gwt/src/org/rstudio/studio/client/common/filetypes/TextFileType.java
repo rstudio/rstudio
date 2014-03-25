@@ -282,9 +282,12 @@ public class TextFileType extends EditableFileType
       }
       if (canKnitToHTML())
       {
-         results.add(commands.knitDocument());
          results.add(commands.usingRMarkdownHelp());
          results.add(commands.editRmdFormatOptions());
+      }
+      if (canKnitToHTML() || canCompileNotebook())
+      {
+         results.add(commands.knitDocument());
       }
       if (canPreviewHTML())
       {

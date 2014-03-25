@@ -3230,6 +3230,8 @@ public class TextEditingTarget implements
          previewRd();
       else if (fileType_.isRpres())
          previewRpresentation();
+      else if (fileType_.isR())
+         onCompileNotebook();
       else
          previewHTML();
    }

@@ -149,7 +149,7 @@ public class TextEditingTargetWidget
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
-      knitDocumentButton_ = commands_.knitDocument().createToolbarButton();
+      knitDocumentButton_ = commands_.knitDocument().createToolbarButton(false);
       knitDocumentButton_.getElement().getStyle().setMarginRight(2, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
@@ -279,6 +279,7 @@ public class TextEditingTargetWidget
    {
       editor_.setFileType(fileType);
       boolean canCompilePdf = fileType.canCompilePDF();
+      boolean canKnitToHTML = fileType.canKnitToHTML();
       boolean canCompileNotebook = fileType.canCompileNotebook();
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
@@ -318,6 +319,8 @@ public class TextEditingTargetWidget
       
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
+      
+      knitDocumentButton_.setVisible(canKnitToHTML);
       
       rmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setVisible(isRMarkdown2);
