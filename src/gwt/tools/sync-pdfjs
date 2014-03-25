@@ -28,6 +28,7 @@ cp pdfjs/build/generic/web/viewer.html ../../cpp/session/resources/pdfjs/web
 cp pdfjs/build/generic/web/images/*.png ../../cpp/session/resources/pdfjs/web/images
 cp pdfjs/build/generic/web/images/*.svg ../../cpp/session/resources/pdfjs/web/images
 cp pdfjs/build/generic/web/locale/locale.properties ../../cpp/session/resources/pdfjs/web/locale
+cp pdfjs/build/generic/web/locale/en-US/viewer.properties ../../cpp/session/resources/pdfjs/web/locale/en-US
 
 echo "Copying scripts"
 cp pdfjs/build/generic/build/pdf.js ../../cpp/session/resources/pdfjs/build
