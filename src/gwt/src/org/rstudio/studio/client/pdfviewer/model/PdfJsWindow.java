@@ -130,8 +130,8 @@ public class PdfJsWindow extends WindowEx
             else if (n > 100) {
                // cap at 100 tries (~5s)
                clearInterval(t);
-               return false;
             }
+            return false;
          }
          if (!checkPDFViewAvailable()) {
             // if the PDFView object isn't available yet, check every 50ms 
@@ -384,6 +384,7 @@ public class PdfJsWindow extends WindowEx
                            pageContainer) + (int) y - 180));
             }
 
+            win.focus();
             return false;
          }
       }, 100);
