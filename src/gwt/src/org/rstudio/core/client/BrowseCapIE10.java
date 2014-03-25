@@ -1,5 +1,5 @@
 /*
- * BrowseCapIE8.java
+ * BrowseCapIE10.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,9 +14,8 @@
  */
 package org.rstudio.core.client;
 
-public class BrowseCapIE8 extends BrowseCap
+public class BrowseCapIE10 extends BrowseCap
 {
-
    @Override
    public boolean suppressBraceHighlighting()
    {
@@ -26,6 +25,12 @@ public class BrowseCapIE8 extends BrowseCap
    @Override
    public boolean hasWindowFind()
    {
-      return false;
+      return true;
+   }
+   
+   @Override
+   public boolean isInternetExplorer10()
+   {
+      return true;
    }
 }

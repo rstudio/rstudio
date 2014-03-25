@@ -1,5 +1,5 @@
 /*
- * DomUtilsIE8Impl.java
+ * DomUtilsIE10Impl.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -20,7 +20,7 @@ import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.ElementEx;
 
-public class DomUtilsIE8Impl implements DomUtilsImpl
+public class DomUtilsIE10Impl implements DomUtilsImpl
 {
    public void focus(Element element, boolean alwaysDriveSelection)
    {

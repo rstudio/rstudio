@@ -62,7 +62,17 @@ public class BrowseCap
    {
       return true;
    }
-
+   
+   public boolean isInternetExplorer()
+   {
+      return isUserAgent("Trident");
+   }
+    
+   public boolean isInternetExplorer10()
+   {
+      return false;
+   }
+   
    public static boolean hasMetaKey()
    {
       return isMacintosh();
