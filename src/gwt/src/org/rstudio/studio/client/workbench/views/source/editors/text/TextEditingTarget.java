@@ -3247,6 +3247,16 @@ public class TextEditingTarget implements
          return;
       } 
       
+      if (BrowseCap.INSTANCE.isInternetExplorer())
+      {
+         globalDisplay_.showMessage(
+               MessageDisplay.MSG_WARNING,
+               "Unable to Preview",
+               "Previewing R Presentations is not supported " +
+               "in Internet Explorer.");
+         return;
+      }
+      
       PresentationState state = sessionInfo.getPresentationState();
       
       // if we are showing a tutorial then don't allow preview
