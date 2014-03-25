@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.presentation;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -58,12 +57,6 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
         
          public void onSessionInit(SessionInitEvent sie)
          {
-            if (BrowseCap.INSTANCE.isInternetExplorer())
-            {
-               commands.newRPresentationDoc().remove();
-            }
-            
-            
             PresentationState state = 
                               session_.getSessionInfo().getPresentationState();
             if (state.isActive())
@@ -101,8 +94,7 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
    @Override
    public boolean isSuppressed()
    {
-      return !session_.getSessionInfo().getPresentationState().isActive() ||
-             BrowseCap.INSTANCE.isInternetExplorer();
+      return !session_.getSessionInfo().getPresentationState().isActive();
    }
 
    private Session session_;

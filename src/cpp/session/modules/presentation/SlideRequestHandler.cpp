@@ -1081,6 +1081,7 @@ void handlePresentationFileRequest(const http::Request& request,
    FilePath resPath = options().rResourcesPath().complete("presentation");
    FilePath filePath = resPath.complete(dir + "/" + path);
    pResponse->setCacheWithRevalidationHeaders();
+   pResponse->setContentType(filePath.mimeContentType());
    pResponse->setCacheableBody(filePath, request);
 }
 
