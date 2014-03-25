@@ -160,63 +160,83 @@ public class TextEditingTargetRMarkdownHelper
    }
    
    public void renderNotebookv2(final DocUpdateSentinel sourceDoc)
-   {
-      final String NOTEBOOK_FORMAT = "notebook_format";
-      
+   { 
       withRMarkdownPackage("Compiling notebooks from R scripts",
          new CommandWithArg<RMarkdownContext>() {
             @Override
             public void execute(RMarkdownContext arg)
             {
-               // default format
-               String format = sourceDoc.getProperty(NOTEBOOK_FORMAT);
-               if (StringUtil.isNullOrEmpty(format))
-               {
-                  format = prefs_.compileNotebookv2Options()
-                                                      .getValue().getFormat();
-                  if (StringUtil.isNullOrEmpty(format))
-                     format = CompileNotebookv2Options.FORMAT_DEFAULT;
-               }
-               
-               CompileNotebookv2OptionsDialog dialog = 
-                     new CompileNotebookv2OptionsDialog(
-                           format,
-                           new OperationWithInput<CompileNotebookv2Options>()
-               {
-                  @Override
-                  public void execute(CompileNotebookv2Options input)
-                  { 
-                     // kickoff the render
-                     eventBus_.fireEvent(new RenderRmdEvent(
-                                                sourceDoc.getPath(), 
-                                                1, 
-                                                input.getFormat(), 
-                                                sourceDoc.getEncoding()));
-                     
-                     // save options for this document
-                     HashMap<String, String> changedProperties 
-                                          = new HashMap<String, String>();
-                     changedProperties.put(NOTEBOOK_FORMAT, input.getFormat());
-                     sourceDoc.modifyProperties(changedProperties, null);
-
-                     // save global prefs
-                     CompileNotebookv2Prefs prefs = 
-                           CompileNotebookv2Prefs.create(input.getFormat());
-                     if (!CompileNotebookv2Prefs.areEqual(
-                               prefs, 
-                               prefs_.compileNotebookv2Options().getValue()))
+               // see if we already have a format defined
+               server_.rmdOutputFormat(sourceDoc.getPath(),
+                                       sourceDoc.getEncoding(),
+                                       new SimpleRequestCallback<String>() {
+                     @Override
+                     public void onResponseReceived(String format)
                      {
-                        prefs_.compileNotebookv2Options().setGlobalValue(prefs);
-                        prefs_.writeUIPrefs();
+                        if (format == null)
+                           renderNotebookv2WithDialog(sourceDoc);
+                        else
+                           renderNotebookv2(sourceDoc, format);
                      }
-                  }
-               }
-               );
-               dialog.showModal();
+               });
             }
           });
    }
   
+   final String NOTEBOOK_FORMAT = "notebook_format";
+   
+   private void renderNotebookv2WithDialog(final DocUpdateSentinel sourceDoc)
+   {
+      // default format
+      String format = sourceDoc.getProperty(NOTEBOOK_FORMAT);
+      if (StringUtil.isNullOrEmpty(format))
+      {
+         format = prefs_.compileNotebookv2Options()
+                                             .getValue().getFormat();
+         if (StringUtil.isNullOrEmpty(format))
+            format = CompileNotebookv2Options.FORMAT_DEFAULT;
+      }
+      
+      CompileNotebookv2OptionsDialog dialog = 
+            new CompileNotebookv2OptionsDialog(
+                  format,
+                  new OperationWithInput<CompileNotebookv2Options>()
+      {
+         @Override
+         public void execute(CompileNotebookv2Options input)
+         { 
+            renderNotebookv2(sourceDoc, input.getFormat());
+            
+            // save options for this document
+            HashMap<String, String> changedProperties 
+                                          = new HashMap<String, String>();
+            changedProperties.put(NOTEBOOK_FORMAT, input.getFormat());
+            sourceDoc.modifyProperties(changedProperties, null);
+
+            // save global prefs
+            CompileNotebookv2Prefs prefs = 
+                  CompileNotebookv2Prefs.create(input.getFormat());
+            if (!CompileNotebookv2Prefs.areEqual(
+                  prefs, 
+                  prefs_.compileNotebookv2Options().getValue()))
+            {
+               prefs_.compileNotebookv2Options().setGlobalValue(prefs);
+               prefs_.writeUIPrefs();
+            }
+         }
+      }
+      );
+      dialog.showModal();
+   }
+   
+   private void renderNotebookv2(final DocUpdateSentinel sourceDoc,
+                                 String format)
+   {
+      eventBus_.fireEvent(new RenderRmdEvent(sourceDoc.getPath(), 
+                                             1, 
+                                             format, 
+                                             sourceDoc.getEncoding()));
+   }
    
    public void renderRMarkdown(final String sourceFile, 
                                final int sourceLine,

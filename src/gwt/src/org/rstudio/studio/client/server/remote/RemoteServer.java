@@ -3259,6 +3259,17 @@ public class RemoteServer implements Server
             TERMINATE_RENDER_RMD,
             requestCallback);
    }
+   
+   @Override
+   public void rmdOutputFormat(String file, 
+                               String encoding, 
+                               ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1, new JSONString(encoding));
+      sendRequest(RPC_SCOPE, "rmd_output_format", params, requestCallback);
+   }
             
    @Override
    public void convertToYAML(JavaScriptObject input,

@@ -67,3 +67,12 @@
         parse_error = .rs.scalar(parseError))
 })
 
+
+.rs.addJsonRpcHandler("rmd_output_format", function(input, encoding) {
+  formats <- rmarkdown:::enumerate_output_formats(input, encoding = encoding)
+  if (is.character(formats))
+    .rs.scalar(formats[[1]])
+  else
+    NULL
+})
+

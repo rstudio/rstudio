@@ -37,6 +37,9 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void terminateRenderRmd(ServerRequestCallback<Void> requestCallback);
    
+   void rmdOutputFormat(String file, 
+                        String encoding, 
+                        ServerRequestCallback<String> requestCallback);
    
    void convertToYAML(JavaScriptObject input, 
                       ServerRequestCallback<RmdYamlResult> requestCallback);
