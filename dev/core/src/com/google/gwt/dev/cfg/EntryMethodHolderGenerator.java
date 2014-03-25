@@ -31,17 +31,20 @@ public class EntryMethodHolderGenerator extends Generator {
   private static final String PACKAGE_PATH = "com.google.gwt.lang";
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context, String moduleName)
+  public String generate(TreeLogger logger, GeneratorContext context, String moduleCanonicalName)
       throws UnableToCompleteException {
-    // Module names aren't subject to Java class name restrictions, so must be escaped.
-    String typeName = Generator.escapeClassName(moduleName + "_" + ENTRY_METHOD_HOLDER_SUFFIX);
+    // Module names aren't subject to Java class name restrictions, so must be escaped. Also name
+    // based on module canonical name, to avoid collisions resulting from multiple modules
+    // with the same rename.
+    String typeName =
+        Generator.escapeClassName(moduleCanonicalName + "_" + ENTRY_METHOD_HOLDER_SUFFIX);
     PrintWriter out = context.tryCreate(logger, PACKAGE_PATH, typeName);
 
     if (out != null) {
       out.println("package " + PACKAGE_PATH + ";");
       out.println("public class " + typeName + " {");
       out.println("  public static final void init() {");
-      out.println("    // Filled in by the compiler to call entry methods.");
+      out.println("    // to be synthesized later");
       out.println("  }");
       out.println("}");
 

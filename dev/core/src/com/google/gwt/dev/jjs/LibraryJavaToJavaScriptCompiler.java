@@ -30,14 +30,11 @@ import com.google.gwt.dev.cfg.RuleReplaceWithFallback;
 import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.cfg.RuntimeRebindRegistratorGenerator;
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.LibraryGroupUnitCache;
+import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
-import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JLiteral;
-import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
@@ -62,6 +59,7 @@ import com.google.gwt.dev.js.ast.JsLiteral;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.resource.impl.FileResource;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -74,8 +72,8 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -161,12 +159,13 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
         HashMultimap.create();
     private Set<String> previouslyReboundTypeNames = Sets.newHashSet();
 
-    public LibraryPrecompiler(RebindPermutationOracle rpo) {
-      super(rpo);
+    public LibraryPrecompiler(RebindPermutationOracle rpo, String[] entryPointTypeNames) {
+      super(rpo, entryPointTypeNames);
     }
 
     @Override
-    protected void beforeUnifyAst(Set<String> allRootTypes) throws UnableToCompleteException {
+    protected void beforeUnifyAst(Set<String> allRootTypes)
+        throws UnableToCompleteException {
       runGeneratorsToFixedPoint(rpo);
 
       Set<JDeclaredType> reboundTypes = gatherReboundTypes(rpo);
@@ -179,28 +178,52 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
     }
 
     @Override
-    protected void checkEntryPoints(String[] entryPointTypeNames, String[] additionalRootTypes) {
+    protected void checkEntryPoints(String[] additionalRootTypes) {
       // Library construction does not need to care whether their are or are not any entry points.
     }
 
     @Override
     protected void createJProgram() {
-      jprogram = new JProgram(options.shouldLink());
-    }
-
-    @Override
-    protected JMethodCall createReboundModuleLoad(SourceInfo info, JDeclaredType reboundEntryType,
-        String originalMainClassName, JDeclaredType enclosingType)
-        throws UnableToCompleteException {
-      return null;
+      jprogram = new JProgram(false);
     }
 
     // VisibleForTesting
     protected JDeclaredType ensureFullTypeLoaded(JDeclaredType type) {
-      String resourcePath = LibraryGroupUnitCache.typeSourceNameToResourcePath(type.getName());
-      CompilationUnit compilationUnit = compilerContext.getUnitCache().find(resourcePath);
-      type = compilationUnit.getTypeByName(type.getName());
-      return type;
+      return findTypeBySourceName(BinaryName.toSourceName(type.getName()));
+    }
+
+    private JDeclaredType findType(List<JDeclaredType> types, String typeName) {
+      for (JDeclaredType type : types) {
+        if (BinaryName.toSourceName(type.getName()).equals(typeName)) {
+          return type;
+        }
+      }
+      return null;
+    }
+
+    // TODO(stalcup): performs much the same load logic as UnifyAst.findType(), but is necessary
+    // much earlier. Replace with some single mechanism. This logic only exists to support the
+    // ability to analyze whether a type is instantiable prior to creating a rebind rule that
+    // attempts to instantiate it. It would be very nice to not be duplicating an instantiability
+    // check here that JDT already does quite well during its own compile.
+    private JDeclaredType findTypeBySourceName(String sourceTypeName) {
+      Map<String, CompiledClass> compiledClassesBySourceName =
+          rpo.getCompilationState().getClassFileMapBySource();
+      // If the type is available as compiled source.
+      if (compiledClassesBySourceName.containsKey(sourceTypeName)) {
+        // Get and return it.
+        CompiledClass compiledClass = compiledClassesBySourceName.get(sourceTypeName);
+        return findType(compiledClass.getUnit().getTypes(), sourceTypeName);
+      }
+      // Otherwise if the type is available in a loaded library.
+      CompilationUnit compilationUnit =
+          compilerContext.getLibraryGroup().getCompilationUnitByTypeSourceName(sourceTypeName);
+      if (compilationUnit != null) {
+        // Get and return it.
+        compilerContext.getUnitCache().add(compilationUnit);
+        return findType(compilationUnit.getTypes(), sourceTypeName);
+      }
+      return null;
     }
 
     // VisibleForTesting
@@ -208,6 +231,12 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
       Collection<CompilationUnit> compilationUnits =
           rpo.getCompilationState().getCompilationUnits();
       Set<JDeclaredType> reboundTypes = Sets.newLinkedHashSet();
+      // EntryPoints are rebound but the rebind synthetisation has not occurred yet. Gather them as
+      // rebound types anyway.
+      for (String entryPointTypeName : entryPointTypeNames) {
+        reboundTypes.add(findTypeBySourceName(entryPointTypeName));
+      }
+
       for (CompilationUnit compilationUnit : compilationUnits) {
         for (JDeclaredType type : compilationUnit.getTypes()) {
           ReboundTypeRecorder.exec(type, reboundTypes);
@@ -227,20 +256,6 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
         typeNames.add(type.getName());
       }
       return typeNames;
-    }
-
-    @Override
-    protected void populateEntryPointRootTypes(
-        String[] entryPointTypeNames, Set<String> allRootTypes) {
-      Collections.addAll(allRootTypes, entryPointTypeNames);
-    }
-
-    @Override
-    protected void rebindEntryPoint(SourceInfo info, JMethod bootStrapMethod, JBlock block,
-        String mainClassName, JDeclaredType mainType) throws UnableToCompleteException {
-      JMethodCall onModuleLoadCall = createReboundModuleLoad(
-          info, mainType, mainClassName, bootStrapMethod.getEnclosingType());
-      block.addStmt(onModuleLoadCall.makeStatement());
     }
 
     /**
@@ -332,8 +347,10 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
       PropertyProviderRegistratorGenerator propertyProviderRegistratorGenerator =
           new PropertyProviderRegistratorGenerator(bindingProperties, configurationProperties);
       StandardGeneratorContext generatorContext = getGeneratorContext();
-      String propertyProviderRegistratorTypeName =
-          propertyProviderRegistratorGenerator.generate(logger, generatorContext, module.getName());
+      // Name based on module canonical name, to avoid collisions resulting from multiple modules
+      // with the same rename.
+      String propertyProviderRegistratorTypeName = propertyProviderRegistratorGenerator.generate(
+          logger, generatorContext, module.getCanonicalName());
       // Ensures that unification traverses and keeps the class.
       allRootTypes.add(propertyProviderRegistratorTypeName);
       // Ensures that JProgram knows to index this class's methods so that later bootstrap
@@ -348,8 +365,10 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
       RuntimeRebindRegistratorGenerator runtimeRebindRegistratorGenerator =
           new RuntimeRebindRegistratorGenerator();
       StandardGeneratorContext generatorContext = getGeneratorContext();
-      String runtimeRebindRegistratorTypeName =
-          runtimeRebindRegistratorGenerator.generate(logger, generatorContext, module.getName());
+      // Name based on module canonical name, to avoid collisions resulting from multiple modules
+      // with the same rename.
+      String runtimeRebindRegistratorTypeName = runtimeRebindRegistratorGenerator.generate(logger,
+          generatorContext, module.getCanonicalName());
       // Ensures that unification traverses and keeps the class.
       allRootTypes.add(runtimeRebindRegistratorTypeName);
       // Ensures that JProgram knows to index this class's methods so that later bootstrap
@@ -463,7 +482,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
   public UnifiedAst precompile(RebindPermutationOracle rpo, String[] entryPointTypeNames,
       String[] additionalRootTypes, boolean singlePermutation,
       PrecompilationMetricsArtifact precompilationMetrics) throws UnableToCompleteException {
-    return new LibraryPrecompiler(rpo).precompile(
-        entryPointTypeNames, additionalRootTypes, singlePermutation, precompilationMetrics);
+    return new LibraryPrecompiler(rpo, entryPointTypeNames).precompile(
+        additionalRootTypes, singlePermutation, precompilationMetrics);
   }
 }

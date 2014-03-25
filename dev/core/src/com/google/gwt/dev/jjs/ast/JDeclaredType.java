@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -156,6 +156,23 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   /**
+   * Returns the method with the given signature, if there is one.<br />
+   *
+   * Optionally can search up the super type chain.
+   */
+  public JMethod findMethod(String methodSignature, boolean recurse) {
+    for (JMethod method : getMethods()) {
+      if (method.getSignature().equals(methodSignature)) {
+        return method;
+      }
+    }
+    if (recurse && getSuperClass() != null) {
+      return getSuperClass().findMethod(methodSignature, true);
+    }
+    return null;
+  }
+
+  /**
    * Determines whether a subclass of this type is in the collection <code>types</code>.
    *
    * @param types a collections of types.
@@ -204,7 +221,7 @@ public abstract class JDeclaredType extends JReferenceType {
 
   /**
    * Returns the type which encloses this type.
-   * 
+   *
    * @return The enclosing type. May be {@code null}.
    */
   public JDeclaredType getEnclosingType() {
@@ -340,7 +357,7 @@ public abstract class JDeclaredType extends JReferenceType {
 
   /**
    * Sets the type which encloses this types.
-   * 
+   *
    * @param enclosingType May be {@code null}.
    */
   public void setEnclosingType(JDeclaredType enclosingType) {
@@ -383,7 +400,7 @@ public abstract class JDeclaredType extends JReferenceType {
 
   /**
    * See {@link #writeMembers(ObjectOutputStream)}.
-   * 
+   *
    * @see #writeMembers(ObjectOutputStream)
    */
   @SuppressWarnings("unchecked")
@@ -395,7 +412,7 @@ public abstract class JDeclaredType extends JReferenceType {
 
   /**
    * See {@link #writeMethodBodies(ObjectOutputStream)}.
-   * 
+   *
    * @see #writeMethodBodies(ObjectOutputStream)
    */
   void readMethodBodies(ObjectInputStream stream) throws IOException, ClassNotFoundException {
@@ -427,7 +444,7 @@ public abstract class JDeclaredType extends JReferenceType {
    * After all types are written to the stream without transient members, this
    * method actually writes fields and methods to the stream, which establishes
    * type identity for them.
-   * 
+   *
    * @see JProgram#writeObject(ObjectOutputStream)
    */
   void writeMembers(ObjectOutputStream stream) throws IOException {
@@ -439,7 +456,7 @@ public abstract class JDeclaredType extends JReferenceType {
   /**
    * After all types, fields, and methods are written to the stream, this method
    * writes method bodies to the stream.
-   * 
+   *
    * @see JProgram#writeObject(ObjectOutputStream)
    */
   void writeMethodBodies(ObjectOutputStream stream) throws IOException {

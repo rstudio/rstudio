@@ -228,10 +228,10 @@ public class ModuleDefLoaderTest extends TestCase {
     // The module sees itself and it's direct fileset module as "target" modules.
     assertEquals(Sets.newHashSet("com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne",
         "com.google.gwt.dev.cfg.testdata.separate.filesetone.FileSetOne"),
-        libraryOneModule.getTargetLibraryModuleNames());
+        libraryOneModule.getTargetLibraryCanonicalModuleNames());
     // The module sees the referenced library module as a "library" module.
     assertEquals(Sets.newHashSet("com.google.gwt.dev.cfg.testdata.separate.librarytwo.LibraryTwo"),
-        libraryOneModule.getExternalLibraryModuleNames());
+        libraryOneModule.getExternalLibraryCanonicalModuleNames());
   }
 
   public void testSeparateModuleResourcesLibraryOne() throws UnableToCompleteException {

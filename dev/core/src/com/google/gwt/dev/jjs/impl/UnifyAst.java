@@ -240,7 +240,8 @@ public class UnifyAst {
     public void endVisit(JExpressionStatement x, Context ctx) {
       if (x.getExpr() instanceof JMethodCall) {
         JMethodCall call = (JMethodCall) x.getExpr();
-        if (gwtDebuggerMethods.contains(call.getTarget())) {
+        JMethod target = call.getTarget();
+        if (GWT_DEBUGGER_METHOD_CALLS.contains(getMethodTypeSignature(target))) {
           // We should see all calls here because GWT.debugger() returns void.
           ctx.replaceMe(new JDebuggerStatement(x.getSourceInfo()));
         }
@@ -285,11 +286,12 @@ public class UnifyAst {
         assert errorsFound;
         return;
       }
-      if (magicMethodCalls.contains(target)) {
-        if (gwtDebuggerMethods.contains(target)) {
+      String targetSignature = getMethodTypeSignature(target);
+      if (MAGIC_METHOD_CALLS.contains(targetSignature)) {
+        if (GWT_DEBUGGER_METHOD_CALLS.contains(targetSignature)) {
           return; // handled in endVisit for JExpressionStatement
         }
-        JExpression result = handleMagicMethodCall(x);
+        JExpression result = handleMagicMethodCall(x, targetSignature);
         if (result == null) {
           // Error of some sort.
           result = JNullLiteral.INSTANCE;
@@ -403,7 +405,7 @@ public class UnifyAst {
       JMethod target = translate(x.getTarget());
       x.resolve(target);
       // Special handling.
-      return !magicMethodCalls.contains(target);
+      return !MAGIC_METHOD_CALLS.contains(getMethodTypeSignature(target));
     }
 
     private JExpression createRebindExpression(JMethodCall gwtCreateCall) {
@@ -439,7 +441,7 @@ public class UnifyAst {
     private JExpression createStaticRebindExpression(JMethodCall gwtCreateCall,
         JClassLiteral classLiteral) {
       JDeclaredType type = (JDeclaredType) classLiteral.getRefType();
-      String reqType = JGwtCreate.nameOf(type);
+      String reqType = BinaryName.toSourceName(type.getName());
       List<String> answers;
       try {
         answers = Lists.create(rpo.getAllPossibleRebindAnswers(logger, reqType));
@@ -517,12 +519,10 @@ public class UnifyAst {
       }
     }
 
-    private JExpression handleMagicMethodCall(JMethodCall x) {
-      JMethod target = x.getTarget();
-      String sig = target.getEnclosingType().getName() + '.' + target.getSignature();
-      if (GWT_CREATE.equals(sig) || OLD_GWT_CREATE.equals(sig)) {
+    private JExpression handleMagicMethodCall(JMethodCall x, String targetSignature) {
+      if (GWT_CREATE.equals(targetSignature) || OLD_GWT_CREATE.equals(targetSignature)) {
         return createRebindExpression(x);
-      } else if (IMPL_GET_NAME_OF.equals(sig)) {
+      } else if (IMPL_GET_NAME_OF.equals(targetSignature)) {
         return handleImplNameOf(x);
       }
       throw new InternalCompilerException("Unknown magic method");
@@ -563,6 +563,12 @@ public class UnifyAst {
   /**
    * Methods for which the call site must be replaced with magic AST nodes.
    */
+  private static final Set<String> GWT_DEBUGGER_METHOD_CALLS =
+      new LinkedHashSet<String>(Arrays.asList(GWT_DEBUGGER_SHARED, GWT_DEBUGGER_CLIENT));
+
+  /**
+   * Methods for which the call site must be replaced with magic AST nodes.
+   */
   private static final Set<String> MAGIC_METHOD_CALLS = new LinkedHashSet<String>(Arrays.asList(
       GWT_CREATE, GWT_DEBUGGER_SHARED, GWT_DEBUGGER_CLIENT, OLD_GWT_CREATE, IMPL_GET_NAME_OF));
 
@@ -596,8 +602,6 @@ public class UnifyAst {
 
   private final TreeLogger logger;
   private final CompilerContext compilerContext;
-  private final Set<JMethod> magicMethodCalls = new IdentityHashSet<JMethod>();
-  private final Set<JMethod> gwtDebuggerMethods = new IdentityHashSet<JMethod>();
   private final Map<String, JMethod> methodMap = new HashMap<String, JMethod>();
   private final JProgram program;
   private final RebindPermutationOracle rpo;
@@ -991,6 +995,14 @@ public class UnifyAst {
     }
   }
 
+  private String getMethodTypeSignature(JMethod method) {
+    return method.getEnclosingType().getName() + '.' + method.getSignature();
+  }
+
+  public NameBasedTypeLocator getSourceNameBasedTypeLocator() {
+    return sourceNameBasedTypeLocator;
+  }
+
   private void implementMagicMethod(JMethod method, JExpression returnValue) {
     JMethodBody body = (JMethodBody) method.getBody();
     JBlock block = body.getBlock();
@@ -1120,25 +1132,19 @@ public class UnifyAst {
       fieldMap.put(sig, field);
     }
     for (JMethod method : type.getMethods()) {
-      String sig = type.getName() + '.' + method.getSignature();
-      methodMap.put(sig, method);
-      if (MAGIC_METHOD_CALLS.contains(sig)) {
-        magicMethodCalls.add(method);
-        if (GWT_DEBUGGER_SHARED.equals(sig) || GWT_DEBUGGER_CLIENT.equals(sig)) {
-          gwtDebuggerMethods.add(method);
-        }
-      }
-      if (MAGIC_METHOD_IMPLS.contains(sig)) {
-        if (sig.startsWith("com.google.gwt.core.client.GWT.")
-            || sig.startsWith("com.google.gwt.core.shared.GWT.")) {
+      String methodSignature = getMethodTypeSignature(method);
+      methodMap.put(methodSignature, method);
+      if (MAGIC_METHOD_IMPLS.contains(methodSignature)) {
+        if (methodSignature.startsWith("com.google.gwt.core.client.GWT.")
+            || methodSignature.startsWith("com.google.gwt.core.shared.GWT.")) {
           // GWT.isClient, GWT.isScript, GWT.isProdMode all true.
           implementMagicMethod(method, JBooleanLiteral.TRUE);
         } else {
-          assert sig.startsWith("java.lang.Class.");
-          if (CLASS_DESIRED_ASSERTION_STATUS.equals(sig)) {
-            implementMagicMethod(
-                method, JBooleanLiteral.get(compilerContext.getOptions().isEnableAssertions()));
-          } else if (CLASS_IS_CLASS_METADATA_ENABLED.equals(sig)) {
+          assert methodSignature.startsWith("java.lang.Class.");
+          if (CLASS_DESIRED_ASSERTION_STATUS.equals(methodSignature)) {
+            implementMagicMethod(method,
+                JBooleanLiteral.get(compilerContext.getOptions().isEnableAssertions()));
+          } else if (CLASS_IS_CLASS_METADATA_ENABLED.equals(methodSignature)) {
             implementMagicMethod(method,
                 JBooleanLiteral.get(!compilerContext.getOptions().isClassMetadataDisabled()));
           } else {
@@ -1174,7 +1180,7 @@ public class UnifyAst {
     type.resolve(resolvedInterfaces, resolvedRescues);
   }
 
-  private JDeclaredType findType(String typeName, NameBasedTypeLocator nameBasedTypeLocator) {
+  public JDeclaredType findType(String typeName, NameBasedTypeLocator nameBasedTypeLocator) {
     if (nameBasedTypeLocator.resolvedTypeIsAvailable(typeName)) {
       return nameBasedTypeLocator.getResolvedType(typeName);
     }

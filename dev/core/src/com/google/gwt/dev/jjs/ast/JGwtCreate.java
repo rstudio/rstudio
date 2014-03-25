@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.util.ArrayList;
@@ -51,18 +52,10 @@ public class JGwtCreate extends JExpression {
     return new JNewInstance(info, noArgCtor, enclosingType);
   }
 
-  /**
-   * Rebinds are always on a source type name.
-   */
-  public static String nameOf(JType type) {
-    // TODO: replace with BinaryName.toSourceName(type.getName())?
-    return type.getName().replace('$', '.');
-  }
-
   static List<String> nameOf(Collection<? extends JType> types) {
     List<String> result = Lists.create();
     for (JType type : types) {
-      result = Lists.add(result, nameOf(type));
+      result = Lists.add(result, BinaryName.toSourceName(type.getName()));
     }
     return Lists.normalizeUnmodifiable(result);
   }
@@ -94,8 +87,8 @@ public class JGwtCreate extends JExpression {
    */
   public JGwtCreate(SourceInfo info, JReferenceType sourceType, Collection<JClassType> resultTypes,
       JType type, JDeclaredType enclosingType) {
-    this(info, nameOf(sourceType), nameOf(resultTypes), type, createInstantiationExpressions(info,
-        resultTypes, enclosingType));
+    this(info, BinaryName.toSourceName(sourceType.getName()), nameOf(resultTypes), type,
+        createInstantiationExpressions(info, resultTypes, enclosingType));
   }
 
   /**

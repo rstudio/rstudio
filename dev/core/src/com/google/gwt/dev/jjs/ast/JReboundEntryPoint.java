@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.Name.BinaryName;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class JReboundEntryPoint extends JStatement {
   public JReboundEntryPoint(SourceInfo info, JReferenceType sourceType,
       List<JClassType> resultTypes, List<JExpression> entryCalls) {
     super(info);
-    this.sourceType = JGwtCreate.nameOf(sourceType);
+    this.sourceType = BinaryName.toSourceName(sourceType.getName());
     this.resultTypes = JGwtCreate.nameOf(resultTypes);
     this.entryCalls = entryCalls;
   }

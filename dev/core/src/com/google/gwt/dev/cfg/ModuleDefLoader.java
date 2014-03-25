@@ -161,8 +161,8 @@ public class ModuleDefLoader {
           loader, logger, moduleName, resources, compilerContext.shouldCompileMonolithic());
 
       LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
-      libraryWriter.setLibraryName(module.getName());
-      libraryWriter.addDependencyLibraryNames(module.getExternalLibraryModuleNames());
+      libraryWriter.setLibraryName(module.getCanonicalName());
+      libraryWriter.addDependencyLibraryNames(module.getExternalLibraryCanonicalModuleNames());
 
       // Records binding property defined values that were newly created in this library.
       for (BindingProperty bindingProperty : module.getProperties().getBindingProperties()) {
@@ -375,7 +375,7 @@ public class ModuleDefLoader {
 
       // If this module.gwt.xml file is one of the target modules that together make up this
       // ModuleDef.
-      if (moduleDef.getTargetLibraryModuleNames().contains(moduleName)) {
+      if (moduleDef.getTargetLibraryCanonicalModuleNames().contains(moduleName)) {
         // Then save a copy of the xml file in the created library file.
         libraryWriter.addBuildResource(new UrlResource(moduleURL, resName, lastModified));
       }

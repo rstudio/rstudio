@@ -231,8 +231,8 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
           createInstantiableClassType("com.google.EventShim"));
       private AtomicLongMap<String> runCountByGeneratorName = AtomicLongMap.create();
 
-      public MockLibraryPrecompiler(RebindPermutationOracle rpo) {
-        super(rpo);
+      public MockLibraryPrecompiler(RebindPermutationOracle rpo, String[] entryPointTypeNames) {
+        super(rpo, entryPointTypeNames);
       }
 
       /**
@@ -275,7 +275,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     }
 
     private MockLibraryPrecompiler createPrecompiler() {
-      return new MockLibraryPrecompiler(null);
+      return new MockLibraryPrecompiler(null, null);
     }
   }
 
