@@ -36,6 +36,7 @@ import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.Pair;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -443,13 +444,21 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   private void assertInFragment(String functionName, int fragmentNum) {
-    JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
-    assertTrue(findFunctionIn(functionName, fragment));
+    Set<Integer> fragments = Sets.newHashSet();
+    for (int i = 0; i < jsProgram.getFragmentCount(); i++) {
+      JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
+      if (findFunctionIn(functionName, fragment)) {
+        fragments.add(fragmentNum);
+      }
+    }
+    assertTrue("function " + functionName + " should be in fragments " + fragmentNum +
+        " but is in " + fragments, fragments.equals(Sets.newHashSet(fragmentNum)));
   }
 
   private void assertNotInFragment(String functionName, int fragmentNum) {
     JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
-    assertFalse(findFunctionIn(functionName, fragment));
+    assertFalse("function " + functionName + " should not be in fragment " + fragmentNum,
+        findFunctionIn(functionName, fragment));
   }
 
   /**

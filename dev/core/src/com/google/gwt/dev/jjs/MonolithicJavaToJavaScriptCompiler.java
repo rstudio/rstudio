@@ -33,10 +33,8 @@ import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.ComputeInstantiatedJsoInterfaces;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
-import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.Devirtualizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
-import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
@@ -59,9 +57,6 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.arg.OptionOptimize;
-import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -103,9 +98,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
     @Override
     protected void optimizeJava() throws InterruptedException {
-      if (options.getOptimizationLevel() == OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
-        optimizeJavaForDraft();
-      } else {
+      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
         optimizeJavaToFixedPoint();
       }
       RemoveEmptySuperCalls.exec(jprogram);
@@ -194,19 +187,6 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         dependencyRecorder = new DependencyGraphRecorder(out, jprogram);
       }
       return dependencyRecorder;
-    }
-
-    /**
-     * Perform the minimal amount of optimization to make sure the compile succeeds.
-     */
-    private void optimizeJavaForDraft() {
-      Event draftOptimizeEvent = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE);
-      Finalizer.exec(jprogram);
-      // needed for certain libraries that depend on dead stripping to work
-      DeadCodeElimination.exec(jprogram);
-      Pruner.exec(jprogram, true);
-      jprogram.typeOracle.recomputeAfterOptimizations();
-      draftOptimizeEvent.end();
     }
 
     /**

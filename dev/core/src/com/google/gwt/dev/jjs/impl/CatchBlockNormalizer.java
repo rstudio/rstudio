@@ -63,6 +63,13 @@ public class CatchBlockNormalizer {
 
     @Override
     public void endVisit(JTryStatement x, Context ctx) {
+      if (x.getCatchClauses().isEmpty() &&
+          (x.getFinallyBlock() == null || x.getFinallyBlock().isEmpty())) {
+        // Remove {@code try { ...  }} if there are not catch and/or finally blocks. Translating it
+        // to JavaScript as {@code try { ... }} without catch and/or finally is illegal.
+        ctx.replaceMe(x.getTryBlock());
+      }
+
       if (x.getCatchClauses().isEmpty()) {
         return;
       }

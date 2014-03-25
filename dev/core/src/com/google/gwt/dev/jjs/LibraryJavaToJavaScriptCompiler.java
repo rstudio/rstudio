@@ -41,10 +41,8 @@ import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeExhaustiveCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.ComputeInstantiatedJsoInterfaces;
-import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.Devirtualizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
-import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
@@ -62,9 +60,6 @@ import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.resource.impl.FileResource;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Pair;
-import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -116,13 +111,6 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
 
     @Override
     protected void optimizeJava() {
-      Event draftOptimizeEvent = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE);
-      Finalizer.exec(jprogram);
-      jprogram.typeOracle.recomputeAfterOptimizations();
-      // Certain libraries depend on dead stripping.
-      DeadCodeElimination.exec(jprogram);
-      jprogram.typeOracle.recomputeAfterOptimizations();
-      draftOptimizeEvent.end();
     }
 
     @Override
