@@ -23,12 +23,6 @@ public class BrowseCapIE10 extends BrowseCap
    }
    
    @Override
-   public boolean hasWindowFind()
-   {
-      return true;
-   }
-   
-   @Override
    public boolean isInternetExplorer10()
    {
       return true;

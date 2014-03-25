@@ -60,7 +60,7 @@ public class BrowseCap
    
    public boolean hasWindowFind()
    {
-      return true;
+      return !isInternetExplorer();
    }
    
    public boolean isInternetExplorer()
