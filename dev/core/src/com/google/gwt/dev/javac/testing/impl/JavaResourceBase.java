@@ -200,6 +200,12 @@ public class JavaResourceBase {
           "public interface IsSerializable {",
           "}");
 
+  public static final MockJavaResource JAVASCRIPTEXCEPTION =
+      createMockJavaResource("com.google.gwt.core.client.JavaScriptException",
+          "package com.google.gwt.core.client;",
+          "public class JavaScriptException extends RuntimeException {",
+          "}");
+
   public static final MockJavaResource JAVASCRIPTOBJECT =
       createMockJavaResource("com.google.gwt.core.client.JavaScriptObject",
           "package com.google.gwt.core.client;",
@@ -388,10 +394,10 @@ public class JavaResourceBase {
     return new MockJavaResource[] {
         AUTOCLOSEABLE, ANNOTATION, ARRAY_LIST, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
         CLASS_NOT_FOUND_EXCEPTION, CLONEABLE, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION,
-        ERROR, FUNCTIONALINTERFACE, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP,
-        NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING,
-        STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE,
-        JSEXPORT, JSPROPERTY};
+        ERROR, FUNCTIONALINTERFACE, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTEXCEPTION,
+        JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
+        RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS,
+        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSPROPERTY};
   }
 
   /**

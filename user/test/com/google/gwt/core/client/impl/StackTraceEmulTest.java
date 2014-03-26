@@ -18,9 +18,7 @@ package com.google.gwt.core.client.impl;
 import static com.google.gwt.core.client.impl.StackTraceExamples.JAVA;
 import static com.google.gwt.core.client.impl.StackTraceExamples.TYPE_ERROR;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import junit.framework.AssertionFailedError;
 
 /**
  * Tests {@link StackTraceCreator} in the emulated mode.
@@ -34,9 +32,7 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
 
   @Override
   protected String[] getTraceJse(Object thrown) {
-    List<String> list = new ArrayList<String>(Arrays.asList(super.getTraceJse(TYPE_ERROR)));
-    list.add(0, Impl.getNameOf("@com.google.gwt.lang.Exceptions::wrap(*)"));
-    return list.toArray(new String[0]);
+    return super.getTraceJse(TYPE_ERROR);
   }
 
   @Override
@@ -45,16 +41,53 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
   }
 
   /**
+   * Verifies that the line numbers are recorded accurately in emulation for JavaScript exceptions.
+   */
+  public void testJseLineNumbers() {
+    Exception exception = StackTraceExamples.getLiveException(TYPE_ERROR);
+    String[] methodNames = getTraceJse(TYPE_ERROR);
+
+    StackTraceElement[] expectedTrace = new StackTraceElement[] {
+        createSTE(methodNames[0], "StackTraceExamples.java", 80),
+        createSTE(methodNames[1], "StackTraceExamples.java", 76),
+        createSTE(methodNames[2], "StackTraceExamples.java", 92),
+        createSTE(methodNames[3], "StackTraceExamples.java", 58),
+        createSTE(methodNames[4], "StackTraceExamples.java", 49),
+        createSTE(methodNames[5], "StackTraceExamples.java", 40)
+    };
+
+    assertTrace(expectedTrace, exception);
+  }
+
+  /**
+   * Verifies that the line numbers are recorded accurately in emulation for Java exceptions.
+   */
+  public void testJavaLineNumbers() {
+    Exception exception = StackTraceExamples.getLiveException(JAVA);
+    String[] methodNames = getTraceJava();
+
+    StackTraceElement[] expectedTrace = new StackTraceElement[] {
+        createSTE(methodNames[0], "Throwable.java", 116),
+        createSTE(methodNames[1], "Throwable.java", 60),
+        createSTE(methodNames[2], "Exception.java", 29),
+        createSTE(methodNames[3], "StackTraceExamples.java", 54),
+        createSTE(methodNames[4], "StackTraceExamples.java", 49),
+        createSTE(methodNames[5], "StackTraceExamples.java", 40)
+    };
+
+    assertTrace(expectedTrace, exception);
+  }
+  /**
    * Verifies throw/try/catch doesn't poison the emulated stack frames.
    */
-  public static void testViaSample() {
+  public void testViaSample() {
     StackTraceElement[] start = sample();
 
     Exception e = StackTraceExamples.getLiveException(JAVA);
     assertTrue(e.getStackTrace().length > 0);
 
     StackTraceElement[] end = sample();
-    assertEquals(start, end);
+    assertTraceMethodNames(start, end);
   }
 
   /**
@@ -67,17 +100,36 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
     assertTrue(e.getStackTrace().length > 0);
 
     StackTraceElement[] end = sample();
-    assertEquals(start, end);
+    assertTraceMethodNames(start, end);
   }
 
-  private static void assertEquals(StackTraceElement[] start, StackTraceElement[] end) {
+  private static void assertTraceMethodNames(StackTraceElement[] start, StackTraceElement[] end) {
     assertEquals("length", start.length, end.length);
     for (int i = 0, j = start.length; i < j; i++) {
       assertEquals("frame " + i, start[i].getMethodName(), end[i].getMethodName());
     }
   }
 
+  private void assertTrace(StackTraceElement[] expected, Exception t) {
+    StackTraceElement[] trace = t.getStackTrace();
+
+    for (int i = 0; i < expected.length; i++) {
+      StackTraceElement actualElement = trace[i];
+      if (actualElement.equals(expected[i])) {
+        continue;
+      }
+      AssertionFailedError e = new AssertionFailedError("Incorrect frame at " + i + " - "
+          + " Expected: " + expected[i] + " Actual: " + actualElement);
+      e.initCause(t);
+      throw e;
+    }
+  }
+
   private static StackTraceElement[] sample() {
     return new Throwable().getStackTrace();
+  }
+
+  private static StackTraceElement createSTE(String methodName, String fileName, int lineNumber) {
+    return new StackTraceElement("Unknown", methodName, fileName, lineNumber);
   }
 }

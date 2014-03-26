@@ -19,10 +19,12 @@ import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.HasArguments;
+import com.google.gwt.dev.js.ast.HasName;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -70,7 +72,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Emulates the JS stack in order to provide useful stack traces on browers that
+ * Emulates the JS stack in order to provide useful stack traces on browsers that
  * do not provide useful stack information.
  *
  * @see com.google.gwt.core.client.impl.StackTraceCreator
@@ -95,31 +97,7 @@ public class JsStackEmulator {
 
     @Override
     public void endVisit(JsExprStmt x, JsContext ctx) {
-      // Looking for e = wrap(e);
-      JsExpression expr = x.getExpression();
-
-      if (!(expr instanceof JsBinaryOperation)) {
-        return;
-      }
-
-      JsBinaryOperation op = (JsBinaryOperation) expr;
-      if (!(op.getArg2() instanceof JsInvocation)) {
-        return;
-      }
-
-      JsInvocation i = (JsInvocation) op.getArg2();
-      JsExpression q = i.getQualifier();
-      if (!(q instanceof JsNameRef)) {
-        return;
-      }
-
-      JsName name = ((JsNameRef) q).getName();
-      if (name == null) {
-        return;
-      }
-
-      // caughtFunction is the JsFunction translated from Exceptions.wrap
-      if (name.getStaticRef() != wrapFunction) {
+      if (!isExceptionWrappingCode(x)) {
         return;
       }
 
@@ -131,6 +109,37 @@ public class JsStackEmulator {
 
       ctx.insertAfter(reset.makeStmt());
     }
+  }
+
+  private boolean isExceptionWrappingCode(JsExprStmt x) {
+    // Looking for e = wrap(e);
+    JsExpression expr = x.getExpression();
+
+    if (!(expr instanceof JsBinaryOperation)) {
+      return false;
+    }
+
+    JsBinaryOperation op = (JsBinaryOperation) expr;
+    if (!(op.getArg2() instanceof JsInvocation)) {
+      return false;
+    }
+
+    JsInvocation i = (JsInvocation) op.getArg2();
+    JsExpression q = i.getQualifier();
+    if (!(q instanceof JsNameRef)) {
+      return false;
+    }
+
+    JsName name = ((JsNameRef) q).getName();
+    if (name == null) {
+      return false;
+    }
+
+    // caughtFunction is the JsFunction translated from Exceptions.wrap
+    if (name.getStaticRef() != wrapFunction) {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -475,9 +484,6 @@ public class JsStackEmulator {
 
     /**
      * Pops the stack frame.
-     *
-     * @param x the statement that will cause the pop
-     * @param ctx the visitor context
      */
     private void pop(JsStatement x, JsExpression expr, JsContext ctx) {
       // $stackDepth = stackIndex - 1
@@ -565,21 +571,15 @@ public class JsStackEmulator {
 
     @Override
     public void endVisit(JsFunction x, JsContext ctx) {
-      if (!x.getBody().getStatements().isEmpty()) {
-        JsName fnName = x.getName();
-        JMethod method = jjsmap.nameToMethod(fnName);
-        /**
-         * Do not instrumental immortal types because they are potentially
-         * evaluated before anything else has been defined.
-         */
-        if (method != null && jprogram.immortalCodeGenTypes.contains(method.getEnclosingType())) {
-          return;
-        }
-        if (recordLineNumbers) {
-          (new LocationVisitor(x)).instrumentBody(x);
-        } else {
-          (new EntryExitVisitor(x)).accept(x.getBody());
-        }
+      if (x.getBody().getStatements().isEmpty() ||
+          !shouldInstrumentFunction(x)) {
+        return;
+      }
+
+      if (recordLineNumbers) {
+        (new LocationVisitor(x)).instrumentBody(x);
+      } else {
+        (new EntryExitVisitor(x)).accept(x.getBody());
       }
     }
   }
@@ -618,13 +618,6 @@ public class JsStackEmulator {
     }
 
     @Override
-    public boolean visit(JsPropertyInitializer x, JsContext ctx) {
-      // do not instrument left hand side of initializer.
-      x.setValueExpr(accept(x.getValueExpr()));
-      return false;
-    }
-
-    @Override
     public void endVisit(JsArrayAccess x, JsContext ctx) {
       record(x, ctx);
     }
@@ -641,7 +634,6 @@ public class JsStackEmulator {
       nodesInRefContext.remove(x.getQualifier());
 
       // Record the location as close as possible to calling the function.
-
       List<JsExpression> args = x.getArguments();
       if (!args.isEmpty()) {
         recordAfterLastArg(x);
@@ -697,6 +689,14 @@ public class JsStackEmulator {
       nodesInRefContext.remove(x.getArg());
     }
 
+    @Override
+    public boolean visit(JsExprStmt x, JsContext ctx) {
+      if (isExceptionWrappingCode(x)) {
+        // Don't instrument exception wrapping code.
+        return false;
+      }
+      return true;
+    }
     /**
      * This is essentially a hacked-up version of JsFor.traverse to account for
      * flow control differing from visitation order. It resets lastFile and
@@ -744,6 +744,13 @@ public class JsStackEmulator {
         nodesInRefContext.add(x.getArg());
       }
       return true;
+    }
+
+    @Override
+    public boolean visit(JsPropertyInitializer x, JsContext ctx) {
+      // do not instrument left hand side of initializer.
+      x.setValueExpr(accept(x.getValueExpr()));
+      return false;
     }
 
     /**
@@ -925,9 +932,12 @@ public class JsStackEmulator {
    */
   private class ReplaceUnobfuscatableNames extends JsModVisitor {
     // See JsRootScope for the definition of these names
-    private final JsName rootLineNumbers = JsRootScope.INSTANCE.findExistingUnobfuscatableName("$location");
-    private final JsName rootStack = JsRootScope.INSTANCE.findExistingUnobfuscatableName("$stack");
-    private final JsName rootStackDepth = JsRootScope.INSTANCE.findExistingUnobfuscatableName("$stackDepth");
+    private final JsName rootLineNumbers =
+        JsRootScope.INSTANCE.findExistingUnobfuscatableName("$location");
+    private final JsName rootStack =
+        JsRootScope.INSTANCE.findExistingUnobfuscatableName("$stack");
+    private final JsName rootStackDepth =
+        JsRootScope.INSTANCE.findExistingUnobfuscatableName("$stackDepth");
 
     @Override
     public void endVisit(JsNameRef x, JsContext ctx) {
@@ -981,16 +991,32 @@ public class JsStackEmulator {
   private JsName stack;
   private JsName stackDepth;
   private JsName tmp;
+  private JDeclaredType exceptionsClass;
 
   private JsStackEmulator(JProgram jprogram, JsProgram jsProgram,
       JavaToJavaScriptMap jjsmap, ConfigProps config) {
     this.jprogram = jprogram;
     this.jsProgram = jsProgram;
     this.jjsmap = jjsmap;
+    this.exceptionsClass = jprogram.getFromTypeMap("com.google.gwt.lang.Exceptions");
 
     recordFileNames = config.getBoolean("compiler.emulatedStack.recordFileNames", false);
     recordLineNumbers = recordFileNames ||
         config.getBoolean("compiler.emulatedStack.recordLineNumbers", false);
+  }
+
+  private boolean shouldInstrumentFunction(JsExpression functionExpression) {
+    if (!(functionExpression instanceof HasName)) {
+      return true;
+    }
+    /**
+     * Do not instrument function in the Exceptions class (those are in involved in the
+     * exception handling machinery) nor immortal codegen types as their code is executed
+     * for setup and the stack emulation variables may have not been defined yet.
+     */
+    JMethod method = jjsmap.nameToMethod(((HasName) functionExpression).getName());
+    return method == null || method.getEnclosingType() != exceptionsClass
+        || jprogram.immortalCodeGenTypes.contains(method.getEnclosingType());
   }
 
   private void execImpl() {

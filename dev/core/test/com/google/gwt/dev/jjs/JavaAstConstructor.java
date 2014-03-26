@@ -192,6 +192,7 @@ public class JavaAstConstructor {
           "package com.google.gwt.lang;",
           "public class Exceptions { ",
           "  static Object wrap(Object e) { return e; }",
+          "  static Object unwrap(Object e) { return e; }",
           "  static RuntimeException makeAssertionError() { return new RuntimeException(); }",
           "  static Throwable safeClose(AutoCloseable resource, Throwable mainException) {",
           "    return mainException;", "  }",
