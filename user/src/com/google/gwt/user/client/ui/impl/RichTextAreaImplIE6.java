@@ -78,7 +78,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
       if (tr == null) {
         return;
       }
-      if (!@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::isOrHasChild(*)(doc.body, tr.parentElement)) {
+      if (!@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::isOrHasChild(*)(doc.body, tr.parentElement())) {
         return;
       }
       tr.pasteHTML(html);
