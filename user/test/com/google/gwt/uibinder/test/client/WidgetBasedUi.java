@@ -46,6 +46,7 @@ import com.google.gwt.user.client.ui.DateLabel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.DoubleBox;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -214,6 +215,7 @@ public class WidgetBasedUi extends Composite {
   @UiField HTML htmlWithComputedSafeHtml;
   @UiField HTML htmlWithComputedText;
   @UiField Label labelWithComputedText;
+  @UiField FlowPanel flowPanelWithTag;
 
   ValueChangeEvent<Double> doubleValueChangeEvent;
   @UiHandler("myDoubleBox")

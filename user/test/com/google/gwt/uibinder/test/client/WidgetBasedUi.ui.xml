@@ -611,6 +611,8 @@
       <gwt:Button ui:field="btnGo" debugId="myButton" addStyleNames="buttonStyle">Go</gwt:Button>
     </gwt:FlowPanel>
 
+    <gwt:FlowPanel ui:field="flowPanelWithTag" tag="p" />
+
     <demo:HandlerDemo />
     <demo:I18nMessageTest />
 

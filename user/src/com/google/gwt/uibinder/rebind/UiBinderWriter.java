@@ -1394,6 +1394,7 @@ public class UiBinderWriter implements Statements {
     addWidgetParser("HasTreeItems");
     addWidgetParser("HasWidgets");
     addWidgetParser("HTMLPanel");
+    addWidgetParser("FlowPanel");
     addWidgetParser("AbsolutePanel");
     addWidgetParser("DockPanel");
     addWidgetParser("StackPanel");

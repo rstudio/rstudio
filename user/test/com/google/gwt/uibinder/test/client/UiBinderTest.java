@@ -647,7 +647,7 @@ public class UiBinderTest extends GWTTestCase {
   public void testUrlResource() {
     assertEquals(new FakeBundle().aUrl(), widgetUi.myImage.getSrc());
   }
-  
+
   public void testUiTextWithSafeHtml() {
     assertEquals("<b>this text should be bold!</b>",
         StringCase.toLower(widgetUi.htmlWithComputedSafeHtml.getHTML()));
@@ -656,7 +656,11 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("<b>this text won't be bold!</b>",
         StringCase.toLower(widgetUi.labelWithComputedText.getText()));
   }
-  
+
+  public void testFlowPanelWithTag() {
+    assertEquals("P", widgetUi.flowPanelWithTag.getElement().getTagName());
+  }
+
   /**
    * Assert that the expect strings are found in body, and in the order given.
    * WARNING: both body and expected are normalized to lower case, to get around
