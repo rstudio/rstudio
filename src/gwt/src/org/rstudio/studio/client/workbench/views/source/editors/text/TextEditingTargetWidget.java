@@ -27,6 +27,9 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
@@ -132,6 +135,13 @@ public class TextEditingTargetWidget
       notebookSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(notebookToolbarButton_ = 
             commands_.compileNotebook().createToolbarButton());
+      
+      int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
+         KeyboardShortcut.CTRL;
+      String cmdText = 
+        new KeyboardShortcut(mod + KeyboardShortcut.SHIFT, 'K').toString(true);
+      cmdText = DomUtils.htmlToText(cmdText);
+      notebookToolbarButton_.setTitle("Compile Notebook (" + cmdText + ")");
       
       texSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
