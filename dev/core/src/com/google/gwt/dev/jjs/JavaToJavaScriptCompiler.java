@@ -52,6 +52,7 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -1053,6 +1054,8 @@ public abstract class JavaToJavaScriptCompiler {
           unifyAst.findType(entryMethodHolderTypeName, unifyAst.getSourceNameBasedTypeLocator());
       JDeclaredType gwtType = unifyAst.findType("com.google.gwt.core.client.GWT",
           unifyAst.getSourceNameBasedTypeLocator());
+      JDeclaredType entryPointType = unifyAst.findType("com.google.gwt.core.client.EntryPoint",
+          unifyAst.getSourceNameBasedTypeLocator());
 
       // Get method references.
       JMethod initMethod = entryMethodHolderType.findMethod("init()V", false);
@@ -1071,6 +1074,8 @@ public abstract class JavaToJavaScriptCompiler {
               "Could not find module entry point class '" + entryPointTypeName + "'", null);
           throw new UnableToCompleteException();
         }
+        JMethod onModuleLoadMethod =
+            entryPointType.findMethod("onModuleLoad()V", true);
         JMethod specificOnModuleLoadMethod =
             specificEntryPointType.findMethod("onModuleLoad()V", true);
 
@@ -1080,13 +1085,15 @@ public abstract class JavaToJavaScriptCompiler {
               new JMethodCall(origin, null, specificOnModuleLoadMethod);
           initMethodBlock.addStmt(staticOnModuleLoadCall.makeStatement());
         } else {
-          // Synthesize an instance GWT.create(FooEntryPoint.class).onModuleLoad(); call.
+          // Synthesize ((EntryPoint)GWT.create(FooEntryPoint.class)).onModuleLoad();
           JClassLiteral entryPointTypeClassLiteral =
               new JClassLiteral(origin, specificEntryPointType);
           JMethodCall createInstanceCall =
               new JMethodCall(origin, null, gwtCreateMethod, entryPointTypeClassLiteral);
+          JCastOperation castToEntryPoint =
+              new JCastOperation(origin, entryPointType, createInstanceCall);
           JMethodCall instanceOnModuleLoadCall =
-              new JMethodCall(origin, createInstanceCall, specificOnModuleLoadMethod);
+              new JMethodCall(origin, castToEntryPoint, onModuleLoadMethod);
           initMethodBlock.addStmt(instanceOnModuleLoadCall.makeStatement());
         }
       }
