@@ -27,8 +27,10 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
+
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -101,8 +103,18 @@ public class DirectoryContentsWidget
          {
             event.preventDefault();
             event.stopPropagation();
-
-            focusImpl_.focus(table_.getElement());
+            
+            // IE10: focusing the the table element causes the scroll panel to
+            // snap it to the top, scrolling the event target offscreen. Set
+            // and restore the position after focus.
+            if (DomUtils.getActiveElement() != table_.getElement())
+            {
+               int h = scrollPanel_.getHorizontalScrollPosition();
+               int v = scrollPanel_.getVerticalScrollPosition();
+               focusImpl_.focus(table_.getElement());
+               scrollPanel_.setHorizontalScrollPosition(h);
+               scrollPanel_.setVerticalScrollPosition(v);
+            }
 
             HTMLTable.Cell cell = table_.getCellForEvent(event);
             if (cell != null)
