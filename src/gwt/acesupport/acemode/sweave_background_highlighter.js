@@ -15,6 +15,8 @@
 define("mode/sweave_background_highlighter", function(require, exports, module)
 {
    var Range = require("ace/range").Range;
+   var markerClass = "ace_foreign_line sweave_background_highlight";
+   var markerType = "background";
 
    var SweaveBackgroundHighlighter = function(session, reCode, reText,
                                               textIsTerminator) {
@@ -34,6 +36,21 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
 
       for (var i = 0; i < this.$doc.getLength(); i++)
          this.$updateRow(i);
+      
+      // The Sweave background highlighter is destroyed and recreated with the
+      // document mode. Look through the markers and see if any were created by
+      // a previous instance of this highlighter; if so, take ownership of them
+      // so we don't create duplicates.
+      var markers = session.getMarkers(false);
+      for (var markerId in markers) {
+          var marker = markers[markerId];
+          if (marker.range &&
+              marker.clazz === markerClass &&
+              marker.type == markerType) {
+              this.$markers[marker.range.start.row] = markerId;
+    	  }
+      }
+
       this.$syncMarkers(0);
    };
 
@@ -128,14 +145,15 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
          for (var row = startRow; row <= endRow; row++) {
             var foreign = this.$rowState[row] != TYPE_TEXT;
             if (!!foreign != !!this.$markers[row]) {
+               if (this.$markers[row]) 
+                  this.$session.removeMarker(this.$markers[row]);
                if (foreign) {
                   this.$markers[row] = this.$session.addMarker(new Range(row, 0, row + 1, 0),
-                                                               "ace_foreign_line",
-                                                               "background",
+                                                               markerClass,
+                                                               markerType,
                                                                false);
                }
                else {
-                  this.$session.removeMarker(this.$markers[row]);
                   delete this.$markers[row];
                }
             }
