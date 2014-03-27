@@ -3295,6 +3295,15 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void discoverRmdTemplates(
+         ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            DISCOVER_RMD_TEMPLATES,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3584,4 +3593,5 @@ public class RemoteServer implements Server
    private static final String TERMINATE_RENDER_RMD = "terminate_render_rmd";
    private static final String CONVERT_TO_YAML = "convert_to_yaml";
    private static final String CONVERT_FROM_YAML = "convert_from_yaml";
+   private static final String DISCOVER_RMD_TEMPLATES = "discover_rmd_templates";
 }

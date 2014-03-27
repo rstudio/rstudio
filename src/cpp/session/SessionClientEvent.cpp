@@ -112,6 +112,8 @@ const int kDebugSourceCompleted = 87;
 const int kRmdRenderStarted = 88;
 const int kRmdRenderOutput = 89;
 const int kRmdRenderCompleted = 90;
+const int kRmdTemplateDiscovered = 91;
+const int kRmdTemplateDiscoveryCompleted = 92;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -295,6 +297,10 @@ std::string ClientEvent::typeName() const
          return "rmd_render_output";
       case client_events::kRmdRenderCompleted:
          return "rmd_render_completed";
+      case client_events::kRmdTemplateDiscovered:
+         return "rmd_template_discovered";
+      case client_events::kRmdTemplateDiscoveryCompleted:
+         return "rmd_template_discovery_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
