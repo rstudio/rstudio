@@ -25,29 +25,23 @@ import com.google.gwt.core.client.JsArrayTest;
 import com.google.gwt.core.client.JsIdentityTest;
 import com.google.gwt.core.client.SchedulerTest;
 import com.google.gwt.core.client.ScriptInjectorTest;
-import com.google.gwt.core.client.impl.AsyncFragmentLoaderTest;
 import com.google.gwt.core.client.impl.SchedulerImplTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorCollectorTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorEmulTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorTest;
 import com.google.gwt.core.client.prefetch.RunAsyncCodeTest;
-import com.google.gwt.core.client.testing.StubSchedulerTest;
 import com.google.gwt.core.shared.SerializableThrowableTest;
-import com.google.gwt.dev.StrictModeTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.lang.RuntimePropertyRegistryTest;
 
 import junit.framework.Test;
 
 /**
- * All core tests.
+ * All core tests that use GWTTestCase.
  */
 public class CoreSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("All core tests");
 
-    // $JUnit-BEGIN$
-    suite.addTestSuite(AsyncFragmentLoaderTest.class);
     suite.addTestSuite(GwtServletBaseTest.class);
     suite.addTestSuite(GWTTest.class);
     suite.addTestSuite(HttpThrowableReporterTest.class);
@@ -57,7 +51,6 @@ public class CoreSuite {
     suite.addTestSuite(JsArrayTest.class);
     suite.addTestSuite(JsArrayMixedTest.class);
     suite.addTestSuite(RunAsyncCodeTest.class);
-    suite.addTestSuite(RuntimePropertyRegistryTest.class);
     suite.addTestSuite(SchedulerImplTest.class);
     suite.addTestSuite(SchedulerTest.class);
     suite.addTestSuite(ScriptInjectorTest.class);
@@ -65,9 +58,6 @@ public class CoreSuite {
     suite.addTestSuite(StackTraceCreatorCollectorTest.class);
     suite.addTestSuite(StackTraceCreatorEmulTest.class);
     suite.addTestSuite(StackTraceCreatorTest.class);
-    suite.addTestSuite(StrictModeTest.class);
-    suite.addTestSuite(StubSchedulerTest.class);
-    // $JUnit-END$
 
     return suite;
   }
