@@ -1023,14 +1023,17 @@ public class JsniReferenceResolverTest extends CheckerTestCase {
     shouldGenerateNoWarning(buggy);
   }
 
-  public void testNullField() {
+  public void testOldStyleNullField() {
     MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
        "class Buggy {",
        "  static native Object main() /*-{",
        "    return @null::nullField;",
        "  }-*/;",
        "}");
-    shouldGenerateNoWarning(buggy);
+    shouldGenerateError(
+        buggy,
+        3,
+        "Referencing class 'null': unable to resolve class");
 
     buggy = JavaResourceBase.createMockJavaResource("Buggy",
        "class Buggy {",
@@ -1041,17 +1044,20 @@ public class JsniReferenceResolverTest extends CheckerTestCase {
     shouldGenerateError(
         buggy,
         3,
-        "Referencing field 'null.foo': 'nullField' is the only legal field reference for 'null'");
+        "Referencing class 'null': unable to resolve class");
   }
 
-  public void testNullMethod() {
+  public void testOldStyleNullMethod() {
     MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
        "class Buggy {",
        "  static native Object main() /*-{",
        "    return @null::nullMethod()();",
        "  }-*/;",
        "}");
-    shouldGenerateNoWarning(buggy);
+    shouldGenerateError(
+        buggy,
+        3,
+        "Referencing class 'null': unable to resolve class");
 
     buggy = JavaResourceBase.createMockJavaResource("Buggy",
        "class Buggy {",
@@ -1062,7 +1068,7 @@ public class JsniReferenceResolverTest extends CheckerTestCase {
     shouldGenerateError(
         buggy,
         3,
-        "Referencing method 'null.foo()': 'nullMethod()' is the only legal method for 'null'");
+        "Referencing class 'null': unable to resolve class");
   }
 
   public void testOverloadedMethodWithNoWarning() {

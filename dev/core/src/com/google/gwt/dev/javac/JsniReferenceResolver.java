@@ -257,8 +257,6 @@ public class JsniReferenceResolver {
         return;
       }
 
-      resolveClassReference(jsniRef);
-
       Binding binding = resolveReference(x.getSourceInfo(), jsniRef, x.getQualifier() != null,
           ctx.isLvalue());
 
@@ -442,18 +440,9 @@ public class JsniReferenceResolver {
 
     private Binding resolveReference(SourceInfo errorInfo, JsniRef jsniRef, boolean hasQualifier,
         boolean isLvalue) {
+
+      resolveClassReference(jsniRef);
       String className = jsniRef.getResolvedClassName();
-      if ("null".equals(className)) {
-        // Do not emit errors for null.nullField or null.nullMethod.
-        // TODO(rluble): Why should these ever reach resolveReference()?
-        if (jsniRef.isField() && !"nullField".equals(jsniRef.memberName())) {
-          emitError(ERR_ILLEGAL_FIELD_ACCESS_ON_NULL, errorInfo, jsniRef);
-        } else if (jsniRef.isMethod() && !"nullMethod()".equals(jsniRef.memberSignature())) {
-          emitError(ERR_ILLEGAL_METHOD_ACCESS_ON_NULL, errorInfo, jsniRef);
-        }
-        jsniRef.setResolvedMemberWithSignature(jsniRef.memberSignature());
-        return null;
-      }
 
       boolean isPrimitive;
       ReferenceBinding clazz;

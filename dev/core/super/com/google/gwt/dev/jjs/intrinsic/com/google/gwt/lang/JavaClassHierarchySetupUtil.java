@@ -61,6 +61,12 @@ public class JavaClassHierarchySetupUtil {
       _ = prototypesByTypeId[typeId]  = (!superTypeId) ? {} : createSubclassPrototype(superTypeId);
       _.@java.lang.Object::castableTypeMap = castableTypeMap;
       _.constructor = _;
+      if (!superTypeId) {
+        // Set the typeMarker on java.lang.Object's prototype, implicitly setting it for all
+        // Java subclasses (String and Arrays have special handling in Cast and Array respectively).
+        _.@java.lang.Object::typeMarker =
+            @JavaClassHierarchySetupUtil::typeMarkerFn(*);
+      }
     }
     for (var i = 3; i < arguments.length; ++i) {
       // Assign the type prototype to each constructor.
@@ -195,5 +201,18 @@ public class JavaClassHierarchySetupUtil {
     var prototypeForTypeId =
         @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[typeId];
     return prototypeForTypeId;
+  }-*/;
+
+  /**
+   * Marker function. All Java Objects (except Strings) have a typeMarker field pointing to
+   * this function.
+   */
+  static native void typeMarkerFn() /*-{
+  }-*/;
+
+  /**
+   * A global noop function. Replaces clinits after execution.
+   */
+  static native void emptyMethod() /*-{
   }-*/;
 }

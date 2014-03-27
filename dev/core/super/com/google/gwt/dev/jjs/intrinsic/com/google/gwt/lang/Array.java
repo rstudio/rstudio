@@ -144,7 +144,7 @@ public final class Array {
       JavaScriptObject elementTypeId, int elementTypeClass, Array array) {
     setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
-    Util.setTypeMarker(array, Cast.getNullMethod());
+    Util.setTypeMarker(array);
     Array.setElementTypeId(array, elementTypeId);
     Array.setElementTypeClass(array, elementTypeClass);
     return array;

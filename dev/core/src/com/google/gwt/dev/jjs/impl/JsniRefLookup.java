@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,7 +35,7 @@ import java.util.TreeSet;
 
 /**
  * A utility class that can look up a {@link JsniRef} in a {@link JProgram}.
- * 
+ *
  * @deprecated find alternatives, only a couple of corner cases use this now.
  */
 @Deprecated
@@ -49,7 +49,7 @@ public class JsniRefLookup {
 
   /**
    * Look up a JSNI reference.
-   * 
+   *
    * @param ref The reference to look up
    * @param program The program to look up the reference in
    * @param errorReporter A callback used to indicate the reason for a failed
@@ -61,24 +61,18 @@ public class JsniRefLookup {
   public static JNode findJsniRefTarget(JsniRef ref, JProgram program,
       JsniRefLookup.ErrorReporter errorReporter) {
     String className = ref.className();
-    JType type = null;
-    if (!className.equals("null")) {
-      type = program.getTypeFromJsniRef(className);
-      if (type == null) {
-        errorReporter.reportError("Unresolvable native reference to type '" + className + "'");
-        return null;
-      }
+    JType type = program.getTypeFromJsniRef(className);
+
+    if (type == null) {
+      errorReporter.reportError("Unresolvable native reference to type '" + className + "'");
+      return null;
     }
 
     if (!ref.isMethod()) {
       // look for a field
       String fieldName = ref.memberName();
-      if (type == null) {
-        if (fieldName.equals("nullField")) {
-          return program.getNullField();
-        }
 
-      } else if (fieldName.equals(JsniRef.CLASS)) {
+      if (fieldName.equals(JsniRef.CLASS)) {
         return type;
 
       } else if (type instanceof JPrimitiveType) {
@@ -109,26 +103,20 @@ public class JsniRefLookup {
           new LinkedHashMap<String, LinkedHashMap<String, JMethod>>();
       String methodName = ref.memberName();
       String jsniSig = ref.memberSignature();
-      if (type == null) {
-        if (jsniSig.equals("nullMethod()")) {
-          return program.getNullMethod();
-        }
-      } else {
-        findMostDerivedMembers(matchesBySig, (JDeclaredType) type, methodName, true);
-        LinkedHashMap<String, JMethod> matches = matchesBySig.get(jsniSig);
-        if (matches != null && matches.size() == 1) {
-          /*
-           * Backward compatibility: allow accessing bridge methods with full
-           * qualification
-           */
-          return matches.values().iterator().next();
-        }
+      findMostDerivedMembers(matchesBySig, (JDeclaredType) type, methodName, true);
+      LinkedHashMap<String, JMethod> matches = matchesBySig.get(jsniSig);
+      if (matches != null && matches.size() == 1) {
+        /*
+         * Backward compatibility: allow accessing bridge methods with full
+         * qualification
+         */
+        return matches.values().iterator().next();
+      }
 
-        removeSyntheticMembers(matchesBySig);
-        matches = matchesBySig.get(jsniSig);
-        if (matches != null && matches.size() == 1) {
-          return matches.values().iterator().next();
-        }
+      removeSyntheticMembers(matchesBySig);
+      matches = matchesBySig.get(jsniSig);
+      if (matches != null && matches.size() == 1) {
+        return matches.values().iterator().next();
       }
 
       // Not found; signal an error
@@ -159,7 +147,7 @@ public class JsniRefLookup {
 
   /**
    * Add a member to the table of most derived members.
-   * 
+   *
    * @param matchesBySig The table so far of most derived members
    * @param member The member to add to it
    * @param refSig The string used to refer to that member, possibly shortened

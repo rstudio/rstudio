@@ -463,19 +463,6 @@ public class GenerateJavaScriptAST {
       names.put(nullField, nullFieldName);
 
       /*
-       * put nullMethod in the global scope, too; it's the replacer for clinits.
-       */
-      if (!program.isReferenceOnly(program.getIndexedType("Cast"))) {
-        // This is the module that contains the intrinsics, hence define the null function.
-        // TODO(rluble): this should be cleaner. Ideally there is a bootstrap library that
-        // is minimal and has all compiler support code.
-        nullFunctionJsName = createNullFunction(nullMethod.getName());
-      } else {
-        nullFunctionJsName = topScope.declareName(nullMethod.getName());
-      }
-      names.put(nullMethod, nullFunctionJsName);
-
-      /*
        * Create names for instantiable array types since JProgram.traverse()
        * doesn't iterate over them.
        */
@@ -1957,7 +1944,8 @@ public class GenerateJavaScriptAST {
               if (jsName == null) {
                 // this can occur when JSNI references an instance method on a
                 // type that was never actually instantiated.
-                jsName = nullFunctionJsName;
+                jsName =
+                    indexedFunctions.get("JavaClassHierarchySetupUtil.emptyMethod").getName();
               }
               x.resolve(jsName);
             }
@@ -2126,8 +2114,6 @@ public class GenerateJavaScriptAST {
       if (x == program.getTypeJavaLangObject()) {
         // special: setup a "toString" alias for java.lang.Object.toString()
         generateToStringAlias(x, globalStmts);
-        // special: setup the identifying typeMarker field
-        generateTypeMarker(globalStmts);
 
         // Set up the artificial castmap for string.
         setupStringCastMap(program.getTypeJavaLangString(), globalStmts);
@@ -2551,22 +2537,6 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateTypeMarker(List<JsStatement> globalStmts) {
-      JField typeMarkerField = program.getIndexedField("Object.typeMarker");
-      JsName typeMarkerName = names.get(typeMarkerField);
-      if (typeMarkerName == null) {
-        // Was pruned; this compilation must have no JSO instanceof tests.
-        return;
-      }
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
-      JsNameRef fieldRef = typeMarkerName.makeRef(sourceInfo);
-      fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
-      JsExpression asg = createAssignment(fieldRef, nullFunctionJsName.makeRef(sourceInfo));
-      JsExprStmt stmt = asg.makeStmt();
-      globalStmts.add(stmt);
-      typeForStatMap.put(stmt, program.getTypeJavaLangObject());
-    }
-
     /**
      * Create a vtable assignment of the form _.polyname = rhs; and register the line as
      * created for {@code method}.
@@ -2727,9 +2697,12 @@ public class GenerateJavaScriptAST {
       clinitFunc.setImpliedExecute(superClinit);
       List<JsStatement> statements = clinitFunc.getBody().getStatements();
       SourceInfo sourceInfo = clinitFunc.getSourceInfo();
-      // self-assign to the null method immediately (to prevent reentrancy)
+      // self-assign to the global noop method immediately (to prevent reentrancy)
+
+      JsFunction emptyFunctionFn =
+          indexedFunctions.get("JavaClassHierarchySetupUtil.emptyMethod");
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(sourceInfo),
-              nullFunctionJsName.makeRef(sourceInfo));
+          emptyFunctionFn.getName().makeRef(sourceInfo));
       statements.add(0, asg.makeStmt());
     }
 
@@ -3158,7 +3131,6 @@ public class GenerateJavaScriptAST {
   private final Map<JsName, JsExpression> longObjects = Maps.newIdentityHashMap();
   private final Map<JAbstractMethodBody, JsFunction> methodBodyMap = Maps.newIdentityHashMap();
   private final Map<HasName, JsName> names = Maps.newIdentityHashMap();
-  private JsName nullFunctionJsName;
 
   /**
    * Contains JsNames for the Object instance methods, such as equals, hashCode,

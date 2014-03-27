@@ -113,11 +113,11 @@ final class Cast {
   }
 
   static boolean isJavaScriptObject(Object src) {
-    return !isJavaString(src) && !hasTypeMarker(src);
+    return !isJavaString(src) && !Util.hasTypeMarker(src);
   }
 
   static boolean isJavaScriptObjectOrString(Object src) {
-    return !hasTypeMarker(src);
+    return !Util.hasTypeMarker(src);
   }
 
   /**
@@ -156,7 +156,7 @@ final class Cast {
     }
 
     // early out for non-Java types because this check is expensive
-    if (typeof(obj) === 'string' || @com.google.gwt.lang.Cast::hasTypeMarker(Ljava/lang/Object;)(obj)) {
+    if (typeof(obj) === 'string' || @Util::hasTypeMarker(Ljava/lang/Object;)(obj)) {
         return false;
     }
 
@@ -273,10 +273,6 @@ final class Cast {
     return o;
   }
 
-  public static native JavaScriptObject getNullMethod() /*-{
-    return @null::nullMethod();
-  }-*/;
-
   /**
    * Returns whether the Object is a Java String.
    *
@@ -300,7 +296,7 @@ final class Cast {
    */
   // Visible for getIndexedMethod()
   static boolean hasJavaObjectVirtualDispatch(Object src) {
-    return !instanceofArray(src) && hasTypeMarker(src);
+    return !instanceofArray(src) && Util.hasTypeMarker(src);
   }
 
   /**
@@ -308,15 +304,13 @@ final class Cast {
    *
    * All regular Java objects and arrays are tagged.
    */
-  static boolean hasTypeMarker(Object src) {
-    return Util.getTypeMarker(src) == getNullMethod();
-  }
+
 
   /**
    * Returns true if {@code src} is a Java array.
    */
   static boolean isJavaArray(Object src) {
-    return instanceofArray(src) && hasTypeMarker(src);
+    return instanceofArray(src) && Util.hasTypeMarker(src);
   }
 
   /**

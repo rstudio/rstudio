@@ -261,15 +261,8 @@ public class GwtAstBuilder {
         String ident = x.getIdent();
         Binding binding = jsniRefs.get(ident);
         SourceInfo info = x.getSourceInfo();
-        if (binding == null) {
-          assert ident.startsWith("@null::");
-          if ("@null::nullMethod()".equals(ident)) {
-            processMethod(x, info, JMethod.NULL_METHOD);
-          } else {
-            assert "@null::nullField".equals(ident);
-            processField(x, info, JField.NULL_FIELD, ctx);
-          }
-        } else if (binding instanceof TypeBinding) {
+        assert binding != null;
+        if (binding instanceof TypeBinding) {
           JType type = typeMap.get((TypeBinding) binding);
           processClassLiteral(x, info, type, ctx);
         } else if (binding instanceof FieldBinding) {
