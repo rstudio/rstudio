@@ -100,9 +100,15 @@
                 width="150px"></rw:WidgetListBox>
      <g:HTMLPanel height="100%" width="325px" 
                   styleName="{style.templateDetails}">
-        <g:Label styleName="{style.defaultOutputLabel}" 
-                 text="Default Output Format:"></g:Label>
-        <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+        <g:HTMLPanel ui:field="newTemplatePanel_">
+           <g:Label styleName="{style.defaultOutputLabel}" 
+                    text="Default Output Format:"></g:Label>
+           <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+        </g:HTMLPanel>
+        <g:HTMLPanel ui:field="existingTemplatePanel_">
+          <rmd:RmdTemplateChooser ui:field="templateChooser_">
+          </rmd:RmdTemplateChooser>
+        </g:HTMLPanel>
      </g:HTMLPanel>
 	</g:HorizontalPanel>
 	</g:HTMLPanel>

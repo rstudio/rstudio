@@ -30,6 +30,7 @@ public class TemplateMenuItem extends Composite
       super();
       wrapper_ = new FlowPanel();
       wrapper_.add(new InlineLabel(templateName));
+      name_ = templateName;
       initWidget(wrapper_);
    }
    
@@ -42,5 +43,11 @@ public class TemplateMenuItem extends Composite
       imageStyle.setMarginRight(3, Unit.PX);
    }
    
+   public String getName()
+   {
+      return name_;
+   }
+   
    private FlowPanel wrapper_;
+   private String name_;
 }

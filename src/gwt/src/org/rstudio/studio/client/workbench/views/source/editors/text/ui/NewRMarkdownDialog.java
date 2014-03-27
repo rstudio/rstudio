@@ -26,6 +26,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
+import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateChooser;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -161,6 +162,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
          listTemplates_.addItem(menuItem);
       }
+      
+      listTemplates_.addItem(new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING));
+      
       updateOptions(getSelectedTemplate());
    }
    
@@ -206,13 +210,28 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private String getSelectedTemplate() 
    {
-      return templates_.get(listTemplates_.getSelectedIndex()).getName();
+      int idx = listTemplates_.getSelectedIndex();
+      TemplateMenuItem item = listTemplates_.getItemAtIdx(idx);
+      if (item.getName() == TEMPLATE_CHOOSE_EXISTING)
+         return TEMPLATE_CHOOSE_EXISTING;
+      else
+         return templates_.get(idx).getName();
    }
    
    private void updateOptions(String selectedTemplate)
    {
+      boolean existing = selectedTemplate.equals(TEMPLATE_CHOOSE_EXISTING);
+
+      newTemplatePanel_.setVisible(!existing);
+      existingTemplatePanel_.setVisible(existing);
+      
+      if (existing)
+      {
+         return;
+      }
+
       currentTemplate_ = RmdTemplate.getTemplate(templates_,
-                                                     selectedTemplate);
+                                                 selectedTemplate);
       if (currentTemplate_ == null)
          return;
       
@@ -253,10 +272,13 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
-   @UiField WidgetListBox listTemplates_;
+   @UiField WidgetListBox<TemplateMenuItem> listTemplates_;
    @UiField NewRmdStyle style;
    @UiField Resources resources;
    @UiField HTMLPanel templateFormatPanel_;
+   @UiField HTMLPanel newTemplatePanel_;
+   @UiField HTMLPanel existingTemplatePanel_;
+   @UiField RmdTemplateChooser templateChooser_;
 
    private final Widget mainWidget_;
    private List<RadioButton> formatOptions_;
@@ -265,4 +287,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
    @SuppressWarnings("unused")
    private final RMarkdownContext context_;
+   
+   private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
 }

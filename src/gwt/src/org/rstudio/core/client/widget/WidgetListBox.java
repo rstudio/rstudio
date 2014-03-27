@@ -36,11 +36,12 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 // A list box that can contain arbitrary GWT widgets as options.
-public class WidgetListBox extends FocusPanel implements HasChangeHandlers
+public class WidgetListBox<T extends Widget> 
+   extends FocusPanel 
+   implements HasChangeHandlers
 {
    private class ClickableHTMLPanel extends HTMLPanel
       implements HasClickHandlers
@@ -111,11 +112,10 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
       return handlerManager_.addHandler(ChangeEvent.getType(), handler);    
    }
    
-   public void addItem(IsWidget item)
+   public void addItem(T item)
    {
       // wrap the widget in a panel that can receive click events, indicate
       // selection, etc.
-      final Widget w = item.asWidget();
       final int itemIdx = maxIdx_++;
       ClickableHTMLPanel panel = new ClickableHTMLPanel();
       panel.addClickHandler(new ClickHandler()
@@ -127,11 +127,12 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
          }
       });
       
-      panel.add(w);
+      panel.add(item);
 
       // add the panel to our root layout panel
       options_.add(panel);
       panel_.add(panel);
+      items_.add(item);
       
       panel.addStyleName(style_.anyItem());
 
@@ -163,11 +164,21 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
       return selectedIdx_;
    }
    
+   public T getItemAtIdx(int idx)
+   {
+      if (idx < items_.size())
+      {
+         return items_.get(idx);
+      }
+      return null;
+   }
+   
    private int maxIdx_ = 0;
    private int selectedIdx_ = 0;
 
    private FlowPanel panel_;
-   private List<Widget> options_ = new ArrayList<Widget>();
+   private List<HTMLPanel> options_ = new ArrayList<HTMLPanel>();
+   private List<T> items_ = new ArrayList<T>();
 
    private Resources resources_;
    private ListStyle style_;
