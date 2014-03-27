@@ -431,20 +431,6 @@ public class JsniChecker {
         binding = clazz = findClass(className);
       }
 
-      // TODO(deprecation): remove this support eventually.
-      if (binding == null && className.length() == 1
-          && "ZBCDFIJSV".indexOf(className.charAt(0)) >= 0) {
-        isPrimitive = true;
-        binding = getTypeBinding(className.charAt(0));
-        assert binding != null;
-        JsniCollector.reportJsniWarning(
-            errorInfo,
-            method,
-            "Referencing primitive type '" + className
-                + "': this is deprecated, use '"
-                + String.valueOf(binding.sourceName()) + "' instead");
-      }
-
       if ((binding == null && looksLikeAnonymousClass(jsniRef))
           || (binding != null && binding.isAnonymousType())) {
         emitError("Referencing class '" + className
@@ -595,32 +581,6 @@ public class JsniChecker {
         }
       }
       return foundMethods;
-    }
-
-    @Deprecated
-    private TypeBinding getTypeBinding(char c) {
-      switch (c) {
-        case 'I':
-          return TypeBinding.INT;
-        case 'Z':
-          return TypeBinding.BOOLEAN;
-        case 'V':
-          return TypeBinding.VOID;
-        case 'C':
-          return TypeBinding.CHAR;
-        case 'D':
-          return TypeBinding.DOUBLE;
-        case 'B':
-          return TypeBinding.BYTE;
-        case 'F':
-          return TypeBinding.FLOAT;
-        case 'J':
-          return TypeBinding.LONG;
-        case 'S':
-          return TypeBinding.SHORT;
-        default:
-          return null;
-      }
     }
 
     private boolean looksLikeAnonymousClass(JsniRef jsniRef) {

@@ -1063,15 +1063,15 @@ public class JsniCheckerTest extends CheckerTestCase {
     shouldGenerateNoWarning(buggy);
   }
 
-  public void testPrimitiveClassDeprecated() {
+  public void testPrimitiveClassRemovedDeprecated() {
     MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
        "class Buggy {",
        "  native void jsniMethod() /*-{",
        "    @Z::class;",
        "  }-*/;",
        "}");
-    shouldGenerateWarning(buggy, 3,
-        "Referencing primitive type 'Z': this is deprecated, use 'boolean' instead");
+    shouldGenerateError(buggy, 3,
+        "Referencing class 'Z': unable to resolve class");
   }
 
   public void testRefInString() {
