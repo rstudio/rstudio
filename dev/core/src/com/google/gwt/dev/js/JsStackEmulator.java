@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.js.ast.HasArguments;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -618,7 +619,7 @@ public class JsStackEmulator {
 
     public LocationVisitor(JsFunction function) {
       super(function);
-      resetPosition();
+      clearLocation();
     }
 
     @Override
@@ -643,7 +644,33 @@ public class JsStackEmulator {
     @Override
     public void endVisit(JsInvocation x, JsContext ctx) {
       nodesInRefContext.remove(x.getQualifier());
-      record(x, ctx);
+
+      // Record the location as close as possible to calling the function.
+
+      List<JsExpression> args = x.getArguments();
+      if (!args.isEmpty()) {
+        recordAfterLastArg(x);
+        return;
+      }
+
+      JsNameRef qualifier = getPossibleMethod(x);
+      if (qualifier == null) {
+        record(x, ctx);
+        return;
+      }
+
+      // This is a call using a qualified name like foo.bar()
+      // Record the location after evaluating foo.
+      // (Doing it after evaluating .bar causes lots of tests to fail.)
+
+      SourceInfo locationToRecord = x.getSourceInfo();
+      if (sameAsLastLocation(locationToRecord)) {
+        return;
+      }
+
+      qualifier.setQualifier(recordAfter(qualifier.getQualifier(), locationToRecord));
+      setLastLocation(locationToRecord);
+      didChange = true;
     }
 
     @Override
@@ -653,7 +680,15 @@ public class JsStackEmulator {
 
     @Override
     public void endVisit(JsNew x, JsContext ctx) {
-      record(x, ctx);
+      nodesInRefContext.remove(x.getConstructorExpression());
+
+      // Record the location as close as possible to calling the constructor.
+
+      if (!x.getArguments().isEmpty()) {
+        recordAfterLastArg(x);
+      } else {
+        record(x, ctx);
+      }
     }
 
     @Override
@@ -682,12 +717,12 @@ public class JsStackEmulator {
       }
 
       if (x.getCondition() != null) {
-        resetPosition();
+        clearLocation();
         x.setCondition(accept(x.getCondition()));
       }
 
       if (x.getIncrExpr() != null) {
-        resetPosition();
+        clearLocation();
         x.setIncrExpr(accept(x.getIncrExpr()));
       }
 
@@ -698,6 +733,12 @@ public class JsStackEmulator {
     @Override
     public boolean visit(JsInvocation x, JsContext ctx) {
       nodesInRefContext.add(x.getQualifier());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsNew x, JsContext ctx) {
+      nodesInRefContext.add(x.getConstructorExpression());
       return true;
     }
 
@@ -716,10 +757,25 @@ public class JsStackEmulator {
      */
     @Override
     public boolean visit(JsWhile x, JsContext ctx) {
-      resetPosition();
+      clearLocation();
       x.setCondition(accept(x.getCondition()));
       accept(x.getBody());
       return false;
+    }
+
+    /**
+     * If the invocation might be a method call, return its NameRef.
+     * Otherwise, return null.
+     */
+    private JsNameRef getPossibleMethod(JsInvocation x) {
+      if (!(x.getQualifier() instanceof JsNameRef)) {
+        return null;
+      }
+      JsNameRef ref = (JsNameRef) x.getQualifier();
+      if (ref.getQualifier() == null) {
+        return null;
+      }
+      return ref;
     }
 
     /**
@@ -739,47 +795,116 @@ public class JsStackEmulator {
       }
     }
 
+    /**
+     * Given an expression and its context, record the location before
+     * evaluating the expression, under the following conditions:
+     *
+     * - We are in a context where this is allowed.
+     * - we have not previously called record() with the same location.
+     *
+     * Note that record() must be called in the same order that the expressions
+     * will be evaluated at runtime. When this isn't true, {@link #clearLocation}
+     * must be called first.
+     *
+     * Side-effect: updates lastLine and possibly lastFile.
+     */
     private void record(JsExpression x, JsContext ctx) {
+
       if (ctx.isLvalue()) {
         // Assignments to comma expressions aren't legal
         return;
       } else if (nodesInRefContext.contains(x)) {
         // Don't modify references into non-references
         return;
-      } else if (x.getSourceInfo().getStartLine() == lastLine
-          && (!recordFileNames || x.getSourceInfo().getFileName().equals(
-              lastFile))) {
-        // Same location; ignore
-        return;
       }
 
-      SourceInfo info = x.getSourceInfo();
+      SourceInfo locationToRecord = x.getSourceInfo();
+      if (sameAsLastLocation(locationToRecord)) {
+        return; // no change
+      }
 
-      // ($locations[stackIndex] = fileName + lineNumber, x)
-      JsExpression location = new JsStringLiteral(info,
-          String.valueOf(lastLine = info.getStartLine()));
+      JsBinaryOperation comma = new JsBinaryOperation(locationToRecord, JsBinaryOperator.COMMA,
+          assignLocation(locationToRecord), x);
+      ctx.replaceMe(comma);
+
+      setLastLocation(locationToRecord);
+    }
+
+    /**
+     * Records the position after evaluating the last argument.
+     * This must be called after visiting the arguments.
+     *
+     * Side-effect: updates lastLine and possibly lastFile.
+     */
+    private <T extends JsExpression & HasArguments> void recordAfterLastArg(T x) {
+      SourceInfo locationToRecord = x.getSourceInfo();
+      if (sameAsLastLocation(locationToRecord)) {
+        return; // no change
+      }
+      List<JsExpression> args = x.getArguments();
+      JsExpression last = args.get(args.size() - 1);
+      args.set(args.size() - 1, recordAfter(last, locationToRecord));
+      setLastLocation(locationToRecord);
+      didChange = true;
+    }
+
+    /**
+     * Sets the last location recorded. (Used to avoid repeating the same location
+     * in the next call to {@link #record}.)
+     */
+    private void setLastLocation(SourceInfo recordedLocation) {
+      lastLine = recordedLocation.getStartLine();
+      if (recordFileNames) {
+        lastFile = recordedLocation.getFileName();
+      }
+    }
+
+    /**
+     * Ensures that the next call to record() will record the location.
+     */
+    private void clearLocation() {
+      lastFile = "";
+      lastLine = -1;
+    }
+
+    private boolean sameAsLastLocation(SourceInfo info) {
+      return info.getStartLine() == lastLine
+          && (!recordFileNames || info.getFileName().equals(lastFile));
+    }
+
+    /**
+     * Wrap an expression so that we record a location after evaluating it.
+     * (Requires a temporary variable.)
+     */
+    private JsExpression recordAfter(JsExpression x, SourceInfo locationToRecord) {
+      // ($tmp = x, $locations[stackIndex] = "{fileName}:" + "{lineNumber}", $tmp)
+      SourceInfo info = x.getSourceInfo();
+      JsExpression setTmp = new JsBinaryOperation(info, JsBinaryOperator.ASG, tmp.makeRef(info), x);
+      return new JsBinaryOperation(info, JsBinaryOperator.COMMA,
+          new JsBinaryOperation(info, JsBinaryOperator.COMMA, setTmp,
+              assignLocation(locationToRecord)),
+          tmp.makeRef(info));
+    }
+
+    /**
+     * Returns an expression that assigns the location.
+     */
+    private JsExpression assignLocation(SourceInfo info) {
+      // If filenames are on:
+      //   $locations[stackIndex] = "{fileName}:" + "{lineNumber}";
+      // Otherwise:
+      //   $locations[stackIndex] = "{lineNumber}";
+
+      JsExpression location = new JsStringLiteral(info, String.valueOf(info.getStartLine()));
       if (recordFileNames) {
         // 'fileName:' + lineNumber
-        JsStringLiteral stringLit = new JsStringLiteral(info,
-            baseName(lastFile = info.getFileName()) + ":");
-        location = new JsBinaryOperation(info, JsBinaryOperator.ADD, stringLit,
-            location);
+        JsStringLiteral stringLit = new JsStringLiteral(info, baseName(info.getFileName()) + ":");
+        location = new JsBinaryOperation(info, JsBinaryOperator.ADD, stringLit, location);
       }
 
       JsArrayAccess access = new JsArrayAccess(info, lineNumbers.makeRef(info),
           stackIndexRef(info));
-      JsBinaryOperation asg = new JsBinaryOperation(info, JsBinaryOperator.ASG,
-          access, location);
-
-      JsBinaryOperation comma = new JsBinaryOperation(info,
-          JsBinaryOperator.COMMA, asg, x);
-
-      ctx.replaceMe(comma);
-    }
-
-    private void resetPosition() {
-      lastFile = "";
-      lastLine = -1;
+      return new JsBinaryOperation(info, JsBinaryOperator.ASG, access, location);
     }
   }
 
@@ -870,6 +995,7 @@ public class JsStackEmulator {
   private boolean recordLineNumbers;
   private JsName stack;
   private JsName stackDepth;
+  private JsName tmp;
 
   private JsStackEmulator(JProgram jprogram, JsProgram jsProgram,
       PropertyOracle[] propertyOracles,
@@ -912,6 +1038,7 @@ public class JsStackEmulator {
         "$stackDepth");
     lineNumbers = jsProgram.getScope().declareName("$JsStackEmulator_location",
         "$location");
+    tmp = jsProgram.getScope().declareName("$JsStackEmulator_tmp", "$tmp");
   }
 
   private void makeVars() {

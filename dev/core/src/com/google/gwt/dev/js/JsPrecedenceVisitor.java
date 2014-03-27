@@ -43,6 +43,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
+import com.google.gwt.dev.js.ast.JsNumericEntry;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -243,6 +244,12 @@ class JsPrecedenceVisitor extends JsVisitor {
   @Override
   public boolean visit(JsNumberLiteral x, JsContext ctx) {
     answer = 17; // primary
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsNumericEntry x, JsContext ctx) {
+    answer = 17; // same as number literal
     return false;
   }
 

@@ -261,6 +261,8 @@ public class JavaResourceBase {
       createMockJavaResource("java.lang.RuntimeException",
           "package java.lang;",
           "public class RuntimeException extends Exception {",
+          "  public RuntimeException() {}",
+          "  public RuntimeException(String message) {}",
           "}");
 
   public static final MockJavaResource SERIALIZABLE =
