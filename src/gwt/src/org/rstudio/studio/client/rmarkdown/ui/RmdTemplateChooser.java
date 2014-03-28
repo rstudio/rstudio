@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -23,6 +26,8 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -46,6 +51,19 @@ public class RmdTemplateChooser extends Composite
    public RmdTemplateChooser()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      dirLocation_.setText(FileSystemItem.HOME_PATH);
+      listTemplates_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent evt)
+         {
+            // when the template changes, update the check to correspond to the
+            // template's preference, if any
+            int idx = listTemplates_.getSelectedIndex();
+            chkCreate_.setValue(
+                  templates_.get(idx).getCreateDir().equals("true"));
+         }
+      });
    }
    
    public void populateTemplates(final Operation onCompleted)
@@ -61,6 +79,7 @@ public class RmdTemplateChooser extends Composite
             public void execute(RmdDiscoveredTemplate template)
             {
                listTemplates_.addItem(template.getName(), template.getPath());
+               templates_.add(template);
             }
          },
          new Operation()
@@ -112,7 +131,7 @@ public class RmdTemplateChooser extends Composite
    private String getSelectedTemplatePath()
    {
       int idx = listTemplates_.getSelectedIndex();
-      if (idx > 0)
+      if (idx >= 0)
       {
          return listTemplates_.getValue(idx);
       }
@@ -136,6 +155,8 @@ public class RmdTemplateChooser extends Composite
    
    private RmdTemplateDiscovery discovery_;
    private int state_;
+   private ArrayList<RmdDiscoveredTemplate> templates_ = 
+         new ArrayList<RmdDiscoveredTemplate>();
    
    @UiField ListBox listTemplates_;
    @UiField TextBox txtName_;

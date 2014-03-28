@@ -435,12 +435,12 @@ public class TextEditingTargetRMarkdownHelper
    public void createDraftFromTemplate(RmdChosenTemplate template)
    {
       String cmd = 
-            "rmarkdown::draft(file = \"" + template.getFileName() + "\", " + 
-            "template = \"" + template.getTemplatePath() + "\", ";
-      if (template.createDir())
-         cmd += "create_dir = \"TRUE\", ";
-      cmd += "edit = TRUE)";
-      eventBus_.fireEvent(new SendToConsoleEvent(cmd, false));
+            "rmarkdown::draft(file = \"" + template.getDirectory() + "/" + 
+             template.getFileName() + "\", " + 
+            "template = \"" + template.getTemplatePath() + "\", " +
+            "create_dir = " + (template.createDir() ? "TRUE" : "FALSE") + ", " +
+            "edit = TRUE)";
+      eventBus_.fireEvent(new SendToConsoleEvent(cmd, true));
    }
    
    // Private methods ---------------------------------------------------------

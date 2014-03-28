@@ -488,6 +488,9 @@ private:
 
    void onOutput(const std::string& output)
    {
+      r::sexp::Protect protect;
+      Error error;
+
       // the output vector may contain more than one path if paths are returned
       // very quickly, so split it into lines and emit a client event for
       // each line
@@ -502,13 +505,48 @@ private:
          json::Object dataJson;
          dataJson["path"] = path;
 
-         // record the template's name (currently inferred as the leaf of the
-         // path)
          std::string name;
-         size_t pos = path.find_last_of('/');
-         if (pos != std::string::npos)
-            name = path.substr(pos + 1, path.length() - pos);
+         std::string description;
+         std::string createDir = "default";
+
+         // try to get the template's YAML
+         FilePath yamlPath(path + "/template.yaml");
+         if (!yamlPath.exists())
+         {
+            // no YAML, use directory name
+            size_t pos = path.find_last_of('/');
+            if (pos != std::string::npos)
+               name = path.substr(pos + 1, path.length() - pos);
+         }
+         else
+         {
+            // we have YAML, parse it using the yaml package and store the
+            // result
+            SEXP templateDetails;
+            error = r::exec::RFunction(
+               "yaml:::yaml.load_file",
+               string_utils::utf8ToSystem(yamlPath.absolutePath())).call(
+                     &templateDetails, &protect);
+            if (!error)
+            {
+               bool createDirFlag = false;
+               r::sexp::getNamedListElement(templateDetails,
+                                            "name", &name);
+               r::sexp::getNamedListElement(templateDetails,
+                                            "description", &description);
+               error = r::sexp::getNamedListElement(templateDetails,
+                                                    "create_dir",
+                                                    &createDirFlag);
+               if (!error)
+               {
+                   createDir = createDirFlag ? "true" : "false";
+               }
+            }
+         }
+
          dataJson["name"] = name;
+         dataJson["description"] = description;
+         dataJson["create_dir"] = createDir;
 
          // emit to the client
          ClientEvent event(client_events::kRmdTemplateDiscovered, dataJson);

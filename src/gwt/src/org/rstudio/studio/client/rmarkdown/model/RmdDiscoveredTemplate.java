@@ -29,4 +29,12 @@ public class RmdDiscoveredTemplate extends JavaScriptObject
    public final native String getName() /*-{
       return this.name;
    }-*/;
+
+   public final native String getDescription() /*-{
+      return this.description;
+   }-*/;
+
+   public final native String getCreateDir() /*-{
+      return this.create_dir;
+   }-*/;
 }
