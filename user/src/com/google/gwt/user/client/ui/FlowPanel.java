@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Node;
 
 /**
  * A panel that formats its child widgets using the default HTML layout
@@ -57,12 +56,7 @@ public class FlowPanel extends ComplexPanel implements InsertPanel.ForIsWidget {
     try {
       doLogicalClear();
     } finally {
-      // Remove all existing child nodes.
-      Node child = getElement().getFirstChild();
-      while (child != null) {
-        getElement().removeChild(child);
-        child = getElement().getFirstChild();
-      }
+      getElement().removeAllChildren();
     }
   }
 

@@ -450,10 +450,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    */
   @Override
   public void clear() {
-    int size = root.getChildCount();
-    for (int i = size - 1; i >= 0; i--) {
-      root.getChild(i).remove();
-    }
+    root.removeItems();
   }
 
   /**

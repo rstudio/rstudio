@@ -317,10 +317,7 @@ public class RootPanel extends AbsolutePanel {
     clear();
 
     if (clearDom) {
-      Element containerElement = getElement();
-      while (containerElement.hasChildNodes()) {
-        containerElement.removeChild(containerElement.getFirstChild());
-      }
+      getElement().removeAllChildren();
     }
   }
 }
