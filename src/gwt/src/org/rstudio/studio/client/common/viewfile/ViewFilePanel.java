@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs.dialog;
+package org.rstudio.studio.client.common.viewfile;
 
 import java.util.ArrayList;
 
@@ -30,8 +30,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -44,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -63,6 +60,13 @@ import com.google.inject.Inject;
 
 public class ViewFilePanel extends Composite implements TextDisplay
 {
+   public interface SaveFileAsHandler
+   {
+      void onSaveFileAs(FileSystemItem source,
+                        FileSystemItem destination,
+                        ProgressIndicator indicator);
+   }
+   
    @Inject
    public ViewFilePanel(DocDisplay docDisplay,
                         FileTypeRegistry fileTypeRegistry,
@@ -72,15 +76,13 @@ public class ViewFilePanel extends Composite implements TextDisplay
                         FontSizeManager fontSizeManager,
                         FileDialogs fileDialogs,
                         RemoteFileSystemContext fileContext,
-                        Session session,
-                        GitServerOperations server)
+                        Session session)
    {
       fileTypeRegistry_ = fileTypeRegistry;
       commands_ = commands;
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
       session_ = session;
-      server_ = server;
       docDisplay_ = docDisplay; 
       docDisplay_.setReadOnly(true);
       
@@ -171,15 +173,21 @@ public class ViewFilePanel extends Composite implements TextDisplay
       initWidget(panel_);
    }
    
-   HandlerRegistration addShowVcsHistoryHandler(
-                                 ShowVcsHistoryEvent.Handler handler)
+   public Toolbar getToolbar()
    {
-      return addHandler(handler, ShowVcsHistoryEvent.TYPE);
+      return toolbar_;
+   }
+    
+   
+   public void setSaveFileAsHandler(SaveFileAsHandler handler)
+   {
+      saveFileAsHandler_ = handler;
+      saveAsButton_.setVisible(saveFileAsHandler_ != null);
+      saveAsButtonSeparator_.setVisible(saveFileAsHandler_ != null);
    }
    
-   public void showFile(FileSystemItem file, String commitId, String contents)
+   public void showFile(String caption, FileSystemItem file, String contents)
    {
-      commitId_ = commitId;
       targetFile_ = file;
       
       docDisplay_.setCode(contents, false);  
@@ -195,7 +203,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
       imgFile.addStyleName(styles.fullscreenCaptionIcon());
       panel.add(imgFile);
       
-      Label lblCaption = new Label(file.getPath() + " @ " + commitId);
+      Label lblCaption = new Label(caption);
       lblCaption.addStyleName(styles.fullscreenCaptionLabel());
       panel.add(lblCaption);
       
@@ -210,12 +218,22 @@ public class ViewFilePanel extends Composite implements TextDisplay
       };
       timer.schedule(100); 
    }
+   
+   public FileSystemItem getTargetFile()
+   {
+      return targetFile_;
+   }
+   
+   public void close()
+   {
+      popupPanel_.close();
+   }
     
    private Toolbar createToolbar()
    {
-      Toolbar toolbar = new ViewFileToolbar();
+      toolbar_ = new ViewFileToolbar();
       
-      toolbar.addLeftWidget(new ToolbarButton(
+      saveAsButton_ = toolbar_.addLeftWidget(new ToolbarButton(
          "Save As", 
          commands_.saveSourceDoc().getImageResource(),
          new ClickHandler() {
@@ -226,9 +244,11 @@ public class ViewFilePanel extends Composite implements TextDisplay
             }
             
          }));
-      toolbar.addLeftSeparator();
+      saveAsButtonSeparator_ = toolbar_.addLeftSeparator();
+      saveAsButton_.setVisible(false);
+      saveAsButtonSeparator_.setVisible(false);
       
-      toolbar.addLeftWidget(new ToolbarButton(
+      toolbar_.addLeftWidget(new ToolbarButton(
          null,
          commands_.printSourceDoc().getImageResource(),
          new ClickHandler() {
@@ -240,26 +260,11 @@ public class ViewFilePanel extends Composite implements TextDisplay
             }
             
          }));
-      toolbar.addLeftSeparator();
+      toolbar_.addLeftSeparator();
       
-      toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
-      
-      
-      toolbar.addRightWidget(new ToolbarButton(
-           "Show History",
-           commands_.goToWorkingDir().getImageResource(),
-           new ClickHandler() {
-
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               fireEvent(new ShowVcsHistoryEvent(targetFile_));
-               popupPanel_.close();
-            }
-              
-           }));
-      
-      return toolbar;
+      toolbar_.addLeftWidget(findReplace_.createFindReplaceButton());
+           
+      return toolbar_;
    }  
    
    @Override
@@ -319,12 +324,9 @@ public class ViewFilePanel extends Composite implements TextDisplay
                   
                   indicator.onProgress("Saving file...");
                   
-                  server_.gitExportFile(
-                        commitId_,
-                        targetFile_.getPath(),
-                        input.getPath(),
-                        new VoidServerRequestCallback(indicator));
-
+                  saveFileAsHandler_.onSaveFileAs(targetFile_,
+                                                  input,
+                                                  indicator);
                }
                
             });
@@ -344,15 +346,19 @@ public class ViewFilePanel extends Composite implements TextDisplay
    private final FileDialogs fileDialogs_;
    private final Commands commands_;
    private final Session session_;
-   private final GitServerOperations server_;
    private final DocDisplay docDisplay_;
+   
+   private Toolbar toolbar_;
+   private ToolbarButton saveAsButton_;
+   private Widget saveAsButtonSeparator_;
    
    private final PanelWithToolbars panel_;
    private FullscreenPopupPanel popupPanel_;
    private final TextEditingTargetFindReplace findReplace_;
    
-   private String commitId_ = null;
    private FileSystemItem targetFile_ = null;
+   
+   private SaveFileAsHandler saveFileAsHandler_ = null;
    
    private final ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();

@@ -41,14 +41,16 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
@@ -123,7 +125,8 @@ public class HistoryPresenter
    }
 
    @Inject
-   public HistoryPresenter(final GlobalDisplay globalDisplay,
+   public HistoryPresenter(final Commands commands,
+                           final GlobalDisplay globalDisplay,
                            final Provider<ViewFilePanel> pViewFilePanel,
                            final DisplayBuilder viewBuilder,
                            final Session session,
@@ -255,24 +258,44 @@ public class HistoryPresenter
                      {
                         indicator.onCompleted();
 
-                        ViewFilePanel viewFilePanel = pViewFilePanel.get();
-                        viewFilePanel.addShowVcsHistoryHandler(
-                              new ShowVcsHistoryEvent.Handler()
-                              {
-                                 @Override
-                                 public void onShowVcsHistory(
-                                       ShowVcsHistoryEvent event)
-                                 {
-                                    view_.getFileFilter().setValue(
-                                          event.getFileFilter());
+                        final ViewFilePanel viewFilePanel = pViewFilePanel.get();
+                        
+                        viewFilePanel.setSaveFileAsHandler(
+                                          new ViewFilePanel.SaveFileAsHandler()
+                        {
+                           
+                           @Override
+                           public void onSaveFileAs(FileSystemItem source, 
+                                                    FileSystemItem destination,
+                                                    ProgressIndicator indicator)
+                           {
+                              strategy_.saveFileAs(event.getRevision(),
+                                                   source.getPath(),
+                                                   destination.getPath(),
+                                                   indicator);
+                           }
+                        });
+                        
+                        viewFilePanel.getToolbar().addRightWidget(
+                                                         new ToolbarButton(
+                              "Show History",
+                              commands.goToWorkingDir().getImageResource(),
+                              new ClickHandler() {
 
-                                 }
-
-                              });
-
+                               @Override
+                               public void onClick(ClickEvent event)
+                               {
+                                  view_.getFileFilter().setValue(
+                                              viewFilePanel.getTargetFile());
+                                  viewFilePanel.close();
+                                 
+                               }
+                                 
+                              }));
+                        
                         viewFilePanel.showFile(
+                              event.getFilename() + " @ " + event.getRevision(),
                               FileSystemItem.createFile(event.getFilename()),
-                              event.getRevision(),
                               contents);
                      }
 

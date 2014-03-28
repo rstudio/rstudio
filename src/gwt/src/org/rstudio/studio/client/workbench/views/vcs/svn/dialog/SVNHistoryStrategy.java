@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
@@ -93,6 +94,16 @@ public class SVNHistoryStrategy implements HistoryStrategy
       int rev = parseRevision(revision);
       server_.svnShowFile(rev, filename, requestCallback);
    }
+   
+   @Override
+   public void saveFileAs(String revision, 
+                          String source, 
+                          String destination,
+                          ProgressIndicator indicator)
+   {
+      // no-op
+   }
+
 
    @Override
    public HandlerRegistration addVcsRefreshHandler(VcsRefreshHandler handler)

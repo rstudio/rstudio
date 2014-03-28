@@ -19,6 +19,7 @@ import com.google.gwt.user.cellview.client.AbstractPager;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -39,6 +40,11 @@ public interface HistoryStrategy
    void showFile(String revision,
                  String filename,
                  ServerRequestCallback<String> requestCallback);
+   
+   void saveFileAs(String revision,
+                   String source,
+                   String destination,
+                   ProgressIndicator indicator);
 
    HandlerRegistration addVcsRefreshHandler(VcsRefreshHandler refreshHandler);
 
