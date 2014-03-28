@@ -237,7 +237,12 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @Override
    protected boolean validate(Result input)
    {
-      return true;
+      // the dialog isn't valid if the user's chosen to create a document from
+      // a template but hasn't chosen a template. 
+      if (input.isNewDocument() || 
+          input.getFromTemplate().getTemplatePath() != null)
+         return true;
+      return false;
    }
 
    @Override
