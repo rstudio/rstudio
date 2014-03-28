@@ -18,6 +18,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
+import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -48,12 +49,12 @@ public class RmdTemplateChooser extends Composite
       
       discovery_ = RStudioGinjector.INSTANCE.getRmdTemplateDiscovery();
       discovery_.discoverTemplates(
-         new OperationWithInput<String>()
+         new OperationWithInput<RmdDiscoveredTemplate>()
          {
             @Override
-            public void execute(String input)
+            public void execute(RmdDiscoveredTemplate template)
             {
-               listTemplates_.addItem(input);
+               listTemplates_.addItem(template.getName(), template.getPath());
             }
          },
          new Operation()

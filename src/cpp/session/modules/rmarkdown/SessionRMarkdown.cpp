@@ -498,8 +498,19 @@ private:
          if (path.empty())
             continue;
 
+         // record the template's path (absolute for the filesystem)
          json::Object dataJson;
          dataJson["path"] = path;
+
+         // record the template's name (currently inferred as the leaf of the
+         // path)
+         std::string name;
+         size_t pos = path.find_last_of('/');
+         if (pos != std::string::npos)
+            name = path.substr(pos + 1, path.length() - pos);
+         dataJson["name"] = name;
+
+         // emit to the client
          ClientEvent event(client_events::kRmdTemplateDiscovered, dataJson);
          module_context::enqueClientEvent(event);
       }

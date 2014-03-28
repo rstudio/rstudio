@@ -21,6 +21,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 import com.google.inject.Inject;
@@ -43,7 +44,7 @@ public class RmdTemplateDiscovery implements
    public void onRmdTemplateDiscovered(RmdTemplateDiscoveredEvent event)
    {
       if (onTemplateDiscovered_ != null)
-         onTemplateDiscovered_.execute(event.getTemplate().getPath());
+         onTemplateDiscovered_.execute(event.getTemplate());
    }
    
    @Override
@@ -54,7 +55,7 @@ public class RmdTemplateDiscovery implements
    }
    
    public void discoverTemplates(
-         OperationWithInput<String> onTemplateDiscovered,
+         OperationWithInput<RmdDiscoveredTemplate> onTemplateDiscovered,
          Operation onCompleted)
    {
       onTemplateDiscovered_ = onTemplateDiscovered;
@@ -64,6 +65,6 @@ public class RmdTemplateDiscovery implements
    
    private final RMarkdownServerOperations server_;
 
-   private OperationWithInput<String> onTemplateDiscovered_;
+   private OperationWithInput<RmdDiscoveredTemplate> onTemplateDiscovered_;
    private Operation onCompleted_;
 }

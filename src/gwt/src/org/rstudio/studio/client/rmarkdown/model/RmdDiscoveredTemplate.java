@@ -23,6 +23,10 @@ public class RmdDiscoveredTemplate extends JavaScriptObject
    }
    
    public final native String getPath() /*-{
-      return this.path
+      return this.path;
+   }-*/;
+
+   public final native String getName() /*-{
+      return this.name;
    }-*/;
 }
