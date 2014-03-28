@@ -861,14 +861,23 @@ public class Source implements InsertSourceHandler,
                      @Override
                      public void execute(final NewRMarkdownDialog.Result result)
                      {
-                        // if an author was specified, persist it
-                        String author = result.getAuthor();
-                        if (author.length() > 0)
+                        if (result.isNewDocument())
                         {
-                           uiPrefs_.documentAuthor().setGlobalValue(author);
-                           uiPrefs_.writeUIPrefs();
+                           NewRMarkdownDialog.RmdNewDocument doc = 
+                                 result.getNewDocument();
+                           String author = doc.getAuthor();
+                           if (author.length() > 0)
+                           {
+                              uiPrefs_.documentAuthor().setGlobalValue(author);
+                              uiPrefs_.writeUIPrefs();
+                           }
+                           newRMarkdownV2Doc(doc);
                         }
-                        newRMarkdownV2Doc(result);
+                        else
+                        {
+                           rmarkdown_.createDraftFromTemplate(
+                                 result.getFromTemplate());
+                        }
                      }
                   }
                ).showModal();
@@ -877,17 +886,18 @@ public class Source implements InsertSourceHandler,
       );
    }
    
-   private void newRMarkdownV2Doc(final NewRMarkdownDialog.Result result)
+   private void newRMarkdownV2Doc(
+         final NewRMarkdownDialog.RmdNewDocument doc)
    {
-      rmarkdown_.frontMatterToYAML((RmdFrontMatter)result.getJSOResult().cast(), 
+      rmarkdown_.frontMatterToYAML((RmdFrontMatter)doc.getJSOResult().cast(), 
             null,
             new CommandWithArg<String>()
       {
          @Override
          public void execute(final String yaml)
          {
-            boolean isPresentation = result.getTemplate().equals(
-                                      RmdTemplateData.PRESENTATION_TEMPLATE);
+            boolean isPresentation = doc.getTemplate().equals(
+                                     RmdTemplateData.PRESENTATION_TEMPLATE);
             
             newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
                   "", 

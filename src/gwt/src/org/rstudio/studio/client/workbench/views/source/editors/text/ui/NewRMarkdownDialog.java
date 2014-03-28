@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -47,9 +48,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 {
-   public static class Result
+   public static class RmdNewDocument
    {  
-      public Result(String template, String author, String title, String format)
+      public RmdNewDocument(String template, String author, String title, 
+                            String format)
       {
          template_ = template;
          author_ = author;
@@ -88,6 +90,36 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       private final String template_;
       private final String author_;
       private final JavaScriptObject result_;
+   }
+   
+   public static class Result
+   {
+      public Result (RmdNewDocument newDocument, RmdChosenTemplate fromTemplate,
+                     boolean isNewDocument)
+      {
+         newDocument_ = newDocument;
+         fromTemplate_ = fromTemplate;
+         isNewDocument_ = isNewDocument;
+      }
+      
+      public RmdNewDocument getNewDocument()
+      {
+         return newDocument_;
+      }
+      
+      public RmdChosenTemplate getFromTemplate()
+      {
+         return fromTemplate_;
+      }
+      
+      public boolean isNewDocument()
+      {
+         return isNewDocument_;
+      }
+      
+      private final RmdNewDocument newDocument_;
+      private final RmdChosenTemplate fromTemplate_;
+      private final boolean isNewDocument_;
    }
 
    public interface Binder extends UiBinder<Widget, NewRMarkdownDialog>
@@ -190,10 +222,12 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
                break;
          }
       }
-      return new Result(getSelectedTemplate(), 
-                        txtAuthor_.getText().trim(), 
-                        txtTitle_.getText().trim(),
-                        formatName);
+      return new Result(
+            new RmdNewDocument(getSelectedTemplate(), 
+                               txtAuthor_.getText().trim(), 
+                                txtTitle_.getText().trim(), formatName),
+            templateChooser_.getChosenTemplate(),
+            !getSelectedTemplate().equals(TEMPLATE_CHOOSE_EXISTING));
    }
 
    @Override

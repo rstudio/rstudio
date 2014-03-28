@@ -19,12 +19,14 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
+import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -79,10 +81,46 @@ public class RmdTemplateChooser extends Composite
       return new DirectoryChooserTextBox("", null);
    }
    
+   public RmdChosenTemplate getChosenTemplate()
+   {
+      return new RmdChosenTemplate(getSelectedTemplatePath(), 
+                                   getFileName(), 
+                                   getDirectory(), 
+                                   createDirectory());
+   }
+   
+   // Private methods ---------------------------------------------------------
+
+   private String getSelectedTemplatePath()
+   {
+      int idx = listTemplates_.getSelectedIndex();
+      if (idx > 0)
+      {
+         return listTemplates_.getValue(idx);
+      }
+      return null;
+   }
+   
+   private String getFileName()
+   {
+      return txtName_.getText();
+   }
+   
+   private String getDirectory()
+   {
+      return dirLocation_.getText();
+   }
+   
+   private boolean createDirectory()
+   {
+      return chkCreate_.getValue();
+   }
+   
    private RmdTemplateDiscovery discovery_;
    private boolean isPopulated_;
 
    @UiField ListBox listTemplates_;
    @UiField TextBox txtName_;
    @UiField DirectoryChooserTextBox dirLocation_;
+   @UiField CheckBox chkCreate_;
 }

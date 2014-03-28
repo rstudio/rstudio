@@ -47,6 +47,7 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -60,6 +61,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
@@ -429,6 +431,19 @@ public class TextEditingTargetRMarkdownHelper
          }
       });
    }
+   
+   public void createDraftFromTemplate(RmdChosenTemplate template)
+   {
+      String cmd = 
+            "rmarkdown::draft(file = \"" + template.getFileName() + "\", " + 
+            "template = \"" + template.getTemplatePath() + "\", ";
+      if (template.createDir())
+         cmd += "create_dir = \"TRUE\", ";
+      cmd += "edit = TRUE)";
+      eventBus_.fireEvent(new SendToConsoleEvent(cmd, false));
+   }
+   
+   // Private methods ---------------------------------------------------------
    
    private void setOutputFormat(RmdFrontMatter frontMatter, String format, 
                                 final CommandWithArg<String> onCompleted)
