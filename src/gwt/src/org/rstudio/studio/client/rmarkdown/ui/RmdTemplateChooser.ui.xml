@@ -15,11 +15,6 @@
 	     margin-top: 7px; 
 	  }
 	  
-	  .templateListBox
-	  {
-	    padding: 4px;
-	  }
-	  
 	  .textBox
 	  {
 	    padding: 2px;
@@ -30,11 +25,36 @@
 	  {
 	    color: #909090;
 	  }
+
+	  .templateListArea
+	  {
+	    height: 90px;
+	    padding: 4px;
+	  }
+	  
+	  .noTemplates
+	  {
+       border: 1px solid #909090;
+	  }
+	  
+	  .noTemplatesText
+	  {
+	     padding: 10px;
+	  }
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Label styleName="{style.controlLabel}" text="Template:"></g:Label>
-	<g:ListBox width="100%" styleName="{style.templateListBox}"
+	<g:ListBox width="100%" styleName="{style.templateListArea}"
 	           ui:field="listTemplates_" visibleItemCount="5"></g:ListBox>
+	<g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 
+	             visible="false" ui:field="noTemplatesFound_">
+	  <g:HTML styleName="{style.noTemplatesText}">
+       No templates were found. R Markdown templates are often installed with
+       packages that use R Markdown. To learn more, see the the 
+       <a href="http://rmarkdown.rstudio.com/" target="_blank">R Markdown
+       documentation.</a>
+	  </g:HTML>
+	</g:HTMLPanel>
 
 	<g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
 	         text="Name:"></g:Label>
@@ -47,7 +67,8 @@
 	</rs:DirectoryChooserTextBox>
 	
 	<g:CheckBox styleName="{style.controlLabel} {style.interiorControlLabel}" 
-	            ui:field="chkCreate_" text="Create in New Directory"></g:CheckBox>
+	            ui:field="chkCreate_" text="Create in New Directory">
+	            </g:CheckBox>
 	<g:HTML styleName="{style.createNote}">
 	  A new directory with the same name as the file will be created. The new R
 	  Markdown file and all its resources will be placed in the new directory.

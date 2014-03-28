@@ -28,6 +28,7 @@ import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -68,6 +69,7 @@ public class RmdTemplateChooser extends Composite
             public void execute()
             {
                state_ = STATE_POPULATED;
+               completeDiscovery();
                onCompleted.execute();
             }
          });
@@ -94,6 +96,18 @@ public class RmdTemplateChooser extends Composite
    }
    
    // Private methods ---------------------------------------------------------
+   
+   private void completeDiscovery()
+   {
+      if (listTemplates_.getItemCount() == 0)
+      {
+         listTemplates_.setVisible(false);
+         noTemplatesFound_.setVisible(true);
+         txtName_.setEnabled(false);
+         dirLocation_.setEnabled(false);
+         chkCreate_.setEnabled(false);
+      }
+   }
 
    private String getSelectedTemplatePath()
    {
@@ -127,6 +141,7 @@ public class RmdTemplateChooser extends Composite
    @UiField TextBox txtName_;
    @UiField DirectoryChooserTextBox dirLocation_;
    @UiField CheckBox chkCreate_;
+   @UiField HTMLPanel noTemplatesFound_;
    
    public final static int STATE_EMPTY = 0;
    public final static int STATE_POPULATING = 1;
