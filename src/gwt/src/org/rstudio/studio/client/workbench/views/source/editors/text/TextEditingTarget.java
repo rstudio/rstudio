@@ -1724,7 +1724,8 @@ public class TextEditingTarget implements
       if (lineCount < 1)
          return;
       
-      if (prefs_.stripTrailingWhitespace().getValue())
+      if (prefs_.stripTrailingWhitespace().getValue() &&
+          !fileType_.isMarkdown())
       {
          String code = docDisplay_.getCode();
          Pattern pattern = Pattern.create("[ \t]+$");
