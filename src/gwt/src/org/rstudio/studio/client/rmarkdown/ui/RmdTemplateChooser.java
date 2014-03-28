@@ -14,6 +14,11 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,6 +40,37 @@ public class RmdTemplateChooser extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
    }
+   
+   public void populateTemplates()
+   {
+      if (isPopulated_)
+         return;
+      
+      discovery_ = RStudioGinjector.INSTANCE.getRmdTemplateDiscovery();
+      discovery_.discoverTemplates(
+         new OperationWithInput<String>()
+         {
+            @Override
+            public void execute(String input)
+            {
+               listTemplates_.addItem(input);
+            }
+         },
+         new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               // TODO Auto-generated method stub
+               
+            }
+            
+         });
+      isPopulated_ = true;
+   }
+   
+   private RmdTemplateDiscovery discovery_;
+   private boolean isPopulated_;
 
    @UiField ListBox listTemplates_;
 }

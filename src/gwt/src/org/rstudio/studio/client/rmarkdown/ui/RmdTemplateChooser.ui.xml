@@ -2,9 +2,14 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
-	
+	  .listHeader
+	  {
+	     font-weight: bold;
+	  }
 	</ui:style>
 	<g:HTMLPanel>
-	<g:ListBox ui:field="listTemplates_"></g:ListBox>
+	<g:Label styleName="{style.listHeader}" text="Installed Templates"></g:Label>
+	<g:ListBox width="100%" ui:field="listTemplates_" visibleItemCount="7">
+	</g:ListBox>
 	</g:HTMLPanel>
 </ui:UiBinder> 

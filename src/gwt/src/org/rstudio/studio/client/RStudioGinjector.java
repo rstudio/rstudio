@@ -43,6 +43,7 @@ import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
+import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
@@ -106,6 +107,7 @@ public interface RStudioGinjector extends Ginjector
    FileTypeRegistry getFileTypeRegistry();
    RnwWeaveRegistry getRnwWeaveRegistry();
    LatexProgramRegistry getLatexProgramRegistry();
+   RmdTemplateDiscovery getRmdTemplateDiscovery();
    Commands getCommands();
    UIPrefs getUIPrefs();
    Session getSession();

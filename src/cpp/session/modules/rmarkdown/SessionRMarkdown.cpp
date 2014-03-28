@@ -18,6 +18,7 @@
 #include "../build/SessionBuildErrors.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
@@ -487,10 +488,21 @@ private:
 
    void onOutput(const std::string& output)
    {
-      json::Object dataJson;
-      dataJson["path"] = output;
-      ClientEvent event(client_events::kRmdTemplateDiscovered, dataJson);
-      module_context::enqueClientEvent(event);
+      // the output vector may contain more than one path if paths are returned
+      // very quickly, so split it into lines and emit a client event for
+      // each line
+      std::vector<std::string> paths;
+      boost::algorithm::split(paths, output, boost::algorithm::is_any_of("\n"));
+      BOOST_FOREACH(std::string& path, paths)
+      {
+         if (path.empty())
+            continue;
+
+         json::Object dataJson;
+         dataJson["path"] = path;
+         ClientEvent event(client_events::kRmdTemplateDiscovered, dataJson);
+         module_context::enqueClientEvent(event);
+      }
    }
 
    void onCompleted(int exitStatus)
@@ -802,7 +814,8 @@ void handleRmdOutputRequest(const http::Request& request,
 Error discoverRmdTemplates(const json::JsonRpcRequest&,
                            json::JsonRpcResponse* pResponse)
 {
-   if (s_pTemplateDiscovery_->isRunning())
+   if (s_pTemplateDiscovery_ &&
+       s_pTemplateDiscovery_->isRunning())
    {
       pResponse->setResult(false);
    }

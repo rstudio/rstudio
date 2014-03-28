@@ -18,10 +18,10 @@ package org.rstudio.studio.client.rmarkdown;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
-
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 import com.google.inject.Inject;
 
@@ -33,6 +33,8 @@ public class RmdTemplateDiscovery implements
    public RmdTemplateDiscovery(EventBus eventBus, 
                                RMarkdownServerOperations server)
    {
+      server_ = server;
+
       eventBus.addHandler(RmdTemplateDiscoveredEvent.TYPE, this);
       eventBus.addHandler(RmdTemplateDiscoveryCompletedEvent.TYPE, this);
    }
@@ -40,20 +42,28 @@ public class RmdTemplateDiscovery implements
    @Override
    public void onRmdTemplateDiscovered(RmdTemplateDiscoveredEvent event)
    {
-
+      if (onTemplateDiscovered_ != null)
+         onTemplateDiscovered_.execute(event.getTemplate().getPath());
    }
    
    @Override
    public void onRmdTemplateDiscoveryCompleted(
          RmdTemplateDiscoveryCompletedEvent event)
    {
-
+      onCompleted_.execute();
    }
    
    public void discoverTemplates(
          OperationWithInput<String> onTemplateDiscovered,
          Operation onCompleted)
    {
-      
+      onTemplateDiscovered_ = onTemplateDiscovered;
+      onCompleted_ = onCompleted;
+      server_.discoverRmdTemplates(new VoidServerRequestCallback());
    }
+   
+   private final RMarkdownServerOperations server_;
+
+   private OperationWithInput<String> onTemplateDiscovered_;
+   private Operation onCompleted_;
 }

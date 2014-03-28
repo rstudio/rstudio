@@ -227,6 +227,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       if (existing)
       {
+         templateChooser_.populateTemplates();
          return;
       }
 
