@@ -28,9 +28,16 @@ import com.google.gwt.core.client.JsArrayString;
 public class StackTraceCreator {
 
   /**
+   * Maximum # of frames to look for {@link Throwable#fillInStackTrace()} in the generated stack
+   * trace. This is just a safe guard just in case if {@code fillInStackTrace} doesn't show up in
+   * the stack trace for some reason.
+   */
+  private static final int DROP_FRAME_LIMIT = 5;
+
+  /**
    * Line number used in a stack trace when it is unknown.
    */
-  public static final int LINE_NUMBER_UNKNOWN = -1;
+  private static final int LINE_NUMBER_UNKNOWN = -1;
 
   /**
    * Replacement for function names that cannot be extracted from a stack.
@@ -193,13 +200,8 @@ public class StackTraceCreator {
      * <code>caller</code> since Mozilla provides proper activation records.
      */
     @Override
-    public final JsArrayString collect() {
-      return collect(makeException());
-    }
-
-    public JsArrayString collect(JavaScriptObject ex) {
-      final int numberOfFramesToDrop = 2; // # of frames added by the StackTraceCreator
-      return splice(inferFrom(ex), numberOfFramesToDrop);
+    public JsArrayString collect() {
+      return inferFrom(makeException());
     }
 
     /**
@@ -256,14 +258,11 @@ public class StackTraceCreator {
     }-*/;
 
     @Override
-    public JsArrayString collect(JavaScriptObject ex) {
-      JsArrayString res = super.collect(ex);
+    public JsArrayString collect() {
+      JsArrayString res = super.collect();
       if (res.length() == 0) {
-        /*
-         * Ensure Safari falls back to default Collector implementation.
-         * Remember to remove this method call from the stack:
-         */
-        res = splice(new Collector().collect(), 1);
+        // Ensure Safari falls back to default Collector implementation.
+        res = new Collector().collect();
       }
       return res;
     }
@@ -271,16 +270,11 @@ public class StackTraceCreator {
     @Override
     public JsArrayString inferFrom(Object e) {
       JsArrayString stack = super.inferFrom(e);
-      if (stack.length() == 0) {
-        // Safari should fall back to default Collector:
-        return new Collector().inferFrom(e);
-      } else {
+      if (stack.length() > 0 && stack.get(0).startsWith(ANONYMOUS + "@@")) {
         // Chrome contains the error itself as the first line of the stack (iOS doesn't).
-        if (stack.get(0).startsWith(ANONYMOUS + "@@")) {
-          stack = splice(stack, 1);
-        }
-        return stack;
+        stack = splice(stack, 1);
       }
+      return stack;
     }
 
     @Override
@@ -420,20 +414,32 @@ public class StackTraceCreator {
     JsArrayString stack = collector.collect();
     StackTraceElement[] stackTrace = collector.getStackTrace(stack);
     if (stackTrace != null) {
+      stackTrace = dropInternalFrames(stackTrace);
       t.setStackTrace(stackTrace);
     }
   }
 
+  private static StackTraceElement[] dropInternalFrames(StackTraceElement[] stackTrace) {
+    final String dropFrameUntilFnName = Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()");
+
+    for (int i = 0; i < stackTrace.length && i < DROP_FRAME_LIMIT; i++) {
+      if (stackTrace[i].getMethodName().equals(dropFrameUntilFnName)) {
+        return splice(stackTrace, i + 1);
+      }
+    }
+
+    return stackTrace;
+  }
+
   private static Collector newCollector() {
     if (!GWT.isScript()) {
-      throw new RuntimeException(
-          "StackTraceCreator should only be called in Production Mode");
+      throw new RuntimeException("StackTraceCreator should only be called in Production Mode");
     }
 
     return GWT.create(Collector.class);
   }
 
-  private static native JsArrayString splice(JsArrayString arr, int length) /*-{
+  private static native <T> T splice(T arr, int length) /*-{
     (arr.length >= length) && arr.splice(0, length);
     return arr;
   }-*/;

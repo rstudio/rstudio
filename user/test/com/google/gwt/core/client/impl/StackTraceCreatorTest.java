@@ -48,7 +48,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTrace()"),
     };
 
-    assertTrace(expected, t.getStackTrace());
+    assertTrace(expected, t.getStackTrace(), 0);
   }
 
   @DoNotRunWith(Platform.Devel)
@@ -72,12 +72,13 @@ public class StackTraceCreatorTest extends GWTTestCase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTraceNative()"),
     };
 
-    assertTrace(expected, t.getStackTrace());
+    StackTraceElement[] trace = t.getStackTrace();
+
+    int offset = getTraceOffset(trace, expected[0]);
+    assertTrace(expected, trace, offset);
   }
 
-  private void assertTrace(final String[] expected, StackTraceElement[] trace) {
-    int offset = getTraceOffset(trace, expected[0]);
-
+  private void assertTrace(final String[] expected, StackTraceElement[] trace, int offset) {
     for (int i = 0; i < expected.length; i++) {
       assertEquals("Incorrect frame at " + i, expected[i], trace[i + offset].getMethodName());
     }
