@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
@@ -41,6 +42,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -55,6 +57,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                     Commands commands,
                     GlobalDisplay globalDisplay,
                     FileTypeRegistry fileTypeRegistry,
+                    Provider<ViewFilePanel> pViewFilePanel,
                     Binder binder,
                     UIPrefs prefs,
                     PDFViewer pdfViewer,
@@ -63,6 +66,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       satelliteManager_ = satelliteManager;
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
+      pViewFilePanel_ = pViewFilePanel;
       prefs_ = prefs;
       pdfViewer_ = pdfViewer;
       
@@ -149,6 +153,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       else if (".html".equals(extension))
       {
          displayHTMLRenderResult(result);
+      }
+      else if (".md".equals(extension))
+      {
+         ViewFilePanel viewFilePanel = pViewFilePanel_.get();
+         viewFilePanel.showFile(
+            FileSystemItem.createFile(result.getOutputFile()), "UTF-8");
       }
       else
       {
@@ -296,6 +306,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final FileTypeRegistry fileTypeRegistry_;
    private final UIPrefs prefs_;
    private final PDFViewer pdfViewer_;
+   private final Provider<ViewFilePanel> pViewFilePanel_;
 
    // stores the last scroll position of each document we know about: map
    // of path to position

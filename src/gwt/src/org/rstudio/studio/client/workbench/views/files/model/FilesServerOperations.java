@@ -29,6 +29,10 @@ public interface FilesServerOperations
    
    void isTextFile(String path,
                    ServerRequestCallback<Boolean> requestCallback);
+   
+   void getFileContents(String path,
+                        String encoding,
+                        ServerRequestCallback<String> requestCallback);
 
    // get a file listing
    void listFiles(FileSystemItem directory,

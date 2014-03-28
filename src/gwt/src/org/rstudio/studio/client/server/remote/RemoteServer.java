@@ -707,6 +707,18 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, IS_TEXT_FILE, path, requestCallback);
    }
+   
+   @Override
+   public void getFileContents(String path,
+                               String encoding,
+                               ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray paramArray = new JSONArray();
+      paramArray.set(0, new JSONString(path));
+      paramArray.set(1, new JSONString(encoding));
+      
+      sendRequest(RPC_SCOPE, "get_file_contents", paramArray, requestCallback);
+   }
 
    public void listFiles(
                   FileSystemItem directory,

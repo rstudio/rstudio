@@ -28,13 +28,18 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -68,21 +73,25 @@ public class ViewFilePanel extends Composite implements TextDisplay
    }
    
    @Inject
-   public ViewFilePanel(DocDisplay docDisplay,
+   public ViewFilePanel(GlobalDisplay globalDisplay,
+                        DocDisplay docDisplay,
                         FileTypeRegistry fileTypeRegistry,
                         UIPrefs uiPrefs,
                         EventBus events,
                         Commands commands,
+                        FilesServerOperations server,
                         FontSizeManager fontSizeManager,
                         FileDialogs fileDialogs,
                         RemoteFileSystemContext fileContext,
                         Session session)
    {
+      globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       commands_ = commands;
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
       session_ = session;
+      server_ = server;
       docDisplay_ = docDisplay; 
       docDisplay_.setReadOnly(true);
       
@@ -184,6 +193,31 @@ public class ViewFilePanel extends Composite implements TextDisplay
       saveFileAsHandler_ = handler;
       saveAsButton_.setVisible(saveFileAsHandler_ != null);
       saveAsButtonSeparator_.setVisible(saveFileAsHandler_ != null);
+   }
+   
+   public void showFile(final FileSystemItem file, String encoding)
+   {
+      final ProgressIndicator indicator = new GlobalProgressDelayer(
+            globalDisplay_, 300, "Loading file contents").getIndicator();
+                                               
+      
+      server_.getFileContents(file.getPath(), 
+                              encoding,
+                              new ServerRequestCallback<String>() {
+
+         @Override
+         public void onResponseReceived(String contents)
+         {
+            indicator.onCompleted();
+            showFile(file.getPath(), file, contents);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            indicator.onError(error.getUserMessage());
+         }
+      });
    }
    
    public void showFile(String caption, FileSystemItem file, String contents)
@@ -341,12 +375,14 @@ public class ViewFilePanel extends Composite implements TextDisplay
       }
    }
   
+   private final GlobalDisplay globalDisplay_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final RemoteFileSystemContext fileContext_;
    private final FileDialogs fileDialogs_;
    private final Commands commands_;
    private final Session session_;
    private final DocDisplay docDisplay_;
+   private final FilesServerOperations server_;
    
    private Toolbar toolbar_;
    private ToolbarButton saveAsButton_;

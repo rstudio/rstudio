@@ -162,6 +162,29 @@ core::Error isTextFile(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+core::Error getFileContents(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   std::string path, encoding;
+   Error error = json::readParams(request.params, &path, &encoding);
+   if (error)
+      return error;
+
+   FilePath targetPath = module_context::resolveAliasedPath(path);
+
+   std::string contents;
+   error = module_context::readAndDecodeFile(targetPath,
+                                             encoding,
+                                             true,
+                                             &contents);
+   if (error)
+      return error;
+
+   pResponse->setResult(contents);
+
+   return Success();
+}
    
 Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
@@ -897,6 +920,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "stat", stat))
       (bind(registerRpcMethod, "is_text_file", isTextFile))
+      (bind(registerRpcMethod, "get_file_contents", getFileContents))
       (bind(registerRpcMethod, "list_files", listFiles))
       (bind(registerRpcMethod, "create_folder", createFolder))
       (bind(registerRpcMethod, "delete_files", deleteFiles))
