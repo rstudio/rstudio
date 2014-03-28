@@ -420,11 +420,13 @@ public class StackTraceCreator {
   }
 
   private static StackTraceElement[] dropInternalFrames(StackTraceElement[] stackTrace) {
-    final String dropFrameUntilFnName = Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()");
+    final String dropFrameUntilFnName =
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreator::fillInStackTrace(*)");
 
-    for (int i = 0; i < stackTrace.length && i < DROP_FRAME_LIMIT; i++) {
+    int numberOfFrameToSearch = Math.min(stackTrace.length - 1, DROP_FRAME_LIMIT);
+    for (int i = 0; i < numberOfFrameToSearch; i++) {
       if (stackTrace[i].getMethodName().equals(dropFrameUntilFnName)) {
-        return splice(stackTrace, i + 1);
+        return splice(stackTrace, i + 2);
       }
     }
 
