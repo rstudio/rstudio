@@ -103,7 +103,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RmdRenderOutput = "rmd_render_output";
    public static final String RmdRenderCompleted = "rmd_render_completed";
    public static final String RmdTemplateDiscovered = "rmd_template_discovered";
-   public static final String RmdTemplateDiscoveryComplete = "rmd_template_discovery_complete";
+   public static final String RmdTemplateDiscoveryCompleted = "rmd_template_discovery_completed";
 
    protected ClientEvent()
    {

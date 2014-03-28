@@ -562,7 +562,7 @@ public class ClientEventDispatcher
             RmdDiscoveredTemplate template = event.getData();
             eventBus_.fireEvent(new RmdTemplateDiscoveredEvent(template));
          }
-         else if (type.equals(ClientEvent.RmdTemplateDiscoveryComplete))
+         else if (type.equals(ClientEvent.RmdTemplateDiscoveryCompleted))
          {
             eventBus_.fireEvent(new RmdTemplateDiscoveryCompletedEvent());
          }

@@ -47,9 +47,9 @@ public class RmdTemplateChooser extends Composite
       initWidget(uiBinder.createAndBindUi(this));
    }
    
-   public void populateTemplates()
+   public void populateTemplates(final Operation onCompleted)
    {
-      if (isPopulated_)
+      if (state_ != STATE_EMPTY)
          return;
       
       discovery_ = RStudioGinjector.INSTANCE.getRmdTemplateDiscovery();
@@ -67,12 +67,11 @@ public class RmdTemplateChooser extends Composite
             @Override
             public void execute()
             {
-               // TODO remove progress if it was showing
-               
+               state_ = STATE_POPULATED;
+               onCompleted.execute();
             }
-            
          });
-      isPopulated_ = true;
+      state_ = STATE_POPULATING;
    }
    
    @UiFactory
@@ -87,6 +86,11 @@ public class RmdTemplateChooser extends Composite
                                    getFileName(), 
                                    getDirectory(), 
                                    createDirectory());
+   }
+   
+   public int getState()
+   {
+      return state_;
    }
    
    // Private methods ---------------------------------------------------------
@@ -117,10 +121,14 @@ public class RmdTemplateChooser extends Composite
    }
    
    private RmdTemplateDiscovery discovery_;
-   private boolean isPopulated_;
-
+   private int state_;
+   
    @UiField ListBox listTemplates_;
    @UiField TextBox txtName_;
    @UiField DirectoryChooserTextBox dirLocation_;
    @UiField CheckBox chkCreate_;
+   
+   public final static int STATE_EMPTY = 0;
+   public final static int STATE_POPULATING = 1;
+   public final static int STATE_POPULATED = 2;
 }

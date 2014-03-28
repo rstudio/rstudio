@@ -18,11 +18,13 @@ package org.rstudio.studio.client.rmarkdown;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.inject.Inject;
 
@@ -32,9 +34,11 @@ public class RmdTemplateDiscovery implements
 {
    @Inject
    public RmdTemplateDiscovery(EventBus eventBus, 
+                               GlobalDisplay display,
                                RMarkdownServerOperations server)
    {
       server_ = server;
+      display_ = display;
 
       eventBus.addHandler(RmdTemplateDiscoveredEvent.TYPE, this);
       eventBus.addHandler(RmdTemplateDiscoveryCompletedEvent.TYPE, this);
@@ -60,10 +64,32 @@ public class RmdTemplateDiscovery implements
    {
       onTemplateDiscovered_ = onTemplateDiscovered;
       onCompleted_ = onCompleted;
-      server_.discoverRmdTemplates(new VoidServerRequestCallback());
+      server_.discoverRmdTemplates(new ServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean discovered)
+         {
+            if (!discovered)
+               showError(null);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            showError(error.getMessage());
+         }
+         
+         private void showError(String error)
+         {
+            display_.showErrorMessage("R Markdown Templates Not Found",
+                  "An error occurred while looking for R Markdown templates. " + 
+                  (error == null ? "" : error));
+         }
+      });
    }
    
    private final RMarkdownServerOperations server_;
+   private final GlobalDisplay display_;
 
    private OperationWithInput<RmdDiscoveredTemplate> onTemplateDiscovered_;
    private Operation onCompleted_;

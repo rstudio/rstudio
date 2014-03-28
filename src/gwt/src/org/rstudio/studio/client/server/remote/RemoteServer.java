@@ -3297,7 +3297,7 @@ public class RemoteServer implements Server
 
    @Override
    public void discoverRmdTemplates(
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<Boolean> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             DISCOVER_RMD_TEMPLATES,
