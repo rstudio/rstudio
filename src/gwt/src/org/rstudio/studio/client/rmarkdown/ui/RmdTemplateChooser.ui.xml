@@ -1,15 +1,57 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rs="urn:import:org.rstudio.core.client.widget">
 	<ui:style>
-	  .listHeader
+	  .controlLabel
 	  {
+	     margin-bottom: 3px;
 	     font-weight: bold;
+	     display: block;
+	  }
+	  
+	  .interiorControlLabel
+	  {
+	     margin-top: 7px; 
+	  }
+	  
+	  .templateListBox
+	  {
+	    padding: 4px;
+	  }
+	  
+	  .textBox
+	  {
+	    padding: 2px;
+	    width: 100%;
+	  }
+
+	  .createNote
+	  {
+	    color: #909090;
 	  }
 	</ui:style>
 	<g:HTMLPanel>
-	<g:Label styleName="{style.listHeader}" text="Installed Templates"></g:Label>
-	<g:ListBox width="100%" ui:field="listTemplates_" visibleItemCount="7">
-	</g:ListBox>
+	<g:Label styleName="{style.controlLabel}" text="Template:"></g:Label>
+	<g:ListBox width="100%" styleName="{style.templateListBox}"
+	           ui:field="listTemplates_" visibleItemCount="5"></g:ListBox>
+
+	<g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	         text="Name:"></g:Label>
+	<g:TextBox styleName="{style.textBox}" ui:field="txtName_" 
+	           text="Untitled"></g:TextBox>
+
+	<g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	         text="Directory:"></g:Label>
+	<rs:DirectoryChooserTextBox width="100%" ui:field="dirLocation_">
+	</rs:DirectoryChooserTextBox>
+	
+	<g:CheckBox styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	            ui:field="chkCreate_" text="Create in New Directory"></g:CheckBox>
+	<g:HTML styleName="{style.createNote}">
+	  A new directory with the same name as the file will be created. The new R
+	  Markdown file and all its resources will be placed in the new directory.
+	</g:HTML>
+
 	</g:HTMLPanel>
 </ui:UiBinder> 

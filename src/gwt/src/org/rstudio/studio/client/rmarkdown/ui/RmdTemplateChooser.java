@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -22,9 +23,11 @@ import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RmdTemplateChooser extends Composite
@@ -62,7 +65,7 @@ public class RmdTemplateChooser extends Composite
             @Override
             public void execute()
             {
-               // TODO Auto-generated method stub
+               // TODO remove progress if it was showing
                
             }
             
@@ -70,8 +73,16 @@ public class RmdTemplateChooser extends Composite
       isPopulated_ = true;
    }
    
+   @UiFactory
+   public DirectoryChooserTextBox makeDirectoryChooserTextbox()
+   {
+      return new DirectoryChooserTextBox("", null);
+   }
+   
    private RmdTemplateDiscovery discovery_;
    private boolean isPopulated_;
 
    @UiField ListBox listTemplates_;
+   @UiField TextBox txtName_;
+   @UiField DirectoryChooserTextBox dirLocation_;
 }
