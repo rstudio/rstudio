@@ -34,6 +34,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -177,7 +178,21 @@ public class ViewFilePanel extends Composite implements TextDisplay
             
          }
       }));
-      
+        
+      saveFileAsHandler_ = new SaveFileAsHandler() {
+
+         @Override
+         public void onSaveFileAs(FileSystemItem source,
+                                  FileSystemItem destination, 
+                                  ProgressIndicator indicator)
+         {
+            server_.copyFile(source, 
+                             destination, 
+                             true, 
+                             new VoidServerRequestCallback(indicator));
+         }
+         
+      };
       
       initWidget(panel_);
    }
@@ -191,8 +206,6 @@ public class ViewFilePanel extends Composite implements TextDisplay
    public void setSaveFileAsHandler(SaveFileAsHandler handler)
    {
       saveFileAsHandler_ = handler;
-      saveAsButton_.setVisible(saveFileAsHandler_ != null);
-      saveAsButtonSeparator_.setVisible(saveFileAsHandler_ != null);
    }
    
    public void showFile(final FileSystemItem file, String encoding)
@@ -267,7 +280,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    {
       toolbar_ = new ViewFileToolbar();
       
-      saveAsButton_ = toolbar_.addLeftWidget(new ToolbarButton(
+      toolbar_.addLeftWidget(new ToolbarButton(
          "Save As", 
          commands_.saveSourceDoc().getImageResource(),
          new ClickHandler() {
@@ -278,9 +291,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
             }
             
          }));
-      saveAsButtonSeparator_ = toolbar_.addLeftSeparator();
-      saveAsButton_.setVisible(false);
-      saveAsButtonSeparator_.setVisible(false);
+      toolbar_.addLeftSeparator();
       
       toolbar_.addLeftWidget(new ToolbarButton(
          null,
@@ -385,9 +396,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    private final FilesServerOperations server_;
    
    private Toolbar toolbar_;
-   private ToolbarButton saveAsButton_;
-   private Widget saveAsButtonSeparator_;
-   
+  
    private final PanelWithToolbars panel_;
    private FullscreenPopupPanel popupPanel_;
    private final TextEditingTargetFindReplace findReplace_;
