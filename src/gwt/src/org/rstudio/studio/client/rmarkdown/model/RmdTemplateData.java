@@ -79,7 +79,7 @@ public class RmdTemplateData
             option_default: "default",
             option_nullable: true,
             option_list: [ "default", "cerulean", "journal", "flatly",
-                           "readable", "spacelab", "united", "yeti", "cosmo"]
+                           "readable", "spacelab", "united", "cosmo"]
             },
             {
             option_name: "highlight",
