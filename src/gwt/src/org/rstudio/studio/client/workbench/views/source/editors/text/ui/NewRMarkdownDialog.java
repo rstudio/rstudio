@@ -148,6 +148,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
       @Source("MarkdownOptionsIcon.png")
       ImageResource optionsIcon();
+      
+      @Source("MarkdownTemplateIcon.png")
+      ImageResource templateIcon();
    }
 
    public NewRMarkdownDialog(
@@ -198,7 +201,12 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          listTemplates_.addItem(menuItem);
       }
       
-      listTemplates_.addItem(new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING));
+      // Add the "From Template" item at the end of the list
+      TemplateMenuItem templateItem = 
+            new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING);
+      templateItem.addIcon(resources.templateIcon());
+      listTemplates_.addItem(templateItem);
+
       updateOptions(getSelectedTemplate());
 
       indicator_ = addProgressIndicator(false);
