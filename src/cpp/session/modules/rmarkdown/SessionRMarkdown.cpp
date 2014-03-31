@@ -503,11 +503,21 @@ private:
 
          // record the template's path (absolute for the filesystem)
          json::Object dataJson;
-         dataJson["path"] = path;
 
          std::string name;
          std::string description;
          std::string createDir = "default";
+         std::string package;
+
+         // if the template's owning package is known, emit that
+         size_t pipePos = path.find_first_of('|');
+         if (pipePos != std::string::npos)
+         {
+            package = path.substr(0, pipePos);
+
+            // remove package name from string, leaving just the path segment
+            path = path.substr(pipePos + 1, path.length() - pipePos);
+         }
 
          // try to get the template's YAML
          FilePath yamlPath(path + "/template.yaml");
@@ -544,6 +554,8 @@ private:
             }
          }
 
+         dataJson["package_name"] = package;
+         dataJson["path"] = path;
          dataJson["name"] = name;
          dataJson["description"] = description;
          dataJson["create_dir"] = createDir;

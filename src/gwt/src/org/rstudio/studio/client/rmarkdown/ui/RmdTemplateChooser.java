@@ -78,7 +78,7 @@ public class RmdTemplateChooser extends Composite
             @Override
             public void execute(RmdDiscoveredTemplate template)
             {
-               listTemplates_.addItem(template.getName(), template.getPath());
+               listTemplates_.addItem(template.getName() + " {" + template.getPackage() + "}", template.getPath());
                templates_.add(template);
             }
          },
