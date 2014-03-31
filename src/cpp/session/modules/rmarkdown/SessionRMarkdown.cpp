@@ -889,6 +889,35 @@ Error discoverRmdTemplates(const json::JsonRpcRequest&,
    return Success();
 }
 
+Error createRmdFromTemplate(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+
+   std::string filePath, templatePath, resultPath;
+   bool createDir;
+   Error error = json::readParams(request.params,
+                                  &filePath,
+                                  &templatePath,
+                                  &createDir);
+   if (error)
+      return error;
+
+   r::exec::RFunction draft("rmarkdown:::draft");
+   draft.addParam("file", filePath);
+   draft.addParam("template", templatePath);
+   draft.addParam("create_dir", createDir);
+   draft.addParam("edit", false);
+   error = draft.call(&resultPath);
+
+   if (error)
+      return error;
+
+   json::Object jsonResult;
+   jsonResult["path"] = resultPath;
+   pResponse->setResult(jsonResult);
+
+   return Success();
+}
 
 } // anonymous namespace
 
@@ -927,6 +956,7 @@ Error initialize()
       (bind(registerRpcMethod, "render_rmd_source", renderRmdSource))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
       (bind(registerRpcMethod, "discover_rmd_templates", discoverRmdTemplates))
+      (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

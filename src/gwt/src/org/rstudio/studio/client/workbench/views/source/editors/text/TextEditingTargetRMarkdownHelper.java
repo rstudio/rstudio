@@ -27,6 +27,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -48,6 +49,7 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -61,7 +63,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
@@ -432,15 +434,30 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
-   public void createDraftFromTemplate(RmdChosenTemplate template)
+   public void createDraftFromTemplate(final RmdChosenTemplate template)
    {
-      String cmd = 
-            "rmarkdown::draft(file = \"" + template.getDirectory() + "/" + 
-             template.getFileName() + "\", " + 
-            "template = \"" + template.getTemplatePath() + "\", " +
-            "create_dir = " + (template.createDir() ? "TRUE" : "FALSE") + ", " +
-            "edit = TRUE)";
-      eventBus_.fireEvent(new SendToConsoleEvent(cmd, true));
+      final String target = template.getDirectory() + "/" + 
+                            template.getFileName();
+      server_.createRmdFromTemplate(target, 
+            template.getTemplatePath(), template.createDir(), 
+            new ServerRequestCallback<RmdCreatedTemplate>() {
+               @Override
+               public void onResponseReceived(RmdCreatedTemplate template)
+               {
+                  FileSystemItem file =
+                        FileSystemItem.createFile(template.getPath());
+                  eventBus_.fireEvent(new FileEditEvent(file));
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("Template Creation Failed", 
+                        "Couldn't create a template from " + 
+                        template.getTemplatePath() + " at " + target + ".\n\n" +
+                        error.getMessage());
+               }
+            });
    }
    
    // Private methods ---------------------------------------------------------

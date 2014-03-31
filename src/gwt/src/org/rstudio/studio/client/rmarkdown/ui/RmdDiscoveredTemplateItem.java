@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -33,6 +34,8 @@ public class RmdDiscoveredTemplateItem extends Composite
       panel_.add(pkg);
       Label name = new Label(template.getName());
       panel_.add(name);
+      panel_.getElement().getStyle().setPaddingLeft(3, Unit.PX);
+      panel_.getElement().getStyle().setPaddingRight(3, Unit.PX);
       
       initWidget(panel_);
    }

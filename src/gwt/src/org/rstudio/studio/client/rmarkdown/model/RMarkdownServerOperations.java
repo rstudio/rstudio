@@ -49,5 +49,10 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
 
    void discoverRmdTemplates(ServerRequestCallback<Boolean> requestCallback);
    
+   void createRmdFromTemplate(String filePath, 
+                              String templatePath, 
+                              boolean createDirectory, 
+                              ServerRequestCallback<RmdCreatedTemplate> requestCallback);
+   
    public String getApplicationURL(String pathName);
 }
