@@ -30,7 +30,7 @@
 
 	  .templateListArea
 	  {
-	    height: 90px;
+	    height: 100px;
 	    margin-top: 5px;
 	  }
 	  

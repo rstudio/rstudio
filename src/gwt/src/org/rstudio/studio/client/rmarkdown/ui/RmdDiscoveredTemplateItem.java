@@ -33,6 +33,7 @@ public class RmdDiscoveredTemplateItem extends Composite
       pkg.getElement().getStyle().setColor("#909090");
       panel_.add(pkg);
       Label name = new Label(template.getName());
+      name.setTitle(template.getDescription());
       panel_.add(name);
       panel_.getElement().getStyle().setPaddingLeft(3, Unit.PX);
       panel_.getElement().getStyle().setPaddingRight(3, Unit.PX);
