@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -133,6 +134,8 @@ public class WidgetListBox<T extends Widget>
       options_.add(panel);
       panel_.add(panel);
       items_.add(item);
+      panel.getElement().getStyle().setPadding(itemPaddingValue_, 
+                                               itemPaddingUnit_);
       
       panel.addStyleName(style_.anyItem());
 
@@ -173,6 +176,17 @@ public class WidgetListBox<T extends Widget>
       return null;
    }
    
+   public int getItemCount()
+   {
+      return items_.size();
+   }
+   
+   public void setItemPadding(double val, Style.Unit unit)
+   {
+      itemPaddingValue_ = val;
+      itemPaddingUnit_ = unit;
+   }
+   
    private int maxIdx_ = 0;
    private int selectedIdx_ = 0;
 
@@ -182,6 +196,9 @@ public class WidgetListBox<T extends Widget>
 
    private Resources resources_;
    private ListStyle style_;
+   
+   private double itemPaddingValue_ = 5;
+   private Style.Unit itemPaddingUnit_ = Style.Unit.PX;
 
    HandlerManager handlerManager_ = new HandlerManager(this);
 }

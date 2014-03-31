@@ -29,7 +29,6 @@
 	  .templateListArea
 	  {
 	    height: 90px;
-	    padding: 4px;
 	  }
 	  
 	  .noTemplates
@@ -44,8 +43,8 @@
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Label styleName="{style.controlLabel}" text="Template:"></g:Label>
-	<g:ListBox width="100%" styleName="{style.templateListArea}"
-	           ui:field="listTemplates_" visibleItemCount="5"></g:ListBox>
+	<rs:WidgetListBox width="100%" styleName="{style.templateListArea}"
+	           ui:field="listTemplates_"></rs:WidgetListBox>
 	<g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 
 	             visible="false" ui:field="noTemplatesFound_">
 	  <g:HTML styleName="{style.noTemplatesText}">
