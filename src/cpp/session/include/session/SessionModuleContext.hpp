@@ -402,7 +402,7 @@ inline bool hasOSXMavericksDeveloperTools()
 {
    return false;
 }
-core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath)
+inline core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath)
 {
    return core::systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
