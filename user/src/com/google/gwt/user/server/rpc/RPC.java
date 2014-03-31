@@ -325,6 +325,32 @@ public final class RPC {
   }
 
   /**
+   * Returns a string that encodes an exception. If <code>rpcRequest</code>
+   * is <code>null</code> a default serialization policy and default request
+   * flags will be used. Otherwise these information are taken from
+   * <code>rpcRequest</code>.
+   * <p>
+   * This method should be used if the RPC request could not be decoded or
+   * could not be executed because of an exception thrown, e.g.
+   * {@link IncompatibleRemoteServiceException}, {@link RpcTokenException}
+   * </p>
+   * @param rpcRequest the RPCRequest that failed to execute, may be null
+   * @param cause the {@link Throwable} that was thrown
+   * @return a String that encodes the exception
+   * @throws SerializationException if the result cannot be serialized
+   */
+  public static String encodeResponseForFailedRequest(RPCRequest rpcRequest, Throwable cause)
+      throws SerializationException {
+    if (rpcRequest == null) {
+      return RPC.encodeResponseForFailure(null, cause,
+          getDefaultSerializationPolicy(), AbstractSerializationStream.DEFAULT_FLAGS);
+    } else {
+      return RPC.encodeResponseForFailure(null, cause,
+          rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
+    }
+  }
+
+  /**
    * Returns a string that encodes an exception. If method is not
    * <code>null</code>, it is an error if the exception is not in the method's
    * list of checked exceptions.

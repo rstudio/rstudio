@@ -194,6 +194,7 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
         + " expected an integer in the range [1-65535] but got: " + value);
   }
 
+  @Override
   public final SerializationPolicy getSerializationPolicy(String moduleBaseURL,
       String strongName) {
 
@@ -233,9 +234,13 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
   }
 
   /**
-   * Process a call originating from the given request. Uses the
-   * {@link RPC#invokeAndEncodeResponse(Object, java.lang.reflect.Method, Object[])}
-   * method to do the actual work.
+   * Process a call originating from the given request. This method calls
+   * {@link RemoteServiceServlet#checkPermutationStrongName()} to prevent
+   * possible XSRF attacks and then decodes the <code>payload</code> using
+   * {@link RPC#decodeRequest(String, Class, SerializationPolicyProvider)}
+   * to do the actual work.
+   * Once the request is decoded {@link RemoteServiceServlet#processCall(RPCRequest)}
+   * will be called.
    * <p>
    * Subclasses may optionally override this method to handle the payload in any
    * way they desire (by routing the request to a framework component, for
@@ -244,7 +249,7 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
    * {@link #getThreadLocalResponse()} methods.
    * </p>
    * This is public so that it can be unit tested easily without HTTP.
-   * 
+   *
    * @param payload the UTF-8 request payload
    * @return a string which encodes either the method's return, a checked
    *         exception thrown by the method, or an
@@ -259,8 +264,44 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
     // First, check for possible XSRF situation
     checkPermutationStrongName();
 
+    RPCRequest rpcRequest;
     try {
-      RPCRequest rpcRequest = RPC.decodeRequest(payload, delegate.getClass(), this);
+      rpcRequest = RPC.decodeRequest(payload, delegate.getClass(), this);
+    } catch (IncompatibleRemoteServiceException ex) {
+      log(
+          "An IncompatibleRemoteServiceException was thrown while processing this call.",
+          ex);
+      return RPC.encodeResponseForFailedRequest(null, ex);
+    }
+    return processCall(rpcRequest);
+  }
+
+  /**
+   * Process an already decoded RPC request. Uses the
+   * {@link RPC#invokeAndEncodeResponse(Object, java.lang.reflect.Method, Object[])}
+   * method to do the actual work.
+   * <p>
+   * Subclasses may optionally override this method to handle the decoded rpc
+   * request in any way they desire (by routing the request to a framework
+   * component, for instance).
+   * The {@link HttpServletRequest} and {@link HttpServletResponse}
+   * can be accessed via the {@link #getThreadLocalRequest()} and
+   * {@link #getThreadLocalResponse()} methods.
+   * </p>
+   * This is public so that it can be unit tested easily without HTTP.
+   *
+   * @param rpcRequest the already decoded RPC request
+   * @return a string which encodes either the method's return, a checked
+   *         exception thrown by the method, or an
+   *         {@link IncompatibleRemoteServiceException}
+   * @throws SerializationException if we cannot serialize the response
+   * @throws UnexpectedException if the invocation throws a checked exception
+   *           that is not declared in the service method's signature
+   * @throws RuntimeException if the service method throws an unchecked
+   *           exception (the exception will be the one thrown by the service)
+   */
+  public String processCall(RPCRequest rpcRequest) throws SerializationException {
+    try {
       onAfterRequestDeserialized(rpcRequest);
       return RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(),
           rpcRequest.getParameters(), rpcRequest.getSerializationPolicy(),
@@ -269,11 +310,11 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
       log(
           "An IncompatibleRemoteServiceException was thrown while processing this call.",
           ex);
-      return RPC.encodeResponseForFailure(null, ex);
+      return RPC.encodeResponseForFailedRequest(rpcRequest, ex);
     } catch (RpcTokenException tokenException) {
       log("An RpcTokenException was thrown while processing this call.",
           tokenException);
-      return RPC.encodeResponseForFailure(null, tokenException);
+      return RPC.encodeResponseForFailedRequest(rpcRequest, tokenException);
     }
   }
 

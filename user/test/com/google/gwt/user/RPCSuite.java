@@ -42,6 +42,7 @@ import com.google.gwt.user.client.rpc.ObjectGraphTest;
 import com.google.gwt.user.client.rpc.ObjectGraphTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.RecursiveClassTest;
 import com.google.gwt.user.client.rpc.RpcTokenTest;
+import com.google.gwt.user.client.rpc.RpcTokenTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.RunTimeSerializationErrorsTest;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
@@ -101,6 +102,7 @@ public class RPCSuite {
     suite.addTestSuite(
         com.google.gwt.user.client.rpc.RemoteServiceServletTestWithTypeObfuscation.class);
     suite.addTestSuite(UnicodeEscapingTestWithTypeObfuscation.class);
+    suite.addTestSuite(RpcTokenTestWithTypeObfuscation.class);
 
     // Client-side test cases for deRPC system
     if (false) {
