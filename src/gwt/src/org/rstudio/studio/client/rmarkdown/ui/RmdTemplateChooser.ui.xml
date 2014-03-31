@@ -3,6 +3,8 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rs="urn:import:org.rstudio.core.client.widget">
 	<ui:style>
+	  @external .gwt-Label;
+	  
 	  .controlLabel
 	  {
 	     margin-bottom: 3px;
@@ -29,6 +31,7 @@
 	  .templateListArea
 	  {
 	    height: 90px;
+	    margin-top: 5px;
 	  }
 	  
 	  .noTemplates
@@ -40,9 +43,14 @@
 	  {
 	     padding: 10px;
 	  }
+	  
+	  .help .gwt-Label
+	  {
+	     font-weight: bold;
+	  }
 	</ui:style>
 	<g:HTMLPanel>
-	<g:Label styleName="{style.controlLabel}" text="Template:"></g:Label>
+	<rs:CaptionWithHelp styleName="{style.help}"></rs:CaptionWithHelp>
 	<rs:WidgetListBox width="100%" styleName="{style.templateListArea}"
 	           ui:field="listTemplates_"></rs:WidgetListBox>
 	<g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 

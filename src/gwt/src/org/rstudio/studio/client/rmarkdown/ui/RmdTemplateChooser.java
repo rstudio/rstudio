@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -101,6 +102,13 @@ public class RmdTemplateChooser extends Composite
    public DirectoryChooserTextBox makeDirectoryChooserTextbox()
    {
       return new DirectoryChooserTextBox("", null);
+   }
+   
+   @UiFactory
+   public CaptionWithHelp makeHelpCaption()
+   {
+      return new CaptionWithHelp("Template:", "Using R Markdown Templates",
+                                 "using_rmarkdown_templates");
    }
    
    public RmdChosenTemplate getChosenTemplate()
