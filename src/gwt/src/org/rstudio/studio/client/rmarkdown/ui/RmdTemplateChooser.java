@@ -83,6 +83,10 @@ public class RmdTemplateChooser extends Composite
             {
                listTemplates_.addItem(new RmdDiscoveredTemplateItem(template));
                templates_.add(template);
+               if (!templateOptionsPanel_.isVisible())
+               {
+                  templateOptionsPanel_.setVisible(true);
+               }
             }
          },
          new Operation()
@@ -173,6 +177,7 @@ public class RmdTemplateChooser extends Composite
    @UiField DirectoryChooserTextBox dirLocation_;
    @UiField CheckBox chkCreate_;
    @UiField HTMLPanel noTemplatesFound_;
+   @UiField HTMLPanel templateOptionsPanel_;
    
    public final static int STATE_EMPTY = 0;
    public final static int STATE_POPULATING = 1;

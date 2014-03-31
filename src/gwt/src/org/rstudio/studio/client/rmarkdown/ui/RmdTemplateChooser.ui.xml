@@ -37,11 +37,14 @@
 	  .noTemplates
 	  {
        border: 1px solid #909090;
+       background-color: #FFFFFF;
+       color: #909090;
 	  }
 	  
 	  .noTemplatesText
 	  {
-	     padding: 10px;
+	     text-align: center;
+	     margin-top: 35px;
 	  }
 	  
 	  .help .gwt-Label
@@ -56,30 +59,29 @@
 	<g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 
 	             visible="false" ui:field="noTemplatesFound_">
 	  <g:HTML styleName="{style.noTemplatesText}">
-       No templates were found. R Markdown templates are often installed with
-       packages that use R Markdown. To learn more, see the the 
-       <a href="http://rmarkdown.rstudio.com/" target="_blank">R Markdown
-       documentation.</a>
+       No R Markdown templates were found. 
 	  </g:HTML>
 	</g:HTMLPanel>
 
-	<g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
-	         text="Name:"></g:Label>
-	<g:TextBox styleName="{style.textBox}" ui:field="txtName_" 
-	           text="Untitled"></g:TextBox>
+   <g:HTMLPanel ui:field="templateOptionsPanel_" visible="false">
+	  <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	           text="Name:"></g:Label>
+	  <g:TextBox styleName="{style.textBox}" ui:field="txtName_" 
+	             text="Untitled"></g:TextBox>
 
-	<g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
-	         text="Directory:"></g:Label>
-	<rs:DirectoryChooserTextBox width="100%" ui:field="dirLocation_">
-	</rs:DirectoryChooserTextBox>
+	  <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	           text="Directory:"></g:Label>
+	  <rs:DirectoryChooserTextBox width="100%" ui:field="dirLocation_">
+	  </rs:DirectoryChooserTextBox>
 	
-	<g:CheckBox styleName="{style.controlLabel} {style.interiorControlLabel}" 
-	            ui:field="chkCreate_" text="Create in New Directory">
-	            </g:CheckBox>
-	<g:HTML styleName="{style.createNote}">
-	  A new directory with the same name as the file will be created. The new R
-	  Markdown file and all its resources will be placed in the new directory.
-	</g:HTML>
+	  <g:CheckBox styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	              ui:field="chkCreate_" text="Create in New Directory">
+	              </g:CheckBox>
+	  <g:HTML styleName="{style.createNote}">
+	    A new directory with the same name as the file will be created. The new R
+	    Markdown file and all its resources will be placed in the new directory.
+	  </g:HTML>
+	</g:HTMLPanel>
 
 	</g:HTMLPanel>
 </ui:UiBinder> 
