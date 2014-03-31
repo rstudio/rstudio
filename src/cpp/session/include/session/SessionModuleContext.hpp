@@ -392,6 +392,7 @@ bool haveRcppAttributes();
 #ifdef __APPLE__
 bool isOSXMavericks();
 bool hasOSXMavericksDeveloperTools();
+core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath);
 #else
 inline bool isOSXMavericks()
 {
@@ -400,6 +401,10 @@ inline bool isOSXMavericks()
 inline bool hasOSXMavericksDeveloperTools()
 {
    return false;
+}
+core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath)
+{
+   return core::systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
 #endif
 

@@ -77,4 +77,8 @@ public interface PlotsServerOperations
                                  int width, 
                                  int height,
                                  ServerRequestCallback<Void> requestCallback);
+   
+   void copyPlotToCocoaPasteboard(int width, 
+                                  int height,
+                                  ServerRequestCallback<Void> requestCallback);
 }

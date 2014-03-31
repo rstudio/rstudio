@@ -231,7 +231,43 @@ Error copyPlotToClipboardMetafile(const json::JsonRpcRequest& request,
 #endif
 }
 
+Error copyPlotToCocoaPasteboard(const json::JsonRpcRequest& request,
+                                json::JsonRpcResponse* pResponse)
+{
+   // get args
+   int width, height;
+   Error error = json::readParams(request.params, &width, &height);
+   if (error)
+      return error;
 
+#if __APPLE__
+
+   // create temp file to write to
+   FilePath targetFile = module_context::tempFile("clipboard", "png");
+
+   // save as png
+   using namespace r::session::graphics;
+   Display& display = r::session::graphics::display();
+   error = display.savePlotAsImage(targetFile, "png", width, height);
+   if (error)
+      return error;
+
+   // copy to pasteboard
+   error = module_context::copyImageToCocoaPasteboard(targetFile);
+   if (error)
+      return error;
+
+   // remove temp file
+   error = targetFile.remove();
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
+
+#else
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+#endif
+}
 
 bool hasStem(const FilePath& filePath, const std::string& stem)
 {
@@ -794,6 +830,7 @@ Error initialize()
       (bind(registerRpcMethod, "save_plot_as", savePlotAs))
       (bind(registerRpcMethod, "save_plot_as_pdf", savePlotAsPdf))
       (bind(registerRpcMethod, "copy_plot_to_clipboard_metafile", copyPlotToClipboardMetafile))
+      (bind(registerRpcMethod, "copy_plot_to_cocoa_pasteboard", copyPlotToCocoaPasteboard))
       (bind(registerRpcMethod, "get_unique_save_plot_stem", getUniqueSavePlotStem))
       (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))

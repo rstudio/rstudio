@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export.impl;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -24,9 +23,12 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotSizeEditor;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -76,7 +78,7 @@ public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
       copyAsBitmap(onCompleted);
    }
    
-   protected void copyAsBitmap(Operation onCompleted)
+   protected void copyAsBitmap(final Operation onCompleted)
    {
       ImageFrame imageFrame = getSizeEditor().getImageFrame();
       final WindowEx win = imageFrame.getElement().<IFrameElementEx>cast()
@@ -89,14 +91,26 @@ public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
          ElementEx img = images.getItem(0).cast();
 
          if (BrowseCap.isCocoaDesktop()) {
-            win.focus();
-            DomUtils.selectElement(img);
+            ExportPlotSizeEditor sizeEditor = getSizeEditor();
+            server_.copyPlotToCocoaPasteboard(
+                  sizeEditor.getImageWidth(),
+                  sizeEditor.getImageHeight(),
+                  new SimpleRequestCallback<Void>() 
+                  {
+                     @Override
+                     public void onResponseReceived(Void response)
+                     {
+                        onCompleted.execute();
+                     }
+                  });
          }
-
-         Desktop.getFrame().copyImageToClipboard(img.getClientLeft(),
-                                                 img.getClientTop(),
-                                                 img.getClientWidth(),
-                                                 img.getClientHeight());
+         else
+         {
+            Desktop.getFrame().copyImageToClipboard(img.getClientLeft(),
+                                                    img.getClientTop(),
+                                                    img.getClientWidth(),
+                                                    img.getClientHeight());
+         }
       }
       
       onCompleted.execute();

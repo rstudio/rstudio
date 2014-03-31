@@ -20,8 +20,12 @@
 #include <core/system/Process.hpp>
 
 #include <Foundation/NSString.h>
+#include <Foundation/NSArray.h>
 #include <Foundation/NSDictionary.h>
 #include <Foundation/NSAutoreleasePool.h>
+
+#include <AppKit/NSPasteboard.h>
+#include <AppKit/NSImage.h>
 
 using namespace core;
 
@@ -64,6 +68,28 @@ bool hasOSXMavericksDeveloperTools()
    {
       return false;
    }
+}
+
+Error copyImageToCocoaPasteboard(const FilePath& imagePath)
+{
+   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+   NSString* path = [NSString stringWithUTF8String:
+                     imagePath.absolutePath().c_str()];
+   
+   NSImage* image = [[NSImage alloc] initWithContentsOfFile: path];
+   
+   NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+   [pboard clearContents];
+   
+   NSArray *copiedObjects = [NSArray arrayWithObject:image];
+   [pboard writeObjects: copiedObjects];
+   
+   [image release];
+   
+   [pool release];
+
+   return Success();
 }
 
 } // namespace module_context
