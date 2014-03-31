@@ -25,6 +25,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.inject.Inject;
 
@@ -35,10 +36,12 @@ public class RmdTemplateDiscovery implements
    @Inject
    public RmdTemplateDiscovery(EventBus eventBus, 
                                GlobalDisplay display,
+                               UIPrefs prefs,
                                RMarkdownServerOperations server)
    {
       server_ = server;
       display_ = display;
+      prefs_ = prefs;
 
       eventBus.addHandler(RmdTemplateDiscoveredEvent.TYPE, this);
       eventBus.addHandler(RmdTemplateDiscoveryCompletedEvent.TYPE, this);
@@ -88,8 +91,14 @@ public class RmdTemplateDiscovery implements
       });
    }
    
+   public String getRmdPreferredTemplatePath()
+   {
+      return prefs_.rmdPreferredTemplatePath().getValue();
+   }
+   
    private final RMarkdownServerOperations server_;
    private final GlobalDisplay display_;
+   private final UIPrefs prefs_;
 
    private OperationWithInput<RmdDiscoveredTemplate> onTemplateDiscovered_;
    private Operation onCompleted_;

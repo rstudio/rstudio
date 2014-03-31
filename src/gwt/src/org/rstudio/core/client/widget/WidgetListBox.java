@@ -94,7 +94,7 @@ public class WidgetListBox<T extends Widget>
          public void onKeyDown(KeyDownEvent event)
          {
             if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN &&
-                selectedIdx_ < (maxIdx_ - 1))
+                selectedIdx_ < (panel_.getWidgetCount() - 1))
             {
                setSelectedIndex(selectedIdx_+1, true);
             }
@@ -115,25 +115,40 @@ public class WidgetListBox<T extends Widget>
    
    public void addItem(T item)
    {
+      addItem(item, true);
+   }
+   
+   public void addItem(final T item, boolean atEnd)
+   {
       // wrap the widget in a panel that can receive click events, indicate
       // selection, etc.
-      final int itemIdx = maxIdx_++;
-      ClickableHTMLPanel panel = new ClickableHTMLPanel();
+      final ClickableHTMLPanel panel = new ClickableHTMLPanel();
       panel.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            setSelectedIndex(itemIdx, true);
+            setSelectedIndex(panel_.getWidgetIndex(panel), true);
          }
       });
       
       panel.add(item);
 
       // add the panel to our root layout panel
-      options_.add(panel);
-      panel_.add(panel);
-      items_.add(item);
+      if (!atEnd && panel_.getWidgetCount() > 0)
+      {
+         panel_.insert(panel, 0);
+         items_.add(0, item);
+         options_.add(0, panel);
+         selectedIdx_++;
+      }
+      else
+      {
+         panel_.add(panel);
+         items_.add(item);
+         options_.add(panel);
+      }
+
       panel.getElement().getStyle().setPadding(itemPaddingValue_, 
                                                itemPaddingUnit_);
       
@@ -142,6 +157,8 @@ public class WidgetListBox<T extends Widget>
       // if it's the first item, select it
       if (options_.size() == 1)
          setSelectedIndex(0);
+      else if (!atEnd && getSelectedIndex() == 1 && options_.size() > 1)
+         setSelectedIndex(0, true);
    }
    
    public void setSelectedIndex(int itemIdx)
@@ -152,9 +169,10 @@ public class WidgetListBox<T extends Widget>
    private void setSelectedIndex(int itemIdx, boolean fireEvent)
    {
       String selectedStyle = resources_.listStyle().selectedItem();
-      options_.get(selectedIdx_).removeStyleName(selectedStyle);
+      panel_.getWidget(selectedIdx_).removeStyleName(selectedStyle);
       selectedIdx_ = itemIdx;
-      options_.get(selectedIdx_).addStyleName(selectedStyle);
+      panel_.getWidget(selectedIdx_).addStyleName(selectedStyle);
+      panel_.getWidget(selectedIdx_).getElement().scrollIntoView();
       if (fireEvent)
       {
          DomEvent.fireNativeEvent(Document.get().createChangeEvent(),
@@ -176,6 +194,11 @@ public class WidgetListBox<T extends Widget>
       return null;
    }
    
+   public T getSelectedItem()
+   {
+      return getItemAtIdx(getSelectedIndex());
+   }
+   
    public int getItemCount()
    {
       return items_.size();
@@ -187,7 +210,6 @@ public class WidgetListBox<T extends Widget>
       itemPaddingUnit_ = unit;
    }
    
-   private int maxIdx_ = 0;
    private int selectedIdx_ = 0;
 
    private FlowPanel panel_;

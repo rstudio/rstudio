@@ -62,9 +62,9 @@ public class RmdTemplateChooser extends Composite
          {
             // when the template changes, update the check to correspond to the
             // template's preference, if any
-            int idx = listTemplates_.getSelectedIndex();
+            RmdDiscoveredTemplateItem item = listTemplates_.getSelectedItem();
             chkCreate_.setValue(
-                  templates_.get(idx).getCreateDir().equals("true"));
+                  item.getTemplate().getCreateDir().equals("true"));
          }
       });
    }
@@ -81,11 +81,16 @@ public class RmdTemplateChooser extends Composite
             @Override
             public void execute(RmdDiscoveredTemplate template)
             {
-               listTemplates_.addItem(new RmdDiscoveredTemplateItem(template));
+               // create a template list item from the template; add it at the
+               // end if it isn't the user's preferred template
+               listTemplates_.addItem(new RmdDiscoveredTemplateItem(template), 
+                     !template.getPath().equals(
+                           discovery_.getRmdPreferredTemplatePath()));
                templates_.add(template);
                if (!templateOptionsPanel_.isVisible())
                {
                   templateOptionsPanel_.setVisible(true);
+                  chkCreate_.setValue(template.getCreateDir() == "true");
                }
             }
          },
@@ -144,11 +149,9 @@ public class RmdTemplateChooser extends Composite
 
    private String getSelectedTemplatePath()
    {
-      int idx = listTemplates_.getSelectedIndex();
-      if (idx >= 0)
-      {
-         return listTemplates_.getItemAtIdx(idx).getTemplate().getPath();
-      }
+      RmdDiscoveredTemplateItem item = listTemplates_.getSelectedItem();
+      if (item != null)
+         return item.getTemplate().getPath();
       return null;
    }
    

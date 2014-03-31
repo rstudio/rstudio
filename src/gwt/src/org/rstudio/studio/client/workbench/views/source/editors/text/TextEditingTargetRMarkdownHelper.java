@@ -442,10 +442,15 @@ public class TextEditingTargetRMarkdownHelper
             template.getTemplatePath(), template.createDir(), 
             new ServerRequestCallback<RmdCreatedTemplate>() {
                @Override
-               public void onResponseReceived(RmdCreatedTemplate template)
+               public void onResponseReceived(RmdCreatedTemplate created)
                {
+                  // write a pref indicating this is the preferred template--
+                  // we'll default to it the next time we load the template list
+                  prefs_.rmdPreferredTemplatePath().setGlobalValue(
+                        template.getTemplatePath());
+                  prefs_.writeUIPrefs();
                   FileSystemItem file =
-                        FileSystemItem.createFile(template.getPath());
+                        FileSystemItem.createFile(created.getPath());
                   eventBus_.fireEvent(new FileEditEvent(file));
                }
 
