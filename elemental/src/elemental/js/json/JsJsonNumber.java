@@ -32,7 +32,7 @@ final public class JsJsonNumber extends JsJsonValue
    * MAGIC: primitive number cast to object interface.
    */
   private static native JsJsonNumber createProd(double number) /*-{
-    return @elemental.js.json.JsJsonString::box(Lelemental/json/JsonValue;)(number);
+    return @elemental.js.json.JsJsonValue::box(Lelemental/json/JsonValue;)(number);
   }-*/;
 
   protected JsJsonNumber() {
