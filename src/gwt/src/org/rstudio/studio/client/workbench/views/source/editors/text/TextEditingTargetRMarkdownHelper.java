@@ -436,6 +436,11 @@ public class TextEditingTargetRMarkdownHelper
    
    public void createDraftFromTemplate(final RmdChosenTemplate template)
    {
+      final ProgressIndicator progress = new GlobalProgressDelayer(
+            globalDisplay_,
+            250,
+            "Creating R Markdown Document...").getIndicator();
+
       final String target = template.getDirectory() + "/" + 
                             template.getFileName();
       server_.createRmdFromTemplate(target, 
@@ -452,12 +457,13 @@ public class TextEditingTargetRMarkdownHelper
                   FileSystemItem file =
                         FileSystemItem.createFile(created.getPath());
                   eventBus_.fireEvent(new FileEditEvent(file));
+                  progress.onCompleted();
                }
 
                @Override
                public void onError(ServerError error)
                {
-                  globalDisplay_.showErrorMessage("Template Creation Failed", 
+                  progress.onError(
                         "Couldn't create a template from " + 
                         template.getTemplatePath() + " at " + target + ".\n\n" +
                         error.getMessage());
