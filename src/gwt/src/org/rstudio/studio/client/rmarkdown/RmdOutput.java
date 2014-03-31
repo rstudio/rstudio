@@ -154,7 +154,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       {
          displayHTMLRenderResult(result);
       }
-      else if (".md".equals(extension))
+      else if (".md".equals(extension) || 
+               extension.toLowerCase().startsWith(".markdown"))
       {
          ViewFilePanel viewFilePanel = pViewFilePanel_.get();
          viewFilePanel.showFile(

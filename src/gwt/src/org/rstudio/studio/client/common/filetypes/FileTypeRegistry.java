@@ -213,7 +213,7 @@ public class FileTypeRegistry
       register("*.rpres", RPRESENTATION, icons.iconRpresentation());
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
-      register("*.markdown", MARKDOWN, icons.iconMarkdown());
+      register("*.markdown*", MARKDOWN, icons.iconMarkdown());
       register("*.bib", TEXT, icons.iconText());
       register("*.c", C, icons.iconC());
       register("*.cpp", CPP, icons.iconCpp());
