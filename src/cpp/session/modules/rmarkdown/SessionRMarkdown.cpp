@@ -495,7 +495,8 @@ private:
       // very quickly, so split it into lines and emit a client event for
       // each line
       std::vector<std::string> paths;
-      boost::algorithm::split(paths, output, boost::algorithm::is_any_of("\n"));
+      boost::algorithm::split(paths, output,
+                              boost::algorithm::is_any_of("\n\r"));
       BOOST_FOREACH(std::string& path, paths)
       {
          if (path.empty())
@@ -519,38 +520,30 @@ private:
             path = path.substr(pipePos + 1, path.length() - pipePos);
          }
 
-         // try to get the template's YAML
+         // try to get the template's YAML; without the YAML the template is
+         // invalid, so skip this template if it has no YAML
          FilePath yamlPath(path + "/template.yaml");
          if (!yamlPath.exists())
+            continue;
+
+         SEXP templateDetails;
+         error = r::exec::RFunction(
+            "yaml:::yaml.load_file",
+            string_utils::utf8ToSystem(yamlPath.absolutePath())).call(
+                  &templateDetails, &protect);
+         if (!error)
          {
-            // no YAML, use directory name
-            size_t pos = path.find_last_of('/');
-            if (pos != std::string::npos)
-               name = path.substr(pos + 1, path.length() - pos);
-         }
-         else
-         {
-            // we have YAML, parse it using the yaml package and store the
-            // result
-            SEXP templateDetails;
-            error = r::exec::RFunction(
-               "yaml:::yaml.load_file",
-               string_utils::utf8ToSystem(yamlPath.absolutePath())).call(
-                     &templateDetails, &protect);
+            bool createDirFlag = false;
+            r::sexp::getNamedListElement(templateDetails,
+                                         "name", &name);
+            r::sexp::getNamedListElement(templateDetails,
+                                         "description", &description);
+            error = r::sexp::getNamedListElement(templateDetails,
+                                                 "create_dir",
+                                                 &createDirFlag);
             if (!error)
             {
-               bool createDirFlag = false;
-               r::sexp::getNamedListElement(templateDetails,
-                                            "name", &name);
-               r::sexp::getNamedListElement(templateDetails,
-                                            "description", &description);
-               error = r::sexp::getNamedListElement(templateDetails,
-                                                    "create_dir",
-                                                    &createDirFlag);
-               if (!error)
-               {
-                   createDir = createDirFlag ? "true" : "false";
-               }
+                createDir = createDirFlag ? "true" : "false";
             }
          }
 
