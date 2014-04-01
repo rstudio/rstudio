@@ -352,6 +352,11 @@ public class UIPrefsAccessor extends Prefs
       return string("document_author", "");
    }
    
+   public PrefValue<String> rmdPreferredTemplatePath()
+   {
+      return string("rmd_preferred_template_path", "");
+   }
+
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

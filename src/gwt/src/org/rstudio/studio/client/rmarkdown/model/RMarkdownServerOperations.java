@@ -47,5 +47,12 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    void convertFromYAML(String input, 
                         ServerRequestCallback<RmdYamlData> requestCallback);
 
+   void discoverRmdTemplates(ServerRequestCallback<Boolean> requestCallback);
+   
+   void createRmdFromTemplate(String filePath, 
+                              String templatePath, 
+                              boolean createDirectory, 
+                              ServerRequestCallback<RmdCreatedTemplate> requestCallback);
+   
    public String getApplicationURL(String pathName);
 }

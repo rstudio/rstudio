@@ -18,6 +18,7 @@
 #include "../build/SessionBuildErrors.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
@@ -418,6 +419,158 @@ private:
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 
+// This class's job is to asynchronously read template locations from the R
+// Markdown package, and emit each template as a client event. This should
+// generally be fast (a few milliseconds); we use this asynchronous
+// implementation in case the file system is slow (e.g. slow or remote disk)
+// or there are many thousands of packages (e.g. all of CRAN).
+class DiscoverTemplates :
+      boost::noncopyable,
+      public boost::enable_shared_from_this<DiscoverTemplates>
+{
+public:
+
+   static boost::shared_ptr<DiscoverTemplates> create()
+   {
+      boost::shared_ptr<DiscoverTemplates> pDiscover(new DiscoverTemplates());
+      pDiscover->start();
+      return pDiscover;
+   }
+
+   bool isRunning()
+   {
+      return isRunning_;
+   }
+
+private:
+
+   DiscoverTemplates() : isRunning_(false)
+   { }
+
+   void start()
+   {
+      // R binary
+      FilePath rProgramPath;
+      Error error = module_context::rScriptPath(&rProgramPath);
+      if (error)
+      {
+         onCompleted(0);
+         return;
+      }
+
+      // args
+      std::vector<std::string> args;
+      args.push_back("--slave");
+      args.push_back("--no-save");
+      args.push_back("--no-restore");
+      args.push_back("-e");
+      args.push_back("rmarkdown:::list_template_dirs()");
+
+      // options
+      core::system::ProcessOptions options;
+      options.terminateChildren = true;
+
+      core::system::ProcessCallbacks cb;
+      using namespace module_context;
+      cb.onStdout = boost::bind(&DiscoverTemplates::onOutput,
+                                DiscoverTemplates::shared_from_this(),
+                                _2);
+      cb.onExit =  boost::bind(&DiscoverTemplates::onCompleted,
+                                DiscoverTemplates::shared_from_this(),
+                                _1);
+
+      module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
+                                                     args,
+                                                     options,
+                                                     cb);
+      isRunning_ = true;
+   }
+
+   void onOutput(const std::string& output)
+   {
+      r::sexp::Protect protect;
+      Error error;
+
+      // the output vector may contain more than one path if paths are returned
+      // very quickly, so split it into lines and emit a client event for
+      // each line
+      std::vector<std::string> paths;
+      boost::algorithm::split(paths, output,
+                              boost::algorithm::is_any_of("\n\r"));
+      BOOST_FOREACH(std::string& path, paths)
+      {
+         if (path.empty())
+            continue;
+
+         // record the template's path (absolute for the filesystem)
+         json::Object dataJson;
+
+         std::string name;
+         std::string description;
+         std::string createDir = "default";
+         std::string package;
+
+         // if the template's owning package is known, emit that
+         size_t pipePos = path.find_first_of('|');
+         if (pipePos != std::string::npos)
+         {
+            package = path.substr(0, pipePos);
+
+            // remove package name from string, leaving just the path segment
+            path = path.substr(pipePos + 1, path.length() - pipePos);
+         }
+
+         // try to get the template's YAML; without the YAML the template is
+         // invalid, so skip this template if it has no YAML
+         FilePath yamlPath(path + "/template.yaml");
+         if (!yamlPath.exists())
+            continue;
+
+         SEXP templateDetails;
+         error = r::exec::RFunction(
+            "yaml:::yaml.load_file",
+            string_utils::utf8ToSystem(yamlPath.absolutePath())).call(
+                  &templateDetails, &protect);
+         if (!error)
+         {
+            bool createDirFlag = false;
+            r::sexp::getNamedListElement(templateDetails,
+                                         "name", &name);
+            r::sexp::getNamedListElement(templateDetails,
+                                         "description", &description);
+            error = r::sexp::getNamedListElement(templateDetails,
+                                                 "create_dir",
+                                                 &createDirFlag);
+            if (!error)
+            {
+                createDir = createDirFlag ? "true" : "false";
+            }
+         }
+
+         dataJson["package_name"] = package;
+         dataJson["path"] = path;
+         dataJson["name"] = name;
+         dataJson["description"] = description;
+         dataJson["create_dir"] = createDir;
+
+         // emit to the client
+         ClientEvent event(client_events::kRmdTemplateDiscovered, dataJson);
+         module_context::enqueClientEvent(event);
+      }
+   }
+
+   void onCompleted(int exitStatus)
+   {
+      isRunning_ = false;
+      module_context::enqueClientEvent(
+               ClientEvent(client_events::kRmdTemplateDiscoveryCompleted));
+   }
+
+   bool isRunning_;
+};
+
+boost::shared_ptr<DiscoverTemplates> s_pTemplateDiscovery_;
+
 // replaces references to MathJax with references to our built-in resource
 // handler.
 // in:  script src = "http://foo/bar/Mathjax.js?abc=123"
@@ -711,6 +864,54 @@ void handleRmdOutputRequest(const http::Request& request,
    }
 }
 
+
+Error discoverRmdTemplates(const json::JsonRpcRequest&,
+                           json::JsonRpcResponse* pResponse)
+{
+   if (s_pTemplateDiscovery_ &&
+       s_pTemplateDiscovery_->isRunning())
+   {
+      pResponse->setResult(false);
+   }
+   else
+   {
+      s_pTemplateDiscovery_ = DiscoverTemplates::create();
+      pResponse->setResult(true);
+   }
+
+   return Success();
+}
+
+Error createRmdFromTemplate(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+
+   std::string filePath, templatePath, resultPath;
+   bool createDir;
+   Error error = json::readParams(request.params,
+                                  &filePath,
+                                  &templatePath,
+                                  &createDir);
+   if (error)
+      return error;
+
+   r::exec::RFunction draft("rmarkdown:::draft");
+   draft.addParam("file", filePath);
+   draft.addParam("template", templatePath);
+   draft.addParam("create_dir", createDir);
+   draft.addParam("edit", false);
+   error = draft.call(&resultPath);
+
+   if (error)
+      return error;
+
+   json::Object jsonResult;
+   jsonResult["path"] = resultPath;
+   pResponse->setResult(jsonResult);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 bool rmarkdownPackageAvailable()
@@ -747,13 +948,15 @@ Error initialize()
       (bind(registerRpcMethod, "render_rmd", renderRmd))
       (bind(registerRpcMethod, "render_rmd_source", renderRmdSource))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
+      (bind(registerRpcMethod, "discover_rmd_templates", discoverRmdTemplates))
+      (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
    return initBlock.execute();
 }
    
-} // namepsace rmarkdown
+} // namespace rmarkdown
 } // namespace modules
-} // namesapce session
+} // namespace session
 

@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -36,11 +37,12 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 // A list box that can contain arbitrary GWT widgets as options.
-public class WidgetListBox extends FocusPanel implements HasChangeHandlers
+public class WidgetListBox<T extends Widget> 
+   extends FocusPanel 
+   implements HasChangeHandlers
 {
    private class ClickableHTMLPanel extends HTMLPanel
       implements HasClickHandlers
@@ -92,7 +94,7 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
          public void onKeyDown(KeyDownEvent event)
          {
             if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN &&
-                selectedIdx_ < (maxIdx_ - 1))
+                selectedIdx_ < (panel_.getWidgetCount() - 1))
             {
                setSelectedIndex(selectedIdx_+1, true);
             }
@@ -111,33 +113,52 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
       return handlerManager_.addHandler(ChangeEvent.getType(), handler);    
    }
    
-   public void addItem(IsWidget item)
+   public void addItem(T item)
+   {
+      addItem(item, true);
+   }
+   
+   public void addItem(final T item, boolean atEnd)
    {
       // wrap the widget in a panel that can receive click events, indicate
       // selection, etc.
-      final Widget w = item.asWidget();
-      final int itemIdx = maxIdx_++;
-      ClickableHTMLPanel panel = new ClickableHTMLPanel();
+      final ClickableHTMLPanel panel = new ClickableHTMLPanel();
       panel.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            setSelectedIndex(itemIdx, true);
+            setSelectedIndex(panel_.getWidgetIndex(panel), true);
          }
       });
       
-      panel.add(w);
+      panel.add(item);
 
       // add the panel to our root layout panel
-      options_.add(panel);
-      panel_.add(panel);
+      if (!atEnd && panel_.getWidgetCount() > 0)
+      {
+         panel_.insert(panel, 0);
+         items_.add(0, item);
+         options_.add(0, panel);
+         selectedIdx_++;
+      }
+      else
+      {
+         panel_.add(panel);
+         items_.add(item);
+         options_.add(panel);
+      }
+
+      panel.getElement().getStyle().setPadding(itemPaddingValue_, 
+                                               itemPaddingUnit_);
       
       panel.addStyleName(style_.anyItem());
 
       // if it's the first item, select it
       if (options_.size() == 1)
          setSelectedIndex(0);
+      else if (!atEnd && getSelectedIndex() == 1 && options_.size() > 1)
+         setSelectedIndex(0, true);
    }
    
    public void setSelectedIndex(int itemIdx)
@@ -148,9 +169,10 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
    private void setSelectedIndex(int itemIdx, boolean fireEvent)
    {
       String selectedStyle = resources_.listStyle().selectedItem();
-      options_.get(selectedIdx_).removeStyleName(selectedStyle);
+      panel_.getWidget(selectedIdx_).removeStyleName(selectedStyle);
       selectedIdx_ = itemIdx;
-      options_.get(selectedIdx_).addStyleName(selectedStyle);
+      panel_.getWidget(selectedIdx_).addStyleName(selectedStyle);
+      panel_.getWidget(selectedIdx_).getElement().scrollIntoView();
       if (fireEvent)
       {
          DomEvent.fireNativeEvent(Document.get().createChangeEvent(),
@@ -163,14 +185,42 @@ public class WidgetListBox extends FocusPanel implements HasChangeHandlers
       return selectedIdx_;
    }
    
-   private int maxIdx_ = 0;
+   public T getItemAtIdx(int idx)
+   {
+      if (idx < items_.size())
+      {
+         return items_.get(idx);
+      }
+      return null;
+   }
+   
+   public T getSelectedItem()
+   {
+      return getItemAtIdx(getSelectedIndex());
+   }
+   
+   public int getItemCount()
+   {
+      return items_.size();
+   }
+   
+   public void setItemPadding(double val, Style.Unit unit)
+   {
+      itemPaddingValue_ = val;
+      itemPaddingUnit_ = unit;
+   }
+   
    private int selectedIdx_ = 0;
 
    private FlowPanel panel_;
-   private List<Widget> options_ = new ArrayList<Widget>();
+   private List<HTMLPanel> options_ = new ArrayList<HTMLPanel>();
+   private List<T> items_ = new ArrayList<T>();
 
    private Resources resources_;
    private ListStyle style_;
+   
+   private double itemPaddingValue_ = 5;
+   private Style.Unit itemPaddingUnit_ = Style.Unit.PX;
 
    HandlerManager handlerManager_ = new HandlerManager(this);
 }

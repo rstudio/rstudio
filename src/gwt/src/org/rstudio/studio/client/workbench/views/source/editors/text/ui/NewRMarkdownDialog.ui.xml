@@ -13,7 +13,6 @@
 	
 	.templatePanel
 	{
-	  margin-top: 15px;
 	  margin-bottom: 15px;
 	}
 	
@@ -33,16 +32,14 @@
 	.templateDetails
 	{
 	  margin-left: 20px;
+	  margin-right: 15px;
 	}
 	
 	.textBox
 	{
+	  width: 100%;
 	  padding: 2px;
-	}
-	
-	.authorLabel
-	{
-	  margin-left: 15px;
+	  margin-bottom: 5px;
 	}
 	
 	.optionsIcon
@@ -55,7 +52,8 @@
 	.defaultOutputLabel
 	{
 	  font-weight: bold;
-     margin-bottom: 10px;
+     margin-bottom: 7px;
+     margin-top: 4px;
 	}
 	
 	.outputFormatChoice
@@ -88,21 +86,45 @@
 	{
 	  margin-left: 3px;
 	}
+	
+	.textCol
+	{
+	  width: 80%;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
-	<g:InlineLabel styleName="{style.topLabel}" text="Title:"></g:InlineLabel>
-	<g:TextBox styleName="{style.textBox}" width="225px" ui:field="txtTitle_"></g:TextBox>
-	<g:InlineLabel styleName="{style.topLabel} {style.authorLabel}" text="Author:"></g:InlineLabel>
-	<g:TextBox styleName="{style.textBox}" width="150px" ui:field="txtAuthor_"></g:TextBox>
 	<g:HorizontalPanel height="300px" styleName="{style.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
                 width="150px"></rw:WidgetListBox>
      <g:HTMLPanel height="100%" width="325px" 
                   styleName="{style.templateDetails}">
-        <g:Label styleName="{style.defaultOutputLabel}" 
-                 text="Default Output Format:"></g:Label>
-        <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+        <g:HTMLPanel ui:field="newTemplatePanel_">
+           <g:Grid width="100%" cellSpacing="0" cellPadding="0">
+             <g:row>
+               <g:customCell><g:Label styleName="{style.topLabel}" 
+                              text="Title:"></g:Label></g:customCell>
+               <g:customCell styleName="{style.textCol}">
+                 <g:TextBox styleName="{style.textBox}" 
+                            ui:field="txtTitle_"></g:TextBox>
+               </g:customCell>
+              </g:row>
+              <g:row>
+                <g:customCell><g:Label styleName="{style.topLabel}" 
+                         text="Author:"></g:Label></g:customCell>
+                <g:customCell><g:TextBox styleName="{style.textBox}"
+                           ui:field="txtAuthor_"></g:TextBox></g:customCell>
+              </g:row>
+           </g:Grid>
+           <g:Label styleName="{style.defaultOutputLabel}" 
+                    text="Default Output Format:"></g:Label>
+           <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+        </g:HTMLPanel>
+        <g:HTMLPanel ui:field="existingTemplatePanel_">
+          <rmd:RmdTemplateChooser ui:field="templateChooser_">
+          </rmd:RmdTemplateChooser>
+        </g:HTMLPanel>
      </g:HTMLPanel>
 	</g:HorizontalPanel>
 	</g:HTMLPanel>

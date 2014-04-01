@@ -110,6 +110,8 @@ extern const int kDebugSourceCompleted;
 extern const int kRmdRenderStarted;
 extern const int kRmdRenderOutput;
 extern const int kRmdRenderCompleted;
+extern const int kRmdTemplateDiscovered;
+extern const int kRmdTemplateDiscoveryCompleted;
 }
    
 class ClientEvent

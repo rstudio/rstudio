@@ -1,0 +1,87 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rs="urn:import:org.rstudio.core.client.widget">
+	<ui:style>
+	  @external .gwt-Label;
+	  
+	  .controlLabel
+	  {
+	     margin-bottom: 3px;
+	     font-weight: bold;
+	     display: block;
+	  }
+	  
+	  .interiorControlLabel
+	  {
+	     margin-top: 7px; 
+	  }
+	  
+	  .textBox
+	  {
+	    padding: 2px;
+	    width: 100%;
+	  }
+
+	  .createNote
+	  {
+	    color: #909090;
+	  }
+
+	  .templateListArea
+	  {
+	    height: 100px;
+	    margin-top: 5px;
+	  }
+	  
+	  .noTemplates
+	  {
+       border: 1px solid #909090;
+       background-color: #FFFFFF;
+       color: #909090;
+	  }
+	  
+	  .noTemplatesText
+	  {
+	     text-align: center;
+	     margin-top: 35px;
+	  }
+	  
+	  .help .gwt-Label
+	  {
+	     font-weight: bold;
+	  }
+	</ui:style>
+	<g:HTMLPanel>
+	<rs:CaptionWithHelp styleName="{style.help}"></rs:CaptionWithHelp>
+	<rs:WidgetListBox width="100%" styleName="{style.templateListArea}"
+	           ui:field="listTemplates_"></rs:WidgetListBox>
+	<g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 
+	             visible="false" ui:field="noTemplatesFound_">
+	  <g:HTML styleName="{style.noTemplatesText}">
+       No R Markdown templates were found. 
+	  </g:HTML>
+	</g:HTMLPanel>
+
+   <g:HTMLPanel ui:field="templateOptionsPanel_" visible="false">
+	  <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	           text="Name:"></g:Label>
+	  <g:TextBox styleName="{style.textBox}" ui:field="txtName_" 
+	             text="Untitled"></g:TextBox>
+
+	  <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	           text="Directory:"></g:Label>
+	  <rs:DirectoryChooserTextBox width="100%" ui:field="dirLocation_">
+	  </rs:DirectoryChooserTextBox>
+	
+	  <g:CheckBox styleName="{style.controlLabel} {style.interiorControlLabel}" 
+	              ui:field="chkCreate_" text="Create in New Directory">
+	              </g:CheckBox>
+	  <g:HTML styleName="{style.createNote}">
+	    A new directory with the same name as the file will be created. The new R
+	    Markdown file and all its resources will be placed in the new directory.
+	  </g:HTML>
+	</g:HTMLPanel>
+
+	</g:HTMLPanel>
+</ui:UiBinder> 

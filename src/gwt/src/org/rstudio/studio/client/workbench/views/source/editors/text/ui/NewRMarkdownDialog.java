@@ -18,14 +18,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
+import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateChooser;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -38,6 +42,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
@@ -46,9 +51,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 {
-   public static class Result
+   public static class RmdNewDocument
    {  
-      public Result(String template, String author, String title, String format)
+      public RmdNewDocument(String template, String author, String title, 
+                            String format)
       {
          template_ = template;
          author_ = author;
@@ -88,6 +94,36 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       private final String author_;
       private final JavaScriptObject result_;
    }
+   
+   public static class Result
+   {
+      public Result (RmdNewDocument newDocument, RmdChosenTemplate fromTemplate,
+                     boolean isNewDocument)
+      {
+         newDocument_ = newDocument;
+         fromTemplate_ = fromTemplate;
+         isNewDocument_ = isNewDocument;
+      }
+      
+      public RmdNewDocument getNewDocument()
+      {
+         return newDocument_;
+      }
+      
+      public RmdChosenTemplate getFromTemplate()
+      {
+         return fromTemplate_;
+      }
+      
+      public boolean isNewDocument()
+      {
+         return isNewDocument_;
+      }
+      
+      private final RmdNewDocument newDocument_;
+      private final RmdChosenTemplate fromTemplate_;
+      private final boolean isNewDocument_;
+   }
 
    public interface Binder extends UiBinder<Widget, NewRMarkdownDialog>
    {
@@ -112,6 +148,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
       @Source("MarkdownOptionsIcon.png")
       ImageResource optionsIcon();
+      
+      @Source("MarkdownTemplateIcon.png")
+      ImageResource templateIcon();
    }
 
    public NewRMarkdownDialog(
@@ -161,7 +200,16 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
          listTemplates_.addItem(menuItem);
       }
+      
+      // Add the "From Template" item at the end of the list
+      TemplateMenuItem templateItem = 
+            new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING);
+      templateItem.addIcon(resources.templateIcon());
+      listTemplates_.addItem(templateItem);
+
       updateOptions(getSelectedTemplate());
+
+      indicator_ = addProgressIndicator(false);
    }
    
    @Override
@@ -186,16 +234,23 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
                break;
          }
       }
-      return new Result(getSelectedTemplate(), 
-                        txtAuthor_.getText().trim(), 
-                        txtTitle_.getText().trim(),
-                        formatName);
+      return new Result(
+            new RmdNewDocument(getSelectedTemplate(), 
+                               txtAuthor_.getText().trim(), 
+                                txtTitle_.getText().trim(), formatName),
+            templateChooser_.getChosenTemplate(),
+            !getSelectedTemplate().equals(TEMPLATE_CHOOSE_EXISTING));
    }
 
    @Override
    protected boolean validate(Result input)
    {
-      return true;
+      // the dialog isn't valid if the user's chosen to create a document from
+      // a template but hasn't chosen a template. 
+      if (input.isNewDocument() || 
+          input.getFromTemplate().getTemplatePath() != null)
+         return true;
+      return false;
    }
 
    @Override
@@ -206,13 +261,32 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private String getSelectedTemplate() 
    {
-      return templates_.get(listTemplates_.getSelectedIndex()).getName();
+      int idx = listTemplates_.getSelectedIndex();
+      TemplateMenuItem item = listTemplates_.getItemAtIdx(idx);
+      if (item.getName() == TEMPLATE_CHOOSE_EXISTING)
+         return TEMPLATE_CHOOSE_EXISTING;
+      else
+         return templates_.get(idx).getName();
    }
    
    private void updateOptions(String selectedTemplate)
    {
+      boolean existing = selectedTemplate.equals(TEMPLATE_CHOOSE_EXISTING);
+
+      newTemplatePanel_.setVisible(!existing);
+      existingTemplatePanel_.setVisible(existing);
+      
+      if (existing)
+      {
+         if (templateChooser_.getState() == RmdTemplateChooser.STATE_EMPTY)
+         {
+            populateTemplates();
+         }
+         return;
+      }
+
       currentTemplate_ = RmdTemplate.getTemplate(templates_,
-                                                     selectedTemplate);
+                                                 selectedTemplate);
       if (currentTemplate_ == null)
          return;
       
@@ -229,6 +303,28 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       // Select the first format by default
       if (formatOptions_.size() > 0)
          formatOptions_.get(0).setValue(true);
+   }
+   
+   private void populateTemplates()
+   {
+      final Timer t = new Timer() {
+         @Override
+         public void run()
+         {
+            indicator_.onProgress("Finding templates...");
+         }
+      };
+      t.schedule(500);
+
+      templateChooser_.populateTemplates(new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            indicator_.onCompleted();
+            t.cancel();
+         }
+      });
    }
    
    private Widget createFormatOption(RmdTemplateFormat format)
@@ -253,16 +349,22 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
-   @UiField WidgetListBox listTemplates_;
+   @UiField WidgetListBox<TemplateMenuItem> listTemplates_;
    @UiField NewRmdStyle style;
    @UiField Resources resources;
    @UiField HTMLPanel templateFormatPanel_;
+   @UiField HTMLPanel newTemplatePanel_;
+   @UiField HTMLPanel existingTemplatePanel_;
+   @UiField RmdTemplateChooser templateChooser_;
 
    private final Widget mainWidget_;
    private List<RadioButton> formatOptions_;
    private JsArray<RmdTemplate> templates_;
    private RmdTemplate currentTemplate_;
+   private ProgressIndicator indicator_;
 
    @SuppressWarnings("unused")
    private final RMarkdownContext context_;
+   
+   private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
 }

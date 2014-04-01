@@ -69,6 +69,7 @@ public class CaptionWithHelp extends Composite
       panel.setCellHorizontalAlignment(helpPanel_, 
                                        HasHorizontalAlignment.ALIGN_RIGHT);
           
+      outerPanel_ = panel;
       initWidget(panel);
    }
    
@@ -90,6 +91,11 @@ public class CaptionWithHelp extends Composite
    public void setHelpVisible(boolean visible)
    {
       helpPanel_.setVisible(visible);
+   }
+   
+   public void setStyleName(String style)
+   {
+      outerPanel_.setStyleName(style);
    }
    
    @Inject
@@ -121,5 +127,6 @@ public class CaptionWithHelp extends Composite
    private String rstudioLinkName_;
    private boolean includeVersionInfo_ = true;
    private HorizontalPanel helpPanel_;
+   private HorizontalPanel outerPanel_;
    private GlobalDisplay globalDisplay_;
 }

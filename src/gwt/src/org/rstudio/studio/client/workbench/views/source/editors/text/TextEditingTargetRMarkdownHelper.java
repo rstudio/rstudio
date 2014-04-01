@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -47,6 +49,8 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -58,8 +62,11 @@ import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
@@ -88,7 +95,8 @@ public class TextEditingTargetRMarkdownHelper
                           EventBus eventBus,
                           UIPrefs prefs,
                           FileTypeCommands fileTypeCommands,
-                          RMarkdownServerOperations server)
+                          RMarkdownServerOperations server,
+                          FilesServerOperations fileServer)
    {
       session_ = session;
       fileTypeCommands_ = fileTypeCommands;
@@ -96,6 +104,7 @@ public class TextEditingTargetRMarkdownHelper
       eventBus_ = eventBus;
       prefs_ = prefs;
       server_ = server;
+      fileServer_ = fileServer;
    }
    
    public String detectExtendedType(String contents,
@@ -430,6 +439,100 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+   public void createDraftFromTemplate(final RmdChosenTemplate template)
+   {
+      final String target = template.getDirectory() + "/" + 
+                            template.getFileName();
+      final String targetFile = target + (template.createDir() ? "" : ".Rmd");
+      fileServer_.stat(targetFile, new ServerRequestCallback<FileSystemItem>()
+      {
+         @Override
+         public void onResponseReceived(final FileSystemItem fsi)
+         {
+            // the file exists--offer to clean it up and continue.
+            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
+                  "Overwrite " + (template.createDir() ? "Directory" : "File"), 
+                  targetFile + " exists. Overwrite it?", false, 
+                  new Operation()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        cleanAndCreateTemplate(template, target, fsi);
+                     }
+                  }, null, null, "Overwrite", "Cancel", false);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // presumably the file doesn't exist, which is what we want.
+            createDraftFromTemplate(template, target);
+         }
+      });
+   }
+   
+   // Private methods ---------------------------------------------------------
+   
+   private void cleanAndCreateTemplate(final RmdChosenTemplate template, 
+                                       final String target,
+                                       final FileSystemItem oldFile)
+   {
+      ArrayList<FileSystemItem> oldFiles = new ArrayList<FileSystemItem>();
+      oldFiles.add(oldFile);
+      fileServer_.deleteFiles(oldFiles, new ServerRequestCallback<Void>() 
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               createDraftFromTemplate(template, target);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("File Remove Failed", 
+                     "Couldn't remove " + oldFile.getPath());
+            }
+         });
+   }
+   
+   private void createDraftFromTemplate(final RmdChosenTemplate template, 
+                                        final String target)
+   {
+      final ProgressIndicator progress = new GlobalProgressDelayer(
+            globalDisplay_,
+            250,
+            "Creating R Markdown Document...").getIndicator();
+
+      server_.createRmdFromTemplate(target, 
+            template.getTemplatePath(), template.createDir(), 
+            new ServerRequestCallback<RmdCreatedTemplate>() {
+               @Override
+               public void onResponseReceived(RmdCreatedTemplate created)
+               {
+                  // write a pref indicating this is the preferred template--
+                  // we'll default to it the next time we load the template list
+                  prefs_.rmdPreferredTemplatePath().setGlobalValue(
+                        template.getTemplatePath());
+                  prefs_.writeUIPrefs();
+                  FileSystemItem file =
+                        FileSystemItem.createFile(created.getPath());
+                  eventBus_.fireEvent(new FileEditEvent(file));
+                  progress.onCompleted();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  progress.onError(
+                        "Couldn't create a template from " + 
+                        template.getTemplatePath() + " at " + target + ".\n\n" +
+                        error.getMessage());
+               }
+            });
+   }
+   
    private void setOutputFormat(RmdFrontMatter frontMatter, String format, 
                                 final CommandWithArg<String> onCompleted)
    {
@@ -567,4 +670,5 @@ public class TextEditingTargetRMarkdownHelper
    private UIPrefs prefs_;
    private FileTypeCommands fileTypeCommands_;
    private RMarkdownServerOperations server_;
+   private FilesServerOperations fileServer_;
 }
