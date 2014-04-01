@@ -48,6 +48,7 @@
 	  .noTemplates
 	  {
        color: #909090;
+       border: 1px solid #909090;
 	  }
 	  
 	  .noTemplatesText
