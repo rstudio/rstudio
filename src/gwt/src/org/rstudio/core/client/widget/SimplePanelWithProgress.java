@@ -34,6 +34,11 @@ public class SimplePanelWithProgress extends SimplePanel
       loadProgressPanel_ = new ProgressPanel(progressImage);
    }
    
+   public SimplePanelWithProgress(Image progressImage, int verticalOffset)
+   {
+      loadProgressPanel_ = new ProgressPanel(progressImage, verticalOffset);
+   }
+   
    @Override
    public void setWidget(Widget widget)
    {
@@ -48,7 +53,7 @@ public class SimplePanelWithProgress extends SimplePanel
       setWidget(loadProgressPanel_);
       loadProgressPanel_.beginProgressOperation(delayMs);
    }
-
+   
    public void onResize()
    {
       if (getWidget() instanceof RequiresResize)

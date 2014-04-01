@@ -27,11 +27,16 @@ public class ProgressPanel extends Composite
    }
    
    public ProgressPanel(Image progressImage)
+   {
+      this(progressImage, 100);
+   }
+   
+   public ProgressPanel(Image progressImage, int verticalOffset)
    { 
       progressImage_ = progressImage;
       HorizontalCenterPanel progressPanel = new HorizontalCenterPanel(
                                                             progressImage_, 
-                                                            100);
+                                                            verticalOffset);
       progressImage_.setVisible(false);
       progressPanel.setSize("100%", "100%");
       initWidget(progressPanel);

@@ -18,9 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
@@ -42,7 +40,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
@@ -208,8 +205,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       listTemplates_.addItem(templateItem);
 
       updateOptions(getSelectedTemplate());
-
-      indicator_ = addProgressIndicator(false);
    }
    
    @Override
@@ -307,24 +302,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private void populateTemplates()
    {
-      final Timer t = new Timer() {
-         @Override
-         public void run()
-         {
-            indicator_.onProgress("Finding templates...");
-         }
-      };
-      t.schedule(500);
-
-      templateChooser_.populateTemplates(new Operation()
-      {
-         @Override
-         public void execute()
-         {
-            indicator_.onCompleted();
-            t.cancel();
-         }
-      });
+      templateChooser_.populateTemplates();
    }
    
    private Widget createFormatOption(RmdTemplateFormat format)
@@ -361,7 +339,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private List<RadioButton> formatOptions_;
    private JsArray<RmdTemplate> templates_;
    private RmdTemplate currentTemplate_;
-   private ProgressIndicator indicator_;
 
    @SuppressWarnings("unused")
    private final RMarkdownContext context_;

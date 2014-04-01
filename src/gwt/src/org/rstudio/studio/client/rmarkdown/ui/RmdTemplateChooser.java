@@ -17,10 +17,12 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
@@ -37,6 +39,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -69,11 +72,12 @@ public class RmdTemplateChooser extends Composite
       });
    }
    
-   public void populateTemplates(final Operation onCompleted)
+   public void populateTemplates()
    {
       if (state_ != STATE_EMPTY)
          return;
       
+      progressPanel_.showProgress(250);
       discovery_ = RStudioGinjector.INSTANCE.getRmdTemplateDiscovery();
       discovery_.discoverTemplates(
          new OperationWithInput<RmdDiscoveredTemplate>()
@@ -87,11 +91,6 @@ public class RmdTemplateChooser extends Composite
                      !template.getPath().equals(
                            discovery_.getRmdPreferredTemplatePath()));
                templates_.add(template);
-               if (!templateOptionsPanel_.isVisible())
-               {
-                  templateOptionsPanel_.setVisible(true);
-                  chkCreate_.setValue(template.getCreateDir() == "true");
-               }
             }
          },
          new Operation()
@@ -101,23 +100,9 @@ public class RmdTemplateChooser extends Composite
             {
                state_ = STATE_POPULATED;
                completeDiscovery();
-               onCompleted.execute();
             }
          });
       state_ = STATE_POPULATING;
-   }
-   
-   @UiFactory
-   public DirectoryChooserTextBox makeDirectoryChooserTextbox()
-   {
-      return new DirectoryChooserTextBox("", null);
-   }
-   
-   @UiFactory
-   public CaptionWithHelp makeHelpCaption()
-   {
-      return new CaptionWithHelp("Template:", "Using R Markdown Templates",
-                                 "using_rmarkdown_templates");
    }
    
    public RmdChosenTemplate getChosenTemplate()
@@ -133,17 +118,52 @@ public class RmdTemplateChooser extends Composite
       return state_;
    }
    
+   // UI factory methods ------------------------------------------------------
+
+   @UiFactory
+   public DirectoryChooserTextBox makeDirectoryChooserTextbox()
+   {
+      return new DirectoryChooserTextBox("", null);
+   }
+   
+   @UiFactory
+   public CaptionWithHelp makeHelpCaption()
+   {
+      return new CaptionWithHelp("Template:", "Using R Markdown Templates",
+                                 "using_rmarkdown_templates");
+   }
+   
+   @UiFactory
+   public SimplePanelWithProgress makeProgressPanel()
+   {
+      return new SimplePanelWithProgress(new Image(
+            CoreResources.INSTANCE.progress()), 50);
+   }
+   
    // Private methods ---------------------------------------------------------
    
    private void completeDiscovery()
    {
       if (listTemplates_.getItemCount() == 0)
       {
-         listTemplates_.setVisible(false);
+         // no templates found -- hide UI and show message
+         progressPanel_.setVisible(false);
          noTemplatesFound_.setVisible(true);
          txtName_.setEnabled(false);
          dirLocation_.setEnabled(false);
          chkCreate_.setEnabled(false);
+      }
+      else
+      {
+         // templates found -- enable creation UI
+         progressPanel_.setWidget(listTemplates_);
+         templateOptionsPanel_.setVisible(true);
+         RmdDiscoveredTemplate template = 
+               listTemplates_.getItemAtIdx(0).getTemplate();
+         if (template != null)
+         {
+            chkCreate_.setValue(template.getCreateDir().equals("true"));
+         }
       }
    }
 
@@ -181,6 +201,7 @@ public class RmdTemplateChooser extends Composite
    @UiField CheckBox chkCreate_;
    @UiField HTMLPanel noTemplatesFound_;
    @UiField HTMLPanel templateOptionsPanel_;
+   @UiField SimplePanelWithProgress progressPanel_;
    
    public final static int STATE_EMPTY = 0;
    public final static int STATE_POPULATING = 1;

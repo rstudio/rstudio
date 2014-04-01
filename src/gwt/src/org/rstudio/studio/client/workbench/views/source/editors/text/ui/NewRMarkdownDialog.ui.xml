@@ -53,7 +53,7 @@
 	{
 	  font-weight: bold;
      margin-bottom: 7px;
-     margin-top: 4px;
+     margin-top: 14px;
 	}
 	
 	.outputFormatChoice
@@ -77,7 +77,7 @@
 	
 	.outputFormat
 	{
-	  margin-bottom: 10px;
+	  margin-bottom: 7px;
      padding-top: 5px;
      padding-bottom: 5px;
 	}
@@ -94,7 +94,7 @@
 	
 	</ui:style>
 	<g:HTMLPanel>
-	<g:HorizontalPanel height="300px" styleName="{style.templatePanel}">
+	<g:HorizontalPanel height="325px" styleName="{style.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
                 width="150px"></rw:WidgetListBox>
