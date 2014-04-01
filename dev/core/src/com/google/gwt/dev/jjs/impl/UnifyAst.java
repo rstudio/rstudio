@@ -898,7 +898,7 @@ public class UnifyAst {
         if (method.canBePolymorphic()) {
           for (JMethod upref : collected.get(method.getSignature())) {
             if (canAccessSuperMethod(type, upref)) {
-              method.addOverride(upref);
+              method.addOverriddenMethod(upref);
             }
           }
         }

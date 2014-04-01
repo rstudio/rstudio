@@ -51,7 +51,7 @@ public class ReplaceGetClassOverrides {
       if (Devirtualizer.isGetClassDevirtualized(program, x.getEnclosingType())) {
         return;
       }
-      if (x.getOverrides().contains(getClassMethod)) {
+      if (x.getOverriddenMethods().contains(getClassMethod)) {
         ctx.removeMe();
       }
     }
@@ -64,7 +64,7 @@ public class ReplaceGetClassOverrides {
       }
       // replace overridden getClass() with reference to Object.clazz field
       if (x.getTarget() == getClassMethod ||
-          x.getTarget().getOverrides().contains(getClassMethod)) {
+          x.getTarget().getOverriddenMethods().contains(getClassMethod)) {
         ctx.replaceMe(new JFieldRef(x.getSourceInfo(), x.getInstance(),
             clazzField, clazzField.getEnclosingType()));
       }

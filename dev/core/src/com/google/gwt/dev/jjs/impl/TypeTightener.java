@@ -239,7 +239,7 @@ public class TypeTightener {
     @Override
     public void endVisit(JMethod x, Context ctx) {
       if (program.typeOracle.isInstantiatedType(x.getEnclosingType())) {
-        for (JMethod method : program.typeOracle.getAllOverrides(x)) {
+        for (JMethod method : program.typeOracle.getAllOverriddenMethods(x)) {
           addOverrider(method, x);
         }
       }
@@ -309,7 +309,7 @@ public class TypeTightener {
          * Add an assignment to each parameter from that same parameter in every
          * method this method overrides.
          */
-        Collection<JMethod> overrides = program.typeOracle.getAllOverrides(x);
+        Collection<JMethod> overrides = program.typeOracle.getAllOverriddenMethods(x);
         if (overrides.isEmpty()) {
           return true;
         }

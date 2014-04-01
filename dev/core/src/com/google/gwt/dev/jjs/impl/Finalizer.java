@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -51,7 +51,7 @@ import java.util.Set;
 public class Finalizer {
   /**
    * Any items that weren't marked during MarkVisitor can be set final.
-   * 
+   *
    * Open question: What does it mean if an interface/abstract method becomes
    * final? Is this possible after Pruning? I guess it means that someone tried
    * to make a call to method that wasn't actually implemented anywhere in the
@@ -86,7 +86,7 @@ public class Finalizer {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      if (!x.isFinal() && !isOverriden.contains(x)) {
+      if (!x.isFinal() && !isOverridden.contains(x)) {
         setFinal(x);
       }
     }
@@ -125,7 +125,7 @@ public class Finalizer {
   }
 
   /**
-   * Find all items that ARE overriden/subclassed/reassigned.
+   * Find all items that ARE overridden/subclassed/reassigned.
    */
   private class MarkVisitor extends JVisitor {
 
@@ -155,9 +155,9 @@ public class Finalizer {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      for (int i = 0; i < x.getOverrides().size(); ++i) {
-        JMethod it = x.getOverrides().get(i);
-        isOverriden.add(it);
+      for (int i = 0; i < x.getOverriddenMethods().size(); ++i) {
+        JMethod it = x.getOverriddenMethods().get(i);
+        isOverridden.add(it);
       }
     }
 
@@ -206,7 +206,7 @@ public class Finalizer {
     return stats;
   }
 
-  private final Set<JMethod> isOverriden = new HashSet<JMethod>();
+  private final Set<JMethod> isOverridden = new HashSet<JMethod>();
 
   private final Set<JVariable> isReassigned = new HashSet<JVariable>();
 

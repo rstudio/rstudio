@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * This class will identify instances of an implicit upcast between
  * non-primitive types, and call the overridable processImplicitUpcast method.
- * 
+ *
  * TODO(jbrosenberg): Consider extending to handle implicit upcasts between
  * primitive types. This is not as straightforward as for reference types,
  * because primitives can be boxed and unboxed implicitly as well.
@@ -106,7 +106,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
   @Override
   public void endVisit(JMethod x, Context ctx) {
     // check for upcast in return type as compared to an overridden method
-    List<JMethod> overrides = x.getOverrides();
+    List<JMethod> overrides = x.getOverriddenMethods();
     if (overrides != null && overrides.size() > 0) {
       // only check the first one, since other ones will be checked when those
       // overridden methods are visited, don't want to do redundant work
@@ -198,7 +198,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
 
   /**
    * An overriding method will be called for each detected implicit upcast.
-   * 
+   *
    * @param fromType
    * @param destType
    */

@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,17 +32,17 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
  * Update polymorphic method calls to tighter bindings based on the type of the
  * qualifier. For a given polymorphic method call to a non-final target, see if
  * the static type of the qualifer would let us target an override instead.
- * 
+ *
  * This is possible because the qualifier might have been tightened by
  * {@link com.google.gwt.dev.jjs.impl.TypeTightener}.
- * 
+ *
  * For example, given the code:
- * 
+ *
  * <pre>
- *   List foo = new ArrayList<String>(); 
+ *   List foo = new ArrayList<String>();
  *   foo.add("bar");
  * </pre>
- * 
+ *
  * The type of foo is tightened by TypeTightener from type List to be of type
  * ArrayList. This means that MethodCallTightener can analyze the polymorphic
  * call List.add() on foo and tighten it to the more specific ArrayList.add().
@@ -75,7 +75,7 @@ public class MethodCallTightener {
       }
 
       JMethod foundMethod =
-          program.typeOracle.getPolyMethod((JClassType) instanceType, method.getSignature());
+          program.typeOracle.getMethodBySignature((JClassType) instanceType, method.getSignature());
       if (foundMethod == null) {
         // The declared instance type is abstract and doesn't have the method.
         return;
@@ -85,6 +85,14 @@ public class MethodCallTightener {
         return;
       }
       assert foundMethod.canBePolymorphic();
+
+      if (!foundMethod.getOverriddenMethods().contains(method)) {
+        // The found method has the same signature as the target method of the call being tightened
+        // but does NOT override it. this situation occurs for example when the target method is
+        // package private and the found method is a method with the same name and signature as the
+        // target method in a subclass declared in a different package).
+        return;
+      }
 
       /*
        * Replace the call to the original method with a call to the same method

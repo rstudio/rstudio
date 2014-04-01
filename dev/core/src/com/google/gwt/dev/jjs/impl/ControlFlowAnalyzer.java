@@ -1021,7 +1021,7 @@ public class ControlFlowAnalyzer {
     methodsThatOverrideMe = new HashMap<JMethod, List<JMethod>>();
     for (JDeclaredType type : program.getDeclaredTypes()) {
       for (JMethod method : type.getMethods()) {
-        for (JMethod overridden : program.typeOracle.getAllOverrides(method)) {
+        for (JMethod overridden : program.typeOracle.getAllOverriddenMethods(method)) {
           List<JMethod> overs = methodsThatOverrideMe.get(overridden);
           if (overs == null) {
             overs = new ArrayList<JMethod>();

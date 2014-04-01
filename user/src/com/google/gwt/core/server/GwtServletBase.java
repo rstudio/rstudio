@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,7 +34,7 @@ public class GwtServletBase extends HttpServlet {
 
   // These defaults should be kept in sync with I18N.gwt.xml
   protected String[] localeSearchOrder = new String[] {
-    "queryparam", "cookie", "meta", "useragent",  
+    "queryparam", "cookie", "meta", "useragent",
   };
   protected String defaultLocale = "default";
   protected String localeCookie = null;
@@ -47,7 +47,7 @@ public class GwtServletBase extends HttpServlet {
 
   /**
    * Fetch a cookie from the HTTP request.
-   * 
+   *
    * @param req
    * @param cookieName
    * @return the value of the cookie or null if not found
@@ -67,7 +67,7 @@ public class GwtServletBase extends HttpServlet {
 
   /**
    * Get the GWT locale to use from this request.
-   * 
+   *
    * @param req
    * @return the GWT locale to use as a String
    */
@@ -96,7 +96,7 @@ public class GwtServletBase extends HttpServlet {
     }
     return defaultLocale;
   }
-  
+
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
       IOException {
@@ -107,9 +107,9 @@ public class GwtServletBase extends HttpServlet {
   /**
    * Sets all GWT properties from the request.
    * <p>
-   * If this method is overriden, this version should be called first and then
+   * If this method is overridden, this version should be called first and then
    * any modifications to property values should be done.
-   * 
+   *
    * @param req
    */
   protected void setGwtProperties(HttpServletRequest req) {

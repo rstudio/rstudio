@@ -298,7 +298,7 @@ public class JTypeOracle implements Serializable {
   /**
    * An index of all polymorphic methods for each class.
    */
-  private final Map<JClassType, Map<String, JMethod>> polyClassMethodMap =
+  private final Map<JClassType, Map<String, JMethod>> methodsBySignatureForType =
       new IdentityHashMap<JClassType, Map<String, JMethod>>();
 
   private final boolean hasWholeWorldKnowledge;
@@ -579,10 +579,10 @@ public class JTypeOracle implements Serializable {
    * In this case, <code>Unrelated.foo()</code> virtually implements
    * <code>IFoo.foo()</code> in subclass <code>Foo</code>.
    */
-  public Set<JMethod> getAllOverrides(JMethod method) {
-    Set<JMethod> results = new IdentityHashSet<JMethod>();
-    getAllRealOverrides(method, results);
-    getAllVirtualOverrides(method, results);
+  public Set<JMethod> getAllOverriddenMethods(JMethod method) {
+    Set<JMethod> results = Sets.newIdentityHashSet();
+    results.addAll(method.getOverriddenMethods());
+    getAllVirtualOverriddenMethods(method, results);
     return results;
   }
 
@@ -590,8 +590,8 @@ public class JTypeOracle implements Serializable {
     return instantiatedTypes;
   }
 
-  public JMethod getPolyMethod(JClassType type, String signature) {
-    return getOrCreatePolyMap(type).get(signature);
+  public JMethod getMethodBySignature(JClassType type, String signature) {
+    return getOrCreateMethodsBySignatureForType(type).get(signature);
   }
 
   public JClassType getSingleJsoImpl(JReferenceType maybeSingleJsoIntf) {
@@ -616,6 +616,27 @@ public class JTypeOracle implements Serializable {
 
   public boolean isDualJsoInterface(JReferenceType maybeDualImpl) {
     return dualImpls.contains(maybeDualImpl.getUnderlyingType());
+  }
+
+
+  /**
+   * Returns the method definition where {@code method} is first defined in a class.
+   */
+  public JMethod getTopMostDefinition(JMethod method) {
+    if (method.getEnclosingType() instanceof JInterfaceType) {
+      return null;
+    }
+    JMethod currentMethod = method;
+    for (JMethod overriddenMethod : method.getOverriddenMethods()) {
+      if (overriddenMethod.getEnclosingType() instanceof JInterfaceType) {
+        continue;
+      }
+      if (isSuperClass((JClassType) currentMethod.getEnclosingType(),
+          (JClassType) overriddenMethod.getEnclosingType())) {
+        currentMethod = overriddenMethod;
+      }
+    }
+    return currentMethod;
   }
 
   /**
@@ -746,7 +767,7 @@ public class JTypeOracle implements Serializable {
 
   public void setInstantiatedTypes(Set<JReferenceType> instantiatedTypes) {
     this.instantiatedTypes = instantiatedTypes;
-    polyClassMethodMap.keySet().retainAll(instantiatedTypes);
+    methodsBySignatureForType.keySet().retainAll(instantiatedTypes);
   }
 
   private <K, V> void add(Map<K, Set<V>> map, K key, V value) {
@@ -966,13 +987,7 @@ public class JTypeOracle implements Serializable {
     return set;
   }
 
-  private void getAllRealOverrides(JMethod method, Set<JMethod> results) {
-    for (JMethod possibleOverride : method.getOverrides()) {
-      results.add(possibleOverride);
-    }
-  }
-
-  private void getAllVirtualOverrides(JMethod method, Set<JMethod> results) {
+  private void getAllVirtualOverriddenMethods(JMethod method, Set<JMethod> results) {
     Map<JClassType, Set<JMethod>> overrideMap = virtualUpRefMap.get(method);
     if (overrideMap != null) {
       for (Map.Entry<JClassType, Set<JMethod>> entry : overrideMap.entrySet()) {
@@ -1002,25 +1017,26 @@ public class JTypeOracle implements Serializable {
     return map2;
   }
 
-  private Map<String, JMethod> getOrCreatePolyMap(JClassType type) {
-    Map<String, JMethod> polyMap = polyClassMethodMap.get(type);
-    if (polyMap == null) {
+  private Map<String, JMethod> getOrCreateMethodsBySignatureForType(JClassType type) {
+    Map<String, JMethod> methodsBySignature = methodsBySignatureForType.get(type);
+    if (methodsBySignature == null) {
       JClassType superClass = type.getSuperClass();
       if (superClass == null) {
-        polyMap = new HashMap<String, JMethod>();
+        methodsBySignature = new HashMap<String, JMethod>();
       } else {
-        Map<String, JMethod> superPolyMap = getOrCreatePolyMap(type.getSuperClass());
-        polyMap = new HashMap<String, JMethod>(superPolyMap);
+        Map<String, JMethod> superMethodsBySignature = getOrCreateMethodsBySignatureForType(
+            type.getSuperClass());
+        methodsBySignature = new HashMap<String, JMethod>(superMethodsBySignature);
       }
       for (JMethod method : type.getMethods()) {
         if (method.canBePolymorphic()) {
-          polyMap.put(method.getSignature(), method);
+          methodsBySignature.put(method.getSignature(), method);
         }
       }
-      polyMap = Maps.normalize(polyMap);
-      polyClassMethodMap.put(type, polyMap);
+      methodsBySignature = Maps.normalize(methodsBySignature);
+      methodsBySignatureForType.put(type, methodsBySignature);
     }
-    return polyMap;
+    return methodsBySignature;
   }
 
   /**

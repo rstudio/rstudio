@@ -15,6 +15,16 @@
  */
 package com.google.gwt.dev.jjs.test;
 
+import com.google.gwt.dev.jjs.test.overrides.package1.Caller;
+import com.google.gwt.dev.jjs.test.overrides.package1.ClassExposingM;
+import com.google.gwt.dev.jjs.test.overrides.package1.SomeParent;
+import com.google.gwt.dev.jjs.test.overrides.package1.SomeParentParent;
+import com.google.gwt.dev.jjs.test.overrides.package1.SomeParentParentParent;
+import com.google.gwt.dev.jjs.test.overrides.package1.SubClassExposingM;
+import com.google.gwt.dev.jjs.test.overrides.package2.SomeSubClassInAnotherPackage;
+import com.google.gwt.dev.jjs.test.overrides.package2.SomeSubSubClassInAnotherPackage;
+import com.google.gwt.dev.jjs.test.overrides.package3.SomeInterface;
+import com.google.gwt.dev.jjs.test.overrides.package3.SomePackageConfusedParent;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -109,6 +119,52 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     foo = Document.get().createDivElement();
     foo.setPropertyString("x", "y");
     assertEquals("y", foo.getPropertyString("x"));
+  }
+
+  /**
+   * Tests complex overriding patterns involving package private methods.
+   * <p>
+   * Test for issue 8654.
+   */
+  public void testOverride() {
+    Caller aCaller = new Caller();
+    assertEquals("SomeParentParent", aCaller.callPackagePrivatem(new SomeParentParent()));
+    assertEquals("SomeParent", aCaller.callPackagePrivatem(new SomeParent()));
+    assertEquals("SomeParent", aCaller.callPackagePrivatem(
+        new SomeSubClassInAnotherPackage()));
+
+    assertEquals("SomeSubClassInAnotherPackage",
+        SomeSubClassInAnotherPackage.pleaseCallm(new SomeSubClassInAnotherPackage()));
+    assertEquals("SomeSubSubClassInAnotherPackage",
+        SomeSubClassInAnotherPackage.pleaseCallm(new SomeSubSubClassInAnotherPackage()));
+
+    assertEquals("ClassExposingM",
+        aCaller.callPackagePrivatem(new ClassExposingM()));
+
+    SomeInterface i = new ClassExposingM();
+    assertEquals("ClassExposingM", i.m());
+    assertEquals("live at ClassExposingM", new ClassExposingM().f());
+
+    // Confirm that both calling m through SomeInterface and through SomeParentParentParent
+    // dispatch to the right implementation.
+    SomeInterface i1 = new SubClassExposingM();
+    assertEquals("SubClassExposingM", i1.m());
+
+    assertEquals("SubClassExposingM",
+        SomeParentParentParent.callSomeParentParentParentM(new SubClassExposingM()));
+
+    assertEquals("SomeParentParentParent",
+        SomeParentParentParent.callSomeParentParentParentM(new SomeParentParentParent()));
+    assertEquals("SomeParentParentParent",
+        SomeParentParentParent.callSomeParentParentParentM(new SomePackageConfusedParent()));
+    assertEquals("SomeParentParent",
+        SomeParentParentParent.callSomeParentParentParentM(new SomeParentParent()));
+    assertEquals("SomeParent",
+        SomeParentParentParent.callSomeParentParentParentM(new SomeParent()));
+    assertEquals("SomeParent",
+        SomeParentParentParent.callSomeParentParentParentM(new SomeSubClassInAnotherPackage()));
+    assertEquals("SomeParent",
+        SomeParentParentParent.callSomeParentParentParentM(new SomeSubSubClassInAnotherPackage()));
   }
 
   private static void assertEqualContents(float[] expected, float[] actual) {

@@ -442,7 +442,7 @@ public class Devirtualizer {
     if ((possibleTargetTypes & STRING) != 0) {
       JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangString());
       assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
-          method.getName() + " not overriden by String";
+          method.getName() + " not overridden by String";
       dispatchToMethodByTargetType.put(STRING, getStaticImpl(overridingMethod));
     }
     if ((possibleTargetTypes & JSO) != 0) {
@@ -452,14 +452,14 @@ public class Devirtualizer {
         overridingMethod = findOverridingMethod(method, program.getJavaScriptObject());
       }
       assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
-          method.getName() + " not overriden by JavaScriptObject";
+          method.getName() + " not overridden by JavaScriptObject";
       dispatchToMethodByTargetType.put(JSO, getStaticImpl(overridingMethod));
     }
     if ((possibleTargetTypes & JAVA_ARRAY) != 0) {
       // Arrays only implement Object methods as the Clonable interface is not supported in GWT.
       JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangObject());
       assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
-          method.getName() + " not overriden by Object";
+          method.getName() + " not overridden by Object";
       dispatchToMethodByTargetType.put(JAVA_ARRAY, getStaticImpl(overridingMethod));
     }
     if ((possibleTargetTypes & HAS_JAVA_VIRTUAL_DISPATCH) != 0) {

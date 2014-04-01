@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -126,7 +126,7 @@ public class SameParameterValueOptimizer {
 
     @Override
     public boolean visit(JMethod x, Context ctx) {
-      Set<JMethod> overrides = program.typeOracle.getAllOverrides(x);
+      Set<JMethod> overrides = program.typeOracle.getAllOverriddenMethods(x);
       if (!overrides.isEmpty()) {
         for (JMethod m : overrides) {
           rescuedMethods.add(m);
@@ -185,7 +185,7 @@ public class SameParameterValueOptimizer {
 
   /**
    * Parameter values.
-   * 
+   *
    * If doesn't contain a parameter, then its value is unknown. If contains
    * parameter, and value is null - the parameter's value is not the same across
    * all calls. If value is not null - the parameter's value is the same across
@@ -198,7 +198,7 @@ public class SameParameterValueOptimizer {
   /**
    * These methods should not be tried to optimized due to their polymorphic
    * nature.
-   * 
+   *
    * TODO: support polymorphic calls properly.
    */
   private final Set<JMethod> rescuedMethods = new HashSet<JMethod>();
