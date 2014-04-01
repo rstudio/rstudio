@@ -366,7 +366,7 @@ public abstract class UIObject implements HasVisibility {
    */
   private static native void updatePrimaryAndDependentStyleNames(Element elem,
       String newPrimaryStyle) /*-{
-    var classes = elem.className.split(/\s+/);
+    var classes = (elem.className || "").split(/\s+/);
     if (!classes) {
       return;
     }

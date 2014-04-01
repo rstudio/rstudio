@@ -205,7 +205,7 @@ public class Element extends Node {
    *      HTML Specification</a>
    */
   public final native String getClassName() /*-{
-     return this.className;
+     return this.className || "";
    }-*/;
 
   /**
@@ -663,7 +663,7 @@ public class Element extends Node {
    *      HTML Specification</a>
    */
   public final native void setClassName(String className) /*-{
-     this.className = className;
+     this.className = className || "";
    }-*/;
 
   /**
