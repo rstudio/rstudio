@@ -973,6 +973,8 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
                         e.what());
       entry["length"] = 0;
    }
+   
+   entry["exists"] = FilePath(fileInfo.absolutePath()).exists();
 
    entry["lastModified"] = date_time::millisecondsSinceEpoch(
                                                    fileInfo.lastWriteTime());

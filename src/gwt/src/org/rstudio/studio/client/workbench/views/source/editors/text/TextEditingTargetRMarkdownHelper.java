@@ -449,6 +449,13 @@ public class TextEditingTargetRMarkdownHelper
          @Override
          public void onResponseReceived(final FileSystemItem fsi)
          {
+            // the file doesn't exist--proceed
+            if (!fsi.exists())
+            {
+               createDraftFromTemplate(template, target);
+               return;
+            }
+
             // the file exists--offer to clean it up and continue.
             globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
                   "Overwrite " + (template.createDir() ? "Directory" : "File"), 

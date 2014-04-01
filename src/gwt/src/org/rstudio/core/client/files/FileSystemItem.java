@@ -312,6 +312,10 @@ public class FileSystemItem extends JavaScriptObject
    public final native StatusAndPathInfo getSVNStatus() /*-{
       return this.svn_status;
    }-*/;
+   
+   public final native boolean exists() /*-{
+      return this.exists;
+   }-*/;
 
    // NOTE: should be synced with mime type database in FilePath.cpp
    private final static HashMap<String,String> MIME_TYPES = 
