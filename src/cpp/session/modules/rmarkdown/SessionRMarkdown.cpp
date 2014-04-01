@@ -25,6 +25,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
@@ -119,6 +120,7 @@ private:
       Error error = module_context::rScriptPath(&rProgramPath);
       if (error)
       {
+         LOG_ERROR(error);
          terminateWithError(error);
          return;
       }
@@ -185,10 +187,16 @@ private:
                                encoding,
                                pAllOutput);
 
-      module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
-                                                     args,
-                                                     options,
-                                                     cb);
+      error = module_context::processSupervisor().runProgram(
+               rProgramPath.absolutePath(),
+               args,
+               options,
+               cb);
+      if (error)
+      {
+         LOG_ERROR(error);
+         terminateWithError(error);
+      }
    }
 
    bool onRenderContinue()
@@ -454,6 +462,7 @@ private:
       Error error = module_context::rScriptPath(&rProgramPath);
       if (error)
       {
+         LOG_ERROR(error);
          onCompleted(0);
          return;
       }
@@ -461,14 +470,23 @@ private:
       // args
       std::vector<std::string> args;
       args.push_back("--slave");
-      args.push_back("--no-save");
-      args.push_back("--no-restore");
+      args.push_back("--vanilla");
       args.push_back("-e");
       args.push_back("rmarkdown:::list_template_dirs()");
 
       // options
       core::system::ProcessOptions options;
       options.terminateChildren = true;
+
+      // we want to discover packages in the libraries visible to this process,
+      // so forward the R_LIBS environment variable to the child process
+      core::system::Options childEnv;
+      std::string libPaths = module_context::libPathsString();
+      if (!libPaths.empty())
+      {
+         core::system::setenv(&childEnv, "R_LIBS", libPaths);
+         options.environment = childEnv;
+      }
 
       core::system::ProcessCallbacks cb;
       using namespace module_context;
@@ -479,11 +497,20 @@ private:
                                 DiscoverTemplates::shared_from_this(),
                                 _1);
 
-      module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
-                                                     args,
-                                                     options,
-                                                     cb);
-      isRunning_ = true;
+      error = module_context::processSupervisor().runProgram(
+               rProgramPath.absolutePath(),
+               args,
+               options,
+               cb);
+      if (error)
+      {
+         LOG_ERROR(error);
+         onCompleted(0);
+      }
+      else
+      {
+         isRunning_ = true;
+      }
    }
 
    void onOutput(const std::string& output)

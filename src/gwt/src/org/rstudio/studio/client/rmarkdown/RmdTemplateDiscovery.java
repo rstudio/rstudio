@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown;
 
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -42,9 +43,7 @@ public class RmdTemplateDiscovery implements
       server_ = server;
       display_ = display;
       prefs_ = prefs;
-
-      eventBus.addHandler(RmdTemplateDiscoveredEvent.TYPE, this);
-      eventBus.addHandler(RmdTemplateDiscoveryCompletedEvent.TYPE, this);
+      events_ = eventBus;
    }
    
    @Override
@@ -58,6 +57,7 @@ public class RmdTemplateDiscovery implements
    public void onRmdTemplateDiscoveryCompleted(
          RmdTemplateDiscoveryCompletedEvent event)
    {
+      unregisterEvents();
       onCompleted_.execute();
    }
    
@@ -65,6 +65,10 @@ public class RmdTemplateDiscovery implements
          OperationWithInput<RmdDiscoveredTemplate> onTemplateDiscovered,
          Operation onCompleted)
    {
+      registrations_ = new HandlerRegistrations(
+         events_.addHandler(RmdTemplateDiscoveredEvent.TYPE, this), 
+         events_.addHandler(RmdTemplateDiscoveryCompletedEvent.TYPE, this));
+
       onTemplateDiscovered_ = onTemplateDiscovered;
       onCompleted_ = onCompleted;
       server_.discoverRmdTemplates(new ServerRequestCallback<Boolean>()
@@ -84,6 +88,7 @@ public class RmdTemplateDiscovery implements
          
          private void showError(String error)
          {
+            unregisterEvents();
             display_.showErrorMessage("R Markdown Templates Not Found",
                   "An error occurred while looking for R Markdown templates. " + 
                   (error == null ? "" : error));
@@ -96,10 +101,21 @@ public class RmdTemplateDiscovery implements
       return prefs_.rmdPreferredTemplatePath().getValue();
    }
    
+   private void unregisterEvents()
+   {
+      if (registrations_ != null)
+      {
+         registrations_.removeHandler();
+         registrations_ = null;
+      }
+   }
+   
    private final RMarkdownServerOperations server_;
    private final GlobalDisplay display_;
    private final UIPrefs prefs_;
+   private final EventBus events_;
 
    private OperationWithInput<RmdDiscoveredTemplate> onTemplateDiscovered_;
    private Operation onCompleted_;
+   private HandlerRegistrations registrations_;
 }

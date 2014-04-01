@@ -275,6 +275,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // auto expand error tracebacks
          autoExpandErrorTracebacks().setGlobalValue(
                     newUiPrefs.autoExpandErrorTracebacks().getGlobalValue());
+         
+         // preferred R Markdown template
+         rmdPreferredTemplatePath().setGlobalValue(
+               newUiPrefs.rmdPreferredTemplatePath().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
