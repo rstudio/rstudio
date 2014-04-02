@@ -635,7 +635,7 @@ void UserSettings::setErrorHandlerType(int type)
 
 bool UserSettings::useDevtools() const
 {
-   return settings_.getBool("useDevtoolsFunctions", false);
+   return settings_.getBool("useDevtools", true);
 }
 
 void UserSettings::setUseDevtools(bool useDevtools)
