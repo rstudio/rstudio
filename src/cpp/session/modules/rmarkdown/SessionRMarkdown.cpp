@@ -60,10 +60,12 @@ public:
    static boost::shared_ptr<RenderRmd> create(const FilePath& targetFile,
                                               int sourceLine,
                                               const std::string& format,
-                                              const std::string& encoding)
+                                              const std::string& encoding,
+                                              bool errorNavigation)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
-                                                         sourceLine));
+                                                         sourceLine,
+                                                         errorNavigation));
       pRender->start(format, encoding);
       return pRender;
    }
@@ -89,11 +91,12 @@ public:
    }
 
 private:
-   RenderRmd(const FilePath& targetFile, int sourceLine) :
+   RenderRmd(const FilePath& targetFile, int sourceLine, bool errorNavigation) :
       isRunning_(false),
       terminationRequested_(false),
       targetFile_(targetFile),
-      sourceLine_(sourceLine)
+      sourceLine_(sourceLine),
+      errorNavigation_(errorNavigation)
    {}
 
    void start(const std::string& format, const std::string& encoding)
@@ -389,7 +392,7 @@ private:
                           const std::string& output)
    {
       using namespace module_context;
-      if (type == module_context::kCompileOutputError)
+      if (type == module_context::kCompileOutputError &&  errorNavigation_)
       {
          // this is an error, parse it to see if it looks like a knitr error
          const boost::regex knitrErr(
@@ -421,6 +424,7 @@ private:
    int sourceLine_;
    FilePath outputFile_;
    std::string encoding_;
+   bool errorNavigation_;
    json::Object outputFormat_;
    std::vector<build::CompileError> knitrErrors_;
 };
@@ -745,6 +749,7 @@ void doRenderRmd(const std::string& file,
                  int line,
                  const std::string& format,
                  const std::string& encoding,
+                 bool errorNavigation,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -758,7 +763,8 @@ void doRenderRmd(const std::string& file,
                module_context::resolveAliasedPath(file),
                line,
                format,
-               encoding);
+               encoding,
+               errorNavigation);
       pResponse->setResult(true);
    }
 }
@@ -776,7 +782,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(file, line, format, encoding, pResponse);
+   doRenderRmd(file, line, format, encoding, true, pResponse);
 
    return Success();
 }
@@ -795,7 +801,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", pResponse);
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, pResponse);
 
    return Success();
 }
