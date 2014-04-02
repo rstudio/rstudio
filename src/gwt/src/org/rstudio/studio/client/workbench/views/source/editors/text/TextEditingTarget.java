@@ -109,6 +109,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
@@ -2896,14 +2897,37 @@ public class TextEditingTarget implements
    @Handler
    void onExecutePreviousChunks()
    {
-      // HACK: This is just to force the entire function tree to be built.
-      // It's the easiest way to make sure getCurrentScope() returns
-      // a Scope with an end.
-      docDisplay_.getScopeTree();
+      withPreservedSelection(new Command() {
+
+         @Override
+         public void execute()
+         {
+            // HACK: This is just to force the entire function tree to be built.
+            // It's the easiest way to make sure getCurrentScope() returns
+            // a Scope with an end.
+            docDisplay_.getScopeTree();
+            
+            // execute the chunks
+            Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks();
+            for (Scope scope : previousScopes)
+               executeSweaveChunk(scope, false);
+         }
+      });    
+   }
+   
+   private void withPreservedSelection(Command command)
+   {
+      // save the selection for restoration
+      Position start = docDisplay_.getSelectionStart();
+      Position end = docDisplay_.getSelectionEnd();
+      AnchoredSelection anchoredSelection = 
+                           docDisplay_.createAnchoredSelection(start,end);
       
-      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks();
-      for (Scope scope : previousScopes)
-         executeSweaveChunk(scope, false);
+      // execute the command
+      command.execute();
+      
+      // restore the selection
+      anchoredSelection.apply();
    }
 
    private void executeSweaveChunk(Scope chunk, boolean scrollNearTop)
