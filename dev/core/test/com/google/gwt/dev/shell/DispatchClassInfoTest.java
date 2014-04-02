@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -55,6 +55,8 @@ public class DispatchClassInfoTest extends TestCase {
     assertField(dci, "field", "field");
     assertNonExistent(dci, "bogofield");
     assertMethod(dci, "nonOverloaded(I)", Foo.class, "nonOverloaded",
+        Integer.TYPE);
+    assertMethod(dci, "nonOverloaded(*)", Foo.class, "nonOverloaded",
         Integer.TYPE);
     assertMethod(dci, "overloaded(I)", Foo.class, "overloaded", Integer.TYPE);
     assertMethod(dci, "overloaded(D)", Foo.class, "overloaded", Double.TYPE);
@@ -115,6 +117,7 @@ public class DispatchClassInfoTest extends TestCase {
     assertNonExistent(dci, "bar(*)");
 
     assertMethod(dci, "nonover(I)", Super.class, "nonover", Integer.TYPE);
+    assertMethod(dci, "nonover(*)", Super.class, "nonover", Integer.TYPE);
 
     assertMethod(dci, "over(I)", Super.class, "over", Integer.TYPE);
     assertMethod(dci, "over(D)", Super.class, "over", Double.TYPE);
@@ -125,6 +128,7 @@ public class DispatchClassInfoTest extends TestCase {
     DispatchClassInfo dci = new DispatchClassInfo(Intf.class, 42);
 
     assertMethod(dci, "foo(I)", Intf.class, "foo", Integer.TYPE);
+    assertMethod(dci, "foo(*)", Intf.class, "foo", Integer.TYPE);
     assertMethod(dci, "bar(I)", Intf.class, "bar", Integer.TYPE);
     assertMethod(dci, "bar(D)", Intf.class, "bar", Double.TYPE);
     assertNonExistent(dci, "bar(*)");
@@ -148,7 +152,8 @@ public class DispatchClassInfoTest extends TestCase {
     DispatchClassInfo dci = new DispatchClassInfo(Sub.class, 42);
 
     assertMethod(dci, "set(Ljava/lang/String;)", Sub.class, "set", String.class);
-
+    assertMethod(dci, "set(*)", Sub.class, "set", String.class);
+    
     // For backward compatibility, allow calling a bridge method directly
     assertMethod(dci, "set(Ljava/lang/Object;)", Sub.class, "set", Object.class);
   }
