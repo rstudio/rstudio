@@ -19,6 +19,7 @@ import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.dev.javac.JSORestrictionsChecker.CheckerState;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -209,9 +210,43 @@ public class JsniReferenceResolver {
     }
 
     @Override
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
+      // Look for the patern a.f = o.@C::m();
+      if (!x.getOperator().isAssignment()) {
+        return;
+      }
+      if (!(x.getArg1() instanceof JsNameRef) || !(x.getArg2() instanceof JsNameRef)) {
+        return;
+      }
+
+      JsNameRef lhs = (JsNameRef) x.getArg1();
+      JsNameRef rhs = (JsNameRef) x.getArg2();
+
+      if (!rhs.isJsniReference() || !(jsniRefs.get(rhs.getIdent()) instanceof MethodBinding)) {
+        // Not a reference to a JSNI method.
+        return;
+      }
+
+      if (rhs.getQualifier() == null) {
+        // Unqualified JSNI reference is OK.
+        return;
+      }
+
+      if (lhs.getQualifier() == null) {
+        // Assignment to unqualified variable is OK.
+        return;
+      }
+
+      // Here we have a qualified JSNI method reference assigned to a field.
+      JsniRef jsniRef = JsniRef.parse(rhs.getIdent());
+      emitWarning("unsafe", WARN_NOT_CAPTURING_QUALIFIER, x.getSourceInfo(), jsniRef,
+          rhs.getQualifier().toSource());
+    }
+
+    @Override
     public void endVisit(JsNameRef x, JsContext ctx) {
       String ident = x.getIdent();
-      if (ident.charAt(0) != '@') {
+      if (!x.isJsniReference()) {
         // Not a jsni reference.
         return;
       }
@@ -477,7 +512,11 @@ public class JsniReferenceResolver {
         return checkAndResolveFieldRef(errorInfo, clazz, jsniRef, hasQualifier, isLvalue);
       }
     }
-
+    private static final String WARN_NOT_CAPTURING_QUALIFIER =
+        "Instance method reference '%2$s.%3$s' loses its instance ('%8$s') when assigned; "
+            + "to remove this warning either assign to a local variable or construct "
+            + "the proper closure using an anonymous function or by calling "
+            + "Function.prototype.bind";
     private static final String ERR_ILLEGAL_ARRAY_OR_PRIMITIVE_REFERENCE =
         "Referencing member '%2$s.%4$s': 'class' is " +
         "the only legal reference for arrays and primitive types";
