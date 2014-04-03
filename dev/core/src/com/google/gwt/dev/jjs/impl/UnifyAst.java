@@ -76,7 +76,6 @@ import com.google.gwt.dev.js.ast.JsNestingScope;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
@@ -498,26 +497,23 @@ public class UnifyAst {
 
       JsniRef ref = JsniRef.parse(stringValue);
       if (ref != null) {
-        if (Name.isBinaryName(ref.className())) {
-          findType(ref.className(), binaryNameBasedTypeLocator);
-        }
         node = JsniRefLookup.findJsniRefTarget(ref, program, new JsniRefLookup.ErrorReporter() {
           @Override
           public void reportError(String errMsg) {
             error(x, errMsg);
           }
         });
-      } else {
-        // See if it's just @foo.Bar, which would result in the class seed
-        String typeName = stringValue.charAt(0) == '@' ? stringValue.substring(1) : stringValue;
-        node = findType(typeName, binaryNameBasedTypeLocator);
       }
       if (node == null) {
         // Not found, must be null
         return null;
-      } else {
-        return new JNameOf(x.getSourceInfo(), program.getTypeJavaLangString(), (HasName) node);
       }
+
+      if (node instanceof JMethod) {
+        flowInto((JMethod) node);
+        program.addPinnedMethod((JMethod) node);
+      }
+      return new JNameOf(x.getSourceInfo(), program.getTypeJavaLangString(), (HasName) node);
     }
 
     private JExpression handleMagicMethodCall(JMethodCall x, String targetSignature) {
@@ -1242,7 +1238,7 @@ public class UnifyAst {
     throw new NoClassDefFoundError(String.format(
         "Could not find %s in types compiled from source or in provided dependency libraries. "
         + "Either the source file was unavailable, failed to compile or there is a missing "
-        + "dependencies.", typeName));
+        + "dependency.", typeName));
   }
 
   private void staticInitialize(JDeclaredType type) {

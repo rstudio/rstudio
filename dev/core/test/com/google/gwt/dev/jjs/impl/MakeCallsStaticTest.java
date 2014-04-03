@@ -40,6 +40,13 @@ public class MakeCallsStaticTest extends OptimizerTestBase {
         .intoString("return EntryPoint.$answer(Exceptions.checkNotNull(new EntryPoint()));");
   }
 
+  public void testUnstatifiableMethod() throws Exception {
+    addSnippetClassDecl("final String answer() { return \"42\"; }");
+    optimize("String",
+        "return com.google.gwt.core.client.impl.Impl.getNameOf(\"@test.EntryPoint::answer()\");")
+        .intoString("return /* JNameOf */\"answer\";");
+  }
+
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     OptionCheckedMode option = new OptionCheckedMode() {

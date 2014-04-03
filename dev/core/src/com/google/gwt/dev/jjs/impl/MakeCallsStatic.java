@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -243,6 +243,11 @@ public class MakeCallsStatic {
         return;
       }
 
+      if (!program.allowStatificationOf(method)) {
+        // Method has been specifically excluded from statification.
+        return;
+      }
+
       // Did we already do this one?
       if (program.getStaticImpl(method) != null || toBeMadeStatic.contains(method)) {
         return;
@@ -294,8 +299,8 @@ public class MakeCallsStatic {
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod oldMethod = x.getTarget();
       JMethod newMethod = program.getStaticImpl(oldMethod);
-      
-      if (newMethod == null || x.canBePolymorphic()) {        
+
+      if (newMethod == null || x.canBePolymorphic()) {
         return;
       }
 
@@ -303,7 +308,7 @@ public class MakeCallsStatic {
           && !initiallyLive.getLiveFieldsAndMethods().contains(x.getTarget())) {
         /*
          * Don't devirtualize calls from initial code to non-initial code.
-         * 
+         *
          * TODO(spoon): similar prevention when the callee is exclusive to some
          * split point and the caller is not.
          */

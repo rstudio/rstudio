@@ -229,8 +229,10 @@ public class JavaAstConstructor {
         @Override
         public CharSequence getContent() {
           return Joiner.on("\n").join(
-              "package com.google.gwt.core.client.impl; public class Impl {",
-              "public static Object registerEntry(){return null;}",
+              "package com.google.gwt.core.client.impl;",
+              "public class Impl {",
+              "  public static Object registerEntry(){return null;}",
+              "  public static String getNameOf(String jsniIdent) { return null; }",
               "}"
           );
         }

@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
@@ -433,6 +434,17 @@ public class ControlFlowAnalyzer {
       }
 
       return rescueArgumentsIfParametersCanBeRead(call, method);
+    }
+
+    @Override
+    public boolean visit(JNameOf x, Context ctx) {
+      if (x.getNode() == null) {
+        return true;
+      }
+
+      assert x.getNode() instanceof JMethod;
+      rescue((JMethod) x.getNode());
+      return true;
     }
 
     @Override

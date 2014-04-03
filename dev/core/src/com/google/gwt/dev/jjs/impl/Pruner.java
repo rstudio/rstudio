@@ -105,19 +105,22 @@ public class Pruner {
 
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
+      if (x.getOp() != JBinaryOperator.ASG) {
+        return;
+      }
       // The LHS of assignments may have been pruned.
-      if (x.getOp() == JBinaryOperator.ASG) {
-        lValues.pop();
-        JExpression lhs = x.getLhs();
-        if (lhs instanceof JVariableRef) {
-          JVariableRef variableRef = (JVariableRef) lhs;
-          if (isVariablePruned(variableRef.getTarget())) {
-            // TODO: better null tracking; we might be missing some NPEs here.
-            JExpression replacement =
-                makeReplacementForAssignment(x.getSourceInfo(), variableRef, x.getRhs());
-            ctx.replaceMe(replacement);
-          }
-        }
+      lValues.pop();
+      JExpression lhs = x.getLhs();
+      if (!(lhs instanceof JVariableRef)) {
+        return;
+      }
+
+      JVariableRef variableRef = (JVariableRef) lhs;
+      if (isVariablePruned(variableRef.getTarget())) {
+        // TODO: better null tracking; we might be missing some NPEs here.
+        JExpression replacement =
+            makeReplacementForAssignment(x.getSourceInfo(), variableRef, x.getRhs());
+        ctx.replaceMe(replacement);
       }
     }
 
@@ -149,10 +152,9 @@ public class Pruner {
     @Override
     public void endVisit(JMethod x, Context ctx) {
       JType type = x.getType();
-      if (type instanceof JReferenceType) {
-        if (!program.typeOracle.isInstantiatedType((JReferenceType) type)) {
-          x.setType(program.getTypeNull());
-        }
+      if (type instanceof JReferenceType &&
+          !program.typeOracle.isInstantiatedType((JReferenceType) type)) {
+        x.setType(program.getTypeNull());
       }
     }
 

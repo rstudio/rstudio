@@ -40,8 +40,8 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -83,7 +83,7 @@ public class MethodInliner {
      * Resets with each new visitor, which is good since things that couldn't be
      * inlined before might become inlinable.
      */
-    private final Set<JMethod> cannotInline = new HashSet<JMethod>();
+    private final Set<JMethod> cannotInline = Sets.newHashSet();
     private JExpression ignoringReturnValueFor;
 
     @Override
@@ -111,7 +111,7 @@ public class MethodInliner {
         possibleToInline = false;
       }
 
-      if (method.isStatic() && !method.isNative()) {
+      if (method.isStatic() && !method.isNative() && program.allowInliningOf(method)) {
         JMethodBody body = (JMethodBody) method.getBody();
         List<JStatement> stmts = body.getStatements();
 
