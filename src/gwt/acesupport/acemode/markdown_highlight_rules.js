@@ -110,8 +110,8 @@ var MarkdownHighlightRules = function() {
         }, { // emphasis * _
             token : ["constant.language.boolean", "constant.language.boolean", "constant.language.boolean"],
             regex : "([*]|[_](?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
-        }, { // 
-            token : ["text", "url", "text"],
+        }, { // simple links <url>
+            token : ["text", "keyword", "text"],
             regex : "(<)("+
                       "(?:https?|ftp|dict):[^'\">\\s]+"+
                       "|"+
