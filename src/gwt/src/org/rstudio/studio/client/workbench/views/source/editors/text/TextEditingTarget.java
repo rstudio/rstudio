@@ -2199,7 +2199,12 @@ public class TextEditingTarget implements
       Match match = Pattern.create("^\\s*[^" + c + "\\s]").match(selection, 0);
       boolean uncomment = match == null && selection.trim().length() != 0;
       if (uncomment)
-         selection = selection.replaceAll("((^|\\n)\\s*)" + c + " ?", "$1");
+      {
+         String prefix = c;
+         if (prefix.equals("#"))
+            prefix = "#'?";
+         selection = selection.replaceAll("((^|\\n)\\s*)" + prefix + " ?", "$1");
+      }
       else
       {
          selection = c + " " + selection.replaceAll("\\n", "\n" + c + " ");
