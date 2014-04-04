@@ -61,11 +61,11 @@ public:
                                               int sourceLine,
                                               const std::string& format,
                                               const std::string& encoding,
-                                              bool errorNavigation)
+                                              bool sourceNavigation)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
-                                                         errorNavigation));
+                                                         sourceNavigation));
       pRender->start(format, encoding);
       return pRender;
    }
@@ -91,12 +91,12 @@ public:
    }
 
 private:
-   RenderRmd(const FilePath& targetFile, int sourceLine, bool errorNavigation) :
+   RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation) :
       isRunning_(false),
       terminationRequested_(false),
       targetFile_(targetFile),
       sourceLine_(sourceLine),
-      errorNavigation_(errorNavigation)
+      sourceNavigation_(sourceNavigation)
    {}
 
    void start(const std::string& format, const std::string& encoding)
@@ -309,14 +309,20 @@ private:
          resultJson["rpubs_published"] = false;
       }
 
-
       // allow for format specific additions to the result json
       std::string formatName =  outputFormat_["format_name"].get_str();
-      rmarkdown::presentation::ammendResults(
-                                  formatName,
-                                  targetFile_,
-                                  sourceLine_,
-                                  &resultJson);
+
+      // only allow extended results if we have a source file to
+      // navigate back to (otherwise you could navigate to the temp
+      // file used for preview)
+      if (sourceNavigation_)
+      {
+         rmarkdown::presentation::ammendResults(
+                                     formatName,
+                                     targetFile_,
+                                     sourceLine_,
+                                     &resultJson);
+      }
 
       // if we failed then we may want to enque additional diagnostics
       if (!succeeded)
@@ -392,7 +398,7 @@ private:
                           const std::string& output)
    {
       using namespace module_context;
-      if (type == module_context::kCompileOutputError &&  errorNavigation_)
+      if (type == module_context::kCompileOutputError &&  sourceNavigation_)
       {
          // this is an error, parse it to see if it looks like a knitr error
          const boost::regex knitrErr(
@@ -424,7 +430,7 @@ private:
    int sourceLine_;
    FilePath outputFile_;
    std::string encoding_;
-   bool errorNavigation_;
+   bool sourceNavigation_;
    json::Object outputFormat_;
    std::vector<build::CompileError> knitrErrors_;
 };
@@ -749,7 +755,7 @@ void doRenderRmd(const std::string& file,
                  int line,
                  const std::string& format,
                  const std::string& encoding,
-                 bool errorNavigation,
+                 bool sourceNavigation,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -764,7 +770,7 @@ void doRenderRmd(const std::string& file,
                line,
                format,
                encoding,
-               errorNavigation);
+               sourceNavigation);
       pResponse->setResult(true);
    }
 }
