@@ -18,6 +18,7 @@ package com.google.gwt.core.client;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.useragent.client.UserAgent;
 
 /**
  * Any JavaScript exceptions occurring within JSNI methods are wrapped as this
@@ -307,9 +308,14 @@ public class JavaScriptExceptionTest extends GWTTestCase {
 
   private static void assertTypeError(JavaScriptException e) {
     assertEquals("TypeError", e.getName());
-    assertTrue(e.getDescription().contains("notExistsWillThrowTypeError"));
+    assertTrue(e.getDescription().contains("notExistsWillThrowTypeError") || isIE8());
     assertTrue(e.isThrownSet());
     assertMessage(e);
+  }
+
+  private static boolean isIE8() {
+    UserAgent userAgent = GWT.create(UserAgent.class);
+    return userAgent.getCompileTimeValue().equals("ie8");
   }
 
   private static void assertDescription(JavaScriptException e, String description) {

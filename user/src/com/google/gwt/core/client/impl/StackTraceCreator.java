@@ -59,8 +59,8 @@ public class StackTraceCreator {
       var seen = {};
       var toReturn = [];
 
-      // Ignore the collect() and fillInStackTrace call
-      var callee = arguments.callee.caller.caller;
+      // Ignore the collect() call
+      var callee = arguments.callee.caller;
       while (callee) {
         var name = this.@com.google.gwt.core.client.impl.StackTraceCreator.Collector::extractName(Ljava/lang/String;)(callee.toString());
         toReturn.push(name);
@@ -444,5 +444,9 @@ public class StackTraceCreator {
   private static native <T> T splice(T arr, int length) /*-{
     (arr.length >= length) && arr.splice(0, length);
     return arr;
+  }-*/;
+
+  static native boolean supportsErrorStack() /*-{
+    return !!Error.prototype.stack;
   }-*/;
 }

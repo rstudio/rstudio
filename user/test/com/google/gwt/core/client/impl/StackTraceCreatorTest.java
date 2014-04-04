@@ -53,6 +53,10 @@ public class StackTraceCreatorTest extends GWTTestCase {
 
   @DoNotRunWith(Platform.Devel)
   public void testTraceNative() {
+    if (!StackTraceCreator.supportsErrorStack()) {
+      return;
+    }
+
     Throwable t = null;
     try {
       throwException1(true /* throw js exception */);
