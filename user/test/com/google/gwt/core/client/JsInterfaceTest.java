@@ -241,7 +241,18 @@ public class JsInterfaceTest extends GWTTestCase {
     assertFalse(localMyClass() instanceof MyClass);
   }
 
+  static native boolean isIE8() /*-{
+    return $wnd.navigator.userAgent.toLowerCase().indexOf('msie') != -1 && $doc.documentMode == 8;
+  }-*/;
+
+  static native boolean isFirefox40OrEarlier() /*-{
+    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko2OrBefore()();
+  }-*/;
+
   public void testInstanceOfNative() {
+    if (isIE8() || isFirefox40OrEarlier()) {
+      return;
+    }
     Object obj = makeNativeButton();
     assertTrue(obj instanceof Object);
     assertTrue(obj instanceof HTMLButtonElement);
