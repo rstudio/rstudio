@@ -37,6 +37,10 @@ public class CallFrame extends JavaScriptObject
        return this.file_name;
    }-*/;
 
+   public final native String getAliasedFileName() /*-{
+       return this.aliased_file_name;
+   }-*/;
+
    public final native int getLineNumber() /*-{
        return this.line_number;
    }-*/;

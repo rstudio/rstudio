@@ -399,6 +399,8 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          if (error)
             LOG_ERROR(error);
          varFrame["file_name"] = filename;
+         varFrame["aliased_file_name"] =
+               module_context::createAliasedPath(FilePath(filename));
 
          SEXP srcref = pSrcContext->srcref;
          if (isValidSrcref(srcref))

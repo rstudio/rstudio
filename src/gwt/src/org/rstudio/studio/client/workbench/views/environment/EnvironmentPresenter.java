@@ -565,7 +565,7 @@ public class EnvironmentPresenter extends BasePresenter
          view_.setCallFrames(callFrames);
          CallFrame browseFrame = callFrames.get(
                  contextDepth_ - 1);
-         String newBrowseFile = browseFrame.getFileName().trim();
+         String newBrowseFile = browseFrame.getAliasedFileName().trim();
          boolean sourceChanged = false;
          
          // check to see if the file we're about to switch to contains unsaved
@@ -659,8 +659,8 @@ public class EnvironmentPresenter extends BasePresenter
                                          NavigationMethod.DebugFrame)
                                       :
                                       NavigationMethod.DebugEnd));
-
       }
+
       // otherwise, if we have a copy of the source from the server, load
       // the copy from the server into the code browser window
       else if (useCurrentBrowseSource_ &&

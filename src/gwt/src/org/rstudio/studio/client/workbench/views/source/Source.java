@@ -1515,56 +1515,43 @@ public class Source implements InsertSourceHandler,
             navMethod == NavigationMethod.DebugStep ||
             navMethod == NavigationMethod.DebugFrame || 
             navMethod == NavigationMethod.DebugEnd;
-      if (isDebugNavigation)
-      {
-         setPendingDebugSelection();
-      }
-
-      final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
+      
+      final CommandWithArg<EditingTarget> editingTargetAction = 
+            new CommandWithArg<EditingTarget>() 
       {
          @Override
-         public void execute(FileSystemItem file)
+         public void execute(EditingTarget target)
          {
-            openFile(file,
-                     fileType,
-                     new CommandWithArg<EditingTarget>() {
-
-               @Override
-               public void execute(EditingTarget target)
+            if (position != null)
+            {
+               SourcePosition endPosition = null;
+               if (isDebugNavigation)
                {
-                  if (position != null)
-                  {
-                     SourcePosition endPosition = null;
-                     if (isDebugNavigation)
-                     {
-                        DebugFilePosition filePos = 
-                              (DebugFilePosition) position.cast();
-                        endPosition = SourcePosition.create(
-                              filePos.getEndLine() - 1,
-                              filePos.getEndColumn() + 1);
-                        
-                        if (Desktop.isDesktop() && 
-                            navMethod != NavigationMethod.DebugEnd)
-                            Desktop.getFrame().bringMainFrameToFront();
-                     }
-                     navigate(target, 
-                              SourcePosition.create(position.getLine() - 1,
-                                                    position.getColumn() - 1),
-                              endPosition);
-                  }
-                  else if (pattern != null)
-                  {
-                     Position pos = target.search(pattern);
-                     if (pos != null)
-                     {
-                        navigate(target, 
-                                 SourcePosition.create(pos.getRow(), 0),
-                                 null);
-                     }
-                  }
+                  DebugFilePosition filePos = 
+                        (DebugFilePosition) position.cast();
+                  endPosition = SourcePosition.create(
+                        filePos.getEndLine() - 1,
+                        filePos.getEndColumn() + 1);
+                  
+                  if (Desktop.isDesktop() && 
+                      navMethod != NavigationMethod.DebugEnd)
+                      Desktop.getFrame().bringMainFrameToFront();
                }
-
-            });
+               navigate(target, 
+                        SourcePosition.create(position.getLine() - 1,
+                                              position.getColumn() - 1),
+                        endPosition);
+            }
+            else if (pattern != null)
+            {
+               Position pos = target.search(pattern);
+               if (pos != null)
+               {
+                  navigate(target, 
+                           SourcePosition.create(pos.getRow(), 0),
+                           null);
+               }
+            }
          }
          
          private void navigate(final EditingTarget target,
@@ -1612,6 +1599,51 @@ public class Source implements InsertSourceHandler,
             });
          }
       };
+
+      final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
+      {
+         @Override
+         public void execute(FileSystemItem file)
+         {
+            openFile(file,
+                     fileType,
+                     editingTargetAction);
+                     
+         }
+      };
+
+      // If this is a debug navigation, we only want to treat this as a full
+      // file open if the file isn't already open; otherwise, we can just
+      // highlight in place.
+      if (isDebugNavigation)
+      {
+         setPendingDebugSelection();
+         
+         for (int i = 0; i < editors_.size(); i++)
+         {
+            EditingTarget target = editors_.get(i);
+            String path = target.getPath();
+            if (path != null && path.equalsIgnoreCase(file.getPath()))
+            {
+               // the file's open; just update its highlighting 
+               if (navMethod == NavigationMethod.DebugEnd)
+               {
+                  target.endDebugHighlighting();
+               }
+               else
+               {
+                  view_.selectTab(i);
+                  editingTargetAction.execute(target);
+               }
+               return;
+            }
+         }
+         
+         // If we're here, the target file wasn't open in an editor. Don't
+         // open a file just to turn off debug highlighting in the file!
+         if (navMethod == NavigationMethod.DebugEnd)
+            return;
+      }
 
       // Warning: event.getFile() can be null (e.g. new Sweave document)
       if (file != null && file.getLength() < 0)
