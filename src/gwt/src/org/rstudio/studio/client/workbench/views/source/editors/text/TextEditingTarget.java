@@ -3261,7 +3261,13 @@ public class TextEditingTarget implements
    @Handler
    void onPreviewHTML()
    {
-      if (extendedType_ == "rmarkdown")
+      // last ditch extended type detection
+      String extendedType = extendedType_;
+      extendedType = rmarkdownHelper_.detectExtendedType(docDisplay_.getCode(),
+                                                         extendedType, 
+                                                         fileType_);
+      
+      if (extendedType == "rmarkdown")
          renderRmd();
       else if (fileType_.isRd())
          previewRd();
