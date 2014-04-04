@@ -1876,6 +1876,13 @@ public class TextEditingTarget implements
    {
       return getPath();
    }
+   
+
+   @Override
+   public TextFileType getTextFileType()
+   {
+      return fileType_;
+   }
 
    @Handler
    void onCheckSpelling()

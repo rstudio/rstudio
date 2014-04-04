@@ -194,6 +194,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId());
    }
    
+   public boolean isRhtml()
+   {
+      return FileTypeRegistry.RHTML.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isRpres()
    {
       return FileTypeRegistry.RPRESENTATION.getTypeId().equals(getTypeId());

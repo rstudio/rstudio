@@ -96,7 +96,19 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
    }
 
+   void executeFromShortcut()
+   {
+      executedFromShortcut_ = true;
+      doExecute();
+   }
+   
    public void execute()
+   {
+      executedFromShortcut_ = false;
+      doExecute();
+   }
+   
+   private void doExecute()
    {
       assert enabled_ : "AppCommand executed when it was not enabled";
       if (!enabled_)
@@ -382,6 +394,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return shortcut_ != null ? shortcut_.toString(true) : null;
    }
 
+   public boolean getExecutedFromShortcut()
+   {
+      return executedFromShortcut_;
+   }
+   
    public static void disableNoHandlerAssertions()
    {
       enableNoHandlerAssertions_ = false;
@@ -402,6 +419,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
    private String id_;
+   
+   private boolean executedFromShortcut_ = false;
  
    private static boolean enableNoHandlerAssertions_ = true;
 }

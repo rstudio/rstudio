@@ -27,6 +27,7 @@ import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -51,6 +52,8 @@ public interface EditingTarget extends IsWidget,
    String getContext();
    ImageResource getIcon();
    String getTabTooltip();
+   
+   TextFileType getTextFileType();
 
    void adaptToExtendedFileType(String extendedType);
    String getExtendedFileType();

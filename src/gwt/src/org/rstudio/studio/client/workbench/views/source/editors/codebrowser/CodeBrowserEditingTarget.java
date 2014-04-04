@@ -47,6 +47,7 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -379,6 +380,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public String getTabTooltip()
    {
       return "R Source Viewer";
+   }
+   
+   @Override
+   public TextFileType getTextFileType()
+   {
+      return null;
    }
 
    @Override

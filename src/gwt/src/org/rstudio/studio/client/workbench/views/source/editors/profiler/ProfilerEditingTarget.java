@@ -33,6 +33,7 @@ import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -97,6 +98,13 @@ public class ProfilerEditingTarget implements EditingTarget
    {
       return FileIconResources.INSTANCE.iconProfiler();
    }
+   
+   @Override
+   public TextFileType getTextFileType()
+   {
+      return null;
+   }
+
 
    public String getTabTooltip()
    {
