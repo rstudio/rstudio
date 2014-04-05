@@ -26,6 +26,7 @@ import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileError;
@@ -38,8 +39,8 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
@@ -54,14 +55,14 @@ public class RenderRmdOutputPresenter extends BasePresenter
    public RenderRmdOutputPresenter(CompileOutputPaneFactory outputFactory,
                                    RMarkdownServerOperations server,
                                    GlobalDisplay globalDisplay,
-                                   Commands commands)
+                                   EventBus events)
    {
       super(outputFactory.create("R Markdown", 
                                  "View the R Markdown render log"));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       server_ = server;
-      commands_ = commands;
+      events_ = events;
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -159,7 +160,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
       renderRunning_ = false;
       if (event.getResult().getSucceeded() && switchToConsoleAfterRender_)
       {
-         commands_.activateConsole().execute();
+         events_.fireEvent(new ConsoleActivateEvent(false)); 
       }
       else if (!event.getResult().getSucceeded())
       {
@@ -194,7 +195,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
    private final RMarkdownServerOperations server_;
    private final CompileOutputPaneDisplay view_;
    private final GlobalDisplay globalDisplay_;
-   private final Commands commands_;
+   private final EventBus events_;
    
    private boolean renderRunning_ = false;
    private boolean switchToConsoleAfterRender_ = false;

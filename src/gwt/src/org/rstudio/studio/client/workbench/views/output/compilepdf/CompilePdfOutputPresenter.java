@@ -26,6 +26,7 @@ import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.compile.CompileOutput;
@@ -38,8 +39,8 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
@@ -57,7 +58,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
                                     GlobalDisplay globalDisplay,
                                     CompilePdfServerOperations server,
                                     FileTypeRegistry fileTypeRegistry,
-                                    Commands commands)
+                                    EventBus events)
    {
       super(outputFactory.create("Compile PDF", 
                                  "View the LaTeX compilation log"));
@@ -65,7 +66,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
-      commands_ = commands;
+      events_ = events;
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -196,7 +197,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       if (event.getResult().getSucceeded() && 
           switchToConsoleOnSuccessfulCompile_)
       {
-         commands_.activateConsole().execute();
+         events_.fireEvent(new ConsoleActivateEvent(false)); 
       }
       else if (!event.getResult().getSucceeded())
       {
@@ -291,6 +292,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    private final CompilePdfServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
-   private final Commands commands_;
+   private final EventBus events_;
+   
    private boolean switchToConsoleOnSuccessfulCompile_;
 }
