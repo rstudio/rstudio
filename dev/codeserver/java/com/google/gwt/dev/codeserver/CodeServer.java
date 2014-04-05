@@ -56,13 +56,30 @@ public class CodeServer {
     if (options.isCompileTest()) {
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(TreeLogger.Type.INFO);
+
+      Modules modules;
+
       try {
-        makeModules(options, logger);
+        modules = makeModules(options, logger);
       } catch (Throwable t) {
         t.printStackTrace();
         System.out.println("FAIL");
         System.exit(1);
+        return;
       }
+
+      int retries = options.getCompileTestRecompiles();
+      for (int i = 0; i < retries; i++) {
+        System.out.println("\n### Recompile " + (i + 1) + "\n");
+        try {
+          modules.defaultCompileAll(options.getNoPrecompile());
+        } catch (Throwable t) {
+          t.printStackTrace();
+          System.out.println("FAIL");
+          System.exit(1);
+        }
+      }
+
       System.out.println("PASS");
       System.exit(0);
     }

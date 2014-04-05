@@ -56,6 +56,7 @@ public class Options {
   // Use the same default as the GWT compiler.
   private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
   private boolean strictResources = false;
+  private int compileTestRecompiles = 0;
 
   /**
    * Sets each option to the appropriate value, based on command-line arguments.
@@ -149,6 +150,10 @@ public class Options {
     return bindAddress;
   }
 
+  int getCompileTestRecompiles() {
+    return compileTestRecompiles;
+  }
+
   /**
    * The hostname to put in a URL pointing to the code server.
    */
@@ -179,6 +184,7 @@ public class Options {
     public ArgProcessor() {
       registerHandler(new NoPrecompileFlag());
       registerHandler(new CompileTestFlag());
+      registerHandler(new CompileTestRecompilesFlag());
       registerHandler(new BindAddressFlag());
       registerHandler(new PortFlag());
       registerHandler(new WorkDirFlag());
@@ -261,6 +267,29 @@ public class Options {
     @Override
     public boolean getDefaultValue() {
       return isCompileTest;
+    }
+  }
+
+  private class CompileTestRecompilesFlag extends ArgHandlerInt {
+
+    @Override
+    public String getTag() {
+      return "-compileTestRecompiles";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] { "count" };
+    }
+
+    @Override
+    public String getPurpose() {
+      return "The number of times to recompile (after the first one) during a compile test.";
+    }
+
+    @Override
+    public void setInt(int value) {
+      compileTestRecompiles = value;
     }
   }
 

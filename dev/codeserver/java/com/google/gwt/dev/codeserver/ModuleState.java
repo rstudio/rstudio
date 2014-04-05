@@ -46,7 +46,13 @@ class ModuleState {
       throws UnableToCompleteException {
     this.recompiler = recompiler;
     this.logger = logger;
+    defaultCompile(noPrecompile);
+  }
 
+  /**
+   * Compiles the module with the default set of properties.
+   */
+  void defaultCompile(boolean noPrecompile) throws UnableToCompleteException {
     CompileDir compileDir;
     if (noPrecompile) {
       compileDir = recompiler.noCompile();

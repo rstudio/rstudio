@@ -16,6 +16,8 @@
 
 package com.google.gwt.dev.codeserver;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -51,5 +53,11 @@ class Modules implements Iterable<String> {
   @Override
   public Iterator<String> iterator() {
     return moduleStateMap.keySet().iterator();
+  }
+
+  void defaultCompileAll(boolean noPrecompile) throws UnableToCompleteException {
+    for (ModuleState m: moduleStateMap.values()) {
+      m.defaultCompile(noPrecompile);
+    }
   }
 }
