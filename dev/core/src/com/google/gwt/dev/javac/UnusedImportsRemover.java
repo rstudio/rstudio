@@ -202,11 +202,7 @@ public class UnusedImportsRemover {
     // the Compilation unit declaration. Hence we do it manually.
     if (cud.currentPackage != null && cud.currentPackage.annotations != null) {
       for (Annotation annotation : cud.currentPackage.annotations) {
-        if (annotation.type instanceof SingleTypeReference) {
-          astVisitor.addName((SingleTypeReference) annotation.type);
-        } else if (annotation.type instanceof QualifiedTypeReference) {
-          astVisitor.addName((QualifiedTypeReference) annotation.type);
-        }
+        annotation.traverse(astVisitor, (BlockScope) null);
       }
     }
 
