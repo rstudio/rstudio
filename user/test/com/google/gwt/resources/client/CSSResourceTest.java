@@ -21,6 +21,7 @@ import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.CssResource.Shared;
 
+
 /**
  * Contains various full-stack tests of the CssResource system.
  */
@@ -190,6 +191,12 @@ public class CSSResourceTest extends GWTTestCase {
     FullTestCss css();
 
     @Source("32x32.png")
+    CustomDataResource customDataMethod();
+
+    @Source("16x16.png")
+    CustomImageResource customSpriteMethod();
+
+    @Source("32x32.png")
     DataResource dataMethod();
 
     // Test default extensions
@@ -314,13 +321,17 @@ public class CSSResourceTest extends GWTTestCase {
 
     // Check data URL expansion
     assertTrue(text.contains("backgroundTopLevel:url('"
-        + Resources.INSTANCE.dataMethod().getUrl() + "')"));
+        + Resources.INSTANCE.dataMethod().getSafeUri().asString() + "')"));
     assertTrue(text.contains("backgroundNested:url('"
-        + Resources.INSTANCE.nested().dataMethod().getUrl() + "')"));
+        + Resources.INSTANCE.nested().dataMethod().getSafeUri().asString() + "')"));
+    assertTrue(text.contains("backgroundCustom:url('"
+        + Resources.INSTANCE.customDataMethod().getSafeUri().asString() + "')"));
     assertTrue(text.contains("backgroundImage:url('"
-        + Resources.INSTANCE.spriteMethod().getURL() + "')"));
+        + Resources.INSTANCE.spriteMethod().getSafeUri().asString() + "')"));
     assertTrue(text.contains("backgroundImageNested:url('"
-        + Resources.INSTANCE.nested().spriteMethod().getURL() + "')"));
+        + Resources.INSTANCE.nested().spriteMethod().getSafeUri().asString() + "')"));
+    assertTrue(text.contains("backgroundImageCustom:url('"
+        + Resources.INSTANCE.customSpriteMethod().getSafeUri().asString() + "')"));
 
     // Check @eval expansion
     assertTrue(text.contains(red() + ";"));

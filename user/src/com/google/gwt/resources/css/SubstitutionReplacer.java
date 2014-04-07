@@ -109,25 +109,21 @@ public class SubstitutionReplacer extends CssVisitor {
           throw new CssCompilerException("Cannot find data method");
         }
 
-        if (!methodType.equals(dataResourceType) &&
-            !methodType.equals(imageResourceType)) {
+        if (!(methodType instanceof JClassType) ||
+            (!dataResourceType.isAssignableFrom((JClassType) methodType) &&
+            !imageResourceType.isAssignableFrom((JClassType) methodType))) {
           String message = "Invalid method type for url substitution: " + methodType + ". " +
               "Only DataResource and ImageResource are supported.";
           logger.log(TreeLogger.ERROR, message);
           throw new CssCompilerException(message);
         }
 
-        String instance = "((" + methodType.getQualifiedSourceName() + ")("
-            + context.getImplementationSimpleSourceName() + ".this."
-            + functionName.getExpression() + "))";
-
         StringBuilder expression = new StringBuilder();
         expression.append("\"url('\" + ");
-        if (methodType.equals(dataResourceType)) {
-          expression.append(instance).append(".getUrl()");
-        } else if (methodType.equals(imageResourceType)) {
-          expression.append(instance).append(".getURL()");
-        }
+        expression.append(context.getImplementationSimpleSourceName());
+        expression.append(".this.");
+        expression.append(functionName.getExpression());
+        expression.append(".getSafeUri().asString()");
         expression.append(" + \"')\"");
         result.add(new ExpressionValue(expression.toString()));
       } else {

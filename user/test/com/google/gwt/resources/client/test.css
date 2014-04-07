@@ -18,8 +18,10 @@
 @eval RED com.google.gwt.resources.client.CSSResourceTest.red();
 @url BACKGROUND dataMethod;
 @url NESTEDBACKGROUND nested.dataMethod;
+@url CUSTOMBACKGROUND customDataMethod;
 @url BACKGROUNDIMAGE spriteMethod;
 @url NESTEDBACKGROUNDIMAGE nested.spriteMethod;
+@url CUSTOMBACKGROUNDIMAGE customSpriteMethod;
 
 /* Check @def expansion */
 @def SPRITEWIDTH value("spriteMethod.getWidth", "px");
@@ -59,8 +61,10 @@ div {
     direction: DIRECTION;
     backgroundTopLevel: BACKGROUND;
     backgroundNested: NESTEDBACKGROUND;
+    backgroundCustom: CUSTOMBACKGROUND;
     backgroundImage: BACKGROUNDIMAGE;
     backgroundImageNested: NESTEDBACKGROUNDIMAGE;
+    backgroundImageCustom: CUSTOMBACKGROUNDIMAGE;
 }
 
 div[foo="bar"] {
