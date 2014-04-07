@@ -51,6 +51,10 @@ public class RmdPreviewParams extends JavaScriptObject
       return this.result.output_url;
    }-*/;
    
+   public native final boolean isShinyDocument() /*-{
+      return this.result.is_shiny_document;
+   }-*/;
+   
    public native final int getScrollPosition() /*-{
       return this.scroll_position;
    }-*/;

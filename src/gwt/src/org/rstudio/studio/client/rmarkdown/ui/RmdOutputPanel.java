@@ -124,7 +124,10 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       }
       else
       {
-         url = server_.getApplicationURL(params.getOutputUrl());
+         if (params.getResult().isShinyDocument())
+            url = params.getOutputUrl();
+         else
+            url = server_.getApplicationURL(params.getOutputUrl());
          
          // check for an explicit anchor if there wasn't one implied
          // by the preview_slide

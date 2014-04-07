@@ -56,6 +56,7 @@ import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
@@ -565,6 +566,11 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.RmdTemplateDiscoveryCompleted))
          {
             eventBus_.fireEvent(new RmdTemplateDiscoveryCompletedEvent());
+         }
+         else if (type.equals(ClientEvent.RmdShinyDocStarted))
+         {
+            RmdShinyDocStartedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RmdShinyDocStartedEvent(data));
          }
          else
          {

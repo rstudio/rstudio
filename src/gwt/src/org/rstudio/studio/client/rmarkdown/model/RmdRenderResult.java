@@ -26,6 +26,26 @@ public class RmdRenderResult extends JavaScriptObject
    {
    }
    
+   public static native final RmdRenderResult createFromShinyUrl(String file,
+                                                          String shinyUrl) /*-{
+     return {
+        succeeded: true,
+        target_file: file,
+        output_file: "",
+        output_url: shinyUrl, 
+        output_format: null, 
+        rpubs_published: false, 
+        knitr_errors: [],
+        is_shiny_document: true,
+        preview_side: -1,
+        slide_navigation: null,
+        output_format: {
+           format_name: "html_document", 
+           self_contained: false
+        }
+     };
+   }-*/;
+  
    public native final boolean getSucceeded() /*-{
       return this.succeeded;
    }-*/;
@@ -71,6 +91,10 @@ public class RmdRenderResult extends JavaScriptObject
    public final native JsArray<CompileError> getKnitrErrors() /*-{
       return this.knitr_errors;
    }-*/;
+   
+   public final native boolean isShinyDocument() /*-{
+      return this.is_shiny_document;
+   }-*/;
 
    public final boolean isHtmlPresentation()
    {
@@ -82,7 +106,11 @@ public class RmdRenderResult extends JavaScriptObject
    // another result (must match name and type)
    public final boolean equals(RmdRenderResult other)
    {
-      return getOutputFile().equals(other.getOutputFile()) &&
-             getFormatName().equals(other.getFormatName());
+      // for Shiny documents, match on input source
+      if (isShinyDocument() && other.isShinyDocument())
+         return getTargetFile().equals(other.getTargetFile());
+      else
+         return getOutputFile().equals(other.getOutputFile()) &&
+                getFormatName().equals(other.getFormatName());
    }
 }

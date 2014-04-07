@@ -94,6 +94,7 @@ private:
    RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation) :
       isRunning_(false),
       terminationRequested_(false),
+      isShiny_(false),
       targetFile_(targetFile),
       sourceLine_(sourceLine),
       sourceNavigation_(sourceNavigation)
@@ -146,10 +147,14 @@ private:
 
       if (renderFunc.empty())
          renderFunc = "rmarkdown::render";
+      else if (renderFunc == "rmarkdown::run_document")
+         isShiny_ = true;
 
       std::string extraParams;
+      if (isShiny_)
+         extraParams += "shiny_args = list(launch.browser = FALSE), ";
       if (!format.empty())
-         extraParams = "output_format = rmarkdown::" + format + "(), ";
+         extraParams += "output_format = rmarkdown::" + format + "(), ";
 
       // render command
       boost::format fmt("%1%('%2%', %3% encoding='%4%');");
@@ -212,8 +217,30 @@ private:
    {
       // buffer output
       pAllOutput->append(output);
-      
+
       enqueRenderOutput(type, output);
+
+      // if this is a Shiny render, check to see if Shiny started listening
+      if (!isShiny_)
+         return;
+      std::vector<std::string> outputLines;
+      boost::algorithm::split(outputLines, output,
+                              boost::algorithm::is_any_of("\n\r"));
+      BOOST_FOREACH(std::string& outputLine, outputLines)
+      {
+         const boost::regex shinyListening("^Listening on (http.*)$");
+         boost::smatch matches;
+         if (boost::regex_match(outputLine, matches, shinyListening))
+         {
+            json::Object startedJson;
+            startedJson["target_file"] = targetFile_.absolutePath();
+            startedJson["url"] = matches[1].str();
+            module_context::enqueClientEvent(ClientEvent(
+                        client_events::kRmdShinyDocStarted,
+                        startedJson));
+            break;
+         }
+      }
    }
 
    void onRenderCompleted(int exitStatus,
@@ -293,6 +320,8 @@ private:
       resultJson["output_url"] = outputUrl;
 
       resultJson["output_format"] = outputFormat_;
+
+      resultJson["is_shiny_document"] = isShiny_;
 
       // default to no slide info
       resultJson["preview_slide"] = -1;
@@ -426,6 +455,7 @@ private:
 
    bool isRunning_;
    bool terminationRequested_;
+   bool isShiny_;
    FilePath targetFile_;
    int sourceLine_;
    FilePath outputFile_;

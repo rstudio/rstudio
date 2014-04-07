@@ -39,6 +39,11 @@
   yamlFrontMatter <- rmarkdown:::parse_yaml_front_matter(lines)
   if (is.character(yamlFrontMatter$knit))
     yamlFrontMatter$knit[[1]]
+  else if (!is.null(yamlFrontMatter$runtime) && 
+           identical(yamlFrontMatter$runtime, "shiny"))
+    # use run_document as a wrapper for reneder when the doc requires the
+    # Shiny runtime
+    "rmarkdown::run_document"
   else
     ""
 })

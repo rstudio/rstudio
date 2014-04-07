@@ -32,9 +32,12 @@ import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -47,7 +50,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class RmdOutput implements RmdRenderStartedEvent.Handler,
-                                  RmdRenderCompletedEvent.Handler
+                                  RmdRenderCompletedEvent.Handler,
+                                  RmdShinyDocStartedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, RmdOutput> {}
@@ -61,7 +65,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                     Binder binder,
                     UIPrefs prefs,
                     PDFViewer pdfViewer,
-                    final SatelliteManager satelliteManager)
+                    final SatelliteManager satelliteManager,
+                    RMarkdownServerOperations server)
    {
       satelliteManager_ = satelliteManager;
       globalDisplay_ = globalDisplay;
@@ -69,9 +74,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       pViewFilePanel_ = pViewFilePanel;
       prefs_ = prefs;
       pdfViewer_ = pdfViewer;
+      server_ = server;
       
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
+      eventBus.addHandler(RmdShinyDocStartedEvent.TYPE, this);
 
       binder.bind(commands, this);
       
@@ -169,6 +176,16 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             globalDisplay_.openWindow(result.getOutputUrl());
       }
    }
+   
+   @Override
+   public void onRmdShinyDocStarted(RmdShinyDocStartedEvent event)
+   {
+      displayHTMLRenderResult(
+            RmdRenderResult.createFromShinyUrl(event.getFile(), 
+                                               event.getUrl()));
+   }
+   
+   // Private methods ---------------------------------------------------------
    
    private void displayHTMLRenderResult(RmdRenderResult result)
    {
@@ -280,6 +297,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       RmdPreviewParams params = closeParams.cast();
       cacheDocPosition(params.getResult(), params.getScrollPosition(), 
                        params.getAnchor());
+      
+      // if this is a Shiny document, stop the associated process
+      if (params.isShinyDocument())
+      {
+         server_.terminateRenderRmd(new VoidServerRequestCallback());
+      }
    }
    
    private void cacheDocPosition(RmdRenderResult result, int scrollPosition, 
@@ -299,7 +322,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    // position and/or anchor by document name and type 
    private String keyFromResult(RmdRenderResult result)
    {
-      return result.getOutputFile() + "-" + result.getFormatName();
+      if (result.isShinyDocument())
+         return result.getTargetFile();
+      else
+         return result.getOutputFile() + "-" + result.getFormatName();
    }
 
    private final SatelliteManager satelliteManager_;
@@ -308,6 +334,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final UIPrefs prefs_;
    private final PDFViewer pdfViewer_;
    private final Provider<ViewFilePanel> pViewFilePanel_;
+   private final RMarkdownServerOperations server_;
 
    // stores the last scroll position of each document we know about: map
    // of path to position
