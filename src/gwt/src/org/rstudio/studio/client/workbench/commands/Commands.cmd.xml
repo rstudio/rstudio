@@ -387,14 +387,14 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
          <shortcut refid="reindent" value="Cmd+I"/>
          <shortcut refid="reflowComment" value="Cmd+Shift+/"/>
-         <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="unfold" value="Cmd+Shift+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="foldAll" value="Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="foldAll" value="Cmd+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="unfoldAll" value="Shift+Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
+         <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
+         <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
+         <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand Fold"/>
+         <shortcut refid="unfold" value="Cmd+Shift+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand Fold"/>
+         <shortcut refid="foldAll" value="Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse All Folds"/>
+         <shortcut refid="foldAll" value="Cmd+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse All Folds"/>
+         <shortcut refid="unfoldAll" value="Shift+Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand All Folds"/>
+         <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand All Folds"/>  
          <shortcut value="Ctrl+K" title="Delete to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
          <shortcut value="Alt+Up" title="Move Lines Up" />
          <shortcut value="Alt+Down" title="Move Lines Down" />
@@ -403,9 +403,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Ctrl+U" title="Yank Line Up to Cursor" />
          <shortcut value="Ctrl+K" title="Yank Line After Cursor" />
          <shortcut value="Ctrl+Y" title="Insert Yanked Text" />
-         <shortcut value="Cmd+Shift+Alt+G" title="Go to Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut value="Shift+Alt+G" title="Go to Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+-" title="Insert Asssignment Operator"/>
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -449,7 +448,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="saveSourceDoc" value="Cmd+S"/>
          <shortcut refid="saveAllSourceDocs" value= "Cmd+Alt+S"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
-         <shortcut refid="newSourceDoc" value="Cmd+Alt+I" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
+         <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="openSourceDoc" value="Cmd+O"/>
          <shortcut refid="closeSourceDoc" value="Cmd+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
@@ -467,9 +466,9 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="roxygenizePackage" value="Cmd+Shift+D"/>
       </shortcutgroup>
       <shortcutgroup name="Execute">
-         <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
-         <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
+         <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S" title="Source Active File"/>
          <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
+         <shortcut refid="sourceFile" value="Cmd+Shift+O" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
          <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()"/>
          <shortcut refid="executeCode" value="Cmd+Enter"/>
