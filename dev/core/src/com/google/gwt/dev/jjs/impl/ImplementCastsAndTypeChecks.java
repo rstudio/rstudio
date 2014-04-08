@@ -107,31 +107,18 @@ public class ImplementCastsAndTypeChecks {
           } else if (program.typeOracle.isDualJsoInterface(refType)) {
             // An interface that should succeed when the object is a JSO
             method = program.getIndexedMethod("Cast.dynamicCastAllowJso");
+          } else if (isJsInterfaceCast) {
+            method = program.getIndexedMethod("Cast.dynamicCastWithPrototype");
           } else {
-            if (program.typeOracle.isOrExtendsJsInterface(toType, true)) {
-            if (isJsInterfaceCast) {
-              method = program.getIndexedMethod("Cast.dynamicCastWithPrototype");
-            } else {
-              // A regular cast
-              method = program.getIndexedMethod("Cast.dynamicCast");
-            }
-              isJsInterfaceCast = true;
-            } else {
-              // A regular cast
-              method = program.getIndexedMethod("Cast.dynamicCast");
-            }
+            // A regular cast
+            method = program.getIndexedMethod("Cast.dynamicCast");
           }
           // override the type of the called method with the target cast type
           JMethodCall call = new JMethodCall(info, null, method, toType);
           call.addArg(curExpr);
           if (!isJsoCast) {
-            call.addArg((new JRuntimeTypeReference(x.getSourceInfo(), program.getTypeJavaLangObject(),
-                refType)));
-          }
-          if (isJsInterfaceCast) {
-            call.addArg(program.getStringLiteral(x.getSourceInfo(),
-                program.typeOracle.getNearestJsInterface(toType,
-                    true).getJsPrototype()));
+            call.addArg((new JRuntimeTypeReference(x.getSourceInfo(),
+                program.getTypeJavaLangObject(), refType)));
           }
           if (isJsInterfaceCast) {
             call.addArg(program.getStringLiteral(x.getSourceInfo(),
@@ -245,14 +232,12 @@ public class ImplementCastsAndTypeChecks {
         } else if (program.typeOracle.willCrossCastLikeJso(toType)) {
           isJsoCast = true;
           method = program.getIndexedMethod("Cast.instanceOfJso");
+        } else if (program.typeOracle.isOrExtendsJsInterface(toType, true)) {
+            // a real castableTypeMap check or JS prototype check
+          method = program.getIndexedMethod("Cast.instanceOfJsInterface");
+          isJsInterfaceCast = true;
         } else {
-          // a real castableTypeMap check or JS prototype check
-          if (program.typeOracle.isOrExtendsJsInterface(toType, true)) {
-            method = program.getIndexedMethod("Cast.instanceOfJsInterface");
-            isJsInterfaceCast = true;
-          } else {
-            method = program.getIndexedMethod("Cast.instanceOf");
-          }
+          method = program.getIndexedMethod("Cast.instanceOf");
         }
         JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         call.addArg(x.getExpr());
