@@ -21,6 +21,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.Desktop;
@@ -37,6 +38,8 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarning;
+import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -105,7 +108,48 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       final RmdRenderResult result = event.getResult();
       if (!result.getSucceeded())
          return;
-        
+
+      if (result.hasShinyContent() && !result.isShinyDocument())
+      {
+         // If the result has Shiny content but wasn't rendered as a Shiny
+         // document, suggest rendering as a Shiny document instead
+         new ShinyDocumentWarningDialog(new OperationWithInput<Integer>()
+         {
+            @Override
+            public void execute(Integer input)
+            {
+               switch (input)
+               {
+               case ShinyDocumentWarningDialog.RENDER_SHINY_NO:
+                  displayRenderResult(result);
+                  break;
+               case ShinyDocumentWarningDialog.RENDER_SHINY_ONCE:
+                  // TODO Render doc in Shiny mode
+                  break;
+               case ShinyDocumentWarningDialog.RENDER_SHINY_ALWAYS:
+                  break;
+               }
+            }
+         }).showModal();
+      }
+      else
+      {
+         displayRenderResult(event.getResult());
+      }
+   }
+      
+   @Override
+   public void onRmdShinyDocStarted(RmdShinyDocStartedEvent event)
+   {
+      displayHTMLRenderResult(
+            RmdRenderResult.createFromShinyUrl(event.getFile(), 
+                                               event.getUrl()));
+   }
+   
+   // Private methods ---------------------------------------------------------
+   
+   private void displayRenderResult(final RmdRenderResult result)
+   {
       String extension = FileSystemItem.getExtensionFromPath(
                                                 result.getOutputFile()); 
       if (".pdf".equals(extension))
@@ -176,16 +220,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             globalDisplay_.openWindow(result.getOutputUrl());
       }
    }
-   
-   @Override
-   public void onRmdShinyDocStarted(RmdShinyDocStartedEvent event)
-   {
-      displayHTMLRenderResult(
-            RmdRenderResult.createFromShinyUrl(event.getFile(), 
-                                               event.getUrl()));
-   }
-   
-   // Private methods ---------------------------------------------------------
    
    private void displayHTMLRenderResult(RmdRenderResult result)
    {

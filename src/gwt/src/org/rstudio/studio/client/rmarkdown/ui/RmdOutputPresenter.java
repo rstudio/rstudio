@@ -161,8 +161,14 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    
    private void onClose() 
    {
-      params_.setScrollPosition(view_.getScrollPosition());
-      params_.setAnchor(view_.getAnchor());
+      if (!params_.isShinyDocument())
+      {
+         // TODO: We can't access these properties for Shiny documents due to
+         // cross-origin policy restrictions. Is there another way to get this
+         // data?
+         params_.setScrollPosition(view_.getScrollPosition());
+         params_.setAnchor(view_.getAnchor());
+      }
       notifyRmdOutputClosed(params_);
    }
    

@@ -45,6 +45,8 @@
 #define kMathjaxSegment "mathjax"
 #define kMathjaxBeginComment "<!-- dynamically load mathjax"
 
+#define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
+
 using namespace core;
 
 namespace session {
@@ -95,6 +97,7 @@ private:
       isRunning_(false),
       terminationRequested_(false),
       isShiny_(false),
+      hasShinyContent_(false),
       targetFile_(targetFile),
       sourceLine_(sourceLine),
       sourceNavigation_(sourceNavigation)
@@ -220,25 +223,34 @@ private:
 
       enqueRenderOutput(type, output);
 
-      // if this is a Shiny render, check to see if Shiny started listening
-      if (!isShiny_)
-         return;
       std::vector<std::string> outputLines;
       boost::algorithm::split(outputLines, output,
                               boost::algorithm::is_any_of("\n\r"));
       BOOST_FOREACH(std::string& outputLine, outputLines)
       {
-         const boost::regex shinyListening("^Listening on (http.*)$");
-         boost::smatch matches;
-         if (boost::regex_match(outputLine, matches, shinyListening))
+         // if this is a Shiny render, check to see if Shiny started listening
+         if (isShiny_)
          {
-            json::Object startedJson;
-            startedJson["target_file"] = targetFile_.absolutePath();
-            startedJson["url"] = matches[1].str();
-            module_context::enqueClientEvent(ClientEvent(
-                        client_events::kRmdShinyDocStarted,
-                        startedJson));
-            break;
+            const boost::regex shinyListening("^Listening on (http.*)$");
+            boost::smatch matches;
+            if (boost::regex_match(outputLine, matches, shinyListening))
+            {
+               json::Object startedJson;
+               startedJson["target_file"] = targetFile_.absolutePath();
+               startedJson["url"] = matches[1].str();
+               module_context::enqueClientEvent(ClientEvent(
+                           client_events::kRmdShinyDocStarted,
+                           startedJson));
+               break;
+            }
+         }
+
+         // check to see if a warning was emitted indicating that this document
+         // contains Shiny content
+         if (outputLine.substr(0, sizeof(kShinyContentWarning)) ==
+             kShinyContentWarning)
+         {
+            hasShinyContent_ = true;
          }
       }
    }
@@ -293,6 +305,7 @@ private:
    void terminate(bool succeeded)
    {
       isRunning_ = false;
+
       json::Object resultJson;
       resultJson["succeeded"] = succeeded;
       resultJson["target_file"] =
@@ -322,6 +335,7 @@ private:
       resultJson["output_format"] = outputFormat_;
 
       resultJson["is_shiny_document"] = isShiny_;
+      resultJson["has_shiny_content"] = hasShinyContent_;
 
       // default to no slide info
       resultJson["preview_slide"] = -1;
@@ -456,6 +470,7 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    bool isShiny_;
+   bool hasShinyContent_;
    FilePath targetFile_;
    int sourceLine_;
    FilePath outputFile_;

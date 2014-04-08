@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rs="urn:import:org.rstudio.studio.client.common">
+	<ui:style>
+	  .warning
+	  {
+	    margin-bottom: 15px;
+	  }
+	</ui:style>
+	<g:HTMLPanel>
+	<g:HTML styleName="{style.warning}">
+	  This R Markdown document contains Shiny components, but was rendered to a
+	  static file. Render and view using Shiny instead?
+	</g:HTML>
+	<rs:HelpLink caption="Shiny Documents" link="shiny_documents"></rs:HelpLink>
+	</g:HTMLPanel>
+</ui:UiBinder> 

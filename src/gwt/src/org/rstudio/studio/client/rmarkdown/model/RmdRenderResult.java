@@ -95,6 +95,10 @@ public class RmdRenderResult extends JavaScriptObject
    public final native boolean isShinyDocument() /*-{
       return this.is_shiny_document;
    }-*/;
+   
+   public final native boolean hasShinyContent() /*-{
+      return this.has_shiny_content;
+   }-*/;
 
    public final boolean isHtmlPresentation()
    {
