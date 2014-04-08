@@ -177,6 +177,7 @@ public class TextEditingTarget implements
       void debug_dumpContents();
       void debug_importDump();
       
+      void setIsShinyFormat();
       void setFormatOptions(TextFileType fileType,
                             List<String> options, 
                             List<String> values, 
@@ -2487,6 +2488,12 @@ public class TextEditingTarget implements
       if (selTemplate == null)
       {
          view_.setFormatOptionsVisible(false);
+         return;
+      }
+      
+      else if (selTemplate.isShiny)
+      {
+         view_.setIsShinyFormat();
          return;
       }
       
