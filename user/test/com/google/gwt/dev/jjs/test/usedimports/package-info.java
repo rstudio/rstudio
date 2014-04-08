@@ -14,6 +14,9 @@
  * the License.
  */
 @ParametersAreNonnullByDefault
+@CheckReturnValue(when = When.UNKNOWN)
 package com.google.gwt.dev.jjs.test.usedimports;
 
+import javax.annotation.CheckReturnValue;
 import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.meta.When;
