@@ -629,7 +629,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
    * as a list of strings and then adds it to the iframe.
    */
   protected boolean shouldInstallCode(LinkerContext context) {
-    return getBooleanConfigurationProperty(context, "installCode", true);
+    return getBooleanConfigurationProperty(context, "installCode", context.isOutputCompact());
   }
 
   /**
