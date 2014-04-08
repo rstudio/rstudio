@@ -484,6 +484,11 @@ int main(int argc, char * const argv[])
             return core::system::exitFailure(error, ERROR_LOCATION);
       }
 
+      // restrict core dumps
+      error = core::system::restrictCoreDumps();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
       // run special verify installation mode if requested
       if (options.verifyInstallation())
       {

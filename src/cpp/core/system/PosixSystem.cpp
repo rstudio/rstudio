@@ -38,6 +38,10 @@
 #include <mach-o/dyld.h>
 #endif
 
+#ifndef __APPLE__
+#include <sys/prctl.h>
+#endif
+
 #include <boost/thread.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -747,6 +751,9 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
       case StackLimit:
          *pLimit = RLIMIT_STACK;
          break;
+      case CoreLimit:
+         *pLimit = RLIMIT_CORE;
+         break;
       default:
          *pLimit = -1;
          break;
@@ -809,6 +816,50 @@ Error setResourceLimit(ResourceLimit resourceLimit,
       return systemError(errno, ERROR_LOCATION);
    else
       return Success();
+}
+
+Error restrictCoreDumps()
+{
+   // set allowed size of core dumps to 0 bytes
+   Error error = setResourceLimit(core::system::CoreLimit, 0);
+   if (error)
+      return error;
+
+   // no ptrace core dumps permitted
+#ifndef __APPLE__
+   int res = ::prctl(PR_SET_DUMPABLE, 0);
+   if (res == -1)
+      return systemError(errno, ERROR_LOCATION);
+#endif
+
+   return Success();
+}
+
+void printCoreDumpable(const std::string& context)
+{
+   std::ostringstream ostr;
+
+   ostr << "Core Dumpable (" << context << ")" << std::endl;
+
+   // ulimit
+   RLimitType rLimitSoft, rLimitHard;
+   Error error = getResourceLimit(core::system::CoreLimit,
+                                  &rLimitSoft, &rLimitHard);
+   if (error)
+      LOG_ERROR(error);
+
+   ostr << "  soft limit: " << rLimitSoft << std::endl;
+   ostr << "  hard limit: " << rLimitHard << std::endl;
+
+   // ptrace
+#ifndef __APPLE__
+   int dumpable = ::prctl(PR_GET_DUMPABLE, NULL, NULL, NULL, NULL);
+   if (dumpable == -1)
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+   ostr << "  pr_get_dumpable: " << dumpable << std::endl;
+#endif
+
+   std::cerr << ostr.str();
 }
 
 

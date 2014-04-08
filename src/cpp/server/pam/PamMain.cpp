@@ -22,6 +22,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Pam.hpp>
 
@@ -61,6 +62,14 @@ int main(int argc, char * const argv[])
       Error error = core::system::ignoreSignal(core::system::SigPipe);
       if (error)
          LOG_ERROR(error);
+
+      // restrict core dumps
+      error = core::system::restrictCoreDumps();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return EXIT_FAILURE;
+      }
 
       // ensure that we aren't being called inappropriately
       if (::isatty(STDIN_FILENO))

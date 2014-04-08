@@ -54,7 +54,8 @@ enum ResourceLimit
    MemoryLimit,
    FilesLimit,
    UserProcessesLimit,
-   StackLimit
+   StackLimit,
+   CoreLimit
 };
 
 bool resourceIsUnlimited(RLimitType limitValue);
@@ -68,6 +69,10 @@ core::Error setResourceLimit(ResourceLimit resourceLimit, RLimitType limit);
 core::Error setResourceLimit(ResourceLimit resourceLimit,
                              RLimitType soft,
                              RLimitType hard);
+
+// core dump restriction
+core::Error restrictCoreDumps();
+void printCoreDumpable(const std::string& context);
 
 // launching child processes
 
