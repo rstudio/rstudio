@@ -236,7 +236,8 @@ private:
             if (boost::regex_match(outputLine, matches, shinyListening))
             {
                json::Object startedJson;
-               startedJson["target_file"] = targetFile_.absolutePath();
+               startedJson["target_file"] =
+                     module_context::createAliasedPath(targetFile_);
                startedJson["url"] = matches[1].str();
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,

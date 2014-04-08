@@ -77,6 +77,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -520,6 +521,24 @@ public class TextEditingTarget implements
                }
             }
             updateBreakpointWarningBar();
+         }
+      });
+      
+      events_.addHandler(ConvertToShinyDocEvent.TYPE, 
+                         new ConvertToShinyDocEvent.Handler()
+      {
+         @Override
+         public void onConvertToShinyDoc(ConvertToShinyDocEvent event)
+         {
+            if (getPath() != null &&
+                getPath().equals(event.getPath()))
+            {
+               String yaml = getRmdFrontMatter();
+               if (yaml == null)
+                  return;
+               String newYaml = rmarkdownHelper_.convertYamlToShinyDoc(yaml);
+               applyRmdFrontMatter(newYaml);
+            }
          }
       });
    }

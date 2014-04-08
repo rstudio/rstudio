@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
+import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
@@ -38,7 +39,6 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
-import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarning;
 import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -78,6 +78,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       prefs_ = prefs;
       pdfViewer_ = pdfViewer;
       server_ = server;
+      events_ = eventBus;
       
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
@@ -127,6 +128,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                   // TODO Render doc in Shiny mode
                   break;
                case ShinyDocumentWarningDialog.RENDER_SHINY_ALWAYS:
+                  events_.fireEvent(new ConvertToShinyDocEvent
+                        (result.getTargetFile()));
                   break;
                }
             }
@@ -369,6 +372,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final PDFViewer pdfViewer_;
    private final Provider<ViewFilePanel> pViewFilePanel_;
    private final RMarkdownServerOperations server_;
+   private final EventBus events_;
 
    // stores the last scroll position of each document we know about: map
    // of path to position

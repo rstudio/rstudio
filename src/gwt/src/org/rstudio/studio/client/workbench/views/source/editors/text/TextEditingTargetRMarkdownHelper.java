@@ -479,6 +479,14 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
+   public String convertYamlToShinyDoc(String yaml)
+   {
+      YamlTree yamlTree = new YamlTree(yaml);
+      yamlTree.addYamlValue(null, "runtime", "shiny");
+      
+      return yamlTree.toString();
+   }
+   
    // Private methods ---------------------------------------------------------
    
    private void cleanAndCreateTemplate(final RmdChosenTemplate template, 
