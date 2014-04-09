@@ -54,11 +54,14 @@ void SatelliteWindow::finishLoading(bool ok)
       avoidMoveCursorIfNecessary();
 }
 
-void SatelliteWindow::closeEvent(QCloseEvent *)
+void SatelliteWindow::closeEvent(QCloseEvent *event)
 {
     webView()->page()->mainFrame()->evaluateJavaScript(QString::fromAscii(
          "if (window.notifyRStudioSatelliteClosing) "
          "   window.notifyRStudioSatelliteClosing();"));
+
+    // forward the close event to the web view
+    webView()->event(event);
 }
 
 void SatelliteWindow::onActivated()
