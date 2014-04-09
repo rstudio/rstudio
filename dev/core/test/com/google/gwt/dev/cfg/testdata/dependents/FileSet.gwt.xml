@@ -1,0 +1,3 @@
+<module type="fileset" rename-to="B">
+  <inherits name="com.google.gwt.dev.cfg.testdata.dependents.Two"/>
+</module>

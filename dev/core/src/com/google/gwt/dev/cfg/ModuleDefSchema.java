@@ -500,6 +500,7 @@ public class ModuleDefSchema extends Schema {
     @SuppressWarnings("unused") // called reflectively
     protected Schema __inherits_begin(String name)
         throws UnableToCompleteException {
+      moduleDef.addDirectDependent(moduleName, name);
       loader.nestedLoad(logger, name, moduleDef);
       return null;
     }
@@ -1445,7 +1446,8 @@ public class ModuleDefSchema extends Schema {
 
   @SuppressWarnings("unused")
   protected Schema __module_begin(NullableName renameTo, String type) {
-    moduleDef.enterModule(ModuleType.valueOf(type.toUpperCase(Locale.ENGLISH)), moduleName);
+    ModuleType moduleType = ModuleType.valueOf(type.toUpperCase(Locale.ENGLISH));
+    moduleDef.enterModule(moduleType, moduleName);
     return bodySchema;
   }
 

@@ -1,0 +1,5 @@
+<module rename-to="A">
+  <inherits name="com.google.gwt.dev.cfg.testdata.dependents.FileSet"/>
+  <inherits name="com.google.gwt.dev.cfg.testdata.dependents.One"/>
+  <inherits name="com.google.gwt.dev.cfg.testdata.dependents.Four"/>
+</module>

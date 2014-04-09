@@ -1,0 +1,3 @@
+<module rename-to="G">
+  <inherits name="com.google.gwt.dev.cfg.testdata.dependents.One"/>
+</module>

@@ -22,6 +22,7 @@ import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -96,6 +97,24 @@ public class ModuleDefLoaderTest extends TestCase {
     // Will throw an exception if com.google.gwt.user.User can't be found and parsed.
     ModuleDefLoader.loadFromResources(TreeLogger.NULL, compilerContext, "com.google.gwt.user.User",
         resourceLoader, false);
+  }
+
+  /**
+   * Tests that the tree representation for a module is correct.
+   */
+  public void testLibraryTree() throws Exception {
+    TreeLogger logger = TreeLogger.NULL;
+    ModuleDef six = ModuleDefLoader.loadFromClassPath(
+        logger, compilerContext, "com.google.gwt.dev.cfg.testdata.dependents.Six");
+
+    assertTrue(six.getDirectDependencies("com.google.gwt.dev.cfg.testdata.dependents.Six")
+        .equals(ImmutableSet.of("com.google.gwt.dev.cfg.testdata.dependents.Five")));
+    assertTrue("Contains " + six.getDirectDependencies(
+        "com.google.gwt.dev.cfg.testdata.dependents.Five"),
+        six.getDirectDependencies("com.google.gwt.dev.cfg.testdata.dependents.Five")
+        .equals(ImmutableSet.of("com.google.gwt.dev.cfg.testdata.dependents.One",
+            "com.google.gwt.dev.cfg.testdata.dependents.Two",
+            "com.google.gwt.dev.cfg.testdata.dependents.Four")));
   }
 
   /**

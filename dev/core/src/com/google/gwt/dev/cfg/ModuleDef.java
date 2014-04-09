@@ -39,9 +39,12 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Iterators;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Queues;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
@@ -59,6 +62,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -66,7 +70,6 @@ import java.util.Set;
  * XML for unit tests.
  */
 public class ModuleDef {
-
   /**
    * Marks a module in a way that can be used to calculate the effective bounds of a library module
    * in a module tree.
@@ -204,6 +207,17 @@ public class ModuleDef {
    */
   private String nameOverride;
 
+
+  /**
+   * The canonical module names of dependency library modules per depending library module.
+   */
+  private Multimap<String, String> directDependentsModuleNamesByModuleName = HashMultimap.create();
+
+  /**
+   * Records the canonical module names for filesets.
+   */
+  private Set<String> filesetModuleNames = Sets.newHashSet();
+
   private final Properties properties = new Properties();
 
   private PathPrefixSet publicPrefixSet = new PathPrefixSet();
@@ -246,6 +260,20 @@ public class ModuleDef {
     this.resources = resources;
     this.monolithic = monolithic;
     defaultFilters = new DefaultFilters();
+  }
+
+  /**
+   * Register a {@code dependentModuleName} as a directDependent of {@code currentModuleName}
+   */
+  public void addDirectDependent(String currentModuleName, String dependentModuleName) {
+    directDependentsModuleNamesByModuleName.put(currentModuleName, dependentModuleName);
+  }
+
+  /**
+   * Registers a module as a fileset.
+   */
+  public void addFileset(String filesetModuleName) {
+    filesetModuleNames.add(filesetModuleName);
   }
 
   public synchronized void addEntryPointTypeName(String typeName) {
@@ -386,6 +414,9 @@ public class ModuleDef {
    * modules ModuleType to updates its idea of attribute source.
    */
   public void enterModule(ModuleType moduleType, String canonicalModuleName) {
+    if (moduleType == ModuleType.FILESET) {
+      addFileset(canonicalModuleName);
+    }
     if (monolithic) {
       // When you're monolithic the module tree is all effectively one giant library.
       currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
@@ -542,6 +573,14 @@ public class ModuleDef {
         logger, compilerContext, compilerContext.getSourceResourceOracle().getResources());
     checkForSeedTypes(logger, compilationState);
     return compilationState;
+  }
+
+  /**
+   * The module names for its direct non fileset dependents.
+   */
+  public Collection<String> getDirectDependencies(String libraryModuleName) {
+    assert !filesetModuleNames.contains(libraryModuleName);
+    return directDependentsModuleNamesByModuleName.get(libraryModuleName);
   }
 
   public synchronized String[] getEntryPointTypeNames() {
@@ -747,6 +786,10 @@ public class ModuleDef {
   synchronized void normalize(TreeLogger logger) {
     Event moduleDefNormalize =
         SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "normalize");
+
+    // Compute compact dependency graph;
+    computeLibraryDependencyGraph();
+
     // Normalize property providers.
     //
     for (Property current : getProperties()) {
@@ -833,6 +876,47 @@ public class ModuleDef {
     if (seedTypesMissing) {
       throw new UnableToCompleteException();
     }
+  }
+
+  /**
+   * Reduce the direct dependency graph to exclude filesets.
+   */
+  private void computeLibraryDependencyGraph() {
+    for (String moduleName : Lists.newArrayList(directDependentsModuleNamesByModuleName.keySet())) {
+      Set<String> libraryModules = Sets.newHashSet();
+      Set<String> filesetsProcessed = Sets.newHashSet();
+
+      // Direct dependents might be libraries or fileset, so add them to a queue of modules
+      // to process.
+      Queue<String> modulesToProcess =
+          Queues.newArrayDeque(directDependentsModuleNamesByModuleName.get(moduleName));
+      while (!modulesToProcess.isEmpty()) {
+        String dependentModuleName = modulesToProcess.poll();
+
+        boolean isLibrary = !filesetModuleNames.contains(dependentModuleName);
+        if (isLibrary) {
+          // Current dependent is not a fileset so it will be in the list of dependents unless it is
+          // the library itself.
+          if (!moduleName.equals(dependentModuleName)) {
+            libraryModules.add(dependentModuleName);
+          }
+          continue;
+        }
+        // Mark the module as processed to avoid an infinite loop.
+        filesetsProcessed.add(dependentModuleName);
+
+        // Get the dependencies of the dependent module under consideration and add all those
+        // that have not been already processed to the queue of modules to process.
+        Set<String> notAlreadyProcessed =
+            Sets.newHashSet(directDependentsModuleNamesByModuleName.get(dependentModuleName));
+        notAlreadyProcessed.removeAll(filesetsProcessed);
+        modulesToProcess.addAll(notAlreadyProcessed);
+      }
+      // Rewrite the dependents with the set just computed.
+      directDependentsModuleNamesByModuleName.replaceValues(moduleName, libraryModules);
+    }
+    // Remove all fileset entries.
+    directDependentsModuleNamesByModuleName.removeAll(filesetModuleNames);
   }
 
   private synchronized void ensureResourcesScanned() {
