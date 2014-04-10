@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -23,6 +25,8 @@ import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
+import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSource;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 
@@ -31,7 +35,10 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
+public class RmdOutputPresenter implements 
+   IsWidget, 
+   RPubsPresenter.Context,
+   ShinyDisconnectSource
 {
    public interface Binder 
           extends CommandBinder<Commands, RmdOutputPresenter>
@@ -62,6 +69,7 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
       session_ = session;
       rpubsPresenter.setContext(this);
       slideNavigationPresenter_ = new SlideNavigationPresenter(view_);
+      disconnectNotifier_ = new ShinyDisconnectNotifier(this);
       
       binder.bind(commands, this);  
       
@@ -113,6 +121,18 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
           false : params_.getResult().getRpubsPublished();
    }
 
+   @Override
+   public String getShinyUrl()
+   {
+      return StringUtil.makeAbsoluteUrl(params_.getOutputUrl());
+   }
+
+   @Override
+   public void onShinyDisconnect()
+   {
+      WindowEx.get().close();
+   }
+
    @Handler
    public void onViewerPopout()
    {
@@ -161,14 +181,8 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    
    private void onClose() 
    {
-      if (!params_.isShinyDocument())
-      {
-         // TODO: We can't access these properties for Shiny documents due to
-         // cross-origin policy restrictions. Is there another way to get this
-         // data?
-         params_.setScrollPosition(view_.getScrollPosition());
-         params_.setAnchor(view_.getAnchor());
-      }
+      params_.setScrollPosition(view_.getScrollPosition());
+      params_.setAnchor(view_.getAnchor());
       notifyRmdOutputClosed(params_);
    }
    
@@ -191,6 +205,7 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    private final Session session_;
   
    private final SlideNavigationPresenter slideNavigationPresenter_;
+   private final ShinyDisconnectNotifier disconnectNotifier_;
    
    private RmdPreviewParams params_;
 }

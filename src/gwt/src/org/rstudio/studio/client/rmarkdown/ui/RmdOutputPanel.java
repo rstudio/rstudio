@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -80,8 +81,18 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       slideChangeMonitor_.cancel();
       
       // file label
-      fileLabel_.setText(FileSystemItem.createFile(
-                                       params.getOutputFile()).getName());
+      if (params.isShinyDocument())
+      {
+         fileLabel_.setVisible(false);
+         fileLabelSeparator_.setVisible(false);
+      }
+      else
+      {
+         fileLabel_.setVisible(true);
+         fileLabelSeparator_.setVisible(true);
+         fileLabel_.setText(FileSystemItem.createFile(
+                                          params.getOutputFile()).getName());
+      }
       
       // RPubs
       boolean showPublish = enablePublish && 
@@ -125,7 +136,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       else
       {
          if (params.getResult().isShinyDocument())
-            url = params.getOutputUrl();
+            url = StringUtil.makeAbsoluteUrl(params.getOutputUrl());
          else
             url = server_.getApplicationURL(params.getOutputUrl());
          
@@ -154,7 +165,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
       fileLabel_.getElement().getStyle().setMarginRight(7, Unit.PX);
       toolbar.addLeftWidget(fileLabel_);
-      toolbar.addLeftSeparator();
+      fileLabelSeparator_ = toolbar.addLeftSeparator();
       ToolbarButton popoutButton = 
             commands.viewerPopout().createToolbarButton();
       popoutButton.setText("Open in Browser");
@@ -419,6 +430,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private SlideNavigationToolbarMenu slideNavigationMenu_;
 
    private Label fileLabel_;
+   private Widget fileLabelSeparator_;
    private ToolbarButton publishButton_;
    private Widget publishButtonSeparator_;
    private String title_;

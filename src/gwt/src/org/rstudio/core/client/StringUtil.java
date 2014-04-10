@@ -16,6 +16,7 @@ package org.rstudio.core.client;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.user.client.Window;
 
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -464,6 +465,28 @@ public class StringUtil
             result += separator;
       }
       return result;
+   }
+   
+   // Given an input URL which may be relative, return an absolute URL. Has
+   // no effect on URLs which are already absolute.
+   public static String makeAbsoluteUrl(String inputUrl)
+   {
+      String url = inputUrl;
+      if (!(url.startsWith("http://") || url.startsWith("https://")))
+      {
+         String thisUrl = Window.Location.getProtocol() + "//" +
+                          Window.Location.getHost() + "/";
+         if (Window.Location.getPath().length() > 0 &&
+             !Window.Location.getPath().equals("/"))
+            thisUrl += Window.Location.getPath();
+         if (!thisUrl.endsWith("/"))
+            thisUrl += "/";
+         if (url.startsWith("/"))
+            url = url.substring(1);
+         url = thisUrl + url;
+      }
+      return url;
+      
    }
    
    private static final String[] LABELS = {

@@ -43,7 +43,7 @@
            identical(yamlFrontMatter$runtime, "shiny"))
     # use run_document as a wrapper for reneder when the doc requires the
     # Shiny runtime
-    "rmarkdown::run_document"
+    "rmarkdown::run"
   else
     ""
 })

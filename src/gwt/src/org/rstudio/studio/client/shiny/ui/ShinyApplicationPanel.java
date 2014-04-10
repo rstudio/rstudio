@@ -17,10 +17,10 @@ package org.rstudio.studio.client.shiny.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
@@ -100,20 +100,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    @Override
    public String getAbsoluteUrl()
    {
-      // always return a full URL; if the app URL appears to be relative, 
-      // make it absolute by prepending the relevant portion of this window's 
-      // URL
-      String url = appParams_.getUrl();
-      if (!(url.startsWith("http://") || url.startsWith("https://")))
-      {
-         String thisUrl = Window.Location.getProtocol() + "//" +
-                          Window.Location.getHost() + "/" + 
-                          Window.Location.getPath();
-         if (!thisUrl.endsWith("/"))
-            thisUrl += "/";
-         url = thisUrl + url;
-      }
-      return url;
+      return StringUtil.makeAbsoluteUrl(appParams_.getUrl());
    }
    
    @Override

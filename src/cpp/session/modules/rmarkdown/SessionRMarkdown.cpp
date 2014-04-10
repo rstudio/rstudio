@@ -150,22 +150,28 @@ private:
 
       if (renderFunc.empty())
          renderFunc = "rmarkdown::render";
-      else if (renderFunc == "rmarkdown::run_document")
+      else if (renderFunc == "rmarkdown::run")
          isShiny_ = true;
 
       std::string extraParams;
+      std::string encodingParam("encoding = '" + encoding + "'");
       if (isShiny_)
+      {
          extraParams += "shiny_args = list(launch.browser = FALSE), ";
+         encodingParam = "render_args = list(" + encodingParam + ")";
+      }
       if (!format.empty())
+      {
          extraParams += "output_format = rmarkdown::" + format + "(), ";
+      }
 
       // render command
-      boost::format fmt("%1%('%2%', %3% encoding='%4%');");
+      boost::format fmt("%1%('%2%', %3% %4%);");
       std::string cmd = boost::str(fmt %
                                    renderFunc %
                                    targetFile_.filename() %
                                    extraParams %
-                                   encoding);
+                                   encodingParam);
 
 
       args.push_back(cmd);
@@ -238,7 +244,8 @@ private:
                json::Object startedJson;
                startedJson["target_file"] =
                      module_context::createAliasedPath(targetFile_);
-               startedJson["url"] = matches[1].str();
+               startedJson["url"] =
+                     module_context::mapUrlPorts(matches[1].str());
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));
