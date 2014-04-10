@@ -32,6 +32,10 @@ import java.util.logging.LogRecord;
  */
 public class JsonLogRecordClientUtil {
 
+  public static String throwableAsJson(Throwable t) {
+    return throwableAsJsonObject(t).toString();
+  }
+
   public static String logRecordAsJson(LogRecord lr) {
     return logRecordAsJsonObject(lr).toString();
   }

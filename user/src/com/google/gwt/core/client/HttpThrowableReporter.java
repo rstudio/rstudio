@@ -21,7 +21,10 @@ import com.google.gwt.xhr.client.XMLHttpRequest;
 /**
  * This is a utility class which can report Throwables to the server via a
  * JSON-formatted payload.
+ *
+ * @deprecated Use {@link JsonLogRecordClientUtil} instead.
  */
+@Deprecated
 public final class HttpThrowableReporter {
 
   private static class MyHandler implements UncaughtExceptionHandler {
