@@ -561,13 +561,6 @@ public class MethodInliner {
     } else {
       result = target;
     }
-
-    // TODO(rluble): Replace a (non nullable) type by its JNonNullType version is always safe; but
-    // there already exists a pass that is responsible for making types tighten (TypeTightener)
-    // hence leaving this tightening unnecessary as it will be performed by a different pass.
-    if (!result.canBeNull()) {
-      result = result.getNonNull();
-    }
     return result;
   }
 }
