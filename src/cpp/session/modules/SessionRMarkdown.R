@@ -35,7 +35,7 @@
 })
 
 .rs.addFunction("getCustomRenderFunction", function(file) {
-  lines <- readLines(file)
+  lines <- readLines(file, warn = FALSE)
   yamlFrontMatter <- rmarkdown:::parse_yaml_front_matter(lines)
   if (is.character(yamlFrontMatter$knit))
     yamlFrontMatter$knit[[1]]
