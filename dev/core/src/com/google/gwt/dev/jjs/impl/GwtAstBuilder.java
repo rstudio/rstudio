@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.client.impl.SpecializeMethod;
 import com.google.gwt.dev.javac.JSORestrictionsChecker;
 import com.google.gwt.dev.javac.JdtUtil;
 import com.google.gwt.dev.javac.JsInteropUtil;
@@ -191,6 +192,7 @@ import org.eclipse.jdt.internal.compiler.ast.UnaryExpression;
 import org.eclipse.jdt.internal.compiler.ast.UnionTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.WhileStatement;
 import org.eclipse.jdt.internal.compiler.impl.Constant;
+import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
@@ -212,6 +214,7 @@ import org.eclipse.jdt.internal.compiler.lookup.VariableBinding;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -1165,6 +1168,7 @@ public class GwtAstBuilder {
     @Override
     public void endVisit(MethodDeclaration x, ClassScope scope) {
       try {
+
         if (x.isNative()) {
           processNativeMethod(x);
         } else {
@@ -3334,7 +3338,38 @@ public class GwtAstBuilder {
     }
     enclosingType.addMethod(method);
     JsInteropUtil.maybeSetJsinteropMethodProperties(x, method);
+    maybeAddMethodSpecialization(x, method);
     typeMap.setMethod(b, method);
+  }
+
+  private void maybeAddMethodSpecialization(AbstractMethodDeclaration x,
+      JMethod method) {
+    AnnotationBinding specializeAnnotation = JdtUtil
+        .getAnnotation(x.binding, SpecializeMethod.class.getName());
+    if (specializeAnnotation != null) {
+      TypeBinding[] params = JdtUtil
+          .getAnnotationParameterTypeBindingArray(
+              specializeAnnotation, "params");
+      TypeBinding returns = JdtUtil.getAnnotationParameterTypeBinding(
+          specializeAnnotation, "returns");
+      String targetMethod = JdtUtil.getAnnotationParameterString(
+          specializeAnnotation, "target");
+      List<JType> paramTypes = null;
+      if (params != null) {
+        paramTypes = new ArrayList<JType>();
+        for (TypeBinding pType : params) {
+          paramTypes.add(typeMap.get(pType));
+        }
+      }
+
+      JType returnsType = null;
+      if (returns != null) {
+        returnsType = typeMap.get(returns);
+      }
+
+      method.setSpecialization(paramTypes, returnsType,
+          targetMethod);
+    }
   }
 
   private void createParameter(SourceInfo info, LocalVariableBinding binding, JMethod method) {

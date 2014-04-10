@@ -38,6 +38,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   private String exportName;
   private boolean jsProperty;
+  private Specialization specialization;
 
   public void setExportName(String exportName) {
     this.exportName = exportName;
@@ -53,6 +54,76 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public boolean isJsProperty() {
     return jsProperty;
+  }
+
+  public void setSpecialization(List<JType> paramTypes, JType returnsType,
+      String targetMethod) {
+    this.specialization = new Specialization(paramTypes, returnsType,
+        targetMethod);
+  }
+
+  public Specialization getSpecialization() {
+    return specialization;
+  }
+
+  public void removeSpecialization() {
+    specialization = null;
+  }
+
+  /**
+   * AST representation of @SpecializeMethod.
+   */
+  public static class Specialization implements Serializable {
+    private List<JType> params;
+    private JType returns;
+    private String target;
+    private JMethod targetMethod;
+
+    public Specialization(List<JType> params,
+        JType returns, String target) {
+      this.params = params;
+      this.returns = returns;
+      this.target = target;
+    }
+
+    public List<JType> getParams() {
+      return params;
+    }
+
+    public JType getReturns() {
+      return returns;
+    }
+
+    public String getTarget() {
+      return target;
+    }
+
+    public JMethod getTargetMethod() {
+      return targetMethod;
+    }
+
+    public String getParameterSignature(JType origReturnValue) {
+      String paramSig = null;
+      if (paramSig == null) {
+        StringBuilder sb = new StringBuilder();
+        getParamSignature(sb, params,
+            returns != null ? returns : origReturnValue, false);
+        paramSig = sb.toString();
+      }
+      return paramSig;
+    }
+
+    public void resolve(List<JType> resolvedParams, JType resolvedReturn,
+        JMethod targetMethod) {
+      this.params = resolvedParams;
+      this.returns = resolvedReturn;
+      this.targetMethod = targetMethod;
+    }
+
+    public String getTargetSignature(JMethod instanceMethod) {
+      return getTarget() + getParameterSignature(instanceMethod
+          .getOriginalReturnType());
+    }
   }
 
   private static class ExternalSerializedForm implements Serializable {
@@ -293,19 +364,25 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     if (signature == null) {
       StringBuilder sb = new StringBuilder();
       sb.append(getName());
-      sb.append('(');
-      for (JType type : getOriginalParamTypes()) {
-        sb.append(type.getJsniSignatureName());
-      }
-      sb.append(')');
-      if (!isConstructor()) {
-        sb.append(getOriginalReturnType().getJsniSignatureName());
-      } else {
-        sb.append(" <init>");
-      }
+      getParamSignature(sb, getOriginalParamTypes(), getOriginalReturnType(),
+          isConstructor());
       signature = sb.toString();
     }
     return signature;
+  }
+
+  private static void getParamSignature(StringBuilder sb,
+      List<JType> params, JType returnType, boolean isCtor) {
+    sb.append('(');
+    for (JType type : params) {
+      sb.append(type.getJsniSignatureName());
+    }
+    sb.append(')');
+    if (!isCtor) {
+      sb.append(returnType.getJsniSignatureName());
+    } else {
+      sb.append(" <init>");
+    }
   }
 
   public List<JClassType> getThrownExceptions() {

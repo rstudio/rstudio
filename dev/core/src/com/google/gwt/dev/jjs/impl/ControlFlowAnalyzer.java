@@ -641,6 +641,9 @@ public class ControlFlowAnalyzer {
               rescue(param);
             }
           }
+          if (method.getSpecialization() != null) {
+            rescue(method.getSpecialization().getTargetMethod());
+          }
           return true;
         }
       }

@@ -191,4 +191,36 @@ public final class JdtUtil {
       return null;
     }
   }
+
+  public static TypeBinding getAnnotationParameterTypeBinding(
+      AnnotationBinding a, String paramName) {
+    if (a != null) {
+      for (ElementValuePair maybeValue : a.getElementValuePairs()) {
+        if (maybeValue.getValue() instanceof Class &&
+            paramName.equals(String.valueOf(maybeValue.getName()))) {
+          return (TypeBinding)  maybeValue.getValue();
+        }
+      }
+    }
+    return null;
+  }
+
+  public static TypeBinding[] getAnnotationParameterTypeBindingArray(
+      AnnotationBinding a, String paramName) {
+    if (a != null) {
+      for (ElementValuePair maybeValue : a.getElementValuePairs()) {
+        Object value = maybeValue.getValue();
+        if (value instanceof Object[] &&
+            paramName.equals(String.valueOf(maybeValue.getName()))) {
+          Object[] values = (Object[]) value;
+          TypeBinding b[] = new TypeBinding[values.length];
+          for (int i = 0; i < values.length; i++) {
+            b[i] = (TypeBinding) values[i];
+          }
+          return b;
+        }
+      }
+    }
+    return null;
+  }
 }

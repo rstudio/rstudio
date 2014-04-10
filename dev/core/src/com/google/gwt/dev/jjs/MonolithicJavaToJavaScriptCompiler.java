@@ -43,6 +43,7 @@ import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
+import com.google.gwt.dev.jjs.impl.RemoveSpecializations;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
 import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
@@ -114,6 +115,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
     @Override
     protected void postNormalizationOptimizeJava() {
+      RemoveSpecializations.exec(jprogram);
       Pruner.exec(jprogram, false);
       ReplaceGetClassOverrides.exec(jprogram);
     }
