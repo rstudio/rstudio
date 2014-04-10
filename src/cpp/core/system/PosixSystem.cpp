@@ -754,6 +754,9 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
       case CoreLimit:
          *pLimit = RLIMIT_CORE;
          break;
+      case MemlockLimit:
+         *pLimit = RLIMIT_MEMLOCK;
+         break;
       default:
          *pLimit = -1;
          break;

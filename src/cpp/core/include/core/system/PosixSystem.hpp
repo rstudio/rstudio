@@ -55,7 +55,8 @@ enum ResourceLimit
    FilesLimit,
    UserProcessesLimit,
    StackLimit,
-   CoreLimit
+   CoreLimit,
+   MemlockLimit
 };
 
 bool resourceIsUnlimited(RLimitType limitValue);
