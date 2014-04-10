@@ -55,6 +55,7 @@ public class Options {
   private TreeLogger.Type logLevel = TreeLogger.Type.WARN;
   // Use the same default as the GWT compiler.
   private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
+  private boolean failOnError = false;
   private boolean strictResources = false;
   private int compileTestRecompiles = 0;
 
@@ -179,6 +180,14 @@ public class Options {
     return sourcePath;
   }
 
+  /**
+   * If true, run the compiler in "strict" mode, which fails the compile if any Java file
+   * cannot be compiled, whether or not it is used.
+   */
+  boolean isFailOnError() {
+    return failOnError;
+  }
+
   private class ArgProcessor extends ArgProcessorBase {
 
     public ArgProcessor() {
@@ -191,6 +200,7 @@ public class Options {
       registerHandler(new AllowMissingSourceDirFlag());
       registerHandler(new SourceFlag());
       registerHandler(new ModuleNameArgument());
+      registerHandler(new FailOnErrorFlag());
       registerHandler(new StrictResourcesFlag());
       registerHandler(new ArgHandlerSourceLevel(new OptionSourceLevel() {
         @Override
@@ -374,6 +384,35 @@ public class Options {
     }
   }
 
+  private class FailOnErrorFlag extends ArgHandlerFlag {
+
+    FailOnErrorFlag() {
+      // Backward compatibility with -strict in the regular compiler.
+      addTagValue("-strict", true);
+    }
+
+    @Override
+    public String getLabel() {
+      return "failOnError";
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return false;
+    }
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Stop compiling if a module has a Java file with a compile error, even if unused.";
+    }
+
+    @Override
+    public boolean setFlag(boolean value) {
+      failOnError = value;
+      return true;
+    }
+  }
+
   private class StrictResourcesFlag extends ArgHandlerFlag {
 
     public StrictResourcesFlag() {
@@ -392,8 +431,8 @@ public class Options {
 
     @Override
     public String getPurposeSnippet() {
-      return "Avoid adding implicit dependencies on \"client\" and \"public\" for "
-          + "modules that don't define any dependencies.";
+      return "Don't implicitly depend on \"client\" and \"public\" when "
+          + "a module doesn't define any dependencies.";
     }
 
     @Override

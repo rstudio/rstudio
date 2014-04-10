@@ -36,15 +36,17 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final List<String> libraryPaths;
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
+  private final boolean failOnError;
   private final boolean strictResources;
   private final TreeLogger.Type logLevel;
 
   CompilerOptionsImpl(CompileDir compileDir, List<String> moduleNames, SourceLevel sourceLevel,
-      boolean strictResources, TreeLogger.Type logLevel) {
+      boolean failOnError, boolean strictResources, TreeLogger.Type logLevel) {
     this.compileDir = compileDir;
     this.libraryPaths = ImmutableList.<String>of();
     this.moduleNames = Lists.newArrayList(moduleNames);
     this.sourceLevel = sourceLevel;
+    this.failOnError = failOnError;
     this.strictResources = strictResources;
     this.logLevel = logLevel;
   }
@@ -215,7 +217,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public boolean isStrict() {
-    return false;
+    return failOnError;
   }
 
   @Override
