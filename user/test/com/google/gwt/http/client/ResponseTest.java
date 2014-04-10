@@ -16,6 +16,7 @@
 package com.google.gwt.http.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.xhr.client.XMLHttpRequest;
 
 /**
  * 
@@ -125,6 +126,18 @@ public class ResponseTest extends RequestTestBase {
         finishTest();
       }
     });
+  }
+
+  public void testGetHeadersOffline() {
+    ResponseImpl resp = new ResponseImpl(XMLHttpRequest.create()) {
+      @Override
+      protected boolean isResponseReady() {
+        return true;
+      }
+    };
+    Header[] headers = resp.getHeaders();
+    assertNotNull(headers);
+    assertEquals(0, headers.length);
   }
 
   /**
