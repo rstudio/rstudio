@@ -34,8 +34,8 @@ namespace desktop {
 WebView::WebView(QUrl baseUrl, QWidget *parent) :
     QWebView(parent),
     baseUrl_(baseUrl),
-    dpiZoomScaling_(1.0),
-    pWebInspector_(NULL)
+    pWebInspector_(NULL),
+    dpiZoomScaling_(1.0)
 {
 #ifdef Q_WS_X11
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
