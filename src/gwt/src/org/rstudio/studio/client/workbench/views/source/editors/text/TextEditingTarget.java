@@ -2928,8 +2928,9 @@ public class TextEditingTarget implements
    }
    
    private void withPreservedSelection(Command command)
-   {
-      // save the selection for restoration
+   { 
+      // save the selection and scroll position for restoration
+      int scrollPosition = docDisplay_.getScrollTop();
       Position start = docDisplay_.getSelectionStart();
       Position end = docDisplay_.getSelectionEnd();
       AnchoredSelection anchoredSelection = 
@@ -2938,8 +2939,9 @@ public class TextEditingTarget implements
       // execute the command
       command.execute();
       
-      // restore the selection
+      // restore the selection and scroll position
       anchoredSelection.apply();
+      docDisplay_.scrollToY(scrollPosition);
    }
 
    private void executeSweaveChunk(Scope chunk, boolean scrollNearTop)
