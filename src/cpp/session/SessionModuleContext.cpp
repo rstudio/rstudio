@@ -745,6 +745,15 @@ FilePath tempDir()
    return r::session::utils::tempDir();
 }
 
+Error copyDirectory(const FilePath& srcDir, const FilePath& targetDir)
+{
+   r::exec::RFunction copy("file.copy");
+   copy.addParam("from", string_utils::utf8ToSystem(srcDir.absolutePath()));
+   copy.addParam("to", string_utils::utf8ToSystem(targetDir.absolutePath()));
+   copy.addParam("recursive", true);
+   return copy.call();
+}
+
 FilePath findProgram(const std::string& name)
 {
    std::string which;

@@ -25,14 +25,20 @@ public class RenderRmdSourceEvent extends GwtEvent<RenderRmdSourceEvent.Handler>
       void onRenderRmdSource(RenderRmdSourceEvent event);
    }
 
-   public RenderRmdSourceEvent(String source)
+   public RenderRmdSourceEvent(String source, String file)
    {
       source_ = source;
+      file_ = file;
    }
 
    public String getSource()
    {
       return source_;
+   }
+   
+   public String getFile()
+   {
+      return file_;
    }
     
    @Override
@@ -48,6 +54,7 @@ public class RenderRmdSourceEvent extends GwtEvent<RenderRmdSourceEvent.Handler>
    }
    
    private final String source_;
+   private final String file_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -3350,7 +3350,8 @@ public class TextEditingTarget implements
           
       if (renderSourceOnly)
       {
-         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode());
+         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode(), 
+                                                docUpdateSentinel_.getPath());
       }
       
       else

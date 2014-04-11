@@ -133,7 +133,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
    @Override
    public void onRenderRmdSource(RenderRmdSourceEvent event)
    {
-      server_.renderRmdSource(event.getSource(),
+      server_.renderRmdSource(event.getSource(), event.getFile(),
                               new SimpleRequestCallback<Boolean>()); 
    }
 
