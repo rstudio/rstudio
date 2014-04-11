@@ -42,6 +42,11 @@
 namespace server {
 namespace pam_auth {
 
+bool canSetSignInCookies();
+void onUserAuthenticated(const std::string& username,
+                         const std::string& password);
+void onUserUnauthenticated(const std::string& username);
+
 namespace {
 
 void assumeRootPriv()
@@ -60,44 +65,6 @@ void assumeRootPriv()
        }
     }
 }
-
-bool pamLogin(const std::string& username, const std::string& password)
-{
-   // get path to pam helper
-   FilePath pamHelperPath(server::options().authPamHelperPath());
-   if (!pamHelperPath.exists())
-   {
-      LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
-                        pamHelperPath.absolutePath());
-      return false;
-   }
-
-   // form args
-   std::vector<std::string> args;
-   args.push_back(username);
-
-   // options (assume priv after fork)
-   core::system::ProcessOptions options;
-   options.onAfterFork = assumeRootPriv;
-
-   // run pam helper
-   core::system::ProcessResult result;
-   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
-                                          args,
-                                          password,
-                                          options,
-                                          &result);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-
-   // check for success
-   return result.exitStatus == 0;
-}
-
-
 
 const char * const kUserId = "user-id";
 
@@ -294,6 +261,8 @@ void doSignIn(const http::Request& request,
    // tranform to local username
    username = auth::handler::userIdentifierToLocalUsername(username);
 
+   onUserUnauthenticated(username);
+
    if ( pamLogin(username, password) && server::auth::validateUser(username))
    {
       if (appUri.size() > 0 && appUri[0] != '/')
@@ -308,6 +277,8 @@ void doSignIn(const http::Request& request,
                               kAuthLoginEvent,
                               "",
                               username));
+
+      onUserAuthenticated(username, password);
    }
    else
    {
@@ -333,6 +304,8 @@ void signOut(const http::Request& request,
                               kAuthLogoutEvent,
                               "",
                               username));
+
+      onUserUnauthenticated(username);
    }
 
    auth::secure_cookie::remove(request, kUserId, "", pResponse);
@@ -340,6 +313,43 @@ void signOut(const http::Request& request,
 }
 
 } // anonymous namespace
+
+
+bool pamLogin(const std::string& username, const std::string& password)
+{
+   // get path to pam helper
+   FilePath pamHelperPath(server::options().authPamHelperPath());
+   if (!pamHelperPath.exists())
+   {
+      LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
+                        pamHelperPath.absolutePath());
+      return false;
+   }
+
+   // form args
+   std::vector<std::string> args;
+   args.push_back(username);
+
+   // options (assume priv after fork)
+   core::system::ProcessOptions options;
+   options.onAfterFork = assumeRootPriv;
+
+   // run pam helper
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
+                                          args,
+                                          password,
+                                          options,
+                                          &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // check for success
+   return result.exitStatus == 0;
+}
 
 
 Error initialize()
@@ -353,7 +363,8 @@ Error initialize()
    pamHandler.refreshCredentialsThenContinue = refreshCredentialsThenContinue;
    pamHandler.signIn = signIn;
    pamHandler.signOut = signOut;
-   pamHandler.setSignInCookies = setSignInCookies;
+   if (canSetSignInCookies())
+      pamHandler.setSignInCookies = setSignInCookies;
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers

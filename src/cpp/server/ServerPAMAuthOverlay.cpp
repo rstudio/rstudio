@@ -1,5 +1,5 @@
 /*
- * ServerPAMAuth.hpp
+ * ServerPAMAuthOverlay.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,24 +13,26 @@
  *
  */
 
-#ifndef SERVER_PAM_AUTH_HPP
-#define SERVER_PAM_AUTH_HPP
-
-#include <string>
-
-namespace core {
-   class Error;
-}
+#include "ServerPAMAuth.hpp"
 
 namespace server {
 namespace pam_auth {
-   
-bool pamLogin(const std::string& username, const std::string& password);
 
-core::Error initialize();
+bool canSetSignInCookies()
+{
+   return true;
+}
+
+void onUserAuthenticated(const std::string& username,
+                         const std::string& password)
+{
+
+}
+
+void onUserUnauthenticated(const std::string& username)
+{
+
+}
 
 } // namespace pam_auth
 } // namespace server
-
-#endif // SERVER_PAM_AUTH_HPP
-
