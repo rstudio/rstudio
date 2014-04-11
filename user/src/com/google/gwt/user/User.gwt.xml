@@ -36,7 +36,6 @@
   <inherits name="com.google.gwt.text.Text"/>
   <inherits name="com.google.gwt.touch.Touch"/>
   <inherits name="com.google.gwt.uibinder.UiBinder"/>
-  <inherits name="com.google.gwt.user.AsyncProxy"/>
   <inherits name="com.google.gwt.user.CaptionPanel" />
   <inherits name="com.google.gwt.user.cellview.CellView"/>
   <inherits name="com.google.gwt.user.ClippedImage"/>

@@ -17,7 +17,6 @@ package com.google.gwt.user;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.layout.client.LayoutTest;
-import com.google.gwt.user.client.AsyncProxyTest;
 import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
 import com.google.gwt.user.client.DoubleClickEventSinkTest;
@@ -41,7 +40,6 @@ public class MiscSuite {
 
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("Miscellaneous GWT tests");
-    suite.addTestSuite(AsyncProxyTest.class);
     suite.addTestSuite(CalendarUtilTest.class);
     suite.addTestSuite(CommandExecutorTest.class);
     suite.addTestSuite(CookieTest.class);
