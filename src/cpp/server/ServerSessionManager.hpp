@@ -61,11 +61,6 @@ public:
                                                   SessionLaunchFunction;
    void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
 
-   // set a user validation function
-   typedef boost::function<bool(const std::string&)> UserValidationFunction;
-   void setUserValidationFunction(
-                     const UserValidationFunction& validationFunction);
-
    // set a launch profile filter
    typedef boost::function<void(
                            core::r_util::SessionLaunchProfile*)>
@@ -76,9 +71,6 @@ public:
    void notifySIGCHLD();
 
 private:
-   // validate a user
-   bool validateUser(const std::string& username);
-
    // default session launcher -- runs the process then uses the
    // ChildProcessTracker to track it's pid for later reaping
    core::Error launchAndTrackSession(
@@ -93,9 +85,6 @@ private:
    // session launch function and profile filter
    SessionLaunchFunction sessionLaunchFunction_;
    SessionLaunchProfileFilter sessionLaunchProfileFilter_;
-
-   // user validation function
-   UserValidationFunction userValidationFunction_;
 
    // child process tracker
    core::system::ChildProcessTracker processTracker_;
