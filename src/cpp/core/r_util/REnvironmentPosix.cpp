@@ -87,6 +87,7 @@ FilePath systemDefaultRScript(std::string* pErrMsg)
    rScriptPaths.push_back("/usr/bin/R");
    rScriptPaths.push_back("/usr/local/bin/R");
    rScriptPaths.push_back("/opt/local/bin/R");
+   rScriptPaths.push_back("/Library/Frameworks/R.framework/Resources/bin/R");
    return scanForRScript(rScriptPaths, pErrMsg);
 }
 
