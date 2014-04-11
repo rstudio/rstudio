@@ -32,6 +32,7 @@
 
 #include <server/ServerOptions.hpp>
 
+#include <server/ServerErrorCategory.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 
@@ -116,12 +117,10 @@ Error SessionManager::launchSession(const std::string& username)
 {
    using namespace boost::posix_time;
 
-   // last ditch user validation -- an invalid user should very rarely
-   // get to this point since we pre-emptively validate on client_init
+   // validate the user before attempting to launch
    if (!server::auth::validateUser(username))
    {
-      Error error = systemError(boost::system::errc::permission_denied,
-                                ERROR_LOCATION);
+      Error error = Error(server::errc::AuthenticationError, ERROR_LOCATION);
       error.addProperty("username", username);
       return error;
    }

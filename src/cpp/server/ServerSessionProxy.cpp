@@ -72,11 +72,7 @@ Error launchSessionRecovery(const std::string& username)
    if (error)
       LOG_ERROR(error);
 
-   error = sessionManager().launchSession(username);
-   if (error)
-      LOG_ERROR(error);
-
-   return Success();
+   return sessionManager().launchSession(username);
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
@@ -245,6 +241,15 @@ void handleContentError(
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(username);
 
+   // check for authentication error
+   if (server::isAuthenticationError(error))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::Unauthorized);
+      ptrConnection->writeResponse();
+      return;
+   }
+
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
 
@@ -272,6 +277,15 @@ void handleRpcError(
 {
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(username);
+
+   // check for authentication error
+   if (server::isAuthenticationError(error))
+   {
+      json::setJsonRpcError(json::errc::Unauthorized,
+                            &(ptrConnection->response()));
+      ptrConnection->writeResponse();
+      return;
+   }
 
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
