@@ -244,13 +244,15 @@ public class TextEditingTargetRMarkdownHelper
       eventBus_.fireEvent(new RenderRmdEvent(sourceDoc.getPath(), 
                                              1, 
                                              format, 
-                                             sourceDoc.getEncoding()));
+                                             sourceDoc.getEncoding(),
+                                             false));
    }
    
    public void renderRMarkdown(final String sourceFile, 
                                final int sourceLine,
                                final String format,
-                               final String encoding)
+                               final String encoding,
+                               final boolean asTempfile)
    {
       withRMarkdownPackage("Rendering R Markdown documents", 
                            new CommandWithArg<RMarkdownContext>() {
@@ -260,7 +262,8 @@ public class TextEditingTargetRMarkdownHelper
             eventBus_.fireEvent(new RenderRmdEvent(sourceFile,
                                                    sourceLine,
                                                    format,
-                                                   encoding));
+                                                   encoding, 
+                                                   asTempfile));
          }
       });
    }

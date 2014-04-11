@@ -3345,8 +3345,7 @@ public class TextEditingTarget implements
    
    void renderRmd()
    { 
-      boolean renderSourceOnly = (docUpdateSentinel_.getPath() == null) ||
-                                 isPackageDocumentationFile();
+      boolean renderSourceOnly = (docUpdateSentinel_.getPath() == null);
           
       if (renderSourceOnly)
       {
@@ -3359,11 +3358,14 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
+               boolean asTempfile = isPackageDocumentationFile();
+               
                rmarkdownHelper_.renderRMarkdown(
                   docUpdateSentinel_.getPath(),
                   docDisplay_.getCursorPosition().getRow() + 1,
                   null,
-                  docUpdateSentinel_.getEncoding());
+                  docUpdateSentinel_.getEncoding(),
+                  asTempfile);
             }
          });
       }

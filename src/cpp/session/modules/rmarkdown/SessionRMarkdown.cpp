@@ -61,12 +61,13 @@ public:
                                               int sourceLine,
                                               const std::string& format,
                                               const std::string& encoding,
-                                              bool sourceNavigation)
+                                              bool sourceNavigation,
+                                              bool asTempfile)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
                                                          sourceNavigation));
-      pRender->start(format, encoding);
+      pRender->start(format, encoding, asTempfile);
       return pRender;
    }
 
@@ -99,7 +100,9 @@ private:
       sourceNavigation_(sourceNavigation)
    {}
 
-   void start(const std::string& format, const std::string& encoding)
+   void start(const std::string& format,
+              const std::string& encoding,
+              bool asTempfile)
    {
       json::Object dataJson;
       getOutputFormat(targetFile_.absolutePath(), encoding, &outputFormat_);
@@ -109,11 +112,12 @@ private:
       module_context::enqueClientEvent(event);
       isRunning_ = true;
 
-      performRender(format, encoding);
+      performRender(format, encoding, asTempfile);
    }
 
    void performRender(const std::string& format,
-                      const std::string& encoding)
+                      const std::string& encoding,
+                      bool asTempfile)
    {
       // save encoding
       encoding_ = encoding;
@@ -150,6 +154,21 @@ private:
       std::string extraParams;
       if (!format.empty())
          extraParams = "output_format = rmarkdown::" + format + "(), ";
+
+      if (asTempfile)
+      {
+         FilePath tmpDir = module_context::tempFile("preview-", "dir");
+         Error error = tmpDir.ensureDirectory();
+         if (!error)
+         {
+            std::string dir = string_utils::utf8ToSystem(tmpDir.absolutePath());
+            extraParams += "output_dir = '" + dir + "', ";
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
 
       // render command
       boost::format fmt("%1%('%2%', %3% encoding='%4%');");
@@ -756,6 +775,7 @@ void doRenderRmd(const std::string& file,
                  const std::string& format,
                  const std::string& encoding,
                  bool sourceNavigation,
+                 bool asTempfile,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -770,7 +790,8 @@ void doRenderRmd(const std::string& file,
                line,
                format,
                encoding,
-               sourceNavigation);
+               sourceNavigation,
+               asTempfile);
       pResponse->setResult(true);
    }
 }
@@ -780,15 +801,17 @@ Error renderRmd(const json::JsonRpcRequest& request,
 {
    int line = -1;
    std::string file, format, encoding;
+   bool asTempfile;
    Error error = json::readParams(request.params,
                                   &file,
                                   &line,
                                   &format,
-                                  &encoding);
+                                  &encoding,
+                                  &asTempfile);
    if (error)
       return error;
 
-   doRenderRmd(file, line, format, encoding, true, pResponse);
+   doRenderRmd(file, line, format, encoding, true, asTempfile, pResponse);
 
    return Success();
 }
@@ -807,7 +830,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, pResponse);
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, false, pResponse);
 
    return Success();
 }

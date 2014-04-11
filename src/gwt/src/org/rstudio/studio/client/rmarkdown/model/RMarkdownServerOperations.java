@@ -30,6 +30,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
          ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void renderRmd(String file, int line, String format, String encoding,
+                  boolean asTempfile,
                   ServerRequestCallback<Boolean> requestCallback);
    
    void renderRmdSource(String source,
