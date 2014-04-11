@@ -265,15 +265,14 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
-   public void renderRMarkdownSource(final String source,
-                                     final String file)
+   public void renderRMarkdownSource(final String source)
    {
       withRMarkdownPackage("Rendering R Markdown documents", 
             new CommandWithArg<RMarkdownContext>() {
          @Override
          public void execute(RMarkdownContext arg)
          {
-            eventBus_.fireEvent(new RenderRmdSourceEvent(source, file));
+            eventBus_.fireEvent(new RenderRmdSourceEvent(source));
          }
       });
    }

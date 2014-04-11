@@ -79,10 +79,6 @@ core::FilePath tempFile(const std::string& prefix,
 
 core::FilePath tempDir();
 
-// copy a directory
-core::Error copyDirectory(const core::FilePath& srcDir,
-                          const core::FilePath& targetDir);
-
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 

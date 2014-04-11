@@ -796,37 +796,13 @@ Error renderRmd(const json::JsonRpcRequest& request,
 Error renderRmdSource(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string source, file;
-   Error error = json::readParams(request.params, &source, &file);
+   std::string source;
+   Error error = json::readParams(request.params, &source);
    if (error)
       return error;
-
-   // create temp directory
-   FilePath previewPath = module_context::tempFile("rstudio-", "dir");
-   error = previewPath.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   // if there is a source file then copy it's directory into the
-   // temp directory (to resolve relative paths)
-   if (!file.empty())
-   {
-      FilePath filePath = module_context::resolveAliasedPath(file);
-      FilePath srcDir = filePath.parent();
-      Error error = module_context::copyDirectory(srcDir, previewPath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
-      previewPath = previewPath.childPath(srcDir.filename());
-   }
 
    // create temp file
-   FilePath rmdTempFile = previewPath.childPath("preview.Rmd");
+   FilePath rmdTempFile = module_context::tempFile("Preview-", "Rmd");
    error = core::writeStringToFile(rmdTempFile, source);
    if (error)
       return error;

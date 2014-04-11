@@ -3273,13 +3273,10 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void renderRmdSource(String source, String file,
+   public void renderRmdSource(String source,
          ServerRequestCallback<Boolean> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(source));
-      params.set(1, new JSONString(StringUtil.notNull(file)));
-      sendRequest(RPC_SCOPE, RENDER_RMD_SOURCE, params, requestCallback);
+      sendRequest(RPC_SCOPE, RENDER_RMD_SOURCE, source, requestCallback);
    }
 
 

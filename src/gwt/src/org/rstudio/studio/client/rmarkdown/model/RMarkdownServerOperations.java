@@ -33,7 +33,6 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                   ServerRequestCallback<Boolean> requestCallback);
    
    void renderRmdSource(String source,
-                        String file,
                         ServerRequestCallback<Boolean> requestCallback);
    
    void terminateRenderRmd(ServerRequestCallback<Void> requestCallback);
