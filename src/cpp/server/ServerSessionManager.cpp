@@ -118,7 +118,7 @@ Error SessionManager::launchSession(const std::string& username)
    using namespace boost::posix_time;
 
    // validate the user before attempting to launch
-   if (!server::auth::validateUser(username))
+   if (!validateUser(username))
    {
       Error error = Error(server::errc::AuthenticationError, ERROR_LOCATION);
       error.addProperty("username", username);
@@ -175,6 +175,14 @@ Error SessionManager::launchSession(const std::string& username)
    return Success();
 }
 
+bool SessionManager::validateUser(const std::string& username)
+{
+   if (userValidationFunction_)
+      return userValidationFunction_(username);
+   else
+      return server::auth::validateUser(username);
+}
+
 // default session launcher -- does the launch then tracks the pid
 // for later reaping
 Error SessionManager::launchAndTrackSession(
@@ -206,6 +214,12 @@ void SessionManager::setSessionLaunchFunction(
                            const SessionLaunchFunction& launchFunction)
 {
    sessionLaunchFunction_ = launchFunction;
+}
+
+void SessionManager::setUserValidationFunction(
+                  const UserValidationFunction& validationFunction)
+{
+   userValidationFunction_ = validationFunction;
 }
 
 void SessionManager::setSessionLaunchProfileFilter(
