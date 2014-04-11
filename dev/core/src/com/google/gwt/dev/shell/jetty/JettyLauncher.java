@@ -38,6 +38,7 @@ import org.eclipse.jetty.server.ssl.SslSocketConnector;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.webapp.ClasspathPattern;
 import org.eclipse.jetty.webapp.WebAppClassLoader;
 import org.eclipse.jetty.webapp.WebAppContext;
 
@@ -93,7 +94,6 @@ public class JettyLauncher extends ServletContainerLauncher {
     /**
      * Log an HTTP request/response to TreeLogger.
      */
-    @SuppressWarnings("unchecked")
     public void log(Request request, Response response) {
       int status = response.getStatus();
       if (status < 0) {
@@ -356,6 +356,20 @@ public class JettyLauncher extends ServletContainerLauncher {
 
       private static final String META_INF_SERVICES = "META-INF/services/";
 
+      private final ClasspathPattern systemClassesFromWebappFirst = new ClasspathPattern(new String[] {
+          "-javax.servlet.",
+          "javax.",
+      });
+      private final ClasspathPattern allowedFromSystemClassLoader = new ClasspathPattern(new String[] {
+          "org.eclipse.jetty.",
+          // Jasper
+          "org.apache.jasper.",
+          "org.apache.commons.logging.",
+          // Xerces
+          "org.apache.xerces.",
+          "javax.xml.", // Used by Jetty for jetty-web.xml parsing
+      });
+
       public WebAppClassLoaderExtension() throws IOException {
         super(bootStrapOnlyClassLoader, WebAppContextWithReload.this);
       }
@@ -367,10 +381,13 @@ public class JettyLauncher extends ServletContainerLauncher {
         if (checkName.startsWith(META_INF_SERVICES)) {
           checkName = checkName.substring(META_INF_SERVICES.length());
         }
+        checkName = checkName.replace('/', '.');
 
         // For a system path, load from the outside world.
+        // Note: bootstrap has already been searched, so javax. classes should be
+        // tried from the webapp first (except for javax.servlet).
         URL found;
-        if (isSystemClass(checkName.replace('/', '.'))) {
+        if (isSystemClass(checkName) && !systemClassesFromWebappFirst.match(checkName)) {
           found = systemClassLoader.getResource(name);
           if (found != null) {
             return found;
@@ -385,8 +402,19 @@ public class JettyLauncher extends ServletContainerLauncher {
 
         // See if the outside world has it.
         found = systemClassLoader.getResource(name);
-        if (found == null) {
+        if (found == null || isServerClass(checkName)) {
           return null;
+        }
+
+        // Special-case Jetty/Jasper/etc. resources
+        if (allowedFromSystemClassLoader.match(checkName) ||
+            // Jasper uses Log4j (via Commons Logging), which will try
+            // to load those.
+            // We have a log4j.properties in user/test and don't want
+            // to add gwt-user when using a "Developer SDK" in Eclipse.
+            "log4j.xml".equals(name) ||
+            "log4j.properties".equals(name)) {
+          return found;
         }
 
         // Warn, add containing URL to our own ClassLoader, and retry the call.
@@ -402,7 +430,9 @@ public class JettyLauncher extends ServletContainerLauncher {
       @Override
       protected Class<?> findClass(String name) throws ClassNotFoundException {
         // For system path, always prefer the outside world.
-        if (isSystemClass(name)) {
+        // Note: bootstrap has already been searched, so javax. classes should be
+        // tried from the webapp first (except for javax.servlet).
+        if (isSystemClass(name) && !systemClassesFromWebappFirst.match(name)) {
           try {
             return systemClassLoader.loadClass(name);
           } catch (ClassNotFoundException e) {
@@ -423,6 +453,12 @@ public class JettyLauncher extends ServletContainerLauncher {
         URL found = systemClassLoader.getResource(resourceName);
         if (found == null) {
           return null;
+        }
+
+        // Those classes are allowed to be loaded right from the systemClassLoader
+        // Note: Jetty classes here are not "server classes", handled above.
+        if (allowedFromSystemClassLoader.match(name)) {
+          return systemClassLoader.loadClass(name);
         }
 
         // Warn, add containing URL to our own ClassLoader, and retry the call.
@@ -486,7 +522,6 @@ public class JettyLauncher extends ServletContainerLauncher {
      */
     private final ClassLoader systemClassLoader = Thread.currentThread().getContextClassLoader();
 
-    @SuppressWarnings("unchecked")
     private WebAppContextWithReload(TreeLogger logger, String webApp,
         String contextPath) {
       super(webApp, contextPath);
@@ -498,18 +533,6 @@ public class JettyLauncher extends ServletContainerLauncher {
 
       // Since the parent class loader is bootstrap-only, prefer it first.
       setParentLoaderPriority(true);
-    }
-
-    /**
-     * Override to additionally consider the most commonly available JSP and
-     * XML implementation as system resources. (In fact, Jasper is in gwt-dev
-     * via embedded Tomcat, so we always hit this case.)
-     */
-    @Override
-    public boolean isSystemClass(String name) {
-      return super.isSystemClass(name)
-          || name.startsWith("org.apache.jasper.")
-          || name.startsWith("org.apache.xerces.");
     }
 
     @Override
@@ -744,6 +767,7 @@ public class JettyLauncher extends ServletContainerLauncher {
     return new WebAppContextWithReload(logger, appRootDir.getAbsolutePath(), "/");
   }
 
+  @SuppressWarnings("deprecation")
   protected AbstractConnector getConnector(TreeLogger logger) {
     if (useSsl) {
       TreeLogger sslLogger = logger.branch(TreeLogger.INFO,
