@@ -61,44 +61,6 @@ void assumeRootPriv()
     }
 }
 
-bool pamLogin(const std::string& username, const std::string& password)
-{
-   // get path to pam helper
-   FilePath pamHelperPath(server::options().authPamHelperPath());
-   if (!pamHelperPath.exists())
-   {
-      LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
-                        pamHelperPath.absolutePath());
-      return false;
-   }
-
-   // form args
-   std::vector<std::string> args;
-   args.push_back(username);
-
-   // options (assume priv after fork)
-   core::system::ProcessOptions options;
-   options.onAfterFork = assumeRootPriv;
-
-   // run pam helper
-   core::system::ProcessResult result;
-   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
-                                          args,
-                                          password,
-                                          options,
-                                          &result);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-
-   // check for success
-   return result.exitStatus == 0;
-}
-
-
-
 const char * const kUserId = "user-id";
 
 // It's important that URIs be in the root directory, so the cookie
@@ -340,6 +302,43 @@ void signOut(const http::Request& request,
 }
 
 } // anonymous namespace
+
+
+bool pamLogin(const std::string& username, const std::string& password)
+{
+   // get path to pam helper
+   FilePath pamHelperPath(server::options().authPamHelperPath());
+   if (!pamHelperPath.exists())
+   {
+      LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
+                        pamHelperPath.absolutePath());
+      return false;
+   }
+
+   // form args
+   std::vector<std::string> args;
+   args.push_back(username);
+
+   // options (assume priv after fork)
+   core::system::ProcessOptions options;
+   options.onAfterFork = assumeRootPriv;
+
+   // run pam helper
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
+                                          args,
+                                          password,
+                                          options,
+                                          &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // check for success
+   return result.exitStatus == 0;
+}
 
 
 Error initialize()
