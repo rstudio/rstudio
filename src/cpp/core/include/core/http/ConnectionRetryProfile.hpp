@@ -20,6 +20,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace core {
+
+class Error;
+
 namespace http {
 
 struct ConnectionRetryProfile
@@ -33,8 +36,8 @@ struct ConnectionRetryProfile
    ConnectionRetryProfile(
          const boost::posix_time::time_duration& maxWait,
          const boost::posix_time::time_duration& retryInterval,
-         const boost::function<void()>& recoveryFunction =
-                                             boost::function<void()>())
+         const boost::function<Error()>& recoveryFunction =
+                                             boost::function<Error()>())
       : maxWait(maxWait),
         retryInterval(retryInterval),
         recoveryFunction(recoveryFunction)
@@ -45,7 +48,7 @@ struct ConnectionRetryProfile
 
    boost::posix_time::time_duration maxWait;
    boost::posix_time::time_duration retryInterval;
-   boost::function<void()> recoveryFunction;
+   boost::function<Error()> recoveryFunction;
 };
 
 

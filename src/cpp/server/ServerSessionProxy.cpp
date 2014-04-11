@@ -54,6 +54,7 @@
 #include <server/auth/ServerAuthHandler.hpp>
 
 #include <server/ServerOptions.hpp>
+#include <server/ServerErrorCategory.hpp>
 
 #include "ServerSessionManager.hpp"
 
@@ -64,7 +65,7 @@ namespace session_proxy {
    
 namespace {
 
-void launchSessionRecovery(const std::string& username)
+Error launchSessionRecovery(const std::string& username)
 {
    // recreate streams dir if necessary
    Error error = session::local_streams::ensureStreamsDir();
@@ -74,6 +75,8 @@ void launchSessionRecovery(const std::string& username)
    error = sessionManager().launchSession(username);
    if (error)
       LOG_ERROR(error);
+
+   return Success();
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
