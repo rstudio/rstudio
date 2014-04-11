@@ -42,6 +42,11 @@
 namespace server {
 namespace pam_auth {
 
+bool canSetSignInCookies();
+void onUserAuthenticated(const std::string& username,
+                         const std::string& password);
+void onUserUnauthenticated(const std::string& username);
+
 namespace {
 
 void assumeRootPriv()
@@ -256,6 +261,8 @@ void doSignIn(const http::Request& request,
    // tranform to local username
    username = auth::handler::userIdentifierToLocalUsername(username);
 
+   onUserUnauthenticated(username);
+
    if ( pamLogin(username, password) && server::auth::validateUser(username))
    {
       if (appUri.size() > 0 && appUri[0] != '/')
@@ -270,6 +277,8 @@ void doSignIn(const http::Request& request,
                               kAuthLoginEvent,
                               "",
                               username));
+
+      onUserAuthenticated(username, password);
    }
    else
    {
@@ -295,6 +304,8 @@ void signOut(const http::Request& request,
                               kAuthLogoutEvent,
                               "",
                               username));
+
+      onUserUnauthenticated(username);
    }
 
    auth::secure_cookie::remove(request, kUserId, "", pResponse);
@@ -352,7 +363,8 @@ Error initialize()
    pamHandler.refreshCredentialsThenContinue = refreshCredentialsThenContinue;
    pamHandler.signIn = signIn;
    pamHandler.signOut = signOut;
-   pamHandler.setSignInCookies = setSignInCookies;
+   if (canSetSignInCookies())
+      pamHandler.setSignInCookies = setSignInCookies;
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers
