@@ -382,7 +382,6 @@ private:
                                       .call(&sexpOutputFormat, &protect);
       if (error)
       {
-         LOG_ERROR(error);
          resultJson["format_name"] = "";
          resultJson["self_contained"] = false;
       }
