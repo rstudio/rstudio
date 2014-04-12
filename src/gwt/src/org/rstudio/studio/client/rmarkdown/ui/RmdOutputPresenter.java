@@ -161,8 +161,18 @@ public class RmdOutputPresenter implements IsWidget, RPubsPresenter.Context
    
    private void onClose() 
    {
-      params_.setScrollPosition(view_.getScrollPosition());
-      params_.setAnchor(view_.getAnchor());
+      // record scroll position and anchor (but try/catch because sometimes 
+      // the document is null at this point)
+      try
+      {
+         params_.setScrollPosition(view_.getScrollPosition());
+         params_.setAnchor(view_.getAnchor());
+      }
+      catch(Exception ex)
+      {
+      }
+      
+      // notify closed
       notifyRmdOutputClosed(params_);
    }
    
