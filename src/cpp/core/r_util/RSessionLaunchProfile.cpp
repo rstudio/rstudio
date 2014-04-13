@@ -92,7 +92,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    std::string stdInput;
    int stdStreamBehavior = 0;
    int priority = 0;
-   RLimitType memoryLimitBytes, stackLimitBytes, userProcessesLimit,
+   double memoryLimitBytes, stackLimitBytes, userProcessesLimit,
               cpuLimit, niceLimit;
    error = json::readObject(configJson,
                            "args", &argsJson,
