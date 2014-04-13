@@ -762,7 +762,7 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
          break;
 #ifndef __APPLE__
       case NiceLimit:
-         *Limit = RLIMIT_NICE;
+         *pLimit = RLIMIT_NICE;
          break;
 #endif
       default:
