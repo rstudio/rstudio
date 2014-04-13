@@ -104,7 +104,7 @@
         <fileset file="${alldeps.jar}"/>
       </targetfiles>
       <sequential>
-        <gwt.jar destfile="${alldeps.jar}">
+        <gwt.jar destfile="${alldeps.jar}" duplicate="preserve">
           <zipfileset src="${gwt.tools.lib}/apache/tapestry-util-text-4.0.2.jar"/>
           <zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar"/>
           <zipfileset
@@ -311,8 +311,8 @@
       <sourcefiles>
         <fileset dir="core/src">
           <exclude name="**/package.html"/>
-          <exclude name="**/*.properties"/>
-          <!-- copied and/or filtered into bin -->
+          <exclude name="**/*.properties"/> <!-- copied and/or filtered into bin -->
+          <exclude name="org/apache/COPYING"/> <!-- already in alldeps.jar -->
         </fileset>
         <fileset dir="core/super" excludes="**/package.html"/>
         <fileset dir="${javac.out}"/>
@@ -328,8 +328,8 @@
         <gwt.jar>
           <fileset dir="core/src">
             <exclude name="**/package.html"/>
-            <exclude name="**/*.properties"/>
-            <!-- copied and/or filtered into bin -->
+            <exclude name="**/*.properties"/> <!-- copied and/or filtered into bin -->
+            <exclude name="org/apache/COPYING"/> <!-- already in alldeps.jar -->
           </fileset>
           <fileset dir="core/super" excludes="**/package.html"/>
           <fileset dir="${javac.out}"/>

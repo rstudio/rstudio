@@ -60,11 +60,9 @@
   </target>
 
   <target name="build" description="Builds GWT">
-    <gwt.timer name="all">
-      <antcall target="-do">
-        <param name="target" value="build" />
-      </antcall>
-    </gwt.timer>
+    <antcall target="-do">
+      <param name="target" value="build" />
+    </antcall>
     <length property="gwt.sample.length">
       <fileset dir="${gwt.build.out}/samples" includes="*/war/*/*.cache.html,*/war/*/*.cache.js"/>
     </length>

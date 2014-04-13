@@ -126,26 +126,24 @@
       <targetfiles path="${sample.build}/war/${sample.lower}/${sample.lower}.nocache.js" />
       <sequential>
         <mkdir dir="${sample.build}/war" />
-        <gwt.timer name="${sample.upper} with ${gwt.samples.localworkers} localWorkers">
-          <java dir="${sample.build}" classname="com.google.gwt.dev.Compiler"
-                		fork="yes" failonerror="true">
-            <classpath>
-              <pathelement path="${sample.path}" />
-              <path refid="sample.extraclasspath" />
-              <pathelement location="${sample.build}/war/WEB-INF/classes" />
-              <pathelement location="${gwt.user.jar}" />
-              <pathelement location="${gwt.dev.jar}" />
-              <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
-              <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
-            </classpath>
-            <jvmarg value="-Xmx384M" />
-            <arg value="-localWorkers" />
-            <arg value="${gwt.samples.localworkers}" />
-            <arg value="-war" />
-            <arg file="${sample.build}/war" />
-            <arg value="com.google.gwt.sample.${sample.lower}.${sample.upper}" />
-          </java>
-        </gwt.timer>
+        <java dir="${sample.build}" classname="com.google.gwt.dev.Compiler"
+            fork="yes" failonerror="true">
+          <classpath>
+            <pathelement path="${sample.path}" />
+            <path refid="sample.extraclasspath" />
+            <pathelement location="${sample.build}/war/WEB-INF/classes" />
+            <pathelement location="${gwt.user.jar}" />
+            <pathelement location="${gwt.dev.jar}" />
+            <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
+            <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
+          </classpath>
+          <jvmarg value="-Xmx384M" />
+          <arg value="-localWorkers" />
+          <arg value="${gwt.samples.localworkers}" />
+          <arg value="-war" />
+          <arg file="${sample.build}/war" />
+          <arg value="com.google.gwt.sample.${sample.lower}.${sample.upper}" />
+        </java>
         <length property="sample.size">
           <fileset dir="${sample.build}/war/${sample.lower}" includes="*.cache.html,*.cache.js"/>
         </length>

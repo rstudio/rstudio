@@ -37,23 +37,21 @@
     <macrodef name="compileModule">
       <element name="module" />
       <sequential>
-        <gwt.timer name="Pre-compile module">
-          <java classname="com.google.gwt.dev.CompileModule" fork="yes" failonerror="true">
-            <classpath>
-              <pathelement location="${gwt.root}/elemental/src" />
-              <pathelement location="${gwt.root}/elemental/idl/generated/src" />
-              <pathelement location="${gwt.dev.jar}" />
-              <pathelement location="${gwt.user.jar}" />
-            </classpath>
-            <jvmarg value="-Xmx512M" />
-            <module />
-            <arg value="-strict" />
-            <arg value="-sourceLevel" />
-            <arg value="${javac.source}" />
-            <arg value="-out" />
-            <arg value="${project.build}/bin" />
-          </java>
-        </gwt.timer>
+        <java classname="com.google.gwt.dev.CompileModule" fork="yes" failonerror="true">
+          <classpath>
+            <pathelement location="${gwt.root}/elemental/src" />
+            <pathelement location="${gwt.root}/elemental/idl/generated/src" />
+            <pathelement location="${gwt.dev.jar}" />
+            <pathelement location="${gwt.user.jar}" />
+          </classpath>
+          <jvmarg value="-Xmx512M" />
+          <module />
+          <arg value="-strict" />
+          <arg value="-sourceLevel" />
+          <arg value="${javac.source}" />
+          <arg value="-out" />
+          <arg value="${project.build}/bin" />
+        </java>
       </sequential>
     </macrodef>
 

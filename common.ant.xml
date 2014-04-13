@@ -164,14 +164,10 @@
     <attribute name="update" default="true"/>
     <element name="jarcontents" implicit="true"/>
     <sequential>
-      <taskdef name="jar.bydate"
-               classname="com.google.gwt.ant.taskdefs.LatestTimeJar"
-               classpath="${gwt.build.lib}/ant-gwt.jar"/>
-
-      <jar.bydate destfile="@{destfile}" duplicate="@{duplicate}" filesonly="false"
-                  index="true" update="@{update}">
+      <jar destfile="@{destfile}" duplicate="@{duplicate}" filesonly="false"
+          index="true" update="@{update}">
         <jarcontents/>
-      </jar.bydate>
+      </jar>
     </sequential>
   </macrodef>
 
@@ -275,19 +271,6 @@
     </sequential>
   </macrodef>
 
-  <macrodef name="gwt.tgz.cat">
-    <attribute name="destfile"/>
-    <attribute name="compression" default="gzip"/>
-    <element name="tar.elements" implicit="true" optional="true"/>
-    <sequential>
-      <taskdef name="tar.cat" classname="com.google.gwt.ant.taskdefs.TarCat"
-               classpath="${gwt.build.lib}/ant-gwt.jar"/>
-      <tar.cat destfile="@{destfile}" compression="@{compression}" longfile="gnu">
-        <tar.elements/>
-      </tar.cat>
-    </sequential>
-  </macrodef>
-
   <macrodef name="gwt.getgitinfo" description="Identifies the GIT info of a workspace">
     <sequential>
       <exec executable="git" searchpath="true" outputproperty="gwt.gitrev">
@@ -319,19 +302,6 @@
           <filter token="GWT_GITREV" value="${gwt.gitrev}"/>
         </filterset>
       </copy>
-    </sequential>
-  </macrodef>
-
-  <macrodef name="gwt.timer">
-    <attribute name="name"/>
-    <element name="timer.elements" implicit="true" optional="false"/>
-    <sequential>
-      <taskdef name="timer"
-               classname="com.google.gwt.ant.taskdefs.Timer"
-               classpath="${gwt.build.lib}/ant-gwt.jar"/>
-      <timer name="@{name}">
-        <timer.elements/>
-      </timer>
     </sequential>
   </macrodef>
 
