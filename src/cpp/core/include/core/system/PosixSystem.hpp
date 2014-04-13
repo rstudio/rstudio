@@ -56,7 +56,9 @@ enum ResourceLimit
    UserProcessesLimit,
    StackLimit,
    CoreLimit,
-   MemlockLimit
+   MemlockLimit,
+   CpuLimit,
+   NiceLimit
 };
 
 bool resourceIsUnlimited(RLimitType limitValue);
@@ -88,9 +90,12 @@ struct ProcessConfig
 {
    ProcessConfig()
       : stdStreamBehavior(StdStreamInherit),
+        priority(0),
         memoryLimitBytes(0),
         stackLimitBytes(0),
-        userProcessesLimit(0)
+        userProcessesLimit(0),
+        cpuLimit(0),
+        niceLimit(0)
    {
    }
 
@@ -98,9 +103,12 @@ struct ProcessConfig
    core::system::Options environment;
    std::string stdInput;
    StdStreamBehavior stdStreamBehavior;
+   int priority;
    RLimitType memoryLimitBytes;
    RLimitType stackLimitBytes;
    RLimitType userProcessesLimit;
+   RLimitType cpuLimit;
+   RLimitType niceLimit;
 };
 
 core::Error waitForProcessExit(PidType processId);

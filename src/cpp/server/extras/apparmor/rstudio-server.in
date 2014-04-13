@@ -12,6 +12,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   capability setgid,
   capability setuid,
   capability sys_resource,
+  capability sys_nice,
   capability kill,
   capability chown,
   capability fowner,
@@ -34,6 +35,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      capability setgid,
      capability setuid,
      capability sys_resource,
+     capability sys_nice,
      capability kill,
     
      owner @{HOME}/** rw,

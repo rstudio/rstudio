@@ -61,6 +61,12 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    configJson["environment"] = optionsAsJson(profile.config.environment);
    configJson["stdInput"] = profile.config.stdInput;
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
+   configJson["priority"] = profile.config.priority;
+   configJson["memoryLimitBytes"] = profile.config.memoryLimitBytes;
+   configJson["stackLimitBytes"] = profile.config.stackLimitBytes;
+   configJson["userProcessesLimit"] = profile.config.userProcessesLimit;
+   configJson["cpuLimit"] = profile.config.cpuLimit;
+   configJson["niceLimit"] = profile.config.niceLimit;
    profileJson["config"] = configJson;
    return profileJson;
 }
@@ -85,11 +91,20 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    json::Object argsJson, envJson;
    std::string stdInput;
    int stdStreamBehavior = 0;
+   int priority = 0;
+   RLimitType memoryLimitBytes, stackLimitBytes, userProcessesLimit,
+              cpuLimit, niceLimit;
    error = json::readObject(configJson,
                            "args", &argsJson,
                            "environment", &envJson,
                            "stdInput", &stdInput,
-                           "stdStreamBehavior", &stdStreamBehavior);
+                           "stdStreamBehavior", &stdStreamBehavior,
+                           "priority", &priority,
+                           "memoryLimitBytes", &memoryLimitBytes,
+                           "stackLimitBytes", &stackLimitBytes,
+                           "userProcessesLimit", &userProcessesLimit,
+                           "cpuLimit", &cpuLimit,
+                           "niceLimit", &niceLimit);
    if (error)
       LOG_ERROR(error);
 
@@ -99,6 +114,12 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    profile.config.stdInput = stdInput;
    profile.config.stdStreamBehavior =
             static_cast<core::system::StdStreamBehavior>(stdStreamBehavior);
+   profile.config.priority = priority;
+   profile.config.memoryLimitBytes = memoryLimitBytes;
+   profile.config.stackLimitBytes = stackLimitBytes;
+   profile.config.userProcessesLimit = userProcessesLimit;
+   profile.config.cpuLimit = cpuLimit;
+   profile.config.niceLimit = niceLimit;
 
    // return profile
    return profile;

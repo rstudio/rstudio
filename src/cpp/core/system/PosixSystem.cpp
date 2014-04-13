@@ -757,6 +757,14 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
       case MemlockLimit:
          *pLimit = RLIMIT_MEMLOCK;
          break;
+      case CpuLimit:
+         *pLimit = RLIMIT_CPU;
+         break;
+#ifndef __APPLE__
+      case NiceLimit:
+         *Limit = RLIMIT_NICE;
+         break;
+#endif
       default:
          *pLimit = -1;
          break;
@@ -868,49 +876,50 @@ void printCoreDumpable(const std::string& context)
 
 namespace {
 
-Error setProcessLimits(RLimitType memoryLimitBytes,
-                       RLimitType stackLimitBytes,
-                       RLimitType userProcessesLimit)
+void setProcessLimits(RLimitType memoryLimitBytes,
+                      RLimitType stackLimitBytes,
+                      RLimitType userProcessesLimit,
+                      RLimitType cpuLimit,
+                      RLimitType niceLimit)
 {
-   // set memory limit
-   Error memoryError;
+   // memory limit
    if (memoryLimitBytes != 0)
-      memoryError = setResourceLimit(MemoryLimit, memoryLimitBytes);
+   {
+      Error error = setResourceLimit(MemoryLimit, memoryLimitBytes);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-   Error stackError;
+   // stack limit
    if (stackLimitBytes != 0)
-      stackError = setResourceLimit(StackLimit, stackLimitBytes);
+   {
+      Error error = setResourceLimit(StackLimit, stackLimitBytes);
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // user processes limit
-   Error processesError;
    if (userProcessesLimit != 0)
-      processesError = setResourceLimit(UserProcessesLimit, userProcessesLimit);
-
-   // if both had errors then log one and return the other
-   if (memoryError)
    {
-      if (stackError)
-         LOG_ERROR(stackError);
-
-      if (processesError)
-         LOG_ERROR(processesError);
-
-      return memoryError;
+      Error error = setResourceLimit(UserProcessesLimit, userProcessesLimit);
+      if (error)
+         LOG_ERROR(error);
    }
-   else if (stackError)
-   {
-      if (processesError)
-         LOG_ERROR(processesError);
 
-      return stackError;
-   }
-   else if (processesError)
+   // cpu limit
+   if (cpuLimit != 0)
    {
-      return processesError;
+      Error error = setResourceLimit(CpuLimit, cpuLimit);
+      if (error)
+         LOG_ERROR(error);
    }
-   else
+
+   // nice limit
+   if (niceLimit != 0)
    {
-      return Success();
+      Error error = setResourceLimit(NiceLimit, niceLimit);
+      if (error)
+         LOG_ERROR(error);
    }
 }
 
@@ -1016,11 +1025,18 @@ Error launchChildProcess(std::string path,
          }
 
          // set limits
-         error = setProcessLimits(config.memoryLimitBytes,
-                                  config.stackLimitBytes,
-                                  config.userProcessesLimit);
-         if (error)
-            LOG_ERROR(error);
+         setProcessLimits(config.memoryLimitBytes,
+                          config.stackLimitBytes,
+                          config.userProcessesLimit,
+                          config.cpuLimit,
+                          config.niceLimit);
+
+         // set priority if we have one
+         if (config.priority != 0)
+         {
+            if (::setpriority(PRIO_PROCESS, 0, config.priority) == -1)
+               LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         }
 
          // switch user
          error = permanentlyDropPriv(runAsUser);
