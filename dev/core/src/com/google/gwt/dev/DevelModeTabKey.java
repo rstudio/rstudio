@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,7 +30,7 @@ class DevelModeTabKey {
 
   /**
    * Create a key.
-   * 
+   *
    * @param userAgent user agent string (not null)
    * @param url top-level URL (may be null for old clients)
    * @param tabKey opaque identifier for a browser tab - must be unique
@@ -67,15 +67,15 @@ class DevelModeTabKey {
       if (fullUrl.getPath() != null) {
         buf.append(fullUrl.getPath());
       }
-      url = buf.toString(); 
+      url = buf.toString();
     } catch (MalformedURLException e) {
       // use URL as-is if it appears to be malformed
-    } 
+    }
     this.url = url;
     this.tabKey = tabKey;
     this.remoteHost = remoteHost;
   }
-  
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
@@ -92,11 +92,11 @@ class DevelModeTabKey {
         && userAgent.equals(other.userAgent)
         && remoteHost.equals(other.remoteHost);
   }
-  
+
   public String getRemoteSocket() {
     return remoteHost;
   }
-  
+
   public String getTabKey() {
     return tabKey;
   }
@@ -112,6 +112,6 @@ class DevelModeTabKey {
   @Override
   public int hashCode() {
     return remoteHost.hashCode() * 7 + tabKey.hashCode() * 11
-        + url.hashCode() * 13 + userAgent.hashCode() * 17;  
+        + url.hashCode() * 13 + userAgent.hashCode() * 17;
   }
 }

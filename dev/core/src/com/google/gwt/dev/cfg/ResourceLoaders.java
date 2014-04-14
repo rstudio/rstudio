@@ -143,7 +143,7 @@ public class ResourceLoaders {
   public static ResourceLoader forPathAndFallback(List<File> path, ResourceLoader fallback) {
     return new PrefixLoader(path, fallback);
   }
-  
+
   /**
    * Adapts a ClassLoader to work as a ResourceLoader.
    * (Caveat: any ClassLoader in the chain that isn't a URLClassLoader won't contribute to the

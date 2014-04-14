@@ -39,7 +39,7 @@ import java.io.Serializable;
  * test case (method) your {@link Object} fails.
  *
  * @version $Revision: 646780 $ $Date: 2008-04-10 13:48:07 +0100 (Thu, 10 Apr 2008) $
- * 
+ *
  * @author Rodney Waldhoff
  * @author Stephen Colebourne
  * @author Anonymous
@@ -48,10 +48,10 @@ public abstract class AbstractTestObject extends BulkTest {
 
     /** Current major release for Collections */
     public static final int COLLECTIONS_MAJOR_VERSION = 3;
-    
+
     /**
      * JUnit constructor.
-     * 
+     *
      * @param testName  the test class name
      */
     public AbstractTestObject(String testName) {
@@ -61,7 +61,7 @@ public abstract class AbstractTestObject extends BulkTest {
     //-----------------------------------------------------------------------
     /**
      * Implement this method to return the object to test.
-     * 
+     *
      * @return the object to test
      */
     public abstract Object makeObject();
@@ -70,7 +70,7 @@ public abstract class AbstractTestObject extends BulkTest {
      * Override this method if a subclass is testing an object
      * that cannot serialize an "empty" Collection.
      * (e.g. Comparators have no contents)
-     * 
+     *
      * @return true
      */
     public boolean supportsEmptyCollections() {
@@ -81,7 +81,7 @@ public abstract class AbstractTestObject extends BulkTest {
      * Override this method if a subclass is testing an object
      * that cannot serialize a "full" Collection.
      * (e.g. Comparators have no contents)
-     * 
+     *
      * @return true
      */
     public boolean supportsFullCollections() {
@@ -157,9 +157,9 @@ public abstract class AbstractTestObject extends BulkTest {
 
     /**
      * Sanity check method, makes sure that any Serializable
-     * class can be serialized and de-serialized in memory, 
+     * class can be serialized and de-serialized in memory,
      * using the handy makeObject() method
-     * 
+     *
      * @throws IOException
      * @throws ClassNotFoundException
      */
@@ -210,14 +210,14 @@ public abstract class AbstractTestObject extends BulkTest {
      * maintain serialization compatibility with. Defaults to 1, the
      * earliest Collections version. (Note: some collections did not
      * even exist in this version).
-     * 
+     *
      * This constant makes it possible for TestMap (and other subclasses,
      * if necessary) to automatically check CVS for a versionX copy of a
      * Serialized object, so we can make sure that compatibility is maintained.
      * See, for example, TestMap.getCanonicalFullMapName(Map map).
      * Subclasses can override this variable, indicating compatibility
      * with earlier Collections versions.
-     * 
+     *
      * @return The version, or <code>null</code> if this object shouldn't be
      * tested for compatibility with previous versions.
      */
@@ -256,7 +256,7 @@ public abstract class AbstractTestObject extends BulkTest {
      * for creating disk-based objects in CVS that can become
      * the basis for compatibility tests using
      * readExternalFormFromDisk(String path)
-     * 
+     *
      * @param o Object to serialize
      * @param path path to write the serialized Object
      * @exception IOException
@@ -269,7 +269,7 @@ public abstract class AbstractTestObject extends BulkTest {
     /**
      * Converts a Serializable or Externalizable object to
      * bytes.  Useful for in-memory tests of serialization
-     * 
+     *
      * @param o Object to convert to bytes
      * @return serialized form of the Object
      * @exception IOException
@@ -284,7 +284,7 @@ public abstract class AbstractTestObject extends BulkTest {
      * Reads a Serialized or Externalized Object from disk.
      * Useful for creating compatibility tests between
      * different CVS versions of the same class
-     * 
+     *
      * @param path path to the serialized Object
      * @return the Object at the given path
      * @exception IOException
@@ -298,7 +298,7 @@ public abstract class AbstractTestObject extends BulkTest {
     /**
      * Read a Serialized or Externalized Object from bytes.
      * Useful for verifying serialization in memory.
-     * 
+     *
      * @param b byte array containing a serialized Object
      * @return Object contained in the bytes
      * @exception IOException

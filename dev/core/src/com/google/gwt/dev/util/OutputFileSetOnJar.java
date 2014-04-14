@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -71,7 +71,7 @@ public class OutputFileSetOnJar extends OutputFileSet {
   private final JarOutputStream jar;
 
   private final String pathPrefix;
-  
+
   private final Set<String> seenEntries = new HashSet<String>();
 
   public OutputFileSetOnJar(File jarFile, String pathPrefix) throws IOException {
@@ -110,7 +110,7 @@ public class OutputFileSetOnJar extends OutputFileSet {
   /**
    * Creates directory entries within a zip archive. Uses
    * <code>createdDirs</code> to avoid creating entries for the same path twice.
-   * 
+   *
    * @param path the path of a directory within the archive to create
    */
   private void mkzipDirs(String path) throws IOException {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -56,11 +56,11 @@ public class JavaSourceParser {
   /**
    * Spits a binary name into a series of char arrays, corresponding to
    * enclosing classes.
-   * 
+   *
    * <p>
    * For example, {@code test.Foo$Bar} gets expanded to [[Foo],[Bar]]. Note that
    * the package is not included.
-   * 
+   *
    * @param binaryName class name in binary form (ie, test.Foo$Bar)
    * @return list of char arrays of class names, from outer to inner
    */
@@ -79,7 +79,7 @@ public class JavaSourceParser {
 
   /**
    * Find a matching method in a type.
-   * 
+   *
    * @param type JDT method
    * @param jMethod TypeOracle method object to find
    * @return method declaration or null if not found
@@ -112,10 +112,10 @@ public class JavaSourceParser {
 
   /**
    * Find all methods which have the requested name.
-   * 
+   *
    * <p>
    * {@code <clinit>} is not supported.
-   * 
+   *
    * @param type JDT type declaration
    * @param name name of methods to find
    * @return list of matching methods
@@ -137,7 +137,7 @@ public class JavaSourceParser {
 
   /**
    * Find a particular type in a compilation unit.
-   * 
+   *
    * @param unit JDT cud
    * @param binaryName binary name of the type to find (ie, test.Foo$Bar)
    * @return type declaration or null if not found
@@ -157,7 +157,7 @@ public class JavaSourceParser {
 
   /**
    * Find one type by name in a array of types.
-   * 
+   *
    * @param types array of types
    * @param name name of type to find
    * @return matching type or null if not found
@@ -173,7 +173,7 @@ public class JavaSourceParser {
 
   /**
    * Parse Java source.
-   * 
+   *
    * @param javaSource String containing Java source to parse
    * @return a CompilationUnitDeclaration or null if parsing failed
    */
@@ -193,7 +193,7 @@ public class JavaSourceParser {
 
   /**
    * Compares an unresolved JDT type to a TypeOracle type to see if they match.
-   * 
+   *
    * @param jdtType
    * @param toType
    * @return true if the two type objects resolve to the same
@@ -222,7 +222,7 @@ public class JavaSourceParser {
 
   /**
    * Cache of top-level classes to JDT CUDs associated with them.
-   * 
+   *
    * <p>
    * CUDs may be discarded at any time (with a performance cost if they are
    * needed again), and are held in SoftReferences to allow GC to dump them.
@@ -231,10 +231,10 @@ public class JavaSourceParser {
 
   /**
    * Add a source file associated with the outermost enclosing class.
-   * 
+   *
    * @param topType
    * @param source
-   * 
+   *
    *          TODO: reduce visibility
    */
   public synchronized void addSourceForType(JClassType topType, Resource source) {
@@ -243,7 +243,7 @@ public class JavaSourceParser {
 
   /**
    * Return the real argument names for a given method from the source.
-   * 
+   *
    * @param method method to lookup parameter names for
    * @return array of argument names or null if no source is available
    */
@@ -274,7 +274,7 @@ public class JavaSourceParser {
 
   /**
    * Finds a JDT CUD for a given top-level type, generating it if needed.
-   * 
+   *
    * @param topType top-level JClassType
    * @return CUD instance or null if no source found
    */

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -94,7 +94,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       for (String v : cprop.getDefinedValues()) {
         possibleValues.add(v);
       }
-      return new DefaultSelectionProperty(value, fallback, name, possibleValues, 
+      return new DefaultSelectionProperty(value, fallback, name, possibleValues,
           cprop.getFallbackValuesMap());
     } else {
       throw new BadPropertyValueException(propertyName);
@@ -124,7 +124,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
 
   /**
    * Returns the value of the specified property.
-   * 
+   *
    * @throws BadPropertyValueException if the property value could not be
    *           computed, or if the returned result is not a legal value for this
    *           property.
@@ -173,7 +173,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
 
   /**
    * Returns a Property given its name, handling error conditions.
-   * 
+   *
    * @throws BadPropertyValueException
    */
   private Property getProperty(String propertyName)

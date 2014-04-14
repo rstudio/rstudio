@@ -30,14 +30,14 @@ import java.util.Map;
 
 /**
  * JUnit tests.
- * 
+ *
  * @version $Revision: 646780 $ $Date: 2008-04-10 13:48:07 +0100 (Thu, 10 Apr 2008) $
- * 
+ *
  * @author Stephen Colebourne
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestIdentityMap extends AbstractTestObject {
-    
+
     private static final Integer I1A = new Integer(1);
     private static final Integer I1B = new Integer(1);
     private static final Integer I2A = new Integer(2);
@@ -50,27 +50,27 @@ public class TestIdentityMap extends AbstractTestObject {
     public static void main(String[] args) {
         TestRunner.run(suite());
     }
-    
+
     public static Test suite() {
         return new TestSuite(TestIdentityMap.class);
 //        return BulkTest.makeSuite(TestIdentityMap.class);  // causes race condition!
     }
-    
+
     @Override
     public Object makeObject() {
         return new IdentityMap();
     }
-    
+
     @Override
     public String getCompatibilityVersion() {
         return "3";
     }
-    
+
     //-----------------------------------------------------------------------
     public void testBasics() {
         IterableMap map = new IdentityMap();
         assertEquals(0, map.size());
-        
+
         map.put(I1A, I2A);
         assertEquals(1, map.size());
         assertSame(I2A, map.get(I1A));
@@ -79,7 +79,7 @@ public class TestIdentityMap extends AbstractTestObject {
         assertEquals(false, map.containsKey(I1B));
         assertEquals(true, map.containsValue(I2A));
         assertEquals(false, map.containsValue(I2B));
-        
+
         map.put(I1A, I2B);
         assertEquals(1, map.size());
         assertSame(I2B, map.get(I1A));
@@ -88,7 +88,7 @@ public class TestIdentityMap extends AbstractTestObject {
         assertEquals(false, map.containsKey(I1B));
         assertEquals(false, map.containsValue(I2A));
         assertEquals(true, map.containsValue(I2B));
-        
+
         map.put(I1B, I2B);
         assertEquals(2, map.size());
         assertSame(I2B, map.get(I1A));
@@ -98,24 +98,24 @@ public class TestIdentityMap extends AbstractTestObject {
         assertEquals(false, map.containsValue(I2A));
         assertEquals(true, map.containsValue(I2B));
     }
-    
+
     //-----------------------------------------------------------------------
     public void testHashEntry() {
         IterableMap map = new IdentityMap();
-        
+
         map.put(I1A, I2A);
         map.put(I1B, I2A);
-        
+
         Map.Entry entry1 = (Map.Entry) map.entrySet().iterator().next();
         Iterator it = map.entrySet().iterator();
         Map.Entry entry2 = (Map.Entry) it.next();
         Map.Entry entry3 = (Map.Entry) it.next();
-        
+
         assertEquals(true, entry1.equals(entry2));
         assertEquals(true, entry2.equals(entry1));
         assertEquals(false, entry1.equals(entry3));
     }
-    
+
     /**
      * Compare the current serialized form of the Map
      * against the canonical version in CVS.
@@ -136,7 +136,7 @@ public class TestIdentityMap extends AbstractTestObject {
         assertEquals(map.size(), cloned.size());
         assertSame(map.get("1"), cloned.get("1"));
     }
-    
+
 //    public void testCreate() throws Exception {
 //        Map map = new IdentityMap();
 //        writeExternalFormToDisk((java.io.Serializable) map, "D:/dev/collections/data/test/IdentityMap.emptyCollection.version3.obj");

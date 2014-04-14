@@ -1,12 +1,12 @@
 /*
  * Copyright 2006 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -193,7 +193,7 @@ public class CheckForUpdates {
             public String getAnchorText() {
               return "Release Notes";
             }
-    
+
             @Override
             public URL getURL() {
               return url;
@@ -229,7 +229,7 @@ public class CheckForUpdates {
   /**
    * Create an update checker which will poll a server URL and log a message
    * about an update if available.
-   * 
+   *
    * @param logger TreeLogger to use
    * @param entryPoint the name of the main entry point used for this execution
    */
@@ -241,7 +241,7 @@ public class CheckForUpdates {
 
   /**
    * Check for updates and log to the logger if they are available.
-   * 
+   *
    * @return an UpdateResult or null if there is no new update
    */
   public UpdateResult check() {
@@ -250,7 +250,7 @@ public class CheckForUpdates {
 
   /**
    * Check for updates and log to the logger if they are available.
-   * 
+   *
    * @return an UpdateResult or null if there is no new update
    */
   public UpdateResult check(long minCheckMillis) {
@@ -367,7 +367,7 @@ public class CheckForUpdates {
    * Default implementation just uses the platform-independent method. A
    * subclass should override this method for platform-dependent proxy handling,
    * for example.
-   * 
+   *
    * @param branch TreeLogger to use
    * @param userAgent user agent string to send in request
    * @param url URL to fetch
@@ -381,7 +381,7 @@ public class CheckForUpdates {
    * This default implementation uses regular Java HTTP, which doesn't deal with
    * proxies automagically. See the IE6 subclasses for an implementation that
    * does deal with proxies.
-   * 
+   *
    * @param branch TreeLogger to use
    * @param userAgent user agent string to send in request
    * @param url URL to fetch

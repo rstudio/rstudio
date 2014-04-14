@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,10 +31,10 @@ import java.util.Set;
 
 /**
  * Shared abstract class for tests that rely on well-known test data.
- * 
+ *
  * These tests rely on the external existence of the following files under
  * <code>test/com/google/gwt/dev/javac/impl/testdata/</code>
- * 
+ *
  * <pre>
  * cpe1/com/google/gwt/user/User.gwt.xml
  * cpe1/com/google/gwt/user/client/Command.java
@@ -45,14 +45,14 @@ import java.util.Set;
  * cpe1/org/example/bar/client/etc/BarEtc.txt
  * cpe1/org/example/foo/client/FooClient.java
  * cpe1/org/example/foo/server/FooServer.java
- * 
+ *
  * cpe1/com/google/gwt/i18n/I18N.gwt.xml
  * cpe2/com/google/gwt/i18n/client/Messages.java
  * cpe2/com/google/gwt/i18n/rebind/LocalizableGenerator.java
  * cpe2/org/example/bar/client/BarClient2.txt
  * cpe2/org/example/bar/client/BarClient3.txt
  * </pre>
- * 
+ *
  * The same files should be present in jar files named cpe1.jar and cpe2.jar;
  * note that the contents of each will not have the <code>cpe1/</code> and
  * <code>cpe2/</code> prefixes (respectively) on their contained files.
@@ -195,7 +195,7 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
     File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
     return new ExcludeSvnClassPathEntry(ZipFileClassPathEntry.get(file));
   }
-  
+
   protected ClassPathEntry getClassPathEntry1AsZip() throws IOException, URISyntaxException {
     File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe1.zip");
     return new ExcludeSvnClassPathEntry(ZipFileClassPathEntry.get(file));
@@ -216,7 +216,7 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
     File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe2.jar");
     return new ExcludeSvnClassPathEntry(ZipFileClassPathEntry.get(file));
   }
-  
+
   protected ClassPathEntry getClassPathEntry2AsZip() throws URISyntaxException, IOException {
     File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe2.zip");
     return new ExcludeSvnClassPathEntry(ZipFileClassPathEntry.get(file));

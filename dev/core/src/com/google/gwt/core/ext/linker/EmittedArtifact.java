@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ import java.io.OutputStream;
  * be emitted by the compiler into the module's output directory. This type may
  * be extended by Linker providers to provide alternative implementations of
  * {@link #getContents(TreeLogger)}.
- * 
+ *
  * TODO(bobv): provide a timestamp so we can make the time on output files match
  * that of input files?
  */
@@ -46,7 +46,7 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
      * A public artifact is something that may be served to clients.
      */
     Public,
-    
+
     /**
      * A private artifact is something that is only used during the build
      * process.
@@ -63,7 +63,7 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
         }
       }
     },
-    
+
     /**
      * A deploy artifact is deployed to the server but is never served to the
      * client.
@@ -94,7 +94,7 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
      * should be visible to the server.  These artifacts will now be treated as
      * both Private and Deploy, so that existing build tools that expect to find
      * them in the output directory for Private artifacts will find them.
-     * 
+     *
      * New code should use Deploy instead.
      */
     LegacyDeploy {
@@ -110,12 +110,12 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
         }
       }
     };
-    
+
     /**
      * Returns true if this visibility matches the requested visibility level,
      * dealing with the fact that {@link #LegacyDeploy} matches both
      * {@link #Private} and {@link #Deploy}.
-     * 
+     *
      * @param visibility
      * @return true if this visibility matches the requested level
      */
@@ -151,7 +151,7 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
    * <p>
    * The default implementation always returns the current time. Subclasses
    * should override this method to provide a type-appropriate value.
-   * 
+   *
    * @return the time at which the Artifact was last modified
    */
   public long getLastModified() {
@@ -191,7 +191,7 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
    * Private EmittedArtifacts are intended for resources that generally should
    * not be deployed to the server in the same location as the module
    * compilation artifacts.
-   * 
+   *
    * @deprecated use {@link #getVisibility()} instead
    */
   @Deprecated
@@ -201,7 +201,7 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
 
   /**
    * Sets the private attribute of the EmittedResource.
-   * 
+   *
    * @param isPrivate true if this artifact is private
    *
    * @deprecated use {@link #setVisibility(Visibility)} instead

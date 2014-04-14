@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -188,7 +188,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
   /**
    * Get the module name.
-   * 
+   *
    * @return the module name
    */
   public String getModuleName() {
@@ -501,11 +501,11 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       caught = e;
     } catch (ExceptionInInitializerError e) {
       caught = e.getException();
-    } catch (NoSuchMethodException e) { 
-      // If it is a nested class and not declared as static, 
+    } catch (NoSuchMethodException e) {
+      // If it is a nested class and not declared as static,
       // then it's not accessible from outside.
       //
-      if (resolvedClass.getEnclosingClass() != null 
+      if (resolvedClass.getEnclosingClass() != null
           && !Modifier.isStatic(resolvedClass.getModifiers())) {
         msg = "Rebind result '" + resultName
         + " is a non-static inner class";
@@ -549,14 +549,14 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
   /**
    * Create the __defineStatic method.
-   * 
+   *
    * @param logger
    */
   protected abstract void createStaticDispatcher(TreeLogger logger);
 
   /**
    * Invokes a native JavaScript function.
-   * 
+   *
    * @param name the name of the function to invoke
    * @param jthis the function's 'this' context
    * @param types the type of each argument
@@ -577,7 +577,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
   /**
    * Invokes a native JavaScript function.
-   * 
+   *
    * @param name the name of the function to invoke
    * @param jthis the function's 'this' context
    * @param types the type of each argument

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -122,14 +122,14 @@ public class CollectAnnotationData extends AnnotationVisitor {
 
   /**
    * Generic callback type taking a parameter.
-   * 
+   *
    * @param <T> type of the argument to the callback
    */
   private interface Callback<T> {
 
     /**
      * Invoke the callback.
-     * 
+     *
      * @param value value to pass to the callback.
      */
     void call(T value);
@@ -140,7 +140,7 @@ public class CollectAnnotationData extends AnnotationVisitor {
 
   /**
    * Construct the collector.
-   * 
+   *
    * @param desc class descriptor of the annotation class
    * @param visible true if the annotation is visible at runtime
    */
@@ -150,7 +150,7 @@ public class CollectAnnotationData extends AnnotationVisitor {
 
   /**
    * Construct the collector.
-   * 
+   *
    * @param desc class descriptor of the annotation class
    * @param visible true if the annotation is visible at runtime
    * @param callback callback to be called when the annotation is finished
@@ -192,7 +192,7 @@ public class CollectAnnotationData extends AnnotationVisitor {
 
       /**
        * Called with an array of values.
-       * 
+       *
        * @param value
        */
       @Override

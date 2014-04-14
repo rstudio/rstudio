@@ -78,7 +78,7 @@ public class FileResourceTest extends TestCase {
 
     /*
      *  The resource is no longer available.  Check to make sure we can't access its contents
-     *  through the API. 
+     *  through the API.
      */
     InputStream in = null;
     try {

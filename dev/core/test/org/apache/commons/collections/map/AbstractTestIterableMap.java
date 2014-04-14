@@ -29,7 +29,7 @@ import java.util.Map;
  * Abstract test class for {@link IterableMap} methods and contracts.
  *
  * @version $Revision: 646780 $ $Date: 2008-04-10 13:48:07 +0100 (Thu, 10 Apr 2008) $
- * 
+ *
  * @author Stephen Colebourne
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -37,13 +37,13 @@ public abstract class AbstractTestIterableMap extends AbstractTestMap {
 
     /**
      * JUnit constructor.
-     * 
+     *
      * @param testName  the test name
      */
     public AbstractTestIterableMap(String testName) {
         super(testName);
     }
-    
+
     //-----------------------------------------------------------------------
     public void testFailFastEntrySet() {
         if (isRemoveSupported() == false) return;
@@ -55,7 +55,7 @@ public abstract class AbstractTestIterableMap extends AbstractTestMap {
             it.next();
             fail();
         } catch (ConcurrentModificationException ex) {}
-        
+
         resetFull();
         it = map.entrySet().iterator();
         it.next();
@@ -65,7 +65,7 @@ public abstract class AbstractTestIterableMap extends AbstractTestMap {
             fail();
         } catch (ConcurrentModificationException ex) {}
     }
-    
+
     public void testFailFastKeySet() {
         if (isRemoveSupported() == false) return;
         resetFull();
@@ -76,7 +76,7 @@ public abstract class AbstractTestIterableMap extends AbstractTestMap {
             it.next();
             fail();
         } catch (ConcurrentModificationException ex) {}
-        
+
         resetFull();
         it = map.keySet().iterator();
         it.next();
@@ -86,7 +86,7 @@ public abstract class AbstractTestIterableMap extends AbstractTestMap {
             fail();
         } catch (ConcurrentModificationException ex) {}
     }
-    
+
     public void testFailFastValues() {
         if (isRemoveSupported() == false) return;
         resetFull();
@@ -97,7 +97,7 @@ public abstract class AbstractTestIterableMap extends AbstractTestMap {
             it.next();
             fail();
         } catch (ConcurrentModificationException ex) {}
-        
+
         resetFull();
         it = map.values().iterator();
         it.next();
@@ -107,27 +107,27 @@ public abstract class AbstractTestIterableMap extends AbstractTestMap {
             fail();
         } catch (ConcurrentModificationException ex) {}
     }
-    
+
     //-----------------------------------------------------------------------
     public BulkTest bulkTestMapIterator() {
         return new InnerTestMapIterator();
     }
-    
+
     public class InnerTestMapIterator extends AbstractTestMapIterator {
         public InnerTestMapIterator() {
             super("InnerTestMapIterator");
         }
-        
+
         @Override
         public Object[] addSetValues() {
             return AbstractTestIterableMap.this.getNewSampleValues();
         }
-        
+
         @Override
         public boolean supportsRemove() {
             return AbstractTestIterableMap.this.isRemoveSupported();
         }
-        
+
         @Override
         public boolean isGetStructuralModify() {
             return AbstractTestIterableMap.this.isGetStructuralModify();
@@ -149,26 +149,26 @@ public abstract class AbstractTestIterableMap extends AbstractTestMap {
             resetFull();
             return ((IterableMap) AbstractTestIterableMap.this.map).mapIterator();
         }
-        
+
         @Override
         public Map getMap() {
             // assumes makeFullMapIterator() called first
             return AbstractTestIterableMap.this.map;
         }
-        
+
         @Override
         public Map getConfirmedMap() {
             // assumes makeFullMapIterator() called first
             return AbstractTestIterableMap.this.confirmed;
         }
-        
+
         @Override
         public void verify() {
             super.verify();
             AbstractTestIterableMap.this.verify();
         }
     }
-    
+
 //  public void testCreate() throws Exception {
 //      resetEmpty();
 //      writeExternalFormToDisk((Serializable) map, "D:/dev/collections/data/test/HashedMap.emptyCollection.version3.obj");

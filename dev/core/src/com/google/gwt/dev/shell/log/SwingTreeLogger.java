@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -121,7 +121,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
     /**
      * Create a log event.
-     * 
+     *
      * @param logger
      * @param isBranchCommit
      * @param index
@@ -200,7 +200,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
     /**
      * Set the properties of a label to match this log entry.
-     * 
+     *
      * @param treeLabel label to set properties for.
      */
     public void setDisplayProperties(JLabel treeLabel) {
@@ -251,7 +251,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
     /**
      * Update this log event's inherited priority, which is the highest priority
      * of this event and any child events.
-     * 
+     *
      * @param childPriority
      * @return true if the priority was upgraded
      */
@@ -285,7 +285,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
   /**
    * Constructs the top-level TreeItemLogger.
-   * 
+   *
    * @param panel
    */
   public SwingTreeLogger(SwingLoggerPanel panel) {
@@ -295,7 +295,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
   /**
    * Used to create a branch treelogger, supplying a tree node to use rather
    * than the panel's.
-   * 
+   *
    * @param panel
    * @param treeNode
    */
@@ -329,7 +329,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
   /**
    * Add a log event to be processed on the event thread.
-   * 
+   *
    * @param logEvent LogEvent to process
    */
   private void addUpdate(final LogEvent logEvent) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -153,7 +153,7 @@ public class PathPrefixSet {
    * {@link ClassPathEntry} subclasses to avoid descending into directory
    * hierarchies that could not possibly contain resources that would be
    * included by {@link #includesResource(String)}
-   * 
+   *
    * @param dirPath must be a valid abstract directory name (must not be an
    *          empty string)
    * @return true if some PathPrefix allows the directory
@@ -163,18 +163,18 @@ public class PathPrefixSet {
 
     /*
      * There are four cases:
-     * 
+     *
      * (1) The empty string was specified as a prefix, which causes everything
      * to be included.
-     * 
+     *
      * (2) As we walk the parts of dirPath, we see a path prefix attached to one
      * of the trie nodes we encounter. This means that there was a specified
      * prefix that this dirPath falls underneath, so it is included.
-     * 
+     *
      * (3) dirPath is longer than the trie, but we never encounter a path prefix
      * as we walk the trie. This indicates that this directory doesn't fall into
      * any of the specified prefixes.
-     * 
+     *
      * (4) dirPath is not longer than the trie and stays on the trie the whole
      * time, which means it is included (since at least some longer prefix
      * includes it).
@@ -212,7 +212,7 @@ public class PathPrefixSet {
   /**
    * Determines whether or not a given resource should be allowed by this path
    * prefix set and the corresponding filters.
-   * 
+   *
    * @param resourceAbstractPathName
    * @return matching <code>PathPrefix</code> if the resource matches some
    *         specified prefix and any associated filters don't exclude it.

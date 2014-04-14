@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -46,13 +46,13 @@ public class JGenericTypeTest extends TestCase {
    * {@link com.google.gwt.core.ext.typeinfo.JGenericTypeTest#testGetTypeParameters()}
    * by testing generic types that have type parameters which are dependent on
    * one another.
-   * 
+   *
    * NOTE: This test does not make use of the
    * {@link com.google.gwt.core.ext.typeinfo.JGenericTypeTest#getTestType()}
    * method. The test types used are:
    * {@link GenericClassWithDependentTypeBounds}
    * {@link GenericClassWithTypeBound}
-   * 
+   *
    * @throws NotFoundException
    */
   public void testGetDependentTypeParameters() throws NotFoundException {
@@ -134,7 +134,7 @@ public class JGenericTypeTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JGenericType#getErasedType()}.
-   * 
+   *
    * @throws NotFoundException
    */
   public void testGetErasedType() throws NotFoundException {
@@ -146,7 +146,7 @@ public class JGenericTypeTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JGenericType#getRawType()}.
-   * 
+   *
    * @throws NotFoundException
    */
   public void testGetRawType() throws NotFoundException {
@@ -164,7 +164,7 @@ public class JGenericTypeTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JGenericType#getTypeParameters()}.
-   * 
+   *
    * @throws NotFoundException
    */
   public void testGetTypeParameters() throws NotFoundException {
@@ -187,7 +187,7 @@ public class JGenericTypeTest extends TestCase {
    * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JGenericType#isAssignableFrom(JClassType)}
    * .
-   * 
+   *
    * @throws NotFoundException
    */
   public void testIsAssignableFrom() throws NotFoundException {
@@ -209,7 +209,7 @@ public class JGenericTypeTest extends TestCase {
    * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JGenericType#isAssignableTo(JClassType)}
    * .
-   * 
+   *
    * @throws NotFoundException
    */
   public void testIsAssignableTo() throws NotFoundException {

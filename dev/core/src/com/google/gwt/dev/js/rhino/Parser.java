@@ -18,7 +18,7 @@
  * Copyright (C) 1997-1999 Netscape Communications Corporation. All
  * Rights Reserved.
  *
- * Contributor(s): 
+ * Contributor(s):
  * Mike Ang
  * Mike McCabe
  *
@@ -41,12 +41,12 @@ import java.io.IOException;
 
 /**
  * This class implements the JavaScript parser.
- * 
+ *
  * It is based on the C source files jsparse.c and jsparse.h in the jsref
  * package.
- * 
+ *
  * @see TokenStream
- * 
+ *
  * @author Mike McCabe
  * @author Brendan Eich
  */
@@ -81,9 +81,9 @@ public class Parser {
 
   /*
    * Build a parse tree from the given TokenStream.
-   * 
+   *
    * @param ts the TokenStream to parse
-   * 
+   *
    * @return an Object representing the parsed program. If the parse fails, null
    * will be returned. (The parse failure will result in a call to the current
    * Context's ErrorReporter.)
@@ -692,7 +692,7 @@ public class Parser {
         // bruce: we don't support this is JSNI code because it's impossible
         // to identify bindings even passably well
         //
-        
+
         reportError(ts, "msg.jsni.unsupported.with");
 
         skipsemi = true;
@@ -813,7 +813,7 @@ public class Parser {
 
         /*
          * Check explicitly against (multi-line) function statement.
-         * 
+         *
          * lastExprEndLine is a hack to fix an automatic semicolon insertion
          * problem with function expressions; the ts.getLineno() == lineno check
          * was firing after a function definition even though the next statement
@@ -1080,7 +1080,7 @@ public class Parser {
 
         /*
          * don't look across a newline boundary for a postfix incop.
-         * 
+         *
          * the rhino scanner seems to work differently than the js scanner here;
          * in js, it works to have the line number check precede the peekToken
          * calls. It'd be better if they had similar behavior...
@@ -1377,7 +1377,7 @@ public class Parser {
    * function nodes and with the toplevel script. When saved in the constant
    * pool of a class, this string will be UTF-8 encoded, and token values will
    * occupy a single byte.
-   * 
+   *
    * Source is saved (mostly) as token numbers. The tokens saved pretty much
    * correspond to the token stream of a 'canonical' representation of the input
    * program, as directed by the parser. (There were a few cases where tokens
@@ -1390,7 +1390,7 @@ public class Parser {
    * are important.) NativeFunction.decompile expands the tokens back into their
    * string representations, using simple lookahead to correct spacing and
    * indentation.
-   * 
+   *
    * Token types with associated ops (ASSIGN, SHOP, PRIMARY, etc.) are saved as
    * two-token pairs. Number tokens are stored inline, as a NUMBER token, a
    * character representing the type, and either 1 or 4 characters representing
@@ -1401,13 +1401,13 @@ public class Parser {
    * to to the string in the compiled class' constant pool would probably save a
    * lot of space... but would require some method of deriving the final
    * constant pool entry from information available at parse time.
-   * 
+   *
    * Nested functions need a similar mechanism... fortunately the nested
    * functions for a given function are generated in source order. Nested
    * functions are encoded as FUNCTION followed by a function number (encoded as
    * a character), which is enough information to find the proper generated
    * NativeFunction instance.
-   * 
+   *
    */
   private void sourceAdd(char c) {
     if (sourceTop == sourceBuffer.length) {
@@ -1438,12 +1438,12 @@ public class Parser {
     /*
      * encode the number in the source stream. Save as NUMBER type (char | char
      * char char char) where type is 'D' - double, 'S' - short, 'J' - long.
-     * 
+     *
      * We need to retain float vs. integer type info to keep the behavior of
      * liveconnect type-guessing the same after decompilation. (Liveconnect
      * tries to present 1.0 to Java as a float/double) OPT: This is no longer
      * true. We could compress the format.
-     * 
+     *
      * This may not be the most space-efficient encoding; the chars created
      * below may take up to 3 bytes in constant pool UTF-8 encoding, so a Double
      * could take up to 12 bytes.

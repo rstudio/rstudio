@@ -32,10 +32,10 @@ public class CompilationMetricsArtifact extends Artifact<CompilationMetricsArtif
   private String permutationDescription;
   private int[] jsSize;
 
-  public CompilationMetricsArtifact(int permutationId) { 
+  public CompilationMetricsArtifact(int permutationId) {
     this(SoycReportLinker.class, permutationId);
   }
-  
+
   protected CompilationMetricsArtifact(Class<? extends Linker> linker, int permutationId) {
     super(linker);
     this.permutationId = permutationId;

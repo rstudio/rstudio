@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -49,7 +49,7 @@ public class DevModeSession {
   /**
    * Creates a new instance. It is public only for unit test purposes and is
    * not meant to be used outside of this package.
-   * 
+   *
    * @param moduleName the name of the GWT module for this session
    * @param userAgent the User agent field provided by the browser for this
    *          session

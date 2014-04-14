@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,7 @@ import java.util.List;
  * mode application via its JavaScriptHost class. JavaScriptHost contains a
  * method called setHost() that must be called when a new application is
  * initialized.
- * 
+ *
  * This interface works with JavaScriptHost to keep running applications at
  * arms-length via an isolated class loader (this requires that there be no
  * explicit dependencies between the shell and any client-side classes).
@@ -35,7 +35,7 @@ public interface ShellJavaScriptHost {
 
   /**
    * Define one or more JSNI methods.
-   * 
+   *
    * @param logger
    * @param compiledClass
    * @param jsniMethods

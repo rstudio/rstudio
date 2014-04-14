@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,13 +32,13 @@ import java.util.Set;
 /**
  * Exports the compiler metrics gathered by the precompile and
  * compilePermutation steps into an XML file to be read by external tools.
- * 
+ *
  * See compilerMetrics.xsd for an XML schema describing the output.
- * 
+ *
  * <pre>
  * &lt;metrics version="1">
- * 
- *   &lt;module elapsed="1234"> 
+ *
+ *   &lt;module elapsed="1234">
  *    &lt;sources count="1">
  *      &lt;source name="foo.java" />
  *    &lt;/sources>
@@ -46,7 +46,7 @@ import java.util.Set;
  *      &lt;type name="com.google.foo.Foo" />
  *    &lt;/types>
  *   &lt;/module>
- * 
+ *
  *   &lt;precompilations>
  *     &lt;precompilation base="0" ids="0,1,2" elapsed="1">
  *       &lt;types count="1" kind="generated">
@@ -66,15 +66,15 @@ import java.util.Set;
  *       &lt;/javascript>
  *     &lt;/compilation>
  *   &lt;/compilations>
- * 
+ *
  * &lt;/metrics>
  *
  *</pre>
- * 
+ *
  */
 public class CompilerMetricsXmlFormatter {
     public static final int XML_FORMAT_VERSION = 1;
-    
+
     public static byte[] writeMetricsAsXml(ArtifactSet artifacts,
         ModuleMetricsArtifact moduleMetrics) {
 
@@ -113,7 +113,7 @@ public class CompilerMetricsXmlFormatter {
       String result = content.replaceAll("\'", "&apos;");
       return result.replaceAll("\"", "&quot;");
     }
-    
+
     private static void writeCompilationMetricsAsXml(
         CompilationMetricsArtifact metrics, PrintWriter pw) {
       pw.append("  <compilation  id=\"" + metrics.getPermutationId() + "\" ");
@@ -121,7 +121,7 @@ public class CompilerMetricsXmlFormatter {
       pw.append("totalElapsed=\"" + metrics.getElapsedMilliseconds() + "\" ");
       // TODO(zundel): Print out captured GC and heap memory analysis if it is
       // available.
-      
+
       String description = metrics.getPermutationDescription();
       if (description != null) {
         pw.append(" description=\"" + escapeXmlAttributeContent(description) + "\"");
@@ -223,7 +223,7 @@ public class CompilerMetricsXmlFormatter {
       }
       pw.append(" </precompilation>\n");
     }
-    
+
     private CompilerMetricsXmlFormatter() {
       // do not instantiate
     }

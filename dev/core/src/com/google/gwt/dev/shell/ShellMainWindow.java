@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -109,7 +109,7 @@ public class ShellMainWindow extends JPanel {
 
   /**
    * A class for implementing different methods of launching a URL.
-   * <p> 
+   * <p>
    * Note that this is retained despite the UI change because we plan to support
    * multiple launcher types in the future.
    */
@@ -119,7 +119,7 @@ public class ShellMainWindow extends JPanel {
 
     /**
      * Construct the launch method.
-     * 
+     *
      * @param displayName the name that will display in the UI for this launch
      *     method
      */
@@ -129,7 +129,7 @@ public class ShellMainWindow extends JPanel {
 
     /**
      * Launch the specified URL.
-     * 
+     *
      * @param url
      */
     public abstract void launchUrl(URL url);
@@ -144,7 +144,7 @@ public class ShellMainWindow extends JPanel {
    * User-visible URL and complete URL for use in combo box.
    */
   private static class UrlComboEntry {
-    
+
     private final String urlFragment;
     private final URL url;
 
@@ -152,7 +152,7 @@ public class ShellMainWindow extends JPanel {
       this.urlFragment = urlFragment;
       this.url = url;
     }
-    
+
     public URL getUrl() {
       return url;
     }
@@ -230,7 +230,7 @@ public class ShellMainWindow extends JPanel {
    * specified in {@link #setStartupUrls(Map)} may be launched.
    * <p>
    * MUST BE CALLED FROM THE UI THREAD
-   * 
+   *
    * @param successfulLoad true if all modules were successfully loaded
    */
   public void moduleLoadComplete(boolean successfulLoad) {
@@ -278,7 +278,7 @@ public class ShellMainWindow extends JPanel {
    * Launch the selected URL with the selected launch method.
    * <p>
    * MUST BE CALLED FROM THE UI THREAD
-   * @param launcher 
+   * @param launcher
    */
   protected void launch(LaunchMethod launcher) {
     UrlComboEntry selectedUrl = (UrlComboEntry) urlCombo.getSelectedItem();

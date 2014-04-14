@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,7 +28,7 @@ public class LongLib extends LongLibBase {
     static final LongEmul TWO = fromInt(2);
     static final LongEmul ZERO = fromInt(0);
   }
-  
+
   private static LongEmul[] boxedValues;
 
   public static LongEmul add(LongEmul a, LongEmul b) {
@@ -45,7 +45,7 @@ public class LongLib extends LongLibBase {
 
   /**
    * Compare the receiver a to the argument b.
-   * 
+   *
    * @return 0 if they are the same, a positive value if the receiver is
    *         greater, or a negative value if the argument is greater.
    */
@@ -189,7 +189,7 @@ public class LongLib extends LongLibBase {
 
   /**
    * Parse a string containing a base-64 encoded version of a long value.
-   * 
+   *
    * Keep this synchronized with the version in Base64Utils.
    */
   public static long longFromBase64(String value) {
@@ -405,7 +405,7 @@ public class LongLib extends LongLibBase {
   /**
    * Return an optionally single-quoted string containing a base-64 encoded
    * version of the given long value.
-   * 
+   *
    * Keep this synchronized with the version in Base64Utils.
    */
   public static String toBase64(long value) {

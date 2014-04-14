@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,7 +25,7 @@ import com.google.gwt.core.ext.linker.Shardable;
  * determined by the order of <code>add-linker</code> tags in the module
  * configuration. Each Linker should also be annotated with {@link Shardable};
  * non-shardable linkers are deprecated and will eventually not be supported.
- * 
+ *
  * <p>
  * A new instance of a linker is created each time a module is compiled or
  * during hosted mode when a module first loads (or is refreshed). During a
@@ -36,7 +36,7 @@ import com.google.gwt.core.ext.linker.Shardable;
  * for each compiled permutation and once after all compiles are finished. The
  * precise artifacts supplied differ with each call and are described in the
  * method's documentation.
- * 
+ *
  * <p>
  * When hosted mode starts for a module, it calls
  * {@link #link(TreeLogger, LinkerContext, ArtifactSet)} for non-shardable
@@ -76,13 +76,13 @@ public abstract class Linker {
 
     return false;
   }
-  
+
   /**
    * This method is invoked for linkers not annotated with {@link Shardable}. It
    * sees all artifacts across the whole compile and can modify them
    * arbitrarily. This method is only called if the linker is not annotated with
    * {@link Shardable}.
-   * 
+   *
    * @param logger the TreeLogger to record to
    * @param context provides access to the Linker's environment
    * @param artifacts an unmodifiable view of the artifacts to link
@@ -103,7 +103,7 @@ public abstract class Linker {
    * permutation, and after all compilation has finished. The
    * <code>onePermutation</code> is <code>true</code> for a per-permutation call
    * and <code>false</code> for a global final-link call.
-   * 
+   *
    * <p>
    * For one-permutation calls, this method is passed all artifacts generated
    * for just the one permutation. For the global call at the end of
@@ -114,7 +114,7 @@ public abstract class Linker {
    * <li>All artifacts not marked as
    * {@link com.google.gwt.core.ext.linker.Transferable} have been discarded.
    * </ol>
-   * 
+   *
    * @param logger the TreeLogger to record to
    * @param context provides access to the Linker's environment
    * @param artifacts an unmodifiable view of the artifacts to link
@@ -135,7 +135,7 @@ public abstract class Linker {
    * reference the original artifact set passed into
    * {@link #link(TreeLogger, LinkerContext, ArtifactSet)} should retain a copy
    * of the original artifact set in an instance variable.
-   * 
+   *
    * @param logger the TreeLogger to record to
    * @param context provides access to the Linker's environment
    * @param newArtifacts an unmodifiable view of the newly generated artifacts
@@ -153,7 +153,7 @@ public abstract class Linker {
 
   /**
    * Returns {@code true} if this linker supports DevMode.
-   * 
+   *
    * @param context a LinkerContext
    */
   public boolean supportsDevModeInJunit(LinkerContext context) {

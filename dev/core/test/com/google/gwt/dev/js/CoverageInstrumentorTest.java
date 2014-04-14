@@ -89,7 +89,7 @@ public class CoverageInstrumentorTest extends TestCase {
     for (String line : lines) {
       instrumentableLines.put("Test.java", ++i);
     }
-    JsParser.parseInto(functionBody.getSourceInfo(), program.getScope(), 
+    JsParser.parseInto(functionBody.getSourceInfo(), program.getScope(),
         functionBody, new StringReader(code));
     i = 0;
     for (JsStatement statement : functionBody.getStatements()) {

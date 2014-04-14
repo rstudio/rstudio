@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -70,7 +70,7 @@ public interface LinkerContext {
    * transformations to the program, based on the compiler's configuration. The
    * return value will be functionally-equivalent JavaScript, although the exact
    * transformations and structure of the output should be considered opaque.
-   * 
+   *
    * While this function can be safely applied multiple times, the best results
    * will be obtained by performing all JavaScript assembly and calling the
    * function just before writing the selection script to disk.

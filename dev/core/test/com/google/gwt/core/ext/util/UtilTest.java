@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -45,7 +45,7 @@ public class UtilTest extends TestCase {
       ">",
       "<"
     };
-    
+
     String[] OUTPUTS = {
       "ab&amp;yoohoo&lt;ok",
       "ab&amp;yoohoo&lt;",
@@ -63,7 +63,7 @@ public class UtilTest extends TestCase {
       assertEquals(Util.escapeXml(INPUTS[i]), OUTPUTS[i]);
     }
   }
-  
+
   private void testWriteUtf8(String input) throws IOException {
     // Built-in encoder
     ByteArrayOutputStream out1 = new ByteArrayOutputStream();
@@ -71,20 +71,20 @@ public class UtilTest extends TestCase {
     writer.write(input);
     writer.close();
     byte[] bytes1 = out1.toByteArray();
-    
+
     // Util encoder
     StringBuilder builder = new StringBuilder();
     builder.append(input);
     ByteArrayOutputStream out2 = new ByteArrayOutputStream();
     Util.writeUtf8(builder, out2);
     byte[] bytes2 = out2.toByteArray();
-    
+
     assertEquals(bytes1.length, bytes2.length);
     for (int i = 0; i < bytes1.length; i++) {
       assertEquals("input = " + input + " at byte " + i, bytes1[i], bytes2[i]);
     }
   }
-  
+
   public void testWriteUtf8() {
     String[] INPUTS = {
         "灰色",
@@ -95,7 +95,7 @@ public class UtilTest extends TestCase {
         "ᴄᴅᴈᴇἓἤἥἨὙΩ№℗℘←↑→↓✤✥✦✧�ﺕﺖꀕꀖꀗ逅逖逡遇違遝遭遷",
         "Surrogate pairs: 𝍠𐀁𐀵𐅇𐅋𐅊𝄐𝄑𝄢𝄫𝄞𝍤𝍦𝍨再善𯾰𯿩"
     };
-    
+
     try {
       for (String input : INPUTS) {
         testWriteUtf8(input);

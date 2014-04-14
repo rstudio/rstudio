@@ -55,37 +55,37 @@ import java.util.logging.Logger;
  *
  */
 public final class SpeedTracerLogger {
-  
+
   private static final Logger log = Logger.getLogger(SpeedTracerLogger.class.getName());
-  
+
   // Log file name (logging is enabled if this is non-null)
-  private static final String logFile = 
+  private static final String logFile =
     System.getProperty("gwt.speedtracerlog");
-  
+
   // Allow a system property to override the default output format
-  private static final String defaultFormatString = 
+  private static final String defaultFormatString =
     System.getProperty("gwt.speedtracerformat");
-  
+
   // Use cumulative multi-threaded process cpu time instead of wall time
-  private static final boolean logProcessCpuTime = 
+  private static final boolean logProcessCpuTime =
     getBooleanProperty("gwt.speedtracer.logProcessCpuTime");
-  
+
   // Use per thread cpu time instead of wall time. If logProcessCpuTime is set,
   // then this can remain false - we only need one or the other.
   private static final boolean logThreadCpuTime =
       getBooleanProperty("gwt.speedtracer.logThreadCpuTime");
-  
+
   // Turn on logging summarizing gc time during an event
   private static final boolean logGcTime =
     getBooleanProperty("gwt.speedtracer.logGcTime");
-  
+
   // Turn on logging estimating overhead used for speedtracer logging.
   private static final boolean logOverheadTime =
     getBooleanProperty("gwt.speedtracer.logOverheadTime");
 
   // Disable logging of JSNI calls and callbacks to reduce memory usage where
   // the heap is already tight.
-  private static final boolean jsniCallLoggingEnabled = 
+  private static final boolean jsniCallLoggingEnabled =
       !getBooleanProperty("gwt.speedtracer.disableJsniLogging");
 
   static {
@@ -96,7 +96,7 @@ public final class SpeedTracerLogger {
           + "or 'gwt.speedtracer.logThreadCpuTime', not both.");
     }
   }
-  
+
   /**
    * Represents a node in a tree of SpeedTracer events.
    */
@@ -105,7 +105,7 @@ public final class SpeedTracerLogger {
     List<Event> children;
     List<String> data;
     DevModeSession devModeSession;
-    
+
     long elapsedDurationNanos;
     long elapsedStartTimeNanos;
 
@@ -155,7 +155,7 @@ public final class SpeedTracerLogger {
         this.data = Lists.addAll(this.data, data);
       }
     }
-    
+
     /**
      * Signals the end of the current event.
      */
@@ -224,7 +224,7 @@ public final class SpeedTracerLogger {
           refEvent.processCpuStartTimeNanos + refEvent.processCpuDurationNanos;
       threadCpuStartTimeNanos = refEvent.threadCpuStartTimeNanos + refEvent.threadCpuDurationNanos;
     }
-    
+
     JsonObject toJson() {
       JsonObject json = JsonObject.create();
       json.put("type", -2);
@@ -335,7 +335,7 @@ public final class SpeedTracerLogger {
       return "Dummy";
     }
   }
-  
+
   /**
    * Provides functionality specific to garbage collection events.
    */
@@ -344,7 +344,7 @@ public final class SpeedTracerLogger {
 
     /**
      * Constructs an event that represents garbage collection metrics.
-     * 
+     *
      * @param refEvent the event during which the garbage collections took place
      * @param gcType the garbage collector type
      * @param collectionCount the total number of collections for this garbage
@@ -388,7 +388,7 @@ public final class SpeedTracerLogger {
       return refEvent.getStartTimeNanos() + refEvent.getDurationNanos() - getDurationNanos();
     }
   }
-  
+
   /**
    * Time keeper which uses wall time.
    */
@@ -404,7 +404,7 @@ public final class SpeedTracerLogger {
       return System.nanoTime() - zeroTimeNanos;
     }
   }
-  
+
   /**
    * Time keeper which uses process cpu time.  This can be greater than wall
    * time, since it is cumulative over the multiple threads of a process.
@@ -417,12 +417,12 @@ public final class SpeedTracerLogger {
     public ProcessNormalizedTimeKeeper() {
       try {
         osMXBean = ManagementFactory.getOperatingSystemMXBean();
-        /* 
+        /*
          * Find this method by reflection, since it's part of the Sun
          * implementation for OperatingSystemMXBean, and we can't always assume
          * that com.sun.management.OperatingSystemMXBean will be available.
          */
-        getProcessCpuTimeMethod = 
+        getProcessCpuTimeMethod =
           osMXBean.getClass().getMethod("getProcessCpuTime");
         getProcessCpuTimeMethod.setAccessible(true);
         zeroTimeNanos = (Long) getProcessCpuTimeMethod.invoke(osMXBean);
@@ -430,7 +430,7 @@ public final class SpeedTracerLogger {
         throw new RuntimeException(ex);
       }
     }
-    
+
     public long normalizedTimeNanos() {
       try {
         return (Long) getProcessCpuTimeMethod.invoke(osMXBean) - zeroTimeNanos;
@@ -467,13 +467,13 @@ public final class SpeedTracerLogger {
     public long normalizedTimeNanos() {
       return threadMXBean.getCurrentThreadCpuTime() + resettableTimeBase.get();
     }
-    
+
     public void resetTimeBase() {
       /*
        * Since all threads start individually at time 0L, we use this to
        * offset each event's time so we can generate chronological output.
        */
-      resettableTimeBase.set(System.nanoTime() 
+      resettableTimeBase.set(System.nanoTime()
           - zeroTimeNanos - threadMXBean.getCurrentThreadCpuTime());
     }
   }
@@ -597,7 +597,7 @@ public final class SpeedTracerLogger {
   public static boolean jsniCallLoggingEnabled() {
     return jsniCallLoggingEnabled;
   }
-  
+
   /**
    * Adds a LOG_MESSAGE SpeedTracer event to the log. This represents a single
    * point in time and has a special representation in the SpeedTracer UI.
@@ -609,12 +609,12 @@ public final class SpeedTracerLogger {
   /**
    * Signals that a new event has started. You must end each event for each
    * corresponding call to {@code start}. You may nest timing calls.
-   * 
+   *
    * <p>
    * Has the same effect as calling
    * {@link #start(DevModeSession, EventType, String...)
    * start(DevModeSession.getSessionForCurrentThread(), type, data)}.
-   * 
+   *
    * @param type the type of event
    * @param data a set of key-value pairs (each key is followed by its value)
    *          that contain additional information about the event
@@ -654,7 +654,7 @@ public final class SpeedTracerLogger {
   private static SpeedTracerLogger get() {
     return LazySpeedTracerLoggerHolder.singleton;
   }
-  
+
   private static boolean getBooleanProperty(String propName) {
     try {
       return System.getProperty(propName) != null;
@@ -664,13 +664,13 @@ public final class SpeedTracerLogger {
   }
 
   private final boolean enabled;
-  
+
   private final DummyEvent dummyEvent = new DummyEvent();
 
   private BlockingQueue<Event> eventsToWrite;
 
   private final boolean fileLoggingEnabled;
-  
+
   private CountDownLatch flushLatch;
 
   private Event flushSentinel;
@@ -678,21 +678,21 @@ public final class SpeedTracerLogger {
   private Format outputFormat;
 
   private ThreadLocal<Stack<Event>> pendingEvents;
-  
+
   private CountDownLatch shutDownLatch;
 
   private Event shutDownSentinel;
 
   private List<GarbageCollectorMXBean> gcMXBeans;
-  
+
   private Map<String, Long> lastGcTimes;
 
   private final ElapsedNormalizedTimeKeeper elapsedTimeKeeper = new ElapsedNormalizedTimeKeeper();
 
-  private final ProcessNormalizedTimeKeeper processCpuTimeKeeper = 
+  private final ProcessNormalizedTimeKeeper processCpuTimeKeeper =
               (logProcessCpuTime) ? new ProcessNormalizedTimeKeeper() : null;
 
-  private final ThreadNormalizedTimeKeeper threadCpuTimeKeeper = 
+  private final ThreadNormalizedTimeKeeper threadCpuTimeKeeper =
               (logThreadCpuTime) ? new ThreadNormalizedTimeKeeper() : null;
 
   /**
@@ -706,7 +706,7 @@ public final class SpeedTracerLogger {
 
   /**
    * Constructor intended for unit testing.
-   * 
+   *
    * @param writer alternative {@link Writer} to send speed tracer output.
    */
   SpeedTracerLogger(Writer writer, Format format) {
@@ -774,7 +774,7 @@ public final class SpeedTracerLogger {
     threadPendingEvents.push(newEvent);
     newEvent.end("message", message);
   }
-  
+
   void addGcEvents(Event refEvent) {
     // we're not sending GC events to the dashboard, so we only record them
     // to file
@@ -800,7 +800,7 @@ public final class SpeedTracerLogger {
       }
     }
   }
-  
+
   void addOverheadEvent(Event refEvent) {
     Event overheadEvent =
         new Event(refEvent.devModeSession, refEvent, SpeedTracerEventType.OVERHEAD);
@@ -819,7 +819,7 @@ public final class SpeedTracerLogger {
     if (data.length % 2 == 1) {
       throw new IllegalArgumentException("Unmatched data argument");
     }
-    
+
     Stack<Event> threadPendingEvents = pendingEvents.get();
     if (threadPendingEvents.isEmpty()) {
       throw new IllegalStateException(
@@ -827,7 +827,7 @@ public final class SpeedTracerLogger {
     }
     Event currentEvent = threadPendingEvents.pop();
     currentEvent.updateDuration();
-    
+
     while (currentEvent != event && !threadPendingEvents.isEmpty()) {
       // Missed a closing end for one or more frames! Try to sync back up.
       currentEvent.addData("Missed",
@@ -840,17 +840,17 @@ public final class SpeedTracerLogger {
       currentEvent.addData(
           "Missed", "Fell off the end of the threadPending events");
     }
-    
+
     if (logGcTime) {
       addGcEvents(currentEvent);
     }
 
     currentEvent.addData(data);
-    
+
     if (logOverheadTime) {
       addOverheadEvent(currentEvent);
     }
-    
+
     if (threadPendingEvents.isEmpty()) {
       if (fileLoggingEnabled) {
         eventsToWrite.add(currentEvent);
@@ -871,7 +871,7 @@ public final class SpeedTracerLogger {
     if (!fileLoggingEnabled) {
       return;
     }
-    
+
     try {
       // Wait for the other thread to drain the queue.
       flushLatch = new CountDownLatch(1);
@@ -903,7 +903,7 @@ public final class SpeedTracerLogger {
         threadCpuTimeKeeper.resetTimeBase();
       }
     }
-    
+
     Event newEvent = new Event(session, parent, type, data);
     // Add a field to the top level event in order to  track the base time
     // so we can re-normalize the data
@@ -922,7 +922,7 @@ public final class SpeedTracerLogger {
       }
     };
   }
-  
+
   private BlockingQueue<Event> openDefaultLogWriter() {
     Writer writer = null;
     if (enabled) {
@@ -958,7 +958,7 @@ public final class SpeedTracerLogger {
     }
 
     final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>();
-    
+
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {

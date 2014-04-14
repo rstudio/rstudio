@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -48,9 +48,9 @@ public class ConstantsFlowFunction implements
     ConstantsAssumption in = AssumptionUtil.join(graph.getInEdges(node), assumptionMap);
 
     final int outSize = graph.getOutEdges(node).size();
-    final ArrayList<ConstantsAssumption> result = 
+    final ArrayList<ConstantsAssumption> result =
       new ArrayList<ConstantsAssumption>(outSize);
-    
+
     final Updater assumption = new Updater(in);
     node.accept(new CfgVisitor() {
       @Override
@@ -58,14 +58,14 @@ public class ConstantsFlowFunction implements
         JExpression condition = x.getCondition();
 
         Updater thenAssumptions = assumption.copy();
-        Updater elseAssumptions = assumption.copy(); 
-          
+        Updater elseAssumptions = assumption.copy();
+
         Preconditions.checkNotNull(condition, "Null condition in %s", x);
-        AssumptionDeducer.deduceAssumption(condition, JBooleanLiteral.TRUE, 
+        AssumptionDeducer.deduceAssumption(condition, JBooleanLiteral.TRUE,
             thenAssumptions);
-        AssumptionDeducer.deduceAssumption(condition, JBooleanLiteral.FALSE, 
+        AssumptionDeducer.deduceAssumption(condition, JBooleanLiteral.FALSE,
             elseAssumptions);
-        
+
         for (CfgEdge e : graph.getOutEdges(x)) {
           if (CfgConditionalNode.THEN.equals(e.getRole())) {
             result.add(thenAssumptions.unwrap());
@@ -103,13 +103,13 @@ public class ConstantsFlowFunction implements
         if (var == null) {
           return;
         }
-        
+
         if (var instanceof JParameter || var instanceof JLocal) {
           if (expression != null) {
-            JValueLiteral valueLiteral = 
+            JValueLiteral valueLiteral =
               ExpressionEvaluator.evaluate(expression, assumption.unwrap());
-            if (valueLiteral != null && 
-                (valueLiteral.getType() == var.getType() || 
+            if (valueLiteral != null &&
+                (valueLiteral.getType() == var.getType() ||
                  valueLiteral instanceof JNullLiteral)) {
               assumption.set(var, valueLiteral);
             } else {

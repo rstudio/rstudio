@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,13 +23,13 @@ import java.util.regex.Pattern;
  * A singleton class that provides blazingly fast implementation of the default
  * excludes of Ant's {@link org.apache.tools.ant.DirectoryScanner}, assuming
  * case-sensitiveness.
- * 
+ *
  * TODO: this class needs to be revisited, when Gwt's Ant is upgraded.
- * 
+ *
  * Currently, we do not go to ant if (a) the filterList is empty, or (b) the
  * filterList has "common" patterns. Exception: When path ends in '/', we defer
  * to ant.
- * 
+ *
  * TODO: This code could be made more general and cleaner by removing the
  * dependency on Ant completely. All ant patterns could be compiled into
  * reg-exps. That could also make the code faster. Plus, at several places,
@@ -143,13 +143,13 @@ public class DefaultFilters {
    * match: When a pattern starts with a File.separator, the string to match
    * must also start with a File.separator. When a pattern does not start with a
    * File.separator, the string to match may not start with a File.separator.
-   * 
+   *
    * </p>
-   * 
+   *
    * TODO: This method could accept all ant patterns, but then all characters
    * that have a special meaning in Java's regular expression would need to be
    * escaped.
-   * 
+   *
    * @param antPatternString the ant pattern String.
    * @return a pattern string that can be passed in Java's Pattern.compile(..),
    *         null if cannot process the pattern.

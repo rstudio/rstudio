@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -43,13 +43,13 @@ public class UseMirroredClasses extends ClassVisitor {
         // TODO(unnurg): Find a better way to track methods that will get
         // rewritten - possibly by using annotations
         mirrorMap = new HashMap<String, HashMap<String, String>>();
-        
+
         HashMap<String, String> logRecordMethods = new HashMap<String, String>();
         logRecordMethods.put(
             "getLoggerName",
             "com/google/gwt/logging/impl/DevModeLoggingFixes:getLoggerName");
         mirrorMap.put("java/util/logging/LogRecord", logRecordMethods);
-        
+
         HashMap<String, String> logManagerMethods = new HashMap<String, String>();
         logManagerMethods.put(
             "getLogger",
@@ -58,7 +58,7 @@ public class UseMirroredClasses extends ClassVisitor {
             "getLoggerNames",
             "com/google/gwt/logging/impl/DevModeLoggingFixes:logManagerGetLoggerNames");
         mirrorMap.put("java/util/logging/LogManager", logManagerMethods);
-        
+
         HashMap<String, String> loggerMethods = new HashMap<String, String>();
         loggerMethods.put(
             "getName",
@@ -68,9 +68,9 @@ public class UseMirroredClasses extends ClassVisitor {
             "com/google/gwt/logging/impl/DevModeLoggingFixes:loggerGetLogger");
         mirrorMap.put("java/util/logging/Logger", loggerMethods);
       }
-    
+
     private String className;
-    
+
     protected MethodInterceptor(MethodVisitor mv, String className) {
       super(Opcodes.ASM4, mv);
       this.className = className;
@@ -79,7 +79,7 @@ public class UseMirroredClasses extends ClassVisitor {
     @Override
     public void visitMethodInsn(int opcode, String owner, String name,
         String desc) {
-      
+
       // Check if this method is in our list
       Map<String, String> mirroredMethods = mirrorMap.get(owner);
       if (mirroredMethods == null) {
@@ -92,7 +92,7 @@ public class UseMirroredClasses extends ClassVisitor {
         super.visitMethodInsn(opcode, owner, name, desc);
         return;
       }
-      
+
       // Confirm that the replacement method string is correctly formatted
       // and split it into a class and a method
       String[] temp = mirrorClassMethod.split(":");
@@ -100,7 +100,7 @@ public class UseMirroredClasses extends ClassVisitor {
         super.visitMethodInsn(opcode, owner, name, desc);
         return;
       }
-      
+
       String mirrorClass = temp[0];
       String mirrorMethod = temp[1];
 
@@ -111,43 +111,43 @@ public class UseMirroredClasses extends ClassVisitor {
         super.visitMethodInsn(opcode, owner, name, desc);
         return;
       }
-      
+
       if (opcode == Opcodes.INVOKESTATIC) {
         super.visitMethodInsn(opcode, mirrorClass, mirrorMethod, desc);
-        return;       
+        return;
       }
-          
+
       // Get the types of the current method being invoked
       // using the method descriptor string
-      final Type[] argTypes = Type.getArgumentTypes(desc); 
-        
+      final Type[] argTypes = Type.getArgumentTypes(desc);
+
       // The new types for the new method
       final Type[] newArgTypes = new Type[argTypes.length + 1];
 
       // Make the first argument be the instance type (i.e. "this")
       newArgTypes[0] = Type.getType("L" + owner + ";");
-        
+
       // Copy over all the other args
       System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
 
       // Specify the new descriptor that includes the "this" arg.
       String newDesc =
         Type.getMethodDescriptor(Type.getReturnType(desc), newArgTypes);
-        
+
       // Call the corresponding static method on the mirror class
       super.visitMethodInsn(
           Opcodes.INVOKESTATIC, mirrorClass, mirrorMethod, newDesc);
       return;
     }
   }
-  
+
   private String className;
-  
+
   public UseMirroredClasses(ClassVisitor cv, String className) {
     super(Opcodes.ASM4, cv);
     this.className = className;
   }
-  
+
   @Override
   public MethodVisitor visitMethod(int access, String name, String desc,
       String signature, String[] exceptions) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -67,7 +67,7 @@ public class CopyIntegratedFlowFunction implements
               if (x == node.getJNode()) {
                 ctx.replaceMe(createRef(x.getSourceInfo(), original));
               }
-            } 
+            }
           };
           CfgNode<?> parentNode = node.getParent();
           JNode parentJNode = parentNode.getJNode();
@@ -80,7 +80,7 @@ public class CopyIntegratedFlowFunction implements
 
     @Override
     public Cfg getNewSubgraph() {
-      CfgReadNode newNode = new CfgReadNode(node.getParent(), 
+      CfgReadNode newNode = new CfgReadNode(node.getParent(),
           createRef(node.getJNode().getSourceInfo(), original));
       return CfgUtil.createSingleNodeReplacementGraph(graph, node, newNode);
     }
@@ -96,7 +96,7 @@ public class CopyIntegratedFlowFunction implements
       } else if (variable instanceof JParameter) {
         return new JParameterRef(sourceInfo, (JParameter) variable);
       }
-      throw new IllegalArgumentException("Unsupported variable: " + 
+      throw new IllegalArgumentException("Unsupported variable: " +
           variable.getClass());
     }
   }
@@ -104,22 +104,22 @@ public class CopyIntegratedFlowFunction implements
   private static final CopyFlowFunction FLOW_FUNCTION = new CopyFlowFunction();
 
   @Override
-  public Transformation<CfgTransformer, Cfg> 
-  interpretOrReplace(final CfgNode<?> node, final Cfg graph, 
+  public Transformation<CfgTransformer, Cfg>
+  interpretOrReplace(final CfgNode<?> node, final Cfg graph,
       AssumptionMap<CfgEdge, CopyAssumption> assumptionMap) {
     CopyAssumption in = AssumptionUtil.join(
         graph.getInEdges(node), assumptionMap);
-    
+
     if (in != null && node instanceof CfgReadNode) {
       JVariable v = ((CfgReadNode) node).getTarget();
       final JVariable original = in.getOriginal(v);
-      Preconditions.checkState(v != original, 
+      Preconditions.checkState(v != original,
           "Variable is a copy of itself: %s", v);
       if (original != null) {
         return new CopyTransformation(node, original, graph);
       }
     }
-    
+
     FLOW_FUNCTION.interpret(node, graph, assumptionMap);
     return null;
   }

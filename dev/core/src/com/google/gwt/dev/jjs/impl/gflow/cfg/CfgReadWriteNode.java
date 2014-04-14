@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,7 +27,7 @@ public class CfgReadWriteNode extends CfgSimpleNode<JNode> {
   private final JExpression target;
   private final JExpression value;
 
-  public CfgReadWriteNode(CfgNode<?> parent, JNode node, JExpression target, 
+  public CfgReadWriteNode(CfgNode<?> parent, JNode node, JExpression target,
       JExpression value) {
     super(parent, node);
     this.target = target;
@@ -47,16 +47,16 @@ public class CfgReadWriteNode extends CfgSimpleNode<JNode> {
   }
 
   /**
-   * Get target variable if target is variable reference. Returns 
+   * Get target variable if target is variable reference. Returns
    * <code>null</code> otherwise (e.g. target is array reference).
    */
   public JVariable getTargetVariable() {
-    return target instanceof JVariableRef ? ((JVariableRef) target).getTarget() 
+    return target instanceof JVariableRef ? ((JVariableRef) target).getTarget()
         : null;
   }
 
   /**
-   * Get expression which is assigned to value. 
+   * Get expression which is assigned to value.
    * <code>null</code> when new value expression can't be statically determined.
    */
   public JExpression getValue() {

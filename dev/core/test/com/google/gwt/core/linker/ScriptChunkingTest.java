@@ -101,7 +101,7 @@ public class ScriptChunkingTest extends TestCase {
           return first.getName().compareTo(second.getName());
         }
       };
-      
+
       TreeSet<SelectionProperty> result = new TreeSet<SelectionProperty>(comparator);
       result.add(mockSourceMapProperty);
       return result;

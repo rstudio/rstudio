@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -77,7 +77,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * compiled from source code byte a {@link ByteCodeCompiler}. After compilation,
  * some byte code rewriting is performed to support
  * <code>JavaScriptObject</code> and its subtypes.
- * 
+ *
  * TODO: we should refactor this class to move the getClassInfoByDispId,
  * getDispId, getMethodDispatch and putMethodDispatch into a separate entity
  * since they really do not interact with the CompilingClassLoader
@@ -112,7 +112,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     /**
      * Returns the {@link DispatchClassInfo} for a given dispatch id.
-     * 
+     *
      * @param dispId dispatch id
      * @return DispatchClassInfo for the requested dispatch id
      */
@@ -125,7 +125,7 @@ public final class CompilingClassLoader extends ClassLoader implements
     /**
      * Returns the dispatch id for a given member reference. Member references
      * can be encoded as: "@class::field" or "@class::method(typesigs)".
-     * 
+     *
      * @param jsniMemberRef a string encoding a JSNI member to use
      * @return integer encoded as ((classId << 16) | memberId)
      */
@@ -189,7 +189,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     /**
      * Extracts the class id from the dispatch id.
-     * 
+     *
      * @param dispId
      * @return the classId encoded into this dispatch id
      */
@@ -203,7 +203,7 @@ public final class CompilingClassLoader extends ClassLoader implements
      * potentially cause initializers to be run in a different order than in web
      * mode. Moreover, we may not have injected all of the JSNI code required to
      * initialize the class.
-     * 
+     *
      * @param binaryClassName the binary name of a class
      * @return {@link java.lang.Class} instance or null if the given binary
      *         class name could not be found
@@ -240,7 +240,7 @@ public final class CompilingClassLoader extends ClassLoader implements
     /**
      * Returns the {@link java.lang.Class} object for a class that matches the
      * source or binary name given.
-     * 
+     *
      * @param className binary or source name
      * @return {@link java.lang.Class} instance, if found, or null
      */
@@ -262,7 +262,7 @@ public final class CompilingClassLoader extends ClassLoader implements
      * references, we need to be able to deal with the fact that multiple
      * permutations of the class name with regards to source or binary forms map
      * on the same {@link DispatchClassInfo}.
-     * 
+     *
      * @param className binary or source name for a class
      * @return {@link DispatchClassInfo} associated with the binary or source
      *         class name; null if there is none
@@ -335,7 +335,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     /**
      * Synthesizes a dispatch identifier for the given class and member ids.
-     * 
+     *
      * @param classId class index
      * @param memberId member index
      * @return dispatch identifier for the given class and member ids
@@ -369,7 +369,7 @@ public final class CompilingClassLoader extends ClassLoader implements
       byte[] bytes = Util.readURLAsBytes(url);
       return defineClass(name, bytes, 0, bytes.length);
     }
-    
+
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
       try {
@@ -382,7 +382,7 @@ public final class CompilingClassLoader extends ClassLoader implements
         }
         return getParent().loadClass(name);
       } catch (Throwable t) {
-        // Make a second attempt not only on ClassNotFoundExceptions, but also errors like 
+        // Make a second attempt not only on ClassNotFoundExceptions, but also errors like
         // ClassCircularityError
         Class c = findClass(name);
         if (resolve) {
@@ -390,7 +390,7 @@ public final class CompilingClassLoader extends ClassLoader implements
         }
         return c;
       }
-    }    
+    }
   }
 
   /**
@@ -511,7 +511,7 @@ public final class CompilingClassLoader extends ClassLoader implements
    * with methods. This includes the set of SingleJsoImpl interfaces actually
    * implemented by a JSO type, the mangled method names, and the names of the
    * Methods that should actually implement the virtual functions.
-   * 
+   *
    * Given the current implementation of JSO$ and incremental execution of
    * rebinds, it's not possible for Generators to produce additional
    * JavaScriptObject subtypes, so this data can remain static.
@@ -532,17 +532,17 @@ public final class CompilingClassLoader extends ClassLoader implements
          * By preemptively adding all possible mangled names by which a method
          * could be called, we greatly simplify the logic necessary to rewrite
          * the call-site.
-         * 
+         *
          * interface A {void m();}
-         * 
+         *
          * interface B extends A {void z();}
-         * 
+         *
          * becomes
-         * 
+         *
          * c_g_p_A_m() -> JsoA$.m$()
-         * 
+         *
          * c_g_p_B_m() -> JsoA$.m$()
-         * 
+         *
          * c_g_p_B_z() -> JsoB$.z$()
          */
         for (JMethod intfMethod : type.getOverridableMethods()) {
@@ -551,9 +551,9 @@ public final class CompilingClassLoader extends ClassLoader implements
           /*
            * It is necessary to locate the implementing type on a per-method
            * basis. Consider the case of
-           * 
+           *
            * @SingleJsoImpl interface C extends A, B {}
-           * 
+           *
            * Methods inherited from interfaces A and B must be dispatched to
            * their respective JSO implementations.
            */
@@ -577,7 +577,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
           /*
            * The mangled name adds the current interface like
-           * 
+           *
            * com_foo_Bar_methodName
            */
           String mangledName = getBinaryName(type).replace('.', '_') + "_"
@@ -599,9 +599,9 @@ public final class CompilingClassLoader extends ClassLoader implements
           /*
            * Create a pseudo-method declaration for the interface method. This
            * should look something like
-           * 
+           *
            * ReturnType method$ (ParamType, ParamType)
-           * 
+           *
            * This must be kept in sync with the WriteJsoImpl class.
            */
           {
@@ -620,9 +620,9 @@ public final class CompilingClassLoader extends ClassLoader implements
           /*
            * Cook up the a pseudo-method declaration for the concrete type. This
            * should look something like
-           * 
+           *
            * ReturnType method$ (JsoType, ParamType, ParamType)
-           * 
+           *
            * This must be kept in sync with the WriteJsoImpl class.
            */
           {
@@ -722,10 +722,10 @@ public final class CompilingClassLoader extends ClassLoader implements
   }
 
   /**
-   * Only loads bootstrap classes, specifically excluding classes from the classpath. 
+   * Only loads bootstrap classes, specifically excluding classes from the classpath.
    */
   private static final ClassLoader bootstrapClassLoader = new ClassLoader(null) { };
-  
+
   /**
    * The names of the bridge classes.
    */
@@ -771,7 +771,7 @@ public final class CompilingClassLoader extends ClassLoader implements
     /*
      * Specific support for bridging to Emma since the user classloader is
      * generally completely isolated.
-     * 
+     *
      * We are looking for a specific emma class "com.vladium.emma.rt.RT". If
      * that changes in the future, this code would need to be updated as well.
      */
@@ -922,7 +922,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   private boolean isInjectingClass = false;
 
   private final ReentrantLock loadLock = new ReentrantLock();
-  
+
   private final TreeLogger logger;
 
   private final Set<String> scriptOnlyClasses = new HashSet<String>();
@@ -997,7 +997,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   /**
    * Retrieves the mapped JSO for a given unique id, provided the id was
    * previously cached and the JSO has not been garbage collected.
-   * 
+   *
    * @param uniqueId the previously stored unique id
    * @return the mapped JSO, or <code>null</code> if the id was not previously
    *         mapped or if the JSO has been garbage collected
@@ -1008,7 +1008,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   /**
    * Returns the {@link DispatchClassInfo} for a given dispatch id.
-   * 
+   *
    * @param dispId dispatch identifier
    * @return {@link DispatchClassInfo} for a given dispatch id or null if one
    *         does not exist
@@ -1020,7 +1020,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   /**
    * Returns the dispatch id for a JSNI member reference.
-   * 
+   *
    * @param jsniMemberRef a JSNI member reference
    * @return dispatch id or -1 if the JSNI member reference could not be found
    */
@@ -1032,7 +1032,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   /**
    * Retrieves the mapped wrapper for a given Java Object, provided the wrapper
    * was previously cached and has not been garbage collected.
-   * 
+   *
    * @param javaObject the Object being wrapped
    * @return the mapped wrapper, or <code>null</code> if the Java object mapped
    *         or if the wrapper has been garbage collected
@@ -1044,7 +1044,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   /**
    * Weakly caches a given JSO by unique id. A cached JSO can be looked up by
    * unique id until it is garbage collected.
-   * 
+   *
    * @param uniqueId a unique id associated with the JSO
    * @param jso the value to cache
    */
@@ -1054,7 +1054,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   /**
    * Weakly caches a wrapper for a given Java Object.
-   * 
+   *
    * @param javaObject the Object being wrapped
    * @param wrapper the mapped wrapper
    */
@@ -1102,11 +1102,11 @@ public final class CompilingClassLoader extends ClassLoader implements
         /*
          * Release the lock before side-loading from scriptOnlyClassLoader. This prevents deadlock
          * conditions when a class from scriptOnlyClassLoader ends up trying to call back into this
-         * classloader from another thread. 
+         * classloader from another thread.
          */
         loadLock.unlock();
 
-        // Also don't run the static initializer to lower the risk of deadlock. 
+        // Also don't run the static initializer to lower the risk of deadlock.
         return Class.forName(className, false, scriptOnlyClassLoader);
       }
 
@@ -1192,19 +1192,19 @@ public final class CompilingClassLoader extends ClassLoader implements
       }
       return c;
     }
-    
+
     assert getParent() == null;
-    
+
     try {
       c = bootstrapClassLoader.loadClass(name);
     } catch (ClassNotFoundException e) {
       c = findClass(name);
     }
-    
+
     if (resolve) {
       resolveClass(c);
     }
-    
+
     return c;
   }
 
@@ -1326,7 +1326,7 @@ public final class CompilingClassLoader extends ClassLoader implements
       }
       classBytes = newBytes;
     }
-    
+
     if (unit != null && unit.isError()) {
       // Compile worked, but the unit had some kind of error (JSNI?)
       CompilationProblemReporter.reportErrors(logger, unit, false);
@@ -1361,7 +1361,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   /**
    * Returns the compilationUnit corresponding to the className. For nested
    * classes, the unit corresponding to the top level type is returned.
-   * 
+   *
    * Since a file might have several top-level types, search using classFileMap.
    */
   private CompilationUnit getUnitForClassName(String className) {
@@ -1443,7 +1443,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   /**
    * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
    * sets its static 'host' field to our module space.
-   * 
+   *
    * @see JavaScriptHost
    */
   private void updateJavaScriptHost() {

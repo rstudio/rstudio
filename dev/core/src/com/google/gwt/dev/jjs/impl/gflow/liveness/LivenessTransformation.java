@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,7 +34,7 @@ import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 /**
  * Kill assignment. Leave rhs expression evaluation if it has side effects.
  */
-public class LivenessTransformation implements 
+public class LivenessTransformation implements
     Transformation<CfgTransformer, Cfg> {
   private final Cfg graph;
   private final CfgWriteNode writeToKill;
@@ -58,7 +58,7 @@ public class LivenessTransformation implements
 
             ctx.replaceMe(x.getRhs());
           }
-          
+
           @Override
           public void endVisit(JDeclarationStatement x, Context ctx) {
             if (writeToKill.getValue() != x.getInitializer() ||
@@ -69,7 +69,7 @@ public class LivenessTransformation implements
             if (x.getInitializer().hasSideEffects()) {
               ctx.insertBefore(x.getInitializer().makeStatement());
             }
-            
+
             x.initializer = null;
             madeChanges();
           }
@@ -79,7 +79,7 @@ public class LivenessTransformation implements
             JExpression expr = x.getExpr();
             if (expr instanceof JBinaryOperation) {
               JBinaryOperation binop = (JBinaryOperation) expr;
-              if (shouldKill(binop) && 
+              if (shouldKill(binop) &&
                   !binop.getRhs().hasSideEffects()) {
                 ctx.removeMe();
                 return false;
@@ -92,13 +92,13 @@ public class LivenessTransformation implements
             return writeToKill.getJNode() == x;
           }
         };
-        
+
         CfgNode<?> parentNode = CfgUtil.findParentOfContainingStatement(node);
-        Preconditions.checkNotNull(parentNode, 
+        Preconditions.checkNotNull(parentNode,
             "Can't find parent of stmt of %s", node);
         JNode parentJNode = parentNode.getJNode();
         visitor.accept(parentJNode);
-        Preconditions.checkState(visitor.didChange(), 
+        Preconditions.checkState(visitor.didChange(),
             "Can't remove write in %s", node.getJNode());
         return visitor.didChange();
       }
@@ -107,9 +107,9 @@ public class LivenessTransformation implements
 
   @Override
   public Cfg getNewSubgraph() {
-    CfgNode<?> newNode = new CfgNopNode(writeToKill.getParent(), 
+    CfgNode<?> newNode = new CfgNopNode(writeToKill.getParent(),
         writeToKill.getJNode());
-    return CfgUtil.createSingleNodeReplacementGraph(graph, writeToKill, 
+    return CfgUtil.createSingleNodeReplacementGraph(graph, writeToKill,
         newNode);
   }
 }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -64,7 +64,7 @@ public abstract class CharIndex {
         return "'" + c + "'";
       }
     }
-    
+
     static final int NULL_ELEMENT = 0;
     protected int lastUsed = NULL_ELEMENT;
     /**
@@ -100,7 +100,7 @@ public abstract class CharIndex {
         }
       }
     }
-    
+
     @Override
     public int lookup(char c) {
       final Char lookupTest = new Char();
@@ -137,7 +137,7 @@ public abstract class CharIndex {
       return lastUsed + 1;
     }
   }
-  
+
   /**
    * An index based on a simple mask: index(c) = (c & MASK).
    * This allows for a very fast index function for many
@@ -204,7 +204,7 @@ public abstract class CharIndex {
     private Masked(char [] contains) {
       this.contains = contains;
     }
-    
+
     @Override
     public int lookup(char c) {
       int index = c & MASK;
@@ -243,7 +243,7 @@ public abstract class CharIndex {
      */
     static final int MAX = 0x80;
 
-    /** 
+    /**
      * A mask used to find characters that fall outside.
      */
     static final int MASK = ~(MAX - 1);
@@ -329,7 +329,7 @@ public abstract class CharIndex {
     /* Full hash always works */
     return new FullHash(s);
   }
-  
+
   /**
    * Returns the index (mapping result) for a given character.
    * If the character is present in the alphabet, then a unique index

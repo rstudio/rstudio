@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -65,12 +65,12 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
   private static boolean isFunctionDeclaration(String code) {
     return functionDeclarationPattern.matcher(code).lookingAt();
   }
-  
+
   /**
    * Number of function declarations found.
    */
   private int numFunctions;
-  
+
   /**
    * The statement indices after clustering. The element at index j represents
    * the index of the statement in the original code that is moved to index j
@@ -82,7 +82,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     super(xformer);
   }
 
-  public JsFunctionClusterer(String js, StatementRanges statementRanges, 
+  public JsFunctionClusterer(String js, StatementRanges statementRanges,
       Map<Range, SourceInfo> sourceInfoMap) {
     super(js, statementRanges, sourceInfoMap);
   }
@@ -90,7 +90,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
   @Override
   public void exec() {
     LinkedList<Integer> functionIndices = new LinkedList<Integer>();
-    
+
     // gather up all of the indices of function decl statements
     for (int i = 0; i < statementRanges.numStatements(); i++) {
       String code = getJsForRange(i);
@@ -98,14 +98,14 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
         functionIndices.add(i);
       }
     }
-    
+
     numFunctions = functionIndices.size();
 
     if (functionIndices.size() < 2) {
       // No need to sort 0 or 1 functions.
       return;
     }
-    
+
     // sort the indices according to size of statement range
     Collections.sort(functionIndices, new Comparator<Integer>() {
       @Override
@@ -196,21 +196,21 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
         int permutedEnd = statementRanges.end(j);
         int originalStart = originalStatementRanges.start(reorderedIndices[j]);
         int originalEnd = originalStatementRanges.end(reorderedIndices[j]);
-        
-        statementShifts.put(new Range(originalStart, originalEnd), 
+
+        statementShifts.put(new Range(originalStart, originalEnd),
             new Range(permutedStart, permutedEnd));
       }
-      
+
       Range[] oldStatementRanges = statementShifts.keySet().toArray(new Range[0]);
       Arrays.sort(oldStatementRanges, Range.SOURCE_ORDER_COMPARATOR);
-      
+
       Range[] oldExpressionRanges = sourceInfoMap.keySet().toArray(new Range[0]);
       Arrays.sort(oldExpressionRanges, Range.SOURCE_ORDER_COMPARATOR);
-      
-      
+
+
       // iterate over expression ranges and shift
       Map<Range, SourceInfo> updatedInfoMap = new HashMap<Range, SourceInfo>();
-      Range entireProgram = 
+      Range entireProgram =
         new Range(0, oldStatementRanges[oldStatementRanges.length - 1].getEnd());
       for (int i = 0, j = 0; j < oldExpressionRanges.length; j++) {
         Range oldExpression = oldExpressionRanges[j];
@@ -218,7 +218,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
           updatedInfoMap.put(oldExpression, sourceInfoMap.get(oldExpression));
           continue;
         }
-        
+
         if (!oldStatementRanges[i].contains(oldExpressionRanges[j])) {
           // expression should fall in the next statement
           i++;
@@ -228,13 +228,13 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
         Range oldStatement = oldStatementRanges[i];
         Range newStatement = statementShifts.get(oldStatement);
         int shift = newStatement.getStart() - oldStatement.getStart();
-        
+
         Range oldExpressionRange = oldExpressionRanges[j];
         Range newExpressionRange = new Range(oldExpressionRange.getStart() + shift,
             oldExpressionRange.getEnd() + shift);
         updatedInfoMap.put(newExpressionRange, sourceInfoMap.get(oldExpressionRange));
       }
-      
+
       sourceInfoMap = updatedInfoMap;
     }
   }

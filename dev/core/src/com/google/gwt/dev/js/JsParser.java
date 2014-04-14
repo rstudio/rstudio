@@ -1280,7 +1280,7 @@ public class JsParser {
    * This should be called when processing any Rhino statement Node that has
    * line number data so that enclosed expressions will have a useful source
    * location.
-   * 
+   *
    * @see Node#hasLineno
    */
   private void pushSourceInfo(SourceInfo sourceInfo) {

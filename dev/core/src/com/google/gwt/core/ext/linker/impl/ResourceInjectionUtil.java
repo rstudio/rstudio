@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -52,12 +52,12 @@ public class ResourceInjectionUtil {
     }
     return selectionScript;
   }
-  
+
   /**
    * Installs stylesheets using the installOneStylesheet method, which is
-   * assumed to be defined on the page.  The installOneStylesheet() 
+   * assumed to be defined on the page.  The installOneStylesheet()
    * helper function is invoked as follows:
-   * 
+   *
    * <pre>
    * installOneStylesheet(URL);
    * </pre>
@@ -74,7 +74,7 @@ public class ResourceInjectionUtil {
     }
     return selectionScript;
   }
-  
+
   private static String generateScriptInjector(String scriptUrl) {
     if (isRelativeURL(scriptUrl)) {
       return "  if (!__gwt_scriptsLoaded['"
@@ -95,7 +95,7 @@ public class ResourceInjectionUtil {
 
   /**
    * Generate a Snippet of JavaScript to inject an external stylesheet.
-   * 
+   *
    * <pre>
    * if (!__gwt_stylesLoaded['URL']) {
    *   var l = $doc.createElement('link');
@@ -123,7 +123,7 @@ public class ResourceInjectionUtil {
 
   /**
    * Determines whether or not the URL is relative.
-   * 
+   *
    * @param src the test url
    * @return <code>true</code> if the URL is relative, <code>false</code> if not
    */
@@ -147,5 +147,5 @@ public class ResourceInjectionUtil {
     // Since none of the above matched, let's guess that it's relative.
     return true;
   }
-  
+
 }

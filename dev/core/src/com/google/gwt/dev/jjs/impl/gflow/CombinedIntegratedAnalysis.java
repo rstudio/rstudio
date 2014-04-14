@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,16 +27,16 @@ import java.util.Map;
  * Integrated analysis, which combines several other integrated analyses into
  * one. It does so be defining combined assumption, which is vector of original
  * assumptions, and applies each analysis to its own component.
- * 
+ *
  * If any analysis decides to rewrite the node, combined analysis returns
  * produced transformation. If more than one analyses decide to transform, the
  * first one wins.
- * 
+ *
  * @param <N> graph node type.
  * @param <E> graph edge type.
  * @param <T> graph transformer type.
  * @param <G> graph type.
- * 
+ *
  */
 public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
     implements
@@ -47,12 +47,12 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
    */
   public static class CombinedAssumption implements
       Assumption<CombinedAssumption> {
-    
+
     private static class CopyOnWrite {
       private final int size;
       private CombinedAssumption assumption;
       private boolean copied = false;
-      
+
       private CopyOnWrite(CombinedAssumption assumption, int size) {
         this.assumption = assumption;
         this.size = size;
@@ -118,7 +118,7 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
       if (other.assumptions.size() != assumptions.size()) {
         return false;
       }
-      
+
       for (int i = 0; i < assumptions.size(); ++i) {
         Assumption<?> a1 = assumptions.get(i);
         Assumption<?> a2 = other.assumptions.get(i);
@@ -133,9 +133,9 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
           if (!a1.equals(a2)) {
             return false;
           }
-        } 
+        }
       }
-      
+
       return true;
     }
 
@@ -157,9 +157,9 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
       if (value == null) {
         return this;
       }
-      Preconditions.checkArgument(value.assumptions.size() == 
+      Preconditions.checkArgument(value.assumptions.size() ==
         assumptions.size());
-      
+
       List<Assumption<?>> newAssumptions = new ArrayList<Assumption<?>>();
       for (int i = 0; i < assumptions.size(); ++i) {
         Assumption a1 = assumptions.get(i);
@@ -196,16 +196,16 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
     @SuppressWarnings("unchecked")
     public Transformation interpretOrReplace(final N node, final G graph,
         final AssumptionMap<E, CombinedAssumption> assumptionMap) {
-      
+
       final Map<E, CombinedAssumption.CopyOnWrite> newAssumptions = new IdentityHashMap<E, CombinedAssumption.CopyOnWrite>();
-      
+
       final int size = functions.size();
       for (int i = 0; i < size; ++i) {
         final int slice = i;
         IntegratedFlowFunction function = functions.get(i);
-        
-        Transformation transformation = 
-          function.interpretOrReplace(node, graph, 
+
+        Transformation transformation =
+          function.interpretOrReplace(node, graph,
               new AssumptionMap() {
                 @Override
                 public Assumption getAssumption(Object edge) {
@@ -228,11 +228,11 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
 
                 @Override
                 public String toString() {
-                  return AssumptionUtil.toString(graph.getInEdges(node), 
+                  return AssumptionUtil.toString(graph.getInEdges(node),
                       graph.getOutEdges(node), this);
                 }
               });
-        
+
         if (transformation != null) {
           return transformation;
         }
@@ -244,28 +244,28 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
           assumptionMap.setAssumption(e, newAssumption.unwrap());
         }
       }
-      
+
       return null;
     }
   }
 
   /**
-   * Factory method. 
+   * Factory method.
    */
-  public static <N, E, T, G extends Graph<N, E, T>> 
+  public static <N, E, T, G extends Graph<N, E, T>>
   CombinedIntegratedAnalysis<N, E, T, G> createAnalysis() {
     return new CombinedIntegratedAnalysis<N, E, T, G>();
   }
   /**
    * Individual analyses.
    */
-  List<IntegratedAnalysis<N, E, T, G, ?>> analyses = 
+  List<IntegratedAnalysis<N, E, T, G, ?>> analyses =
     new ArrayList<IntegratedAnalysis<N, E, T, G, ?>>();
 
   /**
    * Their flow functions.
    */
-  List<IntegratedFlowFunction<N, E, T, G, ?>> functions = 
+  List<IntegratedFlowFunction<N, E, T, G, ?>> functions =
     new ArrayList<IntegratedFlowFunction<N, E, T, G, ?>>();
 
   /**
@@ -277,11 +277,11 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
   }
 
   @Override
-  public IntegratedFlowFunction<N, E, T, G, CombinedAssumption> 
+  public IntegratedFlowFunction<N, E, T, G, CombinedAssumption>
   getIntegratedFlowFunction() {
     return new CombinedIntegratedFlowFunction();
   }
-  
+
   @Override
   @SuppressWarnings("unchecked")
   public void setInitialGraphAssumptions(G graph,

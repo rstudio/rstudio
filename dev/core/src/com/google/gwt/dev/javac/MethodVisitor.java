@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -75,7 +75,7 @@ public abstract class MethodVisitor {
    * Provided by a subclass to return true if this method should be processed.
    * This is separate since some extra work is performed in order to call
    * {@link #processMethod}.
-   * 
+   *
    * @param method
    * @return true if processMethod should be called on this method
    */
@@ -85,7 +85,7 @@ public abstract class MethodVisitor {
    * Provided by a subclass to process a method definition. Methods which have
    * no name are not passed to this method, even if {@link #interestingMethod}
    * returns true.
-   * 
+   *
    * @param typeDecl
    * @param method
    * @param enclosingType
@@ -97,7 +97,7 @@ public abstract class MethodVisitor {
   /**
    * Collect data about interesting methods on a particular type in a
    * compilation unit.
-   * 
+   *
    * @param cud
    * @param typeDecl
    */

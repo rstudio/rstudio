@@ -513,11 +513,11 @@ public class SoycDashboard {
           if (!refType.equals("type") && !refType.equals("method") && !refType.equals("field")) {
             throw new FormatException();
           }
-          
+
           if (refType.equals("method")) {
             breakdown.methodToSize.put(ref, Integer.valueOf(size));
           }
-          
+
           String className = ref;
           if (className.contains("::")) {
             /*

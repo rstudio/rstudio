@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -81,9 +81,9 @@ public abstract class BrowserChannel {
    * Class representing a reference to a JS object.
    */
   public static class JsObjectRef implements RemoteObjectRef  {
-    
+
     private int refId;
-    
+
     public JsObjectRef(int refId) {
       this.refId = refId;
     }
@@ -116,7 +116,7 @@ public abstract class BrowserChannel {
 
   /**
    * Enumeration of message type ids.
-   * 
+   *
    * <p>Ids are used instead of relying on the ordinal to avoid sychronization
    * problems with the client.
    */
@@ -127,58 +127,58 @@ public abstract class BrowserChannel {
      * {@link InvokeOnServerMessage}.
      */
     INVOKE(0),
-    
+
     /**
-     * Returns the result of an INVOKE, INVOKE_SPECIAL, or LOAD_MODULE message. 
+     * Returns the result of an INVOKE, INVOKE_SPECIAL, or LOAD_MODULE message.
      */
     RETURN(1),
-    
+
     /**
      * v1 LOAD_MODULE message.
      */
     OLD_LOAD_MODULE(2),
-    
+
     /**
      * Normal closure of the connection.
      */
     QUIT(3),
-    
+
     /**
      * A request by the server to load JSNI source into the client's JS engine.
      */
     LOAD_JSNI(4),
-    
+
     INVOKE_SPECIAL(5),
-    
+
     FREE_VALUE(6),
-    
+
     /**
      * Abnormal termination of the connection.
      */
     FATAL_ERROR(7),
-    
+
     CHECK_VERSIONS(8),
-    
+
     PROTOCOL_VERSION(9),
-    
+
     CHOOSE_TRANSPORT(10),
-    
+
     SWITCH_TRANSPORT(11),
-    
+
     LOAD_MODULE(12),
-    
+
     REQUEST_ICON(13),
-    
+
     USER_AGENT_ICON(14),
-    
+
     REQUEST_PLUGIN(15);
-    
+
     private final int id;
-    
+
     private MessageType(int id) {
       this.id = id;
     }
-    
+
     public int getId() {
       return id;
     }
@@ -189,7 +189,7 @@ public abstract class BrowserChannel {
    * by an reference ID.
    */
   public interface RemoteObjectRef {
-    
+
     /**
       * @return the reference ID for this object.
       */
@@ -225,21 +225,21 @@ public abstract class BrowserChannel {
 
     /**
      * Enumeration of dispatch IDs on object 0 (the ServerMethods object).
-     * 
+     *
      * <p>Ids are set specifically rather than relying on the ordinal to avoid
      * synchronization problems with the client.
-     * 
+     *
      * TODO: hasMethod/hasProperty no longer used, remove them!
      */
     public enum SpecialDispatchId {
       HasMethod(0), HasProperty(1), GetProperty(2), SetProperty(3);
-      
+
       private final int id;
 
       private SpecialDispatchId(int id) {
         this.id = id;
       }
-      
+
       public int getId() {
         return id;
       }
@@ -304,7 +304,7 @@ public abstract class BrowserChannel {
     /**
      * Convert a Java object to a value. Objects must be primitive wrappers,
      * Strings, or JsObjectRef/JavaObjectRef instances.
-     * 
+     *
      * @param obj value to convert.
      */
     public void convertFromJavaValue(Object obj) {
@@ -338,7 +338,7 @@ public abstract class BrowserChannel {
 
     /**
      * Convert a value to the requested Java type.
-     * 
+     *
      * @param reqType type to convert to
      * @return value as that type.
      */
@@ -579,7 +579,7 @@ public abstract class BrowserChannel {
    * can be detected).
    */
   protected static class CheckVersionsMessage extends Message {
-    
+
     public static CheckVersionsMessage receive(BrowserChannel channel)
         throws IOException {
       DataInputStream stream = channel.getStreamFromOtherSide();
@@ -632,7 +632,7 @@ public abstract class BrowserChannel {
    * and requesting the server choose one of them to switch protocol traffic to.
    */
   protected static class ChooseTransportMessage extends Message {
-    
+
     public static ChooseTransportMessage receive(BrowserChannel channel)
         throws IOException {
       DataInputStream stream = channel.getStreamFromOtherSide();
@@ -655,7 +655,7 @@ public abstract class BrowserChannel {
     public String[] getTransports() {
       return transports;
     }
-    
+
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
@@ -686,11 +686,11 @@ public abstract class BrowserChannel {
       super(channel);
       this.error = error;
     }
-    
+
     public String getError() {
       return error;
     }
-    
+
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
@@ -752,7 +752,7 @@ public abstract class BrowserChannel {
 
   /**
    * A request from the server to invoke a function on the client.
-   * 
+   *
    * Note that MessageType.INVOKE can refer to either this class
    * or {@link InvokeOnServerMessage} depending on the direction, as the
    * protocol is asymmetric (Java needs a dispatch ID, Javascript needs a
@@ -814,7 +814,7 @@ public abstract class BrowserChannel {
 
   /**
    * A request from the client to invoke a function on the server.
-   * 
+   *
    * Note that MessageType.INVOKE can refer to either this class
    * or {@link InvokeOnClientMessage} depending on the direction, as the
    * protocol is asymmetric (Java needs a dispatch ID, Javascript needs a
@@ -995,14 +995,14 @@ public abstract class BrowserChannel {
     private final String sessionKey;
 
     private final String tabKey;
-    
+
     private final String url;
 
     private final String userAgent;
 
     /**
      * Creates a LoadModule message to be sent to the server.
-     * 
+     *
      * @param channel BrowserChannel instance
      * @param url URL of main top-level window - may not be null
      * @param tabKey opaque key identifying the tab in the browser, or an
@@ -1137,7 +1137,7 @@ public abstract class BrowserChannel {
     private final int protoVersion;
 
     private final String userAgent;
-    
+
     public OldLoadModuleMessage(BrowserChannel channel, int protoVersion,
         String moduleName, String userAgent) {
       super(channel);
@@ -1173,7 +1173,7 @@ public abstract class BrowserChannel {
    * Reports the selected protocol version.
    */
   protected static class ProtocolVersionMessage extends Message {
-    
+
     public static ProtocolVersionMessage receive(BrowserChannel channel)
         throws IOException {
       DataInputStream stream = channel.getStreamFromOtherSide();
@@ -1234,7 +1234,7 @@ public abstract class BrowserChannel {
     /**
      * Receive a RequestIconMessage, assuming the message tag has already been
      * read.
-     * 
+     *
      * @throws IOException
      */
     public static RequestIconMessage receive(BrowserChannel channel)
@@ -1312,10 +1312,10 @@ public abstract class BrowserChannel {
 
   /**
    * A response to ChooseTransport telling the client which transport should
-   * be used for the remainder of the protocol. 
+   * be used for the remainder of the protocol.
    */
   protected static class SwitchTransportMessage extends Message {
-    
+
     public static SwitchTransportMessage receive(BrowserChannel channel)
         throws IOException {
       DataInputStream stream = channel.getStreamFromOtherSide();
@@ -1341,7 +1341,7 @@ public abstract class BrowserChannel {
       this.transport = transport;
       this.transportArgs = transportArgs;
     }
-    
+
     public String getTransport() {
       return transport;
     }
@@ -1349,7 +1349,7 @@ public abstract class BrowserChannel {
     public String getTransportArgs() {
       return transportArgs;
     }
-    
+
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
@@ -1421,12 +1421,12 @@ public abstract class BrowserChannel {
    * The oldest protocol version supported by this code.
    */
   public static final int PROTOCOL_VERSION_OLDEST = 2;
-  
+
   /**
    * The protocol version that added the GetIcon message.
    */
   public static final int PROTOCOL_VERSION_GET_ICON = 3;
-  
+
   public static final int SPECIAL_CLIENTMETHODS_OBJECT = 0;
 
   public static final int SPECIAL_SERVERMETHODS_OBJECT = 0;

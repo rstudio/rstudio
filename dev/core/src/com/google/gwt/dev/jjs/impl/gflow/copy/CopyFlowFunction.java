@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,7 +30,7 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgVisitor;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgWriteNode;
 import com.google.gwt.dev.jjs.impl.gflow.copy.CopyAssumption.Updater;
 
-/**  
+/**
  * Flow function for CopyAnalysis.
  */
 public class CopyFlowFunction implements
@@ -61,13 +61,13 @@ public class CopyFlowFunction implements
           result.kill(targetVariable);
           return;
         }
-        
+
         JVariable original = ((JVariableRef) node.getValue()).getTarget();
         original = result.getMostOriginal(original);
-        
+
         if (original != targetVariable) {
           result.kill(targetVariable);
-          if (isSupportedVar(original) && 
+          if (isSupportedVar(original) &&
               original.getType() == targetVariable.getType()) {
             result.addCopy(original, targetVariable);
           }

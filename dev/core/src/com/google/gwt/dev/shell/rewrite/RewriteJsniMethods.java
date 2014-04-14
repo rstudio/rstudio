@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -228,7 +228,7 @@ public class RewriteJsniMethods extends ClassVisitor {
      * Does all of the work necessary to do the dispatch to the appropriate
      * variant of {@link JavaScriptHost#invokeNativeVoid
      * JavaScriptHost.invokeNative*}. And example output:
-     * 
+     *
      * <pre>
      * return JavaScriptHost.invokeNativeInt(
      *     "@com.google.gwt.sample.hello.client.Hello::echo(I)", null,
@@ -292,7 +292,7 @@ public class RewriteJsniMethods extends ClassVisitor {
       /*
        * For speed, we don't ask ASM to COMPUTE_MAXS. We manually calculated a
        * max depth of 8.
-       * 
+       *
        * Also, when tobyr tried getting ASM to compute the correct stack size,
        * ASM seemed to compute the wrong value for reasons we don't understand.
        */
@@ -365,7 +365,7 @@ public class RewriteJsniMethods extends ClassVisitor {
 
   /**
    * Returns the JSNI signature describing the method.
-   * 
+   *
    * @param name the name of the method; for example {@code "echo"}
    * @param descriptor the descriptor for the method; for example {@code "(I)I"}
    * @return the JSNI signature for the method; for example, {@code

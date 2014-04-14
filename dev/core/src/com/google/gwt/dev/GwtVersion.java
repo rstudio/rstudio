@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -36,7 +36,7 @@ public final class GwtVersion implements Comparable<GwtVersion> {
    * The suffix of the release, such as -ms1, -rc2, or random garbage.
    */
   private final String suffix;
-  
+
   /**
    * Create a version that avoids any nagging -- "0.0.999".
    */
@@ -47,7 +47,7 @@ public final class GwtVersion implements Comparable<GwtVersion> {
   /**
    * Parse a version number as a string. An empty or null string are
    * explicitly allowed and are equivalent to "0.0.0".
-   * 
+   *
    * <p>Acceptable format:
    * <ul>
    * <li>prefix before first digit is ignored
@@ -55,10 +55,10 @@ public final class GwtVersion implements Comparable<GwtVersion> {
    * <li>optional release number suffix, such as -ms1, -rc3, etc.
    * <li>stops parsing at first space or dash
    * </ul>
-   * 
+   *
    * <p>The returned version always contains at least 3 components (padding with
    * "0" to 3 components) followed by a release number (which is always last).
-   * 
+   *
    * @param versionString GWT version in string form, ex: "2.1.0-rc2"
    * @throws NumberFormatException
    */
@@ -98,7 +98,7 @@ public final class GwtVersion implements Comparable<GwtVersion> {
     System.arraycopy(components, 0, returnVal, 0, COMPONENT_COUNT);
     return returnVal;
   }
-  
+
   /**
    * @return the suffix of this version.  Null indicates no suffix and that this
    * is a released version.
@@ -121,7 +121,7 @@ public final class GwtVersion implements Comparable<GwtVersion> {
   public boolean isNoNagVersion() {
     return components[2] == NO_NAG;
   }
-  
+
   @Override
   public String toString() {
     StringBuilder buf = new StringBuilder();
@@ -140,7 +140,7 @@ public final class GwtVersion implements Comparable<GwtVersion> {
    * Compare two version number suffixes.  A null suffix is considered a
    * released version and comes after any with a suffix, and all non-null
    * suffixes are considered equal.
-   *  
+   *
    * @param suffix1
    * @param suffix2
    * @return negative if suffix1 < suffix2, positive if suffix2 > suffix1,
@@ -158,7 +158,7 @@ public final class GwtVersion implements Comparable<GwtVersion> {
 
   /**
    * Parse a string containing a GwtVersion.
-   * 
+   *
    * <p>Acceptable format:
    * <ul>
    * <li>prefix before first digit is ignored
@@ -166,10 +166,10 @@ public final class GwtVersion implements Comparable<GwtVersion> {
    * digits)
    * <li>optional release number suffix, such as -ms1, -rc3, etc.
    * </ul>
-   * 
+   *
    * <p>The returned version always contains at least 3 components (padding with
    * "0" to 3 components) followed by a release number (which is always last).
-   * 
+   *
    * @param versionString GWT version in string form, ex: "2.1.0-rc2"
    * @return the trailing suffix, or null if none
    */

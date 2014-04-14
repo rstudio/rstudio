@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,7 +24,7 @@ import java.io.Serializable;
  * ensure stable output between runs of the compiler, Artifact types must
  * implement a stable comparison between instances of a relevant base type (the
  * exact comparison order is irrelevant).
- * 
+ *
  * @param <C> The type of Artifact interface that the Artifact can be compared
  *          to.
  */
@@ -35,7 +35,7 @@ public abstract class Artifact<C extends Artifact<C>> implements
 
   /**
    * Constructor.
-   * 
+   *
    * @param linker the type of Linker that instantiated the Artifact.
    */
   protected Artifact(Class<? extends Linker> linker) {

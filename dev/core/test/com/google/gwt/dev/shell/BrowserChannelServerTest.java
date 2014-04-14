@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -52,7 +52,7 @@ public class BrowserChannelServerTest extends TestCase {
   private class TestBrowserChannelServer extends BrowserChannelServer {
 
     TestDashboardNotifier notifier = new TestDashboardNotifier();
-    
+
     private final Semaphore finishNotify = new Semaphore(0);
 
     public TestBrowserChannelServer(TreeLogger logger,
@@ -66,12 +66,12 @@ public class BrowserChannelServerTest extends TestCase {
       super.run();
       finishNotify.release();
     }
-    
+
     @Override
     DashboardNotifier getDashboardNotifier() {
       return notifier;
     }
-    
+
     public void waitForClose() throws InterruptedException {
       finishNotify.acquire();
     }
@@ -84,23 +84,23 @@ public class BrowserChannelServerTest extends TestCase {
 
     private final PipedOutputStream output;
     private final PipedInputStream input;
-    
+
     public PipedStreamPair() {
       PipedOutputStream out = null;
       PipedInputStream in = null;
       try {
         out = new PipedOutputStream();
         in = new PipedInputStream(out);
-      } catch (IOException e) {        
+      } catch (IOException e) {
       }
       output = out;
       input = in;
     }
-    
+
     public PipedInputStream getInputStream() {
       return input;
     }
-    
+
     public PipedOutputStream getOutputStream() {
       return output;
     }
@@ -187,9 +187,9 @@ public class BrowserChannelServerTest extends TestCase {
     @Override
     public void unloadModule(BrowserChannelServer channel, String moduleName) {
       loadedModule = null;
-    }   
+    }
   }
-  
+
   /**
    * A dashboard notifier that enforces the correct method calls.
    */
@@ -225,7 +225,7 @@ public class BrowserChannelServerTest extends TestCase {
           currentSession, session);
       ended = true;
     }
-    
+
     public void verify(String moduleName, String userAgent) {
       assertTrue(started);
       assertTrue(ended);
@@ -239,10 +239,10 @@ public class BrowserChannelServerTest extends TestCase {
 
   /**
    * Test a version 1 client interacting with the server.
-   * 
-   * @throws IOException 
-   * @throws BrowserChannelException 
-   * @throws InterruptedException 
+   *
+   * @throws IOException
+   * @throws BrowserChannelException
+   * @throws InterruptedException
    */
   public void testVersion1() throws IOException, BrowserChannelException,
       InterruptedException {
@@ -274,10 +274,10 @@ public class BrowserChannelServerTest extends TestCase {
 
   /**
    * Test a version 2 client interacting with the server.
-   * 
-   * @throws IOException 
-   * @throws BrowserChannelException 
-   * @throws InterruptedException 
+   *
+   * @throws IOException
+   * @throws BrowserChannelException
+   * @throws InterruptedException
    */
   public void testVersion2() throws IOException, BrowserChannelException,
       InterruptedException {
@@ -317,10 +317,10 @@ public class BrowserChannelServerTest extends TestCase {
 
   /**
    * Test a version 3 client interacting with the server.
-   * 
-   * @throws IOException 
-   * @throws BrowserChannelException 
-   * @throws InterruptedException 
+   *
+   * @throws IOException
+   * @throws BrowserChannelException
+   * @throws InterruptedException
    */
   public void testVersion3() throws IOException, BrowserChannelException,
       InterruptedException {

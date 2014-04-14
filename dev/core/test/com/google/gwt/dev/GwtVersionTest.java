@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,7 +35,7 @@ public class GwtVersionTest extends TestCase {
     checkCompareEqualsHashCode("1.2.4-ms2", "1.2.4-ms2");
     checkCompareEqualsHashCode("1.2.4-ms2", "1.2.4-rc1");
   }
-  
+
   /**
    * Test that GwtVersion.compareTo produced expected results.
    */
@@ -93,7 +93,7 @@ public class GwtVersionTest extends TestCase {
 
   /**
    * Test that various versions are properly detected as to whether or not they
-   * are "no-nag" versions. 
+   * are "no-nag" versions.
    */
   public void testIsNoNagVersion() {
     GwtVersion version = new GwtVersion("0.0.0");
@@ -188,7 +188,7 @@ public class GwtVersionTest extends TestCase {
     checkAllZerosVersion("foo0.0.0", null);
     checkAllZerosVersion("foo0.0.0 bar", " bar");
   }
- 
+
   /**
    * Test that GwtVersion.toString() returns expected results.
    */
@@ -215,7 +215,7 @@ public class GwtVersionTest extends TestCase {
 
   /**
    * Verify that the version string is treated equivalently to 0.0.0.
-   * 
+   *
    * @param versionString version number in string form
    * @param expectedSuffix expected suffix of the version
    */
@@ -233,7 +233,7 @@ public class GwtVersionTest extends TestCase {
   /**
    * Check that compareTo, equals, and hashCode are compatible for a pair of
    * versions.
-   * 
+   *
    * @param v1String string format version number to test
    * @param v2String string format version number to test
    */

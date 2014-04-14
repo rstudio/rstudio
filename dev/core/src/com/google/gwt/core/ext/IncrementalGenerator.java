@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,7 +25,7 @@ public abstract class IncrementalGenerator extends Generator {
    * A static helper method to wrap a non-incremental generator's result. It
    * calls the generator's {@link Generator#generate} method, and synthesizes a
    * {@link RebindResult} instance to be returned.
-   * 
+   *
    * @param logger A TreeLogger
    * @param generator A non-incremental generator
    * @param context The generator context
@@ -60,9 +60,9 @@ public abstract class IncrementalGenerator extends Generator {
    * {@link NonIncrementalGeneratorContext}, to ensure that no generator result
    * caching is attempted, since the cached result will be ignored by callers of
    * this method anyway.
-   * 
+   *
    * @see Generator#generate
-   * 
+   *
    * @param logger A TreeLogger
    * @param context The generator context
    * @param typeName The type for which a subclass will be generated
@@ -100,10 +100,10 @@ public abstract class IncrementalGenerator extends Generator {
    * <p>
    * This method throws an <code>UnableToCompleteException</code> if for any
    * reason it cannot complete successfully.
-   * 
+   *
    * @see RebindResult
    * @see RebindMode
-   * 
+   *
    * @param logger A TreeLogger
    * @param context The generator context
    * @param typeName The type for which a subclass will be generated
@@ -122,7 +122,7 @@ public abstract class IncrementalGenerator extends Generator {
    * <p>
    * It is the responsibility of the developer to maintain this version id
    * consistently.
-   * 
+   *
    * @return a version id
    */
   public abstract long getVersionId();

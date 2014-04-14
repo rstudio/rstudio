@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Assumption for LivenessAnalysis. Contains set of all live (=used after) 
+ * Assumption for LivenessAnalysis. Contains set of all live (=used after)
  * variables.
  */
 public class LivenessAssumption implements Assumption<LivenessAssumption> {
@@ -36,7 +36,7 @@ public class LivenessAssumption implements Assumption<LivenessAssumption> {
   public static class Updater {
     private LivenessAssumption assumption;
     private boolean copied = false;
-    
+
     public Updater(LivenessAssumption assumption) {
       this.assumption = assumption;
     }
@@ -68,12 +68,12 @@ public class LivenessAssumption implements Assumption<LivenessAssumption> {
       }
     }
   }
-  
+
   /**
    * Set of all live variables.
    */
   private final Set<JVariable> liveVariables = new IdentityHashSet<JVariable>();
-  
+
   public LivenessAssumption() {
     super();
   }
@@ -126,7 +126,7 @@ public class LivenessAssumption implements Assumption<LivenessAssumption> {
 
   public String toDebugString() {
     StringBuffer result = new StringBuffer();
-    
+
     result.append("{");
     List<JVariable> vars = new ArrayList<JVariable>(liveVariables);
     Collections.sort(vars, new Comparator<JVariable>() {
@@ -142,7 +142,7 @@ public class LivenessAssumption implements Assumption<LivenessAssumption> {
       result.append(variable.getName());
     }
     result.append("}");
-    
+
     return result.toString();
   }
 

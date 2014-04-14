@@ -217,7 +217,7 @@ public class SpeedTracerLoggerTest extends TestCase {
     JsonObject markTimelineObject = children.get(0).asObject();
     assertEquals(11.0, markTimelineObject.get("type").asNumber().getDecimal(), .001);
     JsonObject dataObject = markTimelineObject.get("data").asObject();
-    assertEquals("json=" + logString, "Test Message", 
+    assertEquals("json=" + logString, "Test Message",
         dataObject.get("message").asString().getString());
   }
 

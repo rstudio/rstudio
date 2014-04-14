@@ -28,10 +28,10 @@ import java.util.NoSuchElementException;
  * Concrete subclasses must provide the iterator to be tested.
  * They must also specify certain details of how the iterator operates by
  * overriding the supportsXxx() methods if necessary.
- * 
+ *
  * @since Commons Collections 3.0
  * @version $Revision: 646780 $ $Date: 2008-04-10 13:48:07 +0100 (Thu, 10 Apr 2008) $
- * 
+ *
  * @author Morgan Delagrange
  * @author Stephen Colebourne
  */
@@ -40,7 +40,7 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
 
     /**
      * JUnit constructor.
-     * 
+     *
      * @param testName  the test class name
      */
     public AbstractTestIterator(String testName) {
@@ -50,21 +50,21 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
     //-----------------------------------------------------------------------
     /**
      * Implement this method to return an iterator over an empty collection.
-     * 
+     *
      * @return an empty iterator
      */
     public abstract Iterator makeEmptyIterator();
 
     /**
      * Implement this method to return an iterator over a collection with elements.
-     * 
+     *
      * @return a full iterator
      */
     public abstract Iterator makeFullIterator();
 
     /**
      * Implements the abstract superclass method to return the full iterator.
-     * 
+     *
      * @return a full iterator
      */
     @Override
@@ -75,7 +75,7 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
     /**
      * Whether or not we are testing an iterator that can be empty.
      * Default is true.
-     * 
+     *
      * @return true if Iterator can be empty
      */
     public boolean supportsEmptyIterator() {
@@ -85,7 +85,7 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
     /**
      * Whether or not we are testing an iterator that can contain elements.
      * Default is true.
-     * 
+     *
      * @return true if Iterator can be full
      */
     public boolean supportsFullIterator() {
@@ -95,7 +95,7 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
     /**
      * Whether or not we are testing an iterator that supports remove().
      * Default is true.
-     * 
+     *
      * @return true if Iterator supports remove
      */
     public boolean supportsRemove() {
@@ -119,10 +119,10 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
         }
 
         Iterator it = makeEmptyIterator();
-        
+
         // hasNext() should return false
         assertEquals("hasNext() should return false for empty iterators", false, it.hasNext());
-        
+
         // next() should throw a NoSuchElementException
         try {
             it.next();
@@ -130,7 +130,7 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
         } catch (NoSuchElementException e) {
         }
         verify();
-        
+
         assertNotNull(it.toString());
     }
 
@@ -166,7 +166,7 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
             fail("NoSuchElementException must be thrown when Iterator is exhausted");
         } catch (NoSuchElementException e) {
         }
-        
+
         assertNotNull(it.toString());
     }
 
@@ -175,7 +175,7 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
      */
     public void testRemove() {
         Iterator it = makeFullIterator();
-        
+
         if (supportsRemove() == false) {
             // check for UnsupportedOperationException if not supported
             try {
@@ -183,23 +183,23 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
             } catch (UnsupportedOperationException ex) {}
             return;
         }
-        
+
         // should throw IllegalStateException before next() called
         try {
             it.remove();
             fail();
         } catch (IllegalStateException ex) {}
         verify();
-        
+
         // remove after next should be fine
         it.next();
         it.remove();
-        
+
         // should throw IllegalStateException for second remove()
         try {
             it.remove();
             fail();
         } catch (IllegalStateException ex) {}
     }
-    
+
 }

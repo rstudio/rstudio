@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,8 +35,8 @@ final class SessionModule {
 
   /**
    * Return a SessionModule instance for a given sessionKey, modulePanel, and
-   * moduleDisplayName, re-using an existing instance if it exists. 
-   * 
+   * moduleDisplayName, re-using an existing instance if it exists.
+   *
    * @param sessionKey
    * @param modulePanel
    * @param moduleDisplayName
@@ -53,10 +53,10 @@ final class SessionModule {
     instanceCache.put(sessionModule, sessionModule);
     return sessionModule;
   }
-  
+
   // @NotNull
   private final Disconnectable modulePanel;
-  
+
   // @NotNull
   private final String moduleDisplayName;
 
@@ -102,15 +102,15 @@ final class SessionModule {
   public Disconnectable getModulePanel() {
     return modulePanel;
   }
-  
+
   /**
    * @return a unique key representing the session and the module name
    *     within that session.
    */
   public String getStringKey() {
-    return sessionKey + moduleDisplayName; 
+    return sessionKey + moduleDisplayName;
   }
-  
+
   @Override
   public int hashCode() {
     return sessionKey.hashCode() + 31 * moduleDisplayName.hashCode();

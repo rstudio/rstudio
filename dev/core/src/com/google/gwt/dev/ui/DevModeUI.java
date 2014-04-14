@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,7 +34,7 @@ import java.util.Map;
  * <li>{@link #getTopLogger()}
  * <li>possibly {@link #getWebServerLogger(String, byte[])}
  * <li>{@link #setStartupUrls(Map)}
- * <li>{@link #moduleLoadComplete(boolean)} or 
+ * <li>{@link #moduleLoadComplete(boolean)} or
  * <li>zero or more {@link #getModuleLogger}
  * </ul>
  * {@link #setCallback(com.google.gwt.dev.ui.UiEvent.Type, UiCallback)} may be
@@ -60,11 +60,11 @@ public abstract class DevModeUI {
 
   /**
    * Show that a module is loaded in the UI.
-   * 
+   *
    * <p>Note that the {@link CloseModuleEvent} should already have a callback
    * registered when this is called if needed -- the UI is not required to
    * change the UI if it is registered later.
-   * 
+   *
    * @param userAgent full user agent name
    * @param remoteSocket name of remote socket endpoint in host:port format
    * @param url URL of top-level window
@@ -86,7 +86,7 @@ public abstract class DevModeUI {
   /**
    * Create a top-level logger for messages which are not associated with the
    * web server or any module.  Defaults to logging to stdout.
-   * 
+   *
    * @return TreeLogger instance to use
    */
   public TreeLogger getTopLogger() {
@@ -96,11 +96,11 @@ public abstract class DevModeUI {
   /**
    * Create the web server portion of the UI if not already created, and
    * return its TreeLogger instance.
-   * 
+   *
    * <p>Note that the {@link RestartServerEvent} should already have a callback
    * registered when this is called -- the UI is not required to change the
    * UI if it is registered later.
-   * 
+   *
    * @param serverName short name of the web server or null if only the icon
    *     should be used
    * @param serverIcon byte array containing an icon (fitting into 24x24) to
@@ -113,9 +113,9 @@ public abstract class DevModeUI {
   /**
    * Initialize the UI - must be called exactly once and before any other method
    * on this class.
-   * 
+   *
    * <p>Subclasses should call super.initialize(logLevel).
-   * 
+   *
    * @param logLevel log level for all logging
    */
   public void initialize(Type logLevel) {
@@ -126,7 +126,7 @@ public abstract class DevModeUI {
    * Indicates that all modules have been loaded (loading the XML, not
    * completing onModuleLoad), and that URLs previously specified in
    * {@link #setStartupUrls(Map)} may be launched if successful.
-   * 
+   *
    * @param success true if all modules were successfully loaded
    */
   public void moduleLoadComplete(boolean success) {
@@ -135,7 +135,7 @@ public abstract class DevModeUI {
 
   /**
    * Sets the callback for a given event type..
-   * 
+   *
    * @param <C> callback type
    * @param type UI event type token
    * @param callback event callback, or null to clear the callback
@@ -148,7 +148,7 @@ public abstract class DevModeUI {
 
   /**
    * Set the URLs that should be available to start.
-   * 
+   *
    * @param urls map of URLs -- the key is the name supplied with -startupUrls,
    *     and the value is the mapped URL with all parameters included
    */
@@ -160,7 +160,7 @@ public abstract class DevModeUI {
    * Show in the UI that the web server, identified by the logger returned from
    * {@link #getWebServerLogger(String, byte[])}, is operating in a secure
    * fashion.
-   * 
+   *
    * @param serverLogger
    */
   public void setWebServerSecure(TreeLogger serverLogger) {
@@ -169,7 +169,7 @@ public abstract class DevModeUI {
 
   /**
    * Call callback for a given event.
-   * 
+   *
    * @param eventType type of event
    * @return the UiCallback for this event or null if none
    */
@@ -199,7 +199,7 @@ public abstract class DevModeUI {
 
   /**
    * Returns true if a callback has been registered for an event.
-   * 
+   *
    * @param eventType type of event
    * @return true if a callback has been registered for event
    */

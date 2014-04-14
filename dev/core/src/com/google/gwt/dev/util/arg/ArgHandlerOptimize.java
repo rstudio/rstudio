@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,9 +20,9 @@ import com.google.gwt.util.tools.ArgHandlerInt;
 /**
  * Set the optimization level from the command line.  For now, level 1 is the same
  * as draft compile, and level 9 is the same as the default (maximum optimization).
- * 
- * TODO(zundel): In theory, a level 0 should be possible, where all optimizers 
- * are eliminated for the fastest possible compile.  In practice, code generation 
+ *
+ * TODO(zundel): In theory, a level 0 should be possible, where all optimizers
+ * are eliminated for the fastest possible compile.  In practice, code generation
  * depends on some optimizers being run.
  */
 public class ArgHandlerOptimize extends ArgHandlerInt {

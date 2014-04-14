@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -160,7 +160,7 @@ public class JettyLauncher extends ServletContainerLauncher {
   /**
    * An adapter for the Jetty logging system to GWT's TreeLogger. This
    * implementation class is only public to allow {@link Log} to instantiate it.
-   * 
+   *
    * The weird static data / default construction setup is a game we play with
    * {@link Log}'s static initializer to prevent the initial log message from
    * going to stderr.
@@ -341,7 +341,7 @@ public class JettyLauncher extends ServletContainerLauncher {
    * Jetty {@code WebAppContext} will create new instances of servlets, but it
    * will not create a brand new {@link ClassLoader}. By creating a new {@code
    * ClassLoader} each time, we re-read updated classes from disk.
-   * 
+   *
    * Also provides special class filtering to isolate the web app from the GWT
    * hosting environment.
    */
@@ -521,12 +521,12 @@ public class JettyLauncher extends ServletContainerLauncher {
     @Override
     protected void doStop() throws Exception {
       super.doStop();
-      
+
       Class<?> jdbcUnloader =
           getClassLoader().loadClass("com.google.gwt.dev.shell.jetty.JDBCUnloader");
       java.lang.reflect.Method unload = jdbcUnloader.getMethod("unload");
       unload.invoke(null);
-      
+
       setClassLoader(null);
     }
   }
@@ -558,9 +558,9 @@ public class JettyLauncher extends ServletContainerLauncher {
 
   /**
    * Setup a connector for the bind address/port.
-   * 
+   *
    * @param connector
-   * @param bindAddress 
+   * @param bindAddress
    * @param port
    */
   private static void setupConnector(AbstractConnector connector,
@@ -697,7 +697,7 @@ public class JettyLauncher extends ServletContainerLauncher {
 
     // Force load some JRE singletons that can pin the classloader.
     jreLeakPrevention(logger);
-    
+
     // Turn off XML validation.
     System.setProperty("org.eclipse.jetty.xml.XmlParser.Validating", "false");
 
@@ -807,14 +807,14 @@ public class JettyLauncher extends ServletContainerLauncher {
   /**
    * This is a modified version of JreMemoryLeakPreventionListener.java found
    * in the Apache Tomcat project at
-   * 
+   *
    * http://svn.apache.org/repos/asf/tomcat/trunk/java/org/apache/catalina/core/
    * JreMemoryLeakPreventionListener.java
-   * 
+   *
    * Relevant part of the Tomcat NOTICE, retrieved from
    * http://svn.apache.org/repos/asf/tomcat/trunk/NOTICE Apache Tomcat Copyright
    * 1999-2010 The Apache Software Foundation
-   * 
+   *
    * This product includes software developed by The Apache Software Foundation
    * (http://www.apache.org/).
    */
@@ -826,7 +826,7 @@ public class JettyLauncher extends ServletContainerLauncher {
 
     /*
      * Several components end up calling: sun.misc.GC.requestLatency(long)
-     * 
+     *
      * Those libraries / components known to trigger memory leaks due to
      * eventual calls to requestLatency(long) are: -
      * javax.management.remote.rmi.RMIConnectorServer.start()
@@ -877,7 +877,7 @@ public class JettyLauncher extends ServletContainerLauncher {
      * Creating a MessageDigest during web application startup initializes the
      * Java Cryptography Architecture. Under certain conditions this starts a
      * Token poller thread with TCCL equal to the web application class loader.
-     * 
+     *
      * Instead we initialize JCA right now.
      */
     java.security.Security.getProviders();
@@ -887,7 +887,7 @@ public class JettyLauncher extends ServletContainerLauncher {
      * disabling caching. This effectively locks the file. Whilst more
      * noticeable and harder to ignore on Windows, it affects all operating
      * systems.
-     * 
+     *
      * Those libraries/components known to trigger this issue include: - log4j
      * versions 1.2.15 and earlier - javax.xml.bind.JAXBContext.newInstance()
      */

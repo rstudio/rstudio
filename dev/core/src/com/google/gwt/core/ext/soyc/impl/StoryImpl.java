@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,7 +27,7 @@ import java.util.SortedSet;
  * number and the second is a length. Instead of storing range objects for each
  * StoryImpl, we simply store the StoryImpls in order and calculate the Range
  * for the StoryImpl based on its length.
- * 
+ *
  * @see SnippetIterator#next()
  */
 public class StoryImpl implements Story {

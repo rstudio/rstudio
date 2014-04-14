@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -98,7 +98,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method blacklists the supplied regexes, separated by comma or space.
-   * 
+   *
    * @param regexes the regexes to be forbidden
    */
   public static boolean blacklistRegexes(String regexes) {
@@ -107,7 +107,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method blacklists the supplied URL, and any that share the same host.
-   * 
+   *
    * @param url the host to be forbidden
    */
   public static void blacklistURL(String url) {
@@ -117,7 +117,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method checks the host to see if it is in the supplied set of regexes.
-   * 
+   *
    * @param hostUnderConsideration the host to be checked
    * @param hosts the set of regexes to be checked against
    * @return true if the host matches
@@ -138,7 +138,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method computes the host regular expression for the given url.
-   * 
+   *
    * @param url the url to be allowed or disallowed
    * @return the regex that matches the host in the url
    */
@@ -151,7 +151,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method formats the blacklist for display in the treeLogger.
-   * 
+   *
    * @return the list of regexes as a String
    */
   public static String formatBlackList() {
@@ -160,7 +160,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method formats the list of rules for display in the treeLogger.
-   * 
+   *
    * @param hosts the set of regexes that match hosts
    * @return the list of regexes as a String
    */
@@ -176,7 +176,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method formats the whitelist for display in the treeLogger.
-   * 
+   *
    * @return the list of regexes as a String
    */
   public static String formatWhiteList() {
@@ -186,7 +186,7 @@ public class BrowserWidgetHostChecker {
   /**
    * This method returns true if the host is always admissible, regardless of
    * the blacklist.
-   * 
+   *
    * @param url the URL to be verified
    * @return returns true if the host is always admissible
    */
@@ -196,7 +196,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method returns non-null if the host is forbidden.
-   * 
+   *
    * @param url the URL to be verified
    * @return returns the regex that specified the host matches the blacklist
    */
@@ -208,7 +208,7 @@ public class BrowserWidgetHostChecker {
   /**
    * This method returns null if the host is admissible, provided it is not on
    * the blacklist.
-   * 
+   *
    * @param url the URL to be verified
    * @return returns the regex that specified the host matches the whitelist
    */
@@ -220,7 +220,7 @@ public class BrowserWidgetHostChecker {
   /**
    * This method formats a message, and logs it to the treelogger, stating that
    * the url was blocked.
-   * 
+   *
    * @param url the URL that was disallowed
    * @param header the treelogger under which these messages will be put
    * @param msgType either a caution or an error
@@ -236,7 +236,7 @@ public class BrowserWidgetHostChecker {
   /**
    * This method formats a message, and logs it to the treelogger, stating that
    * the url was not trusted.
-   * 
+   *
    * @param url the URL that provoked the dialog box
    * @param header the treelogger under which these messages will be put
    * @param msgType either a caution or an error
@@ -264,7 +264,7 @@ public class BrowserWidgetHostChecker {
   /**
    * This method whitelists the supplied String of regexes, separated by comma
    * or space.
-   * 
+   *
    * @param regexes the regexes to be allowed
    */
   public static boolean whitelistRegexes(String regexes) {
@@ -273,7 +273,7 @@ public class BrowserWidgetHostChecker {
 
   /**
    * This method whitelists the supplied URL, and any that share the same host.
-   * 
+   *
    * @param url the host to be allowed
    */
   public static void whitelistURL(String url) {
@@ -284,7 +284,7 @@ public class BrowserWidgetHostChecker {
   /**
    * This method blacklists or whitelists the supplied regexes, and any that
    * share the same host.
-   * 
+   *
    * @param whitelist if <code>true</code> the host will be whitelisted
    * @param regexes the regular expressions to be forbidden, seperated by comma
    *          or space

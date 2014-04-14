@@ -75,7 +75,7 @@ public class CoverageInstrumentor {
    * Creates the baseline coverage object, with an entry mapping to 0 for every
    * instrumented line.
    */
-  @VisibleForTesting 
+  @VisibleForTesting
   static JsObjectLiteral baselineCoverage(SourceInfo info,
       Multimap<String, Integer> instrumentableLines) {
     JsObjectLiteral baseline = new JsObjectLiteral(info);

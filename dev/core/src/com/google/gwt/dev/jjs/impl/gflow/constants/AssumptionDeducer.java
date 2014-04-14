@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,17 +34,17 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 final class AssumptionDeducer extends JVisitor {
   /**
    * Deduce assumptions, knowing that <code>expression</code> evaluates to
-   * <code>value</code> and stores individual variable assumptions in the 
+   * <code>value</code> and stores individual variable assumptions in the
    * <code>assumption</code> parameter. It will never override any existing
    * constant assumptions. It will override top and bottom assumptions though.
    */
   static void deduceAssumption(
-      JExpression expression, final JValueLiteral value, 
+      JExpression expression, final JValueLiteral value,
       final ConstantsAssumption.Updater assumption) {
     new AssumptionDeducer(value, assumption).accept(expression);
   }
   private final ConstantsAssumption.Updater assumption;
-  
+
   /**
    * Contains the value of evaluating expression we're currently visiting.
    * Is <code>null</code> if we do not know current expression value.
@@ -73,9 +73,9 @@ final class AssumptionDeducer extends JVisitor {
             accept(x.getRhs());
             return false;
           }
-        } 
+        }
         break;
-        
+
       case NEQ:
         if (isFalse(currentValue)) {
           if (x.getRhs() instanceof JValueLiteral &&
@@ -89,9 +89,9 @@ final class AssumptionDeducer extends JVisitor {
             accept(x.getRhs());
             return false;
           }
-        } 
+        }
         break;
-        
+
       case AND:
         if (isTrue(currentValue)) {
           accept(x.getLhs());
@@ -132,7 +132,7 @@ final class AssumptionDeducer extends JVisitor {
 
   @Override
   public boolean visit(JMultiExpression x, Context ctx) {
-    // Knowing the value multi expression, we know the value of its last 
+    // Knowing the value multi expression, we know the value of its last
     // expression only.
     accept(x.getExpression(x.getNumberOfExpressions() - 1));
     return false;
@@ -155,21 +155,21 @@ final class AssumptionDeducer extends JVisitor {
 
   /**
    * Checks that if some expression equals <code>e</code>, then we can freely
-   * substitute it by e. 
+   * substitute it by e.
    */
   private boolean isSubstitutableIfEquals(JExpression e) {
     if (!(e instanceof JValueLiteral)) {
       return false;
     }
-    
-    if (e instanceof JFloatLiteral && 
+
+    if (e instanceof JFloatLiteral &&
         ((JFloatLiteral) e).getValue() == 0.0f) {
       // There are +0.0 and -0.0. And both of them are equal.
       // We can't substitute 0.0 instead of them.
       return false;
     }
-    
-    if (e instanceof JDoubleLiteral && 
+
+    if (e instanceof JDoubleLiteral &&
         ((JDoubleLiteral) e).getValue() == 0.0d) {
       // There are +0.0 and -0.0. And both of them are equal.
       // We can't substitute 0.0 instead of them.

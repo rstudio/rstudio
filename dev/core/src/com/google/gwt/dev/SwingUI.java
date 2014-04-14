@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -72,7 +72,7 @@ public class SwingUI extends DevModeUI {
     public TreeLogger getLogger() {
       return tab.getLogger();
     }
-    
+
     /**
      * @return the ModulePanel associated with this module instance.
      */
@@ -92,10 +92,10 @@ public class SwingUI extends DevModeUI {
    * Interface to group activities related to adding and deleting tabs.
    */
   protected interface TabPanelCollection {
-    
+
     /**
      * Add a new tab containing a ModuleTabPanel.
-     * 
+     *
      * @param tabPanel
      * @param icon
      * @param title
@@ -103,10 +103,10 @@ public class SwingUI extends DevModeUI {
      */
     void addTab(ModuleTabPanel tabPanel, ImageIcon icon, String title,
         String tooltip);
-    
+
     /**
      * Remove the tab containing a ModuleTabpanel.
-     * 
+     *
      * @param tabPanel
      */
     void removeTab(ModuleTabPanel tabPanel);
@@ -128,7 +128,7 @@ public class SwingUI extends DevModeUI {
 
   /**
    * Loads an image from the classpath, optionally prepending this package.
-   * 
+   *
    * @param name name of an image file.
    * @param prependPackage true if {@link #PACKAGE_PATH} should be prepended to
    *     this name.
@@ -140,7 +140,7 @@ public class SwingUI extends DevModeUI {
     if (prependPackage) {
       name = PACKAGE_PATH + name;
     }
-    
+
     URL url = (name == null) ? null : cl.getResource(name);
     if (url != null) {
       ImageIcon image = new ImageIcon(url);
@@ -164,7 +164,7 @@ public class SwingUI extends DevModeUI {
 
   /**
    * Create a Swing UI instance.
-   * 
+   *
    * @param options parsed command-line options
    */
   public SwingUI(HostedModeBaseOptions options) {
@@ -318,7 +318,7 @@ public class SwingUI extends DevModeUI {
       });
     }
   }
-  
+
   protected int getNextSessionCounter(File logdir) {
     synchronized (sessionCounterLock) {
       if (sessionCounter == 0 && logdir != null) {
@@ -334,7 +334,7 @@ public class SwingUI extends DevModeUI {
           }
         }
       }
-      // 
+      //
       return ++sessionCounter;
     }
   }
@@ -360,7 +360,7 @@ public class SwingUI extends DevModeUI {
                 tabPanels.put(key, tabPanel);
               }
             }
-  
+
             @Override
             public void removeTab(ModuleTabPanel tabPanel) {
               synchronized (tabs) {
@@ -376,7 +376,7 @@ public class SwingUI extends DevModeUI {
   /**
    * Invoke a Callable on the UI thread, wait for it to finish, and return the
    * result.
-   * 
+   *
    * @param <T> return type
    * @param callable wrapper of the method to run on the UI thread
    * @return the return value of callable.call()
@@ -398,7 +398,7 @@ public class SwingUI extends DevModeUI {
 
   /**
    * Invoke a Runnable on the UI thread and wait for it to finish.
-   * 
+   *
    * @param runnable
    * @throws RuntimeException if an error occurs
    */
@@ -461,9 +461,9 @@ public class SwingUI extends DevModeUI {
   /**
    * Set the images for the frame.  On JDK 1.5, only the last icon supplied is
    * used for all needs.
-   * 
+   *
    * @param logger logger to use for warnings
-   * @param icons one or more icons 
+   * @param icons one or more icons
    */
   private void setIconImages(TreeLogger logger, ImageIcon... icons) {
     if (icons.length == 0) {

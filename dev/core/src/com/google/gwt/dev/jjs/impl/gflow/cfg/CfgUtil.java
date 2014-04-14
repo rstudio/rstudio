@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -39,25 +39,25 @@ public class CfgUtil {
       newSubgraph.addGraphOutEdge(edge);
     }
   }
-  
-  public static <A extends Assumption<?>> SubgraphAssumptions<A> 
+
+  public static <A extends Assumption<?>> SubgraphAssumptions<A>
   createGraphBottomAssumptions(Cfg graph) {
     ArrayList<A> in = new ArrayList<A>();
     for (int i = 0; i < graph.getGraphInEdges().size(); ++i) {
       in.add(null);
     }
-    
+
     ArrayList<A> out = new ArrayList<A>();
     for (int i = 0; i < graph.getGraphOutEdges().size(); ++i) {
       out.add(null);
     }
-    
+
     return new SubgraphAssumptions<A>(in, out);
   }
 
   /**
-   * Create a graph with single node. Resulting graph will have same amount of 
-   * input/output edges as the original node. 
+   * Create a graph with single node. Resulting graph will have same amount of
+   * input/output edges as the original node.
    */
   public static Cfg createSingleNodeReplacementGraph(
       Cfg originalGraph,
@@ -68,16 +68,16 @@ public class CfgUtil {
     addGraphEdges(originalGraph, originalNode, newNode, newNode, newSubgraph);
     return newSubgraph;
   }
-  
+
   /**
    * Find CFG node corresponding to the nearest statement, containing the AST
-   * node of the passed node. 
+   * node of the passed node.
    */
   public static CfgNode<?> findContainingStatement(CfgNode<?> node) {
     while (!(node.getJNode() instanceof JStatement)) {
       node = node.getParent();
     }
-    
+
     return node;
   }
 
@@ -94,11 +94,11 @@ public class CfgUtil {
       }
       // Preconditions.checkNotNull(result, "Can't find parent for: %s", node);
     }
-    
+
     return result;
   }
-  
+
   private CfgUtil() {
-    // 
+    //
   }
 }

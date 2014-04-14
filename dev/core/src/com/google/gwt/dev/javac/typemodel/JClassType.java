@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -126,7 +126,7 @@ public abstract class JClassType implements
    * over those found in the superinterface hierarchy. Note that the annotation
    * does not need to be tagged with {@code @Inherited} in order to be returned
    * from the superclass chain.
-   * 
+   *
    * @param annotationType the type of the annotation to look for
    * @return the desired annotation or <code>null</code> if the annotation is
    *         not present in the type's type hierarchy
@@ -235,10 +235,10 @@ public abstract class JClassType implements
    * those found in superclasses and superinterfaces. A method is inheritable if
    * its accessibility is <code>public</code>, <code>protected</code>, or
    * package protected.
-   * 
+   *
    * This method offers a convenient way for Generators to find candidate
    * methods to call from a subclass.
-   * 
+   *
    * @return an array of {@link JMethod} objects representing inheritable
    *         methods
    */
@@ -298,14 +298,14 @@ public abstract class JClassType implements
    * those found in superclasses and superinterfaces. A method is overridable if
    * it is not <code>final</code> and its accessibility is <code>public</code>,
    * <code>protected</code>, or package protected.
-   * 
+   *
    * Deferred binding generators often need to generate method implementations;
    * this method offers a convenient way to find candidate methods to implement.
-   * 
+   *
    * Note that the behavior does not match
    * {@link Class#getMethod(String, Class[])}, which does not return the most
    * derived method in some cases.
-   * 
+   *
    * @return an array of {@link JMethod} objects representing overridable
    *         methods
    */
@@ -371,7 +371,7 @@ public abstract class JClassType implements
   /**
    * Returns this instance if it is a annotation or <code>null</code> if it is
    * not.
-   * 
+   *
    * @return this instance if it is a annotation or <code>null</code> if it is
    *         not
    */
@@ -390,11 +390,11 @@ public abstract class JClassType implements
   /**
    * Returns <code>true</code> if this {@link JClassType} is assignable from the
    * specified {@link JClassType} parameter.
-   * 
+   *
    * @param possibleSubtype possible subtype of this {@link JClassType}
    * @return <code>true</code> if this {@link JClassType} is assignable from the
    *         specified {@link JClassType} parameter
-   * 
+   *
    * @throws NullPointerException if <code>possibleSubtype</code> is
    *           <code>null</code>
    */
@@ -411,11 +411,11 @@ public abstract class JClassType implements
   /**
    * Returns <code>true</code> if this {@link JClassType} is assignable to the
    * specified {@link JClassType} parameter.
-   * 
+   *
    * @param possibleSupertype possible supertype of this {@link JClassType}
    * @return <code>true</code> if this {@link JClassType} is assignable to the
    *         specified {@link JClassType} parameter
-   * 
+   *
    * @throws NullPointerException if <code>possibleSupertype</code> is
    *           <code>null</code>
    */
@@ -449,7 +449,7 @@ public abstract class JClassType implements
    * <li>have either no constructors or a parameterless constructor, and</li>
    * <li>be a top-level class or a static nested class.</li>
    * </ul>
-   * 
+   *
    * @return <code>true</code> if the type is default instantiable, or
    *         <code>false</code> otherwise
    */
@@ -459,7 +459,7 @@ public abstract class JClassType implements
   /**
    * Returns true if the type may be enhanced on the server to contain extra
    * fields that are unknown to client code.
-   * 
+   *
    * @return <code>true</code> if the type might be enhanced on the server
    */
   @Override
@@ -470,7 +470,7 @@ public abstract class JClassType implements
   /**
    * Returns this instance if it is an enumeration or <code>null</code> if it is
    * not.
-   * 
+   *
    * @return this instance if it is an enumeration or <code>null</code> if it is
    *         not
    */
@@ -497,7 +497,7 @@ public abstract class JClassType implements
 
   /**
    * Tests if this type is contained within another type.
-   * 
+   *
    * @return true if this type has an enclosing type, false if this type is a
    *         top-level type
    */
@@ -537,7 +537,7 @@ public abstract class JClassType implements
   /**
    * Indicates that the type may be enhanced on the server to contain extra
    * fields that are unknown to client code.
-   * 
+   *
    * TODO(rice): find a better way to do this.
    */
   @Override
@@ -560,7 +560,7 @@ public abstract class JClassType implements
    * type is a class, its own methods are not added. If this type is an
    * interface, its own methods are added. Used internally by
    * {@link #getOverridableMethods()}.
-   * 
+   *
    * @param methodsBySignature
    */
   protected abstract void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
@@ -596,7 +596,7 @@ public abstract class JClassType implements
   /**
    * Returns either the substitution of this type based on the parameterized
    * type or this instance.
-   * 
+   *
    * @param parameterizedType
    * @return either the substitution of this type based on the parameterized
    *         type or this instance

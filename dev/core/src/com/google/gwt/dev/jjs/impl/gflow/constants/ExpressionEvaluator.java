@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,7 +34,7 @@ import com.google.gwt.thirdparty.guava.common.base.Preconditions;
  */
 public class ExpressionEvaluator {
   /**
-   * Main evaluation visitor. 
+   * Main evaluation visitor.
    */
   private static class EvaluatorVisitor extends JVisitor {
     private final ConstantsAssumption assumptions;
@@ -47,13 +47,13 @@ public class ExpressionEvaluator {
     public EvaluatorVisitor(ConstantsAssumption assumptions) {
       this.assumptions = assumptions;
     }
-    
+
     public JValueLiteral evaluate(JExpression expression) {
       Preconditions.checkNotNull(expression);
       accept(expression);
       return result;
     }
-    
+
     @Override
     public boolean visit(JBinaryOperation x, Context ctx) {
       accept(x.getRhs());
@@ -95,8 +95,8 @@ public class ExpressionEvaluator {
       return false;
     }
   }
-  
-  public static JValueLiteral evalBinOp(JBinaryOperation x, JValueLiteral lhs, 
+
+  public static JValueLiteral evalBinOp(JBinaryOperation x, JValueLiteral lhs,
       JValueLiteral rhs) {
     if (lhs instanceof JNullLiteral ||
         rhs instanceof JNullLiteral) {
@@ -108,49 +108,49 @@ public class ExpressionEvaluator {
             !(lhs instanceof JNullLiteral) || !(rhs instanceof JNullLiteral));
       }
     }
-    
+
     if (!lhs.getType().equals(rhs.getType())) {
       // do not even try to get type conversions right :)
       return null;
     }
-    
+
     // TODO: support other types.
-    
+
     if (lhs.getType().equals(JPrimitiveType.INT)) {
       if (!(lhs instanceof JIntLiteral) ||
           !(rhs instanceof JIntLiteral)) {
         return null;
       }
-      
+
       int a = ((JIntLiteral) lhs).getValue();
       int b = ((JIntLiteral) rhs).getValue();
-      
+
       switch (x.getOp()) {
         case ADD:
-          return new JIntLiteral(x.getSourceInfo(), a + b); 
+          return new JIntLiteral(x.getSourceInfo(), a + b);
         case MUL:
-          return new JIntLiteral(x.getSourceInfo(), a * b); 
+          return new JIntLiteral(x.getSourceInfo(), a * b);
         case SUB:
-          return new JIntLiteral(x.getSourceInfo(), a - b); 
+          return new JIntLiteral(x.getSourceInfo(), a - b);
         case DIV:
-          if (b != 0) { 
+          if (b != 0) {
             return new JIntLiteral(x.getSourceInfo(), a / b);
           } else {
             return null;
           }
         case EQ:
-          return JBooleanLiteral.get(a == b); 
+          return JBooleanLiteral.get(a == b);
         case NEQ:
-          return JBooleanLiteral.get(a != b); 
+          return JBooleanLiteral.get(a != b);
         case GT:
-          return JBooleanLiteral.get(a > b); 
+          return JBooleanLiteral.get(a > b);
         case GTE:
-          return JBooleanLiteral.get(a >= b); 
+          return JBooleanLiteral.get(a >= b);
         case LT:
-          return JBooleanLiteral.get(a < b); 
+          return JBooleanLiteral.get(a < b);
         case LTE:
-          return JBooleanLiteral.get(a <= b); 
-          
+          return JBooleanLiteral.get(a <= b);
+
         default:
           return null;
       }
@@ -159,16 +159,16 @@ public class ExpressionEvaluator {
           !(rhs instanceof JBooleanLiteral)) {
         return null;
       }
-      
+
       boolean a = ((JBooleanLiteral) lhs).getValue();
       boolean b = ((JBooleanLiteral) rhs).getValue();
-      
+
       switch (x.getOp()) {
         case EQ:
-          return JBooleanLiteral.get(a == b); 
+          return JBooleanLiteral.get(a == b);
         case NEQ:
-          return JBooleanLiteral.get(a != b); 
-          
+          return JBooleanLiteral.get(a != b);
+
         default:
           return null;
       }

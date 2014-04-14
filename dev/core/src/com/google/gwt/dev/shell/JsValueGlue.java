@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -33,7 +33,7 @@ public final class JsValueGlue {
 
   /**
    * Create a JavaScriptObject instance referring to this JavaScript object.
-   * 
+   *
    * @param classLoader the classLoader to create from
    * @return the constructed JavaScriptObject
    */
@@ -82,7 +82,7 @@ public final class JsValueGlue {
   /**
    * Return an object containing the value JavaScript object as a specified
    * type.
-   * 
+   *
    * @param value the JavaScript value
    * @param type expected type of the returned object
    * @param msgPrefix a prefix for error/warning messages
@@ -182,7 +182,7 @@ public final class JsValueGlue {
 
   /**
    * Set the underlying value.
-   * 
+   *
    * @param value JsValue to set
    * @param type static type of the object
    * @param obj the object to store in the JS value
@@ -271,11 +271,11 @@ public final class JsValueGlue {
 
   /**
    * Returns the underlying JsValue from a JavaScriptObject instance.
-   * 
+   *
    * The tricky part is that it is in a different ClassLoader so therefore can't
    * be specified directly. The type is specified as Object, and reflection is
    * used to retrieve the reference field.
-   * 
+   *
    * @param jso the instance of JavaScriptObject to retrieve the JsValue from.
    * @return the JsValue representing the JavaScript object
    */

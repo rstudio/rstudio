@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,7 +29,7 @@ public interface HasAnnotations {
    * Returns an instance of the specified annotation type if it is present on
    * this element or <code>null</code> if it is not. For a class, this will
    * look for annotations on supertypes as well.
-   * 
+   *
    * @param annotationClass annotation type to search for
    * @return instance of the specified annotation type if it is present on this
    *         element or <code>null</code> if it is not
@@ -51,7 +51,7 @@ public interface HasAnnotations {
   /**
    * Returns <code>true</code> if this item has an annotation of the specified
    * type. For a class, this will look at supertypes as well.
-   * 
+   *
    * @return <code>true</code> if this item has an annotation of the specified
    *         type
    */

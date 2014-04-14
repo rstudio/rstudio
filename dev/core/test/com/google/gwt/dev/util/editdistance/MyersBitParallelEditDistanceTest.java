@@ -133,7 +133,7 @@ public class MyersBitParallelEditDistanceTest extends TestCase {
                 + s1base;
 
     GeneralEditDistanceTest.genericVerification(generate(s1),
-                                                s1, s2, 
+                                                s1, s2,
                                                 5 + 4 /*fN@05, aG$6*/);
   }
 

@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ import java.util.Set;
 
 /**
  * Verify the validity of the symbol.
- * 
+ *
  * This is by no means complete. At the Javascript AST, we no longer have the
  * knowledge we once had in the Java AST. Specify, given a name access.
  */
@@ -41,7 +41,7 @@ public class VerifySymbolMap extends JsVisitor {
       Map<StandardSymbolData, JsName> symbolTable ) {
     new VerifySymbolMap(jjsmap, symbolTable).accept(jsProgram);
   }
-  
+
   private final JavaToJavaScriptMap jjsmap;
   private final Set<String> nameMap = new HashSet<String>();
 
@@ -50,7 +50,7 @@ public class VerifySymbolMap extends JsVisitor {
       Map<StandardSymbolData, JsName> symbolTable) {
     this.jjsmap = jjsmap;
     for (Entry<StandardSymbolData, JsName> entry : symbolTable.entrySet()) {
-      nameMap.add(entry.getValue().getIdent()); 
+      nameMap.add(entry.getValue().getIdent());
     }
   }
 

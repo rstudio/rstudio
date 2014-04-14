@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -52,7 +52,7 @@ public class JsCoerceIntShiftTest extends TestCase {
       } else {
         SortedSet<String> valueSet = new TreeSet<String>();
         valueSet.add(value);
-        return new DefaultSelectionProperty(value, value, value, valueSet, 
+        return new DefaultSelectionProperty(value, value, value, valueSet,
             null /* fallbackValueMap */);
       }
     }
@@ -92,12 +92,12 @@ public class JsCoerceIntShiftTest extends TestCase {
   public void testNonSafari() throws Exception {
     assertNotRewritten(firefoxOracle);
   }
-  
+
   public void testNoUserAgent() throws Exception {
     assertRewritten(noAgentOracle);
     assertRewritten(firefoxOracle, noAgentOracle);
   }
-  
+
   public void testSafari() throws Exception {
     assertRewritten(safariOracle);
     assertRewritten(firefoxOracle, safariOracle);
@@ -106,7 +106,7 @@ public class JsCoerceIntShiftTest extends TestCase {
   /**
    * Assert that the provided PropertyOracles do not cause a rewrite of
    * right-shift operations.
-   * 
+   *
    * @param oracles
    * @throws Exception
    */
@@ -120,7 +120,7 @@ public class JsCoerceIntShiftTest extends TestCase {
   /**
    * Assert that the provided PropertyOracles do cause a rewrite of right-shift
    * operations.
-   * 
+   *
    * @param oracles
    * @throws Exception
    */
@@ -133,9 +133,9 @@ public class JsCoerceIntShiftTest extends TestCase {
 
   /**
    * Process a JS program with the {@link JsCoerceIntShift} pass.
-   * 
+   *
    * @param js the source program
-   * @param oracles 
+   * @param oracles
    * @return processed JS
    */
   private String process(String js, PropertyOracle[] oracles)

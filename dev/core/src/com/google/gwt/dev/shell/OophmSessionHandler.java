@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 
+ *
  */
 public class OophmSessionHandler extends SessionHandlerServer {
 
@@ -45,7 +45,7 @@ public class OophmSessionHandler extends SessionHandlerServer {
 
   /**
    * Listens for new connections from browsers.
-   * 
+   *
    * @param topLogger logger to use for non-module-related messages
    * @param host BrowserWidgetHost instance
    */
@@ -127,7 +127,7 @@ public class OophmSessionHandler extends SessionHandlerServer {
         }
       }
     }
-    
+
     TreeLogger branch = TreeLogger.NULL;
     if (logger.isLoggable(TreeLogger.SPAM)) {
       StringBuffer logMsg = new StringBuffer();
@@ -206,7 +206,7 @@ public class OophmSessionHandler extends SessionHandlerServer {
       // We do catch Throwable intentionally because there are a ton of things
       // that can go wrong trying to load a module, including Error-derived
       // things like NoClassDefFoundError.
-      // 
+      //
       moduleHandle.getLogger().log(
           TreeLogger.ERROR,
           "Failed to load module '" + moduleName + "' from user agent '"

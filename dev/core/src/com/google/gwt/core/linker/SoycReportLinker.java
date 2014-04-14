@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -117,17 +117,17 @@ public class SoycReportLinker extends Linker {
 
     boolean reportFilesPresent = anyReportFilesPresent(artifacts);
     boolean metricsPresent = anyCompilerMetricsPresent(artifacts);
-    
+
     if (!reportFilesPresent && !metricsPresent) {
       return artifacts;
     }
-    
+
     artifacts = new ArtifactSet(artifacts);
-    
+
     if (!onePermutation) {
       buildCompilerMetricsXml(artifacts);
     }
-    
+
     if (reportFilesPresent) {
       if (onePermutation) {
         emitPermutationDescriptions(artifacts);
@@ -135,17 +135,17 @@ public class SoycReportLinker extends Linker {
         buildTopLevelFiles(logger, artifacts);
       }
     }
-    
+
     return artifacts;
   }
 
   /**
    * Check whether an artifact set contains any compilerMetrics.
-   */  
+   */
   boolean anyCompilerMetricsPresent(ArtifactSet artifacts) {
-    return  !artifacts.find(ModuleMetricsArtifact.class).isEmpty(); 
+    return  !artifacts.find(ModuleMetricsArtifact.class).isEmpty();
   }
-  
+
   /**
    * Check whether an artifact set contains any SOYC report documents.
    */
@@ -168,7 +168,7 @@ public class SoycReportLinker extends Linker {
   /**
    * Compiler Metrics are captured in the module load, precompilation,
    * and compile permutations step, then all merged together into a single
-   * XML file as output.  That file can then be consumed by external 
+   * XML file as output.  That file can then be consumed by external
    * reporting tools.
    */
   private void buildCompilerMetricsXml(ArtifactSet artifacts) {

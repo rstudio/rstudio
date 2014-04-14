@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -73,7 +73,7 @@ public class GlobalInformation {
 
   /**
    * Gets the mapping from each class to its package.
-   * 
+   *
    * @return classToPackage
    */
   public final Map<String, String> getClassToPackage() {
@@ -82,7 +82,7 @@ public class GlobalInformation {
 
   /**
    * Gets the mapping from a class to what it depends on.
-   * 
+   *
    * @return classToWhatItDependsOn
    */
   public final HashMap<String, HashSet<String>> getClassToWhatItDependsOn() {
@@ -91,7 +91,7 @@ public class GlobalInformation {
 
   /**
    * Gets the exclusive code breakdown.
-   * 
+   *
    * @return exclusiveCodeBreakdown
    */
   public final Map<Integer, SizeBreakdown> getExclusiveCodeBreakdowns() {
@@ -100,7 +100,7 @@ public class GlobalInformation {
 
   /**
    * Gets the initial fragment size breakdown.
-   * 
+   *
    * @return initialCodeBreakdown
    */
   public final SizeBreakdown getInitialCodeBreakdown() {
@@ -109,7 +109,7 @@ public class GlobalInformation {
 
   /**
    * Gets the leftovers fragment size breakdown.
-   * 
+   *
    * @return leftoversCodeBreakdown
    */
   public final SizeBreakdown getLeftoversBreakdown() {
@@ -118,7 +118,7 @@ public class GlobalInformation {
 
   /**
    * Gets the number of fragments..
-   * 
+   *
    * @return the number of fragments.
    */
   public final int getNumFragments() {
@@ -127,7 +127,7 @@ public class GlobalInformation {
 
   /**
    * Gets the mapping from packages to classes.
-   * 
+   *
    * @return packageToClasses
    */
   public final Map<String, TreeSet<String>> getPackageToClasses() {
@@ -140,7 +140,7 @@ public class GlobalInformation {
 
   /**
    * Gets the initial load sequence.
-   * 
+   *
    * @return initialFragmentLoadSequence
    */
   public final ArrayList<Integer> getInitialFragmentLoadSequence() {
@@ -176,7 +176,7 @@ public class GlobalInformation {
 
   /**
    * Gets the total code breakdown.
-   * 
+   *
    * @return totalCodeBreakdown
    */
   public final SizeBreakdown getTotalCodeBreakdown() {
@@ -185,7 +185,7 @@ public class GlobalInformation {
 
   /**
    * Gets an exclusive code breakdown for a fragment.
-   * 
+   *
    * @param fragment the fragment id
    * @return exlusive code breakdown for fragment
    */
@@ -201,7 +201,7 @@ public class GlobalInformation {
   /**
    * Computes package sizes from class sizes. TODO(spoon) move this to the
    * SizeBreakdown class.
-   * 
+   *
    * @param packageToSize mapping from packages to their sizes
    * @param classToSize mapping from classes to their sizes
    */

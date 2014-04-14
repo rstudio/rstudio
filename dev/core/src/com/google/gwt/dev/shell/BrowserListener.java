@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,7 +35,7 @@ public class BrowserListener {
   /**
    * Get a query parameter to be added to the URL that specifies the address
    * of this listener.
-   * 
+   *
    * @param address address of host to use for connections
    * @param port TCP port number to use for connection
    * @return a query parameter
@@ -52,10 +52,10 @@ public class BrowserListener {
 
   /**
    * Listens for new connections from browsers.
-   * 
-   * @param logger 
-   * @param port 
-   * @param handler 
+   *
+   * @param logger
+   * @param port
+   * @param handler
    */
   public BrowserListener(final TreeLogger logger, String bindAddress,
       int port, final SessionHandlerServer handler) {
@@ -114,7 +114,7 @@ public class BrowserListener {
 
   /**
    * @return the port number of the listening socket.
-   * 
+   *
    * @throws UnableToCompleteException if the listener is not running
    */
   public int getSocketPort() throws UnableToCompleteException {
@@ -127,10 +127,10 @@ public class BrowserListener {
 
   /**
    * Set any created BrowserChannelServers to ignore remote deaths.
-   * 
+   *
    * <p>
    * This is most commonly wanted by JUnitShell.
-   * 
+   *
    * @param ignoreRemoteDeath
    */
   public void setIgnoreRemoteDeath(boolean ignoreRemoteDeath) {

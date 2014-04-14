@@ -221,7 +221,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
     // A virtual upref should still be rescued
     analyzeSnippet("VirtualUpRef.create().getFoo();").assertOnlyInstantiatedTypes(
         "VirtualUpRef", "NonImplementor", "JavaScriptObject", "Object", "UpRefIntf");
-    
+
     // and its methods
     analyzeSnippet("VirtualUpRef.create().getFoo();").assertOnlyLiveFieldsAndMethods(
         "VirtualUpRef.$clinit", "VirtualUpRef.create",

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -75,7 +75,7 @@ public abstract class CorrelationFactory implements Serializable {
      * NB: The Correlation type uses AST nodes in its factory methods to make it
      * easier to extract whatever information we want to include in the Compile
      * Reports without having to update call sites with additional parameters.
-     * 
+     *
      * In the general case, references to AST nodes should not be exposed to any
      * public-API consumers of the Correlation.
      */

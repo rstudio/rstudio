@@ -1,12 +1,12 @@
 /*
  * Copyright 2006 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,7 +23,7 @@ import java.util.Set;
 
 /**
  * Argument handler for boolean flags that have no parameters.
- * 
+ *
  * Supports toggling the boolean value on and off using -label and -nolabel tag variants and
  * calculating a meaningful purpose including default value.
  */
@@ -49,7 +49,7 @@ public abstract class ArgHandlerFlag extends ArgHandler {
   /**
    * The root String that will be munged into -label and -nolabel variants for flag value toggling.
    * Should follow the verb[Adjective]Noun naming pattern. For example:
-   * 
+   *
    * @Override
    * public String getLabel() {
    *   return "allowMissingSrc";
@@ -126,7 +126,7 @@ public abstract class ArgHandlerFlag extends ArgHandler {
   /**
    * Takes the explicitly provided value and propagates it into whatever option settings this flag
    * controls.
-   * 
+   *
    * @param value the new value for the flag.
    * @return whether the assignment was valid.
    */

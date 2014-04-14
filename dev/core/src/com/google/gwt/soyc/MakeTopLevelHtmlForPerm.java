@@ -272,7 +272,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("        '" + Joiner.on(",").join(escapedFragmentDescriptors) + "',");
       }
       outFile.println("  ];");
-      
+
       // object/dictionary containing method sizes
       outFile.println("  var methodSizes = {");
       for (SizeBreakdown breakdown : globalInformation.allSizeBreakdowns()) {
@@ -283,7 +283,7 @@ public class MakeTopLevelHtmlForPerm {
         }
       }
       outFile.println("};");
-      
+
       // dropdown button image srcs
       outFile.println("  var images = {");
       outFile.println("    \"closed\" : \"images/play-g16.png\",");
@@ -309,7 +309,7 @@ public class MakeTopLevelHtmlForPerm {
           + "<span class='soyc-th-units'>(bytes)</span></th>\");");
       outFile.println("    document.write(\"</thead>\");");
       outFile.println("  }");
-      
+
       outFile.println("  function swapShowHide(elementName) {");
       outFile.println("    hp = document.getElementById(elementName);");
       outFile.println("    arrow = document.getElementById(\"dropdown-\" + elementName);");
@@ -325,7 +325,7 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("      arrow.src = images[\"closed\"];");
       outFile.println("    }");
       outFile.println("  }");
-      
+
       // function to print a single dependency in the methodDependencies report
       // see printDependency()
       outFile.println("  function b(c, deps) {");
@@ -356,7 +356,7 @@ public class MakeTopLevelHtmlForPerm {
           + "methodSize + \"</td>\");");
       outFile.println("    document.write(\"</tr>\");");
       outFile.println("  }");
-      
+
       // follows all method dependency stacks
       outFile.println("  function j() {");
       outFile.println("    document.write(\"</table></div>\");");
@@ -770,10 +770,10 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("</th>");
       outFile.println("<th class=\"soyc-numerical-col-header\">% of total</th>");
       outFile.println("</thead>");
-      
+
       NumberFormat bytesFormatter = NumberFormat.getInstance();
       bytesFormatter.setGroupingUsed(true);
-      
+
       NumberFormat percentFormatter = NumberFormat.getPercentInstance();
       percentFormatter.setMinimumFractionDigits(1);
       percentFormatter.setMaximumFractionDigits(1);
@@ -795,7 +795,7 @@ public class MakeTopLevelHtmlForPerm {
           outFile.println("<td class=\"soyc-numerical-col\">");
           outFile.println(bytesFormatter.format(size));
           outFile.println("</td>");
-          outFile.println("<td class=\"soyc-percent-col\">" + 
+          outFile.println("<td class=\"soyc-percent-col\">" +
               percentFormatter.format(perc) + "</td>");
           outFile.println("</tr>");
         }
@@ -814,12 +814,12 @@ public class MakeTopLevelHtmlForPerm {
     String title = "Compiler Metrics for Permutation "
         + compilationMetrics.getPermutationId();
     addStandardHtmlProlog(outFile, title, title, "Build Time Metrics");
-    
+
     NumberFormat elapsedFormatter = NumberFormat.getInstance();
     elapsedFormatter.setGroupingUsed(true);
     elapsedFormatter.setMinimumFractionDigits(3);
     elapsedFormatter.setMaximumFractionDigits(3);
-    
+
     outFile.println("<div id=\"bd\">");
     int permutationId = compilationMetrics.getPermutationId();
 
@@ -838,7 +838,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<td>");
     outFile.println("Module Analysis");
     outFile.println("</td>");
-    outFile.println("<td class=\"soyc-numerical-col\">"  
+    outFile.println("<td class=\"soyc-numerical-col\">"
         + elapsedFormatter.format(moduleMetrics.getElapsedMilliseconds() / 1000.0) + " s");
     outFile.println("</td>");
     outFile.println("</tr>");
@@ -847,7 +847,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<td>");
     outFile.println("Precompile (may include Module Analysis)");
     outFile.println("</td>");
-    outFile.println("<td class=\"soyc-numerical-col\">" 
+    outFile.println("<td class=\"soyc-numerical-col\">"
         + elapsedFormatter.format(precompilationMetrics.getElapsedMilliseconds() / 1000.0)
         + " s");
     outFile.println("</td>");
@@ -857,13 +857,13 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<td>");
     outFile.println("Compile");
     outFile.println("</td>");
-    outFile.println("<td class=\"soyc-numerical-col\">" 
+    outFile.println("<td class=\"soyc-numerical-col\">"
         + elapsedFormatter.format(compilationMetrics.getElapsedMilliseconds() / 1000.0)
         + " s");
     outFile.println("</td>");
     outFile.println("</tr>");
     outFile.println("</table>");
-    
+
     NumberFormat referencesFormatter = NumberFormat.getInstance();
     referencesFormatter.setGroupingUsed(true);
 
@@ -1115,10 +1115,10 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("</th>");
         outFile.println("<th class=\"soyc-numerical-col-header\">% of total</th>");
         outFile.print("</thead>");
-        
+
         NumberFormat bytesFormatter = NumberFormat.getInstance();
         bytesFormatter.setGroupingUsed(true);
-        
+
         NumberFormat percentFormatter = NumberFormat.getPercentInstance();
         percentFormatter.setMinimumFractionDigits(1);
         percentFormatter.setMaximumFractionDigits(1);
@@ -1146,7 +1146,7 @@ public class MakeTopLevelHtmlForPerm {
             outFile.println("<td class=\"soyc-numerical-col\">");
             outFile.println(bytesFormatter.format(size));
             outFile.println("</td>");
-            outFile.println("<td class=\"soyc-percent-col\">" + 
+            outFile.println("<td class=\"soyc-percent-col\">" +
                 percentFormatter.format(perc) + "</td>");
             outFile.println("</tr>");
           }
@@ -1219,7 +1219,7 @@ public class MakeTopLevelHtmlForPerm {
 
     addStandardHtmlProlog(outFile, "Compile report: Permutation "
         + permutationId, "Compile report: Permutation " + permutationId, "");
-    
+
     NumberFormat bytesFormatter = NumberFormat.getInstance();
     bytesFormatter.setGroupingUsed(true);
 
@@ -1228,7 +1228,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<dl>");
     outFile.println("<dt>Full code size</dt>");
     outFile.println("<dd class=\"value\">"
-        + bytesFormatter.format(globalInformation.getTotalCodeBreakdown().sizeAllCode) 
+        + bytesFormatter.format(globalInformation.getTotalCodeBreakdown().sizeAllCode)
         + " Bytes</dd>");
     outFile.println("<dd class=\"report\"><a href=\"total-" + permutationId
         + "-overallBreakdown.html\">Report</a></dd>");
@@ -1247,7 +1247,7 @@ public class MakeTopLevelHtmlForPerm {
 
     outFile.println("<dt>Left over code</dt>");
     outFile.println("<dd class=\"value\">"
-        + bytesFormatter.format(globalInformation.getLeftoversBreakdown().sizeAllCode) 
+        + bytesFormatter.format(globalInformation.getLeftoversBreakdown().sizeAllCode)
         + " Bytes</dd>");
     outFile.println("<dd class=\"report\"><a href=\"leftovers-" + permutationId
         + "-overallBreakdown.html\">Report</a></dd>");
@@ -1274,7 +1274,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<th class=\"soyc-numerical-col-header\">% of total</th>");
     outFile.println("</thead>");
     outFile.println("<tbody>");
-    
+
     NumberFormat percentFormatter = NumberFormat.getPercentInstance();
     percentFormatter.setMinimumFractionDigits(1);
     percentFormatter.setMaximumFractionDigits(1);
@@ -1323,7 +1323,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-numerical-col\">");
         outFile.println(bytesFormatter.format(size));
         outFile.println("</td>");
-        outFile.println("<td class=\"soyc-percent-col\">" + 
+        outFile.println("<td class=\"soyc-percent-col\">" +
             percentFormatter.format(perc) + "</td>");
         outFile.println("</tr>");
       }
@@ -1496,10 +1496,10 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</th>");
     outFile.println("<th class=\"soyc-numerical-col-header\">% of total</th>");
     outFile.println("</thead>");
-    
+
     NumberFormat bytesFormatter = NumberFormat.getInstance();
     bytesFormatter.setGroupingUsed(true);
-    
+
     NumberFormat percentFormatter = NumberFormat.getPercentInstance();
     percentFormatter.setMinimumFractionDigits(1);
     percentFormatter.setMaximumFractionDigits(1);
@@ -1524,7 +1524,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-numerical-col\">");
         outFile.println(bytesFormatter.format(size));
         outFile.println("</td>");
-        outFile.println("<td class=\"soyc-percent-col\">" + 
+        outFile.println("<td class=\"soyc-percent-col\">" +
             percentFormatter.format(perc) + "</td>");
         outFile.println("</tr>");
       }
@@ -1697,7 +1697,7 @@ public class MakeTopLevelHtmlForPerm {
     for (String method : dependencies.keySet()) {
       classesInPackage.add(method);
     }
-    makeDependenciesInternedHtml(depGraphName, 
+    makeDependenciesInternedHtml(depGraphName,
         classesInPackage, dependencies, interner, jsFileName);
   }
 
@@ -1718,7 +1718,7 @@ public class MakeTopLevelHtmlForPerm {
 
     String outFileName = dependenciesFileName(depGraphName);
     outFile = new PrintWriter(getOutFile(outFileName));
-    
+
     addStandardHtmlProlog(outFile, "Method Dependencies for "
         + depGraphDescription,
         "Method Dependencies for " + depGraphDescription, null);
@@ -1794,10 +1794,10 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</th>");
     outFile.println("<th class=\"soyc-numerical-col-header\">% of total</th>");
     outFile.println("</thead>");
-    
+
     NumberFormat bytesFormatter = NumberFormat.getInstance();
     bytesFormatter.setGroupingUsed(true);
-    
+
     NumberFormat percentFormatter = NumberFormat.getPercentInstance();
     percentFormatter.setMinimumFractionDigits(1);
     percentFormatter.setMaximumFractionDigits(1);
@@ -1826,7 +1826,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-numerical-col\">");
         outFile.println(bytesFormatter.format(size));
         outFile.println("</td>");
-        outFile.println("<td class=\"soyc-percent-col\">" + 
+        outFile.println("<td class=\"soyc-percent-col\">" +
             percentFormatter.format(perc) + "</td>");
         outFile.println("</tr>");
       }

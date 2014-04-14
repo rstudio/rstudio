@@ -43,7 +43,7 @@ public class ModuleMetricsArtifact extends Artifact<ModuleMetricsArtifact> {
   public ModuleMetricsArtifact() {
     this(SoycReportLinker.class, nextInstance.getAndIncrement());
   }
-  
+
   protected ModuleMetricsArtifact(Class<? extends Linker> linker, int instanceId) {
     super(linker);
     this.instanceId = instanceId;

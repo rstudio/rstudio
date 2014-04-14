@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -72,7 +72,7 @@ public class JsInlinerTest extends OptimizerTestBase {
 
   /**
    * A test for mutually-recursive functions. Setup:
-   * 
+   *
    * <pre>
    * a -> b, c
    * b -> a, c
@@ -125,7 +125,7 @@ public class JsInlinerTest extends OptimizerTestBase {
 
     // bootstrap the program
     code.append("caller();");
-    
+
     StringBuffer expected = new StringBuffer();
     expected.append("function clinit() { clinit = null; }");
     expected.append("function caller() { var array; array[0] + (clinit(), 2); }");
@@ -241,7 +241,7 @@ public class JsInlinerTest extends OptimizerTestBase {
    */
   public void testPreserveNameScopeWithDoubleInliningAndObfuscation() throws Exception {
     StringBuffer code = new StringBuffer();
-    
+
     code.append("function getA(){"
                 + "var s;"
                 + "s = getB();"
@@ -259,13 +259,13 @@ public class JsInlinerTest extends OptimizerTestBase {
                 + "getA();"
                 + "if (y != 10) {$wnd.alert('y != 10');}"
                 + "}");
-    
+
     code.append("var x = 10; start(x);");
 
     StringBuffer expected = new StringBuffer();
     expected.append("function c(a){var b;b='t';if(a!=10){$wnd.alert('y != 10')}}");
     expected.append("var d=10;c(d);");
-    
+
     verifyOptimizedObfuscated(expected.toString(), code.toString());
   }
 

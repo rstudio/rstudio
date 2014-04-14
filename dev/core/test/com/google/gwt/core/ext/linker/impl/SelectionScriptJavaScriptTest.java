@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -147,7 +147,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
     assertEquals(1, alerts.size());
     assertEquals("base=http://foo.test/", alerts.get(0));
   }
-  
+
   /**
    * Test the script base with no meta properties.
    */
@@ -163,7 +163,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
     assertEquals(1, alerts.size());
     assertEquals("base=http://foo.test/foo/", alerts.get(0));
   }
-  
+
   /**
    * Test getting the base URL from a meta property with an absolute URL
    */
@@ -193,7 +193,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
     assertEquals(1, alerts.size());
     assertEquals("base=http://foo.test/fromMeta/tag/", alerts.get(0));
   }
-  
+
   /**
    * Test the script base logic for an inlined selection script.
    */
@@ -230,7 +230,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
     assertEquals(1, alerts.size());
     assertEquals("base=http://static.test/fromBaseTag/", alerts.get(0));
   }
-  
+
   /**
    * Test the script base logic for an inlined selection script.
    */

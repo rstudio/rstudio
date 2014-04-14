@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -62,12 +62,12 @@ import java.util.TreeSet;
 /**
  * This optimizer replaces enum constants with their ordinal value (a simple
  * int) when possible. We call this process "ordinalization".
- * 
+ *
  * Generally, this can be done for enums that are only ever referred to by
  * reference, or by their ordinal value. For the specific set of conditions
  * under which ordinalization can proceed, see the notes for the nested class
  * {@link EnumOrdinalizer.CannotBeOrdinalAnalyzer} below.
- * 
+ *
  * This optimizer modifies enum classes to change their field constants to ints,
  * and to remove initialization of those constants in the clinit method. An
  * ordinalized enum class will not be removed from the AST by this optimizer,
@@ -78,12 +78,12 @@ import java.util.TreeSet;
  * version of the original enum class can remain in the AST, containing only
  * static fields and methods which aren't part of the enum infrastructure (in
  * which case it will no longer behave as an enum class at all).
- * 
+ *
  * Regardless of whether an ordinalized enum class ends up being completely
  * pruned away, the AST is expected to be in a coherent and usable state after
  * any pass of this optimizer. Thus, this optimizer should be considered to be
  * stateless.
- * 
+ *
  * The process is broken up into 3 separate passes over the AST, each
  * implemented as a separate visitor class. The first visitor,
  * {@link EnumOrdinalizer.CannotBeOrdinalAnalyzer} compiles information about
@@ -92,7 +92,7 @@ import java.util.TreeSet;
  * ordinalized (and it follows that all enums that don't get entered in the
  * black-list, will be allowed to be ordinalized. The set of conditions which
  * cause an enum to be black-listed are outlined below.
- * 
+ *
  * If there are enum classes that didn't get black-listed remaining, the
  * subsequent passes of the optimizer will be invoked. The first,
  * {@link EnumOrdinalizer.ReplaceEnumTypesWithInteger}, replaces the type info
@@ -299,7 +299,7 @@ public class EnumOrdinalizer {
    * A visitor which keeps track of the enums which cannot be ordinalized. It
    * does this by keeping track of a "black-list" for ordinals which violate the
    * conditions for ordinalization, below.
-   * 
+   *
    * An enum cannot be ordinalized, if it:
    * <ul>
    * <li>is implicitly upcast.</li>
@@ -323,27 +323,27 @@ public class EnumOrdinalizer {
    * <li>static methods, other than values() or valueOf().</li>
    * </ul>
    * </ul>
-   * 
+   *
    * This visitor extends the ImplicitUpcastAnalyzer, which encapsulates all the
    * conditions where implicit upcasting can occur in an AST. The rest of the
    * logic for checking ordinalizability is encapsulated in this sub-class.
-   * 
+   *
    * It also keeps track of all enums encountered, so we can know if we need to
    * continue with the other visitors of the optimizer after this visitor runs.
-   * 
+   *
    * We make special allowances not to check any code statements that appear
    * within the ClassLiteralHolder class, which can contain a reference to all
    * enum class literals in the program, even after ordinalization occurs.
-   * 
+   *
    * Also, we ignore visiting the getClass() method for any enum subclass, since
    * it will also cause a visit to the enum's class literal, and we don't
    * necessarily want to prevent ordinalization in that case.
-   * 
+   *
    * Special checking is needed to detect a class literal reference that occurs
    * within a JSNI method body. We don't get a visit to JClassLiteral in that
    * case, so we need to inspect visits to JsniFieldRef for the possibility it
    * might be a reference to a class literal.
-   * 
+   *
    * We also skip any checking in a method call to Enum.createValueOfMap(),
    * since this is generated for any enum class initially within the extra
    * enumClass$Map class, and this call contains an implicit upcast in the
@@ -388,7 +388,7 @@ public class EnumOrdinalizer {
        * Check for references to an enum's class literal. We need to black-list
        * classes in this case, since there could be a call to
        * Enum.valueOf(someEnum.class,"name"), etc.
-       * 
+       *
        * Note: we won't get here for class literals that occur in the
        * ClassLiteralHolder class, or within the getClass method of an enum
        * class (see comments above).
@@ -438,7 +438,7 @@ public class EnumOrdinalizer {
          * Black list if the $VALUES static field is referenced, unless it's
          * within the auto-generated clinit or values method, within the enum
          * class itself.
-         * 
+         *
          * TODO (jbrosenberg): Investigate further whether referencing the
          * $VALUES array (as well as the values() method) should not block
          * ordinalization. Instead, convert $VALUES to an array of int.
@@ -644,15 +644,15 @@ public class EnumOrdinalizer {
   }
   /**
    * A visitor which replaces enum types with an integer.
-   * 
+   *
    * It sub-classes TypeRemapper, which encapsulates all the locations for a
    * settable type. The overridden remap() method will be called in each
    * instance, and it will test whether the type is a candidate for replacement,
    * and if so, return the new type to set (JPrimitiveType.INT).
-   * 
+   *
    * Any reference to an enum field constant in an expression is replaced with
    * integer.
-   * 
+   *
    * This will also explicitly replace an enum's field constants with its
    * ordinal int values, and remove initialization of enum constants and the
    * $VALUES array in the clinit method for the enum.
@@ -787,7 +787,7 @@ public class EnumOrdinalizer {
    * Any references to the {@link Enum#ordinal()} method and
    * {@link Enum#ordinal} field for ordinalized types are replaced with the
    * qualifying instance.
-   * 
+   *
    * Note, this visitor must run after the ReplaceEnumTypesWithInteger visitor,
    * since it depends on detecting the locations where the enumOrdinalField or
    * enumOrdinalMethod have had their types changed to integer.

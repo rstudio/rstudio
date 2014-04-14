@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,7 +35,7 @@ import com.google.gwt.thirdparty.guava.common.base.Preconditions;
  * be simplified using assumptions
  */
 public class ConstantsTransformationFunction implements
-    TransformationFunction<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, 
+    TransformationFunction<CfgNode<?>, CfgEdge, CfgTransformer, Cfg,
                            ConstantsAssumption> {
   private final class MyTransformationVisitor extends CfgVisitor {
     private final ConstantsAssumption assumption;
@@ -53,23 +53,23 @@ public class ConstantsTransformationFunction implements
       if (condition instanceof JValueLiteral) {
         return;
       }
-      
-      Preconditions.checkNotNull(condition, 
+
+      Preconditions.checkNotNull(condition,
           "Null condition in %s: %s", node, node.getJNode());
 
       if (condition.hasSideEffects()) {
         return;
       }
 
-      JValueLiteral evaluatedCondition = 
+      JValueLiteral evaluatedCondition =
         ExpressionEvaluator.evaluate(condition, assumption);
-      
-      if (evaluatedCondition == null || 
+
+      if (evaluatedCondition == null ||
           !(evaluatedCondition instanceof JBooleanLiteral)) {
         super.visitConditionalNode(node);
         return;
       }
-      
+
       final boolean b = ((JBooleanLiteral) evaluatedCondition).getValue();
       result = new ConstantConditionTransformation(graph, b, node);
     }
@@ -91,8 +91,8 @@ public class ConstantsTransformationFunction implements
     if (assumption == null) {
       return null;
     }
-    
-    MyTransformationVisitor visitor = new MyTransformationVisitor(graph, 
+
+    MyTransformationVisitor visitor = new MyTransformationVisitor(graph,
         assumption);
     node.accept(visitor);
     return visitor.result;

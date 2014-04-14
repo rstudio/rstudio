@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ import java.util.Set;
 
 /**
  * Writes the implementation classes for JSO and its subtypes.
- * 
+ *
  * Changes made by the base class:
  * <ol>
  * <li>The new type has the same name as the old type with a '$' appended.</li>
@@ -44,14 +44,14 @@ abstract class WriteJsoImpl extends ClassVisitor {
 
   /**
    * This type implements JavaScriptObject.
-   * 
+   *
    * <ol>
    * <li>JavaScriptObject itself gets a new synthetic field to store the
    * underlying hosted mode reference.</li>
    * <li>Instance methods are added so that JavaScriptObject implements all
    * SingleJsoImpl interfaces.</li>
    * </ol>
-   * 
+   *
    */
   private static class ForJsoDollar extends WriteJsoImpl {
     /**
@@ -122,19 +122,19 @@ abstract class WriteJsoImpl extends ClassVisitor {
      * for all of the mangled SingleJsoImpl interface method names. These
      * instance methods simply turn around and call the static-dispatch methods.
      * In Java, it might look like:
-     * 
+     *
      * <pre>
      * interface Interface {
      *   String someMethod(int a, double b);
      * }
-     * 
+     *
      * class J extends JSO implements I {
      *   public String com_google_Interface_someMethod(int a, double b) {
      *     return com.google.MyJso$.someMethod$(this, a, b);
      *   }
      * }
      * </pre>
-     * 
+     *
      * @param mangledName {@code com_google_gwt_sample_hello_client_Interface_a}
      * @param interfaceMethod {@code java.lang.String a(int, double)}
      * @param implementingMethod {@code static final java.lang.String
@@ -195,7 +195,7 @@ abstract class WriteJsoImpl extends ClassVisitor {
 
   /**
    * This type is used to implement subtypes of JSO.
-   * 
+   *
    * <ol>
    * <li>The new type's superclass is mangled by adding $.</li>
    * <li>Constructors are deleted.</li>
@@ -256,7 +256,7 @@ abstract class WriteJsoImpl extends ClassVisitor {
 
   /**
    * Construct a new rewriter instance.
-   * 
+   *
    * @param cv the visitor to chain to
    * @param jsoDescriptors an unmodifiable set of descriptors containing
    *          <code>JavaScriptObject</code> and all subclasses

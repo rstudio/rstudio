@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * Keeps track of references to remote objects.  When the objects are no longer
  * needed, their ids are returned in {@link #getRefIdsForCleanup()}.
- * 
+ *
  * @param <T> subtype of RemoteObjectRef contained in this table
  */
 public class RemoteObjectTable<T extends RemoteObjectRef> {
@@ -41,7 +41,7 @@ public class RemoteObjectTable<T extends RemoteObjectRef> {
    * garbage-collected, this state must be stored externally.
    */
   private final Map<Reference<T>, Integer> idFromRemoteObject;
-  
+
   /**
    * This accumulates remote objects that are no longer referenced on this side
    * of the channel.
@@ -102,7 +102,7 @@ public class RemoteObjectTable<T extends RemoteObjectRef> {
   /**
    * Obtain the RemoteObjectRef that is currently in use to act as a proxy for
    * the given remote object ID.
-   * 
+   *
    * @return the RemoteObjectRef or null if the ID is not currently in use
    */
   public synchronized T getRemoteObjectRef(int refId) {
@@ -118,7 +118,7 @@ public class RemoteObjectTable<T extends RemoteObjectRef> {
 
   /**
    * Check to see if this ID does not already exist.
-   * 
+   *
    * @param refId reference ID to check
    * @return true if this ID is not currently in use
    */
@@ -129,7 +129,7 @@ public class RemoteObjectTable<T extends RemoteObjectRef> {
 
   /**
    * Store a remote object reference in the table.
-   * 
+   *
    * @param refId
    * @param remoteObjectRef
    */

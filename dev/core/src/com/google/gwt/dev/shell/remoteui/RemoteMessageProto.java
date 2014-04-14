@@ -16,7 +16,7 @@ public final class RemoteMessageProto {
      * <code>optional string protocolVersion = 1;</code>
      *
      * <pre>
-     * In the first release, we'll ignore this field. In the future, 
+     * In the first release, we'll ignore this field. In the future,
      * we can make use of it to detect protocol incompatibilities
      * </pre>
      */
@@ -25,7 +25,7 @@ public final class RemoteMessageProto {
      * <code>optional string protocolVersion = 1;</code>
      *
      * <pre>
-     * In the first release, we'll ignore this field. In the future, 
+     * In the first release, we'll ignore this field. In the future,
      * we can make use of it to detect protocol incompatibilities
      * </pre>
      */
@@ -34,7 +34,7 @@ public final class RemoteMessageProto {
      * <code>optional string protocolVersion = 1;</code>
      *
      * <pre>
-     * In the first release, we'll ignore this field. In the future, 
+     * In the first release, we'll ignore this field. In the future,
      * we can make use of it to detect protocol incompatibilities
      * </pre>
      */
@@ -528,7 +528,7 @@ public final class RemoteMessageProto {
        * Protobuf enum {@code com.google.gwt.dev.shell.remoteui.Message.Request.ServiceType}
        *
        * <pre>
-       * Every request must be addressed to a service. The two types of 
+       * Every request must be addressed to a service. The two types of
        * services are the ViewerService, and the DevModeService. The ViewerService
        * accepts commands for a Viewer. The DevModeService accepts requests for
        * the Development Mode Server.
@@ -1537,8 +1537,8 @@ public final class RemoteMessageProto {
            * Protobuf enum {@code com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.LogType}
            *
            * <pre>
-           * The type of log - either a web server log, a module log, or 
-           * the main log      
+           * The type of log - either a web server log, a module log, or
+           * the main log
            * </pre>
            */
           public enum LogType
@@ -1879,7 +1879,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -1895,7 +1895,7 @@ public final class RemoteMessageProto {
                 getNameBytes() {
               java.lang.Object ref = name_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 name_ = b;
@@ -1938,7 +1938,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -1954,7 +1954,7 @@ public final class RemoteMessageProto {
                 getSessionKeyBytes() {
               java.lang.Object ref = sessionKey_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 sessionKey_ = b;
@@ -1981,7 +1981,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -1997,7 +1997,7 @@ public final class RemoteMessageProto {
                 getUserAgentBytes() {
               java.lang.Object ref = userAgent_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 userAgent_ = b;
@@ -2024,7 +2024,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -2040,7 +2040,7 @@ public final class RemoteMessageProto {
                 getUrlBytes() {
               java.lang.Object ref = url_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 url_ = b;
@@ -2067,7 +2067,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -2083,7 +2083,7 @@ public final class RemoteMessageProto {
                 getTabKeyBytes() {
               java.lang.Object ref = tabKey_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 tabKey_ = b;
@@ -2110,7 +2110,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -2126,7 +2126,7 @@ public final class RemoteMessageProto {
                 getRemoteHostBytes() {
               java.lang.Object ref = remoteHost_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 remoteHost_ = b;
@@ -2464,7 +2464,7 @@ public final class RemoteMessageProto {
 
               public final boolean isInitialized() {
                 if (!hasName()) {
-                  
+
                   return false;
                 }
                 return true;
@@ -2518,7 +2518,7 @@ public final class RemoteMessageProto {
                   getNameBytes() {
                 java.lang.Object ref = name_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   name_ = b;
@@ -2628,7 +2628,7 @@ public final class RemoteMessageProto {
                   getSessionKeyBytes() {
                 java.lang.Object ref = sessionKey_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   sessionKey_ = b;
@@ -2702,7 +2702,7 @@ public final class RemoteMessageProto {
                   getUserAgentBytes() {
                 java.lang.Object ref = userAgent_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   userAgent_ = b;
@@ -2776,7 +2776,7 @@ public final class RemoteMessageProto {
                   getUrlBytes() {
                 java.lang.Object ref = url_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   url_ = b;
@@ -2850,7 +2850,7 @@ public final class RemoteMessageProto {
                   getTabKeyBytes() {
                 java.lang.Object ref = tabKey_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   tabKey_ = b;
@@ -2924,7 +2924,7 @@ public final class RemoteMessageProto {
                   getRemoteHostBytes() {
                 java.lang.Object ref = remoteHost_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   remoteHost_ = b;
@@ -3130,7 +3130,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -3146,7 +3146,7 @@ public final class RemoteMessageProto {
                 getNameBytes() {
               java.lang.Object ref = name_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 name_ = b;
@@ -3405,7 +3405,7 @@ public final class RemoteMessageProto {
 
               public final boolean isInitialized() {
                 if (!hasName()) {
-                  
+
                   return false;
                 }
                 return true;
@@ -3459,7 +3459,7 @@ public final class RemoteMessageProto {
                   getNameBytes() {
                 java.lang.Object ref = name_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   name_ = b;
@@ -4254,13 +4254,13 @@ public final class RemoteMessageProto {
             public final boolean isInitialized() {
               if (hasModuleLog()) {
                 if (!getModuleLog().isInitialized()) {
-                  
+
                   return false;
                 }
               }
               if (hasServerLog()) {
                 if (!getServerLog().isInitialized()) {
-                  
+
                   return false;
                 }
               }
@@ -4426,7 +4426,7 @@ public final class RemoteMessageProto {
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ModuleLog moduleLog = 2;</code>
              */
             private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLogOrBuilder> 
+                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLogOrBuilder>
                 getModuleLogFieldBuilder() {
               if (moduleLogBuilder_ == null) {
                 moduleLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -4543,7 +4543,7 @@ public final class RemoteMessageProto {
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ServerLog serverLog = 3;</code>
              */
             private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLogOrBuilder> 
+                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLogOrBuilder>
                 getServerLogFieldBuilder() {
               if (serverLogBuilder_ == null) {
                 serverLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -4660,7 +4660,7 @@ public final class RemoteMessageProto {
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.MainLog mainLog = 4;</code>
              */
             private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLogOrBuilder> 
+                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLogOrBuilder>
                 getMainLogFieldBuilder() {
               if (mainLogBuilder_ == null) {
                 mainLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -4920,7 +4920,7 @@ public final class RemoteMessageProto {
            * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData.HelpInfo}
            *
            * <pre>
-           * The HelpInfo portion of the log entry       
+           * The HelpInfo portion of the log entry
            * </pre>
            */
           public static final class HelpInfo extends
@@ -5038,7 +5038,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -5054,7 +5054,7 @@ public final class RemoteMessageProto {
                 getUrlBytes() {
               java.lang.Object ref = url_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 url_ = b;
@@ -5081,7 +5081,7 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs = 
+                com.google.gwt.dev.protobuf.ByteString bs =
                     (com.google.gwt.dev.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
@@ -5097,7 +5097,7 @@ public final class RemoteMessageProto {
                 getTextBytes() {
               java.lang.Object ref = text_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 text_ = b;
@@ -5228,7 +5228,7 @@ public final class RemoteMessageProto {
              * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData.HelpInfo}
              *
              * <pre>
-             * The HelpInfo portion of the log entry       
+             * The HelpInfo portion of the log entry
              * </pre>
              */
             public static final class Builder extends
@@ -5388,7 +5388,7 @@ public final class RemoteMessageProto {
                   getUrlBytes() {
                 java.lang.Object ref = url_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   url_ = b;
@@ -5462,7 +5462,7 @@ public final class RemoteMessageProto {
                   getTextBytes() {
                 java.lang.Object ref = text_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b = 
+                  com.google.gwt.dev.protobuf.ByteString b =
                       com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   text_ = b;
@@ -5536,7 +5536,7 @@ public final class RemoteMessageProto {
             if (ref instanceof java.lang.String) {
               return (java.lang.String) ref;
             } else {
-              com.google.gwt.dev.protobuf.ByteString bs = 
+              com.google.gwt.dev.protobuf.ByteString bs =
                   (com.google.gwt.dev.protobuf.ByteString) ref;
               java.lang.String s = bs.toStringUtf8();
               if (bs.isValidUtf8()) {
@@ -5552,7 +5552,7 @@ public final class RemoteMessageProto {
               getSummaryBytes() {
             java.lang.Object ref = summary_;
             if (ref instanceof java.lang.String) {
-              com.google.gwt.dev.protobuf.ByteString b = 
+              com.google.gwt.dev.protobuf.ByteString b =
                   com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                       (java.lang.String) ref);
               summary_ = b;
@@ -5579,7 +5579,7 @@ public final class RemoteMessageProto {
             if (ref instanceof java.lang.String) {
               return (java.lang.String) ref;
             } else {
-              com.google.gwt.dev.protobuf.ByteString bs = 
+              com.google.gwt.dev.protobuf.ByteString bs =
                   (com.google.gwt.dev.protobuf.ByteString) ref;
               java.lang.String s = bs.toStringUtf8();
               if (bs.isValidUtf8()) {
@@ -5595,7 +5595,7 @@ public final class RemoteMessageProto {
               getLevelBytes() {
             java.lang.Object ref = level_;
             if (ref instanceof java.lang.String) {
-              com.google.gwt.dev.protobuf.ByteString b = 
+              com.google.gwt.dev.protobuf.ByteString b =
                   com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                       (java.lang.String) ref);
               level_ = b;
@@ -5638,7 +5638,7 @@ public final class RemoteMessageProto {
             if (ref instanceof java.lang.String) {
               return (java.lang.String) ref;
             } else {
-              com.google.gwt.dev.protobuf.ByteString bs = 
+              com.google.gwt.dev.protobuf.ByteString bs =
                   (com.google.gwt.dev.protobuf.ByteString) ref;
               java.lang.String s = bs.toStringUtf8();
               if (bs.isValidUtf8()) {
@@ -5654,7 +5654,7 @@ public final class RemoteMessageProto {
               getDetailsBytes() {
             java.lang.Object ref = details_;
             if (ref instanceof java.lang.String) {
-              com.google.gwt.dev.protobuf.ByteString b = 
+              com.google.gwt.dev.protobuf.ByteString b =
                   com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                       (java.lang.String) ref);
               details_ = b;
@@ -5983,7 +5983,7 @@ public final class RemoteMessageProto {
 
             public final boolean isInitialized() {
               if (!hasSummary()) {
-                
+
                 return false;
               }
               return true;
@@ -6037,7 +6037,7 @@ public final class RemoteMessageProto {
                 getSummaryBytes() {
               java.lang.Object ref = summary_;
               if (ref instanceof String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 summary_ = b;
@@ -6111,7 +6111,7 @@ public final class RemoteMessageProto {
                 getLevelBytes() {
               java.lang.Object ref = level_;
               if (ref instanceof String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 level_ = b;
@@ -6218,7 +6218,7 @@ public final class RemoteMessageProto {
                 getDetailsBytes() {
               java.lang.Object ref = details_;
               if (ref instanceof String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 details_ = b;
@@ -6367,7 +6367,7 @@ public final class RemoteMessageProto {
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData.HelpInfo helpInfo = 5;</code>
              */
             private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfoOrBuilder> 
+                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfoOrBuilder>
                 getHelpInfoFieldBuilder() {
               if (helpInfoBuilder_ == null) {
                 helpInfoBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -6869,19 +6869,19 @@ public final class RemoteMessageProto {
 
             public final boolean isInitialized() {
               if (!hasParentLogHandle()) {
-                
+
                 return false;
               }
               if (!hasIndexInParent()) {
-                
+
                 return false;
               }
               if (!hasLogData()) {
-                
+
                 return false;
               }
               if (!getLogData().isInitialized()) {
-                
+
                 return false;
               }
               return true;
@@ -7076,7 +7076,7 @@ public final class RemoteMessageProto {
              * <code>required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData logData = 3;</code>
              */
             private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder> 
+                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder>
                 getLogDataFieldBuilder() {
               if (logDataBuilder_ == null) {
                 logDataBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -7578,19 +7578,19 @@ public final class RemoteMessageProto {
 
             public final boolean isInitialized() {
               if (!hasLogHandle()) {
-                
+
                 return false;
               }
               if (!hasIndexInLog()) {
-                
+
                 return false;
               }
               if (!hasLogData()) {
-                
+
                 return false;
               }
               if (!getLogData().isInitialized()) {
-                
+
                 return false;
               }
               return true;
@@ -7785,7 +7785,7 @@ public final class RemoteMessageProto {
              * <code>required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData logData = 3;</code>
              */
             private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder> 
+                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder>
                 getLogDataFieldBuilder() {
               if (logDataBuilder_ == null) {
                 logDataBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -8154,7 +8154,7 @@ public final class RemoteMessageProto {
 
             public final boolean isInitialized() {
               if (!hasLogHandle()) {
-                
+
                 return false;
               }
               return true;
@@ -8385,7 +8385,7 @@ public final class RemoteMessageProto {
             if (ref instanceof java.lang.String) {
               return (java.lang.String) ref;
             } else {
-              com.google.gwt.dev.protobuf.ByteString bs = 
+              com.google.gwt.dev.protobuf.ByteString bs =
                   (com.google.gwt.dev.protobuf.ByteString) ref;
               java.lang.String s = bs.toStringUtf8();
               if (bs.isValidUtf8()) {
@@ -8401,7 +8401,7 @@ public final class RemoteMessageProto {
               getClientIdBytes() {
             java.lang.Object ref = clientId_;
             if (ref instanceof java.lang.String) {
-              com.google.gwt.dev.protobuf.ByteString b = 
+              com.google.gwt.dev.protobuf.ByteString b =
                   com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                       (java.lang.String) ref);
               clientId_ = b;
@@ -8730,7 +8730,7 @@ public final class RemoteMessageProto {
                 getClientIdBytes() {
               java.lang.Object ref = clientId_;
               if (ref instanceof String) {
-                com.google.gwt.dev.protobuf.ByteString b = 
+                com.google.gwt.dev.protobuf.ByteString b =
                     com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 clientId_ = b;
@@ -9419,25 +9419,25 @@ public final class RemoteMessageProto {
           public final boolean isInitialized() {
             if (hasAddLog()) {
               if (!getAddLog().isInitialized()) {
-                
+
                 return false;
               }
             }
             if (hasAddLogBranch()) {
               if (!getAddLogBranch().isInitialized()) {
-                
+
                 return false;
               }
             }
             if (hasAddLogEntry()) {
               if (!getAddLogEntry().isInitialized()) {
-                
+
                 return false;
               }
             }
             if (hasDisconnectLog()) {
               if (!getDisconnectLog().isInitialized()) {
-                
+
                 return false;
               }
             }
@@ -9603,7 +9603,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.CapabilityExchange capabilityExchange = 2;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchangeOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchangeOrBuilder>
               getCapabilityExchangeFieldBuilder() {
             if (capabilityExchangeBuilder_ == null) {
               capabilityExchangeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -9720,7 +9720,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog addLog = 3;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogOrBuilder>
               getAddLogFieldBuilder() {
             if (addLogBuilder_ == null) {
               addLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -9837,7 +9837,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLogBranch addLogBranch = 4;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranchOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranchOrBuilder>
               getAddLogBranchFieldBuilder() {
             if (addLogBranchBuilder_ == null) {
               addLogBranchBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -9954,7 +9954,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLogEntry addLogEntry = 5;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntryOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntryOrBuilder>
               getAddLogEntryFieldBuilder() {
             if (addLogEntryBuilder_ == null) {
               addLogEntryBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -10071,7 +10071,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.DisconnectLog disconnectLog = 6;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLogOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLogOrBuilder>
               getDisconnectLogFieldBuilder() {
             if (disconnectLogBuilder_ == null) {
               disconnectLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -10188,7 +10188,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.Initialize initialize = 7;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.InitializeOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.InitializeOrBuilder>
               getInitializeFieldBuilder() {
             if (initializeBuilder_ == null) {
               initializeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -11590,7 +11590,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.CapabilityExchange capabilityExchange = 2;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchangeOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchangeOrBuilder>
               getCapabilityExchangeFieldBuilder() {
             if (capabilityExchangeBuilder_ == null) {
               capabilityExchangeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -11707,7 +11707,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RestartWebServer restartWebServer = 3;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServerOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServerOrBuilder>
               getRestartWebServerFieldBuilder() {
             if (restartWebServerBuilder_ == null) {
               restartWebServerBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -12061,7 +12061,7 @@ public final class RemoteMessageProto {
         public final boolean isInitialized() {
           if (hasViewerRequest()) {
             if (!getViewerRequest().isInitialized()) {
-              
+
               return false;
             }
           }
@@ -12227,7 +12227,7 @@ public final class RemoteMessageProto {
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest viewerRequest = 2;</code>
          */
         private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-            com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequestOrBuilder> 
+            com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequestOrBuilder>
             getViewerRequestFieldBuilder() {
           if (viewerRequestBuilder_ == null) {
             viewerRequestBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -12344,7 +12344,7 @@ public final class RemoteMessageProto {
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest devModeRequest = 3;</code>
          */
         private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-            com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequestOrBuilder> 
+            com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequestOrBuilder>
             getDevModeRequestFieldBuilder() {
           if (devModeRequestBuilder_ == null) {
             devModeRequestBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -12403,8 +12403,8 @@ public final class RemoteMessageProto {
      * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Response}
      *
      * <pre>
-     * A response message for a request. This is the root type for all response 
-     * messages. 
+     * A response message for a request. This is the root type for all response
+     * messages.
      * </pre>
      */
     public static final class Response extends
@@ -12822,7 +12822,7 @@ public final class RemoteMessageProto {
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability capabilities = 2;</code>
            */
-          java.util.List<com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability> 
+          java.util.List<com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability>
               getCapabilitiesList();
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability capabilities = 2;</code>
@@ -12835,7 +12835,7 @@ public final class RemoteMessageProto {
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability capabilities = 2;</code>
            */
-          java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder> 
+          java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder>
               getCapabilitiesOrBuilderList();
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability capabilities = 2;</code>
@@ -13365,7 +13365,7 @@ public final class RemoteMessageProto {
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability capabilities = 2;</code>
            */
-          public java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder> 
+          public java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder>
               getCapabilitiesOrBuilderList() {
             return capabilities_;
           }
@@ -13616,7 +13616,7 @@ public final class RemoteMessageProto {
                     capabilitiesBuilder_ = null;
                     capabilities_ = other.capabilities_;
                     bitField0_ = (bitField0_ & ~0x00000001);
-                    capabilitiesBuilder_ = 
+                    capabilitiesBuilder_ =
                       com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                          getCapabilitiesFieldBuilder() : null;
                   } else {
@@ -13846,7 +13846,7 @@ public final class RemoteMessageProto {
             /**
              * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability capabilities = 2;</code>
              */
-            public java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder> 
+            public java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder>
                  getCapabilitiesOrBuilderList() {
               if (capabilitiesBuilder_ != null) {
                 return capabilitiesBuilder_.getMessageOrBuilderList();
@@ -13872,12 +13872,12 @@ public final class RemoteMessageProto {
             /**
              * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability capabilities = 2;</code>
              */
-            public java.util.List<com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.Builder> 
+            public java.util.List<com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.Builder>
                  getCapabilitiesBuilderList() {
               return getCapabilitiesFieldBuilder().getBuilderList();
             }
             private com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
-                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder> 
+                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder>
                 getCapabilitiesFieldBuilder() {
               if (capabilitiesBuilder_ == null) {
                 capabilitiesBuilder_ = new com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
@@ -14245,7 +14245,7 @@ public final class RemoteMessageProto {
 
             public final boolean isInitialized() {
               if (!hasLogHandle()) {
-                
+
                 return false;
               }
               return true;
@@ -14657,7 +14657,7 @@ public final class RemoteMessageProto {
 
             public final boolean isInitialized() {
               if (!hasLogHandle()) {
-                
+
                 return false;
               }
               return true;
@@ -15110,13 +15110,13 @@ public final class RemoteMessageProto {
           public final boolean isInitialized() {
             if (hasAddLog()) {
               if (!getAddLog().isInitialized()) {
-                
+
                 return false;
               }
             }
             if (hasAddLogBranch()) {
               if (!getAddLogBranch().isInitialized()) {
-                
+
                 return false;
               }
             }
@@ -15282,7 +15282,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange capabilityExchange = 2;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchangeOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchangeOrBuilder>
               getCapabilityExchangeFieldBuilder() {
             if (capabilityExchangeBuilder_ == null) {
               capabilityExchangeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -15399,7 +15399,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.AddLog addLog = 3;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogOrBuilder>
               getAddLogFieldBuilder() {
             if (addLogBuilder_ == null) {
               addLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -15516,7 +15516,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.AddLogBranch addLogBranch = 4;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranchOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranchOrBuilder>
               getAddLogBranchFieldBuilder() {
             if (addLogBranchBuilder_ == null) {
               addLogBranchBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -15805,7 +15805,7 @@ public final class RemoteMessageProto {
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability capabilities = 2;</code>
            */
-          java.util.List<com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability> 
+          java.util.List<com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability>
               getCapabilitiesList();
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability capabilities = 2;</code>
@@ -15818,7 +15818,7 @@ public final class RemoteMessageProto {
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability capabilities = 2;</code>
            */
-          java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder> 
+          java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder>
               getCapabilitiesOrBuilderList();
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability capabilities = 2;</code>
@@ -16348,7 +16348,7 @@ public final class RemoteMessageProto {
           /**
            * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability capabilities = 2;</code>
            */
-          public java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder> 
+          public java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder>
               getCapabilitiesOrBuilderList() {
             return capabilities_;
           }
@@ -16599,7 +16599,7 @@ public final class RemoteMessageProto {
                     capabilitiesBuilder_ = null;
                     capabilities_ = other.capabilities_;
                     bitField0_ = (bitField0_ & ~0x00000001);
-                    capabilitiesBuilder_ = 
+                    capabilitiesBuilder_ =
                       com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                          getCapabilitiesFieldBuilder() : null;
                   } else {
@@ -16829,7 +16829,7 @@ public final class RemoteMessageProto {
             /**
              * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability capabilities = 2;</code>
              */
-            public java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder> 
+            public java.util.List<? extends com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder>
                  getCapabilitiesOrBuilderList() {
               if (capabilitiesBuilder_ != null) {
                 return capabilitiesBuilder_.getMessageOrBuilderList();
@@ -16855,12 +16855,12 @@ public final class RemoteMessageProto {
             /**
              * <code>repeated .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability capabilities = 2;</code>
              */
-            public java.util.List<com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.Builder> 
+            public java.util.List<com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.Builder>
                  getCapabilitiesBuilderList() {
               return getCapabilitiesFieldBuilder().getBuilderList();
             }
             private com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
-                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder> 
+                com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder>
                 getCapabilitiesFieldBuilder() {
               if (capabilitiesBuilder_ == null) {
                 capabilitiesBuilder_ = new com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
@@ -17688,7 +17688,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange capabilityExchange = 2;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchangeOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchangeOrBuilder>
               getCapabilityExchangeFieldBuilder() {
             if (capabilityExchangeBuilder_ == null) {
               capabilityExchangeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -17805,7 +17805,7 @@ public final class RemoteMessageProto {
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.RestartWebServer restartWebServer = 3;</code>
            */
           private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServerOrBuilder> 
+              com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServerOrBuilder>
               getRestartWebServerFieldBuilder() {
             if (restartWebServerBuilder_ == null) {
               restartWebServerBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -18001,8 +18001,8 @@ public final class RemoteMessageProto {
        * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Response}
        *
        * <pre>
-       * A response message for a request. This is the root type for all response 
-       * messages. 
+       * A response message for a request. This is the root type for all response
+       * messages.
        * </pre>
        */
       public static final class Builder extends
@@ -18127,7 +18127,7 @@ public final class RemoteMessageProto {
         public final boolean isInitialized() {
           if (hasViewerResponse()) {
             if (!getViewerResponse().isInitialized()) {
-              
+
               return false;
             }
           }
@@ -18257,7 +18257,7 @@ public final class RemoteMessageProto {
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse viewerResponse = 1;</code>
          */
         private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-            com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponseOrBuilder> 
+            com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponseOrBuilder>
             getViewerResponseFieldBuilder() {
           if (viewerResponseBuilder_ == null) {
             viewerResponseBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -18374,7 +18374,7 @@ public final class RemoteMessageProto {
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse devModeResponse = 2;</code>
          */
         private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-            com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponseOrBuilder> 
+            com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponseOrBuilder>
             getDevModeResponseFieldBuilder() {
           if (devModeResponseBuilder_ == null) {
             devModeResponseBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -18549,7 +18549,7 @@ public final class RemoteMessageProto {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.gwt.dev.protobuf.ByteString bs = 
+          com.google.gwt.dev.protobuf.ByteString bs =
               (com.google.gwt.dev.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           if (bs.isValidUtf8()) {
@@ -18565,7 +18565,7 @@ public final class RemoteMessageProto {
           getMessageBytes() {
         java.lang.Object ref = message_;
         if (ref instanceof java.lang.String) {
-          com.google.gwt.dev.protobuf.ByteString b = 
+          com.google.gwt.dev.protobuf.ByteString b =
               com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           message_ = b;
@@ -18592,7 +18592,7 @@ public final class RemoteMessageProto {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.gwt.dev.protobuf.ByteString bs = 
+          com.google.gwt.dev.protobuf.ByteString bs =
               (com.google.gwt.dev.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           if (bs.isValidUtf8()) {
@@ -18608,7 +18608,7 @@ public final class RemoteMessageProto {
           getStackTraceBytes() {
         java.lang.Object ref = stackTrace_;
         if (ref instanceof java.lang.String) {
-          com.google.gwt.dev.protobuf.ByteString b = 
+          com.google.gwt.dev.protobuf.ByteString b =
               com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           stackTrace_ = b;
@@ -18895,7 +18895,7 @@ public final class RemoteMessageProto {
             getMessageBytes() {
           java.lang.Object ref = message_;
           if (ref instanceof String) {
-            com.google.gwt.dev.protobuf.ByteString b = 
+            com.google.gwt.dev.protobuf.ByteString b =
                 com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             message_ = b;
@@ -18969,7 +18969,7 @@ public final class RemoteMessageProto {
             getStackTraceBytes() {
           java.lang.Object ref = stackTrace_;
           if (ref instanceof String) {
-            com.google.gwt.dev.protobuf.ByteString b = 
+            com.google.gwt.dev.protobuf.ByteString b =
                 com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             stackTrace_ = b;
@@ -19033,7 +19033,7 @@ public final class RemoteMessageProto {
      * <code>optional string protocolVersion = 1;</code>
      *
      * <pre>
-     * In the first release, we'll ignore this field. In the future, 
+     * In the first release, we'll ignore this field. In the future,
      * we can make use of it to detect protocol incompatibilities
      * </pre>
      */
@@ -19044,7 +19044,7 @@ public final class RemoteMessageProto {
      * <code>optional string protocolVersion = 1;</code>
      *
      * <pre>
-     * In the first release, we'll ignore this field. In the future, 
+     * In the first release, we'll ignore this field. In the future,
      * we can make use of it to detect protocol incompatibilities
      * </pre>
      */
@@ -19053,7 +19053,7 @@ public final class RemoteMessageProto {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.gwt.dev.protobuf.ByteString bs = 
+        com.google.gwt.dev.protobuf.ByteString bs =
             (com.google.gwt.dev.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (bs.isValidUtf8()) {
@@ -19066,7 +19066,7 @@ public final class RemoteMessageProto {
      * <code>optional string protocolVersion = 1;</code>
      *
      * <pre>
-     * In the first release, we'll ignore this field. In the future, 
+     * In the first release, we'll ignore this field. In the future,
      * we can make use of it to detect protocol incompatibilities
      * </pre>
      */
@@ -19074,7 +19074,7 @@ public final class RemoteMessageProto {
         getProtocolVersionBytes() {
       java.lang.Object ref = protocolVersion_;
       if (ref instanceof java.lang.String) {
-        com.google.gwt.dev.protobuf.ByteString b = 
+        com.google.gwt.dev.protobuf.ByteString b =
             com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         protocolVersion_ = b;
@@ -19522,18 +19522,18 @@ public final class RemoteMessageProto {
 
       public final boolean isInitialized() {
         if (!hasMessageId()) {
-          
+
           return false;
         }
         if (hasRequest()) {
           if (!getRequest().isInitialized()) {
-            
+
             return false;
           }
         }
         if (hasResponse()) {
           if (!getResponse().isInitialized()) {
-            
+
             return false;
           }
         }
@@ -19565,7 +19565,7 @@ public final class RemoteMessageProto {
        * <code>optional string protocolVersion = 1;</code>
        *
        * <pre>
-       * In the first release, we'll ignore this field. In the future, 
+       * In the first release, we'll ignore this field. In the future,
        * we can make use of it to detect protocol incompatibilities
        * </pre>
        */
@@ -19576,7 +19576,7 @@ public final class RemoteMessageProto {
        * <code>optional string protocolVersion = 1;</code>
        *
        * <pre>
-       * In the first release, we'll ignore this field. In the future, 
+       * In the first release, we'll ignore this field. In the future,
        * we can make use of it to detect protocol incompatibilities
        * </pre>
        */
@@ -19595,7 +19595,7 @@ public final class RemoteMessageProto {
        * <code>optional string protocolVersion = 1;</code>
        *
        * <pre>
-       * In the first release, we'll ignore this field. In the future, 
+       * In the first release, we'll ignore this field. In the future,
        * we can make use of it to detect protocol incompatibilities
        * </pre>
        */
@@ -19603,7 +19603,7 @@ public final class RemoteMessageProto {
           getProtocolVersionBytes() {
         java.lang.Object ref = protocolVersion_;
         if (ref instanceof String) {
-          com.google.gwt.dev.protobuf.ByteString b = 
+          com.google.gwt.dev.protobuf.ByteString b =
               com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           protocolVersion_ = b;
@@ -19616,7 +19616,7 @@ public final class RemoteMessageProto {
        * <code>optional string protocolVersion = 1;</code>
        *
        * <pre>
-       * In the first release, we'll ignore this field. In the future, 
+       * In the first release, we'll ignore this field. In the future,
        * we can make use of it to detect protocol incompatibilities
        * </pre>
        */
@@ -19634,7 +19634,7 @@ public final class RemoteMessageProto {
        * <code>optional string protocolVersion = 1;</code>
        *
        * <pre>
-       * In the first release, we'll ignore this field. In the future, 
+       * In the first release, we'll ignore this field. In the future,
        * we can make use of it to detect protocol incompatibilities
        * </pre>
        */
@@ -19648,7 +19648,7 @@ public final class RemoteMessageProto {
        * <code>optional string protocolVersion = 1;</code>
        *
        * <pre>
-       * In the first release, we'll ignore this field. In the future, 
+       * In the first release, we'll ignore this field. In the future,
        * we can make use of it to detect protocol incompatibilities
        * </pre>
        */
@@ -19836,7 +19836,7 @@ public final class RemoteMessageProto {
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request request = 4;</code>
        */
       private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-          com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.RequestOrBuilder> 
+          com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.RequestOrBuilder>
           getRequestFieldBuilder() {
         if (requestBuilder_ == null) {
           requestBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -19953,7 +19953,7 @@ public final class RemoteMessageProto {
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response response = 5;</code>
        */
       private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-          com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.ResponseOrBuilder> 
+          com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.ResponseOrBuilder>
           getResponseFieldBuilder() {
         if (responseBuilder_ == null) {
           responseBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
@@ -20070,7 +20070,7 @@ public final class RemoteMessageProto {
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Failure failure = 6;</code>
        */
       private com.google.gwt.dev.protobuf.SingleFieldBuilder<
-          com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.FailureOrBuilder> 
+          com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.FailureOrBuilder>
           getFailureFieldBuilder() {
         if (failureBuilder_ == null) {
           failureBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<

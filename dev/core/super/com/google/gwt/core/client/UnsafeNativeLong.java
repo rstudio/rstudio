@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * This includes declaring a parameter or return type of <code>long</code>,
  * calling a method that takes or returns a <code>long</code>, or accessing a
  * <code>long</code> field.
- * 
+ *
  * <p>
  * The reason for the restriction is that Java long values are not represented
  * as numeric values in compiled code, but as opaque Objects. Attempting to

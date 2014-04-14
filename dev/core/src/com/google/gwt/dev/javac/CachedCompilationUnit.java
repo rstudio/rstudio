@@ -117,7 +117,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.astToken = new DiskCacheToken(astToken);
     this.astVersion = GwtAstBuilder.getSerializationVersion();
   }
-  
+
   @Override
   public CachedCompilationUnit asCachedCompilationUnit() {
     return this;
@@ -217,7 +217,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     Collections.sort(copy, comparator);
     return copy;
   }
-  
+
   private void writeObject(ObjectOutputStream oos) throws IOException {
     oos.defaultWriteObject();
     oos.writeObject(sort(this.compiledClasses, new Comparator<CompiledClass>() {

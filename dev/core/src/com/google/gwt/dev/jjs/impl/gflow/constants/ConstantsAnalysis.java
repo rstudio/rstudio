@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,14 +24,14 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 
-/**  
+/**
  * Constant propagation optimization.
- * 
+ *
  * Detects a situation when variable value is constant and replaces variable
  * access with constant value.
  * As of now supports only locals & parameters.
  */
-public class ConstantsAnalysis implements 
+public class ConstantsAnalysis implements
     Analysis<CfgNode<?>, CfgEdge, Cfg, ConstantsAssumption>,
     IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, ConstantsAssumption> {
 
@@ -48,7 +48,7 @@ public class ConstantsAnalysis implements
   @Override
   public void setInitialGraphAssumptions(Cfg graph,
       AssumptionMap<CfgEdge, ConstantsAssumption> assumptionMap) {
-    AssumptionUtil.setAssumptions(graph.getGraphInEdges(), 
+    AssumptionUtil.setAssumptions(graph.getGraphInEdges(),
         ConstantsAssumption.TOP, assumptionMap);
   }
 }

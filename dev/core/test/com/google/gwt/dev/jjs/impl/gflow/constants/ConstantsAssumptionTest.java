@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,7 @@ import junit.framework.TestCase;
 
 /**
  * Test for ConstantsAssumption.
- * 
+ *
  * We use toString comparison in this test to make it simpler.
  */
 public class ConstantsAssumptionTest extends TestCase {
@@ -34,12 +34,12 @@ public class ConstantsAssumptionTest extends TestCase {
   private final JIntLiteral one = newIntLiteral(1);
   private final JLocal i = newLocal("i", JPrimitiveType.INT);
   private final JLocal j = newLocal("j", JPrimitiveType.INT);
-  
+
   public void testEmptyAssumption() {
     ConstantsAssumption a = new ConstantsAssumption();
     assertEquals("T", a.toString());
   }
-  
+
   public void testSet() {
     ConstantsAssumption a = new ConstantsAssumption();
     a.set(i, zero);
@@ -49,7 +49,7 @@ public class ConstantsAssumptionTest extends TestCase {
     a.set(i, null);
     assertEquals("{j = 1}", a.toString());
   }
-  
+
   public void testJoin_SameValues() {
     ConstantsAssumption a1 = new ConstantsAssumption();
     a1.set(i, zero);

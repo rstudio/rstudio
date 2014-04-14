@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,10 +23,10 @@ public class Pair<L, R> {
   public static <L, R> Pair<L, R> create(L l, R r) {
     return new Pair<L, R>(l, r);
   }
-  
+
   public final L left;
   public final R right;
-  
+
   private Pair(L left, R right) {
     this.left = left;
     this.right = right;
@@ -78,7 +78,7 @@ public class Pair<L, R> {
     result = prime * result + ((right == null) ? 0 : right.hashCode());
     return result;
   }
-  
+
   @Override
   public String toString() {
     return "(" + left + "," + right + ")";

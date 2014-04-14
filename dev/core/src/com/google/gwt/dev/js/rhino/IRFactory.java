@@ -58,7 +58,7 @@ public class IRFactory {
         Node children = ((Node) body).getFirstChild();
         if (children != null)
             result.addChildrenToBack(children);
-        
+
         result.putProp(Node.SOURCENAME_PROP, sourceName);
         result.putIntProp(Node.BASE_LINENO_PROP, baseLineno);
         result.putIntProp(Node.END_LINENO_PROP, endLineno);
@@ -214,8 +214,8 @@ public class IRFactory {
                                  int endLineno, Object source,
                                  boolean isExpr)
     {
-        Node f = new Node(TokenStream.FUNCTION, 
-                          Node.newString(TokenStream.NAME, 
+        Node f = new Node(TokenStream.FUNCTION,
+                          Node.newString(TokenStream.NAME,
                                          name == null ? "" : name),
                           (Node)args, (Node)statements, baseLineno);
 
@@ -394,11 +394,11 @@ public class IRFactory {
             case TokenStream.GETELEM:
                 break;
             default:
-                // TODO: This should be a ReferenceError--but that's a runtime 
+                // TODO: This should be a ReferenceError--but that's a runtime
                 //  exception. Should we compile an exception into the code?
                 reportError("msg.bad.lhs.assign");
         }
-        
+
         return new Node(TokenStream.ASSIGN, left, right, nodeOp);
     }
 

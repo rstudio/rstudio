@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -80,7 +80,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
   /**
    * Checks that GenericClass<Integer> ends up with the correct substitutions.
-   * 
+   *
    * @throws NotFoundException
    */
   public void testGenericClass_Integer() throws NotFoundException {
@@ -140,7 +140,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
    * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JParameterizedType#getEnclosingType()}
    * .
-   * 
+   *
    * @throws NotFoundException
    */
   @Override
@@ -174,7 +174,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
    * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JParameterizedType#getNestedTypes()}
    * .
-   * 
+   *
    * @throws NotFoundException
    */
   @Override
@@ -207,7 +207,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
    * <li><code>MyIntegerList</code></li>
    * <li><code>MyCustomList&lt;? extends Serializable, Integer&gt;</code></li>
    * </ul>
-   * 
+   *
    * @throws NotFoundException
    */
   @Override
@@ -377,7 +377,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
   /**
    * Returns the <code>TypeOracle</code> type for {@link GenericClass}.
-   * 
+   *
    * @return <code>TypeOracle</code> type for {@link GenericClass}
    * @throws NotFoundException
    */
@@ -403,7 +403,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
   /**
    * Returns the type for GenericClass<Integer>.GenericInnerClass<Boolean>.
-   * 
+   *
    * @throws NotFoundException
    * @return type for GenericClass<Integer>.GenericInnerClass<Boolean>
    */
@@ -420,7 +420,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
      * Check that GenericClass<Integer>.GenericInnerClass<Boolean> has
      * GenericClass<Integer> as its enclosing type
      */
-    // 
+    //
     JParameterizedType parameterizedInnerClass = oracle.getParameterizedType(
         innerGenericClass, cut, new JClassType[]{booleanType});
 

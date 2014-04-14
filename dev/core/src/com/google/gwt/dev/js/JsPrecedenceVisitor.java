@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -65,22 +65,22 @@ import com.google.gwt.dev.js.ast.JsWhile;
 /**
  * Precedence indices from "JavaScript - The Definitive Guide" 4th Edition (page
  * 57)
- * 
+ *
  * Precedence 17 is for indivisible primaries that either don't have children,
  * or provide their own delimiters.
- * 
+ *
  * Precedence 16 is for really important things that have their own AST classes.
- * 
+ *
  * Precedence 15 is for the new construct.
- * 
+ *
  * Precedence 14 is for unary operators.
- * 
+ *
  * Precedences 12 through 4 are for non-assigning binary operators.
- * 
+ *
  * Precedence 3 is for the tertiary conditional.
- * 
+ *
  * Precedence 2 is for assignments.
- * 
+ *
  * Precedence 1 is for comma operations.
  */
 class JsPrecedenceVisitor extends JsVisitor {

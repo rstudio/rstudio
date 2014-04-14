@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ public class JavaDispatchImpl implements JavaDispatch {
 
   /**
    * This constructor initializes a dispatcher for handling static members.
-   * 
+   *
    * @param ccl class loader to use for dispatching member access
    */
   public JavaDispatchImpl(CompilingClassLoader ccl) {
@@ -41,10 +41,10 @@ public class JavaDispatchImpl implements JavaDispatch {
 
   /**
    * This constructor initializes a dispatcher around a particular instance.
-   * 
+   *
    * @param ccl class loader to use for dispatching member access
    * @param target the instance object to use for dispatching member accesses
-   * 
+   *
    * @throws NullPointerException if target is null
    */
   public JavaDispatchImpl(CompilingClassLoader ccl, Object target) {
@@ -90,7 +90,7 @@ public class JavaDispatchImpl implements JavaDispatch {
     if (dispId < 0) {
       throw new RuntimeException("Field does not exist.");
     }
-    
+
     Member member = getMember(dispId);
 
     if (member instanceof SyntheticClassMember) {
@@ -116,7 +116,7 @@ public class JavaDispatchImpl implements JavaDispatch {
     if (dispId < 0) {
       throw new RuntimeException("Method does not exist.");
     }
-    
+
     Member m = getMember(dispId);
     if (m instanceof Method) {
       return new MethodAdaptor((Method) m);

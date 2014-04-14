@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,7 +37,7 @@ public class BytecodeSignatureMaker {
    * This visitor looks at methods and members to compute a signature. This is
    * intended for determining if a type needs to be recompiled if byte code it
    * depends on changes.
-   * 
+   *
    * At first, you'd think only public and protected members should be
    * considered, but the JSNI violator pattern means that even a change in a
    * private member might invalidate an access from another class.
@@ -200,7 +200,7 @@ public class BytecodeSignatureMaker {
   /**
    * Returns a hash computed from the non-private/non-synthetic members and
    * methods in a class.
-   * 
+   *
    * @param byteCode byte code for class to analyze.
    * @return a hex string representing an MD5 digest.
    */
@@ -212,7 +212,7 @@ public class BytecodeSignatureMaker {
   /**
    * Returns a raw string used to compute the hash from the
    * non-synthetic members and methods in a class.
-   * 
+   *
    * @param byteCode byte code for class to analyze.
    * @return a human readable string of all public API fields
    */

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,7 +37,7 @@ import java.util.TreeMap;
  * permutation, or to a file which can be parsed by server-side code.
  */
 public class PermutationsUtil {
-  
+
   /**
    * This represents the combination of a unique content hash (i.e. the MD5 of
    * the bytes to be written into the cache.html file) and a soft permutation
@@ -73,18 +73,18 @@ public class PermutationsUtil {
   /**
    * Uses the internal map to insert JS to select a permutation into the
    * selection script.
-   * 
+   *
    * @param selectionScript
    * @param logger
    * @param context
    * @return the modified selectionScript buffer
-   * @throws UnableToCompleteException 
+   * @throws UnableToCompleteException
    */
   public StringBuffer addPermutationsJs(StringBuffer selectionScript,
       TreeLogger logger, LinkerContext context)
       throws UnableToCompleteException {
     int startPos;
-    
+
     PropertiesUtil.addPropertiesJs(selectionScript, logger, context);
 
     // Possibly add permutations
@@ -161,11 +161,11 @@ public class PermutationsUtil {
 
     return selectionScript;
   }
-  
+
   public SortedMap<PermutationId, List<Map<String, String>>> getPermutationsMap() {
     return propMapsByPermutation;
   }
-  
+
   /**
    * Find all instances of {@link SelectionInformation} and add them to the
    * internal map of selection information.

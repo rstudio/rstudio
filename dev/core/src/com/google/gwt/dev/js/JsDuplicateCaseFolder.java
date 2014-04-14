@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,9 +32,9 @@ import java.util.Map;
  * Combine case labels with identical bodies. Case bodies that may fall through
  * to the following case label and case bodies following a possible fallthrough
  * are left undisturbed.
- * 
+ *
  * For example, consider the following input:
- * 
+ *
  * <pre>
  * switch (x) {
  *   case 0: y = 17; break;
@@ -46,9 +46,9 @@ import java.util.Map;
  *   case 6: return 22;
  * }
  * </pre>
- * 
+ *
  * This will be transformed into:
- * 
+ *
  * <pre>
  * switch (x) {
  *   case 0: y = 17; break;
@@ -57,7 +57,7 @@ import java.util.Map;
  *   case 3: if (z == 0) { y = 18; break; } else { y = 19 }
  *   case 5: case 4: y = 17; break;
  * }
- * 
+ *
  * <pre>
  *
  * Cases (2, 6) and (4, 5) have been coalesced.  Note that case 0 has not been

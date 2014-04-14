@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * A base class for tests of {@link DataflowAnalyzer} components.
  */
-public abstract class CfgAnalysisTestBase<A extends Assumption<A>> 
+public abstract class CfgAnalysisTestBase<A extends Assumption<A>>
     extends JJSTestBase {
   protected boolean forward = true;
 

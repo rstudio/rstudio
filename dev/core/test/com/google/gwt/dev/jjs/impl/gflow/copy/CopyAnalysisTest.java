@@ -67,7 +67,7 @@ public class CopyAnalysisTest extends CfgAnalysisTestBase<CopyAssumption> {
         "WRITE(i, 2) -> [* {i = T, j = T}]",
         "END");
   }
-  
+
   public void testConditionalKill() throws Exception {
     analyze("void", "int i = 1; int j = i; if (b) { j = 1; } int k = j;").into(
         "BLOCK -> [* T]",

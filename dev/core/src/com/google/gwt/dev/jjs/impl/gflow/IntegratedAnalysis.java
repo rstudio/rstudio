@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,14 +18,14 @@ package com.google.gwt.dev.jjs.impl.gflow;
 /**
  * Integrated analysis combines analysis with transformation as described in
  * Lerner et al. paper. See package documentation for references.
- * 
+ *
  * @param <N> graph node type.
  * @param <E> graph edge type.
  * @param <T> graph transformer type.
  * @param <G> graph type.
  * @param <A> assumption type.
  */
-public interface IntegratedAnalysis<N, E, T, G extends Graph<N, E, T>, 
+public interface IntegratedAnalysis<N, E, T, G extends Graph<N, E, T>,
     A extends Assumption<A>> {
   /**
    * Gets assumptions for graph incoming & outgoing edges to start approximation
@@ -34,7 +34,7 @@ public interface IntegratedAnalysis<N, E, T, G extends Graph<N, E, T>,
   void setInitialGraphAssumptions(G graph, AssumptionMap<E, A> assumptionMap);
 
   /**
-   * Gets analysis integrated flow function. 
+   * Gets analysis integrated flow function.
    */
   IntegratedFlowFunction<N, E, T, G, A> getIntegratedFlowFunction();
 }

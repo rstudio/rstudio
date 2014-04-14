@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -55,35 +55,35 @@ public class ModuleTabPanel extends JPanel {
   /**
    * A session has a unique session key within a module tab panel, and is
    * identified to the user by the timestamp it was first seen.
-   * 
+   *
    * <p>Within a session, there will be one or more modules, each with their
    * own ModulePanel.
    */
   public class Session {
-    
+
     private final long createTimestamp;
-    
+
     /**
      * Map from display names in the dropdown box to module panels.
      */
     private final Map<String, ModulePanel> displayNameToModule;
-       
+
     private final IdentityHashMap<ModulePanel, SessionModule> moduleSessionMap;
 
     private SessionModule lastSelectedModule;
-    
+
     /**
      * Map of module names to the number of times that module has been seen.
      */
     private final Map<String, Integer> moduleCounts;
-    
+
     /**
      * List, in display order, of entries in the module dropdown box.
      */
     private final List<SessionModule> modules;
-    
+
     private final String sessionKey;
-    
+
     public Session(String sessionKey) {
       this.sessionKey = sessionKey;
       createTimestamp = System.currentTimeMillis();
@@ -175,7 +175,7 @@ public class ModuleTabPanel extends JPanel {
           break;
       }
     }
-    
+
     public Collection<String> getActiveModules() {
       ArrayList<String> activeModules = new ArrayList<String>();
       for (SessionModule sessionModule : modules) {
@@ -255,7 +255,7 @@ public class ModuleTabPanel extends JPanel {
    * Renderer used to show entries in the session dropdown box.
    */
   private static class SessionRenderer extends BasicComboBoxRenderer {
-  
+
     @Override
     public Component getListCellRendererComponent(JList list, Object value,
         int index, boolean isSelected, boolean cellHasFocus) {
@@ -300,12 +300,12 @@ public class ModuleTabPanel extends JPanel {
   /**
    * Create a panel which will be a top-level tab in the OOPHM UI.  Each of
    * these tabs will contain one or more sessions, and within that one or
-   * more module instances. 
-   * 
+   * more module instances.
+   *
    * @param userAgent
    * @param remoteSocket
    * @param url
-   * @param agentIconBytes 
+   * @param agentIconBytes
    * @param tabPanelCollection
    * @param moduleName used just for the tab name in the event that the plugin
    *     is an older version that doesn't supply the url
@@ -355,7 +355,7 @@ public class ModuleTabPanel extends JPanel {
     cardLayout = new CardLayout();
     deckPanel = new JPanel(cardLayout);
     add(deckPanel);
-    
+
     // Construct the tab title and tooltip
     String tabTitle = url;
     if (tabTitle == null) {
@@ -377,7 +377,7 @@ public class ModuleTabPanel extends JPanel {
           buf.append(parsedUrl.getPath());
         }
         buf.append(' '); // space for tooltip below
-        url = buf.toString(); 
+        url = buf.toString();
       } catch (MalformedURLException e1) {
         // Ignore and just use the full URL
       }
@@ -402,7 +402,7 @@ public class ModuleTabPanel extends JPanel {
       String sessionKey,
       File logFile) {
     Session session = findOrCreateSession(sessionKey);
-    
+
     ModulePanel panel = new ModulePanel(maxLevel, moduleName, session, logFile);
     return panel;
   }
@@ -436,10 +436,10 @@ public class ModuleTabPanel extends JPanel {
           sessionDropdown.getItemCount() - 1));
     }
   }
-  
+
   /**
    * Return the proper Session object for this session, creating it if needed.
-   * 
+   *
    * @param sessionKey unique key for this session
    * @return Session instance
    */

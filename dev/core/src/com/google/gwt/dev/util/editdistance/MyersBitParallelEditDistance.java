@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -79,7 +79,7 @@ public abstract class MyersBitParallelEditDistance
    *      when the prior column has a negative vertical transition
    *       in this row ("deletion"):
    *        This is simply the VN bit array from the prior column.
-   *    
+   *
    *      when the row above has a negative transition in this column
    *       ("insertion").
    *        This happens when the diagonal coming into the cell above
@@ -163,7 +163,7 @@ public abstract class MyersBitParallelEditDistance
   static class Multi extends MyersBitParallelEditDistance {
     /* How many integers we use per column */
     int count;
-    
+
     /**
      * Where the last-row bit lives -- only in the last array slot, though.
      */
@@ -202,7 +202,7 @@ public abstract class MyersBitParallelEditDistance
 
       /* Where in last word does last row appear */
       lastBitPosition = (1 << ((m - 1) % wordSize));
-      
+
       /* Initialize scratchpad items */
       perThreadInit();
     }
@@ -443,7 +443,7 @@ public abstract class MyersBitParallelEditDistance
       return distance;
     }
   }
-  
+
   /**
    * Chooses an appropriate implementation for a given pattern string.
    * @param s pattern string

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -42,7 +42,7 @@ public class Jsni {
 
   /**
    * Generate source code, fixing up any JSNI references for hosted mode.
-   * 
+   *
    * <p/>
    * <table>
    * <tr>
@@ -51,32 +51,32 @@ public class Jsni {
    * </tr>
    * <tr>
    * <td><code>obj.@class::method(params)(args)</code></td>
-   * 
+   *
    * <td><code>__gwt_makeJavaInvoke(paramCount)(obj, dispId, args)</code></td>
    * </tr>
    * <tr>
    * <td><code>@class::method(params)(args)</code></td>
-   * 
+   *
    * <td><code>__gwt_makeJavaInvoke(paramCount)(null, dispId, args)</code></td>
    * </tr>
    * <tr>
    * <td><code>obj.@class::method(params)</code></td>
-   * 
+   *
    * <td><code>__gwt_makeTearOff(obj, dispId, paramCount)</code></td>
    * </tr>
    * <tr>
    * <td><code>@class::method(params)</code></td>
-   * 
+   *
    * <td><code>__gwt_makeTearOff(null, dispId, paramCount)</code></td>
    * </tr>
    * <tr>
    * <td><code>obj.@class::field</code></td>
-   * 
+   *
    * <td><code>obj[dispId]</code></td>
    * </tr>
    * <tr>
    * <td><code>@class::field</code></td>
-   * 
+   *
    * <td><code>__static[dispId]</code></td>
    * </tr>
    * </table>
@@ -187,7 +187,7 @@ public class Jsni {
            * Make sure the ident is a reference to a method or constructor and
            * not a reference to a field whose contents (e.g. a Function) we
            * intend to immediately invoke.
-           * 
+           *
            * p.C::method()(); versus p.C::field();
            */
           if (member instanceof Method || member instanceof Constructor<?>) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -82,7 +82,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 /**
  * Swing widget containing a tree logger.
- * 
+ *
  * <p>
  * This class should not be serialized.
  * </p>
@@ -94,11 +94,11 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
    * Callback interface for optional close button behavior.
    */
   public interface CloseHandler {
-    
+
     /**
      * Called when the close button has been clicked on the tree logger
      * and any confirmation needed has been handled.
-     * 
+     *
      * @param loggerPanel SwingTreeLogger instance being closed
      */
     void onCloseRequest(SwingLoggerPanel loggerPanel);
@@ -284,11 +284,11 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
   private final TreeLogger logger;
 
   private JTextField regexField;
-  
+
   private DefaultMutableTreeNode root;
 
   private JPanel topPanel;
-  
+
   private JScrollPane treeView;
 
   private JCheckBox autoScroll;
@@ -296,7 +296,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
   /**
    * Create a Swing-based logger panel, with a tree section and a detail
    * section.
-   * 
+   *
    * @param maxLevel
    * @param logFile
    */
@@ -430,7 +430,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     treeView.setMinimumSize(minSize);
     splitter.setDividerLocation(0.80);
     add(splitter);
-    
+
     AbstractTreeLogger uiLogger = new SwingTreeLogger(this);
     uiLogger.setMaxDetail(maxLevel);
     TreeLogger bestLogger = uiLogger;
@@ -556,7 +556,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
   /**
    * Sets a callback for handling a close request, which also makes the close
    * button visible.
-   * 
+   *
    * @param handler
    */
   public void setCloseHandler(CloseHandler handler) {
@@ -592,7 +592,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
 
   /**
    * Ask the user for confirmation to close the current logger.
-   * 
+   *
    * @return true if the user confirmed the request
    */
   protected boolean confirmClose() {
@@ -650,7 +650,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     if (node == null) {
       return;
     }
-    // is it better to use SwingUtilities2.canAccessSystemClipboard() here? 
+    // is it better to use SwingUtilities2.canAccessSystemClipboard() here?
     Clipboard clipboard;
     try {
       clipboard = tree.getToolkit().getSystemClipboard();
@@ -671,7 +671,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
   /**
    * Returns a keystroke which adds the appropriate modifier for a command key:
    * Command on mac, Ctrl everywhere else.
-   * 
+   *
    * @param key virtual key defined in {@code KeyEvent#VK_*}
    * @param shift true if the Ctrl/Command key must be shifted
    * @return KeyStroke of the Ctrl/Command-key

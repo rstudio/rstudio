@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,11 +30,11 @@ import java.util.Map;
 
 /**
  * Assumptions for ConstantsAnalysis.
- * 
+ *
  * Is a map from variable into it's constant value. If variable is not present
- * in the map, then it's not a constant. 
- * 
- * Empty ConstantsAssumption is a top of the lattice, and is not equals to 
+ * in the map, then it's not a constant.
+ *
+ * Empty ConstantsAssumption is a top of the lattice, and is not equals to
  * null assumption (which is the bottom of every lattice).
  */
 public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
@@ -44,7 +44,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
   public static class Updater {
     private ConstantsAssumption assumption;
     private boolean copied = false;
-    
+
     public Updater(ConstantsAssumption assumption) {
       this.assumption = assumption;
     }
@@ -59,7 +59,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
       }
       return assumption.hasAssumption(target);
     }
-    
+
     public void set(JVariable target, JValueLiteral literal) {
       copyIfNeeded();
       assumption.set(target, literal);
@@ -79,13 +79,13 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
       }
     }
   }
-  
+
   /**
    * A wrapper around JValueLiteral to give it equals() method.
    */
   private static class LiteralWrapper {
     private final JValueLiteral literal;
-    
+
     LiteralWrapper(JValueLiteral literal) {
       Preconditions.checkNotNull(literal);
       this.literal = literal;
@@ -96,11 +96,11 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
       if (obj == null) {
         return false;
       }
-      
+
       if (obj == this) {
         return true;
       }
-      
+
       LiteralWrapper other = (LiteralWrapper) obj;
       return equal(this.literal, other.literal);
     }
@@ -124,17 +124,17 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
   private static boolean equal(JValueLiteral literal1, JValueLiteral literal2) {
     if (literal1 == null || literal2 == null) {
       return literal1 == literal2;
-    } 
-    
+    }
+
     if (literal1 == literal2) {
       return true;
     }
 
     if (literal1.getClass() != literal2.getClass()) {
-      // these are different literal types. 
+      // these are different literal types.
       return false;
     }
-    
+
     if (literal1 instanceof JFloatLiteral) {
       int bits1 = Float.floatToRawIntBits(
           ((JFloatLiteral) literal1).getValue());
@@ -142,7 +142,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
           ((JFloatLiteral) literal2).getValue());
       return bits1 == bits2;
     }
-    
+
     if (literal1 instanceof JDoubleLiteral) {
       long bits1 = Double.doubleToRawLongBits(
           ((JDoubleLiteral) literal1).getValue());
@@ -156,24 +156,24 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     if (valueObj1 == null || valueObj2 == null) {
       return valueObj1 == valueObj2;
     }
-    
+
     return valueObj1.equals(valueObj2);
   }
-  
+
   private static JValueLiteral join(JValueLiteral value1, JValueLiteral value2) {
     if (!equal(value1, value2)) {
       return null;
     }
-    
+
     return value1;
   }
-  
-  private static JValueLiteral join(LiteralWrapper wrapper1, 
+
+  private static JValueLiteral join(LiteralWrapper wrapper1,
       LiteralWrapper wrapper2) {
     if (wrapper1 == null || wrapper2 == null) {
       return null;
     }
-    
+
     return join(wrapper1.literal, wrapper2.literal);
   }
 
@@ -207,10 +207,10 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     ConstantsAssumption other = (ConstantsAssumption) obj;
     return values.equals(other.values);
   }
-  
+
   /**
    * Get variable constant assumption. <code>null</code> if there's no constant
-   * assumption for this variable. 
+   * assumption for this variable.
    */
   public JValueLiteral get(JVariable variable) {
     LiteralWrapper wrapper = values.get(variable);
@@ -218,7 +218,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
   }
 
   /**
-   * Check if we have constant (i.e. not top and not bottom) assumption about 
+   * Check if we have constant (i.e. not top and not bottom) assumption about
    * the variable.
    */
   public boolean hasAssumption(JVariable variable) {
@@ -229,7 +229,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
   public int hashCode() {
     return values.hashCode();
   }
-  
+
   public boolean isEmpty() {
     return values.isEmpty();
   }
@@ -239,13 +239,13 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     if (other == null) {
       return this;
     }
-    
+
     if (other == TOP || this == TOP || isEmpty() || other.isEmpty()) {
       return TOP;
     }
-    
+
     ConstantsAssumption result = new ConstantsAssumption();
-    
+
     for (JVariable var : other.values.keySet()) {
       if (values.containsKey(var)) {
         // Var is present in both assumptions. Join their values.
@@ -253,13 +253,13 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
         if (value != null) {
           result.values.put(var, new LiteralWrapper(value));
         }
-      } 
+      }
     }
-    
+
     if (result.isEmpty()) {
       return TOP;
     }
-    
+
     return result;
   }
 
@@ -268,7 +268,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
       return "T";
     }
     StringBuffer result = new StringBuffer();
-    
+
     result.append("{");
     List<JVariable> variables = new ArrayList<JVariable>(values.keySet());
     HasName.Util.sortByName(variables);
@@ -285,15 +285,15 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
       }
     }
     result.append("}");
-    
+
     return result.toString();
   }
-  
+
   @Override
   public String toString() {
     return toDebugString();
   }
-  
+
   void set(JVariable variable, JValueLiteral literal) {
     if (literal != null) {
       values.put(variable, new LiteralWrapper(literal));

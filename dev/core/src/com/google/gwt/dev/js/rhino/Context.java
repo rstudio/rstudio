@@ -725,10 +725,10 @@ public class Context {
      * file to avoid (synchronized) text parsing.
      */
     // bruce: removed referenced to the initial "java" package name
-    //        that used to be there due to a build artifact 
+    //        that used to be there due to a build artifact
     static final String defaultResource =
       "com.google.gwt.dev.js.rhino.Messages";
-    
+
 
     static String getMessage(String messageId, Object[] arguments) {
         Context cx = getCurrentContext();

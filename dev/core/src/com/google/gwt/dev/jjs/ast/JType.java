@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -41,7 +41,7 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
 
   /**
    * Base type for AST type definitions.
-   * 
+   *
    * @param info tracks the source file origin of this type through compilation.
    * @param name binary name of the type.
    */
@@ -60,7 +60,7 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
 
   /**
    * Binary name of the type.
-   * 
+   *
    * For example "com.example.Foo$Bar"
    */
   @Override
@@ -73,7 +73,7 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
    * host execution environment. For example, while compiling for the JVM, JRE
    * types are external types. External types definitions are provided by class
    * files which are considered opaque by the GWT compiler.
-   * 
+   *
    * TODO(scottb): Means something totally different after AST stiching is done.
    */
   public boolean isExternal() {

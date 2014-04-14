@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -74,13 +74,13 @@ public class RewriteSingleJsoImplDispatches extends ClassVisitor {
         } else {
           /*
            * Might be referring to a subtype of a SingleJso interface:
-           * 
+           *
            * interface IA { void foo() }
-           * 
+           *
            * interface JA extends JSO implements IA;
-           * 
+           *
            * interface IB extends IA {}
-           * 
+           *
            * void bar() { ((IB) object).foo(); }
            */
           outer : for (String intf : computeAllInterfaces(owner)) {
@@ -220,7 +220,7 @@ public class RewriteSingleJsoImplDispatches extends ClassVisitor {
     List<JClassType> q = new LinkedList<JClassType>();
     JClassType intf = typeOracle.findType(intfName.replace('/', '.').replace(
         '$', '.'));
-    
+
     /*
      * If the interface's compilation unit wasn't retained due to an error, then
      * it won't be available in the typeOracle for us to rewrite
@@ -275,7 +275,7 @@ public class RewriteSingleJsoImplDispatches extends ClassVisitor {
     }
     return toReturn;
   }
-  
+
   private void writeEmptyMethod(String mangledMethodName, Method declMethod) {
     MethodVisitor mv = super.visitMethod(Opcodes.ACC_PUBLIC
         | Opcodes.ACC_ABSTRACT, mangledMethodName, declMethod.getDescriptor(),
@@ -310,7 +310,7 @@ public class RewriteSingleJsoImplDispatches extends ClassVisitor {
            * It just so happens that the stack and local variable sizes are the
            * same, but they're kept distinct to aid in clarity should the
            * dispatch logic change.
-           * 
+           *
            * These start at 1 because we need to load "this" onto the stack
            */
           int var = 1;

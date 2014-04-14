@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,18 +40,18 @@ public abstract class ServletContainer {
    * Causes the web app to pick up changes made within the app root dir while
    * running. This method cannot be called after {@link #stop()} has been
    * called.
-   * 
+   *
    * TODO(bruce): need to determine whether all the important servlet containers
    * will let us do this (e.g. ensure they don't lock files we would need to
    * update)
-   * 
+   *
    * @throws UnableToCompleteException
    */
   public abstract void refresh() throws UnableToCompleteException;
 
   /**
    * Stops the running servlet container. It cannot be restarted after this.
-   * 
+   *
    * @throws UnableToCompleteException
    */
   public abstract void stop() throws UnableToCompleteException;

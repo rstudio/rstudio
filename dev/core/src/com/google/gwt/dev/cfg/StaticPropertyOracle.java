@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -42,7 +42,7 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
 
   /**
    * Create a property oracle that will return the supplied values.
-   * 
+   *
    * @param orderedProps array of binding properties
    * @param orderedPropValues values of the above binding properties
    * @param configProps array of config properties
@@ -115,7 +115,7 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
 
     throw new BadPropertyValueException(propertyName);
   }
-  
+
   /**
    * Dumps the binding property key/value pairs; For debugging use only.
    */

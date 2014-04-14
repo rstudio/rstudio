@@ -36,7 +36,7 @@ public class PrecompilationMetricsArtifact extends Artifact<PrecompilationMetric
   public PrecompilationMetricsArtifact(int permutationId) {
     this(SoycReportLinker.class, permutationId);
   }
-  
+
   protected PrecompilationMetricsArtifact(Class<? extends Linker> linker, int permutationBase) {
     super(linker);
     this.permutationBase = permutationBase;
@@ -70,13 +70,13 @@ public class PrecompilationMetricsArtifact extends Artifact<PrecompilationMetric
   public int getPermutationBase() {
     return permutationBase;
   }
-  
+
   /**
-   * @return the permutation ids associated with this precompilation. 
+   * @return the permutation ids associated with this precompilation.
    */
   public int[] getPermutationIds() {
     return permutationIds;
-  }  
+  }
 
   @Override
   public int hashCode() {
@@ -110,12 +110,12 @@ public class PrecompilationMetricsArtifact extends Artifact<PrecompilationMetric
   }
 
   /**
-   * @param ids the permutation ids associated with this precompilation. 
+   * @param ids the permutation ids associated with this precompilation.
    */
   public PrecompilationMetricsArtifact setPermutationIds(int[] ids) {
     this.permutationIds = ids;
     return this;
-  }    
+  }
   @Override
   protected int compareToComparableArtifact(PrecompilationMetricsArtifact o) {
     return getName().compareTo(o.getName());

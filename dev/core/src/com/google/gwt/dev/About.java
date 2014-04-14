@@ -1,12 +1,12 @@
 /*
  * Copyright 2006 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,13 +26,13 @@ public class About {
   /**
    * Tag used for text replacement of the SVN version (split up to avoid
    * replacing it here).
-   */ 
+   */
   private static final String GWT_GITREV_TAG = "@GWT_" + "GITREV@";
 
   /**
    * Tag used for text replacement of the GWT version (split up to avoid
    * replacing it here).
-   */ 
+   */
   private static final String GWT_VERSION_TAG = "@GWT_" + "VERSION@";
 
   private static final String gwtName = "Google Web Toolkit";
@@ -75,7 +75,7 @@ public class About {
 
   /**
    * Deprecated as GWT is no longer hosted in Subversion, see {@link #getGwtGitRev}.
-   * 
+   *
    * @return the subversion revision or 'unknown' if the value couldn't be
    *         determined at build time.
    * @deprecated See {@link #getGwtGitRev()}.
@@ -87,7 +87,7 @@ public class About {
 
   /**
    * Returns the Git repository commit id.
-   * 
+   *
    * @return the Git commit id or 'unknown' if the value couldn't be
    *         determined at build time.
    */
@@ -104,7 +104,7 @@ public class About {
 
   /**
    * The Google Web Toolkit release number.
-   * 
+   *
    * @return the release number or the array {0, 0, 0} if the value couldn't be
    *         determined at build time.
    */
@@ -114,7 +114,7 @@ public class About {
 
   /**
    * The Google Web Toolkit release number.
-   * 
+   *
    * @return the release number or the string '0.0.0' if the value couldn't be
    *         determined at build time.
    */
@@ -124,7 +124,7 @@ public class About {
 
   /**
    * The Google Web Toolkit release number.
-   * 
+   *
    * @return the release number or a version equivalent to "0.0.0" if the value
    *     couldn't be determined at build time.
    */

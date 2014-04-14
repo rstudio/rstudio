@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -50,7 +50,7 @@ public class MethodArgNamesLookup implements Serializable {
 
   /**
    * Lookup the argument names for a given method.
-   * 
+   *
    * @param method TypeOracle method
    * @param methodData method data collected from bytecode
    * @return an array of the argument names, or null if unavailable
@@ -66,7 +66,7 @@ public class MethodArgNamesLookup implements Serializable {
 
   /**
    * Merge argument names from another lookup map into this one.
-   * 
+   *
    * @param other
    */
   public void mergeFrom(MethodArgNamesLookup other) {
@@ -77,7 +77,7 @@ public class MethodArgNamesLookup implements Serializable {
    * Store the argument names for a method.
    * <p>
    * <b>Note: method must have non-zero arguments.<b>
-   * 
+   *
    * @param enclosingType fully qualified binary name of the enclosing type
    * @param method JDT method
    */

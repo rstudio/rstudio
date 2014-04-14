@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,7 +29,7 @@ import java.io.InputStream;
 public abstract class AbstractLinker extends Linker {
   /**
    * A helper method to create an artifact from an array of bytes.
-   * 
+   *
    * @param logger a TreeLogger
    * @param what the data to emit
    * @param partialPath the partial path of the resource
@@ -43,7 +43,7 @@ public abstract class AbstractLinker extends Linker {
 
   /**
    * A helper method to create an artifact from an array of bytes.
-   * 
+   *
    * @param logger a TreeLogger
    * @param what the data to emit
    * @param partialPath the partial path of the resource
@@ -59,7 +59,7 @@ public abstract class AbstractLinker extends Linker {
   /**
    * A helper method to create an artifact to emit the contents of an
    * InputStream.
-   * 
+   *
    * @param logger a TreeLogger
    * @param what the source InputStream
    * @param partialPath the partial path of the emitted resource
@@ -75,7 +75,7 @@ public abstract class AbstractLinker extends Linker {
   /**
    * A helper method to create an artifact to emit the contents of an
    * InputStream.
-   * 
+   *
    * @param logger a TreeLogger
    * @param what the source InputStream
    * @param partialPath the partial path of the emitted resource
@@ -92,7 +92,7 @@ public abstract class AbstractLinker extends Linker {
 
   /**
    * A helper method to create an artifact to emit a String.
-   * 
+   *
    * @param logger a TreeLogger
    * @param what the contents of the Artifact to emit
    * @param partialPath the partial path of the emitted resource
@@ -105,7 +105,7 @@ public abstract class AbstractLinker extends Linker {
 
   /**
    * A helper method to create an artifact to emit a String.
-   * 
+   *
    * @param logger a TreeLogger
    * @param what the contents of the Artifact to emit
    * @param partialPath the partial path of the emitted resource
@@ -120,7 +120,7 @@ public abstract class AbstractLinker extends Linker {
   /**
    * A helper method to create an artifact from an array of bytes with a strong
    * name.
-   * 
+   *
    * @param logger a TreeLogger
    * @param what the data to emit
    * @param prefix a non-null string to prepend to the hash to determine the
@@ -139,7 +139,7 @@ public abstract class AbstractLinker extends Linker {
   /**
    * A helper method to create an artifact from an array of bytes with a strong
    * name.
-   * 
+   *
    * @param logger a TreeLogger
    * @param what the data to emit
    * @param prefix a non-null string to prepend to the hash to determine the

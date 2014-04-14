@@ -30,15 +30,15 @@ import junit.framework.TestSuite;
 /**
  * A {@link TestCase} that can define both simple and bulk test methods.
  * <p>
- * A <I>simple test method</I> is the type of test traditionally 
- * supplied by by {@link TestCase}.  To define a simple test, create a public 
+ * A <I>simple test method</I> is the type of test traditionally
+ * supplied by by {@link TestCase}.  To define a simple test, create a public
  * no-argument method whose name starts with "test".  You can specify
  * the name of simple test in the constructor of <code>BulkTest</code>;
  * a subsequent call to {@link TestCase#run} will run that simple test.
  * <p>
  * A <I>bulk test method</I>, on the other hand, returns a new instance
  * of <code>BulkTest</code>, which can itself define new simple and bulk
- * test methods.  By using the {@link #makeSuite} method, you can 
+ * test methods.  By using the {@link #makeSuite} method, you can
  * automatically create a hierarchal suite of tests and child bulk tests.
  * <p>
  * For instance, consider the following two classes:
@@ -92,7 +92,7 @@ import junit.framework.TestSuite;
  *  In the above examples, <code>TestSet</code> defines two
  *  simple test methods and no bulk test methods; <code>TestHashMap</code>
  *  defines one simple test method and two bulk test methods.  When
- *  <code>makeSuite(TestHashMap.class).run</code> is executed, 
+ *  <code>makeSuite(TestHashMap.class).run</code> is executed,
  *  <I>five</I> simple test methods will be run, in this order:<P>
  *
  *  <Ol>
@@ -130,7 +130,7 @@ import junit.framework.TestSuite;
  *
  *  Note that if you want to use the bulk test methods, you <I>must</I>
  *  define your <code>suite()</code> method to use {@link #makeSuite}.
- *  The ordinary {@link TestSuite} constructor doesn't know how to 
+ *  The ordinary {@link TestSuite} constructor doesn't know how to
  *  interpret bulk test methods.
  *
  *  @author Paul Jack
@@ -139,13 +139,13 @@ import junit.framework.TestSuite;
 public class BulkTest extends TestCase implements Cloneable {
 
 
-    // Note:  BulkTest is Cloneable to make it easier to construct 
-    // BulkTest instances for simple test methods that are defined in 
+    // Note:  BulkTest is Cloneable to make it easier to construct
+    // BulkTest instances for simple test methods that are defined in
     // anonymous inner classes.  Basically we don't have to worry about
     // finding weird constructors.  (And even if we found them, technically
-    // it'd be illegal for anyone but the outer class to invoke them).  
-    // Given one BulkTest instance, we can just clone it and reset the 
-    // method name for every simple test it defines.  
+    // it'd be illegal for anyone but the outer class to invoke them).
+    // Given one BulkTest instance, we can just clone it and reset the
+    // method name for every simple test it defines.
 
 
     /**
@@ -271,21 +271,21 @@ class BulkTestSuiteMaker {
 
     /** List of ignored simple test names. */
     private List ignored;
-   
+
     /** The TestSuite we're currently populating.  Can change over time. */
     private TestSuite result;
 
-    /** 
-     *  The prefix for simple test methods.  Used to check if a test is in 
+    /**
+     *  The prefix for simple test methods.  Used to check if a test is in
      *  the ignored list.
-     */ 
+     */
     private String prefix;
 
-    /** 
+    /**
      *  Constructor.
      *
      *  @param startingClass  the starting class
-     */     
+     */
     public BulkTestSuiteMaker(Class startingClass) {
         this.startingClass = startingClass;
     }
@@ -354,7 +354,7 @@ class BulkTestSuiteMaker {
     void addBulk(BulkTest bulk, Method m) {
         String verboseName = prefix + "." + m.getName();
         if (ignored.contains(verboseName)) return;
-        
+
         BulkTest bulk2;
         try {
             bulk2 = (BulkTest)m.invoke(bulk, (Object[]) null);
@@ -431,7 +431,7 @@ class BulkTestSuiteMaker {
         for (int i = 0; i < all.length; i++) {
             if (isTest(all[i])) return makeTestCase(c, all[i]);
         }
-        throw new IllegalArgumentException(c.getName() + " must provide " 
+        throw new IllegalArgumentException(c.getName() + " must provide "
           + " at least one test method.");
     }
 

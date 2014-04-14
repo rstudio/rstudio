@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,7 +40,7 @@ public class LivenessFlowFunction implements FlowFunction<CfgNode<?>, CfgEdge,
       AssumptionMap<CfgEdge, LivenessAssumption> assumptionMap) {
     final Updater result = new Updater(
         AssumptionUtil.join(g.getOutEdges(node), assumptionMap));
-    
+
     node.accept(new CfgVisitor() {
       @Override
       public void visitReadNode(CfgReadNode node) {
@@ -66,7 +66,7 @@ public class LivenessFlowFunction implements FlowFunction<CfgNode<?>, CfgEdge,
         }
       }
     });
-    
+
     AssumptionUtil.setAssumptions(g.getInEdges(node), result.unwrap(), assumptionMap);
   }
 }

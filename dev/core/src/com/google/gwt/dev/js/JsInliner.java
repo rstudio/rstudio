@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -80,7 +80,7 @@ import java.util.Stack;
 
 /**
  * Perform inlining optimizations on the JavaScript AST.
- * 
+ *
  * TODO(bobv): remove anything that's duplicating work with {@link JsStaticEval}
  * migrate other stuff to that class perhaps.
  */
@@ -155,7 +155,7 @@ public class JsInliner {
    * side-effect-free expressions save for the outer, right-hand expression.
    * This form has a nice side-effect of minimizing the number of generated
    * parentheses.
-   * 
+   *
    * <pre>
    * (X, b) is unchanged
    * (X, (b, c) becomes ((X, b), c); b is guaranteed to have a side-effect
@@ -373,7 +373,7 @@ public class JsInliner {
    * only be executed once, such as clinit functions. Whenever there is a
    * possible branch in program flow, the remover will create a new instance of
    * itself to handle the possible branches.
-   * 
+   *
    * We don't look at combining branch choices. This will not produce the most
    * efficient elimination of duplicated calls, but it handles the general case
    * and is simple to verify.
@@ -414,7 +414,7 @@ public class JsInliner {
         if (left && right) {
           /*
            * (clinit(), clinit()) --> delete or null.
-           * 
+           *
            * This construct is very unlikely since the InliningVisitor builds
            * the comma expressions in a right-nested manner.
            */
@@ -678,7 +678,7 @@ public class JsInliner {
     /**
      * The innermost invocation we see must consume all presently unevaluated
      * parameters to ensure that an exception does not prevent their evaluation.
-     * 
+     *
      * In the case of a nested invocation, such as
      * <code>F(r1, r2, G(r3, r4), f1);</code> the evaluation order is guaranteed
      * to be maintained, provided that no required parameters occur after the
@@ -701,7 +701,7 @@ public class JsInliner {
       /*
        * Unless all arguments have already been evaluated, assume that invoking
        * the new expression might interfere with the evaluation of the argument.
-       * 
+       *
        * It would be possible to allow this if the invoked function either does
        * nothing or does nothing that affects the remaining arguments. However,
        * currently there is no analysis of the invoked function.
@@ -779,7 +779,7 @@ public class JsInliner {
       this.fromScope = fromScope;
       this.hoistedNames = new ArrayList<JsName>();
     }
-    
+
     public List<JsName> getHoistedNames() {
       return hoistedNames;
     }
@@ -1129,7 +1129,7 @@ public class JsInliner {
     /**
      * Determine if <code>invokedFunction</code> can be inlined into
      * <code>callerFunction</code> at callsite <code>x</code>.
-     * 
+     *
      * @return An expression equivalent to <code>x</code>
      */
     private JsExpression process(JsInvocation x, JsFunction callerFunction,
@@ -1150,7 +1150,7 @@ public class JsInliner {
       JsExpression thisExpr = ((JsNameRef) x.getQualifier()).getQualifier();
       HoistedNameVisitor hoistedNameVisitor =
           new HoistedNameVisitor(callerFunction.getScope(), invokedFunction.getScope());
-      
+
       boolean sawReturnStatement = false;
 
       for (JsStatement statement : statements) {
@@ -1160,10 +1160,10 @@ public class JsInliner {
            * statements. The target is unsafe to inline, so bail. Note: in most
            * cases JsStaticEval will have removed any statements following a
            * return statement.
-           * 
+           *
            * The reason we have to bail is that the return statement's
            * expression MUST be the last thing evaluated.
-           * 
+           *
            * TODO(bobv): maybe it could still be inlined with smart
            * transformation?
            */
@@ -1480,7 +1480,7 @@ public class JsInliner {
 
     /**
      * Set a replacement JsName for all references to a JsName.
-     * 
+     *
      * @param name the name to replace
      * @param newName the new name that should be used in place of references to
      *          <code>name</code>
@@ -1600,9 +1600,9 @@ public class JsInliner {
       /*
        * Because functions can encapsulate other functions, we look at the
        * entire stack and not just the top element. This would prevent inlining
-       * 
+       *
        * function a() { function b() { a(); } b(); }
-       * 
+       *
        * in the case that we generally allow nested functions to be inlinable.
        */
       JsFunction f = isFunction(x.getQualifier());
@@ -1920,7 +1920,7 @@ public class JsInliner {
    * outer caller. This does not perform any name replacement, but simply
    * constructs a mutable copy of the expression that can be manipulated
    * at-will.
-   * 
+   *
    * @param statement the statement from which to extract the expressions
    * @return a JsExpression representing all expressions that would have been
    *         evaluated by the statement
@@ -2051,7 +2051,7 @@ public class JsInliner {
     /*
      * Ensure that the names referred to by the argument list and the statement
      * are disjoint. This prevents inlining of the following:
-     * 
+     *
      * static int i; public void add(int a) { i += a; }; add(i++);
      */
     if (hasCommonIdents(arguments, toInline, parameterIdents)) {

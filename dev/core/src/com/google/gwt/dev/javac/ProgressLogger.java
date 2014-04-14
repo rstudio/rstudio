@@ -137,7 +137,7 @@ class ProgressLogger {
     if (progressUnits == maxProgressUnits) {
       displayedPercentage = 100;
     }
-    
+
     // Only attempt to estimate a time remaining if we have a reasonable amount of data to go
     // on. Otherwise the estimates are wildly misleading.
     if (progress >= ETR_ACCURACY_THRESHOLD) {

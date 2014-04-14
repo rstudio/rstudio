@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,28 +26,28 @@ import java.util.Set;
  */
 public class CfgPrinter {
   private final Cfg graph;
-  
+
   public CfgPrinter(Cfg graph) {
     this.graph = graph;
   }
-  
+
   public String print() {
     StringBuffer result = new StringBuffer();
     List<CfgNode<?>> nodes = graph.getNodes();
-    
+
     // Determine nodes which have edges incoming not from previous node.
     Set<CfgNode<?>> targetNodes = new HashSet<CfgNode<?>>();
     for (int i = 1; i < nodes.size(); ++i) {
       CfgNode<?> node = nodes.get(i);
       List<CfgEdge> inEdges = graph.getInEdges(node);
       for (CfgEdge inEdge : inEdges) {
-        if (inEdge.getStart() != null && 
+        if (inEdge.getStart() != null &&
             inEdge.getStart() != nodes.get(i - 1)) {
           targetNodes.add(node);
         }
       }
     }
-    
+
     Map<CfgNode<?>, String> labels = new HashMap<CfgNode<?>, String>();
     for (int i = 0, j = 1; i < nodes.size(); ++i) {
       if (targetNodes.contains(nodes.get(i))) {
@@ -86,7 +86,7 @@ public class CfgPrinter {
             } else {
               result.append("*");
             }
-            
+
             appendEdgeInfo(result, edge);
           }
           result.append("]");
@@ -100,7 +100,7 @@ public class CfgPrinter {
   /**
    * Template method to append arbitrary edge information.
    */
-  protected void appendEdgeInfo(@SuppressWarnings("unused") StringBuffer result, 
+  protected void appendEdgeInfo(@SuppressWarnings("unused") StringBuffer result,
       @SuppressWarnings("unused") CfgEdge edge) {
     // Overridden by ancestors.
   }

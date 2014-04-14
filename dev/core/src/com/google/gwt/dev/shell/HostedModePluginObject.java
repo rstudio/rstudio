@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -155,7 +155,7 @@ public class HostedModePluginObject extends ScriptableObject {
 
   /**
    * Creates a HostedModePluginObject with the passed-in JavaScriptEngine.
-   * 
+   *
    * @param jsEngine The JavaScriptEngine.
    */
   public HostedModePluginObject(JavaScriptEngine jsEngine, TreeLogger logger) {
@@ -166,7 +166,7 @@ public class HostedModePluginObject extends ScriptableObject {
   /**
    * Initiate a hosted mode connection to the requested port and load the
    * requested module.
-   * 
+   *
    * @param url the complete url
    * @param sessionKey a length 16 string to identify a "session"
    * @param address "host:port" or "ipAddress:port" to use for the OOPHM server
@@ -242,7 +242,7 @@ public class HostedModePluginObject extends ScriptableObject {
   /**
    * Verify that the plugin can be initialized properly and supports the
    * requested version.
-   * 
+   *
    * @param version hosted mode protocol version
    * @return true if initialization succeeds, otherwise false
    */

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -62,23 +62,23 @@ import java.util.Map;
 
 /**
  * Builder for CFG graph.
- * 
+ *
  * Resulting CFG graph contains as much information as needed by current
  * analysis set. The amount of detail in call graph can be shrink or extend over
  * time. Current CfgNode inheritance tree gives an accurate understanding of
  * current detail level.
- * 
+ *
  * To build an accurate representation of control flow graph in the presence of
  * exceptions, we maintain all possible exit reason from statement. (This is
  * called completion in JLS. We use exit name in code for brevity).
- * 
+ *
  * CfgBuilder also tries to assign cfg node parents to correspond to AST tree
  * structure. This is not always correct (yet). But it is always guaranteed that
  * you will always meet a cfg node corresponding to containing statements when
  * traversing cfg node parents.
- * 
+ *
  * Every statement always has the corresponding node in cfg graph.
- * 
+ *
  * TODO: such nodes as if, etc, should be parent of their expressions.
  */
 public class CfgBuilder {
@@ -128,12 +128,12 @@ public class CfgBuilder {
       }
 
       private static Exit createCaseElse(CfgNode<?> node) {
-        return new Exit(Reason.CASE_ELSE, node, null, null, 
+        return new Exit(Reason.CASE_ELSE, node, null, null,
             CfgConditionalNode.ELSE);
       }
 
       private static Exit createCaseThen(CfgNode<?> node) {
-        return new Exit(Reason.CASE_THEN, node, null, null, 
+        return new Exit(Reason.CASE_THEN, node, null, null,
             CfgConditionalNode.THEN);
       }
 
@@ -175,7 +175,7 @@ public class CfgBuilder {
        */
       private final String role;
 
-      private Exit(Reason reason, CfgNode<?> source, 
+      private Exit(Reason reason, CfgNode<?> source,
           JType exceptionType, String label, String role) {
         if (source == null) {
           throw new IllegalArgumentException();
@@ -247,7 +247,7 @@ public class CfgBuilder {
     /**
      * Map from statement to its label.
      */
-    private final Map<JStatement, String> labels = 
+    private final Map<JStatement, String> labels =
       new HashMap<JStatement, String>();
 
     /**
@@ -263,7 +263,7 @@ public class CfgBuilder {
     private final JProgram program;
 
     private JSwitchStatement switchStatement;
-    
+
     private final JTypeOracle typeOracle;
 
     public BuilderVisitor(JProgram program) {
@@ -345,7 +345,7 @@ public class CfgBuilder {
         // generate conditionals.
         accept(x.getLhs());
 
-        CfgBinaryConditionalOperationNode node = 
+        CfgBinaryConditionalOperationNode node =
           pushNode(new CfgBinaryConditionalOperationNode(parent, x));
 
         if (x.getOp() == JBinaryOperator.AND) {
@@ -396,8 +396,8 @@ public class CfgBuilder {
       pushNode(new CfgStatementNode<JStatement>(parent, x));
       if (x.getExpr() != null) {
         // case label
-        JExpression condition = new JBinaryOperation(x.getSourceInfo(), 
-            program.getTypePrimitiveBoolean(), 
+        JExpression condition = new JBinaryOperation(x.getSourceInfo(),
+            program.getTypePrimitiveBoolean(),
             JBinaryOperator.EQ, switchStatement.getExpr(), x.getExpr());
         CfgCaseNode node = addNode(new CfgCaseNode(parent, x, condition));
         addExit(Exit.createCaseThen(node));
@@ -433,7 +433,7 @@ public class CfgBuilder {
     public boolean visit(JConditional x, Context ctx) {
       accept(x.getIfTest());
 
-      CfgConditionalExpressionNode node = 
+      CfgConditionalExpressionNode node =
         pushNode(new CfgConditionalExpressionNode(parent, x));
 
       addNormalExit(node, CfgConditionalNode.THEN);
@@ -497,7 +497,7 @@ public class CfgBuilder {
       CfgDoNode node = addNode(new CfgDoNode(parent, x));
 
       addEdge(node, nodes.get(pos), new CfgEdge(CfgConditionalNode.THEN));
-      
+
       String label = labels.get(x);
       addContinueEdges(nodes.get(pos), label);
       addBreakExits(label);
@@ -524,7 +524,7 @@ public class CfgBuilder {
 
       CfgForNode cond = null;
       int testPos = nodes.size();
-      
+
       if (x.getCondition() != null) {
         accept(x.getCondition());
         cond = addNode(new CfgForNode(parent, x));
@@ -609,13 +609,13 @@ public class CfgBuilder {
       for (JClassType exceptionType : x.getTarget().getThrownExceptions()) {
         addExit(Exit.createThrow(node, exceptionType, null));
       }
-      JDeclaredType runtimeExceptionType = 
+      JDeclaredType runtimeExceptionType =
         program.getFromTypeMap("java.lang.RuntimeException");
       if (runtimeExceptionType != null) {
         addExit(Exit.createThrow(node, runtimeExceptionType,
             CfgOptionalThrowNode.RUNTIME_EXCEPTION));
       }
-      JDeclaredType errorExceptionType = 
+      JDeclaredType errorExceptionType =
         program.getFromTypeMap("java.lang.Error");
       if (errorExceptionType != null) {
         addExit(Exit.createThrow(node, errorExceptionType,
@@ -623,7 +623,7 @@ public class CfgBuilder {
       }
 
       addNode(new CfgMethodCallNode(parent, x));
-      
+
       return false;
     }
 
@@ -658,7 +658,7 @@ public class CfgBuilder {
     public boolean visit(JSwitchStatement x, Context ctx) {
       pushNode(new CfgStatementNode<JStatement>(parent, x));
       accept(x.getExpr());
-      
+
       JSwitchStatement oldSwitchStatement = switchStatement;
       // We don't want to mess with other case exits here
       List<Exit> oldCaseElseExits = removeExits(Exit.Reason.CASE_ELSE);
@@ -669,14 +669,14 @@ public class CfgBuilder {
       // Goto to the first non-default node.
       CfgSwitchGotoNode gotoNode = addNode(new CfgSwitchGotoNode(parent, x));
       Exit gotoExit = Exit.createNormal(gotoNode, null);
-      
+
       int defaultPos = -1;
-      
+
       List<Exit> breakExits = new ArrayList<Exit>();
       List<Exit> fallThroughExits = new ArrayList<Exit>();
 
       List<JStatement> statements = x.getBody().getStatements();
-      
+
       for (JStatement s : statements) {
         if (s instanceof JCaseStatement) {
           if (((JCaseStatement) s).getExpr() != null) {
@@ -738,7 +738,7 @@ public class CfgBuilder {
           addExit(Exit.createNormal(e.getNode(), e.role));
         }
       }
-      
+
       for (Exit e : breakExits) {
         addNormalExit(e.getNode(), e.role);
       }
@@ -824,7 +824,7 @@ public class CfgBuilder {
                 // Safe approximation. If it is a multi exception with only one
                 // exception declared in the clause then the variable is of the
                 // the same type as the exception declared  and the approximation
-                // is exact hence and this is a full catch. 
+                // is exact hence and this is a full catch.
                 fullCatch = x.getCatchClauses().get(i).getTypes().size() == 1 &&
                     x.getCatchClauses().get(i).getTypes().get(0) == catchType;
               } else if (typeOracle.canTriviallyCast(catchType, exceptionType)) {
@@ -907,7 +907,7 @@ public class CfgBuilder {
                 // Safe approximation. If it is a multi exception with only one
                 // exception declared in the clause then the variable is of the
                 // the same type as the exception declared  and the approximation
-                // is exact hence and this is a full catch. 
+                // is exact hence and this is a full catch.
                 fullCatch = x.getCatchClauses().get(i).getTypes().size() == 1 &&
                     x.getCatchClauses().get(i).getTypes().get(0) == catchType;
               } else if (typeOracle.canTriviallyCast(catchType, exceptionType)) {
@@ -1161,7 +1161,7 @@ public class CfgBuilder {
     private List<Exit> removeExits(Exit.Reason reason) {
       return currentExitsByReason.put(reason, new ArrayList<Exit>());
     }
-    
+
     private List<Exit> removeExits(List<Exit> exits, Exit.Reason reason) {
       List<Exit> result = new ArrayList<Exit>();
       for (Iterator<Exit> i = exits.iterator(); i.hasNext();) {
@@ -1207,7 +1207,7 @@ public class CfgBuilder {
     private List<Exit> removeUnlabeledBreaks() {
       List<Exit> breakExits = removeExits(Exit.Reason.BREAK);
       List<Exit> labeledBreaks = new ArrayList<Exit>();
-      
+
       for (Iterator<Exit> i = breakExits.iterator(); i.hasNext();) {
         Exit exit = i.next();
         if (exit.getLabel() != null) {
@@ -1253,8 +1253,8 @@ public class CfgBuilder {
   }
 
   /**
-   * Special exception which is thrown when we encounter some syntactic 
-   * construction which is not yet supported by CfgBuilder. 
+   * Special exception which is thrown when we encounter some syntactic
+   * construction which is not yet supported by CfgBuilder.
    */
   private static class UnsupportedNodeException extends RuntimeException {
     public UnsupportedNodeException(String message) {
@@ -1263,7 +1263,7 @@ public class CfgBuilder {
   }
 
   /**
-   * Build Cfg for code block. 
+   * Build Cfg for code block.
    */
   public static Cfg build(JProgram program, JBlock codeblock) {
     return new BuilderVisitor(program).build(codeblock);

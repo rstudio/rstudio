@@ -1,12 +1,12 @@
 /*
  * Copyright 2006 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -106,7 +106,7 @@ public class StringUtils {
          * Emit characters from 0 to 31 that don't have a single character
          * escape sequence in octal where possible. This saves one or two
          * characters compared to the hexadecimal format '\xXX'.
-         * 
+         *
          * These short octal sequences may only be used at the end of the string
          * or where the following character is a non-digit. Otherwise, the
          * following character would be incorrectly interpreted as belonging to
@@ -146,7 +146,7 @@ public class StringUtils {
   /**
    * Returns a string representation of the byte array as a series of
    * hexadecimal characters.
-   * 
+   *
    * @param bytes byte array to convert
    * @return a string representation of the byte array as a series of
    *         hexadecimal characters
@@ -165,7 +165,7 @@ public class StringUtils {
    * Escapes any closing XML tags embedded in <code>str</code>, which could
    * potentially cause a parse failure in a browser, for example, embedding a
    * closing <code>&lt;script&gt;</code> tag.
-   * 
+   *
    * @param str an unescaped literal; May be null
    */
   private static void escapeClosingTags(StringBuffer str) {

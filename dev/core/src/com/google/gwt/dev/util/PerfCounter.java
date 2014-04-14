@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A counter which records bunch of statistics for frequently occuring 
- * operations. Calculates: count, total time, average time, maximum time 
- * & slow operations. 
+ * A counter which records bunch of statistics for frequently occuring
+ * operations. Calculates: count, total time, average time, maximum time
+ * & slow operations.
  */
 public class PerfCounter {
   private static class OperationStats {
@@ -36,11 +36,11 @@ public class PerfCounter {
     private long slowCount = 0;
     private long totalSlowTimeNanos = 0;
     private long totalTimeNanos = 0;
-    
+
     @Override
     public String toString() {
       StringBuilder result = new StringBuilder();
-      
+
       if (!isCounter) {
         result.append(count);
         result.append("/");
@@ -60,7 +60,7 @@ public class PerfCounter {
         result.append(count);
         result.append(" (count)");
       }
-      
+
       return result.toString();
     }
   }
@@ -68,22 +68,22 @@ public class PerfCounter {
   /**
    * Flag for enabling performance logging.
    */
-  private static boolean enabled = 
+  private static boolean enabled =
     Boolean.parseBoolean(System.getProperty("gwt.perfcounters"));
-  
-  private static final ThreadLocal<Map<String, Long>> operationsStartTime = 
+
+  private static final ThreadLocal<Map<String, Long>> operationsStartTime =
     new ThreadLocal<Map<String,Long>>() {
     @Override
     protected Map<String, Long> initialValue() {
       return new HashMap<String, Long>();
     }
   };
-  
-  private static final Map<String, OperationStats> operationStats = 
+
+  private static final Map<String, OperationStats> operationStats =
     new HashMap<String, OperationStats>();
-  
+
   /**
-   * Record the end of the operation. 
+   * Record the end of the operation.
    */
   public static void end(String operation) {
     if (!enabled) {
@@ -91,29 +91,29 @@ public class PerfCounter {
     }
     end(operation, 1 * 1000000000 /* 1 sec */);
   }
-  
+
   /**
-   * Record the end of the operation. 
+   * Record the end of the operation.
    */
   public static void end(String operation, long slowThresholdNano) {
     if (!enabled) {
       return;
     }
     long finishTime = System.nanoTime();
-    
+
     Map<String, Long> startTimes = operationsStartTime.get();
-    
+
     Long startTime;
-    
+
     synchronized (startTimes) {
       startTime = startTimes.remove(operation);
     }
-    
+
     Preconditions.checkNotNull(startTime);
 
     synchronized (operationStats) {
       OperationStats stats = getStats(operation);
-      
+
       stats.count++;
       long elapsedTime = finishTime - startTime.longValue();
       stats.totalTimeNanos += elapsedTime;
@@ -126,7 +126,7 @@ public class PerfCounter {
   }
 
   /**
-   * Increment counter. 
+   * Increment counter.
    */
   public static void inc(String operation) {
     synchronized (operationStats) {
@@ -150,7 +150,7 @@ public class PerfCounter {
     }
     System.out.println("-----------------------------------------");
   }
-  
+
   /**
    * Start operation.
    */
@@ -159,7 +159,7 @@ public class PerfCounter {
       return;
     }
     Map<String, Long> startTimes = operationsStartTime.get();
-    
+
     synchronized (startTimes) {
       Preconditions.checkState(!startTimes.containsKey(operation));
       long startTime = System.nanoTime();
