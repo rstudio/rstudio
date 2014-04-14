@@ -16,8 +16,7 @@
 package com.google.gwt.core.client.impl;
 
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.HttpDownloadFailure;
-import com.google.gwt.xhr.client.ReadyStateChangeHandler;
-import com.google.gwt.xhr.client.XMLHttpRequest;
+import com.google.gwt.core.client.impl.LoadingStrategyBase.RequestData;
 
 /**
  * A download strategy that uses XHRs and iss therefore not cross site compatible.
@@ -31,43 +30,40 @@ public class XhrLoadingStrategy extends LoadingStrategyBase {
    */
   public static class XhrDownloadStrategy implements DownloadStrategy {
     @Override
-    public void tryDownload(final RequestData request) {
-      final XMLHttpRequest xhr = XMLHttpRequest.create();
-
-      xhr.open(HTTP_GET, request.getUrl());
-
-      xhr.setOnReadyStateChange(new ReadyStateChangeHandler() {
-        public void onReadyStateChange(XMLHttpRequest ignored) {
-          if (xhr.getReadyState() == XMLHttpRequest.DONE) {
-            xhr.clearOnReadyStateChange();
-            if ((xhr.getStatus() == HTTP_STATUS_OK || xhr.getStatus() == HTTP_STATUS_NON_HTTP)
-                && xhr.getResponseText() != null
-                && xhr.getResponseText().length() != 0) {
-              request.tryInstall(xhr.getResponseText());
-            } else {
-              // If the download fails
-              request.onLoadError(
-                  new HttpDownloadFailure(request.getUrl(), xhr.getStatus(),
-                      xhr.getStatusText()), true);
-            }
-          }
+    public native void tryDownload(final RequestData request)/*-{
+      var xhr = new $wnd.XMLHttpRequest()
+      xhr.open("GET", request.@RequestData::getUrl()());
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+          // Clearing onreadystatechange otherwise it may cause memory leak (e.g. in IE8).
+          xhr.onreadystatechange = function() {}; // Clear callback
+          @XhrLoadingStrategy::onLoad(*)(request, xhr.status, xhr.statusText, xhr.responseText);
         }
-      });
-
-      xhr.send();
-    }
+      };
+      xhr.send(null);
+    }-*/;
   }
-
-  static final String HTTP_GET = "GET";
 
   /**
    * Some UA's like Safari will have a "0" status code when loading from file:
    * URLs. Additionally, the "0" status code is used sometimes if the server
    * does not respond, e.g. if there is a connection refused.
    */
-  static final int HTTP_STATUS_NON_HTTP = 0;
+  private static final int HTTP_STATUS_NON_HTTP = 0;
 
-  static final int HTTP_STATUS_OK = 200;
+  private static final int HTTP_STATUS_OK = 200;
+
+  @SuppressWarnings("unused") // Called via JSNI
+  private static void onLoad(RequestData request, int status, String statusText, String response) {
+    if ((status == HTTP_STATUS_OK || status == HTTP_STATUS_NON_HTTP)
+        && response != null
+        && response.length() != 0) {
+      request.tryInstall(response);
+    } else {
+      // If the download fails
+      request.onLoadError(new HttpDownloadFailure(request.getUrl(), status, statusText), true);
+    }
+  }
 
   public XhrLoadingStrategy() {
     super(new XhrDownloadStrategy());
