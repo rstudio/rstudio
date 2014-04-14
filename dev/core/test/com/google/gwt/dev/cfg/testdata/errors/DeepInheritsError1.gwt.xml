@@ -1,0 +1,3 @@
+<module rename-to="F">
+  <inherits name="com.google.gwt.dev.cfg.testdata.errors.BadModule"/>
+</module>

@@ -54,6 +54,10 @@ public class DefaultSchema extends Schema {
   @Override
   public void onHandlerException(int line, String elem, Method method,
       Throwable e) throws UnableToCompleteException {
+    if (e instanceof UnableToCompleteException) {
+      // Error has already been logged.
+      throw (UnableToCompleteException) e;
+    }
     Messages.XML_ELEMENT_HANDLER_EXCEPTION.log(logger, line, elem, e);
     throw new UnableToCompleteException();
   }

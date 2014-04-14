@@ -1,0 +1,3 @@
+<module rename-to="A">
+  <inherits name="com.google.gwt.dev.cfg.testdata.NonExistentModule"/>
+</module>

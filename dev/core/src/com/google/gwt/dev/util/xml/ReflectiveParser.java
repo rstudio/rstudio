@@ -16,6 +16,7 @@
 package com.google.gwt.dev.util.xml;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.util.tools.Utility;
 
@@ -23,6 +24,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -366,8 +368,19 @@ public final class ReflectiveParser {
         Utility.close(reader);
       }
 
-      if (caught != null) {
+      if (caught instanceof UnableToCompleteException) {
+        // Error has already been logged.
+        throw (UnableToCompleteException) caught;
+      } else if (caught instanceof SAXParseException) {
+        SAXParseException parseException = ((SAXParseException) caught);
+        logger.log(Type.ERROR, "Line " + parseException.getLineNumber() + ", column " +
+            parseException.getColumnNumber() + " : " + parseException.getMessage());
+      } else if (caught != null) {
+        // Generic error message.
         Messages.XML_PARSE_FAILED.log(logger, caught);
+      }
+
+      if (caught != null) {
         throw new UnableToCompleteException();
       }
     }

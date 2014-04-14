@@ -67,6 +67,66 @@ public class ModuleDefLoaderTest extends TestCase {
     assertHonorsStrictResources(false);
   }
 
+  public void testErrorReporting_badXml() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.BadModule",
+        "Line 3, column 1 : Element type \"inherits\" must be followed by either "
+            + "attribute specifications, \">\" or \"/>\".");
+  }
+
+  public void testErrorReporting_deepError() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.DEBUG);
+    builder.expectDebug(
+        "Loading inherited module 'com.google.gwt.dev.cfg.testdata.errors.DeepInheritsError0'",
+        null);
+    builder.expectDebug(
+        "Loading inherited module 'com.google.gwt.dev.cfg.testdata.errors.DeepInheritsError1'",
+        null);
+    builder.expectDebug(
+        "Loading inherited module 'com.google.gwt.dev.cfg.testdata.errors.BadModule'", null);
+    builder.expectError("Line 3, column 1 : Element type \"inherits\" must be followed by either "
+        + "attribute specifications, \">\" or \"/>\".", null);
+
+    UnitTestTreeLogger logger = builder.createLogger();
+
+    try {
+      ModuleDefLoader.loadFromClassPath(
+          logger, compilerContext, "com.google.gwt.dev.cfg.testdata.errors.DeepInheritsError0");
+      fail("Should have failed to load module.");
+    } catch (UnableToCompleteException e) {
+      // failure is expected.
+    }
+    logger.assertLogEntriesContainExpected();
+  }
+
+  public void testErrorReporting_inheritNotFound() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.InheritNotFound",
+        "Unable to find 'com/google/gwt/dev/cfg/testdata/NonExistentModule.gwt.xml' on your "
+            + "classpath; could be a typo, or maybe you forgot to include a classpath entry "
+            + "for source?");
+  }
+
+  public void testErrorReporting_multipleErrors() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.MultipleErrors",
+        "Element 'module' beginning on line 1 contains unexpected attribute 'blah'");
+  }
+
+  public void testErrorReporting_unexpectedAttribute() throws UnableToCompleteException,
+      IOException, IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.UnexpectedAttribute",
+        "Element 'inherits' beginning on line 2 contains unexpected attribute 'blah'");
+  }
+
+  public void testErrorReporting_unexpectedTag() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.UnexpectedTag",
+        "Line 2: Unexpected element 'inherited'");
+  }
+
   public void testLoadFromLibraryGroup() throws UnableToCompleteException, IOException,
       IncompatibleLibraryVersionException {
     // Create the library zip file.
@@ -321,6 +381,25 @@ public class ModuleDefLoaderTest extends TestCase {
     // property.
     assertEquals(Sets.newHashSet(mockLibraryWriter.getNewConfigurationPropertyValuesByName().get(
         "libraryTwoConfigProperty")), Sets.newHashSet("false"));
+  }
+
+  private void assertErrorsWhenLoading(String moduleName, String... errorMessages) {
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.WARN);
+    for (String errorMessage : errorMessages) {
+      builder.expectError(errorMessage, null);
+
+      UnitTestTreeLogger logger = builder.createLogger();
+
+      try {
+        ModuleDefLoader.loadFromClassPath(
+            logger, compilerContext, moduleName);
+        fail("Should have failed to load module.");
+      } catch (UnableToCompleteException e) {
+        // failure is expected.
+      }
+      logger.assertCorrectLogEntries();
+    }
   }
 
   @Override

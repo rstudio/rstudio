@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -76,6 +77,9 @@ public class GetJreEmulation {
       TypeOracle typeOracle = compilationState.getTypeOracle();
       SignatureDumper.dumpSignatures(typeOracle, System.out,
           new FilterImplementation());
+    } catch (UnableToCompleteException e) {
+      // Error has already been logged.
+      System.exit(1);
     } catch (Throwable e) {
       System.err.println("Unexpected error");
       e.printStackTrace();
