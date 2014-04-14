@@ -61,12 +61,12 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    configJson["environment"] = optionsAsJson(profile.config.environment);
    configJson["stdInput"] = profile.config.stdInput;
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
-   configJson["priority"] = profile.config.priority;
-   configJson["memoryLimitBytes"] = profile.config.memoryLimitBytes;
-   configJson["stackLimitBytes"] = profile.config.stackLimitBytes;
-   configJson["userProcessesLimit"] = profile.config.userProcessesLimit;
-   configJson["cpuLimit"] = profile.config.cpuLimit;
-   configJson["niceLimit"] = profile.config.niceLimit;
+   configJson["priority"] = profile.config.limits.priority;
+   configJson["memoryLimitBytes"] = profile.config.limits.memoryLimitBytes;
+   configJson["stackLimitBytes"] = profile.config.limits.stackLimitBytes;
+   configJson["userProcessesLimit"] = profile.config.limits.userProcessesLimit;
+   configJson["cpuLimit"] = profile.config.limits.cpuLimit;
+   configJson["niceLimit"] = profile.config.limits.niceLimit;
    profileJson["config"] = configJson;
    return profileJson;
 }
@@ -114,12 +114,12 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    profile.config.stdInput = stdInput;
    profile.config.stdStreamBehavior =
             static_cast<core::system::StdStreamBehavior>(stdStreamBehavior);
-   profile.config.priority = priority;
-   profile.config.memoryLimitBytes = memoryLimitBytes;
-   profile.config.stackLimitBytes = stackLimitBytes;
-   profile.config.userProcessesLimit = userProcessesLimit;
-   profile.config.cpuLimit = cpuLimit;
-   profile.config.niceLimit = niceLimit;
+   profile.config.limits.priority = priority;
+   profile.config.limits.memoryLimitBytes = memoryLimitBytes;
+   profile.config.limits.stackLimitBytes = stackLimitBytes;
+   profile.config.limits.userProcessesLimit = userProcessesLimit;
+   profile.config.limits.cpuLimit = cpuLimit;
+   profile.config.limits.niceLimit = niceLimit;
 
    // return profile
    return profile;

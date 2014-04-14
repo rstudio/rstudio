@@ -876,50 +876,54 @@ void printCoreDumpable(const std::string& context)
 
 namespace {
 
-void setProcessLimits(RLimitType memoryLimitBytes,
-                      RLimitType stackLimitBytes,
-                      RLimitType userProcessesLimit,
-                      RLimitType cpuLimit,
-                      RLimitType niceLimit)
+void setProcessLimits(ProcessLimits limits)
 {
    // memory limit
-   if (memoryLimitBytes != 0)
+   if (limits.memoryLimitBytes != 0)
    {
-      Error error = setResourceLimit(MemoryLimit, memoryLimitBytes);
+      Error error = setResourceLimit(MemoryLimit, limits.memoryLimitBytes);
       if (error)
          LOG_ERROR(error);
    }
 
    // stack limit
-   if (stackLimitBytes != 0)
+   if (limits.stackLimitBytes != 0)
    {
-      Error error = setResourceLimit(StackLimit, stackLimitBytes);
+      Error error = setResourceLimit(StackLimit, limits.stackLimitBytes);
       if (error)
          LOG_ERROR(error);
    }
 
    // user processes limit
-   if (userProcessesLimit != 0)
+   if (limits.userProcessesLimit != 0)
    {
-      Error error = setResourceLimit(UserProcessesLimit, userProcessesLimit);
+      Error error = setResourceLimit(UserProcessesLimit,
+                                     limits.userProcessesLimit);
       if (error)
          LOG_ERROR(error);
    }
 
    // cpu limit
-   if (cpuLimit != 0)
+   if (limits.cpuLimit != 0)
    {
-      Error error = setResourceLimit(CpuLimit, cpuLimit);
+      Error error = setResourceLimit(CpuLimit, limits.cpuLimit);
       if (error)
          LOG_ERROR(error);
    }
 
    // nice limit
-   if (niceLimit != 0)
+   if (limits.niceLimit != 0)
    {
-      Error error = setResourceLimit(NiceLimit, niceLimit);
+      Error error = setResourceLimit(NiceLimit, limits.niceLimit);
       if (error)
          LOG_ERROR(error);
+   }
+
+   // priority
+   if (limits.priority != 0)
+   {
+      if (::setpriority(PRIO_PROCESS, 0, limits.priority) == -1)
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
 }
 
@@ -1025,18 +1029,7 @@ Error launchChildProcess(std::string path,
          }
 
          // set limits
-         setProcessLimits(config.memoryLimitBytes,
-                          config.stackLimitBytes,
-                          config.userProcessesLimit,
-                          config.cpuLimit,
-                          config.niceLimit);
-
-         // set priority if we have one
-         if (config.priority != 0)
-         {
-            if (::setpriority(PRIO_PROCESS, 0, config.priority) == -1)
-               LOG_ERROR(systemError(errno, ERROR_LOCATION));
-         }
+         setProcessLimits(config.limits);
 
          // switch user
          error = permanentlyDropPriv(runAsUser);

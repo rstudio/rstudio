@@ -86,29 +86,37 @@ enum StdStreamBehavior
    StdStreamInherit = 2
 };
 
-struct ProcessConfig
+struct ProcessLimits
 {
-   ProcessConfig()
-      : stdStreamBehavior(StdStreamInherit),
-        priority(0),
-        memoryLimitBytes(0),
-        stackLimitBytes(0),
-        userProcessesLimit(0),
-        cpuLimit(0),
-        niceLimit(0)
+   ProcessLimits()
+     : priority(0),
+       memoryLimitBytes(0),
+       stackLimitBytes(0),
+       userProcessesLimit(0),
+       cpuLimit(0),
+       niceLimit(0)
    {
    }
 
-   core::system::Options args;
-   core::system::Options environment;
-   std::string stdInput;
-   StdStreamBehavior stdStreamBehavior;
    int priority;
    RLimitType memoryLimitBytes;
    RLimitType stackLimitBytes;
    RLimitType userProcessesLimit;
    RLimitType cpuLimit;
    RLimitType niceLimit;
+};
+
+struct ProcessConfig
+{
+   ProcessConfig()
+      : stdStreamBehavior(StdStreamInherit)
+   {
+   }
+   core::system::Options args;
+   core::system::Options environment;
+   std::string stdInput;
+   StdStreamBehavior stdStreamBehavior;
+   ProcessLimits limits;
 };
 
 core::Error waitForProcessExit(PidType processId);
