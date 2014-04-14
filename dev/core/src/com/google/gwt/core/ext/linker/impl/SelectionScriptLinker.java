@@ -250,19 +250,18 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       LinkerContext context, CompilationResult result, ArtifactSet artifacts)
       throws UnableToCompleteException {
     String[] js = result.getJavaScript();
-    byte[][] bytes = new byte[js.length][];
-    bytes[0] = generatePrimaryFragment(logger, context, result, js, artifacts);
-
-    for (int i = 1; i < js.length; i++) {
-      bytes[i] = Util.getBytes(generateDeferredFragment(logger, context, i, js[i], artifacts,
-          result));
-    }
 
     Collection<Artifact<?>> toReturn = new ArrayList<Artifact<?>>();
-    toReturn.add(emitBytes(logger, bytes[0], result.getStrongName()
+
+    byte[] primary = generatePrimaryFragment(logger, context, result, js, artifacts);
+    toReturn.add(emitBytes(logger, primary, result.getStrongName()
         + getCompilationExtension(logger, context)));
+    primary = null;
+
     for (int i = 1; i < js.length; i++) {
-      toReturn.add(emitBytes(logger, bytes[i], FRAGMENT_SUBDIR + File.separator
+      byte[] bytes = Util.getBytes(generateDeferredFragment(logger, context, i, js[i], artifacts,
+          result));
+      toReturn.add(emitBytes(logger, bytes, FRAGMENT_SUBDIR + File.separator
           + result.getStrongName() + File.separator + i + FRAGMENT_EXTENSION));
     }
 
