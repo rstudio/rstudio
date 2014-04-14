@@ -151,9 +151,11 @@ Error SessionManager::launchSession(const std::string& username)
    profile.executablePath = server::options().rsessionPath();
    profile.config = sessionProcessConfig(username);
 
-   // pass the profile to the filter if we have one
-   if (sessionLaunchProfileFilter_)
-      sessionLaunchProfileFilter_(&profile);
+   // pass the profile to any filters we have
+   BOOST_FOREACH(SessionLaunchProfileFilter f, sessionLaunchProfileFilters_)
+   {
+      f(&profile);
+   }
 
    // launch the session
    Error error = sessionLaunchFunction_(profile);
@@ -200,10 +202,10 @@ void SessionManager::setSessionLaunchFunction(
    sessionLaunchFunction_ = launchFunction;
 }
 
-void SessionManager::setSessionLaunchProfileFilter(
+void SessionManager::addSessionLaunchProfileFilter(
                               const SessionLaunchProfileFilter& filter)
 {
-   sessionLaunchProfileFilter_ = filter;
+   sessionLaunchProfileFilters_.push_back(filter);
 }
 
 void SessionManager::removePendingLaunch(const std::string& username)

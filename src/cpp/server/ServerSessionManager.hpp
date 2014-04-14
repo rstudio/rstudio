@@ -65,7 +65,7 @@ public:
    typedef boost::function<void(
                            core::r_util::SessionLaunchProfile*)>
                                                   SessionLaunchProfileFilter;
-   void setSessionLaunchProfileFilter(const SessionLaunchProfileFilter& filter);
+   void addSessionLaunchProfileFilter(const SessionLaunchProfileFilter& filter);
 
    // notification that a SIGCHLD was received
    void notifySIGCHLD();
@@ -82,9 +82,11 @@ private:
    typedef std::map<std::string,boost::posix_time::ptime> LaunchMap;
    LaunchMap pendingLaunches_;
 
-   // session launch function and profile filter
+   // session launch function
    SessionLaunchFunction sessionLaunchFunction_;
-   SessionLaunchProfileFilter sessionLaunchProfileFilter_;
+
+   // session launch profile filters
+   std::vector<SessionLaunchProfileFilter> sessionLaunchProfileFilters_;
 
    // child process tracker
    core::system::ChildProcessTracker processTracker_;
