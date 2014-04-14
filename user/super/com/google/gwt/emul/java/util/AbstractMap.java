@@ -25,6 +25,72 @@ package java.util;
  */
 public abstract class AbstractMap<K, V> implements Map<K, V> {
 
+  /**
+   * A mutable {@link Map.Entry} shared by several {@link Map} implementations.
+   */
+  public static class SimpleEntry<K, V> extends AbstractMapEntry<K, V> {
+    private final K key;
+    private V value;
+
+    public SimpleEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    public SimpleEntry(Entry<? extends K, ? extends V> entry) {
+      this(entry.getKey(), entry.getValue());
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      V oldValue = this.value;
+      this.value = value;
+      return oldValue;
+    }
+  }
+
+  /**
+   * An immutable {@link Map.Entry} shared by several {@link Map} implementations.
+   */
+  public static class SimpleImmutableEntry<K, V> extends AbstractMapEntry<K, V> {
+    private final K key;
+    private final V value;
+
+    public SimpleImmutableEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    public SimpleImmutableEntry(Entry<? extends K, ? extends V> entry) {
+      this(entry.getKey(), entry.getValue());
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
   protected AbstractMap() {
   }
 
@@ -207,7 +273,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
       K k = entry.getKey();
       if (Objects.equals(key, k)) {
         if (remove) {
-          entry = new MapEntryImpl<K, V>(entry.getKey(), entry.getValue());
+          entry = new SimpleEntry<K, V>(entry.getKey(), entry.getValue());
           iter.remove();
         }
         return entry;

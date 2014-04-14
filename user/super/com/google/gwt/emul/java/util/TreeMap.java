@@ -163,15 +163,13 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
    * @param <K> key type
    * @param <V> value type
    */
-  private static class Node<K, V> implements Entry<K, V> {
+  private static class Node<K, V> extends SimpleEntry<K, V> {
     /*
      * The children are kept in an array to minimize the normal duplication of
      * code.
      */
-    protected Node<K, V>[] child;
+    protected final Node<K, V>[] child;
     protected boolean isRed;
-    protected K key;
-    protected V value;
 
     /**
      * Create a red node.
@@ -193,47 +191,9 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     @SuppressWarnings("unchecked")
     // create array of generic elements
     public Node(K key, V value, boolean isRed) {
-      this.key = key;
-      this.value = value;
+      super(key, value);
       child = new Node[2]; // suppress unchecked
       this.isRed = isRed;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (!(o instanceof Map.Entry)) {
-        return false;
-      }
-      Map.Entry<?, ?> other = (Map.Entry<?, ?>) o;
-      return Objects.equals(key, other.getKey())
-          && Objects.equals(value, other.getValue());
-    }
-
-    public K getKey() {
-      return key;
-    }
-
-    public V getValue() {
-      return value;
-    }
-
-    @Override
-    public int hashCode() {
-      int keyHash = (key != null ? key.hashCode() : 0);
-      int valueHash = (value != null ? value.hashCode() : 0);
-      return keyHash ^ valueHash;
-    }
-
-    public V setValue(V value) {
-      V old = this.value;
-      this.value = value;
-      return old;
-    }
-
-    @Override
-    public String toString() {
-      // for compatibility with the real Jre: issue 3422
-      return key + "=" + value;
     }
   }
 
@@ -373,10 +333,10 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
     public K firstKey() {
       Node<K, V> node = throwNSE(getFirstSubmapNode());
-      if (type.toKeyValid() && cmp.compare(node.key, toKey) > 0) {
+      if (type.toKeyValid() && cmp.compare(node.getKey(), toKey) > 0) {
         throw new NoSuchElementException();
       }
-      return node.key;
+      return node.getKey();
     }
 
     @SuppressWarnings("unchecked")
@@ -408,10 +368,10 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
     public K lastKey() {
       Node<K, V> node = throwNSE(getLastSubmapNode());
-      if (type.fromKeyValid() && cmp.compare(node.key, fromKey) < 0) {
+      if (type.fromKeyValid() && cmp.compare(node.getKey(), fromKey) < 0) {
         throw new NoSuchElementException();
       }
-      return node.key;
+      return node.getKey();
     }
 
     @Override
@@ -631,7 +591,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   }
 
   public K firstKey() {
-    return throwNSE(getFirstNode()).key;
+    return throwNSE(getFirstNode()).getKey();
   }
 
   @SuppressWarnings("unchecked")
@@ -653,7 +613,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   }
 
   public K lastKey() {
-    return throwNSE(getLastNode()).key;
+    return throwNSE(getLastNode()).getKey();
   }
 
   @Override
@@ -701,7 +661,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     Node<K, V> foundNode = null;
     Node<K, V> node = root;
     while (node != null) {
-      int c = cmp.compare(key, node.key);
+      int c = cmp.compare(key, node.getKey());
       if (c == 0) {
         return node;
       } else if (c > 0) {
@@ -724,7 +684,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     Node<K, V> foundNode = null;
     Node<K, V> node = root;
     while (node != null) {
-      int c = cmp.compare(key, node.key);
+      int c = cmp.compare(key, node.getKey());
       if (c <= 0) {
         node = node.child[LEFT];
       } else {
@@ -768,12 +728,12 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     }
 
     if (tree.child[LEFT] != null
-        && cmp.compare(tree.child[LEFT].key, tree.key) > 0) {
+        && cmp.compare(tree.child[LEFT].getKey(), tree.getKey()) > 0) {
       throw new RuntimeException("Left child " + tree.child[LEFT]
           + " larger than " + tree);
     }
     if (tree.child[RIGHT] != null
-        && cmp.compare(tree.child[RIGHT].key, tree.key) < 0) {
+        && cmp.compare(tree.child[RIGHT].getKey(), tree.getKey()) < 0) {
       throw new RuntimeException("Right child " + tree.child[RIGHT]
           + " smaller than " + tree);
     }
@@ -795,7 +755,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   private Node<K, V> getEntry(K key) {
     Node<K, V> tree = root;
     while (tree != null) {
-      int c = cmp.compare(key, tree.key);
+      int c = cmp.compare(key, tree.getKey());
       if (c == 0) {
         return tree;
       }
@@ -852,11 +812,10 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     if (tree == null) {
       return newNode;
     } else {
-      int c = cmp.compare(tree.key, newNode.key);
+      int c = cmp.compare(tree.getKey(), newNode.getKey());
       if (c == 0) {
-        state.value = tree.value;
+        state.value = tree.setValue(newNode.getValue());
         state.found = true;
-        tree.value = newNode.value;
         return tree;
       }
       int childNum = (c > 0) ? LEFT : RIGHT;
@@ -915,9 +874,9 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
       grandparent = parent;
       parent = node;
       node = node.child[dir];
-      int c = cmp.compare(node.key, key);
+      int c = cmp.compare(node.getKey(), key);
       dir = c < 0 ? RIGHT : LEFT;
-      if (c == 0 && (!state.matchValue || node.value.equals(state.value))) {
+      if (c == 0 && (!state.matchValue || node.getValue().equals(state.value))) {
         found = node;
       }
       if (!isRed(node) && !isRed(node.child[dir])) {
@@ -949,7 +908,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
     if (found != null) {
       state.found = true;
-      state.value = found.value;
+      state.value = found.getValue();
       /**
        * put the "node" values in "found" (the node with key K) and cut "node"
        * out. However, we do not want to corrupt "found" -- issue 3423. So
@@ -959,7 +918,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
        * node to a leaf to avoid the extra traversal in replaceNode.
        */
       if (node != found) {
-        Node<K, V> newNode = new Node<K, V>(node.key, node.value);
+        Node<K, V> newNode = new Node<K, V>(node.getKey(), node.getValue());
         replaceNode(head, found, newNode);
         if (parent == found) {
           parent = newNode;
@@ -985,12 +944,12 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
    */
   private void replaceNode(Node<K, V> head, Node<K, V> node, Node<K, V> newNode) {
     Node<K, V> parent = head;
-    int direction = (parent.key == null || cmp.compare(node.key, parent.key) > 0)
+    int direction = (parent.getKey() == null || cmp.compare(node.getKey(), parent.getKey()) > 0)
         ? RIGHT : LEFT; // parent.key == null handles the fake root node
     while (parent.child[direction] != node) {
       parent = parent.child[direction];
       assert parent != null;
-      direction = cmp.compare(node.key, parent.key) > 0 ? RIGHT : LEFT;
+      direction = cmp.compare(node.getKey(), parent.getKey()) > 0 ? RIGHT : LEFT;
     }
     // replace node with newNode
     parent.child[direction] = newNode;

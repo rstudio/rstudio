@@ -38,7 +38,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
    * small modifications. Paying a small storage cost only if you use
    * LinkedHashMap and minimizing code size seemed like a better tradeoff
    */
-  private class ChainEntry extends MapEntryImpl<K, V> {
+  private class ChainEntry extends SimpleEntry<K, V> {
     private transient ChainEntry next;
     private transient ChainEntry prev;
 
@@ -81,7 +81,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
 
   private final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
 
-    private final class EntryIterator implements Iterator<Entry<K, V>> {
+    private final class EntryIterator implements Iterator<Map.Entry<K, V>> {
       // The last entry that was returned from this iterator.
       private ChainEntry last;
 
@@ -272,7 +272,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
   }
 
   @SuppressWarnings("unused")
-  protected boolean removeEldestEntry(Entry<K, V> eldest) {
+  protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
     return false;
   }
 

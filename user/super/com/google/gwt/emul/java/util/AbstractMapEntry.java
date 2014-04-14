@@ -51,6 +51,7 @@ abstract class AbstractMapEntry<K, V> implements Map.Entry<K, V> {
 
   @Override
   public final String toString() {
+    // for compatibility with the real Jre: issue 3422
     return getKey() + "=" + getValue();
   }
 }
