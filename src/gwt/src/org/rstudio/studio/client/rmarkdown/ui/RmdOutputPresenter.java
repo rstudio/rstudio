@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -181,8 +182,17 @@ public class RmdOutputPresenter implements
    
    private void onClose() 
    {
-      params_.setScrollPosition(view_.getScrollPosition());
-      params_.setAnchor(view_.getAnchor());
+      try
+      {
+         params_.setScrollPosition(view_.getScrollPosition());
+         params_.setAnchor(view_.getAnchor());
+      }
+      catch (Exception e)
+      {
+         // the above can fail with a security exception if the view is pointed
+         // to a URL on a different domain; in this case we'll just live without
+         // persisted positions
+      }
       notifyRmdOutputClosed(params_);
    }
    

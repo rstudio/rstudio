@@ -41,7 +41,6 @@ public class RmdPreviewParams extends JavaScriptObject
    public native final String getTargetFile() /*-{
       return this.result.target_file;
    }-*/;
-
    
    public native final String getOutputFile() /*-{
       return this.result.output_file;

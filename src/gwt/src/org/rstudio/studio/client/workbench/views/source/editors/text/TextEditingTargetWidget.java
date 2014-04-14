@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureHeightHandler;
@@ -575,6 +576,9 @@ public class TextEditingTargetWidget
    {
       setFormatOptionsVisible(false);
       knitCommandText_ = "Run Document";
+      knitDocumentButton_.setTitle("View the current document with Shiny (" +
+            DomUtils.htmlToText(
+                  commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
    }
@@ -587,6 +591,7 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(
             commands_.knitDocument().getImageResource());
+      knitDocumentButton_.setTitle(commands_.knitDocument().getTooltip());
       previewCommandText_ = "Preview" + text;
       previewHTMLButton_.setText(previewCommandText_);
    }
