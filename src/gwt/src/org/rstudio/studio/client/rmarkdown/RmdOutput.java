@@ -21,18 +21,21 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
@@ -41,12 +44,16 @@ import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -55,7 +62,9 @@ import com.google.inject.Singleton;
 @Singleton
 public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RmdRenderCompletedEvent.Handler,
-                                  RmdShinyDocStartedEvent.Handler
+                                  RmdShinyDocStartedEvent.Handler,
+                                  RenderRmdEvent.Handler,
+                                  RenderRmdSourceEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, RmdOutput> {}
@@ -84,6 +93,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
       eventBus.addHandler(RmdShinyDocStartedEvent.TYPE, this);
+      eventBus.addHandler(RenderRmdEvent.TYPE, this);
+      eventBus.addHandler(RenderRmdSourceEvent.TYPE, this);
 
       binder.bind(commands, this);
       
@@ -107,10 +118,19 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
+      // if there's a custom operation to be run when render completes, run
+      // that instead
+      if (onRenderCompleted_ != null)
+      {
+         onRenderCompleted_.execute();
+         onRenderCompleted_ = null;
+         return;
+      }
+
       final RmdRenderResult result = event.getResult();
       if (!result.getSucceeded())
          return;
-
+      
       if (result.hasShinyContent() && !result.isShinyDocument())
       {
          // If the result has Shiny content but wasn't rendered as a Shiny
@@ -145,11 +165,69 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onRmdShinyDocStarted(RmdShinyDocStartedEvent event)
    {
+      currentShinyFile_ = event.getFile();
       displayHTMLRenderResult(
             RmdRenderResult.createFromShinyUrl(event.getFile(), 
                                                event.getUrl()));
    }
    
+   @Override
+   public void onRenderRmd(final RenderRmdEvent event)
+   {
+      final Operation renderOperation = new Operation() {
+         @Override
+         public void execute()
+         {
+            server_.renderRmd(event.getSourceFile(), 
+                              event.getSourceLine(),
+                              event.getFormat(),
+                              event.getEncoding(), 
+                              event.asShiny(),
+                  new SimpleRequestCallback<Boolean>());
+         }
+      };
+
+      if (event.getSourceFile().equals(currentShinyFile_))
+      {
+         // this is a refresh of a Shiny doc; just reactivate the window 
+         satelliteManager_.activateSatelliteWindow(RmdOutputSatellite.NAME);
+      }
+      else if (currentShinyFile_ != null)
+      {
+         // there is a Shiny doc running; we'll need to terminate it before 
+         // we can render this document
+         satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
+         server_.terminateRenderRmd(new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               onRenderCompleted_ = renderOperation;
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Shiny Terminate Failed", 
+                     "The Shiny document " + currentShinyFile_ + " needs to " +
+                     "be stopped before the document " + event.getSourceFile() +
+                     " can be rendered.");
+            }
+         });
+      }
+      else
+      {
+         renderOperation.execute();
+      }
+   }
+   
+   @Override
+   public void onRenderRmdSource(RenderRmdSourceEvent event)
+   {
+      server_.renderRmdSource(event.getSource(),
+                              new SimpleRequestCallback<Boolean>()); 
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void rerenderAsShiny(RmdRenderResult result)
@@ -348,6 +426,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       {
          server_.terminateRenderRmd(new VoidServerRequestCallback());
       }
+      currentShinyFile_ = null;
    }
    
    private void cacheDocPosition(RmdRenderResult result, int scrollPosition, 
@@ -389,4 +468,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final Map<String, String> anchors_ = 
          new HashMap<String, String>();
    private RmdRenderResult result_;
+   private String currentShinyFile_;
+   private Operation onRenderCompleted_;
 }

@@ -28,10 +28,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileError;
-import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
-import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
@@ -45,9 +42,7 @@ import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
 public class RenderRmdOutputPresenter extends BasePresenter
-   implements RenderRmdEvent.Handler,
-              RenderRmdSourceEvent.Handler,
-              RmdRenderStartedEvent.Handler,
+   implements RmdRenderStartedEvent.Handler,
               RmdRenderOutputEvent.Handler,
               RmdRenderCompletedEvent.Handler
 {
@@ -118,24 +113,6 @@ public class RenderRmdOutputPresenter extends BasePresenter
       {
         onConfirmed.execute();
       }
-   }
-
-   @Override
-   public void onRenderRmd(RenderRmdEvent event)
-   {
-      server_.renderRmd(event.getSourceFile(), 
-                        event.getSourceLine(),
-                        event.getFormat(),
-                        event.getEncoding(), 
-                        event.asShiny(),
-            new SimpleRequestCallback<Boolean>());
-   }
-   
-   @Override
-   public void onRenderRmdSource(RenderRmdSourceEvent event)
-   {
-      server_.renderRmdSource(event.getSource(),
-                              new SimpleRequestCallback<Boolean>()); 
    }
 
    @Override
