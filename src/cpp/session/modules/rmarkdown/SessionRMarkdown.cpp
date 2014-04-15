@@ -169,10 +169,12 @@ private:
       }
 
       std::string extraParams;
+      std::string targetFile(targetFile_.filename());
       std::string encodingParam("encoding = '" + encoding + "'");
       if (isShiny_)
       {
          extraParams += "shiny_args = list(launch.browser = FALSE), ";
+         extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
          encodingParam = "render_args = list(" + encodingParam + ")";
       }
       if (!format.empty())
@@ -184,7 +186,7 @@ private:
       boost::format fmt("%1%('%2%', %3% %4%);");
       std::string cmd = boost::str(fmt %
                                    renderFunc %
-                                   targetFile_.filename() %
+                                   targetFile %
                                    extraParams %
                                    encodingParam);
 
@@ -260,7 +262,8 @@ private:
                startedJson["target_file"] =
                      module_context::createAliasedPath(targetFile_);
                startedJson["url"] =
-                     module_context::mapUrlPorts(matches[1].str());
+                     module_context::mapUrlPorts(matches[1].str()) +
+                     targetFile_.filename();
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));
