@@ -23,17 +23,17 @@ import java.io.File;
 /**
  * File message.
  */
-public final class Message1File extends Message1 {
+public final class Message1File extends Message {
 
   public Message1File(Type type, String fmt) {
-    super(type, fmt);
+    super(type, fmt, 1);
   }
 
   public TreeLogger branch(TreeLogger logger, File f, Throwable caught) {
-    return branch1(logger, f, getFormatter(f), caught);
+    return branch(logger, f, getFormatter(f), caught);
   }
 
   public void log(TreeLogger logger, File f, Throwable caught) {
-    log1(logger, f, getFormatter(f), caught);
+    log(logger, f, getFormatter(f), caught);
   }
 }

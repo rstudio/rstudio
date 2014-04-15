@@ -23,22 +23,22 @@ import java.lang.reflect.Method;
 /**
  * Integer, Method, & String message.
  */
-public final class Message3IntMethodString extends Message3 {
+public final class Message3IntMethodString extends Message {
 
   public Message3IntMethodString(Type type, String fmt) {
-    super(type, fmt);
+    super(type, fmt, 3);
   }
 
   public TreeLogger branch(TreeLogger logger, int x, Method m, String s,
       Throwable caught) {
     Integer xi = Integer.valueOf(x);
-    return branch3(logger, xi, m, s, getFormatter(xi), getFormatter(m),
+    return branch(logger, xi, m, s, getFormatter(xi), getFormatter(m),
         getFormatter(s), caught);
   }
 
   public void log(TreeLogger logger, int x, Method m, String s, Throwable caught) {
     Integer xi = Integer.valueOf(x);
-    log3(logger, xi, m, s, getFormatter(xi), getFormatter(m), getFormatter(s),
+    log(logger, xi, m, s, getFormatter(xi), getFormatter(m), getFormatter(s),
         caught);
   }
 

@@ -23,19 +23,19 @@ import java.net.URL;
 /**
  * URL & Integer message.
  */
-public final class Message2URLInt extends Message2 {
+public final class Message2URLInt extends Message {
 
   public Message2URLInt(Type type, String fmt) {
-    super(type, fmt);
+    super(type, fmt, 2);
   }
 
   public TreeLogger branch(TreeLogger logger, URL u, int x, Throwable caught) {
     Integer xi = Integer.valueOf(x);
-    return branch2(logger, u, xi, getFormatter(u), getFormatter(xi), caught);
+    return branch(logger, u, xi, getFormatter(u), getFormatter(xi), caught);
   }
 
   public void log(TreeLogger logger, URL u, int x, Throwable caught) {
     Integer xi = Integer.valueOf(x);
-    log2(logger, u, xi, getFormatter(u), getFormatter(xi), caught);
+    log(logger, u, xi, getFormatter(u), getFormatter(xi), caught);
   }
 }

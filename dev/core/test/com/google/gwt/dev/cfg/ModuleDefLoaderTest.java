@@ -74,6 +74,24 @@ public class ModuleDefLoaderTest extends TestCase {
             + "attribute specifications, \">\" or \"/>\".");
   }
 
+  public void testErrorReporting_badLinker() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.BadLinker",
+        "Line 2: Invalid linker name 'X'");
+  }
+
+  public void testErrorReporting_badProperty() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.BadProperty",
+        "Line 2: Property 'X' not found");
+  }
+
+  public void testErrorReporting_badPropertyValue() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.BadPropertyValue",
+        "Line 3: Value 'z' in not a valid value for property 'X'");
+  }
+
   public void testErrorReporting_deepError() throws UnableToCompleteException, IOException,
       IncompatibleLibraryVersionException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
@@ -109,16 +127,22 @@ public class ModuleDefLoaderTest extends TestCase {
             + "for source?");
   }
 
+  public void testErrorReporting_invalidName() throws UnableToCompleteException, IOException,
+      IncompatibleLibraryVersionException {
+    assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.InvalidName",
+        "Line 2: Invalid property name '123:33'");
+  }
+
   public void testErrorReporting_multipleErrors() throws UnableToCompleteException, IOException,
       IncompatibleLibraryVersionException {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.MultipleErrors",
-        "Element 'module' beginning on line 1 contains unexpected attribute 'blah'");
+        "Line 1: Unexpected attribute 'blah' in element 'module'");
   }
 
   public void testErrorReporting_unexpectedAttribute() throws UnableToCompleteException,
       IOException, IncompatibleLibraryVersionException {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.UnexpectedAttribute",
-        "Element 'inherits' beginning on line 2 contains unexpected attribute 'blah'");
+        "Line 2: Unexpected attribute 'blah' in element 'inherits'");
   }
 
   public void testErrorReporting_unexpectedTag() throws UnableToCompleteException, IOException,

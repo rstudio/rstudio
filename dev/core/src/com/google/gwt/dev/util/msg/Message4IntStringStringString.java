@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2014 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,20 +19,24 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 
 /**
- * Class & Class message.
+ * Integer, String, String & String message.
  */
-public final class Message2ClassClass extends Message {
+public final class Message4IntStringStringString extends Message {
 
-  public Message2ClassClass(Type type, String fmt) {
-    super(type, fmt, 2);
+  public Message4IntStringStringString(Type type, String fmt) {
+    super(type, fmt, 4);
   }
 
-  public TreeLogger branch(TreeLogger logger, Class<?> c1, Class<?> c2,
+  public TreeLogger branch(TreeLogger logger, int x, String s1, String s2, String s3,
       Throwable caught) {
-    return branch(logger, c1, c2, getFormatter(c1), getFormatter(c2), caught);
+    Integer xi = Integer.valueOf(x);
+    return branch(logger, xi, s1, s2, s3, getFormatter(xi), getFormatter(s1), getFormatter(s2),
+        getFormatter(s3), caught);
   }
 
-  public void log(TreeLogger logger, Class<?> c1, Class<?> c2, Throwable caught) {
-    log(logger, c1, c2, getFormatter(c1), getFormatter(c2), caught);
+  public void log(TreeLogger logger, int x, String s1, String s2, String s3, Throwable caught) {
+    Integer xi = Integer.valueOf(x);
+    log(logger, xi, s1, s2, s3, getFormatter(xi), getFormatter(s1), getFormatter(s2),
+        getFormatter(s3), caught);
   }
 }

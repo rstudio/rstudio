@@ -21,20 +21,20 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 /**
  * Long message.
  */
-public final class Message1Long extends Message1 {
+public final class Message1Long extends Message {
 
   public Message1Long(Type type, String fmt) {
-    super(type, fmt);
+    super(type, fmt, 1);
   }
 
   public TreeLogger branch(TreeLogger logger, long x, Throwable caught) {
     Long xl = Long.valueOf(x);
-    return branch1(logger, xl, getFormatter(xl), caught);
+    return branch(logger, xl, getFormatter(xl), caught);
   }
 
   public void log(TreeLogger logger, long x, Throwable caught) {
     Long xl = Long.valueOf(x);
-    log1(logger, xl, getFormatter(xl), caught);
+    log(logger, xl, getFormatter(xl), caught);
   }
 
 }

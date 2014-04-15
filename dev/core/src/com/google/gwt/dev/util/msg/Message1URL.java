@@ -23,17 +23,17 @@ import java.net.URL;
 /**
  * URL message.
  */
-public final class Message1URL extends Message1 {
+public final class Message1URL extends Message {
 
   public Message1URL(Type type, String fmt) {
-    super(type, fmt);
+    super(type, fmt, 1);
   }
 
   public TreeLogger branch(TreeLogger logger, URL u, Throwable caught) {
-    return branch1(logger, u, getFormatter(u), caught);
+    return branch(logger, u, getFormatter(u), caught);
   }
 
   public void log(TreeLogger logger, URL u, Throwable caught) {
-    log1(logger, u, getFormatter(u), caught);
+    log(logger, u, getFormatter(u), caught);
   }
 }

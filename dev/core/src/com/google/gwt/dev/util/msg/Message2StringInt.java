@@ -21,20 +21,20 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 /**
  * String & Integer message.
  */
-public final class Message2StringInt extends Message2 {
+public final class Message2StringInt extends Message {
 
   public Message2StringInt(Type type, String fmt) {
-    super(type, fmt);
+    super(type, fmt, 2);
   }
 
   public TreeLogger branch(TreeLogger logger, String s, int x, Throwable caught) {
     Integer xi = Integer.valueOf(x);
-    return branch2(logger, s, xi, getFormatter(s), getFormatter(xi), caught);
+    return branch(logger, s, xi, getFormatter(s), getFormatter(xi), caught);
   }
 
   public void log(TreeLogger logger, String s, int x, Throwable caught) {
     Integer xi = Integer.valueOf(x);
-    log2(logger, s, xi, getFormatter(s), getFormatter(xi), caught);
+    log(logger, s, xi, getFormatter(s), getFormatter(xi), caught);
   }
 
 }

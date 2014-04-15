@@ -23,18 +23,18 @@ import java.net.URL;
 /**
  * String & URL message.
  */
-public final class Message2StringURL extends Message2 {
+public final class Message2StringURL extends Message {
 
   public Message2StringURL(Type type, String fmt) {
-    super(type, fmt);
+    super(type, fmt, 2);
   }
 
   public TreeLogger branch(TreeLogger logger, String s, URL u, Throwable caught) {
-    return branch2(logger, s, u, getFormatter(s), getFormatter(u), caught);
+    return branch(logger, s, u, getFormatter(s), getFormatter(u), caught);
   }
 
   public void log(TreeLogger logger, String s, URL u, Throwable caught) {
-    log2(logger, s, u, getFormatter(s), getFormatter(u), caught);
+    log(logger, s, u, getFormatter(s), getFormatter(u), caught);
   }
 
 }

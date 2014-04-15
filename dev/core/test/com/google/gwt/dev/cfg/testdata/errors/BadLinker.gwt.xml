@@ -1,0 +1,3 @@
+<module rename-to="F">
+  <add-linker name="X"/>
+</module>

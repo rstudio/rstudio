@@ -17,31 +17,28 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.util.msg.Message0;
-import com.google.gwt.dev.util.msg.Message1String;
-import com.google.gwt.dev.util.msg.Message2ClassClass;
+import com.google.gwt.dev.util.msg.Message2IntString;
+import com.google.gwt.dev.util.msg.Message3IntStringString;
+import com.google.gwt.dev.util.msg.Message4IntStringStringString;
 
 /**
  * User messages related to configuration.
  */
 class Messages {
+  public static final Message2IntString LINKER_NAME_INVALID = new Message2IntString(
+      TreeLogger.ERROR, "Line $0: Invalid linker name '$1'");
 
-  public static final Message2ClassClass INVALID_CLASS_DERIVATION = new Message2ClassClass(
-      TreeLogger.ERROR, "Class '$0' must derive from '$1'");
+  public static final Message2IntString NAME_INVALID = new Message2IntString(
+      TreeLogger.ERROR, "Line $0: Invalid name '$1'");
 
-  public static final Message1String LINKER_NAME_INVALID = new Message1String(
-      TreeLogger.ERROR, "Invalid linker name '$0'");
+  public static final Message2IntString PROPERTY_NAME_INVALID = new Message2IntString(
+      TreeLogger.ERROR, "Line $0: Invalid property name '$1'");
 
-  public static final Message1String NAME_INVALID = new Message1String(
-      TreeLogger.ERROR, "Invalid name '$0'");
+  public static final Message2IntString PROPERTY_NOT_FOUND = new Message2IntString(
+      TreeLogger.ERROR, "Line $0: Property '$1' not found");
 
-  public static final Message1String PROPERTY_NAME_INVALID = new Message1String(
-      TreeLogger.ERROR, "Invalid property name '$0'");
-
-  public static final Message1String PROPERTY_NOT_FOUND = new Message1String(
-      TreeLogger.ERROR, "Property '$0' not found");
-
-  public static final Message1String PROPERTY_VALUE_INVALID = new Message1String(
-      TreeLogger.ERROR, "Invalid property value '$0'");
+  public static final Message2IntString PROPERTY_VALUE_INVALID = new Message2IntString(
+      TreeLogger.ERROR, "Line $0: Invalid property value '$1'");
 
   public static final Message0 PUBLIC_PATH_LOCATIONS = new Message0(
       TreeLogger.TRACE, "Public resources found in...");
@@ -49,9 +46,23 @@ class Messages {
   public static final Message0 SOURCE_PATH_LOCATIONS = new Message0(
       TreeLogger.TRACE, "Translatable source found in...");
 
-  public static final Message1String UNABLE_TO_CREATE_OBJECT = new Message1String(
-      TreeLogger.ERROR, "Unable to create an instance of '$0'");
+  public static final Message2IntString UNABLE_TO_LOAD_CLASS = new Message2IntString(
+      TreeLogger.ERROR, "Line $0: Unable to load class '$1'");
 
-  public static final Message1String UNABLE_TO_LOAD_CLASS = new Message1String(
-      TreeLogger.ERROR, "Unable to load class '$0'");
+  public static final Message3IntStringString PROPERTY_VALUE_NOT_VALID =
+      new Message3IntStringString(TreeLogger.ERROR,
+          "Line $0: Value '$1' in not a valid value for property '$2'");
+
+  public static final Message3IntStringString UNDEFINED_CONFIGURATION_PROPERTY =
+      new Message3IntStringString(TreeLogger.WARN,
+          "Line $0: Setting configuration property named '$1' in module '$2' "
+              + "that has not been previously defined");
+
+  public static final Message2IntString CONFIGURATION_PROPERTY_REDEFINES_BINDING_PROPERTY =
+      new Message2IntString(TreeLogger.ERROR,
+          "Line $0: Property '$1' is already defined as a deferred-binding property");
+
+  public static final Message4IntStringStringString CANNOT_REPLACE_PROPERTY =
+      new Message4IntStringStringString(TreeLogger.ERROR,
+          "Line $0: Property '$1' cannot replace property '$2' of unknown type '$3'");
 }

@@ -28,15 +28,10 @@ public final class Message0 extends Message {
   }
 
   public TreeLogger branch(TreeLogger logger, Throwable caught) {
-    // Always branch, even if the branch root is not loggable.
-    // See TreeLogger.branch() for details as to why.
-    //
-    return logger.branch(type, new String(fmtParts[0]), caught);
+    return super.branch(logger, caught);
   }
 
   public void log(TreeLogger logger, Throwable caught) {
-    if (logger.isLoggable(type)) {
-      logger.log(type, new String(fmtParts[0]), caught);
-    }
+    super.log(logger, caught);
   }
 }

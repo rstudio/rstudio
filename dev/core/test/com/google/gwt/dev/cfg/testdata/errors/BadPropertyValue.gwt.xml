@@ -1,0 +1,4 @@
+<module rename-to="F">
+  <define-property name="X" values="x,y"/>
+  <set-property name="X" value="z"/>
+</module>

@@ -23,18 +23,18 @@ import java.io.File;
 /**
  * String & File message.
  */
-public final class Message2StringFile extends Message2 {
+public final class Message2StringFile extends Message {
 
   public Message2StringFile(Type type, String fmt) {
-    super(type, fmt);
+    super(type, fmt, 2);
   }
 
   public TreeLogger branch(TreeLogger logger, String s, File f, Throwable caught) {
-    return branch2(logger, s, f, getFormatter(s), getFormatter(f), caught);
+    return branch(logger, s, f, getFormatter(s), getFormatter(f), caught);
   }
 
   public void log(TreeLogger logger, String s, File f, Throwable caught) {
-    log2(logger, s, f, getFormatter(s), getFormatter(f), caught);
+    log(logger, s, f, getFormatter(s), getFormatter(f), caught);
   }
 
 }
