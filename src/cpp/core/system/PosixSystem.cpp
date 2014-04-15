@@ -919,6 +919,14 @@ void setProcessLimits(ProcessLimits limits)
          LOG_ERROR(error);
    }
 
+   // files limit
+   if (limits.filesLimit != 0)
+   {
+      Error error = setResourceLimit(FilesLimit, limits.filesLimit);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // priority
    if (limits.priority != 0)
    {
