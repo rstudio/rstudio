@@ -573,7 +573,10 @@ public class TextEditingTargetWidget
    @Override
    public void setIsShinyFormat()
    {
-      setFormatOptionsVisible(false);
+      // hide the format picker for Shiny documents
+      rmdFormatButton_.setVisible(false);
+      rmdFormatButton_.setEnabled(false);
+      
       knitCommandText_ = "Run Document";
       knitDocumentButton_.setTitle("View the current document with Shiny (" +
             DomUtils.htmlToText(

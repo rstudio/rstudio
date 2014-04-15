@@ -34,6 +34,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.CssResource;
@@ -63,18 +64,26 @@ public class RmdTemplateOptionsWidget extends Composite
       String optionWidget();
    }
 
-   public RmdTemplateOptionsWidget()
+   public RmdTemplateOptionsWidget(boolean allowFormatChange)
    {
       initWidget(uiBinder.createAndBindUi(this));
       style.ensureInjected();
-      listFormats_.addChangeHandler(new ChangeHandler()
+      allowFormatChange_ = allowFormatChange;
+      if (allowFormatChange)
       {
-         @Override
-         public void onChange(ChangeEvent event)
+         listFormats_.addChangeHandler(new ChangeHandler()
          {
-            updateFormatOptions(getSelectedFormat());
-         }
-      });
+            @Override
+            public void onChange(ChangeEvent event)
+            {
+               updateFormatOptions(getSelectedFormat());
+            }
+         });
+      }
+      else
+      {
+         formatPanel_.setVisible(false);
+      }
    }
    
    public void setTemplate(RmdTemplate template, boolean forCreate)
@@ -220,6 +229,15 @@ public class RmdTemplateOptionsWidget extends Composite
       tabOuter.getStyle().setOverflow(Overflow.VISIBLE);
       Element tabInner = (Element) tabOuter.getFirstChild();
       tabInner.getStyle().clearWidth();
+      if (!allowFormatChange_) 
+      {
+         // if we're not allowing format changes, reposition the GWT-provided
+         // tab element's parent so the tabs are correctly positioned inside
+         // the dialog
+         Element tabParent = 
+               (Element) optionsTabs_.getElement().getParentElement();
+         tabParent.getStyle().setPosition(Position.STATIC);
+      }
    }
    
    private RmdFormatOption createWidgetForOption(RmdTemplateFormatOption option,
@@ -363,6 +381,7 @@ public class RmdTemplateOptionsWidget extends Composite
    private List<RmdFormatOption> optionWidgets_;
    private RmdFrontMatter frontMatter_;
    private FileSystemItem document_;
+   private boolean allowFormatChange_;
    
    // Cache of options present in the template (ignores those options that 
    // are specifically marked for a format)
@@ -381,4 +400,5 @@ public class RmdTemplateOptionsWidget extends Composite
    @UiField Label labelFormatNotes_;
    @UiField TabLayoutPanel optionsTabs_;
    @UiField OptionsStyle style;
+   @UiField FlowPanel formatPanel_;
 }

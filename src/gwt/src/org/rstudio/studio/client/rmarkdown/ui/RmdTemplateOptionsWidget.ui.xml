@@ -100,7 +100,7 @@
 	}
 	</ui:style>
    <g:HeaderPanel styleName="{style.root}">
-      <g:FlowPanel styleName="{style.formatPanel}">
+      <g:FlowPanel styleName="{style.formatPanel}" ui:field="formatPanel_">
          <g:InlineLabel styleName="{style.topLabel}" text="Output Format:"></g:InlineLabel>
          <g:ListBox ui:field="listFormats_"></g:ListBox>
          <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"></g:Label>

@@ -42,14 +42,15 @@ public class RmdTemplateOptionsDialog
          String initialFormat,
          RmdFrontMatter frontMatter, 
          FileSystemItem document,
+         boolean isShiny,
          OperationWithInput<RmdTemplateOptionsDialog.Result> onSaved,
          Operation onCancelled)
    {
-      super("Edit R Markdown " + template.getName() + " Options", 
+      super("Edit Shiny " + template.getName() + " Options", 
             onSaved, onCancelled);
       setWidth("350px");
       setHeight("400px");
-      templateOptions_ = new RmdTemplateOptionsWidget();
+      templateOptions_ = new RmdTemplateOptionsWidget(!isShiny);
       templateOptions_.setDocument(document);
       templateOptions_.setTemplate(template, false, frontMatter);
       templateOptions_.setSelectedFormat(initialFormat);

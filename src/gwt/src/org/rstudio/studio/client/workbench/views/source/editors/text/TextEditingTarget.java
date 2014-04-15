@@ -80,7 +80,6 @@ import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
-import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
@@ -539,6 +538,7 @@ public class TextEditingTarget implements
                   return;
                String newYaml = rmarkdownHelper_.convertYamlToShinyDoc(yaml);
                applyRmdFrontMatter(newYaml);
+               renderRmd();
             }
          }
       });
@@ -2352,38 +2352,24 @@ public class TextEditingTarget implements
    
    private void showFrontMatterEditorDialog(String yaml, RmdYamlData data)
    {
-      JsArrayString existingFormats = data.getFrontMatter().getFormatList();
-      String format = "";
-      RmdTemplate template = null;
-      if (existingFormats != null && existingFormats.length() == 1)
+      RmdSelectedTemplate selTemplate = 
+            rmarkdownHelper_.getTemplateFormat(yaml);
+      if (selTemplate == null)
       {
-         // If there's only one format, just show the editor for that format
-         format = existingFormats.get(0);
-         template = rmarkdownHelper_.getTemplateForFormat(format);
-      }
-      else
-      {
-         // If there are multiple formats, get the selected template format from
-         // the YAML, and show the dialog for the given format
-         RmdSelectedTemplate selTemplate = 
-               rmarkdownHelper_.getTemplateFormat(yaml);
-         if (selTemplate == null)
-         {
-            // we don't expect this to happen since we disable the dialog
-            // entry point when we can't find an associated template
-            globalDisplay_.showErrorMessage("Edit Format Failed", 
-                  "Couldn't determine the format options from the YAML front " +
-                  "matter. Make sure the YAML defines a supported output " +
-                  "format in its 'output' field.");
-            return;
-         }
-         format = selTemplate.format;
-         template = selTemplate.template;
+         // we don't expect this to happen since we disable the dialog
+         // entry point when we can't find an associated template
+         globalDisplay_.showErrorMessage("Edit Format Failed", 
+               "Couldn't determine the format options from the YAML front " +
+               "matter. Make sure the YAML defines a supported output " +
+               "format in its 'output' field.");
+         return;
       }
       RmdTemplateOptionsDialog dialog = 
-         new RmdTemplateOptionsDialog(template, format,
+         new RmdTemplateOptionsDialog(selTemplate.template, 
+            selTemplate.format,
             data.getFrontMatter(),
             getPath() == null ? null : FileSystemItem.createFile(getPath()),
+            selTemplate.isShiny,
             new OperationWithInput<RmdTemplateOptionsDialog.Result>()
             {
                @Override
