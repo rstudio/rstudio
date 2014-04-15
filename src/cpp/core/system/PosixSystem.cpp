@@ -925,6 +925,14 @@ void setProcessLimits(ProcessLimits limits)
       if (::setpriority(PRIO_PROCESS, 0, limits.priority) == -1)
          LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
+
+   // cpu affinity
+   if (!isCpuAffinityEmpty(limits.cpuAffinity))
+   {
+      Error error = setCpuAffinity(limits.cpuAffinity);
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 void copyEnvironmentVar(const std::string& name,

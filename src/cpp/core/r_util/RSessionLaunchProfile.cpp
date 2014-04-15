@@ -17,6 +17,8 @@
 
 #include <boost/foreach.hpp>
 
+#include <core/system/PosixSched.hpp>
+
 #include <core/json/JsonRpc.hpp>
 
 namespace core {
@@ -47,6 +49,22 @@ core::system::Options optionsFromJson(const json::Object& optionsJson)
    return options;
 }
 
+Error cpuAffinityFromJson(const json::Array& affinityJson,
+                          core::system::CpuAffinity* pAffinity)
+{
+   pAffinity->clear();
+
+   BOOST_FOREACH(const json::Value& val, affinityJson)
+   {
+      if (!json::isType<bool>(val))
+         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+
+      pAffinity->push_back(val.get_bool());
+   }
+
+   return Success();
+}
+
 } // anonymous namespace
 
 
@@ -67,6 +85,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    configJson["userProcessesLimit"] = profile.config.limits.userProcessesLimit;
    configJson["cpuLimit"] = profile.config.limits.cpuLimit;
    configJson["niceLimit"] = profile.config.limits.niceLimit;
+   configJson["cpuAffinity"] = json::toJsonArray(profile.config.limits.cpuAffinity);
    profileJson["config"] = configJson;
    return profileJson;
 }
@@ -108,6 +127,20 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    if (error)
       LOG_ERROR(error);
 
+   // read and convert cpu affinity
+   core::system::CpuAffinity cpuAffinity;
+   json::Array cpuAffinityJson;
+   error = json::readObject(configJson,
+                            "cpuAffinity", &cpuAffinityJson);
+   if (error)
+      LOG_ERROR(error);
+   error = cpuAffinityFromJson(cpuAffinityJson, &cpuAffinity);
+   if (error)
+   {
+      cpuAffinity.clear();
+      LOG_ERROR(error);
+   }
+
    // populate config
    profile.config.args = optionsFromJson(argsJson);
    profile.config.environment = optionsFromJson(envJson);
@@ -120,12 +153,11 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    profile.config.limits.userProcessesLimit = userProcessesLimit;
    profile.config.limits.cpuLimit = cpuLimit;
    profile.config.limits.niceLimit = niceLimit;
+   profile.config.limits.cpuAffinity = cpuAffinity;
 
    // return profile
    return profile;
 }
-
-
 
 } // namespace r_util
 } // namespace core 

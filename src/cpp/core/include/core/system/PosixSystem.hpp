@@ -18,6 +18,8 @@
 
 #include <core/system/System.hpp>
 
+#include <core/system/PosixSched.hpp>
+
 // typedefs (in case we need indirection on these for porting)
 #include <sys/resource.h>
 typedef pid_t PidType;
@@ -98,6 +100,7 @@ struct ProcessLimits
    {
    }
 
+   CpuAffinity cpuAffinity;
    int priority;
    RLimitType memoryLimitBytes;
    RLimitType stackLimitBytes;

@@ -184,6 +184,7 @@ if (UNIX)
       system/PosixLibraryLoader.cpp
       system/PosixParentProcessMonitor.cpp
       system/PosixOutputCapture.cpp
+      system/PosixSched.cpp
       system/PosixShellUtils.cpp
       system/PosixSystem.cpp
       system/PosixUser.cpp
