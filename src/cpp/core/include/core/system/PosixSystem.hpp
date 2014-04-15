@@ -96,7 +96,8 @@ struct ProcessLimits
        stackLimitBytes(0),
        userProcessesLimit(0),
        cpuLimit(0),
-       niceLimit(0)
+       niceLimit(0),
+       filesLimit(0)
    {
    }
 
@@ -107,6 +108,7 @@ struct ProcessLimits
    RLimitType userProcessesLimit;
    RLimitType cpuLimit;
    RLimitType niceLimit;
+   RLimitType filesLimit;
 };
 
 struct ProcessConfig
