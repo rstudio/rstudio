@@ -31,6 +31,7 @@ public class RmdRenderResult extends JavaScriptObject
      return {
         succeeded: true,
         target_file: file,
+        target_encoding: "UTF-8",
         output_file: "",
         output_url: shinyUrl, 
         output_format: null, 
@@ -52,6 +53,14 @@ public class RmdRenderResult extends JavaScriptObject
 
    public native final String getTargetFile() /*-{
       return this.target_file;
+   }-*/;
+   
+   public native final String getTargetEncoding() /*-{
+      return this.target_encoding;
+   }-*/;
+   
+   public native final int getTargetLine() /*-{
+      return this.target_line;
    }-*/;
    
    public native final String getOutputFile() /*-{

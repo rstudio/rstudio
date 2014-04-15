@@ -3387,7 +3387,8 @@ public class TextEditingTarget implements
                   docUpdateSentinel_.getPath(),
                   docDisplay_.getCursorPosition().getRow() + 1,
                   null,
-                  docUpdateSentinel_.getEncoding());
+                  docUpdateSentinel_.getEncoding(), 
+                  false);
             }
          });
       }

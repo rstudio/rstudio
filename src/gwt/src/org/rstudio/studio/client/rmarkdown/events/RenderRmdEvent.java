@@ -28,12 +28,14 @@ public class RenderRmdEvent extends GwtEvent<RenderRmdEvent.Handler>
    public RenderRmdEvent(String sourceFile, 
                          int sourceLine,
                          String format,
-                         String encoding)
+                         String encoding,
+                         boolean asShiny)
    {
       sourceFile_ = sourceFile;
       sourceLine_ = sourceLine;
       format_ = format;
       encoding_ = encoding;
+      asShiny_ = asShiny;
    }
 
    public String getSourceFile()
@@ -56,6 +58,11 @@ public class RenderRmdEvent extends GwtEvent<RenderRmdEvent.Handler>
       return encoding_;
    }
     
+   public boolean asShiny()
+   {
+      return asShiny_;
+   }
+    
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -72,6 +79,7 @@ public class RenderRmdEvent extends GwtEvent<RenderRmdEvent.Handler>
    private final int sourceLine_;
    private final String format_;
    private final String encoding_;
+   private final boolean asShiny_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

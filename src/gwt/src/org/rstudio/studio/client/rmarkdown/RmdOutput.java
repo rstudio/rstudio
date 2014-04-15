@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
@@ -125,7 +126,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                   displayRenderResult(result);
                   break;
                case ShinyDocumentWarningDialog.RENDER_SHINY_ONCE:
-                  // TODO Render doc in Shiny mode
+                  rerenderAsShiny(result);
                   break;
                case ShinyDocumentWarningDialog.RENDER_SHINY_ALWAYS:
                   events_.fireEvent(new ConvertToShinyDocEvent
@@ -150,6 +151,13 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    }
    
    // Private methods ---------------------------------------------------------
+   
+   private void rerenderAsShiny(RmdRenderResult result)
+   {
+      events_.fireEvent(new RenderRmdEvent(
+            result.getTargetFile(), result.getTargetLine(), 
+            null, result.getTargetEncoding(), true));
+   }
    
    private void displayRenderResult(final RmdRenderResult result)
    {

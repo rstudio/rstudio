@@ -45,6 +45,9 @@
 #define kMathjaxSegment "mathjax"
 #define kMathjaxBeginComment "<!-- dynamically load mathjax"
 
+#define kStandardRenderFunc "rmarkdown::render"
+#define kShinyRenderFunc "rmarkdown::run"
+
 #define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
 
 using namespace core;
@@ -63,10 +66,12 @@ public:
                                               int sourceLine,
                                               const std::string& format,
                                               const std::string& encoding,
+                                              bool asShiny,
                                               bool sourceNavigation)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
+                                                         asShiny,
                                                          sourceNavigation));
       pRender->start(format, encoding);
       return pRender;
@@ -93,10 +98,11 @@ public:
    }
 
 private:
-   RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation) :
+   RenderRmd(const FilePath& targetFile, int sourceLine, bool asShiny,
+             bool sourceNavigation) :
       isRunning_(false),
       terminationRequested_(false),
-      isShiny_(false),
+      isShiny_(asShiny),
       hasShinyContent_(false),
       targetFile_(targetFile),
       sourceLine_(sourceLine),
@@ -139,19 +145,28 @@ private:
       args.push_back("--no-restore");
       args.push_back("-e");
 
-      // see if the input file has a custom render function
       std::string renderFunc;
-      error = r::exec::RFunction(
-         ".rs.getCustomRenderFunction",
-         string_utils::utf8ToSystem(targetFile_.absolutePath())).call(
-                                                               &renderFunc);
-      if (error)
-         LOG_ERROR(error);
+      if (isShiny_)
+      {
+         // if a Shiny render was requested, use the Shiny render function
+         // regardless of what was specified in the doc
+         renderFunc = kShinyRenderFunc;
+      }
+      else
+      {
+         // see if the input file has a custom render function
+         error = r::exec::RFunction(
+            ".rs.getCustomRenderFunction",
+            string_utils::utf8ToSystem(targetFile_.absolutePath())).call(
+                                                                  &renderFunc);
+         if (error)
+            LOG_ERROR(error);
 
-      if (renderFunc.empty())
-         renderFunc = "rmarkdown::render";
-      else if (renderFunc == "rmarkdown::run")
-         isShiny_ = true;
+         if (renderFunc.empty())
+            renderFunc = kStandardRenderFunc;
+         else if (renderFunc == kShinyRenderFunc)
+            isShiny_ = true;
+      }
 
       std::string extraParams;
       std::string encodingParam("encoding = '" + encoding + "'");
@@ -318,6 +333,8 @@ private:
       resultJson["succeeded"] = succeeded;
       resultJson["target_file"] =
             module_context::createAliasedPath(targetFile_);
+      resultJson["target_encoding"] = encoding_;
+      resultJson["target_line"] = sourceLine_;
 
       std::string outputFile = module_context::createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
@@ -808,6 +825,7 @@ void doRenderRmd(const std::string& file,
                  int line,
                  const std::string& format,
                  const std::string& encoding,
+                 bool asShiny,
                  bool sourceNavigation,
                  json::JsonRpcResponse* pResponse)
 {
@@ -823,6 +841,7 @@ void doRenderRmd(const std::string& file,
                line,
                format,
                encoding,
+               asShiny,
                sourceNavigation);
       pResponse->setResult(true);
    }
@@ -833,15 +852,17 @@ Error renderRmd(const json::JsonRpcRequest& request,
 {
    int line = -1;
    std::string file, format, encoding;
+   bool asShiny = false;
    Error error = json::readParams(request.params,
                                   &file,
                                   &line,
                                   &format,
-                                  &encoding);
+                                  &encoding,
+                                  &asShiny);
    if (error)
       return error;
 
-   doRenderRmd(file, line, format, encoding, true, pResponse);
+   doRenderRmd(file, line, format, encoding, asShiny, true, pResponse);
 
    return Success();
 }
@@ -860,7 +881,8 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, pResponse);
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, false,
+               pResponse);
 
    return Success();
 }

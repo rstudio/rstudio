@@ -127,6 +127,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
                         event.getSourceLine(),
                         event.getFormat(),
                         event.getEncoding(), 
+                        event.asShiny(),
             new SimpleRequestCallback<Boolean>());
    }
    
