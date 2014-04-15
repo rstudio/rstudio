@@ -54,7 +54,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   }-*/;
 
   private void insertAt(int index, Object[] values) {
-    Array.nativeArraycopy(values, 0, array, index, values.length);
+    Array.nativeArrayInsert(values, 0, array, index, values.length);
   }
 
   /**

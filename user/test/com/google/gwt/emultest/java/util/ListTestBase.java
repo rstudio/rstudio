@@ -33,6 +33,26 @@ public abstract class ListTestBase extends TestArrayList {
   private static volatile boolean NO_OPTIMIZE_FALSE = false;
 
   public void testAddAll() {
+    List<Integer> list = makeEmptyList();
+    list.addAll(Arrays.asList(1, 2, 3, 4));
+    list.addAll(2, Arrays.asList(21, 22));
+
+    checkListSizeAndContent(list, 1, 2, 21, 22, 3 ,4);
+
+    list = makeEmptyList();
+    list.addAll(Arrays.asList(1, 2, 3, 4));
+    list.addAll(0, Arrays.asList(21, 22));
+
+    checkListSizeAndContent(list, 21, 22, 1, 2, 3 ,4);
+
+    list = makeEmptyList();
+    list.addAll(Arrays.asList(1, 2, 3, 4));
+    list.addAll(4, Arrays.asList(21, 22));
+
+    checkListSizeAndContent(list, 1, 2, 3 ,4, 21, 22);
+  }
+
+  public void testAddAllReturnValue() {
     assertFalse(makeEmptyList().addAll(makeEmptyList()));
     assertTrue(makeEmptyList().addAll(makeFullList()));
     assertFalse(makeEmptyList().addAll(0, makeEmptyList()));

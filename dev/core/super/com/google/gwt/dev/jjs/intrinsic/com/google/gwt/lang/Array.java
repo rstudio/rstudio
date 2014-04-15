@@ -151,6 +151,7 @@ public final class Array {
     Array.setElementTypeCategory(array, elementTypeCategory);
     return array;
   }
+
   /**
    * Copy an array using native Javascript. The destination array must be a real
    * Java array (ie, already has the GWT type info on it). No error checking is performed -- the
@@ -162,8 +163,32 @@ public final class Array {
    * @param destOfs offset into destination array
    * @param len number of elements to copy
    */
-  public static native void nativeArraycopy(
-      Object src, int srcOfs, Object dest, int destOfs, int len) /*-{
+  public static void nativeArraycopy(Object src, int srcOfs, Object dest, int destOfs, int len) {
+    nativeArraySplice(src, srcOfs, dest, destOfs, len, true);
+  }
+
+  /**
+   * Insert one array into another native Javascript. The destination array must be a real
+   * Java array (ie, already has the GWT type info on it). No error checking is performed -- the
+   * caller is expected to have verified everything first.
+   *
+   * @param src source array where the data is taken from
+   * @param srcOfs offset into source array
+   * @param dest destination array for the data to be inserted
+   * @param destOfs offset into destination array
+   * @param len number of elements to insert
+   */
+  public static void nativeArrayInsert(Object src, int srcOfs, Object dest, int destOfs,
+      int len) {
+    nativeArraySplice(src, srcOfs, dest, destOfs, len, false);
+  }
+
+  /**
+   * A replacement for Array.prototype.splice to overcome the limits imposed to the number of
+   * function parameters by browsers.
+   */
+  private static native void nativeArraySplice(
+      Object src, int srcOfs, Object dest, int destOfs, int len, boolean overwrite) /*-{
     // Work around function.prototype.apply call stack size limits.
     // Performance: http://jsperf.com/java-system-arraycopy/2
     if (src === dest) {
@@ -174,7 +199,8 @@ public final class Array {
     for (var batchStart = srcOfs, end = srcOfs + len; batchStart < end;) { // increment in block
       var batchEnd = Math.min(batchStart + 10000, end);
       len = batchEnd - batchStart;
-      Array.prototype.splice.apply(dest, [destOfs, len].concat(src.slice(batchStart, batchEnd)));
+      Array.prototype.splice.apply(dest, [destOfs, overwrite ? len : 0]
+          .concat(src.slice(batchStart, batchEnd)));
       batchStart = batchEnd;
       destOfs += len;
     }
