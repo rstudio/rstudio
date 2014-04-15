@@ -74,15 +74,11 @@ public class XMLHttpRequest extends JavaScriptObject {
    * callback is cached somewhere. Setting it to null or an empty function does
    * seem to work properly, though.
    * 
-   * On IE, there are two problems: Setting onreadystatechange to null (as
-   * opposed to an empty function) sometimes throws an exception. With
-   * particular (rare) versions of jscript.dll, setting onreadystatechange from
-   * within onreadystatechange causes a crash. Setting it from within a timeout
-   * fixes this bug (see issue 1610).
+   * On IE, setting onreadystatechange to null (as opposed to an empty function)
+   * sometimes throws an exception.
    * 
    * End result: *always* set onreadystatechange to an empty function (never to
-   * null). Never set onreadystatechange from within onreadystatechange (always
-   * in a setTimeout()).
+   * null).
    */
 
   /**
@@ -147,11 +143,7 @@ public class XMLHttpRequest extends JavaScriptObject {
    * @see #clearOnReadyStateChange()
    */
   public final native void clearOnReadyStateChange() /*-{
-    var self = this;
-    @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(function() {
-      // Using the same function object kills HtmlUnit
-      self.onreadystatechange = function() {};
-    }, 0);
+    this.onreadystatechange = function() {};
   }-*/;
 
   /**
