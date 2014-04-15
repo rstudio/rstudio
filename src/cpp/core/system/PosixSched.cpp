@@ -34,7 +34,7 @@ CpuAffinity emptyCpuAffinity()
 
 bool isCpuAffinityEmpty(const CpuAffinity& cpus)
 {
-   return std::count(cpus.begin(), cpus.end(), true) > 0;
+   return std::count(cpus.begin(), cpus.end(), true) == 0;
 }
 
 Error getCpuAffinity(CpuAffinity* pCpus)
