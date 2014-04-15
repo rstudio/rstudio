@@ -46,8 +46,8 @@ public class RmdTemplateOptionsDialog
          OperationWithInput<RmdTemplateOptionsDialog.Result> onSaved,
          Operation onCancelled)
    {
-      super("Edit Shiny " + template.getName() + " Options", 
-            onSaved, onCancelled);
+      super("Edit " + (isShiny ? "Shiny " : "R Markdown ") + 
+            template.getName() + " Options", onSaved, onCancelled);
       setWidth("350px");
       setHeight("400px");
       templateOptions_ = new RmdTemplateOptionsWidget(!isShiny);

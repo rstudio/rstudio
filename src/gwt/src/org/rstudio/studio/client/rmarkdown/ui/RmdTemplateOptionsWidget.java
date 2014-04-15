@@ -34,7 +34,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.CssResource;
@@ -82,7 +81,10 @@ public class RmdTemplateOptionsWidget extends Composite
       }
       else
       {
-         formatPanel_.setVisible(false);
+         listFormats_.setVisible(false);
+         listFormats_.setEnabled(false);
+         labelFormatNotes_.setVisible(false);
+         labelFormatName_.setVisible(true);
       }
    }
    
@@ -94,6 +96,7 @@ public class RmdTemplateOptionsWidget extends Composite
    public void setTemplate(RmdTemplate template, boolean forCreate, 
                            RmdFrontMatter frontMatter)
    {
+      template_ = template;
       formats_ = template.getFormats();
       options_ = template.getOptions();
       if (frontMatter != null)
@@ -134,13 +137,22 @@ public class RmdTemplateOptionsWidget extends Composite
    
    public void setSelectedFormat(String format)
    {
-      for (int i = 0; i < listFormats_.getItemCount(); i++)
+      if (allowFormatChange_)
       {
-         if (listFormats_.getValue(i).equals(format))
+         for (int i = 0; i < listFormats_.getItemCount(); i++)
          {
-            listFormats_.setSelectedIndex(i);
-            updateFormatOptions(format);
+            if (listFormats_.getValue(i).equals(format))
+            {
+               listFormats_.setSelectedIndex(i);
+               updateFormatOptions(format);
+            }
          }
+      }
+      else
+      {
+         RmdTemplateFormat selFormat = template_.getFormat(format);
+         if (selFormat != null)
+            labelFormatName_.setText("Shiny " + selFormat.getUiName());
       }
    }
    
@@ -169,7 +181,7 @@ public class RmdTemplateOptionsWidget extends Composite
    
    private void addFormatOptions(RmdTemplateFormat format)
    {
-      if (format.getNotes().length() > 0)
+      if (format.getNotes().length() > 0 && allowFormatChange_)
       {
          labelFormatNotes_.setText(format.getNotes());
          labelFormatNotes_.setVisible(true);
@@ -229,15 +241,6 @@ public class RmdTemplateOptionsWidget extends Composite
       tabOuter.getStyle().setOverflow(Overflow.VISIBLE);
       Element tabInner = (Element) tabOuter.getFirstChild();
       tabInner.getStyle().clearWidth();
-      if (!allowFormatChange_) 
-      {
-         // if we're not allowing format changes, reposition the GWT-provided
-         // tab element's parent so the tabs are correctly positioned inside
-         // the dialog
-         Element tabParent = 
-               (Element) optionsTabs_.getElement().getParentElement();
-         tabParent.getStyle().setPosition(Position.STATIC);
-      }
    }
    
    private RmdFormatOption createWidgetForOption(RmdTemplateFormatOption option,
@@ -376,6 +379,7 @@ public class RmdTemplateOptionsWidget extends Composite
       }
    }
 
+   private RmdTemplate template_;
    private JsArray<RmdTemplateFormat> formats_;
    private JsArray<RmdTemplateFormatOption> options_;
    private List<RmdFormatOption> optionWidgets_;
@@ -398,7 +402,7 @@ public class RmdTemplateOptionsWidget extends Composite
 
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;
+   @UiField Label labelFormatName_;
    @UiField TabLayoutPanel optionsTabs_;
    @UiField OptionsStyle style;
-   @UiField FlowPanel formatPanel_;
 }

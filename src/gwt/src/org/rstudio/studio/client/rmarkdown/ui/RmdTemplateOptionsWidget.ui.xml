@@ -20,6 +20,7 @@
 	.topLabel
 	{
 	  font-weight: bold;
+	  margin-right: 5px;
 	}
 	
 	.root
@@ -100,10 +101,11 @@
 	}
 	</ui:style>
    <g:HeaderPanel styleName="{style.root}">
-      <g:FlowPanel styleName="{style.formatPanel}" ui:field="formatPanel_">
+      <g:FlowPanel styleName="{style.formatPanel}">
          <g:InlineLabel styleName="{style.topLabel}" text="Output Format:"></g:InlineLabel>
          <g:ListBox ui:field="listFormats_"></g:ListBox>
          <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"></g:Label>
+         <g:InlineLabel ui:field="labelFormatName_" visible="false"></g:InlineLabel>
       </g:FlowPanel>
       <g:TabLayoutPanel height="100%" barHeight="30" ui:field="optionsTabs_"></g:TabLayoutPanel>
    </g:HeaderPanel>
