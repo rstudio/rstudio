@@ -27,12 +27,17 @@ import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.ProxySerializer;
 import com.google.web.bindery.requestfactory.shared.Receiver;
+import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.ServerFailure;
+import com.google.web.bindery.requestfactory.shared.SimpleFooProxy;
 import com.google.web.bindery.requestfactory.shared.SimpleFooRequest;
 import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
 import com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.Constants;
 import com.google.web.bindery.requestfactory.shared.impl.SimpleProxyId;
+
+import java.util.Set;
 
 /**
  * A base class for anything that makes use of the SimpleRequestFactory.
@@ -41,6 +46,58 @@ import com.google.web.bindery.requestfactory.shared.impl.SimpleProxyId;
  * 
  */
 public abstract class RequestFactoryTestBase extends GWTTestCase {
+
+  /**
+   * A helper Receiver to test onFailure callbacks.
+   */
+  protected class SimpleFooFailureReceiver extends Receiver<SimpleFooProxy> {
+    private SimpleFooProxy mutableFoo;
+    private Request<SimpleFooProxy> persistRequest;
+    private String expectedException;
+
+    public SimpleFooFailureReceiver(SimpleFooProxy mutableFoo,
+        Request<SimpleFooProxy> persistRequest, String exception) {
+      this.mutableFoo = mutableFoo;
+      this.persistRequest = persistRequest;
+      this.expectedException = exception;
+    }
+
+    @Override
+    public void onFailure(ServerFailure error) {
+      assertSame(persistRequest.getRequestContext(), error.getRequestContext());
+      assertEquals(expectedException, error.getExceptionType());
+      if (expectedException != null) {
+        assertFalse(error.getStackTraceString().length() == 0);
+        assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
+      } else {
+        assertEquals(null, error.getStackTraceString());
+        assertEquals("Server Error: THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
+      }
+
+      // Now show that we can fix the error and try again with the same
+      // request
+
+      mutableFoo.setPleaseCrash(24); // Only 42 and 43 crash
+      persistRequest.fire(new Receiver<SimpleFooProxy>() {
+        @Override
+        public void onSuccess(SimpleFooProxy response) {
+          response = checkSerialization(response);
+          finishTestAndReset();
+        }
+      });
+    }
+
+    @Override
+    public void onSuccess(SimpleFooProxy response) {
+      fail("Failure expected but onSuccess() was called");
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onViolation(Set<com.google.web.bindery.requestfactory.shared.Violation> errors) {
+      fail("Failure expected but onViolation() was called");
+    }
+  }
 
   /**
    * Class for counting events.

@@ -44,7 +44,7 @@ public class RequestBatcherTest extends RequestFactoryTestBase {
     }
   }
 
-  private static final int TEST_DELAY = 500000;
+  private static final int TEST_DELAY = 5000;
 
   @Override
   public String getModuleName() {

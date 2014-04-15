@@ -70,55 +70,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * the return value in the place of the returned object.
    */
 
-  class FooReciever extends Receiver<SimpleFooProxy> {
-    private SimpleFooProxy mutableFoo;
-    private Request<SimpleFooProxy> persistRequest;
-    private String expectedException;
-
-    public FooReciever(SimpleFooProxy mutableFoo, Request<SimpleFooProxy> persistRequest,
-        String exception) {
-      this.mutableFoo = mutableFoo;
-      this.persistRequest = persistRequest;
-      this.expectedException = exception;
-    }
-
-    @Override
-    public void onFailure(ServerFailure error) {
-      assertSame(persistRequest.getRequestContext(), error.getRequestContext());
-      assertEquals(expectedException, error.getExceptionType());
-      if (expectedException != null) {
-        assertFalse(error.getStackTraceString().length() == 0);
-        assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
-      } else {
-        assertEquals(null, error.getStackTraceString());
-        assertEquals("Server Error: THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
-      }
-
-      // Now show that we can fix the error and try again with the same
-      // request
-
-      mutableFoo.setPleaseCrash(24); // Only 42 and 43 crash
-      persistRequest.fire(new Receiver<SimpleFooProxy>() {
-        @Override
-        public void onSuccess(SimpleFooProxy response) {
-          response = checkSerialization(response);
-          finishTestAndReset();
-        }
-      });
-    }
-
-    @Override
-    public void onSuccess(SimpleFooProxy response) {
-      fail("Failure expected but onSuccess() was called");
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onViolation(Set<com.google.web.bindery.requestfactory.shared.Violation> errors) {
-      fail("Failure expected but onViolation() was called");
-    }
-  }
-
   class NullReceiver extends Receiver<Object> {
     @Override
     public void onSuccess(Object response) {
@@ -2590,7 +2541,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final SimpleFooProxy mutableFoo = context.edit(newFoo);
     // 43 is the crash causing magic number for a checked exception
     mutableFoo.setPleaseCrash(43);
-    persistRequest.fire(new FooReciever(mutableFoo, persistRequest, null));
+    persistRequest.fire(new SimpleFooFailureReceiver(mutableFoo, persistRequest, null));
   }
 
   public void testServerFailureRuntimeException() {
@@ -2601,7 +2552,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final SimpleFooProxy mutableFoo = context.edit(newFoo);
     // 42 is the crash causing magic number for a runtime exception
     mutableFoo.setPleaseCrash(42);
-    persistRequest.fire(new FooReciever(mutableFoo, persistRequest, null));
+    persistRequest.fire(new SimpleFooFailureReceiver(mutableFoo, persistRequest, null));
   }
 
   /**

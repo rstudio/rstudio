@@ -23,7 +23,7 @@ import com.google.web.bindery.requestfactory.shared.SimpleFooRequest;
  * Tests that {@code RequestFactoryServlet} when using a custom
  * ExceptionHandler.
  */
-public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
+public class RequestFactoryExceptionHandlerTest extends RequestFactoryTestBase {
 
   private static final int DELAY_TEST_FINISH = 5000;
 
@@ -32,7 +32,6 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
     return "com.google.web.bindery.requestfactory.gwt.RequestFactoryExceptionHandlerTest";
   }
 
-  @Override
   public void testServerFailureCheckedException() {
     delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest context = req.simpleFooRequest();
@@ -42,11 +41,10 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
     rayFoo = context.edit(rayFoo);
     // 42 is the crash causing magic number
     rayFoo.setPleaseCrash(42);
-    persistRay.fire(new FooReciever(rayFoo, persistRay,
+    persistRay.fire(new SimpleFooFailureReceiver(rayFoo, persistRay,
         "java.lang.UnsupportedOperationException"));
   }
 
-  @Override
   public void testServerFailureRuntimeException() {
     delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest context = req.simpleFooRequest();
@@ -56,7 +54,7 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
     rayFoo = context.edit(rayFoo);
     // 43 is the crash causing magic number
     rayFoo.setPleaseCrash(43);
-    persistRay.fire(new FooReciever(rayFoo, persistRay, "java.lang.Exception"));
+    persistRay.fire(new SimpleFooFailureReceiver(rayFoo, persistRay, "java.lang.Exception"));
   }
 
 }
