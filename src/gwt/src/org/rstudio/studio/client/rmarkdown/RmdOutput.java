@@ -165,6 +165,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    public void onRmdShinyDocStarted(RmdShinyDocStartedEvent event)
    {
       currentShinyFile_ = event.getFile();
+      currentShinyUrl_ = event.getUrl();
       displayHTMLRenderResult(
             RmdRenderResult.createFromShinyUrl(event.getFile(), 
                                                event.getUrl()));
@@ -188,8 +189,9 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
       if (event.getSourceFile().equals(currentShinyFile_))
       {
-         // this is a refresh of a Shiny doc; just reactivate the window 
-         satelliteManager_.activateSatelliteWindow(RmdOutputSatellite.NAME);
+         displayHTMLRenderResult(
+               RmdRenderResult.createFromShinyUrl(currentShinyFile_,
+                                                  currentShinyUrl_));
       }
       else if (currentShinyFile_ != null)
       {
@@ -426,6 +428,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          server_.terminateRenderRmd(new VoidServerRequestCallback());
       }
       currentShinyFile_ = null;
+      currentShinyUrl_ = null;
    }
    
    private void cacheDocPosition(RmdRenderResult result, int scrollPosition, 
@@ -468,5 +471,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          new HashMap<String, String>();
    private RmdRenderResult result_;
    private String currentShinyFile_;
+   private String currentShinyUrl_;
    private Operation onRenderCompleted_;
 }
