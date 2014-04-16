@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.shiny;
 
-import org.rstudio.core.client.Debug;
-
 public class ShinyDisconnectNotifier
 {
    public interface ShinyDisconnectSource
@@ -42,7 +40,6 @@ public class ShinyDisconnectNotifier
    
    private void onMessage(String data, String origin)
    {  
-      Debug.devlog("got message " + data + " from " + origin);
       if ("disconnected".equals(data))
       {
          if (source_.getShinyUrl().startsWith(origin)) 

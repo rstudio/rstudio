@@ -136,7 +136,10 @@ public class RmdOutputPresenter implements
    @Handler
    public void onViewerPopout()
    {
-      globalDisplay_.showHtmlFile(params_.getOutputFile());
+      if (params_.isShinyDocument())
+         globalDisplay_.openWindow(params_.getOutputUrl());
+      else
+         globalDisplay_.showHtmlFile(params_.getOutputFile());
    }
    
    @Handler
