@@ -52,7 +52,7 @@ public final class SafeHtmlUtils {
    * this method, because the {@code <a>} tag is incomplete:
    *
    * <pre class="code">
-   * {@code shb.appendConstantHtml("<a href='").append(url)}</pre>
+   * {@code shb.appendHtmlConstant("<a href='").append(url)}</pre>
    *
    * </ol>
    *
