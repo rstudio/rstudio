@@ -3282,10 +3282,14 @@ public class RemoteServer implements Server
 
 
    @Override
-   public void terminateRenderRmd(ServerRequestCallback<Void> requestCallback)
+   public void terminateRenderRmd(boolean normal, 
+                                  ServerRequestCallback<Void> requestCallback)
    {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(normal));
       sendRequest(RPC_SCOPE,
             TERMINATE_RENDER_RMD,
+            params,
             requestCallback);
    }
    

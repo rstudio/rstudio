@@ -41,7 +41,7 @@
     yamlFrontMatter$knit[[1]]
   else if (!is.null(yamlFrontMatter$runtime) && 
            identical(yamlFrontMatter$runtime, "shiny"))
-    # use run_document as a wrapper for reneder when the doc requires the
+    # use run_document as a wrapper for render when the doc requires the
     # Shiny runtime
     "rmarkdown::run"
   else

@@ -126,8 +126,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          return;
       }
 
+      // ignore failures and completed Shiny docs (the latter are handled when
+      // the server starts rather than when the render process is finished)
       final RmdRenderResult result = event.getResult();
-      if (!result.getSucceeded())
+      if (!result.getSucceeded() || result.isShinyDocument())
          return;
       
       if (result.hasShinyContent() && !result.isShinyDocument())
@@ -198,7 +200,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          // there is a Shiny doc running; we'll need to terminate it before 
          // we can render this document
          satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
-         server_.terminateRenderRmd(new ServerRequestCallback<Void>()
+         server_.terminateRenderRmd(true, new ServerRequestCallback<Void>()
          {
             @Override
             public void onResponseReceived(Void v)
@@ -425,7 +427,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // if this is a Shiny document, stop the associated process
       if (params.isShinyDocument())
       {
-         server_.terminateRenderRmd(new VoidServerRequestCallback());
+         server_.terminateRenderRmd(true, new VoidServerRequestCallback());
       }
       currentShinyFile_ = null;
       currentShinyUrl_ = null;

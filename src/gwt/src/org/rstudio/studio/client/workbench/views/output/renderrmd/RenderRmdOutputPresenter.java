@@ -153,7 +153,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
    
    private void terminateRenderRmd()
    {
-      server_.terminateRenderRmd(new ServerRequestCallback<Void>()
+      server_.terminateRenderRmd(false, new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void v)

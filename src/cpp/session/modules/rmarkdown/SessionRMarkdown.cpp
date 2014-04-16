@@ -77,9 +77,10 @@ public:
       return pRender;
    }
 
-   void terminate()
+   void terminateProcess(bool normal)
    {
       terminationRequested_ = true;
+      normalTermination_ = normal;
    }
 
    bool isRunning()
@@ -102,6 +103,7 @@ private:
              bool sourceNavigation) :
       isRunning_(false),
       terminationRequested_(false),
+      normalTermination_(false),
       isShiny_(asShiny),
       hasShinyContent_(false),
       targetFile_(targetFile),
@@ -308,9 +310,11 @@ private:
          }
       }
       
-      // consider the render to be successful if R doesn't return an error,
-      // and an output file was written
-      terminate(exitStatus == 0 && outputFile_.exists());
+      // the process may be terminated normally by the IDE (e.g. to stop the
+      // Shiny server); alternately, a termination is considered normal if
+      // the process succeeded and produced output.
+      terminate(normalTermination_ ||
+                (exitStatus == 0 && outputFile_.exists()));
    }
 
    void terminateWithError(const Error& error)
@@ -497,6 +501,7 @@ private:
 
    bool isRunning_;
    bool terminationRequested_;
+   bool normalTermination_;
    bool isShiny_;
    bool hasShinyContent_;
    FilePath targetFile_;
@@ -891,11 +896,16 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
 }
 
 
-Error terminateRenderRmd(const json::JsonRpcRequest&,
+Error terminateRenderRmd(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse*)
 {
+   bool normal;
+   Error error = json::readParams(request.params, &normal);
+   if (error)
+      return error;
+
    if (isRenderRunning())
-      s_pCurrentRender_->terminate();
+      s_pCurrentRender_->terminateProcess(normal);
 
    return Success();
 }
