@@ -66,14 +66,15 @@ public:
                                               int sourceLine,
                                               const std::string& format,
                                               const std::string& encoding,
-                                              bool asShiny,
-                                              bool sourceNavigation)
+                                              bool sourceNavigation,
+                                              bool asTempfile,
+                                              bool asShiny)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
-                                                         asShiny,
-                                                         sourceNavigation));
-      pRender->start(format, encoding);
+                                                         sourceNavigation,
+                                                         asShiny));
+      pRender->start(format, encoding, asTempfile);
       return pRender;
    }
 
@@ -99,8 +100,8 @@ public:
    }
 
 private:
-   RenderRmd(const FilePath& targetFile, int sourceLine, bool asShiny,
-             bool sourceNavigation) :
+   RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation,
+             bool asShiny) :
       isRunning_(false),
       terminationRequested_(false),
       normalTermination_(false),
@@ -111,7 +112,9 @@ private:
       sourceNavigation_(sourceNavigation)
    {}
 
-   void start(const std::string& format, const std::string& encoding)
+   void start(const std::string& format,
+              const std::string& encoding,
+              bool asTempfile)
    {
       json::Object dataJson;
       getOutputFormat(targetFile_.absolutePath(), encoding, &outputFormat_);
@@ -121,11 +124,12 @@ private:
       module_context::enqueClientEvent(event);
       isRunning_ = true;
 
-      performRender(format, encoding);
+      performRender(format, encoding, asTempfile);
    }
 
    void performRender(const std::string& format,
-                      const std::string& encoding)
+                      const std::string& encoding,
+                      bool asTempfile)
    {
       // save encoding
       encoding_ = encoding;
@@ -182,6 +186,21 @@ private:
       if (!format.empty())
       {
          extraParams += "output_format = rmarkdown::" + format + "(), ";
+      }
+
+      if (asTempfile)
+      {
+         FilePath tmpDir = module_context::tempFile("preview-", "dir");
+         Error error = tmpDir.ensureDirectory();
+         if (!error)
+         {
+            std::string dir = string_utils::utf8ToSystem(tmpDir.absolutePath());
+            extraParams += "output_dir = '" + dir + "', ";
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
       }
 
       // render command
@@ -263,9 +282,15 @@ private:
                json::Object startedJson;
                startedJson["target_file"] =
                      module_context::createAliasedPath(targetFile_);
-               startedJson["url"] =
-                     module_context::mapUrlPorts(matches[1].str()) +
-                     targetFile_.filename();
+               std::string url(module_context::mapUrlPorts(matches[1].str()));
+               
+               // add a / to the URL if it doesn't have one already
+               // (typically portmapped URLs do, but the raw URL returned by
+               // Shiny doesn't)
+               if (url[url.length() - 1] != '/')
+                  url += "/";
+               
+               startedJson["url"] = url + targetFile_.filename();
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));
@@ -438,7 +463,6 @@ private:
                                       .call(&sexpOutputFormat, &protect);
       if (error)
       {
-         LOG_ERROR(error);
          resultJson["format_name"] = "";
          resultJson["self_contained"] = false;
       }
@@ -833,8 +857,9 @@ void doRenderRmd(const std::string& file,
                  int line,
                  const std::string& format,
                  const std::string& encoding,
-                 bool asShiny,
                  bool sourceNavigation,
+                 bool asTempfile,
+                 bool asShiny,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -849,8 +874,9 @@ void doRenderRmd(const std::string& file,
                line,
                format,
                encoding,
-               asShiny,
-               sourceNavigation);
+               sourceNavigation,
+               asTempfile,
+               asShiny);
       pResponse->setResult(true);
    }
 }
@@ -860,17 +886,19 @@ Error renderRmd(const json::JsonRpcRequest& request,
 {
    int line = -1;
    std::string file, format, encoding;
-   bool asShiny = false;
+   bool asTempfile, asShiny = false;
    Error error = json::readParams(request.params,
                                   &file,
                                   &line,
                                   &format,
                                   &encoding,
+                                  &asTempfile,
                                   &asShiny);
    if (error)
       return error;
 
-   doRenderRmd(file, line, format, encoding, asShiny, true, pResponse);
+   doRenderRmd(file, line, format, encoding, true, asTempfile, asShiny,
+               pResponse);
 
    return Success();
 }
@@ -889,7 +917,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, false,
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, false, false,
                pResponse);
 
    return Success();

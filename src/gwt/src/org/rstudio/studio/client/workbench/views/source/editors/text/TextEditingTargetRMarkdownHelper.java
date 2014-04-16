@@ -247,7 +247,8 @@ public class TextEditingTargetRMarkdownHelper
       eventBus_.fireEvent(new RenderRmdEvent(sourceDoc.getPath(), 
                                              1, 
                                              format, 
-                                             sourceDoc.getEncoding(), 
+                                             sourceDoc.getEncoding(),
+                                             false,
                                              false));
    }
    
@@ -255,6 +256,7 @@ public class TextEditingTargetRMarkdownHelper
                                final int sourceLine,
                                final String format,
                                final String encoding, 
+                               final boolean asTempfile,
                                final boolean asShiny)
    {
       withRMarkdownPackage("Rendering R Markdown documents", 
@@ -266,6 +268,7 @@ public class TextEditingTargetRMarkdownHelper
                                                    sourceLine,
                                                    format,
                                                    encoding, 
+                                                   asTempfile,
                                                    asShiny));
          }
       });

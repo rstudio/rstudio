@@ -436,7 +436,8 @@ void setImageFileResponse(const FilePath& imageFilePath,
    Error error = pResponse->setBody(imageFilePath);
    if (error)
    {
-      LOG_ERROR(error);
+      if (!core::isPathNotFoundError(error))
+         LOG_ERROR(error);
       pResponse->setError(http::status::InternalServerError,
                           error.code().message());
    }

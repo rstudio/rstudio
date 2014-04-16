@@ -1,5 +1,5 @@
 /*
- * ServerPAMAuth.hpp
+ * PosixSched.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,24 +13,27 @@
  *
  */
 
-#ifndef SERVER_PAM_AUTH_HPP
-#define SERVER_PAM_AUTH_HPP
+#ifndef CORE_SYSTEM_POSIX_SCHED_HPP
+#define CORE_SYSTEM_POSIX_SCHED_HPP
 
-#include <string>
+#include <vector>
 
 namespace core {
-   class Error;
-}
 
-namespace server {
-namespace pam_auth {
-   
-bool pamLogin(const std::string& username, const std::string& password);
+class Error;
 
-core::Error initialize();
+namespace system {
 
-} // namespace pam_auth
-} // namespace server
+typedef std::vector<bool> CpuAffinity;
 
-#endif // SERVER_PAM_AUTH_HPP
+int cpuCount();
+CpuAffinity emptyCpuAffinity();
+bool isCpuAffinityEmpty(const CpuAffinity& cpus);
+Error getCpuAffinity(CpuAffinity* pCpus);
+Error setCpuAffinity(const CpuAffinity& cpus);
+
+} // namespace system
+} // namespace core
+
+#endif // CORE_SYSTEM_POSIX_SCHED_HPP
 

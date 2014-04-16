@@ -527,7 +527,7 @@ Error setEnvironmentName(int contextDepth,
                          RCNTXT* pContext,
                          std::string environmentName)
 {
-   SEXP environment;
+   SEXP environment = R_GlobalEnv;
    if (environmentName == "R_GlobalEnv")
    {
       environment = R_GlobalEnv;

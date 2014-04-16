@@ -181,6 +181,8 @@ public class RmdOutputPresenter implements
    
    private void onClose() 
    {
+      // record scroll position and anchor (but try/catch because sometimes 
+      // the document is null at this point)
       try
       {
          params_.setScrollPosition(view_.getScrollPosition());
@@ -188,10 +190,9 @@ public class RmdOutputPresenter implements
       }
       catch (Exception e)
       {
-         // the above can fail with a security exception if the view is pointed
-         // to a URL on a different domain; in this case we'll just live without
-         // persisted positions
       }
+      
+      // notify closed
       notifyRmdOutputClosed(params_);
    }
    

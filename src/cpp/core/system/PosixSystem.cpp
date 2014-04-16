@@ -38,6 +38,10 @@
 #include <mach-o/dyld.h>
 #endif
 
+#ifndef __APPLE__
+#include <sys/prctl.h>
+#endif
+
 #include <boost/thread.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -747,6 +751,20 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
       case StackLimit:
          *pLimit = RLIMIT_STACK;
          break;
+      case CoreLimit:
+         *pLimit = RLIMIT_CORE;
+         break;
+      case MemlockLimit:
+         *pLimit = RLIMIT_MEMLOCK;
+         break;
+      case CpuLimit:
+         *pLimit = RLIMIT_CPU;
+         break;
+#ifndef __APPLE__
+      case NiceLimit:
+         *pLimit = RLIMIT_NICE;
+         break;
+#endif
       default:
          *pLimit = -1;
          break;
@@ -811,53 +829,120 @@ Error setResourceLimit(ResourceLimit resourceLimit,
       return Success();
 }
 
+Error restrictCoreDumps()
+{
+   // set allowed size of core dumps to 0 bytes
+   Error error = setResourceLimit(core::system::CoreLimit, 0);
+   if (error)
+      return error;
+
+   // no ptrace core dumps permitted
+#ifndef __APPLE__
+   int res = ::prctl(PR_SET_DUMPABLE, 0);
+   if (res == -1)
+      return systemError(errno, ERROR_LOCATION);
+#endif
+
+   return Success();
+}
+
+void printCoreDumpable(const std::string& context)
+{
+   std::ostringstream ostr;
+
+   ostr << "Core Dumpable (" << context << ")" << std::endl;
+
+   // ulimit
+   RLimitType rLimitSoft, rLimitHard;
+   Error error = getResourceLimit(core::system::CoreLimit,
+                                  &rLimitSoft, &rLimitHard);
+   if (error)
+      LOG_ERROR(error);
+
+   ostr << "  soft limit: " << rLimitSoft << std::endl;
+   ostr << "  hard limit: " << rLimitHard << std::endl;
+
+   // ptrace
+#ifndef __APPLE__
+   int dumpable = ::prctl(PR_GET_DUMPABLE, NULL, NULL, NULL, NULL);
+   if (dumpable == -1)
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+   ostr << "  pr_get_dumpable: " << dumpable << std::endl;
+#endif
+
+   std::cerr << ostr.str();
+}
+
 
 namespace {
 
-Error setProcessLimits(RLimitType memoryLimitBytes,
-                       RLimitType stackLimitBytes,
-                       RLimitType userProcessesLimit)
+void setProcessLimits(ProcessLimits limits)
 {
-   // set memory limit
-   Error memoryError;
-   if (memoryLimitBytes != 0)
-      memoryError = setResourceLimit(MemoryLimit, memoryLimitBytes);
+   // memory limit
+   if (limits.memoryLimitBytes != 0)
+   {
+      Error error = setResourceLimit(MemoryLimit, limits.memoryLimitBytes);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-   Error stackError;
-   if (stackLimitBytes != 0)
-      stackError = setResourceLimit(StackLimit, stackLimitBytes);
+   // stack limit
+   if (limits.stackLimitBytes != 0)
+   {
+      Error error = setResourceLimit(StackLimit, limits.stackLimitBytes);
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // user processes limit
-   Error processesError;
-   if (userProcessesLimit != 0)
-      processesError = setResourceLimit(UserProcessesLimit, userProcessesLimit);
-
-   // if both had errors then log one and return the other
-   if (memoryError)
+   if (limits.userProcessesLimit != 0)
    {
-      if (stackError)
-         LOG_ERROR(stackError);
+      Error error = setResourceLimit(UserProcessesLimit,
+                                     limits.userProcessesLimit);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-      if (processesError)
-         LOG_ERROR(processesError);
+   // cpu limit
+   if (limits.cpuLimit != 0)
+   {
+      Error error = setResourceLimit(CpuLimit, limits.cpuLimit);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-      return memoryError;
-   }
-   else if (stackError)
+   // nice limit
+   if (limits.niceLimit != 0)
    {
-      if (processesError)
-         LOG_ERROR(processesError);
+      Error error = setResourceLimit(NiceLimit, limits.niceLimit);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-      return stackError;
-   }
-   else if (processesError)
+   // files limit
+   if (limits.filesLimit != 0)
    {
-      return processesError;
+      Error error = setResourceLimit(FilesLimit, limits.filesLimit);
+      if (error)
+         LOG_ERROR(error);
    }
-   else
+
+   // priority
+   if (limits.priority != 0)
    {
-      return Success();
+      if (::setpriority(PRIO_PROCESS, 0, limits.priority) == -1)
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
+
+   // cpu affinity
+#ifndef __APPLE__
+   if (!isCpuAffinityEmpty(limits.cpuAffinity))
+   {
+      Error error = setCpuAffinity(limits.cpuAffinity);
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
 }
 
 void copyEnvironmentVar(const std::string& name,
@@ -962,11 +1047,7 @@ Error launchChildProcess(std::string path,
          }
 
          // set limits
-         error = setProcessLimits(config.memoryLimitBytes,
-                                  config.stackLimitBytes,
-                                  config.userProcessesLimit);
-         if (error)
-            LOG_ERROR(error);
+         setProcessLimits(config.limits);
 
          // switch user
          error = permanentlyDropPriv(runAsUser);

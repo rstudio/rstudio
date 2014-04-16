@@ -32,6 +32,7 @@
 
 #include <server/ServerOptions.hpp>
 
+#include <server/ServerErrorCategory.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 
@@ -115,17 +116,6 @@ SessionManager::SessionManager()
 Error SessionManager::launchSession(const std::string& username)
 {
    using namespace boost::posix_time;
-
-   // last ditch user validation -- an invalid user should very rarely
-   // get to this point since we pre-emptively validate on client_init
-   if (!server::auth::validateUser(username))
-   {
-      Error error = systemError(boost::system::errc::permission_denied,
-                                ERROR_LOCATION);
-      error.addProperty("username", username);
-      return error;
-   }
-
    LOCK_MUTEX(launchesMutex_)
    {
       // check whether we already have a launch pending
@@ -161,9 +151,11 @@ Error SessionManager::launchSession(const std::string& username)
    profile.executablePath = server::options().rsessionPath();
    profile.config = sessionProcessConfig(username);
 
-   // pass the profile to the filter if we have one
-   if (sessionLaunchProfileFilter_)
-      sessionLaunchProfileFilter_(&profile);
+   // pass the profile to any filters we have
+   BOOST_FOREACH(SessionLaunchProfileFilter f, sessionLaunchProfileFilters_)
+   {
+      f(&profile);
+   }
 
    // launch the session
    Error error = sessionLaunchFunction_(profile);
@@ -175,6 +167,7 @@ Error SessionManager::launchSession(const std::string& username)
 
    return Success();
 }
+
 
 // default session launcher -- does the launch then tracks the pid
 // for later reaping
@@ -209,10 +202,10 @@ void SessionManager::setSessionLaunchFunction(
    sessionLaunchFunction_ = launchFunction;
 }
 
-void SessionManager::setSessionLaunchProfileFilter(
+void SessionManager::addSessionLaunchProfileFilter(
                               const SessionLaunchProfileFilter& filter)
 {
-   sessionLaunchProfileFilter_ = filter;
+   sessionLaunchProfileFilters_.push_back(filter);
 }
 
 void SessionManager::removePendingLaunch(const std::string& username)

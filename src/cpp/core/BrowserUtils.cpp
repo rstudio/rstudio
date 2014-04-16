@@ -125,9 +125,9 @@ bool isTridentOlderThan(const std::string& userAgent, double version)
 
 bool hasRequiredBrowser(const std::string& userAgent)
 {
-   if (isChromeOlderThan(userAgent, 25))
+   if (isChromeOlderThan(userAgent, 21))
       return false;
-   else if (isFirefoxOlderThan(userAgent, 18))
+   else if (isFirefoxOlderThan(userAgent, 10))
       return false;
    else if (isSafariOlderThan(userAgent, 5.1))
       return false;

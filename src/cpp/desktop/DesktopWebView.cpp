@@ -34,6 +34,7 @@ namespace desktop {
 WebView::WebView(QUrl baseUrl, QWidget *parent) :
     QWebView(parent),
     baseUrl_(baseUrl),
+    pWebInspector_(NULL),
     dpiZoomScaling_(1.0)
 {
 #ifdef Q_WS_X11
@@ -42,6 +43,15 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
 #endif
    pWebPage_ = new WebPage(baseUrl, this);
    setPage(pWebPage_);
+
+   // QWebView can create its own QWebInspector instance, but it doesn't always
+   // destroy it correctly if the inspector is open when the associated browser
+   // window is closed (see case 3889), leading to a crash. To work around this,
+   // we create our own unbound web inspector, and clean it up manually when the
+   // WebView closes.
+   pWebInspector_ = new QWebInspector();
+   pWebInspector_->setVisible(false);
+   pWebInspector_->setPage(pWebPage_);
 
    page()->setForwardUnsupportedContent(true);
    if (desktop::options().webkitDevTools())
@@ -273,6 +283,19 @@ void WebView::setDpiAwareZoomFactor(qreal factor)
 qreal WebView::dpiAwareZoomFactor()
 {
    return zoomFactor() / dpiZoomScaling_;
+}
+
+void WebView::closeEvent(QCloseEvent*)
+{
+   // When the webview closes, preemptively destroy the associated web
+   // inspector, if we have one.
+   if (pWebInspector_ != NULL)
+   {
+      pWebInspector_->setVisible(false);
+      pWebInspector_->disconnect();
+      pWebInspector_->deleteLater();
+      pWebInspector_ = NULL;
+   }
 }
 
 } // namespace desktop

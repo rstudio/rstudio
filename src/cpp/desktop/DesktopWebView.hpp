@@ -51,6 +51,7 @@ protected:
    QString promptForFilename(const QNetworkRequest& request,
                              QNetworkReply* pReply);
    void keyPressEvent(QKeyEvent* pEv);
+   void closeEvent(QCloseEvent* pEv);
 
 protected slots:
    void downloadRequested(const QNetworkRequest&);
@@ -59,6 +60,7 @@ protected slots:
 
 private:
    QUrl baseUrl_;
+   QWebInspector* pWebInspector_;
    WebPage* pWebPage_;
    double dpiZoomScaling_;
 };
