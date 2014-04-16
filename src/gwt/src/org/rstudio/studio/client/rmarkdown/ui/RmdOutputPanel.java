@@ -289,7 +289,17 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    public int getScrollPosition()
    {
-      return getFrame().getIFrame().getContentDocument().getScrollTop();
+      // if we're asking for this at document creation/destruction time
+      // it can sometimes have a null ref somewhere in the call chain,
+      // in this case return 0
+      try
+      {
+         return getFrame().getIFrame().getContentDocument().getScrollTop();
+      }
+      catch(Exception ex)
+      {
+         return 0;
+      }
    }
    
    @Override
