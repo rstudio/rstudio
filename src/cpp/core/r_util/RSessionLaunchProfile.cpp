@@ -17,6 +17,8 @@
 
 #include <boost/foreach.hpp>
 
+#include <core/SafeConvert.hpp>
+
 #include <core/system/PosixSched.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -65,6 +67,12 @@ Error cpuAffinityFromJson(const json::Array& affinityJson,
    return Success();
 }
 
+json::Value toJson(RLimitType limit)
+{
+   uint64_t value = safe_convert::numberTo<uint64_t>(limit, 0);
+   return json::Value(value);
+}
+
 } // anonymous namespace
 
 
@@ -80,11 +88,11 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    configJson["stdInput"] = profile.config.stdInput;
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
    configJson["priority"] = profile.config.limits.priority;
-   configJson["memoryLimitBytes"] = profile.config.limits.memoryLimitBytes;
-   configJson["stackLimitBytes"] = profile.config.limits.stackLimitBytes;
-   configJson["userProcessesLimit"] = profile.config.limits.userProcessesLimit;
-   configJson["cpuLimit"] = profile.config.limits.cpuLimit;
-   configJson["niceLimit"] = profile.config.limits.niceLimit;
+   configJson["memoryLimitBytes"] = toJson(profile.config.limits.memoryLimitBytes);
+   configJson["stackLimitBytes"] = toJson(profile.config.limits.stackLimitBytes);
+   configJson["userProcessesLimit"] = toJson(profile.config.limits.userProcessesLimit);
+   configJson["cpuLimit"] = toJson(profile.config.limits.cpuLimit);
+   configJson["niceLimit"] = toJson(profile.config.limits.niceLimit);
    configJson["cpuAffinity"] = json::toJsonArray(profile.config.limits.cpuAffinity);
    profileJson["config"] = configJson;
    return profileJson;
