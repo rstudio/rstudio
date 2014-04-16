@@ -93,6 +93,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    configJson["userProcessesLimit"] = toJson(profile.config.limits.userProcessesLimit);
    configJson["cpuLimit"] = toJson(profile.config.limits.cpuLimit);
    configJson["niceLimit"] = toJson(profile.config.limits.niceLimit);
+   configJson["filesLimit"] = toJson(profile.config.limits.filesLimit);
    configJson["cpuAffinity"] = json::toJsonArray(profile.config.limits.cpuAffinity);
    profileJson["config"] = configJson;
    return profileJson;
@@ -120,7 +121,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    int stdStreamBehavior = 0;
    int priority = 0;
    double memoryLimitBytes, stackLimitBytes, userProcessesLimit,
-              cpuLimit, niceLimit;
+          cpuLimit, niceLimit, filesLimit;
    error = json::readObject(configJson,
                            "args", &argsJson,
                            "environment", &envJson,
@@ -131,7 +132,8 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
                            "stackLimitBytes", &stackLimitBytes,
                            "userProcessesLimit", &userProcessesLimit,
                            "cpuLimit", &cpuLimit,
-                           "niceLimit", &niceLimit);
+                           "niceLimit", &niceLimit,
+                           "filesLimit", &filesLimit);
    if (error)
       LOG_ERROR(error);
 
@@ -161,6 +163,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    profile.config.limits.userProcessesLimit = userProcessesLimit;
    profile.config.limits.cpuLimit = cpuLimit;
    profile.config.limits.niceLimit = niceLimit;
+   profile.config.limits.filesLimit = filesLimit;
    profile.config.limits.cpuAffinity = cpuAffinity;
 
    // return profile
