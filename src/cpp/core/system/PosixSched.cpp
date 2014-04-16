@@ -39,6 +39,7 @@ bool isCpuAffinityEmpty(const CpuAffinity& cpus)
 
 Error getCpuAffinity(CpuAffinity* pCpus)
 {
+#ifndef __APPLE__
    cpu_set_t cs;
    CPU_ZERO(&cs);
    if (::sched_getaffinity(0, sizeof(cs), &cs) == -1)
@@ -55,11 +56,15 @@ Error getCpuAffinity(CpuAffinity* pCpus)
    }
 
    return Success();
+#else
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+#endif
 }
 
 
 Error setCpuAffinity(const CpuAffinity& cpus)
 {
+#ifndef __APPLE__
    cpu_set_t cs;
    CPU_ZERO(&cs);
 
@@ -75,6 +80,9 @@ Error setCpuAffinity(const CpuAffinity& cpus)
       return systemError(errno, ERROR_LOCATION);
 
    return Success();
+#else
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+#endif
 }
 
 } // namespace system

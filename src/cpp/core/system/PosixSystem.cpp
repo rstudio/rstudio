@@ -935,12 +935,14 @@ void setProcessLimits(ProcessLimits limits)
    }
 
    // cpu affinity
+#ifndef __APPLE__
    if (!isCpuAffinityEmpty(limits.cpuAffinity))
    {
       Error error = setCpuAffinity(limits.cpuAffinity);
       if (error)
          LOG_ERROR(error);
    }
+#endif
 }
 
 void copyEnvironmentVar(const std::string& name,
