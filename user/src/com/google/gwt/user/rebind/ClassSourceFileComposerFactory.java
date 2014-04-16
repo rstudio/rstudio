@@ -19,10 +19,8 @@ import com.google.gwt.core.ext.GeneratorContext;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,30 +32,8 @@ public class ClassSourceFileComposerFactory {
    * Represents a java source file category. Right now support interface and
    * class, later should support abstract class, static class, etc.
    */
-  public static class JavaSourceCategory extends Enum {
-    /**
-     * This type is a class.
-     */
-    public static final JavaSourceCategory CLASS;
-
-    /**
-     * This type is a interface.
-     */
-    public static final JavaSourceCategory INTERFACE;
-    static Map<String, Enum> pool = new HashMap<String, Enum>();
-
-    static {
-      CLASS = new JavaSourceCategory("class");
-      INTERFACE = new JavaSourceCategory("interface");
-    }
-
-    public static JavaSourceCategory require(String key) {
-      return (JavaSourceCategory) Enum.require(key, pool);
-    }
-
-    protected JavaSourceCategory(String key) {
-      super(key, pool);
-    }
+  enum JavaSourceCategory {
+    CLASS, INTERFACE;
   }
 
   private List<String> annotations = new ArrayList<String>();
