@@ -26,12 +26,41 @@ public class RmdRenderResult extends JavaScriptObject
    {
    }
    
+   public static native final RmdRenderResult createFromShinyUrl(String file,
+                                                          String shinyUrl) /*-{
+     return {
+        succeeded: true,
+        target_file: file,
+        target_encoding: "UTF-8",
+        output_file: "",
+        output_url: shinyUrl, 
+        output_format: null, 
+        rpubs_published: false, 
+        knitr_errors: [],
+        is_shiny_document: true,
+        preview_side: -1,
+        slide_navigation: null,
+        output_format: {
+           format_name: "html_document", 
+           self_contained: false
+        }
+     };
+   }-*/;
+  
    public native final boolean getSucceeded() /*-{
       return this.succeeded;
    }-*/;
 
    public native final String getTargetFile() /*-{
       return this.target_file;
+   }-*/;
+   
+   public native final String getTargetEncoding() /*-{
+      return this.target_encoding;
+   }-*/;
+   
+   public native final int getTargetLine() /*-{
+      return this.target_line;
    }-*/;
    
    public native final String getOutputFile() /*-{
@@ -71,6 +100,14 @@ public class RmdRenderResult extends JavaScriptObject
    public final native JsArray<CompileError> getKnitrErrors() /*-{
       return this.knitr_errors;
    }-*/;
+   
+   public final native boolean isShinyDocument() /*-{
+      return this.is_shiny_document;
+   }-*/;
+   
+   public final native boolean hasShinyContent() /*-{
+      return this.has_shiny_content;
+   }-*/;
 
    public final boolean isHtmlPresentation()
    {
@@ -82,7 +119,11 @@ public class RmdRenderResult extends JavaScriptObject
    // another result (must match name and type)
    public final boolean equals(RmdRenderResult other)
    {
-      return getOutputFile().equals(other.getOutputFile()) &&
-             getFormatName().equals(other.getFormatName());
+      // for Shiny documents, match on input source
+      if (isShinyDocument() && other.isShinyDocument())
+         return getTargetFile().equals(other.getTargetFile());
+      else
+         return getOutputFile().equals(other.getOutputFile()) &&
+                getFormatName().equals(other.getFormatName());
    }
 }

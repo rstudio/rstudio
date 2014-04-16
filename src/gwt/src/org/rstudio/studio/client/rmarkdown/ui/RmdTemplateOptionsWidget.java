@@ -63,18 +63,29 @@ public class RmdTemplateOptionsWidget extends Composite
       String optionWidget();
    }
 
-   public RmdTemplateOptionsWidget()
+   public RmdTemplateOptionsWidget(boolean allowFormatChange)
    {
       initWidget(uiBinder.createAndBindUi(this));
       style.ensureInjected();
-      listFormats_.addChangeHandler(new ChangeHandler()
+      allowFormatChange_ = allowFormatChange;
+      if (allowFormatChange)
       {
-         @Override
-         public void onChange(ChangeEvent event)
+         listFormats_.addChangeHandler(new ChangeHandler()
          {
-            updateFormatOptions(getSelectedFormat());
-         }
-      });
+            @Override
+            public void onChange(ChangeEvent event)
+            {
+               updateFormatOptions(getSelectedFormat());
+            }
+         });
+      }
+      else
+      {
+         listFormats_.setVisible(false);
+         listFormats_.setEnabled(false);
+         labelFormatNotes_.setVisible(false);
+         labelFormatName_.setVisible(true);
+      }
    }
    
    public void setTemplate(RmdTemplate template, boolean forCreate)
@@ -85,6 +96,7 @@ public class RmdTemplateOptionsWidget extends Composite
    public void setTemplate(RmdTemplate template, boolean forCreate, 
                            RmdFrontMatter frontMatter)
    {
+      template_ = template;
       formats_ = template.getFormats();
       options_ = template.getOptions();
       if (frontMatter != null)
@@ -125,13 +137,22 @@ public class RmdTemplateOptionsWidget extends Composite
    
    public void setSelectedFormat(String format)
    {
-      for (int i = 0; i < listFormats_.getItemCount(); i++)
+      if (allowFormatChange_)
       {
-         if (listFormats_.getValue(i).equals(format))
+         for (int i = 0; i < listFormats_.getItemCount(); i++)
          {
-            listFormats_.setSelectedIndex(i);
-            updateFormatOptions(format);
+            if (listFormats_.getValue(i).equals(format))
+            {
+               listFormats_.setSelectedIndex(i);
+               updateFormatOptions(format);
+            }
          }
+      }
+      else
+      {
+         RmdTemplateFormat selFormat = template_.getFormat(format);
+         if (selFormat != null)
+            labelFormatName_.setText("Shiny " + selFormat.getUiName());
       }
    }
    
@@ -160,7 +181,7 @@ public class RmdTemplateOptionsWidget extends Composite
    
    private void addFormatOptions(RmdTemplateFormat format)
    {
-      if (format.getNotes().length() > 0)
+      if (format.getNotes().length() > 0 && allowFormatChange_)
       {
          labelFormatNotes_.setText(format.getNotes());
          labelFormatNotes_.setVisible(true);
@@ -358,11 +379,13 @@ public class RmdTemplateOptionsWidget extends Composite
       }
    }
 
+   private RmdTemplate template_;
    private JsArray<RmdTemplateFormat> formats_;
    private JsArray<RmdTemplateFormatOption> options_;
    private List<RmdFormatOption> optionWidgets_;
    private RmdFrontMatter frontMatter_;
    private FileSystemItem document_;
+   private boolean allowFormatChange_;
    
    // Cache of options present in the template (ignores those options that 
    // are specifically marked for a format)
@@ -379,6 +402,7 @@ public class RmdTemplateOptionsWidget extends Composite
 
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;
+   @UiField Label labelFormatName_;
    @UiField TabLayoutPanel optionsTabs_;
    @UiField OptionsStyle style;
 }

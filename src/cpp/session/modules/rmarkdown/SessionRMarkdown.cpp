@@ -45,6 +45,11 @@
 #define kMathjaxSegment "mathjax"
 #define kMathjaxBeginComment "<!-- dynamically load mathjax"
 
+#define kStandardRenderFunc "rmarkdown::render"
+#define kShinyRenderFunc "rmarkdown::run"
+
+#define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
+
 using namespace core;
 
 namespace session {
@@ -62,18 +67,21 @@ public:
                                               const std::string& format,
                                               const std::string& encoding,
                                               bool sourceNavigation,
-                                              bool asTempfile)
+                                              bool asTempfile,
+                                              bool asShiny)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
-                                                         sourceNavigation));
+                                                         sourceNavigation,
+                                                         asShiny));
       pRender->start(format, encoding, asTempfile);
       return pRender;
    }
 
-   void terminate()
+   void terminateProcess(bool normal)
    {
       terminationRequested_ = true;
+      normalTermination_ = normal;
    }
 
    bool isRunning()
@@ -92,9 +100,13 @@ public:
    }
 
 private:
-   RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation) :
+   RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation,
+             bool asShiny) :
       isRunning_(false),
       terminationRequested_(false),
+      normalTermination_(false),
+      isShiny_(asShiny),
+      hasShinyContent_(false),
       targetFile_(targetFile),
       sourceLine_(sourceLine),
       sourceNavigation_(sourceNavigation)
@@ -139,21 +151,42 @@ private:
       args.push_back("--no-restore");
       args.push_back("-e");
 
-      // see if the input file has a custom render function
       std::string renderFunc;
-      error = r::exec::RFunction(
-         ".rs.getCustomRenderFunction",
-         string_utils::utf8ToSystem(targetFile_.absolutePath())).call(
-                                                               &renderFunc);
-      if (error)
-         LOG_ERROR(error);
+      if (isShiny_)
+      {
+         // if a Shiny render was requested, use the Shiny render function
+         // regardless of what was specified in the doc
+         renderFunc = kShinyRenderFunc;
+      }
+      else
+      {
+         // see if the input file has a custom render function
+         error = r::exec::RFunction(
+            ".rs.getCustomRenderFunction",
+            string_utils::utf8ToSystem(targetFile_.absolutePath())).call(
+                                                                  &renderFunc);
+         if (error)
+            LOG_ERROR(error);
 
-      if (renderFunc.empty())
-         renderFunc = "rmarkdown::render";
+         if (renderFunc.empty())
+            renderFunc = kStandardRenderFunc;
+         else if (renderFunc == kShinyRenderFunc)
+            isShiny_ = true;
+      }
 
       std::string extraParams;
+      std::string targetFile(targetFile_.filename());
+      std::string encodingParam("encoding = '" + encoding + "'");
+      if (isShiny_)
+      {
+         extraParams += "shiny_args = list(launch.browser = FALSE), ";
+         extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
+         encodingParam = "render_args = list(" + encodingParam + ")";
+      }
       if (!format.empty())
-         extraParams = "output_format = rmarkdown::" + format + "(), ";
+      {
+         extraParams += "output_format = rmarkdown::" + format + "(), ";
+      }
 
       if (asTempfile)
       {
@@ -171,12 +204,12 @@ private:
       }
 
       // render command
-      boost::format fmt("%1%('%2%', %3% encoding='%4%');");
+      boost::format fmt("%1%('%2%', %3% %4%);");
       std::string cmd = boost::str(fmt %
                                    renderFunc %
-                                   targetFile_.filename() %
+                                   targetFile %
                                    extraParams %
-                                   encoding);
+                                   encodingParam);
 
 
       args.push_back(cmd);
@@ -231,8 +264,48 @@ private:
    {
       // buffer output
       pAllOutput->append(output);
-      
+
       enqueRenderOutput(type, output);
+
+      std::vector<std::string> outputLines;
+      boost::algorithm::split(outputLines, output,
+                              boost::algorithm::is_any_of("\n\r"));
+      BOOST_FOREACH(std::string& outputLine, outputLines)
+      {
+         // if this is a Shiny render, check to see if Shiny started listening
+         if (isShiny_)
+         {
+            const boost::regex shinyListening("^Listening on (http.*)$");
+            boost::smatch matches;
+            if (boost::regex_match(outputLine, matches, shinyListening))
+            {
+               json::Object startedJson;
+               startedJson["target_file"] =
+                     module_context::createAliasedPath(targetFile_);
+               std::string url(module_context::mapUrlPorts(matches[1].str()));
+               
+               // add a / to the URL if it doesn't have one already
+               // (typically portmapped URLs do, but the raw URL returned by
+               // Shiny doesn't)
+               if (url[url.length() - 1] != '/')
+                  url += "/";
+               
+               startedJson["url"] = url + targetFile_.filename();
+               module_context::enqueClientEvent(ClientEvent(
+                           client_events::kRmdShinyDocStarted,
+                           startedJson));
+               break;
+            }
+         }
+
+         // check to see if a warning was emitted indicating that this document
+         // contains Shiny content
+         if (outputLine.substr(0, sizeof(kShinyContentWarning)) ==
+             kShinyContentWarning)
+         {
+            hasShinyContent_ = true;
+         }
+      }
    }
 
    void onRenderCompleted(int exitStatus,
@@ -262,9 +335,11 @@ private:
          }
       }
       
-      // consider the render to be successful if R doesn't return an error,
-      // and an output file was written
-      terminate(exitStatus == 0 && outputFile_.exists());
+      // the process may be terminated normally by the IDE (e.g. to stop the
+      // Shiny server); alternately, a termination is considered normal if
+      // the process succeeded and produced output.
+      terminate(normalTermination_ ||
+                (exitStatus == 0 && outputFile_.exists()));
    }
 
    void terminateWithError(const Error& error)
@@ -285,10 +360,13 @@ private:
    void terminate(bool succeeded)
    {
       isRunning_ = false;
+
       json::Object resultJson;
       resultJson["succeeded"] = succeeded;
       resultJson["target_file"] =
             module_context::createAliasedPath(targetFile_);
+      resultJson["target_encoding"] = encoding_;
+      resultJson["target_line"] = sourceLine_;
 
       std::string outputFile = module_context::createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
@@ -312,6 +390,9 @@ private:
       resultJson["output_url"] = outputUrl;
 
       resultJson["output_format"] = outputFormat_;
+
+      resultJson["is_shiny_document"] = isShiny_;
+      resultJson["has_shiny_content"] = hasShinyContent_;
 
       // default to no slide info
       resultJson["preview_slide"] = -1;
@@ -444,6 +525,9 @@ private:
 
    bool isRunning_;
    bool terminationRequested_;
+   bool normalTermination_;
+   bool isShiny_;
+   bool hasShinyContent_;
    FilePath targetFile_;
    int sourceLine_;
    FilePath outputFile_;
@@ -775,6 +859,7 @@ void doRenderRmd(const std::string& file,
                  const std::string& encoding,
                  bool sourceNavigation,
                  bool asTempfile,
+                 bool asShiny,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -790,7 +875,8 @@ void doRenderRmd(const std::string& file,
                format,
                encoding,
                sourceNavigation,
-               asTempfile);
+               asTempfile,
+               asShiny);
       pResponse->setResult(true);
    }
 }
@@ -800,17 +886,19 @@ Error renderRmd(const json::JsonRpcRequest& request,
 {
    int line = -1;
    std::string file, format, encoding;
-   bool asTempfile;
+   bool asTempfile, asShiny = false;
    Error error = json::readParams(request.params,
                                   &file,
                                   &line,
                                   &format,
                                   &encoding,
-                                  &asTempfile);
+                                  &asTempfile,
+                                  &asShiny);
    if (error)
       return error;
 
-   doRenderRmd(file, line, format, encoding, true, asTempfile, pResponse);
+   doRenderRmd(file, line, format, encoding, true, asTempfile, asShiny,
+               pResponse);
 
    return Success();
 }
@@ -829,17 +917,23 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, false, pResponse);
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, false, false,
+               pResponse);
 
    return Success();
 }
 
 
-Error terminateRenderRmd(const json::JsonRpcRequest&,
+Error terminateRenderRmd(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse*)
 {
+   bool normal;
+   Error error = json::readParams(request.params, &normal);
+   if (error)
+      return error;
+
    if (isRenderRunning())
-      s_pCurrentRender_->terminate();
+      s_pCurrentRender_->terminateProcess(normal);
 
    return Success();
 }

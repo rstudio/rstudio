@@ -28,8 +28,10 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class ShinyApplicationPresenter 
-      implements IsWidget, ShinyApplicationStatusEvent.Handler
+public class ShinyApplicationPresenter implements 
+      IsWidget, 
+      ShinyApplicationStatusEvent.Handler, 
+      ShinyDisconnectNotifier.ShinyDisconnectSource
 {
    public interface Binder 
           extends CommandBinder<Commands, ShinyApplicationPresenter>
@@ -56,6 +58,7 @@ public class ShinyApplicationPresenter
       satellite_ = satellite;
       events_ = eventBus;
       globalDisplay_ = globalDisplay;
+      disconnect_ = new ShinyDisconnectNotifier(this);
       
       binder.bind(commands, this);  
       
@@ -77,6 +80,19 @@ public class ShinyApplicationPresenter
       }
    }
    
+   @Override
+   public String getShinyUrl()
+   {
+      return view_.getAbsoluteUrl();
+   }
+
+   @Override
+   public void onShinyDisconnect()
+   {
+      appStopped_ = true;
+      closeShinyApp();
+   }
+
    @Handler
    public void onReloadShinyApp()
    {
@@ -98,34 +114,12 @@ public class ShinyApplicationPresenter
    private native void initializeEvents() /*-{  
       var thiz = this;   
       $wnd.addEventListener(
-            "message",
-            $entry(function(e) {
-               thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
-            }),
-            true);
-
-      $wnd.addEventListener(
             "unload",
             $entry(function() {
                thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onClose()();
             }),
             true);
    }-*/;
-   
-   private void onMessage(String data, String origin)
-   {  
-      if ("disconnected".equals(data))
-      {
-         // ensure the frame url starts with the specified origin; we need to
-         // use the absolute url since 'origin' includes the hostname and 
-         // portmapped urls may be relative (i.e. just p/XXXX).
-         if (view_.getAbsoluteUrl().startsWith(origin)) 
-         {
-            appStopped_ = true;
-            closeShinyApp();
-         }
-      }
-   }
    
    private void onClose()
    {
@@ -156,6 +150,7 @@ public class ShinyApplicationPresenter
    private final Satellite satellite_;
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
+   private final ShinyDisconnectNotifier disconnect_;
    
    private ShinyApplicationParams params_;
    private boolean appStopped_ = false;

@@ -3259,7 +3259,7 @@ public class RemoteServer implements Server
 
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
-                         boolean asTempfile,
+                         boolean asTempfile, boolean asShiny,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -3268,6 +3268,7 @@ public class RemoteServer implements Server
       params.set(2, new JSONString(StringUtil.notNull(format)));
       params.set(3, new JSONString(encoding));
       params.set(4, JSONBoolean.getInstance(asTempfile));
+      params.set(5, JSONBoolean.getInstance(asShiny));
       sendRequest(RPC_SCOPE,
             RENDER_RMD,
             params,
@@ -3283,10 +3284,14 @@ public class RemoteServer implements Server
 
 
    @Override
-   public void terminateRenderRmd(ServerRequestCallback<Void> requestCallback)
+   public void terminateRenderRmd(boolean normal, 
+                                  ServerRequestCallback<Void> requestCallback)
    {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(normal));
       sendRequest(RPC_SCOPE,
             TERMINATE_RENDER_RMD,
+            params,
             requestCallback);
    }
    

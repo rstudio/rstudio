@@ -74,14 +74,17 @@ public class TextEditingTargetRMarkdownHelper
 {
    public class RmdSelectedTemplate
    {
-      public RmdSelectedTemplate (RmdTemplate template, String format)
+      public RmdSelectedTemplate (RmdTemplate template, String format, 
+                                  boolean isShiny)
       {
          this.template = template;
          this.format = format;
+         this.isShiny = isShiny;
       }
 
       RmdTemplate template;
       String format;
+      boolean isShiny;
    }
 
    public TextEditingTargetRMarkdownHelper()
@@ -245,14 +248,16 @@ public class TextEditingTargetRMarkdownHelper
                                              1, 
                                              format, 
                                              sourceDoc.getEncoding(),
+                                             false,
                                              false));
    }
    
    public void renderRMarkdown(final String sourceFile, 
                                final int sourceLine,
                                final String format,
-                               final String encoding,
-                               final boolean asTempfile)
+                               final String encoding, 
+                               final boolean asTempfile,
+                               final boolean asShiny)
    {
       withRMarkdownPackage("Rendering R Markdown documents", 
                            new CommandWithArg<RMarkdownContext>() {
@@ -263,7 +268,8 @@ public class TextEditingTargetRMarkdownHelper
                                                    sourceLine,
                                                    format,
                                                    encoding, 
-                                                   asTempfile));
+                                                   asTempfile,
+                                                   asShiny));
          }
       });
    }
@@ -402,11 +408,19 @@ public class TextEditingTargetRMarkdownHelper
       try
       {
          YamlTree tree = new YamlTree(yaml);
+         boolean isShiny = false;
          
-         if (tree.getKeyValue("knit").length() > 0)
+         if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
             return null;
          
+         if (tree.getKeyValue(RmdFrontMatter.RUNTIME_KEY).equals(
+               RmdFrontMatter.SHINY_RUNTIME))
+         {
+            isShiny = true;
+         }
+         
          // Find the template appropriate to the first output format listed
+         
          List<String> outFormats = getOutputFormats(tree);
          if (outFormats == null)
             return null;
@@ -415,7 +429,7 @@ public class TextEditingTargetRMarkdownHelper
          RmdTemplate template = getTemplateForFormat(outFormat);
          if (template == null)
             return null;
-         return new RmdSelectedTemplate(template, outFormat);
+         return new RmdSelectedTemplate(template, outFormat, isShiny);
       }
       catch (Exception e)
       {
@@ -480,6 +494,14 @@ public class TextEditingTargetRMarkdownHelper
             createDraftFromTemplate(template, target);
          }
       });
+   }
+   
+   public String convertYamlToShinyDoc(String yaml)
+   {
+      YamlTree yamlTree = new YamlTree(yaml);
+      yamlTree.addYamlValue(null, "runtime", "shiny");
+      
+      return yamlTree.toString();
    }
    
    // Private methods ---------------------------------------------------------

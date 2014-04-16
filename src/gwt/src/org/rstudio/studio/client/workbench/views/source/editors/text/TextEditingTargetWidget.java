@@ -334,6 +334,7 @@ public class TextEditingTargetWidget
       
       rmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setVisible(isRMarkdown2);
+      editRmdFormatButton_.setEnabled(isRMarkdown2);
 
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
@@ -532,7 +533,6 @@ public class TextEditingTargetWidget
       setSourceButtonFromShinyState();
    }
    
-
    @Override
    public void setFormatOptions(TextFileType fileType,
                                 List<String> options, 
@@ -571,12 +571,30 @@ public class TextEditingTargetWidget
       editRmdFormatButton_.setEnabled(visible);
    }
    
+   @Override
+   public void setIsShinyFormat()
+   {
+      // hide the format picker for Shiny documents
+      rmdFormatButton_.setVisible(false);
+      rmdFormatButton_.setEnabled(false);
+      
+      knitCommandText_ = "Run Document";
+      knitDocumentButton_.setTitle("View the current document with Shiny (" +
+            DomUtils.htmlToText(
+                  commands_.knitDocument().getShortcutPrettyHtml()) + ")");
+      knitDocumentButton_.setText(knitCommandText_);
+      knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
+   }
+
    private void setFormatText(String text)
    {
       if (text.length() > 0)
          text = " " + text;
       knitCommandText_ = "Knit" + text;
       knitDocumentButton_.setText(knitCommandText_);
+      knitDocumentButton_.setLeftImage(
+            commands_.knitDocument().getImageResource());
+      knitDocumentButton_.setTitle(commands_.knitDocument().getTooltip());
       previewCommandText_ = "Preview" + text;
       previewHTMLButton_.setText(previewCommandText_);
    }

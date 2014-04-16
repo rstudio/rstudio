@@ -41,7 +41,6 @@ public class RmdPreviewParams extends JavaScriptObject
    public native final String getTargetFile() /*-{
       return this.result.target_file;
    }-*/;
-
    
    public native final String getOutputFile() /*-{
       return this.result.output_file;
@@ -49,6 +48,10 @@ public class RmdPreviewParams extends JavaScriptObject
    
    public native final String getOutputUrl() /*-{
       return this.result.output_url;
+   }-*/;
+   
+   public native final boolean isShinyDocument() /*-{
+      return this.result.is_shiny_document;
    }-*/;
    
    public native final int getScrollPosition() /*-{

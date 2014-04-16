@@ -169,17 +169,20 @@ public class YamlTree
       return null;
    }
    
+   // add a simple YAML value to the tree under the given parent, or under
+   // the root if parentKey is null.
    public void addYamlValue(String parentKey, String key, String value)
    {
-      String line = key + ": " + value;
-      if (keyMap_.containsKey(parentKey))
-      {
-         YamlTreeNode parent = keyMap_.get(parentKey);
-         YamlTreeNode child = 
-               new YamlTreeNode(parent.getIndent() + "  " + line);
-         keyMap_.put(key, child);
-         parent.addChild(child);
-      }
+      // if a key was specified but doesn't exist in the flattened map, abort
+      if (parentKey != null && !keyMap_.containsKey(parentKey))
+         return;
+      
+      String line = key + ": " + value;     
+      YamlTreeNode parent = parentKey == null ? root_ : keyMap_.get(parentKey);
+      YamlTreeNode child = parentKey == null ? new YamlTreeNode(line) : 
+            new YamlTreeNode(parent.getIndent() + "  " + line);
+      keyMap_.put(key, child);
+      parent.addChild(child);
    }
    
    public String getKeyValue(String key)
