@@ -21,6 +21,7 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -222,8 +223,8 @@ public class BrowserChannelClient extends BrowserChannel {
           case FREE_VALUE:
             FreeMessage freeMessage = FreeMessage.receive(this);
             if (logger.isLoggable(TreeLogger.DEBUG)) {
-              logger.log(TreeLogger.DEBUG, type + " message "
-                  + freeMessage.getIds());
+              logger.log(TreeLogger.DEBUG,
+                  type + " message " + Arrays.toString(freeMessage.getIds()));
             }
             handler.freeValue(this, freeMessage.getIds());
             // no response
