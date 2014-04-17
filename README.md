@@ -41,5 +41,5 @@ See also the following files included with the distribution:
 - INSTALL - How to build and install RStudio from source
 
 If you have problems or want to share feedback with us please visit our
-[support website](http://support.rstudio.org/). For other inquiries you can
+[support website](http://support.rstudio.com/). For other inquiries you can
 also email us at [info@rstudio.com](mailto:info@rstudio.com). 
