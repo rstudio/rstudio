@@ -62,7 +62,7 @@ shinyApp(
 )
 ```
 
-Note the use of the `height` parameter to determine how much vertical space the embedded application shoudl occupy.
+Note the use of the `height` parameter to determine how much vertical space the embedded application should occupy.
 
 This example embeds a Shiny application defined in another directory:
 
@@ -70,7 +70,7 @@ This example embeds a Shiny application defined in another directory:
 shinyAppDir(
   system.file("examples/06_tabsets", package="shiny"),
   options=list(
-    width="100%", height=700
+    width="100%", height=550
   )
 )
 ```
