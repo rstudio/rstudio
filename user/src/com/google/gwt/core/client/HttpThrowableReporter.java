@@ -16,7 +16,6 @@
 package com.google.gwt.core.client;
 
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.xhr.client.XMLHttpRequest;
 
 /**
  * This is a utility class which can report Throwables to the server via a
@@ -42,44 +41,44 @@ public final class HttpThrowableReporter {
   /**
    * Installs an {@link UncaughtExceptionHandler} that will automatically invoke
    * {@link #report(String, Throwable)}.
-   * 
-   * @param url A URL that is suitable for use with {@link XMLHttpRequest}
+   *
+   * @param url A URL that is suitable for use with {@code XMLHttpRequest}
    */
   public static void installUncaughtExceptionHandler(String url) {
     GWT.setUncaughtExceptionHandler(new MyHandler(url));
   }
 
   /**
-   * Report a Throwable to the server. This method will sent an HTTP
-   * <code>POST</code> request with a JSON-formatted payload. The payload will
-   * consist of a single JSON object with the following keys:
+   * Report a Throwable to the server. This method will sent an HTTP <code>POST</code> request with a
+   * JSON-formatted payload. The payload will consist of a single JSON object with the following
+   * keys:
    * <dl>
    * <dt>strongName</dt>
    * <dd>The result of calling {@link GWT#getPermutationStrongName()}</dd>
    * <dt>message</dt>
    * <dd>The result of calling {@link Throwable#getMessage()}</dd>
    * <dt>stackTrace</dt>
-   * <dd>A list of the methods names in the Throwable's stack trace, derived
-   * from {@link StackTraceElement#getMethodName()}.</dd>
+   * <dd>A list of the methods names in the Throwable's stack trace, derived from
+   * {@link StackTraceElement#getMethodName()}.</dd>
    * </dl>
-   * 
+   *
    * The response from the server is ignored.
-   * 
-   * @param url A URL that is suitable for use with {@link XMLHttpRequest}
+   *
+   * @param url A URL that is suitable for use with {@code XMLHttpRequest}
    * @param t The Throwable to report
    * @return <code>true</code> if the request was successfully initiated
    * @see com.google.gwt.core.linker.SymbolMapsLinker
    */
-  public static boolean report(String url, Throwable t) {
+  public static native boolean report(String url, Throwable t) /*-{
     try {
-      XMLHttpRequest xhr = XMLHttpRequest.create();
+      var xhr = new XMLHttpRequest();
       xhr.open("POST", url);
-      xhr.send(buildPayload(t));
+      xhr.send(@HttpThrowableReporter::buildPayload(*)(t));
       return true;
-    } catch (Throwable t2) {
+    } catch (e) {
       return false;
     }
-  }
+  }-*/;
 
   /**
    * Visible for testing.

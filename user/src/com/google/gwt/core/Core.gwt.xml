@@ -20,8 +20,6 @@
 <module type="fileset">
   <inherits name="com.google.gwt.dev.jjs.intrinsic.Intrinsic" />
   <inherits name="com.google.gwt.emul.Emulation" />
-  <inherits name="com.google.gwt.typedarrays.TypedArrays" />
-  <inherits name="com.google.gwt.xhr.XMLHttpRequest" />
   <inherits name="com.google.gwt.core.CompilerParameters" />
   <inherits name="com.google.gwt.core.EmulateJsStack" />
   <inherits name="com.google.gwt.core.AsyncFragmentLoader" />
