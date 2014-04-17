@@ -58,6 +58,13 @@ namespace rmarkdown {
 
 namespace {
 
+enum RenderTerminateType
+{
+   renderTerminateNormal,
+   renderTerminateAbnormal,
+   renderTerminateQuiet
+};
+
 class RenderRmd : boost::noncopyable,
                   public boost::enable_shared_from_this<RenderRmd>
 {
@@ -78,10 +85,10 @@ public:
       return pRender;
    }
 
-   void terminateProcess(bool normal)
+   void terminateProcess(RenderTerminateType terminateType)
    {
       terminationRequested_ = true;
-      normalTermination_ = normal;
+      terminateType_ = terminateType;
    }
 
    bool isRunning()
@@ -104,7 +111,7 @@ private:
              bool asShiny) :
       isRunning_(false),
       terminationRequested_(false),
-      normalTermination_(false),
+      terminateType_(renderTerminateAbnormal),
       isShiny_(asShiny),
       hasShinyContent_(false),
       targetFile_(targetFile),
@@ -338,7 +345,7 @@ private:
       // the process may be terminated normally by the IDE (e.g. to stop the
       // Shiny server); alternately, a termination is considered normal if
       // the process succeeded and produced output.
-      terminate(normalTermination_ ||
+      terminate(terminateType_ == renderTerminateNormal ||
                 (exitStatus == 0 && outputFile_.exists()));
    }
 
@@ -360,6 +367,10 @@ private:
    void terminate(bool succeeded)
    {
       isRunning_ = false;
+
+      // if a quiet terminate was requested, don't queue any client events
+      if (terminateType_ == renderTerminateQuiet)
+         return;
 
       json::Object resultJson;
       resultJson["succeeded"] = succeeded;
@@ -525,7 +536,7 @@ private:
 
    bool isRunning_;
    bool terminationRequested_;
-   bool normalTermination_;
+   RenderTerminateType terminateType_;
    bool isShiny_;
    bool hasShinyContent_;
    FilePath targetFile_;
@@ -832,6 +843,15 @@ std::string onDetectRmdSourceType(
    return std::string();
 }
 
+void onClientInit()
+{
+   // if a new client is connecting, shut any running render process
+   // (these processes can have virtually unbounded lifetime because they
+   // leave a server running in the Shiny document case)
+   if (s_pCurrentRender_ && s_pCurrentRender_->isRunning())
+      s_pCurrentRender_->terminateProcess(renderTerminateQuiet);
+}
+
 Error getRMarkdownContext(const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {  
@@ -947,7 +967,9 @@ Error terminateRenderRmd(const json::JsonRpcRequest& request,
       return error;
 
    if (isRenderRunning())
-      s_pCurrentRender_->terminateProcess(normal);
+      s_pCurrentRender_->terminateProcess(
+               normal ? renderTerminateNormal :
+                        renderTerminateAbnormal);
 
    return Success();
 }
@@ -1107,7 +1129,8 @@ Error initialize()
    initPandocPath();
 
    module_context::events().onDetectSourceExtendedType
-                                       .connect(onDetectRmdSourceType);
+                                        .connect(onDetectRmdSourceType);
+   module_context::events().onClientInit.connect(onClientInit);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
