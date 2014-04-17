@@ -686,6 +686,20 @@ private:
             }
          }
 
+         // HACK: prevent the Shiny Document template from showing
+         // unless we have the required versions of knitr and shiny
+         // We'll get rid of this hack when we move the template
+         // into the shiny package
+         if (package == "rstudio" && name == "Shiny Document")
+         {
+            using namespace module_context;
+            if (!isPackageVersionInstalled("shiny", "0.9.1.9002") ||
+                !isPackageVersionInstalled("knitr", "1.5.30"))
+            {
+               continue;
+            }
+         }
+
          dataJson["package_name"] = package;
          dataJson["path"] = path;
          dataJson["name"] = name;

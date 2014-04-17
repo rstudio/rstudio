@@ -1,0 +1,68 @@
+---
+title: "Shiny Document"
+output: html_document
+runtime: shiny
+---
+
+This R Markdown document is made interactive using Shiny (for more information on Shiny see <http://shiny.rstudio.com>).
+
+## Inputs and outputs
+
+Your document can contain Shiny inputs and outputs:
+
+```{r, echo=FALSE}
+numericInput("rows", "How many cars?", 5)
+
+renderTable({
+  head(cars, input$rows)
+})
+```
+
+This works with all types of R output including plots:
+
+```{r, echo=FALSE}
+sliderInput("bins", "Number of bins:", min = 1, max = 50, value = 30)
+
+renderPlot({
+  x <- faithful[, 2]  # Old Faithful Geyser data
+  bins <- seq(min(x), max(x), length.out = input$bins + 1)
+
+  # draw the histogram with the specified number of bins
+  hist(x, breaks = bins, col = 'darkgray', border = 'white')
+})
+```
+
+## Embedded applications
+
+You can even embed entire Shiny applications in a document:
+
+```{r, echo=FALSE}
+shinyApp(
+  
+  ui = fluidPage(
+    selectInput("region", "Region:", 
+                choices = colnames(WorldPhones)),
+    plotOutput("phonePlot")
+  ),
+  
+  server = function(input, output) {
+    output$phonePlot <- renderPlot({
+      barplot(WorldPhones[,input$region]*1000, 
+              ylab = "Number of Telephones", xlab = "Year")
+    })
+  },
+  
+  options = list(height = 500)
+)
+```
+
+You can also embed an existing Shiny application by pointing to its directory:
+
+```{r, echo=FALSE}
+shinyAppDir(
+  system.file("examples/06_tabsets", package="shiny"),
+  options=list(
+    width="100%", height=700
+  )
+)
+```
