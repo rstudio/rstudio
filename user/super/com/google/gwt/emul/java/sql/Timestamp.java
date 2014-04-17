@@ -66,7 +66,7 @@ public class Timestamp extends java.util.Date {
   }
 
   private static String padNine(int value) {
-    StringBuffer toReturn = new StringBuffer("000000000");
+    StringBuilder toReturn = new StringBuilder("000000000");
     assert toReturn.length() == 9;
 
     String asString = String.valueOf(value);

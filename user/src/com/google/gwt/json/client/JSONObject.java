@@ -168,8 +168,7 @@ public class JSONObject extends JSONValue {
    */
   @Override
   public String toString() {
-    StringBuffer sb = new StringBuffer();
-    sb.append("{");
+    StringBuilder sb = new StringBuilder("{");
     boolean first = true;
     String[] keys = computeKeys();
     for (String key : keys) {

@@ -1466,7 +1466,7 @@ public class NumberFormat {
    *     therefore only care about the prefix and suffix
    * @return how many characters parsed
    */
-  private int parseAffix(String pattern, int start, StringBuffer affix,
+  private int parseAffix(String pattern, int start, StringBuilder affix,
       boolean inNegativePattern) {
     affix.delete(0, affix.length());
     boolean inQuote = false;
@@ -1564,7 +1564,7 @@ public class NumberFormat {
         : numberConstants.groupingSeparator();
     String exponentChar = numberConstants.exponentialSymbol();
 
-    StringBuffer normalizedText = new StringBuffer();
+    StringBuilder normalizedText = new StringBuilder();
     for (; pos[0] < text.length(); ++pos[0]) {
       char ch = text.charAt(pos[0]);
       int digit = getDigit(ch);
@@ -1630,7 +1630,7 @@ public class NumberFormat {
    */
   private void parsePattern(String pattern) {
     int pos = 0;
-    StringBuffer affix = new StringBuffer();
+    StringBuilder affix = new StringBuilder();
 
     pos += parseAffix(pattern, pos, affix, false);
     positivePrefix = affix.toString();

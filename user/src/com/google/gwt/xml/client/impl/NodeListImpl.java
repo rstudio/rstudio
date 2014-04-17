@@ -46,7 +46,7 @@ class NodeListImpl extends DOMItem implements NodeList {
 
   @Override
   public String toString() {
-    StringBuffer b = new StringBuffer();
+    StringBuilder b = new StringBuilder();
     for (int i = 0; i < getLength(); i++) {
       b.append(item(i).toString());
     }

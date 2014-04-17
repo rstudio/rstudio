@@ -123,8 +123,7 @@ public class JSONArray extends JSONValue {
    */
   @Override
   public String toString() {
-    StringBuffer sb = new StringBuffer();
-    sb.append("[");
+    StringBuilder sb = new StringBuilder("[");
     for (int i = 0, c = size(); i < c; i++) {
       if (i > 0) {
         sb.append(",");

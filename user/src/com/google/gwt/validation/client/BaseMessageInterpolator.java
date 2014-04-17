@@ -122,7 +122,7 @@ abstract class BaseMessageInterpolator implements MessageInterpolator {
 
   protected final String replaceParameters(String message,
       Function<String, String> replacer) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     int index = 0;
 
     MatchResult matcher;

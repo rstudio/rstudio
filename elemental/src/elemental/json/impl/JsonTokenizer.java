@@ -101,7 +101,7 @@ class JsonTokenizer {
   }
 
   String nextString(int startChar) throws JsonException {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     int c = next();
     assert c == '"' || (lenient && c == '\'');
     while (true) {
@@ -147,7 +147,7 @@ class JsonTokenizer {
   }
 
   String nextUntilOneOf(String chars)  {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     int c = next();
     while (c != INVALID_CHAR) {
       if (Character.isSpace((char) c) || chars.indexOf((char) c) >= 0) {
@@ -242,7 +242,7 @@ class JsonTokenizer {
         default:
           if (lenient && (Character.isDigit((char) c) || Character.isLetterOrDigit((char) c)))
         {
-          StringBuffer keyBuffer = new StringBuffer();
+          StringBuilder keyBuffer = new StringBuilder();
           keyBuffer.append(c);
           while (true) {
             c = next();

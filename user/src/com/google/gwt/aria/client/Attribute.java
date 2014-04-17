@@ -122,7 +122,7 @@ public abstract class Attribute<T> {
   protected abstract String getSingleValue(T value);
 
   private String getAriaValue(T... value) {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     for (T item : value) {
       buf.append(getSingleValue(item)).append(" ");
     }

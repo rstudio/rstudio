@@ -34,7 +34,7 @@ class CommentImpl extends CharacterDataImpl implements Comment {
    */
   @Override
   public String toString() {
-    StringBuffer b = new StringBuffer("<!--");
+    StringBuilder b = new StringBuilder("<!--");
     b.append(getData());
     b.append("-->");
     return b.toString();

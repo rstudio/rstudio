@@ -44,7 +44,7 @@ class TextImpl extends CharacterDataImpl implements Text {
 
   @Override
   public String toString() {
-    StringBuffer b = new StringBuffer();
+    StringBuilder b = new StringBuilder();
     String[] x = getData().split("(?=[;&<>\'\"])", -1);
     for (int i = 0; i < x.length; i++) {
       if (x[i].startsWith(";")) {

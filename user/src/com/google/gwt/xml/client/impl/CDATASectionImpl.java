@@ -35,7 +35,7 @@ class CDATASectionImpl extends TextImpl implements CDATASection {
    */
   @Override
   public String toString() {
-    StringBuffer b = new StringBuffer("<![CDATA[");
+    StringBuilder b = new StringBuilder("<![CDATA[");
     b.append(getData());
     b.append("]]>");
     return b.toString();

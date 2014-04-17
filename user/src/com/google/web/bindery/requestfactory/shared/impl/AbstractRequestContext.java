@@ -270,9 +270,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     }
 
     private Splittable collectionEncode(Collection<?> collection) {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder("[");
       Iterator<?> it = collection.iterator();
-      sb.append("[");
       if (it.hasNext()) {
         // TODO: Allow for the encoding of nested collections. See issue 5974.
         sb.append(nonCollectionEncode(it.next()).getPayload());

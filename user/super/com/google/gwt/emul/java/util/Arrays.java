@@ -1072,7 +1072,7 @@ public class Arrays {
       return "null";
     }
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");
@@ -1088,7 +1088,7 @@ public class Arrays {
       return "null";
     }
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");
@@ -1104,7 +1104,7 @@ public class Arrays {
       return "null";
     }
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");
@@ -1120,7 +1120,7 @@ public class Arrays {
       return "null";
     }
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");
@@ -1136,7 +1136,7 @@ public class Arrays {
       return "null";
     }
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");
@@ -1152,7 +1152,7 @@ public class Arrays {
       return "null";
     }
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");
@@ -1168,7 +1168,7 @@ public class Arrays {
       return "null";
     }
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");
@@ -1192,7 +1192,7 @@ public class Arrays {
       return "null";
     }
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");
@@ -1223,7 +1223,7 @@ public class Arrays {
 
     arraysIveSeen.add(a);
 
-    StringBuffer b = new StringBuffer("[");
+    StringBuilder b = new StringBuilder("[");
     for (int i = 0; i < a.length; i++) {
       if (i != 0) {
         b.append(", ");

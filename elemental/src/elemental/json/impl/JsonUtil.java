@@ -60,11 +60,11 @@ public class JsonUtil {
 
     private final String indent;
 
-    private final StringBuffer sb;
+    private final StringBuilder sb;
 
     private final boolean pretty;
 
-    public StringifyJsonVisitor(String indent, StringBuffer sb,
+    public StringifyJsonVisitor(String indent, StringBuilder sb,
         boolean pretty) {
       this.indent = indent;
       this.sb = sb;
@@ -196,7 +196,7 @@ public class JsonUtil {
    * Convert special control characters into unicode escape format.
    */
   public static String escapeControlChars(String text) {
-    StringBuffer toReturn = new StringBuffer();
+    StringBuilder toReturn = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       if (isControlChar(c)) {
@@ -216,8 +216,7 @@ public class JsonUtil {
    * Safely escape an arbitrary string as a JSON string literal.
    */
   public static String quote(String value) {
-    StringBuffer toReturn = new StringBuffer();
-    toReturn.append("\"");
+    StringBuilder toReturn = new StringBuilder("\"");
     for (int i = 0; i < value.length(); i++) {
       char c = value.charAt(i);
 
@@ -273,7 +272,7 @@ public class JsonUtil {
    * @return json formatted string
    */
   public static String stringify(JsonValue jsonValue, int spaces) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < spaces; i++) {
       sb.append(' ');
     }
@@ -288,7 +287,7 @@ public class JsonUtil {
    * @return json formatted string
    */
   public static String stringify(JsonValue jsonValue, final String indent) {
-    final StringBuffer sb = new StringBuffer();
+    final StringBuilder sb = new StringBuilder();
     final boolean isPretty = indent != null && !"".equals(indent);
 
     new StringifyJsonVisitor(indent, sb, isPretty).accept(jsonValue);
@@ -329,7 +328,7 @@ public class JsonUtil {
       RegExpReplacer replacer) {
     expression.setLastIndex(0);
     MatchResult mresult = expression.exec(text);
-    StringBuffer toReturn = new StringBuffer();
+    StringBuilder toReturn = new StringBuilder();
     int lastIndex = 0;
     while (mresult != null) {
       toReturn.append(text.substring(lastIndex, mresult.getIndex()));

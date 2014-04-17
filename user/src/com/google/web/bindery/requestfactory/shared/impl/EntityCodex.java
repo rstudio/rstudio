@@ -179,8 +179,7 @@ public class EntityCodex {
     }
 
     if (value instanceof Iterable<?>) {
-      StringBuffer toReturn = new StringBuffer();
-      toReturn.append('[');
+      StringBuilder toReturn = new StringBuilder("[");
       boolean first = true;
       for (Object val : ((Iterable<?>) value)) {
         if (!first) {

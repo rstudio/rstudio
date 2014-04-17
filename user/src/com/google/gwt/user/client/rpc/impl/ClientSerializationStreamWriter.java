@@ -64,7 +64,7 @@ public final class ClientSerializationStreamWriter extends
     return out + str.substring(idx);
   }-*/;
 
-  private static void append(StringBuffer sb, String token) {
+  private static void append(StringBuilder sb, String token) {
     assert (token != null);
     sb.append(token);
     sb.append(RPC_SEPARATOR_CHAR);
@@ -105,7 +105,7 @@ public final class ClientSerializationStreamWriter extends
     }
   }-*/;
 
-  private StringBuffer encodeBuffer;
+  private StringBuilder encodeBuffer;
 
   private final String moduleBaseURL;
 
@@ -136,7 +136,7 @@ public final class ClientSerializationStreamWriter extends
   @Override
   public void prepareToWrite() {
     super.prepareToWrite();
-    encodeBuffer = new StringBuffer();
+    encodeBuffer = new StringBuilder();
 
     // Write serialization policy info
     writeString(moduleBaseURL);
@@ -145,7 +145,7 @@ public final class ClientSerializationStreamWriter extends
 
   @Override
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     writeHeader(buffer);
     writeStringTable(buffer);
     writePayload(buffer);
@@ -183,16 +183,16 @@ public final class ClientSerializationStreamWriter extends
     serializer.serialize(this, instance, typeSignature);
   }
 
-  private void writeHeader(StringBuffer buffer) {
+  private void writeHeader(StringBuilder buffer) {
     append(buffer, String.valueOf(getVersion()));
     append(buffer, String.valueOf(getFlags()));
   }
 
-  private void writePayload(StringBuffer buffer) {
+  private void writePayload(StringBuilder buffer) {
     buffer.append(encodeBuffer.toString());
   }
 
-  private StringBuffer writeStringTable(StringBuffer buffer) {
+  private StringBuilder writeStringTable(StringBuilder buffer) {
     List<String> stringTable = getStringTable();
     append(buffer, String.valueOf(stringTable.size()));
     for (String s : stringTable) {

@@ -130,9 +130,8 @@ public abstract class AbstractCollection<E> implements Collection<E> {
 
   @Override
   public String toString() {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder("[");
     String comma = null;
-    sb.append("[");
     Iterator<E> iter = iterator();
     while (iter.hasNext()) {
       if (comma != null) {

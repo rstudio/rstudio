@@ -198,7 +198,7 @@ public class JsonpRequest<T> {
    */
   void send(final String baseUri) {
     registerCallbacks(CALLBACKS, canHaveMultipleRequestsForSameId);
-    StringBuffer uri = new StringBuffer(baseUri);
+    StringBuilder uri = new StringBuilder(baseUri);
     uri.append(baseUri.contains("?") ? "&" : "?");
     String prefix = CALLBACKS_NAME + "." + callbackId;
 

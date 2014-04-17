@@ -799,7 +799,7 @@ public class DateTimeFormat {
       keepTime = new Date(date.getTime() + diff);
     }
 
-    StringBuffer toAppendTo = new StringBuffer(64);
+    StringBuilder toAppendTo = new StringBuilder(64);
     int j, n = pattern.length();
     for (int i = 0; i < n;) {
       char ch = pattern.charAt(i);
@@ -950,7 +950,7 @@ public class DateTimeFormat {
    * @param buf pattern part text specification
    * @param count pattern part repeat count
    */
-  private void addPart(StringBuffer buf, int count) {
+  private void addPart(StringBuilder buf, int count) {
     if (buf.length() > 0) {
       patternParts.add((new PatternPart(buf.toString(), count)));
       buf.setLength(0);
@@ -966,7 +966,7 @@ public class DateTimeFormat {
    * @param date hold the date object to be formatted
    */
   @SuppressWarnings("deprecation")
-  private void format0To11Hours(StringBuffer buf, int count, Date date) {
+  private void format0To11Hours(StringBuilder buf, int count, Date date) {
     int value = date.getHours() % 12;
     zeroPaddingNumber(buf, value, count);
   }
@@ -980,7 +980,7 @@ public class DateTimeFormat {
    * @param date hold the date object to be formatted
    */
   @SuppressWarnings("deprecation")
-  private void format0To23Hours(StringBuffer buf, int count, Date date) {
+  private void format0To23Hours(StringBuilder buf, int count, Date date) {
     int value = date.getHours();
     zeroPaddingNumber(buf, value, count);
   }
@@ -994,7 +994,7 @@ public class DateTimeFormat {
    * @param date hold the date object to be formatted
    */
   @SuppressWarnings("deprecation")
-  private void format1To12Hours(StringBuffer buf, int count, Date date) {
+  private void format1To12Hours(StringBuilder buf, int count, Date date) {
     int value = date.getHours() % 12;
     if (value == 0) {
       zeroPaddingNumber(buf, 12, count);
@@ -1012,7 +1012,7 @@ public class DateTimeFormat {
    * @param date hold the date object to be formatted
    */
   @SuppressWarnings("deprecation")
-  private void format24Hours(StringBuffer buf, int count, Date date) {
+  private void format24Hours(StringBuilder buf, int count, Date date) {
     int value = date.getHours();
     if (value == 0) {
       zeroPaddingNumber(buf, 24, count);
@@ -1028,7 +1028,7 @@ public class DateTimeFormat {
    * @param date hold the date object to be formatted
    */
   @SuppressWarnings("deprecation")
-  private void formatAmPm(StringBuffer buf, Date date) {
+  private void formatAmPm(StringBuilder buf, Date date) {
     if (date.getHours() >= 12 && date.getHours() < 24) {
       buf.append(dateTimeFormatInfo.ampms()[1]);
     } else {
@@ -1044,7 +1044,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatDate(StringBuffer buf, int count, Date date) {
+  private void formatDate(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getDate();
     zeroPaddingNumber(buf, value, count);
@@ -1058,7 +1058,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatDayOfWeek(StringBuffer buf, int count, Date date) {
+  private void formatDayOfWeek(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getDay();
     if (count == 5) {
@@ -1078,7 +1078,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatEra(StringBuffer buf, int count, Date date) {
+  private void formatEra(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getYear() >= -JS_START_YEAR ? 1 : 0;
     if (count >= 4) {
@@ -1096,7 +1096,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatFractionalSeconds(StringBuffer buf, int count, Date date) {
+  private void formatFractionalSeconds(StringBuilder buf, int count, Date date) {
     /*
      * Fractional seconds should be left-justified, ie. zero must be padded from
      * left. For example, if the value in milliseconds is 5, and the count is 3,
@@ -1139,7 +1139,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatMinutes(StringBuffer buf, int count, Date date) {
+  private void formatMinutes(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getMinutes();
     zeroPaddingNumber(buf, value, count);
@@ -1153,7 +1153,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatMonth(StringBuffer buf, int count, Date date) {
+  private void formatMonth(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getMonth();
     switch (count) {
@@ -1179,7 +1179,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatQuarter(StringBuffer buf, int count, Date date) {
+  private void formatQuarter(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getMonth() / 3;
     if (count < 4) {
@@ -1197,7 +1197,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatSeconds(StringBuffer buf, int count, Date date) {
+  private void formatSeconds(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getSeconds();
     zeroPaddingNumber(buf, value, count);
@@ -1211,7 +1211,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatStandaloneDay(StringBuffer buf, int count, Date date) {
+  private void formatStandaloneDay(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getDay();
     if (count == 5) {
@@ -1233,7 +1233,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatStandaloneMonth(StringBuffer buf, int count, Date date) {
+  private void formatStandaloneMonth(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getMonth();
     if (count == 5) {
@@ -1255,7 +1255,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatTimeZone(StringBuffer buf, int count, Date date,
+  private void formatTimeZone(StringBuilder buf, int count, Date date,
       TimeZone timeZone) {
     if (count < 4) {
       buf.append(timeZone.getShortName(date));
@@ -1272,7 +1272,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatTimeZoneRFC(StringBuffer buf, int count, Date date,
+  private void formatTimeZoneRFC(StringBuilder buf, int count, Date date,
       TimeZone timeZone) {
     if (count < 3) {
       buf.append(timeZone.getRFCTimeZoneString(date));
@@ -1295,7 +1295,7 @@ public class DateTimeFormat {
    *     the year, while more than 2 digits are zero-padded
    * @param date hold the date object to be formatted
    */
-  private void formatYear(StringBuffer buf, int count, Date date) {
+  private void formatYear(StringBuilder buf, int count, Date date) {
     @SuppressWarnings("deprecation")
     int value = date.getYear() + JS_START_YEAR;
     if (value < 0) {
@@ -1584,7 +1584,7 @@ public class DateTimeFormat {
    * @param pattern describe the format of date string that need to be parsed
    */
   private void parsePattern(String pattern) {
-    StringBuffer buf = new StringBuffer(32);
+    StringBuilder buf = new StringBuilder(32);
     boolean inQuote = false;
 
     for (int i = 0; i < pattern.length(); i++) {
@@ -1736,7 +1736,7 @@ public class DateTimeFormat {
    * @return <code>true</code> if pattern valid, otherwise <code>false</code>
    * 
    */
-  private boolean subFormat(StringBuffer buf, char ch, int count, Date date,
+  private boolean subFormat(StringBuilder buf, char ch, int count, Date date,
       Date adjustedDate, Date adjustedTime, TimeZone timezone) {
     switch (ch) {
       case 'G':
@@ -2191,7 +2191,7 @@ public class DateTimeFormat {
    * @param minWidth minimum width of the formatted string; zero will be padded
    *          to reach this width
    */
-  private void zeroPaddingNumber(StringBuffer buf, int value, int minWidth) {
+  private void zeroPaddingNumber(StringBuilder buf, int value, int minWidth) {
     int b = NUMBER_BASE;
     for (int i = 0; i < minWidth - 1; i++) {
       if (value < b) {

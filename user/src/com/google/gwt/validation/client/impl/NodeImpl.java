@@ -105,7 +105,7 @@ final class NodeImpl implements Node, Serializable {
 
   @Override
   public String toString() {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     if (name != null) {
       sb.append(name);
     }
