@@ -4,11 +4,11 @@ output: html_document
 runtime: shiny
 ---
 
-This R Markdown document is made interactive using Shiny (for more information on Shiny see <http://shiny.rstudio.com>).
+This R Markdown document is made interactive using Shiny (for more information on Shiny see <http://shiny.rstudio.com>). Note that R Markdown documents using Shiny can currently only be run locally (support for running them within Shiny Server will be available soon).
 
 ## Inputs and outputs
 
-Your document can contain Shiny inputs and outputs:
+You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change. In this example we create a `numericInput` with the name "rows" and then refer to it's value via `input$rows` when generating output:
 
 ```{r, echo=FALSE}
 numericInput("rows", "How many cars?", 5)
@@ -18,7 +18,7 @@ renderTable({
 })
 ```
 
-This works with all types of R output including plots:
+In this example the output code was wrapped in a call to `renderTable`. There are many other render functions in Shiny that can be used for plots, printed R output, and more. This example uses `renderPlot` to create dynamic plot output:
 
 ```{r, echo=FALSE}
 sliderInput("bins", "Number of bins:", min = 1, max = 50, value = 30)
@@ -34,7 +34,13 @@ renderPlot({
 
 ## Embedded applications
 
-You can even embed entire Shiny applications in a document:
+It's also possible to embed an entire Shiny application within an R Markdown document. There are two syntaxes for this: 
+
+1) Defining the application inline using the `shinyApp` function; or
+
+2) Referring to an external application directory using the `shinyAppDir` function.
+
+This example uses an inline definition:
 
 ```{r, echo=FALSE}
 shinyApp(
@@ -56,7 +62,9 @@ shinyApp(
 )
 ```
 
-You can also embed an existing Shiny application by pointing to its directory:
+Note the use of the `height` parameter to determine how much vertical space the embedded application shoudl occupy.
+
+This example embeds a Shiny application defined in another directory:
 
 ```{r, echo=FALSE}
 shinyAppDir(
@@ -66,3 +74,7 @@ shinyAppDir(
   )
 )
 ```
+
+Note that in all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
+
+
