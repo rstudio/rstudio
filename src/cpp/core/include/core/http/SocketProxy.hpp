@@ -22,6 +22,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <core/Thread.hpp>
 #include <core/Error.hpp>
 #include <core/http/Socket.hpp>
 
@@ -68,6 +69,7 @@ private:
    boost::shared_ptr<core::http::Socket> ptrServer_;
    boost::array<char, 8192> clientBuffer_;
    boost::array<char, 8192> serverBuffer_;
+   boost::mutex socketMutex_;
 };
 
 } // namespace http
