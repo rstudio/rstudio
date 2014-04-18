@@ -61,6 +61,11 @@ void SocketProxy::readServer()
 void SocketProxy::handleClientRead(const boost::system::error_code& e,
                                    std::size_t bytesTransferred)
 {
+   // client and server reads can happen simultaneously on two threads; a race
+   // condition during close can lead to the socket not getting properly
+   // shut down. use a simple mutex to prevent the threads from simultaneously
+   // writing to the socket state.
+   socketMutex_.lock();
    if (!e)
    {
       std::vector<boost::asio::const_buffer> buffers;
@@ -77,11 +82,13 @@ void SocketProxy::handleClientRead(const boost::system::error_code& e,
    {
       handleError(e, ERROR_LOCATION);
    }
+   socketMutex_.unlock();
 }
 
 void SocketProxy::handleServerRead(const boost::system::error_code& e,
                                    std::size_t bytesTransferred)
 {
+   socketMutex_.lock();
    if (!e)
    {
       std::vector<boost::asio::const_buffer> buffers;
@@ -98,6 +105,7 @@ void SocketProxy::handleServerRead(const boost::system::error_code& e,
    {
       handleError(e, ERROR_LOCATION);
    }
+   socketMutex_.unlock();
 }
 
 void SocketProxy::handleClientWrite(const boost::system::error_code& e,
@@ -131,7 +139,8 @@ void SocketProxy::handleError(const boost::system::error_code& e,
 {
    // log the error if it wasn't connection terminated
    Error error(e, location);
-   if (!http::isConnectionTerminatedError(error))
+   if (!http::isConnectionTerminatedError(error) &&
+       error.code() != boost::asio::error::operation_aborted)
       LOG_ERROR(error);
 
    close();
