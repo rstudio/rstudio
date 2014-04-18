@@ -15,30 +15,20 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.impl.StringBufferImpl;
-
 /**
- * A fast way to create strings using multiple appends. This is implemented
- * using a {@link StringBufferImpl} that is chosen with deferred binding.
+ * A fast way to create strings using multiple appends.
  * 
- * Most methods will give expected performance results. Exceptions are
- * {@link #setCharAt(int, char)}, which is O(n), and {@link #length()}, which
- * forces a {@link #toString()} and thus should not be used many times on the
- * same <code>StringBuilder</code>.
- * 
- * This class is an exact clone of {@link StringBuffer} except for the name. Any
- * change made to one should be mirrored in the other.
+ * This class is an exact clone of {@link StringBuffer} except for the name.
+ * Any change made to one should be mirrored in the other.
  */
-public class StringBuilder implements CharSequence, Appendable {
-  private final StringBufferImpl impl = GWT.create(StringBufferImpl.class);
-  private final Object data = impl.createData();
+public final class StringBuilder extends AbstractStringBuilder implements CharSequence, Appendable {
 
   public StringBuilder() {
+    super("");
   }
 
   public StringBuilder(CharSequence s) {
-    this(s.toString());
+    super(String.valueOf(s));
   }
 
   /**
@@ -47,128 +37,94 @@ public class StringBuilder implements CharSequence, Appendable {
    */
   @SuppressWarnings("unused")
   public StringBuilder(int ignoredCapacity) {
+    super("");
   }
 
   public StringBuilder(String s) {
-    append(s);
+    super(s);
   }
 
   public StringBuilder append(boolean x) {
-    impl.append(data, x);
+    string += x;
     return this;
   }
 
+  @Override
   public StringBuilder append(char x) {
-    impl.appendNonNull(data, String.valueOf(x));
+    string += x;
     return this;
   }
 
   public StringBuilder append(char[] x) {
-    impl.appendNonNull(data, String.valueOf(x));
+    string += String.valueOf(x);
     return this;
   }
 
   public StringBuilder append(char[] x, int start, int len) {
-    impl.appendNonNull(data, String.valueOf(x, start, len));
+    string += String.valueOf(x, start, len);
     return this;
   }
 
+  @Override
   public StringBuilder append(CharSequence x) {
-    impl.append(data, x);
+    string += x;
     return this;
   }
 
+  @Override
   public StringBuilder append(CharSequence x, int start, int end) {
-    if (x == null) {
-      x = "null";
-    }
-    impl.append(data, x.subSequence(start, end));
+    append0(x, start, end);
     return this;
   }
 
   public StringBuilder append(double x) {
-    impl.append(data, x);
+    string += x;
     return this;
   }
 
   public StringBuilder append(float x) {
-    impl.append(data, x);
+    string += x;
     return this;
   }
 
   public StringBuilder append(int x) {
-    impl.append(data, x);
+    string += x;
     return this;
   }
 
   public StringBuilder append(long x) {
-    impl.appendNonNull(data, String.valueOf(x));
+    string += x;
     return this;
   }
 
   public StringBuilder append(Object x) {
-    impl.append(data, x);
+    string += x;
     return this;
   }
 
   public StringBuilder append(String x) {
-    impl.append(data, x);
+    string += x;
     return this;
   }
 
   public StringBuilder append(StringBuffer x) {
-    impl.append(data, x);
+    string += x;
     return this;
   }
 
   public StringBuilder appendCodePoint(int x) {
-    impl.appendNonNull(data, String.valueOf(Character.toChars(x)));
+    appendCodePoint0(x);
     return this;
   }
 
-  /**
-   * This implementation does not track capacity; always returns
-   * {@link Integer#MAX_VALUE}.
-   */
-  public int capacity() {
-    return Integer.MAX_VALUE;
-  }
-
-  public char charAt(int index) {
-    return toString().charAt(index);
-  }
-
   public StringBuilder delete(int start, int end) {
-    return replace(start, end, "");
+    replace0(start, end, "");
+    return this;
   }
 
   public StringBuilder deleteCharAt(int start) {
-    return delete(start, start + 1);
-  }
-
-  /**
-   * This implementation does not track capacity; calling this method has no
-   * effect.
-   */
-  @SuppressWarnings("unused")
-  public void ensureCapacity(int ignoredCapacity) {
-  }
-
-  public void getChars(int srcStart, int srcEnd, char[] dst, int dstStart) {
-    String.__checkBounds(length(), srcStart, srcEnd);
-    String.__checkBounds(dst.length, dstStart, dstStart + (srcEnd - srcStart));
-    String s = toString();
-    while (srcStart < srcEnd) {
-      dst[dstStart++] = s.charAt(srcStart++);
-    }
-  }
-
-  public int indexOf(String x) {
-    return toString().indexOf(x);
-  }
-
-  public int indexOf(String x, int start) {
-    return toString().indexOf(x, start);
+    replace0(start, start + 1, "");
+    return this;
   }
 
   public StringBuilder insert(int index, boolean x) {
@@ -216,66 +172,17 @@ public class StringBuilder implements CharSequence, Appendable {
   }
 
   public StringBuilder insert(int index, String x) {
-    return replace(index, index, x);
-  }
-
-  public int lastIndexOf(String s) {
-    return toString().lastIndexOf(s);
-  }
-
-  public int lastIndexOf(String s, int start) {
-    return toString().lastIndexOf(s, start);
-  }
-
-  public int length() {
-    return impl.length(data);
+    replace0(index, index, x);
+    return this;
   }
 
   public StringBuilder replace(int start, int end, String toInsert) {
-    impl.replace(data, start, end, toInsert);
+    replace0(start, end, toInsert);
     return this;
   }
 
   public StringBuilder reverse() {
-    impl.reverse(data);
+    reverse0();
     return this;
-  }
-
-  /**
-   * Warning! This method is <b>much</b> slower than the JRE implementation. If
-   * you need to do character level manipulation, you are strongly advised to
-   * use a char[] directly.
-   */
-  public void setCharAt(int index, char x) {
-    replace(index, index + 1, String.valueOf(x));
-  }
-
-  public void setLength(int newLength) {
-    int oldLength = length();
-    if (newLength < oldLength) {
-      delete(newLength, oldLength);
-    } else if (newLength > oldLength) {
-      append(new char[newLength - oldLength]);
-    }
-  }
-
-  public CharSequence subSequence(int start, int end) {
-    return this.substring(start, end);
-  }
-
-  public String substring(int begin) {
-    return toString().substring(begin);
-  }
-
-  public String substring(int begin, int end) {
-    return toString().substring(begin, end);
-  }
-
-  @Override
-  public String toString() {
-    return impl.toString(data);
-  }
-
-  public void trimToSize() {
   }
 }

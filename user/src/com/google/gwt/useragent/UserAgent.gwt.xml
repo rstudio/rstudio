@@ -55,7 +55,6 @@
     <when-type-assignable class="com.google.gwt.useragent.client.UserAgent" />
   </generate-with>
 
-  <!-- Deferred binding to optimize JRE classes based on user agent. -->
-  <inherits name="com.google.gwt.emul.EmulationWithUserAgent"/>
+  <!-- Deferred binding to optimize Core based on user agent. -->
   <inherits name="com.google.gwt.core.CoreWithUserAgent"/>
 </module>

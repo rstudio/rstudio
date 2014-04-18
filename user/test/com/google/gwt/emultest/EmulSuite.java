@@ -26,7 +26,6 @@ import com.google.gwt.emultest.java.lang.LongTest;
 import com.google.gwt.emultest.java.lang.MathTest;
 import com.google.gwt.emultest.java.lang.ObjectTest;
 import com.google.gwt.emultest.java.lang.ShortTest;
-import com.google.gwt.emultest.java.lang.StringBufferDefaultImplTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
 import com.google.gwt.emultest.java.lang.StringTest;
 import com.google.gwt.emultest.java.lang.SystemTest;
@@ -66,7 +65,6 @@ public class EmulSuite {
     suite.addTestSuite(ObjectTest.class);
     suite.addTestSuite(ShortTest.class);
     suite.addTestSuite(StringBufferTest.class);
-    suite.addTestSuite(StringBufferDefaultImplTest.class);
     suite.addTestSuite(StringTest.class);
     suite.addTestSuite(SystemTest.class);
     suite.addTestSuite(ThrowableTest.class);
