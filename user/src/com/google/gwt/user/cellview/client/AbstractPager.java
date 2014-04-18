@@ -188,7 +188,7 @@ public abstract class AbstractPager extends Composite {
    * @return true if there is a next page
    */
   protected boolean hasNextPage() {
-    if (display == null) {
+    if (display == null || display.getRowCount() == 0) {
       return false;
     } else if (!display.isRowCountExact()) {
       return true;

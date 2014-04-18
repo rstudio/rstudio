@@ -515,7 +515,7 @@ public class SimplePager extends AbstractPager {
   @Override
   public void setDisplay(HasRows display) {
     // Enable or disable all buttons.
-    boolean disableButtons = (display == null);
+    boolean disableButtons = (display == null || display.getRowCount() == 0);
     setFastForwardDisabled(disableButtons);
     setNextPageButtonsDisabled(disableButtons);
     setPrevPageButtonsDisabled(disableButtons);
