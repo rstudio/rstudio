@@ -65,47 +65,51 @@ void SocketProxy::handleClientRead(const boost::system::error_code& e,
    // condition during close can lead to the socket not getting properly
    // shut down. use a simple mutex to prevent the threads from simultaneously
    // writing to the socket state.
-   socketMutex_.lock();
-   if (!e)
+   LOCK_MUTEX(socketMutex_)
    {
-      std::vector<boost::asio::const_buffer> buffers;
-      buffers.push_back(boost::asio::buffer(clientBuffer_.data(),
-                                            bytesTransferred));
-      ptrServer_->asyncWrite(buffers,
-                             boost::bind(
-                                &SocketProxy::handleServerWrite,
-                                SocketProxy::shared_from_this(),
-                                boost::asio::placeholders::error,
-                                boost::asio::placeholders::bytes_transferred));
+      if (!e)
+      {
+         std::vector<boost::asio::const_buffer> buffers;
+         buffers.push_back(boost::asio::buffer(clientBuffer_.data(),
+                                               bytesTransferred));
+         ptrServer_->asyncWrite(buffers,
+                                boost::bind(
+                                   &SocketProxy::handleServerWrite,
+                                   SocketProxy::shared_from_this(),
+                                   boost::asio::placeholders::error,
+                                   boost::asio::placeholders::bytes_transferred));
+      }
+      else
+      {
+         handleError(e, ERROR_LOCATION);
+      }
    }
-   else
-   {
-      handleError(e, ERROR_LOCATION);
-   }
-   socketMutex_.unlock();
+   END_LOCK_MUTEX
 }
 
 void SocketProxy::handleServerRead(const boost::system::error_code& e,
                                    std::size_t bytesTransferred)
 {
-   socketMutex_.lock();
-   if (!e)
+   LOCK_MUTEX(socketMutex_)
    {
-      std::vector<boost::asio::const_buffer> buffers;
-      buffers.push_back(boost::asio::buffer(serverBuffer_.data(),
-                                            bytesTransferred));
-      ptrClient_->asyncWrite(buffers,
-                             boost::bind(
-                                &SocketProxy::handleClientWrite,
-                                SocketProxy::shared_from_this(),
-                                boost::asio::placeholders::error,
-                                boost::asio::placeholders::bytes_transferred));
+      if (!e)
+      {
+         std::vector<boost::asio::const_buffer> buffers;
+         buffers.push_back(boost::asio::buffer(serverBuffer_.data(),
+                                               bytesTransferred));
+         ptrClient_->asyncWrite(buffers,
+                                boost::bind(
+                                   &SocketProxy::handleClientWrite,
+                                   SocketProxy::shared_from_this(),
+                                   boost::asio::placeholders::error,
+                                   boost::asio::placeholders::bytes_transferred));
+      }
+      else
+      {
+         handleError(e, ERROR_LOCATION);
+      }
    }
-   else
-   {
-      handleError(e, ERROR_LOCATION);
-   }
-   socketMutex_.unlock();
+   END_LOCK_MUTEX
 }
 
 void SocketProxy::handleClientWrite(const boost::system::error_code& e,
