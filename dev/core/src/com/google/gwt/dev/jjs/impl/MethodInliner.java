@@ -104,37 +104,53 @@ public class MethodInliner {
         return;
       }
 
-      boolean possibleToInline = false;
-
-      if (JProgram.isJsInterfacePrototype(method.getEnclosingType())) {
-        // don't inline calls to JsInterface Prototype methods, since these are merely stubs to preserve super calls
-        possibleToInline = false;
-      }
-
-      if (method.isStatic() && !method.isNative() && program.allowInliningOf(method)) {
-        JMethodBody body = (JMethodBody) method.getBody();
-        List<JStatement> stmts = body.getStatements();
-
-        if (method.getEnclosingType() != null
-            && method.getEnclosingType().getClinitMethod() == method && !stmts.isEmpty()) {
-          // clinit() calls cannot be inlined unless they are empty
-          possibleToInline = false;
-        } else if (!body.getLocals().isEmpty()) {
-          // methods with local variables cannot be inlined
-          possibleToInline = false;
-        } else {
-          JMultiExpression multi = createMultiExpressionFromBody(body, ignoringReturnValueFor == x);
-          if (multi != null) {
-            possibleToInline = tryInlineExpression(x, ctx, multi);
-          }
-        }
-      }
-
-      // If it will never be possible to inline the method, add it to a
-      // blacklist
-      if (!possibleToInline) {
+      if (!tryInlineMethodCall(x, ctx)) {
+        // Do not try to inline this method again
         cannotInline.add(method);
       }
+    }
+
+    private boolean tryInlineMethodCall(JMethodCall x, Context ctx) {
+      JMethod method = x.getTarget();
+      if (JProgram.isJsInterfacePrototype(method.getEnclosingType())) {
+         // don't inline calls to JsInterface Prototype methods, since these are merely stubs to
+         // preserve super calls
+        return false;
+      }
+
+      if (!method.isStatic() || method.isNative()) {
+        // Only inline static methods that are not native.
+        return false;
+      }
+
+      if (!program.allowInliningOf(method)) {
+        return false;
+      }
+
+      JMethodBody body = (JMethodBody) method.getBody();
+      List<JStatement> stmts = body.getStatements();
+
+      if (method.getEnclosingType() != null
+         && method.getEnclosingType().getClinitMethod() == method && !stmts.isEmpty()) {
+          // clinit() calls cannot be inlined unless they are empty
+        return false;
+      }
+
+      if (!body.getLocals().isEmpty()) {
+          // methods with local variables cannot be inlined
+        return false;
+      }
+
+      // try to inline
+      JMultiExpression multi = createMultiExpressionFromBody(body, ignoringReturnValueFor == x);
+      if (multi == null || !tryInlineExpression(x, ctx, multi)) {
+        // If it will never be possible to inline the method, add it to a
+        // blacklist
+        return false;
+      }
+
+      // Successfully inlined.
+      return true;
     }
 
     @Override
