@@ -410,11 +410,29 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    }-*/;
    
    private final native int getScrollPosition(JavaScriptObject win) /*-{
-      return win.getRstudioFrameScrollPosition();
+      var scrollPosition;
+      try {
+         scrollPosition = win.getRstudioFrameScrollPosition();
+      }
+      catch (e) {
+         // fail gracefully with top of document
+      }
+      if (typeof(scrollPosition) === "undefined")
+         scrollPosition = 0;
+      return scrollPosition;
    }-*/;
    
    private final native String getAnchor(JavaScriptObject win) /*-{
-      return win.getRstudioFrameAnchor();
+      var anchor;
+      try { 
+         anchor = win.getRstudioFrameAnchor();
+      }
+      catch (e) {
+         // fail gracefully with no anchor
+      }
+      if (typeof(anchor) === "undefined")
+         anchor = "";
+      return anchor;
    }-*/;
    
    // when the window is closed, remember our position within it
