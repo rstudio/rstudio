@@ -185,6 +185,12 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     optimize("boolean", "return \"a\".equals(\"b\");").intoString("return false;");
     optimize("boolean", "return s.equals(\"a\");")
         .intoString("return EntryPoint.s.equals(\"a\");");
+
+    // String concat
+    optimize("String", "return \"a\" + \"a\";").intoString("return \"aa\";");
+    optimize("String", "return \"a\" + 1;").intoString("return \"a1\";");
+    optimize("String", "return \"a\" + '1';").intoString("return \"a1\";");
+    optimize("String", "return \"a\" +  1L;").intoString("return \"a1\";");
   }
 
   public void testSubtractFromZero() throws Exception {

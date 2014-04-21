@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -68,27 +69,27 @@ public class TypeCoercionNormalizer {
       final JPrimitiveType typePrimitiveChar = program.getTypePrimitiveChar();
       final JPrimitiveType typePrimitiveLong = program.getTypePrimitiveLong();
 
-      if (expr.getType() != typePrimitiveChar && expr.getType() != typePrimitiveLong) {
-        return expr;
-      }
-
-      if (expr.getType() == typePrimitiveLong) {
+      if (expr instanceof JLongLiteral) {
+        // Replace the literal by a string containing the literal.
+        long longValue = ((JLongLiteral) expr).getValue();
+        return program.getStringLiteral(expr.getSourceInfo(), String.valueOf(longValue));
+      } else  if (expr.getType() == typePrimitiveLong) {
         JMethodCall call = new JMethodCall(expr.getSourceInfo(), null,
             program.getIndexedMethod("LongLib.toString"), expr);
         return call;
-      }
-
-      if (expr instanceof JCharLiteral) {
+      } else  if (expr instanceof JCharLiteral) {
         // Replace the literal by a string containing the literal.
         char charValue = ((JCharLiteral) expr).getValue();
         return program.getStringLiteral(expr.getSourceInfo(), Character.toString(charValue));
+      } else if (expr.getType() == typePrimitiveChar) {
+        // A non literal expression of type Char.
+        // Replace with Cast.charToString(c)
+        JMethodCall call = new JMethodCall(expr.getSourceInfo(), null,
+            program.getIndexedMethod("Cast.charToString"), expr);
+        return call;
       }
 
-      // A non literal expression of type Char.
-      // Replace with Cast.charToString(c)
-      JMethodCall call = new JMethodCall(expr.getSourceInfo(), null,
-          program.getIndexedMethod("Cast.charToString"), expr);
-      return call;
+      return expr;
     }
 
     private boolean isConcatOperation(JBinaryOperator operator) {

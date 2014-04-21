@@ -29,18 +29,6 @@ public class TypeCoercionNormalizerTest extends OptimizerTestBase {
     runDeadCodeElimination = false;
   }
 
-  public void testCoerceCharLiteral_NonAssignment() throws Exception {
-    optimize("void", "String a = \"a\" + 'b' ;").into("String a = \"a\" + \"b\" ;");
-    optimize("void", "String a =  'b' + \"a\" ;").into("String a = \"b\" + \"a\";");
-  }
-
-  public void testCoerceCharLiteral_Assignment() throws Exception {
-    optimize("void", "String a = \"a\"; a += 'b' ;").into(
-        "String a = \"a\";",
-        "a += \"b\" ;"
-    );
-  }
-
   public void testCoerceChar_NonAssignment() throws Exception {
     addSnippetImport("com.google.gwt.lang.Cast");
     optimize("void", "char c = 'a'; String a = \"a\" + c;").into(
@@ -62,25 +50,62 @@ public class TypeCoercionNormalizerTest extends OptimizerTestBase {
     );
   }
 
+  public void testCoerceCharLiteral_NonAssignment() throws Exception {
+    optimize("void", "String a = \"a\" + 'b' ;").into("String a = \"a\" + \"b\" ;");
+    optimize("void", "String a =  'b' + \"a\" ;").into("String a = \"b\" + \"a\";");
+  }
+
+  public void testCoerceCharLiteral_Assignment() throws Exception {
+    optimize("void", "String a = \"a\"; a += 'b' ;").into(
+        "String a = \"a\";",
+        "a += \"b\" ;"
+    );
+  }
+
   public void testCoerceLong_NonAssignment() throws Exception {
     addSnippetImport("com.google.gwt.lang.LongLib");
 
-    optimize("void", "String a = \"a\"; a = a + 1L ;").into(
+    optimize("void", "long l = 1L; String a = \"a\"; a = a + l;").into(
+        "long l = 1L;",
         "String a = \"a\";",
-        "a = a + LongLib.toString(1L);"
+        "a = a + LongLib.toString(l);"
     );
-    optimize("void", "String a = \"a\"; a = 1L + a ;").into(
+    optimize("void", "long l = 1L; String a = \"a\"; a = l + a;").into(
+        "long l = 1L;",
         "String a = \"a\";",
-        "a = LongLib.toString(1L) + a;"
+        "a = LongLib.toString(l) + a;"
     );
   }
 
   public void testCoerceLong_Assignment() throws Exception {
     addSnippetImport("com.google.gwt.lang.LongLib");
 
-    optimize("void", "String a = \"a\"; a += LongLib.toString(1L) ;").into(
+    optimize("void", "long l = 1L; String a = \"a\"; a += l;").into(
+        "long l = 1L;",
         "String a = \"a\";",
-        "a += LongLib.toString(1L);"
+        "a += LongLib.toString(l);"
+    );
+  }
+
+  public void testCoerceLongLiteral_NonAssignment() throws Exception {
+    addSnippetImport("com.google.gwt.lang.LongLib");
+
+    optimize("void", "String a = \"a\"; a = a + 1L;").into(
+        "String a = \"a\";",
+        "a = a + \"1\";"
+    );
+    optimize("void", "String a = \"a\"; a = 1L + a;").into(
+        "String a = \"a\";",
+        "a = \"1\" + a;"
+    );
+  }
+
+  public void testCoerceLongLiteral_Assignment() throws Exception {
+    addSnippetImport("com.google.gwt.lang.LongLib");
+
+    optimize("void", "String a = \"a\"; a += 1L ;").into(
+        "String a = \"a\";",
+        "a += \"1\";"
     );
   }
 
