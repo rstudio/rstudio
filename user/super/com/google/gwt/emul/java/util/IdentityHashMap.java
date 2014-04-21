@@ -55,7 +55,6 @@ public class IdentityHashMap<K, V> extends AbstractHashMap<K, V> implements
     super(toBeCopied);
   }
 
-  @Override
   public Object clone() {
     return new IdentityHashMap<K, V>(this);
   }
@@ -97,12 +96,12 @@ public class IdentityHashMap<K, V> extends AbstractHashMap<K, V> implements
   }
 
   @Override
-  protected boolean equals(Object value1, Object value2) {
+  boolean equals(Object value1, Object value2) {
     return value1 == value2;
   }
 
   @Override
-  protected int getHashCode(Object key) {
+  int getHashCode(Object key) {
     return Impl.getHashCode(key);
   }
 }

@@ -210,8 +210,6 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     clearImpl();
   }
 
-  public abstract Object clone();
-
   @Override
   public boolean containsKey(Object key) {
     return (key == null) ? nullSlotLive : (!(key instanceof String)
@@ -264,13 +262,13 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * Subclasses must override to return a whether or not two keys or values are
    * equal.
    */
-  protected abstract boolean equals(Object value1, Object value2);
+  abstract boolean equals(Object value1, Object value2);
 
   /**
    * Subclasses must override to return a hash code for a given key. The key is
    * guaranteed to be non-null and not a String.
    */
-  protected abstract int getHashCode(Object key);
+  abstract int getHashCode(Object key);
 
   private native void addAllHashEntries(Collection<?> dest) /*-{
     var hashCodeMap = this.@java.util.AbstractHashMap::hashCodeMap;
