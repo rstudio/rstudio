@@ -57,8 +57,8 @@ public class CallFrame extends JavaScriptObject
        return this.end_character_number;
    }-*/;
 
-   public final native String getArgumentList() /*-{
-       return this.argument_list;
+   public final native String getCallSummary() /*-{
+       return this.call_summary;
    }-*/;
    
    public final native int getFunctionLineNumber() /*-{
@@ -108,7 +108,8 @@ public class CallFrame extends JavaScriptObject
    {
       if (fileName.length() > 0 &&
           !fileName.equalsIgnoreCase("NULL") &&
-          !fileName.equalsIgnoreCase("<tmp>"))
+          !fileName.equalsIgnoreCase("<tmp>") &&
+          !fileName.equalsIgnoreCase("<text>"))
       {
          return true;
       }

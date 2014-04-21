@@ -153,7 +153,7 @@ public class CallFrameItem extends Composite
       }
       if (frame_.getShinyFunctionLabel().isEmpty())
       {
-         return frame_.getFunctionName() + "(" + frame_.getArgumentList() + ")";
+         return frame_.getCallSummary();
       }
       else
       {

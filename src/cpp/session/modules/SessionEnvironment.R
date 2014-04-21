@@ -273,17 +273,9 @@
       as.character(substitute(call))
 })
 
-.rs.addFunction("argumentListSummary", function(args)
+.rs.addFunction("callSummary", function(val)
 {
-    return(paste(lapply(args, function(arg) {
-        if (is.language(arg))
-            capture.output(print(arg))
-        else if (is.environment(arg) || 
-                 is.function(arg))
-            deparse(substitute(arg))
-        else
-            as.character(arg)
-        }), collapse = ", "))
+   deparse(attr(val, "_rs_call"))
 })
 
 .rs.addFunction("valueDescription", function(obj)

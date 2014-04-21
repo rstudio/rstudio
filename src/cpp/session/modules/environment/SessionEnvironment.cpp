@@ -342,24 +342,34 @@ bool insideDebugHiddenFunction()
    return false;
 }
 
-Error functionNameFromContext(const RCNTXT* pContext,
-                              std::string* pFunctionName)
+// call objects can't be passed as primary values through our R interface
+// (early evaluation can be triggered) so we wrap them in an attribute attached
+// to a dummy value when we need to pass them through
+Error invokeFunctionOnCall(const char* rFunction,
+                           SEXP call, std::string* pResult)
 {
-   SEXP functionName;
+   SEXP result;
    r::sexp::Protect protect;
    SEXP val = r::sexp::create("_rs_callval", &protect);
-   r::sexp::setAttrib(val, "_rs_call", pContext->call);
-   Error error = r::exec::RFunction(".rs.functionNameFromCall", val)
-                            .call(&functionName, &protect);
-   if (!error && r::sexp::length(functionName) > 0)
+   r::sexp::setAttrib(val, "_rs_call", call);
+   Error error = r::exec::RFunction(rFunction, val)
+                            .call(&result, &protect);
+   if (!error && r::sexp::length(result) > 0)
    {
-      error = r::sexp::extract(functionName, pFunctionName);
+      error = r::sexp::extract(result, pResult);
    }
    else
    {
-      pFunctionName->clear();
+      pResult->clear();
    }
    return error;
+}
+
+Error functionNameFromContext(const RCNTXT* pContext,
+                              std::string* pFunctionName)
+{
+   return invokeFunctionOnCall(".rs.functionNameFromCall", pContext->call,
+                               pFunctionName);
 }
 
 // Return the call frames and debug information as a JSON object.
@@ -457,24 +467,13 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
             varFrame["function_line_number"] = 1;
          }
 
-         std::string argList;
-         SEXP args = CDR(pRContext->call);
-         switch (TYPEOF(args))
-         {
-            case LISTSXP:
-               error = r::exec::RFunction(".rs.argumentListSummary", args)
-                 .call(&argList);
-              break;
-            case LANGSXP:
-               error = r::exec::RFunction(".rs.promiseDescription", args)
-                 .call(&argList);
-               break;
-         }
+         std::string callSummary;
+         error = invokeFunctionOnCall(".rs.callSummary", pRContext->call,
+                                      &callSummary);
          if (error)
-         {
             LOG_ERROR(error);
-         }
-         varFrame["argument_list"] = error ? "" : argList;
+
+         varFrame["call_summary"] = error ? "" : callSummary;
 
          // If this is a Shiny function, provide its label
          std::string shinyLabel;
