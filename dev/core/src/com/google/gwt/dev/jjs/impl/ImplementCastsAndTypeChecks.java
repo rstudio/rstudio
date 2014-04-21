@@ -95,7 +95,7 @@ public class ImplementCastsAndTypeChecks {
         }
         // A cast is still needed.  Substitute the appropriate Cast implementation.
         ctx.replaceMe(implementCastOrInstanceOfOperation(x.getSourceInfo(), curExpr, refType,
-            dynamicCastMethodsByTargetTypeCategory));
+            dynamicCastMethodsByTargetTypeCategory, true));
         return;
       }
 
@@ -197,7 +197,7 @@ public class ImplementCastsAndTypeChecks {
         // Replace the instance of check by a call to the appropriate instanceof method in class
         // Cast.
         ctx.replaceMe(implementCastOrInstanceOfOperation(x.getSourceInfo(), x.getExpr(), toType,
-            instanceOfMethodsByTargetTypeCategory));
+            instanceOfMethodsByTargetTypeCategory, false));
       }
     }
   }
@@ -220,11 +220,18 @@ public class ImplementCastsAndTypeChecks {
    */
   private JMethodCall implementCastOrInstanceOfOperation(SourceInfo sourceInfo,
       JExpression targetExpression, JReferenceType targetType,
-      Map<TypeCategory, JMethod> targetMethodByTypeCategory) {
+      Map<TypeCategory, JMethod> targetMethodByTypeCategory, boolean overrideReturnType) {
 
     TypeCategory targetTypeCategory = determineTypeCategoryForType(targetType);
     JMethod method = targetMethodByTypeCategory.get(targetTypeCategory);
-    JMethodCall call = new JMethodCall(sourceInfo, null, method);
+    JMethodCall call;
+    if (overrideReturnType) {
+      // Create a method call overriding the return type so that operations like Cast.dynamicCast
+      // don't change the type of the original method call expression.
+      call = new JMethodCall(sourceInfo, null, method, targetType);
+    } else {
+      call = new JMethodCall(sourceInfo, null, method);
+    }
     call.addArg(targetExpression);
     if (method.getParams().size() >= 2) {
       // checking/casting to JSOs or Strings does not require a second parameter
