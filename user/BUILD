@@ -19,7 +19,10 @@
 licenses(["unencumbered"])
 
 package(
-    default_visibility = ["//third_party/java_src/gwt:__subpackages__"],
+    default_visibility = [
+        "//third_party/java/gwt:__subpackages__",
+        "//third_party/java_src/gwt:__subpackages__",
+    ],
 )
 
 subinclude("//third_party/java_src/gwt:build-macros")
@@ -33,6 +36,7 @@ AugmentedJar(
     srcs = glob(
         ["src/**/*.java"],
         exclude = [
+            "src/com/google/gwt/junit/**/*.java",  # see gwt-testing
             "**/super/**",
             "**/RunStyleSelenium.java",
         ],
@@ -56,6 +60,8 @@ AugmentedJar(
     exclude_glob = [
         "**/package.html",
         "**/package-info.java",
+        "src/com/google/gwt/junit/**",
+        "super/com/google/gwt/junit/**",
     ],
     java_library_name = "gwt-user-classes",
     output_name = "gwt-user-classes-src.jar",
@@ -327,7 +333,6 @@ java_library(
         ],
     ),
     javacopts = [
-        "-encoding utf8",
         "-source 5",
         "-target 5",
     ],
@@ -365,9 +370,41 @@ java_library(
     ],
     gwtxml = "Gwt-dto-serializers.gwt.xml",
     javacopts = [
-        "-encoding utf8",
         "-source 5",
         "-target 5",
+    ],
+)
+
+# Creates gwt-testing.jar, which contains GWTTestCase and its infrastructure.
+# (The jar depends on gwt-user.jar but the dependency isn't declared.
+# Instead we assume it will be added by a wrapper rule.)
+AugmentedJar(
+    name = "gwt-testing",
+    srcs = glob(
+        ["src/com/google/gwt/junit/**/*.java"],
+        exclude = [
+            "**/super/**",
+            "**/RunStyleSelenium.java",
+        ],
+    ),
+    added_root_globs = {
+        "src": ["src/com/google/gwt/junit/**"],
+        "super": ["super/com/google/gwt/junit/**"],
+    },
+    build_deps = [
+        ":gwt-user-classes-src",
+        "//third_party/java_src/gwt/svn/tools:dev_deps",
+        # Safe to depend on servlet_api_3 because build_deps doesn't leak
+        "//third_party/java_src/gwt/svn/tools:servlet_api_3",
+        "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-classes",
+        "//third_party/java/junit",
+    ],
+    dojarjar = 1,
+    exclude_glob = [
+        "**/package.html",
+        "**/package-info.java",
+        "**/RunStyleSelenium.java",
     ],
 )
 
@@ -393,6 +430,7 @@ AugmentedJar(
     build_deps = [
         ":gwt-user-classes",
         ":gwt-user-classes_jardeps",
+        ":gwt-testing",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         # Safe to depend on servlet_api_3 because build_deps doesn't leak
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
@@ -422,11 +460,12 @@ AugmentedJar(
 
 filegroup(
     name = "browser_suite_files",
-    srcs = glob(["test/**/*Suite.java"],
+    srcs = glob(
+        ["test/**/*Suite.java"],
         exclude = [
             "test/**/*JreSuite.java",
         ],
-    )
+    ),
 )
 
 filegroup(
