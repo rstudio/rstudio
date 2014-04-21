@@ -101,7 +101,7 @@ public class EnvironmentPresenter extends BasePresenter
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name, boolean local);
-      void setCallFrames(JsArray<CallFrame> frames);
+      void setCallFrames(JsArray<CallFrame> frames, boolean autoSize);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
       void setObjectDisplayType(int type);
@@ -527,14 +527,21 @@ public class EnvironmentPresenter extends BasePresenter
       initialized_ = true;
    }
    
-   public void setContextDepth(int contextDepth)
+   // Private methods ---------------------------------------------------------
+
+   // sets a new context depth; returns true if the the new context depth  
+   // transitions to debug mode
+   private boolean setContextDepth(int contextDepth)
    {
+      boolean enteringDebugMode = false;
+      
       // if entering debug state, activate this tab 
       if (contextDepth > 0 &&
           contextDepth_ == 0)
       {
          eventBus_.fireEvent(new ActivatePaneEvent("Environment"));
          debugCommander_.enterDebugMode(DebugMode.Function);
+         enteringDebugMode = true;
       }
       // if leaving debug mode, let everyone know
       else if (contextDepth == 0 &&
@@ -544,9 +551,9 @@ public class EnvironmentPresenter extends BasePresenter
       }
       contextDepth_ = contextDepth;
       view_.setContextDepth(contextDepth_);
+      
+      return enteringDebugMode;
    }
-
-   // Private methods ---------------------------------------------------------
 
    private void loadNewContextState(int contextDepth, 
          String environmentName,
@@ -555,14 +562,14 @@ public class EnvironmentPresenter extends BasePresenter
          boolean useBrowseSources,
          String functionCode)
    {
-      setContextDepth(contextDepth);
+      boolean enteringDebugMode = setContextDepth(contextDepth);
       environmentName_ = environmentName;
       view_.setEnvironmentName(environmentName_, isLocalEvironment);
       if (callFrames != null && 
           callFrames.length() > 0 &&
           contextDepth > 0)
       {
-         view_.setCallFrames(callFrames);
+         view_.setCallFrames(callFrames, enteringDebugMode);
          CallFrame browseFrame = callFrames.get(
                  contextDepth_ - 1);
          String newBrowseFile = browseFrame.getAliasedFileName().trim();

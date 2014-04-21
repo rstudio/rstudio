@@ -223,9 +223,9 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
-   public void setCallFrames(JsArray<CallFrame> frameList)
+   public void setCallFrames(JsArray<CallFrame> frameList, boolean autoSize)
    {
-      objects_.setCallFrames(frameList);
+      objects_.setCallFrames(frameList, autoSize);
    }
 
    @Override

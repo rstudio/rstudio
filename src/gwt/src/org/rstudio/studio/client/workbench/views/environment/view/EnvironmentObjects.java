@@ -201,9 +201,13 @@ public class EnvironmentObjects extends ResizeComposite
       return objectDisplay_.getSelectedObjects();
    }
 
-   public void setCallFrames(JsArray<CallFrame> frameList)
+   public void setCallFrames(JsArray<CallFrame> frameList, boolean autoSize)
    {
       callFramePanel_.setCallFrames(frameList, contextDepth_);
+      
+      // if not auto-sizing we're done
+      if (!autoSize)
+         return;
 
       // if the parent panel has layout information, auto-size the call frame
       // panel (let GWT go first so the call frame panel visibility has 
@@ -632,7 +636,8 @@ public class EnvironmentObjects extends ResizeComposite
          splitPanel.setWidgetSize(
                callFramePanel_, desiredCallFramePanelSize);
          callFramePanel_.onResize();
-         objectDisplay_.onResize();
+         if (objectDisplay_ != null)
+            objectDisplay_.onResize();
       }
       
       pendingCallFramePanelSize_ = false;
