@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,7 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
@@ -27,7 +28,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.CurrencyList;
 import com.google.gwt.i18n.client.impl.CurrencyDataImpl;
 import com.google.gwt.i18n.shared.GwtLocale;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -49,10 +49,10 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /**
- * Generator used to generate a localized version of CurrencyList, which
- * contains the list of currencies (with names, symbols, and other information)
- * localized to the current locale.
+ * Generator used to generate a localized version of CurrencyList, which contains the list of
+ * currencies (with names, symbols, and other information) localized to the current locale.
  */
+@RunsLocal(requiresProperties = {"locale.queryparam", "locale", "runtime.locales", "locale.cookie"})
 public class CurrencyListGenerator extends Generator {
 
   /**
@@ -79,13 +79,13 @@ public class CurrencyListGenerator extends Generator {
 
     /**
      * Create an instance.
-     * 
+     *
      * currencyData format:
-     * 
+     *
      * <pre>
      *       display name|symbol|decimal digits|not-used-flag
      * </pre>
-     * 
+     *
      * <ul>
      * <li>If a symbol is not supplied, the currency code will be used
      * <li>If # of decimal digits is omitted, 2 is used
@@ -93,9 +93,9 @@ public class CurrencyListGenerator extends Generator {
      * <li>Trailing empty fields can be omitted
      * <li>If null, use currencyCode as the display name
      * </ul>
-     * 
+     *
      * extraData format:
-     * 
+     *
      * <pre>
      *       portable symbol|flags|currency symbol override
      *     flags are space separated list of:
@@ -111,7 +111,7 @@ public class CurrencyListGenerator extends Generator {
      *         ForceNoSpace  Never add a space between the currency symbol
      *                       and the number.
      * </pre>
-     * 
+     *
      * @param currencyCode ISO4217 currency code
      * @param currencyData entry from a CurrencyData properties file
      * @param extraData entry from a CurrencyExtra properties file
@@ -255,7 +255,7 @@ public class CurrencyListGenerator extends Generator {
 
   /**
    * Backslash-escape any double quotes in the supplied string.
-   * 
+   *
    * @param str string to quote
    * @return string with double quotes backslash-escaped.
    */
@@ -263,12 +263,9 @@ public class CurrencyListGenerator extends Generator {
     return str.replace("\"", "\\\"");
   }
 
-  private static ImmutableSet<String> relevantPropertyNames =
-      ImmutableSet.of("locale.queryparam", "locale", "runtime.locales", "locale.cookie");
-
   /**
    * Generate an implementation for the given type.
-   * 
+   *
    * @param logger error logger
    * @param context generator context
    * @param typeName target type name
@@ -302,21 +299,11 @@ public class CurrencyListGenerator extends Generator {
         runtimeLocales);
   }
 
-  @Override
-  public Set<String> getAccessedPropertyNames() {
-    return relevantPropertyNames;
-  }
-
-  @Override
-  public boolean contentDependsOnTypes() {
-    return false;
-  }
-
   /**
    * Generate an implementation class for the requested locale, including all
    * parent classes along the inheritance chain. The data will be kept at the
    * location in the inheritance chain where it was defined in properties files.
-   * 
+   *
    * @param logger
    * @param context
    * @param targetClass
@@ -382,7 +369,7 @@ public class CurrencyListGenerator extends Generator {
   /**
    * Generate the implementation for a single locale, overriding from its parent
    * only data that has changed in this locale.
-   * 
+   *
    * @param logger
    * @param context
    * @param targetClass
@@ -442,7 +429,7 @@ public class CurrencyListGenerator extends Generator {
   /**
    * Generate a class which can select between alternate implementations at
    * runtime based on the runtime locale.
-   * 
+   *
    * @param logger TreeLogger instance for log messages
    * @param context GeneratorContext for generating source files
    * @param targetClass class to generate
@@ -563,15 +550,15 @@ public class CurrencyListGenerator extends Generator {
    * not one (not that inheritance is not handled here).
    * <p/>
    * The keys are ISO4217 currency codes. The format of the map values is:
-   * 
+   *
    * <pre>
    * display name|symbol|decimal digits|not-used-flag
    * </pre>
-   * 
+   *
    * If a symbol is not supplied, the currency code will be used If # of decimal
    * digits is omitted, 2 is used If a currency is not generally used,
    * not-used-flag=1 Trailing empty fields can be omitted
-   * 
+   *
    * @param locale
    * @return currency data map
    */
@@ -587,7 +574,7 @@ public class CurrencyListGenerator extends Generator {
 
   /**
    * Returns the default currency code for the requested locale.
-   * 
+   *
    * @param locale
    * @return ISO4217 currency code
    */
@@ -606,7 +593,7 @@ public class CurrencyListGenerator extends Generator {
   /**
    * Load a properties file for a given locale. Note that locale inheritance is
    * the responsibility of the caller.
-   * 
+   *
    * @param prefix classpath prefix of properties file
    * @param locale locale to load
    * @return LocalizedProperties instance containing properties file or null if
@@ -646,7 +633,7 @@ public class CurrencyListGenerator extends Generator {
   /**
    * Generate an implementation for a runtime locale, to be referenced from the
    * generated runtime selection code.
-   * 
+   *
    * @param logger
    * @param context
    * @param targetClass
@@ -679,10 +666,10 @@ public class CurrencyListGenerator extends Generator {
    * Writes a loadCurrencyMapJava method for the current locale, based on its
    * currency data and its superclass (if any). As currencies are included in
    * this method, their names are added to {@code nameMap} for later use.
-   * 
+   *
    * If no new currency data is added for this locale over its superclass, the
    * method is omitted entirely.
-   * 
+   *
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
    *          listed
@@ -718,10 +705,10 @@ public class CurrencyListGenerator extends Generator {
    * Writes a loadCurrencyMapNative method for the current locale, based on its
    * currency data and its superclass (if any). As currencies are included in
    * this method, their names are added to {@code nameMap} for later use.
-   * 
+   *
    * If no new currency data is added for this locale over its superclass, the
    * method is omitted entirely.
-   * 
+   *
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
    *          listed
@@ -764,10 +751,10 @@ public class CurrencyListGenerator extends Generator {
   /**
    * Writes a loadNamesMapJava method for the current locale, based on its the
    * supplied names map and its superclass (if any).
-   * 
+   *
    * If no new names are added for this locale over its superclass, the method
    * is omitted entirely.
-   * 
+   *
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
    *          listed
@@ -804,10 +791,10 @@ public class CurrencyListGenerator extends Generator {
   /**
    * Writes a loadNamesMapNative method for the current locale, based on its the
    * supplied names map and its superclass (if any).
-   * 
+   *
    * If no new names are added for this locale over its superclass, the method
    * is omitted entirely.
-   * 
+   *
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
    *          listed

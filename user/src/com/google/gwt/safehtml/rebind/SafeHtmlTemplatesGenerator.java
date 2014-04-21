@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,26 +16,24 @@
 package com.google.gwt.safehtml.rebind;
 
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.util.Set;
 
 /**
  * Generator for implementations of
  * {@link com.google.gwt.safehtml.client.SafeHtmlTemplates}.
  */
+@RunsLocal
 public class SafeHtmlTemplatesGenerator extends Generator {
-
-  private static ImmutableSet<String> relevantPropertyNames = ImmutableSet.of();
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext genCtx,
@@ -69,20 +67,5 @@ public class SafeHtmlTemplatesGenerator extends Generator {
       genCtx.commit(logger, printWriter);
     }
     return packageName + "." + implName;
-  }
-
-  @Override
-  public Set<String> getAccessedPropertyNames() {
-    return relevantPropertyNames;
-  }
-
-  @Override
-  public boolean contentDependsOnProperties() {
-    return false;
-  }
-
-  @Override
-  public boolean contentDependsOnTypes() {
-    return false;
   }
 }

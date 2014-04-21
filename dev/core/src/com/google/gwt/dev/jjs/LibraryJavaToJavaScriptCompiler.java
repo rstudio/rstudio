@@ -438,8 +438,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
 
         // If the content of generator output varies when some relevant properties change and some
         // relevant properties have changed.
-        if (generatorRule.contentDependsOnProperties()
-            && relevantPropertiesHaveChanged(generatorRule)) {
+        if (relevantPropertiesHaveChanged(generatorRule)) {
           // Rerun the generator on old rebound types to replace old stale output.
           Set<String> oldReboundTypeNames =
               compilerContext.gatherOldReboundTypeNamesForGenerator(generatorName);

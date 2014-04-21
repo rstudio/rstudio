@@ -13,6 +13,7 @@
  */
 package com.google.gwt.core.ext;
 
+import com.google.gwt.dev.cfg.RuleGenerateWith;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.Set;
@@ -39,20 +40,18 @@ public class SubsetFilteringPropertyOracle implements PropertyOracle {
   @Override
   public ConfigurationProperty getConfigurationProperty(String propertyName)
       throws BadPropertyValueException {
-    Preconditions.checkState(
-        accessiblePropertyNames == null || accessiblePropertyNames.contains(propertyName),
-            "Access to configuration property '" + propertyName + "' is not allowed. "
-            + accessViolationMessage);
+    Preconditions.checkState(accessiblePropertyNames.equals(RuleGenerateWith.ALL_PROPERTIES)
+        || accessiblePropertyNames.contains(propertyName), "Access to configuration property '"
+        + propertyName + "' is not allowed. " + accessViolationMessage);
     return wrappedPropertyOracle.getConfigurationProperty(propertyName);
   }
 
   @Override
   public SelectionProperty getSelectionProperty(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
-    Preconditions.checkState(
-        accessiblePropertyNames == null || accessiblePropertyNames.contains(propertyName),
-            "Access to binding property '" + propertyName + "' is not allowed. "
-            + accessViolationMessage);
+    Preconditions.checkState(accessiblePropertyNames.equals(RuleGenerateWith.ALL_PROPERTIES)
+        || accessiblePropertyNames.contains(propertyName), "Access to binding property '"
+        + propertyName + "' is not allowed. " + accessViolationMessage);
     return wrappedPropertyOracle.getSelectionProperty(logger, propertyName);
   }
 }

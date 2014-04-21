@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,7 @@ import com.google.gwt.codegen.server.CodeGenUtils;
 import com.google.gwt.codegen.server.JavaSourceWriterBuilder;
 import com.google.gwt.codegen.server.SourceWriter;
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
@@ -37,7 +38,6 @@ import com.google.gwt.i18n.client.ConstantsWithLookup;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.i18n.shared.GwtLocale;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +52,7 @@ import java.util.TreeSet;
  * Generator used to bind classes extending the <code>Localizable</code> and
  * <code>Constants</code> interfaces.
  */
+@RunsLocal(requiresProperties = {"locale.queryparam", "locale", "runtime.locales", "locale.cookie"})
 public class LocalizableGenerator extends Generator {
 
   /**
@@ -104,12 +105,9 @@ public class LocalizableGenerator extends Generator {
 
   private LocalizableLinkageCreator linkageCreator = new LocalizableLinkageCreator();
 
-  private static ImmutableSet<String> relevantPropertyNames =
-      ImmutableSet.of("locale.queryparam", "locale", "runtime.locales", "locale.cookie");
-
   /**
    * Generate an implementation for the given type.
-   * 
+   *
    * @param logger error logger
    * @param context generator context
    * @param typeName target type name
@@ -130,7 +128,7 @@ public class LocalizableGenerator extends Generator {
 
   /**
    * Generate an implementation for a given type.
-   * 
+   *
    * @param logger
    * @param context
    * @param typeName
@@ -186,26 +184,11 @@ public class LocalizableGenerator extends Generator {
     return returnedClass;
   }
 
-  @Override
-  public Set<String> getAccessedPropertyNames() {
-    return relevantPropertyNames;
-  }
-
-  @Override
-  public boolean contentDependsOnProperties() {
-    return false;
-  }
-
-  @Override
-  public boolean contentDependsOnTypes() {
-    return false;
-  }
-
   /**
    * Generate a runtime-selection implementation of the target class if needed,
    * delegating all overridable methods to an instance chosen at runtime based
    * on the map of locales to implementing classes.
-   * 
+   *
    * @param ctx code generator context
    * @param targetClass class being GWT.create'd
    * @param defaultClass the default implementation to use
@@ -232,7 +215,7 @@ public class LocalizableGenerator extends Generator {
    * Generate a runtime-selection implementation of the target class, delegating
    * all overridable methods to an instance chosen at runtime based on the map
    * of locales to implementing classes.
-   * 
+   *
    * @param builder source writer builder
    * @param targetClass class being GWT.create'd
    * @param defaultClass the default implementation to use
@@ -313,7 +296,7 @@ public class LocalizableGenerator extends Generator {
   /**
    * @param targetClass
    * @return a set of overrideable methods, in the order they should appear in
-   *     generated source 
+   *     generated source
    */
   private TreeSet<JMethod> collectOverridableMethods(JClassType targetClass) {
     TreeSet<JMethod> overrides = new TreeSet<JMethod>(new JMethodComparator());

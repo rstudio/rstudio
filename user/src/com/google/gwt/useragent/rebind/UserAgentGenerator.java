@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,7 @@ package com.google.gwt.useragent.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
@@ -27,16 +28,15 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.shared.impl.StringCase;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.util.Set;
 
 /**
  * Generator for {@link com.google.gwt.useragent.client.UserAgent}.
  */
+@RunsLocal(requiresProperties = {"user.agent"})
 public class UserAgentGenerator extends Generator {
   static final String PROPERTY_USER_AGENT = "user.agent";
 
@@ -104,15 +104,5 @@ public class UserAgentGenerator extends Generator {
       sw.commit(logger);
     }
     return composerFactory.getCreatedClassName();
-  }
-
-  @Override
-  public Set<String> getAccessedPropertyNames() {
-    return ImmutableSet.of(PROPERTY_USER_AGENT);
-  }
-
-  @Override
-  public boolean contentDependsOnTypes() {
-    return false;
   }
 }

@@ -15,17 +15,57 @@ package com.google.gwt.core.ext;
 
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 
-import java.util.Set;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * Generates source code for subclasses during deferred binding requests. Subclasses must be
- * thread-safe.<br />
- *
- * Well-behaved generators can speed up the separate compiles by overriding @{link
- * #getAccessedPropertyNames}, @{link #contentDependsOnProperties}, and @{contentDependsOnTypes}".
- * The compiler will use this information to run generators less often and cache their outputs.
+ * thread-safe.
+ * <p>
+ * If annotated by {@code @RunsLocal}, a generator can minimize its impact on compilation speed. See
+ * {@link RunsLocal} for details.
  */
 public abstract class Generator {
+
+  /**
+   * An optional annotation indicating that a Generator can be run with local information during
+   * incremental compilation.
+   * <p>
+   * When this annotation is applied, the generator cannot access global level type information
+   * (e.g. {@code JClassType#getSubTypes} or {@code TypeOracle#getTypes}) and also accesses to
+   * property values are restricted to the ones defined by {@link #requiredProperties}.
+   * <p>
+   * This information is used by Generator invocation during incremental compilation to run
+   * Generators as early as possible in the compile tree (and thus as parallelized and cached as
+   * possible).
+   */
+  @Inherited
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface RunsLocal {
+
+    /**
+     * A special value for {@link #requiresProperties} to indicate that any property can affect this
+     * generator's output. While this gives access to any property value, this may slowdown the
+     * compilation speed to precompute all property values.
+     */
+    String ALL = "%ALL%";
+
+    /**
+     * The list of names of properties which will be accessed by this Generator. It is assumed that
+     * any change in the values of these properties will affect the content of Generator output.
+     * <p>
+     * Any Generator that depends on properties will have its execution delayed to the point in the
+     * compile tree where it is known that the properties it cares about have stopped changing. In
+     * general this result of pushing Generator execution towards the root of the tree has negative
+     * performance consequences on incremental compile performance.
+     * <p>
+     * Generators that want to be as fast as possible should strive not to read any properties.
+     * <p>
+     * Can be set to {@code RunsLocal.ALL} to indicate a need to arbitrarily access any property.
+     */
+    String[] requiresProperties() default {};
+  }
 
   private static final int MAX_SIXTEEN_BIT_NUMBER_STRING_LENGTH = 5;
 
@@ -134,37 +174,4 @@ public abstract class Generator {
    */
   public abstract String generate(TreeLogger logger, GeneratorContext context, String typeName)
       throws UnableToCompleteException;
-
-  /**
-   * Returns the set of names of all properties that are accessed by generator execution and affect
-   * its behavior. Returning a null indicates that *all* properties are considered relevant.<br />
-   *
-   * Generators that don't need access to every property can override this method to speed up
-   * separate compiles.
-   */
-  public Set<String> getAccessedPropertyNames() {
-    return null;
-  }
-
-  /**
-   * Whether the *content* of created files (not the list of files created) changes as the set value
-   * of configuration properties or the list of legal values of binding properties changes.<br />
-   *
-   * Generators whose output content is stable even when property values change can override this
-   * method to speed up separate compiles.
-   */
-  public boolean contentDependsOnProperties() {
-    return true;
-  }
-
-  /**
-   * Whether the *content* of created files (not the list of files created) changes as more types
-   * are created that match some subtype query.<br />
-   *
-   * Generators whose output content is stable even as new types are created can override this
-   * method to speed up separate compiles.
-   */
-  public boolean contentDependsOnTypes() {
-    return true;
-  }
 }

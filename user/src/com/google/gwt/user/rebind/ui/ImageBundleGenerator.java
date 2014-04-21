@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,6 +16,7 @@
 package com.google.gwt.user.rebind.ui;
 
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -23,7 +24,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.client.ui.ImageBundle;
 import com.google.gwt.user.client.ui.ImageBundle.Resource;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -33,12 +33,11 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Generates an implementation of a user-defined interface <code>T</code> that
  * extends {@link com.google.gwt.user.client.ui.ImageBundle}.
- * 
+ *
  * Each method in <code>T</code> must be declared to return
  * {@link com.google.gwt.user.client.ui.AbstractImagePrototype}, take no
  * parameters, and optionally specify the metadata tag <code>gwt.resource</code>
@@ -47,6 +46,7 @@ import java.util.Set;
  * <code>.png, .jpg, or .gif</code> defines the name of the image, and the
  * image file must be located in the same package as <code>T</code>.
  */
+@RunsLocal
 public class ImageBundleGenerator extends Generator {
 
   /**
@@ -68,7 +68,7 @@ public class ImageBundleGenerator extends Generator {
    */
   /* private */interface ResourceLocator {
     /**
-     * 
+     *
      * @param resName the resource name in a format that could be passed to
      *          <code>ClassLoader.getResource()</code>
      * @return <code>true</code> if the resource is present
@@ -108,8 +108,6 @@ public class ImageBundleGenerator extends Generator {
   private static final String[] IMAGE_FILE_EXTENSIONS = {"png", "gif", "jpg"};
 
   private static final String IMAGEBUNDLE_QNAME = "com.google.gwt.user.client.ui.ImageBundle";
-
-  private static ImmutableSet<String> relevantPropertyNames = ImmutableSet.of();
 
   /* private */static String msgCannotFindImageFromMetaData(String imgResName) {
     return "Unable to find image resource '" + imgResName + "'";
@@ -155,26 +153,11 @@ public class ImageBundleGenerator extends Generator {
     return resultName;
   }
 
-  @Override
-  public Set<String> getAccessedPropertyNames() {
-    return relevantPropertyNames;
-  }
-
-  @Override
-  public boolean contentDependsOnProperties() {
-    return false;
-  }
-
-  @Override
-  public boolean contentDependsOnTypes() {
-    return false;
-  }
-
   /**
    * Gets the resource name of the image associated with the specified image
    * bundle method in a form that can be passed to
    * <code>ClassLoader.getResource()</code>.
-   * 
+   *
    * @param logger the main logger
    * @param method the image bundle method whose image name is being sought
    * @return a resource name that is suitable to be passed into
@@ -337,7 +320,7 @@ public class ImageBundleGenerator extends Generator {
    * Attempts to get the image name from the name of the method itself by
    * speculatively appending various image-like file extensions in a prioritized
    * order. The first image found, if any, is used.
-   * 
+   *
    * @param logger if no matching image resource is found, an explanatory
    *          message will be logged
    * @param method the method whose name is being examined for matching image
@@ -409,7 +392,7 @@ public class ImageBundleGenerator extends Generator {
 
   /**
    * Attempts to get the image name (verbatim) from an annotation.
-   * 
+   *
    * @return the string specified in in the {@link ImageBundle.Resource}
    *         annotation, or <code>null</code>
    */
@@ -425,7 +408,7 @@ public class ImageBundleGenerator extends Generator {
 
   /**
    * Attempts to get the image name from an annotation.
-   * 
+   *
    * @param logger if an annotation is found but the specified resource isn't
    *          available, an error is logged
    * @param method the image bundle method whose associated image resource is

@@ -15,6 +15,7 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -69,12 +70,8 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
    * Test Generator that wants to create a FooShim%user.agent% type for every processed FooShim
    * type.
    */
+  @RunsLocal(requiresProperties = {"user.agent"})
   public static class BrowserShimGenerator extends Generator {
-
-    @Override
-    public boolean contentDependsOnTypes() {
-      return false;
-    }
 
     @Override
     public String generate(TreeLogger logger, GeneratorContext generatorContext,
@@ -92,23 +89,14 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
         throw new UnableToCompleteException();
       }
     }
-
-    @Override
-    public Set<String> getAccessedPropertyNames() {
-      return Sets.newHashSet("user.agent");
-    }
   }
 
   /**
    * Test Generator that wants to create a FooShim%locale% type for every processed FooShim
    * type.
    */
+  @RunsLocal(requiresProperties = {"locale"})
   public static class LocaleMessageGenerator extends Generator {
-
-    @Override
-    public boolean contentDependsOnTypes() {
-      return false;
-    }
 
     @Override
     public String generate(TreeLogger logger, GeneratorContext generatorContext,
@@ -125,11 +113,6 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
       } catch (BadPropertyValueException e) {
         throw new UnableToCompleteException();
       }
-    }
-
-    @Override
-    public Set<String> getAccessedPropertyNames() {
-      return Sets.newHashSet("locale");
     }
   }
 

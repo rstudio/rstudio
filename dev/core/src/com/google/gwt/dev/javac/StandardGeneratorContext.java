@@ -33,6 +33,7 @@ import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.cfg.RuleGenerateWith;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
@@ -679,8 +680,8 @@ public class StandardGeneratorContext implements GeneratorContext {
       // incompatible way) so that all Generators are forced to accurately declare the names of
       // properties they care about.
       propertyOracle = new SubsetFilteringPropertyOracle(
-          generator.getAccessedPropertyNames(), originalPropertyOracle,
-          generatorClassName + ".getAccessedPropertyNames() may need to be updated.");
+          RuleGenerateWith.getAccessedPropertyNames(generator.getClass()), originalPropertyOracle,
+          generatorClassName + "'s RunsLocal annotation may need to be updated.");
       if (generator instanceof IncrementalGenerator) {
         IncrementalGenerator incGenerator = (IncrementalGenerator) generator;
 

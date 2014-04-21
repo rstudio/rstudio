@@ -14,9 +14,6 @@
 package com.google.gwt.core.ext.test;
 
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.GeneratorContext;
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
@@ -28,15 +25,6 @@ import java.util.Map;
  * Tests the Generator base class.
  */
 public class GeneratorTest extends TestCase {
-
-  private class SimpleGenerator extends Generator {
-
-    @Override
-    public String generate(TreeLogger logger, GeneratorContext context, String typeName)
-        throws UnableToCompleteException {
-      return null;
-    }
-  }
 
   /**
    * Characters to permute into strings to test escaping accuracy.<br />
@@ -75,28 +63,6 @@ public class GeneratorTest extends TestCase {
 
   private static void permuteStringsAndTestEscapedClassNamesAreUnique(int permutedStringLength) {
     appendCharacterOrTestEscapedClassNamesAreUnique("", permutedStringLength);
-  }
-
-  public void testDefaultPropertyValueStability() {
-    SimpleGenerator simpleGenerator = new SimpleGenerator();
-    // Defaults to the worst case of claiming that generator output content is unstable and will
-    // change as property values change.
-    assertTrue(simpleGenerator.contentDependsOnProperties());
-  }
-
-  public void testDefaultRelevantPropertyNames() {
-    SimpleGenerator simpleGenerator = new SimpleGenerator();
-    // Defaults to the worst case of claiming that generator output content is affected by all
-    // properties (that is the meaning of returning null as opposed to a specific list of property
-    // names).
-    assertNull(simpleGenerator.getAccessedPropertyNames());
-  }
-
-  public void testDefaultTypeStability() {
-    SimpleGenerator simpleGenerator = new SimpleGenerator();
-    // Defaults to the worst case of claiming that generator output content is unstable and will
-    // change as the list of available types changes.
-    assertTrue(simpleGenerator.contentDependsOnTypes());
   }
 
   public void testEscapedClassName() {
