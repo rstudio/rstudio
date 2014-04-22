@@ -73,11 +73,11 @@ public class TypeCoercionNormalizer {
         // Replace the literal by a string containing the literal.
         long longValue = ((JLongLiteral) expr).getValue();
         return program.getStringLiteral(expr.getSourceInfo(), String.valueOf(longValue));
-      } else  if (expr.getType() == typePrimitiveLong) {
+      } else if (expr.getType() == typePrimitiveLong) {
         JMethodCall call = new JMethodCall(expr.getSourceInfo(), null,
             program.getIndexedMethod("LongLib.toString"), expr);
         return call;
-      } else  if (expr instanceof JCharLiteral) {
+      } else if (expr instanceof JCharLiteral) {
         // Replace the literal by a string containing the literal.
         char charValue = ((JCharLiteral) expr).getValue();
         return program.getStringLiteral(expr.getSourceInfo(), Character.toString(charValue));
