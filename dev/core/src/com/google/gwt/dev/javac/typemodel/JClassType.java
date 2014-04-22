@@ -519,6 +519,11 @@ public abstract class JClassType implements
   @Override
   public abstract boolean isPublic();
 
+  @Override
+  public boolean isPackageProtected() {
+    return !isPrivate() && !isPublic() && !isProtected();
+  }
+
   // TODO: Rename this to isRaw
   @Override
   public abstract JRawType isRawType();

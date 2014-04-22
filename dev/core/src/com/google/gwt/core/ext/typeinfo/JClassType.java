@@ -229,6 +229,8 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
 
   boolean isPublic();
 
+  boolean isPackageProtected();
+
   boolean isStatic();
 
   /**
