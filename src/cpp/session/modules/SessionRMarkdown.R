@@ -46,10 +46,23 @@
   if (is.character(yamlFrontMatter$knit))
     yamlFrontMatter$knit[[1]]
   else if (!is.null(yamlFrontMatter$runtime) && 
-           identical(yamlFrontMatter$runtime, "shiny"))
-    # use run_document as a wrapper for render when the doc requires the
-    # Shiny runtime
-    "rmarkdown::run"
+           identical(yamlFrontMatter$runtime, "shiny")) {
+    # use run as a wrapper for render when the doc requires the Shiny runtime,
+    # and outputs HTML. 
+    tryCatch({
+       outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
+       formatFunction <- eval(parse(text = outputFormat$name), 
+                              envir = asNamespace("rmarkdown"))
+       if (identical(formatFunction()$pandoc$to, "html"))
+          "rmarkdown::run"
+       else 
+          # this situation is nonsensical (runtime: shiny only makse sense for
+          # HTML-based output formats)
+          ""
+     }, error = function(e) {
+        ""
+     })
+  }
   else
     ""
 })

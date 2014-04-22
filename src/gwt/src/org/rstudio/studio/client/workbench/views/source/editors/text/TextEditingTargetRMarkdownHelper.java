@@ -413,14 +413,7 @@ public class TextEditingTargetRMarkdownHelper
          if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
             return null;
          
-         if (tree.getKeyValue(RmdFrontMatter.RUNTIME_KEY).equals(
-               RmdFrontMatter.SHINY_RUNTIME))
-         {
-            isShiny = true;
-         }
-         
          // Find the template appropriate to the first output format listed
-         
          List<String> outFormats = getOutputFormats(tree);
          if (outFormats == null)
             return null;
@@ -429,6 +422,16 @@ public class TextEditingTargetRMarkdownHelper
          RmdTemplate template = getTemplateForFormat(outFormat);
          if (template == null)
             return null;
+         
+         // If this format produces HTML and is marked as Shiny, treat it as
+         // a Shiny format
+         if (template.getFormat(outFormat).getExtension().equals("html") &&
+             tree.getKeyValue(RmdFrontMatter.RUNTIME_KEY).equals(
+                       RmdFrontMatter.SHINY_RUNTIME))
+         {
+            isShiny = true;
+         }
+         
          return new RmdSelectedTemplate(template, outFormat, isShiny);
       }
       catch (Exception e)
