@@ -13,10 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Defines the user.agent property and its provider function.             -->
-<!--                                                                        -->
-<!-- This module is typically inherited via com.google.gwt.user.User        -->
-<!--                                                                        -->
-<module type="fileset">
+<module>
   <source path="client" />
   <public path="public" />
 

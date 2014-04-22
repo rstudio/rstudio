@@ -12,7 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 <module>
-  <inherits name="com.google.gwt.core.CoreWithUserAgent" />
+  <inherits name="com.google.gwt.useragent.UserAgent" />
   <source path="test" />
 
   <define-property name="collapsedProperty" values="one,two"/>

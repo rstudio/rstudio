@@ -15,9 +15,6 @@
 <!-- Deferred binding rules for core classes based on user agent. -->
 <module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
-  <inherits name="com.google.gwt.core.CompilerParameters" />
-  <inherits name="com.google.gwt.core.EmulateJsStack" />
-  <inherits name="com.google.gwt.useragent.UserAgent"/>
 
   <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
