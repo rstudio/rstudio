@@ -26,6 +26,20 @@ import com.google.gwt.thirdparty.guava.common.collect.Lists;
  */
 public class LibraryTypeOracle extends TypeOracle {
 
+  /**
+   * An exception indicating that the Library flavor of TypeOracle does not support the requested
+   * behavior. This runtime exception can be thrown during LibraryTypeOracle access (from
+   * Generators) and is expected to be caught in the incremental Generator execution framework in
+   * RuleGenerateWith. It would be an error for this exception to ever become visible beyond those
+   * bounds.
+   */
+  public static class UnsupportedTypeOracleAccess extends RuntimeException {
+
+    public UnsupportedTypeOracleAccess(String message) {
+      super(message);
+    }
+  }
+
   private boolean allLoaded;
   private CompilerContext compilerContext;
   private CompilationUnitTypeOracleUpdater typeOracleUpdater;
@@ -53,7 +67,7 @@ public class LibraryTypeOracle extends TypeOracle {
 
   @Override
   public JPackage findPackage(String pkgName) {
-    throw new UnsupportedOperationException("Packages can't be lazily loaded from libraries.");
+    throw new UnsupportedTypeOracleAccess("Packages can't be lazily loaded from libraries.");
   }
 
   @Override
@@ -87,12 +101,12 @@ public class LibraryTypeOracle extends TypeOracle {
 
   @Override
   public JPackage getPackage(String pkgName) throws NotFoundException {
-    throw new UnsupportedOperationException("Packages can't be lazily loaded from libraries.");
+    throw new UnsupportedTypeOracleAccess("Packages can't be lazily loaded from libraries.");
   }
 
   @Override
   public JPackage[] getPackages() {
-    throw new UnsupportedOperationException("Packages can't be lazily loaded from libraries.");
+    throw new UnsupportedTypeOracleAccess("Packages can't be lazily loaded from libraries.");
   }
 
   public CompilationUnitTypeOracleUpdater getTypeOracleUpdater() {

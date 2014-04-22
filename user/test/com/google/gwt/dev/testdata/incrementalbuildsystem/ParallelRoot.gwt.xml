@@ -1,0 +1,5 @@
+<module>
+  <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.ParallelLeft" />
+  <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.ParallelRight" />
+  <source path="" includes="SomeClass.java" />
+</module>

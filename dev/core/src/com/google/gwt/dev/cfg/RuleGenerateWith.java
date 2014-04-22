@@ -23,8 +23,11 @@ import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
+import com.google.gwt.dev.javac.typemodel.LibraryTypeOracle.UnsupportedTypeOracleAccess;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -120,8 +123,8 @@ public class RuleGenerateWith extends Rule {
    * gather runtime rebind rules for all corresponding pairs of property values and Generator
    * output.
    */
-  public void generate(
-      TreeLogger logger, Properties moduleProperties, GeneratorContext context, String typeName) {
+  public void generate(TreeLogger logger, Properties moduleProperties, GeneratorContext context,
+      String typeName) throws UnableToCompleteException {
     Map<Map<String, String>, String> resultTypeNamesByProperties =
         computeResultTypeNamesByProperties(
             logger, moduleProperties, (StandardGeneratorContext) context, typeName);
@@ -157,6 +160,36 @@ public class RuleGenerateWith extends Rule {
     return context.runGeneratorIncrementally(logger, generatorClass, typeName);
   }
 
+  public boolean relevantPropertiesAreFinal(Properties currentProperties,
+      Properties finalProperties) {
+    if (accessedPropertyNames.equals(ALL_PROPERTIES)) {
+      // Generator must be assumed to depend on all properties.
+      for (BindingProperty finalProperty : finalProperties.getBindingProperties()) {
+        Property currentProperty = currentProperties.find(finalProperty.getName());
+        if (!Objects.equal(finalProperty, currentProperty)) {
+          return false;
+        }
+      }
+      for (ConfigurationProperty finalProperty : finalProperties.getConfigurationProperties()) {
+        Property currentProperty = currentProperties.find(finalProperty.getName());
+        if (!Objects.equal(finalProperty, currentProperty)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Generator defines a limited set of properties it cares about.
+    for (String accessedPropertyName : accessedPropertyNames) {
+      Property finalProperty = finalProperties.find(accessedPropertyName);
+      Property currentProperty = currentProperties.find(accessedPropertyName);
+      if (!Objects.equal(finalProperty, currentProperty)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   public String toString() {
     return "<generate-with class='" + generatorClass.getName() + "'/>";
@@ -182,7 +215,7 @@ public class RuleGenerateWith extends Rule {
     return "return " + rootCondition.toSource() + ";";
   }
 
-  // VisibleForTesting
+  @VisibleForTesting
   protected Generator getGenerator() {
     if (generator == null) {
       try {
@@ -203,81 +236,82 @@ public class RuleGenerateWith extends Rule {
    * values. Log corresponding pairs of property values and Generator output.
    */
   private Map<Map<String, String>, String> computeResultTypeNamesByProperties(TreeLogger logger,
-      Properties moduleProperties, StandardGeneratorContext context, String typeName) {
-    try {
-      Map<Map<String, String>, String> resultTypeNamesByProperties = Maps.newHashMap();
-      DynamicPropertyOracle dynamicPropertyOracle =
-          new DynamicPropertyOracle(moduleProperties);
+      Properties moduleProperties, StandardGeneratorContext context, String typeName)
+      throws UnableToCompleteException {
+    Map<Map<String, String>, String> resultTypeNamesByProperties = Maps.newHashMap();
+    DynamicPropertyOracle dynamicPropertyOracle = new DynamicPropertyOracle(moduleProperties);
 
-      // Maybe prime the pump.
-      if (!accessedPropertyNames.equals(ALL_PROPERTIES)) {
-        for (String accessedPropertyName : accessedPropertyNames) {
-          try {
-            dynamicPropertyOracle.getSelectionProperty(logger, accessedPropertyName);
-          } catch (BadPropertyValueException e) {
-            // ignore
-          }
+    // Maybe prime the pump.
+    if (!accessedPropertyNames.equals(ALL_PROPERTIES)) {
+      for (String accessedPropertyName : accessedPropertyNames) {
+        try {
+          dynamicPropertyOracle.getSelectionProperty(logger, accessedPropertyName);
+        } catch (BadPropertyValueException e) {
+          // ignore
         }
       }
-      boolean needsAllTypesIfRun = contentDependsOnTypes() && context.isGlobalCompile();
-      TypeOracle typeModelTypeOracle =
-          (com.google.gwt.dev.javac.typemodel.TypeOracle) context.getTypeOracle();
-
-      context.reset();
-      context.setPropertyOracle(dynamicPropertyOracle);
-
-      context.setCurrentGenerator(generatorClass);
-
-      do {
-        resultTypeNamesByProperties.clear();
-        context.reset();
-        Properties accessedProperties = new Properties();
-
-        List<BindingProperty> accessedPropertiesList =
-            new ArrayList<BindingProperty>(dynamicPropertyOracle.getAccessedProperties());
-        for (BindingProperty bindingProperty : accessedPropertiesList) {
-          accessedProperties.addBindingProperty(bindingProperty);
-        }
-        PropertyPermutations permutationsOfAccessedProperties =
-            new PropertyPermutations(accessedProperties, Sets.<String>newHashSet());
-
-        for (int permutationId = 0; permutationId < permutationsOfAccessedProperties.size();
-            permutationId++) {
-          String[] orderedPropertyValues =
-              permutationsOfAccessedProperties.getOrderedPropertyValues(permutationId);
-          BindingProperty[] orderedProperties =
-              permutationsOfAccessedProperties.getOrderedProperties();
-
-          dynamicPropertyOracle.reset();
-          for (int propertyIndex = 0; propertyIndex < orderedPropertyValues.length;
-              propertyIndex++) {
-            dynamicPropertyOracle.prescribePropertyValue(
-                orderedProperties[propertyIndex].getName(), orderedPropertyValues[propertyIndex]);
-          }
-
-          if (!isApplicable(logger, context, typeName)) {
-            continue;
-          }
-          if (needsAllTypesIfRun) {
-            typeModelTypeOracle.ensureAllLoaded();
-          }
-          String resultTypeName = getGenerator().generate(logger, context, typeName);
-          if (resultTypeName != null) {
-            // Some generators only run to create resource artifacts and don't actually participate
-            // in the requestType->resultType rebind process.
-            resultTypeNamesByProperties.put(
-                dynamicPropertyOracle.getPrescribedPropertyValuesByName(), resultTypeName);
-          }
-
-          if (dynamicPropertyOracle.haveAccessedPropertiesChanged()) {
-            break;
-          }
-        }
-      } while (dynamicPropertyOracle.haveAccessedPropertiesChanged());
-
-      return resultTypeNamesByProperties;
-    } catch (UnableToCompleteException e) {
-      throw new InternalCompilerException(e.getMessage());
     }
+    boolean needsAllTypesIfRun = contentDependsOnTypes() && context.isGlobalCompile();
+    TypeOracle typeModelTypeOracle =
+        (com.google.gwt.dev.javac.typemodel.TypeOracle) context.getTypeOracle();
+
+    context.setPropertyOracle(dynamicPropertyOracle);
+
+    context.setCurrentGenerator(generatorClass);
+
+    do {
+      resultTypeNamesByProperties.clear();
+      Properties accessedProperties = new Properties();
+
+      List<BindingProperty> accessedPropertiesList =
+          new ArrayList<BindingProperty>(dynamicPropertyOracle.getAccessedProperties());
+      for (BindingProperty bindingProperty : accessedPropertiesList) {
+        accessedProperties.addBindingProperty(bindingProperty);
+      }
+      PropertyPermutations permutationsOfAccessedProperties =
+          new PropertyPermutations(accessedProperties, Sets.<String> newHashSet());
+
+      for (int permutationId = 0; permutationId < permutationsOfAccessedProperties.size();
+          permutationId++) {
+        String[] orderedPropertyValues =
+            permutationsOfAccessedProperties.getOrderedPropertyValues(permutationId);
+        BindingProperty[] orderedProperties =
+            permutationsOfAccessedProperties.getOrderedProperties();
+
+        dynamicPropertyOracle.reset();
+        for (int propertyIndex = 0; propertyIndex < orderedPropertyValues.length; propertyIndex++) {
+          dynamicPropertyOracle.prescribePropertyValue(orderedProperties[propertyIndex].getName(),
+              orderedPropertyValues[propertyIndex]);
+        }
+
+        if (!isApplicable(logger, context, typeName)) {
+          continue;
+        }
+        if (needsAllTypesIfRun) {
+          typeModelTypeOracle.ensureAllLoaded();
+        }
+        String resultTypeName;
+        try {
+          resultTypeName = getGenerator().generate(logger, context, typeName);
+        } catch (UnsupportedTypeOracleAccess e) {
+          logger.log(TreeLogger.ERROR, String.format(
+              "TypeOracle error when running generator '%s' in an incremental compile: %s",
+              getName(), e.getMessage()));
+          throw new UnableToCompleteException();
+        }
+        if (resultTypeName != null) {
+          // Some generators only run to create resource artifacts and don't actually participate
+          // in the requestType->resultType rebind process.
+          resultTypeNamesByProperties.put(dynamicPropertyOracle.getPrescribedPropertyValuesByName(),
+              resultTypeName);
+        }
+
+        if (dynamicPropertyOracle.haveAccessedPropertiesChanged()) {
+          break;
+        }
+      }
+    } while (dynamicPropertyOracle.haveAccessedPropertiesChanged());
+
+    return resultTypeNamesByProperties;
   }
 }

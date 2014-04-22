@@ -50,6 +50,10 @@ public class ResourceGeneratorUtilImpl {
     generatedFilesByName.put(name, file);
   }
 
+  public static void clearGeneratedFilesByName() {
+    generatedFilesByName.clear();
+  }
+
   /**
    * Returns the previously recorded generated file with the given name.
    */

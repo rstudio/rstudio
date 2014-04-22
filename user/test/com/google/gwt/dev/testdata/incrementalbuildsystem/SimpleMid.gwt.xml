@@ -1,0 +1,4 @@
+<module>
+  <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.SimpleBottom" />
+  <source path="" includes="Foo.java" />
+</module>

@@ -23,6 +23,8 @@ import com.google.gwt.core.linker.IFrameLinker;
 import com.google.gwt.dev.Compiler;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.CompilerOptions;
+import com.google.gwt.dev.IncrementalBuilder;
+import com.google.gwt.dev.IncrementalBuilder.BuildResultStatus;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -48,8 +50,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * Recompiles a GWT module on demand.
  */
 class Recompiler {
+
   private final AppSpace appSpace;
   private final String originalModuleName;
+  private IncrementalBuilder incrementalBuilder;
   private final TreeLogger logger;
   private String serverPrefix;
   private int compilesDone = 0;
@@ -58,6 +62,8 @@ class Recompiler {
   private AtomicReference<String> moduleName = new AtomicReference<String>(null);
 
   private final AtomicReference<CompileDir> lastBuild = new AtomicReference<CompileDir>();
+  private CompileDir publishedCompileDir;
+  private boolean listenerFailed;
   private final AtomicReference<ResourceLoader> resourceLoader =
       new AtomicReference<ResourceLoader>();
   private final CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
@@ -90,7 +96,7 @@ class Recompiler {
     CompileDir compileDir = makeCompileDir(compileId);
     TreeLogger compileLogger = makeCompileLogger(compileDir);
 
-    boolean listenerFailed = false;
+    listenerFailed = false;
     try {
       options.getRecompileListener().startedCompile(originalModuleName, compileId, compileDir);
     } catch (Exception e) {
@@ -100,25 +106,14 @@ class Recompiler {
 
     boolean success = false;
     try {
-      CompilerOptions compilerOptions = new CompilerOptionsImpl(
-          compileDir, options.getModuleNames(), options.getSourceLevel(),
-          options.isFailOnError(), options.enforceStrictResources(), options.getLogLevel());
-      compilerContext = compilerContextBuilder.options(compilerOptions).build();
-      ModuleDef module = loadModule(compileLogger, bindingProperties);
-
-      // Propagates module rename.
-      String newModuleName = module.getName();
-      moduleName.set(newModuleName);
-      compilerOptions = new CompilerOptionsImpl(
-          compileDir, Lists.newArrayList(newModuleName), options.getSourceLevel(),
-          options.isFailOnError(), options.enforceStrictResources(), options.getLogLevel());
-      compilerContext = compilerContextBuilder.options(compilerOptions).build();
-
-      success = new Compiler(compilerOptions).run(compileLogger, module);
-      lastBuild.set(compileDir); // makes compile log available over HTTP
+      if (options.shouldCompileIncremental()) {
+        success = compileIncremental(compileLogger, compileDir);
+      } else {
+        success = compileMonolithic(compileLogger, bindingProperties, compileDir);
+      }
     } finally {
       try {
-        options.getRecompileListener().finishedCompile(originalModuleName, compileId, success);
+        options.getRecompileListener().finishedCompile(originalModuleName, compilesDone, success);
       } catch (Exception e) {
         compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
         listenerFailed = true;
@@ -131,13 +126,14 @@ class Recompiler {
     }
 
     long elapsedTime = System.currentTimeMillis() - startTime;
-    compileLogger.log(TreeLogger.Type.INFO, "Compile completed in " + elapsedTime + " ms");
+    compileLogger.log(TreeLogger.Type.INFO,
+        String.format("%.3fs total -- Compile completed", elapsedTime / 1000d));
 
     if (options.isCompileTest() && listenerFailed) {
       throw new UnableToCompleteException();
     }
 
-    return compileDir;
+    return publishedCompileDir;
   }
 
   synchronized CompileDir noCompile() throws UnableToCompleteException {
@@ -173,6 +169,65 @@ class Recompiler {
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO, "Module setup completed in " + elapsedTime + " ms");
     return compileDir;
+  }
+
+  private boolean compileIncremental(TreeLogger compileLogger, CompileDir compileDir) {
+    BuildResultStatus buildResultStatus;
+    // Perform a compile.
+    if (incrementalBuilder == null) {
+      // If it's the first compile.
+      ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
+      resources = ResourceLoaders.forPathAndFallback(options.getSourcePath(), resources);
+      this.resourceLoader.set(resources);
+
+      incrementalBuilder = new IncrementalBuilder(originalModuleName,
+          compileDir.getWarDir().getPath(), compileDir.getWorkDir().getPath(),
+          compileDir.getGenDir().getPath(), resourceLoader.get());
+      buildResultStatus = incrementalBuilder.build(compileLogger);
+    } else {
+      // If it's a rebuild.
+      incrementalBuilder.setWarDir(compileDir.getWarDir().getPath());
+      buildResultStatus = incrementalBuilder.rebuild(compileLogger);
+    }
+
+    if (incrementalBuilder.isRootModuleKnown()) {
+      moduleName.set(incrementalBuilder.getRootModuleName());
+    }
+    // Unlike a monolithic compile, the incremental builder can successfully build but have no new
+    // output (for example when no files have changed). So it's important to only publish the new
+    // compileDir if it actually contains output.
+    if (buildResultStatus.isSuccess() && buildResultStatus.outputChanged()) {
+      publishedCompileDir = compileDir;
+    }
+    lastBuild.set(compileDir); // makes compile log available over HTTP
+
+    return buildResultStatus.isSuccess();
+  }
+
+  private boolean compileMonolithic(TreeLogger compileLogger, Map<String, String> bindingProperties,
+      CompileDir compileDir) throws UnableToCompleteException {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl(compileDir,
+        options.getModuleNames(), options.getSourceLevel(), options.isFailOnError(),
+        options.enforceStrictResources(), options.enforceStrictResources(),
+        options.getLogLevel());
+    compilerContext = compilerContextBuilder.options(compilerOptions).build();
+    ModuleDef module = loadModule(compileLogger, bindingProperties);
+
+    // Propagates module rename.
+    String newModuleName = module.getName();
+    moduleName.set(newModuleName);
+    compilerOptions = new CompilerOptionsImpl(compileDir, Lists.newArrayList(newModuleName),
+        options.getSourceLevel(), options.isFailOnError(), options.enforceStrictResources(),
+        options.enforceStrictResources(), options.getLogLevel());
+    compilerContext = compilerContextBuilder.options(compilerOptions).build();
+
+    boolean success = new Compiler(compilerOptions).run(compileLogger, module);
+    if (success) {
+      publishedCompileDir = compileDir;
+    }
+    lastBuild.set(compileDir); // makes compile log available over HTTP
+
+    return success;
   }
 
   /**

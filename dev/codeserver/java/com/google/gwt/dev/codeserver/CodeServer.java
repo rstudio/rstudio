@@ -92,6 +92,9 @@ public class CodeServer {
       System.out.println();
       System.out.println("The code server is ready.");
       System.out.println("Next, visit: " + url);
+    } catch (UnableToCompleteException e) {
+      // Already logged.
+      System.exit(1);
     } catch (Throwable t) {
       t.printStackTrace();
       System.exit(1);

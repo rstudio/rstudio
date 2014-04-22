@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 
 import java.util.ArrayList;
@@ -42,6 +43,11 @@ public class ConfigurationProperty extends Property {
     }
   }
 
+  public void addTargetLibraryValue(String value) {
+    addValue(value);
+    targetLibraryValues.add(value);
+  }
+
   public void addValue(String value) {
     if (!allowMultipleValues) {
       throw new IllegalStateException(
@@ -50,17 +56,23 @@ public class ConfigurationProperty extends Property {
     values.add(value);
   }
 
-  public void addTargetLibraryValue(String value) {
-    addValue(value);
-    targetLibraryValues.add(value);
-  }
-
   public boolean allowsMultipleValues() {
     return allowMultipleValues;
   }
 
   public void clear() {
     values.clear();
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof ConfigurationProperty) {
+      ConfigurationProperty that = (ConfigurationProperty) object;
+      return Objects.equal(this.name, that.name)
+          && Objects.equal(this.allowMultipleValues, that.allowMultipleValues)
+          && Objects.equal(this.values, that.values);
+    }
+    return false;
   }
 
   public List<String> getTargetLibraryValues() {
@@ -76,6 +88,11 @@ public class ConfigurationProperty extends Property {
 
   public List<String> getValues() {
     return Collections.unmodifiableList(values);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(name, allowMultipleValues, values);
   }
 
   public boolean hasTargetLibraryValues() {

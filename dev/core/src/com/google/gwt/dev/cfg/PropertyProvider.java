@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.thirdparty.guava.common.base.Objects;
+
 import java.io.Serializable;
 
 /**
@@ -28,7 +30,21 @@ public class PropertyProvider implements Serializable {
     this.body = body;
   }
 
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof PropertyProvider) {
+      PropertyProvider that = (PropertyProvider) object;
+      return Objects.equal(this.body, that.body);
+    }
+    return false;
+  }
+
   public String getBody() {
     return body;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(body);
   }
 }

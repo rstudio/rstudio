@@ -25,13 +25,17 @@ import com.google.gwt.dev.cfg.LibraryGroup;
 import com.google.gwt.dev.cfg.LibraryWriter;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.cfg.ResourceLoader;
+import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.cfg.ZipLibrary;
 import com.google.gwt.dev.cfg.ZipLibraryWriter;
-import com.google.gwt.dev.javac.LibraryGroupUnitCache;
+import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.PermutationResult;
+import com.google.gwt.dev.url.CloseableJarHandlerFactory;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PersistenceBackedObject;
+import com.google.gwt.dev.util.TinyCompileSummary;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -60,16 +64,13 @@ import java.util.Set;
 
 /**
  * Executable compiler entry point that constructs a library from an input module and its library
- * dependencies.<br />
- *
+ * dependencies.
+ * <p>
  * When compiling the top-level module, you should also pass the -link and -war flags to create the
- * GWT application.<br />
- *
+ * GWT application.
+ * <p>
  * This is an alternative to Compiler.java which does a full world compile that neither reads nor
- * writes libraries.<br />
- *
- * EXPERIMENTAL: does not yet work as it depends on changes which have not yet been reviewed and
- * committed.
+ * writes libraries.
  */
 public class LibraryCompiler {
 
@@ -123,17 +124,48 @@ public class LibraryCompiler {
   private LibraryGroup libraryGroup;
   private ModuleDef module;
   private Permutation[] permutations;
+  private ResourceLoader resourceLoader = ResourceLoaders.forClassLoader(Thread.currentThread());
+  private Library resultLibrary;
 
   public LibraryCompiler(CompilerOptions compilerOptions) {
     this.compilerOptions = new CompilerOptionsImpl(compilerOptions);
     this.compilerContext =
         compilerContextBuilder.options(this.compilerOptions).compileMonolithic(false).build();
+    CloseableJarHandlerFactory.installOverride();
+  }
+
+  ModuleDef getModule() {
+    return module;
+  }
+
+  boolean run(TreeLogger logger) {
+    try {
+      normalizeOptions(logger);
+      loadLibraries(logger);
+      loadModule(logger);
+      compileModule(logger);
+      if (compilerOptions.shouldLink()) {
+        linkLibraries(logger);
+      }
+      return true;
+    } catch (UnableToCompleteException e) {
+      // The real cause has been logged.
+      return false;
+    } finally {
+      // Close all zip files, otherwise the JVM may crash on linux.
+      compilerContext.getLibraryGroup().close();
+      if (resultLibrary != null) {
+        resultLibrary.close();
+      }
+    }
+  }
+
+  void setResourceLoader(ResourceLoader resourceLoader) {
+    this.resourceLoader = resourceLoader;
   }
 
   private void compileModule(TreeLogger logger) throws UnableToCompleteException {
     long beforeCompileMs = System.currentTimeMillis();
-    TreeLogger branch =
-        logger.branch(TreeLogger.INFO, "Compiling module " + module.getCanonicalName());
     LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
 
     try {
@@ -145,7 +177,11 @@ public class LibraryCompiler {
         }
       }
 
-      Precompilation precompilation = Precompile.precompile(branch, compilerContext);
+      Precompilation precompilation = Precompile.precompile(logger, compilerContext);
+      if (precompilation == null) {
+        // The real cause has been logged.
+        throw new UnableToCompleteException();
+      }
       // TODO(stalcup): move to precompile() after params are refactored
       if (!compilerOptions.shouldSaveSource()) {
         precompilation.removeSourceArtifacts(logger);
@@ -157,9 +193,8 @@ public class LibraryCompiler {
       List<PersistenceBackedObject<PermutationResult>> permutationResultFiles =
           new ArrayList<PersistenceBackedObject<PermutationResult>>();
       permutationResultFiles.add(libraryWriter.getPermutationResultHandle());
-      CompilePerms.compile(
-          branch, compilerContext, precompilation, permutations, compilerOptions.getLocalWorkers(),
-          permutationResultFiles);
+      CompilePerms.compile(logger, compilerContext, precompilation, permutations,
+          compilerOptions.getLocalWorkers(), permutationResultFiles);
       compilePermutationsEvent.end();
 
       generatedArtifacts = precompilation.getGeneratedArtifacts();
@@ -170,8 +205,23 @@ public class LibraryCompiler {
     }
 
     long durationMs = System.currentTimeMillis() - beforeCompileMs;
-    branch.log(TreeLogger.INFO,
-        "Library compilation succeeded -- " + String.format("%.3f", durationMs / 1000d) + "s");
+    TreeLogger detailBranch = logger.branch(TreeLogger.INFO,
+        String.format("%.3fs -- Translating Java to Javascript", durationMs / 1000d));
+
+    TinyCompileSummary tinyCompileSummary = compilerContext.getTinyCompileSummary();
+    boolean shouldWarn =
+        tinyCompileSummary.getTypesForGeneratorsCount() + tinyCompileSummary.getTypesForAstCount()
+        > 1500;
+    String recommendation = shouldWarn ? " This module should probably be split into smaller "
+        + "modules or should trigger fewer generators since its current size hurts "
+        + "incremental compiles." : "";
+    detailBranch.log(shouldWarn ? TreeLogger.WARN : TreeLogger.INFO, String.format(
+        "There were %s static source files, %s generated source files, %s types loaded for "
+        + "generators and %s types loaded for AST construction. %s",
+        tinyCompileSummary.getStaticSourceFilesCount(),
+        tinyCompileSummary.getGeneratedSourceFilesCount(),
+        tinyCompileSummary.getTypesForGeneratorsCount(), tinyCompileSummary.getTypesForAstCount(),
+        recommendation));
   }
 
   private void linkLibraries(TreeLogger logger) throws UnableToCompleteException {
@@ -180,7 +230,6 @@ public class LibraryCompiler {
 
     // Load up the library that was just created so that it's possible to get a read-reference to
     // its contained PermutationResult.
-    Library resultLibrary;
     try {
       resultLibrary = new ZipLibrary(compilerOptions.getOutputLibraryPath());
     } catch (IncompatibleLibraryVersionException e) {
@@ -202,26 +251,20 @@ public class LibraryCompiler {
     File absPath = new File(compilerOptions.getWarDir(), module.getName());
     absPath = absPath.getAbsoluteFile();
 
-    String logMessage = "Linking into " + absPath;
-    if (compilerOptions.getExtraDir() != null) {
-      File absExtrasPath = new File(compilerOptions.getExtraDir(), module.getName());
-      absExtrasPath = absExtrasPath.getAbsoluteFile();
-      logMessage += "; Writing extras to " + absExtrasPath;
-    }
-    TreeLogger branch = logger.branch(TreeLogger.TRACE, logMessage);
     try {
-      Link.link(branch,
-          module, compilerContext.getPublicResourceOracle(), generatedArtifacts, permutations,
-          resultFiles, libraryPermutationResults, compilerOptions, compilerOptions);
+      Link.link(TreeLogger.NULL, module, compilerContext.getPublicResourceOracle(),
+          generatedArtifacts, permutations, resultFiles, libraryPermutationResults, compilerOptions,
+          compilerOptions);
+      long durationMs = System.currentTimeMillis() - beforeLinkMs;
+      logger.log(TreeLogger.INFO,
+          String.format("%.3fs -- Successfully linking application", durationMs / 1000d));
     } catch (IOException e) {
-      // The real cause has been logged.
+      long durationMs = System.currentTimeMillis() - beforeLinkMs;
+      logger.log(TreeLogger.INFO,
+          String.format("%.3fs -- Failing to link application", durationMs / 1000d));
       throw new UnableToCompleteException();
     }
     linkEvent.end();
-
-    long durationMs = System.currentTimeMillis() - beforeLinkMs;
-    branch.log(TreeLogger.INFO,
-        "Library link succeeded -- " + String.format("%.3f", durationMs / 1000d) + "s");
   }
 
   private void loadLibraries(TreeLogger logger) throws UnableToCompleteException {
@@ -231,15 +274,31 @@ public class LibraryCompiler {
       logger.log(TreeLogger.ERROR, e.getMessage());
       throw new UnableToCompleteException();
     }
-    compilerContext = compilerContextBuilder.libraryGroup(libraryGroup)
-        .libraryWriter(new ZipLibraryWriter(compilerOptions.getOutputLibraryPath()))
-        .unitCache(new LibraryGroupUnitCache(libraryGroup)).build();
+    libraryGroup.verify(logger);
+
+    try {
+      CloseableJarHandlerFactory.closeStreams(compilerOptions.getOutputLibraryPath());
+    } catch (IOException e) {
+      logger.log(TreeLogger.WARN, String.format("Failed to close old connections to %s. "
+          + "Repeated incremental compiles in the same JVM process may fail.",
+          compilerOptions.getOutputLibraryPath()));
+    }
+
+    ZipLibraryWriter zipLibraryWriter =
+        new ZipLibraryWriter(compilerOptions.getOutputLibraryPath());
+    compilerContext = compilerContextBuilder.libraryGroup(libraryGroup).libraryWriter(
+        zipLibraryWriter).unitCache(UnitCacheSingleton.get(logger, compilerOptions.getWorkDir()))
+        .build();
   }
 
   private void loadModule(TreeLogger logger) throws UnableToCompleteException {
-    module = ModuleDefLoader.loadFromClassPath(
-        logger, compilerContext, compilerOptions.getModuleNames().get(0), false);
+    long beforeLoadModuleMs = System.currentTimeMillis();
+    module = ModuleDefLoader.loadFromResources(logger, compilerContext,
+        compilerOptions.getModuleNames().get(0), resourceLoader, false);
     compilerContext = compilerContextBuilder.module(module).build();
+    long durationMs = System.currentTimeMillis() - beforeLoadModuleMs;
+    logger.log(TreeLogger.INFO,
+        String.format("%.3fs -- Parsing and loading module definition", durationMs / 1000d));
   }
 
   private void normalizeOptions(TreeLogger logger) throws UnableToCompleteException {
@@ -250,7 +309,7 @@ public class LibraryCompiler {
     // Current optimization passes are not safe with only partial data.
     compilerOptions.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
     // Protects against rampant overlapping source inclusion.
-    compilerOptions.setEnforceStrictResources(true);
+    compilerOptions.setEnforceStrictSourceResources(true);
     // Ensures that output JS identifiers are named consistently in all modules.
     compilerOptions.setOutput(JsOutputOption.DETAILED);
     // Code splitting isn't possible when you can't trace the entire control flow.
@@ -280,21 +339,5 @@ public class LibraryCompiler {
     }
     // Optimize early since permutation compiles will run in process.
     compilerOptions.setOptimizePrecompile(true);
-  }
-
-  private boolean run(TreeLogger logger) {
-    try {
-      normalizeOptions(logger);
-      loadLibraries(logger);
-      loadModule(logger);
-      compileModule(logger);
-      if (compilerOptions.shouldLink()) {
-        linkLibraries(logger);
-      }
-      return true;
-    } catch (UnableToCompleteException e) {
-      // The real cause has been logged.
-      return false;
-    }
   }
 }

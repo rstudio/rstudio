@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 
 import java.util.List;
 import java.util.Set;
@@ -42,8 +43,23 @@ public class ConditionWhenPropertyIs extends Condition {
   }
 
   @Override
+  public boolean equals(Object object) {
+    if (object instanceof ConditionWhenPropertyIs) {
+      ConditionWhenPropertyIs that = (ConditionWhenPropertyIs) object;
+      return Objects.equal(this.propName, that.propName)
+          && Objects.equal(this.value, that.value);
+    }
+    return false;
+  }
+
+  @Override
   public Set<String> getRequiredProperties() {
     return Sets.create(propName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(propName, value);
   }
 
   @Override

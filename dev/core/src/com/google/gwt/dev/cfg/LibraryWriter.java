@@ -18,7 +18,6 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.PersistenceBackedObject;
-import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import java.util.Set;
 
@@ -59,35 +58,9 @@ public interface LibraryWriter {
   void addGeneratedArtifacts(ArtifactSet generatedArtifacts);
 
   /**
-   * Registers newly legal values on some binding property.
-   */
-  void addNewBindingPropertyValuesByName(String propertyName, Iterable<String> propertyValues);
-
-  /**
-   * Sets the newly current value(s) on some configuration property.
-   */
-  void addNewConfigurationPropertyValuesByName(
-      String propertyName, Iterable<String> propertyValues);
-
-  /**
    * Adds a public resource (such as a html, css, or png file).
    */
   void addPublicResource(Resource publicResource);
-
-  /**
-   * Marks a generator as having been executed for this library and all sub libraries.
-   */
-  void addRanGeneratorName(String generatorName);
-
-  /**
-   * Returns the map of binding property names to newly legal values.
-   */
-  Multimap<String, String> getNewBindingPropertyValuesByName();
-
-  /**
-   * Returns a map of configuration property names to newly set value(s).
-   */
-  Multimap<String, String> getNewConfigurationPropertyValuesByName();
 
   /**
    * Returns a handle to the permutation result object that was constructed as part of the
@@ -96,10 +69,27 @@ public interface LibraryWriter {
   PersistenceBackedObject<PermutationResult> getPermutationResultHandle();
 
   /**
+   * Returns the set of source names of rebound types that have been processed by the given
+   * Generator.
+   */
+  Set<String> getProcessedReboundTypeSourceNames(String generatorName);
+
+  /**
    * Returns the set of source names of types which are the subject of GWT.create() calls in source
    * code for this library.
    */
   Set<String> getReboundTypeSourceNames();
+
+  /**
+   * Registers the type (by it's source name) as having been processed by the given generator.
+   */
+  void markReboundTypeProcessed(String processedReboundTypeSourceName, String generatorName);
+
+  /**
+   * Records the set of names of types which are the subject of GWT.create() calls in source code
+   * for this library.
+   */
+  void markReboundTypesProcessed(Set<String> reboundTypeSourceNames);
 
   /**
    * Records the library name.<br />
@@ -108,12 +98,6 @@ public interface LibraryWriter {
    * unique within the build tree.
    */
   void setLibraryName(String libraryName);
-
-  /**
-   * Records the set of names of types which are the subject of GWT.create() calls in source code
-   * for this library.
-   */
-  void setReboundTypeSourceNames(Set<String> reboundTypeSourceNames);
 
   /**
    * Finishes writing all library contents and closes the library.

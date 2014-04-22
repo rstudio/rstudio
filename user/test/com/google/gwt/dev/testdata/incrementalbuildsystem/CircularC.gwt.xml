@@ -1,0 +1,3 @@
+<module>
+  <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.CircularFilesetD" />
+</module>

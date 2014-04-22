@@ -87,10 +87,6 @@ public class ZipLibrariesTest extends CompilationStateTestBase {
     String expectedLibraryName = "BazLib";
     final String expectedResourceContents =
         "<html><head><title>Index</title></head><body>Hi</body></html>";
-    Set<String> expectedRanGeneratorNames =
-        Sets.newHashSet("UiBinderGenerator", "PlatinumGenerator");
-    Set<String> expectedUserAgentConfigurationValues = Sets.newHashSet("webkit");
-    Set<String> expectedLocaleConfigurationValues = Sets.newHashSet("en,default,en_US", "fr");
     Set<String> expectedDependencyLibraryNames = Sets.newHashSet("FooLib", "BarLib");
     oracle.add(BAR, SUPER_FOO, JdtCompilerTest.OUTER_INNER);
     rebuildCompilationState();
@@ -109,13 +105,6 @@ public class ZipLibrariesTest extends CompilationStateTestBase {
         return expectedResourceContents;
       }
     });
-    zipLibraryWriter.addNewConfigurationPropertyValuesByName("user.agent",
-        expectedUserAgentConfigurationValues);
-    zipLibraryWriter.addNewConfigurationPropertyValuesByName("locale",
-        expectedLocaleConfigurationValues);
-    for (String generatorName : expectedRanGeneratorNames) {
-      zipLibraryWriter.addRanGeneratorName(generatorName);
-    }
     zipLibraryWriter.addDependencyLibraryNames(expectedDependencyLibraryNames);
     for (CompilationUnit compilationUnit : compilationUnits) {
       zipLibraryWriter.addCompilationUnit(compilationUnit);
@@ -133,11 +122,6 @@ public class ZipLibrariesTest extends CompilationStateTestBase {
     assertEquals(expectedLibraryName, zipLibrary.getLibraryName());
     assertEquals(expectedResourceContents,
         Util.readStreamAsString(zipLibrary.getPublicResourceByPath("index.html").openContents()));
-    assertEquals(expectedRanGeneratorNames, zipLibrary.getRanGeneratorNames());
-    assertEquals(expectedUserAgentConfigurationValues,
-        zipLibrary.getNewConfigurationPropertyValuesByName().get("user.agent"));
-    assertEquals(expectedLocaleConfigurationValues,
-        zipLibrary.getNewConfigurationPropertyValuesByName().get("locale"));
     assertEquals(expectedDependencyLibraryNames, zipLibrary.getDependencyLibraryNames());
 
     // CompilationUnit

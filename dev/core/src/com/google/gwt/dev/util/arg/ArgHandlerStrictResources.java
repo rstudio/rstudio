@@ -24,17 +24,22 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
  */
 public class ArgHandlerStrictResources extends ArgHandlerFlag {
 
-  private final OptionStrictResources options;
+  private final OptionStrictSourceResources optionStrictSourceResources;
+  private final OptionStrictPublicResources optionStrictPublicResources;
 
-  public ArgHandlerStrictResources(OptionStrictResources options) {
-    this.options = options;
+  public <T extends OptionStrictSourceResources &
+                    OptionStrictPublicResources> ArgHandlerStrictResources(T options) {
+    this.optionStrictSourceResources = options;
+    this.optionStrictPublicResources = options;
 
     addTagValue("-XstrictResources", true);
   }
 
   @Override
   public boolean getDefaultValue() {
-    return options.enforceStrictResources();
+    assert optionStrictSourceResources.enforceStrictSourceResources()
+        == optionStrictPublicResources.enforceStrictPublicResources();
+    return optionStrictSourceResources.enforceStrictSourceResources();
   }
 
   @Override
@@ -55,7 +60,8 @@ public class ArgHandlerStrictResources extends ArgHandlerFlag {
 
   @Override
   public boolean setFlag(boolean value) {
-    options.setEnforceStrictResources(value);
+    optionStrictSourceResources.setEnforceStrictSourceResources(value);
+    optionStrictPublicResources.setEnforceStrictPublicResources(value);
     return true;
   }
 }

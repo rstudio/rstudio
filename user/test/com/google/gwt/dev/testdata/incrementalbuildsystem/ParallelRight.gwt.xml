@@ -1,0 +1,4 @@
+<module>
+  <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.ProvidesFoo" />
+  <source path="" includes="RightFooCreator.java" />
+</module>

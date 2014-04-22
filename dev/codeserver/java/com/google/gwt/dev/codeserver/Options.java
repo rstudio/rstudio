@@ -42,6 +42,7 @@ import java.util.List;
  * <p>These flags are EXPERIMENTAL and subject to change.</p>
  */
 public class Options {
+  private boolean compileIncremental = false;
   private boolean noPrecompile = false;
   private boolean isCompileTest = false;
   private File workDir;
@@ -114,6 +115,13 @@ public class Options {
    */
   boolean shouldAllowMissingSourceDir() {
     return allowMissingSourceDir;
+  }
+
+  /**
+   * Whether to compile a series of reusable libraries that are linked at the end.
+   */
+  boolean shouldCompileIncremental() {
+    return compileIncremental;
   }
 
   /**
@@ -202,6 +210,7 @@ public class Options {
       registerHandler(new ModuleNameArgument());
       registerHandler(new FailOnErrorFlag());
       registerHandler(new StrictResourcesFlag());
+      registerHandler(new CompileIncrementalFlag());
       registerHandler(new ArgHandlerSourceLevel(new OptionSourceLevel() {
         @Override
         public SourceLevel getSourceLevel() {
@@ -253,6 +262,35 @@ public class Options {
     @Override
     public boolean getDefaultValue() {
       return !noPrecompile;
+    }
+  }
+
+  private class CompileIncrementalFlag extends ArgHandlerFlag {
+
+    @Override
+    public String getLabel() {
+      return "incremental";
+    }
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Compile and link the application as a set of separate libraries.";
+    }
+
+    @Override
+    public boolean setFlag(boolean value) {
+      compileIncremental = value;
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return false;
+    }
+
+    @Override
+    public boolean isExperimental() {
+      return true;
     }
   }
 

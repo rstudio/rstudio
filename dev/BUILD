@@ -317,6 +317,24 @@ AugmentedJar(
     ],
 )
 
+gwt_test(
+    name = "tests_dev.IncrementalBuilderTest",
+    data = [
+        "//third_party/java_src/gwt:gwt-dev-full.jar",
+        "//third_party/java_src/gwt:gwt-user-full",
+        "//third_party/java_src/gwt/svn/trunk/user:incremental-build-system-test-res.jar",
+    ],
+    jvm_flags = [
+        "-Dgwt.cp=third_party/java_src/gwt/svn/trunk/user/incremental-build-system-test-res.jar\;third_party/java_src/gwt/gwt-dev-full.jar\;third_party/java_src/gwt/gwt-user-full.jar",
+        "-ea",
+    ],
+    main_class = "com.google.gwt.dev.IncrementalBuilderTest",
+    deps = [
+        ":dev-test-code",
+        "//third_party/java_src/gwt/svn/trunk/user:incremental-build-system-test-res",
+    ],
+)
+
 # The "dev" directory is tested by loose tests.  Some of them fail because of
 # classpath expectations that are invalid in Google's distributed build
 # environment.
@@ -329,6 +347,11 @@ GWT_DEV_TESTS = glob(
     exclude = [
         "core/test/**/ClassPathEntryTest.java",
         "core/test/**/ResourceOracleImplTest.java",
+    ] +
+    # Handled separately because it needs a custom test target with
+    # custom classpath.
+    [
+        "core/test/**/IncrementalBuilderTest.java",
     ],
 )
 

@@ -121,6 +121,8 @@ import java.util.Set;
 // TODO: SOYC correlations.
 // TODO(stalcup): perform only binary name based lookups so that libraries
 // don't need to index compilation units by both source and binary name
+// TODO(stalcup): shrink the translate/flowInto graph for reference only types to eliminate
+// unnecessary loading of types and increase performance.
 public class UnifyAst {
 
   /**
@@ -453,7 +455,7 @@ public class UnifyAst {
 
       ArrayList<JExpression> instantiationExpressions = new ArrayList<JExpression>(answers.size());
       for (String answer : answers) {
-        JDeclaredType answerType = findType(answer, sourceNameBasedTypeLocator);
+        JDeclaredType answerType = internalFindType(answer, sourceNameBasedTypeLocator);
         if (answerType == null) {
           error(gwtCreateCall, "Rebind result '" + answer + "' could not be found");
           return null;
@@ -579,6 +581,13 @@ public class UnifyAst {
   private final CompilationState compilationState;
   private final Map<String, CompiledClass> compiledClassesByInternalName;
   private final Map<String, CompiledClass> compiledClassesBySourceName;
+  /**
+   * JVisitor interferes with any exceptions thrown inside of a visitor traversal call tree so any
+   * time UnifyAst wants to log an error and end operation care it should be done by manually
+   * logging an error line and setting errorsFound to true. Adequate checking is already in place to
+   * interpret this as ending further exploration and errorsFound = true is already being converted
+   * to an UnableToCompleteException at the UnifyAst public function boundaries
+   */
   private boolean errorsFound = false;
   private final Set<CompilationUnit> failedUnits = new IdentityHashSet<CompilationUnit>();
   private final Map<String, JField> fieldMap = new HashMap<String, JField>();
@@ -633,9 +642,10 @@ public class UnifyAst {
 
   public void addRootTypes(Collection<String> sourceTypeNames) throws UnableToCompleteException {
     for (String sourceTypeName : sourceTypeNames) {
-      findType(sourceTypeName, sourceNameBasedTypeLocator);
+      internalFindType(sourceTypeName, sourceNameBasedTypeLocator);
     }
     if (errorsFound) {
+      // Already logged.
       throw new UnableToCompleteException();
     }
   }
@@ -647,7 +657,7 @@ public class UnifyAst {
   public void buildEverything() throws UnableToCompleteException {
     for (String internalName : compiledClassesByInternalName.keySet()) {
       String typeName = InternalName.toBinaryName(internalName);
-      findType(typeName, binaryNameBasedTypeLocator);
+      internalFindType(typeName, binaryNameBasedTypeLocator);
     }
 
     for (JDeclaredType type : program.getDeclaredTypes()) {
@@ -695,7 +705,7 @@ public class UnifyAst {
       // Trace execution from all types supplied as source and resolve references.
       Set<String> internalNames = ImmutableSet.copyOf(compiledClassesByInternalName.keySet());
       for (String internalName : internalNames) {
-        JDeclaredType type = findType(internalName, internalNameBasedTypeLocator);
+        JDeclaredType type = internalFindType(internalName, internalNameBasedTypeLocator);
         instantiate(type);
         for (JField field : type.getFields()) {
           flowInto(field);
@@ -717,9 +727,6 @@ public class UnifyAst {
     flowInto(program.getIndexedMethod("Object.toString"));
     mapApi(program.getTypeJavaLangString());
     flowInto(methodMap.get("java.lang.String.valueOf(C)Ljava/lang/String;"));
-
-    // Additional pre-optimization code gen.
-    // TODO: roll these into this class?
 
     // EnumNameObfuscator
     flowInto(program.getIndexedMethod("Enum.obfuscatedName"));
@@ -755,6 +762,7 @@ public class UnifyAst {
     }
     computeOverrides();
     if (errorsFound) {
+      // Already logged.
       throw new UnableToCompleteException();
     }
   }
@@ -807,12 +815,8 @@ public class UnifyAst {
       program.addType(referenceOnlyType);
       program.addReferenceOnlyType(referenceOnlyType);
     }
-    // Flow into the signature of each contained method, so that method call references from
-    // inside this library to functions on these external types can resolve.
-    for (JDeclaredType t : types) {
-      for (JMethod method : t.getMethods()) {
-        flowInto(method);
-      }
+    for (JDeclaredType referenceOnlyType : types) {
+      resolveType(referenceOnlyType);
     }
   }
 
@@ -1214,7 +1218,18 @@ public class UnifyAst {
     type.resolve(resolvedInterfaces, resolvedRescues);
   }
 
-  public JDeclaredType findType(String typeName, NameBasedTypeLocator nameBasedTypeLocator) {
+  public JDeclaredType findType(String typeName, NameBasedTypeLocator nameBasedTypeLocator)
+      throws UnableToCompleteException {
+    JDeclaredType type = internalFindType(typeName, nameBasedTypeLocator);
+    if (errorsFound) {
+      // Already logged.
+      throw new UnableToCompleteException();
+    }
+    return type;
+  }
+
+  private JDeclaredType internalFindType(String typeName,
+      NameBasedTypeLocator nameBasedTypeLocator) {
     if (nameBasedTypeLocator.resolvedTypeIsAvailable(typeName)) {
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
@@ -1225,9 +1240,10 @@ public class UnifyAst {
     }
 
     if (compilerContext.shouldCompileMonolithic()) {
-      throw new NoClassDefFoundError(String.format(
-          "Could not find %s in types compiled from source. "
+      logger.log(TreeLogger.ERROR, String.format("Could not find %s in types compiled from source. "
           + "It was either unavailable or failed to compile.", typeName));
+      errorsFound = true;
+      return null;
     }
 
     if (nameBasedTypeLocator.libraryCompilationUnitIsAvailable(typeName)) {
@@ -1235,10 +1251,12 @@ public class UnifyAst {
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
-    throw new NoClassDefFoundError(String.format(
+    logger.log(TreeLogger.ERROR, String.format(
         "Could not find %s in types compiled from source or in provided dependency libraries. "
         + "Either the source file was unavailable, failed to compile or there is a missing "
         + "dependency.", typeName));
+    errorsFound = true;
+    return null;
   }
 
   private void staticInitialize(JDeclaredType type) {
@@ -1280,14 +1298,12 @@ public class UnifyAst {
     if (!type.isExternal()) {
       return type;
     }
-
     String typeName = type.getName();
-    JDeclaredType newType = findType(typeName, binaryNameBasedTypeLocator);
+    JDeclaredType newType = internalFindType(typeName, binaryNameBasedTypeLocator);
     if (newType == null) {
       assert errorsFound;
       return type;
     }
-
     assert !newType.isExternal();
     return newType;
   }

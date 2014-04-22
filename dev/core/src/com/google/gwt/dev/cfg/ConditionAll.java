@@ -18,6 +18,7 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 
 import java.util.Iterator;
 
@@ -29,6 +30,20 @@ public class ConditionAll extends CompoundCondition {
 
   public ConditionAll(Condition... conditions) {
     super(conditions);
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof ConditionAll) {
+      ConditionAll that = (ConditionAll) object;
+      return Objects.equal(this.conditions, that.conditions);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(conditions);
   }
 
   @Override

@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,6 +16,7 @@
 package com.google.gwt.safecss.shared;
 
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.HashMap;
@@ -24,11 +25,11 @@ import java.util.Stack;
 /**
  * SafeStyles utilities whose implementation differs between Development and
  * Production Mode.
- * 
+ *
  * <p>
  * This class has a super-source peer that provides the Production Mode
  * implementation.
- * 
+ *
  * <p>
  * Do not use this class - it is used for implementation only, and its methods
  * may change in the future.
@@ -50,21 +51,21 @@ public class SafeStylesHostedModeUtils {
 
   /**
    * Check if the specified style property name is valid.
-   * 
+   *
    * <p>
    * NOTE: This method does <em>NOT</em> guarantee the safety of a style name.
    * It looks for common errors, but does not check for every possible error. It
    * is intended to help validate a string that the user has already asserted is
    * safe.
    * </p>
-   * 
+   *
    * @param name the name to check
    * @return null if valid, an error string if not
    * @see <a
    *      href="http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier">CSS
    *      2.1 identifiers</a>
    */
-  // VisibleForTesting.
+  @VisibleForTesting
   public static String isValidStyleName(String name) {
     // Empty name.
     if (name == null || name.isEmpty()) {
@@ -101,20 +102,20 @@ public class SafeStylesHostedModeUtils {
 
   /**
    * Check if the specified style property value is valid.
-   * 
+   *
    * <p>
    * NOTE: This method does <em>NOT</em> guarantee the safety of a style value.
    * It looks for common errors, but does not check for every possible error. It
    * is intended to help validate a string that the user has already asserted is
    * safe.
    * </p>
-   * 
+   *
    * @param value the value to check
    * @return null if valid, an error string if not
    * @see <a href="http://www.w3.org/TR/CSS21/syndata.html#declaration">CSS 2.1
    *      declarations and properties</a>
    */
-  // VisibleForTesting.
+  @VisibleForTesting
   public static String isValidStyleValue(String value) {
     // Empty value.
     if (value == null || value.length() == 0) {
@@ -166,8 +167,8 @@ public class SafeStylesHostedModeUtils {
 
         /*
          * Almost all tokens are valid within a URL.
-         * 
-         * 
+         *
+         *
          * TODO(jlabanca): Check for unescaped quotes and whitespace in URLs.
          * Quotes and whitespace (other than the optional ones that wrap the
          * URL) should be escaped.
@@ -243,7 +244,7 @@ public class SafeStylesHostedModeUtils {
 
   /**
    * Checks if the provided string is a valid style property name.
-   * 
+   *
    * @param name the style name
    * @see <a
    *      href="http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier">CSS
@@ -260,7 +261,7 @@ public class SafeStylesHostedModeUtils {
 
   /**
    * Checks if the provided string is a valid style property value.
-   * 
+   *
    * @param value the style value
    * @see <a href="http://www.w3.org/TR/CSS21/syndata.html#declaration">CSS 2.1
    *      declarations and properties</a>
@@ -279,7 +280,7 @@ public class SafeStylesHostedModeUtils {
    * {@link #maybeCheckValidStyleName(String)} and
    * {@link #maybeCheckValidStyleValue(String)} should perform their checks in a
    * server-side environment.
-   * 
+   *
    * @param check if true, perform server-side checks.
    */
   public static void setForceCheckValidStyle(boolean check) {

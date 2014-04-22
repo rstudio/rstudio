@@ -16,6 +16,7 @@
 package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.Serializable;
@@ -60,7 +61,7 @@ public class StandardStatementRanges implements StatementRanges, Serializable {
     return ary;
   }
 
-  // VisibleForTesting
+  @VisibleForTesting
   final int[] ends;
   final int[] starts;
 

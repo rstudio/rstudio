@@ -50,6 +50,7 @@ import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.PrintWriter;
@@ -423,7 +424,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     indexTypes();
   }
 
-  // VisibleForTesting
+  @VisibleForTesting
   void indexTypes() {
     Event finishEvent =
         SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_UPDATER, "phase", "Finish");
@@ -455,7 +456,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     addNewTypesDontIndex(logger, typeDataList, argsLookup);
   }
 
-  // VisibleForTesting
+  @VisibleForTesting
   public Resolver getMockResolver() {
     return new CompilationUnitTypeOracleResolver(
         new TypeOracleBuildContext(new MethodArgNamesLookup()));
@@ -465,7 +466,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     return typeOracle;
   }
 
-  // VisibleForTesting
+  @VisibleForTesting
   public Map<String, JRealClassType> getTypesByInternalName() {
     return typesByInternalName;
   }
@@ -886,8 +887,9 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
 
     // Process methods
     for (CollectMethodData method : classData.getMethods()) {
-      if (!resolveMethod(logger, unresolvedType, method, typeParamLookup, context)) {
-        logger.log(TreeLogger.WARN, "Unable to resolve method " + method);
+      TreeLogger branch = logger.branch(TreeLogger.SPAM, "Resolving method " + method.getName());
+      if (!resolveMethod(branch, unresolvedType, method, typeParamLookup, context)) {
+        // Already logged.
         return false;
       }
     }
@@ -896,8 +898,9 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     // Track the next enum ordinal across resolveField calls.
     int[] nextEnumOrdinal = new int[] {0};
     for (CollectFieldData field : classData.getFields()) {
-      if (!resolveField(logger, unresolvedType, field, typeParamLookup, nextEnumOrdinal, context)) {
-        logger.log(TreeLogger.WARN, "Unable to resolve field " + field);
+      TreeLogger branch = logger.branch(TreeLogger.SPAM, "Resolving field " + field.getName());
+      if (!resolveField(branch, unresolvedType, field, typeParamLookup, nextEnumOrdinal, context)) {
+        // Already logged.
         return false;
       }
     }
@@ -1006,21 +1009,27 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     addModifierBits(jfield, mapBits(ASM_TO_SHARED_MODIFIERS, field.getAccess()));
 
     String signature = field.getSignature();
-    JType fieldType;
+    JType fieldJType;
     if (signature != null) {
       SignatureReader reader = new SignatureReader(signature);
       JType[] fieldTypeRef = new JType[1];
       reader.acceptType(new ResolveTypeSignature(
           context.resolver, logger, fieldTypeRef, typeParamLookup, null));
-      fieldType = fieldTypeRef[0];
-
+      fieldJType = fieldTypeRef[0];
+      if (fieldJType == null) {
+        logger.log(TreeLogger.ERROR, "Unable to resolve type in field signature " + signature);
+        return false;
+      }
     } else {
-      fieldType = resolveType(Type.getType(field.getDesc()));
+      Type fieldType = Type.getType(field.getDesc());
+      fieldJType = resolveType(fieldType);
+      if (fieldJType == null) {
+        logger.log(TreeLogger.ERROR, "Unable to resolve type " + fieldType.getInternalName()
+            + " of field " + field.getName());
+        return false;
+      }
     }
-    if (fieldType == null) {
-      return false;
-    }
-    setFieldType(jfield, fieldType);
+    setFieldType(jfield, fieldJType);
     return true;
   }
 
@@ -1085,6 +1094,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
           methodData.getArgNames(), methodData.hasActualArgNames(), context.allMethodArgs);
       reader.accept(methodResolver);
       if (!methodResolver.finish()) {
+        logger.log(TreeLogger.ERROR, "Failed to resolve.");
         return false;
       }
     } else {
@@ -1092,19 +1102,23 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
         Type returnType = Type.getReturnType(methodData.getDesc());
         JType returnJType = resolveType(returnType);
         if (returnJType == null) {
+          logger.log(TreeLogger.ERROR,
+              "Unable to resolve return type " + returnType.getInternalName());
           return false;
         }
         setReturnType(method, returnJType);
       }
 
       if (!resolveParameters(logger, method, methodData, context)) {
+        // Already logged.
         return false;
       }
     }
     // The signature might not actually include the exceptions if they don't
     // include a type variable, so resolveThrows is always used (it does
     // nothing if there are already exceptions defined)
-    if (!resolveThrows(method, methodData)) {
+    if (!resolveThrows(logger, method, methodData)) {
+      // Already logged.
       return false;
     }
     typeParamLookup.popScope();
@@ -1142,8 +1156,11 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     }
     List<CollectAnnotationData>[] paramAnnot = methodData.getArgAnnotations();
     for (int i = 0; i < argTypes.length; ++i) {
-      JType argType = resolveType(argTypes[i]);
-      if (argType == null) {
+      Type argType = argTypes[i];
+      JType argJType = resolveType(argType);
+      if (argJType == null) {
+        logger.log(TreeLogger.ERROR, "Unable to resolve type " + argType.getInternalName()
+            + " of argument " + methodData.getArgNames()[i]);
         return false;
       }
       // Try to resolve annotations, ignore any that fail.
@@ -1151,19 +1168,23 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
           new HashMap<Class<? extends Annotation>, Annotation>();
       resolveAnnotations(logger, paramAnnot[i], declaredAnnotations);
 
-      newParameter(method, argType, argNames[i], declaredAnnotations, argNamesAreReal);
+      newParameter(method, argJType, argNames[i], declaredAnnotations, argNamesAreReal);
     }
     return true;
   }
 
-  private boolean resolveThrows(JAbstractMethod method, CollectMethodData methodData) {
+  private boolean resolveThrows(TreeLogger logger, JAbstractMethod method,
+      CollectMethodData methodData) {
     if (method.getThrows().length == 0) {
       for (String exceptionName : methodData.getExceptions()) {
-        JType exceptionType = resolveType(Type.getObjectType(exceptionName));
-        if (exceptionType == null) {
+        Type exceptionType = Type.getObjectType(exceptionName);
+        JType exceptionJType = resolveType(exceptionType);
+        if (exceptionJType == null) {
+          logger.log(TreeLogger.ERROR,
+              "Unable to resolve type " + exceptionType.getInternalName() + " of thrown exception");
           return false;
         }
-        addThrows(method, (JClassType) exceptionType);
+        addThrows(method, (JClassType) exceptionJType);
       }
     }
     return true;

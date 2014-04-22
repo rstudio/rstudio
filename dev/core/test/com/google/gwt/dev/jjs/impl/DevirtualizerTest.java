@@ -74,10 +74,10 @@ public class DevirtualizerTest extends OptimizerTestBase {
     // the method used for val2 and val3.
     StringBuffer expected = new StringBuffer();
     expected.append("int result = ");
-    expected.append("EntryPoint$Jso1.a__devirtual$(EntryPoint.val1) + ");
-    expected.append("EntryPoint$Jso1.a__devirtual$(EntryPoint.val2) + ");
-    expected.append("EntryPoint$Jso2.a1__devirtual$(EntryPoint.val3) + ");
-    expected.append("EntryPoint$Jso2.a1__devirtual$(EntryPoint.val4);");
+    expected.append("EntryPoint$Jso1.a__I__devirtual$(EntryPoint.val1) + ");
+    expected.append("EntryPoint$Jso1.a__I__devirtual$(EntryPoint.val2) + ");
+    expected.append("EntryPoint$Jso2.a__I__devirtual$(EntryPoint.val3) + ");
+    expected.append("EntryPoint$Jso2.a__I__devirtual$(EntryPoint.val4);");
 
     Result result = optimize("void", code.toString());
     // Asserts that a() method calls were redirected to the devirtualized version.
@@ -120,13 +120,14 @@ public class DevirtualizerTest extends OptimizerTestBase {
     // String.length are devirtualized separately.
     StringBuffer expected = new StringBuffer();
     expected.append("int result = ");
-    expected.append(
+    expected.append(String.format(
         // Methods in Comparable and CharSequence end up in String even if used by a JSO.
-        "String.compareTo__devirtual$(EntryPoint.javaVal, EntryPoint.javaVal) + " +
-        "String.compareTo__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + " +
-        "String.compareTo__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + " +
-        "String.length__devirtual$(EntryPoint.stringCharSeq) + " +
-        "String.length1__devirtual$(EntryPoint.aString);");
+        "String.compareTo_%s__I__devirtual$(EntryPoint.javaVal, EntryPoint.javaVal) + " +
+        "String.compareTo_%s__I__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + " +
+        "String.compareTo_%s__I__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + " +
+        "String.length__I__devirtual$(EntryPoint.stringCharSeq) + " +
+        "String.length__I__devirtual$(EntryPoint.aString);", "Ljava_lang_Object",
+        "Ljava_lang_Object", "Ljava_lang_Object"));
 
     Result result = optimize("void", code.toString());
     result.intoString(expected.toString());

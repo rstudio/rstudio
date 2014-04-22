@@ -60,14 +60,11 @@ public class Libraries {
       "nestedBinaryNamesByEnclosingName.txt";
   public static final String NESTED_SOURCE_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME =
       "nestedSourceNamesByEnclosingName.txt";
-  public static final String NEW_BINDING_PROPERTY_VALUES_BY_NAME_ENTRY_NAME =
-      "newBindingPropertyValuesByName.txt";
-  public static final String NEW_CONFIGURATION_PROPERTY_VALUES_BY_NAME_ENTRY_NAME =
-      "newConfigurationPropertyValuesByName.txt";
   public static final String PERMUTATION_RESULT_ENTRY_NAME = "permutationResult.ser";
   public static final String PUBLIC_RESOURCE_PATHS_ENTRY_NAME = "publicResourcePaths.txt";
-  public static final String RAN_GENERATOR_NAMES_ENTRY_NAME = "ranGeneratorNames.txt";
   public static final String REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME = "reboundTypeSourceNames.txt";
+  public static final String PROCESSED_REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME =
+      "processedReboundTypeSourceNames.txt";
   public static final String REGULAR_CLASS_FILE_PATHS_ENTRY_NAME = "regularClassFilePaths.txt";
   public static final String REGULAR_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME =
       "regularCompilationUnitTypeSourceNames.txt";

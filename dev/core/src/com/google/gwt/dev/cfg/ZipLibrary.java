@@ -69,6 +69,28 @@ public class ZipLibrary implements Library {
       }
     }
 
+    private void close() {
+      try {
+        // Close our ZipFile.
+        zipFile.close();
+        zipFile = null;
+      } catch (IOException e) {
+        // nothing to be done about it.
+      }
+    }
+
+    private String decode(String string) {
+      string = decodeCharacter(string, Libraries.VALUE_SEPARATOR);
+      string = decodeCharacter(string, Libraries.LINE_SEPARATOR);
+      string = decodeCharacter(string, Libraries.KEY_VALUE_SEPARATOR);
+      string = decodeCharacter(string, Libraries.ENCODE_PREFIX);
+      return string;
+    }
+
+    private String decodeCharacter(String string, char character) {
+      return string.replace(Libraries.ENCODE_PREFIX + Integer.toString(character), character + "");
+    }
+
     private InputStream getClassFileStream(String classFilePath) {
       ZipEntry classFileEntry =
           zipFile.getEntry(Libraries.computeClassFileEntryName(classFilePath));
@@ -160,12 +182,8 @@ public class ZipLibrary implements Library {
       return readStringMultimap(Libraries.NESTED_SOURCE_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME);
     }
 
-    private Multimap<String, String> readNewBindingPropertyValuesByName() {
-      return readStringMultimap(Libraries.NEW_BINDING_PROPERTY_VALUES_BY_NAME_ENTRY_NAME);
-    }
-
-    private Multimap<String, String> readNewConfigurationPropertyValuesByName() {
-      return readStringMultimap(Libraries.NEW_CONFIGURATION_PROPERTY_VALUES_BY_NAME_ENTRY_NAME);
+    private Multimap<String, String> readProcessedReboundTypeSourceNamesByGenerator() {
+      return readStringMultimap(Libraries.PROCESSED_REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME);
     }
 
     private Resource readPublicResourceByPath(String path) {
@@ -175,10 +193,6 @@ public class ZipLibrary implements Library {
 
     private Set<String> readPublicResourcePaths() {
       return readStringSet(Libraries.PUBLIC_RESOURCE_PATHS_ENTRY_NAME);
-    }
-
-    private Set<String> readRanGeneratorNames() {
-      return readStringSet(Libraries.RAN_GENERATOR_NAMES_ENTRY_NAME);
     }
 
     private Set<String> readReboundTypeSourceNames() {
@@ -232,18 +246,6 @@ public class ZipLibrary implements Library {
       return stringMultimap;
     }
 
-    private String decode(String string) {
-      string = decodeCharacter(string, Libraries.VALUE_SEPARATOR);
-      string = decodeCharacter(string, Libraries.LINE_SEPARATOR);
-      string = decodeCharacter(string, Libraries.KEY_VALUE_SEPARATOR);
-      string = decodeCharacter(string, Libraries.ENCODE_PREFIX);
-      return string;
-    }
-
-    private String decodeCharacter(String string, char character) {
-      return string.replace(Libraries.ENCODE_PREFIX + Integer.toString(character), character + "");
-    }
-
     private Set<String> readStringSet(String entryName) {
       return Collections.unmodifiableSet(Sets.newLinkedHashSet(readStringList(entryName)));
     }
@@ -282,12 +284,10 @@ public class ZipLibrary implements Library {
   private String libraryName;
   private Multimap<String, String> nestedBinaryNamesByCompilationUnitName;
   private Multimap<String, String> nestedSourceNamesByCompilationUnitName;
-  private Multimap<String, String> newBindingPropertyValuesByName;
-  private Multimap<String, String> newConfigurationPropertyValuesByName;
   private ZipEntryBackedObject<PermutationResult> permutationResultHandle;
+  private Multimap<String, String> processedReboundTypeSourceNamesByGenerator;
   private Set<String> publicResourcePaths;
   private Map<String, Resource> publicResourcesByPath = Maps.newHashMap();
-  private Set<String> ranGeneratorNames;
   private Set<String> reboundTypeSourceNames;
   private Set<String> regularCompilationUnitTypeSourceNames;
   private Set<String> superSourceClassFilePaths;
@@ -300,6 +300,11 @@ public class ZipLibrary implements Library {
       throw new IncompatibleLibraryVersionException(
           ZipLibraries.versionNumber, zipLibraryReader.readVersionNumber());
     }
+  }
+
+  @Override
+  public void close() {
+    zipLibraryReader.close();
   }
 
   @Override
@@ -419,29 +424,20 @@ public class ZipLibrary implements Library {
   }
 
   @Override
-  public Multimap<String, String> getNewBindingPropertyValuesByName() {
-    if (newBindingPropertyValuesByName == null) {
-      newBindingPropertyValuesByName =
-          Multimaps.unmodifiableMultimap(zipLibraryReader.readNewBindingPropertyValuesByName());
-    }
-    return newBindingPropertyValuesByName;
-  }
-
-  @Override
-  public Multimap<String, String> getNewConfigurationPropertyValuesByName() {
-    if (newConfigurationPropertyValuesByName == null) {
-      newConfigurationPropertyValuesByName = Multimaps.unmodifiableMultimap(
-          zipLibraryReader.readNewConfigurationPropertyValuesByName());
-    }
-    return newConfigurationPropertyValuesByName;
-  }
-
-  @Override
   public ZipEntryBackedObject<PermutationResult> getPermutationResultHandle() {
     if (permutationResultHandle == null) {
       permutationResultHandle = zipLibraryReader.getPermutationResultHandle();
     }
     return permutationResultHandle;
+  }
+
+  @Override
+  public Multimap<String, String> getProcessedReboundTypeSourceNamesByGenerator() {
+    if (processedReboundTypeSourceNamesByGenerator == null) {
+      processedReboundTypeSourceNamesByGenerator = Multimaps.unmodifiableMultimap(
+          zipLibraryReader.readProcessedReboundTypeSourceNamesByGenerator());
+    }
+    return processedReboundTypeSourceNamesByGenerator;
   }
 
   @Override
@@ -458,14 +454,6 @@ public class ZipLibrary implements Library {
       publicResourcePaths = Collections.unmodifiableSet(zipLibraryReader.readPublicResourcePaths());
     }
     return publicResourcePaths;
-  }
-
-  @Override
-  public Set<String> getRanGeneratorNames() {
-    if (ranGeneratorNames == null) {
-      ranGeneratorNames = Collections.unmodifiableSet(zipLibraryReader.readRanGeneratorNames());
-    }
-    return ranGeneratorNames;
   }
 
   @Override

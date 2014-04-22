@@ -41,6 +41,7 @@ import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.EntryMethodHolderGenerator;
+import com.google.gwt.dev.cfg.LibraryGroup.CollidingCompilationUnitException;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
@@ -130,6 +131,7 @@ import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
+import com.google.gwt.dev.util.TinyCompileSummary;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -137,6 +139,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
@@ -232,7 +235,7 @@ public abstract class JavaToJavaScriptCompiler {
             new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
-        if (logger.isLoggable(TreeLogger.INFO)) {
+        if (compilerContext.shouldCompileMonolithic() && logger.isLoggable(TreeLogger.INFO)) {
           logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
         }
         printPermutationTrace(permutation);
@@ -904,6 +907,12 @@ public abstract class JavaToJavaScriptCompiler {
      */
     private String buildEntryMethodHolder(StandardGeneratorContext context,
         Set<String> allRootTypes) throws UnableToCompleteException {
+      // If there are no entry points.
+      if (entryPointTypeNames.length == 0) {
+        // Then there's no need to generate an EntryMethodHolder class to launch them.
+        return null;
+      }
+
       EntryMethodHolderGenerator entryMethodHolderGenerator = new EntryMethodHolderGenerator();
       String entryMethodHolderTypeName =
           entryMethodHolderGenerator.generate(logger, context, module.getCanonicalName());
@@ -929,6 +938,19 @@ public abstract class JavaToJavaScriptCompiler {
       if (options.isSoycEnabled() || options.isJsonSoycEnabled()) {
         SourceInfoCorrelator.exec(jprogram);
       }
+
+      // Gathers simple metrics that can highlight overly-large modules in an incremental compile.
+      TinyCompileSummary tinyCompileSummary = compilerContext.getTinyCompileSummary();
+      tinyCompileSummary.setTypesForGeneratorsCount(
+          rpo.getGeneratorContext().getTypeOracle().getTypes().length);
+      tinyCompileSummary.setTypesForAstCount(jprogram.getDeclaredTypes().size());
+      tinyCompileSummary.setStaticSourceFilesCount(compilationState.getStaticSourceCount());
+      tinyCompileSummary.setGeneratedSourceFilesCount(compilationState.getGeneratedSourceCount());
+      tinyCompileSummary.setCachedStaticSourceFilesCount(
+          compilationState.getCachedStaticSourceCount());
+      tinyCompileSummary.setCachedGeneratedSourceFilesCount(
+          compilationState.getCachedGeneratedSourceCount());
+
       // Free up memory.
       rpo.clear();
       jprogram.typeOracle.computeBeforeAST();
@@ -1101,16 +1123,30 @@ public abstract class JavaToJavaScriptCompiler {
 
     private void unifyJavaAst(Set<String> allRootTypes, String entryMethodHolderTypeName)
         throws UnableToCompleteException {
-      UnifyAst unifyAst = new UnifyAst(logger, compilerContext, jprogram, jsProgram, rpo);
+      UnifyAst unifyAst;
+      try {
+        unifyAst = new UnifyAst(logger, compilerContext, jprogram, jsProgram, rpo);
+      } catch (CollidingCompilationUnitException e) {
+        logger.log(TreeLogger.ERROR, e.getMessage());
+        throw new UnableToCompleteException();
+      }
       // Makes JProgram aware of these types so they can be accessed via index.
       unifyAst.addRootTypes(allRootTypes);
       // Must synthesize entryPoint.onModuleLoad() calls because some EntryPoint classes are
       // private.
-      synthesizeEntryMethodHolderInit(unifyAst, entryMethodHolderTypeName);
+      if (entryMethodHolderTypeName != null) {
+        // Only synthesize the init method in the EntryMethodHolder class, if there is an
+        // EntryMethodHolder class.
+        synthesizeEntryMethodHolderInit(unifyAst, entryMethodHolderTypeName);
+      }
       // Ensures that unification traversal starts from these methods.
       jprogram.addEntryMethod(jprogram.getIndexedMethod("Impl.registerEntry"));
-      jprogram.addEntryMethod(jprogram.getIndexedMethod(
-          SourceName.getShortClassName(entryMethodHolderTypeName) + ".init"));
+      if (entryMethodHolderTypeName != null) {
+        // Only register the init method in the EntryMethodHolder class as an entry method, if there
+        // is an EntryMethodHolder class.
+        jprogram.addEntryMethod(jprogram.getIndexedMethod(
+            SourceName.getShortClassName(entryMethodHolderTypeName) + ".init"));
+      }
       unifyAst.exec();
     }
   }
@@ -1213,7 +1249,7 @@ public abstract class JavaToJavaScriptCompiler {
 
   protected final PrecompileTaskOptions options;
 
-  // VisibleForTesting
+  @VisibleForTesting
   JProgram jprogram;
 
   public JavaToJavaScriptCompiler(TreeLogger logger, CompilerContext compilerContext) {

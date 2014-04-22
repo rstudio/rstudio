@@ -25,10 +25,11 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
-import com.google.gwt.thirdparty.guava.common.collect.Multimaps;
+import com.google.gwt.thirdparty.guava.common.collect.SetMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.io.ByteStreams;
 
@@ -73,6 +74,11 @@ public class ZipLibraryWriter implements LibraryWriter {
       zipFile = new File(zipFileName);
     }
 
+    public void writeProcessedReboundTypeSourceNamesForGenerators() {
+      writeStringMultimap(Libraries.PROCESSED_REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME,
+          processedReboundTypeSourceNamesByGenerator);
+    }
+
     private void createFileIfMissing() {
       if (!zipFile.exists()) {
         try {
@@ -95,6 +101,18 @@ public class ZipLibraryWriter implements LibraryWriter {
       } catch (Exception e) {
         throw new CompilerIoException("Failed to create zip entry " + entryName + ".", e);
       }
+    }
+
+    private String encode(String string) {
+      string = encodeCharacter(string, Libraries.ENCODE_PREFIX);
+      string = encodeCharacter(string, Libraries.KEY_VALUE_SEPARATOR);
+      string = encodeCharacter(string, Libraries.LINE_SEPARATOR);
+      string = encodeCharacter(string, Libraries.VALUE_SEPARATOR);
+      return string;
+    }
+
+    private String encodeCharacter(String string, char character) {
+      return string.replace(character + "", Libraries.ENCODE_PREFIX + Integer.toString(character));
     }
 
     private synchronized void ensureFileReady() {
@@ -157,10 +175,8 @@ public class ZipLibraryWriter implements LibraryWriter {
         writePublicResourcePaths();
 
         // Generator related
-        writeNewBindingPropertyValuesByName();
-        writeNewConfigurationPropertyValuesByName();
         writeReboundTypeSourceNames();
-        writeRanGeneratorNames();
+        writeProcessedReboundTypeSourceNamesForGenerators();
         writeGeneratedArtifactPaths();
         writeGeneratedArtifacts();
       } finally {
@@ -254,26 +270,12 @@ public class ZipLibraryWriter implements LibraryWriter {
           nestedBinaryNamesByCompilationUnitName);
     }
 
-    private void writeNewBindingPropertyValuesByName() {
-      writeStringMultimap(
-          Libraries.NEW_BINDING_PROPERTY_VALUES_BY_NAME_ENTRY_NAME, newBindingPropertyValuesByName);
-    }
-
-    private void writeNewConfigurationPropertyValuesByName() {
-      writeStringMultimap(Libraries.NEW_CONFIGURATION_PROPERTY_VALUES_BY_NAME_ENTRY_NAME,
-          newConfigurationPropertyValuesByName);
-    }
-
     private void writePublicResourcePaths() {
       writeStringSet(Libraries.PUBLIC_RESOURCE_PATHS_ENTRY_NAME, publicResourcesByPath.keySet());
     }
 
     private void writePublicResources() {
       writeResources("public", Libraries.DIRECTORY_PUBLIC_RESOURCES, publicResourcesByPath);
-    }
-
-    private void writeRanGeneratorNames() {
-      writeStringSet(Libraries.RAN_GENERATOR_NAMES_ENTRY_NAME, ranGeneratorNames);
     }
 
     private void writeReboundTypeSourceNames() {
@@ -337,18 +339,6 @@ public class ZipLibraryWriter implements LibraryWriter {
       }
     }
 
-    private String encode(String string) {
-      string = encodeCharacter(string, Libraries.ENCODE_PREFIX);
-      string = encodeCharacter(string, Libraries.KEY_VALUE_SEPARATOR);
-      string = encodeCharacter(string, Libraries.LINE_SEPARATOR);
-      string = encodeCharacter(string, Libraries.VALUE_SEPARATOR);
-      return string;
-    }
-
-    private String encodeCharacter(String string, char character) {
-      return string.replace(character + "", Libraries.ENCODE_PREFIX + Integer.toString(character));
-    }
-
     private void writeStringSet(String entryName, Set<String> stringSet) {
       createZipEntry(entryName);
       Set<String> encodedStringSet = Sets.newHashSet();
@@ -378,15 +368,13 @@ public class ZipLibraryWriter implements LibraryWriter {
       LinkedHashMultimap.create();
   private Multimap<String, String> nestedSourceNamesByCompilationUnitName =
       LinkedHashMultimap.create();
-  private Multimap<String, String> newBindingPropertyValuesByName = LinkedHashMultimap.create();
-  private Multimap<String, String> newConfigurationPropertyValuesByName =
-      LinkedHashMultimap.create();
   private ZipEntryBackedObject<PermutationResult> permutationResultHandle;
+  private SetMultimap<String, String> processedReboundTypeSourceNamesByGenerator =
+      HashMultimap.create();
   private Map<String, Resource> publicResourcesByPath = Maps.newHashMap();
-  private Set<String> ranGeneratorNames = Sets.newHashSet();
-  private Set<String> reboundTypeSourceNames = Sets.newHashSet();
   private Set<String> regularClassFilePaths = Sets.newHashSet();
   private Set<String> regularCompilationUnitTypeSourceNames = Sets.newLinkedHashSet();
+  private Set<String> reboundTypeSourceNames = Sets.newHashSet();
   private Set<String> superSourceClassFilePaths = Sets.newHashSet();
   private Set<String> superSourceCompilationUnitTypeSourceNames = Sets.newLinkedHashSet();
   private ZipWriter zipWriter;
@@ -454,35 +442,8 @@ public class ZipLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public void addNewBindingPropertyValuesByName(
-      String propertyName, Iterable<String> propertyValues) {
-    newBindingPropertyValuesByName.putAll(propertyName, propertyValues);
-  }
-
-  @Override
-  public void addNewConfigurationPropertyValuesByName(
-      String propertyName, Iterable<String> propertyValues) {
-    newConfigurationPropertyValuesByName.putAll(propertyName, propertyValues);
-  }
-
-  @Override
   public void addPublicResource(Resource publicResource) {
     publicResourcesByPath.put(publicResource.getPath(), publicResource);
-  }
-
-  @Override
-  public void addRanGeneratorName(String generatorName) {
-    ranGeneratorNames.add(generatorName);
-  }
-
-  @Override
-  public Multimap<String, String> getNewBindingPropertyValuesByName() {
-    return Multimaps.unmodifiableMultimap(newBindingPropertyValuesByName);
-  }
-
-  @Override
-  public Multimap<String, String> getNewConfigurationPropertyValuesByName() {
-    return Multimaps.unmodifiableMultimap(newConfigurationPropertyValuesByName);
   }
 
   @Override
@@ -494,18 +455,29 @@ public class ZipLibraryWriter implements LibraryWriter {
   }
 
   @Override
+  public Set<String> getProcessedReboundTypeSourceNames(String generatorName) {
+    return processedReboundTypeSourceNamesByGenerator.get(generatorName);
+  }
+
+  @Override
   public Set<String> getReboundTypeSourceNames() {
     return Collections.unmodifiableSet(reboundTypeSourceNames);
   }
 
   @Override
-  public void setLibraryName(String libraryName) {
-    this.libraryName = libraryName;
+  public void markReboundTypesProcessed(Set<String> reboundTypeSourceNames) {
+    this.reboundTypeSourceNames = reboundTypeSourceNames;
   }
 
   @Override
-  public void setReboundTypeSourceNames(Set<String> reboundTypeSourceNames) {
-    this.reboundTypeSourceNames = reboundTypeSourceNames;
+  public void markReboundTypeProcessed(String processedReboundTypeSourceName,
+      String generatorName) {
+    processedReboundTypeSourceNamesByGenerator.put(generatorName, processedReboundTypeSourceName);
+  }
+
+  @Override
+  public void setLibraryName(String libraryName) {
+    this.libraryName = libraryName;
   }
 
   @Override

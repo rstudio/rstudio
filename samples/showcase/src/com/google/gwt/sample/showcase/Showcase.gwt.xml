@@ -1,6 +1,6 @@
 <module rename-to="showcase">
   <!-- Inherit the core Web Toolkit stuff. -->
-  <inherits name="com.google.gwt.core.Core"/>
+  <inherits name='com.google.gwt.core.Core'/>
   <inherits name='com.google.gwt.user.User'/>
   <inherits name="com.google.gwt.i18n.I18N"/>
   <inherits name="com.google.gwt.i18n.CldrLocales"/>
@@ -28,4 +28,6 @@
   <set-property-fallback name="locale" value="en"/>
   <set-configuration-property name="locale.cookie" value="SHOWCASE_LOCALE"/>
   <set-configuration-property name="locale.useragent" value="Y"/>
+
+  <source path="client" />
 </module>

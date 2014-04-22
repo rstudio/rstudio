@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
+ * Copyright 2014 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,20 +17,18 @@
 package com.google.gwt.dev.util.arg;
 
 /**
- * Whether to be strict about resource loading and in particular whether to implicitly add "client"
- * and "public" resource dependencies when none are mentioned.
+ * Whether to be strict about source resource loading by implicitly adding "client" as a source
+ * folder for every module.
  */
-public interface OptionStrictResources {
+public interface OptionStrictSourceResources {
 
   /**
-   * Returns true if the compiler should not implicitly add "client" and "public" resource
-   * dependencies when none are mentioned.
+   * Returns true if the compiler should not implicitly add a "client" dependency.
    */
-  boolean enforceStrictResources();
+  boolean enforceStrictSourceResources();
 
   /**
-   * Sets whether the compiler should not implicitly add "client" and "public" resource dependencies
-   * when none are mentioned.
+   * Sets whether the compiler should not implicitly add a "client" dependency.
    */
-  void setEnforceStrictResources(boolean strictResources);
+  void setEnforceStrictSourceResources(boolean strictSourceResources);
 }

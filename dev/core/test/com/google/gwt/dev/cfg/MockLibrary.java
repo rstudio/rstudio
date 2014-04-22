@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
-import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -68,10 +67,8 @@ public class MockLibrary implements Library {
   private String libraryName;
   private Multimap<String, String> nestedBinaryNamesByCompilationUnitName = HashMultimap.create();
   private Multimap<String, String> nestedSourceNamesByCompilationUnitName = HashMultimap.create();
-  private Multimap<String, String> newBindingPropertyValuesByName = ArrayListMultimap.create();
-  private Multimap<String, String> newConfigurationPropertyValuesByName =
-      ArrayListMultimap.create();
-  private Set<String> ranGeneratorNames = Sets.newHashSet();
+  private Multimap<String, String> processedReboundTypeSourceNamesByGenerator =
+      HashMultimap.create();
   private Set<String> reboundTypeNames = Sets.newHashSet();
   private Set<String> superSourceCompilationUnitTypeNames = Sets.newHashSet();
 
@@ -114,6 +111,10 @@ public class MockLibrary implements Library {
       compilationUnitNamesByNestedBinaryName.put(binaryName,
           superSourceCompilationUnitTypeSourceName);
     }
+  }
+
+  @Override
+  public void close() {
   }
 
   @Override
@@ -172,18 +173,13 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Multimap<String, String> getNewBindingPropertyValuesByName() {
-    return newBindingPropertyValuesByName;
-  }
-
-  @Override
-  public Multimap<String, String> getNewConfigurationPropertyValuesByName() {
-    return newConfigurationPropertyValuesByName;
-  }
-
-  @Override
   public ZipEntryBackedObject<PermutationResult> getPermutationResultHandle() {
     return null;
+  }
+
+  @Override
+  public Multimap<String, String> getProcessedReboundTypeSourceNamesByGenerator() {
+    return processedReboundTypeSourceNamesByGenerator;
   }
 
   @Override
@@ -197,16 +193,6 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Set<String> getRanGeneratorNames() {
-    return ranGeneratorNames;
-  }
-
-  @Override
-  public Set<String> getReboundTypeSourceNames() {
-    return reboundTypeNames;
-  }
-
-  @Override
   public Set<String> getRegularClassFilePaths() {
     return null;
   }
@@ -214,6 +200,11 @@ public class MockLibrary implements Library {
   @Override
   public Set<String> getRegularCompilationUnitTypeSourceNames() {
     return compilationUnitTypeNames;
+  }
+
+  @Override
+  public Set<String> getReboundTypeSourceNames() {
+    return reboundTypeNames;
   }
 
   @Override

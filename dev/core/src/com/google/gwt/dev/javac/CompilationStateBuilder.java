@@ -238,10 +238,12 @@ public class CompilationStateBuilder {
      * UnableToCompleteException.
      */
     public Collection<CompilationUnit> addGeneratedTypes(TreeLogger logger,
-        Collection<GeneratedUnit> generatedUnits) throws UnableToCompleteException {
+        Collection<GeneratedUnit> generatedUnits, CompilationState compilationState)
+        throws UnableToCompleteException {
       Event event = SpeedTracerLogger.start(DevModeEventType.CSB_ADD_GENERATED_TYPES);
       try {
-        return doBuildGeneratedTypes(logger, compilerContext, generatedUnits, this);
+        return doBuildGeneratedTypes(logger, compilerContext, generatedUnits, compilationState,
+            this);
       } finally {
         event.end();
       }
@@ -556,9 +558,11 @@ public class CompilationStateBuilder {
       }
       builders.add(builder);
     }
+    int cachedSourceCount = cachedUnits.size();
+    int sourceCount = resources.size();
     if (logger.isLoggable(TreeLogger.TRACE)) {
-      logger.log(TreeLogger.TRACE, "Found " + cachedUnits.size() + " cached/archived units.  Used "
-          + cachedUnits.size() + " / " + resources.size() + " units from cache.");
+      logger.log(TreeLogger.TRACE, "Found " + cachedSourceCount + " cached/archived units.  Used "
+          + cachedSourceCount + " / " + sourceCount + " units from cache.");
     }
 
     Collection<CompilationUnit> resultUnits = compileMoreLater.compile(
@@ -576,8 +580,11 @@ public class CompilationStateBuilder {
       typeOracleUpdater = ((LibraryTypeOracle) typeOracle).getTypeOracleUpdater();
     }
 
-    return new CompilationState(logger, compilerContext, typeOracle, typeOracleUpdater,
-        resultUnits, compileMoreLater);
+    CompilationState compilationState = new CompilationState(logger, compilerContext, typeOracle,
+        typeOracleUpdater, resultUnits, compileMoreLater);
+    compilationState.incrementStaticSourceCount(sourceCount);
+    compilationState.incrementCachedStaticSourceCount(cachedSourceCount);
+    return compilationState;
   }
 
   public CompilationState doBuildFrom(
@@ -593,7 +600,8 @@ public class CompilationStateBuilder {
    */
   synchronized Collection<CompilationUnit> doBuildGeneratedTypes(TreeLogger logger,
       CompilerContext compilerContext, Collection<GeneratedUnit> generatedUnits,
-      CompileMoreLater compileMoreLater) throws UnableToCompleteException {
+      CompilationState compilationState, CompileMoreLater compileMoreLater)
+      throws UnableToCompleteException {
     UnitCache unitCache = compilerContext.getUnitCache();
 
     // Units we definitely want to build.
@@ -619,6 +627,8 @@ public class CompilationStateBuilder {
       }
       builders.add(builder);
     }
+    compilationState.incrementGeneratedSourceCount(builders.size() + cachedUnits.size());
+    compilationState.incrementCachedGeneratedSourceCount(cachedUnits.size());
     return compileMoreLater.compile(logger, compilerContext, builders,
         cachedUnits, CompilerEventType.JDT_COMPILER_CSB_GENERATED);
   }

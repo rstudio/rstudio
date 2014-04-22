@@ -17,6 +17,7 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -30,12 +31,21 @@ import java.util.Set;
  */
 public abstract class CompoundCondition extends Condition {
 
-  private final Conditions conditions = new Conditions();
+  protected final Conditions conditions = new Conditions();
 
   public CompoundCondition(Condition... conditions) {
     for (Condition condition : conditions) {
       this.conditions.add(condition);
     }
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof CompoundCondition) {
+      CompoundCondition that = (CompoundCondition) object;
+      return Objects.equal(this.conditions, that.conditions);
+    }
+    return false;
   }
 
   public Conditions getConditions() {
@@ -49,6 +59,11 @@ public abstract class CompoundCondition extends Condition {
       toReturn = Sets.addAll(toReturn, it.next().getRequiredProperties());
     }
     return toReturn;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(conditions);
   }
 
   @Override

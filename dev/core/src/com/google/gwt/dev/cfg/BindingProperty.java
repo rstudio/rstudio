@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 
 import java.util.ArrayList;
@@ -117,6 +118,24 @@ public class BindingProperty extends Property {
       fallbackValues.put(fallbackValue, values);
     }
     values.addFirst(value);
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof BindingProperty) {
+      BindingProperty that = (BindingProperty) object;
+      return Objects.equal(this.name, that.name)
+          && Objects.equal(this.collapsedValues, that.collapsedValues)
+          && Objects.equal(this.conditionalValues, that.conditionalValues)
+          && Objects.equal(this.definedValues, that.definedValues)
+          && Objects.equal(this.fallback, that.fallback)
+          && Objects.equal(this.getFallbackValuesMap(), that.getFallbackValuesMap())
+          && Objects.equal(this.fallbackValues, that.fallbackValues)
+          && Objects.equal(this.provider, that.provider)
+          && Objects.equal(this.providerGenerator, that.providerGenerator)
+          && Objects.equal(this.rootCondition, that.rootCondition);
+    }
+    return false;
   }
 
   /**
@@ -243,6 +262,12 @@ public class BindingProperty extends Property {
 
   public ConditionAll getRootCondition() {
     return rootCondition;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(name, collapsedValues, conditionalValues, definedValues, fallback,
+        getFallbackValuesMap(), fallbackValues, provider, providerGenerator, rootCondition);
   }
 
   public boolean hasTargetLibraryDefinedValues() {

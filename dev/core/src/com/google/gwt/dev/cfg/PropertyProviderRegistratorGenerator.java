@@ -97,6 +97,11 @@ public class PropertyProviderRegistratorGenerator extends Generator {
       out.println("public class " + typeName + " {");
 
       for (BindingProperty bindingProperty : newBindingProperties) {
+        // If nothing about the binding property was set or created in the current module.
+        if (bindingProperty.getTargetLibraryDefinedValues().isEmpty()) {
+          // Then its previously created property provider is still valid.
+          continue;
+        }
         createPropertyProviderClass(logger, out, bindingProperty);
       }
       // TODO(stalcup): create configuration property providers.

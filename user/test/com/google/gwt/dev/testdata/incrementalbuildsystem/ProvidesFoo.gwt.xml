@@ -1,0 +1,6 @@
+<module>
+  <source path="" includes="Foo.java" />
+  <generate-with class="com.google.gwt.dev.FooBarGenerator">
+    <when-type-is class="com.google.gwt.dev.testdata.incrementalbuildsystem.Foo"/>
+  </generate-with>
+</module>

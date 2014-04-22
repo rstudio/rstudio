@@ -13,6 +13,8 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
 import com.google.gwt.dev.javac.CompilationUnit;
@@ -20,20 +22,20 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.PersistenceBackedObject;
-import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.SetMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,6 +87,21 @@ public class LibraryGroup {
     }
   }
 
+  private static final Comparator<Library> LIBRARY_NAME_COMPARATOR = new Comparator<Library>() {
+    @Override
+    public int compare(Library thisLibrary, Library thatLibrary) {
+      return thisLibrary.getLibraryName().compareTo(thatLibrary.getLibraryName());
+    }
+  };
+
+  @VisibleForTesting
+  public static String formatDuplicateCompilationUnitMessage(String compilationUnitTypeSourceName,
+      String oldLibraryName, String newLibraryName) {
+    return String.format("Compilation units must be unique but '%s' is being "
+        + "provided by both the '%s' and '%s' library.", compilationUnitTypeSourceName,
+        oldLibraryName, newLibraryName);
+  }
+
   /**
    * Factory function that constructs and returns a library group from a list of libraries.
    */
@@ -97,7 +114,6 @@ public class LibraryGroup {
     libraryGroup.buildLibraryIndexes(verifyLibraryReferences);
     return libraryGroup;
   }
-
   /**
    * Factory function that constructs and returns a library group from a list of zip library paths.
    */
@@ -120,13 +136,23 @@ public class LibraryGroup {
   private Map<String, Library> librariesByName;
   private Map<String, Library> librariesByPublicResourcePath;
   private List<PersistenceBackedObject<PermutationResult>> permutationResultHandles;
+  private SetMultimap<String, String> processedReboundTypeSourceNamesByGenerator =
+      HashMultimap.create();
   private Set<String> reboundTypeSourceNames;
   private List<Library> rootLibraries;
-
   private Set<String> superSourceCompilationUnitTypeSourceNames;
 
   protected LibraryGroup() {
     // Private to force class construction via one of the public factory functions.
+  }
+
+  /**
+   * Closes all read streams.
+   */
+  public void close() {
+    for (Library library : libraries) {
+      library.close();
+    }
   }
 
   /**
@@ -143,61 +169,6 @@ public class LibraryGroup {
    */
   public LibraryGroup createSubgroup(List<String> libraryNames) {
     return fromLibraries(getLibraries(libraryNames), false);
-  }
-
-  /**
-   * Walks the parts of the library dependency graph that have not run the given generator
-   * referenced by name and accumulates and returns a map from binding property name to newly legal
-   * values that were declared in those libraries.
-   */
-  public Multimap<String, String> gatherNewBindingPropertyValuesForGenerator(String generatorName) {
-    Multimap<String, String> newBindingPropertyValuesByName = LinkedHashMultimap.create();
-    for (Library libraryPendingGeneratorRun : gatherLibrariesForGenerator(generatorName, false)) {
-      newBindingPropertyValuesByName.putAll(
-          libraryPendingGeneratorRun.getNewBindingPropertyValuesByName());
-    }
-    return newBindingPropertyValuesByName;
-  }
-
-  /**
-   * Walks the parts of the library dependency graph that have not run the given generator
-   * referenced by name and accumulates and returns a map from configuration property name to newly
-   * set values that were declared in those libraries.
-   */
-  public Multimap<String, String> gatherNewConfigurationPropertyValuesForGenerator(
-      String generatorName) {
-    Multimap<String, String> newConfigurationPropertyValuesByName = LinkedHashMultimap.create();
-    for (Library libraryPendingGeneratorRun : gatherLibrariesForGenerator(generatorName, false)) {
-      newConfigurationPropertyValuesByName.putAll(
-          libraryPendingGeneratorRun.getNewConfigurationPropertyValuesByName());
-    }
-    return newConfigurationPropertyValuesByName;
-  }
-
-  /**
-   * Walks the parts of the library dependency graph that have not run the given generator
-   * referenced by name and accumulates and returns a set of newly rebound type names.
-   */
-  public Set<String> gatherNewReboundTypeSourceNamesForGenerator(String generatorName) {
-    Set<String> newReboundTypeSourceNames = Sets.newHashSet();
-    List<Library> unprocessedLibraries = gatherLibrariesForGenerator(generatorName, false);
-    for (Library unprocessedLibrary : unprocessedLibraries) {
-      newReboundTypeSourceNames.addAll(unprocessedLibrary.getReboundTypeSourceNames());
-    }
-    return newReboundTypeSourceNames;
-  }
-
-  /**
-   * Walks the parts of the library dependency graph that have already run the given generator
-   * referenced by name and accumulates and returns the set of old rebound type names.
-   */
-  public Set<String> gatherOldReboundTypeSourceNamesForGenerator(String generatorName) {
-    Set<String> oldReboundTypeSourceNames = Sets.newHashSet();
-    List<Library> processedLibraries = gatherLibrariesForGenerator(generatorName, true);
-    for (Library processedLibrary : processedLibraries) {
-      oldReboundTypeSourceNames.addAll(processedLibrary.getReboundTypeSourceNames());
-    }
-    return oldReboundTypeSourceNames;
   }
 
   /**
@@ -295,7 +266,23 @@ public class LibraryGroup {
   }
 
   /**
-   * Returns the resource referenced by name if present or null;
+   * Returns a list of source names of types which have already been rebound by the given generator.
+   */
+  public Set<String> getProcessedReboundTypeSourceNames(String generatorName) {
+    if (!processedReboundTypeSourceNamesByGenerator.containsKey(generatorName)) {
+      Set<String> processedReboundTypeSourceNames = Sets.newHashSet();
+      for (Library library : libraries) {
+        processedReboundTypeSourceNames.addAll(
+            library.getProcessedReboundTypeSourceNamesByGenerator().get(generatorName));
+      }
+      processedReboundTypeSourceNamesByGenerator.putAll(generatorName,
+          Collections.unmodifiableSet(processedReboundTypeSourceNames));
+    }
+    return processedReboundTypeSourceNamesByGenerator.get(generatorName);
+  }
+
+  /**
+   * Returns the resource referenced by name if present or null.
    */
   public Resource getPublicResourceByPath(String path) {
     if (!getLibrariesByPublicResourcePath().containsKey(path)) {
@@ -322,7 +309,8 @@ public class LibraryGroup {
       for (Library library : libraries) {
         reboundTypeSourceNames.addAll(library.getReboundTypeSourceNames());
       }
-      reboundTypeSourceNames = Collections.unmodifiableSet(reboundTypeSourceNames);
+      reboundTypeSourceNames =
+          Collections.unmodifiableSet(reboundTypeSourceNames);
     }
     return reboundTypeSourceNames;
   }
@@ -344,27 +332,33 @@ public class LibraryGroup {
     return superSourceCompilationUnitTypeSourceNames;
   }
 
-  // VisibleForTesting
+  public void verify(TreeLogger logger) throws UnableToCompleteException {
+    try {
+      // Forces the building of the mapping from source names of compilation unit types to the
+      // library that provides them, so that there is an opportunity to notice and reject duplicate
+      // providing libraries.
+      getLibrariesByCompilationUnitTypeSourceName();
+    } catch (CollidingCompilationUnitException e) {
+      logger.log(TreeLogger.ERROR, e.getMessage());
+      throw new UnableToCompleteException();
+    }
+  }
+
+  @VisibleForTesting
   List<Library> getLibraries() {
     return libraries;
   }
 
-  // VisibleForTesting
+  @VisibleForTesting
   List<Library> getLibraries(Collection<String> libraryNames) {
     return Lists.newArrayList(
         Maps.filterKeys(librariesByName, Predicates.in(libraryNames)).values());
   }
 
-  private Iterable<Library> asLibraries(Set<String> libraryNames) {
-    return Iterables.transform(libraryNames, new Function<String, Library>() {
-        @Override
-      public Library apply(String libraryName) {
-        return librariesByName.get(libraryName);
-      }
-    });
-  }
-
   private void buildLibraryIndexes(boolean verifyLibraryReferences) {
+    // Start processing with a consistent library order to ensure consistently ordered output.
+    Collections.sort(libraries, LIBRARY_NAME_COMPARATOR);
+
     librariesByName = Maps.newLinkedHashMap();
     for (Library library : libraries) {
       if (librariesByName.containsKey(library.getLibraryName())) {
@@ -375,8 +369,8 @@ public class LibraryGroup {
       librariesByName.put(library.getLibraryName(), library);
     }
 
-    Multimap<Library, Library> parentLibrariesByChildLibrary = HashMultimap.create();
-    Multimap<Library, Library> childLibrariesByParentLibrary = HashMultimap.create();
+    Multimap<Library, Library> parentLibrariesByChildLibrary = LinkedHashMultimap.create();
+    Multimap<Library, Library> childLibrariesByParentLibrary = LinkedHashMultimap.create();
     for (Library parentLibrary : libraries) {
       for (String childLibraryName : parentLibrary.getDependencyLibraryNames()) {
         Library childLibrary = librariesByName.get(childLibraryName);
@@ -424,38 +418,16 @@ public class LibraryGroup {
   }
 
   /**
-   * Walks the library dependency graph and collects a list of libraries that either have or have
-   * not run the given generator depending on the given gatherNotProcessed boolean.
+   * Throws an exception if the referenced compilation unit (which is being provided by the
+   * referenced new library) is already being provided by some older library.
    */
-  private List<Library> gatherLibrariesForGenerator(
-      String generatorName, boolean gatherLibrariesThatHaveAlreadyRunThisGenerator) {
-    Set<Library> exploredLibraries = Sets.newHashSet();
-    LinkedList<Library> unexploredLibraries = Lists.newLinkedList();
-    List<Library> librariesForGenerator = Lists.newArrayList();
-
-    unexploredLibraries.addAll(rootLibraries);
-    while (!unexploredLibraries.isEmpty()) {
-      Library library = unexploredLibraries.removeFirst();
-      exploredLibraries.add(library);
-
-      boolean libraryHasAlreadyRunThisGenerator =
-          library.getRanGeneratorNames().contains(generatorName);
-      if (!gatherLibrariesThatHaveAlreadyRunThisGenerator && libraryHasAlreadyRunThisGenerator) {
-        // don't gather this one
-        continue;
-      }
-
-      // gather this library
-      librariesForGenerator.add(library);
-      for (Library dependencyLibrary : asLibraries(library.getDependencyLibraryNames())) {
-        if (exploredLibraries.contains(dependencyLibrary)) {
-          continue;
-        }
-        unexploredLibraries.add(dependencyLibrary);
-      }
+  private void assertUniquelyProvided(Library newLibrary, String compilationUnitTypeSourceName) {
+    if (librariesByCompilationUnitTypeSourceName.containsKey(compilationUnitTypeSourceName)) {
+      Library oldLibrary =
+          librariesByCompilationUnitTypeSourceName.get(compilationUnitTypeSourceName);
+      throw new CollidingCompilationUnitException(formatDuplicateCompilationUnitMessage(
+          compilationUnitTypeSourceName, oldLibrary.getLibraryName(), newLibrary.getLibraryName()));
     }
-
-    return librariesForGenerator;
   }
 
   private Map<String, Library> getLibrariesByBuildResourcePath() {
@@ -536,7 +508,6 @@ public class LibraryGroup {
     return Collections.unmodifiableMap(librariesByCompilationUnitTypeBinaryName);
   }
 
-  // TODO(stalcup): throw an error if more than one version of a type is provided.
   private Map<String, Library> getLibrariesByCompilationUnitTypeSourceName() {
     if (librariesByCompilationUnitTypeSourceName == null) {
       librariesByCompilationUnitTypeSourceName = Maps.newLinkedHashMap();
@@ -545,7 +516,7 @@ public class LibraryGroup {
       for (Library library : libraries) {
         for (String compilationUnitTypeSourceName :
             library.getRegularCompilationUnitTypeSourceNames()) {
-          checkCompilationUnitUnique(library, compilationUnitTypeSourceName);
+          assertUniquelyProvided(library, compilationUnitTypeSourceName);
           librariesByCompilationUnitTypeSourceName.put(compilationUnitTypeSourceName, library);
 
           Collection<String> nestedTypeSourceNames = library
@@ -560,7 +531,7 @@ public class LibraryGroup {
       for (Library library : libraries) {
         for (String superSourceCompilationUnitTypeSourceName :
             library.getSuperSourceCompilationUnitTypeSourceNames()) {
-          checkCompilationUnitUnique(library, superSourceCompilationUnitTypeSourceName);
+          assertUniquelyProvided(library, superSourceCompilationUnitTypeSourceName);
           librariesByCompilationUnitTypeSourceName.put(superSourceCompilationUnitTypeSourceName,
               library);
 
@@ -574,18 +545,6 @@ public class LibraryGroup {
       }
     }
     return Collections.unmodifiableMap(librariesByCompilationUnitTypeSourceName);
-  }
-
-  private void checkCompilationUnitUnique(Library newLibrary,
-      String compilationUnitTypeSourceName) {
-    if (librariesByCompilationUnitTypeSourceName.containsKey(compilationUnitTypeSourceName)) {
-      Library oldLibrary =
-          librariesByCompilationUnitTypeSourceName.get(compilationUnitTypeSourceName);
-      throw new CollidingCompilationUnitException(String.format(
-          "Compilation units must be unique but '%s' is being "
-          + "provided by both the '%s' and '%s' library.", compilationUnitTypeSourceName,
-          oldLibrary.getLibraryName(), newLibrary.getLibraryName()));
-    }
   }
 
   private Map<String, Library> getLibrariesByPublicResourcePath() {

@@ -105,14 +105,6 @@ public class ConditionTest extends TestCase {
   }
 
   public void testToSource() {
-    // Linker assertions are not supported.
-    try {
-      new ConditionWhenLinkerAdded("com.some.Linker").toSource();
-      fail("expected linker condition source conversion to fail.");
-    } catch (UnsupportedOperationException e) {
-      // Expected behavior.
-    }
-
     // Compound conditions collapse effectively empty slots.
     assertEquals("((requestTypeClass == @com.google.gwt.Foo::class))", new ConditionAll(
         new ConditionAny(), new ConditionWhenTypeIs("com.google.gwt.Foo")).toSource());

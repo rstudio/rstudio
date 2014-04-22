@@ -51,7 +51,8 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycExtra = false;
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
-  private boolean strictResources = false;
+  private boolean strictSourceResources = false;
+  private boolean strictPublicResources = false;
 
   public JJSOptionsImpl() {
   }
@@ -83,14 +84,20 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setJsonSoycEnabled(other.isJsonSoycEnabled());
     setSoycHtmlDisabled(other.isSoycHtmlDisabled());
     setStrict(other.isStrict());
-    setEnforceStrictResources(other.enforceStrictResources());
+    setEnforceStrictSourceResources(other.enforceStrictSourceResources());
+    setEnforceStrictPublicResources(other.enforceStrictPublicResources());
     setSourceLevel(other.getSourceLevel());
     setNamespace(other.getNamespace());
   }
 
   @Override
-  public boolean enforceStrictResources() {
-    return strictResources;
+  public boolean enforceStrictSourceResources() {
+    return strictSourceResources;
+  }
+
+  @Override
+  public boolean enforceStrictPublicResources() {
+    return strictPublicResources;
   }
 
   @Override
@@ -235,8 +242,13 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
-  public void setEnforceStrictResources(boolean strictResources) {
-    this.strictResources = strictResources;
+  public void setEnforceStrictSourceResources(boolean strictSourceResources) {
+    this.strictSourceResources = strictSourceResources;
+  }
+
+  @Override
+  public void setEnforceStrictPublicResources(boolean strictPublicResources) {
+    this.strictPublicResources = strictPublicResources;
   }
 
   @Override

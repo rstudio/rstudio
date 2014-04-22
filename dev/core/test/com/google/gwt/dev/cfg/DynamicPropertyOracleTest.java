@@ -60,13 +60,13 @@ public class DynamicPropertyOracleTest extends TestCase {
     assertEquals(1, dynamicPropertyOracle.getAccessedProperties().size());
 
     // Finds XML Constrained.
-    dynamicPropertyOracle.reset();
+    dynamicPropertyOracle = new DynamicPropertyOracle(properties);
     userAgentProperty.addDefinedValue(new ConditionWhenLinkerAdded("foo"), "webkit");
     userAgentProperty.addDefinedValue(new ConditionWhenLinkerAdded("bar"), "webkit");
     userAgentProperty.addDefinedValue(new ConditionWhenLinkerAdded("baz"), "webkit");
     assertEquals(
         "webkit", dynamicPropertyOracle.getSelectionProperty(null, "user.agent").getCurrentValue());
-    assertFalse(dynamicPropertyOracle.haveAccessedPropertiesChanged());
+    assertTrue(dynamicPropertyOracle.haveAccessedPropertiesChanged());
     assertEquals(1, dynamicPropertyOracle.getAccessedProperties().size());
 
     // Finds first defined.

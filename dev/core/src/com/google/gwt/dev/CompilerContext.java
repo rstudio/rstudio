@@ -24,7 +24,8 @@ import com.google.gwt.dev.cfg.NullLibraryWriter;
 import com.google.gwt.dev.javac.MemoryUnitCache;
 import com.google.gwt.dev.javac.UnitCache;
 import com.google.gwt.dev.resource.ResourceOracle;
-import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.dev.util.TinyCompileSummary;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Set;
 
@@ -153,8 +154,8 @@ public class CompilerContext {
   private boolean compileMonolithic = true;
   private LibraryGroup libraryGroup = new ImmutableLibraryGroup();
   private LibraryWriter libraryWriter = new NullLibraryWriter();
-
   private ModuleDef module;
+  private TinyCompileSummary tinyCompileSummary = new TinyCompileSummary();
 
   // TODO(stalcup): split this into module parsing, precompilation, compilation, and linking option
   // sets.
@@ -162,50 +163,6 @@ public class CompilerContext {
   private ResourceOracle publicResourceOracle;
   private ResourceOracle sourceResourceOracle;
   private UnitCache unitCache = new MemoryUnitCache();
-
-  /**
-   * Walks the parts of the library dependency graph that have not run the given generator
-   * referenced by name and accumulates and returns a map from binding property name to newly legal
-   * values that were declared in those libraries.<br />
-   *
-   * The resulting map represents the set of binding property changes that have not yet been taken
-   * into account in the output of a particular generator and which may need to trigger the
-   * re-execution of said generator.
-   */
-  public Multimap<String, String> gatherNewBindingPropertyValuesForGenerator(String generatorName) {
-    Multimap<String, String> newBindingPropertyValues =
-        getLibraryGroup().gatherNewBindingPropertyValuesForGenerator(generatorName);
-    newBindingPropertyValues.putAll(libraryWriter.getNewBindingPropertyValuesByName());
-    return newBindingPropertyValues;
-  }
-
-  /**
-   * Walks the parts of the library dependency graph that have not run the given generator
-   * referenced by name and accumulates and returns a map from configuration property name to newly
-   * set values that were declared in those libraries.<br />
-   *
-   * The resulting map represents the set of configuration property value changes that have not yet
-   * been taken into account in the output of a particular generator and which may need to trigger
-   * the re-execution of said generator.
-   */
-  public Multimap<String, String> gatherNewConfigurationPropertyValuesForGenerator(
-      String generatorName) {
-    Multimap<String, String> newConfigurationPropertyValues =
-        getLibraryGroup().gatherNewConfigurationPropertyValuesForGenerator(generatorName);
-    newConfigurationPropertyValues.putAll(libraryWriter.getNewConfigurationPropertyValuesByName());
-    return newConfigurationPropertyValues;
-  }
-
-  public Set<String> gatherNewReboundTypeNamesForGenerator(String generatorName) {
-    Set<String> newReboundTypeNames =
-        getLibraryGroup().gatherNewReboundTypeSourceNamesForGenerator(generatorName);
-    newReboundTypeNames.addAll(libraryWriter.getReboundTypeSourceNames());
-    return newReboundTypeNames;
-  }
-
-  public Set<String> gatherOldReboundTypeNamesForGenerator(String generatorName) {
-    return getLibraryGroup().gatherOldReboundTypeSourceNamesForGenerator(generatorName);
-  }
 
   public ResourceOracle getBuildResourceOracle() {
     return buildResourceOracle;
@@ -227,8 +184,32 @@ public class CompilerContext {
     return options;
   }
 
+  /**
+   * Returns the set of source names of rebound types that have been processed by the given
+   * Generator.
+   */
+  public Set<String> getProcessedReboundTypeSourceNames(String generatorName) {
+    Set<String> processedReboundTypeSourceNames = Sets.newHashSet();
+    processedReboundTypeSourceNames.addAll(
+        getLibraryWriter().getProcessedReboundTypeSourceNames(generatorName));
+    processedReboundTypeSourceNames.addAll(
+        getLibraryGroup().getProcessedReboundTypeSourceNames(generatorName));
+    return processedReboundTypeSourceNames;
+  }
+
   public ResourceOracle getPublicResourceOracle() {
     return publicResourceOracle;
+  }
+
+  /**
+   * Returns the set of source names of types for which GWT.create() rebind has been requested. The
+   * types may or may not yet have been processed by some Generators.
+   */
+  public Set<String> getReboundTypeSourceNames() {
+    Set<String> reboundTypeSourceNames = Sets.newHashSet();
+    reboundTypeSourceNames.addAll(getLibraryWriter().getReboundTypeSourceNames());
+    reboundTypeSourceNames.addAll(getLibraryGroup().getReboundTypeSourceNames());
+    return reboundTypeSourceNames;
   }
 
   public ResourceOracle getSourceResourceOracle() {
@@ -241,5 +222,9 @@ public class CompilerContext {
 
   public boolean shouldCompileMonolithic() {
     return compileMonolithic;
+  }
+
+  public TinyCompileSummary getTinyCompileSummary() {
+    return tinyCompileSummary;
   }
 }

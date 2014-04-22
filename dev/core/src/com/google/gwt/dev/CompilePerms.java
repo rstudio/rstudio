@@ -203,11 +203,15 @@ public class CompilePerms {
       Precompilation precompilation, Permutation[] perms, int localWorkers,
       List<PersistenceBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
-    final TreeLogger branch = logger.branch(TreeLogger.INFO,
-        "Compiling " + perms.length + " permutation" + (perms.length > 1 ? "s" : ""));
+    boolean shouldCompileMonolithic = compilerContext.shouldCompileMonolithic();
+    final TreeLogger branch = shouldCompileMonolithic ? (logger.branch(
+        TreeLogger.INFO,
+        "Compiling " + perms.length + " permutation" + (perms.length > 1 ? "s" : ""))) : logger;
     PermutationWorkerFactory.compilePermutations(
         branch, compilerContext, precompilation, perms, localWorkers, resultFiles);
-    logger.log(TreeLogger.INFO, "Compile of permutations succeeded");
+    if (shouldCompileMonolithic) {
+      logger.log(TreeLogger.INFO, "Compile of permutations succeeded");
+    }
   }
 
   public static void main(String[] args) {

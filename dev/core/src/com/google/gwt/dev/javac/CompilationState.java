@@ -23,6 +23,7 @@ import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +54,13 @@ public class CompilationState {
    */
   protected final Map<String, CompilationUnit> unitMap = new HashMap<String, CompilationUnit>();
 
+  private int cachedGeneratedSourceCount = 0;
+
+  private int cachedStaticSourceCount = 0;
+
   private final CompileMoreLater compileMoreLater;
+
+  private CompilerContext compilerContext;
 
   /**
    * Unmodifiable view of {@link #classFileMap}.
@@ -78,6 +85,10 @@ public class CompilationState {
   private final Collection<CompilationUnit> exposedUnits =
       Collections.unmodifiableCollection(unitMap.values());
 
+  private int generatedSourceCount = 0;
+
+  private int staticSourceCount = 0;
+
   /**
    * Our type oracle.
    */
@@ -87,8 +98,6 @@ public class CompilationState {
    * Updates our type oracle.
    */
   private final CompilationUnitTypeOracleUpdater typeOracleUpdater;
-
-  private CompilerContext compilerContext;
 
   CompilationState(TreeLogger logger, CompilerContext compilerContext,
       TypeOracle typeOracle, CompilationUnitTypeOracleUpdater typeOracleUpdater,
@@ -114,7 +123,7 @@ public class CompilationState {
           + generatedUnits.size() + "' new generated units");
       generatedUnitsAddEvent.addData("# new generated units", "" + generatedUnits.size());
       Collection<CompilationUnit> newUnits = compileMoreLater.addGeneratedTypes(
-          logger, generatedUnits);
+          logger, generatedUnits, this);
       assimilateUnits(logger, newUnits, true);
     } finally {
       generatedUnitsAddEvent.end();
@@ -136,6 +145,14 @@ public class CompilationState {
     } finally {
       referencedUnitsAddEvent.end();
     }
+  }
+
+  public int getCachedGeneratedSourceCount() {
+    return cachedGeneratedSourceCount;
+  }
+
+  public int getCachedStaticSourceCount() {
+    return cachedStaticSourceCount;
   }
 
   /**
@@ -166,9 +183,20 @@ public class CompilationState {
   public Collection<CompilationUnit> getCompilationUnits() {
     return exposedUnits;
   }
+  public int getGeneratedSourceCount() {
+    return generatedSourceCount;
+  }
+  public int getStaticSourceCount() {
+    return staticSourceCount;
+  }
 
   public TypeOracle getTypeOracle() {
     return typeOracle;
+  }
+
+  @VisibleForTesting
+  public Map<String, CompiledClass> getValidClasses() {
+    return compileMoreLater.getValidClasses();
   }
 
   /**
@@ -181,6 +209,22 @@ public class CompilationState {
       }
     }
     return false;
+  }
+
+  public void incrementCachedGeneratedSourceCount(int extraCachedGeneratedSourceCount) {
+    cachedGeneratedSourceCount += extraCachedGeneratedSourceCount;
+  }
+
+  public void incrementCachedStaticSourceCount(int extraCachedStaticSourceCount) {
+    cachedStaticSourceCount += extraCachedStaticSourceCount;
+  }
+
+  public void incrementGeneratedSourceCount(int extraGeneratedSourceCount) {
+    generatedSourceCount += extraGeneratedSourceCount;
+  }
+
+  public void incrementStaticSourceCount(int extraStaticSourceCount) {
+    staticSourceCount += extraStaticSourceCount;
   }
 
   /**
@@ -199,20 +243,16 @@ public class CompilationState {
         classFileMapBySource.put(compiledClass.getSourceName(), compiledClass);
       }
     }
-    CompilationUnitInvalidator.retainValidUnits(logger, units, compileMoreLater.getValidClasses());
 
     // Performed after compilation unit invalidator because only valid units should be saved in the
     // library.
     if (saveInLibrary) {
+      CompilationUnitInvalidator.retainValidUnits(logger, units,
+          compileMoreLater.getValidClasses());
       for (CompilationUnit compilationUnit : units) {
         compilerContext.getLibraryWriter().addCompilationUnit(compilationUnit);
       }
     }
     typeOracleUpdater.addNewUnits(logger, units);
-  }
-
-  // VisibleForTesting
-  public Map<String, CompiledClass> getValidClasses() {
-    return compileMoreLater.getValidClasses();
   }
 }

@@ -38,10 +38,8 @@ import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.CreateStaticImplsVisitor;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.StaticCallConverter;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 
 import java.util.List;
 import java.util.Map;
@@ -250,11 +248,6 @@ public class Devirtualizer {
    * Contains the Cast.instanceofArray method.
    */
   private final JMethod isJavaArray;
-  /**
-   * Key is the method signature, value is the number of unique instances with
-   * the same signature.
-   */
-  private Multiset<String> jsoMethodInstances = HashMultiset.create();
 
   /**
    * Contains the set of devirtualizing methods that replace polymorphic calls
@@ -274,8 +267,7 @@ public class Devirtualizer {
   private JMethod createDevirtualMethodFor(JMethod method, JDeclaredType inClass) {
     SourceInfo sourceInfo = method.getSourceInfo().makeChild();
 
-    int methodCount = jsoMethodInstances.add(method.getSignature(),1);
-    String  prefix = method.getName() + (methodCount == 0 ? "" : methodCount);
+    String prefix = computeEscapedSignature(method.getSignature());
     JMethod devirtualMethod = new JMethod(sourceInfo, prefix + "__devirtual$",
         inClass, method.getType(), false, true, true, AccessModifier.PUBLIC);
     devirtualMethod.setBody(new JMethodBody(sourceInfo));
@@ -294,6 +286,15 @@ public class Devirtualizer {
     sourceInfo.addCorrelation(sourceInfo.getCorrelator().by(devirtualMethod));
 
     return devirtualMethod;
+  }
+
+  /**
+   * A normal method signature contains characters that are not valid in a method name. If you want
+   * to construct a method name based on an existing method signature then those characters need to
+   * be escaped.
+   */
+  private static String computeEscapedSignature(String methodSignature) {
+    return methodSignature.replaceAll("[\\<\\>\\(\\)\\;\\/\\[]", "_");
   }
 
   private Devirtualizer(JProgram program) {
@@ -316,7 +317,6 @@ public class Devirtualizer {
 
     RewriteVirtualDispatches rewriter = new RewriteVirtualDispatches();
     rewriter.accept(program);
-    assert (rewriter.didChange());
   }
 
   /**
@@ -341,7 +341,7 @@ public class Devirtualizer {
    */
   private static JExpression constructMinimalCondition(JMethod checkMethod, JVariableRef target,
       JMethodCall trueDispatch, JExpression falseDispatch) {
-    // TODO(rluble): Maybe we should emit sligthly different code in checked mode, so that if
+    // TODO(rluble): Maybe we should emit slightly different code in checked mode, so that if
     // no condition is met an exception would be thrown rather than cascading.
     if (falseDispatch == null && trueDispatch == null) {
       return null;
@@ -494,8 +494,14 @@ public class Devirtualizer {
       // It is an interface implemented by String or arrays, place it in Object.
       devirtualMethodEnclosingClass = program.getTypeJavaLangObject();
     }
-    // The class where the method is being place is in the current compile.
-    assert !program.isReferenceOnly(devirtualMethodEnclosingClass);
+    // Devirtualization of external methods stays external and devirtualization of internal methods
+    // stays internal.
+    assert program.isReferenceOnly(devirtualMethodEnclosingClass)
+        == program.isReferenceOnly(method.getEnclosingType());
+    // TODO(stalcup): devirtualization is modifying both internal and external types. Really
+    // external types should never be modified. Change the point at which types are saved into
+    // libraries to be after normalization has occurred, so that no further modification is
+    // necessary when loading external types.
     JMethod devirtualMethod = createDevirtualMethodFor(method, devirtualMethodEnclosingClass);
 
     /**

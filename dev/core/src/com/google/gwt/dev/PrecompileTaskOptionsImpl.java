@@ -70,8 +70,13 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public boolean enforceStrictResources() {
-    return jjsOptions.enforceStrictResources();
+  public boolean enforceStrictSourceResources() {
+    return jjsOptions.enforceStrictSourceResources();
+  }
+
+  @Override
+  public boolean enforceStrictPublicResources() {
+    return jjsOptions.enforceStrictPublicResources();
   }
 
   @Override
@@ -257,8 +262,13 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public void setEnforceStrictResources(boolean strictResources) {
-    jjsOptions.setEnforceStrictResources(strictResources);
+  public void setEnforceStrictSourceResources(boolean strictSourceResources) {
+    jjsOptions.setEnforceStrictSourceResources(strictSourceResources);
+  }
+  @Override
+
+  public void setEnforceStrictPublicResources(boolean strictPublicResources) {
+    jjsOptions.setEnforceStrictPublicResources(strictPublicResources);
   }
 
   @Override

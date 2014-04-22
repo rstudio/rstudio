@@ -144,6 +144,32 @@ java_library(
     ],
 )
 
+# Packages just IncrementalBuilder test resource into a jar with correct java root.
+AugmentedJar(
+    name = "incremental-build-system-test-res",
+    srcs = [],
+    added_root_globs = {
+        "test": [
+            "test/com/google/gwt/dev/testdata/incrementalbuildsystem/*",
+        ],
+    },
+    # We only need the Java classes so don't wait for the rest of :gwt-dev.
+    build_deps = [
+        "//third_party/java_src/gwt:gwt-user-full",
+        "//third_party/java_src/gwt/svn/tools:dev_deps",
+        "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-classes",
+    ],
+    constraints = [],
+    dojarjar = 1,
+    exclude_glob = [
+        "**/package.html",
+        "**/package-info.java",
+    ],
+    output_name = "incremental-build-system-test-res.jar",
+    wrap_javalibrary = 0,
+)
+
 # See //third_party/java/gwt:regexp
 java_library(
     name = "jvm_regexp",

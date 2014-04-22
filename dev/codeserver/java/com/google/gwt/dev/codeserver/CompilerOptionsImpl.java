@@ -17,6 +17,7 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.util.arg.OptionOptimize;
@@ -37,23 +38,31 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
   private final boolean failOnError;
-  private final boolean strictResources;
+  private final boolean strictPublicResources;
+  private final boolean strictSourceResources;
   private final TreeLogger.Type logLevel;
 
   CompilerOptionsImpl(CompileDir compileDir, List<String> moduleNames, SourceLevel sourceLevel,
-      boolean failOnError, boolean strictResources, TreeLogger.Type logLevel) {
+      boolean failOnError, boolean strictSourceResources, boolean strictPublicResources,
+      TreeLogger.Type logLevel) {
     this.compileDir = compileDir;
-    this.libraryPaths = ImmutableList.<String>of();
+    this.libraryPaths = ImmutableList.<String> of();
     this.moduleNames = Lists.newArrayList(moduleNames);
     this.sourceLevel = sourceLevel;
     this.failOnError = failOnError;
-    this.strictResources = strictResources;
+    this.strictSourceResources = strictSourceResources;
+    this.strictPublicResources = strictPublicResources;
     this.logLevel = logLevel;
   }
 
   @Override
-  public boolean enforceStrictResources() {
-    return strictResources;
+  public boolean enforceStrictPublicResources() {
+    return strictPublicResources;
+  }
+
+  @Override
+  public boolean enforceStrictSourceResources() {
+    return strictSourceResources;
   }
 
   @Override
@@ -64,6 +73,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public File getExtraDir() {
     return compileDir.getExtraDir();
+  }
+
+  @Override
+  public Properties getFinalProperties() {
+    return null; // handling this in a different way
   }
 
   @Override

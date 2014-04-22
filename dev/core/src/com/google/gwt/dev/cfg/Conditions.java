@@ -16,6 +16,7 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 
 import java.io.Serializable;
 import java.util.Iterator;
@@ -33,6 +34,20 @@ public class Conditions implements Iterable<Condition>, Serializable {
    */
   public void add(Condition condition) {
     list = Lists.add(list, condition);
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof Conditions) {
+      Conditions that = (Conditions) object;
+      return Objects.equal(this.list, that.list);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(list);
   }
 
   @Override
