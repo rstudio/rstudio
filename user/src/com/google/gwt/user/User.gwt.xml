@@ -58,7 +58,6 @@
   <inherits name="com.google.gwt.user.TextBox"/>
   <inherits name="com.google.gwt.user.Tree"/>
   <inherits name="com.google.gwt.user.Window" />
-  <inherits name="com.google.gwt.widget.Widget"/>
 
   <super-source path="translatable"/>
   <source path="client" />
