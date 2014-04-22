@@ -22,12 +22,6 @@
     <when-property-is name="user.agent" value="gecko1_8" />
   </replace-with>
 
-  <replace-with
-      class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorNull">
-    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
-    <when-property-is name="compiler.stackMode" value="strip" />
-  </replace-with>
-
   <!-- Disable source maps for non-Chrome browsers -->
   <set-property name="compiler.useSourceMaps" value="false">
     <none> 

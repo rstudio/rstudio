@@ -50,47 +50,18 @@ public class StackTraceCreator {
   private static final String UNKNOWN = "Unknown";
 
   /**
-   * This class acts as a deferred-binding hook point to allow more optimal
-   * versions to be substituted. This base version simply crawls
-   * <code>arguments.callee.caller</code>.
+   * This class acts as a deferred-binding hook point to allow more optimal versions to be
+   * substituted.
    */
-  static class Collector {
-    public native JsArrayString collect() /*-{
-      var seen = {};
-      var toReturn = [];
+  abstract static class Collector {
 
-      // Ignore the collect() call
-      var callee = arguments.callee.caller;
-      while (callee) {
-        var name = this.@com.google.gwt.core.client.impl.StackTraceCreator.Collector::extractName(Ljava/lang/String;)(callee.toString());
-        toReturn.push(name);
-
-        // Avoid infinite loop by associating names to function objects.  We
-        // record each caller in the withThisName variable to handle functions
-        // with identical names but separate identity (such as 'anonymous')
-        var keyName = ':' + name;
-        var withThisName = seen[keyName];
-        if (withThisName) {
-          var i, j;
-          for (i = 0, j = withThisName.length; i < j; i++) {
-            if (withThisName[i] === callee) {
-              return toReturn;
-            }
-          }
-        }
-
-        (withThisName || (seen[keyName] = [])).push(callee);
-        callee = callee.caller;
-      }
-      return toReturn;
-    }-*/;
+    public abstract JsArrayString collect();
 
     protected StackTraceElement[] getStackTrace(JsArrayString stack) {
       int length = stack.length();
       StackTraceElement[] stackTrace = new StackTraceElement[length];
       for (int i = 0; i < length; i++) {
-        stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i), null,
-            LINE_NUMBER_UNKNOWN);
+        stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i), null, LINE_NUMBER_UNKNOWN);
       }
       return stackTrace;
     }
@@ -133,6 +104,44 @@ public class StackTraceCreator {
   }
 
   /**
+   * This legacy {@link Collector} simply crawls <code>arguments.callee.caller</code> for browsers
+   * that doesn't support {@code Error.stack} property.
+   */
+  static class CollectorLegacy extends Collector {
+
+    @Override
+    public native JsArrayString collect() /*-{
+      var seen = {};
+      var toReturn = [];
+
+      // Ignore the collect() call
+      var callee = arguments.callee.caller;
+      while (callee) {
+        var name = this.@Collector::extractName(*)(callee.toString());
+        toReturn.push(name);
+
+        // Avoid infinite loop by associating names to function objects.  We
+        // record each caller in the withThisName variable to handle functions
+        // with identical names but separate identity (such as 'anonymous')
+        var keyName = ':' + name;
+        var withThisName = seen[keyName];
+        if (withThisName) {
+          var i, j;
+          for (i = 0, j = withThisName.length; i < j; i++) {
+            if (withThisName[i] === callee) {
+              return toReturn;
+            }
+          }
+        }
+
+        (withThisName || (seen[keyName] = [])).push(callee);
+        callee = callee.caller;
+      }
+      return toReturn;
+    }-*/;
+  }
+
+  /**
    * Collaborates with JsStackEmulator.
    */
   static final class CollectorEmulated extends Collector {
@@ -142,8 +151,7 @@ public class StackTraceCreator {
       JsArrayString toReturn = JsArrayString.createArray().cast();
       JsArray<JavaScriptObject> stack = getStack();
       for (int i = 0, j = getStackDepth(); i < j; i++) {
-        String name = stack.get(i) == null ? ANONYMOUS
-            : extractName(stack.get(i).toString());
+        String name = stack.get(i) == null ? ANONYMOUS : extractName(stack.get(i).toString());
         // Reverse the order
         toReturn.set(j - i - 1, name);
       }
@@ -172,8 +180,7 @@ public class StackTraceCreator {
             lineNumber = parseInt(location);
           }
         }
-        stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i),
-            fileName, lineNumber);
+        stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i), fileName, lineNumber);
       }
       return stackTrace;
     }
@@ -256,16 +263,6 @@ public class StackTraceCreator {
       // 128 seems like a reasonable maximum
       Error.stackTraceLimit = 128;
     }-*/;
-
-    @Override
-    public JsArrayString collect() {
-      JsArrayString res = super.collect();
-      if (res.length() == 0) {
-        // Ensure Safari falls back to default Collector implementation.
-        res = new Collector().collect();
-      }
-      return res;
-    }
 
     @Override
     public JsArrayString inferFrom(Object e) {
@@ -373,8 +370,7 @@ public class StackTraceCreator {
   }
 
   private static native int parseInt(String number) /*-{
-    return parseInt(number)
-        || @com.google.gwt.core.client.impl.StackTraceCreator::LINE_NUMBER_UNKNOWN;
+    return parseInt(number) || @StackTraceCreator::LINE_NUMBER_UNKNOWN;
   }-*/;
 
   /**
@@ -438,7 +434,12 @@ public class StackTraceCreator {
       throw new RuntimeException("StackTraceCreator should only be called in Production Mode");
     }
 
-    return GWT.create(Collector.class);
+    Collector collector = GWT.create(Collector.class);
+    // Ensure old Safari falls back to default Collector implementation.
+    if (collector instanceof CollectorChrome && !supportsErrorStack()) {
+      return new CollectorLegacy();
+    }
+    return collector;
   }
 
   private static native <T> T splice(T arr, int length) /*-{

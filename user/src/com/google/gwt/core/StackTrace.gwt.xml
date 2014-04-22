@@ -13,9 +13,8 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- Defines support for emulating the JS stack -->
+<!-- Defines support stack traces -->
 <module type="fileset">
-  <inherits name="com.google.gwt.core.Core" />
 
   <!-- Legacy property. Do NOT use. See 'compiler.stackMode' instead. -->
   <define-property name="compiler.emulatedStack" values="true,false" />
@@ -36,9 +35,19 @@
     <when-property-is name="compiler.emulatedStack" value="true" />
   </set-property>  
 
-  <replace-with
-    class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated">
+  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
     <when-property-is name="compiler.stackMode" value="emulated" />
+  </replace-with>
+
+  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorLegacy">
+    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <when-property-is name="compiler.stackMode" value="native" />
+  </replace-with>
+
+
+  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorNull">
+    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <when-property-is name="compiler.stackMode" value="strip" />
   </replace-with>
 </module>

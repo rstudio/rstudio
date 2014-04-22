@@ -20,6 +20,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChromeNoSourceMap;
+import com.google.gwt.core.client.impl.StackTraceCreator.CollectorLegacy;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -34,7 +35,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   }
 
   public void testExtractName() {
-    Collector c = new Collector();
+    Collector c = new CollectorLegacy();
 
     assertEquals("anonymous", c.extractName("function(){}"));
     assertEquals("anonymous", c.extractName("function (){}"));

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.core.client.impl;
 
-import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
+import com.google.gwt.core.client.impl.StackTraceCreator.CollectorLegacy;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -141,6 +141,6 @@ public class StackTraceCreatorTest extends GWTTestCase {
   }-*/;
 
   static String extractName(String fnToString) {
-    return new Collector().extractName(fnToString);
+    return new CollectorLegacy().extractName(fnToString);
   }
 }
