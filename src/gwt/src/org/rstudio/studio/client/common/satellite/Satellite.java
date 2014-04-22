@@ -129,6 +129,8 @@ public class Satellite implements HasCloseHandlers<Satellite>
           
       // export notifyClosing
       $wnd.notifyRStudioSatelliteClosing = $entry(function() {
+         // see remarks in WindowEx::isClosed
+         $wnd.rstudioSatelliteClosed = true;
          satellite.@org.rstudio.studio.client.common.satellite.Satellite::fireCloseEvent()();
       });
         

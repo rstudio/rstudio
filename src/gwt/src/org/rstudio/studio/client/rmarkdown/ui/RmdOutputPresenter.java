@@ -24,6 +24,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSource;
@@ -31,6 +32,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -62,7 +65,8 @@ public class RmdOutputPresenter implements
                              RPubsPresenter rpubsPresenter,
                              Session session,
                              Commands commands,
-                             EventBus eventBus)
+                             EventBus eventBus,
+                             Satellite satellite)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
@@ -71,6 +75,27 @@ public class RmdOutputPresenter implements
       slideNavigationPresenter_ = new SlideNavigationPresenter(view_);
       disconnectNotifier_ = new ShinyDisconnectNotifier(this);
       
+      satellite.addCloseHandler(new CloseHandler<Satellite>()
+      {
+         @Override
+         public void onClose(CloseEvent<Satellite> event)
+         {
+            // record scroll position and anchor (but try/catch because sometimes 
+            // the document is null at this point)
+            try
+            {
+               params_.setScrollPosition(view_.getScrollPosition());
+               params_.setAnchor(view_.getAnchor());
+            }
+            catch (Exception e)
+            {
+            }
+            
+            // notify closed
+            notifyRmdOutputClosed(params_);
+         }
+      });
+   
       binder.bind(commands, this);  
       
       initializeEvents();
@@ -165,14 +190,7 @@ public class RmdOutputPresenter implements
    }
    
    private native void initializeEvents() /*-{  
-      var thiz = this;   
-      $wnd.addEventListener(
-            "unload",
-            $entry(function() {
-               thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter::onClose()();
-            }),
-            true);
-            
+      var thiz = this;
       $wnd.getRstudioFrameScrollPosition = $entry(function() {
          return thiz.@org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter::getScrollPosition()();
       });
@@ -182,27 +200,10 @@ public class RmdOutputPresenter implements
       });
    }-*/;
    
-   private void onClose() 
-   {
-      // record scroll position and anchor (but try/catch because sometimes 
-      // the document is null at this point)
-      try
-      {
-         params_.setScrollPosition(view_.getScrollPosition());
-         params_.setAnchor(view_.getAnchor());
-      }
-      catch (Exception e)
-      {
-      }
-      
-      // notify closed
-      notifyRmdOutputClosed(params_);
-   }
-   
    private final native void notifyRmdOutputClosed(JavaScriptObject params) /*-{
       $wnd.opener.notifyRmdOutputClosed(params);
    }-*/;
-   
+
    private int getScrollPosition()
    {
       return view_.getScrollPosition();

@@ -114,7 +114,13 @@ public class WindowEx extends JavaScriptObject
    }-*/;
    
    public final native boolean isClosed() /*-{
-      return this.closed;
+      // On the desktop, it is possible in some circumstances for satellite
+      // window objects to become decoupled from their physical windows when
+      // closed--they are still marked open but are effectively zombies. To work
+      // around this we have the desktop frame manually label the window object
+      // as closed with rstudioSatelliteClosed so that we can appropriately
+      // treat it as closed.
+      return this.closed || this.rstudioSatelliteClosed;
    }-*/;
 
    public final native void resizeTo(int width, int height) /*-{
