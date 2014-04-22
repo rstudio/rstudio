@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.linker.SymbolMapsLinker;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.thirdparty.debugging.sourcemap.FilePosition;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapParseException;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -58,38 +58,16 @@ public class SourceMapRecorder {
       throws IOException, JSONException, SourceMapParseException {
     List<SyntheticArtifact> toReturn = Lists.newArrayList();
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    // TODO(ocallau) Consider use SourceMapGeneretator interface and the proper factory
     SourceMapGeneratorV3 generator = new SourceMapGeneratorV3();
-    OutputStreamWriter out = new OutputStreamWriter(baos);
     int fragment = 0;
     if (!sourceInfoMaps.isEmpty()) {
       for (Map<Range, SourceInfo> sourceMap : sourceInfoMaps) {
         generator.reset();
-        Set<Range> rangeSet = sourceMap.keySet();
-        Range[] ranges = rangeSet.toArray(new Range[rangeSet.size()]);
-        Arrays.sort(ranges, Range.DEPENDENCY_ORDER_COMPARATOR);
-        for (Range r : ranges) {
-          SourceInfo si = sourceMap.get(r);
-          if (si.getFileName() == null || si.getStartLine() < 0) {
-            // skip over synthetics with no Java source
-            continue;
-          }
-          if (r.getStartLine() == 0 || r.getEndLine() == 0) {
-            // or other bogus entries that appear
-            // JavaClassHierarchySetupUtil:prototypesByTypeId is pruned here, may be others too
-            continue;
-          }
-          // Starting with V3, SourceMap line numbers are zero-based.
-          // GWT's line numbers for Java files originally came from the JDT, which is 1-based,
-          // so adjust them here to avoid an off-by-one error in debuggers.
-          generator.addMapping(si.getFileName(), getName(si),
-              new FilePosition(si.getStartLine() - 1, 0),
-              new FilePosition(r.getStartLine(), r.getStartColumn()),
-              new FilePosition(r.getEndLine(), r.getEndColumn()));
-        }
+        addMappings(new SourceMappingWriter(generator), sourceMap);
         updateSourceMap(generator, fragment);
 
         baos.reset();
+        OutputStreamWriter out = new OutputStreamWriter(baos);
         generator.appendTo(out, "sourceMap" + fragment);
         out.flush();
         toReturn.add(new SymbolMapsLinker.SourceMapArtifact(permutationId, fragment,
@@ -101,15 +79,51 @@ public class SourceMapRecorder {
   }
 
   /**
-   * Updates the source map with extra information, like extensions.
+   * A hook allowing a subclass to add more info to the sourcemap for a given fragment.
    */
   protected void updateSourceMap(SourceMapGeneratorV3 generator, int fragment)
       throws SourceMapParseException { }
 
   /**
-   * Returns the given name to a sourceInfo.
+   * A hook allowing a subclass to populate the "names" field in the sourcemap.
+   *
+   * <p>The name is currently always a Java identifier, but in theory may be any Java expression.
+   * For example, a compiler-introduced temporary variable could be annotated with the expression
+   * that produced it.
+   *
+   * <p>The name should only be set if the JavaScript range covers one JavaScript identifier.
+   * (Otherwise return null.)
    */
-  protected String getName(SourceInfo sourceInfo) {
+  protected String getJavaName(SourceInfo sourceInfo) {
     return null;
+  }
+
+  /**
+   * Adds the source mappings for one JavaScript file to its sourcemap.
+   * Consolidates adjacent or overlapping ranges to reduce the amount of data that the JavaScript
+   * debugger has to load.
+   */
+  private void addMappings(SourceMappingWriter output, Map<Range, SourceInfo> mappings) {
+    Set<Range> rangeSet = mappings.keySet();
+
+    Range[] ranges = rangeSet.toArray(new Range[rangeSet.size()]);
+    Arrays.sort(ranges, Range.DEPENDENCY_ORDER_COMPARATOR);
+
+    for (Range r : ranges) {
+      SourceInfo info = mappings.get(r);
+
+      if (info == SourceOrigin.UNKNOWN || info.getFileName() == null || info.getStartLine() < 0) {
+        // skip a synthetic with no Java source
+        continue;
+      }
+      if (r.getStartLine() == 0 || r.getEndLine() == 0) {
+        // skip a bogus entry
+        // JavaClassHierarchySetupUtil:prototypesByTypeId is pruned here. Maybe others too?
+        continue;
+      }
+
+      output.addMapping(r, info, getJavaName(info));
+    }
+    output.flush();
   }
 }

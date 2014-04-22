@@ -74,7 +74,9 @@ public final class Range {
   }
 
   /**
-   * Constructor.
+   * A range whose start and end are specified both as character positions and as
+   * line numbers and columns. Everything is zero-based (similar to Java arrays).
+   * The ending position must be greater or equal to the starting position.
    *
    * @param start must be non-negative
    * @param end must be greater than or equal to <code>start</code>

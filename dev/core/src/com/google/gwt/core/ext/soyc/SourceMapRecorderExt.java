@@ -54,7 +54,7 @@ public class SourceMapRecorderExt extends SourceMapRecorder {
   }
 
   @Override
-  protected String getName(SourceInfo sourceInfo) {
+  protected String getJavaName(SourceInfo sourceInfo) {
     // We can discard Unknown or not-so-valid (eg. com.google.gwt.dev.js.ast.JsProgram)
     // sourceInfo
     String rangeName = null;
