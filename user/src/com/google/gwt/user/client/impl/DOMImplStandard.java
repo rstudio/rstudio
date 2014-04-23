@@ -217,6 +217,7 @@ public abstract class DOMImplStandard extends DOMImpl {
     sinkEventsImpl(elem, bits);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   protected native void initEventSystem() /*-{
     // Ensure $entry for bitfull event dispatchers
@@ -254,6 +255,7 @@ public abstract class DOMImplStandard extends DOMImpl {
     elem.addEventListener(eventTypeName, dispatcher, false);
   }-*/;
 
+  @SuppressWarnings("deprecation")
   protected native void sinkEventsImpl(Element elem, int bits) /*-{
     var chMask = (elem.__eventBits || 0) ^ bits;
     elem.__eventBits = bits;
