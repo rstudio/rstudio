@@ -37,6 +37,7 @@ class DOMImplMozilla extends DOMImplStandard {
     sinkEventsMozilla(elem, bits);
   }
 
+  @SuppressWarnings("deprecation")
   public native void sinkEventsMozilla(Element elem, int bits) /*-{
     if (bits & 0x20000) {
       elem.addEventListener('DOMMouseScroll', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
