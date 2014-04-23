@@ -146,7 +146,7 @@ java_library(
     deps = [
         ":compiler.standalone.super",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
-        # Safe to depend on servlet_api_3 because nobody directly depends on gwt-dev-classes
+        # Safe to depend on servlet_api_3 because no body directly depends on gwt-dev-classes
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
     ],
 )
@@ -212,7 +212,6 @@ java_library(
         ],
     ),
     javacopts = [
-        "-encoding utf8",
         "-source 5",
         "-target 5",
     ],
@@ -236,7 +235,6 @@ java_library(
     ),
     constraints = ["android"],
     javacopts = [
-        "-encoding utf8",
         "-source 5",
         "-target 5",
     ],
@@ -275,7 +273,6 @@ java_library(
     ],
     gwtxml = ":interop-annotations-gwtxml",
     javacopts = [
-        "-encoding utf8",
         "-source 5",
         "-target 5",
     ],
@@ -313,7 +310,7 @@ AugmentedJar(
         ":dev",  # for the post-jarjar names
     ],
     deps = [
-        "//third_party/java/junit",
+        "//third_party/java/junit:not-testonly",
     ],
 )
 
