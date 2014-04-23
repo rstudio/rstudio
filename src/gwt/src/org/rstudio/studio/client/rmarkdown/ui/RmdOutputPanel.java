@@ -85,6 +85,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       {
          fileLabel_.setVisible(false);
          fileLabelSeparator_.setVisible(false);
+         shinyUrl_ = StringUtil.makeAbsoluteUrl(params.getOutputUrl());
+         isShiny_ = true;
       }
       else
       {
@@ -92,6 +94,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          fileLabelSeparator_.setVisible(true);
          fileLabel_.setText(FileSystemItem.createFile(
                                           params.getOutputFile()).getName());
+         isShiny_ = false;
       }
       
       // RPubs
@@ -135,8 +138,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       }
       else
       {
-         if (params.getResult().isShinyDocument())
-            url = StringUtil.makeAbsoluteUrl(params.getOutputUrl());
+         if (isShiny_)
+            url = shinyUrl_;
          else
             url = server_.getApplicationURL(params.getOutputUrl());
          
@@ -238,12 +241,16 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // poll for document availability then perform initialization
       // tasks once it's available (addLoadHandler wasn't always 
       // getting called at least under Cocoa WebKit)
-      
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
 
          @Override
          public boolean execute()
          {
+            // it's not currently possible to get read access to Shiny documents
+            // due to same-origin policy restrictions
+            if (isShiny_)
+               return false;
+            
             // see if the document is ready
             AnchorableFrame frame = getFrame();
             if (frame == null)
@@ -271,7 +278,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          }
          
       }, 50);
-      
        
       return frame;
    }
@@ -383,7 +389,10 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    // reflect navigation occurring after initial load (e.g. anchor changes)
    private String getCurrentUrl()
    {
-      return getFrame().getIFrame().getContentDocument().getURL();
+      if (isShiny_)
+         return shinyUrl_;
+      else
+         return getFrame().getIFrame().getContentDocument().getURL();
    }
   
    private void fireSlideIndexChanged()
@@ -455,6 +464,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    
    private FindTextBox findTextBox_;
    private Widget findSeparator_;
+
+   private boolean isShiny_;
+   private String shinyUrl_;
    
    private HandlerManager handlerManager_ = new HandlerManager(this);
 }

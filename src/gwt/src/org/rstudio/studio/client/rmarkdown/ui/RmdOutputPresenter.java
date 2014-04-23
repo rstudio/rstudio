@@ -206,12 +206,18 @@ public class RmdOutputPresenter implements
 
    private int getScrollPosition()
    {
-      return view_.getScrollPosition();
+      if (params_.isShinyDocument())
+         return 0;
+      else
+         return view_.getScrollPosition();
    }
    
    private String getAnchor()
    {
-      return view_.getAnchor();
+      if (params_.isShinyDocument())
+         return "";
+      else
+         return view_.getAnchor();
    }
 
    private final Display view_;
