@@ -18,6 +18,7 @@ package com.google.gwt.core.ext.soyc;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.linker.SymbolMapsLinker;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
@@ -31,7 +32,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,7 +40,7 @@ import java.util.Set;
 public class SourceMapRecorder {
 
   public static List<SyntheticArtifact> makeSourceMapArtifacts(int permutationId,
-      List<Map<Range, SourceInfo>> sourceInfoMaps) {
+      List<JsSourceMap> sourceInfoMaps) {
     try {
       return (new SourceMapRecorder(permutationId)).recordSourceMap(sourceInfoMaps);
     } catch (Exception e) {
@@ -54,14 +54,14 @@ public class SourceMapRecorder {
     this.permutationId = permutationId;
   }
 
-  protected List<SyntheticArtifact> recordSourceMap(List<Map<Range, SourceInfo>> sourceInfoMaps)
+  protected List<SyntheticArtifact> recordSourceMap(List<JsSourceMap> sourceInfoMaps)
       throws IOException, JSONException, SourceMapParseException {
     List<SyntheticArtifact> toReturn = Lists.newArrayList();
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     SourceMapGeneratorV3 generator = new SourceMapGeneratorV3();
     int fragment = 0;
     if (!sourceInfoMaps.isEmpty()) {
-      for (Map<Range, SourceInfo> sourceMap : sourceInfoMaps) {
+      for (JsSourceMap sourceMap : sourceInfoMaps) {
         generator.reset();
         addMappings(new SourceMappingWriter(generator), sourceMap);
         updateSourceMap(generator, fragment);
@@ -103,7 +103,7 @@ public class SourceMapRecorder {
    * Consolidates adjacent or overlapping ranges to reduce the amount of data that the JavaScript
    * debugger has to load.
    */
-  private void addMappings(SourceMappingWriter output, Map<Range, SourceInfo> mappings) {
+  private void addMappings(SourceMappingWriter output, JsSourceMap mappings) {
     Set<Range> rangeSet = mappings.keySet();
 
     Range[] ranges = rangeSet.toArray(new Range[rangeSet.size()]);

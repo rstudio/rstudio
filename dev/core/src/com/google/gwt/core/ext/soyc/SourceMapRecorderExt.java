@@ -18,13 +18,13 @@ package com.google.gwt.core.ext.soyc;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceInfoCorrelation;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapParseException;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Creates Closure Compatible SourceMaps with named ranges.
@@ -34,7 +34,7 @@ public class SourceMapRecorderExt extends SourceMapRecorder {
   public static final String PERMUTATION_EXT = "x_gwt_permutation";
 
   public static List<SyntheticArtifact> makeSourceMapArtifacts(int permutationId,
-      List<Map<Range, SourceInfo>> sourceInfoMaps) {
+      List<JsSourceMap> sourceInfoMaps) {
     try {
       return (new SourceMapRecorderExt(permutationId)).recordSourceMap(sourceInfoMaps);
     } catch (Exception e) {

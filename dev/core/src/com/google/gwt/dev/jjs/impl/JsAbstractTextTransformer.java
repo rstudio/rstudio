@@ -17,11 +17,9 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.impl.StandardStatementRanges;
-import com.google.gwt.core.ext.soyc.Range;
-import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.JsSourceMap;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 /**
  * Base class for transforming program text.
@@ -34,14 +32,14 @@ public abstract class JsAbstractTextTransformer {
 
   protected StatementRanges statementRanges;
 
-  protected Map<Range, SourceInfo> sourceInfoMap;
+  protected JsSourceMap sourceInfoMap;
 
   public JsAbstractTextTransformer(JsAbstractTextTransformer xformer) {
     this(xformer.getJs(), xformer.getStatementRanges(), xformer.getSourceInfoMap());
   }
 
   public JsAbstractTextTransformer(String js, StatementRanges statementRanges,
-      Map<Range, SourceInfo> sourceInfoMap) {
+      JsSourceMap sourceInfoMap) {
     this.js = js;
     this.statementRanges = statementRanges;
     this.originalStatementRanges = statementRanges;
@@ -54,7 +52,7 @@ public abstract class JsAbstractTextTransformer {
     return js;
   }
 
-  public Map<Range, SourceInfo> getSourceInfoMap() {
+  public JsSourceMap getSourceInfoMap() {
     return sourceInfoMap;
   }
 

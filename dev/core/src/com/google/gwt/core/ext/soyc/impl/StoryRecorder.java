@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.Correlation.Axis;
+import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -67,7 +68,7 @@ public class StoryRecorder {
    * Used to record dependencies of a program.
    */
   public static void recordStories(TreeLogger logger, OutputStream out,
-      List<Map<Range, SourceInfo>> sourceInfoMaps, String[] js) {
+      List<JsSourceMap> sourceInfoMaps, String[] js) {
     new StoryRecorder().recordStoriesImpl(logger, out, sourceInfoMaps, js);
   }
 
@@ -102,7 +103,7 @@ public class StoryRecorder {
   }
 
   protected void recordStoriesImpl(TreeLogger logger, OutputStream out,
-      List<Map<Range, SourceInfo>> sourceInfoMaps, String[] js) {
+      List<JsSourceMap> sourceInfoMaps, String[] js) {
 
     logger = logger.branch(TreeLogger.INFO, "Creating Stories file for the compile report");
 
@@ -125,7 +126,7 @@ public class StoryRecorder {
       builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<soyc>\n<stories>\n");
 
       int fragment = 0;
-      for (Map<Range, SourceInfo> sourceInfoMap : sourceInfoMaps) {
+      for (JsSourceMap sourceInfoMap : sourceInfoMaps) {
         lastEnd = 0;
         analyzeFragment(memberFactory, classesMutable, sourceInfoMap, sourceInfoSeen, fragment++);
 
@@ -152,7 +153,7 @@ public class StoryRecorder {
   }
 
   private void analyzeFragment(MemberFactory memberFactory, TreeSet<ClassMember> classesMutable,
-      Map<Range, SourceInfo> sourceInfoMap, Set<SourceInfo> sourceInfoSeen, int fragment)
+      JsSourceMap sourceInfoMap, Set<SourceInfo> sourceInfoSeen, int fragment)
       throws IOException {
     /*
      * We want to iterate over the Ranges so that enclosing Ranges come before

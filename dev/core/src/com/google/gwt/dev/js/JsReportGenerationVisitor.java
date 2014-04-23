@@ -17,13 +17,13 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.HasSourceInfo;
+import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.util.TextOutput;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +67,8 @@ public class JsReportGenerationVisitor extends
   }
 
   @Override
-  public Map<Range, SourceInfo> getSourceInfoMap() {
-    return Collections.unmodifiableMap(sourceInfoMap);
+  public JsSourceMap getSourceInfoMap() {
+    return new JsSourceMap(sourceInfoMap);
   }
 
   @Override

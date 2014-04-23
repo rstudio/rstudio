@@ -15,8 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.core.ext.soyc.Range;
-import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -60,7 +59,7 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
     return new SizeBreakdown(out.getPosition(), sizeMap);
   }
 
-  public Map<Range, SourceInfo> getSourceInfoMap() {
+  public JsSourceMap getSourceInfoMap() {
     // override if your child class creates sourceinfo
     return null;
   }
