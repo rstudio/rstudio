@@ -1332,10 +1332,16 @@ public class JUnitShell extends DevMode {
 
     // Get the module definition for the current test.
     if (!sameTest) {
-      currentModule = compileStrategy.maybeCompileModule(moduleName,
-          syntheticModuleName, strategy, batchingStrategy, getTopLogger());
-      compilerContext = compilerContextBuilder.module(currentModule).build();
-      currentCompilationState = currentModule.getCompilationState(getTopLogger(), compilerContext);
+      try {
+        currentModule = compileStrategy.maybeCompileModule(moduleName,
+            syntheticModuleName, strategy, batchingStrategy, getTopLogger());
+        compilerContext = compilerContextBuilder.module(currentModule).build();
+        currentCompilationState = currentModule.getCompilationState(getTopLogger(),
+            compilerContext);
+      } catch (UnableToCompleteException e) {
+        lastLaunchFailed = true;
+        throw e;
+      }
     }
     assert (currentModule != null);
 
