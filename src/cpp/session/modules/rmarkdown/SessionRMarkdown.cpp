@@ -186,7 +186,8 @@ private:
       std::string encodingParam("encoding = '" + encoding + "'");
       if (isShiny_)
       {
-         extraParams += "shiny_args = list(launch.browser = FALSE), ";
+         extraParams += "shiny_args = list(launch.browser = FALSE), "
+                        "auto_reload = FALSE, ";
          extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
          encodingParam = "render_args = list(" + encodingParam + ")";
       }

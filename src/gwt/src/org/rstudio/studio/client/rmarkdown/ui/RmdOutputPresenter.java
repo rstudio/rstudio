@@ -71,6 +71,7 @@ public class RmdOutputPresenter implements
       view_ = view;
       globalDisplay_ = globalDisplay;
       session_ = session;
+      
       rpubsPresenter.setContext(this);
       slideNavigationPresenter_ = new SlideNavigationPresenter(view_);
       disconnectNotifier_ = new ShinyDisconnectNotifier(this);
@@ -80,6 +81,10 @@ public class RmdOutputPresenter implements
          @Override
          public void onClose(CloseEvent<Satellite> event)
          {
+            // don't process a close if we're being closed for reactivate 
+            if (event.getTarget().isReactivatePending())
+               return;
+
             // record scroll position and anchor (but try/catch because sometimes 
             // the document is null at this point)
             try
