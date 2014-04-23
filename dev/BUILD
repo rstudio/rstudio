@@ -98,7 +98,7 @@ AugmentedJar(
     name = "gwt-dev-deps",
     srcs = [],
     added_jars = [
-        "//third_party/java_src/gwt/legacy:libdev.jar",
+        "//third_party/java_src/gwt/legacy:libdev-bare.jar",
         "//third_party/java_src/gwt/legacy:dev-resources.jar",
         "//third_party/java_src/gwt/svn/tools:dev_jars",
         "//third_party/java_src/gwt/svn/tools:legacy_dev_jars",
@@ -114,7 +114,7 @@ AugmentedJar(
     name = "gwt-dev-only",
     srcs = [],
     added_jars = [
-        ":libgwt-dev-classes.jar",
+        ":libgwt-dev-bare.jar",
         ":gwt-dev-resources.jar",
         ":libcompiler.standalone.jar",
         ":libcompiler.standalone.super.jar",
@@ -126,14 +126,10 @@ AugmentedJar(
     wrap_javalibrary = 0,
 )
 
-# All the dev classes before jarjaring.
-# This should only be used in code that will itself be jarjar-ed
-# or in internal tests.
-# (Exposed because it helps other targets build faster than
-# if they waited for gwt-dev to be jarjar-ed.)
-# TODO: split up.
+# The gwt-dev classes for GWT internal use only.
+# They must be jarjar-ed and dependencies stripped before exposing to google3.
 java_library(
-    name = "gwt-dev-classes",
+    name = "gwt-dev-bare",
     srcs = glob(
         ["core/src/**/*.java"],
         exclude = ["**/package-info.java"],
@@ -146,7 +142,6 @@ java_library(
     deps = [
         ":compiler.standalone.super",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
-        # Safe to depend on servlet_api_3 because no body directly depends on gwt-dev-classes
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
     ],
 )
@@ -289,28 +284,39 @@ genrule(
 # TODO: split up.
 AugmentedJar(
     name = "dev-test-code",
-    srcs = glob([
-        "core/test/**/*.java",
-    ]),
+    testonly = 1,
+    srcs = [],
     added_jars = [
+        ":libdev-test-code-bare.jar",
         # for soycTest
         "//third_party/java_src/gwt/svn/trunk/samples:hello-src.jar",
     ],
     added_roots = [
         "core/test",
     ],
-    build_deps = [
-        ":gwt-dev-classes",
-        ":compiler.standalone.super",
-        "//third_party/java_src/gwt/svn/tools:dev_deps",  # for pre-jarjar imports
-    ],
     constraints = [],
     dojarjar = 1,
     export_deps = [
         ":dev",  # for the post-jarjar names
+        "//third_party/java/junit",
     ],
+)
+
+# The gwt-dev tests for GWT internal use only.
+# They must be jarjar-ed and dependencies stripped before exposing to google3.
+# TODO(skybrian): we should have a separate jar for test infrastructure and
+# and remove dependencies on this library in gwt-user and google3.
+java_library(
+    name = "dev-test-code-bare",
+    testonly = 1,
+    srcs = glob([
+        "core/test/**/*.java",
+    ]),
     deps = [
-        "//third_party/java/junit:not-testonly",
+        ":compiler.standalone.super",
+        ":gwt-dev-bare",
+        "//third_party/java/junit",
+        "//third_party/java_src/gwt/svn/tools:dev_deps",
     ],
 )
 

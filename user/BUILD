@@ -33,27 +33,14 @@ subinclude("//third_party/java_src/gwt:build-macros")
 # depend on this without also touching the compiler and shell internals.
 AugmentedJar(
     name = "gwt-user-classes-src",
-    srcs = glob(
-        ["src/**/*.java"],
-        exclude = [
-            "src/com/google/gwt/junit/**/*.java",  # see gwt-testing
-            "**/super/**",
-            "**/RunStyleSelenium.java",
-        ],
-    ),
-    added_jars = ["//third_party/java_src/gwt/svn/tools:user_jars"],
+    srcs = [],
+    added_jars = [
+        ":libgwt-user-bare.jar",
+        "//third_party/java_src/gwt/svn/tools:user_jars",
+    ],
     added_roots = [
         "src",
         "super",
-    ],
-    # We only need the Java classes so don't wait for the rest of :gwt-dev.
-    build_deps = [
-        "//third_party/java_src/gwt/svn/tools:dev_deps",
-        # Safe to depend on servlet_api_3 because build_deps doesn't leak
-        "//third_party/java_src/gwt/svn/tools:servlet_api_3",
-        "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
-        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-classes",
-        "//third_party/java/junit",
     ],
     constraints = [],
     dojarjar = 1,
@@ -66,6 +53,27 @@ AugmentedJar(
     java_library_name = "gwt-user-classes",
     output_name = "gwt-user-classes-src.jar",
     wrap_javalibrary = 0,
+)
+
+# The gwt-user classes for GWT internal use only.
+# They must be jarjar-ed and dependencies stripped before exposing to google3.
+java_library(
+    name = "gwt-user-bare",
+    srcs = glob(
+        ["src/**/*.java"],
+        exclude = [
+            "src/com/google/gwt/junit/**/*.java",  # see gwt-testing
+            "**/super/**",
+            "**/RunStyleSelenium.java",
+        ],
+    ),
+    deps = [
+        "//third_party/java_src/gwt/svn/tools:dev_deps",
+        "//third_party/java_src/gwt/svn/tools:servlet_api_3",
+        "//third_party/java_src/gwt/svn/tools:user_deps",
+        "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
+    ],
 )
 
 # This target is used by a java_plugin over in java/gwt/BUILD. It's
@@ -107,7 +115,7 @@ AugmentedJar(
         "//third_party/java_src/gwt:gwt-user-full",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
-        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-classes",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
     ],
     constraints = [],
     dojarjar = 1,
@@ -406,26 +414,14 @@ java_library(
 # Instead we assume it will be added by a wrapper rule.)
 AugmentedJar(
     name = "gwt-testing",
-    srcs = glob(
-        ["src/com/google/gwt/junit/**/*.java"],
-        exclude = [
-            "**/super/**",
-            "**/RunStyleSelenium.java",
-        ],
-    ),
+    srcs = [],
+    added_jars = [
+        ":libgwt-testing-bare.jar",
+    ],
     added_root_globs = {
         "src": ["src/com/google/gwt/junit/**"],
         "super": ["super/com/google/gwt/junit/**"],
     },
-    build_deps = [
-        ":gwt-user-classes-src",
-        "//third_party/java_src/gwt/svn/tools:dev_deps",
-        # Safe to depend on servlet_api_3 because build_deps doesn't leak
-        "//third_party/java_src/gwt/svn/tools:servlet_api_3",
-        "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
-        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-classes",
-        "//third_party/java/junit",
-    ],
     dojarjar = 1,
     exclude_glob = [
         "**/package.html",
@@ -434,10 +430,33 @@ AugmentedJar(
     ],
 )
 
+# The gwt-testing classes for GWT internal use only.
+# They must be jarjar-ed and dependencies stripped before exposing to google3.
+java_library(
+    name = "gwt-testing-bare",
+    testonly = 1,
+    srcs = glob(
+        ["src/com/google/gwt/junit/**/*.java"],
+        exclude = [
+            "**/super/**",
+            "**/RunStyleSelenium.java",
+        ],
+    ),
+    deps = [
+        ":gwt-user-bare",
+        "//third_party/java/junit",
+        "//third_party/java_src/gwt/svn/tools:dev_deps",
+        "//third_party/java_src/gwt/svn/tools:servlet_api_3",
+        "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
+    ],
+)
+
 # === TESTS ===
 
 AugmentedJar(
     name = "user-test-code",
+    testonly = 1,
     srcs = glob(
         [
             "test/**/*.java",
@@ -453,16 +472,17 @@ AugmentedJar(
         "test-super",
         "test_i18n_bar",
     ],
+    # For build_deps we should use pre-jarjar dependencies (-bare)
     build_deps = [
-        ":gwt-user-classes",
-        ":gwt-user-classes_jardeps",
-        ":gwt-testing",
+        ":gwt-user-bare",
+        ":gwt-testing-bare",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
-        # Safe to depend on servlet_api_3 because build_deps doesn't leak
+        "//third_party/java_src/gwt/svn/tools:user_deps",
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
-        "//third_party/java_src/gwt/svn/trunk/dev",
-        # for pre-jarjar imports
-        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-classes",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
+        "//third_party/java_src/gwt/svn/trunk/dev:dev-test-code-bare",
+        # for @GwtScriptOnly
+        "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
     ],
     constraints = [
         "gwt",
@@ -472,15 +492,14 @@ AugmentedJar(
     export_deps = [
         "//third_party/java_src/gwt:gwt-dev",  # for the post-jarjar names
         "//third_party/java_src/gwt:gwt",
+        "//third_party/java_src/gwt/svn/trunk/dev:dev-test-code",
     ],
-    # visibility = ["//third_party/java_src/gwt:friends"],
     deps = [
         "//third_party/java/jsr305_annotations",
         "//third_party/java/junit",
         "//third_party/java_src/gwt/svn/tools:testtool_deps",
         "//third_party/java_src/gwt/svn/tools:validator_deps",
         "//third_party/java_src/gwt/svn/tools:validator_tck_deps",
-        "//third_party/java_src/gwt/svn/trunk/dev:dev-test-code",
     ],
 )
 
