@@ -84,16 +84,8 @@ public class CloseableJarHandler extends sun.net.www.protocol.jar.Handler {
       return jarUrlConnection.getContentEncoding();
     }
 
-    @Override
-    public int getContentLength() {
-      return jarUrlConnection.getContentLength();
-    }
-
-    @Override
-    public long getContentLengthLong() {
-      return jarUrlConnection.getContentLengthLong();
-    }
-
+    // No need to override getContentLegth() and getContentLengthLong() because they get rerouted
+    // to getHeaderField...()
     @Override
     public String getContentType() {
       return jarUrlConnection.getContentType();
@@ -129,29 +121,15 @@ public class CloseableJarHandler extends sun.net.www.protocol.jar.Handler {
       return jarUrlConnection.getHeaderField(n);
     }
 
+    // No need to override getHeaderField<Blah> as they all get routed to get getHeaderField()
     @Override
     public String getHeaderField(String name) {
       return jarUrlConnection.getHeaderField(name);
     }
 
     @Override
-    public long getHeaderFieldDate(String name, long defaultValue) {
-      return jarUrlConnection.getHeaderFieldDate(name, defaultValue);
-    }
-
-    @Override
-    public int getHeaderFieldInt(String name, int defaultValue) {
-      return jarUrlConnection.getHeaderFieldInt(name, defaultValue);
-    }
-
-    @Override
     public String getHeaderFieldKey(int n) {
       return jarUrlConnection.getHeaderFieldKey(n);
-    }
-
-    @Override
-    public long getHeaderFieldLong(String name, long defaultValue) {
-      return jarUrlConnection.getHeaderFieldLong(name, defaultValue);
     }
 
     @Override
