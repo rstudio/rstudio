@@ -20,6 +20,7 @@ import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
+import com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated;
 
 /**
  * Tests {@link StackTraceCreator} in the emulated mode.
@@ -148,7 +149,8 @@ public class StackTraceCreatorEmulTest extends StackTraceCreatorTest {
 
   private static JsArrayString sample() {
     if (GWT.isScript()) {
-      return GWT.<Collector> create(Collector.class).collect();
+      Collector collector = new CollectorEmulated();
+      return collector.inferFrom(collector.collect());
     } else {
       return JavaScriptObject.createArray().cast();
     }
