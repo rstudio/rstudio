@@ -110,9 +110,9 @@
               <td
                 align="center"
                 style="width:50%;padding-right:5px;">
-                <w:TextButton
+                <g:Button
                   ui:field="saveButton"
-                  addStyleNames="{style.button}">Edit</w:TextButton>
+                  addStyleNames="{style.button}">Edit</g:Button>
               </td>
               <td
                 align="center"

@@ -2,7 +2,6 @@
 <ui:UiBinder
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
-  xmlns:w="urn:import:com.google.gwt.widget.client"
   xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
   <ui:style>
@@ -118,17 +117,16 @@
               <td
                 align="center"
                 style="width:50%;padding-right:5px;">
-                <w:TextButton
+                <g:Button
                   ui:field="saveButton"
-                  addStyleNames="{style.button}">Done</w:TextButton>
+                  addStyleNames="{style.button}">Done</g:Button>
               </td>
               <td
                 align="center"
                 style="width:50%;padding-left:5px;">
-                <w:TextButton
+                <g:Button
                   ui:field="deleteButton"
-                  decoration="NEGATIVE"
-                  addStyleNames="{style.button}">Delete Item</w:TextButton>
+                  addStyleNames="{style.button}">Delete Item</g:Button>
               </td>
             </tr>
           </table>

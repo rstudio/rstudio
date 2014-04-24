@@ -25,13 +25,13 @@ import com.google.gwt.sample.mobilewebapp.presenter.task.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.widget.client.TextButton;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 
 /**
@@ -84,7 +84,7 @@ public class MobileTaskEditView extends Composite implements TaskEditView {
 
   @UiField
   @Ignore
-  TextButton deleteButton;
+  Button deleteButton;
   @UiField
   DateButton dueDateEditor;
   final EditorDecorator<String> nameEditor;
@@ -97,7 +97,7 @@ public class MobileTaskEditView extends Composite implements TaskEditView {
   TextBoxBase notesEditor;
   @UiField
   @Ignore
-  TextButton saveButton;
+  Button saveButton;
 
   private final Driver driver = GWT.create(Driver.class);
 
