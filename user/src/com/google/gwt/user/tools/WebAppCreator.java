@@ -533,23 +533,22 @@ public final class WebAppCreator {
     String gwtValidationSourcesPath = installPath + '/' + "validation-api-1.0.0.GA-sources.jar";
 
     // Generate a DTD reference.
-    String gwtModuleDtd = "\n<!-- Using DTD from SVN 'trunk'. You probably want to change this"
-        + " to a specific, release tagged, DTD -->"
+    String gwtModuleDtd = "\n<!-- Custom-built GWT. You probably want to uncomment the DOCTYPE "
+        + "and point it to your GWT checkout"
         + "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
         + About.getGwtVersionNum()
-        + "//EN\" \"http://google-web-toolkit.googlecode.com/svn/trunk/"
-        + "/distro-source/core/src/gwt-module.dtd\">";
+        + "//EN\" \"file:///path/to/gwt/checkout/distro-source/core/src/gwt-module.dtd\">"
+        + "\n-->";
     GwtVersion gwtVersion = About.getGwtVersionObject();
     if (!gwtVersion.isNoNagVersion() && !gwtVersion.equals(new GwtVersion(null))) {
+      // TODO: put gwt-module.dtd online at gwtproject.org
       gwtModuleDtd = "\n<!--"
           + "\n  When updating your version of GWT, you should also update this DTD reference,"
           + "\n  so that your app can take advantage of the latest GWT module capabilities."
           + "\n-->"
           + "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
           + About.getGwtVersionNum() + "//EN\""
-          + "\n  \"http://google-web-toolkit.googlecode.com/svn/tags/"
-          + About.getGwtVersionNum()
-          + "/distro-source/core/src/gwt-module.dtd\">";
+          + "\n  \"file:///" + installPath + "/gwt-module.dtd\">";
     }
 
     // Compute module package and name.
@@ -631,7 +630,7 @@ public final class WebAppCreator {
     if (libDirectory.exists()) {
       for (File file : libDirectory.listFiles()) {
         if (file.getName().toLowerCase().endsWith(".jar")) {
-          serverLibs.append("   <classpathentry kind=\"lib\" path=\"war/WEB-INF/lib/");
+          serverLibs.append("   <classpathentry kind=\"lib\" path=\"" + warFolder + "/WEB-INF/lib/");
           serverLibs.append(file.getName());
           serverLibs.append("\"/>\n");
         }
