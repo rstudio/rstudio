@@ -33,11 +33,19 @@ import javax.annotation.Nullable;
 /**
  * Represents a module in a module tree, knows how to build that module into an output library and
  * checks output library freshness.
+ * <p>
+ * Build requests will first build all dependency libraries (even if some fail). But the current
+ * target will only be built if all dependency library builds were successful.
  */
 class BuildTarget {
 
+  /**
+   * Represents a combination of whether output is current and whether output is good. For example
+   * if a build is run and it fails, then output is fresh and does not need to be rebuilt but it is
+   * also known to be bad.
+   */
   public enum OutputFreshness {
-    FRESH, STALE, UNKNOWN;
+    FRESH_KNOWN_BAD, FRESH_KNOWN_GOOD, STALE, UNKNOWN;
   }
 
   public static final Function<BuildTarget, String> LIBRARY_PATH_FUNCTION =
@@ -77,35 +85,40 @@ class BuildTarget {
   }
 
   public boolean build(TreeLogger logger, boolean link) {
-    if (outputFreshness == OutputFreshness.FRESH) {
+    if (outputFreshness == OutputFreshness.FRESH_KNOWN_GOOD
+        || outputFreshness == OutputFreshness.FRESH_KNOWN_BAD) {
       logger.log(TreeLogger.SPAM, formatReusingCachedLibraryMessage(canonicalModuleName));
-      return true;
+      return outputFreshness == OutputFreshness.FRESH_KNOWN_GOOD;
     }
 
+    boolean dependencyBuildsSucceeded = true;
     // Build all my dependencies before myself.
     for (BuildTarget dependencyBuildTarget : dependencyBuildTargets) {
-      // If any dependency fails to build.
-      if (!dependencyBuildTarget.build(logger)) {
-        // Then I have failed to build as well.
-        return false;
-      }
+      // If any dependency fails to build then I have failed to build as well.
+      dependencyBuildsSucceeded &= dependencyBuildTarget.build(logger);
+    }
+    if (!dependencyBuildsSucceeded) {
+      outputFreshness = OutputFreshness.FRESH_KNOWN_BAD;
+      return false;  // Build failed.
     }
 
     TreeLogger branch =
         logger.branch(TreeLogger.INFO, formatCompilingModuleMessage(canonicalModuleName));
-    boolean buildSucceeded;
+    boolean thisBuildSucceeded;
     try {
       RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME.clear();
       LibraryCompiler libraryCompiler = new LibraryCompiler(computeCompileOptions(link));
       libraryCompiler.setResourceLoader(buildTargetOptions.getResourceLoader());
-      buildSucceeded = libraryCompiler.run(branch);
+      thisBuildSucceeded = libraryCompiler.run(branch);
       module = libraryCompiler.getModule();
     } catch (Throwable t) {
       logger.log(TreeLogger.ERROR, t.getMessage());
+      outputFreshness = OutputFreshness.FRESH_KNOWN_BAD;
       return false;
     }
-    outputFreshness = OutputFreshness.FRESH;
-    return buildSucceeded;
+    outputFreshness =
+        thisBuildSucceeded ? OutputFreshness.FRESH_KNOWN_GOOD : OutputFreshness.FRESH_KNOWN_BAD;
+    return thisBuildSucceeded;
   }
 
   public CompilerOptions computeCompileOptions(boolean link) {
@@ -180,7 +193,7 @@ class BuildTarget {
     }
 
     logger.log(TreeLogger.SPAM, "Library " + canonicalModuleName + " is fresh");
-    outputFreshness = OutputFreshness.FRESH;
+    outputFreshness = OutputFreshness.FRESH_KNOWN_GOOD;
   }
 
   public String getCanonicalModuleName() {
@@ -202,8 +215,8 @@ class BuildTarget {
     return transitiveDependencyBuildTargets;
   }
 
-  public boolean isOutputFresh() {
-    return outputFreshness == OutputFreshness.FRESH;
+  public boolean isOutputFreshAndGood() {
+    return outputFreshness == OutputFreshness.FRESH_KNOWN_GOOD;
   }
 
   public boolean link(TreeLogger logger) {

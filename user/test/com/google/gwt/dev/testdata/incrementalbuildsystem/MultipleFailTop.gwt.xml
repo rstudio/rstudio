@@ -1,0 +1,4 @@
+<module>
+  <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.MultipleFailLeft" />
+  <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.MultipleFailRight" />
+</module>

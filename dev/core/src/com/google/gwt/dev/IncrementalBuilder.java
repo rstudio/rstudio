@@ -201,7 +201,7 @@ public class IncrementalBuilder {
     logger.log(TreeLogger.INFO, String.format("%.3fs -- Computing per-target output freshness",
         computeOutputFreshnessDurationMs / 1000d));
 
-    if (rootBuildTarget.isOutputFresh()) {
+    if (rootBuildTarget.isOutputFreshAndGood()) {
       logger.log(TreeLogger.INFO, NO_FILES_HAVE_CHANGED);
       return BuildResultStatus.SUCCESS_NO_CHANGES;
     }

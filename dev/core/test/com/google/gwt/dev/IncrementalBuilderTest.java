@@ -183,6 +183,25 @@ public class IncrementalBuilderTest extends TestCase {
         IncrementalBuilder.formatCircularModulePathMessage(circularModulePath));
   }
 
+  public void testContinuesAfterFirstFailure() throws MalformedURLException {
+    UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
+    loggerBuilder.setLowestLogLevel(TreeLogger.INFO);
+    loggerBuilder.expectInfo(BuildTarget.formatCompilingModuleMessage(
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.MultipleFailLeft"), null);
+    loggerBuilder.expectInfo(BuildTarget.formatCompilingModuleMessage(
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.MultipleFailRight"), null);
+    UnitTestTreeLogger testLogger = loggerBuilder.createLogger();
+
+    IncrementalBuilder incrementalBuilder = createIncrementalBuilder(
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.MultipleFailTop",
+        createGwtClassPathResourceLoader());
+    incrementalBuilder.clean();
+
+    boolean buildSucceeded = incrementalBuilder.build(testLogger).isSuccess();
+    assertFalse(buildSucceeded);
+    testLogger.assertLogEntriesContainExpected();
+  }
+
   public void testDuplicateGeneratorOutput() throws MalformedURLException {
     String duplicateCompilationUnitError = LibraryGroup.formatDuplicateCompilationUnitMessage(
         "com.google.gwt.dev.Bar", "com.google.gwt.dev.testdata.incrementalbuildsystem.ParallelLeft",
