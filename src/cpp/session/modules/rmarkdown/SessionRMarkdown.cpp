@@ -605,6 +605,7 @@ private:
       // we want to discover packages in the libraries visible to this process,
       // so forward the R_LIBS environment variable to the child process
       core::system::Options childEnv;
+      core::system::environment(&childEnv);
       std::string libPaths = module_context::libPathsString();
       if (!libPaths.empty())
       {
@@ -673,7 +674,7 @@ private:
 
          // try to get the template's YAML; without the YAML the template is
          // invalid, so skip this template if it has no YAML
-         FilePath yamlPath(path + "/template.yaml");
+         FilePath yamlPath = FilePath(path).complete("template.yaml");
          if (!yamlPath.exists())
             continue;
 
