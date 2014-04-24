@@ -383,8 +383,9 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
       else
       {
          
-         // show urls that aren't in iframes externally
-         if (!iframe)
+         // show urls that aren't in iframes, or that are followed from
+         // satellite windows
+         if (!iframe || webView != [[MainFrameController instance] webView])
             desktop::utils::browseURL(url);
       }
       
