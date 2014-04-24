@@ -121,6 +121,11 @@ public class CompilationProblemReporter {
         Messages.HINT_CHECK_MODULE_NONCLIENT_SOURCE_DECL.log(logger, null);
       }
     } else if (!missingType.equals("java.lang.Object")) {
+      boolean strictSourceResources =
+          compilationState.getCompilerContext().getOptions().enforceStrictSourceResources();
+      if (strictSourceResources) {
+        Messages.HINT_STRICT_SOURCE_ENTRIES.log(logger, null);
+      }
       Messages.HINT_CHECK_TYPENAME.log(logger, missingType, null);
       Messages.HINT_CHECK_CLASSPATH_SOURCE_ENTRIES.log(logger, null);
     }

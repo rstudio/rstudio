@@ -183,9 +183,15 @@ public class CompilationState {
   public Collection<CompilationUnit> getCompilationUnits() {
     return exposedUnits;
   }
+
+  public CompilerContext getCompilerContext() {
+    return compilerContext;
+  }
+
   public int getGeneratedSourceCount() {
     return generatedSourceCount;
   }
+
   public int getStaticSourceCount() {
     return staticSourceCount;
   }

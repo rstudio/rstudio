@@ -27,6 +27,10 @@ public class Messages {
   public static final Message0 HINT_CHECK_CLASSPATH_SOURCE_ENTRIES = new Message0(
       TreeLogger.ERROR,
       "Hint: Check that your classpath includes all required source roots");
+  public static final Message0 HINT_STRICT_SOURCE_ENTRIES = new Message0(TreeLogger.ERROR,
+      "Hint: Strict source inclusion is active and \"client\" directories "
+      + "are not being implicitly included. Check that you don't need to "
+      + "add some <source path=\"client\" /> entries.");
 
   public static final Message0 HINT_CHECK_INHERIT_CORE = new Message0(
       TreeLogger.ERROR,
