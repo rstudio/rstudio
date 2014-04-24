@@ -308,9 +308,19 @@ public class JavaScriptExceptionTest extends GWTTestCase {
 
   private static void assertTypeError(JavaScriptException e) {
     assertEquals("TypeError", e.getName());
-    assertTrue(e.getDescription().contains("notExistsWillThrowTypeError") || isIE8());
-    assertTrue(e.isThrownSet());
+    assertTrue("e.isThrownSet() for a TypeError", e.isThrownSet());
     assertMessage(e);
+
+    if (isIE8()) {
+      return;
+    }
+
+    String description = e.getDescription();
+    // The description depends on the browser.
+    // On Chrome 34, the description is: "undefined is not a function".
+    if (description.isEmpty()) {
+      fail("TypeError description should not be empty");
+    }
   }
 
   private static boolean isIE8() {
