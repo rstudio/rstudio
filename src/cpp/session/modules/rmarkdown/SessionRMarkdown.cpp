@@ -706,8 +706,8 @@ private:
          if (package == "rstudio" && name == "Shiny Document")
          {
             using namespace module_context;
-            if (!isPackageVersionInstalled("shiny", "0.9.1.9002") ||
-                !isPackageVersionInstalled("knitr", "1.5.30"))
+            if (!isPackageVersionInstalled("shiny", "0.9.1.9005") ||
+                !isPackageVersionInstalled("knitr", "1.5.32"))
             {
                continue;
             }
