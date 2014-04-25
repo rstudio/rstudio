@@ -156,6 +156,12 @@ Error Plot::renderFromDisplay()
    
 Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
 {
+   // if our baseDirPath_ no longer exists it means that someone
+   // has closed the graphics device underneath it, in this case
+   // just silently return success
+   if (!baseDirPath_.exists())
+      return Success();
+
    // generate a new storage uuid
    std::string storageUuid = core::system::generateUuid();
  
