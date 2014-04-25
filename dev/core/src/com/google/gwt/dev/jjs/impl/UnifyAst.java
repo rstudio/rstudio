@@ -468,6 +468,10 @@ public class UnifyAst {
           error(gwtCreateCall, "Rebind result '" + answer + "' cannot be abstract");
           return null;
         }
+        if (isJso((JClassType) answerType)) {
+          error(gwtCreateCall, "Rebind result '" + answer + "' cannot be a JSO");
+          return null;
+        }
         JExpression result = JGwtCreate.createInstantiationExpression(gwtCreateCall.getSourceInfo(),
             (JClassType) answerType, currentMethod.getEnclosingType());
         if (result == null) {
