@@ -380,13 +380,10 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
                          forElement: [actionInformation
                                       objectForKey:WebActionElementKey]];
       }
-      else
+      // show external links in a new window
+      else if (navType == WebNavigationTypeLinkClicked)
       {
-         
-         // show urls that aren't in iframes, or that are followed from
-         // satellite windows
-         if (!iframe || webView != [[MainFrameController instance] webView])
-            desktop::utils::browseURL(url);
+         desktop::utils::browseURL(url);
       }
       
       [listener ignore];
