@@ -129,7 +129,13 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // ignore failures and completed Shiny docs (the latter are handled when
       // the server starts rather than when the render process is finished)
       final RmdRenderResult result = event.getResult();
-      if (!result.getSucceeded() || result.isShinyDocument())
+      if (result.isShinyDocument())
+      {
+         currentShinyFile_ = null;
+         currentShinyUrl_ = null;
+         return;
+      }
+      if (!result.getSucceeded())
          return;
       
       if (result.hasShinyContent() && !result.isShinyDocument())
