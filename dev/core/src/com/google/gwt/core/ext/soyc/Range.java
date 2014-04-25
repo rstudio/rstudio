@@ -95,6 +95,13 @@ public final class Range {
   }
 
   /**
+   * Returns a copy with the end moved.
+   */
+  public Range withNewEnd(int newEnd, int newEndLine, int newEndColumn) {
+    return new Range(start, newEnd, startLine, startColumn, newEndLine, newEndColumn);
+  }
+
+  /**
    * Return <code>true</code> if the given Range lies wholly within the Range.
    */
   public boolean contains(Range o) {

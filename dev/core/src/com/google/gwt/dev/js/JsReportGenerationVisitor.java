@@ -37,6 +37,12 @@ public class JsReportGenerationVisitor extends
   private final Map<Range, SourceInfo> sourceInfoMap = new HashMap<Range, SourceInfo>();
   private final TextOutput out;
 
+  /**
+   * The key of the most recently added Javascript range for a descendant
+   * of the current node.
+   */
+  private Range previousChildKey = null;
+
   public JsReportGenerationVisitor(TextOutput out, JavaToJavaScriptMap map) {
     super(out, map);
     this.out = out;
@@ -44,6 +50,7 @@ public class JsReportGenerationVisitor extends
 
   @Override
   protected <T extends JsVisitable> T generateAndBill(T node, JsName nameToBillTo) {
+    previousChildKey = null; // It's not our child because we haven't visited our children yet.
 
     if (!(node instanceof HasSourceInfo)) {
       return super.generateAndBill(node, nameToBillTo);
@@ -57,13 +64,29 @@ public class JsReportGenerationVisitor extends
     // Write some JavaScript (changing the position).
     T toReturn = super.generateAndBill(node, nameToBillTo);
 
-    Range javaScriptRange = new Range(beforePosition, out.getPosition(),
+    if (out.getPosition() > beforePosition) {
+      // Something was printed, so bill it.
+      Range javaScriptRange = new Range(beforePosition, out.getPosition(),
         beforeLine, beforeColumn, out.getLine(), out.getColumn());
+      SourceInfo target = ((HasSourceInfo) node).getSourceInfo();
+      sourceInfoMap.put(javaScriptRange, target);
 
-    SourceInfo target = ((HasSourceInfo) node).getSourceInfo();
-    sourceInfoMap.put(javaScriptRange, target);
+      previousChildKey = javaScriptRange; // Report this child to its parent.
+    }
 
     return toReturn;
+  }
+
+  @Override
+  protected void billChildToHere() {
+    if (previousChildKey != null && previousChildKey.getEnd() < out.getPosition()) {
+      SourceInfo value = sourceInfoMap.get(previousChildKey);
+      Range newKey = previousChildKey.withNewEnd(out.getPosition(), out.getLine(),
+          out.getColumn());
+      sourceInfoMap.remove(previousChildKey);
+      sourceInfoMap.put(newKey, value);
+      previousChildKey = newKey;
+    }
   }
 
   @Override

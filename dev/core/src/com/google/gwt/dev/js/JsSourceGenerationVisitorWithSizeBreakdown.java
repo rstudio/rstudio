@@ -17,8 +17,6 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor;
@@ -120,29 +118,6 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
       billChars(nameToBillTo, out.getPosition() - start);
       return retValue;
     }
-  }
-
-  protected JDeclaredType getDirectlyEnclosingType(JsName nameToBillTo) {
-    if (nameToBillTo == null) {
-      return null;
-    }
-
-    JDeclaredType type = map.nameToType(nameToBillTo);
-    if (type != null) {
-      return type;
-    }
-
-    JMethod method = map.nameToMethod(nameToBillTo);
-    if (method != null) {
-      return method.getEnclosingType();
-    }
-
-    JField field = map.nameToField(nameToBillTo);
-    if (field != null) {
-      return field.getEnclosingType();
-    }
-
-    return null;
   }
 
   private void billChars(JsName nameToBillTo, int chars) {
