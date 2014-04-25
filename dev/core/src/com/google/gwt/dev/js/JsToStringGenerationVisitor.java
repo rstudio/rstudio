@@ -935,6 +935,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
             _semi();
           }
           _newlineOpt();
+          billChildToHere();
         }
       }
       if (shouldRecordPositions) {
