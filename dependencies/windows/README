@@ -2,10 +2,10 @@
 Install Required Applications
 =============================================================================
 
-Building RStudio requires installations of a number of applications 
+Building RStudio requires installations of a number of applications
 (including R). These applications include:
 
-R:         http://www.r-project.org/ 
+R:         http://www.r-project.org/
 CMake:     http://www.cmake.org/ (choose "Add to system path" during install)
 Java:      http://www.oracle.com/technetwork/java/javase/downloads
 Ant:       http://code.google.com/p/winant
@@ -21,7 +21,7 @@ the QtSDK from this URL:
 https://s3.amazonaws.com/rstudio-buildtools/QtSdk-online-win-x86-v1_2_1.exe
 
 Note that Mingw 4.4 and the MinGW version of Qt are not installed
-by default so you need to perform a custom installation and 
+by default so you need to perform a custom installation and
 modify the following defaults:
 
 - Under Development Tools, select the MinGW variant of the Qt
@@ -31,16 +31,16 @@ framework (the last of the variants listed)
 RStudio is built against version 4.8.3 of the Qt Framework, so you should
 install it from here:
 
-http://download.qt-project.org/official_releases/qt/4.8/4.8.3/qt-win-opensource-4.8.3-mingw.exe
+http://download.qt-project.org/archive/qt/4.8/4.8.3/qt-win-opensource-4.8.3-mingw.exe
 
 
 Update System Path
 =============================================================================
 
-Building RStudio requires that the CMake, Qt, and MingGW executables be 
+Building RStudio requires that the CMake, Qt, and MingGW executables be
 accessible via the system path (note that CMake should already be accessible
 via the CMake installer if the "Add to system path" option was chosen during
-installation). For Qt and MinGW you should ensure that the following 
+installation). For Qt and MinGW you should ensure that the following
 additional directories are available on the path:
 
 C:\Qt\4.8.3\bin
