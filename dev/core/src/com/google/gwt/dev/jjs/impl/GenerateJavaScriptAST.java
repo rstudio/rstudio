@@ -2980,6 +2980,12 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
+      if (x.getExportName() != null && x instanceof JConstructor) {
+        // exported ctors always considered live
+        liveCtors.add((JConstructor) x);
+        // could be called from JS, so clinit must be called from body
+        crossClassTargets.add(x);
+      }
       currentMethod = null;
     }
 
