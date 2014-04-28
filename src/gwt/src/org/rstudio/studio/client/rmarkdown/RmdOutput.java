@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -63,7 +64,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RmdRenderCompletedEvent.Handler,
                                   RmdShinyDocStartedEvent.Handler,
                                   RenderRmdEvent.Handler,
-                                  RenderRmdSourceEvent.Handler
+                                  RenderRmdSourceEvent.Handler,
+                                  RestartStatusEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, RmdOutput> {}
@@ -94,6 +96,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       eventBus.addHandler(RmdShinyDocStartedEvent.TYPE, this);
       eventBus.addHandler(RenderRmdEvent.TYPE, this);
       eventBus.addHandler(RenderRmdSourceEvent.TYPE, this);
+      eventBus.addHandler(RestartStatusEvent.TYPE, this);
 
       binder.bind(commands, this);
       
@@ -198,11 +201,56 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
       if (event.getSourceFile().equals(currentShinyFile_))
       {
+         // this is a re-render of the current Shiny document; we can reload
+         // it in place
          displayHTMLRenderResult(
                RmdRenderResult.createFromShinyUrl(currentShinyFile_,
                                                   currentShinyUrl_));
       }
-      else if (currentShinyFile_ != null)
+      else 
+      {
+         performRenderOperation(renderOperation);
+      }
+   }
+   
+   @Override
+   public void onRenderRmdSource(final RenderRmdSourceEvent event)
+   {
+      performRenderOperation(new Operation() {
+         @Override
+         public void execute()
+         {
+            server_.renderRmdSource(event.getSource(),
+                                    new SimpleRequestCallback<Boolean>()); 
+         }
+
+      });
+   }
+
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      // preemptively close the satellite window when R restarts (so we don't
+      // wait around if the session doesn't get a chance to tell us about
+      // terminated renders)
+      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED) 
+      {
+         satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
+         restarting_ = true;
+      }
+      else
+      {
+         restarting_ =  false;
+      }
+   }
+
+   // Private methods ---------------------------------------------------------
+   
+   // perform the given render after terminating the currently running Shiny
+   // application if there is one
+   private void performRenderOperation(final Operation renderOperation)
+   {
+      if (currentShinyFile_ != null)
       {
          // there is a Shiny doc running; we'll need to terminate it before 
          // we can render this document
@@ -220,8 +268,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             {
                globalDisplay_.showErrorMessage("Shiny Terminate Failed", 
                      "The Shiny document " + currentShinyFile_ + " needs to " +
-                     "be stopped before the document " + event.getSourceFile() +
-                     " can be rendered.");
+                     "be stopped before the document can be rendered.");
             }
          });
       }
@@ -230,15 +277,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          renderOperation.execute();
       }
    }
-   
-   @Override
-   public void onRenderRmdSource(RenderRmdSourceEvent event)
-   {
-      server_.renderRmdSource(event.getSource(),
-                              new SimpleRequestCallback<Boolean>()); 
-   }
-
-   // Private methods ---------------------------------------------------------
    
    private void rerenderAsShiny(RmdRenderResult result)
    {
@@ -451,7 +489,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                        params.getAnchor());
       
       // if this is a Shiny document, stop the associated process
-      if (params.isShinyDocument())
+      if (params.isShinyDocument() && !restarting_)
       {
          server_.terminateRenderRmd(true, new VoidServerRequestCallback());
       }
@@ -490,6 +528,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final Provider<ViewFilePanel> pViewFilePanel_;
    private final RMarkdownServerOperations server_;
    private final EventBus events_;
+   private boolean restarting_ = false;
 
    // stores the last scroll position of each document we know about: map
    // of path to position

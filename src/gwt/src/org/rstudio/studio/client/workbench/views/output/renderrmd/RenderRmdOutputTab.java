@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
@@ -33,7 +34,8 @@ public class RenderRmdOutputTab extends DelayLoadWorkbenchTab<RenderRmdOutputPre
                 DelayLoadTabShim<RenderRmdOutputPresenter, RenderRmdOutputTab>
       implements RmdRenderStartedEvent.Handler,
                  RmdRenderOutputEvent.Handler,
-                 RmdRenderCompletedEvent.Handler
+                 RmdRenderCompletedEvent.Handler,
+                 RestartStatusEvent.Handler
    {
       abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
@@ -50,6 +52,7 @@ public class RenderRmdOutputTab extends DelayLoadWorkbenchTab<RenderRmdOutputPre
       events.addHandler(RmdRenderStartedEvent.TYPE, shim);
       events.addHandler(RmdRenderOutputEvent.TYPE, shim);
       events.addHandler(RmdRenderCompletedEvent.TYPE, shim);
+      events.addHandler(RestartStatusEvent.TYPE, shim);
    }
 
    @Override

@@ -27,6 +27,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
@@ -44,7 +45,8 @@ import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane
 public class RenderRmdOutputPresenter extends BasePresenter
    implements RmdRenderStartedEvent.Handler,
               RmdRenderOutputEvent.Handler,
-              RmdRenderCompletedEvent.Handler
+              RmdRenderCompletedEvent.Handler,
+              RestartStatusEvent.Handler
 {
    @Inject
    public RenderRmdOutputPresenter(CompileOutputPaneFactory outputFactory,
@@ -148,6 +150,23 @@ public class RenderRmdOutputPresenter extends BasePresenter
           CompileError.showErrorList(event.getResult().getKnitrErrors()))
       {
          view_.showErrors(event.getResult().getKnitrErrors());
+      }
+   }
+
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      // when the restart finishes, clean up the view in case we didn't get a
+      // RmdCompletedEvent
+      if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED ||
+          !renderRunning_)
+         return;
+
+      view_.compileCompleted();
+      renderRunning_ = false;
+      if (switchToConsoleAfterRender_)
+      {
+         events_.fireEvent(new ConsoleActivateEvent(false)); 
       }
    }
    
