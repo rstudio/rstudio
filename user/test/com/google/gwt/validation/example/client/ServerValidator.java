@@ -31,7 +31,7 @@ public class ServerValidator
   public void initialize(ServerConstraint constraintAnnotation) {
     // Here I do something that will not compile on GWT
     @SuppressWarnings("unused")
-    Method[] methods = constraintAnnotation.getClass().getMethods();
+    Method[] methods = constraintAnnotation.annotationType().getMethods();
   }
 
   @Override
