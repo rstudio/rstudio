@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.linker.CastableTypeMap;
 import com.google.gwt.core.ext.linker.impl.StandardCastableTypeMap;
@@ -2640,11 +2642,31 @@ public class GenerateJavaScriptAST {
     private void createAndAddExportAssignment(JClassType x, List<JsStatement> globalStmts, JsNameRef exportRhs,
                                               Pair<String, String> exportNamespacePair) {
       JsNameRef leaf = new JsNameRef(x.getSourceInfo(), exportNamespacePair.getRight());
-      leaf.setQualifier(globalTemp.makeRef(x.getSourceInfo()));
+      leaf.setQualifier(getExportLhsQualifier(x, exportNamespacePair.getLeft()));
       JsExprStmt astStat = new JsExprStmt(x.getSourceInfo(),
            createAssignment(leaf,
                exportRhs));
       globalStmts.add(astStat);
+    }
+
+    private JsNameRef getExportLhsQualifier(JClassType x, String namespace) {
+      if (!jsExportClosureStyle) {
+        return globalTemp.makeRef(x.getSourceInfo());
+      }
+
+      if ("".equals(namespace)) {
+        return new JsNameRef(x.getSourceInfo(), "window");
+      }
+
+      String parts[] = namespace.split("\\.");
+      JsNameRef ref = new JsNameRef(x.getSourceInfo(), parts[parts.length - 1]);
+      JsNameRef toReturn = ref;
+      for (int i = parts.length - 2; i >= 0; i--) {
+        JsNameRef qualifier = new JsNameRef(x.getSourceInfo(), parts[i]);
+        ref.setQualifier(qualifier);
+        ref = qualifier;
+      }
+      return toReturn;
     }
 
     private String fixupExportName(JClassType x, String exportName) {
@@ -3121,6 +3143,8 @@ public class GenerateJavaScriptAST {
 
   private final JsProgram jsProgram;
 
+  private boolean jsExportClosureStyle;
+
   private Set<JConstructor> liveCtors = null;
 
   /**
@@ -3240,6 +3264,20 @@ public class GenerateJavaScriptAST {
         assert ident != null : field.getEnclosingType().getName() + "::" + field.getName() +
             " is not in the list of known fields.";
         specialObfuscatedFields.put(field, ident);
+      }
+    }
+
+    jsExportClosureStyle = false;
+    for (PropertyOracle propertyOracle : propertyOracles) {
+      ConfigurationProperty configProp = null;
+      try {
+        configProp = propertyOracle.getConfigurationProperty(
+          "js.export.closurestyle.fullyqualified");
+        if (configProp != null && "true".equals(configProp.getValues().get(0))) {
+          jsExportClosureStyle = true;
+          break;
+        }
+      } catch (BadPropertyValueException e) {
       }
     }
   }
