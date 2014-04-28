@@ -16,7 +16,6 @@ package org.rstudio.studio.client.rmarkdown.ui;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -56,7 +55,6 @@ public class RmdTemplateChooser extends Composite
    public RmdTemplateChooser()
    {
       initWidget(uiBinder.createAndBindUi(this));
-      dirLocation_.setText(FileSystemItem.HOME_PATH);
       listTemplates_.setItemPadding(2, Unit.PX);
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
@@ -118,6 +116,11 @@ public class RmdTemplateChooser extends Composite
       return state_;
    }
    
+   public void setTargetDirectory(String dir)
+   {
+      dirLocation_.setText(dir);
+   }
+
    // UI factory methods ------------------------------------------------------
 
    @UiFactory

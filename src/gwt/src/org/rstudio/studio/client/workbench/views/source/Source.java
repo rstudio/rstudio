@@ -879,6 +879,7 @@ public class Source implements InsertSourceHandler,
             {
                new NewRMarkdownDialog(
                   context,
+                  workbenchContext_,
                   uiPrefs_.documentAuthor().getGlobalValue(),
                   new OperationWithInput<NewRMarkdownDialog.Result>()
                   {

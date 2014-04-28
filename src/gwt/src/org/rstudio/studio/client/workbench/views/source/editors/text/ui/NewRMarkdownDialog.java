@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateChooser;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -152,6 +154,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
    public NewRMarkdownDialog(
          RMarkdownContext context,
+         WorkbenchContext workbench,
          String author,
          OperationWithInput<Result> operation)
    {
@@ -203,6 +206,13 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING);
       templateItem.addIcon(resources.templateIcon());
       listTemplates_.addItem(templateItem);
+      
+      // Save templates to the current project directory if available, and the
+      // current working directory if not
+      FileSystemItem dir = workbench.getActiveProjectDir();
+      if (dir == null)
+         dir = workbench.getCurrentWorkingDir();
+      templateChooser_.setTargetDirectory(dir.getPath());
 
       updateOptions(getSelectedTemplate());
    }
