@@ -551,12 +551,14 @@ public class RCompletionManager implements CompletionManager
       
       public void showHelp(QualifiedName selectedItem)
       {
-         helpStrategy_.showHelp(selectedItem, popup_) ;
+         if (helpStrategy_ != null)
+            helpStrategy_.showHelp(selectedItem, popup_) ;
       }
 
       public void showHelpTopic()
       {
-         helpStrategy_.showHelpTopic(popup_.getSelectedValue()) ;
+         if (helpStrategy_ != null)
+            helpStrategy_.showHelpTopic(popup_.getSelectedValue()) ;
       }
 
       @Override
