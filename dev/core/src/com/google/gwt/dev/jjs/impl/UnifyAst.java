@@ -848,13 +848,23 @@ public class UnifyAst {
      * to copy the exact semantics of ControlFlowAnalyzer.
      */
     for (JDeclaredType t : types) {
-      if (t instanceof JClassType && isJso((JClassType) t)) {
+      if (t instanceof JClassType && (isJso((JClassType) t)
+          || hasAnyExports(t))) {
         instantiate(t);
       }
       if (t instanceof JInterfaceType && ((JInterfaceType) t).isJsInterface()) {
         instantiate(t);
       }
     }
+  }
+
+  private boolean hasAnyExports(JDeclaredType t) {
+    for (JMethod method : t.getMethods()) {
+      if (method.getExportName() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean canAccessSuperMethod(JDeclaredType type, JMethod method) {

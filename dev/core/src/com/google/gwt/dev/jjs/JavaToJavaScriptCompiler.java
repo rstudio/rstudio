@@ -45,6 +45,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
+import com.google.gwt.dev.javac.typemodel.JConstructor;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.UnifiedAst.AST;
@@ -147,6 +148,7 @@ import org.xml.sax.SAXException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1066,6 +1068,28 @@ public abstract class JavaToJavaScriptCompiler {
       for (com.google.gwt.core.ext.typeinfo.JClassType singleJsoIntf :
           typeOracle.getSingleJsoImplInterfaces()) {
         allRootTypes.add(typeOracle.getSingleJsoImpl(singleJsoIntf).getQualifiedSourceName());
+      }
+
+      // find any types with @JsExport could be entry points as well
+      String jsExportAnn = "com.google.gwt.core.client.js.JsExport";
+      nextType: for (com.google.gwt.dev.javac.typemodel.JClassType type :
+          typeOracle.getTypes()) {
+        for (com.google.gwt.dev.javac.typemodel.JMethod meth : type.getMethods()) {
+          for (Annotation ann : meth.getAnnotations()) {
+            if (ann.annotationType().getName().equals(jsExportAnn)) {
+              allRootTypes.add(type.getQualifiedSourceName());
+              continue nextType;
+            }
+          }
+        }
+        for (JConstructor meth : type.getConstructors()) {
+          for (Annotation ann : meth.getAnnotations()) {
+            if (ann.annotationType().getName().equals(jsExportAnn)) {
+              allRootTypes.add(type.getQualifiedSourceName());
+              continue nextType;
+            }
+          }
+        }
       }
     }
 
