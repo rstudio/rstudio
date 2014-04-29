@@ -306,6 +306,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    {
       // cache the scroll position, so we can re-apply it when the page loads
       scrollPosition_ = getScrollPosition();
+      
+      // re-initialize the shiny frame with the URL (so it waits for the new 
+      // window object to become available after refresh)
+      if (isShiny_)
+         shinyFrame_.initialize(getCurrentUrl());
+
       showUrl(getCurrentUrl());
    }
 

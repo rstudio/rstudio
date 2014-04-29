@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.shiny;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.WindowEx;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -80,7 +79,6 @@ public class ShinyFrameHelper
    
    public void setScrollPosition(int pos)
    {
-      Debug.devlog("got request to scroll to " + pos);
       sendMethod(ShinyFrameMethod.create(METHOD_SET_SCROLL, pos));
    }
    
@@ -107,14 +105,11 @@ public class ShinyFrameHelper
       {
       case EVENT_SCROLL_CHANGE:
          scrollPosition_ = event.getIntData();
-         Debug.devlog("got scroll change: " + scrollPosition_);
          break;
       case EVENT_HASH_CHANGE:
          url_ = event.getStringData();
-         Debug.devlog("got hash change: " + url_);
          break;
       case EVENT_READY:
-         Debug.devlog("got doc ready for " + event.getOrigin());
          window_ = event.getSource();
          origin_ = event.getOrigin();
          break;
@@ -140,12 +135,7 @@ public class ShinyFrameHelper
                }
                if (window_ != null)
                {
-                  Debug.devlog("posted method " + method.getMethod());
                   window_.postMessage(method, origin_);
-               }
-               else
-               {
-                  Debug.devlog("gave up looking for window after " + windowRetries_ + " tries");
                }
                return false;
             }
@@ -153,7 +143,6 @@ public class ShinyFrameHelper
       }
       else 
       {
-         Debug.devlog("posted method " + method.getMethod());
          window_.postMessage(method, origin_);
       }
    }
@@ -170,6 +159,7 @@ public class ShinyFrameHelper
    private final static int MAX_WINDOW_RETRIES = 50;
    private final static int WINDOW_RETRY_DELAY = 100;
          
+   // event names (must match those in rsiframe.js)
    private final static String EVENT_SCROLL_CHANGE = "doc_scroll_change";
    private final static String EVENT_HASH_CHANGE = "doc_hash_change";
    private final static String EVENT_READY = "doc_ready";

@@ -28,6 +28,8 @@ var getOrigin = function() {
    return origin;
 };
 
+// property application ------------------------------------------------------
+
 // sets the location hash
 var setHash = function(hash) {
    document.location.hash = hash;
@@ -37,35 +39,29 @@ var setHash = function(hash) {
 // the document has loaded, so if the position specified is not yet available,
 // wait a few ms and try again.
 var setScrollPos = function(pos) {
-   console.log("setting scroll pos to " + pos);
    if (pos > document.body.scrollHeight) {
       window.setTimeout(function() { setScrollPos(pos) }, 500);
-      console.log("waiting: " + document.body.scrollHeight);
    } else {
       document.body.scrollTop = pos;
-      console.log("done setting scroll pos to " + pos);
    }
 }
 
+// cross-domain communication ------------------------------------------------
+
 // obtain and validate the origin
 var origin = getOrigin();
-console.log("rsiframe wants to connect to " + origin);
 if (origin === null)
    return;
 
 // set up cross-domain send/receive
 var send = function(data) {
-   console.log("rsiframe posted " + data.event + ", " + data.data);
    parent.postMessage(data, origin);
 };
 
 var recv = function(evt) {
-   console.log("rsiframe received from " + origin);
    // validate that message is from expected origin (i.e. our parent)
    if (evt.origin !== origin) 
       return;
-
-   console.log("rsiframe dispatch method " + evt.data.method);
 
    switch (evt.data.method) {
    case "rs_set_scroll_pos":
@@ -76,6 +72,8 @@ var recv = function(evt) {
       break;
    }
 }
+
+window.addEventListener("message", recv, false); 
 
 // document event handlers ---------------------------------------------------
 
@@ -94,7 +92,6 @@ var onHashChange = function(evt) {
    send({ event: "doc_hash_change", data: document.location.hash });
 }
 
-window.addEventListener("message", recv, false); 
 window.addEventListener("scroll", onScroll, false); 
 window.addEventListener("hashchange", onHashChange, false); 
 
@@ -102,6 +99,5 @@ window.addEventListener("hashchange", onHashChange, false);
 window.setTimeout(function() {
    send({ event: "doc_ready", data: null });
 }, 0);
-
 })();
 
