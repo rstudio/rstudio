@@ -69,7 +69,6 @@ function maven-deploy-file() {
             $sources \
             -DuniqueVersion=false"
   fi
-  echo $cmd
   eval $cmd
 }
 
