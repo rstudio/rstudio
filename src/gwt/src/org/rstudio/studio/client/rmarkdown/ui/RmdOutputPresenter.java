@@ -89,8 +89,8 @@ public class RmdOutputPresenter implements
             // the document is null at this point)
             try
             {
-               params_.setScrollPosition(view_.getScrollPosition());
-               params_.setAnchor(view_.getAnchor());
+               params_.setScrollPosition(getScrollPosition());
+               params_.setAnchor(getAnchor());
             }
             catch (Exception e)
             {
@@ -211,18 +211,12 @@ public class RmdOutputPresenter implements
 
    private int getScrollPosition()
    {
-      if (params_.isShinyDocument())
-         return 0;
-      else
-         return view_.getScrollPosition();
+      return view_.getScrollPosition();
    }
    
    private String getAnchor()
    {
-      if (params_.isShinyDocument())
-         return "";
-      else
-         return view_.getAnchor();
+      return view_.getAnchor();
    }
 
    private final Display view_;

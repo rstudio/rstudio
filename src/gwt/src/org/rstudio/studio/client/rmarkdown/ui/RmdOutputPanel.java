@@ -46,6 +46,7 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.shiny.ShinyFrameHelper;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
@@ -66,6 +67,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       super(commands);
       fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
+      shinyFrame_ = new ShinyFrameHelper();
    }
    
    @Override
@@ -87,6 +89,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          fileLabelSeparator_.setVisible(false);
          shinyUrl_ = StringUtil.makeAbsoluteUrl(params.getOutputUrl());
          isShiny_ = true;
+         shinyFrame_.initialize(shinyUrl_);
       }
       else
       {
@@ -237,47 +240,47 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       el.setAttribute("allowfullscreen", "");
       
       frame.navigate(url);
-      
-      // poll for document availability then perform initialization
-      // tasks once it's available (addLoadHandler wasn't always 
-      // getting called at least under Cocoa WebKit)
-      Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
 
-         @Override
-         public boolean execute()
-         {
-            // it's not currently possible to get read access to Shiny documents
-            // due to same-origin policy restrictions
-            if (isShiny_)
+      if (isShiny_)
+         shinyFrame_.setScrollPosition(scrollPosition_);
+      else
+      {
+         // poll for document availability then perform initialization
+         // tasks once it's available (addLoadHandler wasn't always 
+         // getting called at least under Cocoa WebKit)
+         Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+
+            @Override
+            public boolean execute()
+            {
+               // see if the document is ready
+               AnchorableFrame frame = getFrame();
+               if (frame == null)
+                  return true;
+               
+               IFrameElementEx iframe = frame.getIFrame();
+               if (iframe == null)
+                  return true;
+               
+               Document doc = iframe.getContentDocument();
+               if (doc == null)
+                  return true;
+
+               if (getNavigationMenu().isVisible())
+               {  
+                  fireSlideIndexChanged();
+                  slideChangeMonitor_.scheduleRepeating(100);
+               }
+               
+               // Even though the document exists, it may not have rendered all
+               // its content yet
+               setScrollPositionOnLoad();
+
                return false;
-            
-            // see if the document is ready
-            AnchorableFrame frame = getFrame();
-            if (frame == null)
-               return true;
-            
-            IFrameElementEx iframe = frame.getIFrame();
-            if (iframe == null)
-               return true;
-            
-            Document doc = iframe.getContentDocument();
-            if (doc == null)
-               return true;
-
-            if (getNavigationMenu().isVisible())
-            {  
-               fireSlideIndexChanged();
-               slideChangeMonitor_.scheduleRepeating(100);
             }
             
-            // Even though the document exists, it may not have rendered all
-            // its content yet
-            setScrollPositionOnLoad();
-
-            return false;
-         }
-         
-      }, 50);
+         }, 50);
+      }
        
       return frame;
    }
@@ -314,7 +317,10 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // in this case return 0
       try
       {
-         return getFrame().getIFrame().getContentDocument().getScrollTop();
+         if (isShiny_)
+            return shinyFrame_.getScrollPosition();
+         else
+            return getFrame().getIFrame().getContentDocument().getScrollTop();
       }
       catch(Exception ex)
       {
@@ -390,7 +396,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private String getCurrentUrl()
    {
       if (isShiny_)
-         return shinyUrl_;
+         return shinyFrame_.getUrl();
       else
          return getFrame().getIFrame().getContentDocument().getURL();
    }
@@ -467,6 +473,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
 
    private boolean isShiny_;
    private String shinyUrl_;
+   private ShinyFrameHelper shinyFrame_;
    
    private HandlerManager handlerManager_ = new HandlerManager(this);
 }
