@@ -20,6 +20,12 @@
 
 #include <core/system/PosixSched.hpp>
 
+#ifndef __APPLE__
+#include <linux/kernel.h>
+#else
+
+#endif
+
 // typedefs (in case we need indirection on these for porting)
 #include <sys/resource.h>
 typedef pid_t PidType;
@@ -74,6 +80,18 @@ core::Error setResourceLimit(ResourceLimit resourceLimit, RLimitType limit);
 core::Error setResourceLimit(ResourceLimit resourceLimit,
                              RLimitType soft,
                              RLimitType hard);
+
+
+struct SysInfo
+{
+   SysInfo() : cores(0), load1(0), load5(0), load15(0) {}
+   unsigned cores;
+   double load1;
+   double load5;
+   double load15;
+};
+
+core::Error systemInformation(SysInfo* pSysInfo);
 
 // core dump restriction
 core::Error restrictCoreDumps();

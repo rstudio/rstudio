@@ -22,7 +22,7 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-#include <core/system/PosixSched.hpp>
+#include <core/system/PosixSystem.hpp>
 
 using namespace core ;
 
@@ -39,25 +39,13 @@ int test_main(int argc, char * argv[])
          LOG_ERROR(error);
 
 
-      core::system::CpuAffinity cpuAffinity = core::system::emptyCpuAffinity();
+      core::system::SysInfo sysInfo;
+      error = core::system::systemInformation(&sysInfo);
 
-      cpuAffinity[1] = true;
-      cpuAffinity[3] = true;
-
-      error = core::system::setCpuAffinity(cpuAffinity);
-      if (error)
-         LOG_ERROR(error);
-
-      core::system::CpuAffinity cpuAffinity2;
-      error = core::system::getCpuAffinity(&cpuAffinity2);
-
-      BOOST_FOREACH(bool val, cpuAffinity2)
-      {
-         std::cerr << (val ? "true" : "false") << std::endl;
-      }
-
-      std::flush(std::cerr);
-
+      std::cerr << " Cores: " << sysInfo.cores << std::endl;
+      std::cerr << " Load1: " << sysInfo.load1 << std::endl;
+      std::cerr << " Load5: " << sysInfo.load5 << std::endl;
+      std::cerr << "Load15: " << sysInfo.load15 << std::endl;
 
       return EXIT_SUCCESS;
    }

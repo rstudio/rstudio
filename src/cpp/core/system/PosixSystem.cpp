@@ -40,6 +40,7 @@
 
 #ifndef __APPLE__
 #include <sys/prctl.h>
+#include <sys/sysinfo.h>
 #endif
 
 #include <boost/thread.hpp>
@@ -827,6 +828,25 @@ Error setResourceLimit(ResourceLimit resourceLimit,
       return systemError(errno, ERROR_LOCATION);
    else
       return Success();
+}
+
+Error systemInformation(SysInfo* pSysInfo)
+{
+   pSysInfo->cores = boost::thread::hardware_concurrency();
+
+#ifndef __APPLE__
+   struct sysinfo info;
+   if (::sysinfo(&info) == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   pSysInfo->load1 = info.loads[0] / (float)(1 << SI_LOAD_SHIFT);
+   pSysInfo->load5 = info.loads[1] / (float)(1 << SI_LOAD_SHIFT);
+   pSysInfo->load15 = info.loads[2] / (float)(1 << SI_LOAD_SHIFT);
+#else
+
+
+#endif
+   return Success();
 }
 
 Error restrictCoreDumps()
