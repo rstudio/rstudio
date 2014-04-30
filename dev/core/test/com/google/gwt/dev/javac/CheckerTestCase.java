@@ -34,21 +34,47 @@ import java.util.Set;
  */
 public abstract class CheckerTestCase extends TestCase {
 
+  /**
+   * A warning or error message.
+   */
+  protected static class Message {
+    private int line;
+    private Type logLevel;
+    private String message;
+
+    private Message(int line, Type logLevel, String message) {
+      this.line = line;
+      this.logLevel = logLevel;
+      this.message = message;
+    }
+  }
+
+  protected Message warning(int line, String message) {
+    return new Message(line, Type.WARN, message);
+  }
+
+  protected Message error(int line, String message) {
+    return new Message(line, Type.ERROR, message);
+  }
+
   protected void shouldGenerate(MockJavaResource buggyCode, MockJavaResource extraCode,
-      int line, Type logLevel, String logHeader, String message) {
+      Type logLevel, Message... messages) {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
     b.setLowestLogLevel(logLevel);
-    if (message != null) {
-      b.expect(logLevel, logHeader + " in '" + buggyCode.getLocation() + "'", null);
-      final String fullMessage = "Line " + line + ": " + message;
-      b.expect(logLevel, fullMessage, null);
+    if (messages.length != 0) {
+      b.expect(logLevel, (logLevel == Type.WARN ? "Warnings" : "Errors") +
+          " in '" + buggyCode.getLocation() + "'", null);
+    }
+    for (Message message : messages) {
+      final String fullMessage = "Line " + message.line + ": " + message.message;
+      b.expect(message.logLevel, fullMessage, null);
     }
     UnitTestTreeLogger logger = b.createLogger();
     TypeOracle oracle = buildOracle(logger, buggyCode, extraCode);
 
     logger.assertCorrectLogEntries();
     String className = buggyCode.getTypeName();
-    if (message != null && logLevel == TreeLogger.ERROR) {
+    if (messages.length != 0 && logLevel == TreeLogger.ERROR) {
       assertNull("Buggy compilation unit not removed from type oracle",
           oracle.findType(className));
     } else {
@@ -57,22 +83,19 @@ public abstract class CheckerTestCase extends TestCase {
     }
   }
 
-  protected void shouldGenerateError(MockJavaResource buggyCode,
-      MockJavaResource extraCode, int line, String message) {
-    shouldGenerate(buggyCode, extraCode, line, TreeLogger.ERROR, "Errors",
-        message);
+  protected void shouldGenerateError(MockJavaResource buggyCode, MockJavaResource extraCode,
+      int line, String message) {
+    shouldGenerate(buggyCode, extraCode, TreeLogger.ERROR, error(line, message));
   }
 
-  protected void shouldGenerateError(CharSequence buggyCode,
-      CharSequence extraCode, int line, String message) {
+  protected void shouldGenerateError(CharSequence buggyCode, CharSequence extraCode, int line,
+      String message) {
     StaticJavaResource codeResource = new StaticJavaResource("Buggy", buggyCode);
     StaticJavaResource extraResource = new StaticJavaResource("Extra", extraCode);
-    shouldGenerate(codeResource, extraResource, line, TreeLogger.ERROR, "Errors",
-        message);
+    shouldGenerate(codeResource, extraResource, TreeLogger.ERROR,  error(line, message));
   }
 
-  protected void shouldGenerateError(MockJavaResource buggyCode, int line,
-      String message) {
+  protected void shouldGenerateError(MockJavaResource buggyCode, int line,  String message) {
     shouldGenerateError(buggyCode, null, line, message);
   }
 
@@ -81,25 +104,26 @@ public abstract class CheckerTestCase extends TestCase {
   }
 
   protected void shouldGenerateNoError(MockJavaResource code, MockJavaResource extraCode) {
-    shouldGenerateError(code, extraCode, -1, null);
+    shouldGenerate(code, extraCode, TreeLogger.ERROR);
   }
 
   protected void shouldGenerateNoError(CharSequence code, CharSequence extraCode) {
-    shouldGenerateError(code, extraCode, -1, null);
+    StaticJavaResource codeResource = new StaticJavaResource("Buggy", code);
+    StaticJavaResource extraResource = new StaticJavaResource("Extra", extraCode);
+    shouldGenerate(codeResource, extraResource, TreeLogger.ERROR);
   }
 
   protected void shouldGenerateNoWarning(MockJavaResource code) {
-    shouldGenerateWarning(code, -1, null);
+    shouldGenerateNoWarning(code, null);
   }
 
   protected void shouldGenerateNoWarning(MockJavaResource code, MockJavaResource extraCode) {
-    shouldGenerateWarning(code, extraCode, -1, null);
+    shouldGenerate(code, extraCode, TreeLogger.WARN);
   }
 
   protected void shouldGenerateWarning(MockJavaResource buggyCode,
       MockJavaResource extraCode, int line, String message) {
-    shouldGenerate(buggyCode, extraCode, line, TreeLogger.WARN, "Warnings",
-        message);
+    shouldGenerate(buggyCode, extraCode, TreeLogger.WARN,  warning(line, message));
   }
 
   protected void shouldGenerateWarning(MockJavaResource buggyCode, int line,
@@ -107,6 +131,14 @@ public abstract class CheckerTestCase extends TestCase {
     shouldGenerateWarning(buggyCode, null, line, message);
   }
 
+  protected void shouldGenerateWarnings(MockJavaResource buggyCode, Message... messages) {
+    shouldGenerateWarnings(buggyCode, null, messages);
+  }
+
+  protected void shouldGenerateWarnings(MockJavaResource buggyCode, MockJavaResource extraCode,
+      Message... messages) {
+    shouldGenerate(buggyCode, extraCode, TreeLogger.WARN, messages);
+  }
   private String buggyPackage = "";
 
   private void addLongCheckingCups(Set<Resource> resources) {

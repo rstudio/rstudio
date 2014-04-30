@@ -353,6 +353,16 @@ public class JsniReferenceResolver {
       jsniRef.setResolvedClassName(jsniRef.className());
     }
 
+    private boolean isEnclosingClass(TypeBinding clazz, TypeBinding maybeEnclosingClass) {
+      for (TypeBinding currentClass = clazz; currentClass != null;
+          currentClass = currentClass.enclosingType()) {
+        if (currentClass == maybeEnclosingClass) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     private FieldBinding checkAndResolveFieldRef(SourceInfo errorInfo, ReferenceBinding clazz,
         JsniRef jsniRef, boolean hasQualifier, boolean isLvalue) {
       assert jsniRef.isField();
@@ -362,7 +372,8 @@ public class JsniReferenceResolver {
         return null;
       }
       resolveJsniRef(jsniRef, target);
-      if (target.isDeprecated()) {
+      if (target.isDeprecated() &&
+          !isEnclosingClass(method.binding.declaringClass, target.declaringClass)) {
         emitWarning("deprecation", WARN_DEPRECATED_FIELD, errorInfo, jsniRef);
       }
       if (isLvalue && target.constant() != Constant.NotAConstant) {
@@ -398,7 +409,8 @@ public class JsniReferenceResolver {
       }
       MethodBinding target = targets.get(0);
       resolveJsniRef(jsniRef, target);
-      if (target.isDeprecated()) {
+      if (target.isDeprecated() &&
+          !isEnclosingClass(method.binding.declaringClass, target.declaringClass)) {
         emitWarning("deprecation", WARN_DEPRECATED_METHOD, errorInfo, jsniRef);
       }
       if (isLvalue) {
@@ -468,7 +480,8 @@ public class JsniReferenceResolver {
         return null;
       }
 
-      if (clazz != null && clazz.isDeprecated()) {
+      if (clazz != null && clazz.isDeprecated() &&
+          !isEnclosingClass(method.binding.declaringClass, clazz)) {
         emitWarning("deprecation", WARN_DEPRECATED_CLASS, errorInfo, jsniRef);
       }
 

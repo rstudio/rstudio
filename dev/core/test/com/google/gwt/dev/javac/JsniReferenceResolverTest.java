@@ -157,28 +157,110 @@ public class JsniReferenceResolverTest extends CheckerTestCase {
 
   public void testDeprecationField() {
     MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
-       "class Buggy {",
-       "  @Deprecated static int bar;",
-       "  native void jsniMethod() /*-{",
-       "    @Buggy::bar;",
-       "  }-*/;",
-       "}");
+        "class Buggy {",
+        "  @Deprecated static int bar;",
+        "}",
+        "class Other {",
+        "  native void jsniMethod() /*-{",
+        "    @Buggy::bar;",
+        "  }-*/;",
+        "}");
 
-    shouldGenerateWarning(buggy, 4,
+    shouldGenerateWarning(buggy, 6,
         "Referencing field 'Buggy.bar': field 'Buggy.bar' is deprecated");
+  }
+
+  public void testDeprecationField_inEnclosingClass() {
+    MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
+        "class Buggy {",
+        "  @Deprecated static int bar;",
+        "  static class Inner {",
+        "    static class InnerInner {",
+        "      native void jsniMethod() /*-{",
+        "        @Buggy::bar;",
+        "      }-*/;",
+        "    }",
+        "  }",
+        "}");
+
+    shouldGenerateNoWarning(buggy);
+  }
+
+  public void testDeprecationField_deprecatedbyClass() {
+    MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
+        "@Deprecated",
+        "class Buggy {",
+        "  static int bar;",
+        "  native void jsniMethod() /*-{",
+        "    @Buggy::bar;",
+        "  }-*/;",
+        "}");
+
+    shouldGenerateNoWarning(buggy);
+  }
+
+  public void testDeprecationField_deprecatedbyClass_fromOtherClass() {
+    MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
+        "@Deprecated",
+        "class DeprecatedClass {",
+        "  @Deprecated static int bar;",
+        "}",
+        "class Buggy {",
+        "  native void jsniMethod() /*-{",
+        "    @DeprecatedClass::bar;",
+        "  }-*/;",
+        "}");
+
+    shouldGenerateWarnings(buggy,
+        warning(7,"Referencing deprecated class 'DeprecatedClass'"),
+        warning(7,
+            "Referencing field 'DeprecatedClass.bar': field 'DeprecatedClass.bar' is deprecated"));
   }
 
   public void testDeprecationMethod() {
     MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
-       "class Buggy {",
-       "  @Deprecated static void foo(){}",
-       "  native void jsniMethod() /*-{",
-       "    @Buggy::foo();",
-       "  }-*/;",
-       "}");
+        "class Buggy {",
+        "  @Deprecated static void foo(){}",
+        "}",
+        "class Other {",
+        "  native void jsniMethod() /*-{",
+        "    @Buggy::foo();",
+        "  }-*/;",
+        "}");
 
-    shouldGenerateWarning(buggy, 4,
+    shouldGenerateWarning(buggy, 6,
         "Referencing method 'Buggy.foo': method 'Buggy.foo()' is deprecated");
+  }
+
+  public void testDeprecationMethod_deprecatedbyClass() {
+    MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
+        "@Deprecated",
+        "class Buggy {",
+        "  static void foo(){}",
+        "  native void jsniMethod() /*-{",
+        "    @Buggy::foo();",
+        "  }-*/;",
+        "}");
+
+    shouldGenerateNoWarning(buggy);
+  }
+
+  public void testDeprecationMethod_deprecatedbyClass_fromOtherClass() {
+    MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
+        "@Deprecated",
+        "class DeprecatedClass {",
+        "  @Deprecated static void foo(){}",
+        "}",
+        "class Buggy {",
+        "  native void jsniMethod() /*-{",
+        "    @DeprecatedClass::foo();",
+        "  }-*/;",
+        "}");
+
+    shouldGenerateWarnings(buggy,
+        warning(7,"Referencing deprecated class 'DeprecatedClass'"),
+        warning(7,"Referencing method 'DeprecatedClass.foo': "
+            + "method 'DeprecatedClass.foo()' is deprecated"));
   }
 
   public void testDeprecationSuppression() {
