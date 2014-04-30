@@ -40,7 +40,8 @@ public class TemplateMenuItem extends Composite
       wrapper_.insert(iconImage, 0);
       Style imageStyle = iconImage.getElement().getStyle();
       imageStyle.setVerticalAlign(VerticalAlign.MIDDLE);
-      imageStyle.setMarginRight(3, Unit.PX);
+      imageStyle.setMarginRight(5, Unit.PX);
+      imageStyle.setMarginBottom(2, Unit.PX);
    }
    
    public String getName()

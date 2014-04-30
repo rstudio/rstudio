@@ -59,12 +59,6 @@ namespace rmarkdown {
 namespace {
 
 
-bool canRenderShinyDocs()
-{
-   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9005") &&
-          module_context::isPackageVersionInstalled("knitr", "1.5.32");
-}
-
 enum RenderTerminateType
 {
    renderTerminateNormal,
@@ -730,17 +724,6 @@ private:
             }
          }
 
-         // HACK: prevent the Shiny Document template from showing
-         // unless we have the required versions of knitr and shiny
-         // We'll get rid of this hack when we move the template
-         // into the shiny package
-         if ((package == "rstudio") &&
-             (name == "Shiny Document") &&
-             !canRenderShinyDocs())
-         {
-            continue;
-         }
-
          dataJson["package_name"] = package;
          dataJson["path"] = path;
          dataJson["name"] = name;
@@ -1132,8 +1115,13 @@ Error createRmdFromTemplate(const json::JsonRpcRequest& request,
 
    return Success();
 }
-
 } // anonymous namespace
+
+bool canRenderShinyDocs()
+{
+   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9005") &&
+          module_context::isPackageVersionInstalled("knitr", "1.5.32");
+}
 
 bool rmarkdownPackageAvailable()
 {

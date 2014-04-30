@@ -64,6 +64,7 @@ import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -881,6 +882,7 @@ public class Source implements InsertSourceHandler,
                   context,
                   workbenchContext_,
                   uiPrefs_.documentAuthor().getGlobalValue(),
+                  session_.getSessionInfo().getCanRenderShinyDocs(),
                   new OperationWithInput<NewRMarkdownDialog.Result>()
                   {
                      @Override
@@ -921,13 +923,23 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(final String yaml)
          {
-            boolean isPresentation = doc.getTemplate().equals(
-                                     RmdTemplateData.PRESENTATION_TEMPLATE);
-            
+            String template = "";
+            // select a template appropriate to the document type we're creating
+            if (doc.getTemplate().equals(RmdTemplateData.PRESENTATION_TEMPLATE))
+               template = "r_markdown_v2_presentation.Rmd";
+            else if (doc.isShiny())
+            {
+               if (doc.getFormat().endsWith(
+                     RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
+                  template = "r_markdown_presentation_shiny.Rmd";
+               else
+                  template = "r_markdown_shiny.Rmd";
+            }
+            else
+               template = "r_markdown_v2.Rmd";
             newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
                   "", 
-                  isPresentation ? "r_markdown_v2_presentation.Rmd" :
-                                   "r_markdown_v2.Rmd",
+                  template,
                   Position.create(1, 0),
                   null,
                   new TransformerCommand<String>()
@@ -935,7 +947,10 @@ public class Source implements InsertSourceHandler,
                      @Override
                      public String transform(String input)
                      {
-                        return "---\n" + yaml + "---\n\n" + input;
+                        return RmdFrontMatter.FRONTMATTER_SEPARATOR + 
+                               yaml + 
+                               RmdFrontMatter.FRONTMATTER_SEPARATOR + "\n" + 
+                               input;
                      }
                   });
          }

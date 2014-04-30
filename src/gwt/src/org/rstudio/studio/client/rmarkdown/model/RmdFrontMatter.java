@@ -33,6 +33,10 @@ public class RmdFrontMatter extends JavaScriptObject
    public final native void setAuthor(String author) /*-{
       this.author = author;
    }-*/;
+   
+   public final native void setRuntime(String runtime) /*-{
+      this.runtime = runtime;
+   }-*/;
 
    public final native void addDate() /*-{
       this.date = (new Date()).toLocaleDateString();

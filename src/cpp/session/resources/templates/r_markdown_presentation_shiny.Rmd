@@ -1,0 +1,32 @@
+## Shiny Presentation
+
+This R Markdown presentation is made interactive using Shiny. For more information on authoring Shiny content in R Markdown documents, see [Shiny in R Markdown](http://rmarkdown.rstudio.com/authoring_shiny.html). 
+
+When you click the **Run Document** button a presentation will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Slide with Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide with R Code and Output
+
+```{r}
+summary(cars)
+```
+
+## Slide with Interactive Plot
+
+```{r, echo=FALSE}
+sliderInput("bins", "Number of bins:", min = 1, max = 50, value = 30)
+
+renderPlot({
+  x <- faithful[, 2]  # Old Faithful Geyser data
+  bins <- seq(min(x), max(x), length.out = input$bins + 1)
+
+  # draw the histogram with the specified number of bins
+  hist(x, breaks = bins, col = 'darkgray', border = 'white')
+})
+```
+

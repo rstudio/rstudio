@@ -1,10 +1,4 @@
----
-title: "Shiny Document"
-output: html_document
-runtime: shiny
----
-
-This R Markdown document is made interactive using Shiny (for more information on Shiny see <http://shiny.rstudio.com>). Note that R Markdown documents using Shiny can currently only be run locally (support for running them within Shiny Server will be available soon).
+This R Markdown document is made interactive using Shiny. For more information on authoring Shiny content in R Markdown documents, see [Shiny in R Markdown](http://rmarkdown.rstudio.com/authoring_shiny.html). 
 
 ## Inputs and outputs
 
