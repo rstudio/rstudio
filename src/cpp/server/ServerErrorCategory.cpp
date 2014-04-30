@@ -43,6 +43,10 @@ std::string ServerErrorCategory::message( int ev ) const
       case errc::AuthenticationError:
          message = "Authentication error";
          break;
+
+     case errc::SessionUnavailableError:
+         message = "Session unavailable error";
+         break;
          
       default:
          message = "Unknown error" ;
@@ -60,5 +64,13 @@ bool isAuthenticationError(const core::Error& error)
    else
       return false;
 }
-   
+
+bool isSessionUnavailableError(const core::Error& error)
+{
+   if (error.code() == server::errc::SessionUnavailableError)
+      return true;
+   else
+      return false;
+}
+
 } // namespace server

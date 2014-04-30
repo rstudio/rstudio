@@ -25,6 +25,8 @@ class Error;
 
 namespace http {
 
+class Request;
+
 struct ConnectionRetryProfile
 {
    ConnectionRetryProfile()
@@ -36,8 +38,8 @@ struct ConnectionRetryProfile
    ConnectionRetryProfile(
          const boost::posix_time::time_duration& maxWait,
          const boost::posix_time::time_duration& retryInterval,
-         const boost::function<Error()>& recoveryFunction =
-                                             boost::function<Error()>())
+         const boost::function<Error(const http::Request&)>& recoveryFunction =
+                            boost::function<Error(const http::Request&)>())
       : maxWait(maxWait),
         retryInterval(retryInterval),
         recoveryFunction(recoveryFunction)
@@ -48,7 +50,7 @@ struct ConnectionRetryProfile
 
    boost::posix_time::time_duration maxWait;
    boost::posix_time::time_duration retryInterval;
-   boost::function<Error()> recoveryFunction;
+   boost::function<Error(const http::Request&)> recoveryFunction;
 };
 
 

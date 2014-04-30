@@ -58,6 +58,8 @@
 
 #include "ServerSessionManager.hpp"
 
+#include "ServerConstants.hpp"
+
 using namespace core ;
 
 namespace server {
@@ -65,8 +67,19 @@ namespace session_proxy {
    
 namespace {
 
-Error launchSessionRecovery(const std::string& username)
+bool requiresSession(const http::Request& request)
 {
+   return !request.headerValue(kRStudioSessionRequiredHeader).empty();
+}
+
+Error launchSessionRecovery(const http::Request& request,
+                            const std::string& username)
+{
+   // if this request is marked as requiring an existing
+   // session then return session unavilable error
+   if (requiresSession(request))
+      return Error(server::errc::SessionUnavailableError, ERROR_LOCATION);
+
    // recreate streams dir if necessary
    Error error = session::local_streams::ensureStreamsDir();
    if (error)
@@ -80,7 +93,8 @@ http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(10);
-   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery, username);
+   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
+                                               _1, username);
    return retryProfile;
 }
 
@@ -250,6 +264,14 @@ void handleContentError(
       return;
    }
 
+   if (server::isSessionUnavailableError(error))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::ServiceUnavailable);
+      ptrConnection->writeResponse();
+      return;
+   }
+
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
 
@@ -287,6 +309,14 @@ void handleRpcError(
       return;
    }
 
+   if (server::isSessionUnavailableError(error))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::ServiceUnavailable);
+      ptrConnection->writeResponse();
+      return;
+   }
+
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
 
@@ -316,8 +346,17 @@ void handleEventsError(
    // distinguish connection error as (expected) "Unavailable" error state
    if (http::isConnectionUnavailableError(error))
    {
-      json::setJsonRpcError(json::errc::Unavailable,
-                            &(ptrConnection->response())) ;
+      // if this request required a session then return a standard 503
+      if (requiresSession(ptrConnection->request()))
+      {
+         http::Response& response = ptrConnection->response();
+         response.setStatusCode(http::status::ServiceUnavailable);
+      }
+      else
+      {
+         json::setJsonRpcError(json::errc::Unavailable,
+                              &(ptrConnection->response()));
+      }
    }
    else
    {
@@ -339,10 +378,8 @@ void proxyRequest(
       const http::ConnectionRetryProfile& connectionRetryProfile =
                                              http::ConnectionRetryProfile())
 {
-   // calculate stream path
-   FilePath streamPath = session::local_streams::streamPath(username);
-
    // create async client
+   FilePath streamPath = session::local_streams::streamPath(username);
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
     new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath));
 

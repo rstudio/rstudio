@@ -223,7 +223,8 @@ private:
 
             if (connectionRetryContext_.profile.recoveryFunction)
             {
-               Error error = connectionRetryContext_.profile.recoveryFunction();
+               Error error = connectionRetryContext_.profile
+                                      .recoveryFunction(request_);
                if (error)
                {
                   *pOtherError = error;
