@@ -40,7 +40,7 @@ var setHash = function(hash) {
 // wait a few ms and try again.
 var setScrollPos = function(pos) {
    if (pos > document.body.scrollHeight) {
-      window.setTimeout(function() { setScrollPos(pos) }, 500);
+      window.setTimeout(function() { setScrollPos(pos) }, 100);
    } else {
       document.body.scrollTop = pos;
    }

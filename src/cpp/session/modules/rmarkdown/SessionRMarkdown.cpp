@@ -184,12 +184,17 @@ private:
       std::string extraParams;
       std::string targetFile(targetFile_.filename());
 
-      // inject the RStudio IFrame helper script (for syncing scroll position
-      // and anchor information cross-domain)
+      std::string renderOptions("encoding = '" + encoding + "'");
 
-      // TODO: Only inject this script for HTML-based formats
-      std::string renderOptions(
-               "encoding = '" + encoding + "', "
+      if (isShiny_)
+      {
+         extraParams += "shiny_args = list(launch.browser = FALSE), "
+                        "auto_reload = FALSE, ";
+         extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
+
+         // inject the RStudio IFrame helper script (for syncing scroll position
+         // and anchor information cross-domain)
+         renderOptions = "render_args = list(" + renderOptions + ", "
                "output_options = list(extra_dependencies = "
                   "list(structure(list("
                         "name = 'rstudio-iframe', "
@@ -198,13 +203,7 @@ private:
                             session::options().rResourcesPath().absolutePath() +
                         "', "
                         "script = 'rsiframe.js'), "
-                     "class = 'html_dependency')))");
-      if (isShiny_)
-      {
-         extraParams += "shiny_args = list(launch.browser = FALSE), "
-                        "auto_reload = FALSE, ";
-         extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
-         renderOptions = "render_args = list(" + renderOptions + ")";
+                     "class = 'html_dependency'))))";
       }
       if (!format.empty())
       {
