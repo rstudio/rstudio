@@ -280,15 +280,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             // represent the document
             if (isShiny)
             {
-               switch(formatOptions_.get(i).getText())
-               {
-               case SHINY_DOC_NAME:
+               String option = formatOptions_.get(i).getText();
+               if (option.equals(SHINY_DOC_NAME))
                   formatName = "html_document";
-                  break;
-               case SHINY_PRESENTATION_NAME:
+               else if (option.equals(SHINY_PRESENTATION_NAME))
                   formatName = "ioslides_presentation";
-                  break;
-               }
             }
             // for other documents, read the format from the template
             else
