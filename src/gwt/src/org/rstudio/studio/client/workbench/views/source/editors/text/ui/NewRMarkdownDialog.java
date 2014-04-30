@@ -18,10 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
@@ -251,10 +251,10 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    }
    
    @UiFactory
-   public CaptionWithHelp makeHelpCaption()
+   public HelpLink makeHelpCaption()
    {
-      return new CaptionWithHelp("Shiny", "Shiny in R Markdown",
-                                 "using_rmarkdown_shiny");
+      return new HelpLink("Using Shiny with R Markdown",
+                          "using_rmarkdown_shiny");
    }
    
    @Override
@@ -342,7 +342,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       newTemplatePanel_.setVisible(!existing);
       existingTemplatePanel_.setVisible(existing);
       shinyInfoPanel_.setVisible(shiny);
-      outputFormatLabel_.setVisible(!shiny);
       
       if (existing)
       {
@@ -359,9 +358,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       if (shiny)
       {
          templateFormatPanel_.add(createFormatOption(SHINY_DOC_NAME, 
-               "Create an HTML document with interactive Shiny content"));
+               "Create an HTML document with interactive Shiny components."));
          templateFormatPanel_.add(createFormatOption(SHINY_PRESENTATION_NAME, 
-               "Create an IOSlides presentation with interactive Shiny content"));
+               "Create an IOSlides presentation with interactive Shiny components."));
       }
       else 
       {

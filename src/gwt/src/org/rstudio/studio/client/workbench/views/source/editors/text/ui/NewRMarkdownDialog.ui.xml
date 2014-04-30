@@ -2,6 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rw="urn:import:org.rstudio.core.client.widget"
+	xmlns:rc="urn:import:org.rstudio.studio.client.common"
 	xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
 
 	<ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
@@ -96,7 +97,7 @@
 	
 	.shinyInfoHeader
 	{
-     margin-top: 15px;
+     margin-top: 25px;
      margin-bottom: 7px;
 	}
 	
@@ -135,17 +136,6 @@
                            ui:field="txtAuthor_"></g:TextBox></g:customCell>
               </g:row>
            </g:Grid>
-           <g:HTMLPanel styleName="{style.shinyInfoPanel}"
-                        ui:field="shinyInfoPanel_" visible="false">
-              <rw:CaptionWithHelp styleName="{style.shinyInfoHeader}">
-              </rw:CaptionWithHelp>
-              <g:HTML>
-              Shiny documents are R Markdown documents that can contain
-              interactive <a href="http://shiny.rstudio.com/" 
-              target="_blank">Shiny</a> content. You can view them locally
-              and share them on a Shiny server.
-              </g:HTML>
-           </g:HTMLPanel>
            <g:Label styleName="{style.defaultOutputLabel}" 
                     text="Default Output Format:"
                     ui:field="outputFormatLabel_"></g:Label>
@@ -154,6 +144,11 @@
         <g:HTMLPanel ui:field="existingTemplatePanel_">
           <rmd:RmdTemplateChooser ui:field="templateChooser_">
           </rmd:RmdTemplateChooser>
+        </g:HTMLPanel>
+        <g:HTMLPanel styleName="{style.shinyInfoPanel}"
+                        ui:field="shinyInfoPanel_" visible="false">
+	        <rc:HelpLink styleName="{style.shinyInfoHeader}">
+	        </rc:HelpLink>
         </g:HTMLPanel>
      </g:HTMLPanel>
 	</g:HorizontalPanel>
