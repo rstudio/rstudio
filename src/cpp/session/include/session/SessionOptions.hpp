@@ -133,6 +133,8 @@ public:
    int saveActionDefault() const { return saveActionDefault_; }
 
    unsigned int minimumUserId() const { return 100; }
+
+   std::string route() const { return std::string(route_.c_str()); }
    
    core::FilePath coreRSourcePath() const 
    { 
@@ -405,6 +407,7 @@ private:
    // session
    std::string secret_;
    std::string preflightScript_;
+   std::string route_;
    int timeoutMinutes_;
    int disconnectedTimeoutMinutes_;
    bool createPublicFolder_;
