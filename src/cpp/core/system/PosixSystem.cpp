@@ -843,8 +843,12 @@ Error systemInformation(SysInfo* pSysInfo)
    pSysInfo->load5 = info.loads[1] / (float)(1 << SI_LOAD_SHIFT);
    pSysInfo->load15 = info.loads[2] / (float)(1 << SI_LOAD_SHIFT);
 #else
-
-
+   double loads[3];
+   if (::getloadavg(loads, 3) == -1)
+      return systemError(errno, ERROR_LOCATION);
+   pSysInfo->load1 = loads[0];
+   pSysInfo->load5 = loads[1];
+   pSysInfo->load15 = loads[2];
 #endif
    return Success();
 }
