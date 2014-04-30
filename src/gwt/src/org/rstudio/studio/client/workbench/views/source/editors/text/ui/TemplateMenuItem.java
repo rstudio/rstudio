@@ -29,9 +29,7 @@ public class TemplateMenuItem extends Composite
    {
       super();
       wrapper_ = new FlowPanel();
-      InlineLabel label = new InlineLabel(templateName);
-      label.getElement().getStyle().setMarginTop(2, Unit.PX);
-      wrapper_.add(label);
+      wrapper_.add(new InlineLabel(templateName));
       name_ = templateName;
       initWidget(wrapper_);
    }

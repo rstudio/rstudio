@@ -60,6 +60,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          template_ = template;
          author_ = author;
          isShiny_ = isShiny;
+         format_ = format;
          result_ = toJSO(author, title, format, isShiny);
       }
       
@@ -76,6 +77,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       public boolean isShiny()
       {
          return isShiny_;
+      }
+      
+      public String getFormat()
+      {
+         return format_;
       }
       
       public JavaScriptObject getJSOResult()
@@ -105,6 +111,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       private final String template_;
       private final String author_;
       private final boolean isShiny_;
+      private final String format_;
       private final JavaScriptObject result_;
    }
    
@@ -433,6 +440,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
    private final static String TEMPLATE_SHINY = "Shiny";
-   private final static String SHINY_DOC_NAME = "Document";
-   private final static String SHINY_PRESENTATION_NAME = "Presentation";
+   private final static String SHINY_DOC_NAME = "Shiny Document";
+   private final static String SHINY_PRESENTATION_NAME = "Shiny Presentation";
 }

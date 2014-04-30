@@ -141,7 +141,7 @@
               </rw:CaptionWithHelp>
               <g:HTML>
               Shiny documents are R Markdown documents that can contain
-              interactive <a href="http://www.rstudio.com/shiny/" 
+              interactive <a href="http://shiny.rstudio.com/" 
               target="_blank">Shiny</a> content. You can view them locally
               and share them on a Shiny server.
               </g:HTML>
