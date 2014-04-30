@@ -216,16 +216,7 @@ public class RmdTemplateData
                               "fig_retina", "incremental", "smaller",
                               "widescreen", "highlight", "transition", 
                               "self_contained", "smart" ],
-            format_notes: "Recommended format for HTML presentations (you can also print ioslides to PDF with Chrome)."
-            },
-            {
-            format_name: "revealjs_presentation",
-            format_ui_name: "HTML (reveal.js)",
-            format_extension: "html",
-            format_options: ["center", "incremental", "highlight", "transition", 
-                             "theme", "fig_width", "fig_height", "fig_caption",
-                             "fig_retina", "self_contained", "smart" ],
-            format_notes: "HTML presentation format with less features but additional options for theming and transitions." 
+            format_notes: "HTML presentation viewable with any browser (you can also print ioslides to PDF with Chrome)."
             },
             {
             format_name: "beamer_presentation",
@@ -323,22 +314,6 @@ public class RmdTemplateData
             option_category: "Figures",
             option_type: "float", 
             option_default: "4.5"
-            },
-            {
-            option_name: "fig_width",
-            option_format: "revealjs_presentation",
-            option_ui_name: "Default figure width (in inches)", 
-            option_category: "Figures",
-            option_type: "float", 
-            option_default: "8"
-            },
-            {
-            option_name: "fig_height",
-            option_format: "revealjs_presentation",
-            option_ui_name: "Default figure width (in inches)", 
-            option_category: "Figures",
-            option_type: "float", 
-            option_default: "6"
             },
             {
             option_name: "fig_width",

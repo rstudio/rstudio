@@ -58,6 +58,13 @@ namespace rmarkdown {
 
 namespace {
 
+
+bool canRenderShinyDocs()
+{
+   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9005") &&
+          module_context::isPackageVersionInstalled("knitr", "1.5.32");
+}
+
 enum RenderTerminateType
 {
    renderTerminateNormal,
@@ -460,6 +467,16 @@ private:
             "  (NOTE: Download with Safari rather than Chrome _strongly_ recommended)\n\n"
             "  Linux: Use system package manager\n\n");
       }
+
+      if (isShiny_ && !canRenderShinyDocs())
+      {
+         enqueRenderOutput(module_context::kCompileOutputError,
+            "\n"
+            "The development versions of knitr and shiny are required to\n"
+            "render Shiny documents. You can install them using devtools\n"
+            "as follows:\n\n"
+            "devtools::install_github(c(\"yihui/knitr\",\"rstudio/shiny\"))\n\n");
+      }
    }
 
    void getOutputFormat(const std::string& path,
@@ -703,14 +720,11 @@ private:
          // unless we have the required versions of knitr and shiny
          // We'll get rid of this hack when we move the template
          // into the shiny package
-         if (package == "rstudio" && name == "Shiny Document")
+         if ((package == "rstudio") &&
+             (name == "Shiny Document") &&
+             !canRenderShinyDocs())
          {
-            using namespace module_context;
-            if (!isPackageVersionInstalled("shiny", "0.9.1.9005") ||
-                !isPackageVersionInstalled("knitr", "1.5.32"))
-            {
-               continue;
-            }
+            continue;
          }
 
          dataJson["package_name"] = package;
@@ -904,7 +918,7 @@ void doRenderRmd(const std::string& file,
       pResponse->setResult(false);
    }
    else
-   {
+   {   
       s_pCurrentRender_ = RenderRmd::create(
                module_context::resolveAliasedPath(file),
                line,
