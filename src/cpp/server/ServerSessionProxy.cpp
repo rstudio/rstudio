@@ -375,8 +375,7 @@ void proxyRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::ErrorHandler& errorHandler,
-      const http::ConnectionRetryProfile& connectionRetryProfile =
-                                             http::ConnectionRetryProfile())
+      const http::ConnectionRetryProfile& connectionRetryProfile)
 {
    // create async client
    FilePath streamPath = session::local_streams::streamPath(username);
@@ -491,7 +490,8 @@ void proxyEventsRequest(
 
    proxyRequest(username,
                 ptrConnection,
-                boost::bind(handleEventsError, ptrConnection, _1));
+                boost::bind(handleEventsError, ptrConnection, _1),
+                http::ConnectionRetryProfile());
 }
 
 void proxyLocalhostRequest(
