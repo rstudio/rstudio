@@ -874,6 +874,22 @@ void toPids(const std::vector<std::string>& lines, std::vector<PidType>* pPids)
 #ifndef __APPLE__
 core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
 {
+   // use pidof to capture pids
+   std::string cmd = "pidof " + process;
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(cmd,
+                                          core::system::ProcessOptions(),
+                                          &result);
+   if (error)
+      return error;
+
+   // parse into pids
+   std::vector<std::string> pids;
+   boost::algorithm::split(pids,
+                           result.stdOut,
+                           boost::algorithm::is_space());
+
+   toPids(pids, pPids);
    return Success();
 }
 #else
