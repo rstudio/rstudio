@@ -253,19 +253,39 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    protected Result collectInput()
    {
       String formatName = "";
+      boolean isShiny = getSelectedTemplate().equals(TEMPLATE_SHINY);
       for (int i = 0; i < formatOptions_.size(); i++)
       {
          if (formatOptions_.get(i).getValue())
          {
-            formatName = currentTemplate_.getFormats().get(i).getName();
-               break;
+            // for Shiny documents, manually choose the underlying format to
+            // represent the document
+            if (isShiny)
+            {
+               switch(formatOptions_.get(i).getText())
+               {
+               case SHINY_DOC_NAME:
+                  formatName = "html_document";
+                  break;
+               case SHINY_PRESENTATION_NAME:
+                  formatName = "ioslides_presentation";
+                  break;
+               }
+            }
+            // for other documents, read the format from the template
+            else
+            {
+               formatName = currentTemplate_.getFormats().get(i).getName();
+            }
+            break;
          }
       }
       return new Result(
             new RmdNewDocument(getSelectedTemplate(), 
                                txtAuthor_.getText().trim(), 
-                                txtTitle_.getText().trim(), formatName,
-                                getSelectedTemplate().equals(TEMPLATE_SHINY)),
+                               txtTitle_.getText().trim(), 
+                               formatName,
+                               isShiny),
             templateChooser_.getChosenTemplate(),
             !getSelectedTemplate().equals(TEMPLATE_CHOOSE_EXISTING));
    }
@@ -324,9 +344,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       if (shiny)
       {
-         templateFormatPanel_.add(createFormatOption("Document", 
+         templateFormatPanel_.add(createFormatOption(SHINY_DOC_NAME, 
                "Create an HTML document with interactive Shiny content"));
-         templateFormatPanel_.add(createFormatOption("Presentation", 
+         templateFormatPanel_.add(createFormatOption(SHINY_PRESENTATION_NAME, 
                "Create an IOSlides presentation with interactive Shiny content"));
       }
       else 
@@ -402,4 +422,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
    private final static String TEMPLATE_SHINY = "Shiny";
+   private final static String SHINY_DOC_NAME = "Document";
+   private final static String SHINY_PRESENTATION_NAME = "Presentation";
 }
