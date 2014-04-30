@@ -29,7 +29,9 @@ public class TemplateMenuItem extends Composite
    {
       super();
       wrapper_ = new FlowPanel();
-      wrapper_.add(new InlineLabel(templateName));
+      InlineLabel label = new InlineLabel(templateName);
+      label.getElement().getStyle().setMarginTop(2, Unit.PX);
+      wrapper_.add(label);
       name_ = templateName;
       initWidget(wrapper_);
    }
@@ -40,7 +42,8 @@ public class TemplateMenuItem extends Composite
       wrapper_.insert(iconImage, 0);
       Style imageStyle = iconImage.getElement().getStyle();
       imageStyle.setVerticalAlign(VerticalAlign.MIDDLE);
-      imageStyle.setMarginRight(3, Unit.PX);
+      imageStyle.setMarginRight(5, Unit.PX);
+      imageStyle.setMarginBottom(2, Unit.PX);
    }
    
    public String getName()

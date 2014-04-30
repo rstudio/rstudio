@@ -6,6 +6,8 @@
 
 	<ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
 	<ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.NewRmdStyle">
+	@external .gwt-Label;
+	
 	.fillHeight
 	{
 	  height: 100%;
@@ -92,6 +94,17 @@
 	  width: 80%;
 	}
 	
+	.shinyInfoHeader
+	{
+     margin-top: 15px;
+     margin-bottom: 7px;
+	}
+	
+	.shinyInfoHeader .gwt-Label
+   {
+	  font-weight:bold;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
 	<g:HorizontalPanel height="325px" styleName="{style.templatePanel}">
@@ -117,8 +130,19 @@
                            ui:field="txtAuthor_"></g:TextBox></g:customCell>
               </g:row>
            </g:Grid>
+           <g:HTMLPanel ui:field="shinyInfoPanel_" visible="false">
+              <rw:CaptionWithHelp styleName="{style.shinyInfoHeader}">
+              </rw:CaptionWithHelp>
+              <g:HTML>
+              Shiny documents are R Markdown documents that can contain
+              interactive <a href="http://www.rstudio.com/shiny/" 
+              target="_blank">Shiny</a> content. You can view them in RStudio
+              and share them on a Shiny server.
+              </g:HTML>
+           </g:HTMLPanel>
            <g:Label styleName="{style.defaultOutputLabel}" 
-                    text="Default Output Format:"></g:Label>
+                    text="Default Output Format:"
+                    ui:field="outputFormatLabel_"></g:Label>
            <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
         </g:HTMLPanel>
         <g:HTMLPanel ui:field="existingTemplatePanel_">

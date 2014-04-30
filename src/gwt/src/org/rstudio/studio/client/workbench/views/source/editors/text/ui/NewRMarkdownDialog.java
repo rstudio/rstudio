@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
@@ -41,6 +42,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -53,11 +55,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    public static class RmdNewDocument
    {  
       public RmdNewDocument(String template, String author, String title, 
-                            String format)
+                            String format, boolean isShiny)
       {
          template_ = template;
          author_ = author;
-         result_ = toJSO(author, title, format);
+         result_ = toJSO(author, title, format, isShiny);
       }
       
       public String getTemplate()
@@ -77,13 +79,18 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       private final JavaScriptObject toJSO(String author, 
                                            String title, 
-                                           String format)
+                                           String format, 
+                                           boolean isShiny)
       {
          RmdFrontMatter result = RmdFrontMatter.create(title);
          if (author.length() > 0)
          {
             result.setAuthor(author);
             result.addDate();
+         }
+         if (isShiny)
+         {
+            result.setRuntime(RmdFrontMatter.SHINY_RUNTIME);
          }
          result.setOutputOption(format, RmdFrontMatterOutputOptions.create());
          return result;
@@ -150,6 +157,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       @Source("MarkdownTemplateIcon.png")
       ImageResource templateIcon();
+
+      @Source("MarkdownShinyIcon.png")
+      ImageResource shinyIcon();
    }
 
    public NewRMarkdownDialog(
@@ -201,6 +211,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          listTemplates_.addItem(menuItem);
       }
       
+      // Add the Shiny template
+      TemplateMenuItem shinyItem = new TemplateMenuItem(TEMPLATE_SHINY);
+      shinyItem.addIcon(resources.shinyIcon());
+      listTemplates_.addItem(shinyItem);
+      
       // Add the "From Template" item at the end of the list
       TemplateMenuItem templateItem = 
             new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING);
@@ -215,6 +230,13 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       templateChooser_.setTargetDirectory(dir.getPath());
 
       updateOptions(getSelectedTemplate());
+   }
+   
+   @UiFactory
+   public CaptionWithHelp makeHelpCaption()
+   {
+      return new CaptionWithHelp("Shiny", "Shiny in R Markdown",
+                                 "using_rmarkdown_shiny");
    }
    
    @Override
@@ -242,7 +264,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       return new Result(
             new RmdNewDocument(getSelectedTemplate(), 
                                txtAuthor_.getText().trim(), 
-                                txtTitle_.getText().trim(), formatName),
+                                txtTitle_.getText().trim(), formatName,
+                                getSelectedTemplate().equals(TEMPLATE_SHINY)),
             templateChooser_.getChosenTemplate(),
             !getSelectedTemplate().equals(TEMPLATE_CHOOSE_EXISTING));
    }
@@ -268,8 +291,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    {
       int idx = listTemplates_.getSelectedIndex();
       TemplateMenuItem item = listTemplates_.getItemAtIdx(idx);
-      if (item.getName() == TEMPLATE_CHOOSE_EXISTING)
-         return TEMPLATE_CHOOSE_EXISTING;
+      if (item.getName().equals(TEMPLATE_CHOOSE_EXISTING) ||
+          item.getName().equals(TEMPLATE_SHINY))
+         return item.getName();
       else
          return templates_.get(idx).getName();
    }
@@ -277,9 +301,14 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private void updateOptions(String selectedTemplate)
    {
       boolean existing = selectedTemplate.equals(TEMPLATE_CHOOSE_EXISTING);
+      boolean shiny = selectedTemplate.equals(TEMPLATE_SHINY);
 
+      // toggle visibility of UI elements based on which section of the dialog
+      // we're in 
       newTemplatePanel_.setVisible(!existing);
       existingTemplatePanel_.setVisible(existing);
+      shinyInfoPanel_.setVisible(shiny);
+      outputFormatLabel_.setVisible(!shiny);
       
       if (existing)
       {
@@ -289,22 +318,33 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          }
          return;
       }
-
-      currentTemplate_ = RmdTemplate.getTemplate(templates_,
-                                                 selectedTemplate);
-      if (currentTemplate_ == null)
-         return;
       
       templateFormatPanel_.clear();
       formatOptions_.clear();
       
-      // Add each format to the dialog
-      JsArray<RmdTemplateFormat> formats = currentTemplate_.getFormats();
-      for (int i = 0; i < formats.length(); i++)
+      if (shiny)
       {
-         templateFormatPanel_.add(createFormatOption(formats.get(i)));
+         templateFormatPanel_.add(createFormatOption("Document", 
+               "Create an HTML document with interactive Shiny content"));
+         templateFormatPanel_.add(createFormatOption("Presentation", 
+               "Create an IOSlides presentation with interactive Shiny content"));
       }
-      
+      else 
+      {
+         
+         currentTemplate_ = RmdTemplate.getTemplate(templates_,
+                                                    selectedTemplate);
+         if (currentTemplate_ == null)
+            return;
+         
+         // Add each format to the dialog
+         JsArray<RmdTemplateFormat> formats = currentTemplate_.getFormats();
+         for (int i = 0; i < formats.length(); i++)
+         {
+            templateFormatPanel_.add(createFormatOption(formats.get(i)));
+         }
+      }
+         
       // Select the first format by default
       if (formatOptions_.size() > 0)
          formatOptions_.get(0).setValue(true);
@@ -314,22 +354,27 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    {
       templateChooser_.populateTemplates();
    }
-   
+
    private Widget createFormatOption(RmdTemplateFormat format)
+   {
+      return createFormatOption(format.getUiName(), format.getNotes());
+   }
+   
+   private Widget createFormatOption(String name, String description)
    {
       HTMLPanel formatWrapper = new HTMLPanel("");
       formatWrapper.setStyleName(style.outputFormat());
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       sb.appendHtmlConstant("<span class=\"" + style.outputFormatName() + 
                             "\">");
-      sb.appendEscaped(format.getUiName());
+      sb.appendEscaped(name);
       sb.appendHtmlConstant("</span>");
       RadioButton button = new RadioButton("DefaultOutputFormat", 
                                            sb.toSafeHtml().asString(), true);
       button.setStyleName(style.outputFormatChoice());
       formatOptions_.add(button);
       formatWrapper.add(button);
-      Label label = new Label(format.getNotes());
+      Label label = new Label(description);
       label.setStyleName(style.outputFormatDetails());
       formatWrapper.add(label);
       return formatWrapper;
@@ -344,6 +389,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField HTMLPanel newTemplatePanel_;
    @UiField HTMLPanel existingTemplatePanel_;
    @UiField RmdTemplateChooser templateChooser_;
+   @UiField HTMLPanel shinyInfoPanel_;
+   @UiField Label outputFormatLabel_;
 
    private final Widget mainWidget_;
    private List<RadioButton> formatOptions_;
@@ -354,4 +401,5 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private final RMarkdownContext context_;
    
    private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
+   private final static String TEMPLATE_SHINY = "Shiny";
 }
