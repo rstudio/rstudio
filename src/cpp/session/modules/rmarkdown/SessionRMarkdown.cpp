@@ -1119,7 +1119,7 @@ Error createRmdFromTemplate(const json::JsonRpcRequest& request,
 
 bool canRenderShinyDocs()
 {
-   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9005") &&
+   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9006") &&
           module_context::isPackageVersionInstalled("knitr", "1.5.32");
 }
 
