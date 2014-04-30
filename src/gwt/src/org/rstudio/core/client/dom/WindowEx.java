@@ -158,6 +158,11 @@ public class WindowEx extends JavaScriptObject
    public final native int getScrollTop() /*-{
       return this.scrollY;
    }-*/;
+   
+   public final native void postMessage(JavaScriptObject data, 
+                                        String origin) /*-{
+      this.postMessage(data, origin);
+   }-*/;
 
    public static HandlerRegistration addFocusHandler(FocusHandler handler)
    {
