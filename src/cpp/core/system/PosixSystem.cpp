@@ -34,6 +34,8 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <ifaddrs.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <uuid/uuid.h>
 
@@ -44,8 +46,6 @@
 #ifndef __APPLE__
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
-#include <sys/socket.h>
-#include <netdb.h>
 #endif
 
 #include <boost/thread.hpp>
