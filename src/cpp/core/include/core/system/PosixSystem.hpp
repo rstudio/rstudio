@@ -95,6 +95,14 @@ core::Error systemInformation(SysInfo* pSysInfo);
 
 core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
 
+struct IpAddress
+{
+   std::string name;
+   std::string addr;
+};
+
+core::Error ipAddresses(std::vector<IpAddress>* pAddresses);
+
 // core dump restriction
 core::Error restrictCoreDumps();
 void printCoreDumpable(const std::string& context);

@@ -32,6 +32,8 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
 
 #include <uuid/uuid.h>
 
@@ -42,6 +44,8 @@
 #ifndef __APPLE__
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #endif
 
 #include <boost/thread.hpp>
@@ -914,6 +918,44 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    return Success();
 }
 #endif
+
+Error ipAddresses(std::vector<IpAddress>* pAddresses)
+{
+   // get addrs
+   struct ifaddrs* pAddrs;
+   if (::getifaddrs(&pAddrs) == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   // iterate through the linked list
+   for (struct ifaddrs* pAddr = pAddrs; pAddr != NULL; pAddr = pAddr->ifa_next)
+   {
+      if (pAddr->ifa_addr == NULL)
+         continue;
+
+      if (pAddr->ifa_addr->sa_family != AF_INET)
+         continue;
+
+      char host[NI_MAXHOST];
+      if (::getnameinfo(pAddr->ifa_addr,
+                        sizeof(struct sockaddr_in),
+                        host, NI_MAXHOST,
+                        NULL, 0, NI_NUMERICHOST) != 0)
+      {
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         continue;
+      }
+
+      struct IpAddress addr;
+      addr.name = pAddr->ifa_name;
+      addr.addr = host;
+      pAddresses->push_back(addr);
+   }
+
+   // free them and return success
+   ::freeifaddrs(pAddrs);
+   return Success();
+}
+
 
 Error restrictCoreDumps()
 {

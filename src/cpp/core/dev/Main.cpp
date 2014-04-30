@@ -57,6 +57,17 @@ int test_main(int argc, char * argv[])
          std::cerr << pid << std::endl;
       }
 
+      std::vector<core::system::IpAddress> addresses;
+      error = core::system::ipAddresses(&addresses);
+      if (error)
+         LOG_ERROR(error);
+
+      std::cerr << std::endl;
+      BOOST_FOREACH(const core::system::IpAddress& address, addresses)
+      {
+         std::cerr << address.name << " - " << address.addr << std::endl;
+      }
+
       return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
