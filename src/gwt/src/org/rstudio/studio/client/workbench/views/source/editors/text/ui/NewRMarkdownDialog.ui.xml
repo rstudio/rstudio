@@ -105,6 +105,11 @@
 	  font-weight:bold;
 	}
 	
+	.shinyInfoPanel
+	{
+	  margin-bottom: 7px;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
 	<g:HorizontalPanel height="325px" styleName="{style.templatePanel}">
@@ -130,13 +135,14 @@
                            ui:field="txtAuthor_"></g:TextBox></g:customCell>
               </g:row>
            </g:Grid>
-           <g:HTMLPanel ui:field="shinyInfoPanel_" visible="false">
+           <g:HTMLPanel styleName="{style.shinyInfoPanel}"
+                        ui:field="shinyInfoPanel_" visible="false">
               <rw:CaptionWithHelp styleName="{style.shinyInfoHeader}">
               </rw:CaptionWithHelp>
               <g:HTML>
               Shiny documents are R Markdown documents that can contain
               interactive <a href="http://www.rstudio.com/shiny/" 
-              target="_blank">Shiny</a> content. You can view them in RStudio
+              target="_blank">Shiny</a> content. You can view them locally
               and share them on a Shiny server.
               </g:HTML>
            </g:HTMLPanel>

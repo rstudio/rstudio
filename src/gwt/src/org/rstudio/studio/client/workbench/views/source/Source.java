@@ -921,13 +921,17 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(final String yaml)
          {
-            boolean isPresentation = doc.getTemplate().equals(
-                                     RmdTemplateData.PRESENTATION_TEMPLATE);
-            
+            String template = "";
+            // select a template appropriate to the document type we're creating
+            if (doc.getTemplate().equals(RmdTemplateData.PRESENTATION_TEMPLATE))
+               template = "r_markdown_v2_presentation.Rmd";
+            else if (doc.isShiny())
+               template = "r_markdown_shiny.Rmd";
+            else
+               template = "r_markdown_v2.Rmd";
             newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
                   "", 
-                  isPresentation ? "r_markdown_v2_presentation.Rmd" :
-                                   "r_markdown_v2.Rmd",
+                  template,
                   Position.create(1, 0),
                   null,
                   new TransformerCommand<String>()
@@ -935,7 +939,10 @@ public class Source implements InsertSourceHandler,
                      @Override
                      public String transform(String input)
                      {
-                        return "---\n" + yaml + "---\n\n" + input;
+                        return RmdFrontMatter.FRONTMATTER_SEPARATOR + 
+                               yaml + 
+                               RmdFrontMatter.FRONTMATTER_SEPARATOR + "\n" + 
+                               input;
                      }
                   });
          }

@@ -59,6 +59,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       {
          template_ = template;
          author_ = author;
+         isShiny_ = isShiny;
          result_ = toJSO(author, title, format, isShiny);
       }
       
@@ -70,6 +71,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       public String getAuthor()
       {
          return author_;
+      }
+      
+      public boolean isShiny()
+      {
+         return isShiny_;
       }
       
       public JavaScriptObject getJSOResult()
@@ -98,6 +104,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
       private final String template_;
       private final String author_;
+      private final boolean isShiny_;
       private final JavaScriptObject result_;
    }
    
