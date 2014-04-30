@@ -93,6 +93,8 @@ struct SysInfo
 
 core::Error systemInformation(SysInfo* pSysInfo);
 
+core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
+
 // core dump restriction
 core::Error restrictCoreDumps();
 void printCoreDumpable(const std::string& context);

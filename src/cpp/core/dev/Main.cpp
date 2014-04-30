@@ -47,6 +47,16 @@ int test_main(int argc, char * argv[])
       std::cerr << " Load5: " << sysInfo.load5 << std::endl;
       std::cerr << "Load15: " << sysInfo.load15 << std::endl;
 
+      std::vector<PidType> pids;
+      error = core::system::pidof("rsession", &pids);
+      if (error)
+         LOG_ERROR(error);
+
+      BOOST_FOREACH(PidType pid, pids)
+      {
+         std::cerr << pid << std::endl;
+      }
+
       return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION

@@ -20,6 +20,7 @@
 #include <iostream>
 #include <vector>
 
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <signal.h>
@@ -60,10 +61,13 @@
 #include <core/StderrLogWriter.hpp>
 #include <core/StringUtils.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/Process.hpp>
+#include <core/system/ShellUtils.hpp>
 
 #include "config.h"
 
@@ -852,6 +856,48 @@ Error systemInformation(SysInfo* pSysInfo)
 #endif
    return Success();
 }
+
+namespace  {
+
+void toPids(const std::vector<std::string>& lines, std::vector<PidType>* pPids)
+{
+   BOOST_FOREACH(const std::string& line, lines)
+   {
+      PidType pid = safe_convert::stringTo<PidType>(line, -1);
+      if (pid != -1)
+         pPids->push_back(pid);
+   }
+}
+
+} // anonymous namespace
+
+#ifndef __APPLE__
+core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
+{
+   return Success();
+}
+#else
+core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
+{
+   // use ps to capture pids
+   std::string cmd = "ps acx | awk \"{if (\\$5==\\\"" +
+                      process + "\\\") print \\$1}\"";
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(cmd,
+                                          core::system::ProcessOptions(),
+                                          &result);
+   if (error)
+      return error;
+
+   // parse into pids
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines,
+                           result.stdOut,
+                           boost::algorithm::is_any_of("\n"));
+   toPids(lines, pPids);
+   return Success();
+}
+#endif
 
 Error restrictCoreDumps()
 {
