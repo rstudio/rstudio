@@ -58,6 +58,9 @@ public class StackTraceCreator {
     public abstract JavaScriptObject collect();
 
     protected StackTraceElement[] getStackTrace(JsArrayString stack) {
+      if (stack.length() == 0) {
+        return null;
+      }
       int length = stack.length();
       StackTraceElement[] stackTrace = new StackTraceElement[length];
       for (int i = 0; i < length; i++) {
@@ -124,7 +127,7 @@ public class StackTraceCreator {
           var i, j;
           for (i = 0, j = withThisName.length; i < j; i++) {
             if (withThisName[i] === callee) {
-              return toReturn;
+              return { fnStack: toReturn };
             }
           }
         }

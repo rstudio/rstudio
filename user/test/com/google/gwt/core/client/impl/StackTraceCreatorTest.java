@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.client.impl;
 
+import static com.google.gwt.core.client.impl.StackTraceCreator.supportsErrorStack;
+
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorLegacy;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
@@ -52,11 +54,40 @@ public class StackTraceCreatorTest extends GWTTestCase {
   }
 
   @DoNotRunWith(Platform.Devel)
-  public void testTraceNative() {
-    if (!StackTraceCreator.supportsErrorStack()) {
-      return;
+  public void testTraceRecursion() {
+    Throwable t = null;
+    try {
+      throwExceptionRecursive(3);
+      fail("No exception thrown");
+    } catch (Throwable e) {
+      t = e;
     }
 
+    final String[] expectedModern = {
+        Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwException3(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwException2(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwException1(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwExceptionRecursive(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwExceptionRecursive(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwExceptionRecursive(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTrace()"),
+    };
+
+    final String[] expectedLegacy = {
+        Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwException3(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwException2(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwException1(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwExceptionRecursive(*)"),
+    };
+
+    final String[] expected = supportsErrorStack() ? expectedModern : expectedLegacy;
+    assertTrace(expected, t.getStackTrace(), 0);
+  }
+
+  @DoNotRunWith(Platform.Devel)
+  public void testTraceNative() {
     Throwable t = null;
     try {
       throwException1(true /* throw js exception */);
@@ -66,7 +97,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
     }
 
     String[] nativeMethodNames = throwNative(false /* don't throw - collect mode */);
-    final String[] expected = {
+    final String[] expectedModern = {
         nativeMethodNames[0],
         nativeMethodNames[1],
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwNative(*)"),
@@ -76,15 +107,23 @@ public class StackTraceCreatorTest extends GWTTestCase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTraceNative()"),
     };
 
+    final String[] expectedLegacy = {
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTraceNative()"),
+    };
+
+    final String[] expected = supportsErrorStack() ? expectedModern : expectedLegacy;
+
     StackTraceElement[] trace = t.getStackTrace();
 
     int offset = getTraceOffset(trace, expected[0]);
     assertTrace(expected, trace, offset);
   }
 
-  private void assertTrace(final String[] expected, StackTraceElement[] trace, int offset) {
+  private void assertTrace(final String[] expected, StackTraceElement[] actual, int offset) {
     for (int i = 0; i < expected.length; i++) {
-      assertEquals("Incorrect frame at " + i, expected[i], trace[i + offset].getMethodName());
+      StackTraceElement actualElement = actual[i + offset];
+      String methodName = actualElement == null ? "!MISSING!" : actualElement.getMethodName();
+      assertEquals("Incorrect frame at " + i, expected[i], methodName);
     }
   }
 
@@ -99,6 +138,14 @@ public class StackTraceCreatorTest extends GWTTestCase {
       offset++;
     }
     return offset;
+  }
+
+  private static void throwExceptionRecursive(int count) throws Throwable {
+    if (count > 0) {
+      throwExceptionRecursive(count - 1);
+    } else {
+      throwException1(false);
+    }
   }
 
   private static void throwException1(boolean throwNative) throws Throwable {
