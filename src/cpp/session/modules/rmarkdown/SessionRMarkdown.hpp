@@ -25,6 +25,7 @@ namespace modules {
 namespace rmarkdown {
 
 bool rmarkdownPackageAvailable();
+bool canRenderShinyDocs();
 
 core::Error initialize();
 

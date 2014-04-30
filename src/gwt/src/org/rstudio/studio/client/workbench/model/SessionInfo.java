@@ -358,4 +358,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getRMarkdownPackageAvailable() /*-{
       return this.rmarkdown_available;
    }-*/;
+
+   public final native boolean getCanRenderShinyDocs() /*-{
+      return this.can_render_shiny_docs;
+   }-*/;
 }
