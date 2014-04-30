@@ -56,6 +56,7 @@ function maven-deploy-file() {
             -DuniqueVersion=false \
             $javadoc \
             $sources \
+            -q \
             -Dgpg.passphrase=\"$gpgPassphrase\""
   else
     echo "GPG passphrase not specified; will attempt to deploy files without signing"
@@ -67,7 +68,8 @@ function maven-deploy-file() {
             -DpomFile=$pomFile \
             $javadoc \
             $sources \
-            -DuniqueVersion=false"
+            -DuniqueVersion=false" \
+            -q
   fi
   eval $cmd
 }
