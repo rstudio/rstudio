@@ -62,7 +62,7 @@ public class SpecializationTest extends GWTTestCase {
     try {
       succ.put(42, VALUE);
       fail();
-    } catch (Throwable t) {
+    } catch (Exception t) {
       // swallow failure, we expect putString is called
     }
   }
