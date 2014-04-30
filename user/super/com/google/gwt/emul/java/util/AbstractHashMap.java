@@ -242,7 +242,6 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
         key, getHashCode(key)) : getStringValue((String) key));
   }
 
-
   @SpecializeMethod(params = {String.class, Object.class},
                     target = "putStringValue")
   @Override
@@ -252,9 +251,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
             (String) key, value));
   }
 
-
-  @SpecializeMethod(params = {String.class},
-      target = "removeStringValue")
+  @SpecializeMethod(params = {String.class}, target = "removeStringValue")
   @Override
   public V remove(Object key) {
     return (key == null) ? removeNullSlot() : (!(key instanceof String)
