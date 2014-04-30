@@ -1,3 +1,4 @@
+/*jshint browser:true, strict:false, curly:false, indent:3*/
 (function(){
 // returns the origin we should post messages to (if on same host), or null if
 // no suitable origin is found
@@ -33,18 +34,18 @@ var getOrigin = function() {
 // sets the location hash
 var setHash = function(hash) {
    document.location.hash = hash;
-}
+};
 
 // sets the document scroll position. this could be called before that part of
 // the document has loaded, so if the position specified is not yet available,
 // wait a few ms and try again.
 var setScrollPos = function(pos) {
    if (pos > document.body.scrollHeight) {
-      window.setTimeout(function() { setScrollPos(pos) }, 100);
+      window.setTimeout(function() { setScrollPos(pos); }, 100);
    } else {
       document.body.scrollTop = pos;
    }
-}
+};
 
 // cross-domain communication ------------------------------------------------
 
@@ -65,13 +66,13 @@ var recv = function(evt) {
 
    switch (evt.data.method) {
    case "rs_set_scroll_pos":
-      setScrollPos(evt.data.arg)
+      setScrollPos(evt.data.arg);
       break;
    case "rs_set_hash": 
-      setHash(evt.data.arg)
+      setHash(evt.data.arg);
       break;
    }
-}
+};
 
 window.addEventListener("message", recv, false); 
 
@@ -82,15 +83,15 @@ window.addEventListener("message", recv, false);
 var scrollTimer = 0;
 var onScroll = function(pos) {
    if (scrollTimer !== 0)
-      window.clearTimeout(scrollTimer)
+      window.clearTimeout(scrollTimer);
    scrollTimer = window.setTimeout(function() {
       send({ event: "doc_scroll_change", data: document.body.scrollTop });
    }, 250);
-}
+};
 
 var onHashChange = function(evt) {
    send({ event: "doc_hash_change", data: document.location.hash });
-}
+};
 
 window.addEventListener("scroll", onScroll, false); 
 window.addEventListener("hashchange", onHashChange, false); 
