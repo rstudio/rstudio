@@ -150,6 +150,13 @@ using namespace core;
 using namespace session;
 using namespace session::client_events;
 
+// forward-declare overlay methods
+namespace session {
+namespace overlay {
+Error initialize();
+} // namespace overlay
+} // namespace session
+
 namespace {
 
 // uri handlers
@@ -2741,6 +2748,11 @@ int main (int argc, char * const argv[])
                           options.userLogPath());
          }
       }
+
+      // initialize overlay
+      error = session::overlay::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // set version
       s_version = installedVersion();

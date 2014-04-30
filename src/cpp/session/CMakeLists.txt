@@ -45,6 +45,7 @@ set (SESSION_SOURCE_FILES
    SessionContentUrls.cpp
    SessionSSH.cpp
    SessionMain.cpp
+   SessionMainOverlay.cpp
    SessionModuleContext.cpp
    SessionOptions.cpp
    SessionOptionsOverlay.cpp
