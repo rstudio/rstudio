@@ -98,6 +98,17 @@ http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
    return retryProfile;
 }
 
+ProxyFilter s_proxyFilter;
+
+bool applyProxyFilter(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   if (s_proxyFilter)
+      return s_proxyFilter(username, ptrConnection);
+   else
+      return false;
+}
 
 void handleProxyResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
@@ -394,6 +405,10 @@ void proxyRequest(
       const http::ErrorHandler& errorHandler,
       const http::ConnectionRetryProfile& connectionRetryProfile)
 {
+   // apply optional proxy filter
+   if (applyProxyFilter(username, ptrConnection))
+      return;
+
    // create async client
    FilePath streamPath = session::local_streams::streamPath(username);
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
@@ -515,6 +530,10 @@ void proxyLocalhostRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
+   // apply optional proxy filter
+   if (applyProxyFilter(username, ptrConnection))
+      return;
+
    // make a copy of the request for forwarding
    http::Request request;
    request.assign(ptrConnection->request());
@@ -563,6 +582,11 @@ void proxyLocalhostRequest(
    pClient->execute(
          boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, _1),
          boost::bind(handleLocalhostError, ptrConnection, _1));
+}
+
+void setProxyFilter(ProxyFilter filter)
+{
+   s_proxyFilter = filter;
 }
 
 } // namespace session_proxy

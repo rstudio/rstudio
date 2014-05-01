@@ -47,6 +47,12 @@ void proxyLocalhostRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
    
+
+typedef boost::function<bool(
+    const std::string&,
+    boost::shared_ptr<core::http::AsyncConnection>)> ProxyFilter;
+void setProxyFilter(ProxyFilter filter);
+
 } // namespace session_proxy
 } // namespace server
 
