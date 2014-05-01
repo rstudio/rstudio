@@ -30,14 +30,14 @@ well as menu structures (for main menu and popup menus).
          <menu label="New _File">
             <cmd refid="newSourceDoc"/>
             <separator/>
+            <cmd refid="newRMarkdownDoc"/>
+            <separator/>
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
             <separator/>
-            <cmd refid="newRMarkdownDoc"/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
             <cmd refid="newRPresentationDoc"/>
-            <separator/>
             <cmd refid="newRDocumentationDoc"/>
          </menu>
          <cmd refid="newProject"/>
@@ -572,7 +572,7 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new R Sweave document"/>  
         
    <cmd id="newRMarkdownDoc"
-        menuLabel="R _Markdown"
+        menuLabel="R _Markdown..."
         desc="Create a new R Markdown document"/>    
    
     <cmd id="newRHTMLDoc"
@@ -584,7 +584,7 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new R presentation"/>     
         
    <cmd id="newRDocumentationDoc"
-        menuLabel="R_d File"
+        menuLabel="R _Documentation"
         desc="Create a new Rd documentation file"/>  
         
    <cmd id="openSourceDoc"
