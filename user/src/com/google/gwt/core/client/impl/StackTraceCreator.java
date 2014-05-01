@@ -413,12 +413,11 @@ public class StackTraceCreator {
    * should only be called in Production Mode.
    */
   public static void fillInStackTrace(Throwable t) {
-    constructStackTrace(t, newCollector().collect(), true);
+    constructStackTrace(t, collector.collect(), true);
   }
 
   private static void constructStackTrace(Throwable t, Object thrown, boolean strip) {
     JavaScriptObject e = (thrown instanceof JavaScriptObject) ? (JavaScriptObject) thrown : null;
-    Collector collector = newCollector();
     JsArrayString stack = collector.inferFrom(e);
     StackTraceElement[] stackTrace = collector.getStackTrace(stack);
     if (stackTrace != null) {
@@ -430,7 +429,7 @@ public class StackTraceCreator {
   }
 
   private static StackTraceElement[] dropInternalFrames(StackTraceElement[] stackTrace) {
-    final String dropFrameUntilFnName = Impl.getNameOf("@java.lang.Throwable::fillInStackTrace(*)");
+    final String dropFrameUntilFnName = Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()");
 
     int numberOfFrameToSearch = Math.min(stackTrace.length, DROP_FRAME_LIMIT);
     for (int i = 0; i < numberOfFrameToSearch; i++) {
@@ -442,18 +441,18 @@ public class StackTraceCreator {
     return stackTrace;
   }
 
-  private static Collector newCollector() {
-    if (!GWT.isScript()) {
-      throw new RuntimeException("StackTraceCreator should only be called in Production Mode");
-    }
+  // Visible for testing
+  static final Collector collector;
 
-    Collector collector = GWT.create(Collector.class);
+  static {
+    Collector c = GWT.create(Collector.class);
     // Ensure old Safari falls back to default Collector implementation.
-    if (collector instanceof CollectorChrome && !supportsErrorStack()) {
-      return new CollectorLegacy();
-    }
-    return collector;
+    collector = (c instanceof CollectorChrome && !supportsErrorStack()) ? new CollectorLegacy() : c;
   }
+
+  private static native boolean supportsErrorStack() /*-{
+    return "stack" in new Error; // Checked via 'in' to avoid execution of stack getter in Chrome
+  }-*/;
 
   private static native JavaScriptObject toFnStackError(JsArrayString s) /*-{
     return { fnStack: s };
@@ -466,9 +465,5 @@ public class StackTraceCreator {
   private static native <T> T splice(T arr, int length) /*-{
     (arr.length >= length) && arr.splice(0, length);
     return arr;
-  }-*/;
-
-  static native boolean supportsErrorStack() /*-{
-    return !!Error.prototype.stack;
   }-*/;
 }

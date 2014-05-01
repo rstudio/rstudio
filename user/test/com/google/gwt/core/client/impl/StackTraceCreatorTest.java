@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.client.impl;
 
-import static com.google.gwt.core.client.impl.StackTraceCreator.supportsErrorStack;
-
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorLegacy;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
@@ -71,7 +69,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwExceptionRecursive(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwExceptionRecursive(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwExceptionRecursive(*)"),
-        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTrace()"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTraceRecursion()"),
     };
 
     final String[] expectedLegacy = {
@@ -82,7 +80,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::throwExceptionRecursive(*)"),
     };
 
-    final String[] expected = supportsErrorStack() ? expectedModern : expectedLegacy;
+    final String[] expected = isLegacyCollector() ? expectedLegacy : expectedModern;
     assertTrace(expected, t.getStackTrace(), 0);
   }
 
@@ -111,7 +109,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTraceNative()"),
     };
 
-    final String[] expected = supportsErrorStack() ? expectedModern : expectedLegacy;
+    final String[] expected = isLegacyCollector() ? expectedLegacy : expectedModern;
 
     StackTraceElement[] trace = t.getStackTrace();
 
@@ -140,8 +138,12 @@ public class StackTraceCreatorTest extends GWTTestCase {
     return offset;
   }
 
+  private static boolean isLegacyCollector() {
+    return StackTraceCreator.collector instanceof CollectorLegacy;
+  }
+
   private static void throwExceptionRecursive(int count) throws Throwable {
-    if (count > 0) {
+    if (count > 1) {
       throwExceptionRecursive(count - 1);
     } else {
       throwException1(false);
