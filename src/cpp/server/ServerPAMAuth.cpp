@@ -36,8 +36,7 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
-
-#include "ServerSessionProxy.hpp"
+#include <server/ServerSessionProxy.hpp>
 
 namespace server {
 namespace pam_auth {

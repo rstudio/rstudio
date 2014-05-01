@@ -47,6 +47,8 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
+#include <server/ServerSessionProxy.hpp>
+#include <server/ServerSessionManager.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
@@ -56,9 +58,7 @@
 #include "ServerMeta.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
-#include "ServerSessionProxy.hpp"
 #include "ServerREnvironment.hpp"
-#include "ServerSessionManager.hpp"
 
 using namespace core ;
 using namespace server;

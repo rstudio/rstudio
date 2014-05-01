@@ -13,7 +13,7 @@
  *
  */
 
-#include "ServerSessionManager.hpp"
+#include <server/ServerSessionManager.hpp>
 
 #include <vector>
 
