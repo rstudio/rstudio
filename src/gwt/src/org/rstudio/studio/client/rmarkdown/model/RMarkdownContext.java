@@ -24,4 +24,8 @@ public class RMarkdownContext extends JavaScriptObject
    public native final boolean getRMarkdownInstalled() /*-{
       return this.rmarkdown_installed;
    }-*/;
+   
+   public native final boolean getCanRenderShinyDocs() /*-{
+      return this.can_render_shiny_docs;
+   }-*/;
 }

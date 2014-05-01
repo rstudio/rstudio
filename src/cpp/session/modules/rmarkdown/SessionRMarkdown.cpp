@@ -882,6 +882,7 @@ Error getRMarkdownContext(const json::JsonRpcRequest&,
    // return installation status
    json::Object contextJson;
    contextJson["rmarkdown_installed"] = install::haveRequiredVersion();
+   contextJson["can_render_shiny_docs"] = canRenderShinyDocs();
    pResponse->setResult(contextJson);
 
    return Success();
