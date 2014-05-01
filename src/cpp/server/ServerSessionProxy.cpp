@@ -235,6 +235,23 @@ void handleLocalhostResponse(
    }
 }
 
+void handleLocalhostError(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const Error& error)
+{
+   // if this request required a session then return a standard 503
+   if (http::isConnectionUnavailableError(error) &&
+       requiresSession(ptrConnection->request()))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::ServiceUnavailable);
+      ptrConnection->writeResponse();
+   }
+   else
+   {
+      ptrConnection->writeError(error);
+   }
+}
 
 void logIfNotConnectionTerminated(const Error& error,
                                   const http::Request& request)
@@ -545,8 +562,7 @@ void proxyLocalhostRequest(
    // execute request
    pClient->execute(
          boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, _1),
-         boost::bind(&core::http::AsyncConnection::writeError,
-                     ptrConnection, _1));
+         boost::bind(handleLocalhostError, ptrConnection, _1));
 }
 
 } // namespace session_proxy
