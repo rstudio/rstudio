@@ -18,7 +18,9 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
+#include <boost/bind.hpp>
 #include <boost/utility.hpp>
 
 namespace boost {
@@ -104,7 +106,7 @@ protected:
    void appendHttpVersionBuffers(
          std::vector<boost::asio::const_buffer>& buffers) const ;
 
-   void assign(const Message& message)
+   void assign(const Message& message, const Headers& extraHeaders)
    {
       body_ = message.body_;
       httpVersionMajor_ = message.httpVersionMajor_;
@@ -112,6 +114,9 @@ protected:
       headers_ = message.headers_;
       overrideHeader_ = message.overrideHeader_;
       httpVersion_ = message.httpVersion_;
+
+      std::for_each(extraHeaders.begin(), extraHeaders.end(),
+                    boost::bind(&Message::setExtraHeader, this, _1));
    }
 
 private:
@@ -120,6 +125,11 @@ private:
          std::vector<boost::asio::const_buffer>& buffers) const = 0;
 
    virtual void resetMembers() = 0;
+
+   void setExtraHeader(const Header& header)
+   {
+      setHeader(header);
+   }
    
 private:
 

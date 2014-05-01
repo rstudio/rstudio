@@ -88,9 +88,10 @@ public:
 
    // COPYING: boost::noncopyable (but see explicit assign method below)
 
-   void assign(const Response& response)
+   void assign(const Response& response,
+               const Headers& extraHeaders = Headers())
    {
-      Message::assign(response);
+      Message::assign(response, extraHeaders);
       statusCode_ = response.statusCode_;
       statusCodeStr_ = response.statusCodeStr_;
       statusMessage_ = response.statusMessage_;

@@ -32,9 +32,9 @@ public:
    virtual ~Request() ;
    // COPYING: boost::noncopyable
 
-   void assign(const Request& request)
+   void assign(const Request& request, const Headers& extraHeaders = Headers())
    {
-      Message::assign(request);
+      Message::assign(request, extraHeaders);
       method_ = request.method_;
       uri_ = request.uri_;
       remoteUid_ = request.remoteUid_;
