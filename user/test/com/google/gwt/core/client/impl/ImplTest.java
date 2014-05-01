@@ -47,6 +47,10 @@ public class ImplTest extends GWTTestCase {
     }
   }
 
+  private static abstract class ClassWithAbstractMethod {
+    public abstract void abstractMethod();
+  }
+
   @DoNotRunWith(Platform.Devel)
   public void testPinnedByImpl_getNameOf() {
     Foo foo = new Foo();
@@ -58,6 +62,8 @@ public class ImplTest extends GWTTestCase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.ImplTest::inlinableFunction()"));
     assertNotNullNorEmpty(
         Impl.getNameOf("@com.google.gwt.core.client.impl.ImplTest.Foo::statifiableFunction(*)"));
+    assertNull(Impl.getNameOf("@com.google.gwt.core.client.impl.ImplTest.ClassWithAbstractMethod::"
+        + "abstractMethod(*)"));
 
     if (areNamesObfuscatedOrNotPresent()) {
       // In obfuscated mode the names of the functions in the output code have no relation

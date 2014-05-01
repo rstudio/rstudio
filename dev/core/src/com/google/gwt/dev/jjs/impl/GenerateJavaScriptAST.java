@@ -368,6 +368,16 @@ public class GenerateJavaScriptAST {
     }
   }
 
+  /**
+   * Finds the nodes that are targets of JNameOf so that a name is assigned to them.
+   */
+  private class FindNameOfTargets extends JVisitor {
+    @Override
+    public void endVisit(JNameOf x, Context ctx) {
+      nameOfTargets.add(x.getNode());
+    }
+  }
+
   private class CreateNamesAndScopesVisitor extends JVisitor {
 
     /**
@@ -570,9 +580,10 @@ public class GenerateJavaScriptAST {
 
       /*
        * Only allocate a name for a function if it is native, not polymorphic,
-       * or stack-stripping is disabled.
+       * is a JNameOf target or stack-stripping is disabled.
        */
-      if (!stripStack || !polymorphicNames.containsKey(x) || x.isNative()) {
+      if (!stripStack || !polymorphicNames.containsKey(x) || x.isNative()
+          || nameOfTargets.contains(x)) {
         globalName = topScope.declareName(mangleName, name);
         names.put(x, globalName);
         recordSymbol(x, globalName);
@@ -1584,7 +1595,10 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JNameOf x, Context ctx) {
       JsName name = names.get(x.getNode());
-      assert name != null : "Missing JsName for " + x.getNode().getName();
+      if (name == null) {
+        push(new JsNameRef(x.getSourceInfo(), JsRootScope.INSTANCE.getUndefined()));
+        return;
+      }
       push(new JsNameOf(x.getSourceInfo(), name));
     }
 
@@ -3171,6 +3185,11 @@ public class GenerateJavaScriptAST {
   private final Map<JMethod, JsName> polymorphicNames = Maps.newIdentityHashMap();
   private final JProgram program;
 
+  /**
+   * SEt of all targets of JNameOf.
+   */
+  private Set<HasName> nameOfTargets = Sets.newHashSet();
+
   private final JsOutputOption output;
   // Whether the AST for the whole program arrived to this pass or just for one module.
   // This is used to do some final optimizations.
@@ -3389,6 +3408,7 @@ public class GenerateJavaScriptAST {
   private Pair<JavaToJavaScriptMap, Set<JsNode>> execImpl() {
     new FixNameClashesVisitor().accept(program);
     new CanObserveSubclassUninitializedFieldsVisitor().accept(program);
+    new FindNameOfTargets().accept(program);
     new SortVisitor().accept(program);
     if (hasWholeWorldKnowledge) {
       // TODO(rluble): pull out this analysis and make it a Java AST optimization pass.
