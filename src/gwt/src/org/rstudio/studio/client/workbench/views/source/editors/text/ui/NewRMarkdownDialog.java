@@ -193,6 +193,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          public void onChange(ChangeEvent event)
          {
             updateOptions(getSelectedTemplate());
+            txtTitle_.setFocus(true);
          }
       });
 

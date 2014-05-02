@@ -933,36 +933,8 @@ public class Source implements InsertSourceHandler,
                   globalDisplay_.showErrorMessage("Template Content Missing", 
                         "The template at " + template.getTemplatePath() + 
                         " is missing.");
-               String yaml = YamlFrontMatter.getFrontMatter(content);
-               rmarkdown_.convertFromYaml(yaml, 
-                     new CommandWithArg<RmdYamlData>()
-                     {
-                        @Override
-                        public void execute(RmdYamlData yaml)
-                        {
-                           RmdFrontMatter frontMatter = yaml.getFrontMatter();
-                           frontMatter.applyCreateOptions(
-                                 result.getNewDocument().getAuthor(), 
-                                 result.getNewDocument().getTitle(), null, 
-                                 false);
-                           newDocWithFrontMatter(frontMatter, content);
-                        }
-                     });
+               newDoc(FileTypeRegistry.RMARKDOWN, content, null);
             }
-      });
-   }
-   
-   private void newDocWithFrontMatter(final RmdFrontMatter front,
-                                      final String content)
-   {
-      rmarkdown_.frontMatterToYAML(front, null, new CommandWithArg<String>() {
-         @Override
-         public void execute(String yaml)
-         {
-            String finalContent = 
-                  YamlFrontMatter.applyFrontMatter(content, yaml);
-            newDoc(FileTypeRegistry.RMARKDOWN, finalContent, null);
-         }
       });
    }
    
