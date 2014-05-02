@@ -38,14 +38,7 @@ namespace {
 void handleOfflineRequest(const http::Request& request,
                           http::Response* pResponse)
 {
-   // send error code for json responses
-   if (request.acceptsContentType(json::kJsonContentType))
-   {
-      json::setJsonRpcError(json::errc::ServerOffline, pResponse);
-   }
-   
-   // send error page for html responses
-   else if (request.acceptsContentType("text/html"))
+   if (request.acceptsContentType("text/html"))
    {
       pResponse->setStatusCode(http::status::ServiceUnavailable);
       pResponse->setNoCacheHeaders();
