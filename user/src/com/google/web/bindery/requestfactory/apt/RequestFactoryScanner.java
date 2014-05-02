@@ -19,6 +19,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -26,6 +27,8 @@ import javax.lang.model.type.TypeMirror;
  * the State object to validate the types that it encounters.
  */
 class RequestFactoryScanner extends ScannerBase<Void> {
+  private TypeElement checkedElement;
+
   @Override
   public Void visitExecutable(ExecutableElement x, State state) {
     if (shouldIgnore(x, state)) {
@@ -35,7 +38,9 @@ class RequestFactoryScanner extends ScannerBase<Void> {
     if (!x.getParameters().isEmpty()) {
       state.poison(x, Messages.factoryNoMethodParameters());
     }
-    TypeMirror returnType = x.getReturnType();
+    // resolve type parameters, if any
+    ExecutableType xType = viewIn(checkedElement, x, state);
+    TypeMirror returnType = xType.getReturnType();
     if (state.types.isAssignable(returnType, state.requestContextType)) {
       Element returnTypeElement = state.types.asElement(returnType);
       if (!returnTypeElement.getKind().equals(ElementKind.INTERFACE)) {
@@ -58,6 +63,8 @@ class RequestFactoryScanner extends ScannerBase<Void> {
     if (state.types.isSameType(state.requestFactoryType, x.asType())) {
       return null;
     }
+
+    checkedElement = x;
 
     scanAllInheritedMethods(x, state);
     state.checkExtraTypes(x);

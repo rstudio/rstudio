@@ -24,6 +24,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -48,10 +49,22 @@ class ScannerBase<R> extends ElementScanner6<R, State> {
     }
   }
 
-  protected static ExecutableType viewIn(TypeElement lookIn, ExecutableElement methodElement, State state) {
+  protected static ExecutableType viewIn(TypeElement lookIn, ExecutableElement methodElement,
+      State state) {
+    // Do not use state.types.getDeclaredType, as we really want a
+    // "prototypical" type, and not a raw type.
+    // This is important when a proxy maps to a generic domain type:
+    // state.types.getDeclaredType without typeArgs would return the raw type,
+    // and asMemberOf would then return an ExecutableType using raw types too.
+    // For instance, if a class Foo<T> contains a method whose return type is
+    // List<String> (note it doesn't even make use of the T type parameter),
+    // then if we were to use raw types, the returned type of the ExecutableType
+    // would be the raw type java.util.List, and not List<String>. Using
+    // asType(), we'd get the expected List<String> though; and for a List<T>,
+    // we'd get a List<Object> (or whichever upper bound for the T type
+    // parameter).
     try {
-      return (ExecutableType) state.types.asMemberOf(state.types.getDeclaredType(lookIn),
-          methodElement);
+      return (ExecutableType) state.types.asMemberOf((DeclaredType) lookIn.asType(), methodElement);
     } catch (IllegalArgumentException e) {
       return (ExecutableType) methodElement.asType();
     }

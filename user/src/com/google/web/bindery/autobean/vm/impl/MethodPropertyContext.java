@@ -19,78 +19,48 @@ import com.google.web.bindery.autobean.shared.AutoBeanVisitor.CollectionProperty
 import com.google.web.bindery.autobean.shared.AutoBeanVisitor.MapPropertyContext;
 import com.google.web.bindery.autobean.shared.AutoBeanVisitor.ParameterizationVisitor;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * A base type to handle analyzing the return value of a getter method. The
  * accessor methods are implemented in subtypes.
  */
-abstract class MethodPropertyContext implements CollectionPropertyContext,
-    MapPropertyContext {
-  private static class Data {
-    Class<?> elementType;
-    Type genericType;
-    Class<?> keyType;
-    Class<?> valueType;
-    Class<?> type;
-  }
+abstract class MethodPropertyContext implements CollectionPropertyContext, MapPropertyContext {
+  private final Class<?> elementType;
+  private final Type genericType;
+  private final Class<?> keyType;
+  private final Class<?> valueType;
+  private final Class<?> type;
 
-  /**
-   * Save prior instances in order to decrease the amount of data computed.
-   */
-  private static final Map<Method, Data> cache = new WeakHashMap<Method, Data>();
-  private final Data data;
-
-  public MethodPropertyContext(Method getter) {
-    synchronized (cache) {
-      Data previous = cache.get(getter);
-      if (previous != null) {
-        this.data = previous;
-        return;
-      }
-
-      this.data = new Data();
-      data.genericType = getter.getGenericReturnType();
-      data.type = getter.getReturnType();
-      // Compute collection element type
-      if (Collection.class.isAssignableFrom(getType())) {
-        data.elementType = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
-            Collection.class, getter.getGenericReturnType(),
-            getter.getReturnType()));
-      } else if (Map.class.isAssignableFrom(getType())) {
-        Type[] types = TypeUtils.getParameterization(Map.class,
-            getter.getGenericReturnType());
-        data.keyType = TypeUtils.ensureBaseType(types[0]);
-        data.valueType = TypeUtils.ensureBaseType(types[1]);
-      }
-      cache.put(getter, data);
-    }
+  protected MethodPropertyContext(Type genericType, Class<?> type, Class<?> elementType,
+      Class<?> keyType, Class<?> valueType) {
+    this.genericType = genericType;
+    this.type = type;
+    this.elementType = elementType;
+    this.keyType = keyType;
+    this.valueType = valueType;
   }
 
   public void accept(ParameterizationVisitor visitor) {
-    traverse(visitor, data.genericType);
+    traverse(visitor, genericType);
   }
 
   public abstract boolean canSet();
 
   public Class<?> getElementType() {
-    return data.elementType;
+    return elementType;
   }
 
   public Class<?> getKeyType() {
-    return data.keyType;
+    return keyType;
   }
 
   public Class<?> getType() {
-    return data.type;
+    return type;
   }
 
   public Class<?> getValueType() {
-    return data.valueType;
+    return valueType;
   }
 
   public abstract void set(Object value);

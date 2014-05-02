@@ -119,6 +119,7 @@
       <arg path="${gwt.build.lib}/requestfactory-test-validated.jar" />
       <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryChainedContextTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryPolymorphicTest.Factory" />
+      <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryGenericsTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.shared.BoxesAndPrimitivesTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.shared.ComplexKeysTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.shared.LocatorTest.Factory" />

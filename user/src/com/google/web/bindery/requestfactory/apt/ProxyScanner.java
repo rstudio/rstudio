@@ -23,6 +23,7 @@ import com.google.web.bindery.requestfactory.shared.ProxyForName;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 
@@ -32,26 +33,47 @@ import javax.lang.model.type.TypeMirror;
  */
 class ProxyScanner extends ScannerBase<Void> {
 
+  private TypeElement checkedElement;
+
   @Override
   public Void visitExecutable(ExecutableElement x, State state) {
     if (shouldIgnore(x, state)) {
       return null;
     }
 
+    ExecutableType xType = viewIn(checkedElement, x, state);
     if (isGetter(x, state)) {
-      TypeMirror returnType = x.getReturnType();
+      TypeMirror returnType = xType.getReturnType();
       if (!state.isTransportableType(returnType)) {
+        // XXX(t.broyer): should we really pass the "resolved" type? that could
+        // result in several errors being reported on the same method, but on
+        // the other hand tells exactly which type it is that isn't
+        // transportable.
+        // For instance, a List<T> might be transportable if T is
+        // java.lang.String in a sub-interface, but not if T is some
+        // untransportable type in another sub-interface
         state.poison(x, Messages.untransportableType(returnType));
       }
     } else if (!isSetter(x, state)) {
       state.poison(x, Messages.proxyOnlyGettersSetters());
     }
-    // Parameters checked by visitVariable
-    return super.visitExecutable(x, state);
+
+    // check parameters (we do not defer to visitVariable, as we need the
+    // resolved generics)
+    int i = 0;
+    for (TypeMirror parameterType : xType.getParameterTypes()) {
+      if (!state.isTransportableType(parameterType)) {
+        // see comments above about the returnType
+        state.poison(x.getParameters().get(i), Messages.untransportableType(parameterType));
+      }
+      i++;
+    }
+    return null;
   }
 
   @Override
   public Void visitType(TypeElement x, State state) {
+    checkedElement = x;
     ProxyFor proxyFor = x.getAnnotation(ProxyFor.class);
     ProxyForName proxyForName = x.getAnnotation(ProxyForName.class);
     JsonRpcProxy jsonRpcProxy = x.getAnnotation(JsonRpcProxy.class);

@@ -28,9 +28,10 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -42,16 +43,43 @@ import java.util.WeakHashMap;
  */
 public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   private static class Data {
-    final List<Method> getters = new ArrayList<Method>();
-    final List<String> getterNames = new ArrayList<String>();
-    final List<PropertyType> propertyType = new ArrayList<PropertyType>();
+    final Class<?> elementType;
+    final Type genericType;
+    final Method getter;
+    final Class<?> keyType;
+    final PropertyType propertyType;
+    Method setter;
+    final Class<?> type;
+    final Class<?> valueType;
+
+    Data(Method getter, Type genericType, Class<?> type, PropertyType propertyType) {
+      this.getter = getter;
+      this.genericType = genericType;
+      this.type = type;
+      this.propertyType = propertyType;
+
+      if (propertyType == PropertyType.COLLECTION) {
+        elementType =
+            TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(Collection.class,
+                genericType, type));
+        keyType = valueType = null;
+      } else if (propertyType == PropertyType.MAP) {
+        elementType = null;
+        Type[] types = TypeUtils.getParameterization(Map.class, genericType, type);
+        keyType = TypeUtils.ensureBaseType(types[0]);
+        valueType = TypeUtils.ensureBaseType(types[1]);
+      } else {
+        elementType = keyType = valueType = null;
+      }
+    }
   }
 
   private enum PropertyType {
     VALUE, REFERENCE, COLLECTION, MAP;
   }
 
-  private static final Map<Class<?>, Data> cache = new WeakHashMap<Class<?>, Data>();
+  private static final Map<Class<?>, Map<String, Data>> cache =
+      new WeakHashMap<Class<?>, Map<String, Data>>();
 
   /**
    * Utility method to crete a new {@link Proxy} instance.
@@ -77,37 +105,62 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     return intf.cast(Proxy.newProxyInstance(intf.getClassLoader(), intfs, handler));
   }
 
-  private static Data calculateData(Class<?> beanType) {
-    Data toReturn;
+  private static Map<String, Data> calculateData(Class<?> beanType) {
+    Map<String, Data> toReturn;
     synchronized (cache) {
       toReturn = cache.get(beanType);
       if (toReturn == null) {
-        toReturn = new Data();
+        Map<String, Data> getters = new HashMap<String, Data>();
+        List<Method> setters = new ArrayList<Method>();
         for (Method method : beanType.getMethods()) {
           if (BeanMethod.GET.matches(method)) {
-            toReturn.getters.add(method);
+            // match methods on their name for now, to find the most specific
+            // override
+            String name = method.getName();
 
-            String name;
-            PropertyName annotation = method.getAnnotation(PropertyName.class);
-            if (annotation != null) {
-              name = annotation.value();
-            } else {
-              name = BeanMethod.GET.inferName(method);
-            }
-            toReturn.getterNames.add(name);
+            Type genericReturnType = TypeUtils.resolveGenerics(beanType, method.getGenericReturnType());
+            Class<?> returnType = TypeUtils.ensureBaseType(genericReturnType);
 
-            Class<?> returnType = method.getReturnType();
-            if (TypeUtils.isValueType(returnType)) {
-              toReturn.propertyType.add(PropertyType.VALUE);
-            } else if (Collection.class.isAssignableFrom(returnType)) {
-              toReturn.propertyType.add(PropertyType.COLLECTION);
-            } else if (Map.class.isAssignableFrom(returnType)) {
-              toReturn.propertyType.add(PropertyType.MAP);
-            } else {
-              toReturn.propertyType.add(PropertyType.REFERENCE);
+            Data data = getters.get(name);
+            if (data == null || data.type.isAssignableFrom(returnType)) {
+              // no getter seen yet for the property, or a less specific one
+              PropertyType propertyType;
+              if (TypeUtils.isValueType(returnType)) {
+                propertyType = PropertyType.VALUE;
+              } else if (Collection.class.isAssignableFrom(returnType)) {
+                propertyType = PropertyType.COLLECTION;
+              } else if (Map.class.isAssignableFrom(returnType)) {
+                propertyType = PropertyType.MAP;
+              } else {
+                propertyType = PropertyType.REFERENCE;
+              }
+              data = new Data(method, genericReturnType, returnType, propertyType);
+
+              getters.put(name, data);
             }
+          } else if (BeanMethod.SET.matches(method) || BeanMethod.SET_BUILDER.matches(method)) {
+            setters.add(method);
           }
         }
+
+        toReturn = new HashMap<String, Data>(getters.size());
+
+        // Now take @PropertyName into account
+        for (Map.Entry<String, Data> entry : getters.entrySet()) {
+          Data data = entry.getValue();
+          toReturn.put(BeanMethod.GET.inferName(data.getter), data);
+        }
+
+        // Associate setters to getters
+        for (Method setter : setters) {
+          String name = BeanMethod.SET.inferName(setter);
+          Data data = toReturn.get(name);
+          if (data != null && data.setter == null
+              && data.getter.getReturnType().isAssignableFrom(setter.getParameterTypes()[0])) {
+            data.setter = setter;
+          }
+        }
+
         cache.put(beanType, toReturn);
       }
     }
@@ -116,7 +169,7 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
 
   private final Class<T> beanType;
   private final Configuration configuration;
-  private final Data data;
+  private final Map<String, Data> propertyData;
   /**
    * Because the shim and the ProxyAutoBean are related through WeakMapping, we
    * need to ensure that the ProxyAutoBean doesn't artificially extend the
@@ -150,7 +203,7 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     super(factory);
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
-    this.data = calculateData(beanType);
+    this.propertyData = calculateData(beanType);
   }
 
   @SuppressWarnings("unchecked")
@@ -159,7 +212,7 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     super(toWrap, factory);
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
-    this.data = calculateData(beanType);
+    this.propertyData = calculateData(beanType);
   }
 
   @Override
@@ -235,7 +288,7 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   @Override
   protected T getWrapped() {
     if (wrapped == null && isUsingSimplePeer()) {
-      wrapped = (T) ProxyAutoBean.makeProxy(beanType, new SimpleBeanHandler<T>(this));
+      wrapped = ProxyAutoBean.<T> makeProxy(beanType, new SimpleBeanHandler<T>(this));
     }
     return super.getWrapped();
   }
@@ -256,15 +309,11 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   // TODO: Port to model-based when class-based TypeOracle is available.
   @Override
   protected void traverseProperties(AutoBeanVisitor visitor, OneShotContext ctx) {
-    assert data.getters.size() == data.getterNames.size()
-        && data.getters.size() == data.propertyType.size();
-    Iterator<Method> getterIt = data.getters.iterator();
-    Iterator<String> nameIt = data.getterNames.iterator();
-    Iterator<PropertyType> typeIt = data.propertyType.iterator();
-    while (getterIt.hasNext()) {
-      Method getter = getterIt.next();
-      String name = nameIt.next();
-      PropertyType propertyType = typeIt.next();
+    for (Map.Entry<String, Data> entry : propertyData.entrySet()) {
+      String name = entry.getKey();
+      Data data = entry.getValue();
+      Method getter = data.getter;
+      PropertyType propertyType = data.propertyType;
 
       // Use the shim to handle automatic wrapping
       Object value;
@@ -280,9 +329,16 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
       }
 
       // Create the context used for the property visitation
-      MethodPropertyContext x =
-          isUsingSimplePeer() ? new BeanPropertyContext(this, getter) : new GetterPropertyContext(
-              this, getter);
+      MethodPropertyContext x;
+      if (isUsingSimplePeer()) {
+        x =
+            new BeanPropertyContext(this, name, data.genericType, data.type, data.elementType,
+                data.keyType, data.valueType);
+      } else {
+        x =
+            new GetterPropertyContext(this, getter, data.genericType, data.type, data.elementType,
+                data.keyType, data.valueType);
+      }
 
       switch (propertyType) {
         case VALUE: {
@@ -331,10 +387,6 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
         }
       }
     }
-  }
-
-  Class<?> getBeanType() {
-    return beanType;
   }
 
   private T createShim() {

@@ -17,6 +17,7 @@ package com.google.web.bindery.autobean.vm.impl;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 /**
  * Used by {@link ProxyAutoBean#traverseProperties()}.
@@ -25,23 +26,12 @@ class GetterPropertyContext extends MethodPropertyContext {
   private final Method setter;
   private final Object shim;
 
-  GetterPropertyContext(ProxyAutoBean<?> bean, Method getter) {
-    super(getter);
-    this.shim = bean.as();
+  GetterPropertyContext(ProxyAutoBean<?> bean, Method setter, Type genericType, Class<?> type,
+      Class<?> elementType, Class<?> keyType, Class<?> valueType) {
+    super(genericType, type, elementType, keyType, valueType);
 
-    // Look for the setter method.
-    Method found = null;
-    String name = BeanMethod.GET.inferName(getter);
-    for (Method m : getter.getDeclaringClass().getMethods()) {
-      if (BeanMethod.SET.matches(m) || BeanMethod.SET_BUILDER.matches(m)) {
-        if (BeanMethod.SET.inferName(m).equals(name)
-            && getter.getReturnType().isAssignableFrom(m.getParameterTypes()[0])) {
-          found = m;
-          break;
-        }
-      }
-    }
-    setter = found;
+    this.setter = setter;
+    this.shim = bean.as();
   }
 
   @Override

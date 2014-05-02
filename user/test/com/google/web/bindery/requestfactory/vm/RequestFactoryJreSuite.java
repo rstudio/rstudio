@@ -25,6 +25,7 @@ import com.google.web.bindery.requestfactory.server.MethodProvidedByServiceLayer
 import com.google.web.bindery.requestfactory.server.MultipleFactoriesJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryChainedContextJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryExceptionPropagationJreTest;
+import com.google.web.bindery.requestfactory.server.RequestFactoryGenericsJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryPolymorphicJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryUnicodeEscapingJreTest;
@@ -55,6 +56,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(MultipleFactoriesJreTest.class);
     suite.addTestSuite(RequestFactoryChainedContextJreTest.class);
     suite.addTestSuite(RequestFactoryExceptionPropagationJreTest.class);
+    suite.addTestSuite(RequestFactoryGenericsJreTest.class);
     suite.addTestSuite(RequestFactoryJreTest.class);
     suite.addTestSuite(RequestFactoryPolymorphicJreTest.class);
     suite.addTestSuite(RequestFactoryUnicodeEscapingJreTest.class);

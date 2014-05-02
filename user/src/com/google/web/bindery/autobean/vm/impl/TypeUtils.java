@@ -170,6 +170,66 @@ public class TypeUtils {
     return autoBoxType == null ? domainType : autoBoxType;
   }
 
+  public static Type resolveGenerics(Class<?> containingType, Type type) {
+    if (type instanceof Class<?>) {
+      return type;
+    } else if (type instanceof ParameterizedType) {
+      final ParameterizedType param = (ParameterizedType) type;
+      Type[] actualTypeArguments = param.getActualTypeArguments();
+      boolean hadTypeVariable = false;
+      final ArrayList<Type> resolvedTypeArguments = new ArrayList<Type>(actualTypeArguments.length);
+      for (Type actualTypeArgument : actualTypeArguments) {
+        Type resolvedTypeArgument = resolveGenerics(containingType, actualTypeArgument);
+        hadTypeVariable = hadTypeVariable || (resolvedTypeArgument != actualTypeArgument);
+        resolvedTypeArguments.add(resolvedTypeArgument);
+      }
+      if (!hadTypeVariable) {
+        return type;
+      }
+      return new ParameterizedType() {
+        @Override
+        public Type getRawType() {
+          return param.getRawType();
+        }
+
+        @Override
+        public Type getOwnerType() {
+          return param.getOwnerType();
+        }
+
+        @Override
+        public Type[] getActualTypeArguments() {
+          return resolvedTypeArguments.toArray(new Type[resolvedTypeArguments.size()]);
+        }
+      };
+    } else if (type instanceof TypeVariable<?>) {
+      TypeVariable<?> variable = (TypeVariable<?>) type;
+      Object genericDeclaration = variable.getGenericDeclaration();
+      if (genericDeclaration instanceof Class<?>) {
+        Class<?> declaration = (Class<?>) genericDeclaration;
+        // could probably optimize, but would involve duplicating a bunch of
+        // getParameterization's code
+        Type[] types = getParameterization(declaration, containingType);
+        TypeVariable<?>[] x = declaration.getTypeParameters();
+        for (int i = 0; i < x.length; i++) {
+          if (variable.equals(x[i])) {
+            return resolveGenerics(containingType, types[i]);
+          }
+        }
+        throw new IllegalStateException(
+            "TypeVariable not found in its generic declaration type; must be a JVM error");
+      } else {
+        // Use "erasure" for method-level type variables; should we throw
+        // instead?
+        return ensureBaseType(type);
+      }
+    } else if (type instanceof WildcardType) {
+      return resolveGenerics(containingType, ((WildcardType) type).getUpperBounds()[0]);
+    } else {
+      throw new RuntimeException("Cannot handle " + type.getClass().getName());
+    }
+  }
+
   private TypeUtils() {
   }
 }

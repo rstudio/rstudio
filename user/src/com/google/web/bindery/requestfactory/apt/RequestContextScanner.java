@@ -23,8 +23,8 @@ import com.google.web.bindery.requestfactory.shared.ServiceName;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 
@@ -34,12 +34,16 @@ import javax.lang.model.type.TypeMirror;
  */
 class RequestContextScanner extends ScannerBase<Void> {
 
+  private TypeElement checkedElement;
+
   @Override
   public Void visitExecutable(ExecutableElement x, State state) {
     if (shouldIgnore(x, state)) {
       return null;
     }
-    TypeMirror returnType = x.getReturnType();
+    // resolve type parameters, if any
+    ExecutableType xType = viewIn(checkedElement, x, state);
+    TypeMirror returnType = xType.getReturnType();
     if (state.types.isAssignable(returnType, state.requestType)) {
       // Extract Request<Foo> type
       DeclaredType asRequest = (DeclaredType) State.viewAs(state.requestType, returnType, state);
@@ -65,17 +69,27 @@ class RequestContextScanner extends ScannerBase<Void> {
           state.poison(x, Messages.untransportableType(requestReturn));
         }
       }
-    } else if (isSetter(x, state)) {
-      // Parameter checked in visitVariable
-    } else {
+    } else if (!isSetter(x, state)) {
       state.poison(x, Messages.contextRequiredReturnTypes(state.requestType.asElement()
           .getSimpleName(), state.instanceRequestType.asElement().getSimpleName()));
     }
-    return super.visitExecutable(x, state);
+
+    // check parameters (we do not defer to visitVariable, as we need the
+    // resolved generics)
+    int i = 0;
+    for (TypeMirror parameterType : xType.getParameterTypes()) {
+      if (!state.isTransportableType(parameterType)) {
+        // see comments in ProxyScanner#visitExecutable
+        state.poison(x.getParameters().get(i), Messages.untransportableType(parameterType));
+      }
+      i++;
+    }
+    return null;
   }
 
   @Override
   public Void visitType(TypeElement x, State state) {
+    checkedElement = x;
     Service service = x.getAnnotation(Service.class);
     ServiceName serviceName = x.getAnnotation(ServiceName.class);
     JsonRpcService jsonRpcService = x.getAnnotation(JsonRpcService.class);
@@ -114,13 +128,5 @@ class RequestContextScanner extends ScannerBase<Void> {
       }
     }
     return super.visitTypeParameter(x, state);
-  }
-
-  @Override
-  public Void visitVariable(VariableElement x, State state) {
-    if (!state.isTransportableType(x.asType())) {
-      state.poison(x, Messages.untransportableType(x.asType()));
-    }
-    return super.visitVariable(x, state);
   }
 }

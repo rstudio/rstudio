@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.autobean.vm.impl;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 /**
  * A property context that allows setters to be called on a simple peer,
@@ -25,10 +25,11 @@ class BeanPropertyContext extends MethodPropertyContext {
   private final ProxyAutoBean<?> bean;
   private final String propertyName;
 
-  public BeanPropertyContext(ProxyAutoBean<?> bean, Method getter) {
-    super(getter);
+  public BeanPropertyContext(ProxyAutoBean<?> bean, String name, Type genericType, Class<?> type,
+      Class<?> elementType, Class<?> keyType, Class<?> valueType) {
+    super(genericType, type, elementType, keyType, valueType);
     this.bean = bean;
-    propertyName = BeanMethod.GET.inferName(getter);
+    propertyName = name;
   }
 
   @Override

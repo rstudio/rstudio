@@ -22,6 +22,7 @@ import com.google.web.bindery.requestfactory.gwt.client.RequestBatcherTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryChainedContextTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryExceptionHandlerTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryExceptionPropagationTest;
+import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryGenericsTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryPolymorphicTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryUnicodeEscapingTest;
@@ -58,6 +59,7 @@ public class RequestFactorySuite {
     suite.addTestSuite(RequestFactoryChainedContextTest.class);
     suite.addTestSuite(RequestFactoryExceptionHandlerTest.class);
     suite.addTestSuite(RequestFactoryExceptionPropagationTest.class);
+    suite.addTestSuite(RequestFactoryGenericsTest.class);
     suite.addTestSuite(RequestFactoryPolymorphicTest.class);
     suite.addTestSuite(RequestFactoryUnicodeEscapingTest.class);
     suite.addTestSuite(RequestPayloadTest.class);
