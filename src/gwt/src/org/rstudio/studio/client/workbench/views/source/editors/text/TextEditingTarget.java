@@ -82,6 +82,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -2393,55 +2394,20 @@ public class TextEditingTarget implements
       dialog.showModal();
    }
    
-   private int[] getFrontMatterRange(String code)
-   {
-      String separator = RmdFrontMatter.FRONTMATTER_SEPARATOR;
-      int beginPos = code.indexOf(separator) + separator.length();
-      if (beginPos < 0)
-         return null;
-      int endPos = code.indexOf(separator, beginPos);
-      if (endPos < 0)
-         return null;
-      return new int[] { beginPos, endPos };
-   }
-
    private String getRmdFrontMatter()
    {
-      String code = docDisplay_.getCode();
-      int[] range = getFrontMatterRange(code);
-      // if there is none then use the "implicit" front matter
-      // indicating an html document
-      if (range == null)
-      {
-         return "output: html_document\n";
-      }
-      else
-      {
-         return code.substring(range[0], range[1]);
-      }
+      return YamlFrontMatter.getFrontMatter(docDisplay_.getCode());
    }
    
    private void applyRmdFrontMatter(String yaml)
    {
-      if (yaml == null || yaml.isEmpty())
-         return;
-      
       String code = docDisplay_.getCode();
-      int[] range = getFrontMatterRange(code);
-      if (range == null)
+      String newCode = YamlFrontMatter.applyFrontMatter(code, yaml);
+      if (!code.equals(newCode)) 
       {
-         code = RmdFrontMatter.FRONTMATTER_SEPARATOR +
-                yaml +
-                RmdFrontMatter.FRONTMATTER_SEPARATOR +
-                code;
+         docDisplay_.setCode(code, true);
+         updateRmdFormatList();
       }
-      else
-      {
-         code = code.substring(0, range[0]) + yaml + 
-                code.substring(range[1], code.length());
-      }
-      docDisplay_.setCode(code, true);
-      updateRmdFormatList();
    }
 
    private void applyRmdFrontMatter(RmdTemplateOptionsDialog.Result result)

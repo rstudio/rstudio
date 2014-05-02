@@ -67,6 +67,8 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
+import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -903,7 +905,7 @@ public class Source implements InsertSourceHandler,
                         }
                         else
                         {
-                           newDocFromRmdTemplate(result.getFromTemplate());
+                           newDocFromRmdTemplate(result);
                         }
                      }
                   }
@@ -913,27 +915,55 @@ public class Source implements InsertSourceHandler,
       );
    }
    
-   private void newDocFromRmdTemplate(final RmdChosenTemplate template)
+   private void newDocFromRmdTemplate(final NewRMarkdownDialog.Result result)
    {
+      final RmdChosenTemplate template = result.getFromTemplate();
       if (template.createDir())
       {
          rmarkdown_.createDraftFromTemplate(template);
+         return;
       }
-      else
-      {
-         rmarkdown_.getTemplateContent(template, 
-            new OperationWithInput<String>() {
-               @Override
-               public void execute(String content)
-               {
-                  if (content.length() == 0)
-                     globalDisplay_.showErrorMessage("Template Content Missing", 
-                           "The template at " + template.getTemplatePath() + 
-                           " is missing.");
-                  newDoc(FileTypeRegistry.RMARKDOWN, content, null);
-               }
-         });
-      }
+
+      rmarkdown_.getTemplateContent(template, 
+         new OperationWithInput<String>() {
+            @Override
+            public void execute(final String content)
+            {
+               if (content.length() == 0)
+                  globalDisplay_.showErrorMessage("Template Content Missing", 
+                        "The template at " + template.getTemplatePath() + 
+                        " is missing.");
+               String yaml = YamlFrontMatter.getFrontMatter(content);
+               rmarkdown_.convertFromYaml(yaml, 
+                     new CommandWithArg<RmdYamlData>()
+                     {
+                        @Override
+                        public void execute(RmdYamlData yaml)
+                        {
+                           RmdFrontMatter frontMatter = yaml.getFrontMatter();
+                           frontMatter.applyCreateOptions(
+                                 result.getNewDocument().getAuthor(), 
+                                 result.getNewDocument().getTitle(), null, 
+                                 false);
+                           newDocWithFrontMatter(frontMatter, content);
+                        }
+                     });
+            }
+      });
+   }
+   
+   private void newDocWithFrontMatter(final RmdFrontMatter front,
+                                      final String content)
+   {
+      rmarkdown_.frontMatterToYAML(front, null, new CommandWithArg<String>() {
+         @Override
+         public void execute(String yaml)
+         {
+            String finalContent = 
+                  YamlFrontMatter.applyFrontMatter(content, yaml);
+            newDoc(FileTypeRegistry.RMARKDOWN, finalContent, null);
+         }
+      });
    }
    
    private void newRMarkdownV2Doc(
