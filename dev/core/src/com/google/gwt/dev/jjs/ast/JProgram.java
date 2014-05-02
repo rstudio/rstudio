@@ -348,7 +348,7 @@ public class JProgram extends JNode {
 
   private JClassType typeString;
 
-  private FragmentPartitioningResult fragmentPartitioninResult;
+  private FragmentPartitioningResult fragmentPartitioningResult;
 
   /**
    * Set of method that are pinned and should be skipped by optimizations such as
@@ -696,7 +696,7 @@ public class JProgram extends JNode {
   }
 
   public FragmentPartitioningResult getFragmentPartitioningResult() {
-    return fragmentPartitioninResult;
+    return fragmentPartitioningResult;
   }
 
   // TODO(stalcup): this is a blatant bug. there's no unambiguous way to convert from binary name to
@@ -821,7 +821,7 @@ public class JProgram extends JNode {
   }
 
   public int getCommonAncestorFragmentId(int thisFragmentId, int thatFragmentId) {
-    return fragmentPartitioninResult.getCommonAncestorFragmentId(thisFragmentId, thatFragmentId);
+    return fragmentPartitioningResult.getCommonAncestorFragmentId(thisFragmentId, thatFragmentId);
   }
 
   public String getRuntimeRebindRegistratorTypeSourceName() {
@@ -1021,7 +1021,7 @@ public class JProgram extends JNode {
   }
 
   public void setFragmentPartitioningResult(FragmentPartitioningResult result) {
-    fragmentPartitioninResult = result;
+    fragmentPartitioningResult = result;
   }
 
   public void setInitialFragmentIdSequence(List<Integer> initialFragmentIdSequence) {
