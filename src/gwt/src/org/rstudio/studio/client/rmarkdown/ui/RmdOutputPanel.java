@@ -401,10 +401,20 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    // reflect navigation occurring after initial load (e.g. anchor changes)
    private String getCurrentUrl()
    {
-      if (isShiny_)
-         return shinyFrame_.getUrl();
-      else
-         return getFrame().getIFrame().getContentDocument().getURL();
+      String url = "";
+      // guard against exceptions (can occur if the content document isn't 
+      // fully created yet or we don't have access to it)
+      try 
+      {
+         if (isShiny_)
+            url = shinyFrame_.getUrl();
+         else
+            url = getFrame().getIFrame().getContentDocument().getURL();
+      }
+      catch (Exception ex)
+      {
+      }
+      return url;
    }
   
    private void fireSlideIndexChanged()
