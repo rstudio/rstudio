@@ -116,7 +116,6 @@ public class RpcRequest
             public void onResponseReceived(Request request, 
                                            Response response)
             {
-               // only accept 200 responses
                int status = response.getStatusCode();
                if ( status == 200 )
                {
@@ -144,10 +143,14 @@ public class RpcRequest
                      requestCallback.onError(enclosingRequest, error) ;
                   }
                }
-               else
+               else if ( status == 503 )
                {
-                  // ERROR: Non-200 response from server
-                  
+                  RpcError error = RpcError.create(RpcError.SERVER_OFFLINE,
+                                                   "Server Unavailable");
+                  requestCallback.onError(enclosingRequest, error);
+               }
+               else
+               { 
                   // default error message
                   String message = "Status code " + 
                                    Integer.toString(status) + 
