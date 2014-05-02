@@ -158,9 +158,9 @@ public final class Impl {
   }-*/;
 
   /**
-   * Returns the obfuscated name of members in the compiled output. This is a
-   * thin wrapper around JNameOf AST nodes and is therefore meaningless to
-   * implement in Development Mode.
+   * Returns the obfuscated name of members in the compiled output. This is a thin wrapper around
+   * JNameOf AST nodes and is therefore meaningless to implement in Development Mode.
+   * If the requested member is a method, the method will not be devirtualized, inlined or prunned.
    *
    * @param jsniIdent a string literal specifying a type, field, or method. Raw
    *          type names may also be used to obtain the name of the type's seed

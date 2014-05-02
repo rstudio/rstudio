@@ -151,20 +151,14 @@ public class StackTraceCreatorTest extends GWTTestCase {
   }
 
   private static void throwException1(boolean throwNative) throws Throwable {
-    if (Math.abs(Math.random()) < 0) { return; } // Dummy code to prevent inlining
-
     throwException2(throwNative);
   }
 
   private static void throwException2(boolean throwNative) throws Throwable {
-    if (Math.abs(Math.random()) < 0) { return; } // Dummy code to prevent inlining
-
     throwException3(throwNative);
   }
 
   private static void throwException3(boolean throwNative) throws Throwable {
-    if (Math.abs(Math.random()) < 0) { return; } // Dummy code to prevent inlining
-
     if (throwNative) {
       throwNative(true /* really throw exception */);
     } else {

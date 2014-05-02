@@ -359,14 +359,14 @@ public class JProgram extends JNode {
   /**
    * Returns true if the inliner should try to inline {@code method}.
    */
-  public boolean allowInliningOf(JMethod method) {
+  public boolean isInliningAllowed(JMethod method) {
     return !pinnedMethods.contains(method);
   }
 
   /**
    * Returns true if {@link MakeCallsStatic} should try to statify {@code method}.
    */
-  public boolean allowStatificationOf(JMethod method) {
+  public boolean isDevitualizationAllowed(JMethod method) {
     return !pinnedMethods.contains(method);
   }
 

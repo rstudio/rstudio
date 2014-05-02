@@ -1261,6 +1261,10 @@ public class GenerateJavaScriptAST {
 
       JsFunction jsFunc = pop(); // body
 
+      if (!program.isInliningAllowed(x)) {
+        jsProgram.disallowInlining(jsFunc);
+      }
+
       // Collect the resulting function to be considered by the JsInliner.
       if (methodsForJsInlining.contains(x)) {
         functionsForJsInlining.add(jsFunc);

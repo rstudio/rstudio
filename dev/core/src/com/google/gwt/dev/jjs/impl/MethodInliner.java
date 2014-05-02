@@ -123,7 +123,7 @@ public class MethodInliner {
         return false;
       }
 
-      if (!program.allowInliningOf(method)) {
+      if (!program.isInliningAllowed(method)) {
         return false;
       }
 

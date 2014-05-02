@@ -868,9 +868,12 @@ public class JsInliner {
      */
     private JsFunction programFunction;
 
+    private JsProgram program;
+
     public InliningVisitor(JsProgram program, Set<JsNode> whitelist) {
-      invocationCountingVisitor.accept(program);
+      this.program = program;
       this.whitelist = whitelist;
+      invocationCountingVisitor.accept(program);
     }
 
     /**
@@ -995,6 +998,10 @@ public class JsInliner {
        */
       JsFunction invokedFunction = isFunction(x.getQualifier());
       if (invokedFunction == null) {
+        return;
+      }
+
+      if (!program.isInliningAllowed(invokedFunction)) {
         return;
       }
 
