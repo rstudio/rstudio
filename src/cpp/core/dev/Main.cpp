@@ -20,7 +20,10 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+
+#include <core/system/FileMode.hpp>
 
 #include <core/system/PosixSystem.hpp>
 
@@ -37,6 +40,33 @@ int test_main(int argc, char * argv[])
       Error error = core::system::ignoreSignal(core::system::SigPipe);
       if (error)
          LOG_ERROR(error);
+
+      FilePath tempFile;
+      error = FilePath::tempFilePath(&tempFile);
+      if (error)
+         LOG_ERROR(error);
+
+      error = core::writeStringToFile(tempFile, "foobar");
+      if (error)
+         LOG_ERROR(error);
+
+      core::system::FileMode mode = core::system::UserReadWriteMode;
+      error = core::system::changeFileMode(tempFile, mode);
+      if (error)
+         LOG_ERROR(error);
+
+      core::system::FileMode readMode;
+      error = core::system::getFileMode(tempFile, &readMode);
+      if (error)
+         LOG_ERROR(error);
+
+      if (mode == readMode)
+         std::cerr << "File modes match!" << std::endl;
+      else
+         std::cerr << "File modes do not match!" << std::endl;
+
+
+
 
 
       core::system::SysInfo sysInfo;
