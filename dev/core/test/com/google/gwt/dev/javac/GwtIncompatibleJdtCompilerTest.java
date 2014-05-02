@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.util.List;
 
@@ -83,12 +84,10 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.GwtIncompatible") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public @interface GwtIncompatible {\n");
-      code.append("  String[] value();\n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public @interface GwtIncompatible {",
+      "  String[] value();",
+      "}");
     }
   };
 
@@ -96,14 +95,12 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       new MockJavaResource("com.google.gwt.GwtIncompatibleTest") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class GwtIncompatibleTest {\n");
-      code.append("  int test() { return gwtIncompatibleMethod(); }  \n");
-      code.append("  @GwtIncompatible(\" not compatible \") \n");
-      code.append("  int gwtIncompatibleMethod() { return -1; }  \n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class GwtIncompatibleTest {",
+      "  int test() { return gwtIncompatibleMethod(); }  ",
+      "  @GwtIncompatible(\" not compatible \") ",
+      "  int gwtIncompatibleMethod() { return -1; }  ",
+      "}");
     }
   };
 
@@ -111,13 +108,11 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.GwtIncompatibleMethodTest") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class GwtIncompatibleMethodTest {\n");
-      code.append("  @GwtIncompatible(\" not compatible \") \n");
-      code.append("  int test() { return methodDoesNotExist(); }  \n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class GwtIncompatibleMethodTest {",
+      "  @GwtIncompatible(\" not compatible \") ",
+      "  int test() { return methodDoesNotExist(); }  ",
+      "}");
     }
   };
 
@@ -125,14 +120,12 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.GwtIncompatibleFieldTest") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class GwtIncompatibleFieldTest {\n");
-      code.append("  @GwtIncompatible(\" not compatible \") \n");
-      code.append("  int test = methodDoesNotExist();   \n");
-      code.append("  int test() { return 31; }  \n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class GwtIncompatibleFieldTest {",
+      "  @GwtIncompatible(\" not compatible \") ",
+      "  int test = methodDoesNotExist();   ",
+      "  int test() { return 31; }  ",
+      "}");
     }
   };
 
@@ -140,16 +133,14 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.GwtIncompatibleInnerTest") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class GwtIncompatibleInnerTest {\n");
-      code.append("  @GwtIncompatible(\" not compatible \") \n");
-      code.append("  public class Inner {\n");
-      code.append("    int test() { return methodDoesNotExist(); }  \n");
-      code.append("  }\n");
-      code.append("  int test() { return 31; }  \n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class GwtIncompatibleInnerTest {",
+      "  @GwtIncompatible(\" not compatible \") ",
+      "  public class Inner {",
+      "    int test() { return methodDoesNotExist(); }  ",
+      "  }",
+      "  int test() { return 31; }  ",
+      "}");
     }
   };
 
@@ -157,12 +148,10 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.GwtIncompatibleClass") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("@GwtIncompatible(\" not compatible \") \n");
-      code.append("public class GwtIncompatibleClass {\n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "@GwtIncompatible(\" not compatible \") ",
+      "public class GwtIncompatibleClass {",
+      "}");
     }
   };
 
@@ -170,12 +159,10 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.ExtendsGwtIncompatibleClass") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class ExtendsGwtIncompatibleClass\n");
-      code.append("   extends GwtIncompatibleClass {\n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class ExtendsGwtIncompatibleClass",
+      "   extends GwtIncompatibleClass {",
+      "}");
     }
   };
 
@@ -183,12 +170,10 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.InstantiatesGwtIncompatibleClass") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class InstantiatesGwtIncompatibleClass {\n");
-      code.append("    Object test() { return new GwtIncompatibleClass(); }  \n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class InstantiatesGwtIncompatibleClass {",
+      "    Object test() { return new GwtIncompatibleClass(); }  ",
+      "}");
     }
   };
 
@@ -196,18 +181,16 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.GwtIncompatibleAInnerTest") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class GwtIncompatibleAInnerTest {\n");
-      code.append("  Object createAnonymous() {\n");
-      code.append("    return new Object() {\n");
-      code.append("      @GwtIncompatible(\" not compatible \") \n");
-      code.append("      int test() { return methodDoesNotExist(); }  \n");
-      code.append("    };\n");
-      code.append("  }\n");
-      code.append("  int test() { return 31; }  \n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class GwtIncompatibleAInnerTest {",
+      "  Object createAnonymous() {",
+      "    return new Object() {",
+      "      @GwtIncompatible(\" not compatible \") ",
+      "      int test() { return methodDoesNotExist(); }  ",
+      "    };",
+      "  }",
+      "  int test() { return 31; }  ",
+      "}");
     }
   };
 
@@ -215,14 +198,12 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.GwtIncompatibleWithInnerClass") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("@GwtIncompatible(\" not compatible \") \n");
-      code.append("public class GwtIncompatibleWithInnerClass {\n");
-      code.append("  public class Child {\n");
-      code.append("  }\n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "@GwtIncompatible(\" not compatible \") ",
+      "public class GwtIncompatibleWithInnerClass {",
+      "  public class Child {",
+      "  }",
+      "}");
     }
   };
 
@@ -230,14 +211,12 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "com.google.gwt.GwtIncompatibleWithInnerClassTest") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class GwtIncompatibleWithInnerClassTest {\n");
-      code.append("  void test() {\n");
-      code.append("    (new GwtIncompatibleWithInnerClass()).new Child();\n");
-      code.append("  }\n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class GwtIncompatibleWithInnerClassTest {",
+      "  void test() {",
+      "    (new GwtIncompatibleWithInnerClass()).new Child();",
+      "  }",
+      "}");
     }
   };
 
@@ -245,14 +224,12 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       new MockJavaResource("com.google.gwt.GwtIncompatibleWithStaticInnerClass") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("@GwtIncompatible(\" not compatible \") \n");
-      code.append("public class GwtIncompatibleWithStaticInnerClass {\n");
-      code.append("  public static class Child {\n");
-      code.append("  }\n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "@GwtIncompatible(\" not compatible \") ",
+      "public class GwtIncompatibleWithStaticInnerClass {",
+      "  public static class Child {",
+      "  }",
+      "}");
     }
   };
 
@@ -260,14 +237,12 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       new MockJavaResource("com.google.gwt.GwtIncompatibleWithStaticInnerClassTest") {
     @Override
     public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt;\n");
-      code.append("public class GwtIncompatibleWithStaticInnerClassTest {\n");
-      code.append("  void test() {\n");
-      code.append("    new GwtIncompatibleWithStaticInnerClass.Child();\n");
-      code.append("  }\n");
-      code.append("}\n");
-      return code;
+      return Joiner.on("\n").join("package com.google.gwt;",
+      "public class GwtIncompatibleWithStaticInnerClassTest {",
+      "  void test() {",
+      "    new GwtIncompatibleWithStaticInnerClass.Child();",
+      "  }",
+      "}");
     }
   };
 }
