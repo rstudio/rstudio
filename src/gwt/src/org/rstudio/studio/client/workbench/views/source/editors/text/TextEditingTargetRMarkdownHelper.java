@@ -54,6 +54,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
@@ -505,6 +506,28 @@ public class TextEditingTargetRMarkdownHelper
       yamlTree.addYamlValue(null, "runtime", "shiny");
       
       return yamlTree.toString();
+   }
+   
+   public void getTemplateContent(
+         final RmdChosenTemplate template, 
+         final OperationWithInput<String> onContentReceived)
+   {
+      server_.getRmdTemplate(template.getTemplatePath(), 
+         new ServerRequestCallback<RmdTemplateContent>()
+         {
+            @Override 
+            public void onResponseReceived (RmdTemplateContent content)
+            {
+               onContentReceived.execute(content.getContent());
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Template Creation Failed", 
+                     "Failed to load content from the template at " + 
+                     template.getTemplatePath() + ": " + error.getMessage());
+            }
+         });
    }
    
    // Private methods ---------------------------------------------------------

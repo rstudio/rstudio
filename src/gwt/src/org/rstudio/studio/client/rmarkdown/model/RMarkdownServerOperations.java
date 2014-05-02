@@ -56,5 +56,8 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                               boolean createDirectory, 
                               ServerRequestCallback<RmdCreatedTemplate> requestCallback);
    
+   void getRmdTemplate(String templatePath, 
+                       ServerRequestCallback<RmdTemplateContent> requestCallback);
+   
    public String getApplicationURL(String pathName);
 }

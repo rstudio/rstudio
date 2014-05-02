@@ -25,12 +25,13 @@
 
 	  .createNote
 	  {
-	    color: #909090;
+	    margin-top: 10px;
+
 	  }
 
 	  .templateListArea
 	  {
-	    height: 125px;
+	    height: 155px;
 	    margin-top: 5px;
 	    background-color: #FFFFFF;
 	  }
@@ -77,23 +78,20 @@
    </g:HTMLPanel>
 
    <g:HTMLPanel ui:field="templateOptionsPanel_" visible="false">
+	  <g:HTML styleName="{style.createNote}">
+	     This template contains multiple files. Create a new directory for
+	     these files:
+	  </g:HTML>
 	  <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
 	           text="Name:"></g:Label>
 	  <g:TextBox styleName="{style.textBox}" ui:field="txtName_" 
 	             text="Untitled"></g:TextBox>
 
 	  <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
-	           text="Directory:"></g:Label>
+	           text="Location:"></g:Label>
 	  <rs:DirectoryChooserTextBox width="100%" ui:field="dirLocation_">
 	  </rs:DirectoryChooserTextBox>
 	
-	  <g:CheckBox styleName="{style.controlLabel} {style.interiorControlLabel}" 
-	              ui:field="chkCreate_" text="Create in New Directory">
-	              </g:CheckBox>
-	  <g:HTML styleName="{style.createNote}">
-	    A new directory with the same name as the file will be created. The new R
-	    Markdown file and all its resources will be placed in the new directory.
-	  </g:HTML>
 	</g:HTMLPanel>
 
 	</g:HTMLPanel>

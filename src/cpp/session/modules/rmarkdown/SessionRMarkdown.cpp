@@ -703,6 +703,12 @@ private:
          if (!yamlPath.exists())
             continue;
 
+         // ensure that the template has a skeleton Rmd file
+         FilePath skeletonPath =
+               FilePath(path).complete("skeleton/skeleton.Rmd");
+         if (!skeletonPath.exists())
+            continue;
+
          SEXP templateDetails;
          error = r::exec::RFunction(
             "yaml:::yaml.load_file",
@@ -1089,7 +1095,6 @@ Error discoverRmdTemplates(const json::JsonRpcRequest&,
 Error createRmdFromTemplate(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
-
    std::string filePath, templatePath, resultPath;
    bool createDir;
    Error error = json::readParams(request.params,
@@ -1115,6 +1120,33 @@ Error createRmdFromTemplate(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+Error getRmdTemplate(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error;
+
+   json::Object jsonResult;
+
+   // locate the template skeleton on disk (if it doesn't exist we'll just
+   // return an empty string)
+   FilePath skeletonPath = FilePath(path).complete("skeleton/skeleton.Rmd");
+   std::string templateContent;
+   if (skeletonPath.exists())
+   {
+      error = readStringFromFile(skeletonPath, &templateContent);
+      if (error)
+         return error;
+   }
+   jsonResult["content"] = templateContent;
+   pResponse->setResult(jsonResult);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 bool canRenderShinyDocs()
@@ -1160,6 +1192,7 @@ Error initialize()
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
       (bind(registerRpcMethod, "discover_rmd_templates", discoverRmdTemplates))
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
+      (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
