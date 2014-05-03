@@ -85,7 +85,9 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   public ArrayList(int initialCapacity) {
     // Avoid calling overridable methods from constructors
-    assert (initialCapacity >= 0);
+    if (initialCapacity < 0) {
+      throw new IllegalArgumentException("Initial capacity must not be negative");
+    }
     setCapacity(array, initialCapacity);
   }
 
