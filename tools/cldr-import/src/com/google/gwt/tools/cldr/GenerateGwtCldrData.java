@@ -20,7 +20,7 @@ import com.google.gwt.i18n.shared.GwtLocaleFactory;
 
 import com.ibm.icu.dev.tool.UOption;
 
-import org.unicode.cldr.util.CldrUtility;
+import org.unicode.cldr.util.CLDRPaths;
 import org.unicode.cldr.util.Factory;
 
 import java.io.File;
@@ -36,7 +36,6 @@ import java.util.Set;
  * Generate a country list for each locale, taking into account the literate
  * population of each country speaking the language.
  */
-@SuppressWarnings("unchecked")
 public class GenerateGwtCldrData {
 
   private static final GwtLocaleFactory factory = new GwtLocaleFactoryImpl();
@@ -51,7 +50,7 @@ public class GenerateGwtCldrData {
         + "produced by cldr-tools)");
     UOption[] options = {
         UOption.HELP_H(), UOption.HELP_QUESTION_MARK(),
-        UOption.SOURCEDIR().setDefault(CldrUtility.MAIN_DIRECTORY),
+        UOption.SOURCEDIR().setDefault(CLDRPaths.MAIN_DIRECTORY),
         outputDir().setDefault("./"),
         restrictLocales(),
         processors().setDefault(DEFAULT_PROCESSORS),

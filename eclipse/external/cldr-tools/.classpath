@@ -7,5 +7,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.7.1.jar"/>
 	<classpathentry kind="var" path="CLDR_ROOT/tools/java/libs/icu4j.jar" sourcepath="/CLDR_ROOT/tools/java/libs/icu4j-src.jar"/>
 	<classpathentry kind="var" path="CLDR_ROOT/tools/java/libs/utilities.jar" sourcepath="/CLDR_ROOT/tools/java/libs/utilities-src.jar"/>
+	<classpathentry kind="var" path="CLDR_ROOT/tools/java/libs/guava-16.0.1.jar" sourcepath="/CLDR_ROOT/tools/java/libs/guava-16.0.1-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

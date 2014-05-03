@@ -9,12 +9,12 @@
   <property.ensure name="gwt.servlet.jar" location="${gwt.build.lib}/gwt-servlet.jar" />
 
   <condition property="CLDR_TOOLS" value="${env.CLDR_ROOT}/tools/java"
-      else="${gwt.tools}/lib/cldr/21">
+      else="${gwt.tools}/lib/cldr/25">
     <isset property="env.CLDR_ROOT" />
   </condition>
 
   <condition property="ICU" value="${env.CLDR_ROOT}/tools/java/libs"
-      else="${gwt.tools}/lib/cldr/21">
+      else="${gwt.tools}/lib/cldr/25">
     <isset property="env.CLDR_ROOT" />
   </condition>
 

@@ -665,7 +665,8 @@ public class LocaleData {
     Set<GwtLocale> result = new HashSet<GwtLocale>();
     for (Map.Entry<MapKey, Map<String, String>> entry : maps.entrySet()) {
       Map<String, String> map = entry.getValue();
-      if (map.isEmpty()) {
+      // Ignore version entries
+      if ("version".equals(entry.getKey().getCategory()) || map.isEmpty()) {
         continue;
       }
       result.add(entry.getKey().getLocale());

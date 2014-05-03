@@ -42,7 +42,7 @@ public class ListFormattingProcessor extends Processor {
   protected void loadData() throws IOException {
     System.out.println("Loading data for list formatting");
     localeData.addVersions(cldrFactory);
-    localeData.addEntries("list", cldrFactory, "//ldml/listPatterns/listPattern",
+    localeData.addEntries("list", cldrFactory, "//ldml/listPatterns/listPattern/",
         "listPatternPart", "type");
   }
 

@@ -277,7 +277,6 @@ public abstract class Processor {
     for (Map.Entry<String, String> entry : map.entrySet()) {
       pw.println(prefix + " " + entry.getKey() + "=" + entry.getValue());
     }
-    pw.println();
   }
 
   /**

@@ -192,6 +192,10 @@ public class DateTimeFormatInfoProcessor extends Processor {
       String key, String method, final String... args) {
     String value = localeData.getEntry(category, locale, key);
     if (value != null) {
+      // cldr data escapes literals with single quote, but we need two single quotes when
+      // parsing message formats.
+      value = value.replace("'", "''");
+
       pw.println();
       if (getOverrides()) {
         pw.println("  @Override");
@@ -541,24 +545,6 @@ public class DateTimeFormatInfoProcessor extends Processor {
     // write weekend boundaries
     generateDayNumber(pw, locale, "weekendEnd", "weekendEnd");
     generateDayNumber(pw, locale, "weekendStart", "weekendStart");
-
-    if (locale.isDefault()) {
-      pw.println();
-      pw.println("  @Override");
-      pw.println("  public String dateFormat() {");
-      pw.println("    return dateFormatMedium();");
-      pw.println("  }");
-      pw.println();
-      pw.println("  @Override");
-      pw.println("  public String dateTime(String timePattern, String datePattern) {");
-      pw.println("    return datePattern + \" \" + timePattern;");
-      pw.println("  }");
-      pw.println();
-      pw.println("  @Override");
-      pw.println("  public String timeFormat() {");
-      pw.println("    return timeFormatMedium();");
-      pw.println("  }");
-    }
 
     pw.println("}");
     pw.close();
