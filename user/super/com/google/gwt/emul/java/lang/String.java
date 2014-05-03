@@ -678,7 +678,7 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public native boolean endsWith(String suffix) /*-{
-    return (this.lastIndexOf(suffix) != -1) && (this.lastIndexOf(suffix) == (this.length - suffix.length));
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
   }-*/;
 
   @Override
