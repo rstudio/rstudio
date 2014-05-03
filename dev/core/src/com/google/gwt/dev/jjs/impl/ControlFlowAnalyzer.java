@@ -57,13 +57,12 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -80,7 +79,7 @@ public class ControlFlowAnalyzer {
     /**
      * Used to record the dependencies of a specific method.
      */
-    void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain);
+    void methodIsLiveBecause(JMethod liveMethod, List<JMethod> dependencyChain);
   }
 
   /**
@@ -91,7 +90,7 @@ public class ControlFlowAnalyzer {
    * TODO(later): make RescueVisitor use less stack?
    */
   private class RescueVisitor extends JVisitor {
-    private final ArrayList<JMethod> curMethodStack = new ArrayList<JMethod>();
+    private final List<JMethod> curMethodStack = Lists.newArrayList();
 
     private RescueVisitor() {
       /*
@@ -135,8 +134,7 @@ public class ControlFlowAnalyzer {
               isInstantiated);
         } else {
           // anything[] -> Object
-          // But instead of Object, rescue the base Array implementation type.
-          rescue(baseArrayType, true, isInstantiated);
+          rescue(program.getTypeJavaLangObject(), true, isInstantiated);
         }
       }
 
@@ -201,31 +199,33 @@ public class ControlFlowAnalyzer {
     public boolean visit(JCastOperation x, Context ctx) {
       // Rescue any JavaScriptObject type that is the target of a cast.
       JType targetType = x.getCastType();
-      if (program.typeOracle.canBeInstantiatedInJavascript(targetType)) {
-        rescue((JReferenceType) targetType, true, true);
-        JType exprType = x.getExpr().getType();
-        if (program.typeOracle.isSingleJsoImpl(targetType)) {
-          /*
-           * It's a JSO interface, check if the source expr can be a live JSO:
-           * 1) source is java.lang.Object (JSO could have been assigned to it)
-           * 2) source is JSO
-           * 3) source is SingleJSO interface whose implementor is live
-           */
-          if (program.getTypeJavaLangObject() == exprType
-              || program.typeOracle.canBeJavaScriptObject(exprType)) {
-            // source is JSO or SingleJso interface whose implementor is live
-            JClassType jsoImplementor =
-                program.typeOracle.getSingleJsoImpl((JReferenceType) targetType);
-            if (jsoImplementor != null) {
-              rescue(jsoImplementor, true, true);
-            }
-          }
-        } else if (program.typeOracle.isJsInterface(targetType)
-            && ((JInterfaceType) targetType).getJsPrototype() != null) {
-          // keep alive JsInterface with prototype used in cast so it can used in cast checks against JS objects later
-          rescue((JReferenceType) targetType, true, true);
-        }
+      if (!program.typeOracle.canBeInstantiatedInJavascript(targetType)) {
+        return true;
       }
+      rescue((JReferenceType) targetType, true, true);
+      JType exprType = x.getExpr().getType();
+      if (program.typeOracle.isSingleJsoImpl(targetType)) {
+        /*
+         * It's a JSO interface, check if the source expr can be a live JSO:
+         * 1) source is java.lang.Object (JSO could have been assigned to it)
+         * 2) source is JSO
+         * 3) source is SingleJSO interface whose implementor is live
+         */
+        if (program.getTypeJavaLangObject() == exprType
+            || program.typeOracle.canBeJavaScriptObject(exprType)) {
+          // source is JSO or SingleJso interface whose implementor is live
+          JClassType jsoImplementor =
+              program.typeOracle.getSingleJsoImpl((JReferenceType) targetType);
+          if (jsoImplementor != null) {
+            rescue(jsoImplementor, true, true);
+          }
+        }
+      } else if (program.typeOracle.isJsInterface(targetType)
+          && ((JInterfaceType) targetType).getJsPrototype() != null) {
+        // keep alive JsInterface with prototype used in cast so it can used in cast checks against JS objects later
+        rescue((JReferenceType) targetType, true, true);
+      }
+
       return true;
     }
 
@@ -266,18 +266,16 @@ public class ControlFlowAnalyzer {
        * A declaration by itself doesn't rescue a local (even if it has an
        * initializer). Writes don't count, only reads.
        */
-      if (x.getInitializer() != null) {
+      if (x.getInitializer() != null &&
+          !isStaticFieldInitializedToLiteral(x.getVariableRef().getTarget())) {
+        /*
+         * Don't traverse literal initializers, because those become live when
+         * the variable is accessed, not when its declaration runs.
+         */
+        accept(x.getInitializer());
 
-        if (!isStaticFieldInitializedToLiteral(x.getVariableRef().getTarget())) {
-          /*
-           * Don't traverse literal initializers, because those become live when
-           * the variable is accessed, not when its declaration runs.
-           */
-          accept(x.getInitializer());
-
-          if (x.getVariableRef().getTarget() instanceof JField) {
-            fieldsWritten.add((JField) x.getVariableRef().getTarget());
-          }
+        if (x.getVariableRef().getTarget() instanceof JField) {
+          fieldsWritten.add((JField) x.getVariableRef().getTarget());
         }
       }
 
@@ -531,27 +529,65 @@ public class ControlFlowAnalyzer {
       return true;
     }
 
-    private boolean isStaticFieldInitializedToLiteral(JVariable var) {
-      if (var instanceof JField) {
-        JField field = (JField) var;
-        return field.isStatic() && field.getLiteralInitializer() != null;
+    private boolean canBeInstantiatedInJavaScript(JType type) {
+      if (program.typeOracle.canBeInstantiatedInJavascript(type) ||
+          program.isJavaLangString(type)) {
+        return true;
       }
-      return false;
+
+      if (!(type instanceof JArrayType)) {
+        return false;
+      }
+
+      /*
+       * Hackish: in our own JRE we sometimes create "not quite baked" arrays
+       * in JavaScript for expediency.
+       */
+      JArrayType arrayType = (JArrayType) type;
+      JType elementType = arrayType.getElementType();
+      return elementType instanceof JPrimitiveType || canBeInstantiatedInJavaScript(elementType);
+    }
+
+    private JMethod getStringValueOfCharMethod() {
+      JPrimitiveType charType = program.getTypePrimitiveChar();
+      JClassType stringType = program.getTypeJavaLangString();
+      if (stringValueOfChar != null) {
+        return stringValueOfChar;
+      }
+
+      for (JMethod method : stringType.getMethods()) {
+        if (method.getName().equals("valueOf") &&
+            method.getOriginalParamTypes().size() == 1 &&
+            method.getOriginalParamTypes().get(0) == charType) {
+          stringValueOfChar = method;
+          return stringValueOfChar;
+        }
+      }
+      assert false;
+      return null;
+    }
+
+    private boolean isStaticFieldInitializedToLiteral(JVariable var) {
+      if (!(var instanceof JField)) {
+        return false;
+      }
+
+      JField field = (JField) var;
+      return field.isStatic() && field.getLiteralInitializer() != null;
     }
 
     private boolean isVolatileField(JExpression x) {
-      if (x instanceof JFieldRef) {
-        JFieldRef xFieldRef = (JFieldRef) x;
-        if (xFieldRef.getField().isVolatile()) {
-          return true;
-        }
+      if (!(x instanceof JFieldRef)) {
+        return false;
       }
 
-      return false;
+      JFieldRef xFieldRef = (JFieldRef) x;
+      return xFieldRef.getField().isVolatile();
     }
 
     private void maybeRescueClassLiteral(JReferenceType type) {
-      if (liveFieldsAndMethods.contains(getClassMethod) || liveFieldsAndMethods.contains(getClassField)) {
+      if (liveFieldsAndMethods.contains(getClassMethod) ||
+          liveFieldsAndMethods.contains(getClassField)) {
         // getClass() already live so rescue class literal immediately
         rescue(program.getClassLiteralField(type));
       } else {
@@ -571,71 +607,58 @@ public class ControlFlowAnalyzer {
      * @see com.google.gwt.core.client.JavaScriptObject
      */
     private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
-      boolean doIt = false;
-      if (program.typeOracle.canBeInstantiatedInJavascript(type)
-          || program.isJavaLangString(type)) {
-        doIt = true;
-      } else if (type instanceof JArrayType) {
-        /*
-         * Hackish: in our own JRE we sometimes create "not quite baked" arrays
-         * in JavaScript for expediency.
-         */
-        JArrayType arrayType = (JArrayType) type;
-        JType elementType = arrayType.getElementType();
-        if (elementType instanceof JPrimitiveType || program.isJavaLangString(elementType)
-            || program.typeOracle.canBeInstantiatedInJavascript(elementType)) {
-          doIt = true;
-        }
+      if (!canBeInstantiatedInJavaScript(type)) {
+        return;
       }
-      if (doIt) {
-        rescue((JReferenceType) type, true, true);
-        if (program.typeOracle.isSingleJsoImpl(type)) {
-          // Cast of JSO into SingleJso interface, rescue the implementor if exists
-          JClassType singleJsoImpl = program.typeOracle.getSingleJsoImpl((JReferenceType) type);
-          if (singleJsoImpl != null) {
-            rescue(singleJsoImpl, true, true);
-          }
+      rescue((JReferenceType) type, true, true);
+      if (program.typeOracle.isSingleJsoImpl(type)) {
+        // Cast of JSO into SingleJso interface, rescue the implementor if exists
+        JClassType singleJsoImpl = program.typeOracle.getSingleJsoImpl((JReferenceType) type);
+        if (singleJsoImpl != null) {
+          rescue(singleJsoImpl, true, true);
         }
       }
     }
 
-    private boolean rescue(JMethod method) {
-      if (method != null) {
-        if (!liveFieldsAndMethods.contains(method)) {
-          liveFieldsAndMethods.add(method);
-          membersToRescueIfTypeIsInstantiated.remove(method);
-          if (dependencyRecorder != null) {
-            curMethodStack.add(method);
-            dependencyRecorder.methodIsLiveBecause(method, curMethodStack);
-          }
-          accept(method);
-          if (dependencyRecorder != null) {
-            curMethodStack.remove(curMethodStack.size() - 1);
-          }
-          if (method.isNative()) {
-            /*
-             * SPECIAL: returning from this method passes a value from
-             * JavaScript into Java.
-             */
-            maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
-          }
-          rescueOverridingMethods(method);
-          if (method == getClassMethod) {
-            rescueClassLiteralsIfGetClassIsLive();
-          }
-          if (JProgram.isJsInterfacePrototype(method.getEnclosingType())) {
-            // for JsInterface Prototype methods, rescue all parameters
-            for (JParameter param : method.getParams()) {
-              rescue(param);
-            }
-          }
-          if (method.getSpecialization() != null) {
-            rescue(method.getSpecialization().getTargetMethod());
-          }
-          return true;
+    private void rescue(JMethod method) {
+      if (method == null) {
+        return;
+      }
+
+      if (!liveFieldsAndMethods.add(method)) {
+        // Already in the set.
+        return;
+      }
+
+      membersToRescueIfTypeIsInstantiated.remove(method);
+      if (dependencyRecorder != null) {
+        curMethodStack.add(method);
+        dependencyRecorder.methodIsLiveBecause(method, curMethodStack);
+      }
+      accept(method);
+      if (dependencyRecorder != null) {
+        curMethodStack.remove(curMethodStack.size() - 1);
+      }
+      if (method.isNative()) {
+        /*
+         * SPECIAL: returning from this method passes a value from
+         * JavaScript into Java.
+         */
+        maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
+      }
+      rescueOverridingMethods(method);
+      if (method == getClassMethod) {
+        rescueClassLiteralsIfGetClassIsLive();
+      }
+      if (JProgram.isJsInterfacePrototype(method.getEnclosingType())) {
+        // for JsInterface Prototype methods, rescue all parameters
+        for (JParameter param : method.getParams()) {
+          rescue(param);
         }
       }
-      return false;
+      if (method.getSpecialization() != null) {
+        rescue(method.getSpecialization().getTargetMethod());
+      }
     }
 
     private void rescue(JReferenceType type, boolean isReferenced, boolean isInstantiated) {
@@ -650,101 +673,102 @@ public class ControlFlowAnalyzer {
       type = type.getUnderlyingType();
 
       boolean doVisit = false;
-      if (isInstantiated && !instantiatedTypes.contains(type)) {
-        instantiatedTypes.add(type);
+      if (isInstantiated && instantiatedTypes.add(type)) {
         maybeRescueClassLiteral(type);
-
         doVisit = true;
       }
 
-      if (isReferenced && !referencedTypes.contains(type)) {
-        referencedTypes.add(type);
+      if (isReferenced && referencedTypes.add(type)) {
         doVisit = true;
       }
 
-      if (doVisit) {
-        accept(type);
-        if (type instanceof JInterfaceType) {
-          /*
-           * For @JsInterface with a Java implementor, we rescue all interface
-           * methods because we don't know if they'll be called from JS or not.
-           * That is, the Java implementor may be called because the interface
-           * was passed into JS, or it may be called via exported functions.
-           *
-           * We may be able to tighten this to check for @JsExport as well,
-           * since if there is no @JsExport, the only way for JS code to get a
-           * reference to the interface is by it being constructed in Java
-           * and passed via JSNI into JS, and in that mechanism, the
-           * rescue would happen automatically.
-           */
-          JInterfaceType intfType = (JInterfaceType) type;
+      if (!doVisit) {
+        return;
+      }
 
-          if (intfType.isJsInterface()) {
-            for (JMethod method : intfType.getMethods()) {
-              rescue(method);
-            }
+      accept(type);
+      if (type instanceof JInterfaceType) {
+        /*
+         * For @JsInterface with a Java implementor, we rescue all interface
+         * methods because we don't know if they'll be called from JS or not.
+         * That is, the Java implementor may be called because the interface
+         * was passed into JS, or it may be called via exported functions.
+         *
+         * We may be able to tighten this to check for @JsExport as well,
+         * since if there is no @JsExport, the only way for JS code to get a
+         * reference to the interface is by it being constructed in Java
+         * and passed via JSNI into JS, and in that mechanism, the
+         * rescue would happen automatically.
+         */
+        JInterfaceType intfType = (JInterfaceType) type;
+
+        if (intfType.isJsInterface()) {
+          for (JMethod method : intfType.getMethods()) {
+            rescue(method);
           }
         }
-        if (type instanceof JDeclaredType) {
-          for (JNode artificial : ((JDeclaredType) type).getArtificialRescues()) {
-            if (artificial instanceof JReferenceType) {
-              rescue((JReferenceType) artificial, true, true);
-            } else if (artificial instanceof JVariable) {
-              rescue((JVariable) artificial);
-            } else if (artificial instanceof JMethod) {
-              rescue((JMethod) artificial);
-            }
-          }
+      }
+      if (!(type instanceof JDeclaredType)) {
+        return;
+      }
+      for (JNode artificial : ((JDeclaredType) type).getArtificialRescues()) {
+        if (artificial instanceof JReferenceType) {
+          rescue((JReferenceType) artificial, true, true);
+        } else if (artificial instanceof JVariable) {
+          rescue((JVariable) artificial);
+        } else if (artificial instanceof JMethod) {
+          rescue((JMethod) artificial);
         }
       }
     }
 
     private void rescue(JVariable var) {
-      if (var != null) {
-        if (liveFieldsAndMethods.add(var)) {
-          membersToRescueIfTypeIsInstantiated.remove(var);
-          if (var == getClassField) {
-            rescueClassLiteralsIfGetClassIsLive();
-          }
+      if (var == null) {
+        return;
+      }
+      if (!liveFieldsAndMethods.add(var)) {
+        // Already rescued.
+        return;
+      }
+      membersToRescueIfTypeIsInstantiated.remove(var);
+      if (var == getClassField) {
+        rescueClassLiteralsIfGetClassIsLive();
+      }
 
-          if (isStaticFieldInitializedToLiteral(var)) {
-            /*
-             * Rescue literal initializers when the field is rescued, not when
-             * the static initializer runs. This allows fields initialized to
-             * string literals to only need the string literals when the field
-             * itself becomes live.
-             */
-            accept(((JField) var).getLiteralInitializer());
-          } else if (var instanceof JField
-              && (program.getTypeClassLiteralHolder().equals(((JField) var).getEnclosingType()))) {
-            /*
-             * Rescue just slightly less than what would normally be rescued for
-             * a field reference to the literal's field. Rescue the field
-             * itself, and its initializer, but do NOT rescue the whole
-             * enclosing class. That would pull in the clinit of that class,
-             * which has initializers for all the class literals, which in turn
-             * have all of the strings of all of the class names.
-             *
-             * This work is done in rescue() to allow JSNI references to class
-             * literals (via the @Foo::class syntax) to correctly rescue class
-             * literal initializers.
-             *
-             * TODO: Model ClassLiteral access a different way to avoid special
-             * handling. See
-             *  Pruner.transformToNullFieldRef()/transformToNullMethodCall().
-             */
-            JField field = (JField) var;
-            accept(field.getInitializer());
-            referencedTypes.add(field.getEnclosingType());
-            liveFieldsAndMethods.add(field.getEnclosingType().getClinitMethod());
-          } else if (argsToRescueIfParameterRead != null && var instanceof JParameter) {
-            List<JExpression> list = argsToRescueIfParameterRead.remove(var);
-            if (list != null) {
-              for (JExpression arg : list) {
-                this.accept(arg);
-              }
-            }
-          }
+      if (isStaticFieldInitializedToLiteral(var)) {
+        /*
+         * Rescue literal initializers when the field is rescued, not when
+         * the static initializer runs. This allows fields initialized to
+         * string literals to only need the string literals when the field
+         * itself becomes live.
+         */
+        accept(((JField) var).getLiteralInitializer());
+      } else if (var instanceof JField
+          && (program.getTypeClassLiteralHolder().equals(((JField) var).getEnclosingType()))) {
+        /*
+         * Rescue just slightly less than what would normally be rescued for
+         * a field reference to the literal's field. Rescue the field
+         * itself, and its initializer, but do NOT rescue the whole
+         * enclosing class. That would pull in the clinit of that class,
+         * which has initializers for all the class literals, which in turn
+         * have all of the strings of all of the class names.
+         *
+         * This work is done in rescue() to allow JSNI references to class
+         * literals (via the @Foo::class syntax) to correctly rescue class
+         * literal initializers.
+         *
+         * TODO: Model ClassLiteral access a different way to avoid special
+         * handling. See
+         *  Pruner.transformToNullFieldRef()/transformToNullMethodCall().
+         */
+        JField field = (JField) var;
+        accept(field.getInitializer());
+        referencedTypes.add(field.getEnclosingType());
+        liveFieldsAndMethods.add(field.getEnclosingType().getClinitMethod());
+      } else if (argsToRescueIfParameterRead != null && var instanceof JParameter) {
+        List<JExpression> list = argsToRescueIfParameterRead.removeAll(var);
+        for (JExpression arg : list) {
+          this.accept(arg);
         }
       }
     }
@@ -775,16 +799,11 @@ public class ControlFlowAnalyzer {
         if (arg.hasSideEffects() || liveFieldsAndMethods.contains(param)
             // rescue any args of JsInterface Prototype methods or JsInterface
             || program.typeOracle.isJsInterfaceMethod(method)
-            || program.isJsInterfacePrototype(method.getEnclosingType())) {
+            || JProgram.isJsInterfacePrototype(method.getEnclosingType())) {
           this.accept(arg);
           continue;
         }
-        List<JExpression> list = argsToRescueIfParameterRead.get(param);
-        if (list == null) {
-          argsToRescueIfParameterRead.put(param, Lists.create(arg));
-        } else {
-          argsToRescueIfParameterRead.put(param, Lists.add(list, arg));
-        }
+        argsToRescueIfParameterRead.put(param, arg);
       }
       // Visit any "extra" arguments that exceed the param list.
       for (int c = args.size(); i < c; ++i) {
@@ -815,21 +834,7 @@ public class ControlFlowAnalyzer {
         /*
          * Characters must rescue String.valueOf(char)
          */
-        if (stringValueOfChar == null) {
-          for (JMethod meth : stringType.getMethods()) {
-            if (meth.getName().equals("valueOf")) {
-              List<JType> params = meth.getOriginalParamTypes();
-              if (params.size() == 1) {
-                if (params.get(0) == charType) {
-                  stringValueOfChar = meth;
-                  break;
-                }
-              }
-            }
-          }
-          assert (stringValueOfChar != null);
-        }
-        rescue(stringValueOfChar);
+        rescue(getStringValueOfCharMethod());
       }
     }
 
@@ -850,22 +855,17 @@ public class ControlFlowAnalyzer {
      * previously seen method call could call.
      */
     private void rescueMembersIfInstantiable(JDeclaredType type) {
-      if (instantiatedTypes.contains(type)) {
-        for (JMethod method : type.getMethods()) {
-          if (!method.isStatic()) {
-            if (membersToRescueIfTypeIsInstantiated.contains(method)) {
-              rescue(method);
-              continue;
-            }
-          }
+      if (!instantiatedTypes.contains(type)) {
+        return;
+      }
+      for (JMethod method : type.getMethods()) {
+        if (!method.isStatic() && membersToRescueIfTypeIsInstantiated.contains(method)) {
+          rescue(method);
         }
-        for (JField field : type.getFields()) {
-          if (!field.isStatic()) {
-            if (membersToRescueIfTypeIsInstantiated.contains(field)) {
-              rescue(field);
-              continue;
-            }
-          }
+      }
+      for (JField field : type.getFields()) {
+        if (!field.isStatic() && membersToRescueIfTypeIsInstantiated.contains(field)) {
+            rescue(field);
         }
       }
     }
@@ -876,21 +876,24 @@ public class ControlFlowAnalyzer {
      * dispatch.
      */
     private void rescueOverridingMethods(JMethod method) {
-      if (!method.isStatic()) {
+      if (method.isStatic()) {
+        return;
+      }
 
-        List<JMethod> overriders = methodsThatOverrideMe.get(method);
-        if (overriders != null) {
-          for (JMethod overrider : overriders) {
-            if (liveFieldsAndMethods.contains(overrider)) {
-              // The override is already alive, do nothing.
-            } else if (instantiatedTypes.contains(overrider.getEnclosingType())) {
-              // The enclosing class is alive, make my override reachable.
-              rescue(overrider);
-            } else {
-              // The enclosing class is not yet alive, put override in limbo.
-              membersToRescueIfTypeIsInstantiated.add(overrider);
-            }
-          }
+      List<JMethod> overriders = methodsThatOverrideMe.get(method);
+      if (overriders == null) {
+        return;
+      }
+
+      for (JMethod overrider : overriders) {
+        if (liveFieldsAndMethods.contains(overrider)) {
+          // The override is already alive, do nothing.
+        } else if (instantiatedTypes.contains(overrider.getEnclosingType())) {
+          // The enclosing class is alive, make my override reachable.
+          rescue(overrider);
+        } else {
+          // The enclosing class is not yet alive, put override in limbo.
+          membersToRescueIfTypeIsInstantiated.add(overrider);
         }
       }
     }
@@ -902,7 +905,7 @@ public class ControlFlowAnalyzer {
    * read, we will need to rescue the associated arguments. See comments in
    * {@link #rescueArgumentsIfParametersCanBeRead}.
    */
-  private Map<JParameter, List<JExpression>> argsToRescueIfParameterRead;
+  private ListMultimap<JParameter, JExpression> argsToRescueIfParameterRead;
 
   private final JMethod asyncFragmentOnLoad;
   private final JDeclaredType baseArrayType;
@@ -911,13 +914,13 @@ public class ControlFlowAnalyzer {
    * Schrodinger set of classLiterals to be rescued if type is instantiated AND getClass()
    * is live.
    */
-  private Set<JReferenceType> classLiteralsToBeRescuedIfGetClassIsLive = new HashSet<JReferenceType>();
+  private Set<JReferenceType> classLiteralsToBeRescuedIfGetClassIsLive = Sets.newHashSet();
 
   private DependencyRecorder dependencyRecorder;
-  private Set<JField> fieldsWritten = new HashSet<JField>();
-  private Set<JReferenceType> instantiatedTypes = new HashSet<JReferenceType>();
-  private Set<JNode> liveFieldsAndMethods = new HashSet<JNode>();
-  private Set<String> liveStrings = new HashSet<String>();
+  private Set<JField> fieldsWritten = Sets.newHashSet();
+  private Set<JReferenceType> instantiatedTypes = Sets.newHashSet();
+  private Set<JNode> liveFieldsAndMethods = Sets.newHashSet();
+  private Set<String> liveStrings = Sets.newHashSet();
 
   /**
    * Schrodinger's members... aka "limbo". :) These are instance methods and
@@ -925,20 +928,20 @@ public class ControlFlowAnalyzer {
    * uninstantiable. We place these methods into purgatory until/unless the
    * enclosing type is found to be instantiable.
    */
-  private Set<JNode> membersToRescueIfTypeIsInstantiated = new HashSet<JNode>();
+  private Set<JNode> membersToRescueIfTypeIsInstantiated = Sets.newHashSet();
 
   /**
    * A precomputed map of all instance methods onto a set of methods that
    * override each key method.
    */
-  private Map<JMethod, List<JMethod>> methodsThatOverrideMe;
+  private ListMultimap<JMethod, JMethod> methodsThatOverrideMe;
 
   private final JField getClassField;
   private final JMethod getClassMethod;
   private final JProgram program;
-  private Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
+  private Set<JReferenceType> referencedTypes = Sets.newHashSet();
   private final RescueVisitor rescuer = new RescueVisitor();
-  private final Set<JReferenceType> rescuedViaCast = new HashSet<JReferenceType>();
+  private final Set<JReferenceType> rescuedViaCast = Sets.newHashSet();
   private final JMethod runAsyncOnsuccess;
   private JMethod stringValueOfChar = null;
 
@@ -947,17 +950,17 @@ public class ControlFlowAnalyzer {
     asyncFragmentOnLoad = cfa.asyncFragmentOnLoad;
     runAsyncOnsuccess = cfa.runAsyncOnsuccess;
     baseArrayType = cfa.baseArrayType;
-    fieldsWritten = new HashSet<JField>(cfa.fieldsWritten);
-    instantiatedTypes = new HashSet<JReferenceType>(cfa.instantiatedTypes);
-    liveFieldsAndMethods = new HashSet<JNode>(cfa.liveFieldsAndMethods);
-    referencedTypes = new HashSet<JReferenceType>(cfa.referencedTypes);
+    fieldsWritten = Sets.newHashSet(cfa.fieldsWritten);
+    instantiatedTypes = Sets.newHashSet(cfa.instantiatedTypes);
+    liveFieldsAndMethods = Sets.newHashSet(cfa.liveFieldsAndMethods);
+    referencedTypes = Sets.newHashSet(cfa.referencedTypes);
     stringValueOfChar = cfa.stringValueOfChar;
-    liveStrings = new HashSet<String>(cfa.liveStrings);
+    liveStrings = Sets.newHashSet(cfa.liveStrings);
     membersToRescueIfTypeIsInstantiated =
-        new HashSet<JNode>(cfa.membersToRescueIfTypeIsInstantiated);
+        Sets.newHashSet(cfa.membersToRescueIfTypeIsInstantiated);
     if (cfa.argsToRescueIfParameterRead != null) {
       argsToRescueIfParameterRead =
-          new HashMap<JParameter, List<JExpression>>(cfa.argsToRescueIfParameterRead);
+          ArrayListMultimap.create(cfa.argsToRescueIfParameterRead);
     }
     methodsThatOverrideMe = cfa.methodsThatOverrideMe;
     getClassField = program.getIndexedField("Object.___clazz");
@@ -1021,7 +1024,7 @@ public class ControlFlowAnalyzer {
 
   public void setForPruning() {
     assert argsToRescueIfParameterRead == null;
-    argsToRescueIfParameterRead = new HashMap<JParameter, List<JExpression>>();
+    argsToRescueIfParameterRead = ArrayListMultimap.create();
   }
 
   /**
@@ -1099,16 +1102,11 @@ public class ControlFlowAnalyzer {
   }
 
   private void buildMethodsOverriding() {
-    methodsThatOverrideMe = new HashMap<JMethod, List<JMethod>>();
+    methodsThatOverrideMe = ArrayListMultimap.create();
     for (JDeclaredType type : program.getDeclaredTypes()) {
       for (JMethod method : type.getMethods()) {
         for (JMethod overridden : program.typeOracle.getAllOverriddenMethods(method)) {
-          List<JMethod> overs = methodsThatOverrideMe.get(overridden);
-          if (overs == null) {
-            overs = new ArrayList<JMethod>();
-            methodsThatOverrideMe.put(overridden, overs);
-          }
-          overs.add(method);
+          methodsThatOverrideMe.put(overridden, method);
         }
       }
     }

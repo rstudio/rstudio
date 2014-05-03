@@ -24,8 +24,6 @@ import com.google.gwt.dev.cfg.ConditionNone;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.FullCompileTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -38,7 +36,7 @@ import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -60,7 +58,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
         }
 
         @Override
-        public void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain) {
+        public void methodIsLiveBecause(JMethod liveMethod, List<JMethod> dependencyChain) {
         }
 
         @Override
@@ -323,17 +321,6 @@ public class CodeSplitterTest extends FullCompileTestBase {
     assertInFragment("functionA", 1);
     assertInFragment("functionB", 1);
     assertInFragment("functionC", 1);
-  }
-
-  /**
-   * Tests that everything in the magic Array class is considered initially
-   * live.
-   */
-  public void testArrayIsInitial() throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", "");
-    ControlFlowAnalyzer cfa = CodeSplitter.computeInitiallyLive(program);
-
-    assertTrue(cfa.getInstantiatedTypes().contains(findType(program, "com.google.gwt.lang.Array")));
   }
 
   /**

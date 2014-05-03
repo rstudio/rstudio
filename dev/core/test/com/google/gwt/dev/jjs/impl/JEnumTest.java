@@ -48,7 +48,7 @@ public class JEnumTest extends JJSTestBase {
   public void testBasic() throws UnableToCompleteException {
     JProgram program = compileSnippet("void", "test.Simple.FOO.toString();");
 
-    JDeclaredType simple = findType(program, "test.Simple");
+    JDeclaredType simple = findDeclaredType(program, "test.Simple");
     Set<JEnumField> enumFields = new HashSet<JEnumField>();
     for (JField field : simple.getFields()) {
       if (field instanceof JEnumField) {

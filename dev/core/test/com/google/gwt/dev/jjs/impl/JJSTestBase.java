@@ -29,7 +29,9 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
@@ -40,6 +42,8 @@ import junit.framework.TestCase;
 
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A useful base class for tests that build JJS ASTs.
@@ -68,7 +72,7 @@ public abstract class JJSTestBase extends TestCase {
     assertTrue(pos > 0);
     String typeName = qualifiedFieldName.substring(0, pos);
     String fieldName = qualifiedFieldName.substring(pos + 1);
-    JDeclaredType type = findType(program, typeName);
+    JDeclaredType type = findDeclaredType(program, typeName);
     JField field = findField(type, fieldName);
     return field;
   }
@@ -116,30 +120,55 @@ public abstract class JJSTestBase extends TestCase {
     assertTrue(pos > 0);
     String typeName = methodName.substring(0, pos);
     String unqualMethodName = methodName.substring(pos + 1);
-    JDeclaredType type = findType(program, typeName);
+    JDeclaredType type = findDeclaredType(program, typeName);
     return findMethod(type, unqualMethodName);
   }
 
+  private static Pattern typeNamePattern = Pattern.compile("([^\\[\\]]*)((?:\\[\\])*)");
+
   /**
-   * Finds a type by name. The type name may be short, e.g. <code>"Foo"</code>,
+   * Finds a type by name including arrays and primitives.
+   */
+  public static JType findType(JProgram program, String typeName) {
+    Matcher matcher = typeNamePattern.matcher(typeName);
+    if (!matcher.matches()) {
+      return null;
+    }
+    String bareName = matcher.group(1);
+    int dimensions = matcher.group(2).length() / 2;
+
+    JType type = JPrimitiveType.getType(bareName);
+    if (type == null) {
+      type = findDeclaredType(program, bareName);
+    }
+
+    if (type != null && dimensions > 0) {
+      type = program.getTypeArray(type, dimensions);
+    }
+    return type;
+  }
+
+  /**
+   * Finds a declared type by name. The type name may be short, e.g. <code>"Foo"</code>,
    * or fully-qualified, e.g. <code>"com.google.example.Foo"</code>. If a short
    * name is used, it must be unambiguous.
    */
-  public static JDeclaredType findType(JProgram program, String typeName) {
+  public static JDeclaredType findDeclaredType(JProgram program, String typeName) {
     JDeclaredType type = program.getFromTypeMap(typeName);
-    if (type == null && typeName.indexOf('.') < 0) {
-      // Do a slow lookup by short name.
-      for (JDeclaredType checkType : program.getDeclaredTypes()) {
-        if (checkType.getShortName().equals(typeName)) {
-          if (type == null) {
-            type = checkType;
-          } else {
-            fail("Ambiguous type reference '" + typeName + "' might be '"
-                + type.getName() + "' or '" + checkType.getName()
-                + "' (possibly more matches)");
-          }
-        }
+    if (type != null || typeName.indexOf('.') != -1) {
+      return type;
+    }
+    // Do a slow lookup by short name.
+    for (JDeclaredType checkType : program.getDeclaredTypes()) {
+      if (!checkType.getShortName().equals(typeName)) {
+        continue;
       }
+      if (type != null) {
+        fail("Ambiguous type reference '" + typeName + "' might be '"
+            + type.getName() + "' or '" + checkType.getName()
+            + "' (possibly more matches)");
+      }
+      type = checkType;
     }
     return type;
   }

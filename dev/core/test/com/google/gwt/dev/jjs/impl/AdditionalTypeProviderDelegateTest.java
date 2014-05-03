@@ -140,9 +140,9 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     JProgram program = compileSnippet("void", "new test.B().func();");
 
     // Make sure the compiled classes appeared.
-    JDeclaredType bType = findType(program, "test.B");
+    JDeclaredType bType = findDeclaredType(program, "test.B");
     assertNotNull("Unknown type B", bType);
-    JDeclaredType insertedClassType = findType(program, "myPackage.InsertedClass");
+    JDeclaredType insertedClassType = findDeclaredType(program, "myPackage.InsertedClass");
     assertNotNull("Unknown type InsertedClass", insertedClassType);
   }
 
@@ -150,16 +150,16 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     JProgram program = compileSnippet("void", "new test.B1().func();");
 
     // Make sure the compiled classes appeared.
-    JDeclaredType bType = findType(program, "test.B1");
+    JDeclaredType bType = findDeclaredType(program, "test.B1");
     assertNotNull("Unknown type B1", bType);
-    JDeclaredType insertedClassType = findType(program, "myPackage.InsertedClass");
+    JDeclaredType insertedClassType = findDeclaredType(program, "myPackage.InsertedClass");
     assertNotNull("Unknown type InsertedClass", insertedClassType);
   }
 
   // Make sure regular code not using the AdditionalTypeProviderDelegate still works.
   public void testSimpleParse() throws UnableToCompleteException {
     JProgram program = compileSnippet("void", "new test.A();");
-    JDeclaredType goodClassType = findType(program, "test.A");
+    JDeclaredType goodClassType = findDeclaredType(program, "test.A");
     assertNotNull("Unknown class A", goodClassType);
   }
 

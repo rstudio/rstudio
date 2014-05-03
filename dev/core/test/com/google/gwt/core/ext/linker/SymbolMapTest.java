@@ -19,18 +19,19 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.CompilerOptionsImpl;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.util.tools.Utility;
 
 import junit.framework.TestCase;
-
-import org.eclipse.jdt.internal.compiler.problem.ShouldNotImplement;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -117,7 +118,7 @@ public class SymbolMapTest extends TestCase {
 
     @Override
     public String getRuntimeTypeId() {
-      throw new ShouldNotImplement(NOT_IMPLEMENTED_MESSAGE);
+      throw new UnsupportedOperationException(NOT_IMPLEMENTED_MESSAGE);
     }
 
     @Override
@@ -168,15 +169,10 @@ public class SymbolMapTest extends TestCase {
     }
   }
 
-  private final CompilerOptionsImpl options = new CompilerOptionsImpl();
-  // maps permutationId to symbolMap content
-  private Map<Integer, Map<String, SimpleSymbolData>> mapping =
-      Maps.newHashMap();
-
   /**
    * Loads the symbol map from a file.
    */
-  private Map<String, SimpleSymbolData> loadSymbolMap(File root) throws Exception {
+  private Iterable<Map<String, SimpleSymbolData>> loadSymbolMaps(File root) throws Exception {
     // Testing SourceMaps as SymbolMap replacement
     // make sure the files have been produced
     assertTrue(root.exists());
@@ -185,7 +181,18 @@ public class SymbolMapTest extends TestCase {
 
     assertTrue(symbolMapFiles.length >= 1);
 
-    return SimpleSymbolData.readSymbolMap(symbolMapFiles[0]);
+    return Iterables.transform(Arrays.asList(symbolMapFiles),
+        new Function<File, Map<String, SimpleSymbolData>>() {
+          @Override
+          public Map<String, SimpleSymbolData> apply(File file) {
+            try {
+              return SimpleSymbolData.readSymbolMap(file);
+            } catch (IOException e) {
+              fail("Error reading symbol map " + file.getAbsolutePath());
+            }
+            return null;
+          }
+        });
   }
 
   private static final String JSE_METHOD =
@@ -203,6 +210,7 @@ public class SymbolMapTest extends TestCase {
 
     File work = Utility.makeTemporaryDirectory(null, benchmark + "work");
     try {
+      CompilerOptionsImpl options = new CompilerOptionsImpl();
       options.addModuleName(module);
       options.setWarDir(new File(work, "war"));
       options.setExtraDir(new File(work, "extra"));
@@ -212,25 +220,23 @@ public class SymbolMapTest extends TestCase {
       new com.google.gwt.dev.Compiler(options).run(logger);
       // Change parentDir for cached/pre-built reports
       String parentDir = options.getExtraDir() + "/" + benchmark;
-      Map<String, SimpleSymbolData> symbolDataBySymbolName =
-          loadSymbolMap(new File(parentDir + "/symbolMaps/"));
-      assertTrue(!symbolDataBySymbolName.isEmpty());
-      assertNotNull(symbolDataBySymbolName.get(JSE_METHOD));
-      assertTrue(symbolDataBySymbolName.get(JSE_METHOD).isMethod());
-      assertFalse(symbolDataBySymbolName.get(JSE_METHOD).isField());
-      assertFalse(symbolDataBySymbolName.get(JSE_METHOD).isClass());
-      assertNotNull(symbolDataBySymbolName.get(JSE_FIELD));
-      assertTrue(symbolDataBySymbolName.get(JSE_FIELD).isField());
-      assertFalse(symbolDataBySymbolName.get(JSE_FIELD).isMethod());
-      assertFalse(symbolDataBySymbolName.get(JSE_FIELD).isClass());
-      assertNotNull(symbolDataBySymbolName.get(JSE_CLASS));
-      assertTrue(symbolDataBySymbolName.get(JSE_CLASS).isClass());
-      assertFalse(symbolDataBySymbolName.get(JSE_CLASS).isField());
-      assertFalse(symbolDataBySymbolName.get(JSE_CLASS).isMethod());
-      // There should not be a mapping for uninstantiable classes.
-      // TODO(rluble): Uncomment the following line. It is commented because it
-      // makes the test flaky, indicating a deeper problem.
-      // assertNull(symbolDataBySymbolName.get(UNINSTANTIABLE_CLASS));
+      for (Map<String, SimpleSymbolData> symbolDataBySymbolName :
+          loadSymbolMaps(new File(parentDir + "/symbolMaps/"))) {
+        assertTrue(!symbolDataBySymbolName.isEmpty());
+        assertNotNull(symbolDataBySymbolName.get(JSE_METHOD));
+        assertTrue(symbolDataBySymbolName.get(JSE_METHOD).isMethod());
+        assertFalse(symbolDataBySymbolName.get(JSE_METHOD).isField());
+        assertFalse(symbolDataBySymbolName.get(JSE_METHOD).isClass());
+        assertNotNull(symbolDataBySymbolName.get(JSE_FIELD));
+        assertTrue(symbolDataBySymbolName.get(JSE_FIELD).isField());
+        assertFalse(symbolDataBySymbolName.get(JSE_FIELD).isMethod());
+        assertFalse(symbolDataBySymbolName.get(JSE_FIELD).isClass());
+        assertNotNull(symbolDataBySymbolName.get(JSE_CLASS));
+        assertTrue(symbolDataBySymbolName.get(JSE_CLASS).isClass());
+        assertFalse(symbolDataBySymbolName.get(JSE_CLASS).isField());
+        assertFalse(symbolDataBySymbolName.get(JSE_CLASS).isMethod());
+        assertNull(symbolDataBySymbolName.get(UNINSTANTIABLE_CLASS));
+      }
     } finally {
       Util.recursiveDelete(work, false);
     }

@@ -61,13 +61,13 @@ public class JavaAstConstructor {
           "package com.google.gwt.lang;",
           "import com.google.gwt.core.client.JavaScriptObject;",
           "public final class Array {",
-          "  static void setCheck(Array array, int index, Object value) { }",
+          "  static void setCheck(Object array, int index, Object value) { }",
           "  static void initDim(Class arrayClass, JavaScriptObject castableTypeMap,",
           "      int elementTypeId, int elementTypeCategory, int length) { }",
           "  static void initDims(Class arrayClasses[], JavaScriptObject[] castableTypeMapExprs,",
           "      int[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs, int count) { }",
           "  static void initValues(Class arrayClass, JavaScriptObject castableTypeMap,",
-          "      int elementTypeId, int elementTypeCategory, Array array) { }",
+          "      int elementTypeId, int elementTypeCategory, Object array) { }",
           "}"
       );
     }

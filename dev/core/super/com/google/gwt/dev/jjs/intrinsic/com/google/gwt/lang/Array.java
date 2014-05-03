@@ -46,10 +46,9 @@ public final class Array {
    * Creates a copy of a subrange of the specified array.
    */
   public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
-    Array a = asArrayType(array);
-    Array result = arraySlice(a, fromIndex, toIndex);
-    initValues(a.getClass(), Util.getCastableTypeMap(a), Array.getElementTypeId(a),
-        Array.getElementTypeCategory(a), result);
+    Object result = arraySlice(array, fromIndex, toIndex);
+    initValues(array.getClass(), Util.getCastableTypeMap(array), Array.getElementTypeId(array),
+        Array.getElementTypeCategory(array), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -66,14 +65,13 @@ public final class Array {
    * specified length.
    */
   public static <T> T[] createFrom(T[] array, int length) {
-    Array a = asArrayType(array);
     // TODO(rluble): The behaviour here seems erroneous as the array elements will not be
     // initialized but left undefined. However the usages seem to be safe and changing here
     // might have performace penalty. Maybe rename to createUninitializedFrom(), to make
     // the meaning clearer.
-    Array result = initializeArrayElementsWithDefaults(TYPE_JAVA_OBJECT, length);
-    initValues(a.getClass(), Util.getCastableTypeMap(a), Array.getElementTypeId(a),
-        Array.getElementTypeCategory(a), result);
+    Object result = initializeArrayElementsWithDefaults(TYPE_JAVA_OBJECT, length);
+    initValues(array.getClass(), Util.getCastableTypeMap(array), Array.getElementTypeId(array),
+        Array.getElementTypeCategory(array), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -95,9 +93,9 @@ public final class Array {
    * @param length the length of the array
    * @return the new array
    */
-  public static Array initDim(Class<?> arrayClass, JavaScriptObject castableTypeMap,
+  public static Object initDim(Class<?> arrayClass, JavaScriptObject castableTypeMap,
       JavaScriptObject elementTypeId, int length, int elementTypeCategory) {
-    Array result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
+    Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
     initValues(arrayClass, castableTypeMap, elementTypeId, elementTypeCategory, result);
     return result;
   }
@@ -119,7 +117,7 @@ public final class Array {
    * @param dimExprs the length of each dimension, from highest to lower
    * @return the new array
    */
-  public static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
+  public static Object initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
       JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs, int count) {
     return initDims(arrayClasses, castableTypeMapExprs, elementTypeIds, leafElementTypeCategory,
         dimExprs, 0, count);
@@ -142,8 +140,8 @@ public final class Array {
    * @param array the JSON array that will be transformed into a GWT array
    * @return values; having wrapped it for GWT
    */
-  public static Array initValues(Class<?> arrayClass, JavaScriptObject castableTypeMap,
-      JavaScriptObject elementTypeId, int elementTypeCategory, Array array) {
+  public static Object initValues(Class<?> arrayClass, JavaScriptObject castableTypeMap,
+      JavaScriptObject elementTypeId, int elementTypeCategory, Object array) {
     setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
     Util.setTypeMarker(array);
@@ -231,7 +229,7 @@ public final class Array {
    * Attempting to store an object that cannot satisfy the castability check
    * throws an {@link ArrayStoreException}.
    */
-  public static Object setCheck(Array array, int index, Object value) {
+  public static Object setCheck(Object array, int index, Object value) {
     if (value != null) {
       int elementTypeCategory = Array.getElementTypeCategory(array);
       JavaScriptObject elementTypeId = Array.getElementTypeId(array);
@@ -266,28 +264,21 @@ public final class Array {
     return set(array, index, value);
   }
 
-  private static native Array arraySlice(Array array, int fromIndex, int toIndex) /*-{
+  private static native Object arraySlice(Object array, int fromIndex, int toIndex) /*-{
     return array.slice(fromIndex, toIndex);
   }-*/;
 
   /**
    * Use JSNI to effect a castless type change.
    */
-  private static native <T> T[] asArray(Array array) /*-{
-    return array;
-  }-*/;
-
-  /**
-   * Use JSNI to effect a castless type change.
-   */
-  private static native <T> Array asArrayType(T[] array) /*-{
+  private static native <T> T[] asArray(Object array) /*-{
     return array;
   }-*/;
 
   /**
    * Creates a primitive JSON array of a given the element type class.
    */
-  private static native Array initializeArrayElementsWithDefaults(
+  private static native Object initializeArrayElementsWithDefaults(
       int elementTypeCategory, int length) /*-{
     var array = new Array(length);
     var initValue;
@@ -314,7 +305,7 @@ public final class Array {
     return array;
   }-*/;
 
-  private static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
+  private static Object initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
       JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs,
       int index, int count) {
     int length = dimExprs[index];
@@ -322,7 +313,7 @@ public final class Array {
     // All dimensions but the last are plain reference types.
     int elementTypeCategory = isLastDim ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
-    Array result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
+    Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
     initValues(arrayClasses[index], castableTypeMapExprs[index],
         elementTypeIds[index], elementTypeCategory, result);
 
@@ -340,7 +331,7 @@ public final class Array {
   /**
    * Sets a value in the array.
    */
-  private static native Object set(Array array, int index, Object value) /*-{
+  private static native Object set(Object array, int index, Object value) /*-{
     return array[index] = value;
   }-*/;
 

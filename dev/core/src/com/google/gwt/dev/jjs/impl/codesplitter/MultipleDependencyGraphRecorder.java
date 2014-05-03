@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.impl.codesplitter;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A dependency recorder that can record multiple dependency graphs. It has
@@ -39,7 +39,7 @@ public interface MultipleDependencyGraphRecorder extends ControlFlowAnalyzer.Dep
         }
 
         @Override
-        public void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain) {
+        public void methodIsLiveBecause(JMethod liveMethod, List<JMethod> dependencyChain) {
         }
 
         @Override

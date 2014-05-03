@@ -122,6 +122,14 @@ public class JPrimitiveType extends JType {
   }
 
   /**
+   * Returns the JPrimitiveType instance corresponding to {@code typeName} or {@code null} if
+   * typeName is not the name of a primitive type.
+   */
+  public static JPrimitiveType getType(String typeName) {
+    return Singletons.map.get(typeName);
+  }
+
+  /**
    * Canonicalize to singleton; uses {@link JType#name}.
    */
   private Object readResolve() {

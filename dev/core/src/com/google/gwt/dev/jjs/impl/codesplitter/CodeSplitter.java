@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl.codesplitter;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
@@ -156,31 +155,9 @@ public class CodeSplitter {
     ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(jprogram);
     cfa.setDependencyRecorder(dependencyRecorder);
     cfa.traverseEntryMethods();
-    computeLivenessFromArrayType(jprogram, cfa);
     computeLivenessFromCodeGenTypes(jprogram, cfa);
     dependencyRecorder.endDependencyGraph();
     return cfa;
-  }
-
-  /**
-   * Any instance method in the magic Array class must be in the initial
-   * download. The methods of that class are copied to a separate object the
-   * first time class Array is touched, and any methods added later won't be
-   * part of the copy.
-   */
-  private static void computeLivenessFromArrayType(JProgram jprogram, ControlFlowAnalyzer cfa) {
-    JDeclaredType arrayType = jprogram.getFromTypeMap("com.google.gwt.lang.Array");
-    if (arrayType == null) {
-      // It was pruned; nothing to do
-      return;
-    }
-
-    cfa.traverseFromInstantiationOf(arrayType);
-    for (JMethod method : arrayType.getMethods()) {
-      if (method.needsVtable()) {
-        cfa.traverseFrom(method);
-      }
-    }
   }
 
   /**

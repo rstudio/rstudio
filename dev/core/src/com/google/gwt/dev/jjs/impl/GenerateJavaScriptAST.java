@@ -645,10 +645,6 @@ public class GenerateJavaScriptAST {
       return false;
     }
 
-    private JsName createNullFunction(String name) {
-      return createGlobalJsFunctionFromSource(name, "function " + name + "(){}");
-    }
-
     private JsName createGlobalJsFunctionFromSource(String functionName, String code) {
       try {
         List<JsStatement> stmts =
@@ -2471,7 +2467,7 @@ public class GenerateJavaScriptAST {
       JLiteral superTypeId = (superClass == null) ? JNullLiteral.INSTANCE :
           getRuntimeTypeReference(x.getSuperClass());
       // check if there's an overriding prototype
-      JInterfaceType jsPrototypeIntf = program.maybeGetJsInterfaceFromPrototype(superClass);
+      JInterfaceType jsPrototypeIntf = JProgram.maybeGetJsInterfaceFromPrototype(superClass);
       String jsPrototype = jsPrototypeIntf != null ? jsPrototypeIntf.getJsPrototype() : null;
       // choose appropriate setup function
       JsName defineClassRef = indexedFunctions.get(

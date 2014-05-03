@@ -17,12 +17,14 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.Empty;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -56,9 +58,9 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
     }
 
     public void assertOnlyInstantiatedTypes(String... expectedTypes) {
-      Set<JDeclaredType> expectedSet = new HashSet<JDeclaredType>();
+      Set<JType> expectedSet = Sets.newHashSet();
       for (String expectedType : expectedTypes) {
-        JDeclaredType type = findType(program, expectedType);
+        JType type = findType(program, expectedType);
         assertNotNull(type);
         expectedSet.add(type);
       }
@@ -106,88 +108,82 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
       sourceOracle.addOrReplace(new MockJavaResource("test.JsoIntf") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package test;");
-        code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-        code.append("public interface JsoIntf {");
-        code.append("  public int getAny();");
-        code.append("}");
-        return code;
+        return Joiner.on("\n").join(
+            "package test;",
+            "import com.google.gwt.core.client.JavaScriptObject;",
+            "public interface JsoIntf {",
+            "  public int getAny();",
+            "}");
       }
     });
 
       sourceOracle.addOrReplace(new MockJavaResource("test.UpRefIntf") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package test;");
-        code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-        code.append("public interface UpRefIntf {");
-        code.append("  public int getFoo();");
-        code.append("}");
-        return code;
+        return Joiner.on("\n").join(
+            "package test;",
+            "import com.google.gwt.core.client.JavaScriptObject;",
+            "public interface UpRefIntf {",
+            "  public int getFoo();",
+            "}");
       }
     });
 
      sourceOracle.addOrReplace(new MockJavaResource("test.NonImplementor") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package test;");
-        code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-        code.append("public class NonImplementor extends JavaScriptObject {");
-        code.append("  protected NonImplementor() {}");
-        code.append("  final public native int getFoo() /*-{ return 0; }-*/;");
-        code.append("}");
-        return code;
+        return Joiner.on("\n").join(
+            "package test;",
+            "import com.google.gwt.core.client.JavaScriptObject;",
+            "public class NonImplementor extends JavaScriptObject {",
+            "  protected NonImplementor() {}",
+            "  final public native int getFoo() /*-{ return 0; }-*/;",
+            "}");
       }
     });
 
      sourceOracle.addOrReplace(new MockJavaResource("test.VirtualUpRef") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package test;");
-        code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-        code.append("final public class VirtualUpRef extends NonImplementor implements UpRefIntf {");
-        code.append("  protected VirtualUpRef() {}");
-        code.append("  public static native VirtualUpRef create() /*-{ return  {}; }-*/;");
-        code.append("}");
-        return code;
+        return Joiner.on("\n").join(
+            "package test;",
+            "import com.google.gwt.core.client.JavaScriptObject;",
+            "final public class VirtualUpRef extends NonImplementor implements UpRefIntf {",
+            "  protected VirtualUpRef() {}",
+            "  public static native VirtualUpRef create() /*-{ return  {}; }-*/;",
+            "}");
       }
     });
 
     sourceOracle.addOrReplace(new MockJavaResource("test.SingleJso") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package test;");
-        code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-        code.append("final public class SingleJso extends JavaScriptObject implements JsoIntf {");
-        code.append("  protected SingleJso() {}");
-        code.append("  public native int getAny() /*-{ return 1; }-*/;");
-        code.append("  public static native JsoIntf returnsJsoIntf() /*-{ return {}; }-*/;");
-        code.append("  public static native SingleJso returnsJso() /*-{ return {}; }-*/;");
-        code.append("}");
-        return code;
+        return Joiner.on("\n").join(
+            "package test;",
+            "import com.google.gwt.core.client.JavaScriptObject;",
+            "final public class SingleJso extends JavaScriptObject implements JsoIntf {",
+            "  protected SingleJso() {}",
+            "  public native int getAny() /*-{ return 1; }-*/;",
+            "  public static native JsoIntf returnsJsoIntf() /*-{ return {}; }-*/;",
+            "  public static native SingleJso returnsJso() /*-{ return {}; }-*/;",
+            "}");
       }
     });
 
     sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package test;\n");
-        code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-        code.append("public class Foo {\n");
-        code.append("  public static native JavaScriptObject returnsJso() /*-{ return {}; }-*/;\n");
-        code.append("  public static native void assignsJsoField() /*-{ @test.Foo::jsoField = {}; }-*/;\n");
-        code.append("  public static native void readsJsoField() /*-{ var x = @test.Foo::jsoField; }-*/;\n");
-        code.append("  public static native void passesJsoParam() /*-{ @test.Foo::calledFromJsni(Lcom/google/gwt/core/client/JavaScriptObject;)({}); }-*/;\n");
-        code.append("  private static JavaScriptObject jsoField = null;\n");
-        code.append("  private static void calledFromJsni(JavaScriptObject arg) { }\n");
-        code.append("}\n");
-        return code;
+        return Joiner.on("\n").join(
+            "package test;",
+            "import com.google.gwt.core.client.JavaScriptObject;",
+            "public class Foo {",
+            "  public static native JavaScriptObject returnsJso() /*-{ return {}; }-*/;",
+            "  public static native void assignsJsoField() /*-{ @test.Foo::jsoField = {}; }-*/;",
+            "  public static native void readsJsoField() /*-{ var x = @test.Foo::jsoField; }-*/;",
+            "  public static native void passesJsoParam() /*-{ @test.Foo::calledFromJsni(Lcom/google/gwt/core/client/JavaScriptObject;)({}); }-*/;",
+            "  private static JavaScriptObject jsoField = null;",
+            "  private static void calledFromJsni(JavaScriptObject arg) { }",
+            "}");
       }
     });
     addSnippetImport("test.Foo");
@@ -231,6 +227,36 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
         "EntryPoint.$clinit",
         "EntryPoint.onModuleLoad",
         "Object.$clinit");
+  }
+
+  /**
+   * Tests that certain Java arrays are rescued if returned from JSNI code. Arrays that are rescued
+   * if returned from JSNI: code whose leaf types are either primitive or types that might be
+   * instantiated in JSNI.
+   */
+  public void testRescueArraysFromJSNI() throws Exception {
+    sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
+      @Override
+      public CharSequence getContent() {
+        return Joiner.on("\n").join(
+            "package test;",
+            "public class Foo {",
+            "  public static native int[] create_array() /*-{ return {}; }-*/;",
+            "  public static native int[][] create_2d_array() /*-{ return {}; }-*/;",
+            "}");
+      }
+    });
+    addSnippetImport("test.Foo");
+
+    analyzeSnippet("").assertOnlyInstantiatedTypes(Empty.STRINGS);
+
+    // Returning a JSO from a JSNI method rescues.
+    analyzeSnippet("Foo.create_array();").assertOnlyInstantiatedTypes(
+        "int[]", "Object");
+
+    // Returning a JSO from a JSNI method rescues.
+    analyzeSnippet("Foo.create_2d_array();").assertOnlyInstantiatedTypes(
+        "int[][]", "Object[]", "Object");
   }
 
   private Result analyzeSnippet(String codeSnippet)

@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -76,7 +76,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
    * Used to record the dependencies of a specific method.
    */
   @Override
-  public void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain) {
+  public void methodIsLiveBecause(JMethod liveMethod, List<JMethod> dependencyChain) {
     printMethodDependency(dependencyChain);
   }
 
@@ -157,7 +157,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
    * recovered by code that reads the entire dependencies file, because it can
    * do repeated lookups into the dependencies table to follow the chain.
    */
-  private void printMethodDependency(ArrayList<JMethod> dependencyChain) {
+  private void printMethodDependency(List<JMethod> dependencyChain) {
     int size = dependencyChain.size();
     if (size < 2) {
       return;
