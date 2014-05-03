@@ -168,11 +168,19 @@ public class CalendarUtil {
    */
   @SuppressWarnings("deprecation") // GWT requires Date
   public static void resetTime(Date date) {
-    long msec = date.getTime();
-    msec = (msec / 1000) * 1000;
+    long msec = resetMilliseconds(date.getTime());
     date.setTime(msec);
     date.setHours(0);
     date.setMinutes(0);
     date.setSeconds(0);
+  }
+
+  private static long resetMilliseconds(long msec) {
+    int offset = (int) (msec % 1000);
+    // Normalize if time is before epoch
+    if (offset < 0) {
+      offset += 1000;
+    }
+    return msec - offset;
   }
 }

@@ -145,4 +145,50 @@ public class CalendarUtilTest extends TestCase {
       assertTrue(CalendarUtil.isSameDate(new Date(99, 5, 1), date));
     }
   }
+
+  public void testResetTime() {
+    // Dates before 1970-01-01 01:00:00 (negative msec)
+    {
+        Date date = createDate(1950, 6, 15, 13, 30, 30, 500);
+        Date expected = createDate(1950, 6, 15, 0, 0, 0, 0);
+        CalendarUtil.resetTime(date);
+        assertEquals(expected, date);
+    }
+
+    {
+        Date date = createDate(1969, 12, 31, 23, 59, 59, 999);
+        Date expected = createDate(1969, 12, 31, 0, 0, 0, 0);
+        CalendarUtil.resetTime(date);
+        assertEquals(expected, date);
+    }
+
+    // Date at 1970-01-01 01:00:00 (0 msec)
+    {
+        Date date = createDate(1970, 1, 1, 1, 0, 0, 0);
+        Date expected = createDate(1970, 1, 1, 0, 0, 0, 0);
+        CalendarUtil.resetTime(date);
+        assertEquals(expected, date);
+    }
+
+    // Dates after 1970-01-01 01:00:00 (positive msec)
+    {
+        Date date = createDate(1970, 1, 1, 1, 0, 0, 1);
+        Date expected = createDate(1970, 1, 1, 0, 0, 0, 0);
+        CalendarUtil.resetTime(date);
+        assertEquals(expected, date);
+    }
+
+    {
+        Date date = createDate(2000, 3, 10, 23, 59, 59, 999);
+        Date expected = createDate(2000, 3, 10, 0, 0, 0, 0);
+        CalendarUtil.resetTime(date);
+        assertEquals(expected, date);
+    }
+  }
+
+  private Date createDate(int year, int month, int day, int hour, int minute, int second, int msec) {
+    Date date = new Date(year - 1900, month - 1, day, hour, minute, second);
+    date.setTime(date.getTime() + msec);
+    return date;
+  }
 }
