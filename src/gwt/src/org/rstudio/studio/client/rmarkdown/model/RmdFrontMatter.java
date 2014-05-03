@@ -23,15 +23,18 @@ public class RmdFrontMatter extends JavaScriptObject
    {
    }
    
-   public static final native RmdFrontMatter create(String titleText) /*-{
+   public static final native RmdFrontMatter create() /*-{
       return {
-         title: titleText,
          output: {}
       };
    }-*/;
    
    public final native void setAuthor(String author) /*-{
       this.author = author;
+   }-*/;
+   
+   public final native void setTitle(String title) /*-{
+      this.title = title;
    }-*/;
    
    public final native void setRuntime(String runtime) /*-{
@@ -84,6 +87,25 @@ public class RmdFrontMatter extends JavaScriptObject
         this.output[format] = options;
      }
    }-*/;
+   
+   public final void applyCreateOptions(String author, String title, 
+                                        String format, boolean isShiny)
+   {
+      setTitle(title);
+      if (author.length() > 0)
+      {
+         setAuthor(author);
+         addDate();
+      }
+      if (isShiny)
+      {
+         setRuntime(SHINY_RUNTIME);
+      }
+      if (format != null)
+      {
+         setOutputOption(format, RmdFrontMatterOutputOptions.create());
+      }
+   }
    
    public final static String OUTPUT_KEY = "output";
    public final static String RUNTIME_KEY = "runtime";

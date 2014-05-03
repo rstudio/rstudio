@@ -25,7 +25,6 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
-import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
@@ -58,6 +57,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
                             String format, boolean isShiny)
       {
          template_ = template;
+         title_ = title;
          author_ = author;
          isShiny_ = isShiny;
          format_ = format;
@@ -72,6 +72,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       public String getAuthor()
       {
          return author_;
+      }
+      
+      public String getTitle()
+      {
+         return title_;
       }
       
       public boolean isShiny()
@@ -94,22 +99,14 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
                                            String format, 
                                            boolean isShiny)
       {
-         RmdFrontMatter result = RmdFrontMatter.create(title);
-         if (author.length() > 0)
-         {
-            result.setAuthor(author);
-            result.addDate();
-         }
-         if (isShiny)
-         {
-            result.setRuntime(RmdFrontMatter.SHINY_RUNTIME);
-         }
-         result.setOutputOption(format, RmdFrontMatterOutputOptions.create());
+         RmdFrontMatter result = RmdFrontMatter.create();
+         result.applyCreateOptions(author, title, format, isShiny);
          return result;
       }
 
       private final String template_;
       private final String author_;
+      private final String title_;
       private final boolean isShiny_;
       private final String format_;
       private final JavaScriptObject result_;
@@ -196,6 +193,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          public void onChange(ChangeEvent event)
          {
             updateOptions(getSelectedTemplate());
+            txtTitle_.setFocus(true);
          }
       });
 

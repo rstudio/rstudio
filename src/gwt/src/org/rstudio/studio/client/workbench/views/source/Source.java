@@ -63,9 +63,12 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
+import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -902,8 +905,7 @@ public class Source implements InsertSourceHandler,
                         }
                         else
                         {
-                           rmarkdown_.createDraftFromTemplate(
-                                 result.getFromTemplate());
+                           newDocFromRmdTemplate(result);
                         }
                      }
                   }
@@ -911,6 +913,29 @@ public class Source implements InsertSourceHandler,
             }
          }
       );
+   }
+   
+   private void newDocFromRmdTemplate(final NewRMarkdownDialog.Result result)
+   {
+      final RmdChosenTemplate template = result.getFromTemplate();
+      if (template.createDir())
+      {
+         rmarkdown_.createDraftFromTemplate(template);
+         return;
+      }
+
+      rmarkdown_.getTemplateContent(template, 
+         new OperationWithInput<String>() {
+            @Override
+            public void execute(final String content)
+            {
+               if (content.length() == 0)
+                  globalDisplay_.showErrorMessage("Template Content Missing", 
+                        "The template at " + template.getTemplatePath() + 
+                        " is missing.");
+               newDoc(FileTypeRegistry.RMARKDOWN, content, null);
+            }
+      });
    }
    
    private void newRMarkdownV2Doc(

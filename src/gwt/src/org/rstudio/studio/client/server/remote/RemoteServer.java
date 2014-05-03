@@ -64,6 +64,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.server.*;
@@ -3353,8 +3354,20 @@ public class RemoteServer implements Server
             CREATE_RMD_FROM_TEMPLATE,
             params,
             requestCallback);
-      
    }
+
+   @Override
+   public void getRmdTemplate(String templatePath,
+         ServerRequestCallback<RmdTemplateContent> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(templatePath));
+      sendRequest(RPC_SCOPE,
+            GET_RMD_TEMPLATE,
+            params,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3647,4 +3660,5 @@ public class RemoteServer implements Server
    private static final String CONVERT_FROM_YAML = "convert_from_yaml";
    private static final String DISCOVER_RMD_TEMPLATES = "discover_rmd_templates";
    private static final String CREATE_RMD_FROM_TEMPLATE = "create_rmd_from_template";
+   private static final String GET_RMD_TEMPLATE = "get_rmd_template";
 }

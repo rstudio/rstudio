@@ -35,7 +35,6 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -64,7 +63,7 @@ public class RmdTemplateChooser extends Composite
             // when the template changes, update the check to correspond to the
             // template's preference, if any
             RmdDiscoveredTemplateItem item = listTemplates_.getSelectedItem();
-            chkCreate_.setValue(
+            templateOptionsPanel_.setVisible(
                   item.getTemplate().getCreateDir().equals("true"));
          }
       });
@@ -154,7 +153,6 @@ public class RmdTemplateChooser extends Composite
          noTemplatesFound_.setVisible(true);
          txtName_.setEnabled(false);
          dirLocation_.setEnabled(false);
-         chkCreate_.setEnabled(false);
       }
       else
       {
@@ -165,7 +163,8 @@ public class RmdTemplateChooser extends Composite
                listTemplates_.getItemAtIdx(0).getTemplate();
          if (template != null)
          {
-            chkCreate_.setValue(template.getCreateDir().equals("true"));
+            templateOptionsPanel_.setVisible(
+                  template.getCreateDir().equals("true"));
          }
       }
    }
@@ -190,7 +189,10 @@ public class RmdTemplateChooser extends Composite
    
    private boolean createDirectory()
    {
-      return chkCreate_.getValue();
+      RmdDiscoveredTemplateItem item = listTemplates_.getSelectedItem();
+      if (item != null)
+         return item.getTemplate().getCreateDir().equals("true");
+      return false;
    }
    
    private RmdTemplateDiscovery discovery_;
@@ -201,7 +203,6 @@ public class RmdTemplateChooser extends Composite
    @UiField WidgetListBox<RmdDiscoveredTemplateItem> listTemplates_;
    @UiField TextBox txtName_;
    @UiField DirectoryChooserTextBox dirLocation_;
-   @UiField CheckBox chkCreate_;
    @UiField HTMLPanel noTemplatesFound_;
    @UiField HTMLPanel templateOptionsPanel_;
    @UiField SimplePanelWithProgress progressPanel_;
