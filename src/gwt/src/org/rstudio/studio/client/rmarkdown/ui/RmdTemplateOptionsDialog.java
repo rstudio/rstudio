@@ -48,14 +48,14 @@ public class RmdTemplateOptionsDialog
    {
       super("Edit " + (isShiny ? "Shiny " : "R Markdown ") + 
             template.getName() + " Options", onSaved, onCancelled);
-      setWidth("350px");
-      setHeight("400px");
+      setWidth("425px");
+      setHeight("450px");
       templateOptions_ = new RmdTemplateOptionsWidget(!isShiny);
       templateOptions_.setDocument(document);
       templateOptions_.setTemplate(template, false, frontMatter);
       templateOptions_.setSelectedFormat(initialFormat);
-      templateOptions_.setHeight("300px");
-      templateOptions_.setWidth("375px");
+      templateOptions_.setHeight("350px");
+      templateOptions_.setWidth("450px");
    }
 
    @Override
