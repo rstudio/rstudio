@@ -28,8 +28,8 @@ public class RmdTemplateData
             format_ui_name: "HTML",
             format_extension: "html",
             format_options: [ "toc", "highlight", "theme", "css", "fig_width", 
-                              "fig_height", "fig_caption", "smart", 
-                              "self_contained" ],
+                              "fig_height", "fig_caption", "number_sections",
+                              "smart", "self_contained" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
