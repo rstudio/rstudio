@@ -44,7 +44,7 @@ public class RequestFactoryJreTest extends RequestFactoryTest {
         throw new RuntimeException(e);
       }
     } else {
-      ServiceLayer serviceLayer = ServiceLayer.create();
+      ServiceLayer serviceLayer = ServiceLayer.create(new MethodProvidedByServiceLayerJreTest.Decorator());
       SimpleRequestProcessor processor = new SimpleRequestProcessor(serviceLayer);
       req.initialize(eventBus, new InProcessRequestTransport(processor));
     }

@@ -21,6 +21,7 @@ import com.google.web.bindery.requestfactory.server.FanoutReceiverJreTest;
 import com.google.web.bindery.requestfactory.server.FindServiceJreTest;
 import com.google.web.bindery.requestfactory.server.JsonRpcRequestFactoryJreTest;
 import com.google.web.bindery.requestfactory.server.LocatorJreTest;
+import com.google.web.bindery.requestfactory.server.MethodProvidedByServiceLayerJreTest;
 import com.google.web.bindery.requestfactory.server.MultipleFactoriesJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryChainedContextJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryExceptionPropagationJreTest;
@@ -50,6 +51,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(FindServiceJreTest.class);
     suite.addTestSuite(JsonRpcRequestFactoryJreTest.class);
     suite.addTestSuite(LocatorJreTest.class);
+    suite.addTestSuite(MethodProvidedByServiceLayerJreTest.class);
     suite.addTestSuite(MultipleFactoriesJreTest.class);
     suite.addTestSuite(RequestFactoryChainedContextJreTest.class);
     suite.addTestSuite(RequestFactoryExceptionPropagationJreTest.class);

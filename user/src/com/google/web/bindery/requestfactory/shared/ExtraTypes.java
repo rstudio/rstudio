@@ -16,6 +16,8 @@
 package com.google.web.bindery.requestfactory.shared;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
@@ -24,6 +26,7 @@ import java.lang.annotation.Target;
  * include additional polymorphic proxy types that are not explicitly
  * referenced.
  */
+@Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ExtraTypes {
   Class<? extends BaseProxy>[] value();

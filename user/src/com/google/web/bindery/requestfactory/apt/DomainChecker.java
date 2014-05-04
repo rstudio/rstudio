@@ -187,8 +187,13 @@ class DomainChecker extends ScannerBase<Void> {
       // Did not find a service method
       StringBuilder sb = new StringBuilder();
       sb.append(returnType).append(" ").append(name).append("(");
+      boolean first = true;
       for (TypeMirror param : lookFor) {
+        if (!first) {
+          sb.append(", ");
+        }
         sb.append(param);
+        first = false;
       }
       sb.append(")");
 

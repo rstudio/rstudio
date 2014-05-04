@@ -30,6 +30,7 @@ import com.google.web.bindery.requestfactory.shared.BoxesAndPrimitivesTest;
 import com.google.web.bindery.requestfactory.shared.ComplexKeysTest;
 import com.google.web.bindery.requestfactory.shared.FanoutReceiverTest;
 import com.google.web.bindery.requestfactory.shared.LocatorTest;
+import com.google.web.bindery.requestfactory.shared.MethodProvidedByServiceLayerTest;
 import com.google.web.bindery.requestfactory.shared.MultipleFactoriesTest;
 import com.google.web.bindery.requestfactory.shared.ServiceInheritanceTest;
 import com.google.web.bindery.requestfactory.shared.impl.RequestPayloadTest;
@@ -51,6 +52,7 @@ public class RequestFactorySuite {
     suite.addTestSuite(FindServiceTest.class);
     suite.addTestSuite(JsonRpcRequestFactoryTest.class);
     suite.addTestSuite(LocatorTest.class);
+    suite.addTestSuite(MethodProvidedByServiceLayerTest.class);
     suite.addTestSuite(MultipleFactoriesTest.class);
     suite.addTestSuite(RequestFactoryTest.class);
     suite.addTestSuite(RequestFactoryChainedContextTest.class);

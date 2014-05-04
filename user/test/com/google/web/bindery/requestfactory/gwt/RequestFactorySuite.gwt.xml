@@ -20,5 +20,5 @@
   <inherits name='com.google.gwt.junit.JUnit'/>
   <inherits name='com.google.gwt.json.JSON'/>
   <servlet path='/gwtRequest'
-    class='com.google.web.bindery.requestfactory.server.RequestFactoryServlet' />
+    class='com.google.web.bindery.requestfactory.server.TestRequestFactoryServlet' />
 </module>
