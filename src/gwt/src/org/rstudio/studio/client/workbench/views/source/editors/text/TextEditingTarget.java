@@ -2405,7 +2405,7 @@ public class TextEditingTarget implements
       String newCode = YamlFrontMatter.applyFrontMatter(code, yaml);
       if (!code.equals(newCode)) 
       {
-         docDisplay_.setCode(code, true);
+         docDisplay_.setCode(newCode, true);
          updateRmdFormatList();
       }
    }
