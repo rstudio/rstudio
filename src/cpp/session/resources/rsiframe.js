@@ -33,7 +33,14 @@ var getOrigin = function() {
 
 // sets the location hash
 var setHash = function(hash) {
-   document.location.hash = hash;
+   // special case for ioslides: if the hash is numeric and we have a slide
+   // controller, use it to change the slides (ioslides doesn't respond to
+   // onhashchange)
+   if (/[0-9]+/.test(hash) && window.slidedeck) {
+      window.slidedeck.loadSlide(parseInt(hash));
+   } else {
+      location.hash = hash;
+   }
 };
 
 // sets the document scroll position. this could be called before that part of

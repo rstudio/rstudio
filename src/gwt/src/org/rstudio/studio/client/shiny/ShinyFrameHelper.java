@@ -50,6 +50,10 @@ public class ShinyFrameHelper
                                                          int arg) /*-{
          return { method: method, arg: arg };
       }-*/;
+      public final native static ShinyFrameMethod create(String method, 
+                                                         String arg) /*-{
+         return { method: method, arg: arg };
+      }-*/;
       public final native String getMethod() /*-{
          return this.method;
       }-*/;
@@ -82,6 +86,11 @@ public class ShinyFrameHelper
    public void setScrollPosition(int pos)
    {
       sendMethod(ShinyFrameMethod.create(METHOD_SET_SCROLL, pos));
+   }
+   
+   public void setHash(String hash)
+   {
+      sendMethod(ShinyFrameMethod.create(METHOD_SET_HASH, hash));
    }
    
    // Private methods ---------------------------------------------------------

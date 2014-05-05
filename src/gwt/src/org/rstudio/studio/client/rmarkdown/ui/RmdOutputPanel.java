@@ -377,7 +377,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       if (anchorPos > 0)
          url = url.substring(0, anchorPos);
       
-      showUrl(url + "#" + (index + 1));
+      String hash = "" + (index + 1);
+
+      if (isShiny_)
+         shinyFrame_.setHash(hash);
+      else
+         showUrl(url + "#" + hash);
    }
 
    @Override
