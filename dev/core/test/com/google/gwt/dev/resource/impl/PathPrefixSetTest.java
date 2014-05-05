@@ -62,7 +62,8 @@ public class PathPrefixSetTest extends TestCase {
     assertEquals(pp3,
         pps.includesResource("com/google/gwt/dom/client/DivElement.java"));
 
-    assertNull(pps.includesResource("com/google/gwt/user/rebind/rpc/ServiceInterfaceProxyGenerator.java"));
+    assertNull(
+        pps.includesResource("com/google/gwt/user/rebind/rpc/ServiceInterfaceProxyGenerator.java"));
     assertNull(pps.includesResource("com/google/gwt/sample/hello/client/Hello.java"));
     assertNull(pps.includesResource("com/google/gwt/user/public/clear.cache.gif"));
   }
@@ -125,6 +126,60 @@ public class PathPrefixSetTest extends TestCase {
     assertEquals(pp1, pps.includesResource("a/b/Y.java"));
     assertEquals(pp4, pps.includesResource("a/b/c/Z.java"));
     assertEquals(pp4, pps.includesResource("a/b/c/d/V.java"));
+  }
+
+  public void testExcludes_DenyOverridesAllow() {
+    PathPrefixSet pathPrefixSet = new PathPrefixSet();
+
+    String[] excludesDeny = new String[] {"a/b/FILTERMEOUT"};
+    String[] excludesAllow = null;
+    PathPrefix pathPrefixFilterDeny =
+        new PathPrefix("a/b/", null, false, excludesDeny);
+    PathPrefix pathPrefixFilterAllow = new PathPrefix("a/b/", null, false, excludesAllow);
+
+    pathPrefixSet.add(pathPrefixFilterDeny);
+    pathPrefixSet.add(pathPrefixFilterAllow);
+
+    assertNull(pathPrefixSet.includesResource("a/b/FILTERMEOUT"));
+  }
+
+  public void testFilter_AllowOverridesDeny() {
+    PathPrefixSet pathPrefixSet = new PathPrefixSet();
+
+    // "Includes" and "Skips" xml entries together become Filters.
+    ResourceFilter filterDeny = new ResourceFilter() {
+      @Override
+      public boolean allows(String path) {
+        return !path.endsWith("FILTERMEOUT");
+      }
+    };
+    ResourceFilter filterAllow = null;
+    PathPrefix pathPrefixFilterDeny = new PathPrefix("a/b/", filterDeny);
+    PathPrefix pathPrefixFilterAllow = new PathPrefix("a/b/", filterAllow);
+
+    pathPrefixSet.add(pathPrefixFilterDeny);
+    pathPrefixSet.add(pathPrefixFilterAllow);
+
+    assertNotNull(pathPrefixSet.includesResource("a/b/DONT_FILTERMEOUT"));
+  }
+
+  public void testMostSpecificFilterWins() {
+    PathPrefixSet pathPrefixSet = new PathPrefixSet();
+
+    PathPrefix pathPrefixGeneralFilterDeny = new PathPrefix("a/b/", new ResourceFilter() {
+        @Override
+      public boolean allows(String path) {
+        return !path.endsWith("FILTERMEOUT");
+      }
+    });
+    PathPrefix pathPrefixSpecificFilterAllow = new PathPrefix("a/b/c/", null);
+
+    pathPrefixSet.add(pathPrefixGeneralFilterDeny);
+    pathPrefixSet.add(pathPrefixSpecificFilterAllow);
+
+    assertNull(pathPrefixSet.includesResource("a/b/FILTERMEOUT"));
+    assertEquals(pathPrefixSpecificFilterAllow,
+        pathPrefixSet.includesResource("a/b/c/DONT_FILTERMEOUT"));
   }
 
   public void testOverlappingPrefixesNonEmptyFilter() {
