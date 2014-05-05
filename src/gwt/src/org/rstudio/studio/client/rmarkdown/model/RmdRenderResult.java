@@ -15,12 +15,10 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import org.rstudio.studio.client.common.compile.CompileError;
-import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class RmdRenderResult extends JavaScriptObject
+public class RmdRenderResult extends RmdSlideNavigationInfo
 {
    protected RmdRenderResult() 
    {
@@ -88,14 +86,6 @@ public class RmdRenderResult extends JavaScriptObject
    {
       return getFormat().getFormatName();
    }
-   
-   public final native int getPreviewSlide() /*-{
-      return this.preview_slide;
-   }-*/;
-   
-   public final native SlideNavigation getSlideNavigation() /*-{
-      return this.slide_navigation;
-   }-*/;
    
    public final native JsArray<CompileError> getKnitrErrors() /*-{
       return this.knitr_errors;

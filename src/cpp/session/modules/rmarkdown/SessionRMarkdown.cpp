@@ -313,6 +313,15 @@ private:
                if (url[url.length() - 1] != '/')
                   url += "/";
                
+               if (sourceNavigation_)
+               {
+                  rmarkdown::presentation::ammendResults(
+                           outputFormat_["format_name"].get_str(),
+                           targetFile_,
+                           sourceLine_,
+                           &startedJson);
+               }
+
                startedJson["url"] = url + targetFile_.filename();
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,

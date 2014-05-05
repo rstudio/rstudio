@@ -15,13 +15,14 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.rmarkdown.model.RmdSlideNavigationInfo;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdShinyDocStartedEvent extends GwtEvent<RmdShinyDocStartedEvent.Handler>
 {  
-   public static class Data extends JavaScriptObject
+   public static class Data extends RmdSlideNavigationInfo
    {
       protected Data()
       {  
@@ -54,6 +55,11 @@ public class RmdShinyDocStartedEvent extends GwtEvent<RmdShinyDocStartedEvent.Ha
    public String getFile()
    {
       return data_.getFile();
+   }
+   
+   public RmdSlideNavigationInfo getSlideInfo()
+   {
+      return data_;
    }
    
    @Override

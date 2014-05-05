@@ -177,9 +177,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       currentShinyFile_ = event.getFile();
       currentShinyUrl_ = event.getUrl();
-      displayHTMLRenderResult(
+      RmdRenderResult result = 
             RmdRenderResult.createFromShinyUrl(event.getFile(), 
-                                               event.getUrl()));
+                                               event.getUrl());
+
+      result.copySlideInfo(event.getSlideInfo());
+      displayHTMLRenderResult(result);
    }
    
    @Override
