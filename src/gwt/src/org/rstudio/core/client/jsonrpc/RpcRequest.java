@@ -57,7 +57,8 @@ public class RpcRequest
       clientVersion_ = new JSONNumber(clientVersion);
    }
    
-   public void send(RpcRequestCallback callback)
+   public void send(final boolean serverOfflineOn503,
+                    RpcRequestCallback callback)
    {
       // final references for access from anonymous class
       final RpcRequest enclosingRequest = this ;
@@ -143,7 +144,7 @@ public class RpcRequest
                      requestCallback.onError(enclosingRequest, error) ;
                   }
                }
-               else if ( status == 503 )
+               else if ( (status == 503) && serverOfflineOn503 )
                {
                   RpcError error = RpcError.create(RpcError.SERVER_OFFLINE,
                                                    "Server Unavailable");

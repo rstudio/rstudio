@@ -2046,7 +2046,8 @@ public class RemoteServer implements Server
          return rpcRequest;
 
       // send the request
-      rpcRequest.send(new RpcRequestCallback() {
+      boolean serverOfflineOn503 = scope.equals(EVENTS_SCOPE);
+      rpcRequest.send(serverOfflineOn503, new RpcRequestCallback() {
          public void onError(RpcRequest request, RpcError error)
          {
             // ignore errors if we are disconnected
