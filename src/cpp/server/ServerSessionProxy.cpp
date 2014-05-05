@@ -304,7 +304,8 @@ void handleContentError(
 
    // handle connection unavailable with sign out if session launches
    // require authentication, otherwise just return service unavailable
-   if (http::isConnectionUnavailableError(error))
+   if (http::isConnectionUnavailableError(error) &&
+       requiresSession(ptrConnection->request()))
    {
       // write service unavailable
       http::Response& response = ptrConnection->response();
