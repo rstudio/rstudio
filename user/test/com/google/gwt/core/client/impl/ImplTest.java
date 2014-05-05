@@ -31,7 +31,7 @@ public class ImplTest extends GWTTestCase {
 
   // A function that is not referenced and can be pruned very early in the compilation pipeline.
   public static String prunableFunction() {
-    return "Prunnable";
+    return "Prunable";
   }
 
   // A very simple function that will certainly be inlined away in optimized compiles.
@@ -57,8 +57,6 @@ public class ImplTest extends GWTTestCase {
     assertNotNull(foo.statifiableFunction(null));
     assertNotNull(inlinableFunction());
     assertNotNullNorEmpty(
-        Impl.getNameOf("@com.google.gwt.core.client.impl.ImplTest::prunableFunction()"));
-    assertNotNullNorEmpty(
         Impl.getNameOf("@com.google.gwt.core.client.impl.ImplTest::inlinableFunction()"));
     assertNotNullNorEmpty(
         Impl.getNameOf("@com.google.gwt.core.client.impl.ImplTest.Foo::statifiableFunction(*)"));
@@ -71,10 +69,10 @@ public class ImplTest extends GWTTestCase {
       return;
     }
 
-    String prunnableFnName =
+    String prunableFnName =
         Impl.getNameOf("@com.google.gwt.core.client.impl.ImplTest::prunableFunction()");
-    assertTrue("Expecting 'prunableFunction' got '" + prunnableFnName + "'",
-        prunnableFnName.contains("prunableFunction"));
+    assertTrue("Expecting 'prunableFunction' or null got '" + prunableFnName + "'",
+        prunableFnName == null || prunableFnName.contains("prunableFunction"));
 
     String inlineableFnName =
         Impl.getNameOf("@com.google.gwt.core.client.impl.ImplTest::inlinableFunction()");
