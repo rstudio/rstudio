@@ -89,12 +89,20 @@ var onScroll = function(pos) {
    }, 250);
 };
 
-var onHashChange = function(evt) {
-   send({ event: "doc_hash_change", data: document.location.hash });
+// test the href for changes every 100ms, and notify parent if it has changed.
+// ordinarily we'd hook an event handler to 'hashchange' here, but in some 
+// cases (e.g. ioslides) the document can change the hash without triggering
+// a hashchange event.
+var currentHref = location.href;
+var testHrefChange = function() {
+   if (currentHref !== location.href) {
+      currentHref = location.href;
+      send({ event: "doc_hash_change", data: location.href });
+   }
 };
+window.setInterval(testHrefChange, 100);
 
 window.addEventListener("scroll", onScroll, false); 
-window.addEventListener("hashchange", onHashChange, false); 
 
 // let parent know we're ready once the event loop finishes
 window.setTimeout(function() {
