@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.shiny;
 
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.Operation;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
@@ -49,17 +50,22 @@ public class ShinyFrameHelper
                                                          int arg) /*-{
          return { method: method, arg: arg };
       }-*/;
+      public final native static ShinyFrameMethod create(String method, 
+                                                         String arg) /*-{
+         return { method: method, arg: arg };
+      }-*/;
       public final native String getMethod() /*-{
          return this.method;
       }-*/;
    }
    
-   public void initialize(String url)
+   public void initialize(String url, Operation onComplete)
    {
       // remember the URL and begin waiting for the window object to arrive
       url_ = url;
       window_ = null;
       origin_ = null;
+      onInitComplete_ = onComplete;
    }
 
    public ShinyFrameHelper()
@@ -80,6 +86,11 @@ public class ShinyFrameHelper
    public void setScrollPosition(int pos)
    {
       sendMethod(ShinyFrameMethod.create(METHOD_SET_SCROLL, pos));
+   }
+   
+   public void setHash(String hash)
+   {
+      sendMethod(ShinyFrameMethod.create(METHOD_SET_HASH, hash));
    }
    
    // Private methods ---------------------------------------------------------
@@ -114,6 +125,11 @@ public class ShinyFrameHelper
       {
          window_ = event.getSource();
          origin_ = event.getOrigin();
+         if (onInitComplete_ != null)
+         {
+            onInitComplete_.execute();
+            onInitComplete_ = null;
+         }
       }
    }
    
@@ -153,6 +169,7 @@ public class ShinyFrameHelper
    private int scrollPosition_ = 0;
    private String url_ = "";
    private String origin_ = "";
+   private Operation onInitComplete_;
    
    // how many times and how long we're willing to wait for a window object to
    // appear to communicate with

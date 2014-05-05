@@ -39,6 +39,7 @@ import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -89,7 +90,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          fileLabelSeparator_.setVisible(false);
          shinyUrl_ = StringUtil.makeAbsoluteUrl(params.getOutputUrl());
          isShiny_ = true;
-         shinyFrame_.initialize(shinyUrl_);
       }
       else
       {
@@ -240,9 +240,32 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       el.setAttribute("allowfullscreen", "");
       
       frame.navigate(url);
+      
+      final Operation initSlides = new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            if (getNavigationMenu().isVisible())
+            {  
+               fireSlideIndexChanged();
+               slideChangeMonitor_.scheduleRepeating(100);
+            }
+         }
+      };
 
       if (isShiny_)
-         shinyFrame_.setScrollPosition(scrollPosition_);
+      {
+         shinyFrame_.initialize(url, new Operation() 
+         {
+            @Override
+            public void execute()
+            {
+               shinyFrame_.setScrollPosition(scrollPosition_);
+               initSlides.execute();
+            }
+         });
+      }
       else
       {
          // poll for document availability then perform initialization
@@ -266,11 +289,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                if (doc == null)
                   return true;
 
-               if (getNavigationMenu().isVisible())
-               {  
-                  fireSlideIndexChanged();
-                  slideChangeMonitor_.scheduleRepeating(100);
-               }
+               initSlides.execute();
                
                // Even though the document exists, it may not have rendered all
                // its content yet
@@ -310,7 +329,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // re-initialize the shiny frame with the URL (so it waits for the new 
       // window object to become available after refresh)
       if (isShiny_)
-         shinyFrame_.initialize(getCurrentUrl());
+         shinyFrame_.initialize(getCurrentUrl(), null);
 
       showUrl(getCurrentUrl());
    }
@@ -358,7 +377,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       if (anchorPos > 0)
          url = url.substring(0, anchorPos);
       
-      showUrl(url + "#" + (index + 1));
+      String hash = "" + (index + 1);
+
+      if (isShiny_)
+         shinyFrame_.setHash(hash);
+      else
+         showUrl(url + "#" + hash);
    }
 
    @Override
