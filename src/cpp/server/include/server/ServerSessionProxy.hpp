@@ -47,6 +47,7 @@ void proxyLocalhostRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
    
+bool requiresSession(const core::http::Request& request);
 
 typedef boost::function<bool(
     const std::string&,

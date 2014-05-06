@@ -57,8 +57,7 @@ public class RpcRequest
       clientVersion_ = new JSONNumber(clientVersion);
    }
    
-   public void send(final boolean serverOfflineOn503,
-                    RpcRequestCallback callback)
+   public void send(RpcRequestCallback callback)
    {
       // final references for access from anonymous class
       final RpcRequest enclosingRequest = this ;
@@ -117,6 +116,7 @@ public class RpcRequest
             public void onResponseReceived(Request request, 
                                            Response response)
             {
+               // only accept 200 responses
                int status = response.getStatusCode();
                if ( status == 200 )
                {
@@ -144,14 +144,10 @@ public class RpcRequest
                      requestCallback.onError(enclosingRequest, error) ;
                   }
                }
-               else if ( (status == 503) && serverOfflineOn503 )
-               {
-                  RpcError error = RpcError.create(RpcError.SERVER_OFFLINE,
-                                                   "Server Unavailable");
-                  requestCallback.onError(enclosingRequest, error);
-               }
                else
-               { 
+               {
+                  // ERROR: Non-200 response from server
+                  
                   // default error message
                   String message = "Status code " + 
                                    Integer.toString(status) + 

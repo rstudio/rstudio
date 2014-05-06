@@ -66,11 +66,6 @@ namespace session_proxy {
    
 namespace {
 
-bool requiresSession(const http::Request& request)
-{
-   return !request.headerValue(kRStudioSessionRequiredHeader).empty();
-}
-
 Error launchSessionRecovery(const http::Request& request,
                             const std::string& username)
 {
@@ -304,12 +299,11 @@ void handleContentError(
 
    // handle connection unavailable with sign out if session launches
    // require authentication, otherwise just return service unavailable
-   if (http::isConnectionUnavailableError(error) &&
-       requiresSession(ptrConnection->request()))
+   if (http::isConnectionUnavailableError(error))
    {
-      // write service unavailable
+      // write bad gateway
       http::Response& response = ptrConnection->response();
-      response.setStatusCode(http::status::ServiceUnavailable);
+      response.setStatusCode(http::status::BadGateway);
 
       ptrConnection->writeResponse();
    }
@@ -582,6 +576,11 @@ void proxyLocalhostRequest(
    pClient->execute(
          boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, _1),
          boost::bind(handleLocalhostError, ptrConnection, _1));
+}
+
+bool requiresSession(const http::Request& request)
+{
+   return !request.headerValue(kRStudioSessionRequiredHeader).empty();
 }
 
 void setProxyFilter(ProxyFilter filter)
