@@ -140,7 +140,8 @@ Error httpServerInit()
 
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
-   s_pHttpServer->setScheduledCommandInterval(boost::posix_time::seconds(1));
+   s_pHttpServer->setScheduledCommandInterval(
+                                    boost::posix_time::milliseconds(500));
 
    // initialize
    return server::httpServerInit(s_pHttpServer.get());
