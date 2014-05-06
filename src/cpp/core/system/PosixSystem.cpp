@@ -922,9 +922,13 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
          if (pid == -1)
             continue;
 
-         // read the command line and trim it
+         // confirm the cmdline file exists for this pid
          boost::format fmt("/proc/%1%/cmdline");
          FilePath cmdlineFile = FilePath(boost::str(fmt % pDirent->d_name));
+         if (!cmdlineFile.exists())
+            continue;
+
+         // read the cmdline
          std::string cmdline;
          Error error = core::readStringFromFile(cmdlineFile, &cmdline);
          if (error)
