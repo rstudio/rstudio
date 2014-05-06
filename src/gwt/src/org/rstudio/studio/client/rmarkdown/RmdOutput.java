@@ -202,18 +202,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          }
       };
 
-      if (event.getSourceFile().equals(currentShinyFile_))
-      {
-         // this is a re-render of the current Shiny document; we can reload
-         // it in place
-         displayHTMLRenderResult(
-               RmdRenderResult.createFromShinyUrl(currentShinyFile_,
-                                                  currentShinyUrl_));
-      }
-      else 
-      {
-         performRenderOperation(renderOperation);
-      }
+      // for Shiny documents it's technically possible to trigger a re-render
+      // just by reloading the page, but we always go through a full stop/start
+      // here since we want to keep one codepath for propagating changes to
+      // other metadata (e.g. we may need to rebuild the slide menu based on a
+      // content change)
+      performRenderOperation(renderOperation);
    }
    
    @Override
