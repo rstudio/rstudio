@@ -20,12 +20,6 @@
 
 #include <core/system/PosixSched.hpp>
 
-#ifndef __APPLE__
-#include <linux/kernel.h>
-#else
-
-#endif
-
 // typedefs (in case we need indirection on these for porting)
 #include <sys/resource.h>
 typedef pid_t PidType;

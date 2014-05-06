@@ -46,6 +46,7 @@
 #ifndef __APPLE__
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
+#include <linux/kernel.h>
 #endif
 
 #include <boost/thread.hpp>
