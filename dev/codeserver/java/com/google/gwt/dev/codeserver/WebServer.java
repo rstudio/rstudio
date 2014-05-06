@@ -408,6 +408,7 @@ public class WebServer {
       HttpServletResponse response) throws IOException {
 
     response.setStatus(HttpServletResponse.SC_OK);
+    response.setHeader("Cache-control", "no-cache");
     response.setContentType("application/javascript");
     PrintWriter out = response.getWriter();
 

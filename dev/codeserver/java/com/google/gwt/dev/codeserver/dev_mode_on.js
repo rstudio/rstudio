@@ -30,6 +30,7 @@
  * to delete and replace their bookmarklets when we change this code.
  */
 (function() {
+  var $doc = document;
 
   // Set up globals needed for JSONP calls. (These persist between bookmarklet
   // calls, in case the user clicks the bookmarklet more than once.)
@@ -69,27 +70,44 @@
     return params;
   }
 
+  /**
+   * Creates an element and populates it with text.
+   * Ensures that a text is black, regardless of style sheet.
+   * @param tagName {string}
+   * @param fontSize {string}
+   * @param text {string}
+   */
+  function makeTextElt(tagName, fontSize, text) {
+    var elt = $doc.createElement(tagName);
+    elt.style.color = 'black';
+    elt.style.background = 'white';
+    elt.style.fontSize = fontSize;
+    elt.appendChild($doc.createTextNode(text));
+    return elt;
+  }
+
   function makeOverlay() {
-    var overlay = document.createElement('div');
+    var overlay = $doc.createElement('div');
     overlay.style.zIndex = 1000000;
     overlay.style.position = 'absolute';
     overlay.style.top = 0;
     overlay.style.left = 0;
     overlay.style.bottom = 0;
     overlay.style.right = 0;
-    overlay.style.backgroundColor = '#000';
+    overlay.style.background = 'white';
     overlay.style.opacity = '0.5';
     return overlay;
   }
 
   function makeDialog() {
-    var dialog = document.createElement('div');
+    var dialog = $doc.createElement('div');
     dialog.style.zIndex = 1000001;
     dialog.style.position = 'fixed';
     dialog.style.top = '20pt';
     dialog.style.left = '20pt';
     dialog.style.right = '20pt';
-    dialog.style.backgroundColor = 'white';
+    dialog.style.color = 'black';
+    dialog.style.background = 'white';
     dialog.style.border = '4px solid #ccc';
     dialog.style.padding = '1em';
     dialog.style.borderRadius = '5px';
@@ -98,16 +116,13 @@
   }
 
   function makeBookmarklet(name, javascript) {
-    var result = document.createElement('a');
-    result.style.fontSize = '12pt';
-    result.style.color = '#000';
+    var result = makeTextElt('a', '12pt', name);
+    result.style.fontFamily = 'sans';
     result.style.textDecoration = 'none';
-    result.style.backgroundColor = '#ddd';
-    result.style.marginLeft = '1em';
-    result.style.borderBottom = '1px solid black';
+    result.style.background = '#ddd';
+    result.style.border = '2px outset #ddd';
     result.style.padding = '3pt';
     result.setAttribute('href', 'javascript:' + encodeURIComponent(javascript));
-    setTextContent(result, name);
     result.title = 'Tip: drag this button to the bookmark bar';
     return result;
   }
@@ -132,12 +147,12 @@
    */
   function getCannotCompileError(module_name) {
     if (!isModuleOnCodeServer(module_name)) {
-      return 'The code server isn\'t configured to compile this module';
+      return 'The code server isn\'t configured to compile this module.';
     }
 
     var modules_on_page = window.__gwt_activeModules;
     if (!modules_on_page || !(module_name in modules_on_page)) {
-      return 'The current page doesn\'t have this module';
+      return 'The current page doesn\'t have this module.';
     }
 
     var mod = modules_on_page[module_name];
@@ -147,7 +162,7 @@
         window.sessionStorage[dev_mode_key];
 
     if (!dev_mode_on && !mod.canRedirect) {
-      return 'This module doesn\'t have Super Dev Mode enabled';
+      return 'This module doesn\'t have Super Dev Mode enabled.';
     }
 
     // looks okay
@@ -178,59 +193,99 @@
   function showModuleDialog(codeserver_url) {
 
     function makeHeader() {
-      var message = document.createElement('div');
-      message.style.fontSize = '24pt';
-      setTextContent(message, 'Choose a module to recompile:');
-      return message;
+      return makeTextElt('div', '20pt', 'Choose a module to recompile:');
     }
 
-    function makeModuleItem(mod) {
+    function makeModuleRows(mod) {
       var module_name = mod.moduleName;
-
-      var result = document.createElement('li');
-      result.style.fontSize = '14pt';
-      result.appendChild(document.createTextNode(module_name));
-
       var error = getCannotCompileError(module_name);
-      if (error) {
-        result.style.color = 'gray';
-        result.title = error;
-        return result;
+      var moduleColor = error ? 'grey' : 'black';
+
+      var row = $doc.createElement('tr');
+
+      // Bullet and module name
+      var cell = $doc.createElement('td');
+      var text = makeTextElt('span', '14pt', "\u2022 " + module_name + ": ");
+      text.style.color = moduleColor;
+      cell.appendChild(text);
+
+      // Status (usually clickable)
+      var status = makeTextElt('span', '14pt', mod.superdevmode ? "on" : "off");
+      status.style.color = moduleColor;
+      if (!error || status.superdevmode) {
+        status.style.cursor = "pointer";
+        status.onclick = function() {
+          if (mod.superdevmode) {
+            reloadWithoutDevMode(module_name);
+          } else {
+            reloadInDevMode(module_name, codeserver_url);
+          }
+          return false;
+        };
+        status.title = "Click to turn " +
+            (mod.superdevmode ? "off." : "on without recompiling.") +
+            " (Reloads the page.)";
+      }
+      cell.appendChild(status);
+
+      row.appendChild(cell);
+
+      if (!error) {
+        // Compile button
+        var button = makeCompileBookmarklet(codeserver_url, module_name);
+        button.className = 'module_' + module_name;
+        cell = $doc.createElement('td');
+        cell.style.paddingLeft = '1em';
+        cell.appendChild(button);
+        row.appendChild(cell);
       }
 
-      var button = makeCompileBookmarklet(codeserver_url, module_name);
-      button.className = 'module_' + module_name;
-      result.appendChild(document.createTextNode(' '));
-      result.appendChild(button);
-      return result;
+      var rows = [row];
+      if (error) {
+        // Error message
+        cell = makeTextElt('td', '10pt', error);
+        cell.style.color = 'gray';
+
+        row = $doc.createElement('tr');
+        row.appendChild(cell);
+        rows.push(row);
+      }
+
+      return rows;
     }
 
     function makeCodeServerLink() {
-      var link = document.createElement('a');
-      link.style.fontSize = '10pt';
-      link.style.marginTop = '10px';
+      var div = $doc.createElement('div');
+      div.style.float = "right";
+
+      var hostPort = codeserver_url.replace(/^http:\/\//, '').replace(/\/$/, '');
+      var link = makeTextElt('a', '10pt', hostPort);
+      link.style.textDecoration = "none";
       link.setAttribute('href', codeserver_url);
       link.setAttribute('target', '_blank');
-      link.appendChild(document.createTextNode('code server'));
-      var div = document.createElement('div');
+      link.title = "The address of the server this bookmarklet uses to compile.";
       div.appendChild(link);
       return div;
     }
 
     var active_modules = window.__gwt_activeModules;
 
-    var moduleList = document.createElement('ol');
+    var moduleTable = $doc.createElement('table');
+    moduleTable.style.marginTop = "10px";
     for (var module_name in active_modules) {
-      moduleList.appendChild(makeModuleItem(active_modules[module_name]));
+      var rows = makeModuleRows(active_modules[module_name]);
+      for (var i = 0; i < rows.length; i++) {
+        moduleTable.appendChild(rows[i]);
+      }
     }
 
     // Assemble the dialog.
     var dialog = makeDialog();
-    if (moduleList.hasChildNodes()) {
+    if (moduleTable.hasChildNodes()) {
       dialog.appendChild(makeHeader());
-      dialog.appendChild(moduleList);
+      dialog.appendChild(moduleTable);
     } else {
-      dialog.appendChild(document.createTextNode(
+      dialog.appendChild(makeTextElt('span', '16pt',
           'Can\'t find any GWT Modules on this page.'));
     }
     dialog.appendChild(makeCodeServerLink());
@@ -238,7 +293,7 @@
     // Grey out everything under the dialog.
     var overlay = makeOverlay();
 
-    var body = document.getElementsByTagName('body')[0];
+    var body = $doc.getElementsByTagName('body')[0];
     body.appendChild(overlay);
     body.appendChild(dialog);
 
@@ -265,13 +320,10 @@
     var overlay = makeOverlay();
     var dialog = makeDialog();
 
-    var message = document.createElement('div');
-    message.style.fontSize = '24pt';
-    setTextContent(message, text);
-
+    var message = makeTextElt('div', '16pt', text);
     dialog.appendChild(message);
 
-    var body = document.getElementsByTagName('body')[0];
+    var body = $doc.getElementsByTagName('body')[0];
     body.appendChild(overlay);
     body.appendChild(dialog);
 
@@ -285,17 +337,14 @@
      *     "Try Again" button.
      */
     result.showError = function(errorText, log_url, onClickTryAgain) {
-      var error = document.createElement('a');
+      var error = makeTextElt('a', '16pt', errorText);
       error.setAttribute('href', log_url);
       error.setAttribute('target', 'gwt_dev_mode_log');
-      setTextContent(error, errorText);
       error.style.color = 'red';
       error.style.textDecoration = 'underline';
       message.appendChild(error);
 
-      var button = document.createElement('button');
-      button.style.fontSize = '16pt';
-      setTextContent(button, 'Try Again');
+      var button = makeTextElt('button', '12pt', 'Try Again');
       button.onclick = function() {
         body.removeChild(dialog);
         body.removeChild(overlay);
@@ -305,20 +354,6 @@
     };
 
     return result;
-  }
-
-  /**
-   * Updates the contents of the given element with the provided text.
-   * @param {Node} element The element to update.
-   * @param {String} text The text to display.
-   */
-  function setTextContent(element, text) {
-    if (typeof element.textContent === 'string') {
-      element.textContent = text;
-    } else {
-      // Use innerText when textContent is not supported (e.g. IE8).
-      element.innerText = text;
-    }
   }
 
   /**
@@ -338,9 +373,9 @@
     var url = url_prefix + '_callback=__gwt_bookmarklet_globals.callbacks.' +
         callback_id;
 
-    var script = document.createElement('script');
+    var script = $doc.createElement('script');
     script.src = url;
-    document.getElementsByTagName('head')[0].appendChild(script);
+    $doc.getElementsByTagName('head')[0].appendChild(script);
   }
 
   /**
@@ -393,6 +428,16 @@
     var key = '__gwtDevModeHook:' + module_name;
     sessionStorage[key] = codeserver_url + module_name + '/' +
         module_name + '.nocache.js';
+    window.location.reload();
+  }
+
+  /**
+   * Turns dev mode off for the given module, then reloads the page.
+   * @param {string} module_name
+   */
+  function reloadWithoutDevMode(module_name) {
+    var key = '__gwtDevModeHook:' + module_name;
+    sessionStorage.removeItem(key);
     window.location.reload();
   }
 
