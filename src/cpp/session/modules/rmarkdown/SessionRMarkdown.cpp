@@ -187,6 +187,29 @@ private:
 
       std::string renderOptions("encoding = '" + encoding + "'");
 
+      // output to a specific format if specified
+      if (!format.empty())
+      {
+         renderOptions += ", output_format = rmarkdown::" + format + "()";
+      }
+
+      // output to a temporary directory if specified (no need to do this
+      // for Shiny since it already renders to a temporary dir)
+      if (asTempfile && !isShiny_)
+      {
+         FilePath tmpDir = module_context::tempFile("preview-", "dir");
+         Error error = tmpDir.ensureDirectory();
+         if (!error)
+         {
+            std::string dir = string_utils::utf8ToSystem(tmpDir.absolutePath());
+            renderOptions += ", output_dir = '" + dir + "'";
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
+
       if (isShiny_)
       {
          extraParams += "shiny_args = list(launch.browser = FALSE), "
@@ -194,7 +217,8 @@ private:
          extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
 
          // inject the RStudio IFrame helper script (for syncing scroll position
-         // and anchor information cross-domain)
+         // and anchor information cross-domain), and wrap the other render
+         // options discovered so far in the render_args parameter
          renderOptions = "render_args = list(" + renderOptions + ", "
                "output_options = list(extra_dependencies = "
                   "list(structure(list("
@@ -205,25 +229,6 @@ private:
                         "', "
                         "script = 'rsiframe.js'), "
                      "class = 'html_dependency'))))";
-      }
-      if (!format.empty())
-      {
-         extraParams += "output_format = rmarkdown::" + format + "(), ";
-      }
-
-      if (asTempfile)
-      {
-         FilePath tmpDir = module_context::tempFile("preview-", "dir");
-         Error error = tmpDir.ensureDirectory();
-         if (!error)
-         {
-            std::string dir = string_utils::utf8ToSystem(tmpDir.absolutePath());
-            extraParams += "output_dir = '" + dir + "', ";
-         }
-         else
-         {
-            LOG_ERROR(error);
-         }
       }
 
       // render command
