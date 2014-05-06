@@ -706,38 +706,26 @@ private:
             path = path.substr(pipePos + 1, path.length() - pipePos);
          }
 
-         // try to get the template's YAML; without the YAML the template is
-         // invalid, so skip this template if it has no YAML
-         FilePath yamlPath = FilePath(path).complete("template.yaml");
-         if (!yamlPath.exists())
-            continue;
-
-         // ensure that the template has a skeleton Rmd file
-         FilePath skeletonPath =
-               FilePath(path).complete("skeleton/skeleton.Rmd");
-         if (!skeletonPath.exists())
-            continue;
-
          SEXP templateDetails;
          error = r::exec::RFunction(
-            "yaml:::yaml.load_file",
-            string_utils::utf8ToSystem(yamlPath.absolutePath())).call(
-                  &templateDetails, &protect);
-         if (!error)
-         {
-            bool createDirFlag = false;
-            r::sexp::getNamedListElement(templateDetails,
-                                         "name", &name);
-            r::sexp::getNamedListElement(templateDetails,
-                                         "description", &description);
-            error = r::sexp::getNamedListElement(templateDetails,
-                                                 "create_dir",
-                                                 &createDirFlag);
-            if (!error)
-            {
-                createDir = createDirFlag ? "true" : "false";
-            }
-         }
+            ".rs.getTemplateDetails",string_utils::utf8ToSystem(path))
+            .call(&templateDetails, &protect);
+
+         // .rs.getTemplateDetails may return null if the template is not
+         // well-formed
+         if (error || TYPEOF(templateDetails) == NILSXP)
+            continue;
+         
+         r::sexp::getNamedListElement(templateDetails,
+                                      "name", &name);
+         r::sexp::getNamedListElement(templateDetails,
+                                      "description", &description);
+
+         bool createDirFlag = false;
+         error = r::sexp::getNamedListElement(templateDetails,
+                                              "create_dir",
+                                              &createDirFlag);
+         createDir = createDirFlag ? "true" : "false";
 
          dataJson["package_name"] = package;
          dataJson["path"] = path;
