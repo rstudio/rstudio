@@ -47,6 +47,7 @@
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
 #include <linux/kernel.h>
+#include <dirent.h>
 #endif
 
 #include <boost/thread.hpp>
@@ -897,6 +898,90 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    toPids(pids, pPids);
    return Success();
 }
+
+Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
+{
+   // clear the existing process info
+   pInfo->clear();
+
+   // declear directory iterator
+   DIR *pDir = NULL;
+
+   try
+   {
+      // open the /proc directory
+      pDir = ::opendir("/proc");
+      if (pDir == NULL)
+         return systemError(errno, ERROR_LOCATION);
+
+      struct dirent *pDirent;
+      while ( (pDirent = ::readdir(pDir)) )
+      {
+         // confirm this is a process directory
+         PidType pid = safe_convert::stringTo<PidType>(pDirent->d_name, -1);
+         if (pid == -1)
+            continue;
+
+         // read the command line and trim it
+         boost::format fmt("/proc/%1%/cmdline");
+         FilePath cmdlineFile = FilePath(boost::str(fmt % pDirent->d_name));
+         std::string cmdline;
+         Error error = core::readStringFromFile(cmdlineFile, &cmdline);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+         boost::algorithm::trim(cmdline);
+
+         // confirm we have a command line
+         if (cmdline.empty())
+            continue;
+
+         // just keep first part of the command line (the rest represent the
+         // program arguments)
+         size_t pos = cmdline.find('\0');
+         if (pos != std::string::npos)
+            cmdline = cmdline.substr(0, pos);
+
+         // check if this is the process we are filtering on
+         if (FilePath(cmdline).filename() == process)
+         {
+            // stat the file to determine it's owner
+            struct stat st;
+            if (::stat(cmdlineFile.absolutePath().c_str(), &st) == -1)
+            {
+               Error error = systemError(errno, ERROR_LOCATION);
+               error.addProperty("path", cmdlineFile);
+               LOG_ERROR(error);
+               continue;
+            }
+
+            // get the username
+            core::system::user::User user;
+            Error error = core::system::user::userFromId(st.st_uid, &user);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            // add a process info
+            ProcessInfo pi;
+            pi.pid = pid;
+            pi.username = user.username;
+            pInfo->push_back(pi);
+         }
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   if (pDir != NULL)
+      ::closedir(pDir);
+
+   return Success();
+}
+
 #else
 core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
 {
@@ -918,7 +1003,31 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    toPids(lines, pPids);
    return Success();
 }
+
+Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
+{
+   std::vector<PidType> pids;
+   Error error = pidof(process, &pids);
+   if (error)
+      return error;
+
+   pInfo->clear();
+   BOOST_FOREACH(PidType pid, pids)
+   {
+      ProcessInfo pi;
+      pi.pid = pid;
+      pInfo->push_back(pi);
+   }
+
+   return Success();
+}
 #endif
+
+std::ostream& operator<<(std::ostream& os, const ProcessInfo& info)
+{
+   os << info.pid << " - " << info.username;
+   return os;
+}
 
 Error ipAddresses(std::vector<IpAddress>* pAddresses)
 {

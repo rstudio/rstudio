@@ -89,6 +89,18 @@ core::Error systemInformation(SysInfo* pSysInfo);
 
 core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
 
+struct ProcessInfo
+{
+   ProcessInfo() : pid(0) {}
+   PidType pid;
+   std::string username;
+};
+
+core::Error processInfo(const std::string& process,
+                        std::vector<ProcessInfo>* pInfo);
+
+std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
+
 struct IpAddress
 {
    std::string name;

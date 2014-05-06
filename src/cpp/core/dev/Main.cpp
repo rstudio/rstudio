@@ -77,14 +77,14 @@ int test_main(int argc, char * argv[])
       std::cerr << " Load5: " << sysInfo.load5 << std::endl;
       std::cerr << "Load15: " << sysInfo.load15 << std::endl;
 
-      std::vector<PidType> pids;
-      error = core::system::pidof("rsession", &pids);
+      std::vector<core::system::ProcessInfo> processInfo;
+      error = core::system::processInfo("rsession", &processInfo);
       if (error)
          LOG_ERROR(error);
 
-      BOOST_FOREACH(PidType pid, pids)
+      BOOST_FOREACH(core::system::ProcessInfo pi, processInfo)
       {
-         std::cerr << pid << std::endl;
+         std::cerr << pi << std::endl;
       }
 
       std::vector<core::system::IpAddress> addresses;

@@ -38,6 +38,9 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      capability sys_nice,
      capability kill,
     
+     @{PROC} r,
+     @{PROC}/*/cmdline r,
+
      owner @{HOME}/** rw,
      owner /tmp/** rw,
      /tmp/rstudio-rsession/** rw,
