@@ -83,7 +83,7 @@ Error initialize()
    // periodically poll process supervisor
    scheduler::addCommand(
       boost::shared_ptr<ScheduledCommand>(new PeriodicCommand(
-         boost::posix_time::milliseconds(1250), pollProcessSupervisor, false))
+         boost::posix_time::milliseconds(500), pollProcessSupervisor, false))
    );
 
    return Success();
