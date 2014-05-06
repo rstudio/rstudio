@@ -49,6 +49,7 @@
 #include <server/ServerScheduler.hpp>
 #include <server/ServerSessionProxy.hpp>
 #include <server/ServerSessionManager.hpp>
+#include <server/ServerProcessSupervisor.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
@@ -139,6 +140,7 @@ Error httpServerInit()
 
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
+   s_pHttpServer->setScheduledCommandInterval(boost::posix_time::seconds(1));
 
    // initialize
    return server::httpServerInit(s_pHttpServer.get());
@@ -421,6 +423,12 @@ int main(int argc, char * const argv[])
 
       // initialize http server
       error = httpServerInit();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize the process supervisor (needs to happen post http server
+      // init for access to the scheduled command list)
+      error = process_supervisor::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
