@@ -675,7 +675,7 @@ public abstract class JavaToJavaScriptCompiler {
         if (fragNum != null) {
           symbolData.setFragmentNumber(fragNum);
         }
-        if (nameUsed.contains(entry.getValue().getIdent())) {
+        if (nameUsed.contains(entry.getValue().getIdent()) || entry.getKey().isClass()) {
           result.add(symbolData);
         }
       }

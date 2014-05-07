@@ -697,6 +697,10 @@ public class GenerateJavaScriptAST {
     }
 
     private void recordSymbol(JReferenceType x, JsName jsName) {
+      if (getRuntimeTypeReference(x) == null || !typeOracle.isInstantiatedType(x)) {
+        return;
+      }
+      // TODO(rluble): Remove castmaps from symbol maps as part of deRPC deprecation.
       StringBuilder sb = new StringBuilder();
       sb.append('{');
       JCastMap castMap = program.getCastMap(x);
@@ -715,12 +719,10 @@ public class GenerateJavaScriptAST {
       sb.append('}');
       CastableTypeMap castableTypeMap = new StandardCastableTypeMap(sb.toString());
 
-
-      String typeId = getRuntimeTypeReference(x) != null ?
-         getRuntimeTypeReference(x).toSource() : null;
+      String typeId = getRuntimeTypeReference(x).toSource();
       StandardSymbolData symbolData =
-          StandardSymbolData.forClass(x.getName(), x.getSourceInfo().getFileName(), x
-              .getSourceInfo().getStartLine(), castableTypeMap, typeId);
+          StandardSymbolData.forClass(x.getName(), x.getSourceInfo().getFileName(),
+              x.getSourceInfo().getStartLine(), castableTypeMap, typeId);
       assert !symbolTable.containsKey(symbolData);
       symbolTable.put(symbolData, jsName);
     }
