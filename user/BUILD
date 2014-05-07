@@ -464,6 +464,7 @@ AugmentedJar(
         ],
         exclude = [
             "test/**/super/**",
+            "test/**/tck/**",
             "**/RunStyleSeleniumTest.java",
         ],
     ),
@@ -498,6 +499,31 @@ AugmentedJar(
         "//third_party/java/jsr305_annotations",
         "//third_party/java/junit",
         "//third_party/java_src/gwt/svn/tools:testtool_deps",
+    ],
+)
+
+# This target should only be dependent from platform tests that care about tck.
+# This target is separated from user-test-code as its deps pulls in an old version of Guice which
+# breaks the Webdriver for Android.
+AugmentedJar(
+    name = "tck-test-code",
+    testonly = 1,
+    srcs = glob(["test/**/tck/**/*.java"]),
+    # For build_deps we should use pre-jarjar dependencies (-bare)
+    build_deps = [
+        ":gwt-user-bare",
+        ":gwt-testing-bare",
+        "//third_party/java_src/gwt/svn/tools:user_deps",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
+        "//third_party/java_src/gwt/svn/trunk/dev:dev-test-code-bare",
+    ],
+    constraints = [
+        "gwt",
+        "public",
+    ],
+    dojarjar = 1,
+    deps = [
+        "//third_party/java/junit",
         "//third_party/java_src/gwt/svn/tools:validator_deps",
         "//third_party/java_src/gwt/svn/tools:validator_tck_deps",
     ],
@@ -523,7 +549,7 @@ filegroup(
     srcs = glob(
         ["test/**/*Suite.java"],
         exclude = [
-            "test/**/CompilerSuite.java",
+            "test/**/*CompilerSuite.java",
             "test/**/*JreSuite.java",
         ],
     ),
