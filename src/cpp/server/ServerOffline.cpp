@@ -27,6 +27,7 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
+#include <server/ServerSessionProxy.hpp>
 
 using namespace core;
 
@@ -38,8 +39,14 @@ namespace {
 void handleOfflineRequest(const http::Request& request,
                           http::Response* pResponse)
 {
+   // requests that require a session always get a standard 503
+   if (session_proxy::requiresSession(request))
+   {
+      pResponse->setStatusCode(http::status::ServiceUnavailable);
+   }
+
    // send error code for json responses
-   if (request.acceptsContentType(json::kJsonContentType))
+   else if (request.acceptsContentType(json::kJsonContentType))
    {
       json::setJsonRpcError(json::errc::ServerOffline, pResponse);
    }
