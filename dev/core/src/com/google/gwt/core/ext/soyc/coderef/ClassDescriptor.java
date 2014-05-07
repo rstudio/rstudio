@@ -104,6 +104,7 @@ public class ClassDescriptor extends EntityDescriptor {
    * Returns the method descriptor associated to the given original method signature.
    */
   public MethodDescriptor getMethod(String methodSignature) {
+    methodSignature = MethodDescriptor.normalizeMethodSignature(methodSignature);
     return methodsByJsniSignature.get(methodSignature);
   }
 
@@ -124,6 +125,7 @@ public class ClassDescriptor extends EntityDescriptor {
    * If the method descriptor is not in the current class descriptor, it will be added.
    */
   public MethodDescriptor methodFrom(JMethod method, String signature) {
+    signature = MethodDescriptor.normalizeMethodSignature(signature);
     MethodDescriptor methodDescriptor = this.methodsByJsniSignature.get(signature);
     if (methodDescriptor == null) {
       methodDescriptor = MethodDescriptor.from(this, method, signature);

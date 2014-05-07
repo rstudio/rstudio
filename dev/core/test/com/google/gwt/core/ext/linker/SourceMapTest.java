@@ -13,11 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.ext.test;
+package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.linker.CastableTypeMap;
-import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.soyc.SourceMapRecorderExt;
 import com.google.gwt.core.ext.soyc.coderef.ClassDescriptor;
 import com.google.gwt.core.ext.soyc.coderef.EntityDescriptor;

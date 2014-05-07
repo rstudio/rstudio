@@ -49,7 +49,17 @@ public class MethodDescriptor extends MemberDescriptor {
     super(owner, signatureComponents[0]);
     this.paramTypes = signatureComponents[1];
     // fix for wrong jsni signature for constructors in JMethod.getSignature()
-    this.type = signatureComponents[2].equals(" <init>") ? "V" : signatureComponents[2];
+    this.type = normalizeMethodSignature(signatureComponents[2]);
+  }
+
+  private static final String CONSTRUCTOR_POSTFIX = " <init>";
+
+  public static String normalizeMethodSignature(String methodSignature) {
+    if (methodSignature.endsWith(CONSTRUCTOR_POSTFIX)) {
+      return methodSignature.substring(0,
+          methodSignature.length() - CONSTRUCTOR_POSTFIX.length()) + "V";
+    }
+    return methodSignature;
   }
 
   public MethodDescriptor(ClassDescriptor owner, String jsniSignature) {
