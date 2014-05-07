@@ -37,7 +37,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,7 +84,6 @@ public class WebServer {
       Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*\\.)*[a-zA-Z_][a-zA-Z0-9_]*");
 
   private static final MimeTypes MIME_TYPES = new MimeTypes();
-  private static final String TIME_IN_THE_PAST = "Fri, 01 Jan 1990 00:00:00 GMT";
 
   private final SourceHandler handler;
 
@@ -163,6 +161,13 @@ public class WebServer {
 
   private void doGet(String target, HttpServletRequest request, HttpServletResponse response)
       throws IOException {
+
+    if (!target.endsWith(".cache.js")) {
+      // Make sure IE9 doesn't cache any pages.
+      // (Nearly all pages may change on server restart.)
+      PageUtil.setNoCacheHeaders(response);
+    }
+
     if (target.equals("/")) {
       setHandled(request);
       JsonObject config = makeConfig();
@@ -288,11 +293,6 @@ public class WebServer {
 
     if (target.endsWith(".cache.js")) {
       response.setHeader("X-SourceMap", sourceMapLocationForModule(moduleName));
-    } else if (target.endsWith(".nocache.js")) {
-      response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
-      response.setHeader("Pragma", "no-cache");
-      response.setHeader("Expires", TIME_IN_THE_PAST);
-      response.setDateHeader("Date", new Date().getTime());
     }
     response.setHeader("Access-Control-Allow-Origin", "*");
     String mimeType = guessMimeType(target);

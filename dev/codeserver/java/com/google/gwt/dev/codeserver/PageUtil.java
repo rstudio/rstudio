@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
+import java.util.Date;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -42,6 +43,8 @@ import javax.servlet.http.HttpServletResponse;
  */
 class PageUtil {
 
+  private static final String TIME_IN_THE_PAST = "Fri, 01 Jan 1990 00:00:00 GMT";
+
   /**
    * Sends a page represented as a string.
    */
@@ -50,6 +53,16 @@ class PageUtil {
     response.setStatus(HttpServletResponse.SC_OK);
     response.setContentType(mimeType);
     response.getWriter().append(page);
+  }
+
+  /**
+   * Sets all headers that might help to prevent a page from being cached.
+   */
+  static void setNoCacheHeaders(HttpServletResponse response) {
+    response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setHeader("Expires", TIME_IN_THE_PAST);
+    response.setDateHeader("Date", new Date().getTime());
   }
 
   /**
