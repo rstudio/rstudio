@@ -806,7 +806,12 @@ public class SerializableTypeOracleBuilder {
           computeTypeInstantiability(entry.getValue(), entry.getKey(),
               TypePaths.createRootPath(entry.getKey()), problems).hasInstantiableSubtypes();
       if (!entrySucceeded) {
-        problems.report(logger, TreeLogger.ERROR, TreeLogger.INFO);
+        if (!problems.hasFatalProblems()) {
+          logger.log(TreeLogger.ERROR, "'" + entry.getKey().getQualifiedSourceName() +
+              "' has no instantiable subtypes");
+        } else {
+          problems.report(logger, TreeLogger.ERROR, TreeLogger.INFO);
+        }
       } else {
         maybeReport(logger, problems);
       }
