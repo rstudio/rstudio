@@ -49,6 +49,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
@@ -61,8 +62,7 @@ namespace html_preview {
 
 namespace {
 
-class HTMLPreview : boost::noncopyable,
-                    public boost::enable_shared_from_this<HTMLPreview>
+class HTMLPreview : public async_r::AsyncRProcess
 {
 public:
    static boost::shared_ptr<HTMLPreview> create(const FilePath& targetFile,
@@ -82,9 +82,7 @@ private:
         isMarkdown_(false),
         isInternalMarkdown_(false),
         isNotebook_(false),
-        requiresKnit_(false),
-        isRunning_(false),
-        terminationRequested_(false)
+        requiresKnit_(false)
    {
    }
 
@@ -121,10 +119,6 @@ public:
    // COPYING: prohibited
 
 public:
-
-   bool isRunning() const  { return isRunning_; }
-
-   void terminate() { terminationRequested_ = true; }
 
    bool isMarkdown() { return isMarkdown_; }
 
@@ -175,9 +169,6 @@ private:
 
    void performKnit(const std::string& encoding)
    {
-      // set running flag
-      isRunning_ = true;
-
       // predict the name of the output file -- if we can't do this then
       // we instrument our call to knitr to return it in a temp file
       FilePath outputFileTempFile;
@@ -198,11 +189,7 @@ private:
       }
 
       // args
-      std::vector<std::string> args;
-      args.push_back("--slave");
-      args.push_back("--no-save");
-      args.push_back("--no-restore");
-      args.push_back("-e");
+      std::string cmd;
       if (!knitrOutputFile_.empty())
       {
          boost::format fmt;
@@ -210,8 +197,7 @@ private:
          fmt = boost::format("require(knitr); "
                               "knit('%2%', encoding='%1%');");
 
-         std::string cmd = boost::str(fmt % encoding % targetFile_.filename());
-         args.push_back(cmd);
+         cmd = boost::str(fmt % encoding % targetFile_.filename());
       }
       else
       {
@@ -221,35 +207,14 @@ private:
          fmt = boost::format("require(knitr); "
                              "knit('%2%', encoding='%1%'); "
                              "cat(o, file='%3%');");
-         std::string cmd = boost::str(fmt % encoding
-                                          % targetFile_.filename()
-                                          % tempFilePath);
-         args.push_back(cmd);
+         cmd = boost::str(fmt % encoding % targetFile_.filename() % 
+                          tempFilePath);
       }
 
-      // options
-      core::system::ProcessOptions options;
-      options.terminateChildren = true;
-      options.redirectStdErrToStdOut = true;
-      options.workingDir = targetFile_.parent();
+      outputPathTempFile_ = outputFileTempFile;
+      encoding_ = encoding;
 
-      // callbacks
-      core::system::ProcessCallbacks cb;
-      cb.onContinue = boost::bind(&HTMLPreview::onKnitContinue,
-                                  HTMLPreview::shared_from_this());
-      cb.onStdout = boost::bind(&HTMLPreview::onKnitOutput,
-                                HTMLPreview::shared_from_this(), _2);
-      cb.onStderr = boost::bind(&HTMLPreview::onKnitOutput,
-                                HTMLPreview::shared_from_this(), _2);
-      cb.onExit =  boost::bind(&HTMLPreview::onKnitCompleted,
-                                HTMLPreview::shared_from_this(),
-                                _1, outputFileTempFile, encoding);
-
-      // execute knitr
-      module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
-                                                     args,
-                                                     options,
-                                                     cb);
+      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent());
    }
 
    bool targetIsRMarkdown()
@@ -258,14 +223,19 @@ private:
       return ext == ".rmd" || ext == ".rmarkdown";
    }
 
-   bool onKnitContinue()
-   {
-      return !terminationRequested_;
-   }
-
-   void onKnitOutput(const std::string& output)
+   void onStdout (const std::string& output)
    {
       enqueHTMLPreviewOutput(output);
+   }
+
+   void onStderr (const std::string& output)
+   {
+      enqueHTMLPreviewOutput(output);
+   }
+
+   void onCompleted(int exitStatus)
+   {
+      onKnitCompleted(exitStatus, outputPathTempFile_, encoding_);
    }
 
    void onKnitCompleted(int exitStatus,
@@ -407,14 +377,14 @@ private:
 
    void terminateWithError(const std::string& message)
    {
-      isRunning_ = false;
+      markCompleted();
       enqueHTMLPreviewOutput(message);
       enqueHTMLPreviewFailed();
    }
 
    void terminateWithSuccess(const FilePath& outputFile)
    {
-      isRunning_ = false;
+      markCompleted();
       outputFile_ = outputFile;
 
       enqueHTMLPreviewSucceeded(kHTMLPreview "/",
@@ -472,15 +442,15 @@ private:
 
 private:
    FilePath targetFile_;
+   FilePath outputPathTempFile_;
    bool isMarkdown_;
    bool isInternalMarkdown_;
    bool isNotebook_;
    bool requiresKnit_;
+   std::string encoding_;
 
    FilePath knitrOutputFile_;
    FilePath outputFile_;
-   bool isRunning_;
-   bool terminationRequested_;
 };
 
 std::string deriveNotebookPath(const std::string& path)

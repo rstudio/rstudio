@@ -117,7 +117,7 @@ bool AsyncRProcess::onContinue()
 
 void AsyncRProcess::onProcessCompleted(int exitStatus)
 {
-   isRunning_ = false;
+   markCompleted();
    onCompleted(exitStatus);
 }
 
@@ -129,6 +129,11 @@ bool AsyncRProcess::isRunning()
 void AsyncRProcess::terminate()
 {
    terminationRequested_ = true;
+}
+
+void AsyncRProcess::markCompleted() 
+{
+   isRunning_ = false;
 }
 
 AsyncRProcess::~AsyncRProcess()

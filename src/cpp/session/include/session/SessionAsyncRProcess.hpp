@@ -36,6 +36,7 @@ public:
    void start(const char* rCommand, const core::FilePath& workingDir);
    bool isRunning();
    void terminate();
+   void markCompleted();
 
 protected:
    virtual bool onContinue();
