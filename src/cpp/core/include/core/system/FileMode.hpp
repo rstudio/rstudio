@@ -34,6 +34,7 @@ enum FileMode
    UserReadWriteMode,
    UserReadWriteExecuteMode,
    UserReadWriteGroupReadMode,
+   UserReadWriteGroupEveryoneReadMode,
    EveryoneReadMode,
    EveryoneReadWriteMode,
    EveryoneReadWriteExecuteMode
@@ -56,6 +57,10 @@ inline Error changeFileMode(const FilePath& filePath,
 
       case UserReadWriteGroupReadMode:
          mode = S_IRUSR | S_IWUSR | S_IRGRP ;
+         break;
+
+      case UserReadWriteGroupEveryoneReadMode:
+         mode =  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
          break;
 
       case EveryoneReadMode:
@@ -125,6 +130,8 @@ inline Error getFileMode(const FilePath& filePath, FileMode* pFileMode)
       *pFileMode = UserReadWriteExecuteMode;
    else if (mode == "rw-r-----")
       *pFileMode = UserReadWriteGroupReadMode;
+   else if (mode == "rw-r--r--")
+      *pFileMode = UserReadWriteGroupEveryoneReadMode;
    else if (mode == "r--r--r--")
       *pFileMode = EveryoneReadMode;
    else if (mode == "rw-rw-rw-")
@@ -132,7 +139,7 @@ inline Error getFileMode(const FilePath& filePath, FileMode* pFileMode)
    else if (mode == "rwxrwxrwx")
       *pFileMode = EveryoneReadWriteExecuteMode;
    else
-       return systemError(ENOTSUP, ERROR_LOCATION);
+       return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
    return Success();
 }
