@@ -29,6 +29,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
@@ -50,7 +51,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class ShinyApps implements SessionInitHandler, 
                                   ShinyAppsActionEvent.Handler,
-                                  ShinyAppsDeployInitiatedEvent.Handler
+                                  ShinyAppsDeployInitiatedEvent.Handler,
+                                  ShinyAppsDeploymentCompletedEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, ShinyApps> {}
@@ -74,6 +76,7 @@ public class ShinyApps implements SessionInitHandler,
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(ShinyAppsActionEvent.TYPE, this); 
       events.addHandler(ShinyAppsDeployInitiatedEvent.TYPE, this); 
+      events.addHandler(ShinyAppsDeploymentCompletedEvent.TYPE, this); 
    }
    
    @Override
@@ -160,7 +163,8 @@ public class ShinyApps implements SessionInitHandler,
             {
                dirState_.addDeployment(event.getPath(), event.getRecord());
                dirStateDirty_ = true;
-               events_.fireEvent(new ShinyAppsDeploymentStartedEvent());
+               events_.fireEvent(new ShinyAppsDeploymentStartedEvent(
+                     event.getPath()));
             }
             else
             {
@@ -179,6 +183,16 @@ public class ShinyApps implements SessionInitHandler,
                   "': " + error.getMessage());
          }
       });
+   }
+
+   @Override
+   public void onShinyAppsDeploymentCompleted(
+         ShinyAppsDeploymentCompletedEvent event)
+   {
+      if (launchBrowser_)
+      {
+         display_.openWindow(event.getUrl());
+      }
    }
 
    @Handler
@@ -320,6 +334,7 @@ public class ShinyApps implements SessionInitHandler,
    private final Session session_;
    private final ShinyAppsServerOperations server_;
    private final EventBus events_;
+   private boolean launchBrowser_ = false;
    
    private ShinyAppsDirectoryState dirState_;
    private boolean dirStateDirty_ = false;

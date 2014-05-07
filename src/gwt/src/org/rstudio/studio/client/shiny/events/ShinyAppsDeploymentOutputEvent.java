@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.shiny.events;
 
+import org.rstudio.studio.client.common.compile.CompileOutput;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -27,12 +29,12 @@ public class ShinyAppsDeploymentOutputEvent extends GwtEvent<ShinyAppsDeployment
    public static final GwtEvent.Type<ShinyAppsDeploymentOutputEvent.Handler> TYPE =
       new GwtEvent.Type<ShinyAppsDeploymentOutputEvent.Handler>();
    
-   public ShinyAppsDeploymentOutputEvent(String output)
+   public ShinyAppsDeploymentOutputEvent(CompileOutput output)
    {
       output_ = output;
    }
    
-   public String getOutput()
+   public CompileOutput getOutput()
    {
       return output_;
    }
@@ -49,5 +51,5 @@ public class ShinyAppsDeploymentOutputEvent extends GwtEvent<ShinyAppsDeployment
       return TYPE;
    }
    
-   private String output_;
+   private CompileOutput output_;
 }

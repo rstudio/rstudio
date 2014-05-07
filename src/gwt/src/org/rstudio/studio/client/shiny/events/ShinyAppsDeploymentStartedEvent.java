@@ -27,8 +27,14 @@ public class ShinyAppsDeploymentStartedEvent extends GwtEvent<ShinyAppsDeploymen
    public static final GwtEvent.Type<ShinyAppsDeploymentStartedEvent.Handler> TYPE =
       new GwtEvent.Type<ShinyAppsDeploymentStartedEvent.Handler>();
    
-   public ShinyAppsDeploymentStartedEvent()
+   public ShinyAppsDeploymentStartedEvent(String path)
    {
+      path_ = path;
+   }
+   
+   public String getPath()
+   {
+      return path_;
    }
    
    @Override
@@ -42,4 +48,6 @@ public class ShinyAppsDeploymentStartedEvent extends GwtEvent<ShinyAppsDeploymen
    {
       return TYPE;
    }
+   
+   private final String path_;
 }

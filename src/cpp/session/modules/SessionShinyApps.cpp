@@ -59,10 +59,15 @@ public:
 private:
    void onStderr(const std::string& output)
    {
-      onStdout(output);
+      onOutput(module_context::kCompileOutputNormal, output);
    }
 
    void onStdout(const std::string& output)
+   {
+      onOutput(module_context::kCompileOutputError, output);
+   }
+
+   void onOutput(int type, const std::string& output)
    {
       r::sexp::Protect protect;
       Error error;
@@ -82,8 +87,9 @@ private:
       }
 
       // emit the output to the client for display
+      module_context::CompileOutput deployOutput(type, output);
       ClientEvent event(client_events::kRmdShinyAppsDeploymentOutput, 
-                        output);
+                        module_context::compileOutputAsJson(deployOutput));
       module_context::enqueClientEvent(event);
    }
 

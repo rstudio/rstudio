@@ -21,7 +21,6 @@ import com.google.inject.Inject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
@@ -61,15 +60,14 @@ public class ShinyAppsDeployOutputPresenter extends BasePresenter
    {
       switchToConsoleAfterDeploy_ = !view_.isEffectivelyVisible();
       view_.ensureVisible(true);
-      view_.compileStarted("");
+      view_.compileStarted(event.getPath());
       deployRunning_ = true;
    }
 
    @Override
    public void onShinyAppsDeploymentOutput(ShinyAppsDeploymentOutputEvent event)
    {
-      view_.showOutput(
-            CompileOutput.create(CompileOutput.kNormal, event.getOutput()));
+      view_.showOutput(event.getOutput());
    }
    
    @Override

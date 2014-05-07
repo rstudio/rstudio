@@ -316,6 +316,7 @@ public class ShinyAppsDeployDialog
       // let everyone know a deployment has started 
       events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
             sourceDir_,
+            launchCheck_.getValue(),
             ShinyAppsDeploymentRecord.create(appName, account, "")));
 
       closeDialog();

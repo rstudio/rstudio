@@ -576,7 +576,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ShinyAppsDeploymentOutput))
          {
-            String output = event.getData();
+            CompileOutput output = event.getData();
             eventBus_.fireEvent(new ShinyAppsDeploymentOutputEvent(output));
          }
          else if (type.equals(ClientEvent.ShinyAppsDeploymentCompleted))
