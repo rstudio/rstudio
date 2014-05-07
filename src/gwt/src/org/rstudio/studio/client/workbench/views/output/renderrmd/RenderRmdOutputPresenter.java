@@ -92,7 +92,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
    public void confirmClose(final Command onConfirmed)
    {
       // if we're in the middle of rendering, presume that the user might be
-      // trying to end the render by closing the tabl.
+      // trying to end the render by closing the tab.
       if (renderRunning_)
       {
         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 

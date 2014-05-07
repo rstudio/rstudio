@@ -63,6 +63,8 @@ import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
@@ -571,6 +573,16 @@ public class ClientEventDispatcher
          {
             RmdShinyDocStartedEvent.Data data = event.getData();
             eventBus_.fireEvent(new RmdShinyDocStartedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ShinyAppsDeploymentOutput))
+         {
+            String output = event.getData();
+            eventBus_.fireEvent(new ShinyAppsDeploymentOutputEvent(output));
+         }
+         else if (type.equals(ClientEvent.ShinyAppsDeploymentCompleted))
+         {
+            String url = event.getData();
+            eventBus_.fireEvent(new ShinyAppsDeploymentCompletedEvent(url));
          }
          else
          {

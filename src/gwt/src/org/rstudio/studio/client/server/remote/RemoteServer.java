@@ -3244,6 +3244,20 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void deployShinyApp(String dir, String account, String appName,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(dir));
+      params.set(1, new JSONString(account));
+      params.set(2, new JSONString(appName));
+      sendRequest(RPC_SCOPE,
+            DEPLOY_SHINY_APP,
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getRMarkdownContext(
                   ServerRequestCallback<RMarkdownContext> requestCallback)
    {
@@ -3652,6 +3666,7 @@ public class RemoteServer implements Server
    private static final String CONNECT_SHINYAPPS_ACCOUNT = "connect_shinyapps_account";
    private static final String GET_SHINYAPPS_APP_LIST = "get_shinyapps_app_list";
    private static final String GET_SHINYAPPS_DEPLOYMENTS = "get_shinyapps_deployments";
+   private static final String DEPLOY_SHINY_APP = "deploy_shiny_app";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";

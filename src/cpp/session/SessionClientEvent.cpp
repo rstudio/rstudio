@@ -115,6 +115,8 @@ const int kRmdRenderCompleted = 90;
 const int kRmdTemplateDiscovered = 91;
 const int kRmdTemplateDiscoveryCompleted = 92;
 const int kRmdShinyDocStarted = 93;
+const int kRmdShinyAppsDeploymentOutput = 94;
+const int kRmdShinyAppsDeploymentCompleted = 95;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -304,6 +306,10 @@ std::string ClientEvent::typeName() const
          return "rmd_template_discovery_completed";
       case client_events::kRmdShinyDocStarted:
          return "rmd_shiny_doc_started";
+      case client_events::kRmdShinyAppsDeploymentOutput:
+         return "shiny_apps_deployment_output";
+      case client_events::kRmdShinyAppsDeploymentCompleted:
+         return "shiny_apps_deployment_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

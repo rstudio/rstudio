@@ -34,6 +34,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           FindOutputTab findResultsTab,
                           WorkbenchTab sourceCppTab,
                           WorkbenchTab renderRmdTab, 
+                          WorkbenchTab deployShinyTab,
                           EventBus events,
                           ConsoleInterruptButton consoleInterrupt,
                           ToolbarButton goToWorkingDirButton)
@@ -47,6 +48,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       consoleInterrupt_ = consoleInterrupt;
       goToWorkingDirButton_ = goToWorkingDirButton;
       renderRmdTab_ = renderRmdTab;
+      deployShinyTab_ = deployShinyTab;
 
       compilePdfTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {
@@ -141,6 +143,29 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          }
       });
 
+      deployShinyTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            deployShinyTabVisible_ = true;
+            managePanels();
+            if (event.getActivate())
+               selectTab(deployShinyTab_);
+         }
+      });
+      deployShinyTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            deployShinyTabVisible_ = false;
+            managePanels();
+            if (!consoleOnly_)
+               selectTab(0);
+         }
+      });
+
       events.addHandler(WorkingDirChangedEvent.TYPE, new WorkingDirChangedHandler()
       {
          @Override
@@ -163,7 +188,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       boolean consoleOnly = !compilePdfTabVisible_ && 
                             !findResultsTabVisible_ &&
                             !sourceCppTabVisible_ &&
-                            !renderRmdTabVisible_;
+                            !renderRmdTabVisible_ &&
+                            !deployShinyTabVisible_;
 
       if (!consoleOnly)
       {
@@ -177,6 +203,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(sourceCppTab_);
          if (renderRmdTabVisible_)
             tabs.add(renderRmdTab_);
+         if (deployShinyTabVisible_)
+            tabs.add(deployShinyTab_);
 
          setTabs(tabs);
       }
@@ -215,6 +243,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean sourceCppTabVisible_;
    private final WorkbenchTab renderRmdTab_;
    private boolean renderRmdTabVisible_;
+   private final WorkbenchTab deployShinyTab_;
+   private boolean deployShinyTabVisible_;
    private final ConsoleInterruptButton consoleInterrupt_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;

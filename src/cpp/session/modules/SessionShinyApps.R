@@ -20,7 +20,9 @@
 
    # take apart the frame and compose a list of scalars from each row
    for (i in seq_len(nrow(frame))) {
-      row <- lapply(cols, function(col) { .rs.scalar(unlist(frame[i,col])) })
+      row <- lapply(cols, 
+                    function(col) { if (is.null(col)) NULL 
+                                    else .rs.scalar(unlist(frame[i,col])) })
       names(row) <- cols
       ret[[i]] <- row
    }

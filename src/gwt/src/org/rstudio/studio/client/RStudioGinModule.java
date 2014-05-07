@@ -126,6 +126,7 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.renderrmd.RenderRmdOutputTab;
+import org.rstudio.studio.client.workbench.views.output.shinyappsdeploy.ShinyAppsDeployOutputTab;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPane;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputTab;
@@ -269,6 +270,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("R Markdown", RenderRmdOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);
+      bindTab("Deploy Shiny", ShinyAppsDeployOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

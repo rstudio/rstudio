@@ -28,7 +28,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -313,19 +312,8 @@ public class ShinyAppsDeployDialog
          appName = contents_.getNewAppName();
       
       String account = contents_.getSelectedAccount();
-      String launch = launchCheck_.getValue() ? "TRUE" : "FALSE";
       
-      // send the deployment command to the console
-      String cmd = "shinyapps::deployApp(appDir=\"" + sourceDir_ + "\", " + 
-                   "account=\"" + account + "\", " + 
-                   "appName=\"" + appName + "\", " + 
-                   "launch.browser=" + launch + ")";
-      
-      events_.fireEvent(new SendToConsoleEvent(cmd, true));
-      
-      // let everyone know a deployment has started (this triggers the 
-      // deployment record to be cached for this directory, so we can 
-      // issue an identical deployment next time)
+      // let everyone know a deployment has started 
       events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
             sourceDir_,
             ShinyAppsDeploymentRecord.create(appName, account, "")));

@@ -29,6 +29,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDirectoryState;
@@ -144,10 +145,40 @@ public class ShinyApps implements SessionInitHandler,
    }
    
    @Override
-   public void onShinyAppsDeployInitiated(ShinyAppsDeployInitiatedEvent event)
+   public void onShinyAppsDeployInitiated(
+         final ShinyAppsDeployInitiatedEvent event)
    {
-      dirState_.addDeployment(event.getPath(), event.getRecord());
-      dirStateDirty_ = true;
+      server_.deployShinyApp(event.getPath(), 
+                             event.getRecord().getAccount(), 
+                             event.getRecord().getName(), 
+      new ServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean status)
+         {
+            if (status)
+            {
+               dirState_.addDeployment(event.getPath(), event.getRecord());
+               dirStateDirty_ = true;
+               events_.fireEvent(new ShinyAppsDeploymentStartedEvent());
+            }
+            else
+            {
+               display_.showErrorMessage("Deployment In Progress", 
+                     "Another deployment is currently in progress; only one " + 
+                     "deployment can be performed at a time.");
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Deploying Application", 
+                  "Could not deploy application '" + 
+                  event.getRecord().getName() + 
+                  "': " + error.getMessage());
+         }
+      });
    }
 
    @Handler

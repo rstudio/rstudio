@@ -38,4 +38,7 @@ public interface ShinyAppsServerOperations
    
    void getShinyAppsDeployments(String dir, 
                ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>> requestCallback); 
+   
+   void deployShinyApp(String dir, String account, String appName, 
+               ServerRequestCallback<Boolean> requestCallback);
 }

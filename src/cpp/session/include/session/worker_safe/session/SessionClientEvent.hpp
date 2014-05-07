@@ -113,6 +113,8 @@ extern const int kRmdRenderCompleted;
 extern const int kRmdTemplateDiscovered;
 extern const int kRmdTemplateDiscoveryCompleted;
 extern const int kRmdShinyDocStarted;
+extern const int kRmdShinyAppsDeploymentOutput;
+extern const int kRmdShinyAppsDeploymentCompleted;
 }
    
 class ClientEvent

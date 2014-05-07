@@ -105,6 +105,8 @@ class ClientEvent extends JavaScriptObject
    public static final String RmdTemplateDiscovered = "rmd_template_discovered";
    public static final String RmdTemplateDiscoveryCompleted = "rmd_template_discovery_completed";
    public static final String RmdShinyDocStarted = "rmd_shiny_doc_started";
+   public static final String ShinyAppsDeploymentOutput = "shiny_apps_deployment_output";
+   public static final String ShinyAppsDeploymentCompleted = "shiny_apps_deployment_completed";
 
    protected ClientEvent()
    {
