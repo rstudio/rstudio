@@ -163,6 +163,7 @@ public class ShinyApps implements SessionInitHandler,
             {
                dirState_.addDeployment(event.getPath(), event.getRecord());
                dirStateDirty_ = true;
+               launchBrowser_ = event.getLaunchBrowser();
                events_.fireEvent(new ShinyAppsDeploymentStartedEvent(
                      event.getPath()));
             }

@@ -77,12 +77,12 @@ private:
       std::vector<std::string> lines;
       boost::algorithm::split(lines, output,
                               boost::algorithm::is_any_of("\n\r"));
+      int ncharMarker = sizeof(kFinishedMarker) - 1;
       BOOST_FOREACH(std::string& line, lines)
       {
-         if (line.substr(0, sizeof(kFinishedMarker)) == kFinishedMarker)
+         if (line.substr(0, ncharMarker) == kFinishedMarker)
          {
-            deployedUrl_ = line.substr(sizeof(kFinishedMarker), 
-                                       line.size() - sizeof(kFinishedMarker));
+            deployedUrl_ = line.substr(ncharMarker, line.size() - ncharMarker);
          }
       }
 
