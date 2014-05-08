@@ -23,7 +23,6 @@ import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.JsArrayUtils;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -39,6 +38,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -84,7 +84,7 @@ public class ShinyAppsDeploy extends Composite
    
    public void setSourceDir(String dir)
    {
-      sourceDir.setText(dir);
+      deployLabel_.setText(dir);
       appName.setText(FilePathUtils.friendlyFileName(dir));
    }
    
@@ -221,7 +221,6 @@ public class ShinyAppsDeploy extends Composite
    }
 
    @UiField Anchor urlAnchor;
-   @UiField Label sourceDir;
    @UiField Label nameLabel;
    @UiField Label statusLabel;
    @UiField ListBox accountList;
@@ -231,6 +230,7 @@ public class ShinyAppsDeploy extends Composite
    @UiField HTMLPanel nameValidatePanel;
    @UiField DeployStyle style;
    @UiField FlowPanel fileListPanel_;
+   @UiField InlineLabel deployLabel_;
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;

@@ -65,11 +65,6 @@
 	   color: red;
 	}
 	
-	.shinyLogo
-	{
-	   float: left;
-	}
-	
 	.launchCheck
 	{
 	   display: block;
@@ -79,43 +74,62 @@
 	.fileList
 	{
 	  background-color: #ffffff;
-     border: 1px solid black;
-     height: 150px;
+     border: 1px solid gray;
+     height: 100px;
+     padding: 7px;
+     margin-top: 5px;
+     margin-bottom: 10px;
+	}
+	
+	.deployLabel
+	{
+	  font-weight: bold;
 	}
 	</ui:style>
 	<g:HTMLPanel>
-	<g:Image styleName="{style.shinyLogo}" resource="{projRes.shinyAppIcon}"></g:Image>
-	<g:Label styleName="{style.source}" ui:field="sourceDir"></g:Label>
-	<g:Image styleName="{style.transferArrow}" resource="{res.deployArrow}"></g:Image>
+	<g:InlineLabel text="Deploy From: "></g:InlineLabel>
+	<g:InlineLabel styleName="{style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
 	<g:ScrollPanel styleName="{style.fileList}">
 	  <g:FlowPanel ui:field="fileListPanel_">
 	  </g:FlowPanel>
 	</g:ScrollPanel>
+	<g:HTML>
+	  Deploy To: <a href="http://www.shinyapps.io/" target="_blank">ShinyApps.io</a>
+	</g:HTML>
 	<g:Grid>
-	  <g:row>
+     <g:row>
        <g:customCell>
-         <g:Label text="Account"></g:Label>
+         <g:Image resource="{projRes.shinyAppIcon}"></g:Image>
        </g:customCell>
        <g:customCell>
-         <g:ListBox styleName="{style.dropListControl}" ui:field="accountList"></g:ListBox>
+        <g:Grid>
+          <g:row>
+             <g:customCell>
+               <g:Label text="Account"></g:Label>
+             </g:customCell>
+             <g:customCell>
+               <g:ListBox styleName="{style.dropListControl}" ui:field="accountList"></g:ListBox>
+             </g:customCell>
+          </g:row>
+          <g:row>
+             <g:customCell>
+               <g:Label text="Application"></g:Label>
+             </g:customCell>
+             <g:customCell>
+               <g:ListBox styleName="{style.dropListControl}" ui:field="appList"></g:ListBox>
+             </g:customCell>
+          </g:row>
+          <g:row>
+             <g:customCell>
+               <g:Label ui:field="nameLabel" text="Name"></g:Label>
+             </g:customCell>
+             <g:customCell>
+               <g:TextBox styleName="{style.gridControl}" ui:field="appName" maxLength="63"></g:TextBox>
+             </g:customCell>
+          </g:row>
+        </g:Grid>
        </g:customCell>
-	  </g:row>
-	  <g:row>
-       <g:customCell>
-         <g:Label text="Application"></g:Label>
-       </g:customCell>
-       <g:customCell>
-         <g:ListBox styleName="{style.dropListControl}" ui:field="appList"></g:ListBox>
-       </g:customCell>
-	  </g:row>
-	  <g:row>
-       <g:customCell>
-         <g:Label ui:field="nameLabel" text="Name"></g:Label>
-       </g:customCell>
-       <g:customCell>
-         <g:TextBox styleName="{style.gridControl}" ui:field="appName" maxLength="63"></g:TextBox>
-       </g:customCell>
-	  </g:row>
+     </g:row>
 	</g:Grid>
 	<g:HTMLPanel visible="false" ui:field="appInfoPanel">
 	  <g:Anchor styleName="{style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
