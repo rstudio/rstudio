@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
@@ -63,12 +65,14 @@ public class ShinyApps implements SessionInitHandler,
                     Session session,
                     GlobalDisplay display, 
                     Binder binder, 
-                    ShinyAppsServerOperations server)
+                    ShinyAppsServerOperations server,
+                    FilesServerOperations fileServer)
    {
       commands_ = commands;
       display_ = display;
       session_ = session;
       server_ = server;
+      fileServer_ = fileServer;
       events_ = events;
 
       binder.bind(commands, this);
@@ -126,20 +130,30 @@ public class ShinyApps implements SessionInitHandler,
    {
       if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_DEPLOY)
       {
-         String dir = FilePathUtils.dirFromFile(event.getPath());
+         final String dir = FilePathUtils.dirFromFile(event.getPath());
          ShinyAppsDeploymentRecord record = dirState_.getLastDeployment(dir);
-         String lastAccount = null;
-         String lastAppName = null;
-         if (record != null)
-         {
-            lastAccount = record.getAccount();
-            lastAppName = record.getName();
-         }
-         ShinyAppsDeployDialog dialog = 
-               new ShinyAppsDeployDialog(
-                         server_, display_, events_, 
-                         dir, lastAccount, lastAppName);
-         dialog.showModal();
+         final String lastAccount = record == null ? null : record.getAccount();
+         final String lastAppName = record == null ? null : record.getName();
+
+         fileServer_.listFiles(FileSystemItem.createDir(dir), false, 
+               new ServerRequestCallback<JsArray<FileSystemItem>>()
+               {
+                  @Override 
+                  public void onResponseReceived(JsArray<FileSystemItem> files)
+                  {
+                     ShinyAppsDeployDialog dialog = 
+                           new ShinyAppsDeployDialog(
+                                     server_, display_, events_, 
+                                     dir, files, lastAccount, lastAppName);
+                     dialog.showModal();
+                  }
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     display_.showErrorMessage("Deployment Failed", 
+                           "Couldn't list files in the directory " + dir);
+                  }
+               });
       }
       else if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_TERMINATE)
       {
@@ -334,6 +348,7 @@ public class ShinyApps implements SessionInitHandler,
    private final GlobalDisplay display_;
    private final Session session_;
    private final ShinyAppsServerOperations server_;
+   private final FilesServerOperations fileServer_;
    private final EventBus events_;
    private boolean launchBrowser_ = false;
    

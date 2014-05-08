@@ -16,11 +16,14 @@ package org.rstudio.studio.client.shiny.ui;
 
 import java.util.List;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArrayUtils;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -34,6 +37,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -134,6 +138,15 @@ public class ShinyAppsDeploy extends Composite
       appList.setSelectedIndex(selectedIdx);
    }
    
+   public void setFileList(JsArray<FileSystemItem> files)
+   {
+      for (int i = 0; i < files.length(); i++)
+      {
+         Label fileLabel = new Label(files.get(i).getName());
+         fileListPanel_.add(fileLabel);
+      }
+   }
+   
    public String getNewAppName()
    {
       return appName.getText();
@@ -217,6 +230,7 @@ public class ShinyAppsDeploy extends Composite
    @UiField HTMLPanel appInfoPanel;
    @UiField HTMLPanel nameValidatePanel;
    @UiField DeployStyle style;
+   @UiField FlowPanel fileListPanel_;
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;

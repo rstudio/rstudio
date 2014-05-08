@@ -75,11 +75,22 @@
 	   display: block;
       margin-top: 7px;
 	}
+	
+	.fileList
+	{
+	  background-color: #ffffff;
+     border: 1px solid black;
+     height: 150px;
+	}
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Image styleName="{style.shinyLogo}" resource="{projRes.shinyAppIcon}"></g:Image>
 	<g:Label styleName="{style.source}" ui:field="sourceDir"></g:Label>
 	<g:Image styleName="{style.transferArrow}" resource="{res.deployArrow}"></g:Image>
+	<g:ScrollPanel styleName="{style.fileList}">
+	  <g:FlowPanel ui:field="fileListPanel_">
+	  </g:FlowPanel>
+	</g:ScrollPanel>
 	<g:Grid>
 	  <g:row>
        <g:customCell>
