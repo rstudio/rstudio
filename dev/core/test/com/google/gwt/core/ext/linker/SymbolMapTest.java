@@ -206,6 +206,7 @@ public class SymbolMapTest extends TestCase {
       options.addModuleName(module);
       options.setWarDir(new File(work, "war"));
       options.setExtraDir(new File(work, "extra"));
+      options.setOptimizationLevel(0);
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(TreeLogger.ERROR);
       new com.google.gwt.dev.Compiler(options).run(logger);

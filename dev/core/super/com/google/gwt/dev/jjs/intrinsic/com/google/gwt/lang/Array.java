@@ -364,5 +364,8 @@ public final class Array {
   private static native int getElementTypeCategory(Object array) /*-{
     return array.__elementTypeCategory$;
   }-*/;
+
+  private Array() {
+  }
 }
 

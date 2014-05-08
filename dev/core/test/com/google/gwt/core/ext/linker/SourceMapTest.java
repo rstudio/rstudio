@@ -521,7 +521,7 @@ public class SourceMapTest extends TestCase {
     }
   }
 
-  public void testSourceMapT() throws Exception {
+  public void testSourceMap() throws Exception {
     String benchmark = "hello";
     String module = "com.google.gwt.sample.hello.Hello";
 

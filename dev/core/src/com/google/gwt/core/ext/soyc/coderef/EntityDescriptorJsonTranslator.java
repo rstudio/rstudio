@@ -141,7 +141,7 @@ public class EntityDescriptorJsonTranslator {
       fragments.put(frag);
     }
     json.put(EntityRecorder.FRAGMENTS, fragments);
-    json.put(ENTITY_JS, entity.getObfuscatedNames());
+    json.put(ENTITY_JS, new JSONArray(entity.getObfuscatedNames()));
     return json;
   }
 
@@ -170,7 +170,7 @@ public class EntityDescriptorJsonTranslator {
       for (MethodDescriptor methodDescriptor : classDescriptor.getMethods()) {
         JSONObject jsonMethod = writeJsonFromMember(methodDescriptor);
         jsonMethod.put(METHOD_ID, methodDescriptor.getUniqueId());
-        jsonMethod.put(METHOD_DEPENDENTS, methodDescriptor.getDependentPointers());
+        jsonMethod.put(METHOD_DEPENDENTS, new JSONArray(methodDescriptor.getDependentPointers()));
         methods.put(jsonMethod);
       }
       jsonClass.put(METHODS, methods);
