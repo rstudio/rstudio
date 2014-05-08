@@ -36,6 +36,33 @@ import java.util.Set;
  */
 public final class PathPrefix {
 
+  /**
+   * Represents whether or not a PathPrefix includes a particular file as well
+   * as an indicator of the inclusion/exclusion priority. The priority is
+   * needed because there can be multiple PathPrefixes for a given directory
+   * and the highest priority judgement must be found and honored.
+   */
+  public enum Judgement {
+    EXCLUSION_EXCLUDE(false, 3), FILTER_INCLUDE(true, 2),
+    IMPLICIT_EXCLUDE(false, 1);
+
+    private final boolean include;
+    private final int priority;
+
+    private Judgement(boolean include, int priority) {
+      this.include = include;
+      this.priority = priority;
+    }
+
+    public int getPriority() {
+      return priority;
+    }
+
+    public boolean isInclude() {
+      return include;
+    }
+  }
+
   public static final PathPrefix ALL = new PathPrefix("", null);
 
   private final Set<String> exclusions;
@@ -44,6 +71,7 @@ public final class PathPrefix {
   private final String prefix;
   private int priority = -1;
   private final boolean shouldReroot;
+  private final String moduleName;
 
   /**
    * Construct a non-rerooting prefix.
@@ -56,7 +84,7 @@ public final class PathPrefix {
    *          inconsistent behavior in identifying available resources)
    */
   public PathPrefix(String prefix, ResourceFilter filter) {
-    this(prefix, filter, false, null);
+    this("", prefix, filter, false, null);
   }
 
   /**
@@ -74,12 +102,14 @@ public final class PathPrefix {
    *          matching resource's path.
    */
   public PathPrefix(String prefix, ResourceFilter filter, boolean shouldReroot) {
-    this(prefix, filter, shouldReroot, null);
+    this("", prefix, filter, shouldReroot, null);
   }
 
   /**
    * Construct a prefix.
    *
+   * @param moduleName the name of the module that contained the Source or
+   *          Public entry that this PathPrefix represents
    * @param prefix a string prefix that (1) is the empty string or (2) begins
    *          with something other than a slash and ends with a slash
    * @param filter the resource filter to use, or <code>null</code> for no
@@ -93,9 +123,10 @@ public final class PathPrefix {
    * @param excludeList list of globs that should be removed from <i>any</i>
    *          module's resources.
    */
-  public PathPrefix(String prefix, ResourceFilter filter, boolean shouldReroot,
-      String[] excludeList) {
+  public PathPrefix(String moduleName, String prefix, ResourceFilter filter,
+      boolean shouldReroot, String[] excludeList) {
     assertValidPrefix(prefix);
+    this.moduleName = moduleName;
     this.prefix = prefix;
     this.filters = new ArrayList<ResourceFilter>(1);
     this.filters.add(filter);
@@ -109,18 +140,18 @@ public final class PathPrefix {
   }
 
   /**
-   * Determines whether or not a given path is allowed by this path prefix by
-   * checking both the prefix string and the filter.
-   *
-   * @param path
-   * @return
+   * Determines the inclusion/exclusion status and priority of a given path.
+   * <p>
+   * Determination is made using the prefix path, list of exclusions and list
+   * of filters (which are constructed from "includes" and "skips" entries in
+   * the xml).
    */
-  public boolean allows(String path) {
+  public Judgement getJudgement(String path) {
     if (!path.startsWith(prefix)) {
-      return false;
+      return Judgement.IMPLICIT_EXCLUDE;
     }
     if (filters.size() == 0 && exclusions.size() == 0) {
-      return true;
+      return Judgement.FILTER_INCLUDE;
     }
     if (shouldReroot) {
       path = getRerootedPath(path);
@@ -128,14 +159,14 @@ public final class PathPrefix {
 
     createExcludeFilter();
     if (exclusionScanner != null && exclusionScanner.match(path)) {
-      return false;
+      return Judgement.EXCLUSION_EXCLUDE;
     }
     for (ResourceFilter filter : filters) {
       if (filter == null || filter.allows(path)) {
-        return true;
+        return Judgement.FILTER_INCLUDE;
       }
     }
-    return false;
+    return Judgement.IMPLICIT_EXCLUDE;
   }
 
   /**
@@ -202,6 +233,10 @@ public final class PathPrefix {
   @Override
   public String toString() {
     return prefix + (shouldReroot ? "**" : "*") + (filters.size() == 0 ? "" : "?");
+  }
+
+  public String getModuleName() {
+    return moduleName;
   }
 
   int getPriority() {

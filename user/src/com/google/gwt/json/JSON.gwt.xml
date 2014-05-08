@@ -16,4 +16,5 @@
 <!--                                                                        -->
 <module type="fileset">
 	<inherits name="com.google.gwt.core.Core"/>
+  <source path="client" />
 </module>

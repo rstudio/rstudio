@@ -220,8 +220,12 @@ public class Precompile {
 
   static Precompilation precompile(TreeLogger logger, CompilerContext compilerContext,
       int permutationBase, PropertyPermutations allPermutations) {
-    return precompile(logger, compilerContext, permutationBase, allPermutations,
-        ManagementFactory.getRuntimeMXBean().getStartTime());
+    Precompilation precompile = precompile(logger, compilerContext, permutationBase,
+        allPermutations, ManagementFactory.getRuntimeMXBean().getStartTime());
+    if (compilerContext.getOptions().warnOverlappingSource()) {
+      compilerContext.getModule().printOverlappingSourceWarnings(logger);
+    }
+    return precompile;
   }
 
   static Precompilation precompile(TreeLogger logger, CompilerContext compilerContext,

@@ -58,23 +58,23 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
   }
 
   @Override
-  public List<Map<AbstractResource, PathPrefix>> findApplicableResources(
+  public List<Map<AbstractResource, ResourceResolution>> findApplicableResources(
       TreeLogger logger, List<PathPrefixSet> pathPrefixSets) {
-    List<Map<AbstractResource, PathPrefix>> results = new ArrayList<Map<AbstractResource, PathPrefix>>(
-        pathPrefixSets.size());
+    List<Map<AbstractResource, ResourceResolution>> results =
+        new ArrayList<Map<AbstractResource, ResourceResolution>>(pathPrefixSets.size());
     for (int i = 0, c = pathPrefixSets.size(); i < c; ++i) {
-      results.add(new IdentityHashMap<AbstractResource, PathPrefix>());
+      results.add(new IdentityHashMap<AbstractResource, ResourceResolution>());
     }
     descendToFindResources(logger, pathPrefixSets, results, dir, "");
     return results;
   }
 
   @Override
-  public Map<AbstractResource, PathPrefix> findApplicableResources(
-      TreeLogger logger, PathPrefixSet pathPrefixSet) {
-    Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
-    descendToFindResources(logger, Lists.create(pathPrefixSet),
-        Lists.create(results), dir, "");
+  public Map<AbstractResource, ResourceResolution> findApplicableResources(TreeLogger logger,
+      PathPrefixSet pathPrefixSet) {
+    Map<AbstractResource, ResourceResolution> results =
+        new IdentityHashMap<AbstractResource, ResourceResolution>();
+    descendToFindResources(logger, Lists.create(pathPrefixSet), Lists.create(results), dir, "");
     return results;
   }
 
@@ -95,7 +95,7 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
    */
   private void descendToFindResources(TreeLogger logger,
       List<PathPrefixSet> pathPrefixSets,
-      List<Map<AbstractResource, PathPrefix>> results, File dir, String dirPath) {
+      List<Map<AbstractResource, ResourceResolution>> results, File dir, String dirPath) {
     assert (dir.isDirectory()) : dir + " is not a directory";
     int len = pathPrefixSets.size();
 
@@ -116,13 +116,12 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
         }
       } else if (child.isFile()) {
         for (int i = 0; i < len; ++i) {
-          PathPrefix prefix = null;
-          if ((prefix = pathPrefixSets.get(i).includesResource(childPath)) != null) {
+          ResourceResolution resourceResolution = null;
+          if ((resourceResolution = pathPrefixSets.get(i).includesResource(childPath)) != null) {
             Messages.INCLUDING_FILE.log(logger, childPath, null);
             FileResource r = new FileResource(this, childPath, child);
-            results.get(i).put(r, prefix);
-          }
-          else {
+            results.get(i).put(r, resourceResolution);
+          } else {
             Messages.EXCLUDING_FILE.log(logger, childPath, null);
           }
         }

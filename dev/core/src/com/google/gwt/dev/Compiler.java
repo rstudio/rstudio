@@ -172,7 +172,7 @@ public class Compiler {
           }
           // TODO: move to precompile() after params are refactored
           if (!options.shouldSaveSource()) {
-            precompilation.removeSourceArtifacts(logger);
+            precompilation.removeSourceArtifacts(branch);
           }
 
           Event compilePermutationsEvent = SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);

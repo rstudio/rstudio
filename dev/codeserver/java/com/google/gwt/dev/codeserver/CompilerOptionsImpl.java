@@ -34,13 +34,13 @@ import java.util.List;
  */
 class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final CompileDir compileDir;
+  private final boolean failOnError;
   private final List<String> libraryPaths;
+  private final TreeLogger.Type logLevel;
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
-  private final boolean failOnError;
   private final boolean strictPublicResources;
   private final boolean strictSourceResources;
-  private final TreeLogger.Type logLevel;
 
   CompilerOptionsImpl(CompileDir compileDir, List<String> moduleNames, SourceLevel sourceLevel,
       boolean failOnError, boolean strictSourceResources, boolean strictPublicResources,
@@ -116,6 +116,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public int getMaxPermsPerPrecompile() {
     return -1;
+  }
+
+  @Override
+  public File getMissingDepsFile() {
+    return null; // Don't record and save missing dependency information to a file.
   }
 
   @Override
@@ -283,5 +288,15 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean shouldSaveSource() {
     return false; // handling this a different way
+  }
+
+  @Override
+  public boolean warnOverlappingSource() {
+    return false;
+  }
+
+  @Override
+  public boolean warnMissingDeps() {
+    return false;
   }
 }

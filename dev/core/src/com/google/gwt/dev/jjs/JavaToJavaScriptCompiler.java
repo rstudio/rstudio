@@ -87,6 +87,7 @@ import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
+import com.google.gwt.dev.jjs.impl.TypeRefDepsChecker;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
@@ -860,6 +861,8 @@ public abstract class JavaToJavaScriptCompiler {
         CompilationState compilationState = constructJavaAst(additionalRootTypes);
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
+        TypeRefDepsChecker.exec(logger, jprogram, module, options.warnMissingDeps(),
+            options.getMissingDepsFile());
         logTypeOracleMetrics(precompilationMetrics, compilationState);
         Memory.maybeDumpMemory("AstOnly");
         AstDumper.maybeDumpAST(jprogram);

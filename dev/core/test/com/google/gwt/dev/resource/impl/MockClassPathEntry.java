@@ -30,7 +30,8 @@ import java.util.Map;
 public class MockClassPathEntry extends ClassPathEntry {
 
   final String pathRoot;
-  private final Map<String, MockAbstractResource> resourceMap = new HashMap<String, MockAbstractResource>();
+  private final Map<String, MockAbstractResource> resourceMap =
+      new HashMap<String, MockAbstractResource>();
 
   /**
    * By default, MockClassPathEntry has an all-inclusive path prefix. Tests may
@@ -48,15 +49,16 @@ public class MockClassPathEntry extends ClassPathEntry {
   }
 
   @Override
-  public Map<AbstractResource, PathPrefix> findApplicableResources(
+  public Map<AbstractResource, ResourceResolution> findApplicableResources(
       TreeLogger logger, PathPrefixSet pathPrefixes) {
     // Only include resources that have the prefix and pass its filter.
-    Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
+    Map<AbstractResource, ResourceResolution> results =
+        new IdentityHashMap<AbstractResource, ResourceResolution>();
     for (Map.Entry<String, MockAbstractResource> entry : resourceMap.entrySet()) {
       String path = entry.getKey();
-      PathPrefix prefix = null;
-      if ((prefix = pathPrefixes.includesResource(path)) != null) {
-        results.put(entry.getValue(), prefix);
+      ResourceResolution resourceResolution = null;
+      if ((resourceResolution = pathPrefixes.includesResource(path)) != null) {
+        results.put(entry.getValue(), resourceResolution);
       }
     }
 

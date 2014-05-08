@@ -24,16 +24,71 @@ import java.util.Locale;
  */
 public class PathPrefixSetTest extends TestCase {
 
-  public void testEmptyPrefixSet() {
-    PathPrefixSet pps = new PathPrefixSet();
+  public void doTestEmptyPrefixSet(boolean mergePathPrefixes) {
+    PathPrefixSet pps = new PathPrefixSet(mergePathPrefixes);
     assertNull(pps.includesResource("com/google/gwt/user/client/Command.java"));
   }
 
-  public void testNonOverlappingPrefixesEmptyFilter() {
+  public void doTestExcludes_DenyOverridesAllow(boolean mergePathPrefixes) {
+    PathPrefixSet pathPrefixSet = new PathPrefixSet(mergePathPrefixes);
+
+    String[] excludesDeny = new String[] {"a/b/FILTERMEOUT"};
+    String[] excludesAllow = null;
+    PathPrefix pathPrefixExcludesDeny =
+        new PathPrefix("FooModule", "a/b/", null, false, excludesDeny);
+    PathPrefix pathPrefixExcludesAllow =
+        new PathPrefix("BarModule", "a/b/", null, false, excludesAllow);
+
+    pathPrefixSet.add(pathPrefixExcludesDeny);
+    pathPrefixSet.add(pathPrefixExcludesAllow);
+
+    assertNull(pathPrefixSet.includesResource("a/b/FILTERMEOUT"));
+  }
+
+  public void doTestFilter_AllowOverridesDeny(boolean mergePathPrefixes) {
+    PathPrefixSet pathPrefixSet = new PathPrefixSet(mergePathPrefixes);
+
+    // "Includes" and "Skips" xml entries together become Filters.
+    ResourceFilter filterDeny = new ResourceFilter() {
+      @Override
+      public boolean allows(String path) {
+        return !path.endsWith("FILTERMEOUT");
+      }
+    };
+    ResourceFilter filterAllow = null;
+    PathPrefix pathPrefixFilterDeny = new PathPrefix("a/b/", filterDeny);
+    PathPrefix pathPrefixFilterAllow = new PathPrefix("a/b/", filterAllow);
+
+    pathPrefixSet.add(pathPrefixFilterDeny);
+    pathPrefixSet.add(pathPrefixFilterAllow);
+
+    assertNotNull(pathPrefixSet.includesResource("a/b/DONT_FILTERMEOUT"));
+  }
+
+  public void doTestMostSpecificFilterWins(boolean mergePathPrefixes) {
+    PathPrefixSet pathPrefixSet = new PathPrefixSet(mergePathPrefixes);
+
+    PathPrefix pathPrefixGeneralFilterDeny = new PathPrefix("a/b/", new ResourceFilter() {
+        @Override
+      public boolean allows(String path) {
+        return !path.endsWith("FILTERMEOUT");
+      }
+    });
+    PathPrefix pathPrefixSpecificFilterAllow = new PathPrefix("a/b/c/", null);
+
+    pathPrefixSet.add(pathPrefixGeneralFilterDeny);
+    pathPrefixSet.add(pathPrefixSpecificFilterAllow);
+
+    assertNull(pathPrefixSet.includesResource("a/b/FILTERMEOUT"));
+    assertEquals(pathPrefixSpecificFilterAllow, pathPrefixSet.includesResource(
+        "a/b/c/DONT_FILTERMEOUT").getPathPrefix());
+  }
+
+  public void doTestNonOverlappingPrefixesEmptyFilter(boolean mergePathPrefixes) {
     /*
      * Test with null filters to ensure nothing gets filtered out.
      */
-    PathPrefixSet pps = new PathPrefixSet();
+    PathPrefixSet pps = new PathPrefixSet(mergePathPrefixes);
     PathPrefix pp1 = new PathPrefix("com/google/gwt/user/client/", null);
     PathPrefix pp2 = new PathPrefix("com/google/gwt/i18n/client/", null);
     PathPrefix pp3 = new PathPrefix("com/google/gwt/dom/client/", null);
@@ -53,14 +108,14 @@ public class PathPrefixSetTest extends TestCase {
     assertFalse(pps.includesDirectory("com/google/gwt/user/server/"));
     assertFalse(pps.includesDirectory("com/google/gwt/xml/client/"));
 
-    assertEquals(pp1,
-        pps.includesResource("com/google/gwt/user/client/Command.java"));
-    assertEquals(pp1,
-        pps.includesResource("com/google/gwt/user/client/Timer.java"));
-    assertEquals(pp2,
-        pps.includesResource("com/google/gwt/i18n/client/Messages.java"));
-    assertEquals(pp3,
-        pps.includesResource("com/google/gwt/dom/client/DivElement.java"));
+    assertEquals(pp1, pps.includesResource(
+        "com/google/gwt/user/client/Command.java").getPathPrefix());
+    assertEquals(pp1, pps.includesResource(
+        "com/google/gwt/user/client/Timer.java").getPathPrefix());
+    assertEquals(pp2, pps.includesResource(
+        "com/google/gwt/i18n/client/Messages.java").getPathPrefix());
+    assertEquals(pp3, pps.includesResource(
+        "com/google/gwt/dom/client/DivElement.java").getPathPrefix());
 
     assertNull(
         pps.includesResource("com/google/gwt/user/rebind/rpc/ServiceInterfaceProxyGenerator.java"));
@@ -68,11 +123,11 @@ public class PathPrefixSetTest extends TestCase {
     assertNull(pps.includesResource("com/google/gwt/user/public/clear.cache.gif"));
   }
 
-  public void testNonOverlappingPrefixesNonEmptyFilter() {
+  public void doTestNonOverlappingPrefixesNonEmptyFilter(boolean mergePathPrefixes) {
     /*
      * Test with a real filter to ensure it does have an effect.
      */
-    PathPrefixSet pps = new PathPrefixSet();
+    PathPrefixSet pps = new PathPrefixSet(mergePathPrefixes);
     ResourceFilter allowsGifs = new ResourceFilter() {
       @Override
       public boolean allows(String path) {
@@ -87,10 +142,10 @@ public class PathPrefixSetTest extends TestCase {
     pps.add(pp2);
 
     // Correct prefix, and filter should allow .
-    assertEquals(pp1,
-        pps.includesResource("com/google/gwt/user/public/clear.cache.gif"));
-    assertEquals(pp2,
-        pps.includesResource("com/google/gwt/sample/mail/public/inboxIcon.gif"));
+    assertEquals(pp1, pps.includesResource(
+        "com/google/gwt/user/public/clear.cache.gif").getPathPrefix());
+    assertEquals(pp2, pps.includesResource(
+        "com/google/gwt/sample/mail/public/inboxIcon.gif").getPathPrefix());
 
     // Correct prefix, but filter should exclude.
     assertNull(pps.includesResource("com/google/gwt/user/public/README.txt"));
@@ -104,11 +159,11 @@ public class PathPrefixSetTest extends TestCase {
     assertNull(pps.includesResource("com/google/gwt/i18n/public/flags.gif"));
   }
 
-  public void testOverlappingPrefixesEmptyFilter() {
+  public void doTestOverlappingPrefixesEmptyFilter(boolean mergePathPrefixes) {
     /*
      * Without a filter.
      */
-    PathPrefixSet pps = new PathPrefixSet();
+    PathPrefixSet pps = new PathPrefixSet(mergePathPrefixes);
     PathPrefix pp1 = new PathPrefix("a/b/", null);
     PathPrefix pp2 = new PathPrefix("a/", null);
     PathPrefix pp3 = new PathPrefix("", null);
@@ -121,72 +176,18 @@ public class PathPrefixSetTest extends TestCase {
     // pp5 now overrides pp2
     pps.add(pp5);
 
-    assertEquals(pp3, pps.includesResource("W.java"));
-    assertEquals(pp5, pps.includesResource("a/X.java"));
-    assertEquals(pp1, pps.includesResource("a/b/Y.java"));
-    assertEquals(pp4, pps.includesResource("a/b/c/Z.java"));
-    assertEquals(pp4, pps.includesResource("a/b/c/d/V.java"));
+    assertEquals(pp3, pps.includesResource("W.java").getPathPrefix());
+    assertEquals(pp5, pps.includesResource("a/X.java").getPathPrefix());
+    assertEquals(pp1, pps.includesResource("a/b/Y.java").getPathPrefix());
+    assertEquals(pp4, pps.includesResource("a/b/c/Z.java").getPathPrefix());
+    assertEquals(pp4, pps.includesResource("a/b/c/d/V.java").getPathPrefix());
   }
 
-  public void testExcludes_DenyOverridesAllow() {
-    PathPrefixSet pathPrefixSet = new PathPrefixSet();
-
-    String[] excludesDeny = new String[] {"a/b/FILTERMEOUT"};
-    String[] excludesAllow = null;
-    PathPrefix pathPrefixFilterDeny =
-        new PathPrefix("a/b/", null, false, excludesDeny);
-    PathPrefix pathPrefixFilterAllow = new PathPrefix("a/b/", null, false, excludesAllow);
-
-    pathPrefixSet.add(pathPrefixFilterDeny);
-    pathPrefixSet.add(pathPrefixFilterAllow);
-
-    assertNull(pathPrefixSet.includesResource("a/b/FILTERMEOUT"));
-  }
-
-  public void testFilter_AllowOverridesDeny() {
-    PathPrefixSet pathPrefixSet = new PathPrefixSet();
-
-    // "Includes" and "Skips" xml entries together become Filters.
-    ResourceFilter filterDeny = new ResourceFilter() {
-      @Override
-      public boolean allows(String path) {
-        return !path.endsWith("FILTERMEOUT");
-      }
-    };
-    ResourceFilter filterAllow = null;
-    PathPrefix pathPrefixFilterDeny = new PathPrefix("a/b/", filterDeny);
-    PathPrefix pathPrefixFilterAllow = new PathPrefix("a/b/", filterAllow);
-
-    pathPrefixSet.add(pathPrefixFilterDeny);
-    pathPrefixSet.add(pathPrefixFilterAllow);
-
-    assertNotNull(pathPrefixSet.includesResource("a/b/DONT_FILTERMEOUT"));
-  }
-
-  public void testMostSpecificFilterWins() {
-    PathPrefixSet pathPrefixSet = new PathPrefixSet();
-
-    PathPrefix pathPrefixGeneralFilterDeny = new PathPrefix("a/b/", new ResourceFilter() {
-        @Override
-      public boolean allows(String path) {
-        return !path.endsWith("FILTERMEOUT");
-      }
-    });
-    PathPrefix pathPrefixSpecificFilterAllow = new PathPrefix("a/b/c/", null);
-
-    pathPrefixSet.add(pathPrefixGeneralFilterDeny);
-    pathPrefixSet.add(pathPrefixSpecificFilterAllow);
-
-    assertNull(pathPrefixSet.includesResource("a/b/FILTERMEOUT"));
-    assertEquals(pathPrefixSpecificFilterAllow,
-        pathPrefixSet.includesResource("a/b/c/DONT_FILTERMEOUT"));
-  }
-
-  public void testOverlappingPrefixesNonEmptyFilter() {
+  public void doTestOverlappingPrefixesNonEmptyFilter(boolean mergePathPrefixes) {
     /*
      * Ensure the right filter applies.
      */
-    PathPrefixSet pps = new PathPrefixSet();
+    PathPrefixSet pps = new PathPrefixSet(mergePathPrefixes);
     PathPrefix pp1 = new PathPrefix("", null);
     PathPrefix pp2 = new PathPrefix("a/", null);
     PathPrefix pp3 = new PathPrefix("a/b/", new ResourceFilter() {
@@ -209,12 +210,12 @@ public class PathPrefixSetTest extends TestCase {
     pps.add(pp4);
     pps.add(pp5);
 
-    assertEquals(pp1, pps.includesResource("W.java"));
+    assertEquals(pp1, pps.includesResource("W.java").getPathPrefix());
 
     // see TODO in the implementation note for PathPrefixSet.java
     // assertEquals(pp2, pps.includesResource("a/X.java"));
-    assertEquals(pp5, pps.includesResource("a/Y.java"));
-    assertEquals(pp3, pps.includesResource("a/b/Y.java"));
+    assertEquals(pp5, pps.includesResource("a/Y.java").getPathPrefix());
+    assertEquals(pp3, pps.includesResource("a/b/Y.java").getPathPrefix());
     // This should be gone, since it is found in b.
     assertNull(pps.includesResource("a/b/FILTERMEOUT"));
     /*
@@ -222,33 +223,34 @@ public class PathPrefixSetTest extends TestCase {
      * b's. The logic here is that the prefix including c is more specific and
      * seemed to want c's resources to be included.
      */
-    assertEquals(pp4, pps.includesResource("a/b/c/DONT_FILTERMEOUT"));
-    assertEquals(pp4, pps.includesResource("a/b/c/Z.java"));
-    assertEquals(pp4, pps.includesResource("a/b/c/d/V.java"));
+    assertEquals(pp4,
+        pps.includesResource("a/b/c/DONT_FILTERMEOUT").getPathPrefix());
+    assertEquals(pp4, pps.includesResource("a/b/c/Z.java").getPathPrefix());
+    assertEquals(pp4, pps.includesResource("a/b/c/d/V.java").getPathPrefix());
   }
 
   /**
    * In essence, this tests support for the default package in Java.
    */
-  public void testZeroLengthPrefixEmptyFilter() {
+  public void doTestZeroLengthPrefixEmptyFilter(boolean mergePathPrefixes) {
     /*
      * Without a filter.
      */
-    PathPrefixSet pps = new PathPrefixSet();
+    PathPrefixSet pps = new PathPrefixSet(mergePathPrefixes);
     PathPrefix pp1 = new PathPrefix("", null);
     pps.add(pp1);
 
-    assertEquals(pp1, pps.includesResource("W.java"));
-    assertEquals(pp1, pps.includesResource("a/X.java"));
-    assertEquals(pp1, pps.includesResource("a/b/Y.java"));
-    assertEquals(pp1, pps.includesResource("a/b/c/Z.java"));
+    assertEquals(pp1, pps.includesResource("W.java").getPathPrefix());
+    assertEquals(pp1, pps.includesResource("a/X.java").getPathPrefix());
+    assertEquals(pp1, pps.includesResource("a/b/Y.java").getPathPrefix());
+    assertEquals(pp1, pps.includesResource("a/b/c/Z.java").getPathPrefix());
   }
 
-  public void testZeroLengthPrefixNonEmptyFilter() {
+  public void doTestZeroLengthPrefixNonEmptyFilter(boolean mergePathPrefixes) {
     /*
      * With a filter.
      */
-    PathPrefixSet pps = new PathPrefixSet();
+    PathPrefixSet pps = new PathPrefixSet(mergePathPrefixes);
     PathPrefix pp1 = new PathPrefix("", new ResourceFilter() {
       @Override
       public boolean allows(String path) {
@@ -259,7 +261,57 @@ public class PathPrefixSetTest extends TestCase {
 
     assertNull(pps.includesResource("W.java"));
     assertNull(pps.includesResource("a/X.java"));
-    assertEquals(pp1, pps.includesResource("a/b/Y.java"));
+    assertEquals(pp1, pps.includesResource("a/b/Y.java").getPathPrefix());
     assertNull(pps.includesResource("a/b/c/Z.java"));
+  }
+
+  public void testEmptyPrefixSet() {
+    doTestEmptyPrefixSet(true);
+    doTestEmptyPrefixSet(false);
+  }
+
+  public void testExcludes_DenyOverridesAllow() {
+    doTestExcludes_DenyOverridesAllow(true);
+    doTestExcludes_DenyOverridesAllow(false);
+  }
+
+  public void testFilter_AllowOverridesDeny() {
+    doTestFilter_AllowOverridesDeny(true);
+    doTestFilter_AllowOverridesDeny(false);
+  }
+
+  public void testMostSpecificFilterWins() {
+    doTestMostSpecificFilterWins(true);
+    doTestMostSpecificFilterWins(false);
+  }
+
+  public void testNonOverlappingPrefixesEmptyFilter() {
+    doTestNonOverlappingPrefixesEmptyFilter(true);
+    doTestNonOverlappingPrefixesEmptyFilter(false);
+  }
+
+  public void testNonOverlappingPrefixesNonEmptyFilter() {
+    doTestNonOverlappingPrefixesNonEmptyFilter(true);
+    doTestNonOverlappingPrefixesNonEmptyFilter(false);
+  }
+
+  public void testOverlappingPrefixesEmptyFilter() {
+    doTestOverlappingPrefixesEmptyFilter(true);
+    doTestOverlappingPrefixesEmptyFilter(false);
+  }
+
+  public void testOverlappingPrefixesNonEmptyFilter() {
+    doTestOverlappingPrefixesNonEmptyFilter(true);
+    doTestOverlappingPrefixesNonEmptyFilter(false);
+  }
+
+  public void testZeroLengthPrefixEmptyFilter() {
+    doTestZeroLengthPrefixEmptyFilter(true);
+    doTestZeroLengthPrefixEmptyFilter(false);
+  }
+
+  public void testZeroLengthPrefixNonEmptyFilter() {
+    doTestZeroLengthPrefixNonEmptyFilter(true);
+    doTestZeroLengthPrefixNonEmptyFilter(false);
   }
 }

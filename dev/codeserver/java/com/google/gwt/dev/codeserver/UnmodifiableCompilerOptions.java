@@ -165,6 +165,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public final void setMissingDepsFile(File file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final void setModuleNames(List<String> moduleNames) {
     throw new UnsupportedOperationException();
   }
@@ -256,6 +261,16 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public final void setWarDir(File dir) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final void setWarnOverlappingSource(boolean warnOverlappingSource) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final void setWarnMissingDeps(boolean warnMissingDeps) {
     throw new UnsupportedOperationException();
   }
 

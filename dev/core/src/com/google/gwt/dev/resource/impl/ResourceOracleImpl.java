@@ -25,7 +25,11 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.SetMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
@@ -159,6 +163,19 @@ public class ResourceOracleImpl implements ResourceOracle {
   private static final Map<ResourceLoader, List<ClassPathEntry>> classPathCache =
       new MapMaker().weakKeys().makeMap();
 
+  /**
+   * A mapping from resource paths to the name of the library module that
+   * created the PathPrefix (usually because of a <source> entry) that made
+   * the resource path live.
+   * <p>
+   * For example com/google/gwt/user/client/DOM.java was made live by the
+   * com.google.gwt.user.User library module.
+   */
+  private SetMultimap<String, String> sourceModulesByTypeSourceName =
+      HashMultimap.create();
+
+  private Map<String, String> overlapWarningsByModuleSet = Maps.newHashMap();
+
   public static void clearCache() {
     classPathCache.clear();
   }
@@ -225,6 +242,28 @@ public class ResourceOracleImpl implements ResourceOracle {
   }
 
   /**
+   * Returns a mapping from resource paths to the set of names of library
+   * modules that created PathPrefixes (usually because of a <source> entry)
+   * that made the resource path live.
+   * <p>
+   * For example com/google/gwt/user/client/DOM.java was made live by the
+   * com.google.gwt.user.User library module.
+   */
+  public SetMultimap<String, String> getSourceModulesByTypeSourceName() {
+    return sourceModulesByTypeSourceName;
+  }
+
+  /**
+   * Print overlapping include warnings that accumulated during resource
+   * scanning. Prints only one entry per set of overlapping modules.
+   */
+  public void printOverlappingModuleIncludeWarnings(TreeLogger logger) {
+    for (String overlapWarning : overlapWarningsByModuleSet.values()) {
+      logger.log(TreeLogger.WARN, overlapWarning);
+    }
+  }
+
+  /**
    * Scans the associated paths to recompute the available resources.
    *
    * @param logger status and error details are written here
@@ -241,13 +280,16 @@ public class ResourceOracleImpl implements ResourceOracle {
       TreeLogger branchForClassPathEntry =
           Messages.EXAMINING_PATH_ROOT.branch(refreshBranch, classPathEntry.getLocation(), null);
 
-      Map<AbstractResource, PathPrefix> prefixesByResource =
+      Map<AbstractResource, ResourceResolution> prefixesByResource =
           classPathEntry.findApplicableResources(branchForClassPathEntry, pathPrefixSet);
-      for (Entry<AbstractResource, PathPrefix> entry : prefixesByResource.entrySet()) {
+      for (Entry<AbstractResource, ResourceResolution> entry : prefixesByResource.entrySet()) {
         AbstractResource resource = entry.getKey();
-        PathPrefix pathPrefix = entry.getValue();
-        ResourceDescription resourceDescription = new ResourceDescription(resource, pathPrefix);
+        ResourceResolution resourceResolution = entry.getValue();
+        ResourceDescription resourceDescription =
+            new ResourceDescription(resource, resourceResolution.getPathPrefix());
         String resourcePath = resourceDescription.resource.getPath();
+        maybeRecordTypeForModule(resourceResolution, resourcePath);
+        maybeRecordOverlapWarning(resourceResolution, resourcePath);
 
         // In case of collision.
         if (resourceDescriptionsByPath.containsKey(resourcePath)) {
@@ -274,6 +316,42 @@ public class ResourceOracleImpl implements ResourceOracle {
     exposedPathNames = Collections.unmodifiableSet(resourcesByPath.keySet());
 
     resourceOracle.end();
+  }
+
+  private void maybeRecordTypeForModule(ResourceResolution resourceResolution,
+      String resourcePath) {
+    // If PathPrefix->Module associations are inaccurate because PathPrefixes have been merged.
+    if (pathPrefixSet.mergePathPrefixes()) {
+      // Then don't record any Type<->Module associations since they won't be accurate;
+      return;
+    }
+
+    sourceModulesByTypeSourceName.putAll(asTypeSourceName(resourcePath),
+        resourceResolution.getSourceModuleNames());
+  }
+
+  private String asTypeSourceName(String resourcePath) {
+    return resourcePath.replace(".java", "").replace("/", ".");
+  }
+
+  private void maybeRecordOverlapWarning(ResourceResolution resourceResolution,
+      String resourcePath) {
+    // If PathPrefix->Module associations are inaccurate because PathPrefixes have been merged.
+    if (pathPrefixSet.mergePathPrefixes()) {
+      // Then don't record any overlap warnings since they won't be accurate;
+      return;
+    }
+
+    if (resourceResolution.getSourceModuleNames().size() > 1) {
+      if (!overlapWarningsByModuleSet.containsKey(
+          resourceResolution.getSourceModuleNames().toString())) {
+        overlapWarningsByModuleSet.put(
+            resourceResolution.getSourceModuleNames().toString(), String.format(
+                "Resource %s is included by multiple modules (%s).",
+                resourcePath, Joiner.on(", ").join(
+                    resourceResolution.getSourceModuleNames())));
+      }
+    }
   }
 
   private static void addAllClassPathEntries(TreeLogger logger, ResourceLoader loader,
@@ -370,6 +448,8 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   @Override
   public void clear() {
+    sourceModulesByTypeSourceName.clear();
+    overlapWarningsByModuleSet.clear();
     exposedPathNames = Collections.emptySet();
     exposedResourceMap = Collections.emptyMap();
     exposedResources = Collections.emptySet();

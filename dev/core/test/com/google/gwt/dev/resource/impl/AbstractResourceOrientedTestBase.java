@@ -67,12 +67,13 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
     }
 
     @Override
-    public Map<AbstractResource, PathPrefix> findApplicableResources(
-        TreeLogger logger, PathPrefixSet pathPrefixSet) {
-      Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
-      Map<AbstractResource, PathPrefix> rs = cpe.findApplicableResources(
+    public Map<AbstractResource, ResourceResolution> findApplicableResources(TreeLogger logger,
+        PathPrefixSet pathPrefixSet) {
+      Map<AbstractResource, ResourceResolution> results =
+          new IdentityHashMap<AbstractResource, ResourceResolution>();
+      Map<AbstractResource, ResourceResolution> rs = cpe.findApplicableResources(
           logger, pathPrefixSet);
-      for (Map.Entry<AbstractResource, PathPrefix> entry : rs.entrySet()) {
+      for (Map.Entry<AbstractResource, ResourceResolution> entry : rs.entrySet()) {
         AbstractResource r = entry.getKey();
         if (r.getPath().indexOf(".svn/") < 0) {
           results.put(r, entry.getValue());

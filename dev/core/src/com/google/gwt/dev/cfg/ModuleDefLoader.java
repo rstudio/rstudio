@@ -158,8 +158,10 @@ public class ModuleDefLoader {
         return moduleDef;
       }
       ModuleDefLoader loader = new ModuleDefLoader(compilerContext, resources);
-      ModuleDef module = ModuleDefLoader.doLoadModule(
-          loader, logger, moduleName, resources, compilerContext.shouldCompileMonolithic());
+      boolean mergePathPrefixes = !(compilerContext.getOptions().warnMissingDeps()
+          || compilerContext.getOptions().warnOverlappingSource());
+      ModuleDef module = ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources,
+          compilerContext.shouldCompileMonolithic(), mergePathPrefixes);
 
       LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
       libraryWriter.setLibraryName(module.getCanonicalName());
@@ -197,7 +199,7 @@ public class ModuleDefLoader {
   private static ModuleDef doLoadModule(ModuleDefLoader loader, TreeLogger logger,
       String moduleName, ResourceLoader resources)
       throws UnableToCompleteException {
-    return doLoadModule(loader, logger, moduleName, resources, true);
+    return doLoadModule(loader, logger, moduleName, resources, true, true);
   }
 
   /**
@@ -208,14 +210,16 @@ public class ModuleDefLoader {
    * @param moduleName the name of the module
    * @param resources where to load source code from
    * @param monolithic whether to encapsulate the entire module tree
+   * @param mergePathPrefixes whether PathPrefixSets should merge colliding PathPrefixes for faster
+   *          resource scanning
    * @return the module returned -- cannot be null
    * @throws UnableToCompleteException if module loading failed
    */
   private static ModuleDef doLoadModule(ModuleDefLoader loader, TreeLogger logger,
-      String moduleName, ResourceLoader resources, boolean monolithic)
+      String moduleName, ResourceLoader resources, boolean monolithic, boolean mergePathPrefixes)
       throws UnableToCompleteException {
 
-    ModuleDef moduleDef = new ModuleDef(moduleName, resources, monolithic);
+    ModuleDef moduleDef = new ModuleDef(moduleName, resources, monolithic, mergePathPrefixes);
     Event moduleLoadEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,
         "phase", "strategy.load()");
     loader.load(logger, moduleName, moduleDef);
@@ -321,6 +325,7 @@ public class ModuleDefLoader {
 
     long lastModified = 0;
     if (moduleURL != null) {
+      moduleDef.recordModuleGwtXmlFile(moduleName, moduleURL.getPath());
       String externalForm = moduleURL.toExternalForm();
       if (logger.isLoggable(TreeLogger.DEBUG)) {
         logger.log(TreeLogger.DEBUG, "Module location: " + externalForm, null);

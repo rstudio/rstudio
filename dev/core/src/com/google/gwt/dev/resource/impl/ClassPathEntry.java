@@ -46,10 +46,10 @@ public abstract class ClassPathEntry {
    *
    * @see #findApplicableResources(TreeLogger, PathPrefixSet)
    */
-  public List<Map<AbstractResource, PathPrefix>> findApplicableResources(
+  public List<Map<AbstractResource, ResourceResolution>> findApplicableResources(
       TreeLogger logger, List<PathPrefixSet> pathPrefixSets) {
-    List<Map<AbstractResource, PathPrefix>> results = new ArrayList<
-        Map<AbstractResource, PathPrefix>>(pathPrefixSets.size());
+    List<Map<AbstractResource, ResourceResolution>> results = new ArrayList<
+        Map<AbstractResource, ResourceResolution>>(pathPrefixSets.size());
     for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
       results.add(findApplicableResources(logger, pathPrefixSet));
     }
@@ -66,7 +66,7 @@ public abstract class ClassPathEntry {
    *         identities of the returned resource objects, and the same object
    *         may be returned across multiple calls
    */
-  public abstract Map<AbstractResource, PathPrefix> findApplicableResources(
+  public abstract Map<AbstractResource, ResourceResolution> findApplicableResources(
       TreeLogger logger, PathPrefixSet pathPrefixSet);
 
   /**

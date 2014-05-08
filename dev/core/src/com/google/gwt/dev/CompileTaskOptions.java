@@ -27,5 +27,6 @@ import com.google.gwt.dev.util.arg.OptionWorkDir;
  * A common set of options for all compile tasks.
  */
 public interface CompileTaskOptions extends OptionModuleName, OptionLogLevel, OptionWorkDir,
-    OptionOutputLibraryPath, OptionLibraryPaths, OptionFinalProperties, OptionLink {
+    OptionOutputLibraryPath, OptionLibraryPaths, OptionFinalProperties,
+    OptionLink {
 }
