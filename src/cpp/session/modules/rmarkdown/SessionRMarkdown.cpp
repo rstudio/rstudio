@@ -53,7 +53,7 @@
 using namespace core;
 
 namespace session {
-namespace modules { 
+namespace modules {
 namespace rmarkdown {
 
 namespace {
@@ -311,13 +311,13 @@ private:
                startedJson["target_file"] =
                      module_context::createAliasedPath(targetFile_);
                std::string url(module_context::mapUrlPorts(matches[1].str()));
-               
+
                // add a / to the URL if it doesn't have one already
                // (typically portmapped URLs do, but the raw URL returned by
                // Shiny doesn't)
                if (url[url.length() - 1] != '/')
                   url += "/";
-               
+
                if (sourceNavigation_)
                {
                   rmarkdown::presentation::ammendResults(
@@ -371,7 +371,7 @@ private:
             break;
          }
       }
-      
+
       // the process may be terminated normally by the IDE (e.g. to stop the
       // Shiny server); alternately, a termination is considered normal if
       // the process succeeded and produced output.
@@ -720,7 +720,7 @@ private:
          // well-formed
          if (error || TYPEOF(templateDetails) == NILSXP)
             continue;
-         
+
          r::sexp::getNamedListElement(templateDetails,
                                       "name", &name);
          r::sexp::getNamedListElement(templateDetails,
@@ -830,7 +830,7 @@ bool isRenderRunning()
 void initPandocPath()
 {
    r::exec::RFunction sysSetenv("Sys.setenv");
-   sysSetenv.addParam("RSTUDIO_PANDOC", 
+   sysSetenv.addParam("RSTUDIO_PANDOC",
                       session::options().pandocPath().absolutePath());
    Error error = sysSetenv.call();
    if (error)
@@ -875,7 +875,7 @@ void onClientInit()
 
 Error getRMarkdownContext(const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
-{  
+{
    // check the current status
    install::Status status = install::status();
 
@@ -924,7 +924,7 @@ void doRenderRmd(const std::string& file,
       pResponse->setResult(false);
    }
    else
-   {   
+   {
       s_pCurrentRender_ = RenderRmd::create(
                module_context::resolveAliasedPath(file),
                line,
@@ -1154,7 +1154,7 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
 
 bool canRenderShinyDocs()
 {
-   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9006") &&
+   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9007") &&
           module_context::isPackageVersionInstalled("knitr", "1.5.32");
 }
 
@@ -1201,7 +1201,7 @@ Error initialize()
 
    return initBlock.execute();
 }
-   
+
 } // namespace rmarkdown
 } // namespace modules
 } // namespace session
