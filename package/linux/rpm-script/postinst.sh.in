@@ -10,8 +10,16 @@ groupadd -r rstudio-server
 # create softlink to admin script in /usr/sbin
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
-# create config directory
+# create config directory and default config files
 mkdir -p /etc/rstudio
+if ! test -f /etc/rstudio/rserver.conf
+then
+  printf '# Server Configuration File\n\n' > /etc/rstudio/rserver.conf
+fi
+if ! test -f /etc/rstudio/rsession.conf
+then
+  printf '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf
+fi
 
 # create var directories
 mkdir -p /var/run/rstudio-server
