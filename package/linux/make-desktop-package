@@ -2,6 +2,11 @@
 
 set -e
 
+if [ "$1" == "RPM" ]
+then
+  export RSTUDIO_NO_LINK_BLAS="1"
+fi
+
 # make standard package
 ./make-package Desktop $1 $2
 
@@ -25,7 +30,6 @@ then
   PLATFORM=debian
 else
   PLATFORM=fedora
-  export RSTUDIO_NO_LINK_BLAS=1
 fi
 PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT-$PLATFORM.tar.gz
 
