@@ -493,7 +493,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ResourceOracleImpl resourceOracleImpl = new ResourceOracleImpl(logger,
         ResourceLoaders.wrap(Thread.currentThread().getContextClassLoader()));
 
-    PathPrefixSet pathPrefixSet = new PathPrefixSet();
+    PathPrefixSet pathPrefixSet = new PathPrefixSet(false);
     // Include from an outer directory.
     pathPrefixSet.add(new PathPrefix("OuterDirModule",
         "com/google/gwt/dev/resource/impl/testdata/outer/",
