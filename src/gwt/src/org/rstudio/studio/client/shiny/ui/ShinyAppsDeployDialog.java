@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -50,7 +49,6 @@ public class ShinyAppsDeployDialog
                                 final GlobalDisplay display, 
                                 EventBus events,
                                 String sourceDir, 
-                                JsArray<FileSystemItem> sourceDirContents,
                                 final String lastAccount, 
                                 String lastAppName)
                                 
@@ -82,6 +80,22 @@ public class ShinyAppsDeployDialog
       });
       
       indicator_ = addProgressIndicator(false);
+
+      // Get the files to be deployed
+      server_.getDeploymentFiles(sourceDir,
+            new ServerRequestCallback<JsArrayString>()
+            {
+               @Override 
+               public void onResponseReceived(JsArrayString files)
+               {
+                  contents_.setFileList(files);
+               }
+               @Override
+               public void onError(ServerError error)
+               {
+                  // we'll just show an empty list in the failure case
+               }
+            });
 
       // Get the deployments of this directory from any account (should be fast,
       // since this information is stored locally in the directory). 
@@ -182,8 +196,6 @@ public class ShinyAppsDeployDialog
             deployButton_.setEnabled(true);
          }
       });
-      
-      contents_.setFileList(sourceDirContents);
    }
    
    // Runs when the selected application changes; shows the cached information

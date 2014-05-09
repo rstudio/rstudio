@@ -76,6 +76,7 @@
 	  background-color: #ffffff;
      border: 1px solid gray;
      height: 100px;
+     width: 400px;
      padding: 7px;
      margin-top: 5px;
      margin-bottom: 10px;

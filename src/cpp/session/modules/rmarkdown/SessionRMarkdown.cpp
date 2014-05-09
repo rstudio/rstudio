@@ -102,6 +102,15 @@ public:
       return isRunning() && outputFile_.exists();
    }
 
+   void getPresentationDetails(int sourceLine, json::Object* jsonObject)
+   {
+      rmarkdown::presentation::ammendResults(
+               outputFormat_["format_name"].get_str(),
+               targetFile_,
+               sourceLine,
+               jsonObject);
+   }
+
 private:
    RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation,
              bool asShiny) :
@@ -255,11 +264,7 @@ private:
                
                if (sourceNavigation_)
                {
-                  rmarkdown::presentation::ammendResults(
-                           outputFormat_["format_name"].get_str(),
-                           targetFile_,
-                           sourceLine_,
-                           &startedJson);
+                  getPresentationDetails(sourceLine_, &startedJson);
                }
 
                startedJson["url"] = url + targetFile_.filename();
@@ -389,11 +394,7 @@ private:
       // file used for preview)
       if (sourceNavigation_)
       {
-         rmarkdown::presentation::ammendResults(
-                                     formatName,
-                                     targetFile_,
-                                     sourceLine_,
-                                     &resultJson);
+         getPresentationDetails(sourceLine_, &resultJson);
       }
 
       // if we failed then we may want to enque additional diagnostics
@@ -1006,6 +1007,25 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getPresentationDetails(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   int sourceLine;
+   Error error = json::readParams(request.params, &sourceLine);
+   if (error)
+      return error;
+
+   json::Object presentationDetails;
+   if (isRenderRunning())
+   {
+      s_pCurrentRender_->getPresentationDetails(sourceLine, 
+                                                &presentationDetails);
+   }
+   pResponse->setResult(presentationDetails);
+   return Success();
+}
+
+
 } // anonymous namespace
 
 bool canRenderShinyDocs()
@@ -1052,6 +1072,7 @@ Error initialize()
       (bind(registerRpcMethod, "discover_rmd_templates", discoverRmdTemplates))
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
+      (bind(registerRpcMethod, "get_presentation_details", getPresentationDetails))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
