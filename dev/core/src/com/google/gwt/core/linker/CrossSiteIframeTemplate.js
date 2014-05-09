@@ -76,7 +76,7 @@ function __MODULE_FUNC__() {
   __MODULE_FUNC__.__gwt_getMetaProperty = function() { return null; };
 
   // Exposed for permutations code
-  __propertyErrorFunction = null;
+  var __propertyErrorFunction = null;
 
 
   // Set up our entry in the page-wide registry of active modules.

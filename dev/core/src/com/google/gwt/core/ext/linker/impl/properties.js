@@ -31,8 +31,8 @@
     for (var k in allowedValuesMap) {
       allowedValuesList[allowedValuesMap[k]] = k;
     }
-    if (__propertyErrorFunc) {
-      __propertyErrorFunc(propName, allowedValuesList, value);
+    if (__propertyErrorFunction) {
+      __propertyErrorFunction(propName, allowedValuesList, value);
     }
     throw null;
   }
