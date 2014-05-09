@@ -16,8 +16,8 @@ function installScript(filename) {
       __END_OBFUSCATED_ONLY__
     }
 
-    var docbody = getInstallLocation();
     var doc = getInstallLocationDoc();
+    var docbody = doc.body;
     var script;
     // for sourcemaps, we inject textNodes into the script element on Chrome
     if (navigator.userAgent.indexOf("Chrome") > -1 && window.JSON) {

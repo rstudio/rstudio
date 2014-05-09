@@ -5,8 +5,9 @@ function installScript(filename) {
   __WAIT_FOR_BODY_LOADED__
   
   function installCode(code) {
-    var docbody = getInstallLocation();
-    var script = getInstallLocationDoc().createElement('script');
+    var doc = getInstallLocationDoc();
+    var docbody = doc.body;
+    var script = doc.createElement('script');
     script.language='javascript';
     script.src = code;
     docbody.appendChild(script);

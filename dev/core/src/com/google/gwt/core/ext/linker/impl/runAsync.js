@@ -3,8 +3,9 @@ __MODULE_FUNC__.__startLoadingFragment = function(fragmentFile) {
 };
 
 __MODULE_FUNC__.__installRunAsyncCode = function(code) {
-  var docbody = getInstallLocation();
-  var script = getInstallLocationDoc().createElement('script');
+  var doc = getInstallLocationDoc();
+  var docbody = doc.body;
+  var script = doc.createElement('script');
   script.language='javascript';
   script.text = code;
   docbody.appendChild(script);

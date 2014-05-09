@@ -20,11 +20,6 @@ function getInstallLocationDoc() {
   return frameDoc;
 }
 
-function getInstallLocation() {
-  setupInstallLocation();
-  return frameDoc.getElementsByTagName('body')[0];
-}
-
 function setupInstallLocation() {
   if (frameDoc) { return; }
   // Create the script frame, making sure it's invisible, but not

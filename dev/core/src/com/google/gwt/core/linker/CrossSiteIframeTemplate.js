@@ -91,7 +91,7 @@ function __MODULE_FUNC__() {
    * files for readability and for easy sharing between linkers.  The linker
    * code will inject these functions in these placeholders.
    ***************************************************************************/
-  // Provides the getInstallLocation() and getInstallLocationDoc() functions
+  // Provides getInstallLocationDoc() function.
   __INSTALL_LOCATION__
 
   // Provides the installScript() function.
