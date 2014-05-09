@@ -129,20 +129,22 @@ else()
    endif()
 
    # look for lapack
-   find_library(LIBR_LAPACK_LIBRARY NAMES Rlapack
-                HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-   if(LIBR_LAPACK_LIBRARY)
-      set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_LAPACK_LIBRARY})
-      if(UNIX)
-         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} gfortran)
+   if(RSTUDIO_LINK_BLAS)
+      find_library(LIBR_LAPACK_LIBRARY NAMES Rlapack
+                   HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
+      if(LIBR_LAPACK_LIBRARY)
+         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_LAPACK_LIBRARY})
+         if(UNIX)
+            set(LIBR_LIBRARIES ${LIBR_LIBRARIES} gfortran)
+         endif()
       endif()
-   endif()
 
-   # look for blas
-   find_library(LIBR_BLAS_LIBRARY NAMES Rblas
-                HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-   if(LIBR_BLAS_LIBRARY)
-      set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_BLAS_LIBRARY})
+      # look for blas
+      find_library(LIBR_BLAS_LIBRARY NAMES Rblas
+                   HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
+      if(LIBR_BLAS_LIBRARY)
+         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_BLAS_LIBRARY})
+      endif()
    endif()
 
    # look for rgraphapp on win32
