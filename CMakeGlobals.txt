@@ -32,6 +32,13 @@ else()
 endif()
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
+# blas/lapack behavior
+if ("$ENV{RSTUDIO_NO_LINK_BLAS}" STREQUAL "1")
+  set(RSTUDIO_LINK_BLAS FALSE)
+else()
+  set(RSTUDIO_LINK_BLAS TRUE)
+endif()
+
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Debug")

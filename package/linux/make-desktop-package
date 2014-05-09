@@ -25,6 +25,7 @@ then
   PLATFORM=debian
 else
   PLATFORM=fedora
+  export RSTUDIO_NO_LINK_BLAS=1
 fi
 PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT-$PLATFORM.tar.gz
 
