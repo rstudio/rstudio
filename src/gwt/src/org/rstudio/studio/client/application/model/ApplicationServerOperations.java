@@ -49,7 +49,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    // quit the current session
    void quitSession(boolean saveWorkspace, 
                     String switchToProjectPath,
-                    ServerRequestCallback<Boolean> requestCallback);
+                    ServerRequestCallback<Void> requestCallback);
    
    // verify current credentials
    void updateCredentials();

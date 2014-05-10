@@ -42,6 +42,7 @@ import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -595,36 +596,24 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                server_.quitSession(
                   saveChanges_,
                   switchToProject_,
-                  new ServerRequestCallback<Boolean>()
+                  new ServerRequestCallback<Void>()
                   {
                      @Override
-                     public void onResponseReceived(Boolean response)
+                     public void onResponseReceived(Void response)
                      {
-                        if (response)
-                        {
-                           // clear progress only if we aren't switching projects
-                           // (otherwise we want to leave progress up until
-                           // the app reloads)
-                           if (switchToProject_ == null)
-                              progress.dismiss();
-                           
-                           // fire onQuitAcknowledged
-                           if (onQuitAcknowledged_ != null)
-                              onQuitAcknowledged_.execute();
-                        }
-                        else
-                        {
-                           onFailedToQuit();
-                        }
+                        // clear progress only if we aren't switching projects
+                        // (otherwise we want to leave progress up until
+                        // the app reloads)
+                        if (switchToProject_ == null)
+                           progress.dismiss();
+                        
+                        // fire onQuitAcknowledged
+                        if (onQuitAcknowledged_ != null)
+                           onQuitAcknowledged_.execute();
                      }
 
                      @Override
                      public void onError(ServerError error)
-                     {
-                        onFailedToQuit();
-                     }
-                     
-                     private void onFailedToQuit()
                      {
                         progress.dismiss();
 

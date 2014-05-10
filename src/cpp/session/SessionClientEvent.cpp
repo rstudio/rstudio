@@ -115,7 +115,6 @@ const int kRmdRenderCompleted = 90;
 const int kRmdTemplateDiscovered = 91;
 const int kRmdTemplateDiscoveryCompleted = 92;
 const int kRmdShinyDocStarted = 93;
-const int kReloadBrowser = 94;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -305,8 +304,6 @@ std::string ClientEvent::typeName() const
          return "rmd_template_discovery_completed";
       case client_events::kRmdShinyDocStarted:
          return "rmd_shiny_doc_started";
-      case client_events::kReloadBrowser:
-         return "reload_browser";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
