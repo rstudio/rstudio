@@ -600,26 +600,31 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                      @Override
                      public void onResponseReceived(Boolean response)
                      {
-                        if (!response)
+                        if (response)
                         {
-                           progress.dismiss();
-                           return;
-                        }
+                           // clear progress only if we aren't switching projects
+                           // (otherwise we want to leave progress up until
+                           // the app reloads)
+                           if (switchToProject_ == null)
+                              progress.dismiss();
                            
-                        
-                        // clear progress only if we aren't switching projects
-                        // (otherwise we want to leave progress up until
-                        // the app reloads)
-                        if (switchToProject_ == null)
-                           progress.dismiss();
-                        
-                        // fire onQuitAcknowledged
-                        if (onQuitAcknowledged_ != null)
-                           onQuitAcknowledged_.execute();
+                           // fire onQuitAcknowledged
+                           if (onQuitAcknowledged_ != null)
+                              onQuitAcknowledged_.execute();
+                        }
+                        else
+                        {
+                           onFailedToQuit();
+                        }
                      }
 
                      @Override
                      public void onError(ServerError error)
+                     {
+                        onFailedToQuit();
+                     }
+                     
+                     private void onFailedToQuit()
                      {
                         progress.dismiss();
 
