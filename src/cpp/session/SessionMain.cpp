@@ -863,6 +863,20 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          // quit_session: exit process
          if (jsonRpcRequest.method == kQuitSession)
          {
+#ifdef _WIN32
+            // if we are on windows then we can't quit while the browser
+            // context is active
+            if (r::session::browserContextActive())
+            {
+               module_context::consoleWriteError(
+                        "Error: unable to quit when browser is active\n");
+               json::JsonRpcResponse response;
+               response.setResult(false);
+               ptrConnection->sendJsonRpcResponse(response);
+               return;
+            }
+#endif
+
             // see whether we should save the workspace
             bool saveWorkspace = true;
             std::string switchToProject;
@@ -880,7 +894,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             }
 
             // acknowledge request & quit session
-            ptrConnection->sendJsonRpcResponse();
+            json::JsonRpcResponse response;
+            response.setResult(true);
+            ptrConnection->sendJsonRpcResponse(response);
             r::session::quit(saveWorkspace); // does not return
          }
          else if (jsonRpcRequest.method == kSuspendSession)

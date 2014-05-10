@@ -55,7 +55,6 @@ import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -534,7 +533,7 @@ public class Application implements ApplicationEventHandlers
                                        DesktopFrame.PENDING_QUIT_AND_EXIT);
                      server_.quitSession(false,
                                          null,
-                                         new SimpleRequestCallback<Void>());
+                                         new SimpleRequestCallback<Boolean>());
                   }
                   else
                      navigateToSignIn();
