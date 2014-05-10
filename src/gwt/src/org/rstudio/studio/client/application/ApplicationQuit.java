@@ -42,7 +42,6 @@ import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -596,11 +595,18 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                server_.quitSession(
                   saveChanges_,
                   switchToProject_,
-                  new ServerRequestCallback<Void>()
+                  new ServerRequestCallback<Boolean>()
                   {
                      @Override
-                     public void onResponseReceived(Void response)
+                     public void onResponseReceived(Boolean response)
                      {
+                        if (!response)
+                        {
+                           progress.dismiss();
+                           return;
+                        }
+                           
+                        
                         // clear progress only if we aren't switching projects
                         // (otherwise we want to leave progress up until
                         // the app reloads)

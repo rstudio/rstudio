@@ -572,6 +572,10 @@ public class ClientEventDispatcher
             RmdShinyDocStartedEvent.Data data = event.getData();
             eventBus_.fireEvent(new RmdShinyDocStartedEvent(data));
          }
+         else if (type.equals(ClientEvent.ReloadBrowser))
+         {
+            eventBus_.fireEvent(new ReloadEvent());
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);
