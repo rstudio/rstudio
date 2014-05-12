@@ -61,6 +61,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
@@ -571,8 +572,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.RmdShinyDocStarted))
          {
-            RmdShinyDocStartedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RmdShinyDocStartedEvent(data));
+            RmdShinyDocInfo docInfo = event.getData();
+            eventBus_.fireEvent(new RmdShinyDocStartedEvent(docInfo));
          }
          else if (type.equals(ClientEvent.ShinyAppsDeploymentOutput))
          {

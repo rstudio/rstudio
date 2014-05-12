@@ -24,15 +24,15 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    {
    }
    
-   public static native final RmdRenderResult createFromShinyUrl(String file,
-                                                          String shinyUrl) /*-{
+   public static native final RmdRenderResult createFromShinyDoc(
+         RmdShinyDocInfo doc) /*-{
      return {
         succeeded: true,
-        target_file: file,
+        target_file: doc.target_file,
         target_encoding: "UTF-8",
         output_file: "",
-        output_url: shinyUrl, 
-        output_format: null, 
+        output_url: doc.url, 
+        output_format: doc.output_format, 
         rpubs_published: false, 
         knitr_errors: [],
         is_shiny_document: true,

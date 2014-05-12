@@ -15,51 +15,26 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
-import org.rstudio.studio.client.rmarkdown.model.RmdSlideNavigationInfo;
+import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdShinyDocStartedEvent extends GwtEvent<RmdShinyDocStartedEvent.Handler>
 {  
-   public static class Data extends RmdSlideNavigationInfo
-   {
-      protected Data()
-      {  
-      }
-      
-      public final native String getUrl() /*-{
-         return this.url;
-      }-*/;
-
-      public final native String getFile() /*-{
-         return this.target_file;
-      }-*/;
-   }
-   
    public interface Handler extends EventHandler
    {
       void onRmdShinyDocStarted(RmdShinyDocStartedEvent event);
    }
 
-   public RmdShinyDocStartedEvent(Data data)
+   public RmdShinyDocStartedEvent(RmdShinyDocInfo data)
    {
-      data_ = data;
+      docInfo_ = data;
    }
 
-   public String getUrl()
+   public RmdShinyDocInfo getDocInfo()
    {
-      return data_.getUrl();
-   }
-   
-   public String getFile()
-   {
-      return data_.getFile();
-   }
-   
-   public RmdSlideNavigationInfo getSlideInfo()
-   {
-      return data_;
+      return docInfo_;
    }
    
    @Override
@@ -74,7 +49,7 @@ public class RmdShinyDocStartedEvent extends GwtEvent<RmdShinyDocStartedEvent.Ha
       handler.onRmdShinyDocStarted(this);
    }
    
-   private final Data data_;
+   private final RmdShinyDocInfo docInfo_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

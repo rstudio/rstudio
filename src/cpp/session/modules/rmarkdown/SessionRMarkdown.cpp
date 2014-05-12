@@ -254,6 +254,7 @@ private:
                json::Object startedJson;
                startedJson["target_file"] =
                      module_context::createAliasedPath(targetFile_);
+               startedJson["output_format"] = outputFormat_;
                std::string url(module_context::mapUrlPorts(matches[1].str()));
                
                // add a / to the URL if it doesn't have one already
