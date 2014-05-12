@@ -124,7 +124,6 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       private HorizontalPanel layoutPanel_;
       private Image closeButton_;
       private Image busyImage_;
-
    }
 
    public ModuleTabLayoutPanel(final WindowFrame owner)

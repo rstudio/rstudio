@@ -46,6 +46,10 @@ public abstract class BusyPresenter extends BasePresenter
    @Override
    public void addBusyHandler(BusyHandler handler)
    {
+      // if a handler is added while when we're already busy, invoke the
+      // handler immediately
+      if (isBusy())
+         handler.onBusy(new BusyEvent(true));
       handlerManager_.addHandler(BusyEvent.TYPE, handler);
    }
    
