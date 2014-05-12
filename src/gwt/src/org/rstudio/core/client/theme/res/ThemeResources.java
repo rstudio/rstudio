@@ -118,6 +118,8 @@ public interface ThemeResources extends ClientBundle
 
    @Source("closeTabSelected.png")
    ImageResource closeTab();
+   @Source("busyTab.gif")
+   ImageResource busyTab();
 
    ImageResource toolbarSeparator();
 

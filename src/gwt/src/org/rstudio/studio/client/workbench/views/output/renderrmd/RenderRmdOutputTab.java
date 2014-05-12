@@ -19,23 +19,28 @@ package org.rstudio.studio.client.workbench.views.output.renderrmd;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
+import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
-public class RenderRmdOutputTab extends DelayLoadWorkbenchTab<RenderRmdOutputPresenter>
+public class RenderRmdOutputTab 
+   extends DelayLoadWorkbenchTab<RenderRmdOutputPresenter> 
+   implements ProvidesBusy
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<RenderRmdOutputPresenter, RenderRmdOutputTab>
       implements RmdRenderStartedEvent.Handler,
                  RmdRenderOutputEvent.Handler,
                  RmdRenderCompletedEvent.Handler,
-                 RestartStatusEvent.Handler
+                 RestartStatusEvent.Handler,
+                 ProvidesBusy
    {
       abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
@@ -65,6 +70,12 @@ public class RenderRmdOutputTab extends DelayLoadWorkbenchTab<RenderRmdOutputPre
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
+   }
+   
+   @Override
+   public void addBusyHandler(BusyHandler handler)
+   {
+      shim_.addBusyHandler(handler);
    }
    
    private Shim shim_;
