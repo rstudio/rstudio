@@ -18,17 +18,20 @@ package org.rstudio.studio.client.workbench.views.output.shinyappsdeploy;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
+import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
 public class ShinyAppsDeployOutputTab 
    extends DelayLoadWorkbenchTab<ShinyAppsDeployOutputPresenter>
+   implements ProvidesBusy
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<ShinyAppsDeployOutputPresenter, 
@@ -36,7 +39,8 @@ public class ShinyAppsDeployOutputTab
       implements ShinyAppsDeploymentStartedEvent.Handler,
                  ShinyAppsDeploymentOutputEvent.Handler,
                  ShinyAppsDeploymentCompletedEvent.Handler, 
-                 RestartStatusEvent.Handler
+                 RestartStatusEvent.Handler,
+                 ProvidesBusy
    {
       abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
@@ -67,5 +71,11 @@ public class ShinyAppsDeployOutputTab
       shim_.confirmClose(onConfirmed);
    }
    
+   @Override
+   public void addBusyHandler(BusyHandler handler)
+   {
+      shim_.addBusyHandler(handler);
+   }
+
    private Shim shim_;
 }

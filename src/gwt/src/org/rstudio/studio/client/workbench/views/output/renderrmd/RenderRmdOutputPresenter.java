@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.output.renderrmd;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -26,7 +25,6 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
@@ -39,19 +37,16 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.events.BusyEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
-import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
-public class RenderRmdOutputPresenter extends BasePresenter
+public class RenderRmdOutputPresenter extends BusyPresenter
    implements RmdRenderStartedEvent.Handler,
               RmdRenderOutputEvent.Handler,
               RmdRenderCompletedEvent.Handler,
-              RestartStatusEvent.Handler,
-              ProvidesBusy
+              RestartStatusEvent.Handler
 {
    @Inject
    public RenderRmdOutputPresenter(CompileOutputPaneFactory outputFactory,
@@ -98,7 +93,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
    {
       // if we're in the middle of rendering, presume that the user might be
       // trying to end the render by closing the tab.
-      if (renderRunning_)
+      if (isBusy())
       {
         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
               "Stop R Markdown Rendering", 
@@ -129,7 +124,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
       view_.ensureVisible(true);
       view_.compileStarted(event.getTargetFile());
       targetFile_ = event.getTargetFile();
-      setRenderRunning(true);
+      setIsBusy(true);
    }
 
    @Override
@@ -142,7 +137,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
       view_.compileCompleted();
-      setRenderRunning(false);
+      setIsBusy(false);
       if (event.getResult().getSucceeded() && switchToConsoleAfterRender_)
       {
          events_.fireEvent(new ConsoleActivateEvent(false)); 
@@ -164,30 +159,17 @@ public class RenderRmdOutputPresenter extends BasePresenter
       // when the restart finishes, clean up the view in case we didn't get a
       // RmdCompletedEvent
       if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED ||
-          !renderRunning_)
+          !isBusy())
          return;
 
       view_.compileCompleted();
-      setRenderRunning(false);
+      setIsBusy(false);
       if (switchToConsoleAfterRender_)
       {
          events_.fireEvent(new ConsoleActivateEvent(false)); 
       }
    }
    
-   @Override
-   public void addBusyHandler(final BusyHandler handler)
-   {
-      handlerManager_.addHandler(BusyEvent.TYPE, handler);
-   }
-   
-   private void setRenderRunning(boolean running)
-   {
-      if (renderRunning_ != running)
-         handlerManager_.fireEvent(new BusyEvent(running));
-      renderRunning_ = running;
-   }
-
    private void terminateRenderRmd()
    {
       server_.terminateRenderRmd(false, new ServerRequestCallback<Void>()
@@ -195,7 +177,7 @@ public class RenderRmdOutputPresenter extends BasePresenter
          @Override
          public void onResponseReceived(Void v)
          {
-            setRenderRunning(false);
+            setIsBusy(false);
          }
 
          @Override
@@ -212,8 +194,6 @@ public class RenderRmdOutputPresenter extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
    
-   private boolean renderRunning_ = false;
    private boolean switchToConsoleAfterRender_ = false;
    private String targetFile_;
-   private HandlerManager handlerManager_ = new HandlerManager(this);
 }

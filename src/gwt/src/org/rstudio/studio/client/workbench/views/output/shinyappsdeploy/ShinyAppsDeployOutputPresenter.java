@@ -24,12 +24,12 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
-import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
-public class ShinyAppsDeployOutputPresenter extends BasePresenter
+public class ShinyAppsDeployOutputPresenter extends BusyPresenter
    implements ShinyAppsDeploymentStartedEvent.Handler, 
               ShinyAppsDeploymentOutputEvent.Handler,
               ShinyAppsDeploymentCompletedEvent.Handler,
@@ -61,7 +61,7 @@ public class ShinyAppsDeployOutputPresenter extends BasePresenter
       switchToConsoleAfterDeploy_ = !view_.isEffectivelyVisible();
       view_.ensureVisible(true);
       view_.compileStarted(event.getPath());
-      deployRunning_ = true;
+      setIsBusy(true);
    }
 
    @Override
@@ -75,7 +75,7 @@ public class ShinyAppsDeployOutputPresenter extends BasePresenter
          ShinyAppsDeploymentCompletedEvent event)
    {
       view_.compileCompleted();
-      deployRunning_ = false;
+      setIsBusy(false);
       if (switchToConsoleAfterDeploy_)
       {
          events_.fireEvent(new ConsoleActivateEvent(false)); 
@@ -88,20 +88,19 @@ public class ShinyAppsDeployOutputPresenter extends BasePresenter
       // when the restart finishes, clean up the view in case we didn't get a
       // RmdCompletedEvent
       if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED ||
-          !deployRunning_)
+          !isBusy())
          return;
 
       view_.compileCompleted();
-      deployRunning_ = false;
+      setIsBusy(false);
       if (switchToConsoleAfterDeploy_)
       {
          events_.fireEvent(new ConsoleActivateEvent(false)); 
       }
    }
-   
+
    private final CompileOutputPaneDisplay view_;
    private final EventBus events_;
    
-   private boolean deployRunning_ = false;
    private boolean switchToConsoleAfterDeploy_ = false;
 }
