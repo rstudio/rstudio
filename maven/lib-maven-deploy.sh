@@ -68,8 +68,8 @@ function maven-deploy-file() {
             -DpomFile=$pomFile \
             $javadoc \
             $sources \
-            -DuniqueVersion=false" \
-            -q
+            -DuniqueVersion=false \
+            -q"
   fi
   eval $cmd
 }
