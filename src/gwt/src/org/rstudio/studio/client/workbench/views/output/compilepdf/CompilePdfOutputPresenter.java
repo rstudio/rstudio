@@ -223,7 +223,6 @@ public class CompilePdfOutputPresenter extends BusyPresenter
    private void compileStarted(String targetFile)
    {
       targetFile_ = FileSystemItem.createFile(targetFile);
-      setIsBusy(true);
       view_.compileStarted(targetFile);
    }
    
@@ -244,6 +243,7 @@ public class CompilePdfOutputPresenter extends BusyPresenter
                @Override
                protected void onSuccess(Boolean started)
                {
+                  setIsBusy(started);
                }
          });
    }

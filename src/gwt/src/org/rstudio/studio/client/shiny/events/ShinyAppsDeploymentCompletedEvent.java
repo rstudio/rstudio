@@ -37,6 +37,11 @@ public class ShinyAppsDeploymentCompletedEvent extends GwtEvent<ShinyAppsDeploym
       return url_;
    }
    
+   public boolean succeeded()
+   {
+      return url_ != null && url_.length() > 0;
+   }
+   
    @Override
    protected void dispatch(ShinyAppsDeploymentCompletedEvent.Handler handler)
    {

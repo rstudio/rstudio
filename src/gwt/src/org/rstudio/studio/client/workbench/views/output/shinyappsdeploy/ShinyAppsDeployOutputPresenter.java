@@ -43,6 +43,7 @@ public class ShinyAppsDeployOutputPresenter extends BusyPresenter
       super(outputFactory.create("Deploy Shiny", ""));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
+      view_.setCanStop(false);
       events_ = events;
    }
    
@@ -76,7 +77,7 @@ public class ShinyAppsDeployOutputPresenter extends BusyPresenter
    {
       view_.compileCompleted();
       setIsBusy(false);
-      if (switchToConsoleAfterDeploy_)
+      if (switchToConsoleAfterDeploy_ && event.succeeded())
       {
          events_.fireEvent(new ConsoleActivateEvent(false)); 
       }

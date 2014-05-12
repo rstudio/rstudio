@@ -164,6 +164,12 @@ public class CompileOutputPane extends WorkbenchPane
    {
       hasLogs_ = logs;
    }
+   
+   @Override
+   public void setCanStop(boolean canStop)
+   {
+      compilePanel_.setCanStop(canStop);
+   }
 
    private void setShowLogVisible(boolean visible)
    {

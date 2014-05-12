@@ -99,7 +99,8 @@ public class CompilePanel extends Composite
 
       showOutputButton_.setVisible(false);
       showErrorsButton_.setVisible(false);
-      stopButton_.setVisible(true);
+      if (canStop_)
+        stopButton_.setVisible(true);
    }
 
    public void clearAll()
@@ -186,6 +187,11 @@ public class CompilePanel extends Composite
       return errorList_;
    }
    
+   public void setCanStop(boolean canStop)
+   {
+      canStop_ = canStop;
+   }
+   
    private boolean isErrorPanelShowing()
    {
       return errorList_.isAttached();
@@ -199,4 +205,5 @@ public class CompilePanel extends Composite
    private SimplePanel panel_;
    private CompileOutputDisplay outputDisplay_;
    private CompileErrorList errorList_;
+   private boolean canStop_ = true;
 }

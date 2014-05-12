@@ -187,7 +187,7 @@ public class ShinyApps implements SessionInitHandler,
    public void onShinyAppsDeploymentCompleted(
          ShinyAppsDeploymentCompletedEvent event)
    {
-      if (launchBrowser_)
+      if (launchBrowser_ && event.succeeded())
       {
          display_.openWindow(event.getUrl());
       }
