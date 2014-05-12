@@ -68,7 +68,7 @@ function __MODULE_FUNC__() {
   __MODULE_FUNC__.__getPropMap = null;
   
   // Exposed for runAsync
-  __MODULE_FUNC__.__gwtInstallCode = function() {};
+  __MODULE_FUNC__.__installRunAsyncCode = function() {};
   __MODULE_FUNC__.__gwtStartLoadingFragment = function() { return null; };
 
   // Exposed for property provider code
