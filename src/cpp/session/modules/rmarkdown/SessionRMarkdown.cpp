@@ -97,11 +97,6 @@ public:
       return outputFile_;
    }
 
-   bool hasOutput()
-   {
-      return isRunning() && outputFile_.exists();
-   }
-
    void getPresentationDetails(int sourceLine, json::Object* jsonObject)
    {
       rmarkdown::presentation::ammendResults(
@@ -330,6 +325,8 @@ private:
 
    void terminate(bool succeeded)
    {
+      markCompleted();
+
       // if a quiet terminate was requested, don't queue any client events
       if (terminateType_ == renderTerminateQuiet)
          return;
