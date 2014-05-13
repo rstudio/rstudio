@@ -1933,11 +1933,32 @@ public class GwtAstBuilder {
           } else if (rescue instanceof MethodBinding) {
             type.addArtificialRescue(typeMap.get((MethodBinding) rescue));
           } else {
-            throw new InternalCompilerException("Unknown artifical rescue binding type.");
+            throw new InternalCompilerException("Unknown artificial rescue binding type.");
           }
         }
       }
 
+      if (JsInteropUtil.isClassWideJsExport(x)) {
+        for (JMethod m : type.getMethods()) {
+          if (m.getExportName() != null) {
+            continue;
+          }
+          if (m.getAccess() == AccessModifier.PUBLIC
+            && (m.isStatic() ||
+              (m instanceof JConstructor && !((JConstructor) m).isDefaultConstructor()))) {
+            m.setExportName("");
+          }
+        }
+        for (JField f : type.getFields()) {
+          if (f.getExportName() != null) {
+            continue;
+          }
+          if (f.isStatic()) {
+            f.setExportName("");
+          }
+        }
+      }
+      JsInteropUtil.maybeSetJsNamespace(type, x);
       curClass = classStack.pop();
     }
 
@@ -3441,21 +3462,22 @@ public class GwtAstBuilder {
       }
       name = intern(name);
       JDeclaredType type;
+      String jsPrototype = "";
+      JInterfaceType.JsInteropType interopType = JDeclaredType.JsInteropType.NONE;
+      jsPrototype = JsInteropUtil.maybeGetJsTypePrototype(x, jsPrototype);
+      interopType = JsInteropUtil.maybeGetJsInteropType(x, jsPrototype, interopType);
+
       if (binding.isClass()) {
-        type = new JClassType(info, name, binding.isAbstract(), binding.isFinal());
+        type = new JClassType(info, name, binding.isAbstract(), binding.isFinal(), interopType);
         JsInteropUtil.maybeSetJsPrototypeFlag(x, (JClassType) type);
       } else if (binding.isInterface() || binding.isAnnotationType()) {
-        String jsPrototype = "";
-        JInterfaceType.JsInteropType interopType = JInterfaceType.JsInteropType.NONE;
-        jsPrototype = JsInteropUtil.maybeGetJsInterfacePrototype(x, jsPrototype);
-        interopType = JsInteropUtil.maybeGetJsInterfaceType(x, jsPrototype, interopType);
         type = new JInterfaceType(info, name, interopType, jsPrototype);
       } else if (binding.isEnum()) {
         if (binding.isAnonymousType()) {
           // Don't model an enum subclass as a JEnumType.
-          type = new JClassType(info, name, false, true);
+          type = new JClassType(info, name, false, true, interopType);
         } else {
-          type = new JEnumType(info, name, binding.isAbstract());
+          type = new JEnumType(info, name, binding.isAbstract(), interopType);
         }
       } else {
         throw new InternalCompilerException("ReferenceBinding is not a class, interface, or enum.");

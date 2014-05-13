@@ -24,6 +24,7 @@ import java.io.Serializable;
  * Java field definition.
  */
 public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
+
   /**
    * Determines whether the variable is final, volatile, or neither.
    */
@@ -121,6 +122,14 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
       return (JValueLiteral) initializer;
     }
     return null;
+  }
+
+  public String getQualifiedExportName() {
+    if ("".equals(exportName)) {
+        return getEnclosingType().getQualifiedExportName() + "." + getName();
+    } else {
+      return exportName;
+    }
   }
 
   public String getSignature() {

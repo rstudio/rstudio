@@ -20,6 +20,7 @@ import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.impl.BooleanConstant;
 import org.eclipse.jdt.internal.compiler.impl.StringConstant;
@@ -27,11 +28,13 @@ import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.ElementValuePair;
+import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
+import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.Arrays;
@@ -58,7 +61,7 @@ public final class JdtUtil {
   }
 
   public static String getSourceName(TypeBinding classBinding) {
-    return Joiner.on(".").skipNulls().join(new String[]{
+    return Joiner.on(".").skipNulls().join(new String[] {
         Strings.emptyToNull(CharOperation.charToString(classBinding.qualifiedPackageName())),
         CharOperation.charToString(classBinding.qualifiedSourceName())});
   }
@@ -121,7 +124,8 @@ public final class JdtUtil {
         accessModifier,
         methodBinding.isStatic() ? "static" : null,
         getSourceName(methodBinding.declaringClass) + "." +
-            formatMethodSignature(methodBinding));
+            formatMethodSignature(methodBinding)
+    );
   }
 
   private JdtUtil() {
@@ -185,8 +189,13 @@ public final class JdtUtil {
       return scope != null ? getAnnotation(scope.referenceType().annotations, nameToFind) : null;
     } else if (binding instanceof ReferenceBinding) {
       return getAnnotation(((ReferenceBinding) binding).getAnnotations(), nameToFind);
+    } else if (binding instanceof SyntheticMethodBinding) {
+      return null;
     } else if (binding instanceof MethodBinding) {
-      return getAnnotation(((MethodBinding) binding).sourceMethod().annotations, nameToFind);
+      AbstractMethodDeclaration abMethod = safeSourceMethod((MethodBinding) binding);
+      return abMethod != null ? getAnnotation(abMethod.annotations, nameToFind) : null;
+    } else if (binding instanceof FieldBinding) {
+      return getAnnotation(((FieldBinding) binding).sourceField().annotations, nameToFind);
     } else {
       return null;
     }
@@ -222,5 +231,16 @@ public final class JdtUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Work around JDT bug.
+   */
+  public static AbstractMethodDeclaration safeSourceMethod(MethodBinding mb) {
+    try {
+      return mb.sourceMethod();
+    } catch (Exception e) {
+      return null;
+    }
   }
 }

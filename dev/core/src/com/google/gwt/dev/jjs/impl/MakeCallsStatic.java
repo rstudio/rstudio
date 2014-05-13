@@ -286,7 +286,7 @@ public class MakeCallsStatic {
         return false;
       }
 
-      if (program.typeOracle.isJsInterfaceMethod(method)) {
+      if (program.typeOracle.isJsTypeMethod(method)) {
         return false;
       }
 

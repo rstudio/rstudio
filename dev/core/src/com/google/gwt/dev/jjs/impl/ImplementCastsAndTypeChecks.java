@@ -242,7 +242,7 @@ public class ImplementCastsAndTypeChecks {
 
      assert targetTypeCategory == TypeCategory.TYPE_JS_INTERFACE;
      call.addArg(program.getStringLiteral(sourceInfo,
-         program.typeOracle.getNearestJsInterface(targetType, true).getJsPrototype()));
+         program.typeOracle.getNearestJsType(targetType, true).getJsPrototype()));
     }
     return call;
   }
@@ -274,7 +274,7 @@ public class ImplementCastsAndTypeChecks {
     this.instanceOfMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JAVA_LANG_STRING, program.getIndexedMethod("Cast.isJavaString"));
     this.instanceOfMethodsByTargetTypeCategory.put(
-        TypeCategory.TYPE_JS_INTERFACE, program.getIndexedMethod("Cast.instanceOfJsInterface"));
+        TypeCategory.TYPE_JS_INTERFACE, program.getIndexedMethod("Cast.instanceOfJsType"));
 
     // Populate the necessary dynamicCast methods.
     this.dynamicCastMethodsByTargetTypeCategory.put(

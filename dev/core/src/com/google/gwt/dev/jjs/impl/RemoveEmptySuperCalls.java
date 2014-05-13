@@ -33,14 +33,20 @@ public class RemoveEmptySuperCalls {
    * Removes calls to no-op super constructors.
    */
   public static class EmptySuperCallVisitor extends JModVisitor {
+    private JProgram program;
+
+    public EmptySuperCallVisitor(JProgram program) {
+      this.program = program;
+    }
+
     @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
       if (x.getExpr() instanceof JMethodCall && !(x.getExpr() instanceof JNewInstance)) {
         JMethodCall call = (JMethodCall) x.getExpr();
         if (call.getTarget() instanceof JConstructor) {
           JConstructor ctor = (JConstructor) call.getTarget();
-          if (JProgram.isJsInterfacePrototype(ctor.getEnclosingType())) {
-            // don't remove calls to JsInterface super-constructors;
+          if (program.isJsTypePrototype(ctor.getEnclosingType())) {
+            // don't remove calls to JsType super-constructors;
             return;
           }
           if (ctor.isEmpty()) {
@@ -61,7 +67,7 @@ public class RemoveEmptySuperCalls {
   }
 
   public static boolean exec(JProgram program) {
-    EmptySuperCallVisitor v = new EmptySuperCallVisitor();
+    EmptySuperCallVisitor v = new EmptySuperCallVisitor(program);
     v.accept(program);
     return v.didChange();
   }

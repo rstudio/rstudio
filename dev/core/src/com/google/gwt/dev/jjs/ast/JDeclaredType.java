@@ -43,9 +43,12 @@ import java.util.List;
  * Optimizations may eliminate class initializers (<code>$clinit</code>) if no static variables need
  * initialization, and use the private variable <code>clinitTarget</code>to keep track which
  * initializer in the superclass chain needs to be called.
- *
  */
 public abstract class JDeclaredType extends JReferenceType {
+
+  protected final String jsPrototype;
+  protected final JsInteropType jsInteropType;
+  private String jsNamespace = "";
 
   /**
    * The other nodes that this node should implicitly rescue. Special
@@ -90,8 +93,15 @@ public abstract class JDeclaredType extends JReferenceType {
    */
   private List<JInterfaceType> superInterfaces = Lists.create();
 
-  public JDeclaredType(SourceInfo info, String name) {
+  public JDeclaredType(SourceInfo info, String name, JsInteropType interopType,
+      String jsPrototype) {
     super(info, name);
+    this.jsInteropType = interopType;
+    this.jsPrototype = jsPrototype;
+  }
+
+  public JDeclaredType(SourceInfo info, String name, JsInteropType interopType) {
+    this(info, name, interopType, null);
   }
 
   public void addArtificialRescue(JNode node) {
@@ -202,13 +212,13 @@ public abstract class JDeclaredType extends JReferenceType {
    *
    * @return The class initializer method.
    */
-   public final JMethod getClinitMethod() {
-     assert getMethods().size() != 0;
-     JMethod clinit = this.getMethods().get(0);
+  public final JMethod getClinitMethod() {
+    assert getMethods().size() != 0;
+    JMethod clinit = this.getMethods().get(0);
 
-     assert clinit != null;
-     assert clinit.getName().equals("$clinit");
-     return clinit;
+    assert clinit != null;
+    assert clinit.getName().equals("$clinit");
+    return clinit;
   }
 
   /**
@@ -283,6 +293,18 @@ public abstract class JDeclaredType extends JReferenceType {
     return name.substring(dotpos + 1);
   }
 
+  public boolean isJsType() {
+    return jsInteropType != JsInteropType.NONE;
+  }
+
+  public JsInteropType getJsInteropType() {
+    return jsInteropType;
+  }
+
+  public String getJsPrototype() {
+    return jsPrototype;
+  }
+
   /**
    * Returns this type's super class, or <code>null</code> if this type is
    * {@link Object} or an interface.
@@ -336,7 +358,7 @@ public abstract class JDeclaredType extends JReferenceType {
   /**
    * Resets the clinitTarget to the current class. Used by optimizations that move initializers from
    * superclasses down.
-   *
+   * <p/>
    * Prerequisite: the $clinit method must exist and be non empty.
    */
   public void resetClinitTarget() {
@@ -348,11 +370,15 @@ public abstract class JDeclaredType extends JReferenceType {
   /**
    * Resolves external references during AST stitching.
    */
-  public void resolve(List<JInterfaceType> resolvedInterfaces, List<JNode> resolvedRescues) {
+  public void resolve(List<JInterfaceType> resolvedInterfaces, List<JNode> resolvedRescues,
+      String jsNamespace) {
     assert JType.replaces(resolvedInterfaces, superInterfaces);
     superInterfaces = Lists.normalize(resolvedInterfaces);
     assert JNameOf.replacesNamedElements(resolvedRescues, artificialRescues);
     artificialRescues = Lists.normalize(resolvedRescues);
+    if (this.jsNamespace.isEmpty()) {
+      this.jsNamespace = jsNamespace;
+    }
   }
 
   /**
@@ -403,8 +429,8 @@ public abstract class JDeclaredType extends JReferenceType {
    *
    * @see #writeMembers(ObjectOutputStream)
    */
-  @SuppressWarnings("unchecked")
-  void readMembers(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+  @SuppressWarnings("unchecked") void readMembers(ObjectInputStream stream)
+      throws IOException, ClassNotFoundException {
     fields = (List<JField>) stream.readObject();
     methods = (List<JMethod>) stream.readObject();
     artificialRescues = (List<JNode>) stream.readObject();
@@ -483,5 +509,41 @@ public abstract class JDeclaredType extends JReferenceType {
       }
     }
     return null;
+  }
+
+  public String getQualifiedExportName() {
+
+    if (enclosingType == null) {
+      return jsNamespace == null || jsNamespace.isEmpty() ? getName() :
+          jsNamespace + "." + getLeafName();
+    } else {
+      return enclosingType.getQualifiedExportName() + "." + getLeafName();
+    }
+  }
+
+  public String getJsNamespace() {
+    return jsNamespace;
+  }
+
+  public void setJsNamespace(String jsNamespace) {
+    this.jsNamespace = jsNamespace;
+  }
+
+  private String getLeafName() {
+    String fqName = getName();
+    return getEnclosingType() == null ? fqName.substring(fqName.lastIndexOf('.') + 1) :
+        fqName.substring(getEnclosingType().getName().length() + 1);
+  }
+
+  /**
+   * The type of JsType this can be: NONE, NO_PROTOTYPE, JS_PROTOTYPE, NATIVE_PROTOTYPE (e.g. DOM element), and
+   * WEB_COMPONENT.
+   */
+  public enum JsInteropType {
+    NONE,
+    NO_PROTOTYPE,
+    JS_PROTOTYPE,
+    NATIVE_PROTOTYPE,
+    WEB_COMPONENT
   }
 }

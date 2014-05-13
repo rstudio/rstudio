@@ -17,7 +17,6 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
-import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -41,7 +40,6 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -61,19 +59,16 @@ import java.util.Stack;
  */
 public class JSORestrictionsChecker {
 
-  public static final String ERR_JSINTERFACE_ONLY_ON_INTERFACES = "@JsInterface only permitted on interfaces";
-  public static final String ERR_JSINTERFACE_OVERLOADS_NOT_ALLOWED =
-      "JsInterface methods cannot overload another method.";
+  public static final String ERR_JSTYPE_OVERLOADS_NOT_ALLOWED =
+      "JsType methods cannot overload another method.";
   public static final String ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS =
       "@JsExport may only be applied to constructors and static methods.";
   public static final String ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING =
       "@JsProperty is only allowed on JavaBean-style or fluent-style named methods";
   public static final String ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS =
-      "Classes implementing @JsInterface with a prototype must extend that interface's Prototype class";
+      "Classes implementing @JsType with a prototype must extend that interface's Prototype class";
   public static final String ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE =
-      "Classes implementing a @JsInterface without a prototype should not extend the Prototype class";
-  public static final String ERR_JSEXPORT_USED_ON_JSINTERFACE =
-      "@JsExport used on @JsInterface interface, instead of implementing class";
+      "Classes implementing a @JsType without a prototype should not extend the Prototype class";
   public static final String ERR_JSPROPERTY_ONLY_ON_INTERFACES =
       "@JsProperty not allowed on concrete class methods";
   public static final String ERR_CONSTRUCTOR_WITH_PARAMETERS =
@@ -91,12 +86,13 @@ public class JSORestrictionsChecker {
   public static final String ERR_OVERRIDDEN_METHOD =
       "Methods cannot be overridden in JavaScriptObject subclasses";
   public static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
-  public static final String ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSINTERFACE = "@JsInterface subtype extends magic _Prototype class, but _Prototype class doesn't implement JsInterface";
+  public static final String ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSTYPE = "@JsType subtype extends magic _Prototype class, but _Prototype class doesn't implement JsType";
   public static final String ERR_SUBCLASSING_NATIVE_NOT_ALLOWED = "Subclassing prototypes of native browser prototypes not allowed.";
+  public static final String ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES = "@JsType with prototype set not allowed on class types";
   static boolean LINT_MODE = false;
 
   private enum ClassState {
-    NORMAL, JSO, JSINTERFACE, JSINTERFACE_IMPL;
+    NORMAL, JSO, JSTYPE, JSTYPE_IMPL;
   }
 
   /**
@@ -250,17 +246,23 @@ public class JSORestrictionsChecker {
       return true;
     }
 
-    private void checkJsInterface(TypeDeclaration type, TypeBinding typeBinding) {
+    private void checkJsType(TypeDeclaration type, TypeBinding typeBinding) {
       ReferenceBinding binding = (ReferenceBinding) typeBinding;
-      if (!binding.isInterface()) {
-        errorOn(type, ERR_JSINTERFACE_ONLY_ON_INTERFACES);
+      if (binding.isClass()) {
+        AnnotationBinding jsinterfaceAnn = JdtUtil.getAnnotation(typeBinding,
+          JsInteropUtil.JSTYPE_CLASS);
+        String jsPrototype = JdtUtil.getAnnotationParameterString(jsinterfaceAnn, "prototype");
+        if (jsPrototype != null && !"".equals(jsPrototype)) {
+          errorOn(type, ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES);
+        }
       }
+      Map<String, MethodBinding> methodSignatures = new HashMap<String, MethodBinding>();
+      Map<String, MethodBinding> noExports = new HashMap<String, MethodBinding>();
 
-      Set<String> methodNames = new HashSet<String>();
-      checkJsInterfaceMethodsForOverloads(methodNames, binding);
+      checkJsTypeMethodsForOverloads(methodSignatures, noExports, binding);
       for (MethodBinding mb : binding.methods()) {
         checkJsProperty(mb, true);
-        checkJsExport(mb, false);
+        checkJsExport(mb, !binding.isInterface());
       }
     }
 
@@ -268,11 +270,8 @@ public class JSORestrictionsChecker {
       AnnotationBinding jsExport = JdtUtil.getAnnotation(mb, JsInteropUtil.JSEXPORT_CLASS);
       if (jsExport != null && allowed) {
         if (!mb.isConstructor() && !mb.isStatic()) {
-          errorOn(mb.sourceMethod(), ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS);
+          errorOn(mb, ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS);
         }
-      }
-      if (jsExport != null && !allowed) {
-        errorOn(mb.sourceMethod(), ERR_JSEXPORT_USED_ON_JSINTERFACE);
       }
     }
 
@@ -280,12 +279,12 @@ public class JSORestrictionsChecker {
       AnnotationBinding jsProperty = JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS);
       if (jsProperty != null) {
         if (!allowed) {
-          errorOn(mb.sourceMethod(), ERR_JSPROPERTY_ONLY_ON_INTERFACES);
+          errorOn(mb, ERR_JSPROPERTY_ONLY_ON_INTERFACES);
           return;
         }
         String methodName = String.valueOf(mb.selector);
         if (!isGetter(methodName, mb) && !isSetter(methodName, mb) && !isHas(methodName, mb)) {
-          errorOn(mb.sourceMethod(), ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+          errorOn(mb, ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
         }
       }
     }
@@ -325,37 +324,53 @@ public class JSORestrictionsChecker {
       return false;
     }
 
-    private void checkJsInterfaceMethodsForOverloads(Set<String> methodNames, ReferenceBinding binding) {
-      for (MethodBinding mb : binding.methods()) {
-        String methodName = String.valueOf(mb.selector);
-        if (mb.isConstructor()) {
-          continue;
-        }
-        if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS) != null) {
-          if (isGetter(methodName, mb) || isSetter(methodName, mb) || isHas(methodName, mb)) {
-            // js properties are allowed to be overloaded (setter/getter)
+    private void checkJsTypeMethodsForOverloads(Map<String, MethodBinding> methodNamesAndSigs,
+                                                Map<String, MethodBinding> noExports,
+                                                ReferenceBinding binding) {
+      if (isJsType(binding)) {
+        for (MethodBinding mb : binding.methods()) {
+          String methodName = String.valueOf(mb.selector);
+          if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSNOEXPORT_CLASS) != null) {
+            noExports.put(methodName, mb);
             continue;
           }
-        }
-        if (!methodNames.add(methodName)) {
-          errorOn(mb.sourceMethod(), ERR_JSINTERFACE_OVERLOADS_NOT_ALLOWED);
+          if (mb.isConstructor() || mb.isStatic()) {
+            continue;
+          }
+          if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS) != null) {
+            if (isGetter(methodName, mb) || isSetter(methodName, mb) || isHas(methodName, mb)) {
+              // js properties are allowed to be overloaded (setter/getter)
+              continue;
+            }
+          }
+          if (methodNamesAndSigs.containsKey(methodName)) {
+            if (!methodNamesAndSigs.get(methodName).areParameterErasuresEqual(mb)) {
+              if (noExports.containsKey(methodName)
+                  && noExports.get(methodName).areParameterErasuresEqual(mb)) {
+                continue;
+              }
+              errorOn(mb, ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
+            }
+          } else {
+            methodNamesAndSigs.put(methodName, mb);
+          }
         }
       }
       for (ReferenceBinding rb : binding.superInterfaces()) {
-        checkJsInterfaceMethodsForOverloads(methodNames, rb);
+        checkJsTypeMethodsForOverloads(methodNamesAndSigs, noExports, rb);
       }
     }
 
     private ClassState checkType(TypeDeclaration type) {
       SourceTypeBinding binding = type.binding;
 
-      if (isJsInterface(type.binding)) {
-        checkJsInterface(type, type.binding);
-        return ClassState.JSINTERFACE;
+      if (isJsType(type.binding)) {
+        checkJsType(type, type.binding);
+        return ClassState.JSTYPE;
       }
 
-      if (checkClassImplementingJsInterface(type)) {
-        return ClassState.JSINTERFACE_IMPL;
+      if (checkClassImplementingJsType(type)) {
+        return ClassState.JSTYPE_IMPL;
       }
 
       if (!isJsoSubclass(binding)) {
@@ -387,8 +402,8 @@ public class JSORestrictionsChecker {
       return ClassState.JSO;
     }
 
-    private boolean checkClassImplementingJsInterface(TypeDeclaration type) {
-      ReferenceBinding jsInterface = findNearestJsInterfaceRecursive(type.binding);
+    private boolean checkClassImplementingJsType(TypeDeclaration type) {
+      ReferenceBinding jsInterface = findNearestJsTypeRecursive(type.binding);
       if (jsInterface == null) {
         return false;
       }
@@ -399,7 +414,7 @@ public class JSORestrictionsChecker {
       }
 
       AnnotationBinding jsinterfaceAnn = JdtUtil.getAnnotation(jsInterface,
-          JsInteropUtil.JSINTERFACE_CLASS);
+          JsInteropUtil.JSTYPE_CLASS);
       String jsPrototype = JdtUtil.getAnnotationParameterString(jsinterfaceAnn, "prototype");
       boolean isNative = JdtUtil.getAnnotationParameterBoolean(jsinterfaceAnn, "isNative");
       if (!Strings.isNullOrEmpty(jsPrototype)) {
@@ -415,11 +430,11 @@ public class JSORestrictionsChecker {
     private void checkClassExtendsMagicPrototype(TypeDeclaration type, ReferenceBinding jsInterface,
                                                  boolean shouldExtend, boolean isNative) {
       ReferenceBinding superClass = type.binding.superclass();
-      // if type is the _Prototype stub (implements JsInterface) exit
+      // if type is the _Prototype stub (implements JsType) exit
       if (isMagicPrototype(type.binding, jsInterface)) {
         return;
       } else if (isMagicPrototypeStub(type)) {
-        errorOn(type, ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSINTERFACE);
+        errorOn(type, ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSTYPE);
       }
 
       if (shouldExtend) {
@@ -438,7 +453,7 @@ public class JSORestrictionsChecker {
       }
     }
 
-    // Roughly parallels JProgram.isJsInterfacePrototype()
+    // Roughly parallels JProgram.isJsTypePrototype()
     private boolean isMagicPrototype(ReferenceBinding type, ReferenceBinding jsInterface) {
       if (isMagicPrototypeStub(type)) {
         for (ReferenceBinding intf : type.superInterfaces()) {
@@ -455,19 +470,19 @@ public class JSORestrictionsChecker {
     }
 
     private boolean isMagicPrototypeStub(ReferenceBinding binding) {
-      return JdtUtil.getAnnotation(binding, JsInteropUtil.JSINTERFACEPROTOTYPE_CLASS) != null;
+      return JdtUtil.getAnnotation(binding, JsInteropUtil.JSTYPEPROTOTYPE_CLASS) != null;
     }
 
     /**
-     * Walks up chain of interfaces and superinterfaces to find the first one marked with @JsInterface.
+     * Walks up chain of interfaces and superinterfaces to find the first one marked with @JsType.
      */
-    private ReferenceBinding findNearestJsInterface(ReferenceBinding binding, boolean mustHavePrototype) {
-      if (isJsInterface(binding)) {
+    private ReferenceBinding findNearestJsType(ReferenceBinding binding, boolean mustHavePrototype) {
+      if (isJsType(binding)) {
         return binding;
       }
 
       for (ReferenceBinding intb : binding.superInterfaces()) {
-        ReferenceBinding checkSuperInt = findNearestJsInterface(intb, false);
+        ReferenceBinding checkSuperInt = findNearestJsType(intb, false);
         if (checkSuperInt != null) {
           return checkSuperInt;
         }
@@ -475,12 +490,12 @@ public class JSORestrictionsChecker {
       return null;
     }
 
-    private ReferenceBinding findNearestJsInterfaceRecursive(ReferenceBinding binding) {
-      ReferenceBinding nearest = findNearestJsInterface(binding, false);
+    private ReferenceBinding findNearestJsTypeRecursive(ReferenceBinding binding) {
+      ReferenceBinding nearest = findNearestJsType(binding, false);
       if (nearest != null) {
         return nearest;
       } else if (binding.superclass() != null) {
-        return findNearestJsInterfaceRecursive(binding.superclass());
+        return findNearestJsTypeRecursive(binding.superclass());
       }
       return null;
     }
@@ -528,15 +543,15 @@ public class JSORestrictionsChecker {
   }
 
   /**
-   * Returns the first JsInterface annotation encountered traversing the type hierarchy upwards from the type.
+   * Returns the first JsType annotation encountered traversing the type hierarchy upwards from the type.
    */
-  private boolean isJsInterface(TypeBinding typeBinding) {
+  private boolean isJsType(TypeBinding typeBinding) {
 
     if (!(typeBinding instanceof ReferenceBinding) || !(typeBinding instanceof SourceTypeBinding)) {
       return false;
     }
 
-    AnnotationBinding jsInterface = JdtUtil.getAnnotation(typeBinding, JsInteropUtil.JSINTERFACE_CLASS);
+    AnnotationBinding jsInterface = JdtUtil.getAnnotation(typeBinding, JsInteropUtil.JSTYPE_CLASS);
     return jsInterface != null;
   }
 
@@ -587,6 +602,16 @@ public class JSORestrictionsChecker {
   }
 
   private void errorOn(ASTNode node, String error) {
+    errorOn(node, cud, error);
+  }
+
+  private void errorOn(MethodBinding mb, String error) {
+    ASTNode node = JdtUtil.safeSourceMethod(mb);
+    if (node == null) {
+      node = cud;
+      // Workaround for bad JDT bug
+      error = "Error in " + mb.toString() + ": " + error;
+    }
     errorOn(node, cud, error);
   }
 }

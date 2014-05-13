@@ -355,62 +355,37 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateNoError(goodCode);
   }
 
-  public void testJsInterfaceOnlyOnInterface() {
+  public void testJsTypeNoOverloads() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
-    buggyCode.append("@JsInterface\n");
-    buggyCode.append("public final class Buggy {\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 3: "
-        + JSORestrictionsChecker.ERR_JSINTERFACE_ONLY_ON_INTERFACES);
-  }
-
-  public void testJsInterfaceNoOverloads() {
-    StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
-    buggyCode.append("@JsInterface\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("@JsType\n");
     buggyCode.append("public interface Buggy {\n");
     buggyCode.append("void foo();\n");
     buggyCode.append("void foo(int x);\n");
     buggyCode.append("}\n");
 
     shouldGenerateError(buggyCode,
-        "Line 5: " + JSORestrictionsChecker.ERR_JSINTERFACE_OVERLOADS_NOT_ALLOWED);
+        "Line 5: " + JSORestrictionsChecker.ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
   }
 
-  public void testJsInterfaceNoOverloadsHierarchy() {
+  public void testJsTypeNoOverloadsHierarchy() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("public interface Buggy {\n");
-    buggyCode.append("@JsInterface interface Buggy2 { void foo(); }\n");
-    buggyCode.append("@JsInterface interface Buggy3 extends Buggy2 { void foo(int x); }\n");
+    buggyCode.append("@JsType interface Buggy2 { void foo(); }\n");
+    buggyCode.append("@JsType interface Buggy3 extends Buggy2 { void foo(int x); }\n");
     buggyCode.append("}\n");
 
     shouldGenerateError(buggyCode,
-        "Line 3: " + JSORestrictionsChecker.ERR_JSINTERFACE_OVERLOADS_NOT_ALLOWED);
-  }
-
-  public void testJsExportNotOnInterface() {
-    StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("@JsInterface\n");
-    buggyCode.append("public interface Buggy {\n");
-    buggyCode.append("@JsExport\n");
-    buggyCode.append("public void foo();");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 6: "
-        + JSORestrictionsChecker.ERR_JSEXPORT_USED_ON_JSINTERFACE);
+        "Line 3: " + JSORestrictionsChecker.ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
   }
 
   public void testJsExportNotOnMethod() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsInterface interface Foo {}\n");
+    buggyCode.append("@JsType interface Foo {}\n");
     buggyCode.append("static class BuggyFoo implements Foo {\n");
     buggyCode.append("@JsExport void foo() {}\n");
     buggyCode.append("}\n");
@@ -420,12 +395,24 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS);
   }
 
+  public void testJsPrototypeNotOnClass() {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("@JsType(prototype = \"foo\")\n");
+    buggyCode.append("public class Buggy {\n");
+    buggyCode.append("void foo() {}\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 3: "
+      + JSORestrictionsChecker.ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES);
+  }
+
   public void testJsPropertyNotAllowed() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsInterface interface Foo {}\n");
+    buggyCode.append("@JsType interface Foo {}\n");
     buggyCode.append("static class BuggyFoo implements Foo {\n");
     buggyCode.append("@JsProperty void foo() {}\n");
     buggyCode.append("}\n");
@@ -435,13 +422,13 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_ON_INTERFACES);
   }
 
-  public void testJsInterfacePrototypeExtensionNotAllowed() {
+  public void testJsTypePrototypeExtensionNotAllowed() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsType;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsInterface interface Foo { " +
-        "@PrototypeOfJsInterface static class Foo_Prototype implements Foo {} }\n");
+    buggyCode.append("@JsType interface Foo { " +
+        "@PrototypeOfJsType static class Foo_Prototype implements Foo {} }\n");
     buggyCode.append("static class BuggyFoo extends Foo.Foo_Prototype {\n");
     buggyCode.append("}\n");
     buggyCode.append("}\n");
@@ -450,13 +437,13 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE);
   }
 
-  public void testJsInterfacePrototypeExtensionNoError() {
+  public void testJsTypePrototypeExtensionNoError() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsType;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsInterface (prototype =\"foo\") interface Foo { " +
-        "@PrototypeOfJsInterface static class Foo_Prototype implements Foo {} }\n");
+    buggyCode.append("@JsType (prototype =\"foo\") interface Foo { " +
+        "@PrototypeOfJsType static class Foo_Prototype implements Foo {} }\n");
     buggyCode.append("static class BuggyFoo extends Foo.Foo_Prototype {\n");
     buggyCode.append("}\n");
     buggyCode.append("}\n");
@@ -464,13 +451,13 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateNoError(buggyCode);
   }
 
-  public void testJsInterfacePrototypeExtensionNoError2() {
+  public void testJsTypePrototypeExtensionNoError2() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsType;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsInterface (prototype =\"foo\") interface Foo { }\n ");
-    buggyCode.append("@PrototypeOfJsInterface static class Foo_Prototype implements Foo {}\n");
+    buggyCode.append("@JsType (prototype =\"foo\") interface Foo { }\n ");
+    buggyCode.append("@PrototypeOfJsType static class Foo_Prototype implements Foo {}\n");
     buggyCode.append("static class BuggyFoo extends Foo_Prototype {\n");
     buggyCode.append("}\n");
     buggyCode.append("}\n");
@@ -478,13 +465,13 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateNoError(buggyCode);
   }
 
-  public void testJsInterfacePrototypeExtensionNotAllowed2() {
+  public void testJsTypePrototypeExtensionNotAllowed2() {
     // TODO (cromwellian): add a command-line flag for this later
     JSORestrictionsChecker.LINT_MODE = true;
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsInterface (prototype =\"foo\") interface Foo { }\n");
+    buggyCode.append("@JsType (prototype =\"foo\") interface Foo { }\n");
     buggyCode.append("static class BuggyBar {}\n");
     buggyCode.append("static class BuggyFoo extends BuggyBar implements Foo {\n");
     buggyCode.append("}\n");
@@ -494,13 +481,13 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS);
   }
 
-  public void testJsInterfacePrototypeExtensionNotAllowedOnNativePrototype() {
+  public void testJsTypePrototypeExtensionNotAllowedOnNativePrototype() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsType;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsInterface (prototype =\"foo\", isNative = true) interface Foo { " +
-        "@PrototypeOfJsInterface static class Foo_Prototype implements Foo {} }\n");
+    buggyCode.append("@JsType (prototype =\"foo\", isNative = true) interface Foo { " +
+        "@PrototypeOfJsType static class Foo_Prototype implements Foo {} }\n");
     buggyCode.append("static class BuggyFoo extends Foo.Foo_Prototype {\n");
     buggyCode.append("}\n");
     buggyCode.append("}\n");
@@ -511,9 +498,9 @@ public class JSORestrictionsTest extends TestCase {
 
   public void testJsPropertyBadStyle() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
-    buggyCode.append("@JsInterface public interface Buggy {\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
     buggyCode.append("@JsProperty void foo();\n");
     buggyCode.append("}\n");
 
@@ -523,9 +510,9 @@ public class JSORestrictionsTest extends TestCase {
 
   public void testJsPropertyBadStyle2() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
-    buggyCode.append("@JsInterface public interface Buggy {\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
     buggyCode.append("@JsProperty int foo(int x);\n");
     buggyCode.append("}\n");
 
@@ -535,9 +522,9 @@ public class JSORestrictionsTest extends TestCase {
 
   public void testJsPropertyNoErrors() {
     StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.js.JsInterface;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
-    buggyCode.append("@JsInterface public interface Buggy {\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
     buggyCode.append("@JsProperty int foo();\n");
     buggyCode.append("@JsProperty void foo(int x);\n");
     buggyCode.append("@JsProperty void setFoo(int x);\n");

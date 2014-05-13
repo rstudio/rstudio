@@ -94,7 +94,7 @@ public class JavaAstConstructor {
           "  public static boolean isJavaScriptObject(Object o) { return true; }",
           "  public static boolean instanceOfOrJso(Object src, int dst) { return false;}",
           "  public static boolean instanceOfJso(Object src) { return false;}",
-          "  public static boolean instanceOfJsInterface(Object src, JavaScriptObject dstId, String jsType)  { return false;}",
+          "  public static boolean instanceOfJsType(Object src, JavaScriptObject dstId, String jsType)  { return false;}",
           "  public static native boolean isNull(Object a) /*-{ }-*/;",
           "  public static native boolean isNotNull(Object a) /*-{ }-*/;",
           "  public static native boolean jsEquals(Object a, Object b) /*-{ }-*/;",

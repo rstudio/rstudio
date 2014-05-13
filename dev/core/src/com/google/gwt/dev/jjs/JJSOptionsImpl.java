@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.js.JsNamespaceOption;
+import com.google.gwt.dev.util.arg.JsInteropMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
@@ -53,6 +54,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean strict = false;
   private boolean strictSourceResources = false;
   private boolean strictPublicResources = false;
+  private JsInteropMode jsInteropMode = JsInteropMode.NONE;
 
   public JJSOptionsImpl() {
   }
@@ -88,6 +90,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setEnforceStrictPublicResources(other.enforceStrictPublicResources());
     setSourceLevel(other.getSourceLevel());
     setNamespace(other.getNamespace());
+    setJsInteropMode(other.getJsInteropMode());
   }
 
   @Override
@@ -364,5 +367,13 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public boolean shouldRemoveDuplicateFunctions() {
     return removeDuplicateFunctions;
+  }
+
+  @Override public JsInteropMode getJsInteropMode() {
+    return jsInteropMode;
+  }
+
+  @Override public void setJsInteropMode(JsInteropMode mode) {
+    jsInteropMode = mode;
   }
 }

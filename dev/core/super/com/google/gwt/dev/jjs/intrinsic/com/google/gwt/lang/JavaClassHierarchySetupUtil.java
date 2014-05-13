@@ -183,6 +183,15 @@ public class JavaClassHierarchySetupUtil {
   }-*/;
 
   /**
+   * Create a function that invokes the specified method reference.
+   */
+  public static native JavaScriptObject makeBridgeMethod(JavaScriptObject methodRef) /*-{
+    return function() {
+      return methodRef.apply(this, arguments);
+    };
+  }-*/;
+
+  /**
    * Do polyfills for all methods expected in a modern browser.
    */
   public static native void modernizeBrowser() /*-{

@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
+import com.google.gwt.dev.util.arg.JsInteropMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
@@ -452,5 +453,13 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public boolean warnMissingDeps() {
     return warnMissingDeps;
+  }
+
+  @Override public JsInteropMode getJsInteropMode() {
+    return jjsOptions.getJsInteropMode();
+  }
+
+  @Override public void setJsInteropMode(JsInteropMode mode) {
+    jjsOptions.setJsInteropMode(mode);
   }
 }

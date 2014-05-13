@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * and all code reachable from an exported method is also considered live, so use with care.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.FIELD })
+@Target({ ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.FIELD, ElementType.TYPE })
 @Documented
 public @interface JsExport {
   String value() default "";

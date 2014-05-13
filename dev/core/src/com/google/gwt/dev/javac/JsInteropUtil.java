@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -31,16 +32,32 @@ import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 public final class JsInteropUtil {
 
   public static final String JSEXPORT_CLASS = "com.google.gwt.core.client.js.JsExport";
+  public static final String JSNAMESPACE_CLASS = "com.google.gwt.core.client.js.JsNamespace";
+  public static final String JSNOEXPORT_CLASS = "com.google.gwt.core.client.js.JsNoExport";
   public static final String JSPROPERTY_CLASS = "com.google.gwt.core.client.js.JsProperty";
-  public static final String JSINTERFACE_CLASS = "com.google.gwt.core.client.js.JsInterface";
-  public static final String JSINTERFACEPROTOTYPE_CLASS =
-      "com.google.gwt.core.client.js.impl.PrototypeOfJsInterface";
+  public static final String JSTYPE_CLASS = "com.google.gwt.core.client.js.JsType";
+  public static final String JSTYPEPROTOTYPE_CLASS =
+      "com.google.gwt.core.client.js.impl.PrototypeOfJsType";
+
+  public static String maybeGetJsNamespace(TypeDeclaration x) {
+    if (x.annotations != null) {
+      AnnotationBinding jsNamespace = JdtUtil.getAnnotation(x.binding, JSNAMESPACE_CLASS);
+      if (jsNamespace != null) {
+       return JdtUtil.getAnnotationParameterString(jsNamespace, "value");
+      }
+    }
+    return null;
+  }
 
   public static void maybeSetExportedField(FieldDeclaration x, JField field) {
     if (x.annotations != null) {
       AnnotationBinding jsExport = JdtUtil.getAnnotation(x.binding, JSEXPORT_CLASS);
       if (jsExport != null) {
-        field.setExportName(JdtUtil.getAnnotationParameterString(jsExport, "value"));
+        String value = JdtUtil.getAnnotationParameterString(jsExport, "value");
+        if (value == null) {
+          value = ""; // JDT bug? returns null sometimes instead of "" for default value
+        }
+        field.setExportName(value);
       }
     }
   }
@@ -51,41 +68,72 @@ public final class JsInteropUtil {
       AnnotationBinding jsExport = JdtUtil.getAnnotation(x.binding, JSEXPORT_CLASS);
       AnnotationBinding jsProperty = JdtUtil.getAnnotation(x.binding, JSPROPERTY_CLASS);
       if (jsExport != null) {
-        method.setExportName(JdtUtil.getAnnotationParameterString(jsExport, "value"));
+        String value = JdtUtil.getAnnotationParameterString(jsExport, "value");
+        if (value == null) {
+          // JDT bug? returns null instead of "" sometimes for default
+          value = "";
+        }
+        method.setExportName(value);
       }
       if (jsProperty != null) {
         method.setJsProperty(true);
       }
+      if (JdtUtil.getAnnotation(x.binding, JSNOEXPORT_CLASS) != null) {
+        method.setNoExport(true);
+      }
     }
   }
 
-  public static JInterfaceType.JsInteropType maybeGetJsInterfaceType(TypeDeclaration x,
-      String jsPrototype, JInterfaceType.JsInteropType interopType) {
+  public static JInterfaceType.JsInteropType maybeGetJsInteropType(TypeDeclaration x,
+       String jsPrototype, JInterfaceType.JsInteropType interopType) {
     if (x.annotations != null) {
-      AnnotationBinding jsInterface = JdtUtil.getAnnotation(x.binding, JSINTERFACE_CLASS);
+      AnnotationBinding jsInterface = JdtUtil.getAnnotation(x.binding, JSTYPE_CLASS);
       if (jsInterface != null) {
         boolean isNative = JdtUtil.getAnnotationParameterBoolean(jsInterface, "isNative");
         interopType = jsPrototype != null ?
-            (isNative ? JInterfaceType.JsInteropType.NATIVE_PROTOTYPE :
-            JInterfaceType.JsInteropType.JS_PROTOTYPE) : JInterfaceType.JsInteropType.NO_PROTOTYPE;
+            (isNative ? JDeclaredType.JsInteropType.NATIVE_PROTOTYPE :
+            JDeclaredType.JsInteropType.JS_PROTOTYPE) : JDeclaredType.JsInteropType.NO_PROTOTYPE;
       }
     }
     return interopType;
   }
 
-  public static String maybeGetJsInterfacePrototype(TypeDeclaration x, String jsPrototype) {
+  public static String maybeGetJsTypePrototype(TypeDeclaration x, String jsPrototype) {
     if (x.annotations != null) {
-      AnnotationBinding jsInterface = JdtUtil.getAnnotation(x.binding, JSINTERFACE_CLASS);
-      if (jsInterface != null) {
-        jsPrototype = JdtUtil.getAnnotationParameterString(jsInterface, "prototype");
+      AnnotationBinding jsType = JdtUtil.getAnnotation(x.binding, JSTYPE_CLASS);
+      if (jsType != null) {
+        jsPrototype = JdtUtil.getAnnotationParameterString(jsType, "prototype");
       }
     }
     return jsPrototype;
   }
 
   public static void maybeSetJsPrototypeFlag(TypeDeclaration x, JClassType type) {
-    if (JdtUtil.getAnnotation(x.binding, JSINTERFACEPROTOTYPE_CLASS) != null) {
+    if (JdtUtil.getAnnotation(x.binding, JSTYPEPROTOTYPE_CLASS) != null) {
       ((JClassType) type).setJsPrototypeStub(true);
+    }
+  }
+
+  public static boolean isClassWideJsExport(TypeDeclaration x) {
+    if (x.annotations != null) {
+      AnnotationBinding jsExport = JdtUtil.getAnnotation(x.binding, JSEXPORT_CLASS);
+      if (jsExport != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static void maybeSetJsNamespace(JDeclaredType type, TypeDeclaration x) {
+    if (x.annotations != null) {
+      AnnotationBinding jsNamespace = JdtUtil.getAnnotation(x.binding, JSNAMESPACE_CLASS);
+      if (jsNamespace != null) {
+        type.setJsNamespace(JdtUtil.getAnnotationParameterString(jsNamespace, "value"));
+      } else {
+        if (type.getSuperClass() != null && x.enclosingType != null) {
+          maybeSetJsNamespace(type.getSuperClass(), x.enclosingType);
+        }
+      }
     }
   }
 }

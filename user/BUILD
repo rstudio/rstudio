@@ -402,6 +402,37 @@ java_library(
     ],
 )
 
+# GWT JsInterop annotations in a separate library used by hybrid app projects
+java_library(
+    name = "gwt-jsinterop-annotations",
+    srcs = [
+        "src/com/google/gwt/core/client/js/JsNamespace.java",
+        "src/com/google/gwt/core/client/js/JsType.java",
+        "src/com/google/gwt/core/client/js/JsExport.java",
+        "src/com/google/gwt/core/client/js/JsNoExport.java",
+        "src/com/google/gwt/core/client/js/JsProperty.java",
+        "src/com/google/gwt/core/client/js/impl/PrototypeOfJsType.java",
+    ],
+    constraints = [
+        "gwt",
+        "public",
+        "android",
+    ],
+    gwtxml = "Gwt-jsinterop-annotations.gwt.xml",
+    javacopts = [
+        "-source 5",
+        "-target 5",
+    ],
+)
+
+
+# (This is a genrule so that it won't be mirrored to svn and git.)
+genrule(
+    name = "jsinterop-annotations-gwtxml",
+    outs = ["Gwt-jsinterop-annotations.gwt.xml"],
+    cmd = "$(ECHO) '<module><source path=\"client\" /></module>' > $(@)",
+)
+
 # Creates gwt-testing.jar, which contains GWTTestCase and its infrastructure.
 # (The jar depends on gwt-user.jar but the dependency isn't declared.
 # Instead we assume it will be added by a wrapper rule.)
@@ -442,6 +473,21 @@ java_library(
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
         "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
         "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
+    ],
+)
+
+# A minimal library for annotations that might be used by client code.
+java_library(
+    name = "gwt-user-interop-annotations",
+    srcs = [
+        "src/com/google/gwt/core/shared/GwtIncompatible.java",
+    ],
+    constraints = [
+        "gwt",
+        "public",
+    ],
+    deps = [
+        "//third_party/java/jsr305_annotations",
     ],
 )
 

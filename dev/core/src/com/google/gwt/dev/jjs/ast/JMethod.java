@@ -39,6 +39,15 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   private String exportName;
   private boolean jsProperty;
   private Specialization specialization;
+  private boolean noExport = false;
+
+  public boolean isNoExport() {
+    return noExport;
+  }
+
+  public void setNoExport(boolean noExport) {
+    this.noExport = noExport;
+  }
 
   public void setExportName(String exportName) {
     this.exportName = exportName;
@@ -68,6 +77,21 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public void removeSpecialization() {
     specialization = null;
+  }
+
+  public String getQualifiedExportName() {
+    if ("".equals(exportName)) {
+      String qualifiedExportName = getEnclosingType().getQualifiedExportName();
+      return this instanceof JConstructor ? qualifiedExportName :
+          qualifiedExportName + "." + getLeafName();
+    } else {
+      return exportName;
+    }
+  }
+
+  private String getLeafName() {
+    String shortName = getName();
+    return shortName.substring(shortName.lastIndexOf('$') + 1);
   }
 
   /**

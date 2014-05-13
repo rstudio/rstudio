@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * JsProperty marks a method in a {@link JsInterface} as a property accessor and recognizes
+ * JsProperty marks a method in a {@link JsType} as a property accessor and recognizes
  * JavaBean style naming convention. Instead of translating method calls to JsProperty methods
  * as method calls in JS, they will be replaced with dotted property lookups.
  *<p> Examples:

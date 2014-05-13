@@ -25,6 +25,13 @@ import java.io.Serializable;
  */
 public class JClassType extends JDeclaredType implements CanBeSetFinal {
 
+  public JClassType(SourceInfo info, String name, boolean isAbstract, boolean isFinal,
+      JsInteropType interopType) {
+    super(info, name, interopType);
+    this.isAbstract = isAbstract;
+    this.isFinal = isFinal;
+  }
+
   private static class ExternalSerializedForm implements Serializable {
     private final String name;
 
@@ -43,16 +50,14 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   private boolean isJsPrototype = false;
 
   public JClassType(SourceInfo info, String name, boolean isAbstract, boolean isFinal) {
-    super(info, name);
-    this.isAbstract = isAbstract;
-    this.isFinal = isFinal;
+    this(info, name, isAbstract, isFinal, JsInteropType.NONE);
   }
 
   /**
    * Construct a bare-bones deserialized external class.
    */
   JClassType(String name) {
-    super(SourceOrigin.UNKNOWN, name);
+    super(SourceOrigin.UNKNOWN, name, JsInteropType.NONE);
     isAbstract = false;
     setExternal(true);
   }

@@ -331,18 +331,18 @@ public class JavaResourceBase {
           "}");
 
   // TODO: move JS* annotations to intrinsic mock resource base
-  public static final MockJavaResource JSINTERFACE =
-      createMockJavaResource("com.google.gwt.core.client.js.JsInterface",
+  public static final MockJavaResource JSTYPE =
+      createMockJavaResource("com.google.gwt.core.client.js.JsType",
           "package com.google.gwt.core.client.js;",
-          "public @interface JsInterface {\n",
+          "public @interface JsType {\n",
           "  String prototype() default \"\";\n" +
               "  boolean isNative() default false;\n",
           "}"
       );
-  public static final MockJavaResource JSINTERFACEPROTOTYPE =
-      createMockJavaResource("com.google.gwt.core.client.js.impl.PrototypeOfJsInterface",
+  public static final MockJavaResource JSTYPEPROTOTYPE =
+      createMockJavaResource("com.google.gwt.core.client.js.impl.PrototypeOfJsType",
           "package com.google.gwt.core.client.js.impl;",
-          "public @interface PrototypeOfJsInterface {\n",
+          "public @interface PrototypeOfJsType {\n",
           "}");
   public static final MockJavaResource JSEXPORT =
       createMockJavaResource("com.google.gwt.core.client.js.JsExport",
@@ -363,7 +363,7 @@ public class JavaResourceBase {
         CLASS_NOT_FOUND_EXCEPTION, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT,
         INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER,
         OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE,
-        JSINTERFACE, JSINTERFACEPROTOTYPE, JSEXPORT, JSPROPERTY};
+        JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSPROPERTY};
   }
 
   /**

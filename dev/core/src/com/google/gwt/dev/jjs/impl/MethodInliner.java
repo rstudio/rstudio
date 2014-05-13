@@ -112,9 +112,11 @@ public class MethodInliner {
 
     private boolean tryInlineMethodCall(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      if (JProgram.isJsInterfacePrototype(method.getEnclosingType())) {
-         // don't inline calls to JsInterface Prototype methods, since these are merely stubs to
-         // preserve super calls
+      if (program.isJsTypePrototype(method.getEnclosingType())) {
+         /*
+          * Don't inline calls to JsType Prototype methods, since these are merely stubs to
+          * preserve super calls to JS prototype methods.
+          */
         return false;
       }
 

@@ -41,7 +41,7 @@ public class ComputeInstantiatedJsoInterfaces {
       if (toType instanceof JReferenceType && !(toType instanceof JNullType)) {
         JReferenceType refType = ((JReferenceType) toType).getUnderlyingType();
         if (program.typeOracle.willCrossCastLikeJso(refType) ||
-            program.typeOracle.isOrExtendsJsInterface(toType, true)) {
+            program.typeOracle.isOrExtendsJsType(toType, true)) {
           instantiateJsoInterface(refType);
         }
       }
@@ -61,9 +61,9 @@ public class ComputeInstantiatedJsoInterfaces {
           instantiateJsoInterface(superType);
         }
       }
-      // if we extend another JsInterface, or Interface with JSO implementation, rescue it
+      // if we extend another JsType, or Interface with JSO implementation, rescue it
       for (JInterfaceType intf : ((JDeclaredType) toType).getImplements()) {
-        if (intf.isJsInterface() || program.typeOracle.getSingleJsoImpl(intf) != null) {
+        if (intf.isJsType() || program.typeOracle.getSingleJsoImpl(intf) != null) {
           instantiateJsoInterface(intf);
         }
       }

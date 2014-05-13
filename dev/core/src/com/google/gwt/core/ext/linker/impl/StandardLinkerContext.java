@@ -463,7 +463,6 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         JsPrettyNamer.exec(jsProgram, null);
         break;
       case DETAILED:
-        // As above with OBFUSCATED
         TopFunctionStringInterner.exec(jsProgram);
         JsVerboseNamer.exec(jsProgram, null);
         break;

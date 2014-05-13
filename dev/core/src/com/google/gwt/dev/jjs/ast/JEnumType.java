@@ -37,6 +37,10 @@ public class JEnumType extends JClassType {
     super(info, name, isAbstract, false);
   }
 
+  public JEnumType(SourceInfo info, String name, boolean isAbstract, JsInteropType interopType) {
+    super(info, name, isAbstract, false, interopType);
+  }
+
   @Override
   public void addField(JField field) {
     if (field instanceof JEnumField) {

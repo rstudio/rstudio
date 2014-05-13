@@ -13,20 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.client.js.impl;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- * Marker annotation used to indicate which JsInterface stub classes trigger prototype overriding
- * behavior in subtypes. This class is meant to be used by implementers of annotation processors.
- */
-@Retention(RetentionPolicy.CLASS)
-@Target(ElementType.TYPE)
-@Documented
-public @interface PrototypeOfJsInterface {
-}
+@com.google.gwt.core.client.js.JsNamespace("$wnd.woo")
+@com.google.gwt.util.PreventSpuriousRebuilds
+package com.google.gwt.core.client.interop;

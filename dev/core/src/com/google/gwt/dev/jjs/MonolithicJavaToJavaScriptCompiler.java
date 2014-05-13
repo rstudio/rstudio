@@ -123,7 +123,9 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     @Override
     protected Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config) {
       Map<JsName, JsLiteral> internedTextByVariableName =
-          JsLiteralInterner.exec(jprogram, jsProgram, JsLiteralInterner.INTERN_ALL);
+          JsLiteralInterner.exec(jprogram, jsProgram, (byte) (JsLiteralInterner.INTERN_ALL
+              & (byte) (jprogram.typeOracle.isInteropEnabled()
+              ? ~JsLiteralInterner.INTERN_STRINGS : ~0)));
       JsVerboseNamer.exec(jsProgram, config);
       return internedTextByVariableName;
     }

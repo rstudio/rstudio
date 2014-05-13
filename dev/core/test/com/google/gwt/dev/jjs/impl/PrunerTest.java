@@ -67,18 +67,17 @@ public class PrunerTest extends OptimizerTestBase {
         "}-*/;");
     addSnippetClassDecl("static void methodWithUninstantiatedParam(UninstantiatedClass c) { }");
     addSnippetClassDecl("interface UnusedInterface { void foo(); }");
-    addSnippetImport("com.google.gwt.core.client.js.JsInterface");
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
     addSnippetImport("com.google.gwt.core.client.js.JsExport");
     addSnippetImport("com.google.gwt.core.client.js.impl"
-        + ".PrototypeOfJsInterface");
+        + ".PrototypeOfJsType");
     addSnippetClassDecl("interface Callback { void go(); }");
-    addSnippetImport("com.google.gwt.core.client.js.JsInterface");
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
     addSnippetImport("com.google.gwt.core.client.js.JsExport");
 
-
-    addSnippetClassDecl("@JsInterface interface Js { void doIt(Callback cb); }");
-    addSnippetClassDecl("@JsInterface(prototype=\"Foo\") interface JsProto { " +
-        "@PrototypeOfJsInterface static class Prototype implements JsProto {" +
+    addSnippetClassDecl("@JsType interface Js { void doIt(Callback cb); }");
+    addSnippetClassDecl("@JsType(prototype=\"Foo\") interface JsProto { " +
+        "@PrototypeOfJsType static class Prototype implements JsProto {" +
         "public Prototype(int arg) {}" +
         "}" +
         "}");

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionOutDir;
 import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.OptionStrict;
@@ -23,5 +24,5 @@ import com.google.gwt.dev.util.arg.OptionStrict;
  * The complete set of options for {@link CompileModule}.
  */
 public interface CompileModuleOptions extends CompileTaskOptions, OptionOutDir, OptionStrict,
-    OptionSourceLevel {
+    OptionSourceLevel, OptionJsInteropMode {
 }
