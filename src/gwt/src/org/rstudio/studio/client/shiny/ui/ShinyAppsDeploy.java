@@ -61,8 +61,8 @@ public class ShinyAppsDeploy extends Composite
    
    public interface DeployResources extends ClientBundle
    {
-      @Source("DeployArrow.png")
-      ImageResource deployArrow();
+      @Source("DeployDialogIllustration.png")
+      ImageResource deployIllustration();
    }
 
    public ShinyAppsDeploy()
@@ -220,7 +220,7 @@ public class ShinyAppsDeploy extends Composite
 
    @UiField Anchor urlAnchor;
    @UiField Label nameLabel;
-   @UiField Label statusLabel;
+   @UiField InlineLabel statusLabel;
    @UiField ListBox accountList;
    @UiField ListBox appList;
    @UiField TextBox appName;
