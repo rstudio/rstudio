@@ -266,6 +266,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             public void onResponseReceived(Void v)
             {
                onRenderCompleted_ = renderOperation;
+               shinyDoc_ = null;
             }
 
             @Override

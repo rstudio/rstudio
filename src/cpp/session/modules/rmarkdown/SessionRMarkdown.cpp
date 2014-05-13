@@ -263,11 +263,6 @@ private:
                if (url[url.length() - 1] != '/')
                   url += "/";
                
-               if (sourceNavigation_)
-               {
-                  getPresentationDetails(sourceLine_, &startedJson);
-               }
-
                startedJson["url"] = url + targetFile_.filename();
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
@@ -1008,25 +1003,6 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error getPresentationDetails(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse* pResponse)
-{
-   int sourceLine;
-   Error error = json::readParams(request.params, &sourceLine);
-   if (error)
-      return error;
-
-   json::Object presentationDetails;
-   if (isRenderRunning())
-   {
-      s_pCurrentRender_->getPresentationDetails(sourceLine, 
-                                                &presentationDetails);
-   }
-   pResponse->setResult(presentationDetails);
-   return Success();
-}
-
-
 } // anonymous namespace
 
 bool canRenderShinyDocs()
@@ -1073,7 +1049,6 @@ Error initialize()
       (bind(registerRpcMethod, "discover_rmd_templates", discoverRmdTemplates))
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
-      (bind(registerRpcMethod, "get_presentation_details", getPresentationDetails))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

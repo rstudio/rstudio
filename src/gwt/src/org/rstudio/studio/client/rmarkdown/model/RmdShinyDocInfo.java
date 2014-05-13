@@ -1,5 +1,5 @@
 /*
- * RmdRenderResult.java
+ * RmdShinyDocInfo.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
