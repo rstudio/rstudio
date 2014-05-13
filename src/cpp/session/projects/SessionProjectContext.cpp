@@ -615,7 +615,6 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
 namespace {
 
 const char * const kVcsOverride = "activeVcsOverride";
-const char * const kSshKeyPathOverride = "sshKeyPathOverride";
 
 } // anonymous namespace
 

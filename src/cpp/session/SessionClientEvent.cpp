@@ -71,7 +71,6 @@ const int kConsoleProcessCreated = 46;
 const int kUiPrefsChanged = 47;
 const int kHandleUnsavedChanges = 48;
 const int kConsoleProcessPrompt = 49;
-const int kShowConsoleProcessDialog = 50;
 const int kHTMLPreviewStartedEvent = 51;
 const int kHTMLPreviewOutputEvent = 52;
 const int kHTMLPreviewCompletedEvent = 53;
