@@ -36,12 +36,8 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
         rpubs_published: false, 
         knitr_errors: [],
         is_shiny_document: true,
-        preview_side: -1,
-        slide_navigation: null,
-        output_format: {
-           format_name: "html_document", 
-           self_contained: false
-        }
+        preview_side: doc.preview_slide,
+        slide_navigation: doc.slide_navigation
      };
    }-*/;
   

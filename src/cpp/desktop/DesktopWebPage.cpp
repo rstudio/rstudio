@@ -50,6 +50,7 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
    settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
    setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
    defaultSaveDir_ = QDir::home();
+   connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
@@ -136,6 +137,12 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    }
 }
 
+void WebPage::closeRequested()
+{
+   // invoked when close is requested via script (i.e. window.close()); honor
+   // this request by closing the window in which the view is hosted
+   view()->window()->close();
+}
 
 bool WebPage::shouldInterruptJavaScript()
 {

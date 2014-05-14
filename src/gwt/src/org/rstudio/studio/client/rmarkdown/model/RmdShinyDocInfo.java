@@ -14,9 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
-public class RmdShinyDocInfo extends JavaScriptObject
+public class RmdShinyDocInfo extends RmdSlideNavigationInfo
 {
    protected RmdShinyDocInfo() 
    {

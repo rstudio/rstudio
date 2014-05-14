@@ -128,25 +128,25 @@ else()
       message(STATUS "Could not find libR shared library.")
    endif()
 
-   # look for lapack
-   find_library(LIBR_LAPACK_LIBRARY NAMES Rlapack
-                HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-   if(LIBR_LAPACK_LIBRARY)
-      set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_LAPACK_LIBRARY})
-      if(UNIX)
-         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} gfortran)
-      endif()
-   endif()
-
-   # look for blas
-   find_library(LIBR_BLAS_LIBRARY NAMES Rblas
-                HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-   if(LIBR_BLAS_LIBRARY)
-      set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_BLAS_LIBRARY})
-   endif()
-
-   # look for rgraphapp on win32
    if(WIN32)
+      # look for lapack
+      find_library(LIBR_LAPACK_LIBRARY NAMES Rlapack
+                   HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
+      if(LIBR_LAPACK_LIBRARY)
+         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_LAPACK_LIBRARY})
+         if(UNIX)
+            set(LIBR_LIBRARIES ${LIBR_LIBRARIES} gfortran)
+         endif()
+      endif()
+
+      # look for blas
+      find_library(LIBR_BLAS_LIBRARY NAMES Rblas
+                   HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
+      if(LIBR_BLAS_LIBRARY)
+         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_BLAS_LIBRARY})
+      endif()
+
+      # look for rgraphapp
       find_library(LIBR_GRAPHAPP_LIBRARY NAMES Rgraphapp
                    HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
       if(LIBR_GRAPHAPP_LIBRARY)

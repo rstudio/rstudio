@@ -78,6 +78,8 @@ const char * const kErrorParam = "error";
 const char * const kErrorDisplay = "errorDisplay";
 const char * const kErrorMessage = "errorMessage";
 
+const char * const kFormAction = "formAction";
+
 
 std::string applicationURL(const http::Request& request,
                            const std::string& path = std::string())
@@ -170,6 +172,11 @@ void signIn(const http::Request& request,
    std::string error = request.queryParamValue(kErrorParam);
    variables[kErrorMessage] = error;
    variables[kErrorDisplay] = error.empty() ? "none" : "block";
+   if (server::options().authEncryptPassword())
+      variables[kFormAction] = "action=\"javascript:void\" "
+                               "onsubmit=\"submitRealForm();return false\"";
+   else
+      variables[kFormAction] = "action=\"" + variables["action"] + "\"";
 
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
@@ -224,38 +231,52 @@ void doSignIn(const http::Request& request,
    if (appUri.empty())
       appUri = "/";
 
-   std::string encryptedValue = request.formFieldValue("v");
-   bool persist = request.formFieldValue("persist") == "1";
-   std::string plainText;
-   Error error = core::system::crypto::rsaPrivateDecrypt(encryptedValue,
-                                                         &plainText);
-   if (error)
-   {
-      LOG_ERROR(error);
-      pResponse->setMovedTemporarily(
-            request,
-            applicationSignInURL(request,
-                                 appUri,
-                                 "Temporary server error,"
-                                 " please try again"));
-      return;
-   }
 
-   size_t splitAt = plainText.find('\n');
-   if (splitAt == std::string::npos)
-   {
-      LOG_ERROR_MESSAGE("Didn't find newline in plaintext");
-      pResponse->setMovedTemporarily(
-            request,
-            applicationSignInURL(request,
-                                 appUri,
-                                 "Temporary server error,"
-                                 " please try again"));
-      return;
-   }
 
-   std::string username = plainText.substr(0, splitAt);
-   std::string password = plainText.substr(splitAt + 1, plainText.size());
+   bool persist = false;
+   std::string username, password;
+
+   if (server::options().authEncryptPassword())
+   {
+      std::string encryptedValue = request.formFieldValue("v");
+      std::string plainText;
+      Error error = core::system::crypto::rsaPrivateDecrypt(encryptedValue,
+                                                            &plainText);
+      if (error)
+      {
+         LOG_ERROR(error);
+         pResponse->setMovedTemporarily(
+               request,
+               applicationSignInURL(request,
+                                    appUri,
+                                    "Temporary server error,"
+                                    " please try again"));
+         return;
+      }
+
+      size_t splitAt = plainText.find('\n');
+      if (splitAt == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("Didn't find newline in plaintext");
+         pResponse->setMovedTemporarily(
+               request,
+               applicationSignInURL(request,
+                                    appUri,
+                                    "Temporary server error,"
+                                    " please try again"));
+         return;
+      }
+
+      persist = request.formFieldValue("persist") == "1";
+      username = plainText.substr(0, splitAt);
+      password = plainText.substr(splitAt + 1, plainText.size());
+   }
+   else
+   {
+      persist = request.formFieldValue("staySignedIn") == "1";
+      username = request.formFieldValue("username");
+      password = request.formFieldValue("password");
+   }
 
    // tranform to local username
    username = auth::handler::userIdentifierToLocalUsername(username);

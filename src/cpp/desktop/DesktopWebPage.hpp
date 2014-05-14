@@ -64,6 +64,7 @@ public:
 
 public slots:
    bool shouldInterruptJavaScript();
+   void closeRequested();
 
 protected:
    QWebPage* createWindow(QWebPage::WebWindowType type);

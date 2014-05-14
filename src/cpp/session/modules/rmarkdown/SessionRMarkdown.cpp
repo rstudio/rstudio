@@ -54,7 +54,7 @@
 using namespace core;
 
 namespace session {
-namespace modules { 
+namespace modules {
 namespace rmarkdown {
 
 namespace {
@@ -99,11 +99,21 @@ public:
 
    void getPresentationDetails(int sourceLine, json::Object* jsonObject)
    {
-      rmarkdown::presentation::ammendResults(
-               outputFormat_["format_name"].get_str(),
-               targetFile_,
-               sourceLine,
-               jsonObject);
+      // default to no slide info
+      (*jsonObject)["preview_slide"] = -1;
+      (*jsonObject)["slide_navigation"] = json::Value();
+
+      // only allow extended results if we have a source file to
+      // navigate back to (otherwise you could navigate to the temp
+      // file used for preview)
+      if (sourceNavigation_)
+      {
+         rmarkdown::presentation::ammendResults(
+                  outputFormat_["format_name"].get_str(),
+                  targetFile_,
+                  sourceLine,
+                  jsonObject);
+      }
    }
 
 private:
@@ -251,13 +261,15 @@ private:
                      module_context::createAliasedPath(targetFile_);
                startedJson["output_format"] = outputFormat_;
                std::string url(module_context::mapUrlPorts(matches[1].str()));
-               
+
                // add a / to the URL if it doesn't have one already
                // (typically portmapped URLs do, but the raw URL returned by
                // Shiny doesn't)
                if (url[url.length() - 1] != '/')
                   url += "/";
-               
+
+               getPresentationDetails(sourceLine_, &startedJson);
+
                startedJson["url"] = url + targetFile_.filename();
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
@@ -300,7 +312,7 @@ private:
             break;
          }
       }
-      
+
       // the process may be terminated normally by the IDE (e.g. to stop the
       // Shiny server); alternately, a termination is considered normal if
       // the process succeeded and produced output.
@@ -364,10 +376,6 @@ private:
       resultJson["is_shiny_document"] = isShiny_;
       resultJson["has_shiny_content"] = hasShinyContent_;
 
-      // default to no slide info
-      resultJson["preview_slide"] = -1;
-      resultJson["slide_navigation"] = json::Value();
-
       // for HTML documents, check to see whether they've been published
       if (outputFile_.extensionLowerCase() == ".html")
       {
@@ -382,13 +390,8 @@ private:
       // allow for format specific additions to the result json
       std::string formatName =  outputFormat_["format_name"].get_str();
 
-      // only allow extended results if we have a source file to
-      // navigate back to (otherwise you could navigate to the temp
-      // file used for preview)
-      if (sourceNavigation_)
-      {
-         getPresentationDetails(sourceLine_, &resultJson);
-      }
+      // populate slide information if available
+      getPresentationDetails(sourceLine_, &resultJson);
 
       // if we failed then we may want to enque additional diagnostics
       if (!succeeded)
@@ -573,7 +576,7 @@ private:
          // well-formed
          if (error || TYPEOF(templateDetails) == NILSXP)
             continue;
-         
+
          r::sexp::getNamedListElement(templateDetails,
                                       "name", &name);
          r::sexp::getNamedListElement(templateDetails,
@@ -680,7 +683,7 @@ bool isRenderRunning()
 void initPandocPath()
 {
    r::exec::RFunction sysSetenv("Sys.setenv");
-   sysSetenv.addParam("RSTUDIO_PANDOC", 
+   sysSetenv.addParam("RSTUDIO_PANDOC",
                       session::options().pandocPath().absolutePath());
    Error error = sysSetenv.call();
    if (error)
@@ -725,7 +728,7 @@ void onClientInit()
 
 Error getRMarkdownContext(const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
-{  
+{
    // check the current status
    install::Status status = install::status();
 
@@ -774,7 +777,7 @@ void doRenderRmd(const std::string& file,
       pResponse->setResult(false);
    }
    else
-   {   
+   {
       s_pCurrentRender_ = RenderRmd::create(
                module_context::resolveAliasedPath(file),
                line,
@@ -1004,7 +1007,7 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
 
 bool canRenderShinyDocs()
 {
-   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9006") &&
+   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9007") &&
           module_context::isPackageVersionInstalled("knitr", "1.5.32");
 }
 
@@ -1051,7 +1054,7 @@ Error initialize()
 
    return initBlock.execute();
 }
-   
+
 } // namespace rmarkdown
 } // namespace modules
 } // namespace session
