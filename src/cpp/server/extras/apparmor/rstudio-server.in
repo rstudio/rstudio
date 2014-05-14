@@ -36,6 +36,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      capability setuid,
      capability sys_resource,
      capability sys_nice,
+     capability sys_ptrace,
      capability kill,
     
      @{PROC} r,
