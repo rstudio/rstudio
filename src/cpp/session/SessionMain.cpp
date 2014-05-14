@@ -2154,8 +2154,9 @@ void rSuicide(const std::string& message)
    using namespace monitor;
    logExitEvent(Event(kSessionScope, kSessionSuicideEvent));
 
-   // log the error
-   LOG_ERROR_MESSAGE("R SUICIDE: " + message);
+   // log the error if it was unexpected
+   if (!message.empty())
+      LOG_ERROR_MESSAGE("R SUICIDE: " + message);
    
    // enque suicide event so the client knows
    ClientEvent suicideEvent(kSuicide, message);

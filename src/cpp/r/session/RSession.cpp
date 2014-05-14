@@ -528,7 +528,12 @@ void rSuicide(const std::string& msg)
 
 void rSuicide(const Error& error)
 {
-   rSuicide(core::log::errorAsLogEntry(error));
+   // provide error message if the error was unexpected
+   std::string msg;
+   if (!error.expected())
+      msg = core::log::errorAsLogEntry(error);
+
+   rSuicide(msg);
 }
 
 // forward declare win32 quit handler and provide string based quit
@@ -660,8 +665,9 @@ int RReadConsole (const char *pmt,
             if (initError)
                error = initError;
 
-            // log the error
-            LOG_ERROR(error);
+            // log the error if it was unexpected
+            if (!error.expected())
+               LOG_ERROR(error);
             
             // terminate the session (use suicide so that no special
             // termination code runs -- i.e. call to setAbnormalEnd(false)
