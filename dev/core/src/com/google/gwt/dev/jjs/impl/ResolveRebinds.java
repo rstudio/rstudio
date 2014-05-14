@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.GwtCreateMap;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -34,11 +35,7 @@ import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -100,41 +97,21 @@ public class ResolveRebinds {
     }
   }
 
-  public static boolean exec(JProgram program, Map<String, String>[] orderedRebindAnswers) {
-    return new ResolveRebinds(program, orderedRebindAnswers).execImpl();
+  public static boolean exec(JProgram program, List<GwtCreateMap> gwtCreateAnswers) {
+    return new ResolveRebinds(program, gwtCreateAnswers).execImpl();
   }
 
-  /**
-   * Returns the rebind answers that do not vary across various maps of rebind
-   * answers.
-   */
-  public static Map<String, String> getHardRebindAnswers(Map<String, String>[] rebindAnswers) {
-    Iterator<Map<String, String>> it = Arrays.asList(rebindAnswers).iterator();
-
-    // Start with an arbitrary copy of a rebind answer map
-    Map<String, String> toReturn = new HashMap<String, String>(it.next());
-
-    while (it.hasNext()) {
-      Map<String, String> next = it.next();
-      // Only keep key/value pairs present in the other rebind map
-      toReturn.entrySet().retainAll(next.entrySet());
-    }
-
-    return toReturn;
-  }
-
-  private final Map<String, String> hardRebindAnswers;
-  private final JClassType holderType;
-  private final Map<String, String>[] orderedRebindAnswers;
-  private final JMethod permutationIdMethod;
   private final JProgram program;
+  private final List<GwtCreateMap> answers;
+  private final GwtCreateMap hardRebindAnswers;
+  private final JClassType holderType;
+  private final JMethod permutationIdMethod;
   private final Map<String, JMethod> rebindMethods = new HashMap<String, JMethod>();
 
-  private ResolveRebinds(JProgram program, Map<String, String>[] orderedRebindAnswers) {
+  private ResolveRebinds(JProgram program, List<GwtCreateMap> gwtCreateAnswers) {
     this.program = program;
-    this.orderedRebindAnswers = orderedRebindAnswers;
-
-    this.hardRebindAnswers = getHardRebindAnswers(orderedRebindAnswers);
+    this.answers = gwtCreateAnswers;
+    this.hardRebindAnswers = GwtCreateMap.getCommonAnswers(gwtCreateAnswers);
     this.holderType = (JClassType) program.getIndexedType("CollapsedPropertyHolder");
     this.permutationIdMethod = program.getIndexedMethod("CollapsedPropertyHolder.getPermutationId");
   }
@@ -170,21 +147,8 @@ public class ResolveRebinds {
     if (toReturn != null) {
       return toReturn;
     }
-
-    // Maps the result types to the various virtual permutation ids
-    Map<String, List<Integer>> resultsToPermutations = new LinkedHashMap<String, List<Integer>>();
-
-    for (int i = 0, j = orderedRebindAnswers.length; i < j; i++) {
-      Map<String, String> answerMap = orderedRebindAnswers[i];
-      String answerType = answerMap.get(requestType);
-      List<Integer> list = resultsToPermutations.get(answerType);
-      if (list == null) {
-        list = new ArrayList<Integer>();
-        resultsToPermutations.put(answerType, list);
-      }
-      // and map it to the permutation ID for a particular set of values
-      list.add(i);
-    }
+    Map<String, List<Integer>> resultsToPermutations =
+        GwtCreateMap.getAnswerPermutations(answers, requestType);
 
     // Pick the most-used result type to emit less code
     String mostUsed = null;

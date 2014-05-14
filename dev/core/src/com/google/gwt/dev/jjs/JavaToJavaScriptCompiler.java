@@ -50,8 +50,6 @@ import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.UnifiedAst.AST;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JBinaryOperation;
-import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
@@ -62,7 +60,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
@@ -243,7 +240,7 @@ public abstract class JavaToJavaScriptCompiler {
         printPermutationTrace(permutation);
 
         // (2) Transform unresolved Java AST to resolved Java AST
-        ResolveRebinds.exec(jprogram, permutation.getOrderedRebindAnswers());
+        ResolveRebinds.exec(jprogram, permutation.getGwtCreateAnswers());
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
         // This has to happen before optimizations because functions might
@@ -997,29 +994,6 @@ public abstract class JavaToJavaScriptCompiler {
         }
         precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
       }
-    }
-
-    /**
-     * Create a variable assignment to invoke a call to the statistics collector.
-     *
-     * <pre>
-     * Stats.isStatsAvailable() &&
-     * Stats.onModuleStart("mainClassName");
-     * </pre>
-     */
-    private JStatement makeStatsCalls(SourceInfo info, String mainClassName) {
-      JMethod isStatsAvailableMethod = jprogram.getIndexedMethod("Stats.isStatsAvailable");
-      JMethod onModuleStartMethod = jprogram.getIndexedMethod("Stats.onModuleStart");
-
-      JMethodCall availableCall = new JMethodCall(info, null, isStatsAvailableMethod);
-      JMethodCall onModuleStartCall = new JMethodCall(info, null, onModuleStartMethod);
-      onModuleStartCall.addArg(jprogram.getStringLiteral(info, mainClassName));
-
-      JBinaryOperation amp = new JBinaryOperation(
-          info, jprogram.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
-          onModuleStartCall);
-
-      return amp.makeStatement();
     }
 
     private void obfuscateEnums() {

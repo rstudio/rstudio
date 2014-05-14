@@ -248,9 +248,6 @@ public class LibraryCompiler {
       libraryPermutationResults.add(permutationResultHandle.newInstance(logger));
     }
 
-    File absPath = new File(compilerOptions.getWarDir(), module.getName());
-    absPath = absPath.getAbsoluteFile();
-
     try {
       Link.link(TreeLogger.NULL, module, compilerContext.getPublicResourceOracle(),
           generatedArtifacts, permutations, resultFiles, libraryPermutationResults, compilerOptions,

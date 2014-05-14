@@ -34,7 +34,13 @@ public interface RebindPermutationOracle {
   void clear();
 
   /**
-   * Always answers with at least one name.
+   * Finds the types that may be returned for a GWT.create() call, ordered by
+   * permutation id.
+   *
+   * <p>In production, always returns at least one name, and as a side-effect,
+   * populates the appropriate AnswerMaps in the Permutations.)
+   *
+   * @return an array of source type names.
    */
   String[] getAllPossibleRebindAnswers(TreeLogger logger, String sourceTypeName)
       throws UnableToCompleteException;

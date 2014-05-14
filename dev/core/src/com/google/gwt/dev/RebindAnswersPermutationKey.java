@@ -17,11 +17,9 @@ package com.google.gwt.dev;
 
 import com.google.gwt.dev.util.StringKey;
 
-import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * Creates a string representation of live rebound types to all possible
@@ -35,37 +33,16 @@ import java.util.TreeSet;
  * </pre>
  */
 class RebindAnswersPermutationKey extends StringKey {
-  private static String collapse(Permutation permutation,
-      SortedSet<String> liveRebindRequests) {
-    // Accumulates state
-    SortedMap<String, SortedSet<String>> answers = new TreeMap<String, SortedSet<String>>();
+  private static String collapse(Permutation permutation, Set<String> liveRebindRequests) {
 
-    // Iterate over each map of rebind answers
-    for (SortedMap<String, String> rebinds : permutation.getOrderedRebindAnswers()) {
-      for (Map.Entry<String, String> rebind : rebinds.entrySet()) {
-        if (!liveRebindRequests.contains(rebind.getKey())) {
-          // Ignore rebinds that aren't actually used
-          continue;
-        }
-
-        // Get-or-put
-        SortedSet<String> set = answers.get(rebind.getKey());
-        if (set == null) {
-          set = new TreeSet<String>();
-          answers.put(rebind.getKey(), set);
-        }
-
-        // Record rebind value
-        set.add(rebind.getValue());
-      }
-    }
+    SortedMap<String, SortedSet<String>> answers =
+        GwtCreateMap.getPossibleAnswers(permutation.getGwtCreateAnswers(), liveRebindRequests);
 
     // Create string
     return answers.toString();
   }
 
-  public RebindAnswersPermutationKey(Permutation permutation,
-      SortedSet<String> liveRebindRequests) {
+  public RebindAnswersPermutationKey(Permutation permutation, Set<String> liveRebindRequests) {
     super(collapse(permutation, liveRebindRequests));
   }
 }

@@ -2236,8 +2236,7 @@ public class GenerateJavaScriptAST {
 
       // Stub gwtOnLoad at top level so that HtmlUnit can find it.
       // var gwtOnLoad = typeof gwtOnLoad === 'undefined' ? null : gwtOnLoad;
-      JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
-      gwtOnLoadName.setObfuscatable(false);
+      JsName gwtOnLoadName = topScope.findExistingUnobfuscatableName("gwtOnLoad");
       JsVar gwtOnLoadNameVar = new JsVar(sourceInfo, gwtOnLoadName);
       gwtOnLoadNameVar.setInitExpr(new JsConditional(sourceInfo, new JsBinaryOperation(sourceInfo,
           JsBinaryOperator.REF_EQ, new JsPrefixOperation(

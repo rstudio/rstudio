@@ -328,7 +328,7 @@ public final class JsRootScope extends JsScope {
       "java", "Packages", "netscape", "sun", "JavaObject", "JavaClass", "JavaArray", "JavaMember",
 
       // GWT-defined identifiers
-      "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version", "$sessionId",
+      "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version", "$sessionId", "gwtOnLoad",
 
       // typeMarker 'tM' field will break JSO detection on window object if nullMethod is called 'tM'
       "tM",
