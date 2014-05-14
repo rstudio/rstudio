@@ -129,8 +129,6 @@ Error deployShinyApp(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
 } // anonymous namespace
 
 Error initialize()

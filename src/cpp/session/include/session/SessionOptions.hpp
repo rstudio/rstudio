@@ -286,6 +286,12 @@ public:
       return allowOverlay() || allowRpubsPublish_;
    }
 
+   bool allowRmdDeployment() const 
+   {
+      // ShinyApps.io doesn't support R Markdown deployment 
+      return false;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
