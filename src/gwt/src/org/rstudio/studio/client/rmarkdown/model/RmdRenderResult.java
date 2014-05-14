@@ -36,7 +36,7 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
         rpubs_published: false, 
         knitr_errors: [],
         is_shiny_document: true,
-        preview_side: doc.preview_slide,
+        preview_slide: doc.preview_slide,
         slide_navigation: doc.slide_navigation
      };
    }-*/;
