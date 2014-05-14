@@ -63,6 +63,9 @@ public class CoreSuite {
     suite.addTestSuite(StackTraceCreatorEmulTest.class);
     suite.addTestSuite(StackTraceCreatorTest.class);
 
+    // Uncomment to print native stack traces for different platforms
+    // suite.addTestSuite(com.google.gwt.core.client.impl.StackTraceGenerator.class);
+
     return suite;
   }
 }

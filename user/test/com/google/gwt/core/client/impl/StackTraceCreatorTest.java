@@ -20,6 +20,8 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import junit.framework.AssertionFailedError;
+
 /**
  * Tests {@link StackTraceCreator}.
  */
@@ -27,7 +29,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.core.StackTraceCreatorTest";
+    return "com.google.gwt.core.StackTraceNoEmul";
   }
 
   @DoNotRunWith(Platform.Devel)
@@ -48,7 +50,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testTrace()"),
     };
 
-    assertTrace(expected, t.getStackTrace(), 0);
+    assertTrace(expected, t, 0);
   }
 
   @DoNotRunWith(Platform.Devel)
@@ -81,7 +83,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
     };
 
     final String[] expected = isLegacyCollector() ? expectedLegacy : expectedModern;
-    assertTrace(expected, t.getStackTrace(), 0);
+    assertTrace(expected, t, 0);
   }
 
   @DoNotRunWith(Platform.Devel)
@@ -111,17 +113,22 @@ public class StackTraceCreatorTest extends GWTTestCase {
 
     final String[] expected = isLegacyCollector() ? expectedLegacy : expectedModern;
 
-    StackTraceElement[] trace = t.getStackTrace();
-
-    int offset = getTraceOffset(trace, expected[0]);
-    assertTrace(expected, trace, offset);
+    int offset = getTraceOffset(t.getStackTrace(), expected[0]);
+    assertTrace(expected, t, offset);
   }
 
-  private void assertTrace(final String[] expected, StackTraceElement[] actual, int offset) {
+  private void assertTrace(String[] expected, Throwable t, int offset) {
+    StackTraceElement[] trace = t.getStackTrace();
     for (int i = 0; i < expected.length; i++) {
-      StackTraceElement actualElement = actual[i + offset];
+      StackTraceElement actualElement = trace[i + offset];
       String methodName = actualElement == null ? "!MISSING!" : actualElement.getMethodName();
-      assertEquals("Incorrect frame at " + i, expected[i], methodName);
+      if (expected[i].equals(methodName)) {
+        continue;
+      }
+      AssertionFailedError e = new AssertionFailedError("Incorrect frame at " + i + " - "
+          + " Expected: " + expected[i] + " Actual: " + methodName);
+      e.initCause(t);
+      throw e;
     }
   }
 

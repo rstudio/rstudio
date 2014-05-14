@@ -297,14 +297,9 @@ public class StackTraceCreator {
         toReturn = toReturn.substring(3);
       }
 
-      // Strip square bracketed items from the end:
-      int index = toReturn.indexOf("[");
-      if (index != -1) {
-        toReturn = toReturn.substring(0, index).trim() +
-            toReturn.substring(toReturn.indexOf("]", index) + 1).trim();
-      }
+      toReturn = stripSquareBrackets(toReturn);
 
-      index = toReturn.indexOf("(");
+      int index = toReturn.indexOf("(");
       if (index == -1) {
         // No bracketed items found, try '@' (used by iOS).
         index = toReturn.indexOf("@");
@@ -330,6 +325,10 @@ public class StackTraceCreator {
       }
       return (toReturn.length() > 0 ? toReturn : ANONYMOUS) + "@@" + location;
     }
+
+    private native String stripSquareBrackets(String toReturn) /*-{
+      return toReturn.replace(/\[.*?\]/g,"")
+    }-*/;
 
     protected int replaceIfNoSourceMap(int line) {
          return line;

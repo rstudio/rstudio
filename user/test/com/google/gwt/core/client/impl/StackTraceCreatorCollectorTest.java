@@ -60,7 +60,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   }
 
   public void testFirefox14ExtractName() {
-    StackTraceCreator.CollectorMoz c = new StackTraceCreator.CollectorMoz();
+    CollectorMoz c = new CollectorMoz();
 
     assertEquals("anonymous", c.extractName("@file.js:1"));
     assertEquals("functionName", c.extractName("functionName@file.js:1"));
@@ -87,18 +87,30 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   // Asserts expected behavior but it is broken
   public void _disabled_testChrome_31_multiline() {
     StackTraceElement[] expected = new StackTraceElement[] {
-        createSTE("dumpException6", "http://www.example.com/test/ExceptionLab.html@20", 82),
-        createSTE("onclick", "http://www.example.com/test/ExceptionLab.html@122", 101),
+        createSTE("dumpException6", "http://www.example.com/test/ABCD.cache.js@20", 82),
+        createSTE("onclick", "http://www.example.com/test/ABCD.cache.js@122", 101),
     };
     assertStackTrace(StackTraceExamples.chrome_31_multiline(), new CollectorChrome(), expected);
+  }
+
+  public void testAndroid_gingerbread_broken() {
+    StackTraceElement[] expected = new StackTraceElement[] {
+        createSTE("Kj", "http://www.example.com/test/ABCD.cache.js@9", 300),
+        createSTE("$third", "http://www.example.com/test/ABCD.cache.js@10", 300),
+        createSTE("$second", "http://www.example.com/test/ABCD.cache.js@10", 200),
+        createSTE("$first", "http://www.example.com/test/ABCD.cache.js@10", 100),
+        createSTE("$entry0", "http://www.example.com/test/ABCD.cache.js@10", 50),
+        createSTE("anonymous", "http://www.example.com/test/ABCD.cache.js@10", 40),
+    };
+    assertStackTrace(StackTraceExamples.android_gingerbread(), new CollectorChrome(), expected);
   }
 
   // Asserts expected behavior but it is broken
   public void _disabled_testSafari_6() {
     StackTraceElement[] expected = new StackTraceElement[] {
-        createSTE("anonymous", "file:///Users/test/ExceptionLab.html", 48),
-        createSTE("dumpException3", "file:///Users/test/ExceptionLab.html", 52),
-        createSTE("onclick", "file:///Users/test/ExceptionLab.html", 82),
+        createSTE("anonymous", "http://www.example.com/test/ABCD.cache.js", 48),
+        createSTE("dumpException3", "http://www.example.com/test/ABCD.cache.js", 52),
+        createSTE("onclick", "http://www.example.com/test/ABCD.cache.js", 82),
         createSTE("anonymous", "Unknown", -1),
     };
     assertStackTrace(StackTraceExamples.safari_6(), new CollectorChromeNoSourceMap(), expected);
@@ -107,8 +119,8 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   // Asserts current broken behavior
   public void testSafari_6_broken() {
     StackTraceElement[] expected = new StackTraceElement[] {
-        createSTE("dumpException3", "file@52", -1),
-        createSTE("onclick", "file@82", -1),
+        createSTE("dumpException3", "http@52", -1),
+        createSTE("onclick", "http@82", -1),
         createSTE("anonymous", "Unknown@-1", -1),
     };
     assertStackTrace(StackTraceExamples.safari_6(), new CollectorChromeNoSourceMap(), expected);
@@ -151,8 +163,8 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("bar", "stacktrace.js", 13),
         createSTE("bar", "stacktrace.js", 16),
         createSTE("foo", "stacktrace.js", 20),
-        createSTE("", "stacktrace.js", 24),
-        createSTE("", "", -1),
+        createSTE("anonymous", "stacktrace.js", 24),
+        createSTE("anonymous", "stacktrace.js", -1),
     };
     assertStackTrace(StackTraceExamples.firefox_3_6(), new CollectorMoz(), expected);
   }
@@ -168,6 +180,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("foo", null, -1),
         createSTE("anonymous", null, -1),
         createSTE("anonymous", null, -1),
+        createSTE("anonymous", null, -1),
     };
     assertStackTrace(StackTraceExamples.firefox_3_6(), new CollectorMoz(), expected);
   }
@@ -175,11 +188,12 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   // Asserts expected behavior but it is broken
   public void _disabled_testFirefox_22() {
     StackTraceElement[] expected = new StackTraceElement[] {
-        createSTE("anonymous", "http://www.example.com/ExceptionLab.html", 4),
-        createSTE("createException", "http://www.example.com/ExceptionLab.html", 8),
-        createSTE("createException4", "http://www.example.com/ExceptionLab.html", 56),
-        createSTE("dumpException4", "http://www.example.com/ExceptionLab.html", 60),
-        createSTE("onclick", "http://www.example.com/ExceptionLab.html", 1),
+        createSTE("anonymous", "http://www.example.com/test/ABCD.cache.js", 4),
+        createSTE("createException", "http://www.example.com/test/ABCD.cache.js", 8),
+        createSTE("createException4", "http://www.example.com/test/ABCD.cache.js", 56),
+        createSTE("dumpException4", "http://www.example.com/test/ABCD.cache.js", 60),
+        createSTE("Ul", "http://www.example.com/test/ABCD.cache.js", 7),
+        createSTE("onclick", "http://www.example.com/test/ABCD.cache.js", 1),
         createSTE("anonymous", "Unknown", -1),
     };
     assertStackTrace(StackTraceExamples.firefox_22(), new CollectorMoz(), expected);
@@ -192,6 +206,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("createException", null, -1),
         createSTE("createException4", null, -1),
         createSTE("dumpException4", null, -1),
+        createSTE("Ul/<[\"a.b\"].xyz", null, -1),
         createSTE("onclick", null, -1),
         createSTE("anonymous", null, -1),
     };
@@ -202,9 +217,9 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   // TODO(goktug): IE10 actually uses default collector so we are manually generating the stack.
   public void _disabled_testIE_10() {
     StackTraceElement[] expected = new StackTraceElement[] {
-        createSTE("anonymous", "http://www.example.com/ExceptionLab.html@13", 48),
-        createSTE("dumpException4", "http://www.example.com/ExceptionLab.html@9", 46),
-        createSTE("onclick", "http://www.example.com/ExceptionLab.html@1", 82),
+        createSTE("anonymous", "http://www.example.com/test/ABCD.cache.js@13", 48),
+        createSTE("dumpException4", "http://www.example.com/test/ABCD.cache.js@9", 46),
+        createSTE("onclick", "http://www.example.com/test/ABCD.cache.js@1", 82),
     };
     assertStackTrace(StackTraceExamples.ie_10(), new CollectorMoz(), expected);
   }
