@@ -17,7 +17,10 @@ package org.rstudio.studio.client.shiny.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
@@ -28,6 +31,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
+import org.rstudio.studio.client.shiny.ShinyApps;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
 public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
@@ -55,6 +59,29 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
       popoutButton.setText("Open in Browser");
       toolbar.addLeftWidget(popoutButton);
 
+      deployButtonSeparator_ = toolbar.addLeftSeparator();
+      deployButton_ = new ToolbarButton("Deploy", 
+            commands.shinyAppsDeploy().getImageResource(), 
+            new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent evt)
+         {
+            if (appParams_ != null)
+            {
+               // we initiate deployment from a specific file; choose server.R
+               // (it's okay if it doesn't exist since we're just going to 
+               // deploy its parent)
+               String deployPath = appParams_.getPath();
+               if (!deployPath.endsWith("/"))
+                  deployPath += "/";
+               deployPath += "server.R";
+               ShinyApps.deployFromSatellite(deployPath);
+            }
+         }
+      });
+      toolbar.addLeftWidget(deployButton_);
+
       ToolbarButton refreshButton = 
             commands.reloadShinyApp().createToolbarButton();
       refreshButton.setLeftImage(commands.viewerRefresh().getImageResource());
@@ -63,10 +90,13 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    }
    
    @Override
-   public void showApp(ShinyApplicationParams params)
+   public void showApp(ShinyApplicationParams params, boolean showDeploy)
    {
       appParams_ = params;
 
+      deployButtonSeparator_.setVisible(showDeploy);
+      deployButton_.setVisible(showDeploy);
+         
       String url = params.getUrl();
       
       // ensure that we display a full url in server mode
@@ -111,4 +141,6 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
 
    private Label urlBox_;
    private ShinyApplicationParams appParams_;
+   private ToolbarButton deployButton_;
+   private Widget deployButtonSeparator_;
 }
