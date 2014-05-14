@@ -2624,10 +2624,12 @@ WaitForMethodFunction registerWaitForMethod(const std::string& methodName)
 
 namespace {
 
-int sessionExitFailure(const core::Error& cause,
+int sessionExitFailure(const core::Error& error,
                        const core::ErrorLocation& location)
 {
-   core::log::logError(cause, location);
+   if (!error.expected())
+      core::log::logError(error, location);
+
    return EXIT_FAILURE;
 }
 
