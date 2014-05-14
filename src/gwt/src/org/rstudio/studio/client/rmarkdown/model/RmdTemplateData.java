@@ -38,8 +38,7 @@ public class RmdTemplateData
             format_extension: "pdf",
             format_options: [ "toc", "toc_depth", "fig_width", "fig_height",
                               "fig_caption", "fig_crop", "number_sections", 
-                              "latex_engine", "keep_tex", "highlight", "natbib", 
-                              "biblatex" ],
+                              "latex_engine", "keep_tex", "highlight" ],
             format_notes: "PDF output requires TeX (MiKTeX on Windows, MacTeX 2013+ on OS X, TeX Live 2013+ on Linux)."
             },
             {
@@ -188,20 +187,6 @@ public class RmdTemplateData
             option_type: "file", 
             option_nullable: true,
             option_default: "null"
-            },
-            {
-            option_name: "natbib",
-            option_ui_name: "Use natbib for citations in LaTeX output", 
-            option_category: "Advanced",
-            option_type: "boolean", 
-            option_default: "false"
-            },
-            {
-            option_name: "biblatex",
-            option_ui_name: "Use biblatex for citations in LaTeX output", 
-            option_category: "Advanced",
-            option_type: "boolean", 
-            option_default: "false"
             },
          ]
          },
