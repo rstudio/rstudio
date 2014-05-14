@@ -19,8 +19,10 @@ import java.util.List;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -78,6 +80,8 @@ public class ShinyApps implements SessionInitHandler,
       events.addHandler(ShinyAppsActionEvent.TYPE, this); 
       events.addHandler(ShinyAppsDeployInitiatedEvent.TYPE, this); 
       events.addHandler(ShinyAppsDeploymentCompletedEvent.TYPE, this); 
+      
+      exportNativeCallbacks();
    }
    
    @Override
@@ -200,6 +204,12 @@ public class ShinyApps implements SessionInitHandler,
             new ShinyAppsAccountManagerDialog(server_, display_);
       dialog.showModal();
    }
+   
+   public static native void deployFromSatellite(String filename) /*-{
+      $wnd.opener.deployToShinyApps(filename);
+   }-*/;
+   
+   // Private methods ---------------------------------------------------------
    
    // Terminate, step 1: create a list of apps deployed from this directory
    private void terminateShinyApp(final String dir)
@@ -325,6 +335,28 @@ public class ShinyApps implements SessionInitHandler,
    {
       events_.fireEvent(new SendToConsoleEvent("shinyapps::terminateApp(\"" +
             appName + "\", \"" + accountName + "\")", true));
+   }
+   
+   private final native void exportNativeCallbacks() /*-{
+      var thiz = this;     
+      $wnd.deployToShinyApps = $entry(
+         function(file) {
+            thiz.@org.rstudio.studio.client.shiny.ShinyApps::deployToShinyApps(Ljava/lang/String;)(file);
+         }
+      ); 
+   }-*/;
+   
+   private void deployToShinyApps(String file)
+   {
+      // this can be invoked by a satellite, so bring the main frame to the
+      // front if we can
+      if (Desktop.isDesktop())
+         Desktop.getFrame().bringMainFrameToFront();
+      else
+         WindowEx.get().focus();
+      
+      events_.fireEvent(new ShinyAppsActionEvent(
+            ShinyAppsActionEvent.ACTION_TYPE_DEPLOY, file));
    }
    
    private final Commands commands_;

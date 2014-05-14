@@ -19,6 +19,8 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -47,6 +49,7 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.shiny.ShinyApps;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -73,7 +76,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    
    @Override
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
-                          boolean refresh)
+                          boolean enableDeploy, boolean refresh)
    {
       // remember target file (for invoking editor)
       targetFile_ = FileSystemItem.createFile(params.getTargetFile());
@@ -109,6 +112,13 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
       publishButtonSeparator_.setVisible(showPublish);
+      
+      // ShinyApps
+      boolean showDeploy = enableDeploy && 
+            (params.getResult().isHtml() || params.isShinyDocument());
+      deployButton_.setVisible(showDeploy);
+      deployButton_.setText("Deploy");
+      deployButtonSeparator_.setVisible(showDeploy);
       
       // find text box
       boolean showFind = params.getResult().isHtml() && 
@@ -179,6 +189,20 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       publishButtonSeparator_ = toolbar.addLeftSeparator();
       publishButton_ = commands.publishHTML().createToolbarButton(false);
       toolbar.addLeftWidget(publishButton_);
+
+      deployButtonSeparator_ = toolbar.addLeftSeparator();
+      deployButton_ = new ToolbarButton("Deploy", 
+            commands.shinyAppsDeploy().getImageResource(), 
+            new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent evt)
+         {
+            if (targetFile_ != null)
+              ShinyApps.deployFromSatellite(targetFile_.getPath());
+         }
+      });
+      toolbar.addLeftWidget(deployButton_);
 
       findTextBox_ = new FindTextBox("Find");
       findTextBox_.setIconVisible(true);
@@ -498,6 +522,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private Widget fileLabelSeparator_;
    private ToolbarButton publishButton_;
    private Widget publishButtonSeparator_;
+   private ToolbarButton deployButton_;
+   private Widget deployButtonSeparator_;
    private String title_;
    
    private FileTypeRegistry fileTypeRegistry_;

@@ -51,7 +51,7 @@ public class RmdOutputPresenter implements
                                     SlideNavigationPresenter.Display
    {
       void showOutput(RmdPreviewParams params, boolean showPublish, 
-                      boolean refresh);
+                      boolean showDeploy, boolean refresh);
       int getScrollPosition();
       void refresh();
       String getTitle();
@@ -191,7 +191,7 @@ public class RmdOutputPresenter implements
             params_.getResult().equals(params.getResult());
       params_ = params;
       view_.showOutput(params, session_.getSessionInfo().getAllowRpubsPublish(), 
-                       refresh);
+                       session_.getSessionInfo().allowRmdDeployment(), refresh);
    }
    
    private native void initializeEvents() /*-{  
