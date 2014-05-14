@@ -18,6 +18,7 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.impl.UrlResource;
 import com.google.gwt.dev.util.Util;
@@ -158,8 +159,10 @@ public class ModuleDefLoader {
         return moduleDef;
       }
       ModuleDefLoader loader = new ModuleDefLoader(compilerContext, resources);
-      boolean mergePathPrefixes = !(compilerContext.getOptions().warnMissingDeps()
-          || compilerContext.getOptions().warnOverlappingSource());
+      PrecompileTaskOptions options = compilerContext.getOptions();
+      boolean mergePathPrefixes = !(options.warnMissingDeps()
+          || compilerContext.getOptions().warnOverlappingSource()
+          || compilerContext.getOptions().getMissingDepsFile() != null);
       ModuleDef module = ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources,
           compilerContext.shouldCompileMonolithic(), mergePathPrefixes);
 
