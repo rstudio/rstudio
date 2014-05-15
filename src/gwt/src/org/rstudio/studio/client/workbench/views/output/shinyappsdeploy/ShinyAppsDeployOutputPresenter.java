@@ -40,7 +40,7 @@ public class ShinyAppsDeployOutputPresenter extends BusyPresenter
                                    GlobalDisplay globalDisplay,
                                    EventBus events)
    {
-      super(outputFactory.create("Deploy Shiny", ""));
+      super(outputFactory.create("Deploy", ""));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       view_.setCanStop(false);
