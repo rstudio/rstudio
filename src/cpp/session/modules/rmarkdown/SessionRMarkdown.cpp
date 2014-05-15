@@ -35,7 +35,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
-#include <Session/SessionAsyncRProcess.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 
 #include "RMarkdownInstall.hpp"
 #include "RMarkdownPresentation.hpp"
