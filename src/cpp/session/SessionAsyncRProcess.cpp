@@ -39,7 +39,7 @@ void AsyncRProcess::start(const char* rCommand,
    if (error)
    {
       LOG_ERROR(error);
-      onCompleted(0);
+      onCompleted(EXIT_FAILURE);
       return;
    }
 
@@ -53,6 +53,7 @@ void AsyncRProcess::start(const char* rCommand,
    // options
    core::system::ProcessOptions options;
    options.terminateChildren = true;
+   options.redirectStdErrToStdOut = redirectStdErrToStdOut();
 
    // if a working directory was specified, use it
    if (!workingDir.empty())
@@ -92,7 +93,7 @@ void AsyncRProcess::start(const char* rCommand,
    if (error)
    {
       LOG_ERROR(error);
-      onCompleted(0);
+      onCompleted(EXIT_FAILURE);
 }
 else
 {
@@ -134,6 +135,11 @@ void AsyncRProcess::terminate()
 void AsyncRProcess::markCompleted() 
 {
    isRunning_ = false;
+}
+
+bool AsyncRProcess::redirectStdErrToStdOut()
+{
+   return false;
 }
 
 AsyncRProcess::~AsyncRProcess()

@@ -394,6 +394,11 @@ private:
                                 !isNotebook());
    }
 
+   bool redirectStdErrToStdOut()
+   {
+      return true;
+   }
+
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
    {
       json::Object dataJson;
