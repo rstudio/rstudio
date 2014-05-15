@@ -39,14 +39,14 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 
 
-public class CompilePdfOutputPresenter extends BasePresenter
+public class CompilePdfOutputPresenter extends BusyPresenter
    implements CompilePdfEvent.Handler,
               CompilePdfStartedEvent.Handler,
               CompilePdfOutputEvent.Handler, 
@@ -193,6 +193,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
       view_.compileCompleted();
+      setIsBusy(false);
       
       if (event.getResult().getSucceeded() && 
           switchToConsoleOnSuccessfulCompile_)
@@ -242,6 +243,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
                @Override
                protected void onSuccess(Boolean started)
                {
+                  setIsBusy(started);
                }
          });
    }
@@ -276,6 +278,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
             {
                if (onTerminated != null)
                   onTerminated.execute(); 
+               setIsBusy(false);
             }
             else
             {

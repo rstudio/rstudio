@@ -1,6 +1,5 @@
-
 /*
- * RenderRmdOutputTab.java
+ * ShinyAppsDeployOutputTab.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -14,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.output.renderrmd;
+package org.rstudio.studio.client.workbench.views.output.shinyappsdeploy;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -22,23 +21,24 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
-import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
-import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
-public class RenderRmdOutputTab 
-   extends DelayLoadWorkbenchTab<RenderRmdOutputPresenter> 
+public class ShinyAppsDeployOutputTab 
+   extends DelayLoadWorkbenchTab<ShinyAppsDeployOutputPresenter>
    implements ProvidesBusy
 {
    public abstract static class Shim extends
-                DelayLoadTabShim<RenderRmdOutputPresenter, RenderRmdOutputTab>
-      implements RmdRenderStartedEvent.Handler,
-                 RmdRenderOutputEvent.Handler,
-                 RmdRenderCompletedEvent.Handler,
+                DelayLoadTabShim<ShinyAppsDeployOutputPresenter, 
+                                 ShinyAppsDeployOutputTab>
+      implements ShinyAppsDeploymentStartedEvent.Handler,
+                 ShinyAppsDeploymentOutputEvent.Handler,
+                 ShinyAppsDeploymentCompletedEvent.Handler, 
                  RestartStatusEvent.Handler,
                  ProvidesBusy
    {
@@ -47,17 +47,16 @@ public class RenderRmdOutputTab
    }
 
    @Inject
-   public RenderRmdOutputTab(Shim shim,
+   public ShinyAppsDeployOutputTab(Shim shim,
                              EventBus events,
                              final Session session)
    {
-      super("R Markdown", shim);
+      super("Deploy Shiny", shim);
       shim_ = shim;
 
-      events.addHandler(RmdRenderStartedEvent.TYPE, shim);
-      events.addHandler(RmdRenderOutputEvent.TYPE, shim);
-      events.addHandler(RmdRenderCompletedEvent.TYPE, shim);
-      events.addHandler(RestartStatusEvent.TYPE, shim);
+      events.addHandler(ShinyAppsDeploymentStartedEvent.TYPE, shim);
+      events.addHandler(ShinyAppsDeploymentOutputEvent.TYPE, shim);
+      events.addHandler(ShinyAppsDeploymentCompletedEvent.TYPE, shim);
    }
 
    @Override
@@ -77,6 +76,6 @@ public class RenderRmdOutputTab
    {
       shim_.addBusyHandler(handler);
    }
-   
+
    private Shim shim_;
 }

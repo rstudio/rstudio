@@ -17,22 +17,25 @@ package org.rstudio.studio.client.workbench.views.output.compilepdf;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
+import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 
-public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputPresenter>
+public class CompilePdfOutputTab 
+   extends DelayLoadWorkbenchTab<CompilePdfOutputPresenter>
+   implements ProvidesBusy
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<CompilePdfOutputPresenter, CompilePdfOutputTab>
@@ -40,7 +43,8 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
                  CompilePdfStartedEvent.Handler,
                  CompilePdfOutputEvent.Handler, 
                  CompilePdfErrorsEvent.Handler,
-                 CompilePdfCompletedEvent.Handler
+                 CompilePdfCompletedEvent.Handler,
+                 ProvidesBusy
    {
       abstract void initialize(CompilePdfState compilePdfState);
       abstract void confirmClose(Command onConfirmed);
@@ -84,6 +88,11 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
       shim_.confirmClose(onConfirmed);
    }
    
+   @Override
+   public void addBusyHandler(BusyHandler handler)
+   {
+      shim_.addBusyHandler(handler);
+   }
    
    private Shim shim_;
   

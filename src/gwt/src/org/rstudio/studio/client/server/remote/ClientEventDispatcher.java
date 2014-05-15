@@ -61,8 +61,11 @@ import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
@@ -569,8 +572,18 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.RmdShinyDocStarted))
          {
-            RmdShinyDocStartedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RmdShinyDocStartedEvent(data));
+            RmdShinyDocInfo docInfo = event.getData();
+            eventBus_.fireEvent(new RmdShinyDocStartedEvent(docInfo));
+         }
+         else if (type.equals(ClientEvent.ShinyAppsDeploymentOutput))
+         {
+            CompileOutput output = event.getData();
+            eventBus_.fireEvent(new ShinyAppsDeploymentOutputEvent(output));
+         }
+         else if (type.equals(ClientEvent.ShinyAppsDeploymentCompleted))
+         {
+            String url = event.getData();
+            eventBus_.fireEvent(new ShinyAppsDeploymentCompletedEvent(url));
          }
          else
          {

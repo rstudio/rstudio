@@ -24,24 +24,20 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    {
    }
    
-   public static native final RmdRenderResult createFromShinyUrl(String file,
-                                                          String shinyUrl) /*-{
+   public static native final RmdRenderResult createFromShinyDoc(
+         RmdShinyDocInfo doc) /*-{
      return {
         succeeded: true,
-        target_file: file,
+        target_file: doc.target_file,
         target_encoding: "UTF-8",
         output_file: "",
-        output_url: shinyUrl, 
-        output_format: null, 
+        output_url: doc.url, 
+        output_format: doc.output_format, 
         rpubs_published: false, 
         knitr_errors: [],
         is_shiny_document: true,
-        preview_side: -1,
-        slide_navigation: null,
-        output_format: {
-           format_name: "html_document", 
-           self_contained: false
-        }
+        preview_slide: doc.preview_slide,
+        slide_navigation: doc.slide_navigation
      };
    }-*/;
   

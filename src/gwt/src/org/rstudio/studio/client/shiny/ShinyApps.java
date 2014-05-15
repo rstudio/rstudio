@@ -19,8 +19,10 @@ import java.util.List;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -29,6 +31,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
+import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDirectoryState;
@@ -49,7 +53,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class ShinyApps implements SessionInitHandler, 
                                   ShinyAppsActionEvent.Handler,
-                                  ShinyAppsDeployInitiatedEvent.Handler
+                                  ShinyAppsDeployInitiatedEvent.Handler,
+                                  ShinyAppsDeploymentCompletedEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, ShinyApps> {}
@@ -61,6 +66,7 @@ public class ShinyApps implements SessionInitHandler,
                     GlobalDisplay display, 
                     Binder binder, 
                     ShinyAppsServerOperations server)
+                    
    {
       commands_ = commands;
       display_ = display;
@@ -73,6 +79,9 @@ public class ShinyApps implements SessionInitHandler,
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(ShinyAppsActionEvent.TYPE, this); 
       events.addHandler(ShinyAppsDeployInitiatedEvent.TYPE, this); 
+      events.addHandler(ShinyAppsDeploymentCompletedEvent.TYPE, this); 
+      
+      exportNativeCallbacks();
    }
    
    @Override
@@ -122,15 +131,11 @@ public class ShinyApps implements SessionInitHandler,
    {
       if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_DEPLOY)
       {
-         String dir = FilePathUtils.dirFromFile(event.getPath());
+         final String dir = FilePathUtils.dirFromFile(event.getPath());
          ShinyAppsDeploymentRecord record = dirState_.getLastDeployment(dir);
-         String lastAccount = null;
-         String lastAppName = null;
-         if (record != null)
-         {
-            lastAccount = record.getAccount();
-            lastAppName = record.getName();
-         }
+         final String lastAccount = record == null ? null : record.getAccount();
+         final String lastAppName = record == null ? null : record.getName();
+
          ShinyAppsDeployDialog dialog = 
                new ShinyAppsDeployDialog(
                          server_, display_, events_, 
@@ -144,10 +149,52 @@ public class ShinyApps implements SessionInitHandler,
    }
    
    @Override
-   public void onShinyAppsDeployInitiated(ShinyAppsDeployInitiatedEvent event)
+   public void onShinyAppsDeployInitiated(
+         final ShinyAppsDeployInitiatedEvent event)
    {
-      dirState_.addDeployment(event.getPath(), event.getRecord());
-      dirStateDirty_ = true;
+      server_.deployShinyApp(event.getPath(), 
+                             event.getRecord().getAccount(), 
+                             event.getRecord().getName(), 
+      new ServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean status)
+         {
+            if (status)
+            {
+               dirState_.addDeployment(event.getPath(), event.getRecord());
+               dirStateDirty_ = true;
+               launchBrowser_ = event.getLaunchBrowser();
+               events_.fireEvent(new ShinyAppsDeploymentStartedEvent(
+                     event.getPath()));
+            }
+            else
+            {
+               display_.showErrorMessage("Deployment In Progress", 
+                     "Another deployment is currently in progress; only one " + 
+                     "deployment can be performed at a time.");
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Deploying Application", 
+                  "Could not deploy application '" + 
+                  event.getRecord().getName() + 
+                  "': " + error.getMessage());
+         }
+      });
+   }
+
+   @Override
+   public void onShinyAppsDeploymentCompleted(
+         ShinyAppsDeploymentCompletedEvent event)
+   {
+      if (launchBrowser_ && event.succeeded())
+      {
+         display_.openWindow(event.getUrl());
+      }
    }
 
    @Handler
@@ -157,6 +204,12 @@ public class ShinyApps implements SessionInitHandler,
             new ShinyAppsAccountManagerDialog(server_, display_);
       dialog.showModal();
    }
+   
+   public static native void deployFromSatellite(String filename) /*-{
+      $wnd.opener.deployToShinyApps(filename);
+   }-*/;
+   
+   // Private methods ---------------------------------------------------------
    
    // Terminate, step 1: create a list of apps deployed from this directory
    private void terminateShinyApp(final String dir)
@@ -284,11 +337,34 @@ public class ShinyApps implements SessionInitHandler,
             appName + "\", \"" + accountName + "\")", true));
    }
    
+   private final native void exportNativeCallbacks() /*-{
+      var thiz = this;     
+      $wnd.deployToShinyApps = $entry(
+         function(file) {
+            thiz.@org.rstudio.studio.client.shiny.ShinyApps::deployToShinyApps(Ljava/lang/String;)(file);
+         }
+      ); 
+   }-*/;
+   
+   private void deployToShinyApps(String file)
+   {
+      // this can be invoked by a satellite, so bring the main frame to the
+      // front if we can
+      if (Desktop.isDesktop())
+         Desktop.getFrame().bringMainFrameToFront();
+      else
+         WindowEx.get().focus();
+      
+      events_.fireEvent(new ShinyAppsActionEvent(
+            ShinyAppsActionEvent.ACTION_TYPE_DEPLOY, file));
+   }
+   
    private final Commands commands_;
    private final GlobalDisplay display_;
    private final Session session_;
    private final ShinyAppsServerOperations server_;
    private final EventBus events_;
+   private boolean launchBrowser_ = false;
    
    private ShinyAppsDirectoryState dirState_;
    private boolean dirStateDirty_ = false;

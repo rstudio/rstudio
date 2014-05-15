@@ -38,4 +38,5 @@ public interface CompileOutputPaneDisplay extends WorkbenchView, HasEnsureHidden
    boolean isEffectivelyVisible();
    void scrollToBottom();
    void setHasLogs(boolean logs);
+   void setCanStop(boolean canStop);
 }

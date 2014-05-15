@@ -35,6 +35,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <Session/SessionAsyncRProcess.hpp>
 
 #include "RMarkdownInstall.hpp"
 #include "RMarkdownPresentation.hpp"
@@ -66,8 +67,7 @@ enum RenderTerminateType
    renderTerminateQuiet
 };
 
-class RenderRmd : boost::noncopyable,
-                  public boost::enable_shared_from_this<RenderRmd>
+class RenderRmd : public async_r::AsyncRProcess
 {
 public:
    static boost::shared_ptr<RenderRmd> create(const FilePath& targetFile,
@@ -88,13 +88,8 @@ public:
 
    void terminateProcess(RenderTerminateType terminateType)
    {
-      terminationRequested_ = true;
       terminateType_ = terminateType;
-   }
-
-   bool isRunning()
-   {
-      return isRunning_;
+      async_r::AsyncRProcess::terminate();
    }
 
    FilePath outputFile()
@@ -102,16 +97,28 @@ public:
       return outputFile_;
    }
 
-   bool hasOutput()
+   void getPresentationDetails(int sourceLine, json::Object* jsonObject)
    {
-      return !isRunning_ && outputFile_.exists();
+      // default to no slide info
+      (*jsonObject)["preview_slide"] = -1;
+      (*jsonObject)["slide_navigation"] = json::Value();
+
+      // only allow extended results if we have a source file to
+      // navigate back to (otherwise you could navigate to the temp
+      // file used for preview)
+      if (sourceNavigation_)
+      {
+         rmarkdown::presentation::ammendResults(
+                  outputFormat_["format_name"].get_str(),
+                  targetFile_,
+                  sourceLine,
+                  jsonObject);
+      }
    }
 
 private:
    RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation,
              bool asShiny) :
-      isRunning_(false),
-      terminationRequested_(false),
       terminateType_(renderTerminateAbnormal),
       isShiny_(asShiny),
       hasShinyContent_(false),
@@ -124,40 +131,16 @@ private:
               const std::string& encoding,
               bool asTempfile)
    {
+      Error error;
       json::Object dataJson;
       getOutputFormat(targetFile_.absolutePath(), encoding, &outputFormat_);
       dataJson["output_format"] = outputFormat_;
       dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
       ClientEvent event(client_events::kRmdRenderStarted, dataJson);
       module_context::enqueClientEvent(event);
-      isRunning_ = true;
 
-      performRender(format, encoding, asTempfile);
-   }
-
-   void performRender(const std::string& format,
-                      const std::string& encoding,
-                      bool asTempfile)
-   {
       // save encoding
       encoding_ = encoding;
-
-      // R binary
-      FilePath rProgramPath;
-      Error error = module_context::rScriptPath(&rProgramPath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         terminateWithError(error);
-         return;
-      }
-
-      // args
-      std::vector<std::string> args;
-      args.push_back("--slave");
-      args.push_back("--no-save");
-      args.push_back("--no-restore");
-      args.push_back("-e");
 
       std::string renderFunc;
       if (isShiny_)
@@ -239,59 +222,25 @@ private:
                                    extraParams %
                                    renderOptions);
 
-
-      args.push_back(cmd);
-
-      // options
-      core::system::ProcessOptions options;
-      options.terminateChildren = true;
-      options.workingDir = targetFile_.parent();
-
-      // buffer the output so we can inspect it for the completed marker
-      boost::shared_ptr<std::string> pAllOutput = boost::make_shared<std::string>();
-
-      core::system::ProcessCallbacks cb;
-      using namespace module_context;
-      cb.onContinue = boost::bind(&RenderRmd::onRenderContinue,
-                                  RenderRmd::shared_from_this());
-      cb.onStdout = boost::bind(&RenderRmd::onRenderOutput,
-                                RenderRmd::shared_from_this(),
-                                kCompileOutputNormal,
-                                _2,
-                                pAllOutput);
-      cb.onStderr = boost::bind(&RenderRmd::onRenderOutput,
-                                RenderRmd::shared_from_this(),
-                                kCompileOutputError,
-                                _2,
-                                pAllOutput);
-      cb.onExit =  boost::bind(&RenderRmd::onRenderCompleted,
-                                RenderRmd::shared_from_this(),
-                               _1,
-                               encoding,
-                               pAllOutput);
-
-      error = module_context::processSupervisor().runProgram(
-               rProgramPath.absolutePath(),
-               args,
-               options,
-               cb);
-      if (error)
-      {
-         LOG_ERROR(error);
-         terminateWithError(error);
-      }
+      // start the async R process with the render command
+      allOutput_.clear();
+      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent());
    }
 
-   bool onRenderContinue()
+   void onStdout(const std::string& output)
    {
-      return !terminationRequested_;
+      onRenderOutput(module_context::kCompileOutputNormal, output);
    }
 
-   void onRenderOutput(int type, const std::string& output,
-                       boost::shared_ptr<std::string> pAllOutput)
+   void onStderr(const std::string& output)
+   {
+      onRenderOutput(module_context::kCompileOutputError, output);
+   }
+
+   void onRenderOutput(int type, const std::string& output)
    {
       // buffer output
-      pAllOutput->append(output);
+      allOutput_.append(output);
 
       enqueRenderOutput(type, output);
 
@@ -310,6 +259,7 @@ private:
                json::Object startedJson;
                startedJson["target_file"] =
                      module_context::createAliasedPath(targetFile_);
+               startedJson["output_format"] = outputFormat_;
                std::string url(module_context::mapUrlPorts(matches[1].str()));
 
                // add a / to the URL if it doesn't have one already
@@ -318,14 +268,7 @@ private:
                if (url[url.length() - 1] != '/')
                   url += "/";
 
-               if (sourceNavigation_)
-               {
-                  rmarkdown::presentation::ammendResults(
-                           outputFormat_["format_name"].get_str(),
-                           targetFile_,
-                           sourceLine_,
-                           &startedJson);
-               }
+               getPresentationDetails(sourceLine_, &startedJson);
 
                startedJson["url"] = url + targetFile_.filename();
                module_context::enqueClientEvent(ClientEvent(
@@ -345,16 +288,14 @@ private:
       }
    }
 
-   void onRenderCompleted(int exitStatus,
-                          const std::string& encoding,
-                          boost::shared_ptr<std::string> pAllOutput)
+   void onCompleted(int exitStatus)
    {
       // check each line of the emitted output; if it starts with a token
       // indicating rendering is complete, store the remainder of the emitted
       // line as the file we rendered
       std::string completeMarker("Output created: ");
       std::string renderLine;
-      std::stringstream outputStream(*pAllOutput);
+      std::stringstream outputStream(allOutput_);
       while (std::getline(outputStream, renderLine))
       {
          if (boost::algorithm::starts_with(renderLine, completeMarker))
@@ -396,7 +337,7 @@ private:
 
    void terminate(bool succeeded)
    {
-      isRunning_ = false;
+      markCompleted();
 
       // if a quiet terminate was requested, don't queue any client events
       if (terminateType_ == renderTerminateQuiet)
@@ -435,10 +376,6 @@ private:
       resultJson["is_shiny_document"] = isShiny_;
       resultJson["has_shiny_content"] = hasShinyContent_;
 
-      // default to no slide info
-      resultJson["preview_slide"] = -1;
-      resultJson["slide_navigation"] = json::Value();
-
       // for HTML documents, check to see whether they've been published
       if (outputFile_.extensionLowerCase() == ".html")
       {
@@ -453,17 +390,8 @@ private:
       // allow for format specific additions to the result json
       std::string formatName =  outputFormat_["format_name"].get_str();
 
-      // only allow extended results if we have a source file to
-      // navigate back to (otherwise you could navigate to the temp
-      // file used for preview)
-      if (sourceNavigation_)
-      {
-         rmarkdown::presentation::ammendResults(
-                                     formatName,
-                                     targetFile_,
-                                     sourceLine_,
-                                     &resultJson);
-      }
+      // populate slide information if available
+      getPresentationDetails(sourceLine_, &resultJson);
 
       // if we failed then we may want to enque additional diagnostics
       if (!succeeded)
@@ -574,8 +502,6 @@ private:
       module_context::enqueClientEvent(event);
    }
 
-   bool isRunning_;
-   bool terminationRequested_;
    RenderTerminateType terminateType_;
    bool isShiny_;
    bool hasShinyContent_;
@@ -586,6 +512,7 @@ private:
    bool sourceNavigation_;
    json::Object outputFormat_;
    std::vector<build::CompileError> knitrErrors_;
+   std::string allOutput_;
 };
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
@@ -595,89 +522,18 @@ boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 // generally be fast (a few milliseconds); we use this asynchronous
 // implementation in case the file system is slow (e.g. slow or remote disk)
 // or there are many thousands of packages (e.g. all of CRAN).
-class DiscoverTemplates :
-      boost::noncopyable,
-      public boost::enable_shared_from_this<DiscoverTemplates>
+class DiscoverTemplates : public async_r::AsyncRProcess
 {
 public:
-
    static boost::shared_ptr<DiscoverTemplates> create()
    {
       boost::shared_ptr<DiscoverTemplates> pDiscover(new DiscoverTemplates());
-      pDiscover->start();
+      pDiscover->start("rmarkdown:::list_template_dirs()", FilePath());
       return pDiscover;
    }
 
-   bool isRunning()
-   {
-      return isRunning_;
-   }
-
 private:
-
-   DiscoverTemplates() : isRunning_(false)
-   { }
-
-   void start()
-   {
-      // R binary
-      FilePath rProgramPath;
-      Error error = module_context::rScriptPath(&rProgramPath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         onCompleted(0);
-         return;
-      }
-
-      // args
-      std::vector<std::string> args;
-      args.push_back("--slave");
-      args.push_back("--vanilla");
-      args.push_back("-e");
-      args.push_back("rmarkdown:::list_template_dirs()");
-
-      // options
-      core::system::ProcessOptions options;
-      options.terminateChildren = true;
-
-      // we want to discover packages in the libraries visible to this process,
-      // so forward the R_LIBS environment variable to the child process
-      core::system::Options childEnv;
-      core::system::environment(&childEnv);
-      std::string libPaths = module_context::libPathsString();
-      if (!libPaths.empty())
-      {
-         core::system::setenv(&childEnv, "R_LIBS", libPaths);
-         options.environment = childEnv;
-      }
-
-      core::system::ProcessCallbacks cb;
-      using namespace module_context;
-      cb.onStdout = boost::bind(&DiscoverTemplates::onOutput,
-                                DiscoverTemplates::shared_from_this(),
-                                _2);
-      cb.onExit =  boost::bind(&DiscoverTemplates::onCompleted,
-                                DiscoverTemplates::shared_from_this(),
-                                _1);
-
-      error = module_context::processSupervisor().runProgram(
-               rProgramPath.absolutePath(),
-               args,
-               options,
-               cb);
-      if (error)
-      {
-         LOG_ERROR(error);
-         onCompleted(0);
-      }
-      else
-      {
-         isRunning_ = true;
-      }
-   }
-
-   void onOutput(const std::string& output)
+   void onStdout(const std::string& output)
    {
       r::sexp::Protect protect;
       Error error;
@@ -746,12 +602,9 @@ private:
 
    void onCompleted(int exitStatus)
    {
-      isRunning_ = false;
       module_context::enqueClientEvent(
                ClientEvent(client_events::kRmdTemplateDiscoveryCompleted));
    }
-
-   bool isRunning_;
 };
 
 boost::shared_ptr<DiscoverTemplates> s_pTemplateDiscovery_;

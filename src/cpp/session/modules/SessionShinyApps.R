@@ -20,11 +20,21 @@
 
    # take apart the frame and compose a list of scalars from each row
    for (i in seq_len(nrow(frame))) {
-      row <- lapply(cols, function(col) { .rs.scalar(unlist(frame[i,col])) })
+      row <- lapply(cols, 
+                    function(col) { if (is.null(frame[i,col])) NULL 
+                                    else .rs.scalar(unlist(frame[i,col])) })
       names(row) <- cols
       ret[[i]] <- row
    }
    return(ret)
+})
+
+.rs.addJsonRpcHandler("get_deployment_files", function(dir) {
+   # get a list of all the files to be published
+   files <- list.files(dir, recursive = TRUE, all.files = FALSE, 
+                       include.dirs = FALSE)
+   # hide the shinyapps folder
+   files[substr(files, 1, nchar("shinyapps/")) != "shinyapps/"] 
 })
 
 .rs.addJsonRpcHandler("get_shinyapps_account_list", function() {

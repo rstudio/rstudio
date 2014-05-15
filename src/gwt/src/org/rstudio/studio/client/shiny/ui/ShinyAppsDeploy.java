@@ -34,7 +34,9 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -59,8 +61,8 @@ public class ShinyAppsDeploy extends Composite
    
    public interface DeployResources extends ClientBundle
    {
-      @Source("DeployArrow.png")
-      ImageResource deployArrow();
+      @Source("DeployDialogIllustration.png")
+      ImageResource deployIllustration();
    }
 
    public ShinyAppsDeploy()
@@ -80,7 +82,7 @@ public class ShinyAppsDeploy extends Composite
    
    public void setSourceDir(String dir)
    {
-      sourceDir.setText(dir);
+      deployLabel_.setText(dir);
       appName.setText(FilePathUtils.friendlyFileName(dir));
    }
    
@@ -132,6 +134,15 @@ public class ShinyAppsDeploy extends Composite
       }
       appList.addItem("Create New");
       appList.setSelectedIndex(selectedIdx);
+   }
+   
+   public void setFileList(JsArrayString files)
+   {
+      for (int i = 0; i < files.length(); i++)
+      {
+         Label fileLabel = new Label(files.get(i));
+         fileListPanel_.add(fileLabel);
+      }
    }
    
    public String getNewAppName()
@@ -208,15 +219,16 @@ public class ShinyAppsDeploy extends Composite
    }
 
    @UiField Anchor urlAnchor;
-   @UiField Label sourceDir;
    @UiField Label nameLabel;
-   @UiField Label statusLabel;
+   @UiField InlineLabel statusLabel;
    @UiField ListBox accountList;
    @UiField ListBox appList;
    @UiField TextBox appName;
    @UiField HTMLPanel appInfoPanel;
    @UiField HTMLPanel nameValidatePanel;
    @UiField DeployStyle style;
+   @UiField FlowPanel fileListPanel_;
+   @UiField InlineLabel deployLabel_;
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;

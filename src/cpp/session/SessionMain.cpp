@@ -617,8 +617,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
            options.showUserIdentity();
 
    // light up shinyapps-related UI features if shinyapps is installed
-   sessionInfo["shinyapps_installed"] =
-         module_context::isPackageVersionInstalled("shinyapps", "0.2.1");
+   bool shinyAppsInstalled = 
+      module_context::isPackageVersionInstalled("shinyapps", "0.2.1"); 
+   sessionInfo["shinyapps_installed"] = shinyAppsInstalled;
+   sessionInfo["allow_rmd_deployment"] = shinyAppsInstalled &&
+      options.allowRmdDeployment();
 
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();

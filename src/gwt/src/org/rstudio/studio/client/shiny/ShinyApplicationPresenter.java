@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -42,7 +43,7 @@ public class ShinyApplicationPresenter implements
       String getDocumentTitle();
       String getUrl();
       String getAbsoluteUrl();
-      void showApp(ShinyApplicationParams params);
+      void showApp(ShinyApplicationParams params, boolean showDeploy);
       void reloadApp();
    }
    
@@ -52,13 +53,15 @@ public class ShinyApplicationPresenter implements
                                Binder binder,
                                final Commands commands,
                                EventBus eventBus,
-                               Satellite satellite)
+                               Satellite satellite,
+                               Session session)
    {
       view_ = view;
       satellite_ = satellite;
       events_ = eventBus;
       globalDisplay_ = globalDisplay;
       disconnect_ = new ShinyDisconnectNotifier(this);
+      session_ = session;
       
       binder.bind(commands, this);  
       
@@ -108,7 +111,7 @@ public class ShinyApplicationPresenter implements
    public void loadApp(ShinyApplicationParams params) 
    {
       params_ = params;
-      view_.showApp(params);
+      view_.showApp(params, session_.getSessionInfo().getShinyappsInstalled());
    }
    
    private native void initializeEvents() /*-{  
@@ -151,6 +154,7 @@ public class ShinyApplicationPresenter implements
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
    private final ShinyDisconnectNotifier disconnect_;
+   private final Session session_;
    
    private ShinyApplicationParams params_;
    private boolean appStopped_ = false;

@@ -44,6 +44,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
+import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -134,8 +135,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       final RmdRenderResult result = event.getResult();
       if (result.isShinyDocument())
       {
-         currentShinyFile_ = null;
-         currentShinyUrl_ = null;
+         shinyDoc_ = null;
          return;
       }
       if (!result.getSucceeded())
@@ -175,13 +175,9 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onRmdShinyDocStarted(RmdShinyDocStartedEvent event)
    {
-      currentShinyFile_ = event.getFile();
-      currentShinyUrl_ = event.getUrl();
+      shinyDoc_ = event.getDocInfo();
       RmdRenderResult result = 
-            RmdRenderResult.createFromShinyUrl(event.getFile(), 
-                                               event.getUrl());
-
-      result.copySlideInfo(event.getSlideInfo());
+            RmdRenderResult.createFromShinyDoc(shinyDoc_);
       displayHTMLRenderResult(result);
    }
    
@@ -202,12 +198,25 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          }
       };
 
-      // for Shiny documents it's technically possible to trigger a re-render
-      // just by reloading the page, but we always go through a full stop/start
-      // here since we want to keep one codepath for propagating changes to
-      // other metadata (e.g. we may need to rebuild the slide menu based on a
-      // content change)
-      performRenderOperation(renderOperation);
+      // If there's a running shiny document for this file and it's not a 
+      // presentation, we can do an in-place reload. Note that we don't
+      // currently support in-place reload for Shiny presentations since we
+      // would need to hook a client event at the end of the re-render that
+      // emitted updated slide navigation information and then plumbed that
+      // information back into the preview window.
+      if (shinyDoc_ != null &&
+          event.getSourceFile().equals(shinyDoc_.getFile()) &&
+          !shinyDoc_.getFormat().getFormatName().endsWith(
+                RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
+      {
+         final RmdRenderResult result = 
+               RmdRenderResult.createFromShinyDoc(shinyDoc_);
+         displayHTMLRenderResult(result);
+      }
+      else
+      {
+         performRenderOperation(renderOperation);
+      }
    }
    
    @Override
@@ -220,7 +229,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             server_.renderRmdSource(event.getSource(),
                                     new SimpleRequestCallback<Boolean>()); 
          }
-
       });
    }
 
@@ -247,7 +255,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    // application if there is one
    private void performRenderOperation(final Operation renderOperation)
    {
-      if (currentShinyFile_ != null)
+      if (shinyDoc_ != null)
       {
          // there is a Shiny doc running; we'll need to terminate it before 
          // we can render this document
@@ -258,13 +266,14 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             public void onResponseReceived(Void v)
             {
                onRenderCompleted_ = renderOperation;
+               shinyDoc_ = null;
             }
 
             @Override
             public void onError(ServerError error)
             {
                globalDisplay_.showErrorMessage("Shiny Terminate Failed", 
-                     "The Shiny document " + currentShinyFile_ + " needs to " +
+                     "The Shiny document " + shinyDoc_.getFile() + " needs to " +
                      "be stopped before the document can be rendered.");
             }
          });
@@ -490,8 +499,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       {
          server_.terminateRenderRmd(true, new VoidServerRequestCallback());
       }
-      currentShinyFile_ = null;
-      currentShinyUrl_ = null;
+      shinyDoc_ = null;
    }
    
    private void cacheDocPosition(RmdRenderResult result, int scrollPosition, 
@@ -534,7 +542,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final Map<String, String> anchors_ = 
          new HashMap<String, String>();
    private RmdRenderResult result_;
-   private String currentShinyFile_;
-   private String currentShinyUrl_;
+   private RmdShinyDocInfo shinyDoc_;
    private Operation onRenderCompleted_;
 }

@@ -168,7 +168,7 @@ public class GlobalToolbar extends Toolbar
          addLeftSeparator();
          ToolbarButton deployButton = 
                commands_.shinyAppsDeploy().createToolbarButton();
-         deployButton.setText("Deploy App");
+         deployButton.setText("Deploy");
          addLeftWidget(deployButton);
       }
       
