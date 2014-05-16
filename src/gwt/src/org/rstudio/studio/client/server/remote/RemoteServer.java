@@ -45,6 +45,7 @@ import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
+import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -3275,14 +3276,6 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, "get_rmarkdown_context", requestCallback);
    }
-   
-   @Override
-   public void installRMarkdown(
-                        ServerRequestCallback<ConsoleProcess> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, "install_rmarkdown", 
-                  new ConsoleProcessCallbackAdapter(requestCallback));
-   }
 
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
@@ -3392,6 +3385,28 @@ public class RemoteServer implements Server
             GET_RMD_TEMPLATE,
             params,
             requestCallback);
+   }
+   
+   @Override
+   public void unsatisfiedDependencies(
+      JsArray<Dependency> dependencies,
+      ServerRequestCallback<JsArray<Dependency>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  "unsatisfied_dependencies", 
+                  dependencies, 
+                  requestCallback);
+   }
+     
+   @Override
+   public void installDependencies(
+      JsArray<Dependency> dependencies,
+      ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  "install_dependencies",
+                  dependencies,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
    private String clientId_;

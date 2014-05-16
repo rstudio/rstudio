@@ -106,6 +106,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
+#include "modules/SessionDependencies.hpp"
 #include "modules/SessionDirty.hpp"
 #include "modules/SessionWorkbench.hpp"
 #include "modules/SessionHelp.hpp"
@@ -1591,6 +1592,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::files::initialize)
       (modules::find::initialize)
       (modules::environment::initialize)
+      (modules::dependencies::initialize)
       (modules::dirty::initialize)
       (modules::workbench::initialize)
       (modules::data::initialize)

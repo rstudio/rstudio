@@ -34,6 +34,7 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
@@ -88,6 +89,7 @@ public class Workbench implements BusyHandler,
                     HTMLPreview htmlPreview, // required to force gin to create
                     ProfilerPresenter prof,  // required to force gin to create
                     ShinyApplication sApp,   // required to force gin to create
+                    DependencyManager dm,    // required to force gin to create
                     RmdOutput rmdOutput)     // required to force gin to create
   {
       view_ = view;

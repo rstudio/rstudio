@@ -37,7 +37,6 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 
-#include "RMarkdownInstall.hpp"
 #include "RMarkdownPresentation.hpp"
 
 #define kRmdOutput "rmd_output"
@@ -729,35 +728,9 @@ void onClientInit()
 Error getRMarkdownContext(const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {
-   // check the current status
-   install::Status status = install::status();
-
-   // silent upgrade if we have an older version
-   if (status == install::InstalledRequiresUpdate)
-   {
-      Error error = install::silentUpdate();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // return installation status
    json::Object contextJson;
-   contextJson["rmarkdown_installed"] = install::haveRequiredVersion();
    contextJson["can_render_shiny_docs"] = canRenderShinyDocs();
    pResponse->setResult(contextJson);
-
-   return Success();
-}
-
-Error installRMarkdown(const json::JsonRpcRequest&,
-                       json::JsonRpcResponse* pResponse)
-{
-   boost::shared_ptr<console_process::ConsoleProcess> pCP;
-   Error error = install::installWithProgress(&pCP);
-   if (error)
-      return error;
-
-   pResponse->setResult(pCP->toJson());
 
    return Success();
 }
@@ -1040,9 +1013,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (install::initialize)
       (bind(registerRpcMethod, "get_rmarkdown_context", getRMarkdownContext))
-      (bind(registerRpcMethod, "install_rmarkdown", installRMarkdown))
       (bind(registerRpcMethod, "render_rmd", renderRmd))
       (bind(registerRpcMethod, "render_rmd_source", renderRmdSource))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))

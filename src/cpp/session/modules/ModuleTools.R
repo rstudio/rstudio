@@ -107,4 +107,11 @@
   }
 })
 
+.rs.addFunction("updateRStudioIDEPackage", function(name, archive)
+{
+  pkgDir <- find.package(name)
+  .rs.forceUnloadPackage(name)
+  .Call("rs_installPackage",  archive, dirname(pkgDir))
+})
+
 

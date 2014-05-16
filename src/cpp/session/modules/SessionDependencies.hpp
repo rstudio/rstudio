@@ -1,5 +1,5 @@
 /*
- * RMarkdownContext.java
+ * SessionDependencies.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,16 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.rmarkdown.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+#ifndef SESSION_SESSION_DEPENDENCIES_HPP
+#define SESSION_SESSION_DEPENDENCIES_HPP
 
-public class RMarkdownContext extends JavaScriptObject
-{
-   protected RMarkdownContext()
-   {}
- 
-   public native final boolean getCanRenderShinyDocs() /*-{
-      return this.can_render_shiny_docs;
-   }-*/;
+namespace core {
+   class Error ;
 }
+
+namespace session {
+namespace modules { 
+namespace dependencies {
+
+core::Error initialize();
+
+} // namespace dependencies
+} // namespace modules
+} // namesapce session
+
+#endif // SESSION_SESSION_DEPENDENCIES_HPP

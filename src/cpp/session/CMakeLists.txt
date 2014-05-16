@@ -65,6 +65,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
+   modules/SessionDependencies.cpp
    modules/SessionDirty.cpp
    modules/SessionErrors.cpp
    modules/SessionFiles.cpp
@@ -113,7 +114,6 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
-   modules/rmarkdown/RMarkdownInstall.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp

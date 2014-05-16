@@ -1,0 +1,344 @@
+/*
+ * SessionDependencies.cpp
+ *
+ * Copyright (C) 2009-12 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include "SessionDependencies.hpp"
+
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string/join.hpp>
+
+#include <core/Error.hpp>
+#include <core/Exec.hpp>
+#include <core/system/Environment.hpp>
+
+#include <core/json/JsonRpc.hpp>
+
+#include <r/RExec.hpp>
+#include <r/session/RSessionUtils.hpp>
+
+#include <session/SessionModuleContext.hpp>
+#include <session/SessionConsoleProcess.hpp>
+
+using namespace core;
+
+namespace session {
+namespace modules {
+namespace dependencies {
+
+namespace {
+
+const int kCRANPackageDependency = 0;
+const int kEmbeddedPackageDependency = 1;
+
+struct Dependency
+{
+   Dependency() : type(0) {}
+
+   bool empty() const { return name.empty(); }
+
+   int type;
+   std::string name;
+   std::string version;
+};
+
+std::vector<Dependency> dependenciesFromJson(const json::Array& depsJson)
+{
+   std::vector<Dependency> deps;
+   BOOST_FOREACH(const json::Value& depJsonValue, depsJson)
+   {
+      if (json::isType<json::Object>(depJsonValue))
+      {
+         Dependency dep;
+         json::Object depJson = depJsonValue.get_obj();
+         Error error = json::readObject(depJson,
+                                        "type", &(dep.type),
+                                        "name", &(dep.name),
+                                        "version", &(dep.version));
+         if (!error)
+         {
+            deps.push_back(dep);
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
+   }
+   return deps;
+}
+
+json::Array dependenciesToJson(const std::vector<Dependency>& deps)
+{
+   json::Array depsJson;
+   BOOST_FOREACH(const Dependency& dep, deps)
+   {
+      json::Object depJson;
+      depJson["type"] = dep.type;
+      depJson["name"] = dep.name;
+      depJson["version"] = dep.version;
+      depsJson.push_back(depJson);
+   }
+   return depsJson;
+}
+
+struct EmbeddedPackage
+{
+   bool empty() const { return archivePath.empty(); }
+
+   std::string name;
+   std::string version;
+   std::string sha1;
+   std::string archivePath;
+};
+
+EmbeddedPackage embeddedPackageInfo(const std::string& name)
+{
+   // determine location of archives
+   FilePath archivesDir = session::options().sessionPackageArchivesPath();
+   std::vector<FilePath> children;
+   Error error = archivesDir.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return EmbeddedPackage();
+   }
+
+   // we saw the regex with explicit character class ranges fail to match
+   // on a windows 8.1 system so we are falling back to a simpler regex
+   //
+   // (note see below for another approach involving setting the locale
+   // of the regex directly -- this assumes that the matching issue is
+   // somehow related to locales)
+   boost::regex re(name + "_([^_]+)_([^\\.]+)\\.tar\\.gz");
+
+   /* another approach (which we didn't try) based on setting the regex locale
+   boost::regex re;
+   re.imbue(std::locale("en_US.UTF-8"));
+   re.assign(name + "_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
+   */
+
+   BOOST_FOREACH(const FilePath& child, children)
+   {
+      boost::smatch match;
+      if (boost::regex_match(child.filename(), match, re))
+      {
+         EmbeddedPackage pkg;
+         pkg.name = name;
+         pkg.version = match[1];
+         pkg.sha1 = match[2];
+         pkg.archivePath = string_utils::utf8ToSystem(child.absolutePath());
+         return pkg;
+      }
+   }
+
+   // none found
+   return EmbeddedPackage();
+}
+
+bool embeddedPackageRequiresUpdate(const EmbeddedPackage& pkg)
+{
+   // if this package came from the rstudio ide then check if it needs
+   // an update (i.e. has a different SHA1)
+   r::exec::RFunction func(".rs.rstudioIDEPackageRequiresUpdate",
+                           pkg.name, pkg.sha1);
+   bool requiresUpdate = false;
+   Error error = func.call(&requiresUpdate);
+   if (error)
+      LOG_ERROR(error);
+
+   return requiresUpdate;
+}
+
+void silentUpdateEmbeddedPackage(const EmbeddedPackage& pkg)
+{
+   // suppress output which occurs during silent update
+   r::session::utils::SuppressOutputInScope suppressOutput;
+
+   Error error = r::exec::RFunction(".rs.updateRStudioIDEPackage",
+                             pkg.name, pkg.archivePath).call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+
+Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   // get list of dependencies
+   json::Array depsJson;
+   Error error = json::readParams(request.params, &depsJson);
+   if (error)
+      return error;
+   std::vector<Dependency> deps = dependenciesFromJson(depsJson);
+
+   // build the list of unsatisifed dependencies
+   using namespace module_context;
+   std::vector<Dependency> unsatisfiedDeps;
+   BOOST_FOREACH(const Dependency& dep, deps)
+   {
+      switch(dep.type)
+      {
+      case kCRANPackageDependency:
+         if (!isPackageVersionInstalled(dep.name, dep.version))
+         {
+            unsatisfiedDeps.push_back(dep);
+         }
+         break;
+
+      case kEmbeddedPackageDependency:
+         EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
+
+         // package isn't installed so report that it reqires installation
+         if (!isPackageInstalled(dep.name))
+         {
+            unsatisfiedDeps.push_back(dep);
+         }
+         // package installed was from IDE but is out of date -- silent update
+         else if (embeddedPackageRequiresUpdate(pkg))
+         {
+            silentUpdateEmbeddedPackage(pkg);
+         }
+         // package installed wasn't from the IDE but is older than
+         // the version we currently have embedded -- silent update
+         else if (!isPackageVersionInstalled(pkg.name, pkg.version))
+         {
+            silentUpdateEmbeddedPackage(pkg);
+         }
+         else
+         {
+            // the only remaining case is a newer version of the package is
+            // already installed (e.g. directly from github). in this case
+            // we do nothing
+         }
+
+         break;
+      }
+   }
+
+   // return unsatisfied dependencies
+   pResponse->setResult(dependenciesToJson(unsatisfiedDeps));
+   return Success();
+}
+
+Error installDependencies(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // get list of dependencies
+   json::Array depsJson;
+   Error error = json::readParams(request.params, &depsJson);
+   if (error)
+      return error;
+   std::vector<Dependency> deps = dependenciesFromJson(depsJson);
+
+   // Ensure we have a writeable user library
+   error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();
+   if (error)
+      return error;
+
+   // R binary
+   FilePath rProgramPath;
+   error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+      return error;
+
+   // options/environment
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   options.redirectStdErrToStdOut = true;
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   // allow child process to inherit our R_LIBS
+   std::string libPaths = module_context::libPathsString();
+   if (!libPaths.empty())
+      core::system::setenv(&childEnv, "R_LIBS", libPaths);
+   options.environment = childEnv;
+
+   // build lists of cran packages and archives
+   std::vector<std::string> cranPackages;
+   std::vector<std::string> embeddedPackages;
+   BOOST_FOREACH(const Dependency& dep, deps)
+   {
+      switch(dep.type)
+      {
+      case kCRANPackageDependency:
+         cranPackages.push_back("'" + dep.name + "'");
+         break;
+
+      case kEmbeddedPackageDependency:
+         EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
+         if (!pkg.empty())
+            embeddedPackages.push_back(pkg.archivePath);
+         break;
+      }
+   }
+
+   // build install command
+   std::string cmd = "{";
+   if (!cranPackages.empty())
+   {
+      std::string pkgList = boost::algorithm::join(cranPackages, ",");
+      cmd += "utils::install.packages(c(" + pkgList + "), " +
+             "repos = '"+ module_context::CRANReposURL() + "');";
+   }
+   BOOST_FOREACH(const std::string& pkg, embeddedPackages)
+   {
+      cmd += "utils::install.packages('" + pkg + "', "
+                                      "repos = NULL, type = 'source');";
+   }
+   cmd += "}";
+
+   // build args
+   std::vector<std::string> args;
+   args.push_back("--slave");
+   args.push_back("--no-save");
+   args.push_back("--no-restore");
+   args.push_back("-e");
+   args.push_back(cmd);
+
+   // create and execute console process
+   boost::shared_ptr<console_process::ConsoleProcess> pCP;
+   pCP = console_process::ConsoleProcess::create(
+            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            args,
+            options,
+            "Installing Packages",
+            true,
+            console_process::InteractionNever);
+
+   // return console process
+   pResponse->setResult(pCP->toJson());
+   return Success();
+}
+
+
+} // anonymous namespace
+ 
+Error initialize()
+{         
+   // install handlers
+   using boost::bind;
+   using namespace session::module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "unsatisfied_dependencies", unsatisfiedDependencies))
+      (bind(registerRpcMethod, "install_dependencies", installDependencies));
+   return initBlock.execute();
+}
+   
+
+} // namepsace dependencies
+} // namespace modules
+} // namesapce session
+

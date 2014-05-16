@@ -37,6 +37,8 @@ import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.DebuggingServerOperations;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
@@ -198,6 +200,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(AskPassManager.class).in(Singleton.class);
       bind(ProfilerPresenter.class).asEagerSingleton();
       bind(WorkbenchContext.class).asEagerSingleton();
+      bind(DependencyManager.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
       bind(ApplicationInterrupt.class).asEagerSingleton();
@@ -329,6 +332,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ViewerServerOperations.class).to(RemoteServer.class);
       bind(ProfilerServerOperations.class).to(RemoteServer.class);
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
+      bind(DependencyServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
