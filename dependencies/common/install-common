@@ -22,7 +22,7 @@ set -e
 ./install-mathjax
 ./install-boost
 ./install-pandoc
-./install-rmarkdown
+./install-packages
 
 if [ -e install-overlay ]
 then

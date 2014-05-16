@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# install-rmarkdown
+# install-packages
 #
 # Copyright (C) 2009-12 by RStudio, Inc.
 #
@@ -20,43 +20,51 @@ set -e
 # install dir
 INSTALL_DIR=`pwd`
 
+install()
+{
+PACKAGE=$1
+PACKAGE_DIR=$PACKAGE
+PACKAGE_VERSION=$2
+
 # git clone if necessary
-RMARKDOWN_DIR=rmarkdown
-if [ ! -d "$RMARKDOWN_DIR" ]
+if [ ! -d "$PACKAGE_DIR" ]
 then
-  git clone https://github.com/rstudio/rmarkdown.git
+  git clone https://github.com/rstudio/$PACKAGE.git
 fi
 
 # clean and checkout target branch
-RMARKDOWN_VERSION=master
-cd $RMARKDOWN_DIR
+cd $PACKAGE_DIR
 git checkout .
 git clean -df .
 git pull
-git checkout $RMARKDOWN_VERSION
+git checkout $PACKAGE_VERSION
 
 # append GitHub fields to DESCRIPTION
-RMARKDOWN_SHA1=`git rev-parse $RMARKDOWN_VERSION`
+PACKAGE_SHA1=`git rev-parse $PACKAGE_VERSION`
 cat <<EOF >> DESCRIPTION
-GithubRepo: rmarkdown
+GithubRepo: $PACKAGE
 GithubUsername: rstudio
-GithubRef: $RMARKDOWN_VERSION
-GithubSHA1: $RMARKDOWN_SHA1
+GithubRef: $PACKAGE_VERSION
+GithubSHA1: $PACKAGE_SHA1
 Repository: RStudioIDE
 EOF
 
 # create source package (remove previous first)
 cd ..
-RMARKDOWN_ARCHIVE_PATTERN="rmarkdown*.tar.gz"
-rm -f $RMARKDOWN_ARCHIVE_PATTERN
-R CMD build rmarkdown
+PACKAGE_ARCHIVE_PATTERN="$PACKAGE*.tar.gz"
+rm -f $PACKAGE_ARCHIVE_PATTERN
+R CMD build $PACKAGE
 
 # modify filename to include SHA1
-RMARKDOWN_ARCHIVE=`ls $RMARKDOWN_ARCHIVE_PATTERN`
-RMARKDOWN_ARCHIVE_STEM=${RMARKDOWN_ARCHIVE%.tar.gz}
-RMARKDOWN_ARCHIVE_SHA1=${RMARKDOWN_ARCHIVE_STEM}_${RMARKDOWN_SHA1}.tar.gz
-mv $RMARKDOWN_ARCHIVE $RMARKDOWN_ARCHIVE_SHA1
+PACKAGE_ARCHIVE=`ls $PACKAGE_ARCHIVE_PATTERN`
+PACKAGE_ARCHIVE_STEM=${PACKAGE_ARCHIVE%.tar.gz}
+PACKAGE_ARCHIVE_SHA1=${PACKAGE_ARCHIVE_STEM}_${PACKAGE_SHA1}.tar.gz
+mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
+
+}
+
+install rmarkdown master
+
 
 # back to install-dir
 cd $INSTALL_DIR
-
