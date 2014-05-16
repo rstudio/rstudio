@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -131,6 +132,13 @@ public class ShinyApps implements SessionInitHandler,
    {
       if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_DEPLOY)
       {
+         // ignore this request if there's already a modal up (we particularly
+         // don't want to stack this modal with itself since the deploy request
+         // can be initiated from a satellite window, which has no knowledge of
+         // whether there's already a dialog up)
+         if (ModalDialogTracker.numModalsShowing() > 0)
+            return;
+         
          final String dir = FilePathUtils.dirFromFile(event.getPath());
          ShinyAppsDeploymentRecord record = dirState_.getLastDeployment(dir);
          final String lastAccount = record == null ? null : record.getAccount();

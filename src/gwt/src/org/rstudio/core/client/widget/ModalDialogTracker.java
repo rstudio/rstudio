@@ -36,6 +36,11 @@ public class ModalDialogTracker
       while (dialogStack_.remove(panel))
       {}
    }
+   
+   public static int numModalsShowing()
+   {
+      return dialogStack_.size();
+   }
 
    private static ArrayList<PopupPanel> dialogStack_ =
          new ArrayList<PopupPanel>();
