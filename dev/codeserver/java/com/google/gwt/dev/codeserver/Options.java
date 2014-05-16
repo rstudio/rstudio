@@ -53,7 +53,7 @@ public class Options {
   private String preferredHost = "localhost";
   private int port = 9876;
   private RecompileListener recompileListener = RecompileListener.NONE;
-  private TreeLogger.Type logLevel = TreeLogger.Type.WARN;
+  private TreeLogger.Type logLevel = TreeLogger.Type.INFO;
   // Use the same default as the GWT compiler.
   private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
   private boolean failOnError = false;

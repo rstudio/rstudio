@@ -16,7 +16,6 @@
 
 package com.google.gwt.dev.codeserver;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.Utility;
@@ -55,7 +54,7 @@ public class CodeServer {
   public static void main(Options options) {
     if (options.isCompileTest()) {
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-      logger.setMaxDetail(TreeLogger.Type.INFO);
+      logger.setMaxDetail(options.getLogLevel());
 
       Modules modules;
 
@@ -110,7 +109,7 @@ public class CodeServer {
    */
   public static WebServer start(Options options) throws IOException, UnableToCompleteException {
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-    logger.setMaxDetail(TreeLogger.Type.INFO);
+    logger.setMaxDetail(options.getLogLevel());
 
     Modules modules = makeModules(options, logger);
 

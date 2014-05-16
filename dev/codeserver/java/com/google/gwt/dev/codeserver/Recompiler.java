@@ -250,7 +250,7 @@ class Recompiler {
     try {
       PrintWriterTreeLogger fileLogger =
           new PrintWriterTreeLogger(compileDir.getLogFile());
-      fileLogger.setMaxDetail(TreeLogger.Type.INFO);
+      fileLogger.setMaxDetail(options.getLogLevel());
       return new CompositeTreeLogger(logger, fileLogger);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "unable to open log file: " + compileDir.getLogFile(), e);
