@@ -980,8 +980,8 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
 
 bool canRenderShinyDocs()
 {
-   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9007") &&
-          module_context::isPackageVersionInstalled("knitr", "1.5.32");
+   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9008") &&
+          module_context::isPackageVersionInstalled("knitr", "1.5.33");
 }
 
 bool rmarkdownPackageAvailable()
