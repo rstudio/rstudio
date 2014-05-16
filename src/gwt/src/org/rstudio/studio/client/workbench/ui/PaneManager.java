@@ -114,7 +114,7 @@ public class PaneManager
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       @Named("R Markdown") final WorkbenchTab renderRmdTab,
-                      @Named("Deploy Shiny") final WorkbenchTab deployShinyTab,
+                      @Named("Deploy") final WorkbenchTab deployShinyTab,
                       final FindOutputTab findOutputTab)
    {
       eventBus_ = eventBus;

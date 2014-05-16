@@ -51,7 +51,7 @@ public class ShinyAppsDeployOutputTab
                              EventBus events,
                              final Session session)
    {
-      super("Deploy Shiny", shim);
+      super("Deploy", shim);
       shim_ = shim;
 
       events.addHandler(ShinyAppsDeploymentStartedEvent.TYPE, shim);

@@ -273,7 +273,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("R Markdown", RenderRmdOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);
-      bindTab("Deploy Shiny", ShinyAppsDeployOutputTab.class);
+      bindTab("Deploy", ShinyAppsDeployOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

@@ -44,6 +44,7 @@ protected:
    virtual void onStderr(const std::string& output);
 
    virtual void onCompleted(int exitStatus) = 0;
+   virtual bool redirectStdErrToStdOut();
 
 private:
    void onProcessCompleted(int exitStatus);
