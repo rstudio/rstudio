@@ -13,7 +13,7 @@
  *
  */
 
-#include <core/r_util/RVersions.hpp>
+#include <core/r_util/RVersionsPosix.hpp>
 
 #include <iostream>
 #include <algorithm>
@@ -25,6 +25,11 @@
 #include <core/r_util/REnvironment.hpp>
 
 #include <core/system/Environment.hpp>
+
+#ifdef __APPLE__
+#define kRFrameworkVersions "/Library/Frameworks/R.framework/Versions"
+#define kRScriptPath "Resources/bin/R"
+#endif
 
 namespace core {
 namespace r_util {
@@ -42,10 +47,26 @@ std::vector<FilePath> removeNonExistent(const std::vector<FilePath>& paths)
    return filteredPaths;
 }
 
+
 } // anonymous namespace
 
-std::vector<RVersion> enumerateRVersionsPosix(
-                              const std::string& arch,
+std::ostream& operator<<(std::ostream& os, const RVersion& version)
+{
+   os << version.number;
+   if (version.isDefault)
+      os << " [default]";
+   os << std::endl;
+   os << version.homeDir() << std::endl;
+   BOOST_FOREACH(const core::system::Option& option, version.environment)
+   {
+      os << option.first << "=" << option.second << std::endl;
+   }
+   os << std::endl;
+
+   return os;
+}
+
+std::vector<RVersion> enumerateRVersions(
                               const std::vector<FilePath>& otherRHomes,
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath)
@@ -104,7 +125,6 @@ std::vector<RVersion> enumerateRVersionsPosix(
          RVersion version;
          version.isDefault = (rScriptPath.absolutePath() == kDefaultVersion);
          version.number = rVersion;
-         version.arch = arch;
          version.environment = env;
          rVersions.push_back(version);
       }
@@ -116,8 +136,65 @@ std::vector<RVersion> enumerateRVersionsPosix(
       }
    }
 
+#ifdef __APPLE__
+   // scan the R frameworks directory
+   FilePath rFrameworkVersions(kRFrameworkVersions);
+   std::vector<FilePath> versionPaths;
+   Error error = rFrameworkVersions.children(&versionPaths);
+   if (error)
+      LOG_ERROR(error);
+   BOOST_FOREACH(const FilePath& versionPath, versionPaths)
+   {
+      if (!versionPath.isHidden() && (versionPath.filename() != "Current"))
+      {
+         using namespace core::system;
+         core::system::Options env;
+         FilePath rHomePath = versionPath.childPath("Resources");
+         FilePath rLibPath = rHomePath.childPath("lib");
+         core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
+         core::system::setenv(&env,
+                              "R_SHARE_DIR",
+                              rHomePath.childPath("share").absolutePath());
+         core::system::setenv(&env,
+                              "R_INCLUDE_DIR",
+                               rHomePath.childPath("include").absolutePath());
+         core::system::setenv(&env,
+                              "R_DOC_DIR",
+                               rHomePath.childPath("doc").absolutePath());
+         core::system::setenv(&env,
+                              "DYLD_FALLBACK_LIBRARY_PATH",
+                              r_util::rLibraryPath(rHomePath,
+                                                   rLibPath,
+                                                   ldPathsScript,
+                                                   ldLibraryPath));
+         core::system::setenv(&env, "R_ARCH", "/x86_64");
+
+         RVersion version;
+         version.number = versionPath.filename();
+         version.environment = env;
+
+         // improve on the version by asking R for it's version
+         FilePath rBinaryPath = rHomePath.childPath("bin/exec/R");
+         if (!rBinaryPath.exists())
+            rBinaryPath = rHomePath.childPath("bin/exec/x86_64/R");
+         if (rBinaryPath.exists())
+         {
+            Error error = rVersion(rHomePath,
+                                   rBinaryPath,
+                                   &version.number);
+            if (error)
+               LOG_ERROR(error);
+         }
+
+         rVersions.push_back(version);
+      }
+   }
+#endif
+
    return rVersions;
 }
+
+
 
 } // namespace r_util
 } // namespace core 

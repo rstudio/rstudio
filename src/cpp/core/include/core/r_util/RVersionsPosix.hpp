@@ -1,5 +1,5 @@
 /*
- * RVersionsLinux.cpp
+ * RVersions.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,24 +13,43 @@
  *
  */
 
-#include <core/r_util/RVersions.hpp>
+#ifndef CORE_R_UTIL_R_VERSIONS_HPP
+#define CORE_R_UTIL_R_VERSIONS_HPP
+
+#include <vector>
+#include <iosfwd>
+
+#include <core/FilePath.hpp>
+
+#include <core/system/Environment.hpp>
 
 namespace core {
 namespace r_util {
 
+struct RVersion
+{
+   RVersion() : isDefault(false) {}
+   bool isDefault;
+   std::string number;
+   core::system::Options environment;
+
+   FilePath homeDir() const
+   {
+      return FilePath(core::system::getenv(environment, "R_HOME"));
+   }
+};
+
+
+std::ostream& operator<<(std::ostream& os, const RVersion& version);
+
 std::vector<RVersion> enumerateRVersions(
                               const std::vector<FilePath>& otherRHomes,
                               const FilePath& ldPathsScript,
-                              const std::string& ldLibraryPath)
-{
-   return enumerateRVersionsPosix("",
-                                  otherRHomes,
-                                  ldPathsScript,
-                                  ldLibraryPath);
-}
+                              const std::string& ldLibraryPath);
+
 
 } // namespace r_util
 } // namespace core 
 
-
+#endif // CORE_R_UTIL_R_VERSIONS_HPP
 

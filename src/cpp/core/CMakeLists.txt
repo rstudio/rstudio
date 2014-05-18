@@ -201,13 +201,11 @@ if (UNIX)
 
    if(APPLE)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-         r_util/RVersionsMac.cpp
          system/file_monitor/MacFileMonitor.cpp
          system/recycle_bin/MacRecycleBin.cpp
       )
    else()
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-         r_util/RVersionsLinux.cpp
          system/file_monitor/LinuxFileMonitor.cpp
          system/recycle_bin/LinuxRecycleBin.cpp
       )
