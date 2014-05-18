@@ -23,8 +23,10 @@ std::vector<RVersion> enumerateRVersions(
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath)
 {
-
-   return std::vector<RVersion>();
+   return enumerateRVersionsPosix("",
+                                  otherRHomes,
+                                  ldPathsScript,
+                                  ldLibraryPath);
 }
 
 } // namespace r_util

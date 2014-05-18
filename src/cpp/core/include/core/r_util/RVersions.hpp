@@ -48,6 +48,14 @@ std::vector<RVersion> enumerateRVersions(
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath);
 
+#ifndef _WIN32
+std::vector<RVersion> enumerateRVersionsPosix(
+                              const std::string& arch,
+                              const std::vector<FilePath>& otherRHomes,
+                              const FilePath& ldPathsScript,
+                              const std::string& ldLibraryPath);
+#endif
+
 } // namespace r_util
 } // namespace core 
 

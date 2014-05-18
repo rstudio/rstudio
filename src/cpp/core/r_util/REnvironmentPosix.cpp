@@ -177,6 +177,10 @@ bool detectRLocationsUsingFramework(FilePath* pHomePath,
 std::string extraLibraryPaths(const FilePath& ldPathsScript,
                               const std::string& rHome)
 {
+   // no-op if no script is passed
+   if (ldPathsScript.empty())
+      return std::string();
+
    // verify that script exists
    if (!ldPathsScript.exists())
    {
