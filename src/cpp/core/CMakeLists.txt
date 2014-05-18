@@ -86,6 +86,7 @@ set (CORE_SOURCE_FILES
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
+   r_util/RVersions.cpp
    spelling/HunspellCustomDictionaries.cpp
    spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellingEngine.cpp
@@ -200,11 +201,13 @@ if (UNIX)
 
    if(APPLE)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
+         r_util/RVersionsMac.cpp
          system/file_monitor/MacFileMonitor.cpp
          system/recycle_bin/MacRecycleBin.cpp
       )
    else()
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
+         r_util/RVersionsLinux.cpp
          system/file_monitor/LinuxFileMonitor.cpp
          system/recycle_bin/LinuxRecycleBin.cpp
       )
@@ -235,6 +238,7 @@ else()
       system/file_monitor/Win32FileMonitor.cpp
       system/recycle_bin/Win32RecycleBin.cpp
       r_util/RToolsInfo.cpp
+      r_util/RVersionsWindows.cpp
    )
 
 endif()

@@ -74,11 +74,12 @@ bool detectREnvironment(const core::FilePath& rScriptPath,
    FilePath rLdScriptPath(server::options().rldpathPath());
    std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
 
-   std::string rScriptPathOut;
+   std::string rScriptPathOut, rVersion;
    return r_util::detectREnvironment(rScriptPath,
                                      rLdScriptPath,
                                      ldLibraryPath,
                                      &rScriptPathOut,
+                                     &rVersion,
                                      pVars,
                                      pErrMsg);
 }
