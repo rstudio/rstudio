@@ -86,7 +86,6 @@ set (CORE_SOURCE_FILES
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
-   r_util/RVersions.cpp
    spelling/HunspellCustomDictionaries.cpp
    spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellingEngine.cpp
@@ -238,7 +237,6 @@ else()
       system/file_monitor/Win32FileMonitor.cpp
       system/recycle_bin/Win32RecycleBin.cpp
       r_util/RToolsInfo.cpp
-      r_util/RVersionsWindows.cpp
    )
 
 endif()

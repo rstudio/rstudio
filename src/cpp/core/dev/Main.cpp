@@ -38,6 +38,7 @@ int test_main(int argc, char * argv[])
       if (error)
          LOG_ERROR(error);
 
+      /*
       std::vector<r_util::RVersion> rVersions = r_util::enumerateRVersions(
                std::vector<FilePath>(),
                FilePath(),
@@ -47,6 +48,7 @@ int test_main(int argc, char * argv[])
       {
          std::cerr << rVersion << std::endl;
       }
+      */
 
       return EXIT_SUCCESS;
    }
