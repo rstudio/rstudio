@@ -24,7 +24,9 @@ namespace r_util {
 
 std::ostream& operator<<(std::ostream& os, const RVersion& version)
 {
-   os << version.number << " (" << version.arch << ")";
+   os << version.number;
+   if (!version.arch.empty())
+      os << " (" << version.arch << ")";
    if (version.isDefault)
       os << " [default]";
    os << std::endl;
