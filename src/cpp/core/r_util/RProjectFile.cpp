@@ -29,6 +29,7 @@
 #include <core/text/DcfParser.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
+#include <core/r_util/RVersionInfo.hpp>
 
 namespace core {
 namespace r_util {
@@ -193,7 +194,7 @@ std::string detectBuildType(const FilePath& projectFilePath,
    return detectBuildType(projectFilePath, buildDefaults, &config);
 }
 
-std::string rVersionAsString(const RProjectRVersion& rVersion)
+std::string rVersionAsString(const RVersionInfo& rVersion)
 {
    std::string ver = rVersion.number;
    if (!rVersion.arch.empty())
@@ -201,19 +202,19 @@ std::string rVersionAsString(const RProjectRVersion& rVersion)
    return ver;
 }
 
-RProjectRVersion rVersionFromString(const std::string& str)
+RVersionInfo rVersionFromString(const std::string& str)
 {
    std::size_t pos = str.find('/');
    if (pos == std::string::npos)
-      return RProjectRVersion(str);
+      return RVersionInfo(str);
    else
-      return RProjectRVersion(str.substr(0, pos), str.substr(pos+1));
+      return RVersionInfo(str.substr(0, pos), str.substr(pos+1));
 }
 
 bool interpretRVersionValue(const std::string& value,
-                            RProjectRVersion* pRVersion)
+                            RVersionInfo* pRVersion)
 {
-   RProjectRVersion version = rVersionFromString(value);
+   RVersionInfo version = rVersionFromString(value);
 
    if (version.number != kRVersionDefault &&
        !boost::regex_match(version.number, boost::regex("[\\d\\.]+")))
@@ -256,11 +257,6 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
 
    return stream ;
 }
-
-const char * const kRVersionDefault = "Default";
-const char * const kRVersionArch32 = "32";
-const char * const kRVersionArch64 = "64";
-
 
 Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,

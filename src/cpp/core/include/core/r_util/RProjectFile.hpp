@@ -19,6 +19,8 @@
 #include <string>
 #include <iosfwd>
 
+#include <core/r_util/RVersionInfo.hpp>
+
 namespace core {
 
 class Error;
@@ -48,24 +50,6 @@ struct RProjectBuildDefaults
    {
    }
    bool useDevtools;
-};
-
-extern const char * const kRVersionDefault;
-extern const char * const kRVersionArch32;
-extern const char * const kRVersionArch64;
-
-struct RProjectRVersion
-{
-   explicit RProjectRVersion(const std::string& number,
-                             const std::string& arch = std::string())
-      : number(number), arch(arch)
-   {
-   }
-
-   std::string number;
-   std::string arch;
-
-   bool isDefault() const { return number == kRVersionDefault; }
 };
 
 struct RProjectConfig
@@ -100,7 +84,7 @@ struct RProjectConfig
    }
 
    double version;
-   RProjectRVersion rVersion;
+   RVersionInfo rVersion;
    int saveWorkspace;
    int restoreWorkspace;
    int alwaysSaveHistory;

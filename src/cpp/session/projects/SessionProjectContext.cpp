@@ -567,7 +567,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
 {
    // setup defaults for project file
    r_util::RProjectConfig defaultConfig;
-   defaultConfig.rVersion = r_util::RProjectRVersion(r_util::kRVersionDefault);
+   defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
    defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
    defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
    defaultConfig.autoAppendNewline = userSettings().autoAppendNewline();
