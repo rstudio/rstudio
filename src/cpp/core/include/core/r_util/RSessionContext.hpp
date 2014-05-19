@@ -24,6 +24,10 @@
 #define kNextSessionProject                "next-session-project"
 #define kLastProjectPath                   "last-project-path"
 
+#define kRStudioInitialWorkingDir          "RS_INITIAL_WD"
+#define kRStudioInitialEnvironment         "RS_INITIAL_ENV"
+#define kRStudioInitialProject             "RS_INITIAL_PROJECT"
+
 namespace core {
 namespace r_util {
 

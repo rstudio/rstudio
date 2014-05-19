@@ -417,16 +417,16 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    //core::system::unsetenv("RS_SHARED_SECRET");
 
    // initial working dir override
-   initialWorkingDirOverride_ = core::system::getenv("RS_INITIAL_WD");
-   core::system::unsetenv("RS_INITIAL_WD");
+   initialWorkingDirOverride_ = core::system::getenv(kRStudioInitialWorkingDir);
+   core::system::unsetenv(kRStudioInitialWorkingDir);
 
    // initial environment file override
-   initialEnvironmentFileOverride_ = core::system::getenv("RS_INITIAL_ENV");
-   core::system::unsetenv("RS_INITIAL_ENV");
+   initialEnvironmentFileOverride_ = core::system::getenv(kRStudioInitialEnvironment);
+   core::system::unsetenv(kRStudioInitialEnvironment);
 
    // initial project
-   initialProjectPath_ = core::system::getenv("RS_INITIAL_PROJECT");
-   core::system::unsetenv("RS_INITIAL_PROJECT");
+   initialProjectPath_ = core::system::getenv(kRStudioInitialProject);
+   core::system::unsetenv(kRStudioInitialProject);
 
    // limit rpc client uid
    limitRpcClientUid_ = -1;
