@@ -64,6 +64,7 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationView;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationWindow;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewPanel;
+import org.rstudio.studio.client.packrat.Packrat;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -221,6 +222,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DebugCommander.class).asEagerSingleton();
       bind(ShortcutViewer.class).asEagerSingleton();
       bind(ShinyApps.class).asEagerSingleton();
+      bind(Packrat.class).asEagerSingleton();
       bind(RmdOutput.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)

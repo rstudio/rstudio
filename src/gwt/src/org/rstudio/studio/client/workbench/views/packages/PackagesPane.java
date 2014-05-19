@@ -162,7 +162,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       ToolbarButton packratButton_ = new ToolbarButton(
     		  "Packrat", commands_.packratButton().getImageResource(), packratMenu_);
       
-      
       toolbar.addLeftWidget(packratButton_);
       toolbar.addLeftSeparator();
       
