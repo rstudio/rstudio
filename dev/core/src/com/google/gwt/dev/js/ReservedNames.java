@@ -15,12 +15,9 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.dev.cfg.ConfigProps;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -40,38 +37,15 @@ class ReservedNames {
 
   private final List<String> blacklistedSuffixes;
 
-  ReservedNames(PropertyOracle[] propertyOracles) {
+  ReservedNames(ConfigProps config) {
     Set<String> blacklist = new HashSet<String>();
     List<String> blacklistSuffixes = new ArrayList<String>();
-    if (propertyOracles != null) {
-      for (PropertyOracle propOracle : propertyOracles) {
-        maybeAddToBlacklist(BLACKLIST, blacklist, propOracle);
-        maybeAddToBlacklist(BLACKLIST_SUFFIXES, blacklistSuffixes, propOracle);
-      }
+    if (config != null) {
+      blacklist.addAll(config.getCommaSeparatedStrings(BLACKLIST));
+      blacklistSuffixes.addAll(config.getCommaSeparatedStrings(BLACKLIST_SUFFIXES));
     }
     blacklistedIdents = Collections.unmodifiableSet(blacklist);
     blacklistedSuffixes = Collections.unmodifiableList(blacklistSuffixes);
-  }
-
-  private void maybeAddToBlacklist(String propName, Collection<String> blacklist,
-      PropertyOracle propOracle) {
-    try {
-      ConfigurationProperty configProp =
-          propOracle.getConfigurationProperty(propName);
-      // supports multivalue property
-      for (String bannedSymbols : configProp.getValues()) {
-        // and comma separated list
-        String [] idents = bannedSymbols.split(",");
-        for (String ident : idents) {
-          String trimmedIdent = ident.trim();
-          if (trimmedIdent.length() > 0) {
-            blacklist.add(trimmedIdent);
-          }
-        }
-      }
-    } catch (BadPropertyValueException e) {
-      // thrown if not set to anything
-    }
   }
 
   final boolean isAvailable(String newIdent) {

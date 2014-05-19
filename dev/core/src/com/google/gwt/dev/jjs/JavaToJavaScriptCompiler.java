@@ -13,8 +13,6 @@
  */
 package com.google.gwt.dev.jjs;
 
-import com.google.gwt.core.ext.PropertyOracle;
-import com.google.gwt.core.ext.PropertyOracles;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
@@ -38,10 +36,12 @@ import com.google.gwt.core.linker.SoycReportLinker;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.PrecompileTaskOptions;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.EntryMethodHolderGenerator;
 import com.google.gwt.dev.cfg.LibraryGroup.CollidingCompilationUnitException;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
@@ -215,7 +215,8 @@ public abstract class JavaToJavaScriptCompiler {
     public PermutationResult compilePermutation(UnifiedAst unifiedAst)
         throws UnableToCompleteException {
       Event jjsCompilePermutationEvent = SpeedTracerLogger.start(
-          CompilerEventType.JJS_COMPILE_PERMUTATION, "name", permutation.prettyPrint());
+          CompilerEventType.JJS_COMPILE_PERMUTATION, "name", permutation.getProps().prettyPrint()
+      );
       /*
        * Do not introduce any new pass here unless it is logically a part of one of the 9 defined
        * stages and is physically located in that stage.
@@ -225,7 +226,7 @@ public abstract class JavaToJavaScriptCompiler {
       try {
         // (1) Initialize local state.
         long startTimeMs = System.currentTimeMillis();
-        PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
+        PermProps props = permutation.getProps();
         int permutationId = permutation.getId();
         AST ast = unifiedAst.getFreshAst();
         jprogram = ast.getJProgram();
@@ -266,7 +267,7 @@ public abstract class JavaToJavaScriptCompiler {
         // (5) Construct the Js AST
         Pair<? extends JavaToJavaScriptMap, Set<JsNode>> jjsMapAndInlineableFunctions =
             GenerateJavaScriptAST.exec(jprogram, jsProgram, compilerContext,
-                typeIdLiteralsByType,  symbolTable, propertyOracles);
+                typeIdLiteralsByType,  symbolTable, props);
         JavaToJavaScriptMap jjsmap = jjsMapAndInlineableFunctions.getLeft();
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
@@ -293,22 +294,21 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): move to normalization
         // Must run before code splitter and namer.
-        JsStackEmulator.exec(jprogram, jsProgram, propertyOracles, jjsmap);
+        JsStackEmulator.exec(jprogram, jsProgram, props, jjsmap);
 
         // TODO(stalcup): move to normalization
         Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder =
-            splitJsIntoFragments(propertyOracles, permutationId, jjsmap);
+            splitJsIntoFragments(props, permutationId, jjsmap);
 
         // TODO(stalcup): move to optimize.
-        Map<JsName, JsLiteral> internedLiteralByVariableName = renameJsSymbols(propertyOracles);
+        Map<JsName, JsLiteral> internedLiteralByVariableName = renameJsSymbols(props);
 
         // TODO(stalcup): move to normalization
-        JsBreakUpLargeVarStatements.exec(jsProgram, propertyOracles);
+        JsBreakUpLargeVarStatements.exec(jsProgram, props.getConfigProps());
 
         // (8) Generate Js source
         List<JsSourceMap> sourceInfoMaps = new ArrayList<JsSourceMap>();
-        boolean isSourceMapsEnabled = PropertyOracles.findBooleanProperty(
-            logger, propertyOracles, "compiler.useSourceMaps", "true", true, false, false);
+        boolean isSourceMapsEnabled = props.isTrueInAnyPermutation("compiler.useSourceMaps");
         String[] jsFragments = new String[jsProgram.getFragmentCount()];
         StatementRanges[] ranges = new StatementRanges[jsFragments.length];
         SizeBreakdown[] sizeBreakdowns = options.isJsonSoycEnabled() || options.isSoycEnabled()
@@ -345,10 +345,10 @@ public abstract class JavaToJavaScriptCompiler {
 
     protected abstract void postNormalizationOptimizeJava();
 
-    protected abstract Map<JsName, JsLiteral> runDetailedNamer(PropertyOracle[] propertyOracles);
+    protected abstract Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config);
 
     protected abstract Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> splitJsIntoFragments(
-        PropertyOracle[] propertyOracles, int permutationId, JavaToJavaScriptMap jjsmap);
+        PermProps props, int permutationId, JavaToJavaScriptMap jjsmap);
 
     private CompilationMetricsArtifact addCompilerMetricsArtifact(UnifiedAst unifiedAst,
         Permutation permutation, long startTimeMs, SizeBreakdown[] sizeBreakdowns,
@@ -366,7 +366,7 @@ public abstract class JavaToJavaScriptCompiler {
           compilationMetrics.setElapsedMilliseconds(
               System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
           compilationMetrics.setJsSize(sizeBreakdowns);
-          compilationMetrics.setPermutationDescription(permutation.prettyPrint());
+          compilationMetrics.setPermutationDescription(permutation.getProps().prettyPrint());
           permutationResult.addArtifacts(Lists.newArrayList(
               unifiedAst.getModuleMetrics(), unifiedAst.getPrecompilationMetrics(),
               compilationMetrics));
@@ -747,21 +747,21 @@ public abstract class JavaToJavaScriptCompiler {
         System.out.println("-------------------------------------------------------------");
         System.out.println("|                     (new permutation)                     |");
         System.out.println("-------------------------------------------------------------");
-        System.out.println("Properties: " + permutation.prettyPrint());
+        System.out.println("Properties: " + permutation.getProps().prettyPrint());
       }
     }
 
-    private Map<JsName, JsLiteral> renameJsSymbols(PropertyOracle[] propertyOracles) {
+    private Map<JsName, JsLiteral> renameJsSymbols(PermProps props) {
       Map<JsName, JsLiteral> internedLiteralByVariableName = null;
       switch (options.getOutput()) {
         case OBFUSCATED:
-          internedLiteralByVariableName = runObfuscateNamer(propertyOracles);
+          internedLiteralByVariableName = runObfuscateNamer(props);
           break;
         case PRETTY:
-          internedLiteralByVariableName = runPrettyNamer(propertyOracles);
+          internedLiteralByVariableName = runPrettyNamer(props.getConfigProps());
           break;
         case DETAILED:
-          internedLiteralByVariableName = runDetailedNamer(propertyOracles);
+          internedLiteralByVariableName = runDetailedNamer(props.getConfigProps());
           break;
         default:
           throw new InternalCompilerException("Unknown output mode");
@@ -769,24 +769,25 @@ public abstract class JavaToJavaScriptCompiler {
       return internedLiteralByVariableName;
     }
 
-    private Map<JsName, JsLiteral> runObfuscateNamer(PropertyOracle[] propertyOracles) {
+    private Map<JsName, JsLiteral> runObfuscateNamer(PermProps props) {
       Map<JsName, JsLiteral> internedLiteralByVariableName =
           JsLiteralInterner.exec(jprogram, jsProgram, JsLiteralInterner.INTERN_ALL);
-      FreshNameGenerator freshNameGenerator = JsObfuscateNamer.exec(jsProgram, propertyOracles);
+      FreshNameGenerator freshNameGenerator = JsObfuscateNamer.exec(jsProgram,
+          props.getConfigProps());
       if (options.shouldRemoveDuplicateFunctions()
-          && JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP) {
+          && JsStackEmulator.getStackMode(props) == JsStackEmulator.StackMode.STRIP) {
         JsDuplicateFunctionRemover.exec(jsProgram, freshNameGenerator);
       }
       return internedLiteralByVariableName;
     }
 
-    private Map<JsName, JsLiteral> runPrettyNamer(PropertyOracle[] propertyOracles) {
+    private Map<JsName, JsLiteral> runPrettyNamer(ConfigProps config) {
       // We don't intern strings in pretty mode to improve readability
       Map<JsName, JsLiteral> internedLiteralByVariableName = JsLiteralInterner.exec(
           jprogram, jsProgram,
           (byte) (JsLiteralInterner.INTERN_ALL & ~JsLiteralInterner.INTERN_STRINGS));
 
-      JsPrettyNamer.exec(jsProgram, propertyOracles);
+      JsPrettyNamer.exec(jsProgram, config);
       return internedLiteralByVariableName;
     }
   }

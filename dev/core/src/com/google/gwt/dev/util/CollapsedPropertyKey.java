@@ -17,9 +17,11 @@ package com.google.gwt.dev.util;
 
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.StaticPropertyOracle;
+import com.google.gwt.dev.cfg.BindingProps;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -40,13 +42,15 @@ public class CollapsedPropertyKey extends StringKey {
   /**
    * Create the string key for a collection of property oracles.
    */
-  private static String collapse(StaticPropertyOracle... oracles) {
+  private static String collapse(List<BindingProps> allProps) {
     // The map used to create the string key
     SortedMap<String, SortedSet<String>> collapsedPropertyMap = new TreeMap<String, SortedSet<String>>();
-    for (StaticPropertyOracle oracle : oracles) {
-      for (int i = 0, j = oracle.getOrderedProps().length; i < j; i++) {
-        BindingProperty prop = oracle.getOrderedProps()[i];
-        String value = oracle.getOrderedPropValues()[i];
+    for (BindingProps bindingProps : allProps) {
+      BindingProperty[] props = bindingProps.getOrderedProps();
+      String[] values = bindingProps.getOrderedPropValues();
+      for (int i = 0; i < props.length; i++) {
+        BindingProperty prop = props[i];
+        String value = values[i];
         boolean isCollapsed = false;
 
         // Iterate over the equivalence sets defined in the property
@@ -84,16 +88,15 @@ public class CollapsedPropertyKey extends StringKey {
    * through {@link #getPermutation()}.
    */
   public CollapsedPropertyKey(Permutation permutation) {
-    super(collapse(permutation.getPropertyOracles()));
+    super(collapse(permutation.getProps().getSoftProps()));
     this.permutation = permutation;
   }
 
   /**
-   * Constructor that constructs a key based on all collapsed property/value
-   * pairs defined by the given property oracle.
+   * Creates a key based on all collapsed property/value pairs for a single permutation.
    */
-  public CollapsedPropertyKey(StaticPropertyOracle oracle) {
-    super(collapse(oracle));
+  public CollapsedPropertyKey(BindingProps props) {
+    super(collapse(ImmutableList.of(props)));
     this.permutation = null;
   }
 

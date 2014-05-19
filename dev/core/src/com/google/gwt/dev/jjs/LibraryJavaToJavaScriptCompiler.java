@@ -13,7 +13,6 @@
  */
 package com.google.gwt.dev.jjs;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.impl.ResourceGeneratorUtilImpl;
@@ -22,7 +21,9 @@ import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
+import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.cfg.PropertyProviderRegistratorGenerator;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.RuleGenerateWith;
@@ -123,14 +124,14 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
     }
 
     @Override
-    protected Map<JsName, JsLiteral> runDetailedNamer(PropertyOracle[] propertyOracles) {
-      JsVerboseNamer.exec(jsProgram, propertyOracles);
+    protected Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config) {
+      JsVerboseNamer.exec(jsProgram, config);
       return null;
     }
 
     @Override
     protected Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> splitJsIntoFragments(
-        PropertyOracle[] propertyOracles, int permutationId, JavaToJavaScriptMap jjsmap) {
+        PermProps props, int permutationId, JavaToJavaScriptMap jjsmap) {
       // Local control flow knowledge and the local list of RunAsyncs is not enough information to
       // be able to accurately split program fragments.
       return Pair.<SyntheticArtifact, MultipleDependencyGraphRecorder>create(null, null);

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
@@ -23,10 +22,12 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.PrecompileTaskOptionsImpl;
 import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.BindingProps;
 import com.google.gwt.dev.cfg.ConditionNone;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
+import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.cfg.Properties;
-import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -55,6 +56,7 @@ import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -254,18 +256,19 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     BindingProperty stackMode = new BindingProperty("compiler.stackMode");
     stackMode.addDefinedValue(new ConditionNone(), "EMULATED");
 
-    PropertyOracle[] properties = {new StaticPropertyOracle(
-        new BindingProperty[]{stackMode}, new String[]{"EMULATED"},
-        new ConfigurationProperty[]{recordFileNamesProp, recordLineNumbersProp}
-    )};
+    ConfigProps config = new ConfigProps(Arrays.asList(recordFileNamesProp,
+        recordLineNumbersProp));
+    PermProps props = new PermProps(Arrays.asList(
+        new BindingProps(new BindingProperty[]{stackMode}, new String[]{"EMULATED"}, config)
+    ));
 
     JsProgram jsProgram = new JsProgram();
     JavaToJavaScriptMap jjsmap = GenerateJavaScriptAST.exec(
         jProgram, jsProgram, context, typeIdsByType, symbolTable,
-        properties).getLeft();
+        props).getLeft();
 
     // Finally, run the pass we care about.
-    JsStackEmulator.exec(jProgram, jsProgram, properties, jjsmap);
+    JsStackEmulator.exec(jProgram, jsProgram, props, jjsmap);
 
     return jsProgram;
   }

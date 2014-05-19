@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.StaticPropertyOracle;
+import com.google.gwt.dev.cfg.BindingProps;
+import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.Serializable;
@@ -30,7 +30,7 @@ public final class Permutation implements Serializable {
 
   private final int id;
 
-  private List<StaticPropertyOracle> orderedPropertyOracles = Lists.newArrayList();
+  private List<BindingProps> orderedProps = Lists.newArrayList();
   private List<GwtCreateMap> gwtCreateAnswers = Lists.newArrayList();
 
   /**
@@ -41,13 +41,13 @@ public final class Permutation implements Serializable {
    */
   public Permutation(int id, Permutation other) {
     this.id = id;
-    orderedPropertyOracles = Lists.newArrayList(other.orderedPropertyOracles);
+    orderedProps = Lists.newArrayList(other.orderedProps);
     gwtCreateAnswers = Lists.newArrayList(other.gwtCreateAnswers);
   }
 
-  public Permutation(int id, StaticPropertyOracle propertyOracle) {
+  public Permutation(int id, BindingProps props) {
     this.id = id;
-    orderedPropertyOracles.add(propertyOracle);
+    orderedProps.add(props);
     gwtCreateAnswers.add(new GwtCreateMap());
   }
 
@@ -64,10 +64,10 @@ public final class Permutation implements Serializable {
   }
 
   /**
-   * Returns the property oracles, sorted by property values.
+   * Returns the properties to be used for generating this (hard) permutation.
    */
-  public StaticPropertyOracle[] getPropertyOracles() {
-    return orderedPropertyOracles.toArray(new StaticPropertyOracle[orderedPropertyOracles.size()]);
+  public PermProps getProps() {
+    return new PermProps(orderedProps);
   }
 
   /**
@@ -87,30 +87,10 @@ public final class Permutation implements Serializable {
    * vary between the two permutations.
    */
   public void mergeRebindsFromCollapsed(Permutation other) {
-    assert other.orderedPropertyOracles.size() == other.gwtCreateAnswers.size();
-    orderedPropertyOracles.addAll(other.orderedPropertyOracles);
+    assert other.orderedProps.size() == other.gwtCreateAnswers.size();
+    orderedProps.addAll(other.orderedProps);
     gwtCreateAnswers.addAll(other.gwtCreateAnswers);
     other.destroy();
-  }
-
-  /**
-   * Shows a list of the property settings that were set to make up this
-   * permutation in human readable form.
-   */
-  public String prettyPrint() {
-    StringBuilder builder = new StringBuilder();
-    for (StaticPropertyOracle oracle : orderedPropertyOracles) {
-      String[] values = oracle.getOrderedPropValues();
-      BindingProperty[] props = oracle.getOrderedProps();
-      assert values.length == props.length;
-      for (int i = 0; i < props.length; i++) {
-        builder.append(props[i].getName() + "=" + values[i]);
-        if (i < props.length - 1) {
-          builder.append(",");
-        }
-      }
-    }
-    return builder.toString();
   }
 
   public void putRebindAnswer(String requestType, String resultType) {
@@ -133,7 +113,7 @@ public final class Permutation implements Serializable {
    * in {@link #mergeFrom}.
    */
   private void destroy() {
-    orderedPropertyOracles = Lists.newArrayList();
+    orderedProps = Lists.newArrayList();
     gwtCreateAnswers = Lists.newArrayList();
   }
 }

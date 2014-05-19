@@ -15,13 +15,11 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.linker.CastableTypeMap;
 import com.google.gwt.core.ext.linker.impl.StandardCastableTypeMap;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
@@ -3110,20 +3108,16 @@ public class GenerateJavaScriptAST {
    *
    * @param program           a Java AST
    * @param jsProgram         an (empty) JavaScript AST
-   * @param outputOption      options that affect this transformation for this transformation
-   *                          e.g. OBFUSCATED, etc.
    * @param symbolTable       an (empty) symbol table that will be populated here
-   * @param propertyOracles   property oracles that correspond to the permutation being compiled.
    * @return A pair containing a JavaToJavaScriptMap and a Set of JsFunctions that need to be
    *         considered for inlining.
    */
   public static Pair<JavaToJavaScriptMap, Set<JsNode>> exec(JProgram program,
       JsProgram jsProgram, CompilerContext compilerContext, Map<JType, JLiteral> typeIdsByType,
-      Map<StandardSymbolData, JsName> symbolTable,
-      PropertyOracle[] propertyOracles) {
+      Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
     GenerateJavaScriptAST generateJavaScriptAST =
         new GenerateJavaScriptAST(program, jsProgram, compilerContext, typeIdsByType,
-            symbolTable, propertyOracles);
+            symbolTable, props);
     return generateJavaScriptAST.execImpl();
   }
 
@@ -3233,7 +3227,7 @@ public class GenerateJavaScriptAST {
 
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
       CompilerContext compilerContext, Map<JType, JLiteral> typeIdsByType,
-      Map<StandardSymbolData, JsName> symbolTable, PropertyOracle[] propertyOracles) {
+      Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
@@ -3245,8 +3239,9 @@ public class GenerateJavaScriptAST {
     this.symbolTable = symbolTable;
     this.typeIdsByType = typeIdsByType;
 
-    this.stripStack =
-        JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP;
+    this.stripStack = JsStackEmulator.getStackMode(props) == JsStackEmulator.StackMode.STRIP;
+    this.jsExportClosureStyle = props.getConfigProps().getBoolean(
+        "js.export.closurestyle.fullyqualified", false);
 
     /*
      * Because we modify the JavaScript String prototype, all fields and
@@ -3284,20 +3279,6 @@ public class GenerateJavaScriptAST {
         assert ident != null : field.getEnclosingType().getName() + "::" + field.getName() +
             " is not in the list of known fields.";
         specialObfuscatedFields.put(field, ident);
-      }
-    }
-
-    jsExportClosureStyle = false;
-    for (PropertyOracle propertyOracle : propertyOracles) {
-      ConfigurationProperty configProp = null;
-      try {
-        configProp = propertyOracle.getConfigurationProperty(
-          "js.export.closurestyle.fullyqualified");
-        if (configProp != null && "true".equals(configProp.getValues().get(0))) {
-          jsExportClosureStyle = true;
-          break;
-        }
-      } catch (BadPropertyValueException e) {
       }
     }
   }

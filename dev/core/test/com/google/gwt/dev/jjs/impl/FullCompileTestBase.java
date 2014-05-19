@@ -15,15 +15,16 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.BindingProps;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
+import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.cfg.Properties;
-import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -36,6 +37,7 @@ import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.Pair;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -94,9 +96,13 @@ public abstract class FullCompileTestBase extends JJSTestBase {
         ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jProgram);
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
-    return GenerateJavaScriptAST.exec(
-        jProgram, jsProgram, compilerContext, typeIdsByType, symbolTable, new PropertyOracle[]{
-        new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)});
+
+    ConfigProps config = new ConfigProps(Arrays.asList(configProps));
+    PermProps props = new PermProps(Arrays.asList(
+        new BindingProps(orderedProps, orderedPropValues, config)
+    ));
+    return GenerateJavaScriptAST.exec(jProgram, jsProgram, compilerContext, typeIdsByType,
+        symbolTable, props);
   }
 
   abstract protected void optimizeJava();

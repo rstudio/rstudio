@@ -15,12 +15,9 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.PropertyOracle;
-import com.google.gwt.core.ext.SelectionProperty;
-import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.jjs.HasSourceInfo;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -79,8 +76,6 @@ import java.util.Set;
  * @see com.google.gwt.core.client.impl.StackTraceCreator
  */
 public class JsStackEmulator {
-
-  private static final String PROPERTY_NAME = "compiler.stackMode";
 
   /**
    * Resets the global stack depth to the local stack index and top stack frame
@@ -946,44 +941,19 @@ public class JsStackEmulator {
    * module.
    */
   public enum StackMode {
-    STRIP, NATIVE, EMULATED;
+    STRIP, NATIVE, EMULATED
   }
 
-  public static void exec(JProgram jprogram, JsProgram jsProgram,
-      PropertyOracle[] propertyOracles,
+  public static void exec(JProgram jprogram, JsProgram jsProgram, PermProps props,
       JavaToJavaScriptMap jjsmap) {
-    if (getStackMode(propertyOracles) == StackMode.EMULATED) {
-      (new JsStackEmulator(jprogram, jsProgram, propertyOracles, jjsmap)).execImpl();
+    if (getStackMode(props) == StackMode.EMULATED) {
+      (new JsStackEmulator(jprogram, jsProgram, jjsmap, props.getConfigProps())).execImpl();
     }
   }
 
-  public static StackMode getStackMode(PropertyOracle[] propertyOracles) {
-    SelectionProperty property;
-    try {
-      property = propertyOracles[0].getSelectionProperty(TreeLogger.NULL,
-          PROPERTY_NAME);
-    } catch (BadPropertyValueException e) {
-      // Should be inherited via Core.gwt.xml
-      throw new InternalCompilerException("Expected property " + PROPERTY_NAME
-          + " not defined", e);
-    }
-
-    String value = property.getCurrentValue();
-    assert value != null : property.getName() + " did not have a value";
-    StackMode stackMode = StackMode.valueOf(value.toUpperCase(Locale.ENGLISH));
-    // Check for multiply defined properties
-    if (propertyOracles.length > 1) {
-      for (int i = 1; i < propertyOracles.length; ++i) {
-        try {
-          property = propertyOracles[i].getSelectionProperty(TreeLogger.NULL,
-              PROPERTY_NAME);
-        } catch (BadPropertyValueException e) {
-          // OK!
-        }
-        assert value.equals(property.getCurrentValue()) : "compiler.stackMode property has multiple values.";
-      }
-    }
-    return stackMode;
+  public static StackMode getStackMode(PermProps props) {
+    String value = props.mustGetString("compiler.stackMode");
+    return StackMode.valueOf(value.toUpperCase(Locale.ENGLISH));
   }
 
   private JsFunction wrapFunction;
@@ -991,33 +961,21 @@ public class JsStackEmulator {
   private JProgram jprogram;
   private final JsProgram jsProgram;
   private JavaToJavaScriptMap jjsmap;
-  private boolean recordFileNames;
-  private boolean recordLineNumbers;
+  private final boolean recordFileNames;
+  private final boolean recordLineNumbers;
   private JsName stack;
   private JsName stackDepth;
   private JsName tmp;
 
   private JsStackEmulator(JProgram jprogram, JsProgram jsProgram,
-      PropertyOracle[] propertyOracles,
-      JavaToJavaScriptMap jjsmap) {
+      JavaToJavaScriptMap jjsmap, ConfigProps config) {
     this.jprogram = jprogram;
     this.jsProgram = jsProgram;
     this.jjsmap = jjsmap;
 
-    assert propertyOracles.length > 0;
-    PropertyOracle oracle = propertyOracles[0];
-    try {
-      List<String> values = oracle.getConfigurationProperty(
-          "compiler.emulatedStack.recordFileNames").getValues();
-      recordFileNames = Boolean.valueOf(values.get(0));
-
-      values = oracle.getConfigurationProperty(
-          "compiler.emulatedStack.recordLineNumbers").getValues();
-      recordLineNumbers = recordFileNames || Boolean.valueOf(values.get(0));
-    } catch (BadPropertyValueException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    recordFileNames = config.getBoolean("compiler.emulatedStack.recordFileNames", false);
+    recordLineNumbers = recordFileNames ||
+        config.getBoolean("compiler.emulatedStack.recordLineNumbers", false);
   }
 
   private void execImpl() {

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
@@ -26,12 +26,12 @@ import com.google.gwt.dev.js.ast.JsScope;
  */
 public class JsVerboseNamer extends JsNamer {
 
-  public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
-    new JsVerboseNamer(program, propertyOracles).execImpl();
+  public static void exec(JsProgram program, ConfigProps config) {
+    new JsVerboseNamer(program, config).execImpl();
   }
 
-  public JsVerboseNamer(JsProgram program, PropertyOracle[] propertyOracles) {
-    super(program, propertyOracles);
+  public JsVerboseNamer(JsProgram program, ConfigProps config) {
+    super(program, config);
   }
 
   @Override

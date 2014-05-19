@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -90,10 +90,10 @@ public abstract class JsNamer {
 
   protected final ReservedNames reserved;
 
-  public JsNamer(JsProgram program, PropertyOracle[] propertyOracles) {
+  public JsNamer(JsProgram program, ConfigProps config) {
     this.program = program;
     referenced = collectReferencedNames(program);
-    reserved = new ReservedNames(propertyOracles);
+    reserved = new ReservedNames(config);
   }
 
   protected final void execImpl() {

@@ -15,9 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -36,8 +34,8 @@ import java.util.List;
 public class JsBreakUpLargeVarStatements extends JsModVisitor {
   private static final String CONFIG_PROP_MAX_VARS = "compiler.max.vars.per.var";
 
-  public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
-    (new JsBreakUpLargeVarStatements(propertyOracles)).accept(program);
+  public static void exec(JsProgram program, ConfigProps configMap) {
+    (new JsBreakUpLargeVarStatements(configMap)).accept(program);
   }
 
   private static JsVars last(List<JsVars> list) {
@@ -46,8 +44,12 @@ public class JsBreakUpLargeVarStatements extends JsModVisitor {
 
   private final int maxVarsPerStatement;
 
-  private JsBreakUpLargeVarStatements(PropertyOracle[] propertyOracles) {
-    maxVarsPerStatement = getMaxVarsPerStatement(propertyOracles[0]);
+  private JsBreakUpLargeVarStatements(ConfigProps configMap) {
+    int maxVars = configMap.getInteger(CONFIG_PROP_MAX_VARS, -1);
+    if (maxVars < 1) {
+      throw new InternalCompilerException("Could not find property " + CONFIG_PROP_MAX_VARS);
+    }
+    maxVarsPerStatement = maxVars;
   }
 
   @Override
@@ -75,23 +77,6 @@ public class JsBreakUpLargeVarStatements extends JsModVisitor {
       }
       context.removeMe();
     }
-  }
-
-  /**
-   * Look up in the specified property oracle the maximum number of variables to
-   * allow per var statement.
-   */
-  private int getMaxVarsPerStatement(PropertyOracle propertyOracle)
-      throws InternalCompilerException, NumberFormatException {
-    ConfigurationProperty prop;
-    try {
-      prop = propertyOracle.getConfigurationProperty(CONFIG_PROP_MAX_VARS);
-    } catch (BadPropertyValueException e) {
-      throw new InternalCompilerException("Could not find property "
-          + CONFIG_PROP_MAX_VARS, e);
-    }
-    int t = Integer.parseInt(prop.getValues().get(0));
-    return t;
   }
 
   /**

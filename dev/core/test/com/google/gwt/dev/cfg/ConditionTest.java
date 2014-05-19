@@ -48,8 +48,9 @@ public class ConditionTest extends TestCase {
     binding1.addDefinedValue(new ConditionAll(), "true");
     binding1.addDefinedValue(new ConditionAll(), "false");
 
-    propertyOracle = new StaticPropertyOracle(new BindingProperty[] {binding1},
-        new String[] {"true"}, new ConfigurationProperty[] {conf1});
+    ConfigProps config = new ConfigProps(Arrays.asList(conf1));
+    propertyOracle = new BindingProps(new BindingProperty[] {binding1},
+        new String[] {"true"}, config).toPropertyOracle();
 
     compilationState = TypeOracleTestingUtils.buildStandardCompilationStateWith(TreeLogger.NULL);
   }

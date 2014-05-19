@@ -13,8 +13,6 @@
  */
 package com.google.gwt.dev.jjs;
 
-import com.google.gwt.core.ext.PropertyOracle;
-import com.google.gwt.core.ext.PropertyOracles;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
@@ -24,6 +22,8 @@ import com.google.gwt.core.ext.soyc.impl.DependencyRecorder;
 import com.google.gwt.core.linker.SoycReportLinker;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.Permutation;
+import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -121,17 +121,17 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     }
 
     @Override
-    protected Map<JsName, JsLiteral> runDetailedNamer(PropertyOracle[] propertyOracles) {
+    protected Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config) {
       Map<JsName, JsLiteral> internedTextByVariableName =
           JsLiteralInterner.exec(jprogram, jsProgram, JsLiteralInterner.INTERN_ALL);
-      JsVerboseNamer.exec(jsProgram, propertyOracles);
+      JsVerboseNamer.exec(jsProgram, config);
       return internedTextByVariableName;
     }
 
     @Override
     protected Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> splitJsIntoFragments(
-        PropertyOracle[] propertyOracles, int permutationId, JavaToJavaScriptMap jjsmap) {
-      Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder = null;
+        PermProps props, int permutationId, JavaToJavaScriptMap jjsmap) {
+      Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder;
       MultipleDependencyGraphRecorder dependencyRecorder = null;
       SyntheticArtifact dependencies = null;
       if (options.isRunAsyncEnabled()) {
@@ -150,8 +150,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
           }
         }
 
-        int minFragmentSize = PropertyOracles.findIntegerConfigurationProperty(
-            propertyOracles, CodeSplitters.MIN_FRAGMENT_SIZE, 0);
+        int minFragmentSize = props.getConfigProps().getInteger(CodeSplitters.MIN_FRAGMENT_SIZE, 0);
 
         dependencyRecorder = chooseDependencyRecorder(baos);
         CodeSplitter.exec(logger, jprogram, jsProgram, jjsmap, expectedFragmentCount,
@@ -173,7 +172,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
       // No new JsNames or references to JSNames can be introduced after this
       // point.
-      HandleCrossFragmentReferences.exec(logger, jsProgram, propertyOracles);
+      HandleCrossFragmentReferences.exec(jsProgram, props);
 
       return dependenciesAndRecorder;
     }

@@ -15,12 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.DefaultConfigurationProperty;
-import com.google.gwt.core.ext.PropertyOracle;
-import com.google.gwt.core.ext.SelectionProperty;
-import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -35,6 +30,7 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import junit.framework.TestCase;
 
@@ -42,6 +38,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tests the JsStaticEval optimizer.
@@ -152,13 +149,13 @@ public class JsNamerTest extends TestCase {
     JsSymbolResolver.exec(program);
     switch (outputOption) {
       case PRETTY:
-        JsPrettyNamer.exec(program, new PropertyOracle[] {props});
+        JsPrettyNamer.exec(program, props.makeConfig());
         break;
       case OBFUSCATED:
-        JsObfuscateNamer.exec(program, new PropertyOracle[] {props});
+        JsObfuscateNamer.exec(program, props.makeConfig());
         break;
       case DETAILED:
-        JsVerboseNamer.exec(program, new PropertyOracle[] {props});
+        JsVerboseNamer.exec(program, props.makeConfig());
         break;
     }
     TextOutput text = new DefaultTextOutput(true);
@@ -171,29 +168,19 @@ public class JsNamerTest extends TestCase {
     return rename(parseJs(js));
   }
 
-  private static class BlacklistProps implements PropertyOracle {
-
+  private static class BlacklistProps {
     List<String> blacklist;
     List<String> blacklistSuffixes;
 
-    @Override
-    public ConfigurationProperty getConfigurationProperty(String propertyName)
-        throws BadPropertyValueException {
-
-      if (ReservedNames.BLACKLIST.equals(propertyName) && blacklist != null) {
-        return new DefaultConfigurationProperty(ReservedNames.BLACKLIST, blacklist);
+    private ConfigProps makeConfig() {
+      Map<String, List<String>> props = Maps.newHashMap();
+      if (blacklist != null) {
+        props.put(ReservedNames.BLACKLIST, blacklist);
       }
-      if (ReservedNames.BLACKLIST_SUFFIXES.equals(propertyName) && blacklistSuffixes != null) {
-        return new DefaultConfigurationProperty(ReservedNames.BLACKLIST_SUFFIXES,
-            blacklistSuffixes);
+      if (blacklistSuffixes != null) {
+        props.put(ReservedNames.BLACKLIST_SUFFIXES, blacklistSuffixes);
       }
-      throw new BadPropertyValueException("No property value for " + propertyName);
-    }
-
-    @Override
-    public SelectionProperty getSelectionProperty(TreeLogger logger,
-        String propertyName) throws BadPropertyValueException {
-      return null;
+      return new ConfigProps(props);
     }
   }
 }
