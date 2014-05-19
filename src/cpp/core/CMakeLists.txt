@@ -83,6 +83,7 @@ set (CORE_SOURCE_FILES
    markdown/sundown/stack.c
    r_util/RPackageInfo.cpp
    r_util/RProjectFile.cpp
+   r_util/RSessionContext.cpp
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp

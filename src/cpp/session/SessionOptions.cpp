@@ -27,6 +27,8 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <monitor/MonitorConstants.hpp>
 
 #include <r/session/RSession.hpp>
@@ -350,20 +352,15 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       }
    }
 
-   // compute user home path
-   FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
+   // compute user paths
+   r_util::SessionType sessionType =
+      (programMode_ == kSessionProgramModeDesktop) ?
+                                    r_util::SessionTypeDesktop :
+                                    r_util::SessionTypeServer;
 
-   userHomePath_ = userHomePath.absolutePath();
-
-   // compute user scratch path
-   std::string scratchPathName;
-   if (programMode_ == kSessionProgramModeDesktop)
-      scratchPathName = "RStudio-Desktop";
-   else
-      scratchPathName = "RStudio";
-   userScratchPath_ = core::system::userSettingsPath(
-                                       userHomePath,
-                                       scratchPathName).absolutePath();
+   r_util::UserDirectories userDirs = r_util::userDirectories(sessionType);
+   userHomePath_ = userDirs.homePath;
+   userScratchPath_ = userDirs.scratchPath;
 
    // session timeout seconds is always -1 in desktop mode
    if (programMode_ == kSessionProgramModeDesktop)
