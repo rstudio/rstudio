@@ -242,6 +242,14 @@ public abstract class
    public abstract AppCommand updatePackages();
    public abstract AppCommand refreshPackages();
    public abstract AppCommand activatePackages();
+   
+   // // packrat
+   public abstract AppCommand packratButton();
+   public abstract AppCommand packratSnapshot();
+   public abstract AppCommand packratRestore();
+   public abstract AppCommand packratClean();
+   public abstract AppCommand packratBundle();
+   public abstract AppCommand packratHelp();
 
    // Version control
    public abstract AppCommand versionControlHelp();

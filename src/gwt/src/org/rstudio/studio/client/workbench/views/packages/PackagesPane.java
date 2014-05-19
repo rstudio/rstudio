@@ -20,6 +20,7 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -37,6 +38,8 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -139,10 +142,30 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       Toolbar toolbar = new Toolbar();
      
+      // install packages
       toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());
       toolbar.addLeftSeparator();
+      
+      // update packages
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
       toolbar.addLeftSeparator();
+      
+      // packrat
+      ToolbarPopupMenu packratMenu_ = new ToolbarPopupMenu();
+      packratMenu_.addItem(commands_.packratSnapshot().createMenuItem(false));
+      packratMenu_.addItem(commands_.packratRestore().createMenuItem(false));
+      packratMenu_.addItem(commands_.packratClean().createMenuItem(false));
+      packratMenu_.addItem(commands_.packratBundle().createMenuItem(false));
+      packratMenu_.addSeparator();
+      packratMenu_.addItem(commands_.packratHelp().createMenuItem(false));
+      
+      ToolbarButton packratButton_ = new ToolbarButton(
+    		  "Packrat", commands_.packratButton().getImageResource(), packratMenu_);
+      
+      
+      toolbar.addLeftWidget(packratButton_);
+      toolbar.addLeftSeparator();
+      
       toolbar.addLeftWidget(commands_.refreshPackages().createToolbarButton());
       
       searchWidget_ = new SearchWidget(new SuggestOracle() {
