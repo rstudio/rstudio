@@ -249,6 +249,10 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
 {
    json::Object configJson;
    configJson["version"] = config.version;
+   json::Object rVersionJson;
+   rVersionJson["number"] = config.rVersion.number;
+   rVersionJson["arch"] = config.rVersion.arch;
+   configJson["r_version"] = rVersionJson;
    configJson["restore_workspace"] = config.restoreWorkspace;
    configJson["save_workspace"] = config.saveWorkspace;
    configJson["always_save_history"] = config.alwaysSaveHistory;
@@ -438,6 +442,17 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "makefile_path", &(config.makefilePath),
                     "custom_script_path", &(config.customScriptPath),
                     "tutorial_path", &(config.tutorialPath));
+   if (error)
+      return error;
+
+   // read the r version info
+   json::Object rVersionJson;
+   error = json::readObject(configJson, "r_version", &rVersionJson);
+   if (error)
+      return error;
+   error = json::readObject(rVersionJson,
+                            "number", &(config.rVersion.number),
+                            "arch", &(config.rVersion.arch));
    if (error)
       return error;
 

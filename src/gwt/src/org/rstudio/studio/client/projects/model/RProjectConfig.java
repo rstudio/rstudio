@@ -40,6 +40,14 @@ public class RProjectConfig extends JavaScriptObject
    public native final double getVersion() /*-{
       return this.version;
    }-*/;
+   
+   public native final RProjectRVersion getRVersion() /*-{
+      return this.r_version;
+   }-*/;
+   
+   public native final void setRVersion(RProjectRVersion rVersion) /*-{
+      this.r_version = rVersion;
+   }-*/;
 
    public native final int getRestoreWorkspace() /*-{
       return this.restore_workspace;
