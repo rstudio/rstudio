@@ -21,6 +21,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -572,6 +573,9 @@ void onMonitoringDisabled()
 }  // anonymous namespace
 
 
+// Note that the logic here needs to be synchronized with the logic in
+// core::r_util::RSessionContext::nextSessionWorkingDir (so that both
+// reach the same conclusion about what the next working directory is)
 void startup()
 {
    // register suspend handler
@@ -598,7 +602,7 @@ void startup()
       session::options().clearInitialContextSettings();
 
       // check for special "none" value (used for close project)
-      if (nextSessionProject == "none")
+      if (nextSessionProject == kNextSessionProjectNone)
       {
          projectFilePath = FilePath();
       }

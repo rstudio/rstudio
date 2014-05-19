@@ -23,6 +23,8 @@
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include "modules/SessionErrors.hpp"
@@ -44,7 +46,6 @@ const char * const kContextId ="contextIdentifier";
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
-const char * const kAlwaysRestoreLastProject = "restoreLastProject";
 const char * const kRProfileOnResume = "rprofileOnResume";
 const char * const kSaveAction = "saveAction";
 const char * const kLoadRData = "loadRData";
