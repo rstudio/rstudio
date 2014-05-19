@@ -41,11 +41,5 @@
 #define kPostbackUriScope                 "postback/"
 #define kPostbackExitCodeHeader           "X-Postback-ExitCode"
 
-// These constants are here so that the HttpConnectionListener::checkForAbort
-// method can write the next session project (so that aborts don't require
-// a full IDE reload)
-#define kProjectsSettings                  "projects_settings"
-#define kNextSessionProject                "next-session-project"
-
 #endif // SESSION_CONSTANTS_HPP
 

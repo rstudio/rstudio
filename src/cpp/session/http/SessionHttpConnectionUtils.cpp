@@ -30,9 +30,9 @@
 
 #include <core/json/JsonRpc.hpp>
 
-#include <session/SessionOptions.hpp>
-#include <session/SessionConstants.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
+#include <session/SessionOptions.hpp>
 
 
 namespace session {

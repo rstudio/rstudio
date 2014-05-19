@@ -22,6 +22,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/FileMonitor.hpp>
 
@@ -295,8 +296,6 @@ Error ProjectContext::initialize()
 
 
 namespace {
-const char * const kLastProjectPath = "last-project-path";
-
 
 // NOTE: the HttpConnectionListener relies on this path as well as the
 // kNextSessionProject constant in order to write the next session project

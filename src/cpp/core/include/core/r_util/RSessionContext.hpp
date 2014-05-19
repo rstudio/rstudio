@@ -20,6 +20,10 @@
 
 #include <core/FilePath.hpp>
 
+#define kProjectsSettings                  "projects_settings"
+#define kNextSessionProject                "next-session-project"
+#define kLastProjectPath                   "last-project-path"
+
 namespace core {
 namespace r_util {
 
