@@ -164,6 +164,16 @@ FilePath nextSessionProject(SessionType sessionType,
    }
 }
 
+core::system::Options rEnvironmentForNextSession(
+                              SessionType sessionType,
+                              const std::vector<FilePath>& otherRHomes,
+                              const FilePath& ldPathsScript,
+                              const std::string& ldLibraryPath,
+                              const std::string& homePath)
+{
+   return core::system::Options();
+}
+
 } // namespace r_util
 } // namespace core 
 

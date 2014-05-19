@@ -20,6 +20,8 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/system/Types.hpp>
+
 #define kUserSettings                  "monitored/user-settings/user-settings"
 #define kAlwaysRestoreLastProject      "restoreLastProject"
 
@@ -63,6 +65,12 @@ void writeProjectsSetting(const FilePath& settingsPath,
 FilePath nextSessionProject(SessionType sessionType,
                             const std::string& homePath = std::string());
 
+core::system::Options rEnvironmentForNextSession(
+                              SessionType sessionType,
+                              const std::vector<FilePath>& otherRHomes,
+                              const FilePath& ldPathsScript,
+                              const std::string& ldLibraryPath,
+                              const std::string& homePath = std::string());
 
 } // namespace r_util
 } // namespace core 
