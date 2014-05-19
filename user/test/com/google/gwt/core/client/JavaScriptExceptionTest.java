@@ -112,20 +112,6 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     assertEquals(expected, ((JavaScriptException) exception).getThrown());
   }
 
-  private static void assertJsoProperties() {
-    JavaScriptObject jso = makeJSO();
-    try {
-      throwNative(jso);
-      fail();
-    } catch (JavaScriptException e) {
-      assertEquals("myName", e.getName());
-      assertDescription(e, "myDescription");
-      assertTrue(e.isThrownSet());
-      assertSame(jso, e.getThrown());
-      assertMessage(e);
-    }
-  }
-
   /**
    * This test doesn't work in Development Mode yet; we'd need a way to throw
    * true native objects as exceptions. Windows/IE is the deal killer right now
