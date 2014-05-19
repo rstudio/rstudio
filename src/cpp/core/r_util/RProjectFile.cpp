@@ -259,6 +259,19 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
 }
 
 Error readProjectFile(const FilePath& projectFilePath,
+                      RProjectConfig* pConfig,
+                      std::string* pUserErrMsg)
+{
+   bool providedDefaults;
+   return readProjectFile(projectFilePath,
+                          RProjectConfig(),
+                          RProjectBuildDefaults(),
+                          pConfig,
+                          &providedDefaults,
+                          pUserErrMsg);
+}
+
+Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
                       const RProjectBuildDefaults& buildDefaults,
                       RProjectConfig* pConfig,

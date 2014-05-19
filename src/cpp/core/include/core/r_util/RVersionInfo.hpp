@@ -19,6 +19,7 @@
 #include <string>
 
 #define kRVersionDefault   "Default"
+
 #define kRVersionArch32    "32"
 #define kRVersionArch64    "64"
 
@@ -27,7 +28,7 @@ namespace r_util {
 
 struct RVersionInfo
 {
-   explicit RVersionInfo(const std::string& number,
+   explicit RVersionInfo(const std::string& number = kRVersionDefault,
                          const std::string& arch = std::string())
       : number(number), arch(arch)
    {

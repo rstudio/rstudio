@@ -26,6 +26,8 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#include <core/r_util/RProjectFile.hpp>
+
 namespace core {
 namespace r_util {
 
@@ -162,6 +164,32 @@ FilePath nextSessionProject(SessionType sessionType,
    {
       return FilePath();
    }
+}
+
+RVersionInfo nextSessionRVersion(SessionType sessionType,
+                                 const std::string& homePath)
+{
+   // first determine the project path -- if there is none then we return
+   // an empty RVersionInfo (which will result in just using the default)
+   FilePath nextProject = nextSessionProject(sessionType, homePath);
+   if (nextProject.empty())
+      return RVersionInfo();
+
+   // read the project file
+   std::string errMsg;
+   r_util::RProjectConfig projectConfig;
+   Error error = r_util::readProjectFile(nextProject, &projectConfig, &errMsg);
+   if (error)
+   {
+      error.addProperty("message", errMsg);
+      LOG_ERROR(error);
+      return RVersionInfo();
+   }
+
+   // TODO: look for packrat version as well
+
+   // return the version
+   return projectConfig.rVersion;
 }
 
 } // namespace r_util

@@ -112,8 +112,12 @@ struct RProjectConfig
 
 
 Error readProjectFile(const FilePath& projectFilePath,
+                      RProjectConfig* pConfig,
+                      std::string* pUserErrMsg);
+
+Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
-                      const RProjectBuildDefaults& buildDefauls,
+                      const RProjectBuildDefaults& buildDefaults,
                       RProjectConfig* pConfig,
                       bool* pProvidedDefaults,
                       std::string* pUserErrMsg);
