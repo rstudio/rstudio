@@ -13,28 +13,42 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.rpc.client.ast;
-
-import com.google.gwt.rpc.client.ast.RpcCommandVisitor.Context;
+package com.google.web.bindery.requestfactory.server;
 
 /**
- * Encapsulates a string value in the command stream.
+ * Simple pair class.
+ * 
+ * @param <A> any type
+ * @param <B> any type
  */
-public class StringValueCommand extends ScalarValueCommand {
-  private final String value;
+public class Pair<A, B> {
+  private final A a;
+  private final B b;
 
-  public StringValueCommand(String value) {
-    this.value = value;
+  public Pair(A a, B b) {
+    this.a = a;
+    this.b = b;
   }
 
   @Override
-  public String getValue() {
-    return value;
+  public boolean equals(Object o) {
+    if (!(o instanceof Pair<?, ?>)) {
+      return false;
+    }
+    Pair<?, ?> other = (Pair<?, ?>) o;
+    return a.equals(other.a) && b.equals(other.b);
+  }
+
+  public A getA() {
+    return a;
+  }
+
+  public B getB() {
+    return b;
   }
 
   @Override
-  public void traverse(RpcCommandVisitor visitor, Context ctx) {
-    visitor.visit(this, ctx);
-    visitor.endVisit(this, ctx);
+  public int hashCode() {
+    return a.hashCode() * 13 + b.hashCode() * 7;
   }
 }

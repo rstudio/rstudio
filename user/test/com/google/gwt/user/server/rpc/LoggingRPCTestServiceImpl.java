@@ -34,7 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * Remote service implementation for serialization of GWT core.java.util.logging emulations.
  */
-public class LoggingRPCTestServiceImpl extends HybridServiceServlet implements
+public class LoggingRPCTestServiceImpl extends RemoteServiceServlet implements
     LoggingRPCTestService {
 
   @Override

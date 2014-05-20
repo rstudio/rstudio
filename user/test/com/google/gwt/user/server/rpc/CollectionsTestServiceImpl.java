@@ -62,7 +62,7 @@ import java.util.Vector;
 /**
  * TODO: document me.
  */
-public class CollectionsTestServiceImpl extends HybridServiceServlet implements
+public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     CollectionsTestService {
 
   private static String toString(Object[] values) {

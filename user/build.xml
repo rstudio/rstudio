@@ -181,7 +181,6 @@
         <pathelement location="${project.build}/bin/com/google/gwt/regexp/RegExp.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/user/User.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/xml/XML.gwtar"/>
-        <pathelement location="${project.build}/bin/com/google/gwt/rpc/RPC.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/debug/Debug.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/place/Place.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/activity/Activity.gwtar"/>
@@ -205,7 +204,6 @@
 
             <!-- Below are modules that depend on User           -->
             <arg value="com.google.gwt.xml.XML"/>
-            <arg value="com.google.gwt.rpc.RPC"/>
             <arg value="com.google.gwt.debug.Debug"/>
             <arg value="com.google.gwt.logging.Logging"/>
 

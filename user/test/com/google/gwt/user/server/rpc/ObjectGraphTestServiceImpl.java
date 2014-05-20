@@ -25,7 +25,7 @@ import com.google.gwt.user.client.rpc.TestSetValidator;
 /**
  * TODO: document me.
  */
-public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
+public class ObjectGraphTestServiceImpl extends RemoteServiceServlet implements
     ObjectGraphTestService {
 
   @Override

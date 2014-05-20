@@ -265,8 +265,6 @@ public class StandardGeneratorContext implements GeneratorContext {
         CompilerEventType.GENERATOR_I18N);
     eventsByGeneratorType.put("com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator",
         CompilerEventType.GENERATOR_RPC);
-    eventsByGeneratorType.put("com.google.gwt.rpc.rebind.RpcServiceGenerator",
-        CompilerEventType.GENERATOR_RPC); // deRPC
     eventsByGeneratorType.put("com.google.gwt.uibinder.rebind.UiBinderGenerator",
         CompilerEventType.GENERATOR_UIBINDER);
     eventsByGeneratorType.put("com.google.gwt.inject.rebind.GinjectorGenerator",

@@ -130,11 +130,6 @@ public class SourceMapTest extends TestCase {
     }
 
     @Override
-    public CastableTypeMap getCastableTypeMap() {
-      return null;
-    }
-
-    @Override
     public String getClassName() {
       return this.className;
     }

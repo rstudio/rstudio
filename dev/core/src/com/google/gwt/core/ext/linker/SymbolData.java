@@ -82,11 +82,6 @@ public interface SymbolData extends Serializable {
   }
 
   /**
-   * Returns a JSON map of castableTypes.
-   */
-  CastableTypeMap getCastableTypeMap();
-
-  /**
    * Returns the name of the type or enclosing type if the symbol is a method or
    * field.
    */

@@ -24,7 +24,7 @@ import java.math.MathContext;
 /**
  * Remote service implementation  for serialization of GWT core.java emulations.
  */
-public class CoreJavaTestServiceImpl extends HybridServiceServlet implements CoreJavaTestService {
+public class CoreJavaTestServiceImpl extends RemoteServiceServlet implements CoreJavaTestService {
 
   @Override
   public MathContext echoMathContext(MathContext value) throws CoreJavaTestServiceException {

@@ -20,7 +20,7 @@ import com.google.gwt.user.client.rpc.ExceptionsTestService;
 /**
  * Remote Service Implementation for Exception serialization tests.
  */
-public class ExceptionsTestServiceImpl extends HybridServiceServlet implements
+public class ExceptionsTestServiceImpl extends RemoteServiceServlet implements
     ExceptionsTestService {
 
   @Override

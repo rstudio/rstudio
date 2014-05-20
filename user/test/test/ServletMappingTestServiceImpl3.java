@@ -15,12 +15,12 @@
  */
 package test;
 
-import com.google.gwt.user.server.rpc.HybridServiceServlet;
+import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
  * TODO: document me.
  */
-public class ServletMappingTestServiceImpl3 extends HybridServiceServlet
+public class ServletMappingTestServiceImpl3 extends RemoteServiceServlet
     implements ServletMappingTestService {
 
   @Override

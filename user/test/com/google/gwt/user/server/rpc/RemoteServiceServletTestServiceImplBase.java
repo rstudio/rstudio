@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletRequest;
  * RPC-over-HTTP.
  */
 public class RemoteServiceServletTestServiceImplBase extends
-    HybridServiceServlet implements RemoteServiceServletTestService {
+    RemoteServiceServlet implements RemoteServiceServletTestService {
 
   /**
    * A RuntimeException the client code shouldn't know anything about.

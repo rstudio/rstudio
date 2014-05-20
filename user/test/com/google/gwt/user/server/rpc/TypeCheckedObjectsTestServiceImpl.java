@@ -27,7 +27,7 @@ import com.google.gwt.user.client.rpc.TypeUncheckedGenericClass;
  * Servlet used by the
  * {@link com.google.gwt.user.client.rpc.TypeCheckedObjectsTest} unit tests.
  */
-public class TypeCheckedObjectsTestServiceImpl extends HybridServiceServlet implements
+public class TypeCheckedObjectsTestServiceImpl extends RemoteServiceServlet implements
     TypeCheckedObjectsTestService {
 
   /*

@@ -20,7 +20,7 @@ import com.google.gwt.user.client.rpc.EnumsTestService;
 /**
  * Simple remote service used to echo enumerated types.
  */
-public class EnumsTestServiceImpl extends HybridServiceServlet implements
+public class EnumsTestServiceImpl extends RemoteServiceServlet implements
     EnumsTestService {
 
   @Override

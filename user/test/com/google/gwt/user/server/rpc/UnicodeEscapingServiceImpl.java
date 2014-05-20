@@ -21,7 +21,7 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 /**
  * Implementation of the {@link UnicodeEscapingService} interface.
  */
-public class UnicodeEscapingServiceImpl extends HybridServiceServlet implements
+public class UnicodeEscapingServiceImpl extends RemoteServiceServlet implements
     UnicodeEscapingService {
 
   /**

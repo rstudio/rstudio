@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import static com.google.gwt.user.client.rpc.RpcRequestBuilder.MODULE_BASE_HEADER;
+
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.SerializationException;
@@ -192,6 +194,31 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
     // Fail loudly so that that a configuration error will be noticed.
     throw new ServletException("Invalid value of gwt.codeserver.port system property;"
         + " expected an integer in the range [1-65535] but got: " + value);
+  }
+
+  /**
+   * Extract the module's base path from the current request.
+   *
+   * @return the module's base path, modulo protocol and host, as reported by
+   *         {@link com.google.gwt.core.client.GWT#getModuleBaseURL()} or
+   *         <code>null</code> if the request did not contain the
+   *         {@value com.google.gwt.user.client.rpc.RpcRequestBuilder#MODULE_BASE_HEADER} header
+   */
+  protected String getRequestModuleBasePath() {
+    try {
+      String header = getThreadLocalRequest().getHeader(MODULE_BASE_HEADER);
+      if (header == null) {
+        return null;
+      }
+      String path = new URL(header).getPath();
+      String contextPath = getThreadLocalRequest().getContextPath();
+      if (!path.startsWith(contextPath)) {
+        return null;
+      }
+      return path.substring(contextPath.length());
+    } catch (MalformedURLException e) {
+      return null;
+    }
   }
 
   @Override

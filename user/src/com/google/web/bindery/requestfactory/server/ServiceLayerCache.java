@@ -15,7 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
-import com.google.gwt.rpc.server.Pair;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.Locator;
 import com.google.web.bindery.requestfactory.shared.RequestContext;

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.linker.CastableTypeMap;
-import com.google.gwt.core.ext.linker.impl.StandardCastableTypeMap;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.PermProps;
@@ -694,29 +692,11 @@ public class GenerateJavaScriptAST {
       if (getRuntimeTypeReference(x) == null || !typeOracle.isInstantiatedType(x)) {
         return;
       }
-      // TODO(rluble): Remove castmaps from symbol maps as part of deRPC deprecation.
-      StringBuilder sb = new StringBuilder();
-      sb.append('{');
-      JCastMap castMap = program.getCastMap(x);
-      if (castMap != null) {
-        boolean isFirst = true;
-        for (JExpression castToType : castMap.getCanCastToTypes()) {
-          if (isFirst) {
-            isFirst = false;
-          } else {
-            sb.append(',');
-          }
-          sb.append(castToType.toSource());
-          sb.append(":1");
-        }
-      }
-      sb.append('}');
-      CastableTypeMap castableTypeMap = new StandardCastableTypeMap(sb.toString());
 
       String typeId = getRuntimeTypeReference(x).toSource();
       StandardSymbolData symbolData =
           StandardSymbolData.forClass(x.getName(), x.getSourceInfo().getFileName(),
-              x.getSourceInfo().getStartLine(), castableTypeMap, typeId);
+              x.getSourceInfo().getStartLine(), typeId);
       assert !symbolTable.containsKey(symbolData);
       symbolTable.put(symbolData, jsName);
     }

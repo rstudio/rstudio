@@ -27,7 +27,7 @@ import java.math.BigInteger;
  * sure it isn't mangled on the way to the server and then unmangled on the way
  * back to the client.
  */
-public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
+public class ValueTypesTestServiceImpl extends RemoteServiceServlet implements
     ValueTypesTestService {
 
   @Override
