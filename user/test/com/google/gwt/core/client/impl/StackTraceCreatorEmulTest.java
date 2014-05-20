@@ -17,10 +17,6 @@ package com.google.gwt.core.client.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
-import com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated;
 
 /**
  * Tests {@link StackTraceCreator} in the emulated mode.
@@ -28,7 +24,7 @@ import com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated;
 public class StackTraceCreatorEmulTest extends StackTraceCreatorTest {
 
   public static void testJavaScriptException() {
-    JsArrayString start = sample();
+    StackTraceElement[] start = sample();
     Throwable t = null;
     try {
       throwNative();
@@ -56,7 +52,7 @@ public class StackTraceCreatorEmulTest extends StackTraceCreatorTest {
 
     checkStack(myName, t);
 
-    JsArrayString end = sample();
+    StackTraceElement[] end = sample();
     assertEquals(start, end);
   }
 
@@ -69,18 +65,18 @@ public class StackTraceCreatorEmulTest extends StackTraceCreatorTest {
       return;
     }
 
-    JsArrayString start = sample();
+    StackTraceElement[] start = sample();
 
-    JsArrayString stack = countDown(5);
+    StackTraceElement[] stack = countDown(5);
     assertNotNull(stack);
-    assertTrue(stack.length() > 0);
+    assertTrue(stack.length > 0);
 
-    JsArrayString end = sample();
+    StackTraceElement[] end = sample();
     assertEquals(start, end);
   }
 
   public static void testStackTraces() {
-    JsArrayString start = sample();
+    StackTraceElement[] start = sample();
 
     Throwable t;
     try {
@@ -98,14 +94,14 @@ public class StackTraceCreatorEmulTest extends StackTraceCreatorTest {
 
     checkStack(myName, t);
 
-    JsArrayString end = sample();
+    StackTraceElement[] end = sample();
     assertEquals(start, end);
   }
 
-  private static void assertEquals(JsArrayString start, JsArrayString end) {
-    assertEquals("length", start.length(), end.length());
-    for (int i = 0, j = start.length(); i < j; i++) {
-      assertEquals("frame " + i, start.get(i), end.get(i));
+  private static void assertEquals(StackTraceElement[] start, StackTraceElement[] end) {
+    assertEquals("length", start.length, end.length);
+    for (int i = 0, j = start.length; i < j; i++) {
+      assertEquals("frame " + i, start[i].getMethodName(), end[i].getMethodName());
     }
   }
 
@@ -139,7 +135,7 @@ public class StackTraceCreatorEmulTest extends StackTraceCreatorTest {
         found);
   }
 
-  private static JsArrayString countDown(int count) {
+  private static StackTraceElement[] countDown(int count) {
     if (count > 0) {
       return countDown(count - 1);
     } else {
@@ -147,13 +143,8 @@ public class StackTraceCreatorEmulTest extends StackTraceCreatorTest {
     }
   }
 
-  private static JsArrayString sample() {
-    if (GWT.isScript()) {
-      Collector collector = new CollectorEmulated();
-      return collector.inferFrom(collector.collect());
-    } else {
-      return JavaScriptObject.createArray().cast();
-    }
+  private static StackTraceElement[] sample() {
+    return new Throwable().getStackTrace();
   }
 
   private static native void throwNative() /*-{

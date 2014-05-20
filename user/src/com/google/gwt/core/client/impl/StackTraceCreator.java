@@ -124,16 +124,18 @@ public class StackTraceCreator {
   static final class CollectorEmulated extends Collector {
 
     @Override
-    public JavaScriptObject collect() {
-      JsArrayString toReturn = JsArrayString.createArray().cast();
-      JsArray<JavaScriptObject> stack = getStack();
-      for (int i = 0, j = getStackDepth(); i < j; i++) {
-        String name = stack.get(i) == null ? ANONYMOUS : getFunctionName(stack.get(i));
+    public native JavaScriptObject collect() /*-{
+      var toReturn = [];
+      for (var i = 0; i < $stackDepth; i++) {
+        var location = $location[i];
+        var fn = $stack[i];
+        var name = fn ? @StackTraceCreator::getFunctionName(*)(fn) : @StackTraceCreator::ANONYMOUS;
+
         // Reverse the order
-        toReturn.set(j - i - 1, name);
+        toReturn[$stackDepth - i - 1] = [name, location];
       }
-      return toFnStackError(toReturn);
-    }
+      return { fnStack: toReturn };
+    }-*/;
 
     @Override
     public JsArrayString inferFrom(JavaScriptObject e) {
@@ -141,16 +143,18 @@ public class StackTraceCreator {
     }
 
     @Override
+    protected StackTraceElement[] getStackTrace(JsArrayString st) {
+      JsArray<JsArrayString> stack = st.cast();
 
-    protected StackTraceElement[] getStackTrace(JsArrayString stack) {
       if (stack.length() == 0) {
         return null;
       }
-      JsArrayString locations = getLocation();
       StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
-      for (int i = 0, j = stackTrace.length; i < j; i++) {
-        // Locations is also backwards
-        String location = locations.get(j - i - 1);
+      for (int i = 0; i < stackTrace.length; i++) {
+        JsArrayString frame = stack.get(i);
+        String name = frame.get(0);
+        String location = frame.get(1);
+
         String fileName = null;
         int lineNumber = LINE_NUMBER_UNKNOWN;
         if (location != null) {
@@ -162,22 +166,10 @@ public class StackTraceCreator {
             lineNumber = parseInt(location);
           }
         }
-        stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i), fileName, lineNumber);
+        stackTrace[i] = new StackTraceElement(UNKNOWN, name, fileName, lineNumber);
       }
       return stackTrace;
     }
-
-    private native JsArrayString getLocation()/*-{
-      return $location;
-    }-*/;
-
-    private native JsArray<JavaScriptObject> getStack()/*-{
-      return $stack;
-    }-*/;
-
-    private native int getStackDepth() /*-{
-      return $stackDepth;
-    }-*/;
   }
 
   /**
@@ -450,10 +442,6 @@ public class StackTraceCreator {
 
   private static native boolean supportsErrorStack() /*-{
     return "stack" in new Error; // Checked via 'in' to avoid execution of stack getter in Chrome
-  }-*/;
-
-  private static native JavaScriptObject toFnStackError(JsArrayString s) /*-{
-    return { fnStack: s };
   }-*/;
 
   private static native JsArrayString getFnStack(JavaScriptObject e) /*-{
