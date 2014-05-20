@@ -17,10 +17,15 @@ package org.rstudio.studio.client.packrat;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.ConsoleDispatcher;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.inject.Inject;
@@ -36,9 +41,16 @@ public class Packrat {
          Binder binder,
          Commands commands,
          EventBus eventBus,
-         GlobalDisplay display) {
+         GlobalDisplay display,
+         FileDialogs fileDialogs,
+         WorkbenchContext workbenchContext,
+         RemoteFileSystemContext fsContext) {
+      
       eventBus_ = eventBus;
       display_ = display;
+      fileDialogs_ = fileDialogs;
+      workbenchContext_ = workbenchContext;
+      fsContext_ = fsContext;
       binder.bind(commands, this);
    }
 
@@ -70,13 +82,49 @@ public class Packrat {
 
    @Handler
    public void onPackratBundle() {
+      fileDialogs_.saveFile("Save Bundled Packrat Project...", fsContext_,
+            workbenchContext_.getCurrentWorkingDir(), "zip", false,
+            new ProgressOperationWithInput<FileSystemItem>() {
+
+               @Override
+               public void execute(FileSystemItem input,
+                     ProgressIndicator indicator) {
+
+                  if (input == null)
+                     return;
+
+                  indicator.onCompleted();
+
+                  String bundleFile = input.getPath();
+                  if (bundleFile == null)
+                     return;
+
+                  StringBuilder cmd = new StringBuilder();
+                  // We use 'overwrite = TRUE' since the UI dialog will prompt
+                  // us if we want to overwrite
+                  cmd.append("packrat::bundle(file = '").append(bundleFile)
+                        .append("', overwrite = TRUE)");
+
+                  eventBus_.fireEvent(new SendToConsoleEvent(cmd.toString(),
+                        true, false));
+
+               }
+            });
+      
+   }
+   
+   @Handler
+   public void onPackratStatus() {
       eventBus_.fireEvent(
-         new SendToConsoleEvent("packrat::bundle()", true, false)
+            new SendToConsoleEvent("packrat::status()", true, false)
       );
    }
 
 
-   private GlobalDisplay display_;
-   private EventBus eventBus_;
+   private final GlobalDisplay display_;
+   private final EventBus eventBus_;
+   private final RemoteFileSystemContext fsContext_;
+   private final WorkbenchContext workbenchContext_;
+   private final FileDialogs fileDialogs_;
 
 }

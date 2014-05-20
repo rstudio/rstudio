@@ -1172,27 +1172,32 @@ well as menu structures (for main menu and popup menus).
    <cmd id="packratSnapshot"
    		buttonLabel="Snapshot"
    		menuLabel="Snapshot"
-   		desc="Snapshot" />
+   		desc="Save the current state of the active packrat project's library" />
    		
    <cmd id="packratRestore"
    		buttonLabel="Restore"
    		menuLabel="Restore"
-   		desc="Restore" />
+   		desc="Restore the private library of a packrat project from the latest snapshot" />
    		
    <cmd id="packratClean"
    		buttonLabel="Clean"
    		menuLabel="Clean"
-   		desc="Clean" />
+   		desc="Clean the private library of a packrat project" />
    		
    <cmd id="packratBundle"
    		buttonLabel="Bundle"
    		menuLabel="Bundle"
-   		desc="Bundle" />
+   		desc="Bundle a Packrat Project" />
    		
    <cmd id="packratHelp"
    		buttonLabel="Help"
    		menuLabel="Help"
-   		desc="Help" />
+   		desc="Learn more about Packrat" />
+   		
+   <cmd id="packratStatus"
+        buttonLabel="Status"
+        menuLabel="Status"
+        desc="Packrat Project Status" />
         
    <cmd id="versionControlOptions"
         menuLabel="_Options..."

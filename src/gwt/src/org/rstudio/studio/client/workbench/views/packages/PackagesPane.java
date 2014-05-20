@@ -14,22 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
-import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.CheckboxCell;
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
-import com.google.gwt.user.client.ui.*;
-import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.NoSelectionModel;
-import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
@@ -52,8 +38,24 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOp
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.CheckboxCell;
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.NoSelectionModel;
+import com.google.inject.Inject;
 
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
@@ -66,17 +68,20 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       ensureWidget();
    }
    
+   @Override
    public void setObserver(PackagesDisplayObserver observer)
    {
       observer_ = observer ;  
    }
 
+   @Override
    public void listPackages(List<PackageInfo> packages)
    {
       packagesTable_.setPageSize(packages.size());
       packagesDataProvider_.setList(packages);
    }
    
+   @Override
    public void installPackage(PackageInstallContext installContext,
                               PackageInstallOptions defaultInstallOptions,
                               PackagesServerOperations server,
@@ -90,6 +95,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                                operation).showModal();
    }
    
+   @Override
    public void setPackageStatus(PackageStatus status)
    {
       int row = packageRow(status.getName(), status.getLib()) ;
@@ -151,18 +157,21 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftSeparator();
       
       // packrat
-      ToolbarPopupMenu packratMenu_ = new ToolbarPopupMenu();
-      packratMenu_.addItem(commands_.packratSnapshot().createMenuItem(false));
-      packratMenu_.addItem(commands_.packratRestore().createMenuItem(false));
-      packratMenu_.addItem(commands_.packratClean().createMenuItem(false));
-      packratMenu_.addItem(commands_.packratBundle().createMenuItem(false));
-      packratMenu_.addSeparator();
-      packratMenu_.addItem(commands_.packratHelp().createMenuItem(false));
+      ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
+      packratMenu.addItem(commands_.packratSnapshot().createMenuItem(false));
+      packratMenu.addItem(commands_.packratRestore().createMenuItem(false));
+      packratMenu.addItem(commands_.packratClean().createMenuItem(false));
+      packratMenu.addSeparator();
+      packratMenu.addItem(commands_.packratStatus().createMenuItem(false));
+      packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
+      packratMenu.addSeparator();
+      packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
       
-      ToolbarButton packratButton_ = new ToolbarButton(
-    		  "Packrat", commands_.packratButton().getImageResource(), packratMenu_);
+      ToolbarButton packratButton = new ToolbarButton(
+    		  "Packrat", commands_.packratButton().getImageResource(), packratMenu
+    	);
       
-      toolbar.addLeftWidget(packratButton_);
+      toolbar.addLeftWidget(packratButton);
       toolbar.addLeftSeparator();
       
       toolbar.addLeftWidget(commands_.refreshPackages().createToolbarButton());
@@ -225,6 +234,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(nameColumn);
     
       TextColumn<PackageInfo> descColumn = new TextColumn<PackageInfo>() {
+         @Override
          public String getValue(PackageInfo packageInfo)
          {
             return packageInfo.getDesc();
@@ -249,6 +259,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
         new ImageButtonColumn<PackageInfo>(
           AbstractImagePrototype.create(ThemeResources.INSTANCE.removePackage()),
           new OperationWithInput<PackageInfo>() {
+            @Override
             public void execute(PackageInfo packageInfo)
             {
                observer_.removePackage(packageInfo);          
@@ -274,6 +285,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          super(new CheckboxCell(false, false));
          
          setFieldUpdater(new FieldUpdater<PackageInfo,Boolean>() {
+            @Override
             public void update(int index, PackageInfo packageInfo, Boolean value)
             {
                if (value.booleanValue())
