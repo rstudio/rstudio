@@ -23,6 +23,8 @@
 
 #include <core/system/Environment.hpp>
 
+#include <core/r_util/RVersionInfo.hpp>
+
 namespace core {
 namespace r_util {
 
@@ -47,6 +49,8 @@ std::vector<RVersion> enumerateRVersions(
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath);
 
+RVersion selectVersion(const RVersionInfo& matchVersion,
+                       std::vector<RVersion> versions);
 
 } // namespace r_util
 } // namespace core 
