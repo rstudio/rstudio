@@ -22,6 +22,7 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
+#include <core/r_util/RVersionInfo.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 
 using namespace core ;
@@ -38,17 +39,22 @@ int test_main(int argc, char * argv[])
       if (error)
          LOG_ERROR(error);
 
+      using namespace core::r_util;
 
-      std::vector<r_util::RVersion> rVersions = r_util::enumerateRVersions(
-               std::vector<FilePath>(),
-               FilePath(),
-               std::string());
+      std::vector<RVersionNumber> vers;
+      vers.push_back(RVersionNumber::parse("3.0"));
+      vers.push_back(RVersionNumber::parse("2.14.3"));
+      vers.push_back(RVersionNumber::parse("3.0.1"));
+      vers.push_back(RVersionNumber::parse("2.15"));
+      vers.push_back(RVersionNumber::parse("3.1.0"));
 
-      BOOST_FOREACH(const r_util::RVersion& rVersion, rVersions)
+      std::sort(vers.begin(), vers.end());
+      std::reverse(vers.begin(), vers.end());
+
+      BOOST_FOREACH(RVersionNumber ver, vers)
       {
-         std::cerr << rVersion << std::endl;
+         std::cerr << ver << std::endl;
       }
-
 
       return EXIT_SUCCESS;
    }
