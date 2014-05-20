@@ -696,6 +696,17 @@ void setREnvironmentVars(const EnvironmentVars& vars)
    }
 }
 
+void setREnvironmentVars(const EnvironmentVars& vars,
+                         core::system::Options* pEnv)
+{
+   for (EnvironmentVars::const_iterator it = vars.begin();
+        it != vars.end();
+        ++it)
+   {
+      core::system::setenv(pEnv, it->first, it->second);
+   }
+}
+
 std::string rLibraryPath(const FilePath& rHomePath,
                          const FilePath& rLibPath,
                          const FilePath& ldPathsScript,
