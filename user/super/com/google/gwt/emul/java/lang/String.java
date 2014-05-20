@@ -954,11 +954,7 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public boolean startsWith(String prefix, int toffset) {
-    if (toffset < 0 || toffset >= length()) {
-      return false;
-    } else {
-      return indexOf(prefix, toffset) == toffset;
-    }
+    return toffset >= 0 && indexOf(prefix, toffset) == toffset;
   }
 
   public CharSequence subSequence(int beginIndex, int endIndex) {
