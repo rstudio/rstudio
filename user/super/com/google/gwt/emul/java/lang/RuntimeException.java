@@ -37,4 +37,8 @@ public class RuntimeException extends Exception {
     super(cause);
   }
 
+  protected RuntimeException(String message, Throwable cause, boolean enableSuppression,
+      boolean writableStackTrace) {
+    super(message, cause, enableSuppression, writableStackTrace);
+  }
 }
