@@ -73,32 +73,6 @@ public class StackTraceCreator {
      * Attempt to infer the stack from an unknown JavaScriptObject that had been thrown.
      */
     public abstract JsArrayString inferFrom(JavaScriptObject e);
-
-    /**
-     * Extract the name of a function from it's toString() representation.
-     * Package-access for testing.
-     */
-    protected String extractName(String fnToString) {
-      String toReturn = "";
-      fnToString = fnToString.trim();
-      int index = fnToString.indexOf("(");
-      int start = fnToString.startsWith("function") ? 8 : 0;
-      if (index == -1) {
-        // Firefox 14 does not include parenthesis and uses '@' symbol instead to terminate symbol
-        index = fnToString.indexOf('@');
-        /**
-         * Firefox 14 doesn't return strings like 'function()' for anonymous methods, so
-         * we assert a space must trail 'function' keyword for a method named 'functionName', e.g.
-         * functionName:file.js:2 won't accidentally strip off the 'function' prefix which is part
-         * of the name.
-         */
-        start = fnToString.startsWith("function ") ? 9 : 0;
-      }
-      if (index != -1) {
-        toReturn = fnToString.substring(start, index).trim();
-      }
-      return toReturn.length() > 0 ? toReturn : ANONYMOUS;
-    }
   }
 
   /**
@@ -115,7 +89,7 @@ public class StackTraceCreator {
       // Ignore the collect() call
       var callee = arguments.callee.caller;
       while (callee) {
-        var name = this.@Collector::extractName(*)(callee.toString());
+        var name = @StackTraceCreator::getFunctionName(*)(callee);
         toReturn.push(name);
 
         // Avoid infinite loop by associating names to function objects.  We
@@ -154,7 +128,7 @@ public class StackTraceCreator {
       JsArrayString toReturn = JsArrayString.createArray().cast();
       JsArray<JavaScriptObject> stack = getStack();
       for (int i = 0, j = getStackDepth(); i < j; i++) {
-        String name = stack.get(i) == null ? ANONYMOUS : extractName(stack.get(i).toString());
+        String name = stack.get(i) == null ? ANONYMOUS : getFunctionName(stack.get(i));
         // Reverse the order
         toReturn.set(j - i - 1, name);
       }
@@ -242,6 +216,31 @@ public class StackTraceCreator {
     private native JsArrayString getStack(JavaScriptObject e) /*-{
       return (e && e.stack) ? e.stack.split('\n') : [];
     }-*/;
+
+    /**
+     * Extract the name of a function from it's toString() representation.
+     */
+    protected String extractName(String fnToString) {
+      String toReturn = "";
+      fnToString = fnToString.trim();
+      int index = fnToString.indexOf("(");
+      int start = fnToString.startsWith("function") ? 8 : 0;
+      if (index == -1) {
+        // Firefox 14 does not include parenthesis and uses '@' symbol instead to terminate symbol
+        index = fnToString.indexOf('@');
+        /**
+         * Firefox 14 doesn't return strings like 'function()' for anonymous methods, so
+         * we assert a space must trail 'function' keyword for a method named 'functionName', e.g.
+         * functionName:file.js:2 won't accidentally strip off the 'function' prefix which is part
+         * of the name.
+         */
+        start = fnToString.startsWith("function ") ? 9 : 0;
+      }
+      if (index != -1) {
+        toReturn = fnToString.substring(start, index).trim();
+      }
+      return toReturn.length() > 0 ? toReturn : ANONYMOUS;
+    }
   }
 
   /**
@@ -459,6 +458,15 @@ public class StackTraceCreator {
 
   private static native JsArrayString getFnStack(JavaScriptObject e) /*-{
     return (e && e.fnStack && e.fnStack instanceof Array) ? e.fnStack : [];
+  }-*/;
+
+  private static native String getFunctionName(JavaScriptObject fn) /*-{
+    return fn.name || (fn.name = @StackTraceCreator::extractFunctionName(*)(fn.toString()));
+  }-*/;
+
+  static native String extractFunctionName(String fnName) /*-{
+    var fnRE = /function(?:\s+([\w$]+))?\s*\(/;
+    return (fnRE.test(fnName) && RegExp.$1) || @StackTraceCreator::ANONYMOUS;
   }-*/;
 
   private static native <T> T splice(T arr, int length) /*-{

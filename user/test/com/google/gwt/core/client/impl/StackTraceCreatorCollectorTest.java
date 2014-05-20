@@ -15,12 +15,12 @@
  */
 package com.google.gwt.core.client.impl;
 
+import static com.google.gwt.core.client.impl.StackTraceCreator.extractFunctionName;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChromeNoSourceMap;
-import com.google.gwt.core.client.impl.StackTraceCreator.CollectorLegacy;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -35,15 +35,13 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   }
 
   public void testExtractName() {
-    Collector c = new CollectorLegacy();
-
-    assertEquals("anonymous", c.extractName("function(){}"));
-    assertEquals("anonymous", c.extractName("function (){}"));
-    assertEquals("anonymous", c.extractName("  function (){}"));
-    assertEquals("anonymous", c.extractName("function  (){}"));
-    assertEquals("foo", c.extractName("function foo(){}"));
-    assertEquals("foo", c.extractName("function foo (){}"));
-    assertEquals("foo", c.extractName("  function foo (){}"));
+    assertEquals("anonymous", extractFunctionName("function(){}"));
+    assertEquals("anonymous", extractFunctionName("function (){}"));
+    assertEquals("anonymous", extractFunctionName("  function (){}"));
+    assertEquals("anonymous", extractFunctionName("function  (){}"));
+    assertEquals("foo", extractFunctionName("function foo(){}"));
+    assertEquals("foo", extractFunctionName("function foo (){}"));
+    assertEquals("foo", extractFunctionName("  function foo (){}"));
   }
 
   public void testChromeExtractName() {

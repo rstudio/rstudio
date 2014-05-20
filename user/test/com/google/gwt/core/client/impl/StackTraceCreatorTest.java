@@ -180,17 +180,11 @@ public class StackTraceCreatorTest extends GWTTestCase {
     function native2() {
       if (reallyThrow) null.a();
 
-      var callee1 = arguments.callee;
-      var callee2 = callee1.caller;
       return [
-        @com.google.gwt.core.client.impl.StackTraceCreatorTest::extractName(*)(callee1.toString()),
-        @com.google.gwt.core.client.impl.StackTraceCreatorTest::extractName(*)(callee2.toString())
+        @StackTraceCreator::getFunctionName(*)(arguments.callee),
+        @StackTraceCreator::getFunctionName(*)(arguments.callee.caller),
       ];
     }
     return native1();
   }-*/;
-
-  static String extractName(String fnToString) {
-    return new CollectorLegacy().extractName(fnToString);
-  }
 }
