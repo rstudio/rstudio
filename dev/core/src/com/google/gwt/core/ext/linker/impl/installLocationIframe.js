@@ -20,6 +20,12 @@ function getInstallLocationDoc() {
   return frameDoc;
 }
 
+// This function is left for compatibility
+// and may be used by custom linkers
+function getInstallLocation() {
+  return getInstallLocationDoc().body;
+}
+
 function setupInstallLocation() {
   if (frameDoc) { return; }
   // Create the script frame, making sure it's invisible, but not
