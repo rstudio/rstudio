@@ -108,10 +108,6 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "%%|>=|<=|==|!=|\\->|<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@"
             },
             {
-               token : "markup.list", // chaining operator
-               regex : "%>%"
-            },
-            {
                token : "keyword.operator", // infix operators
                regex : "%.*?%"
             },
