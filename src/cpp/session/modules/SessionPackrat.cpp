@@ -17,6 +17,10 @@
 
 #include <core/Exec.hpp>
 
+#include <core/system/FileMonitor.hpp>
+
+#include <session/projects/SessionProjects.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace core;
@@ -27,8 +31,28 @@ namespace packrat {
 
 namespace {
 
-// Private Packrat server code goes here
+void onFileChanged(FilePath sourceFilePath)
+{
+   // if the changed file path is in the Packrat library folder, 
+   // we may need to initiate a snapshot 
+   
+   // if the changed file is an R source file, we may need to test for
+   // changes to the list of used packages
+   
+   // if the changed file is the Packrat lock file, we may need to tell
+   // the client to ask the user to initiate a restore
+   std::cerr << "Packrat file change detected: " 
+             << sourceFilePath.absolutePath() << std::endl;
+}
 
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
+{
+   BOOST_FOREACH(const core::system::FileChangeEvent& fileChange, changes)
+   {
+      FilePath changedFilePath(fileChange.fileInfo().absolutePath());
+      onFileChanged(changedFilePath);
+   }
+}
 
 } // anonymous namespace
 
@@ -37,8 +61,15 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
+   // listen for changes to the project files 
+   session::projects::FileMonitorCallbacks cb;
+   cb.onFilesChanged = onFilesChanged;
+   projects::projectContext().subscribeToFileMonitor("Packrat", cb);
+   module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
+
    ExecBlock initBlock;
    /*
+
    add e.g. RPC handlers and R file source commands to perform on init
 
    initBlock.addFunctions()

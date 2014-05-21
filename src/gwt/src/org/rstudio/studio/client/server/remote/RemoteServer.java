@@ -58,6 +58,7 @@ import org.rstudio.studio.client.common.vcs.*;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
@@ -3407,6 +3408,13 @@ public class RemoteServer implements Server
                   "install_dependencies",
                   dependencies,
                   new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   @Override
+   public void getPackratStatus(String dir,
+         ServerRequestCallback<PackratStatus> requestCallback)
+   {
+      // Invoke get_packrat_status here
    }
 
    private String clientId_;

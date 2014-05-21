@@ -61,6 +61,12 @@ public class Packrat {
 
    @Handler
    public void onPackratSnapshot() {
+      // When Packrat commands are invoked, use DependencyManager to check 
+      // for packrat installation (see withRMarkdownPackage for an example)
+      //
+      // If not installed, invoke the packrat install dialog:
+      // p = new PackratInstallDialog(...)
+      // p.showModal()
       eventBus_.fireEvent(
          new SendToConsoleEvent("packrat::snapshot()", true, false)
       );
