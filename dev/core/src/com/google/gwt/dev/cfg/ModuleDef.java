@@ -906,27 +906,23 @@ public class ModuleDef implements DepsInfoProvider {
 
     // Normalize property providers.
     //
-    for (Property current : getProperties()) {
-      if (current instanceof BindingProperty) {
-        BindingProperty prop = (BindingProperty) current;
+    for (BindingProperty prop : properties.getBindingProperties()) {
+      if (collapseAllProperties) {
+        prop.addCollapsedValues("*");
+      }
 
-        if (collapseAllProperties) {
-          prop.addCollapsedValues("*");
-        }
+      prop.normalizeCollapsedValues();
 
-        prop.normalizeCollapsedValues();
-
-        /*
-         * Create a default property provider for any properties with more than
-         * one possible value and no existing provider.
-         */
-        if (prop.getProvider() == null && prop.getConstrainedValue() == null) {
-          String src = "{";
-          src += "return __gwt_getMetaProperty(\"";
-          src += prop.getName();
-          src += "\"); }";
-          prop.setProvider(new PropertyProvider(src));
-        }
+      /*
+       * Create a default property provider for any properties with more than
+       * one possible value and no existing provider.
+       */
+      if (prop.getProvider() == null && prop.getConstrainedValue() == null) {
+        String src = "{";
+        src += "return __gwt_getMetaProperty(\"";
+        src += prop.getName();
+        src += "\"); }";
+        prop.setProvider(new PropertyProvider(src));
       }
     }
 

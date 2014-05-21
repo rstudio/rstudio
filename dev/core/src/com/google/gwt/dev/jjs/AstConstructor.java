@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.PrecompileTaskOptions;
-import com.google.gwt.dev.cfg.Properties;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
@@ -44,7 +44,7 @@ public class AstConstructor {
    * {@link JavaToJavaScriptCompiler}.
    */
   public static JProgram construct(TreeLogger logger, final CompilationState state,
-      PrecompileTaskOptions options, Properties properties) throws UnableToCompleteException {
+      PrecompileTaskOptions options, ConfigProps config) throws UnableToCompleteException {
 
     InternalCompilerException.preload();
 
@@ -97,8 +97,8 @@ public class AstConstructor {
 
     if (options.isRunAsyncEnabled()) {
       ReplaceRunAsyncs.exec(logger, jprogram);
-      if (properties != null) {
-        CodeSplitters.pickInitialLoadSequence(logger, jprogram, properties);
+      if (config != null) {
+        CodeSplitters.pickInitialLoadSequence(logger, jprogram, config);
       }
     }
 

@@ -176,12 +176,13 @@ public class PropertyPermutations implements Iterable<String[]> {
     // Collate property values in this map
     SortedMap<CollapsedPropertyKey, List<String[]>> map = new TreeMap<CollapsedPropertyKey, List<String[]>>();
 
+    BindingProperty[] propertyKeys = getOrderedProperties();
     // Loop over all possible property value permutations
     for (Iterator<String[]> it = iterator(); it.hasNext();) {
       String[] propertyValues = it.next();
-      assert propertyValues.length == getOrderedProperties().length;
+      assert propertyValues.length == propertyKeys.length;
 
-      BindingProps props = new BindingProps(getOrderedProperties(), propertyValues,
+      BindingProps props = new BindingProps(propertyKeys, propertyValues,
           ConfigProps.EMPTY);
       CollapsedPropertyKey key = new CollapsedPropertyKey(props);
 

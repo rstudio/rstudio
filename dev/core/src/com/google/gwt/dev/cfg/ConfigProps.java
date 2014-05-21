@@ -59,7 +59,7 @@ public class ConfigProps implements Serializable {
   private final ImmutableMap<String, List<String>> props;
 
   /**
-   * Construct from internal ConfigurationProperty instances.
+   * Takes a snapshot of some ConfigurationProperty instances.
    */
   public ConfigProps(Iterable<ConfigurationProperty> props) {
     Builder<String, List<String>> builder = ImmutableMap.builder();
@@ -67,6 +67,13 @@ public class ConfigProps implements Serializable {
       builder.put(prop.getName(), copyOf(prop.getValues()));
     }
     this.props = builder.build();
+  }
+
+  /**
+   * Takes a snapshot of a module's configuration properties.
+   */
+  public ConfigProps(ModuleDef def) {
+    this(def.getProperties().getConfigurationProperties());
   }
 
   /**

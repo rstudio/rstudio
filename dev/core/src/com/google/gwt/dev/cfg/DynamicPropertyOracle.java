@@ -70,12 +70,9 @@ public class DynamicPropertyOracle implements PropertyOracle {
   @Override
   public ConfigurationProperty getConfigurationProperty(String propertyName)
       throws BadPropertyValueException {
-    Property property = properties.find(propertyName);
-    if (property instanceof com.google.gwt.dev.cfg.ConfigurationProperty) {
-      com.google.gwt.dev.cfg.ConfigurationProperty configurationProperty =
-          (com.google.gwt.dev.cfg.ConfigurationProperty) property;
-      return new DefaultConfigurationProperty(
-          configurationProperty.getName(), configurationProperty.getValues());
+    com.google.gwt.dev.cfg.ConfigurationProperty prop = properties.findConfigProp(propertyName);
+    if (prop != null) {
+      return new DefaultConfigurationProperty(prop.getName(), prop.getValues());
     }
     throw new BadPropertyValueException(propertyName);
   }
@@ -113,9 +110,9 @@ public class DynamicPropertyOracle implements PropertyOracle {
   }
 
   private BindingProperty getBindingProperty(String propertyName) throws BadPropertyValueException {
-    Property property = properties.find(propertyName);
-    if (property instanceof BindingProperty) {
-      return (BindingProperty) property;
+    BindingProperty property = properties.findBindingProp(propertyName);
+    if (property != null) {
+      return property;
     }
     throw new BadPropertyValueException(propertyName);
   }

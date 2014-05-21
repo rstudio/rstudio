@@ -31,6 +31,8 @@ public class PermProps {
   public PermProps(Iterable<BindingProps> softProps) {
     this.props = ImmutableList.copyOf(softProps);
     assert props.size() >= 1;
+    assert sameBindingProperties(props) :
+        "The binding properties should be the same for each soft permutation.";
   }
 
   /**
@@ -106,5 +108,15 @@ public class PermProps {
       out.append(bindingProps.prettyPrint());
     }
     return out.toString();
+  }
+
+  private boolean sameBindingProperties(ImmutableList<BindingProps> props) {
+    BindingProps expected = props.get(0);
+    for (BindingProps actual : props.subList(1, props.size())) {
+      if (!expected.hasSameBindingProperties(actual)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

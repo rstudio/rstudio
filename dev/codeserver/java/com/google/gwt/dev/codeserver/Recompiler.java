@@ -26,10 +26,10 @@ import com.google.gwt.dev.CompilerOptions;
 import com.google.gwt.dev.IncrementalBuilder;
 import com.google.gwt.dev.IncrementalBuilder.BuildResultStatus;
 import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.javac.UnitCacheSingleton;
@@ -63,7 +63,6 @@ class Recompiler {
 
   private final AtomicReference<CompileDir> lastBuild = new AtomicReference<CompileDir>();
   private CompileDir publishedCompileDir;
-  private boolean listenerFailed;
   private final AtomicReference<ResourceLoader> resourceLoader =
       new AtomicReference<ResourceLoader>();
   private final CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
@@ -96,7 +95,7 @@ class Recompiler {
     CompileDir compileDir = makeCompileDir(compileId);
     TreeLogger compileLogger = makeCompileLogger(compileDir);
 
-    listenerFailed = false;
+    boolean listenerFailed = false;
     try {
       options.getRecompileListener().startedCompile(originalModuleName, compileId, compileDir);
     } catch (Exception e) {
@@ -274,6 +273,9 @@ class Recompiler {
         logger, compilerContext, originalModuleName, resources, true);
     compilerContext = compilerContextBuilder.module(moduleDef).build();
 
+    // A snapshot of the module's configuration before we modified it.
+    ConfigProps config = new ConfigProps(moduleDef);
+
     // We need a cross-site linker. Automatically replace the default linker.
     if (IFrameLinker.class.isAssignableFrom(moduleDef.getActivePrimaryLinker())) {
       moduleDef.addLinker("xsiframe");
@@ -288,7 +290,7 @@ class Recompiler {
     }
 
     // Print a nice error if the superdevmode hook isn't present
-    if (moduleDef.getProperties().find("devModeRedirectEnabled") == null) {
+    if (config.getStrings("devModeRedirectEnabled").isEmpty()) {
       throw new RuntimeException("devModeRedirectEnabled isn't set for module: " +
           moduleDef.getName());
     }
@@ -299,7 +301,7 @@ class Recompiler {
 
     // Turn off "installCode" if it's on because it makes debugging harder.
     // (If it's already off, don't change anything.)
-    if (getBooleanConfig(moduleDef, "installCode", true)) {
+    if (config.getBoolean("installCode", true)) {
       overrideConfig(moduleDef, "installCode", "false");
       // Make sure installScriptJs is set to the default for compiling without installCode.
       overrideConfig(moduleDef, "installScriptJs",
@@ -343,8 +345,8 @@ class Recompiler {
 
     logger = logger.branch(TreeLogger.Type.INFO, "binding: " + propName + "=" + newValue);
 
-    Property prop = module.getProperties().find(propName);
-    if (!(prop instanceof BindingProperty)) {
+    BindingProperty prop = module.getProperties().findBindingProp(propName);
+    if (prop == null) {
       logger.log(TreeLogger.Type.WARN, "undefined property: '" + propName + "'");
       return;
     }
@@ -392,37 +394,15 @@ class Recompiler {
    * Sets a binding even if it's set to a different value in the GWT application.
    */
   private static void overrideBinding(ModuleDef module, String propName, String newValue) {
-    Property prop = module.getProperties().find(propName);
-    if (prop instanceof BindingProperty) {
-      BindingProperty binding = (BindingProperty) prop;
+    BindingProperty binding = module.getProperties().findBindingProp(propName);
+    if (binding != null) {
       binding.setAllowedValues(binding.getRootCondition(), newValue);
     }
   }
 
-  /**
-   * Returns a boolean configuration property. If not defined, returns the default.
-   */
-  private static boolean getBooleanConfig(ModuleDef module, String propName,
-      boolean defaultValue) {
-    Property prop = module.getProperties().find(propName);
-    if (prop instanceof ConfigurationProperty) {
-      ConfigurationProperty config = (ConfigurationProperty) prop;
-      String value = config.getValue();
-      if (value != null) {
-        if (value.equalsIgnoreCase("true")) {
-          return true;
-        } else if (value.equalsIgnoreCase("false")) {
-          return false;
-        }
-      }
-    }
-    return defaultValue;
-  }
-
   private static boolean maybeOverrideConfig(ModuleDef module, String propName, String newValue) {
-    Property prop = module.getProperties().find(propName);
-    if (prop instanceof ConfigurationProperty) {
-      ConfigurationProperty config = (ConfigurationProperty) prop;
+    ConfigurationProperty config = module.getProperties().findConfigProp(propName);
+    if (config != null) {
       config.setValue(newValue);
       return true;
     }

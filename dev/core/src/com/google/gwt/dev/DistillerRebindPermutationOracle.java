@@ -56,8 +56,7 @@ class DistillerRebindPermutationOracle implements RebindPermutationOracle {
     generatorContext = new StandardGeneratorContext(
         compilerContext, compilationState, generatorArtifacts, true);
     BindingProperty[] orderedProps = perms.getOrderedProperties();
-    ConfigProps config = new ConfigProps(
-        module.getProperties().getConfigurationProperties());
+    ConfigProps config = new ConfigProps(module);
     Rules rules = module.getRules();
     for (int i = 0; i < rebindOracles.length; ++i) {
       BindingProps props = new BindingProps(orderedProps, perms.getOrderedPropertyValues(i), config);

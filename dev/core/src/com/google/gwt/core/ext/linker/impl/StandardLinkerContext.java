@@ -29,7 +29,6 @@ import com.google.gwt.core.ext.linker.PublicResource;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.Script;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
@@ -196,28 +195,22 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
           CONFIGURATION_PROPERTY_COMPARATOR);
       SortedSet<SelectionProperty> mutableSelectionProperties = new TreeSet<SelectionProperty>(
           SELECTION_PROPERTY_COMPARATOR);
-      for (Property p : module.getProperties()) {
-        // Create a new view
-        if (p instanceof com.google.gwt.dev.cfg.ConfigurationProperty) {
-          StandardConfigurationProperty newProp = new StandardConfigurationProperty(
-              (com.google.gwt.dev.cfg.ConfigurationProperty) p);
-          mutableConfigurationProperties.add(newProp);
-          if (logger.isLoggable(TreeLogger.SPAM)) {
-            logger.log(TreeLogger.SPAM,
-                "Added configuration property " + newProp, null);
-          }
-        } else if (p instanceof BindingProperty) {
-          StandardSelectionProperty newProp = new StandardSelectionProperty(
-              (BindingProperty) p);
-          mutableSelectionProperties.add(newProp);
-          propertiesByName.put(newProp.getName(), newProp);
-          if (logger.isLoggable(TreeLogger.SPAM)) {
-            logger.log(TreeLogger.SPAM, "Added selection property " + newProp,
-                null);
-          }
-        } else {
-          logger.log(TreeLogger.ERROR, "Unknown property type "
-              + p.getClass().getName());
+      for (com.google.gwt.dev.cfg.ConfigurationProperty p : module
+          .getProperties().getConfigurationProperties()) {
+        StandardConfigurationProperty newProp = new StandardConfigurationProperty(p);
+        mutableConfigurationProperties.add(newProp);
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM,
+              "Added configuration property " + newProp, null);
+        }
+      }
+      for (BindingProperty p : module.getProperties().getBindingProperties()) {
+        StandardSelectionProperty newProp = new StandardSelectionProperty(p);
+        mutableSelectionProperties.add(newProp);
+        propertiesByName.put(newProp.getName(), newProp);
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "Added selection property " + newProp,
+              null);
         }
       }
       selectionProperties = Collections.unmodifiableSortedSet(mutableSelectionProperties);

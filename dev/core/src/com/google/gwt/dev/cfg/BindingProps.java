@@ -155,6 +155,18 @@ public class BindingProps implements Serializable {
     return out.toString();
   }
 
+  boolean hasSameBindingProperties(BindingProps other) {
+    if (orderedProps.length != other.orderedProps.length) {
+      return false;
+    }
+    for (int i = 0; i < orderedProps.length; i++) {
+      if (orderedProps[i] != other.orderedProps[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private class SoftPropsOracle implements PropertyOracle {
 
     @Override

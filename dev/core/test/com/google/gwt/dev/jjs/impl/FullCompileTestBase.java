@@ -24,7 +24,6 @@ import com.google.gwt.dev.cfg.BindingProps;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.PermProps;
-import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -36,6 +35,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.Pair;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -77,10 +77,10 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, compilerContext,
             sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
+    ConfigProps config = new ConfigProps(Lists.newArrayList(configProps));
 
-    Properties properties = createPropertiesObject(configProps);
     jProgram =
-        JavaAstConstructor.construct(logger, state, compilerContext.getOptions(), properties,
+        JavaAstConstructor.construct(logger, state, compilerContext.getOptions(), config,
             "test.EntryPoint", "com.google.gwt.lang.Exceptions");
     jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
 
@@ -97,7 +97,6 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
 
-    ConfigProps config = new ConfigProps(Arrays.asList(configProps));
     PermProps props = new PermProps(Arrays.asList(
         new BindingProps(orderedProps, orderedPropValues, config)
     ));
@@ -109,19 +108,6 @@ public abstract class FullCompileTestBase extends JJSTestBase {
 
   protected CompilerContext provideCompilerContext() {
     return new CompilerContext.Builder().build();
-  }
-
-  private static Properties createPropertiesObject(ConfigurationProperty[] propertyArray) {
-    Properties properties = new Properties();
-    for (ConfigurationProperty configurationPropertyFromArray : propertyArray) {
-      ConfigurationProperty configurationProperty =
-          properties.createConfiguration(configurationPropertyFromArray.getName(),
-              configurationPropertyFromArray.allowsMultipleValues());
-      for (String value : configurationPropertyFromArray.getValues()) {
-        configurationProperty.addValue(value);
-      }
-    }
-    return properties;
   }
 
   public void setProperties(BindingProperty[] orderedProps, String[] orderedValues,

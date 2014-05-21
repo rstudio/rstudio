@@ -27,7 +27,6 @@ import com.google.gwt.dev.cfg.ConditionNone;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.PermProps;
-import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -230,10 +229,13 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     options.setRunAsyncEnabled(false);
     CompilerContext context = new CompilerContext.Builder().options(options).build();
 
+    ConfigProps config = new ConfigProps(Arrays.asList(recordFileNamesProp,
+        recordLineNumbersProp));
+
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, context,
             sourceOracle.getResources(), null);
-    JProgram jProgram = AstConstructor.construct(logger, state, options, new Properties());
+    JProgram jProgram = AstConstructor.construct(logger, state, options, config);
     jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
 
     if (inline) {
@@ -256,8 +258,6 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     BindingProperty stackMode = new BindingProperty("compiler.stackMode");
     stackMode.addDefinedValue(new ConditionNone(), "EMULATED");
 
-    ConfigProps config = new ConfigProps(Arrays.asList(recordFileNamesProp,
-        recordLineNumbersProp));
     PermProps props = new PermProps(Arrays.asList(
         new BindingProps(new BindingProperty[]{stackMode}, new String[]{"EMULATED"}, config)
     ));

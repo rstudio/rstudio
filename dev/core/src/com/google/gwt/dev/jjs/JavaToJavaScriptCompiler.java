@@ -37,7 +37,6 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.ConfigProps;
-import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.EntryMethodHolderGenerator;
 import com.google.gwt.dev.cfg.LibraryGroup.CollidingCompilationUnitException;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -872,7 +871,8 @@ public abstract class JavaToJavaScriptCompiler {
         }
         if (module != null && options.isRunAsyncEnabled()) {
           ReplaceRunAsyncs.exec(logger, jprogram);
-          CodeSplitters.pickInitialLoadSequence(logger, jprogram, module.getProperties());
+          ConfigProps config = new ConfigProps(module);
+          CodeSplitters.pickInitialLoadSequence(logger, jprogram, config);
         }
         ImplementClassLiteralsAsFields.exec(jprogram);
 
@@ -995,10 +995,8 @@ public abstract class JavaToJavaScriptCompiler {
     private void obfuscateEnums() {
       // See if we should run the EnumNameObfuscator
       if (module != null) {
-        ConfigurationProperty enumNameObfuscationProp =
-            (ConfigurationProperty) module.getProperties().find(ENUM_NAME_OBFUSCATION_PROPERTY);
-        if (enumNameObfuscationProp != null
-            && Boolean.parseBoolean(enumNameObfuscationProp.getValue())) {
+        ConfigProps config = new ConfigProps(module);
+        if (config.getBoolean(ENUM_NAME_OBFUSCATION_PROPERTY, false)) {
           EnumNameObfuscator.exec(jprogram, logger);
         }
       }

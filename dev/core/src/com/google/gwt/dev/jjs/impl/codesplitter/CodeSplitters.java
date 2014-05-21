@@ -17,10 +17,7 @@ package com.google.gwt.dev.jjs.impl.codesplitter;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.cfg.ConfigurationProperty;
-import com.google.gwt.dev.cfg.Properties;
-import com.google.gwt.dev.cfg.Property;
-import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -42,7 +39,6 @@ import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -62,7 +58,7 @@ public class CodeSplitters {
    * @throws UnableToCompleteException If the module specifies a bad load order
    */
   public static void pickInitialLoadSequence(TreeLogger logger,
-      JProgram program, Properties properties) throws UnableToCompleteException {
+      JProgram program, ConfigProps config) throws UnableToCompleteException {
     SpeedTracerLogger.Event codeSplitterEvent =
         SpeedTracerLogger
             .start(CompilerEventType.CODE_SPLITTER, "phase", "pickInitialLoadSequence");
@@ -70,21 +66,8 @@ public class CodeSplitters {
         logger.branch(TreeLogger.TRACE, "Looking up initial load sequence for split points");
     LinkedHashSet<JRunAsync> asyncsInInitialLoadSequence = new LinkedHashSet<JRunAsync>();
 
-    ConfigurationProperty configurationPropertyInitialSequence;
-    {
-      Property property = properties.find(PROP_INITIAL_SEQUENCE);
-      if (property == null) {
-        throw new InternalCompilerException("Could not find configuration property "
-            + PROP_INITIAL_SEQUENCE);
-      }
-      if (!(property instanceof ConfigurationProperty)) {
-        throw new InternalCompilerException(PROP_INITIAL_SEQUENCE
-            + " is not a configuration property");
-      }
-      configurationPropertyInitialSequence = (ConfigurationProperty) property;
-    }
-
-    for (String runAsyncReference : configurationPropertyInitialSequence.getValues()) {
+    List<String> initialSequence = config.getStrings(PROP_INITIAL_SEQUENCE);
+    for (String runAsyncReference : initialSequence) {
       JRunAsync runAsync = findRunAsync(runAsyncReference, program, branch);
       if (asyncsInInitialLoadSequence.contains(runAsync)) {
         branch.log(TreeLogger.ERROR, "Split point specified more than once: " + runAsyncReference);
