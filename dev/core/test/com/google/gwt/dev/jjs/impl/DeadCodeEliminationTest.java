@@ -51,6 +51,65 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     optimize("boolean", "return b ? b1 : false;").into("return b && b1;");
   }
 
+  public void testSwitchOverConstant_noMatchingCase() throws Exception {
+    optimize("int", "switch (0) { case 1: return 1; } return 0;")
+        .into("return 0;");
+  }
+
+  public void testSwitchOverConstant_MatchingCase() throws Exception {
+    optimize("int",
+        "switch (1) { case 1: return 1; } return 0;")
+        .into("return 1;");
+
+    // The if isn't really the focus of the optimization, but the `into`
+    // string will not compile if it is invalid Java.  It makes the opt form
+    // valid java.
+    optimize("int",
+        "int j = 1;",
+        "if (b) {",
+        "  switch (1) {",
+        "    case 0:",
+        "    case 1:",
+        "    case 2:",
+        "      j = 5;",
+        "    case 3:",
+        "      return 1;",
+        "    default:",
+        "      return j;",
+        "  }",
+        "}",
+        "return -1;")
+        .into(
+            "int j = 1;",
+            "if (b) {",
+            "  switch (1) {",
+            "    case 1:",  // All of the other cases and the default are gone
+            "      j = 5;", // this is a dead-store but is currently retained
+            "      return 1;",
+            "  }",
+            "}",
+            "return -1;");
+  }
+
+  public void testSwitchOverConstant_NonConstant() throws Exception {
+    // doesn't optimize when there is a non-constant switch expr
+    // (though, in this case, it's easy to imagine that it could)
+    String[] nonConstantSwitch = new String[] {
+      "int j = 1;",
+      "switch (j) {",
+      "  case 0: ",
+      "  case 1: ",
+      "  case 2: ",
+      "    j = 5; ",
+      "  case 3: ",
+      "    return 1; ",
+      "  default: ",
+      "    return j; ",
+      "}"
+    };
+    optimize("int", nonConstantSwitch).into(nonConstantSwitch);
+  }
+
   public void testIfOptimizations() throws Exception {
     optimize("int", "if (true) return 1; return 0;").into("return 1;");
     optimize("int", "if (false) return 1; return 0;").into("return 0;");

@@ -569,6 +569,11 @@ public class DeadCodeElimination {
     public void endVisit(JSwitchStatement x, Context ctx) {
       switchBlocks.remove(x.getBody());
 
+      // If it returns true, it was reduced to nothing
+      if (tryReduceSwitchWithConstantInput(x, ctx)) {
+        return;
+      }
+
       if (hasNoDefaultCase(x)) {
         removeEmptyCases(x);
       }
@@ -1099,6 +1104,73 @@ public class DeadCodeElimination {
         }
       }
       return null;
+    }
+
+    /**
+     * Tries to removes cases and statements from switches whose expression is a
+     * constant value.
+     *
+     * @return true, if the switch was completely eliminated
+     */
+    private boolean tryReduceSwitchWithConstantInput(JSwitchStatement s, Context ctx) {
+      if (!(s.getExpr() instanceof JValueLiteral)) {
+        // the input is not a constant
+        return false;
+      }
+      JValueLiteral targetValue = (JValueLiteral) s.getExpr();
+
+      // Find the matching case
+      JCaseStatement matchingCase = null;
+      for (JStatement subStatement : s.getBody().getStatements()) {
+        if (subStatement instanceof JCaseStatement) {
+          JCaseStatement caseStatement = (JCaseStatement) subStatement;
+          if (caseStatement.getExpr() == null) {
+            // speculatively put the default case into the matching case
+            matchingCase = caseStatement;
+          } else if (caseStatement.getExpr() instanceof JValueLiteral) {
+            JValueLiteral caseValue = (JValueLiteral) caseStatement.getExpr();
+            if (caseValue.getValueObj().equals(targetValue.getValueObj())) {
+              matchingCase = caseStatement;
+              break;
+            }
+          }
+        }
+      }
+
+      if (matchingCase == null) {
+        // the switch has no default and no matching cases
+        // the expression is a value literal, so it can go away completely
+        removeMe(s, ctx);
+        return true;
+      }
+
+      Iterator<JStatement> it = s.getBody().getStatements().iterator();
+
+      // Remove things until we find the matching case
+      while (it.hasNext() && (it.next() != matchingCase)) {
+        it.remove();
+        madeChanges();
+      }
+
+      // Until an unconditional control break, preserve everything that isn't a case
+      // or default.
+      while (it.hasNext()) {
+        JStatement statement = it.next();
+        if (statement.unconditionalControlBreak()) {
+          break;
+        } else if (statement instanceof JCaseStatement) {
+          it.remove();
+        }
+      }
+
+      // having found a break or return (or reached the end), remove all remaining
+      while (it.hasNext()) {
+        it.next();
+        it.remove();
+        madeChanges();
+      }
+
+      return false;
     }
 
     private boolean hasNoDefaultCase(JSwitchStatement x) {
