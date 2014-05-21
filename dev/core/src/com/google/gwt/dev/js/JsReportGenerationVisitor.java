@@ -16,13 +16,20 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.core.ext.soyc.Range;
-import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.js.ast.JsBlock;
+import com.google.gwt.dev.js.ast.JsDoWhile;
+import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +43,7 @@ public class JsReportGenerationVisitor extends
     JsSourceGenerationVisitorWithSizeBreakdown {
   private final Map<Range, SourceInfo> sourceInfoMap = new HashMap<Range, SourceInfo>();
   private final TextOutput out;
+  private final boolean needSourcemapNames;
 
   /**
    * The key of the most recently added Javascript range for a descendant
@@ -43,17 +51,49 @@ public class JsReportGenerationVisitor extends
    */
   private Range previousChildKey = null;
 
-  public JsReportGenerationVisitor(TextOutput out, JavaToJavaScriptMap map) {
+  /**
+   * The ancestor nodes whose Range and SourceInfo will be added to the sourcemap.
+   */
+  private List<JsNode> parentStack = Lists.newArrayList();
+
+  public JsReportGenerationVisitor(TextOutput out, JavaToJavaScriptMap map,
+      boolean needSourcemapNames) {
     super(out, map);
     this.out = out;
+    this.needSourcemapNames = needSourcemapNames;
   }
 
   @Override
   protected <T extends JsVisitable> T generateAndBill(T node, JsName nameToBillTo) {
     previousChildKey = null; // It's not our child because we haven't visited our children yet.
 
-    if (!(node instanceof HasSourceInfo)) {
+    if (!(node instanceof JsNode)) {
       return super.generateAndBill(node, nameToBillTo);
+    }
+
+    boolean willReportRange = false;
+    if (node instanceof JsBlock) {
+      willReportRange = false; // Only report the statements within the block
+    } else if (parentStack.isEmpty()) {
+      willReportRange = true;
+    } else if (node instanceof JsStatement) {
+      willReportRange = true;
+    } else if ((node instanceof JsNameRef) && needSourcemapNames) {
+      willReportRange = true;
+    } else {
+      JsNode parent = parentStack.get(parentStack.size() - 1);
+      if ((node instanceof JsExpression) &&
+          (parent instanceof JsDoWhile)) {
+        // Always instrument the expression because it comes at the end.
+        // (So we can stop there in a loop.)
+        willReportRange = true;
+      } else {
+        // Instrument the expression if it was inlined in Java.
+        SourceInfo info = ((JsNode) node).getSourceInfo();
+        if (!surroundsInJavaSource(parent.getSourceInfo(), info)) {
+          willReportRange = true;
+        }
+      }
     }
 
     // Remember the position before generating the JavaScript.
@@ -61,20 +101,45 @@ public class JsReportGenerationVisitor extends
     int beforeLine = out.getLine();
     int beforeColumn = out.getColumn();
 
+    if (willReportRange) {
+      parentStack.add((JsNode) node);
+    }
+
     // Write some JavaScript (changing the position).
     T toReturn = super.generateAndBill(node, nameToBillTo);
 
-    if (out.getPosition() > beforePosition) {
-      // Something was printed, so bill it.
+    if (willReportRange) {
+      parentStack.remove(parentStack.size() - 1);
+    }
+
+    if (out.getPosition() > beforePosition && willReportRange) {
+
+      SourceInfo info = ((JsNode) node).getSourceInfo();
       Range javaScriptRange = new Range(beforePosition, out.getPosition(),
         beforeLine, beforeColumn, out.getLine(), out.getColumn());
-      SourceInfo target = ((HasSourceInfo) node).getSourceInfo();
-      sourceInfoMap.put(javaScriptRange, target);
+      sourceInfoMap.put(javaScriptRange, info);
 
       previousChildKey = javaScriptRange; // Report this child to its parent.
     }
 
     return toReturn;
+  }
+
+  /**
+   * Returns true if the given parent's range as Java source code surrounds
+   * the child.
+   */
+  @VisibleForTesting
+  boolean surroundsInJavaSource(SourceInfo parent, SourceInfo child) {
+    if (!hasValidJavaRange(parent) || !hasValidJavaRange(child)) {
+      return false;
+    }
+    return parent.getStartPos() <= child.getStartPos() && child.getEndPos() <= parent.getEndPos()
+        && child.getFileName().equals(parent.getFileName());
+  }
+
+  private boolean hasValidJavaRange(SourceInfo info) {
+    return info != null && info.getStartPos() >= 0 && info.getEndPos() >= info.getStartPos();
   }
 
   @Override
@@ -92,20 +157,5 @@ public class JsReportGenerationVisitor extends
   @Override
   public JsSourceMap getSourceInfoMap() {
     return new JsSourceMap(sourceInfoMap);
-  }
-
-  @Override
-  protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
-    for (T t : collection) {
-      doAccept(t);
-    }
-  }
-
-  @Override
-  protected <T extends JsVisitable> void doAcceptWithInsertRemove(
-      List<T> collection) {
-    for (T t : collection) {
-      doAccept(t);
-    }
   }
 }

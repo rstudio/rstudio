@@ -20,18 +20,13 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor;
-import com.google.gwt.dev.js.ast.JsBlock;
-import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsName;
-import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.collect.HashMap;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,42 +58,9 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   }
 
   @Override
-  public boolean visit(JsBlock x, JsContext ctx) {
-    printJsBlock(x, false, true);
-    return false;
-  }
-
-  @Override
-  public boolean visit(JsProgram x, JsContext ctx) {
-    // Descend naturally.
-    return true;
-  }
-
-  @Override
-  public boolean visit(JsProgramFragment x, JsContext ctx) {
-    // Descend naturally.
-    return true;
-  }
-
-  @Override
   protected final <T extends JsVisitable> T doAccept(T node) {
     JsName newName = nameToBillTo(node, billedAncestor != null);
     return generateAndBill(node, newName);
-  }
-
-  @Override
-  protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
-    for (T t : collection) {
-      doAccept(t);
-    }
-  }
-
-  @Override
-  protected <T extends JsVisitable> void doAcceptWithInsertRemove(
-      List<T> collection) {
-    for (T t : collection) {
-      doAccept(t);
-    }
   }
 
   /**

@@ -106,7 +106,6 @@ import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsReportGenerationVisitor;
-import com.google.gwt.dev.js.JsSourceGenerationVisitorWithSizeBreakdown;
 import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.JsStaticEval;
 import com.google.gwt.dev.js.JsSymbolResolver;
@@ -448,6 +447,7 @@ public abstract class JavaToJavaScriptCompiler {
     private void generateJavaScriptCode(JavaToJavaScriptMap jjsMap, String[] jsFragments,
         StatementRanges[] ranges, SizeBreakdown[] sizeBreakdowns,
         List<JsSourceMap> sourceInfoMaps, boolean sourceMapsEnabled) {
+
       boolean useClosureCompiler = options.isClosureCompilerEnabled();
       if (useClosureCompiler) {
         ClosureJsRunner runner = new ClosureJsRunner();
@@ -457,13 +457,8 @@ public abstract class JavaToJavaScriptCompiler {
 
       for (int i = 0; i < jsFragments.length; i++) {
         DefaultTextOutput out = new DefaultTextOutput(options.getOutput().shouldMinimize());
-        JsSourceGenerationVisitorWithSizeBreakdown v;
-
-        if (sourceInfoMaps != null) {
-          v = new JsReportGenerationVisitor(out, jjsMap);
-        } else {
-          v = new JsSourceGenerationVisitorWithSizeBreakdown(out, jjsMap);
-        }
+        JsReportGenerationVisitor v = new JsReportGenerationVisitor(out, jjsMap,
+            options.isJsonSoycEnabled());
         v.accept(jsProgram.getFragmentBlock(i));
 
         StatementRanges statementRanges = v.getStatementRanges();

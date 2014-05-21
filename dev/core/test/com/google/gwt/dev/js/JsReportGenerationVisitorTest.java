@@ -38,27 +38,55 @@ import java.util.List;
  */
 public class JsReportGenerationVisitorTest extends TestCase {
   boolean compact = false;
-  JsProgram program;
 
-  // TODO(skybrian) don't generate ranges for all of these nodes. Just do executable code.
-  // (Documenting it as-is for now.)
+  // If true, list all the JavaScript ranges where a Java method might be inlined.
+  boolean includeInlinedRanges = false;
+
+  JsProgram program;
 
   public void testEmpty() throws Exception {
     program = parseJs("");
     checkMappings();
   }
 
-  public void testOneStatement() throws Exception {
+  public void testAssignmentDraft() throws Exception {
     program = parseJs("x = 1");
     checkMappings(
-        "x = 1;\n",
+        "x = 1;\n"
+    );
+  }
+
+  public void testAssignmentCompact() throws Exception {
+    compact = true;
+    program = parseJs("x = 1");
+    checkMappings(
+        "x=1;"
+    );
+  }
+
+  public void testAssignmentCompactInlined() throws Exception {
+    compact = true;
+    includeInlinedRanges = true;
+    program = parseJs("x = 1");
+    checkMappings(
+        "x=1;",
         "x",
         "1"
     );
   }
 
-  public void testTwoStatementsCompact() throws Exception {
+  public void testTwoStatementsDraft() throws Exception {
+    program = parseJs("x = 1; y = 2");
+    checkMappings(
+        "x = 1;\ny = 2;\n",
+        "x = 1;\n",
+        "y = 2;\n"
+    );
+  }
+
+  public void testTwoStatementsCompactInlined() throws Exception {
     compact = true;
+    includeInlinedRanges = true;
     program = parseJs("x = 1; y = 2");
     checkMappings(
         "x=1;y=2;",
@@ -71,71 +99,145 @@ public class JsReportGenerationVisitorTest extends TestCase {
     );
   }
 
-  public void testTwoStatementsPretty() throws Exception {
-    program = parseJs("x = 1; y = 2");
+  public void testIfStatementDraft() throws Exception {
+    program = parseJs("if(true) { x=1 } else { y=2 }");
     checkMappings(
-        "x = 1;\ny = 2;\n",
-        "x = 1;\n",
-        "x",
-        "1",
-        "y = 2;\n",
-        "y",
-        "2"
+        "if (true) {\n  x = 1;\n}\n else {\n  y = 2;\n}\n",
+        "  x = 1;\n",
+        "  y = 2;\n"
     );
   }
 
-  public void testIfStatementCompact() throws Exception {
+  public void testIfStatementCompactInlined() throws Exception {
+    includeInlinedRanges = true;
     compact = true;
     program = parseJs("if(true) { x=1 } else { y=2 }");
     checkMappings(
         "if(true){x=1}else{y=2}",
         "true",
-        "{x=1}",
         "x=1",
         "x",
         "1",
-        "{y=2}",
         "y=2",
         "y",
         "2"
     );
   }
 
-  public void testIfStatementPretty() throws Exception {
-    program = parseJs("if(true) { x=1 } else { y=2 }");
+  public void testFunctionDraft() throws Exception {
+    program = parseJs("function f() { return 42; }");
     checkMappings(
-        "if (true) {\n  x = 1;\n}\n else {\n  y = 2;\n}\n",
-        "true",
-        "{\n  x = 1;\n}\n",
-        "  x = 1;\n",
-        "  x",
-        "1",
-        "{\n  y = 2;\n}\n",
-        "  y = 2;\n",
-        "  y",
-        "2"
+        "function f(){\n  return 42;\n}\n\n",
+        "function f(){\n  return 42;\n}\n",
+        "  return 42;\n"
     );
   }
 
-  public void testFunctionCompact() throws Exception {
+  public void testFunctionCompactInlined() throws Exception {
     compact = true;
+    includeInlinedRanges = true;
     program = parseJs("function f() { return 42; }");
     checkMappings("function f(){return 42}\n",
         "function f(){return 42}",
-        "{return 42}",
         "return 42",
         "42"
     );
   }
 
-  public void testFunctionPretty() throws Exception {
-    program = parseJs("function f() { return 42; }");
+  public void testTryStatementDraft() throws Exception {
+    program = parseJs("try { 123 } catch (e) { 456 } finally { 789 }");
     checkMappings(
-      "function f(){\n  return 42;\n}\n\n",
-      "function f(){\n  return 42;\n}\n",
-      "{\n  return 42;\n}\n",
-      "  return 42;\n",
-      "42"
+        "try {\n  123;\n}\n catch (e) {\n  456;\n}\n finally {\n  789;\n}\n",
+        "  123;\n",
+        "  456;\n",
+        "  789;\n"
+    );
+  }
+
+  public void testTryStatementCompactInlined() throws Exception {
+    compact = true;
+    includeInlinedRanges = true;
+    program = parseJs("try{ 123 } catch (e) { 456 } finally { 789 }");
+    checkMappings(
+        "try{123}catch(e){456}finally{789}",
+        "123",
+        "456",
+        "789"
+    );
+  }
+
+  public void testDoWhileDraft() throws Exception {
+    program = parseJs("do { something() } while (x>1)");
+    checkMappings(
+        "do {\n  something();\n}\n while (x > 1);\n",
+        "  something();\n",
+        "x > 1"
+    );
+  }
+
+  public void testForStatementDraft() throws Exception {
+    program = parseJs("for (var i = 0; i < 10; i++) { something() }");
+    checkMappings(
+        "for (var i = 0; i < 10; i++) {\n  something();\n}\n",
+        "var i = 0;", // a separate range because it's a statement TODO: remove?
+        "  something();\n"
+    );
+  }
+
+  public void testForInStatementDraft() throws Exception {
+    program = parseJs("for (var x in someIterable) { something() }");
+    checkMappings(
+        "for (var x in someIterable) {\n  something();\n}\n",
+        "  something();\n"
+    );
+  }
+
+  public void testSwitchStatementDraft() throws Exception {
+    program = parseJs("switch (abc) { case c1: s1; break; case c2: s2; default: s3 }");
+    checkMappings(
+        "switch (abc) {\n  case c1:\n    s1;\n    break;\n  case c2:\n    s2;\n  default:s3;\n}\n",
+        "    s1;",
+        "    break;",
+        "    s2;",
+        "s3;"
+    );
+  }
+
+  public void testSwitchStatementCompactInlined() throws Exception {
+    compact = true;
+    includeInlinedRanges = true;
+    program = parseJs("switch (abc) { case c1: s1; break; case c2: s2; default: s3 }");
+    checkMappings(
+        "switch(abc){case c1:s1;break;case c2:s2;default:s3;}",
+        "abc",
+        "c1",
+        "s1;",
+        "break;",
+        "c2",
+        "s2;",
+        "s3;"
+    );
+  }
+
+  public void testWhileStatementDraft() throws Exception {
+    program = parseJs("while (a>2) { a--; }");
+    checkMappings(
+      "while (a > 2) {\n  a--;\n}\n",
+       "  a--;\n"
+    );
+  }
+
+  public void testWhileStatementCompactInlined() throws Exception {
+    compact = true;
+    includeInlinedRanges = true;
+    program = parseJs("while (a>2) { a--; }");
+    checkMappings(
+        "while(a>2){a--}",
+        "a>2",
+        "a",
+        "2",
+        "a--",
+        "a"
     );
   }
 
@@ -152,7 +254,15 @@ public class JsReportGenerationVisitorTest extends TestCase {
       throws IOException, JsParserException {
     DefaultTextOutput text = new DefaultTextOutput(compact);
     JsReportGenerationVisitor generator = new JsReportGenerationVisitor(text,
-        JavaToJavaScriptMap.EMPTY);
+        JavaToJavaScriptMap.EMPTY, false) {
+      @Override
+      boolean surroundsInJavaSource(SourceInfo parent, SourceInfo child) {
+        // The Rhino-based JavaScript parser doesn't provide character ranges
+        // in SourceInfo. Therefore we can't test this method directly
+        // and have to mock it out.
+        return !includeInlinedRanges;
+      }
+    };
     generator.accept(program);
     String actual = dumpMappings(text.toString(), generator.getSourceInfoMap());
 
