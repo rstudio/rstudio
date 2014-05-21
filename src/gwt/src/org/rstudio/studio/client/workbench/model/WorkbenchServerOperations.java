@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -80,7 +81,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    ViewerServerOperations,
                                                    ProfilerServerOperations,
                                                    RMarkdownServerOperations,
-                                                   DependencyServerOperations
+                                                   DependencyServerOperations,
+                                                   PackratServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

@@ -80,6 +80,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionPackages.cpp
+   modules/SessionPackrat.cpp
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionProfiler.cpp

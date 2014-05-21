@@ -113,6 +113,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
+#include "modules/SessionPackrat.hpp"
 #include "modules/SessionProfiler.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionShinyApps.hpp"
@@ -1619,6 +1620,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::about::initialize)
       (modules::shiny_viewer::initialize)
       (modules::shiny_apps::initialize)
+      (modules::packrat::initialize)
 
       // workers
       (workers::web_request::initialize)
