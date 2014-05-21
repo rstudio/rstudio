@@ -559,7 +559,7 @@ public class ClosureJsAstTranslator {
   }
 
   private Node transform(JsNameOf x) {
-    Node n = transformName(x.getName().getShortIdent(), x);
+    Node n = transformNameAsString(x.getName().getShortIdent(), x);
     applyOriginalName(n, x);
     return applySourceInfo(n, x);
   }
