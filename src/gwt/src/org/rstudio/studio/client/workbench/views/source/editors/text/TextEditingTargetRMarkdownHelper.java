@@ -141,6 +141,7 @@ public class TextEditingTargetRMarkdownHelper
          new Dependency[] {
            Dependency.cranPackage("knitr", "1.2"),
            Dependency.cranPackage("yaml", "2.1.5"),
+           Dependency.cranPackage("htmltools", "0.2.4"),
            Dependency.embeddedPackage("rmarkdown")
          }, 
          
