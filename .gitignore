@@ -21,3 +21,4 @@ rstudio*.Rproj
 /src/gwt/gwt-unitCache/
 NEWS.html
 CMakeLists.txt.user
+.idea/
