@@ -66,21 +66,67 @@ public class Packrat {
       display_.openRStudioLink("packrat");
    }
    
+   // packrat::bundle
+   private void bundlePackratProject() {
+      fileDialogs_.saveFile(
+         "Save Bundled Packrat Project...",
+         fsContext_,
+         workbenchContext_.getCurrentWorkingDir(),
+         "zip",
+         false,
+         new ProgressOperationWithInput<FileSystemItem>() {
+
+            @Override
+            public void execute(FileSystemItem input,
+                                ProgressIndicator indicator) {
+
+               if (input == null)
+                  return;
+
+               indicator.onCompleted();
+
+               String bundleFile = input.getPath();
+               if (bundleFile == null)
+                  return;
+
+               StringBuilder cmd = new StringBuilder();
+               // We use 'overwrite = TRUE' since the UI dialog will prompt
+               // us if we want to overwrite
+               cmd
+               .append("packrat::bundle(file = '")
+               .append(bundleFile)
+               .append("', overwrite = TRUE)")
+               ;
+
+               eventBus_.fireEvent(
+                  new SendToConsoleEvent(
+                     cmd.toString(),
+                     true,
+                     false
+                  )
+               );
+
+            }
+
+         });
+
+   }
+
    // Fire a console event with packrat, while checking that packrat exists
    private void fireConsoleEventWithPackrat(final String userAction) {
-      
+
       dependencyManager_.withDependencies(
-         
+
          "Packrat",
-         
+
          userAction,
-         
+
          new Dependency[] {
             Dependency.embeddedPackage("packrat")
          },
-         
+
          new Command() {
-            
+
             @Override
             public void execute() {
                eventBus_.fireEvent(
@@ -89,7 +135,7 @@ public class Packrat {
             }
          }
       );
-      
+
    }
 
    @Handler
@@ -125,49 +171,7 @@ public class Packrat {
             
             @Override
             public void execute() {
-               
-               fileDialogs_.saveFile(
-                  "Save Bundled Packrat Project...",
-                  fsContext_,
-                  workbenchContext_.getCurrentWorkingDir(),
-                  "zip",
-                  false,
-                  new ProgressOperationWithInput<FileSystemItem>() {
-
-                     @Override
-                     public void execute(FileSystemItem input,
-                                         ProgressIndicator indicator) {
-
-                        if (input == null)
-                           return;
-
-                        indicator.onCompleted();
-
-                        String bundleFile = input.getPath();
-                        if (bundleFile == null)
-                           return;
-
-                        StringBuilder cmd = new StringBuilder();
-                        // We use 'overwrite = TRUE' since the UI dialog will prompt
-                        // us if we want to overwrite
-                        cmd
-                        .append("packrat::bundle(file = '")
-                        .append(bundleFile)
-                        .append("', overwrite = TRUE)")
-                        ;
-
-                        eventBus_.fireEvent(
-                           new SendToConsoleEvent(
-                              cmd.toString(),
-                              true,
-                              false
-                           )
-                        );
-
-                     }
-
-                  });
-
+               bundlePackratProject();
             }
 
          });
