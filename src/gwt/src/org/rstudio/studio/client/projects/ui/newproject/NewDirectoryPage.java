@@ -35,6 +35,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class NewDirectoryPage extends NewProjectWizardPage
 {
+
    public NewDirectoryPage()
    {
       this("Empty Project", 
@@ -100,6 +101,11 @@ public class NewDirectoryPage extends NewProjectWizardPage
          
          addWidget(chkGitInit_);
       }
+      
+      // Initialize project with packrat
+      addSpacer();
+      chkPackratInit_ = new CheckBox("Use Packrat to manage this project");
+      addWidget(chkPackratInit_);
    }
    
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
@@ -163,10 +169,10 @@ public class NewDirectoryPage extends NewProjectWizardPage
          
          return new NewProjectResult(projFile, 
                                      chkGitInit_.getValue(), 
-                                     newDefaultLocation, 
+                                     chkPackratInit_.getValue(), 
+                                     newDefaultLocation,
                                      null,
-                                     getNewPackageOptions(),
-                                     getNewShinyAppOptions());
+                                     getNewPackageOptions(), getNewShinyAppOptions());
       }
       else
       {
@@ -184,6 +190,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
    protected Label dirNameLabel_;
    protected TextBox txtProjectName_;
    private CheckBox chkGitInit_;
+   private CheckBox chkPackratInit_;
    
    private DirectoryChooserTextBox newProjectParent_;
 

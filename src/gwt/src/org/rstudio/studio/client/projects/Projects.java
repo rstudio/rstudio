@@ -35,10 +35,10 @@ import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
-import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
-import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
+import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
@@ -59,12 +59,13 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 @Singleton
 public class Projects implements OpenProjectFileHandler,
@@ -93,6 +94,7 @@ public class Projects implements OpenProjectFileHandler,
       applicationQuit_ = applicationQuit;
       server_ = server;
       gitServer_ = gitServer;
+      eventBus_ = eventBus;
       fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
       session_ = session;
@@ -398,6 +400,32 @@ public class Projects implements OpenProjectFileHandler,
          }, false);
       }
       
+      // Generate a new packrat project
+      if (newProject.getUsePackrat()) {
+         createProjectCmds.addCommand(new SerializedCommand() {
+            
+            @Override
+            public void onExecute(final Command continuation) {
+               
+               indicator.onProgress("Initializing packrat project...");
+               
+               String projDir = FileSystemItem.createFile(
+                  newProject.getProjectFile()
+               ).getParentPathString();
+               
+               StringBuilder cmd = new StringBuilder();
+               cmd.append("packrat::bootstrap(projDir = '");
+               cmd.append(projDir);
+               cmd.append("')");
+               
+               eventBus_.fireEvent(
+                  new SendToConsoleEvent(cmd.toString(), true)
+               );
+               
+            }
+         }, false);
+      }
+      
       if (newProject.getOpenInNewWindow())
       {
          createProjectCmds.addCommand(new SerializedCommand() {
@@ -650,6 +678,7 @@ public class Projects implements OpenProjectFileHandler,
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations server_;
    private final GitServerOperations gitServer_;
+   private final EventBus eventBus_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
