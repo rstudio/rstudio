@@ -475,7 +475,7 @@ public class FileTypeRegistry
          assert filespec.indexOf("*") < 0 : "Unexpected filespec format";
          fileTypesByFilename_.put(filespec.toLowerCase(), fileType);
          if (icon != null)
-            iconsByFileExtension_.put(filespec.toLowerCase(), icon);
+            iconsByFilename_.put(filespec.toLowerCase(), icon);
       }
    }
 
