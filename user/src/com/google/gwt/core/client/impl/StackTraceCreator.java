@@ -454,7 +454,8 @@ public class StackTraceCreator {
 
   static native String extractFunctionName(String fnName) /*-{
     var fnRE = /function(?:\s+([\w$]+))?\s*\(/;
-    return (fnRE.test(fnName) && RegExp.$1) || @StackTraceCreator::ANONYMOUS;
+    var match = fnRE.exec(fnName);
+    return (match && match[1]) || @StackTraceCreator::ANONYMOUS;
   }-*/;
 
   private static native <T> T splice(T arr, int length) /*-{

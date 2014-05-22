@@ -42,6 +42,8 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
     assertEquals("foo", extractFunctionName("function foo(){}"));
     assertEquals("foo", extractFunctionName("function foo (){}"));
     assertEquals("foo", extractFunctionName("  function foo (){}"));
+    // In an unlikely case if somebody overrides fn.toString
+    assertEquals("anonymous", extractFunctionName("abc"));
   }
 
   public void testChromeExtractName() {
