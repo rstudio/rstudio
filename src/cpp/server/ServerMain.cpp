@@ -479,7 +479,10 @@ int main(int argc, char * const argv[])
       if (options.serverAppArmorEnabled())
       {
          error = app_armor::enforceRestricted();
-         if (error)
+
+         // log error unless it's path not found (which indicates that
+         // libapparmor isn't installed on this system)
+         if (error && !isPathNotFoundError(error))
             LOG_ERROR(error);
       }
 
