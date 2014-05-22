@@ -455,6 +455,9 @@ private:
                filename == "README" ||
                filename == "NEWS" ||
                filename == "Makefile" ||
+               filename == "configure" ||
+               filename == "cleanup" ||
+               filename == "Makevars" ||
                filePath.hasTextMimeType());
    }
 

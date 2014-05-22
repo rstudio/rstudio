@@ -14,11 +14,7 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import java.util.HashMap;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -33,7 +29,11 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
-import java.util.HashMap;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 @Singleton
 public class FileTypeRegistry
@@ -55,9 +55,9 @@ public class FileTypeRegistry
                        ICONS.iconRd(),
                        true, // word-wrap
                        true, // source on save aka preview on save
-                       false, false, false, 
+                       false, false, false,
                        true, // preview html
-                       false, false, false, false, 
+                       false, false, false, false,
                        true, // check spelling
                        false);
 
@@ -65,20 +65,20 @@ public class FileTypeRegistry
          new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf",
                           ICONS.iconText(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
-   
+
    public static final TextFileType NAMESPACE =
      new TextFileType("r_namespace", "NAMESPACE", EditorLanguage.LANG_R, "",
                       ICONS.iconText(), false, false, false, false, false,
                       false, false, false, false, false, false, false);
-   
+
    public static final TextFileType SWEAVE =
-      new SweaveFileType("sweave", "R Sweave", 
+      new SweaveFileType("sweave", "R Sweave",
           EditorLanguage.LANG_SWEAVE, ".Rnw",ICONS.iconRsweave());
-        
+
    public static final TexFileType TEX =
          new TexFileType("tex", "TeX", EditorLanguage.LANG_TEX, ".tex",
                           ICONS.iconTex());
-   
+
    public static final PlainTextFileType RHISTORY =
       new PlainTextFileType("r_history", "R History", ".Rhistory",
                             ICONS.iconRhistory(),
@@ -87,22 +87,22 @@ public class FileTypeRegistry
    public static final RWebContentFileType RMARKDOWN =
          new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
                               ".Rmd", ICONS.iconRmarkdown(), true);
-   
+
    public static final RWebContentFileType RPRESENTATION = new RPresentationFileType();
-     
+
    public static final WebContentFileType MARKDOWN =
       new WebContentFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
                            ".md", ICONS.iconMarkdown(), true);
-   
-   
+
+
    public static final RWebContentFileType RHTML =
          new RWebContentFileType("r_html", "R HTML", EditorLanguage.LANG_RHTML,
                               ".Rhtml", ICONS.iconRhtml(), false);
-  
+
    public static final WebContentFileType HTML =
          new WebContentFileType("html", "HTML", EditorLanguage.LANG_HTML,
                               ".html", ICONS.iconHTML(), false);
-   
+
    public static final TextFileType CSS =
          new TextFileType("css", "CSS", EditorLanguage.LANG_CSS, ".css",
                           ICONS.iconCss(),
@@ -118,47 +118,47 @@ public class FileTypeRegistry
    public static final TextFileType PYTHON = new ScriptFileType(
      "python", "Python", EditorLanguage.LANG_PYTHON, ".py",ICONS.iconPython(),
      "python", true);
-   
+
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
                           ICONS.iconSql(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
-   
+
    public static final TextFileType SH = new ScriptFileType(
          "sh", "Shell", EditorLanguage.LANG_SH, ".sh", ICONS.iconSh(),
          null, false);
-   
+
    public static final TextFileType YAML =
          new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yaml",
                           ICONS.iconYaml(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
-    
+
    public static final TextFileType XML =
          new TextFileType("xml", "XML", EditorLanguage.LANG_XML, ".xml",
                           ICONS.iconXml(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
-    
-  
-    
-   
-   
+
+
+
+
+
    public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), false);
    public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false);
    public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp(), true);
    public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true);
-   
-   
-   
+
+
+
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
-   
+
    public static final DataFrameType DATAFRAME = new DataFrameType();
    public static final UrlContentType URLCONTENT = new UrlContentType();
    public static final CodeBrowserType CODEBROWSER = new CodeBrowserType();
    public static final ProfilerType PROFILER = new ProfilerType();
 
    public static final BrowserType BROWSER = new BrowserType();
-   
+
    @Inject
    public FileTypeRegistry(EventBus eventBus,
                            Satellite satellite,
@@ -171,7 +171,7 @@ public class FileTypeRegistry
       server_ = server;
       session_ = session;
       globalDisplay_ = globalDisplay;
-      
+
       if (!satellite_.isCurrentWindowSatellite())
          exportEditFileCallback();
 
@@ -189,6 +189,8 @@ public class FileTypeRegistry
       register(".rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
       register("DESCRIPTION", DCF, icons.iconText());
+      register("configure", SH, icons.iconSh());
+      register("cleanup", SH, icons.iconSh());
       register("TUTORIAL", DCF, icons.iconText());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
@@ -255,7 +257,7 @@ public class FileTypeRegistry
    {
       openFile(file, true);
    }
-   
+
    public void openFile(final FileSystemItem file, final boolean canUseBrowser)
    {
       FileType fileType = getTypeForFile(file);
@@ -265,12 +267,12 @@ public class FileTypeRegistry
       }
       else
       {
-         // build default command to use if we have an error or the 
+         // build default command to use if we have an error or the
          // file is not a text file
          final Command defaultCommand = new Command() {
             @Override
             public void execute()
-            {   
+            {
                if (canUseBrowser)
                {
                   if (session_.getSessionInfo().getAllowFileDownloads())
@@ -287,9 +289,9 @@ public class FileTypeRegistry
                }
             }
          };
-         
+
          // check with the server to see if this is likely to be a text file
-         server_.isTextFile(file.getPath(), 
+         server_.isTextFile(file.getPath(),
                             new ServerRequestCallback<Boolean>() {
             @Override
             public void onResponseReceived(Boolean isText)
@@ -299,13 +301,13 @@ public class FileTypeRegistry
                else
                   defaultCommand.execute();
             }
-            
+
             @Override
             public void onError(ServerError error)
             {
                defaultCommand.execute();
             }
-         }); 
+         });
       }
    }
 
@@ -313,19 +315,19 @@ public class FileTypeRegistry
    {
       editFile(file, null);
    }
-   
+
    public void editFile(FileSystemItem file, FilePosition position)
    {
       editFile(file, position, false);
    }
-   
-   public void editFile(FileSystemItem file, 
+
+   public void editFile(FileSystemItem file,
                         FilePosition position,
                         boolean highlightLine)
    {
       if (satellite_.isCurrentWindowSatellite())
       {
-         satellite_.focusMainWindow();   
+         satellite_.focusMainWindow();
          callSatelliteEditFile(file.cast(), position.cast(), highlightLine);
       }
       else
@@ -333,18 +335,18 @@ public class FileTypeRegistry
          FileType fileType = getTypeForFile(file);
          if (fileType != null && !(fileType instanceof TextFileType))
             fileType = TEXT;
-   
+
          if (fileType != null)
-            fileType.openFile(file, 
-                  position, 
+            fileType.openFile(file,
+                  position,
                   highlightLine ?
                         NavigationMethod.HighlightLine :
-                        NavigationMethod.Default, 
+                        NavigationMethod.Default,
                   eventBus_);
       }
    }
-   
-   private void satelliteEditFile(JavaScriptObject file, 
+
+   private void satelliteEditFile(JavaScriptObject file,
                                   JavaScriptObject position,
                                   boolean highlightLine)
    {
@@ -352,14 +354,14 @@ public class FileTypeRegistry
       FilePosition pos = position.cast();
       editFile(fsi, pos);
    }
-   
+
    private final native void exportEditFileCallback()/*-{
-      var registry = this;     
+      var registry = this;
       $wnd.editFileFromRStudioSatellite = $entry(
          function(file, position, highlightLine) {
             registry.@org.rstudio.studio.client.common.filetypes.FileTypeRegistry::satelliteEditFile(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;Z)(file,position,highlightLine);
          }
-      ); 
+      );
    }-*/;
 
    private final native void callSatelliteEditFile(
@@ -374,8 +376,8 @@ public class FileTypeRegistry
    {
       return fileTypesByTypeName_.get(name);
    }
-   
-   
+
+
 
 
    public FileType getTypeForFile(FileSystemItem file)
@@ -403,7 +405,7 @@ public class FileTypeRegistry
          result = fileTypesByFileExtension_.get(extension);
          if (result != null)
             return result;
-         
+
          if (defaultType != null)
          {
             String mimeType = file.mimeType(defaultType);
@@ -411,7 +413,7 @@ public class FileTypeRegistry
                return TEXT;
          }
       }
-      
+
       return null;
    }
 
@@ -423,7 +425,7 @@ public class FileTypeRegistry
       else
          return TEXT;
    }
-   
+
    public ImageResource getIconForFile(FileSystemItem file)
    {
       if (file.isDirectory())
@@ -436,7 +438,7 @@ public class FileTypeRegistry
 
       return getIconForFilename(file.getName());
    }
-   
+
    public ImageResource getIconForFilename(String filename)
    {
       ImageResource icon = iconsByFilename_.get(filename.toLowerCase());
