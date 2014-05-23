@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.test;
 
 import static com.google.gwt.dev.jjs.test.gwtincompatible.ClassWithGwtIncompatibleMethod.gwtIncompatibleMethod;
 
+import com.google.gwt.dev.jjs.test.gwtincompatible.AbstractGwtIncompatibleClass;
 import com.google.gwt.dev.jjs.test.gwtincompatible.GwtIncompatible;
 import com.google.gwt.dev.jjs.test.gwtincompatible.GwtIncompatibleClass;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -100,6 +101,13 @@ public class GwtIncompatibleTest extends GWTTestCase {
   public void testGwtIncompatibleReference() {
     // Have a reference to a GwtIncompatibleClass
     GwtIncompatibleClass instance = (GwtIncompatibleClass) null;
+
+    assertNull(instance);
+  }
+
+  public void testAbstractGwtIncompatibleReference() {
+    // Have a reference to a GwtIncompatibleClass
+    AbstractGwtIncompatibleClass instance = (AbstractGwtIncompatibleClass) null;
 
     assertNull(instance);
   }

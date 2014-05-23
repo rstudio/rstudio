@@ -162,6 +162,7 @@ public class GwtIncompatiblePreprocessor {
       constructor.bits &= ~ASTNode.IsDefaultConstructor;
       // Mark the class as final so that it can not be extended.
       tyDecl.modifiers |= ClassFileConstants.AccFinal;
+      tyDecl.modifiers &= ~ClassFileConstants.AccAbstract;
     }
   }
 
