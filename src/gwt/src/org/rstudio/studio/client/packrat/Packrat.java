@@ -180,7 +180,7 @@ public class Packrat {
 
    @Handler
    public void onPackratStatus() {
-      fireConsoleEventWithPackrat("packrat::status()");
+      // ??
    }
 
    private DependencyManager dependencyManager_;

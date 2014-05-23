@@ -418,9 +418,8 @@ public class Projects implements OpenProjectFileHandler,
                cmd.append(projDir);
                cmd.append("')");
                
-               eventBus_.fireEvent(
-                  new SendToConsoleEvent(cmd.toString(), true)
-               );
+               SendToConsoleEvent event = new SendToConsoleEvent(cmd.toString(), true);
+               eventBus_.fireEvent(event);
                
             }
          }, false);

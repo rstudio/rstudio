@@ -15,13 +15,10 @@
 
 package org.rstudio.studio.client.server.remote;
 
-import com.google.gwt.core.client.*;
-import com.google.gwt.http.client.URL;
-import com.google.gwt.json.client.*;
-import com.google.gwt.user.client.Random;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -29,9 +26,18 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.jsonrpc.*;
+import org.rstudio.core.client.jsonrpc.RpcError;
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.jsonrpc.RpcRequest;
+import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
+import org.rstudio.core.client.jsonrpc.RpcResponse;
+import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
+import org.rstudio.studio.client.application.events.ServerOfflineEvent;
+import org.rstudio.studio.client.application.events.UnauthorizedEvent;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
@@ -54,7 +60,14 @@ import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.common.shiny.model.ShinyCapabilities;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
-import org.rstudio.studio.client.common.vcs.*;
+import org.rstudio.studio.client.common.vcs.AllStatus;
+import org.rstudio.studio.client.common.vcs.BranchesInfo;
+import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
+import org.rstudio.studio.client.common.vcs.CreateKeyResult;
+import org.rstudio.studio.client.common.vcs.DiffResult;
+import org.rstudio.studio.client.common.vcs.ProcessResult;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
+import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
@@ -69,7 +82,11 @@ import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.server.ClientException;
+import org.rstudio.studio.client.server.Server;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
@@ -111,10 +128,24 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.core.client.JsArrayNumber;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONBoolean;
+import com.google.gwt.json.client.JSONNull;
+import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.user.client.Random;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 @Singleton
 public class RemoteServer implements Server
@@ -3414,7 +3445,14 @@ public class RemoteServer implements Server
    public void getPackratStatus(String dir,
          ServerRequestCallback<PackratStatus> requestCallback)
    {
-      // Invoke get_packrat_status here
+      
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(dir));
+      
+      sendRequest(RPC_SCOPE,
+                  "get_packrat_status",
+                  params,
+                  requestCallback);
    }
 
    private String clientId_;
