@@ -8,6 +8,7 @@
 	
 	</ui:style>
 	<g:HTMLPanel>
-	  <g:HTML>Here is some information about Packrat.</g:HTML>
+	  <g:FlexTable ui:field="statusTable"></g:FlexTable> 
 	</g:HTMLPanel>
+	
 </ui:UiBinder> 

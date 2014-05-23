@@ -68,13 +68,9 @@ Error initialize()
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
 
    ExecBlock initBlock;
-   /*
-
-   add e.g. RPC handlers and R file source commands to perform on init
 
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionPackrat.R"));
-   */
 
    return initBlock.execute();
 }

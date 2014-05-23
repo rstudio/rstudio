@@ -14,8 +14,5 @@
 #
 
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {
-   # query packrat for the status of the directory and return it directly
-   # (note that this will be converted from a data frame to JSON automatically)
    packrat::status(dir)
 })
-

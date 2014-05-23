@@ -3450,7 +3450,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(dir));
       
       sendRequest(RPC_SCOPE,
-                  "get_packrat_status",
+                  GET_PACKRAT_STATUS,
                   params,
                   requestCallback);
    }
@@ -3750,4 +3750,7 @@ public class RemoteServer implements Server
    private static final String DISCOVER_RMD_TEMPLATES = "discover_rmd_templates";
    private static final String CREATE_RMD_FROM_TEMPLATE = "create_rmd_from_template";
    private static final String GET_RMD_TEMPLATE = "get_rmd_template";
+   
+   private static final String GET_PACKRAT_STATUS = "get_packrat_status";
+   
 }

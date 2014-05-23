@@ -25,6 +25,9 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
+import org.rstudio.studio.client.packrat.model.PackratStatus;
+import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
+import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -38,8 +41,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class Packrat {
-   public interface Binder extends CommandBinder<Commands, Packrat> {
-   }
+   
+   public interface Binder extends CommandBinder<Commands, Packrat> {}
 
    @Inject
    public Packrat(
@@ -50,7 +53,9 @@ public class Packrat {
          FileDialogs fileDialogs,
          WorkbenchContext workbenchContext,
          RemoteFileSystemContext fsContext,
-         DependencyManager dependencyManager) {
+         DependencyManager dependencyManager,
+         PackratStatus prStatus,
+         RemoteServer server) {
       
       eventBus_ = eventBus;
       display_ = display;
@@ -58,6 +63,8 @@ public class Packrat {
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
       dependencyManager_ = dependencyManager;
+      prStatus_ = prStatus;
+      server_ = server;
       binder.bind(commands, this);
    }
 
@@ -180,14 +187,35 @@ public class Packrat {
 
    @Handler
    public void onPackratStatus() {
-      // ??
+      
+      // workbenchContext_.getActiveProjectDir().getPath();
+      
+      // Ask the server for the current project status
+      /*
+      server_.getPackratStatus(projDir, new ServerRequestCallback<PackratStatus>() {
+         
+         // Assign the object encompassing the packrat status to a private variable
+
+         @Override
+         public void onError(ServerError error) {
+            Debug.logError(error);
+            
+         }
+         
+      });
+      */
+      
+      // Use that status to construct the dialog
+      new PackratStatusDialog().showModal();
    }
 
    private DependencyManager dependencyManager_;
+   private PackratStatus prStatus_;
    private final GlobalDisplay display_;
    private final EventBus eventBus_;
    private final RemoteFileSystemContext fsContext_;
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
+   private final RemoteServer server_;
 
 }

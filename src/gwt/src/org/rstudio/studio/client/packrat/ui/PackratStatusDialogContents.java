@@ -16,23 +16,35 @@ package org.rstudio.studio.client.packrat.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Widget;
 
 // This widget represents the body of the Packrat install dialog.
-public class PackratStatus extends Composite
+public class PackratStatusDialogContents extends Composite
 {
 
    private static PackratStatusUiBinder uiBinder = GWT
          .create(PackratStatusUiBinder.class);
 
-   interface PackratStatusUiBinder extends UiBinder<Widget, PackratStatus>
-   {
-   }
+   interface PackratStatusUiBinder extends UiBinder<Widget, PackratStatusDialogContents> {}
 
-   public PackratStatus()
-   {
+   public PackratStatusDialogContents() {
+      
+      setupTable();
+      
+      // fill the table with the results
       initWidget(uiBinder.createAndBindUi(this));
    }
+   
+   private void setupTable() {
+      // use status to fill the table
+      statusTable.setText(0, 0, "foo");
+      statusTable.setText(0, 1, "bar");
+      statusTable.insertRow(1);
+   }
+   
+   @UiField (provided = true) FlexTable statusTable;
 
 }
