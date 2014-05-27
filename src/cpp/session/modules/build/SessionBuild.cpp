@@ -1492,6 +1492,25 @@ SEXP rs_installBuildTools()
 
 SEXP rs_installBuildTools()
 {
+   if (module_context::isOSXMavericks() &&
+       !module_context::hasOSXMavericksDeveloperTools())
+   {
+      // on mavericks we just need to invoke clang and the user will be
+      // prompted to install the command line tools
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand("clang --version",
+                                             "",
+                                             core::system::ProcessOptions(),
+                                             &result);
+      if (error)
+         LOG_ERROR(error);
+   }
+   else
+   {
+      ClientEvent event = browseUrlEvent(
+          "http://www.rstudio.org/links/install_osx_build_tools");
+      module_context::enqueClientEvent(event);
+   }
    return R_NilValue;
 }
 
