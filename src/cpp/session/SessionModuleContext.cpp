@@ -242,6 +242,28 @@ SEXP rs_packageUnloaded(SEXP pkgnameSEXP)
    return R_NilValue;
 }
 
+SEXP rs_userPrompt(SEXP typeSEXP,
+                   SEXP captionSEXP,
+                   SEXP messageSEXP,
+                   SEXP yesLabelSEXP,
+                   SEXP noLabelSEXP,
+                   SEXP includeCancelSEXP,
+                   SEXP yesIsDefaultSEXP)
+{
+   UserPrompt prompt(r::sexp::asInteger(typeSEXP),
+                     r::sexp::safeAsString(captionSEXP),
+                     r::sexp::safeAsString(messageSEXP),
+                     r::sexp::safeAsString(yesLabelSEXP),
+                     r::sexp::safeAsString(noLabelSEXP),
+                     r::sexp::asLogical(includeCancelSEXP),
+                     r::sexp::asLogical(yesIsDefaultSEXP));
+
+   UserPrompt::Response response = showUserPrompt(prompt);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(response, &rProtect);
+}
+
 } // anonymous namespace
 
 
@@ -453,6 +475,13 @@ Error initialize()
    methodDef12.fun = (DL_FUNC) rs_packageUnloaded;
    methodDef12.numArgs = 1;
    r::routines::addCallMethod(methodDef12);
+
+   // register rs_userPrompt
+   R_CallMethodDef methodDef13;
+   methodDef13.name = "rs_userPrompt" ;
+   methodDef13.fun = (DL_FUNC) rs_userPrompt;
+   methodDef13.numArgs = 7;
+   r::routines::addCallMethod(methodDef13);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

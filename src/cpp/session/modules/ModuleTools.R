@@ -115,3 +115,42 @@
 })
 
 
+.rs.addFunction("userPrompt", function(type,
+                                       caption,
+                                       message,
+                                       yesLabel = NULL,
+                                       noLabel = NULL,
+                                       includeCancel = FALSE,
+                                       yesIsDefault = TRUE) {
+
+   if (identical(type, "info"))
+      type <- 1
+   else if (identical(type, "warning"))
+      type <- 2
+   else if (identical(type, "error"))
+      type <- 3
+   else if (identical(type, "question"))
+      type <- 4
+   else
+      stop("Invalid type specified")
+
+   result <- .Call("rs_userPrompt",
+         type,
+         caption,
+         message,
+         yesLabel,
+         noLabel,
+         includeCancel,
+         yesIsDefault)
+
+   if (result == 0)
+      "yes"
+   else if (result == 1)
+      "no"
+   else if (result == 2)
+      "cancel"
+   else
+      stop("Invalid result")
+})
+
+

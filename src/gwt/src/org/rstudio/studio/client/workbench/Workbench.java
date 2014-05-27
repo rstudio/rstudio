@@ -23,6 +23,7 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
@@ -45,6 +46,7 @@ import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -61,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class Workbench implements BusyHandler,
                                   ShowErrorMessageHandler,
+                                  UserPromptHandler,
                                   ShowWarningBarHandler,
                                   BrowseUrlHandler,
                                   QuotaStatusHandler,
@@ -111,6 +114,7 @@ public class Workbench implements BusyHandler,
       // edit
       eventBus.addHandler(BusyEvent.TYPE, this);
       eventBus.addHandler(ShowErrorMessageEvent.TYPE, this);
+      eventBus.addHandler(UserPromptEvent.TYPE, this);
       eventBus.addHandler(ShowWarningBarEvent.TYPE, this);
       eventBus.addHandler(BrowseUrlEvent.TYPE, this);
       eventBus.addHandler(QuotaStatusEvent.TYPE, this);
@@ -394,6 +398,46 @@ public class Workbench implements BusyHandler,
       }
    }
     
+   
+   public void onUserPrompt(UserPromptEvent event)
+   {
+      // is cancel supported?
+      UserPrompt userPrompt = event.getUserPrompt();
+                
+      // resolve labels
+      String yesLabel = userPrompt.getYesLabel();
+      if (StringUtil.isNullOrEmpty(yesLabel))
+         yesLabel = "Yes";
+      String noLabel = userPrompt.getNoLabel();
+      if (StringUtil.isNullOrEmpty(noLabel))
+         noLabel = "No";
+         
+      // show dialog
+      globalDisplay_.showYesNoMessage(
+                 userPrompt.getType(),
+                 userPrompt.getCaption(),
+                 userPrompt.getMessage(),
+                 userPrompt.getIncludeCancel(),
+                 userPromptResponse(UserPrompt.RESPONSE_YES),
+                 userPromptResponse(UserPrompt.RESPONSE_NO),
+                 userPrompt.getIncludeCancel() ?
+                       userPromptResponse(UserPrompt.RESPONSE_CANCEL) : null,
+                 yesLabel, 
+                 noLabel, 
+                 userPrompt.getYesIsDefault());
+   }
+   
+   private Operation userPromptResponse(final int response)
+   {
+      return new Operation() {
+         public void execute()
+         {
+            server_.userPromptCompleted(response, 
+                                        new SimpleRequestCallback<Void>());
+            
+         }
+      };
+   }
 
    private final Server server_;
    private final EventBus eventBus_;
