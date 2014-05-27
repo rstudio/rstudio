@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
-import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
@@ -28,8 +27,8 @@ public class InstallRtoolsEvent extends GwtEvent<InstallRtoolsEvent.Handler>
       {
       }
       
-      public final native ConsoleProcessInfo getConsoleProcess() /*-{
-         return this.console_process_info;
+      public final native String getVersion() /*-{
+         return this.version;
       }-*/;
       
       public final native String getInstallerPath() /*-{
@@ -48,9 +47,9 @@ public class InstallRtoolsEvent extends GwtEvent<InstallRtoolsEvent.Handler>
       data_ = data;
    }
    
-   public ConsoleProcessInfo getConsoleProcess()
+   public String getVersion()
    {
-      return data_.getConsoleProcess();
+      return data_.getVersion();
    }
    
    public String getInstallerPath()

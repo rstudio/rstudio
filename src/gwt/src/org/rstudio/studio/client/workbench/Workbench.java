@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -444,7 +445,11 @@ public class Workbench implements BusyHandler,
    @Override
    public void onInstallRtools(final InstallRtoolsEvent event)
    {
-      Desktop.getFrame().installRtools(event.getInstallerPath());  
+      if (BrowseCap.isWindowsDesktop())
+      {
+         Desktop.getFrame().installRtools(event.getVersion(),
+                                          event.getInstallerPath());  
+      }
    }
   
    private final Server server_;

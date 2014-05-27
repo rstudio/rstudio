@@ -135,5 +135,5 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void setWindowTitle(String title);
    
-   void installRtools(String installerPath);
+   void installRtools(String version, String installerPath);
 }
