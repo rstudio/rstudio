@@ -1663,6 +1663,11 @@ bool haveRcppAttributes()
 
 bool canBuildCpp()
 {
+#ifdef __APPLE__
+   if (isOSXMavericks() && !hasOSXMavericksDeveloperTools())
+      return false;
+#endif
+
    // try to build a simple c file to test whether we have build tools available
    FilePath cppPath = module_context::tempFile("test", "c");
    Error error = core::writeStringToFile(cppPath, "void test() {}\n");
