@@ -14,7 +14,11 @@
  */
 package org.rstudio.studio.client.packrat.ui;
 
+import org.rstudio.studio.client.packrat.model.PackratStatus;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -30,21 +34,32 @@ public class PackratStatusDialogContents extends Composite
 
    interface PackratStatusUiBinder extends UiBinder<Widget, PackratStatusDialogContents> {}
 
-   public PackratStatusDialogContents() {
+   public PackratStatusDialogContents(JsArray<PackratStatus> prStatus) {
       
-      setupTable();
+      statusTable_ = new FlexTable();
       
       // fill the table with the results
+      JsArrayString keys = prStatus.get(0).keys();
+      int nRow = prStatus.length();
+      int nCol = prStatus.get(0).length();
+      
+      // set the column names
+      for (int i = 0; i < nCol; i++) {
+         statusTable_.setText(0, i, keys.get(i));
+      }
+      
+      for (int i = 0; i < nRow; i++) {
+         PackratStatus thisRow = prStatus.get(i);
+         for (int j = 0; j < nCol; j++) {
+            statusTable_.setText(i + 1, j, thisRow.getString(keys.get(j)));
+         }
+      }
+      
+      // create it
       initWidget(uiBinder.createAndBindUi(this));
+      
    }
    
-   private void setupTable() {
-      // use status to fill the table
-      statusTable.setText(0, 0, "foo");
-      statusTable.setText(0, 1, "bar");
-      statusTable.insertRow(1);
-   }
-   
-   @UiField (provided = true) FlexTable statusTable;
+   @UiField (provided = true) FlexTable statusTable_;
 
 }

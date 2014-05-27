@@ -14,5 +14,5 @@
 #
 
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {
-   packrat::status(dir)
+   packrat::status(dir, quiet = TRUE)
 })

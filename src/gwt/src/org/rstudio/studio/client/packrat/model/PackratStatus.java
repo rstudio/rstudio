@@ -14,16 +14,36 @@
  */
 package org.rstudio.studio.client.packrat.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.core.client.js.JsObject;
 
 // This class represents the JSON value the server returns from
 // get_packrat_status.
-public class PackratStatus extends JavaScriptObject
+public class PackratStatus extends JsObject
 {
    protected PackratStatus()
    {
    }
 
    // One JSNI native method per field in the data frame returned by 
-   // packrat::status. 
+   // packrat::status.
+   
+   public final native String getPackageName() /*-{
+      return this["package"];
+   }-*/;
+   
+   public final native String getPackageVersion() /*-{
+      return this["package.version"];
+   }-*/;
+   
+   public final native String getPackageSource() /*-{
+      return this["package.source"];
+   }-*/;
+   
+   public final native String getLibraryVersion() /*-{
+      return this["library.version"];
+   }-*/;
+   
+   public final native String getCurrentlyUsed() /*-{
+      return this["currently.used"] ? "TRUE" : "FALSE";
+   }-*/;
 }

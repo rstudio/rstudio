@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.packrat;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -27,12 +28,15 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -188,25 +192,23 @@ public class Packrat {
    @Handler
    public void onPackratStatus() {
       
-      // workbenchContext_.getActiveProjectDir().getPath();
+      String projDir = workbenchContext_.getActiveProjectDir().getPath();
       
       // Ask the server for the current project status
-      /*
-      server_.getPackratStatus(projDir, new ServerRequestCallback<PackratStatus>() {
+      server_.getPackratStatus(projDir, new ServerRequestCallback<JsArray<PackratStatus>>() {
          
-         // Assign the object encompassing the packrat status to a private variable
+         @Override
+         public void onResponseReceived(JsArray<PackratStatus> prStatus) {
+            new PackratStatusDialog(prStatus).showModal();
+         }
 
          @Override
          public void onError(ServerError error) {
             Debug.logError(error);
-            
          }
          
       });
-      */
       
-      // Use that status to construct the dialog
-      new PackratStatusDialog().showModal();
    }
 
    private DependencyManager dependencyManager_;

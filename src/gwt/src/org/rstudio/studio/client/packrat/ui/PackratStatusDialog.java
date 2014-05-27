@@ -15,14 +15,16 @@
 package org.rstudio.studio.client.packrat.ui;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.packrat.model.PackratStatus;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PackratStatusDialog extends ModalDialogBase
 {
-   public PackratStatusDialog()
+   public PackratStatusDialog(JsArray<PackratStatus> prStatus)
    {
       setText("Packrat Project Status");
       ThemedButton OKButton = new ThemedButton("OK", 
@@ -34,7 +36,7 @@ public class PackratStatusDialog extends ModalDialogBase
             }
       });
       addOkButton(OKButton);
-      contents_ = new PackratStatusDialogContents();
+      contents_ = new PackratStatusDialogContents(prStatus);
       setWidth("600px");
    }
 

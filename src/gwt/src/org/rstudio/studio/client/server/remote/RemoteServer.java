@@ -3443,7 +3443,7 @@ public class RemoteServer implements Server
 
    @Override
    public void getPackratStatus(String dir,
-         ServerRequestCallback<PackratStatus> requestCallback)
+         ServerRequestCallback<JsArray<PackratStatus>> requestCallback)
    {
       
       JSONArray params = new JSONArray();
