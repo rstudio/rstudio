@@ -446,7 +446,7 @@ public class Workbench implements BusyHandler,
    }
    
    @Override
-   public void onInstallRtools(InstallRtoolsEvent event)
+   public void onInstallRtools(final InstallRtoolsEvent event)
    {
       final ConsoleProgressDialog dlg = pConsoleProcessFactory_.get()
                      .showConsoleProgressDialog(event.getConsoleProcess());
@@ -455,12 +455,13 @@ public class Workbench implements BusyHandler,
                                           new ProcessExitEvent.Handler()
       {
          @Override
-         public void onProcessExit(ProcessExitEvent event)
+         public void onProcessExit(ProcessExitEvent exitEvent)
          {
-            if (event.getExitCode() == 0)
+            if (exitEvent.getExitCode() == 0)
+            {
                dlg.closeDialog();
-            else
-               globalDisplay_.showErrorMessage("Rtools", "Failed!");
+               Desktop.getFrame().installRtools(event.getInstallerPath());
+            }
          }
       });
      

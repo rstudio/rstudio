@@ -784,6 +784,13 @@ enum RS_NSActivityOptions : uint64_t
    return false;
 }
 
+
+// No Rtools installation on the Mac
+- (void) installRtools: (NSString*) installerPath
+{
+}
+
+
 // No desktop synctex on the Mac
 
 - (NSString*) getDesktopSynctexViewer
@@ -897,6 +904,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"setBusy";
    else if (sel == @selector(setWindowTitle:))
       return @"setWindowTitle";
+   else if (sel == @selector(installRtools:))
+      return @"installRtools";
   
    return nil;
 }
