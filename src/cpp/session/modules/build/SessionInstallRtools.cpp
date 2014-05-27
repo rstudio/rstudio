@@ -32,11 +32,13 @@ namespace build {
 namespace {
 
 void onDownloadCompleted(const core::system::ProcessResult& result,
+                         const std::string& version,
                          const FilePath& installerPath)
 {
    if (result.exitStatus == EXIT_SUCCESS)
    {
       json::Object data;
+      data["version"] = version;
       data["installer_path"] = installerPath.absolutePath();
       ClientEvent event(client_events::kInstallRtools, data);
       module_context::enqueClientEvent(event);
@@ -67,11 +69,12 @@ Error installRtools()
       return error;
 
    // create the command
+   std::string version = "3.1";
    std::string rtoolsBinary = "Rtools31.exe";
    std::string rtoolsPath = "http://cran.rstudio.com/bin/windows/Rtools";
    FilePath installerPath = tempPath.childPath(rtoolsBinary);
    std::string dest = string_utils::utf8ToSystem(installerPath.absolutePath());
-   boost::format fmt("download.file('%1%/%2%', '%3%')");
+   boost::format fmt("download.file('%1%/%2%', '%3%', mode = 'wb')");
    std::string cmd = boost::str(fmt % rtoolsPath % rtoolsBinary % dest);
 
    // build args
@@ -91,7 +94,7 @@ Error installRtools()
             args,
             "",
             options,
-            boost::bind(onDownloadCompleted, _1, installerPath));
+            boost::bind(onDownloadCompleted, _1, version, installerPath));
 
    return Success();
 }
