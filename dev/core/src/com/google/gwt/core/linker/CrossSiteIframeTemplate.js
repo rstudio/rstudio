@@ -86,6 +86,21 @@ function __MODULE_FUNC__() {
       ($wnd.__gwt_activeModules = ($wnd.__gwt_activeModules || {}));
   activeModules["__MODULE_NAME__"] = {moduleName: "__MODULE_NAME__"};
 
+  __MODULE_FUNC__.__moduleStartupDone = function(permProps) {
+    // Make embedded properties available to Super Dev Mode.
+    // (They override any properties already exported.)
+    var oldBindings = activeModules["__MODULE_NAME__"].bindings;
+    activeModules["__MODULE_NAME__"].bindings = function() {
+      var props = oldBindings ? oldBindings() : {};
+      var embeddedProps = permProps[__MODULE_FUNC__.__softPermutationId];
+      for (var i = 0; i < embeddedProps.length; i++) {
+        var pair = embeddedProps[i];
+        props[pair[0]] = pair[1];
+      }
+      return props;
+    };
+  };
+
   /****************************************************************************
    * Internal Helper functions that have been broken out into their own .js
    * files for readability and for easy sharing between linkers.  The linker

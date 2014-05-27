@@ -119,4 +119,13 @@
                                    is-multi-valued="false"/>
   <set-configuration-property name="js.export.closurestyle.fullyqualified"
                                 value="false" />
+
+  <!--
+    Specifies that a binding property should be included in the $permProps variable
+    in the generated JavaScript. This will allow Super Dev Mode to pick it up
+    regardless of how many permutations are generated.
+  -->
+  <define-configuration-property name="js.embedded.properties" is-multi-valued="true"/>
+  <set-configuration-property name="js.embedded.properties" value="locale"/>
+  <set-configuration-property name="js.embedded.properties" value="user.agent"/>
 </module>

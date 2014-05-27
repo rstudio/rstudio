@@ -110,6 +110,7 @@ import com.google.gwt.dev.js.JsStaticEval;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.SizeBreakdown;
+import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -121,7 +122,9 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Empty;
@@ -137,6 +140,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
@@ -153,6 +157,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -304,6 +309,8 @@ public abstract class JavaToJavaScriptCompiler {
         // TODO(stalcup): move to normalization
         JsBreakUpLargeVarStatements.exec(jsProgram, props.getConfigProps());
 
+        embedBindingProperties(jsProgram, props);
+
         // (8) Generate Js source
         List<JsSourceMap> sourceInfoMaps = new ArrayList<JsSourceMap>();
         boolean isSourceMapsEnabled = props.isTrueInAnyPermutation("compiler.useSourceMaps");
@@ -438,6 +445,38 @@ public abstract class JavaToJavaScriptCompiler {
           permutationResult, compilationMetrics);
       addSourceMapArtifacts(permutationId, jjsmap, dependenciesAndRecorder, isSourceMapsEnabled,
           sizeBreakdowns, sourceInfoMaps, permutationResult);
+    }
+
+    /**
+     * Embeds properties into $permProps for easy access from JavaScript.
+     */
+    private void embedBindingProperties(JsProgram jsProgram, PermProps props) {
+
+      // Generates a list of lists of pairs: [[["key", "value"], ...], ...]
+      // The outermost list is indexed by soft permutation id. Each item represents
+      // a map from binding properties to their values, but is stored as a list of pairs
+      // for easy iteration.
+      JsArrayLiteral permProps = new JsArrayLiteral(SourceOrigin.UNKNOWN);
+      for (ImmutableMap<String, String> propMap : props.findEmbeddedProperties(logger)) {
+        JsArrayLiteral entryList = new JsArrayLiteral(SourceOrigin.UNKNOWN);
+        for (Entry<String, String> entry : propMap.entrySet()) {
+          JsArrayLiteral pair = new JsArrayLiteral(SourceOrigin.UNKNOWN);
+          pair.getExpressions().add(new JsStringLiteral(SourceOrigin.UNKNOWN, entry.getKey()));
+          pair.getExpressions().add(new JsStringLiteral(SourceOrigin.UNKNOWN, entry.getValue()));
+          entryList.getExpressions().add(pair);
+        }
+        permProps.getExpressions().add(entryList);
+      }
+
+      // Generate: var $permProps = ...;
+      JsVar var = new JsVar(SourceOrigin.UNKNOWN,
+          jsProgram.getScope().findExistingUnobfuscatableName("$permProps"));
+      var.setInitExpr(permProps);
+      JsVars vars = new JsVars(SourceOrigin.UNKNOWN);
+      vars.add(var);
+
+      // Put it at the beginning for easy reference.
+      jsProgram.getGlobalBlock().getStatements().add(0, vars);
     }
 
     /**
@@ -746,7 +785,7 @@ public abstract class JavaToJavaScriptCompiler {
     }
 
     private Map<JsName, JsLiteral> renameJsSymbols(PermProps props) {
-      Map<JsName, JsLiteral> internedLiteralByVariableName = null;
+      Map<JsName, JsLiteral> internedLiteralByVariableName;
       switch (options.getOutput()) {
         case OBFUSCATED:
           internedLiteralByVariableName = runObfuscateNamer(props);

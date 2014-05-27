@@ -481,6 +481,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
         + "__gwtModuleFunction.__computePropValue);");
     out.newlineOpt();
     out.print("$sendStats('moduleStartup', 'end');");
+    out.newlineOpt();
+    out.print("__gwtModuleFunction.__moduleStartupDone($permProps);");
 
     writeMagicComments(out, context, 0, strongName);
     return out.toString();

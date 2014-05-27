@@ -15,8 +15,17 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * The properties for one hard permutation.
@@ -41,6 +50,14 @@ public class PermProps {
   public ConfigProps getConfigProps() {
     // They are all the same, so just take the first one.
     return props.get(0).getConfigProps();
+  }
+
+  /**
+   * Returns the binding properties in dependency order (permutation-independent).
+   */
+  public ImmutableList<BindingProperty> getBindingProperties() {
+    // Just take the first one.
+    return ImmutableList.copyOf(props.get(0).getOrderedProps());
   }
 
   /**
@@ -94,6 +111,46 @@ public class PermProps {
       }
     }
     return false;
+  }
+
+  /**
+   * Returns the binding property values to be embedded into the initial JavaScript fragment
+   * for this permutation. (There will be one map for each soft permutation.)
+   */
+  public ImmutableList<ImmutableMap<String, String>> findEmbeddedProperties(TreeLogger logger) {
+
+    Set<String> propsWanted = Sets.newTreeSet(getConfigProps().getStrings(
+        "js.embedded.properties"));
+
+    // Filter out any binding properties that don't exist.
+    SortedSet<String> propsToSave = Sets.newTreeSet();
+    for (BindingProperty prop : getBindingProperties()) {
+      String name = prop.getName();
+      if (propsWanted.remove(name)) {
+        propsToSave.add(name);
+      }
+    }
+
+    // Warn about binding properties that don't exist.
+    if (!propsWanted.isEmpty()) {
+      TreeLogger branch = logger.branch(Type.WARN,
+          propsWanted.size() + "properties listed in js.embedded.properties are undefined");
+      for (String prop : propsWanted) {
+        branch.log(Type.WARN, "undefined property: '" + prop + "'");
+      }
+    }
+
+    // Find the values.
+    List<ImmutableMap<String, String>> result = Lists.newArrayList();
+    for (BindingProps softProps : getSoftProps()) {
+      ImmutableMap.Builder<String, String> values = ImmutableMap.builder();
+      for (String key : propsToSave) {
+        values.put(key, softProps.getString(key, null));
+      }
+      result.add(values.build());
+    }
+
+    return ImmutableList.copyOf(result);
   }
 
   /**
