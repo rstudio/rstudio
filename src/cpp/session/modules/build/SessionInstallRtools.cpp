@@ -31,6 +31,22 @@ namespace build {
 
 namespace {
 
+void onDownloadCompleted(const core::system::ProcessResult& result,
+                         const FilePath& installerPath)
+{
+   if (result.exitStatus == EXIT_SUCCESS)
+   {
+      json::Object data;
+      data["installer_path"] = installerPath.absolutePath();
+      ClientEvent event(client_events::kInstallRtools, data);
+      module_context::enqueClientEvent(event);
+   }
+   else
+   {
+      module_context::consoleWriteError(result.stdOut + "\n");
+   }
+}
+
 } // anonymous namespace
 
 Error installRtools()
@@ -53,8 +69,8 @@ Error installRtools()
    // create the command
    std::string rtoolsBinary = "Rtools31.exe";
    std::string rtoolsPath = "http://cran.rstudio.com/bin/windows/Rtools";
-   FilePath downloadPath = tempPath.childPath(rtoolsBinary);
-   std::string dest = string_utils::utf8ToSystem(downloadPath.absolutePath());
+   FilePath installerPath = tempPath.childPath(rtoolsBinary);
+   std::string dest = string_utils::utf8ToSystem(installerPath.absolutePath());
    boost::format fmt("download.file('%1%/%2%', '%3%')");
    std::string cmd = boost::str(fmt % rtoolsPath % rtoolsBinary % dest);
 
@@ -66,23 +82,16 @@ Error installRtools()
    args.push_back("-e");
    args.push_back(cmd);
 
-   // create and execute console process
+   // create and execute the process
    core::system::ProcessOptions options;
+   options.redirectStdErrToStdOut = true;
    options.terminateChildren = true;
-   boost::shared_ptr<console_process::ConsoleProcess> pCP;
-   pCP = console_process::ConsoleProcess::create(
+   module_context::processSupervisor().runProgram(
             string_utils::utf8ToSystem(rProgramPath.absolutePath()),
             args,
+            "",
             options,
-            "Downloading Rtools",
-            true,
-            console_process::InteractionNever);
-
-   json::Object data;
-   data["console_process_info"] = pCP->toJson();
-   data["installer_path"] = downloadPath.absolutePath();
-   ClientEvent event(client_events::kInstallRtools, data);
-   module_context::enqueClientEvent(event);
+            boost::bind(onDownloadCompleted, _1, installerPath));
 
    return Success();
 }

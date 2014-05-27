@@ -35,8 +35,6 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
-import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
@@ -89,7 +87,6 @@ public class Workbench implements BusyHandler,
                     FileTypeRegistry fileTypeRegistry,
                     ConsoleDispatcher consoleDispatcher,
                     Provider<GitState> pGitState,
-                    Provider<ConsoleProcessFactory> pConsoleProcessFactory,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
                     PDFViewer pdfViewer,     // required to force gin to create
@@ -112,7 +109,6 @@ public class Workbench implements BusyHandler,
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       pGitState_ = pGitState;
-      pConsoleProcessFactory_ = pConsoleProcessFactory;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -448,24 +444,7 @@ public class Workbench implements BusyHandler,
    @Override
    public void onInstallRtools(final InstallRtoolsEvent event)
    {
-      final ConsoleProgressDialog dlg = pConsoleProcessFactory_.get()
-                     .showConsoleProgressDialog(event.getConsoleProcess());
-      
-      dlg.getConsoleProcess().addProcessExitHandler(
-                                          new ProcessExitEvent.Handler()
-      {
-         @Override
-         public void onProcessExit(ProcessExitEvent exitEvent)
-         {
-            if (exitEvent.getExitCode() == 0)
-            {
-               dlg.closeDialog();
-               Desktop.getFrame().installRtools(event.getInstallerPath());
-            }
-         }
-      });
-     
-      
+      Desktop.getFrame().installRtools(event.getInstallerPath());  
    }
   
    private final Server server_;
@@ -481,7 +460,6 @@ public class Workbench implements BusyHandler,
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final Provider<GitState> pGitState_;
-   private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false; 
