@@ -1481,6 +1481,30 @@ SEXP rs_addRToolsToPath()
     return R_NilValue;
 }
 
+#ifdef _WIN32
+
+SEXP rs_installBuildTools()
+{
+   return R_NilValue;
+}
+
+#elif __APPLE__
+
+SEXP rs_installBuildTools()
+{
+   return R_NilValue;
+}
+
+#else
+
+SEXP rs_installBuildTools()
+{
+   return R_NilValue;
+}
+
+#endif
+
+
 SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
 {
    // get R bin directory
@@ -1590,6 +1614,12 @@ Error initialize()
    installPackageMethodDef.fun = (DL_FUNC) rs_installPackage;
    installPackageMethodDef.numArgs = 2;
    r::routines::addCallMethod(installPackageMethodDef);
+
+   R_CallMethodDef installBuildToolsMethodDef;
+   installBuildToolsMethodDef.name = "rs_installBuildTools" ;
+   installBuildToolsMethodDef.fun = (DL_FUNC) rs_installBuildTools;
+   installBuildToolsMethodDef.numArgs = 0;
+   r::routines::addCallMethod(installBuildToolsMethodDef);
 
    // subscribe to deferredInit for build tools fixup
    module_context::events().onDeferredInit.connect(onDeferredInit);

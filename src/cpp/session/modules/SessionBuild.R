@@ -21,6 +21,33 @@ setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
    .Call("rs_sourceCppOnBuildComplete", succeeded, output)
 })
 
+.rs.addFunction("checkBuildTools", function(action) {
+   if (!.Call("rs_canBuildCpp")) {
+     response <- .rs.userPrompt(
+        "question",
+        "Install Build Tools",
+        paste(action, " requires installation of additional build tools.\n\n",
+        "Do you want to install the additional tools now?", sep = ""))
+     if (identical(response, "yes"))
+        .Call("rs_installBuildTools")
+     return(FALSE)
+   }
+   else {
+     return(TRUE);
+   }
+})
+
+.rs.addFunction("withBuildTools", function(code) {
+    .rs.addRToolsToPath()
+    on.exit(.rs.restorePreviousPath(), add = TRUE)
+    force(code)
+})
+
+options(buildtools.check = .rs.checkBuildTools)
+options(buildtools.with = .rs.withBuildTools)
+
+
+
 
 
 
