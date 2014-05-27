@@ -476,10 +476,17 @@ bool restore(const FilePath& statePath,
          reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
    }
    
-   // restore libpaths
-   error = restoreLibPaths(statePath.complete(kLibPathsFile));
-   if (error)
-      reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
+   // restore libpaths -- but only if packrat mode is off
+   bool packratModeOn = false;
+   r::exec::RFunction("packrat:::isPackratModeOn").call(&packratModeOn);
+
+   // an error implies packrat isn't installed or otherwise -- either way,
+   // we should restore the libpath
+   if (error || !packratModeOn) {
+      error = restoreLibPaths(statePath.complete(kLibPathsFile));
+      if (error)
+         reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
+   }
 
    // restore devmode
    if (settings.getBool(kDevModeOn, false))
