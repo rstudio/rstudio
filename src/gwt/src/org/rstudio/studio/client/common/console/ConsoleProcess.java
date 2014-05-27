@@ -54,6 +54,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                    final SatelliteManager satelliteManager)
       {
          server_ = server;
+         cryptoServer_ = cryptoServer;
          eventBus_ = eventBus;
 
          eventBus_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
@@ -231,8 +232,31 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                                                eventBus_,
                                                                procInfo));
       }
+      
+      public ConsoleProgressDialog showConsoleProgressDialog(
+                                                ConsoleProcessInfo procInfo)
+      {
+         ConsoleProcess proc = new ConsoleProcess(server_,
+                                                  eventBus_,
+                                                  procInfo);
+
+         ConsoleProgressDialog dlg = new ConsoleProgressDialog(
+               procInfo.getCaption(),
+               proc,
+               procInfo.getBufferedOutput(),
+               procInfo.getExitCode(),
+               cryptoServer_);
+
+         if (procInfo.getShowOnOutput())
+            dlg.showOnOutput();
+         else
+            dlg.showModal();
+         
+         return dlg;
+      }
 
       private final ConsoleServerOperations server_;
+      private final CryptoServerOperations cryptoServer_;
       private final EventBus eventBus_;
    }
 

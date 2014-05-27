@@ -35,6 +35,8 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
@@ -68,7 +70,8 @@ public class Workbench implements BusyHandler,
                                   BrowseUrlHandler,
                                   QuotaStatusHandler,
                                   WorkbenchLoadedHandler,
-                                  WorkbenchMetricsChangedHandler
+                                  WorkbenchMetricsChangedHandler,
+                                  InstallRtoolsEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -86,6 +89,7 @@ public class Workbench implements BusyHandler,
                     FileTypeRegistry fileTypeRegistry,
                     ConsoleDispatcher consoleDispatcher,
                     Provider<GitState> pGitState,
+                    Provider<ConsoleProcessFactory> pConsoleProcessFactory,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
                     PDFViewer pdfViewer,     // required to force gin to create
@@ -108,6 +112,7 @@ public class Workbench implements BusyHandler,
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       pGitState_ = pGitState;
+      pConsoleProcessFactory_ = pConsoleProcessFactory;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -120,6 +125,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(QuotaStatusEvent.TYPE, this);
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
+      eventBus.addHandler(InstallRtoolsEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -438,7 +444,29 @@ public class Workbench implements BusyHandler,
          }
       };
    }
-
+   
+   @Override
+   public void onInstallRtools(InstallRtoolsEvent event)
+   {
+      final ConsoleProgressDialog dlg = pConsoleProcessFactory_.get()
+                     .showConsoleProgressDialog(event.getConsoleProcess());
+      
+      dlg.getConsoleProcess().addProcessExitHandler(
+                                          new ProcessExitEvent.Handler()
+      {
+         @Override
+         public void onProcessExit(ProcessExitEvent event)
+         {
+            if (event.getExitCode() == 0)
+               dlg.closeDialog();
+            else
+               globalDisplay_.showErrorMessage("Rtools", "Failed!");
+         }
+      });
+     
+      
+   }
+  
    private final Server server_;
    private final EventBus eventBus_;
    private final Session session_;
@@ -452,6 +480,7 @@ public class Workbench implements BusyHandler,
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final Provider<GitState> pGitState_;
+   private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false; 

@@ -117,6 +117,7 @@ const int kRmdShinyDocStarted = 93;
 const int kRmdShinyAppsDeploymentOutput = 94;
 const int kRmdShinyAppsDeploymentCompleted = 95;
 const int kUserPrompt = 96;
+const int kInstallRtools = 97;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -312,6 +313,8 @@ std::string ClientEvent::typeName() const
          return "shiny_apps_deployment_completed";
       case client_events::kUserPrompt:
          return "user_prompt";
+      case client_events::kInstallRtools:
+         return "install_r_tools";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
