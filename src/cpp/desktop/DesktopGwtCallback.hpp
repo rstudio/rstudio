@@ -164,6 +164,8 @@ public slots:
 
    void setWindowTitle(QString title);
 
+   void installRtools(QString installerPath);
+
 private:
    Synctex& synctex();
 

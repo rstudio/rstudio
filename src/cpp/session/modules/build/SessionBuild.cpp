@@ -1486,6 +1486,10 @@ SEXP rs_addRToolsToPath()
 
 SEXP rs_installBuildTools()
 {
+   Error error = installRtools();
+   if (error)
+      LOG_ERROR(error);
+
    return R_NilValue;
 }
 

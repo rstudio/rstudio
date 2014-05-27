@@ -1018,5 +1018,20 @@ void GwtCallback::setWindowTitle(QString title)
    pMainWindow_->setWindowTitle(title + QString::fromUtf8(" - RStudio"));
 }
 
+#ifdef Q_WS_WIN
+void GwtCallback::installRtools(QString installerPath)
+{
+
+
+
+}
+#else
+void GwtCallback::installRtools(QString installerPath)
+{
+}
+#endif
+
+
+
 
 } // namespace desktop

@@ -96,7 +96,6 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuild.cpp
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
-   modules/build/SessionInstallRtools.cpp
    modules/build/SessionSourceCpp.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
@@ -151,6 +150,7 @@ if(UNIX)
 else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
+      modules/build/SessionInstallRtools.cpp
    )
 endif()
 
