@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
@@ -687,20 +686,6 @@ public class TypeTightener {
       return null;
     }
 
-    private JArrayType nullifyArrayType(JArrayType arrayType) {
-      JType elementType = arrayType.getElementType();
-      if (elementType instanceof JReferenceType) {
-        JReferenceType refType = (JReferenceType) elementType;
-        if (!program.typeOracle.isInstantiatedType(refType)) {
-          return program.getTypeArray(JNullType.INSTANCE);
-        } else if (elementType instanceof JArrayType) {
-          JArrayType newElementType = nullifyArrayType((JArrayType) elementType);
-          return program.getTypeArray(newElementType.getLeafType(), newElementType.getDims() + 1);
-        }
-      }
-      return arrayType;
-    }
-
     /**
      * Tighten based on assignment, and for parameters, callArgs as well.
      */
@@ -719,11 +704,6 @@ public class TypeTightener {
         x.setType(typeNull);
         madeChanges();
         return;
-      }
-
-      if (refType instanceof JArrayType) {
-        JArrayType arrayType = (JArrayType) refType;
-        refType = nullifyArrayType(arrayType);
       }
 
       // tighten based on leaf types

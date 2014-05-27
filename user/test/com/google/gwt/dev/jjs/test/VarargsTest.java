@@ -24,6 +24,8 @@ import java.util.Arrays;
  */
 public class VarargsTest extends GWTTestCase {
 
+  private static class Foo { }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -59,7 +61,26 @@ public class VarargsTest extends GWTTestCase {
     assertTrue(Arrays.equals(expected, actual));
   }
 
+  /**
+   * Test for issue 8736.
+   */
+  public void testNullEmptyUninstantiable_Varargs() {
+    assertNotNull(fooVararg());
+  }
+
+  public void testNullEmptyUninstantiable_NoVarargs() {
+    assertNotNull(fooIdent(new Foo[]{}));
+  }
+
   private String[] vararg(String... args) {
+    return args;
+  }
+
+  private Foo[] fooVararg(Foo... args) {
+    return args;
+  }
+
+  private Foo[] fooIdent(Foo[] args) {
     return args;
   }
 

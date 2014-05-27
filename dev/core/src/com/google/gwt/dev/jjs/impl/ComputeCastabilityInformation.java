@@ -167,20 +167,22 @@ public class ComputeCastabilityInformation {
       type = type.getUnderlyingType();
       qType = qType.getUnderlyingType();
 
+      if (program.typeOracle.canTriviallyCast(type, qType)) {
+        return true;
+      }
+
       if (type instanceof JArrayType && qType instanceof JArrayType) {
         JArrayType aType = (JArrayType) type;
         JArrayType aqType = (JArrayType) qType;
-        return program.typeOracle.canTriviallyCast(type, qType)
-            || (program.isJavaScriptObject(aType.getLeafType()) && program
+        return (program.isJavaScriptObject(aType.getLeafType()) && program
                 .isJavaScriptObject(aqType.getLeafType()));
       }
 
-      return program.typeOracle.canTriviallyCast(type, qType)
-          || (program.isJavaScriptObject(type) && program.isJavaScriptObject(qType));
+      return (program.isJavaScriptObject(type) && program.isJavaScriptObject(qType));
     }
 
     /**
-     * Create the mapping from a class to its query types.
+     * Create the mapping from a class to the types it can be cast to.
      */
     private void computeCastMap(JReferenceType type) {
       if (type == null || alreadyRan.contains(type)) {
