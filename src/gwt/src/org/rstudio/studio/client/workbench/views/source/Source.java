@@ -883,7 +883,6 @@ public class Source implements InsertSourceHandler,
                   context,
                   workbenchContext_,
                   uiPrefs_.documentAuthor().getGlobalValue(),
-                  context.getCanRenderShinyDocs(),
                   new OperationWithInput<NewRMarkdownDialog.Result>()
                   {
                      @Override

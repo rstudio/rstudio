@@ -415,16 +415,6 @@ private:
             "  (NOTE: Download with Safari rather than Chrome _strongly_ recommended)\n\n"
             "  Linux: Use system package manager\n\n");
       }
-
-      if (isShiny_ && !canRenderShinyDocs())
-      {
-         enqueRenderOutput(module_context::kCompileOutputError,
-            "\n"
-            "The development versions of knitr and shiny are required to\n"
-            "render Shiny documents. You can install them using devtools\n"
-            "as follows:\n\n"
-            "devtools::install_github(c(\"yihui/knitr\",\"rstudio/shiny\"))\n\n");
-      }
    }
 
    void getOutputFormat(const std::string& path,
@@ -728,9 +718,7 @@ Error getRMarkdownContext(const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {
    json::Object contextJson;
-   contextJson["can_render_shiny_docs"] = canRenderShinyDocs();
    pResponse->setResult(contextJson);
-
    return Success();
 }
 
@@ -976,12 +964,6 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
 }
 
 } // anonymous namespace
-
-bool canRenderShinyDocs()
-{
-   return module_context::isPackageVersionInstalled("shiny", "0.9.1.9008") &&
-          module_context::isPackageVersionInstalled("knitr", "1.5.33");
-}
 
 bool rmarkdownPackageAvailable()
 {
