@@ -1497,18 +1497,20 @@ SEXP rs_installBuildTools()
 
 SEXP rs_installBuildTools()
 {
-   if (module_context::isOSXMavericks() &&
-       !module_context::hasOSXMavericksDeveloperTools())
+   if (module_context::isOSXMavericks())
    {
-      // on mavericks we just need to invoke clang and the user will be
-      // prompted to install the command line tools
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand("clang --version",
-                                             "",
-                                             core::system::ProcessOptions(),
-                                             &result);
-      if (error)
-         LOG_ERROR(error);
+      if (!module_context::hasOSXMavericksDeveloperTools())
+      {
+         // on mavericks we just need to invoke clang and the user will be
+         // prompted to install the command line tools
+         core::system::ProcessResult result;
+         Error error = core::system::runCommand("clang --version",
+                                                "",
+                                                core::system::ProcessOptions(),
+                                                &result);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
    else
    {
@@ -1680,6 +1682,17 @@ Error initialize()
 
 namespace module_context {
 
+#ifndef _WIN32
+namespace {
+
+bool usingSystemMake()
+{
+   return findProgram("make").absolutePath() == "/usr/bin/make";
+}
+
+} // anonymous namespace
+#endif
+
 bool haveRcppAttributes()
 {
    return module_context::isPackageVersionInstalled("Rcpp", "0.10.1");
@@ -1688,8 +1701,12 @@ bool haveRcppAttributes()
 bool canBuildCpp()
 {
 #ifdef __APPLE__
-   if (isOSXMavericks() && !hasOSXMavericksDeveloperTools())
+   if (isOSXMavericks() &&
+       usingSystemMake() &&
+       !hasOSXMavericksDeveloperTools())
+   {
       return false;
+   }
 #endif
 
    // try to build a simple c file to test whether we have build tools available
