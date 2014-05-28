@@ -1019,14 +1019,27 @@ void GwtCallback::setWindowTitle(QString title)
 }
 
 #ifdef Q_WS_WIN
-void GwtCallback::installRtools(QString installerPath)
+void GwtCallback::installRtools(QString version, QString installerPath)
 {
+   // silent install
+   QStringList args;
+   args.push_back(QString::fromAscii("/SP-"));
+   args.push_back(QString::fromAscii("/SILENT"));
 
+   // custom install directory
+   std::string systemDrive = core::system::getenv("SYSTEMDRIVE");
+   if (!systemDrive.empty() && FilePath(systemDrive).exists())
+   {
+      std::string dir = systemDrive + "\\RBuildTools\\" + version.toStdString();
+      std::string dirArg = "/DIR=" + dir;
+      args.push_back(QString::fromStdString(dirArg));
+   }
 
-
+   // launch installer
+   QProcess::startDetached(installerPath, args);
 }
 #else
-void GwtCallback::installRtools(QString installerPath)
+void GwtCallback::installRtools(QString version, QString installerPath)
 {
 }
 #endif
