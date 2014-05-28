@@ -59,6 +59,20 @@ namespace session {
 
 namespace {
 
+bool installRBuildTools(const std::string& action)
+{
+#if defined(_WIN32) || defined(__APPLE__)
+   r::exec::RFunction check(".rs.installBuildTools", action);
+   bool userConfirmed = false;
+   Error error = check.call(&userConfirmed);
+   if (error)
+      LOG_ERROR(error);
+   return userConfirmed;
+#else
+   return false;
+#endif
+}
+
 std::string quoteString(const std::string& str)
 {
    return "'" + str + "'";
@@ -566,7 +580,7 @@ private:
       core::system::setenv(&childEnv, "NOT_CRAN", "true");
 
       // add r tools to path if necessary
-      addRtoolsToPathIfNecessary(&childEnv, &postBuildWarning_);
+      addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
 
       pkgOptions.environment = childEnv;
 
@@ -1188,11 +1202,11 @@ private:
 
          // if this is a package build then check if we can build
          // C++ code at all
-         if (!pkgInfo_.empty() && postBuildWarning_.empty())
+         if (!pkgInfo_.empty() && buildToolsWarning_.empty())
          {
             if (!module_context::canBuildCpp())
             {
-               postBuildWarning_ =
+               buildToolsWarning_ =
                  "WARNING: The tools required to build R packages "
                  "are not currently installed. Additional information on "
                  "installing the required tools for your platform can be "
@@ -1252,9 +1266,14 @@ private:
    {
       isRunning_ = false;
 
-      if (!postBuildWarning_.empty())
+      if (!buildToolsWarning_.empty())
+      {
          enqueBuildOutput(module_context::kCompileOutputError,
-                          postBuildWarning_ + "\n\n");
+                          buildToolsWarning_ + "\n\n");
+
+         // prompt user to install
+         installRBuildTools("Compiling C/C++ code for R");
+      }
 
       // enque event
       std::string afterRestartCommand;
@@ -1306,7 +1325,7 @@ private:
    r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
    std::string successMessage_;
-   std::string postBuildWarning_;
+   std::string buildToolsWarning_;
    boost::function<void()> successFunction_;
    boost::function<void()> failureFunction_;
    boost::function<bool(const std::string&)> errorOutputFilterFunction_;
@@ -1364,6 +1383,20 @@ Error getCppCapabilities(const json::JsonRpcRequest& request,
    capsJson["can_build"] = module_context::canBuildCpp();
    capsJson["can_source_cpp"] = module_context::haveRcppAttributes();
    pResponse->setResult(capsJson);
+
+   return Success();
+}
+
+Error installBuildTools(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // get param
+   std::string action;
+   Error error = json::readParam(request.params, 0, &action);
+   if (error)
+      return error;
+
+   installRBuildTools(action);
 
    return Success();
 }
@@ -1670,6 +1703,7 @@ Error initialize()
       (bind(registerRpcMethod, "start_build", startBuild))
       (bind(registerRpcMethod, "terminate_build", terminateBuild))
       (bind(registerRpcMethod, "get_cpp_capabilities", getCppCapabilities))
+      (bind(registerRpcMethod, "install_build_tools", installBuildTools))
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
       (bind(sourceModuleRFile, "SessionBuild.R"))
       (bind(source_cpp::initialize));

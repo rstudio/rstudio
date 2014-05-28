@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
@@ -54,6 +55,11 @@ public class TextEditingTargetCppHelper
                   warningBar.showWarningBar(
                      "The tools required to build C/C++ code for R " +
                      "are not currently installed");
+                  
+                  // do a prompted install of the build tools
+                  server_.installBuildTools("Compiling C/C++ code for R",
+                                            new VoidServerRequestCallback());
+                  
                }
                else if (!capabilities.getCanSourceCpp())
                {
