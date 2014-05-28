@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
@@ -43,6 +45,7 @@ import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -64,10 +67,12 @@ import com.google.inject.Inject;
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
    @Inject
-   public PackagesPane(Commands commands)
+   public PackagesPane(Commands commands, 
+                       Session session)
    {
       super("Packages");
       commands_ = commands;
+      session_ = session;
      
       ensureWidget();
    }
@@ -346,26 +351,49 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Override
       public void buildRowImpl(PackageInfo pkg, int idx)
       {
-         if (!lastLibrary_.equals(pkg.getLibrary()))
+         String library = pkg.getLibrary();
+         if (!lastLibrary_.equals(library) || idx == 0)
          {
            TableRowBuilder row = startRow();
            TableCellBuilder cell = row.startTD();
-           cell.colSpan(5);
-           cell.text(pkg.getLibrary());
+           cell.colSpan(5).className(
+                 PackagesCellTableResources.INSTANCE.cellTableStyle()
+                 .libraryHeader());
+           cell.startH1().text(friendlyNameOfLibrary(library)).endH1();
+           cell.startParagraph().text(library).endParagraph();
            row.endTD();
-
+           
            row.endTR();
-           lastLibrary_ = pkg.getLibrary();
+           lastLibrary_ = library;
          }
          super.buildRowImpl(pkg, idx);
       }
       
       private String lastLibrary_ = "";
    }
+   
+   private String friendlyNameOfLibrary(String library)
+   {
+      if (library.startsWith(
+            session_.getSessionInfo().getActiveProjectDir().getPath()))
+      {
+         return "Project Library";
+      }
+      else if (library.startsWith(FileSystemItem.HOME_PATH))
+      {
+         return "User Library";
+      } 
+      else
+      {
+         return "System Library";
+      }
+   }
          
    private CellTable<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
+
    private final Commands commands_;
+   private final Session session_;
 }

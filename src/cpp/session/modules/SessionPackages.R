@@ -13,6 +13,19 @@
 #
 #
 
+# a vectorized function that takes any number of paths and aliases the home
+# directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
+# paths outside the home directory untouched
+.rs.addFunction("createAliasedPath", function(path)
+{
+   homeDir <- path.expand("~/")
+   homePathIdx <- substr(path, 1, nchar(homeDir)) == homeDir
+   homePaths <- path[homePathIdx]
+   path[homePathIdx] <-
+          paste("~", substr(homePaths, nchar(homeDir), nchar(homePaths)), sep="")
+   path
+})
+
 # Some R commands called during packaging-related operations (such as untar)
 # delegate to the system tar binary specified in TAR. On OS X, R may set TAR to
 # /usr/bin/gnutar, which exists prior to Mavericks (10.9) but not in later
@@ -282,7 +295,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # extract/compute required fields 
    pkgs.name <- x[, 1]
-   pkgs.library <- x[, 2]
+   pkgs.library <- .rs.createAliasedPath(x[, 2])
    pkgs.desc <- x[, 3]
    pkgs.url <- file.path("help/library",
                          pkgs.name, 

@@ -26,6 +26,7 @@ public interface PackagesCellTableResources extends CellTable.Resources
 
    interface PackagesCellTableStyle extends CellTable.Style
    {
+      String libraryHeader();
    }
   
    @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "PackagesCellTableStyle.css"})

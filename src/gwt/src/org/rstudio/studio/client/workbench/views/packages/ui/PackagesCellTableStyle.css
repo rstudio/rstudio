@@ -20,3 +20,22 @@
 .cellTableOddRowCell {
   border: selectionBorderWidth solid #eef4fb;;
 }
+
+.libraryHeader h1
+{
+	margin-top: 5px;
+	margin-bottom: 0px;
+	margin-left: 5px;
+	font-weight: bold;
+	font-size: medium;
+}
+
+.libraryHeader p
+{
+	font-weight: lighter;
+	color: #c0c0c0;
+	margin-left: 5px;
+	margin-top: 0px;
+	margin-bottom: 3px;
+	font-size: x-small;
+}
