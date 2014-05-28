@@ -59,20 +59,6 @@ namespace session {
 
 namespace {
 
-bool installRBuildTools(const std::string& action)
-{
-#if defined(_WIN32) || defined(__APPLE__)
-   r::exec::RFunction check(".rs.installBuildTools", action);
-   bool userConfirmed = false;
-   Error error = check.call(&userConfirmed);
-   if (error)
-      LOG_ERROR(error);
-   return userConfirmed;
-#else
-   return false;
-#endif
-}
-
 std::string quoteString(const std::string& str)
 {
    return "'" + str + "'";
@@ -1200,11 +1186,11 @@ private:
          boost::format fmt("\nExited with status %1%.\n\n");
          enqueBuildOutput(kCompileOutputError, boost::str(fmt % exitStatus));
 
-         // if this is a package build then check if we can build
-         // C++ code at all
-         if (!pkgInfo_.empty() && buildToolsWarning_.empty())
+         // if this is a package build then check for ability to
+         // build C++ code at all
+         if (!pkgInfo_.empty() && !module_context::canBuildCpp())
          {
-            if (!module_context::canBuildCpp())
+            if (buildToolsWarning_.empty())
             {
                buildToolsWarning_ =
                  "WARNING: The tools required to build R packages "
@@ -1213,6 +1199,8 @@ private:
                  "found here:\n\n"
                  "http://www.rstudio.com/ide/docs/packages/prerequisites";
             }
+
+            module_context::installRBuildTools("Building R packages");
          }
 
          // never restart R after a failed build
@@ -1270,9 +1258,6 @@ private:
       {
          enqueBuildOutput(module_context::kCompileOutputError,
                           buildToolsWarning_ + "\n\n");
-
-         // prompt user to install
-         installRBuildTools("Compiling C/C++ code for R");
       }
 
       // enque event
@@ -1396,7 +1381,7 @@ Error installBuildTools(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   pResponse->setResult(installRBuildTools(action));
+   pResponse->setResult(module_context::installRBuildTools(action));
 
    return Success();
 }
@@ -1783,6 +1768,20 @@ bool canBuildCpp()
    }
 
    return result.exitStatus == EXIT_SUCCESS;
+}
+
+bool installRBuildTools(const std::string& action)
+{
+#if defined(_WIN32) || defined(__APPLE__)
+   r::exec::RFunction check(".rs.installBuildTools", action);
+   bool userConfirmed = false;
+   Error error = check.call(&userConfirmed);
+   if (error)
+      LOG_ERROR(error);
+   return userConfirmed;
+#else
+   return false;
+#endif
 }
 
 }

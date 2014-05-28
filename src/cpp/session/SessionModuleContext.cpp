@@ -636,9 +636,16 @@ void schedulePeriodicWork(const boost::posix_time::time_duration& period,
 
 namespace {
 
-bool performDelayedWork(const boost::function<void()> &execute)
+bool performDelayedWork(const boost::function<void()> &execute,
+                        boost::shared_ptr<bool> pExecuted)
 {
+   if (*pExecuted)
+      return false;
+
+   *pExecuted = true;
+
    execute();
+
    return false;
 }
 
@@ -648,8 +655,10 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                          const boost::function<void()> &execute,
                          bool idleOnly)
 {
+   boost::shared_ptr<bool> pExecuted(new bool(false));
+
    schedulePeriodicWork(period,
-                        boost::bind(performDelayedWork, execute),
+                        boost::bind(performDelayedWork, execute, pExecuted),
                         idleOnly,
                         false);
 }

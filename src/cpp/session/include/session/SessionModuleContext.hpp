@@ -387,6 +387,7 @@ void syncRSaveAction();
 
 std::string libPathsString();
 bool canBuildCpp();
+bool installRBuildTools(const std::string& action);
 bool haveRcppAttributes();
 
 #ifdef __APPLE__
