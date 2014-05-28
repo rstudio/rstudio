@@ -2907,7 +2907,7 @@ public class RemoteServer implements Server
    
    @Override
    public void installBuildTools(String action, 
-                                 ServerRequestCallback<Void> callback)
+                                 ServerRequestCallback<Boolean> callback)
    {
       sendRequest(RPC_SCOPE, INSTALL_BUILD_TOOLS, action, callback);
    }
