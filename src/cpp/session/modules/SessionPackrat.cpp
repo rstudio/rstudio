@@ -19,8 +19,9 @@
 
 #include <core/system/FileMonitor.hpp>
 
-#include <session/projects/SessionProjects.hpp>
+#include <r/RExec.hpp>
 
+#include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace core;
@@ -55,6 +56,22 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 }
 
 } // anonymous namespace
+
+bool isPackratModeOn()
+{
+   // if we're not in a project, we don't support Packrat mode hooks
+   if (!projects::projectContext().hasProject())
+      return false;
+
+   // if we are in a project, attempt to ascertain whether Packrat mode is on
+   // for the project (it's OK if this fails; by default we presume packrat
+   // mode to be off)
+   bool packratMode = false;
+   FilePath dir = projects::projectContext().directory();
+   r::exec::RFunction("packrat:::isPackratModeOn", 
+                      dir.absolutePath()).call(&packratMode);
+   return packratMode;
+}
 
 Error initialize()
 {

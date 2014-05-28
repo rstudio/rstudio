@@ -24,6 +24,7 @@ namespace session {
 namespace modules { 
 namespace packrat {
 
+bool isPackratModeOn();
 core::Error initialize();
                        
 } // namespace packrat
