@@ -36,12 +36,18 @@ setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
 })
 
 .rs.addFunction("checkBuildTools", function(action) {
-   if (!.Call("rs_canBuildCpp")) {
-     .rs.installBuildTools(action)
-     return(FALSE)
-   }
-   else {
-     return(TRUE);
+
+   if (identical(.Platform$pkgType, "mac.binary.mavericks")) {
+      # this will auto-prompt to install on mavericks
+      .Call("rs_canBuildCpp")
+   } else {
+      if (!.Call("rs_canBuildCpp")) {
+        .rs.installBuildTools(action)
+        FALSE
+      }
+      else {
+        TRUE;
+      }
    }
 })
 
