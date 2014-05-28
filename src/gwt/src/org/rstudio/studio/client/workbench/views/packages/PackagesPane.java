@@ -41,12 +41,16 @@ import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableRe
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.dom.builder.shared.TableCellBuilder;
+import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
@@ -223,6 +227,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_ = new CellTable<PackageInfo>(
         15,
         PackagesCellTableResources.INSTANCE);
+      packagesTable_.setTableBuilder(new PackageTableBuilder(packagesTable_));
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
       packagesTable_.setWidth("100%", false);
@@ -331,7 +336,32 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
-   
+   class PackageTableBuilder extends DefaultCellTableBuilder<PackageInfo>
+   {
+      public PackageTableBuilder(AbstractCellTable<PackageInfo> cellTable)
+      {
+         super(cellTable);
+      }
+
+      @Override
+      public void buildRowImpl(PackageInfo pkg, int idx)
+      {
+         if (!lastLibrary_.equals(pkg.getLibrary()))
+         {
+           TableRowBuilder row = startRow();
+           TableCellBuilder cell = row.startTD();
+           cell.colSpan(5);
+           cell.text(pkg.getLibrary());
+           row.endTD();
+
+           row.endTR();
+           lastLibrary_ = pkg.getLibrary();
+         }
+         super.buildRowImpl(pkg, idx);
+      }
+      
+      private String lastLibrary_ = "";
+   }
          
    private CellTable<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
