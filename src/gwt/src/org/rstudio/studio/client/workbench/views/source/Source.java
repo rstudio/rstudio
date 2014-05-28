@@ -1002,7 +1002,7 @@ public class Source implements InsertSourceHandler,
                        final Position cursorPosition,
                        final CommandWithArg<EditingTarget> onSuccess)
    {
-      newSourceDocWithTemplate(fileType, name, template, cursorPosition, null, null);
+      newSourceDocWithTemplate(fileType, name, template, cursorPosition, onSuccess, null);
    }
 
    private void newSourceDocWithTemplate(

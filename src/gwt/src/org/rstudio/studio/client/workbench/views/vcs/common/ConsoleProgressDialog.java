@@ -160,6 +160,11 @@ public class ConsoleProgressDialog extends ProgressDialog
       return display_;
    }
 
+   public ConsoleProcess getConsoleProcess()
+   {
+      return consoleProcess_;
+   }
+   
    public void showOnOutput()
    {
       showOnOutput_ = true;

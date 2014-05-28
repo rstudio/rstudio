@@ -200,6 +200,7 @@ const char * const kConsoleInput = "console_input" ;
 const char * const kEditCompleted = "edit_completed";
 const char * const kChooseFileCompleted = "choose_file_completed";
 const char * const kLocatorCompleted = "locator_completed";
+const char * const kUserPromptCompleted = "user_prompt_completed";
 const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
 const char * const kQuitSession = "quit_session" ;   
 const char * const kSuspendSession = "suspend_session";
@@ -1536,6 +1537,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    s_waitForMethodNames.push_back(kLocatorCompleted);
    s_waitForMethodNames.push_back(kEditCompleted);
    s_waitForMethodNames.push_back(kChooseFileCompleted);
+   s_waitForMethodNames.push_back(kUserPromptCompleted);
    s_waitForMethodNames.push_back(kHandleUnsavedChangesCompleted);
 
    // execute core initialization functions
@@ -2563,6 +2565,58 @@ Error registerRpcMethod(const std::string& name,
                         std::make_pair(true, json::adaptToAsync(function))));
    return Success();
 }
+
+UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
+{
+   // enque user prompt event
+   json::Object obj;
+   obj["type"] = static_cast<int>(userPrompt.type);
+   obj["caption"] = userPrompt.caption;
+   obj["message"] = userPrompt.message;
+   obj["yesLabel"] = userPrompt.yesLabel;
+   obj["noLabel"] = userPrompt.noLabel;
+   obj["yesIsDefault"] = userPrompt.yesIsDefault;
+   obj["includeCancel"] = userPrompt.includeCancel;
+   ClientEvent userPromptEvent(client_events::kUserPrompt, obj);
+   session::clientEventQueue().add(userPromptEvent);
+
+   // wait for user_prompt_completed
+   json::JsonRpcRequest request ;
+   waitForMethod(kUserPromptCompleted,
+                 userPromptEvent,
+                 disallowSuspend,
+                 &request);
+
+   // read the response param
+   int response;
+   Error error = json::readParam(request.params, 0, &response);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return UserPrompt::ResponseCancel;
+   }
+
+   // return response (don't cast so that we can make sure the integer
+   // returned matches one of enumerated type values and warn otherwise)
+   switch (response)
+   {
+      case UserPrompt::ResponseYes:
+         return UserPrompt::ResponseYes;
+
+      case UserPrompt::ResponseNo:
+         return UserPrompt::ResponseNo;
+
+      case UserPrompt::ResponseCancel:
+         return UserPrompt::ResponseCancel;
+
+      default:
+         LOG_WARNING_MESSAGE("Unexpected user prompt response: " +
+                             boost::lexical_cast<std::string>(response));
+
+         return UserPrompt::ResponseCancel;
+   };
+}
+
 
 bool rSessionResumed()
 {

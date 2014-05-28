@@ -147,7 +147,7 @@ public:
                boost::posix_time::milliseconds(200),
                boost::bind(&SourceCppContext::handleBuildComplete,
                            this, succeeded, output),
-               false);
+               true); // idle only
    }
 
 private:
@@ -167,8 +167,17 @@ private:
          buildOutput = output;
 
       // if we failed and there was an R tools warning then show it
-      if (!succeeded && !rToolsWarning_.empty())
-         module_context::consoleWriteError(rToolsWarning_);
+      if (!succeeded)
+      {
+         if (!rToolsWarning_.empty())
+            module_context::consoleWriteError(rToolsWarning_);
+
+         // prompted install of Rtools on Win32
+#ifdef _WIN32
+         if (!module_context::canBuildCpp())
+            module_context::installRBuildTools("Compiling C/C++ code for R");
+#endif
+      }
 
       // parse for gcc errors for sourceCpp
       if (!fromCode_)

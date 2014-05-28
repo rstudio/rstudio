@@ -585,6 +585,16 @@ public class ClientEventDispatcher
             String url = event.getData();
             eventBus_.fireEvent(new ShinyAppsDeploymentCompletedEvent(url));
          }
+         else if (type.equals(ClientEvent.UserPrompt))
+         {
+            UserPrompt prompt = event.getData();
+            eventBus_.fireEvent(new UserPromptEvent(prompt));
+         }
+         else if (type.equals(ClientEvent.InstallRtools))
+         {
+            InstallRtoolsEvent.Data data = event.getData();
+            eventBus_.fireEvent(new InstallRtoolsEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

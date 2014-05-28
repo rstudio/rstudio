@@ -1,5 +1,5 @@
 /*
- * SessionBuildEnvironment.hpp
+ * SessionInstallRtools.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,34 +13,22 @@
  *
  */
 
-#ifndef SESSION_BUILD_ENVIRONMENT_HPP
-#define SESSION_BUILD_ENVIRONMENT_HPP
-
-#include <string>
-
-#include <core/system/Environment.hpp>
+#ifndef SESSION_BUILD_INSTALL_RTOOLS_HPP
+#define SESSION_BUILD_INSTALL_RTOOLS_HPP
 
 namespace core {
-namespace r_util {
-   class RToolsInfo;
-}
+   class Error;
 }
 
 namespace session {
 namespace modules {
 namespace build {
 
-bool isRtoolsCompatible(const core::r_util::RToolsInfo& rTools);
-
-bool addRtoolsToPathIfNecessary(std::string* pPath,
-                                std::string* pWarningMessage);
-
-bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
-                                std::string* pWarningMessage);
+core::Error installRtools();
 
 } // namespace build
 } // namespace modules
 } // namespace session
 
-#endif // SESSION_BUILD_ENVIRONMENT_HPP
+#endif // SESSION_BUILD_INSTALL_RTOOLS_HPP
 

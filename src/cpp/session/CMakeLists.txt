@@ -150,6 +150,7 @@ if(UNIX)
 else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
+      modules/build/SessionInstallRtools.cpp
    )
 endif()
 
