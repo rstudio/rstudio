@@ -16,16 +16,30 @@ package org.rstudio.studio.client.packrat.model;
 
 import org.rstudio.core.client.js.JsObject;
 
+import com.google.gwt.view.client.ProvidesKey;
+
 // This class represents the JSON value the server returns from
 // get_packrat_status.
 public class PackratStatus extends JsObject
 {
+   
+   public static final ProvidesKey<PackratStatus> KEY_PROVIDER =
+   new ProvidesKey<PackratStatus>() {
+      public Object getKey(PackratStatus item) {
+         return item.getPackageName();
+      }
+   };
+   
    protected PackratStatus()
    {
    }
 
    // One JSNI native method per field in the data frame returned by 
    // packrat::status.
+   
+   public final native int length() /*-{
+      return Object.keys(this).length;
+   }-*/;
    
    public final native String getPackageName() /*-{
       return this["package"];
