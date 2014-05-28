@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 
@@ -54,21 +55,21 @@ public class Packrat {
          Commands commands,
          EventBus eventBus,
          GlobalDisplay display,
-         FileDialogs fileDialogs,
          WorkbenchContext workbenchContext,
          RemoteFileSystemContext fsContext,
          DependencyManager dependencyManager,
          PackratStatus prStatus,
-         RemoteServer server) {
+         RemoteServer server,
+         Provider<FileDialogs> pFileDialogs) {
       
       eventBus_ = eventBus;
       display_ = display;
-      fileDialogs_ = fileDialogs;
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
       dependencyManager_ = dependencyManager;
       prStatus_ = prStatus;
       server_ = server;
+      pFileDialogs_ = pFileDialogs;
       binder.bind(commands, this);
    }
 
@@ -79,7 +80,7 @@ public class Packrat {
    
    // packrat::bundle
    private void bundlePackratProject() {
-      fileDialogs_.saveFile(
+      pFileDialogs_.get().saveFile(
          "Save Bundled Packrat Project...",
          fsContext_,
          workbenchContext_.getCurrentWorkingDir(),
@@ -217,7 +218,7 @@ public class Packrat {
    private final EventBus eventBus_;
    private final RemoteFileSystemContext fsContext_;
    private final WorkbenchContext workbenchContext_;
-   private final FileDialogs fileDialogs_;
+   private final Provider<FileDialogs> pFileDialogs_;
    private final RemoteServer server_;
 
 }
