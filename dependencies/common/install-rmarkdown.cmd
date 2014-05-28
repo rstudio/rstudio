@@ -2,10 +2,16 @@
 
 setlocal
 
-set PACKAGE=rmarkdown
-set PACKAGE_VERSION=master
-
 set PATH=%PATH%;%CD%\tools
+
+call:install rmarkdown master
+
+GOTO:EOF
+
+:install
+
+set PACKAGE=%1
+set PACKAGE_VERSION=%2
 
 REM git clone if necessary
 set PACKAGE_DIR="%PACKAGE%"
@@ -42,4 +48,8 @@ for %%f in (%PACKAGE_ARCHIVE_PATTERN%) do set PACKAGE_ARCHIVE=%%f
 set PACKAGE_ARCHIVE_STEM=%PACKAGE_ARCHIVE:~0,-7%
 set PACKAGE_ARCHIVE_SHA1=%PACKAGE_ARCHIVE_STEM%_%PACKAGE_SHA1%.tar.gz
 move %PACKAGE_ARCHIVE% %PACKAGE_ARCHIVE_SHA1%
+
+GOTO:EOF
+
+
 
