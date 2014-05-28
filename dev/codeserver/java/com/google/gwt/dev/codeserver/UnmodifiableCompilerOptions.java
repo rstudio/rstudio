@@ -235,6 +235,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setSourceMapFilePrefix(String path) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final void setSoycEnabled(boolean enabled) {
     throw new UnsupportedOperationException();
   }

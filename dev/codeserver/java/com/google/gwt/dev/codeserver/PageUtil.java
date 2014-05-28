@@ -18,8 +18,11 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -29,6 +32,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
 import java.util.Date;
@@ -125,6 +130,33 @@ class PageUtil {
     BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
     sendStream(mimeType, in, response);
   }
+
+  /**
+   * Sends a text file, substituting one variable. (Doesn't preserve line endings.)
+   * @param templateVariable the string to replace
+   * @param replacement the replacement
+   */
+  static void sendTemplateFile(String mimeType, File file, String templateVariable,
+      String replacement, HttpServletResponse response) throws IOException {
+
+    BufferedReader reader = Files.newReader(file, Charsets.UTF_8);
+    try {
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.setContentType(mimeType);
+      PrintWriter out = response.getWriter();
+      while (true) {
+        String line = reader.readLine();
+        if (line == null) {
+          break;
+        }
+        line = line.replace(templateVariable, replacement);
+        out.println(line);
+      }
+    } finally {
+      reader.close();
+    }
+  }
+
 
   /**
    * Sends a page. Closes pageBytes when done.

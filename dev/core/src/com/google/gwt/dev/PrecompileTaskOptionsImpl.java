@@ -36,6 +36,7 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   private int maxPermsPerPrecompile;
   private File missingDepsFile;
   private boolean saveSource;
+  private String sourceMapFilePrefix;
   private boolean validateOnly;
   private boolean warnOverlappingSource;
   private boolean warnMissingDeps;
@@ -67,6 +68,7 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
     setDisableUpdateCheck(other.isUpdateCheckDisabled());
     setGenDir(other.getGenDir());
     setSaveSource(other.shouldSaveSource());
+    setSourceMapFilePrefix(other.getSourceMapFilePrefix());
     setMaxPermsPerPrecompile(other.getMaxPermsPerPrecompile());
     setWarnOverlappingSource(other.warnOverlappingSource());
     setWarnMissingDeps(other.warnMissingDeps());
@@ -129,6 +131,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   public SourceLevel getSourceLevel()
   {
     return jjsOptions.getSourceLevel();
+  }
+
+  @Override
+  public String getSourceMapFilePrefix() {
+    return sourceMapFilePrefix;
   }
 
   @Override
@@ -360,6 +367,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setSourceLevel(SourceLevel sourceLevel) {
     jjsOptions.setSourceLevel(sourceLevel);
+  }
+
+  @Override
+  public void setSourceMapFilePrefix(String path) {
+    sourceMapFilePrefix = path;
   }
 
   @Override

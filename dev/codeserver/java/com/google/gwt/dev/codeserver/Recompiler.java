@@ -38,7 +38,6 @@ import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
 import java.io.IOException;
@@ -205,22 +204,19 @@ class Recompiler {
 
   private boolean compileMonolithic(TreeLogger compileLogger, Map<String, String> bindingProperties,
       CompileDir compileDir) throws UnableToCompleteException {
-    CompilerOptions compilerOptions = new CompilerOptionsImpl(compileDir,
-        options.getModuleNames(), options.getSourceLevel(), options.isFailOnError(),
-        options.enforceStrictResources(), options.enforceStrictResources(),
-        options.getLogLevel());
-    compilerContext = compilerContextBuilder.options(compilerOptions).build();
+
+    CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, originalModuleName, options);
+    compilerContext = compilerContextBuilder.options(loadOptions).build();
     ModuleDef module = loadModule(compileLogger, bindingProperties);
 
     // Propagates module rename.
     String newModuleName = module.getName();
     moduleName.set(newModuleName);
-    compilerOptions = new CompilerOptionsImpl(compileDir, Lists.newArrayList(newModuleName),
-        options.getSourceLevel(), options.isFailOnError(), options.enforceStrictResources(),
-        options.enforceStrictResources(), options.getLogLevel());
-    compilerContext = compilerContextBuilder.options(compilerOptions).build();
 
-    boolean success = new Compiler(compilerOptions).run(compileLogger, module);
+    CompilerOptions runOptions = new CompilerOptionsImpl(compileDir, newModuleName, options);
+    compilerContext = compilerContextBuilder.options(runOptions).build();
+
+    boolean success = new Compiler(runOptions).run(compileLogger, module);
     if (success) {
       publishedCompileDir = compileDir;
     }
@@ -345,13 +341,12 @@ class Recompiler {
 
     logger = logger.branch(TreeLogger.Type.INFO, "binding: " + propName + "=" + newValue);
 
-    BindingProperty prop = module.getProperties().findBindingProp(propName);
-    if (prop == null) {
+    BindingProperty binding = module.getProperties().findBindingProp(propName);
+    if (binding == null) {
       logger.log(TreeLogger.Type.WARN, "undefined property: '" + propName + "'");
       return;
     }
 
-    BindingProperty binding = (BindingProperty) prop;
     if (!binding.isAllowedValue(newValue)) {
 
       String[] allowedValues = binding.getAllowedValues(binding.getRootCondition());

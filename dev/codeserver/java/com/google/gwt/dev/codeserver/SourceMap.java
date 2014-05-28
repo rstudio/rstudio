@@ -24,7 +24,6 @@ import com.google.gwt.dev.util.Util;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -57,19 +56,6 @@ class SourceMap {
     }
 
     return new SourceMap(json);
-  }
-
-  /**
-   * Adds the given prefix to each source filename in the source map.
-   */
-  void addPrefixToEachSourceFile(String serverPrefix) {
-    JsonArray sources = (JsonArray) json.get("sources");
-    JsonArray newSources = new JsonArray();
-    for (int i = 0; i < sources.getLength(); i++) {
-      String filename = sources.get(i).asString().getString();
-      newSources.add(serverPrefix + filename);
-    }
-    json.put("sources", newSources);
   }
 
   /**
@@ -114,15 +100,5 @@ class SourceMap {
     }
 
     return result;
-  }
-
-  String serialize() {
-    StringWriter buffer = new StringWriter();
-    try {
-      json.write(buffer);
-    } catch (IOException e) {
-      throw new RuntimeException("can't convert sourcemap to json");
-    }
-    return buffer.toString();
   }
 }

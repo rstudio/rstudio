@@ -16,7 +16,6 @@
 package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.soyc.SourceMapRecorderExt;
 import com.google.gwt.core.ext.soyc.coderef.ClassDescriptor;
 import com.google.gwt.core.ext.soyc.coderef.EntityDescriptor;
 import com.google.gwt.core.ext.soyc.coderef.EntityDescriptor.Fragment;
@@ -239,8 +238,9 @@ public class SourceMapTest extends TestCase {
       SourceMapConsumerV3 sourceMap = new SourceMapConsumerV3();
       sourceMap.parse(stringContent(sourceMapFile));
       if (firstIteration) {
-        mapping.put((Integer) sourceMap.getExtensions().get(SourceMapRecorderExt.PERMUTATION_EXT),
-            symbolTable);
+        Integer permutationId = (Integer) sourceMap.getExtensions().get("x_gwt_permutation");
+        assertNotNull(permutationId);
+        mapping.put(permutationId, symbolTable);
         firstIteration = false;
       }
       sourceMap.visitMappings(new  SourceMapConsumerV3.EntryVisitor() {

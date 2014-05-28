@@ -94,7 +94,7 @@
     overlay.style.left = 0;
     overlay.style.bottom = 0;
     overlay.style.right = 0;
-    overlay.style.background = 'white';
+    overlay.style.background = 'black'; // darken background
     overlay.style.opacity = '0.5';
     return overlay;
   }

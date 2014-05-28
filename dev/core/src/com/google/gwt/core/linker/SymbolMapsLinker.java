@@ -174,11 +174,14 @@ public class SymbolMapsLinker extends AbstractLinker {
     private int fragment;
     private byte[] js;
 
-    public SourceMapArtifact(int permutationId, int fragment, byte[] js) {
+    private final String sourceRoot;
+
+    public SourceMapArtifact(int permutationId, int fragment, byte[] js, String sourceRoot) {
       super(SymbolMapsLinker.class, permutationId + '/' + sourceMapFilenameForFragment(fragment), js);
       this.permutationId = permutationId;
       this.fragment = fragment;
       this.js = js;
+      this.sourceRoot = sourceRoot;
     }
 
     public int getFragment() {
@@ -187,6 +190,14 @@ public class SymbolMapsLinker extends AbstractLinker {
 
     public int getPermutationId() {
       return permutationId;
+    }
+
+    /**
+     * The base URL for Java filenames in the sourcemap.
+     * (We need to reapply this after edits.)
+     */
+    public String getSourceRoot() {
+      return sourceRoot;
     }
 
     public static String sourceMapFilenameForFragment(int fragment) {
@@ -298,6 +309,12 @@ public class SymbolMapsLinker extends AbstractLinker {
           emArt = emitSourceMapString(logger, sourceMapString, partialPath);
         } else {
           SourceMapGeneratorV3 sourceMapGenerator = new SourceMapGeneratorV3();
+
+          if (se.getSourceRoot() != null) {
+            // Reapply source root since mergeMapSection() will not copy it.
+            sourceMapGenerator.setSourceRoot(se.getSourceRoot());
+          }
+
           try {
             int totalPrefixLines = 0;
             for (ScriptFragmentEditsArtifact.EditOperation op : editArtifact.editOperations) {

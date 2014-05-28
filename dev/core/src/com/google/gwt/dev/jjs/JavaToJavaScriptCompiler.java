@@ -392,7 +392,8 @@ public abstract class JavaToJavaScriptCompiler {
         } else {
           // Is a super set of SourceMapRecorder.makeSourceMapArtifacts().
           permutationResult.addArtifacts(EntityRecorder.makeSoycArtifacts(
-              permutationId, sourceInfoMaps, jjsmap, sizeBreakdowns,
+              permutationId, sourceInfoMaps, options.getSourceMapFilePrefix(),
+              jjsmap, sizeBreakdowns,
               ((DependencyGraphRecorder) dependenciesAndRecorder.getRight()), jprogram));
         }
       } else if (isSourceMapsEnabled) {
@@ -402,8 +403,8 @@ public abstract class JavaToJavaScriptCompiler {
               + "compiler.useSourceMaps=true; ignoring compiler.useSourceMaps=true.");
         } else {
           logger.log(TreeLogger.INFO, "Source Maps Enabled");
-          permutationResult.addArtifacts(
-              SourceMapRecorder.makeSourceMapArtifacts(permutationId, sourceInfoMaps));
+          permutationResult.addArtifacts(SourceMapRecorder.exec(permutationId, sourceInfoMaps,
+              options.getSourceMapFilePrefix()));
         }
       }
     }

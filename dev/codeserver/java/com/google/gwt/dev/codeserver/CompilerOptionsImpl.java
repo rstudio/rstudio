@@ -35,24 +35,20 @@ import java.util.List;
 class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final CompileDir compileDir;
   private final boolean failOnError;
-  private final List<String> libraryPaths;
   private final TreeLogger.Type logLevel;
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
   private final boolean strictPublicResources;
   private final boolean strictSourceResources;
 
-  CompilerOptionsImpl(CompileDir compileDir, List<String> moduleNames, SourceLevel sourceLevel,
-      boolean failOnError, boolean strictSourceResources, boolean strictPublicResources,
-      TreeLogger.Type logLevel) {
+  CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
-    this.libraryPaths = ImmutableList.<String> of();
-    this.moduleNames = Lists.newArrayList(moduleNames);
-    this.sourceLevel = sourceLevel;
-    this.failOnError = failOnError;
-    this.strictSourceResources = strictSourceResources;
-    this.strictPublicResources = strictPublicResources;
-    this.logLevel = logLevel;
+    this.moduleNames = Lists.newArrayList(moduleName);
+    this.sourceLevel = options.getSourceLevel();
+    this.failOnError = options.isFailOnError();
+    this.strictSourceResources = options.enforceStrictResources();
+    this.strictPublicResources = options.enforceStrictResources();
+    this.logLevel = options.getLogLevel();
   }
 
   @Override
@@ -97,7 +93,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public List<String> getLibraryPaths() {
-    return libraryPaths;
+    return ImmutableList.of();
   }
 
   /**
@@ -251,7 +247,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public boolean shouldAddRuntimeChecks() {
-    // TODO set to true in a separate patch
+    // Not needed since no optimizations are on.
     return false;
   }
 
@@ -288,6 +284,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean shouldSaveSource() {
     return false; // handling this a different way
+  }
+
+  @Override
+  public String getSourceMapFilePrefix() {
+    return SourceHandler.SOURCEROOT_TEMPLATE_VARIABLE;
   }
 
   @Override

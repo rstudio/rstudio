@@ -47,6 +47,8 @@ class SourceHandler {
    */
   static final String SOURCEMAP_PATH = "/sourcemaps/";
 
+  static final String SOURCEROOT_TEMPLATE_VARIABLE = "$sourceroot_goes_here$";
+
   private Modules modules;
 
   private final TreeLogger logger;
@@ -109,15 +111,29 @@ class SourceHandler {
   private void sendSourceMap(String moduleName, HttpServletRequest request,
       HttpServletResponse response) throws IOException {
 
-    SourceMap map = loadSourceMap(moduleName);
+    long startTime = System.currentTimeMillis();
 
-    // hack: rewrite the source map so that each filename is a URL
-    String serverPrefix = String.format("http://%s:%d/sourcemaps/%s/", request.getServerName(),
+    ModuleState moduleState = modules.get(moduleName);
+    File sourceMap = moduleState.findSourceMap();
+
+    // Stream the file, substituting the sourceroot variable with the filename.
+    // (This is more efficient than parsing the file as JSON.)
+
+    // We need to do this at runtime because we don't know what the hostname will be
+    // until we get a request. (For example, some people run the Code Server behind
+    // a reverse proxy to support https.)
+
+    String sourceRoot = String.format("http://%s:%d/sourcemaps/%s/", request.getServerName(),
         request.getServerPort(), moduleName);
-    map.addPrefixToEachSourceFile(serverPrefix);
 
-    PageUtil.sendString("application/json", map.serialize(), response);
-    logger.log(TreeLogger.WARN, "sent source map for module: " + moduleName);
+    PageUtil.sendTemplateFile("application/json", sourceMap,
+        "\"" + SOURCEROOT_TEMPLATE_VARIABLE + "\"",
+        "\"" + sourceRoot + "\"", response);
+
+    long elapsedTime = System.currentTimeMillis() - startTime;
+
+    logger.log(TreeLogger.WARN, "sent source map for module '" + moduleName +
+        "' in " + elapsedTime + " ms");
   }
 
   private void sendDirectoryListPage(String moduleName, HttpServletResponse response)
