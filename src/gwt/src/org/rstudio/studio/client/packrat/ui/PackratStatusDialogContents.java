@@ -14,41 +14,43 @@
  */
 package org.rstudio.studio.client.packrat.ui;
 
-import org.rstudio.core.client.cellview.ScrollingDataGrid;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 
-import com.google.gwt.cell.client.EditTextCell;
+import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 // This widget represents the body of the Packrat install dialog.
 public class PackratStatusDialogContents extends Composite
 {
-
+   
    private static PackratStatusUiBinder uiBinder = GWT
          .create(PackratStatusUiBinder.class);
 
    interface PackratStatusUiBinder extends UiBinder<Widget, PackratStatusDialogContents> {}
 
-   public PackratStatusDialogContents(JsArray<PackratStatus> prStatus) {
+   public PackratStatusDialogContents(JsArray<PackratStatus> prStatusArray) {
       
-      // Create a ScrollingDataGrid.
-
-      statusTable_ = new ScrollingDataGrid<PackratStatus>(20, PackratStatus.KEY_PROVIDER);
-      statusTable_.setWidth("100%");
-
-      // Do not refresh the headers and footers every time the data is updated.
-      statusTable_.setAutoHeaderRefreshDisabled(true);
-      statusTable_.setAutoFooterRefreshDisabled(true);
+      // jsArray -> List
+      List<PackratStatus> prStatusList = new ArrayList<PackratStatus>();
+      JsArrayUtil.fillList(prStatusArray, prStatusList);
+      
+      // create the status table
+      statusTable_ = new DataGrid<PackratStatus>();
+      statusTable_.setRowData(prStatusList);
       
       initTableColumns();
-
+      
       // create it
       initWidget(uiBinder.createAndBindUi(this));
       
@@ -56,10 +58,8 @@ public class PackratStatusDialogContents extends Composite
    
    private void initTableColumns() {
       
-      statusTable_.setEmptyTableWidget(new Label("No packrat information available"));
-      
       // package name column
-      Column<PackratStatus, String> packageNameColumn = new Column<PackratStatus, String>(new EditTextCell()) {
+      Column<PackratStatus, String> packageNameColumn = new Column<PackratStatus, String>(new TextCell()) {
          @Override
          public String getValue(PackratStatus obj) {
             return obj.getPackageName();
@@ -68,8 +68,7 @@ public class PackratStatusDialogContents extends Composite
       
       statusTable_.addColumn(packageNameColumn, "Package");
       
-      //
-      Column<PackratStatus, String> packratVersionColumn = new Column<PackratStatus, String>(new EditTextCell()) {
+      Column<PackratStatus, String> packratVersionColumn = new Column<PackratStatus, String>(new TextCell()) {
          @Override
          public String getValue(PackratStatus obj) {
             return obj.getPackageVersion();
@@ -78,8 +77,7 @@ public class PackratStatusDialogContents extends Composite
       
       statusTable_.addColumn(packratVersionColumn, "Packrat Version");
       
-      // package name column
-      Column<PackratStatus, String> packageSourceColumn = new Column<PackratStatus, String>(new EditTextCell()) {
+      Column<PackratStatus, String> packageSourceColumn = new Column<PackratStatus, String>(new TextCell()) {
          @Override
          public String getValue(PackratStatus obj) {
             return obj.getPackageSource();
@@ -89,7 +87,7 @@ public class PackratStatusDialogContents extends Composite
       statusTable_.addColumn(packageSourceColumn, "Source");
       
       // package name column
-      Column<PackratStatus, String> packratLibraryVersionColumn = new Column<PackratStatus, String>(new EditTextCell()) {
+      Column<PackratStatus, String> packratLibraryVersionColumn = new Column<PackratStatus, String>(new TextCell()) {
          @Override
          public String getValue(PackratStatus obj) {
             return obj.getLibraryVersion();
@@ -99,7 +97,7 @@ public class PackratStatusDialogContents extends Composite
       statusTable_.addColumn(packratLibraryVersionColumn, "Library Version");
       
       // package name column
-      Column<PackratStatus, String> currentlyUsedColumn = new Column<PackratStatus, String>(new EditTextCell()) {
+      Column<PackratStatus, String> currentlyUsedColumn = new Column<PackratStatus, String>(new TextCell()) {
          @Override
          public String getValue(PackratStatus obj) {
             return obj.getCurrentlyUsed();
@@ -110,6 +108,6 @@ public class PackratStatusDialogContents extends Composite
       
    }
    
-   @UiField (provided = true) ScrollingDataGrid<PackratStatus> statusTable_;
+   @UiField (provided = true) DataGrid<PackratStatus> statusTable_;
 
 }

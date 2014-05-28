@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import java.util.List;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -42,4 +44,11 @@ public class JsArrayUtil
       }
       return null;
    }-*/;
+   
+   public static <T extends JavaScriptObject> void fillList(JsArray<T> jsArray, List<T> list) {
+      for (int i = 0; i < jsArray.length(); ++i) {
+         list.add(jsArray.get(i));
+      }
+   }
+   
 }

@@ -30,9 +30,7 @@ public class PackratStatus extends JsObject
       }
    };
    
-   protected PackratStatus()
-   {
-   }
+   protected PackratStatus() {}
 
    // One JSNI native method per field in the data frame returned by 
    // packrat::status.
@@ -46,11 +44,11 @@ public class PackratStatus extends JsObject
    }-*/;
    
    public final native String getPackageVersion() /*-{
-      return this["package.version"];
+      return this["packrat.version"];
    }-*/;
    
    public final native String getPackageSource() /*-{
-      return this["package.source"];
+      return this["packrat.source"];
    }-*/;
    
    public final native String getLibraryVersion() /*-{
