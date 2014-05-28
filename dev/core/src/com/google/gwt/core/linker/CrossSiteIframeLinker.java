@@ -402,6 +402,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     throws UnableToCompleteException {
     TextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
+    // Note: this code is included in both the primary fragment and devmode.js
+
     // $wnd is the main window that the GWT code will affect and also the
     // location where the bootstrap function was defined. In iframe-based linkers,
     // $wnd is set to window.parent. Usually, in others, $wnd = window.
@@ -471,6 +473,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       String strongName) {
 
     // Note: this method won't be called if getModuleSuffix() is overridden and returns non-null.
+    // Note: this code is included in both the primary fragment and devmode.js.
 
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
@@ -482,7 +485,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("$sendStats('moduleStartup', 'end');");
     out.newlineOpt();
-    out.print("__gwtModuleFunction.__moduleStartupDone($permProps);");
+    out.print("$permProps && __gwtModuleFunction.__moduleStartupDone($permProps);");
 
     writeMagicComments(out, context, 0, strongName);
     return out.toString();

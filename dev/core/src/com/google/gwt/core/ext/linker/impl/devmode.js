@@ -7,6 +7,7 @@ var $hostedHtmlVersion="2.1";
 var $errFn;
 var $moduleName;
 var $moduleBase;
+var $permProps; // unused but expected by module suffix
 var __gwt_getProperty;
 
 /******************************************************************************
