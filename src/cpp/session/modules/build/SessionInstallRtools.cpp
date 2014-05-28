@@ -16,12 +16,18 @@
 #include "SessionInstallRtools.hpp"
 
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/StringUtils.hpp>
 
+#include <core/r_util/RToolsInfo.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionUserSettings.hpp>
+
+#include "SessionBuildEnvironment.hpp"
 
 using namespace core ;
 
@@ -53,6 +59,33 @@ void onDownloadCompleted(const core::system::ProcessResult& result,
 
 Error installRtools()
 {
+   // determine the correct version of rtools
+   std::string version, url;
+   FilePath installPath("C:\\Rtools");
+   std::vector<r_util::RToolsInfo> availableRtools;
+   availableRtools.push_back(r_util::RToolsInfo("3.1", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("3.0", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("2.15", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("2.14", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("2.13", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("2.12", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("2.11", installPath));
+   BOOST_FOREACH(const r_util::RToolsInfo& rTools, availableRtools)
+   {
+      if (isRtoolsCompatible(rTools))
+      {
+         version = rTools.name();
+
+         std::string repos = userSettings().cranMirror().url;
+         if (repos.empty())
+            repos = "http://cran.rstudio.com/";
+         url = rTools.url(repos);
+         break;
+      }
+   }
+   if (version.empty())
+      return core::pathNotFoundError(ERROR_LOCATION);
+
    // R binary
    FilePath rProgramPath;
    Error error = module_context::rScriptPath(&rProgramPath);
@@ -69,13 +102,12 @@ Error installRtools()
       return error;
 
    // create the command
-   std::string version = "3.1";
-   std::string rtoolsBinary = "Rtools31.exe";
-   std::string rtoolsPath = "http://cran.rstudio.com/bin/windows/Rtools";
+   std::string rtoolsBinary =
+       "Rtools" + boost::algorithm::replace_all_copy(version, ".", "") + ".exe";
    FilePath installerPath = tempPath.childPath(rtoolsBinary);
    std::string dest = string_utils::utf8ToSystem(installerPath.absolutePath());
-   boost::format fmt("download.file('%1%/%2%', '%3%', mode = 'wb')");
-   std::string cmd = boost::str(fmt % rtoolsPath % rtoolsBinary % dest);
+   boost::format fmt("utils::download.file('%1%', '%2%', mode = 'wb')");
+   std::string cmd = boost::str(fmt % url % dest);
 
    // build args
    std::vector<std::string> args;

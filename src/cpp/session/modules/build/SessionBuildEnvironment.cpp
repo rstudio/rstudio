@@ -42,16 +42,6 @@ namespace build {
 
 namespace {
 
-bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
-{
-   bool isCompatible = false;
-   Error error = r::exec::evaluateString(rTools.versionPredicate(),
-                                         &isCompatible);
-   if (error)
-      LOG_ERROR(error);
-   return isCompatible;
-}
-
 r_util::RToolsInfo scanPathForRTools()
 {
    // first confirm ls.exe is in Rtools
@@ -202,6 +192,17 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
 } // anonymous namespace
 
 
+bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
+{
+   bool isCompatible = false;
+   Error error = r::exec::evaluateString(rTools.versionPredicate(),
+                                         &isCompatible);
+   if (error)
+      LOG_ERROR(error);
+   return isCompatible;
+}
+
+
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage)
 {
@@ -216,6 +217,13 @@ bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
 
 
 #else
+
+bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
+{
+   return false;
+}
+
+
 
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage)
