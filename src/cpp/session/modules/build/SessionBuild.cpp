@@ -1200,7 +1200,10 @@ private:
                  "http://www.rstudio.com/ide/docs/packages/prerequisites";
             }
 
+            // prompted install of Rtools on Windows
+#ifdef _WIN32
             module_context::installRBuildTools("Building R packages");
+#endif
          }
 
          // never restart R after a failed build
