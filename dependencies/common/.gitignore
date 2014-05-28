@@ -4,6 +4,8 @@ overlay/
 CEF/
 node-webkit/
 pandoc/
+packrat/
+packrat*.tar.gz
 rmarkdown/
 rmarkdown*.tar.gz
 

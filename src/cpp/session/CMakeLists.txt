@@ -31,6 +31,9 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
   message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
 endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat")
+  message(FATAL_ERROR "packrat package not found (re-run install-dependencies script to install)")
+endif()
 
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
@@ -342,6 +345,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install rmarkdown package
    file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
    install(FILES ${RMARKDOWN_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+
+   # install packrat package
+   file(GLOB PACKRAT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat*.tar.gz")
+   install(FILES ${PACKRAT_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install PDF.js

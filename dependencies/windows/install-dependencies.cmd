@@ -131,7 +131,7 @@ if not exist pandoc\%PANDOC_VERSION% (
 )
 
 
-install-rmarkdown.cmd
+install-packages.cmd
 
 popd
 
