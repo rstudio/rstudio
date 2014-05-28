@@ -1396,7 +1396,7 @@ Error installBuildTools(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   installRBuildTools(action);
+   pResponse->setResult(installRBuildTools(action));
 
    return Success();
 }

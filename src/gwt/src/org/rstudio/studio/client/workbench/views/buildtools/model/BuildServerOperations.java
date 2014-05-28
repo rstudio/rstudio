@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.buildtools.model;
 
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
@@ -26,7 +25,9 @@ public interface BuildServerOperations
                      ServerRequestCallback<CppCapabilities> requestCallback);
    
    // prompted install of build tools
-   void installBuildTools(String action, ServerRequestCallback<Void> callback);
+   void installBuildTools(
+                     String action, 
+                     ServerRequestCallback<Boolean> callback);
    
    // returns true to indicate that the build has started, returns false
    // to indicate that the build could not be started because another
