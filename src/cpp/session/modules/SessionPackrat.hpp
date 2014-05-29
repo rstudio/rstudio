@@ -25,6 +25,8 @@ namespace modules {
 namespace packrat {
 
 bool isPackratModeOn();
+bool isPackratManagedRPackage();
+
 core::Error initialize();
                        
 } // namespace packrat

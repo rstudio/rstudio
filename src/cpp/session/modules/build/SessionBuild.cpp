@@ -51,6 +51,7 @@
 #include "SessionBuildEnvironment.hpp"
 #include "SessionBuildErrors.hpp"
 #include "SessionSourceCpp.hpp"
+#include "../SessionPackrat.hpp"
 
 using namespace core;
 
@@ -551,10 +552,15 @@ private:
       core::system::Options childEnv;
       core::system::environment(&childEnv);
 
-      // allow child process to inherit our R_LIBS
-      std::string libPaths = module_context::libPathsString();
-      if (!libPaths.empty())
-         core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      // allow child process to inherit our R_LIBS -- but only if package is not
+      // being managed by packrat
+      // presumedly, if a user is managing an R package with packrat, he wants to
+      // install his package into a user library, not the packrat private library
+      if (!session::modules::packrat::isPackratManagedRPackage()) {
+         std::string libPaths = module_context::libPathsString();
+         if (!libPaths.empty())
+            core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      }
 
       // prevent spurious cygwin warnings on windows
 #ifdef _WIN32

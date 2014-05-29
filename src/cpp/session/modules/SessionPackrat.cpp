@@ -24,6 +24,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionPackages.hpp"
+
 using namespace core;
 
 namespace session {
@@ -71,6 +73,26 @@ bool isPackratModeOn()
    r::exec::RFunction("packrat:::isPackratModeOn", 
                       dir.absolutePath()).call(&packratMode);
    return packratMode;
+}
+
+bool isPackratManagedRPackage()
+{
+    // if we're not in a project, bail
+    if (!projects::projectContext().hasProject())
+        return false;
+
+    // get the current working directory
+    FilePath dir = projects::projectContext().directory();
+
+    // bail if this isn't a package
+    if (!core::r_util::isPackageDirectory(dir))
+        return false;
+
+    // check if the project is packified
+    bool isPackratProject;
+    r::exec::RFunction("packrat:::checkPackified",
+                       dir.absolutePath()).call(&isPackratProject);
+    return isPackratProject;
 }
 
 Error initialize()
