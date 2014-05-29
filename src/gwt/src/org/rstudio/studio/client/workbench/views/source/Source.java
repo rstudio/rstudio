@@ -874,6 +874,7 @@ public class Source implements InsertSourceHandler,
    {
       rmarkdown_.withRMarkdownPackage(
          "Creating R Markdown documents",
+         false,
          new CommandWithArg<RMarkdownContext>(){
 
             @Override
