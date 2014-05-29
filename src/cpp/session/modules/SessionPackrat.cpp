@@ -91,7 +91,8 @@ bool isPackratManagedRPackage()
     // check if the project is packified
     bool isPackratProject;
     r::exec::RFunction("packrat:::checkPackified",
-                       dir.absolutePath()).call(&isPackratProject);
+                       /* projDir = */ dir.absolutePath(),
+                       /* silent = */ true).call(&isPackratProject);
     return isPackratProject;
 }
 
