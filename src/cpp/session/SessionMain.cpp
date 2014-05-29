@@ -1672,8 +1672,11 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    }
 
    // add gwt handlers if we are running desktop mode
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   if ((session::options().programMode() == kSessionProgramModeDesktop) ||
+       session::options().standalone())
+   {
       registerGwtHandlers();
+   }
 
    // enque abend warning event if necessary.
    using namespace session::client_events;

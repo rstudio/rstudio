@@ -119,7 +119,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "www symbol maps path")
       ("www-port",
          value<std::string>(&wwwPort_)->default_value("8787"),
-         "port to listen on");
+         "port to listen on")
+      ("standalone",
+         value<bool>(&standalone_)->default_value(false),
+         "run standalone");
 
    // session options
    std::string saveActionDefault;

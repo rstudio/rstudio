@@ -369,6 +369,11 @@ public:
       return monitorSharedSecret_.c_str();
    }
 
+   bool standalone() const
+   {
+      return standalone_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -416,6 +421,7 @@ private:
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
    int saveActionDefault_;
+   bool standalone_;
 
    // r
    std::string coreRSourcePath_;
