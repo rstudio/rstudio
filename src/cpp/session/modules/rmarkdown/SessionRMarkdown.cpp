@@ -899,7 +899,15 @@ void handleRmdOutputRequest(const http::Request& request,
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
       html_preview::addFileSpecificHeaders(filePath, pResponse);
-      pResponse->setCacheableFile(filePath, request);
+      if (session::options().programMode() == kSessionProgramModeDesktop)
+      {
+         pResponse->setNoCacheHeaders();
+         pResponse->setFile(filePath, request);
+      }
+      else
+      {
+         pResponse->setCacheableFile(filePath, request);
+      }
    }
 }
 
