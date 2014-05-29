@@ -17,15 +17,18 @@ package org.rstudio.studio.client.common.dependencies;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -38,21 +41,97 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class DependencyManager
+public class DependencyManager implements InstallShinyEvent.Handler
 {
    @Inject
    public DependencyManager(GlobalDisplay globalDisplay,
-                            DependencyServerOperations server)
+                            DependencyServerOperations server,
+                            EventBus eventBus)
    {
       globalDisplay_ = globalDisplay;
       server_ = server;
+      
+      eventBus.addHandler(InstallShinyEvent.TYPE, this);
    }
    
+   public void withDependencies(String progressCaption,
+                                CommandWithArg<Command> userPrompt,
+                                Dependency[] dependencies, 
+                                Command command)
+   {
+      withDependencies(progressCaption,
+                       null,
+                       userPrompt,
+                       dependencies,
+                       command);
+   }
    
    public void withDependencies(String progressCaption,
-                                final String userAction,
+                                String userAction,
                                 Dependency[] dependencies, 
                                 final Command command)
+   {
+      withDependencies(progressCaption, 
+                       userAction, 
+                       null, 
+                       dependencies, 
+                       command);
+   }
+   
+ 
+   public void withShiny(final String userAction, final Command command)
+   {
+      // create user prompt command
+      CommandWithArg<Command> userPrompt = new CommandWithArg<Command>() {
+         @Override
+         public void execute(final Command yesCommand)
+         {
+            globalDisplay_.showYesNoMessage(
+              MessageDialog.QUESTION,
+              "Install Shiny Package", 
+              userAction + " requires installation of the development " +
+              "version of Shiny.\n\nDo you want to install this package now?",
+                  new Operation() {
+
+                     @Override
+                     public void execute()
+                     {
+                        yesCommand.execute();
+                     }
+                  },
+                  true);
+          }
+       };
+       
+       // perform dependency resolution 
+       withDependencies(
+          "Checking installed packages",
+          userPrompt,
+          new Dependency[] {
+            Dependency.cranPackage("httpuv", "1.2"),
+            Dependency.cranPackage("caTools", "1.13"),
+            Dependency.cranPackage("RJSONIO", "1.0"),
+            Dependency.cranPackage("xtable", "1.7"),
+            Dependency.cranPackage("digest", "0.6"),
+            Dependency.cranPackage("htmltools", "0.2.4"),
+            Dependency.embeddedPackage("shiny")
+          }, 
+          command
+       ); 
+   }
+   
+   @Override
+   public void onInstallShiny(InstallShinyEvent event)
+   {
+      withShiny(event.getUserAction(), 
+                new Command() { public void execute() {}});
+   }
+   
+   private void withDependencies(String progressCaption,
+                                 final String userAction,
+                                 final CommandWithArg<Command> userPrompt,
+                                 Dependency[] dependencies, 
+                                 final Command command)
    {
       // convert dependencies to JsArray
       JsArray<Dependency> deps = JsArray.createArray().cast();
@@ -86,17 +165,24 @@ public class DependencyManager
             // unsatisifed dependencies
             else
             {
-               confirmPackageInstallation(userAction, 
-                                          unsatisfiedDeps,
-                                          new Command() {
-
+               Command installCommand = new Command() {
                   @Override
                   public void execute()
                   {
                      installDependencies(unsatisfiedDeps, command);
                   }
-                  
-               });
+               };
+               
+               if (userPrompt != null)
+               {
+                  userPrompt.execute(installCommand);
+               }
+               else
+               {
+                  confirmPackageInstallation(userAction, 
+                                             unsatisfiedDeps,
+                                             installCommand);                           
+               }
             }
          }
          
@@ -199,5 +285,4 @@ public class DependencyManager
    
    private final GlobalDisplay globalDisplay_;
    private final DependencyServerOperations server_;
-
 }

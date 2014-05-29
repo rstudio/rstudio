@@ -117,6 +117,7 @@ extern const int kRmdShinyAppsDeploymentOutput;
 extern const int kRmdShinyAppsDeploymentCompleted;
 extern const int kUserPrompt;
 extern const int kInstallRtools;
+extern const int kInstallShiny;
 }
    
 class ClientEvent
