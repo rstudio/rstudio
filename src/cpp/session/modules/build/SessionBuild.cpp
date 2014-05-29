@@ -245,7 +245,8 @@ public:
 
 private:
    Build()
-      : isRunning_(false), terminationRequested_(false), restartR_(false)
+      : isRunning_(false), terminationRequested_(false), restartR_(false),
+        usedDevtools_(false)
    {
    }
 
@@ -822,6 +823,8 @@ private:
                pkgOptions,
                cb);
 
+      usedDevtools_ = true;
+
       return true;
    }
 
@@ -1200,9 +1203,11 @@ private:
                  "http://www.rstudio.com/ide/docs/packages/prerequisites";
             }
 
-            // prompted install of Rtools on Windows
+            // prompted install of Rtools on Windows (but don't prompt if
+            // we used devtools since it likely has it's own prompt)
 #ifdef _WIN32
-            module_context::installRBuildTools("Building R packages");
+            if (!usedDevtools_)
+               module_context::installRBuildTools("Building R packages");
 #endif
          }
 
@@ -1318,6 +1323,7 @@ private:
    boost::function<void()> failureFunction_;
    boost::function<bool(const std::string&)> errorOutputFilterFunction_;
    bool restartR_;
+   bool usedDevtools_;
 };
 
 boost::shared_ptr<Build> s_pBuild;
