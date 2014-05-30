@@ -1486,7 +1486,8 @@ bool isSuspendable(const std::string& currentPrompt)
 bool suspend(const RSuspendOptions& options,
              const FilePath& suspendedSessionPath,
              bool disableSaveCompression,
-             bool force)
+             bool force,
+             int status = EXIT_SUCCESS)
 {
    // validate that force == true if disableSaveCompression is specified
    // this is because save compression is disabled and the previous options
@@ -1529,7 +1530,7 @@ bool suspend(const RSuspendOptions& options,
    
       // clean up but don't save workspace or runLast because we have
       // been suspended
-      RCleanUp(SA_NOSAVE, 0, FALSE);
+      RCleanUp(SA_NOSAVE, status, FALSE);
       
       // keep compiler happy (this line will never execute)
       return true;
@@ -1551,7 +1552,8 @@ void suspendForRestart(const RSuspendOptions& options)
            RestartContext::createSessionStatePath(s_options.scopedScratchPath,
                                                   s_options.sessionPort),
            true,  // disable save compression
-           true); // force suspend
+           true,  // force suspend
+           EX_CONTINUE);
 }
 
 // set save action
@@ -1592,7 +1594,7 @@ bool browserContextActive()
    return Rf_countContexts(CTXT_BROWSER, 1) > 0;
 }
    
-void quit(bool saveWorkspace)
+void quit(bool saveWorkspace, int status)
 {
    // invoke quit
    std::string save = saveWorkspace ? "yes" : "no";
@@ -1605,7 +1607,7 @@ void quit(bool saveWorkspace)
       LOG_ERROR_MESSAGE(quitErr);
    }
  #else
-   Error error = r::exec::RFunction("q", save, 0, true).call();
+   Error error = r::exec::RFunction("q", save, status, true).call();
    if (error)
    {
       REprintf((r::endUserErrorMessage(error) + "\n").c_str());

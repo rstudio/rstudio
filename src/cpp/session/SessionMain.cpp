@@ -898,11 +898,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                                                   switchToProject);
             }
 
+            // exit status
+            int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
+
             // acknowledge request & quit session
             json::JsonRpcResponse response;
             response.setResult(true);
             ptrConnection->sendJsonRpcResponse(response);
-            r::session::quit(saveWorkspace); // does not return
+            r::session::quit(saveWorkspace, status); // does not return
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {

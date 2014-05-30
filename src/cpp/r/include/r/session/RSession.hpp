@@ -25,6 +25,8 @@
 #include <R_ext/RStartup.h>
 #include <r/session/RSessionUtils.hpp>
 
+#define EX_CONTINUE 100
+
 namespace core {
 	class Error ;
    class Settings;
@@ -179,7 +181,7 @@ bool imageIsDirty();
 bool browserContextActive();
 
 // quit
-void quit(bool saveWorkspace);
+void quit(bool saveWorkspace, int status = EXIT_SUCCESS);
 
 } // namespace session
 } // namespace r
