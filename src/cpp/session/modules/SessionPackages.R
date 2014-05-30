@@ -295,7 +295,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # extract/compute required fields 
    pkgs.name <- x[, 1]
-   pkgs.library <- .rs.createAliasedPath(x[, 2])
+   pkgs.library <- x[, 2]
    pkgs.desc <- x[, 3]
    pkgs.url <- file.path("help/library",
                          pkgs.name, 
@@ -314,6 +314,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                               pkgs.library[[i]],
                                               instPkgs)
    }
+   
+   # alias library paths for the client
+   pkgs.library <- .rs.createAliasedPath(pkgs.library)
 
    # return data frame sorted by name
    packages = data.frame(name=pkgs.name,
