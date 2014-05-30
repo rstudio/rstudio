@@ -198,6 +198,37 @@ SEXP rs_canInstallPackages()
                           &rProtect);
 }
 
+void detectLibPathsChanges()
+{
+   static std::vector<std::string> s_lastLibPaths;
+   std::vector<std::string> libPaths;
+   Error error = r::exec::RFunction("base:::.libPaths").call(&libPaths);
+   if (!error)
+   {
+      if (s_lastLibPaths.empty())
+      {
+         s_lastLibPaths = libPaths;
+      }
+      else if (libPaths != s_lastLibPaths)
+      {
+         ClientEvent event(client_events::kInstalledPackagesChanged);
+         module_context::enqueClientEvent(event);
+         s_lastLibPaths = libPaths;
+      }
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
+}
+
+void onDetectChanges(module_context::ChangeSource source)
+{
+   if (source == module_context::ChangeSourceREPL)
+      detectLibPathsChanges();
+}
+
+
 void initializeRStudioPackages(bool newSession)
 {
 #ifdef RSTUDIO_UNVERSIONED_BUILD
@@ -224,12 +255,22 @@ void initializeRStudioPackages(bool newSession)
    }
 }
 
+void onDeferredInit(bool newSession)
+{
+   // initialize rstudio packages
+   initializeRStudioPackages(newSession);
+
+   // monitor libPaths for changes
+   detectLibPathsChanges();
+   module_context::events().onDetectChanges.connect(onDetectChanges);
+}
+
 } // anonymous namespace
 
 Error initialize()
 {
    // register deferred init
-   module_context::events().onDeferredInit.connect(initializeRStudioPackages);
+   module_context::events().onDeferredInit.connect(onDeferredInit);
 
    // register routines
    R_CallMethodDef methodDef ;

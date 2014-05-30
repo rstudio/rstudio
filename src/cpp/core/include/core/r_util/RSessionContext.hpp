@@ -20,13 +20,19 @@
 
 #include <core/FilePath.hpp>
 
-#define kProjectsSettings                  "projects_settings"
-#define kNextSessionProject                "next-session-project"
-#define kLastProjectPath                   "last-project-path"
+#include <core/r_util/RVersionInfo.hpp>
 
-#define kRStudioInitialWorkingDir          "RS_INITIAL_WD"
-#define kRStudioInitialEnvironment         "RS_INITIAL_ENV"
-#define kRStudioInitialProject             "RS_INITIAL_PROJECT"
+#define kUserSettings                  "monitored/user-settings/user-settings"
+#define kAlwaysRestoreLastProject      "restoreLastProject"
+
+#define kProjectsSettings              "projects_settings"
+#define kNextSessionProject            "next-session-project"
+#define kNextSessionProjectNone        "none"
+#define kLastProjectPath               "last-project-path"
+
+#define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
+#define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
+#define kRStudioInitialProject         "RS_INITIAL_PROJECT"
 
 namespace core {
 namespace r_util {
@@ -46,6 +52,21 @@ struct UserDirectories
 UserDirectories userDirectories(SessionType sessionType,
                                 const std::string& homePath = std::string());
 
+
+FilePath projectsSettingsPath(const FilePath& userScratchPath);
+
+std::string readProjectsSetting(const FilePath& settingsPath,
+                                const char * const settingName);
+
+void writeProjectsSetting(const FilePath& settingsPath,
+                          const char * const settingName,
+                          const std::string& value);
+
+FilePath nextSessionProject(SessionType sessionType,
+                            const std::string& homePath = std::string());
+
+RVersionInfo nextSessionRVersion(SessionType sessionType,
+                                 const std::string& homePath = std::string());
 
 } // namespace r_util
 } // namespace core 

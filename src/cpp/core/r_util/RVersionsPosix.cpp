@@ -194,6 +194,94 @@ std::vector<RVersion> enumerateRVersions(
    return rVersions;
 }
 
+namespace {
+
+bool isVersion(const RVersionNumber& test, const RVersion& item)
+{
+   return test == RVersionNumber::parse(item.number);
+}
+
+bool isMajorMinorVersion(RVersionNumber& test, const RVersion& item)
+{
+   RVersionNumber itemNumber = RVersionNumber::parse(item.number);
+   return (test.major() == itemNumber.major() &&
+           test.minor() == itemNumber.minor());
+}
+
+bool compareVersion(const RVersion& a, const RVersion& b)
+{
+   return RVersionNumber::parse(a.number) <
+          RVersionNumber::parse(b.number);
+}
+
+bool compareVersionInfo(const RVersionInfo& versionInfo,
+                        const RVersion& version)
+{
+   return RVersionNumber::parse(versionInfo.number) <
+          RVersionNumber::parse(version.number);
+}
+
+RVersion findClosest(const RVersionInfo& matchVersion,
+                     std::vector<RVersion> versions)
+{
+   // sort so algorithms work correctly
+   std::sort(versions.begin(), versions.end(), compareVersion);
+
+   // first look for an upper_bound
+   std::vector<RVersion>::const_iterator it;
+   it = std::upper_bound(versions.begin(),
+                         versions.end(),
+                         matchVersion,
+                         compareVersionInfo);
+   if (it != versions.end())
+      return *it;
+
+   // can't find a greater version, use the newest version
+   return *std::max_element(versions.begin(), versions.end(), compareVersion);
+}
+
+}
+
+
+RVersion selectVersion(const RVersionInfo& matchVersion,
+                       std::vector<RVersion> versions)
+{
+   // check for empty
+   if (versions.empty())
+      return RVersion();
+
+   // version we are seeking
+   RVersionNumber matchNumber = RVersionNumber::parse(matchVersion.number);
+
+   // order correctly for algorithms
+   std::sort(versions.begin(), versions.end(), compareVersion);
+
+   // first seek an exact match
+   std::vector<RVersion>::const_iterator it;
+   it = std::find_if(versions.begin(),
+                     versions.end(),
+                     boost::bind(isVersion, matchNumber, _1));
+   if (it != versions.end())
+      return *it;
+
+   // now look for versions that match major and minor (same series)
+   std::vector<RVersion> seriesVersions;
+   algorithm::copy_if(versions.begin(),
+                      versions.end(),
+                      std::back_inserter(seriesVersions),
+                      boost::bind(isMajorMinorVersion, matchNumber, _1));
+
+   // find the closest match in the series
+   if (seriesVersions.size() > 0)
+   {
+      return findClosest(matchVersion, seriesVersions);
+   }
+   // otherwise find the closest match in the whole list
+   else
+   {
+      return findClosest(matchVersion, versions);
+   }
+}
 
 
 } // namespace r_util

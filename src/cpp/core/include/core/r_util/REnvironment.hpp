@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include <core/system/Types.hpp>
+
 namespace core {
 
 class Error;
@@ -37,6 +39,8 @@ bool detectREnvironment(const FilePath& whichRScript,
                         std::string* pErrMsg);
 
 void setREnvironmentVars(const EnvironmentVars& vars);
+void setREnvironmentVars(const EnvironmentVars& vars,
+                         core::system::Options* pEnv);
 
 std::string rLibraryPath(const FilePath& rHomePath,
                          const FilePath& rLibPath,

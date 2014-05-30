@@ -20,9 +20,17 @@
 
 #include <core/system/Environment.hpp>
 
+namespace core {
+namespace r_util {
+   class RToolsInfo;
+}
+}
+
 namespace session {
 namespace modules {
 namespace build {
+
+bool isRtoolsCompatible(const core::r_util::RToolsInfo& rTools);
 
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage);

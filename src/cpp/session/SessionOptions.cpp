@@ -119,7 +119,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "www symbol maps path")
       ("www-port",
          value<std::string>(&wwwPort_)->default_value("8787"),
-         "port to listen on");
+         "port to listen on")
+      ("standalone",
+         value<bool>(&standalone_)->default_value(false),
+         "run standalone");
 
    // session options
    std::string saveActionDefault;
@@ -137,6 +140,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("session-create-public-folder",
          value<bool>(&createPublicFolder_)->default_value(false),
          "automatically create public folder")
+      ("session-create-profile",
+         value<bool>(&createProfile_)->default_value(false),
+         "automatically create .Rprofile")
       ("session-rprofile-on-resume-default",
           value<bool>(&rProfileOnResumeDefault_)->default_value(false),
           "default user setting for running Rprofile on resume")

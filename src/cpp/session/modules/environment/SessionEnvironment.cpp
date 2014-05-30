@@ -996,7 +996,7 @@ Error removeObjects(const json::JsonRpcRequest& request,
 Error removeAllObjects(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   bool includeHidden;
+   bool includeHidden = false;
    Error error = json::readParam(request.params, 0, &includeHidden);
    if (error)
       return error;

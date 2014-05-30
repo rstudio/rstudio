@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.AppCommand;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
@@ -48,13 +50,15 @@ public class ViewerPresenter extends BasePresenter
                           EventBus eventBus,
                           Commands commands,
                           Binder binder,
-                          ViewerServerOperations server)
+                          ViewerServerOperations server,
+                          SourceShim sourceShim)
    {
       super(display);
       display_ = display;
       commands_ = commands;
       server_ = server;
       events_ = eventBus;
+      sourceShim_ = sourceShim;
       
       binder.bind(commands, this);
       
@@ -118,6 +122,20 @@ public class ViewerPresenter extends BasePresenter
    @Handler
    public void onViewerRefresh() { display_.refresh(); }
         
+   @Handler
+   public void onViewerSaveAllAndRefresh()
+   {
+      sourceShim_.handleUnsavedChangesBeforeExit(
+         sourceShim_.getUnsavedChanges(),
+         new Command() {
+            @Override
+            public void execute()
+            {
+               display_.refresh();
+            }
+         });
+   }
+   
    
    @Handler 
    public void onViewerClear()
@@ -196,6 +214,7 @@ public class ViewerPresenter extends BasePresenter
    private final Commands commands_;
    private final ViewerServerOperations server_;
    private final EventBus events_;
+   private final SourceShim sourceShim_; 
    
    private ShinyApplicationParams runningShinyAppParams_;
 }

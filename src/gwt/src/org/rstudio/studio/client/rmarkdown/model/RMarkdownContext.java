@@ -20,8 +20,4 @@ public class RMarkdownContext extends JavaScriptObject
 {
    protected RMarkdownContext()
    {}
- 
-   public native final boolean getCanRenderShinyDocs() /*-{
-      return this.can_render_shiny_docs;
-   }-*/;
 }

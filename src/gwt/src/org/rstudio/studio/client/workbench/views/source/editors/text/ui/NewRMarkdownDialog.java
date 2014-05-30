@@ -177,7 +177,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          RMarkdownContext context,
          WorkbenchContext workbench,
          String author,
-         boolean showShinyDocs,
          OperationWithInput<Result> operation)
    {
       super("New R Markdown", operation);
@@ -225,13 +224,10 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       }
       
       // Add the Shiny template
-      if (showShinyDocs)
-      {
-         TemplateMenuItem shinyItem = new TemplateMenuItem(TEMPLATE_SHINY);
-         shinyItem.addIcon(resources.shinyIcon());
-         listTemplates_.addItem(shinyItem);
-      }
-      
+      TemplateMenuItem shinyItem = new TemplateMenuItem(TEMPLATE_SHINY);
+      shinyItem.addIcon(resources.shinyIcon());
+      listTemplates_.addItem(shinyItem);
+       
       // Add the "From Template" item at the end of the list
       TemplateMenuItem templateItem = 
             new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING);

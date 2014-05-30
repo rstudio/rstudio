@@ -2938,6 +2938,14 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void installBuildTools(String action, 
+                                 ServerRequestCallback<Boolean> callback)
+   {
+      sendRequest(RPC_SCOPE, INSTALL_BUILD_TOOLS, action, callback);
+   }
+   
+   
+   @Override
    public void startBuild(String type,
                           ServerRequestCallback<Boolean> requestCallback)
    {
@@ -3701,6 +3709,7 @@ public class RemoteServer implements Server
    private static final String STOP_FIND = "stop_find";
    
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
+   private static final String INSTALL_BUILD_TOOLS = "install_build_tools";
    private static final String START_BUILD = "start_build";
    private static final String TERMINATE_BUILD = "terminate_build";
    private static final String DEVTOOLS_LOAD_ALL_PATH = "devtools_load_all_path";

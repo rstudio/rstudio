@@ -201,6 +201,7 @@ const char * const kConsoleInput = "console_input" ;
 const char * const kEditCompleted = "edit_completed";
 const char * const kChooseFileCompleted = "choose_file_completed";
 const char * const kLocatorCompleted = "locator_completed";
+const char * const kUserPromptCompleted = "user_prompt_completed";
 const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
 const char * const kQuitSession = "quit_session" ;   
 const char * const kSuspendSession = "suspend_session";
@@ -251,6 +252,10 @@ double installedVersion()
 {
    // never return a version in desktop mode
    if (session::options().programMode() == kSessionProgramModeDesktop)
+      return 0;
+
+   // never return a version in standalone mode
+   if (session::options().standalone())
       return 0;
 
    // read installation time (as string) from file (return 0 if not found)
@@ -622,8 +627,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    bool shinyAppsInstalled = 
       module_context::isPackageVersionInstalled("shinyapps", "0.2.1"); 
    sessionInfo["shinyapps_installed"] = shinyAppsInstalled;
-   sessionInfo["allow_rmd_deployment"] = shinyAppsInstalled &&
-      options.allowRmdDeployment();
+   sessionInfo["allow_rmd_deployment"] = shinyAppsInstalled;
 
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
@@ -900,11 +904,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                                                   switchToProject);
             }
 
+            // exit status
+            int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
+
             // acknowledge request & quit session
             json::JsonRpcResponse response;
             response.setResult(true);
             ptrConnection->sendJsonRpcResponse(response);
-            r::session::quit(saveWorkspace); // does not return
+            r::session::quit(saveWorkspace, status); // does not return
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {
@@ -1539,6 +1546,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    s_waitForMethodNames.push_back(kLocatorCompleted);
    s_waitForMethodNames.push_back(kEditCompleted);
    s_waitForMethodNames.push_back(kChooseFileCompleted);
+   s_waitForMethodNames.push_back(kUserPromptCompleted);
    s_waitForMethodNames.push_back(kHandleUnsavedChangesCompleted);
 
    // execute core initialization functions
@@ -1674,8 +1682,11 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    }
 
    // add gwt handlers if we are running desktop mode
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   if ((session::options().programMode() == kSessionProgramModeDesktop) ||
+       session::options().standalone())
+   {
       registerGwtHandlers();
+   }
 
    // enque abend warning event if necessary.
    using namespace session::client_events;
@@ -2247,7 +2258,11 @@ void rSerialization(int action, const FilePath& targetPath)
    
 void ensureRProfile()
 {
+   // check if we need to create the proifle (bail if we don't)
    Options& options = session::options();
+   if (!options.createProfile())
+      return;
+
    FilePath rProfilePath = options.userHomePath().complete(".Rprofile");
    if (!rProfilePath.exists() && !userSettings().autoCreatedProfile())
    {
@@ -2567,6 +2582,58 @@ Error registerRpcMethod(const std::string& name,
                         std::make_pair(true, json::adaptToAsync(function))));
    return Success();
 }
+
+UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
+{
+   // enque user prompt event
+   json::Object obj;
+   obj["type"] = static_cast<int>(userPrompt.type);
+   obj["caption"] = userPrompt.caption;
+   obj["message"] = userPrompt.message;
+   obj["yesLabel"] = userPrompt.yesLabel;
+   obj["noLabel"] = userPrompt.noLabel;
+   obj["yesIsDefault"] = userPrompt.yesIsDefault;
+   obj["includeCancel"] = userPrompt.includeCancel;
+   ClientEvent userPromptEvent(client_events::kUserPrompt, obj);
+   session::clientEventQueue().add(userPromptEvent);
+
+   // wait for user_prompt_completed
+   json::JsonRpcRequest request ;
+   waitForMethod(kUserPromptCompleted,
+                 userPromptEvent,
+                 disallowSuspend,
+                 &request);
+
+   // read the response param
+   int response;
+   Error error = json::readParam(request.params, 0, &response);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return UserPrompt::ResponseCancel;
+   }
+
+   // return response (don't cast so that we can make sure the integer
+   // returned matches one of enumerated type values and warn otherwise)
+   switch (response)
+   {
+      case UserPrompt::ResponseYes:
+         return UserPrompt::ResponseYes;
+
+      case UserPrompt::ResponseNo:
+         return UserPrompt::ResponseNo;
+
+      case UserPrompt::ResponseCancel:
+         return UserPrompt::ResponseCancel;
+
+      default:
+         LOG_WARNING_MESSAGE("Unexpected user prompt response: " +
+                             boost::lexical_cast<std::string>(response));
+
+         return UserPrompt::ResponseCancel;
+   };
+}
+
 
 bool rSessionResumed()
 {

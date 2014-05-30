@@ -125,7 +125,7 @@ Error setShinyViewer(boost::shared_ptr<int> pShinyViewerType,
                      const json::JsonRpcRequest& request,
                      json::JsonRpcResponse*)
 {
-   int viewerType;
+   int viewerType = 0;
    Error error = json::readParams(request.params, &viewerType);
    if (error)
       return error;

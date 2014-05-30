@@ -52,6 +52,7 @@
 #include "SessionBuildErrors.hpp"
 #include "SessionSourceCpp.hpp"
 #include "../SessionPackrat.hpp"
+#include "SessionInstallRtools.hpp"
 
 using namespace core;
 
@@ -245,7 +246,8 @@ public:
 
 private:
    Build()
-      : isRunning_(false), terminationRequested_(false), restartR_(false)
+      : isRunning_(false), terminationRequested_(false), restartR_(false),
+        usedDevtools_(false)
    {
    }
 
@@ -571,7 +573,7 @@ private:
       core::system::setenv(&childEnv, "NOT_CRAN", "true");
 
       // add r tools to path if necessary
-      addRtoolsToPathIfNecessary(&childEnv, &postBuildWarning_);
+      addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
 
       pkgOptions.environment = childEnv;
 
@@ -826,6 +828,8 @@ private:
                args,
                pkgOptions,
                cb);
+
+      usedDevtools_ = true;
 
       return true;
    }
@@ -1191,19 +1195,26 @@ private:
          boost::format fmt("\nExited with status %1%.\n\n");
          enqueBuildOutput(kCompileOutputError, boost::str(fmt % exitStatus));
 
-         // if this is a package build then check if we can build
-         // C++ code at all
-         if (!pkgInfo_.empty() && postBuildWarning_.empty())
+         // if this is a package build then check for ability to
+         // build C++ code at all
+         if (!pkgInfo_.empty() && !module_context::canBuildCpp())
          {
-            if (!module_context::canBuildCpp())
+            if (buildToolsWarning_.empty())
             {
-               postBuildWarning_ =
+               buildToolsWarning_ =
                  "WARNING: The tools required to build R packages "
                  "are not currently installed. Additional information on "
                  "installing the required tools for your platform can be "
                  "found here:\n\n"
                  "http://www.rstudio.com/ide/docs/packages/prerequisites";
             }
+
+            // prompted install of Rtools on Windows (but don't prompt if
+            // we used devtools since it likely has it's own prompt)
+#ifdef _WIN32
+            if (!usedDevtools_)
+               module_context::installRBuildTools("Building R packages");
+#endif
          }
 
          // never restart R after a failed build
@@ -1257,9 +1268,11 @@ private:
    {
       isRunning_ = false;
 
-      if (!postBuildWarning_.empty())
+      if (!buildToolsWarning_.empty())
+      {
          enqueBuildOutput(module_context::kCompileOutputError,
-                          postBuildWarning_ + "\n\n");
+                          buildToolsWarning_ + "\n\n");
+      }
 
       // enque event
       std::string afterRestartCommand;
@@ -1311,11 +1324,12 @@ private:
    r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
    std::string successMessage_;
-   std::string postBuildWarning_;
+   std::string buildToolsWarning_;
    boost::function<void()> successFunction_;
    boost::function<void()> failureFunction_;
    boost::function<bool(const std::string&)> errorOutputFilterFunction_;
    bool restartR_;
+   bool usedDevtools_;
 };
 
 boost::shared_ptr<Build> s_pBuild;
@@ -1369,6 +1383,20 @@ Error getCppCapabilities(const json::JsonRpcRequest& request,
    capsJson["can_build"] = module_context::canBuildCpp();
    capsJson["can_source_cpp"] = module_context::haveRcppAttributes();
    pResponse->setResult(capsJson);
+
+   return Success();
+}
+
+Error installBuildTools(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // get param
+   std::string action;
+   Error error = json::readParam(request.params, 0, &action);
+   if (error)
+      return error;
+
+   pResponse->setResult(module_context::installRBuildTools(action));
 
    return Success();
 }
@@ -1487,6 +1515,55 @@ SEXP rs_addRToolsToPath()
     return R_NilValue;
 }
 
+#ifdef _WIN32
+
+SEXP rs_installBuildTools()
+{
+   Error error = installRtools();
+   if (error)
+      LOG_ERROR(error);
+
+   return R_NilValue;
+}
+
+#elif __APPLE__
+
+SEXP rs_installBuildTools()
+{
+   if (module_context::isOSXMavericks())
+   {
+      if (!module_context::hasOSXMavericksDeveloperTools())
+      {
+         // on mavericks we just need to invoke clang and the user will be
+         // prompted to install the command line tools
+         core::system::ProcessResult result;
+         Error error = core::system::runCommand("clang --version",
+                                                "",
+                                                core::system::ProcessOptions(),
+                                                &result);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+   else
+   {
+      ClientEvent event = browseUrlEvent(
+          "http://www.rstudio.org/links/install_osx_build_tools");
+      module_context::enqueClientEvent(event);
+   }
+   return R_NilValue;
+}
+
+#else
+
+SEXP rs_installBuildTools()
+{
+   return R_NilValue;
+}
+
+#endif
+
+
 SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
 {
    // get R bin directory
@@ -1597,6 +1674,12 @@ Error initialize()
    installPackageMethodDef.numArgs = 2;
    r::routines::addCallMethod(installPackageMethodDef);
 
+   R_CallMethodDef installBuildToolsMethodDef;
+   installBuildToolsMethodDef.name = "rs_installBuildTools" ;
+   installBuildToolsMethodDef.fun = (DL_FUNC) rs_installBuildTools;
+   installBuildToolsMethodDef.numArgs = 0;
+   r::routines::addCallMethod(installBuildToolsMethodDef);
+
    // subscribe to deferredInit for build tools fixup
    module_context::events().onDeferredInit.connect(onDeferredInit);
 
@@ -1620,6 +1703,7 @@ Error initialize()
       (bind(registerRpcMethod, "start_build", startBuild))
       (bind(registerRpcMethod, "terminate_build", terminateBuild))
       (bind(registerRpcMethod, "get_cpp_capabilities", getCppCapabilities))
+      (bind(registerRpcMethod, "install_build_tools", installBuildTools))
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
       (bind(sourceModuleRFile, "SessionBuild.R"))
       (bind(source_cpp::initialize));
@@ -1632,6 +1716,17 @@ Error initialize()
 
 namespace module_context {
 
+#ifndef _WIN32
+namespace {
+
+bool usingSystemMake()
+{
+   return findProgram("make").absolutePath() == "/usr/bin/make";
+}
+
+} // anonymous namespace
+#endif
+
 bool haveRcppAttributes()
 {
    return module_context::isPackageVersionInstalled("Rcpp", "0.10.1");
@@ -1639,6 +1734,15 @@ bool haveRcppAttributes()
 
 bool canBuildCpp()
 {
+#ifdef __APPLE__
+   if (isOSXMavericks() &&
+       usingSystemMake() &&
+       !hasOSXMavericksDeveloperTools())
+   {
+      return false;
+   }
+#endif
+
    // try to build a simple c file to test whether we have build tools available
    FilePath cppPath = module_context::tempFile("test", "c");
    Error error = core::writeStringToFile(cppPath, "void test() {}\n");
@@ -1679,6 +1783,20 @@ bool canBuildCpp()
    }
 
    return result.exitStatus == EXIT_SUCCESS;
+}
+
+bool installRBuildTools(const std::string& action)
+{
+#if defined(_WIN32) || defined(__APPLE__)
+   r::exec::RFunction check(".rs.installBuildTools", action);
+   bool userConfirmed = false;
+   Error error = check.call(&userConfirmed);
+   if (error)
+      LOG_ERROR(error);
+   return userConfirmed;
+#else
+   return false;
+#endif
 }
 
 }

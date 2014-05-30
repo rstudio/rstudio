@@ -784,6 +784,7 @@ enum RS_NSActivityOptions : uint64_t
    return false;
 }
 
+
 // No desktop synctex on the Mac
 
 - (NSString*) getDesktopSynctexViewer

@@ -1,5 +1,5 @@
 /*
- * SessionRMarkdown.hpp
+ * SessionInstallRtools.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,23 +13,22 @@
  *
  */
 
-#ifndef SESSION_SESSION_RMARKDOWN_HPP
-#define SESSION_SESSION_RMARKDOWN_HPP
+#ifndef SESSION_BUILD_INSTALL_RTOOLS_HPP
+#define SESSION_BUILD_INSTALL_RTOOLS_HPP
 
 namespace core {
    class Error;
 }
- 
+
 namespace session {
-namespace modules {      
-namespace rmarkdown {
+namespace modules {
+namespace build {
 
-bool rmarkdownPackageAvailable();
+core::Error installRtools();
 
-core::Error initialize();
+} // namespace build
+} // namespace modules
+} // namespace session
 
-} // namespace rmarkdown
-} // namepace handlers
-} // namesapce session
+#endif // SESSION_BUILD_INSTALL_RTOOLS_HPP
 
-#endif // SESSION_SESSION_RMARKDOWN_HPP

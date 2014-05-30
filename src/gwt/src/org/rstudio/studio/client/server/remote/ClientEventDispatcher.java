@@ -44,6 +44,7 @@ import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -584,6 +585,21 @@ public class ClientEventDispatcher
          {
             String url = event.getData();
             eventBus_.fireEvent(new ShinyAppsDeploymentCompletedEvent(url));
+         }
+         else if (type.equals(ClientEvent.UserPrompt))
+         {
+            UserPrompt prompt = event.getData();
+            eventBus_.fireEvent(new UserPromptEvent(prompt));
+         }
+         else if (type.equals(ClientEvent.InstallRtools))
+         {
+            InstallRtoolsEvent.Data data = event.getData();
+            eventBus_.fireEvent(new InstallRtoolsEvent(data));
+         }
+         else if (type.equals(ClientEvent.InstallShiny))
+         {
+            String userAction = event.getData();
+            eventBus_.fireEvent(new InstallShinyEvent(userAction));
          }
          else
          {

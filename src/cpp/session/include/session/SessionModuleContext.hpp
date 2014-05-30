@@ -387,6 +387,7 @@ void syncRSaveAction();
 
 std::string libPathsString();
 bool canBuildCpp();
+bool installRBuildTools(const std::string& action);
 bool haveRcppAttributes();
 
 #ifdef __APPLE__
@@ -471,6 +472,75 @@ core::json::Object compileOutputAsJson(const CompileOutput& compileOutput);
 std::string previousRpubsUploadId(const core::FilePath& filePath);
 
 std::string CRANReposURL();
+
+struct UserPrompt
+{
+   enum Type { Info = 0, Warning = 1, Error = 2, Question = 3 };
+   enum Response { ResponseYes = 0, ResponseNo = 1, ResponseCancel = 2 };
+
+   UserPrompt(int type,
+              const std::string& caption,
+              const std::string& message,
+              bool includeCancel = false)
+   {
+      commonInit(type, caption, message, "", "", includeCancel, true);
+   }
+
+   UserPrompt(int type,
+              const std::string& caption,
+              const std::string& message,
+              bool includeCancel,
+              bool yesIsDefault)
+   {
+      commonInit(type, caption, message, "", "", includeCancel, yesIsDefault);
+   }
+
+   UserPrompt(int type,
+              const std::string& caption,
+              const std::string& message,
+              const std::string& yesLabel,
+              const std::string& noLabel,
+              bool includeCancel,
+              bool yesIsDefault)
+   {
+      commonInit(type,
+                 caption,
+                 message,
+                 yesLabel,
+                 noLabel,
+                 includeCancel,
+                 yesIsDefault);
+   }
+
+   int type ;
+   std::string caption;
+   std::string message;
+   std::string yesLabel;
+   std::string noLabel;
+   bool includeCancel;
+   bool yesIsDefault;
+
+private:
+   void commonInit(int type,
+                   const std::string& caption,
+                   const std::string& message,
+                   const std::string& yesLabel,
+                   const std::string& noLabel,
+                   bool includeCancel,
+                   bool yesIsDefault)
+   {
+      this->type = type;
+      this->caption = caption;
+      this->message = message;
+      this->yesLabel = yesLabel;
+      this->noLabel = noLabel;
+      this->includeCancel = includeCancel;
+      this->yesIsDefault = yesIsDefault;
+   }
+};
+
+UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt);
+
 
 } // namespace module_context
 } // namespace session

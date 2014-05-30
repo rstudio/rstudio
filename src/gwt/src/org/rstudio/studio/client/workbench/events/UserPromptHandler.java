@@ -1,5 +1,5 @@
 /*
- * SessionRMarkdown.hpp
+ * UserPromptHandler.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,23 +13,11 @@
  *
  */
 
-#ifndef SESSION_SESSION_RMARKDOWN_HPP
-#define SESSION_SESSION_RMARKDOWN_HPP
+package org.rstudio.studio.client.workbench.events;
 
-namespace core {
-   class Error;
+import com.google.gwt.event.shared.EventHandler;
+
+public interface UserPromptHandler extends EventHandler
+{
+   void onUserPrompt(UserPromptEvent event);
 }
- 
-namespace session {
-namespace modules {      
-namespace rmarkdown {
-
-bool rmarkdownPackageAvailable();
-
-core::Error initialize();
-
-} // namespace rmarkdown
-} // namepace handlers
-} // namesapce session
-
-#endif // SESSION_SESSION_RMARKDOWN_HPP

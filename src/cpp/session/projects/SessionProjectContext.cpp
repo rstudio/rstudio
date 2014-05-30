@@ -304,42 +304,17 @@ namespace {
 // that are single threaded by convention
 FilePath settingsPath()
 {
-   FilePath settingsPath = session::options().userScratchPath().complete(
-                                                        kProjectsSettings);
-   Error error = settingsPath.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
-
-   return settingsPath;
+   return r_util::projectsSettingsPath(session::options().userScratchPath());
 }
 
 std::string readSetting(const char * const settingName)
 {
-   FilePath readPath = settingsPath().complete(settingName);
-   if (readPath.exists())
-   {
-      std::string value;
-      Error error = core::readStringFromFile(readPath, &value);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return std::string();
-      }
-      boost::algorithm::trim(value);
-      return value;
-   }
-   else
-   {
-      return std::string();
-   }
+   return r_util::readProjectsSetting(settingsPath(), settingName);
 }
 
 void writeSetting(const char * const settingName, const std::string& value)
 {
-   FilePath writePath = settingsPath().complete(settingName);
-   Error error = core::writeStringToFile(writePath, value);
-   if (error)
-      LOG_ERROR(error);
+   r_util::writeProjectsSetting(settingsPath(), settingName, value);
 }
 
 } // anonymous namespace
@@ -592,7 +567,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
 {
    // setup defaults for project file
    r_util::RProjectConfig defaultConfig;
-   defaultConfig.rVersion = r_util::RProjectRVersion(r_util::kRVersionDefault);
+   defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
    defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
    defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
    defaultConfig.autoAppendNewline = userSettings().autoAppendNewline();
