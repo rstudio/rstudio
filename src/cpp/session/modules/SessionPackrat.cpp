@@ -21,6 +21,7 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <r/RExec.hpp>
+#include <r/session/RClientState.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -34,6 +35,38 @@ namespace modules {
 namespace packrat {
 
 namespace {
+
+enum PackratHashType
+{
+   HASH_TYPE_LOCKFILE = 0,
+   HASH_TYPE_LIBRARY = 1
+};
+
+std::string keyOfHashType(PackratHashType hashType)
+{
+   return hashType == HASH_TYPE_LOCKFILE ?
+      "packratLockfileHash" : 
+      "packratLibraryHash";
+}
+
+std::string getStoredHash(PackratHashType hashType)
+{
+   json::Value hash = 
+      r::session::clientState().getProjectPersistent("packrat",
+                                                     keyOfHashType(hashType));
+   if (hash.type() == json::StringType) 
+      return hash.get_str();
+   else
+      return "";
+}
+
+void setStoredHash(PackratHashType hashType, const std::string& hash)
+{
+   r::session::clientState().putProjectPersistent(
+         "packrat", 
+         keyOfHashType(hashType), 
+         hash);
+}
 
 // adds content from the given file to the given file if it's a 
 // DESCRIPTION file (used to summarize library content for hashing)
@@ -86,30 +119,67 @@ std::string computeLockfileHash()
    return hash::crc32HexHash(lockFileContent);
 }
 
+std::string getComputedHash(PackratHashType hashType)
+{
+   if (hashType == HASH_TYPE_LOCKFILE)
+      return computeLockfileHash();
+   else
+      return computeLibraryHash();
+}
+
+void checkHashes(
+      PackratHashType primary, 
+      PackratHashType secondary, 
+      boost::function<void(const std::string&, const std::string&)> onPrimaryMismatch)
+{
+   std::string oldHash = getStoredHash(primary);
+   std::string newHash = getComputedHash(primary);
+
+   // hashes match, no work needed
+   if (oldHash == newHash)
+      return;
+
+   // primary hashes mismatch, secondary hashes match
+   else if (getStoredHash(secondary) == getComputedHash(secondary)) 
+   {
+      onPrimaryMismatch(oldHash, newHash);
+   }
+
+   // primary and secondary hashes mismatch
+   else 
+   {
+      // TODO: invoke status() to see if we're in a consistent state.
+      // yes -> update both hashes
+      // no -> prompt user
+   }
+}
+
+void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
+{
+   std::cerr << "detected lockfile change (" 
+      << oldHash << " -> " << newHash << ")" << std::endl;
+   setStoredHash(HASH_TYPE_LOCKFILE, newHash);
+}
+
+void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
+{
+   std::cerr << "detected library change (" 
+      << oldHash << " -> " << newHash << ")" << std::endl;
+   setStoredHash(HASH_TYPE_LIBRARY, newHash);
+}
+
 void onFileChanged(FilePath sourceFilePath)
 {
    FilePath libraryPath = 
       projects::projectContext().directory().complete("packrat/lib");
 
-   // if the changed file path is in the Packrat library folder, 
-   // we may need to initiate a snapshot 
-   
-   // if the changed file is an R source file, we may need to test for
-   // changes to the list of used packages
-   
-   // if the changed file is the Packrat lock file, we may need to tell
-   // the client to ask the user to initiate a restore
-   std::cerr << "Packrat file change detected: " 
-             << sourceFilePath.absolutePath() << std::endl;
    if (sourceFilePath.filename() == "packrat.lock")
    {
-      std::string hash = computeLockfileHash();
-      std::cerr << "New lockfile hash: " << hash << std::endl;
+      checkHashes(HASH_TYPE_LOCKFILE, HASH_TYPE_LIBRARY, onLockfileUpdate);
    }
    else if (sourceFilePath.isWithin(libraryPath)) 
    {
-      std::string hash = computeLibraryHash();
-      std::cerr << "New library hash: " << hash << std::endl;
+      checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
    }
 }
 
