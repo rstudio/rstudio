@@ -16,7 +16,8 @@
 #include "SessionPackrat.hpp"
 
 #include <core/Exec.hpp>
-
+#include <core/FileSerializer.hpp>
+#include <core/Hash.hpp>
 #include <core/system/FileMonitor.hpp>
 
 #include <r/RExec.hpp>
@@ -34,8 +35,62 @@ namespace packrat {
 
 namespace {
 
+// adds content from the given file to the given file if it's a 
+// DESCRIPTION file (used to summarize library content for hashing)
+void addDescContent(int level, const FilePath& path, std::string* pDescContent)
+{
+   std::string newDescContent;
+   if (path.filename() == "DESCRIPTION") 
+   {
+      Error error = readStringFromFile(path, &newDescContent);
+      pDescContent->append(newDescContent);
+   }
+}
+
+// computes a hash of the content of all DESCRIPTION files in the Packrat
+// private library
+std::string computeLibraryHash()
+{
+   FilePath libraryPath = 
+      projects::projectContext().directory().complete("packrat/lib");
+
+   // find all DESCRIPTION files in the library and concatenate them to form
+   // a hashable state
+   std::string descFileContent;
+   libraryPath.childrenRecursive(
+         boost::bind(addDescContent, _1, _2, &descFileContent));
+
+   if (descFileContent.empty())
+      return "";
+
+   return hash::crc32HexHash(descFileContent);
+}
+
+// computes the hash of the current project's lockfile
+std::string computeLockfileHash()
+{
+   FilePath lockFilePath = 
+      projects::projectContext().directory().complete("packrat/packrat.lock");
+
+   if (!lockFilePath.exists()) 
+      return "";
+
+   std::string lockFileContent;
+   Error error = readStringFromFile(lockFilePath, &lockFileContent);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return "";
+   }
+   
+   return hash::crc32HexHash(lockFileContent);
+}
+
 void onFileChanged(FilePath sourceFilePath)
 {
+   FilePath libraryPath = 
+      projects::projectContext().directory().complete("packrat/lib");
+
    // if the changed file path is in the Packrat library folder, 
    // we may need to initiate a snapshot 
    
@@ -46,6 +101,16 @@ void onFileChanged(FilePath sourceFilePath)
    // the client to ask the user to initiate a restore
    std::cerr << "Packrat file change detected: " 
              << sourceFilePath.absolutePath() << std::endl;
+   if (sourceFilePath.filename() == "packrat.lock")
+   {
+      std::string hash = computeLockfileHash();
+      std::cerr << "New lockfile hash: " << hash << std::endl;
+   }
+   else if (sourceFilePath.isWithin(libraryPath)) 
+   {
+      std::string hash = computeLibraryHash();
+      std::cerr << "New library hash: " << hash << std::endl;
+   }
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
@@ -56,7 +121,6 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
       onFileChanged(changedFilePath);
    }
 }
-
 } // anonymous namespace
 
 // returns true if we're in a project and packrat is installed
