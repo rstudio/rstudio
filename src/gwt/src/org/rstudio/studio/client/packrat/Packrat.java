@@ -25,7 +25,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
 import org.rstudio.studio.client.server.ServerError;
@@ -67,7 +66,6 @@ public class Packrat {
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
       dependencyManager_ = dependencyManager;
-      prStatus_ = prStatus;
       server_ = server;
       pFileDialogs_ = pFileDialogs;
       binder.bind(commands, this);
@@ -196,7 +194,6 @@ public class Packrat {
    }
 
    private DependencyManager dependencyManager_;
-   private PackratStatus prStatus_;
    private final GlobalDisplay display_;
    private final EventBus eventBus_;
    private final RemoteFileSystemContext fsContext_;

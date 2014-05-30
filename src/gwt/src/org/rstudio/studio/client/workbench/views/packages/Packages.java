@@ -532,11 +532,7 @@ public class Packages
             Collections.sort(allPackages_, new Comparator<PackageInfo>() {
                public int compare(PackageInfo o1, PackageInfo o2)
                {
-                  // sort first by library and then by name
-                  int library = o1.getLibrary().compareTo(o2.getLibrary());
-                  return library == 0 ?
-                          o1.getName().compareToIgnoreCase(o2.getName()) :
-                          library;
+                  return o1.getName().compareToIgnoreCase(o2.getName());
                }
             });
             
