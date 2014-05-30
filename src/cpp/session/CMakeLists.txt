@@ -34,6 +34,9 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat")
   message(FATAL_ERROR "packrat package not found (re-run install-dependencies script to install)")
 endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/shiny")
+  message(FATAL_ERROR "shiny package not found (re-run install-dependencies script to install)")
+endif()
 
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
@@ -352,6 +355,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES ${PACKRAT_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
+   # install shiny package
+   file(GLOB SHINY_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/shiny*.tar.gz")
+   install(FILES ${SHINY_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+
    # install PDF.js
    install(DIRECTORY "resources/pdfjs"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
@@ -397,5 +405,3 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
 endif()
-
-

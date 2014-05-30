@@ -130,6 +130,7 @@ public class TextEditingTargetRMarkdownHelper
    
    public void withRMarkdownPackage(
           final String userAction, 
+          final boolean isShinyDoc,
           final CommandWithArg<RMarkdownContext> onReady)
    {
       dependencyManager_.withDependencies(
@@ -139,7 +140,7 @@ public class TextEditingTargetRMarkdownHelper
          userAction, 
          
          new Dependency[] {
-           Dependency.cranPackage("knitr", "1.2"),
+           Dependency.cranPackage("knitr", "1.6"),
            Dependency.cranPackage("yaml", "2.1.5"),
            Dependency.embeddedPackage("rmarkdown")
          }, 
@@ -149,17 +150,34 @@ public class TextEditingTargetRMarkdownHelper
             @Override
             public void execute()
             { 
-               server_.getRMarkdownContext(
-                  new SimpleRequestCallback<RMarkdownContext>() {
+               // command to execute when we are ready
+               Command callReadyCommand = new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     server_.getRMarkdownContext(
+                        new SimpleRequestCallback<RMarkdownContext>() {
 
-                     @Override
-                     public void onResponseReceived(RMarkdownContext context)
-                     {
-                        if (onReady != null)
-                           onReady.execute(context);
-                     }      
-                  });
+                           @Override
+                           public void onResponseReceived(RMarkdownContext ctx)
+                           {
+                              if (onReady != null)
+                                 onReady.execute(ctx);
+                           }      
+                        });
+                  }  
+               };
                
+               // check if this is a Shiny Doc
+               if (isShinyDoc)
+               {
+                  dependencyManager_.withShiny("Running Shiny documents",
+                                               callReadyCommand);
+               }
+               else
+               {
+                  callReadyCommand.execute();
+               }
             } 
          });
    }
@@ -167,6 +185,7 @@ public class TextEditingTargetRMarkdownHelper
    public void renderNotebookv2(final DocUpdateSentinel sourceDoc)
    { 
       withRMarkdownPackage("Compiling notebooks from R scripts",
+                           false,
          new CommandWithArg<RMarkdownContext>() {
             @Override
             public void execute(RMarkdownContext arg)
@@ -250,9 +269,11 @@ public class TextEditingTargetRMarkdownHelper
                                final String format,
                                final String encoding, 
                                final boolean asTempfile,
+                               final boolean isShinyDoc,
                                final boolean asShiny)
    {
       withRMarkdownPackage("Rendering R Markdown documents", 
+                           isShinyDoc,
                            new CommandWithArg<RMarkdownContext>() {
          @Override
          public void execute(RMarkdownContext arg)
@@ -267,9 +288,11 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
    
-   public void renderRMarkdownSource(final String source)
+   public void renderRMarkdownSource(final String source,
+                                     final boolean isShinyDoc)
    {
       withRMarkdownPackage("Rendering R Markdown documents", 
+                           isShinyDoc,
             new CommandWithArg<RMarkdownContext>() {
          @Override
          public void execute(RMarkdownContext arg)

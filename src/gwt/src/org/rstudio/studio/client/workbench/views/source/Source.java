@@ -874,6 +874,7 @@ public class Source implements InsertSourceHandler,
    {
       rmarkdown_.withRMarkdownPackage(
          "Creating R Markdown documents",
+         false,
          new CommandWithArg<RMarkdownContext>(){
 
             @Override
@@ -883,7 +884,6 @@ public class Source implements InsertSourceHandler,
                   context,
                   workbenchContext_,
                   uiPrefs_.documentAuthor().getGlobalValue(),
-                  context.getCanRenderShinyDocs(),
                   new OperationWithInput<NewRMarkdownDialog.Result>()
                   {
                      @Override

@@ -2296,6 +2296,7 @@ public class TextEditingTarget implements
    {
       rmarkdownHelper_.withRMarkdownPackage(
           "Editing R Markdown options", 
+          false,
           new CommandWithArg<RMarkdownContext>() {
 
             @Override
@@ -3346,7 +3347,8 @@ public class TextEditingTarget implements
           
       if (renderSourceOnly)
       {
-         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode());
+         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode(),
+                                                isShinyDoc());
       }
       
       else
@@ -3363,11 +3365,26 @@ public class TextEditingTarget implements
                   null,
                   docUpdateSentinel_.getEncoding(),
                   asTempfile,
+                  isShinyDoc(),
                   false);
             }
          });
       }
       
+   }
+   
+   private boolean isShinyDoc()
+   {
+      try
+      {
+         RmdSelectedTemplate template = getSelectedTemplate();
+         return (template != null) && template.isShiny;
+      }
+      catch(Exception e)
+      {
+         Debug.log(e.getMessage());
+         return false;
+      }
    }
    
    void previewHTML()
