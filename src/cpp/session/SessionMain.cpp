@@ -253,6 +253,10 @@ double installedVersion()
    if (session::options().programMode() == kSessionProgramModeDesktop)
       return 0;
 
+   // never return a version in standalone mode
+   if (session::options().standalone())
+      return 0;
+
    // read installation time (as string) from file (return 0 if not found)
    FilePath installedPath("/var/lib/rstudio-server/installed");
    if (!installedPath.exists())
