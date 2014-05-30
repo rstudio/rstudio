@@ -2251,7 +2251,11 @@ void rSerialization(int action, const FilePath& targetPath)
    
 void ensureRProfile()
 {
+   // check if we need to create the proifle (bail if we don't)
    Options& options = session::options();
+   if (!options.createProfile())
+      return;
+
    FilePath rProfilePath = options.userHomePath().complete(".Rprofile");
    if (!rProfilePath.exists() && !userSettings().autoCreatedProfile())
    {
