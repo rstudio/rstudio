@@ -363,6 +363,10 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_rmd_deployment;
    }-*/;
    
+   public final native boolean getPackratAvailable() /*-{
+      return this.packrat_available;
+   }-*/;
+
    public final native boolean packratModeOn() /*-{
       return this.packrat_mode_on;
    }-*/;

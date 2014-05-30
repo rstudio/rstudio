@@ -26,6 +26,7 @@ namespace packrat {
 
 bool isPackratModeOn();
 bool isPackratManagedRPackage();
+bool isPackratEligibleProject();
 
 core::Error initialize();
                        

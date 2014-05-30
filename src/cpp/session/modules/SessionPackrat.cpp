@@ -57,6 +57,8 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
+} // anonymous namespace
+
 // returns true if we're in a project and packrat is installed
 bool isPackratEligibleProject()
 {
@@ -68,8 +70,6 @@ bool isPackratEligibleProject()
 
    return true;
 }
-
-} // anonymous namespace
 
 bool isPackratModeOn()
 {

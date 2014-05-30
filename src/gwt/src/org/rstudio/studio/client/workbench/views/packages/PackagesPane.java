@@ -166,22 +166,25 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftSeparator();
       
       // packrat
-      ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
-      packratMenu.addItem(commands_.packratSnapshot().createMenuItem(false));
-      packratMenu.addItem(commands_.packratRestore().createMenuItem(false));
-      packratMenu.addItem(commands_.packratClean().createMenuItem(false));
-      packratMenu.addSeparator();
-      packratMenu.addItem(commands_.packratStatus().createMenuItem(false));
-      packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
-      packratMenu.addSeparator();
-      packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
-      
-      ToolbarButton packratButton = new ToolbarButton(
-    		  "Packrat", commands_.packratButton().getImageResource(), packratMenu
-    	);
-      
-      toolbar.addLeftWidget(packratButton);
-      toolbar.addLeftSeparator();
+      if (session_.getSessionInfo().getPackratAvailable())
+      {
+         ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
+         packratMenu.addItem(commands_.packratSnapshot().createMenuItem(false));
+         packratMenu.addItem(commands_.packratRestore().createMenuItem(false));
+         packratMenu.addItem(commands_.packratClean().createMenuItem(false));
+         packratMenu.addSeparator();
+         packratMenu.addItem(commands_.packratStatus().createMenuItem(false));
+         packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
+         packratMenu.addSeparator();
+         packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
+         
+         ToolbarButton packratButton = new ToolbarButton(
+               "Packrat", commands_.packratButton().getImageResource(), packratMenu
+          );
+         
+         toolbar.addLeftWidget(packratButton);
+         toolbar.addLeftSeparator();
+      }
       
       toolbar.addLeftWidget(commands_.refreshPackages().createToolbarButton());
       
