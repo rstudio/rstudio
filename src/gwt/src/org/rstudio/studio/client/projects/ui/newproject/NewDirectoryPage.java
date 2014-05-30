@@ -103,9 +103,12 @@ public class NewDirectoryPage extends NewProjectWizardPage
       }
       
       // Initialize project with packrat
-      addSpacer();
       chkPackratInit_ = new CheckBox("Use Packrat to manage this project");
-      addWidget(chkPackratInit_);
+      if (sessionInfo.getPackratAvailable())
+      {
+         addSpacer();
+         addWidget(chkPackratInit_);
+      }
    }
    
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
