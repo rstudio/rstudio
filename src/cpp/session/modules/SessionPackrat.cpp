@@ -199,7 +199,7 @@ bool isPackratEligibleProject()
    if (!projects::projectContext().hasProject())
       return false;
 
-   if (!module_context::isPackageVersionInstalled("packrat", "0.1.0"))
+   if (!module_context::isPackageVersionInstalled("packrat", "0.2.0"))
       return false;
 
    return true;

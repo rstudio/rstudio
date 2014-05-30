@@ -481,7 +481,7 @@ bool restore(const FilePath& statePath,
    bool packratModeOn = false;
    bool packratInstalled = false;
    error = r::exec::RFunction (".rs.isPackageVersionInstalled", 
-                               "packrat", "0.1.0")
+                               "packrat", "0.2.0")
            .call(&packratInstalled);
    if (!error && packratInstalled)
    {
