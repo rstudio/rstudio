@@ -57,12 +57,23 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
+// returns true if we're in a project and packrat is installed
+bool isPackratEligibleProject()
+{
+   if (!projects::projectContext().hasProject())
+      return false;
+
+   if (!module_context::isPackageVersionInstalled("packrat", "0.1.0"))
+      return false;
+
+   return true;
+}
+
 } // anonymous namespace
 
 bool isPackratModeOn()
 {
-   // if we're not in a project, we don't support Packrat mode hooks
-   if (!projects::projectContext().hasProject())
+   if (!isPackratEligibleProject())
       return false;
 
    // if we are in a project, attempt to ascertain whether Packrat mode is on
@@ -77,23 +88,22 @@ bool isPackratModeOn()
 
 bool isPackratManagedRPackage()
 {
-    // if we're not in a project, bail
-    if (!projects::projectContext().hasProject())
-        return false;
+   if (!isPackratEligibleProject())
+      return false;
 
-    // get the current working directory
-    FilePath dir = projects::projectContext().directory();
+   // get the current working directory
+   FilePath dir = projects::projectContext().directory();
 
-    // bail if this isn't a package
-    if (!core::r_util::isPackageDirectory(dir))
-        return false;
+   // bail if this isn't a package
+   if (!core::r_util::isPackageDirectory(dir))
+      return false;
 
-    // check if the project is packified
-    bool isPackratProject;
-    r::exec::RFunction("packrat:::checkPackified",
-                       /* projDir = */ dir.absolutePath(),
-                       /* silent = */ true).call(&isPackratProject);
-    return isPackratProject;
+   // check if the project is packified
+   bool isPackratProject;
+   r::exec::RFunction("packrat:::checkPackified",
+                      /* projDir = */ dir.absolutePath(),
+                      /* silent = */ true).call(&isPackratProject);
+   return isPackratProject;
 }
 
 Error initialize()

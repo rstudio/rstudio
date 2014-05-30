@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
+import org.rstudio.studio.client.packrat.ui.PackratInstallDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
@@ -114,6 +115,29 @@ public class DependencyManager implements InstallShinyEvent.Handler
             Dependency.cranPackage("xtable", "1.7"),
             Dependency.cranPackage("digest", "0.6"),
             Dependency.embeddedPackage("shiny")
+          }, 
+          command
+       ); 
+   }
+   
+   public void withPackrat(final String userAction, final Command command)
+   {
+      CommandWithArg<Command> userPrompt = new CommandWithArg<Command>() {
+         @Override
+         public void execute(final Command yesCommand)
+         {
+            PackratInstallDialog dialog = 
+                  new PackratInstallDialog(userAction, yesCommand);
+            dialog.showModal();
+         }
+       };
+       
+       // perform dependency resolution 
+       withDependencies(
+          "Checking installed packages",
+          userPrompt,
+          new Dependency[] {
+            Dependency.embeddedPackage("packrat")
           }, 
           command
        ); 

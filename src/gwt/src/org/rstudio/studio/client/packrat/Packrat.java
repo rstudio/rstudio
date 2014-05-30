@@ -127,16 +127,8 @@ public class Packrat {
    // Fire a console event with packrat, while checking that packrat exists
    private void fireConsoleEventWithPackrat(final String userAction) {
 
-      dependencyManager_.withDependencies(
-
-         "Packrat",
-
+      dependencyManager_.withPackrat(
          userAction,
-
-         new Dependency[] {
-            Dependency.embeddedPackage("packrat")
-         },
-
          new Command() {
 
             @Override
@@ -169,16 +161,8 @@ public class Packrat {
 
    @Handler
    public void onPackratBundle() {
-      dependencyManager_.withDependencies(
-         
-         "Packrat",
-         
+      dependencyManager_.withPackrat(
          "packrat::bundle()",
-         
-         new Dependency[] {
-            Dependency.embeddedPackage("packrat")
-         },
-         
          new Command() {
             
             @Override
@@ -187,7 +171,6 @@ public class Packrat {
             }
 
          });
-
    }
 
    @Handler

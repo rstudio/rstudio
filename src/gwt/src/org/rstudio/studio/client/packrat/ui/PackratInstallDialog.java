@@ -15,19 +15,33 @@
 package org.rstudio.studio.client.packrat.ui;
 
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ThemedButton;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PackratInstallDialog extends ModalDialogBase
 {
-   public PackratInstallDialog()
+   public PackratInstallDialog(String userAction, final Command onInstall)
    {
-      // This widget provides the main body of the dialog.
       install_ = new PackratInstall();
 
-      // Use addOkButton here to create a button with an action that installs
-      // Packrat 
-
+      setWidth("400px");
+      setText("Packrat: " + userAction);
+      
+      ThemedButton installButton = new ThemedButton("Install Packrat",
+            new ClickHandler()
+            {
+               @Override
+               public void onClick(ClickEvent arg0)
+               {
+                  hide();
+                  onInstall.execute();
+               }
+            });
+      addOkButton(installButton);
       addCancelButton();
    }
 

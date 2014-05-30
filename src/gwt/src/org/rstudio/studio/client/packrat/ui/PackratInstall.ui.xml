@@ -1,13 +1,16 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rw="urn:import:org.rstudio.core.client.widget"
-	xmlns:rc="urn:import:org.rstudio.studio.client.common"
-	xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
 	
 	</ui:style>
 	<g:HTMLPanel>
-	  <g:HTML>Here is some information about Packrat.</g:HTML>
+	  <g:HTML>
+	     <p>This operation requires the Packrat package.</p>
+	     <p>Packrat is a dependency management tool that makes your R code
+	        more isolated, portable, and reproducible by giving your project
+	        its own privately managed package library.</p>
+	     <p>Install it now?</p>
+     </g:HTML>
 	</g:HTMLPanel>
 </ui:UiBinder> 

@@ -476,12 +476,20 @@ bool restore(const FilePath& statePath,
          reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
    }
    
-   // restore libpaths -- but only if packrat mode is off
+   // if the packrat package is present, check to see whether packrat mode
+   // is on
    bool packratModeOn = false;
-   r::exec::RFunction("packrat:::isPackratModeOn").call(&packratModeOn);
+   bool packratInstalled = false;
+   error = r::exec::RFunction (".rs.isPackageVersionInstalled", 
+                               "packrat", "0.1.0")
+           .call(&packratInstalled);
+   if (!error && packratInstalled)
+   {
+      error = r::exec::RFunction("packrat:::isPackratModeOn")
+              .call(&packratModeOn);
+   }
 
-   // an error implies packrat isn't installed or otherwise -- either way,
-   // we should restore the libpath
+   // restore libpaths -- but only if packrat mode is off
    if (error || !packratModeOn) {
       error = restoreLibPaths(statePath.complete(kLibPathsFile));
       if (error)
