@@ -64,14 +64,24 @@ void initializeHttpConnectionListener()
    }
    else // mode == "server"
    {
-      // create listener based on options
-      std::string userIdentity = options.userIdentity();
-      FilePath localStreamPath = local_streams::streamPath(userIdentity);
-      s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
-                                           localStreamPath,
-                                           core::system::EveryoneReadWriteMode,
-                                           "", // no shared secret
-                                           options.limitRpcClientUid());
+      if (session::options().standalone())
+      {
+         s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
+                                            "127.0.0.1",
+                                            options.wwwPort(),
+                                            ""); // no shared secret
+      }
+      else
+      {
+         // create listener based on options
+         std::string userIdentity = options.userIdentity();
+         FilePath localStreamPath = local_streams::streamPath(userIdentity);
+         s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
+                                          localStreamPath,
+                                          core::system::EveryoneReadWriteMode,
+                                          "", // no shared secret
+                                          options.limitRpcClientUid());
+      }
    }
 }
 

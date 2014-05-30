@@ -253,6 +253,10 @@ double installedVersion()
    if (session::options().programMode() == kSessionProgramModeDesktop)
       return 0;
 
+   // never return a version in standalone mode
+   if (session::options().standalone())
+      return 0;
+
    // read installation time (as string) from file (return 0 if not found)
    FilePath installedPath("/var/lib/rstudio-server/installed");
    if (!installedPath.exists())
@@ -897,11 +901,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                                                   switchToProject);
             }
 
+            // exit status
+            int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
+
             // acknowledge request & quit session
             json::JsonRpcResponse response;
             response.setResult(true);
             ptrConnection->sendJsonRpcResponse(response);
-            r::session::quit(saveWorkspace); // does not return
+            r::session::quit(saveWorkspace, status); // does not return
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {
@@ -1671,8 +1678,11 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    }
 
    // add gwt handlers if we are running desktop mode
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   if ((session::options().programMode() == kSessionProgramModeDesktop) ||
+       session::options().standalone())
+   {
       registerGwtHandlers();
+   }
 
    // enque abend warning event if necessary.
    using namespace session::client_events;
@@ -2244,7 +2254,11 @@ void rSerialization(int action, const FilePath& targetPath)
    
 void ensureRProfile()
 {
+   // check if we need to create the proifle (bail if we don't)
    Options& options = session::options();
+   if (!options.createProfile())
+      return;
+
    FilePath rProfilePath = options.userHomePath().complete(".Rprofile");
    if (!rProfilePath.exists() && !userSettings().autoCreatedProfile())
    {

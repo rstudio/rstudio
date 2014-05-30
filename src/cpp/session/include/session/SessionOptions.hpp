@@ -126,6 +126,8 @@ public:
 
    int disconnectedTimeoutMinutes() { return disconnectedTimeoutMinutes_; }
 
+   bool createProfile() const { return createProfile_; }
+
    bool createPublicFolder() const { return createPublicFolder_; }
 
    bool rProfileOnResumeDefault() const { return rProfileOnResumeDefault_; }
@@ -363,6 +365,11 @@ public:
       return monitorSharedSecret_.c_str();
    }
 
+   bool standalone() const
+   {
+      return standalone_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -407,9 +414,11 @@ private:
    std::string preflightScript_;
    int timeoutMinutes_;
    int disconnectedTimeoutMinutes_;
+   bool createProfile_;
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
    int saveActionDefault_;
+   bool standalone_;
 
    // r
    std::string coreRSourcePath_;
