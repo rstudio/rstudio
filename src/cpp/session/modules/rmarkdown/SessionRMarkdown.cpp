@@ -203,14 +203,13 @@ private:
          // options discovered so far in the render_args parameter
          renderOptions = "render_args = list(" + renderOptions + ", "
                "output_options = list(extra_dependencies = "
-                  "list(structure(list("
+                  "list(htmltools::htmlDependency("
                         "name = 'rstudio-iframe', "
                         "version = '0.1', "
-                        "path = '" +
+                        "src = '" +
                             session::options().rResourcesPath().absolutePath() +
                         "', "
-                        "script = 'rsiframe.js'), "
-                     "class = 'html_dependency'))))";
+                        "script = 'rsiframe.js'))))";
       }
 
       // render command
