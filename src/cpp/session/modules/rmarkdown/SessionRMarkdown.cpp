@@ -977,11 +977,7 @@ bool rmarkdownPackageAvailable()
 {
    if (!haveMarkdownToHTMLOption())
    {
-#ifdef _WIN32
       return r::util::hasRequiredVersion("3.0");
-#else
-      return r::util::hasRequiredVersion("2.14.1");
-#endif
    }
    else
    {
