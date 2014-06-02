@@ -143,11 +143,19 @@ public class ShinyApps implements SessionInitHandler,
          ShinyAppsDeploymentRecord record = dirState_.getLastDeployment(dir);
          final String lastAccount = record == null ? null : record.getAccount();
          final String lastAppName = record == null ? null : record.getName();
+         
+         // don't consider this to be a deployment of a specific file unless
+         // we're deploying R Markdown content
+         String file = "";
+         if (event.getPath().toLowerCase().endsWith(".rmd"))
+         {
+            file = FilePathUtils.friendlyFileName(event.getPath());
+         }
 
          ShinyAppsDeployDialog dialog = 
                new ShinyAppsDeployDialog(
                          server_, display_, events_, 
-                         dir, lastAccount, lastAppName);
+                         dir, file, lastAccount, lastAppName);
          dialog.showModal();
       }
       else if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_TERMINATE)
@@ -161,6 +169,7 @@ public class ShinyApps implements SessionInitHandler,
          final ShinyAppsDeployInitiatedEvent event)
    {
       server_.deployShinyApp(event.getPath(), 
+                             event.getSourceFile(),
                              event.getRecord().getAccount(), 
                              event.getRecord().getName(), 
       new ServerRequestCallback<Boolean>()

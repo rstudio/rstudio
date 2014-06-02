@@ -3253,13 +3253,14 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void deployShinyApp(String dir, String account, String appName,
-         ServerRequestCallback<Boolean> requestCallback)
+   public void deployShinyApp(String dir, String file, String account, 
+         String appName, ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
-      params.set(1, new JSONString(account));
-      params.set(2, new JSONString(appName));
+      params.set(1, new JSONString(file));
+      params.set(2, new JSONString(account));
+      params.set(3, new JSONString(appName));
       sendRequest(RPC_SCOPE,
             DEPLOY_SHINY_APP,
             params,

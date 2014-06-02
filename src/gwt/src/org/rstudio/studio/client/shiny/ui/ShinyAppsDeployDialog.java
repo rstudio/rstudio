@@ -49,6 +49,7 @@ public class ShinyAppsDeployDialog
                                 final GlobalDisplay display, 
                                 EventBus events,
                                 String sourceDir, 
+                                String sourceFile,
                                 final String lastAccount, 
                                 String lastAppName)
                                 
@@ -60,6 +61,7 @@ public class ShinyAppsDeployDialog
       addCancelButton();
       addOkButton(deployButton_);
       sourceDir_ = sourceDir;
+      sourceFile_ = sourceFile;
       events_ = events;
       lastAppName_ = lastAppName;
 
@@ -332,6 +334,7 @@ public class ShinyAppsDeployDialog
       // let everyone know a deployment has started 
       events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
             sourceDir_,
+            sourceFile_,
             launchCheck_.getValue(),
             ShinyAppsDeploymentRecord.create(appName, account, "")));
 
@@ -353,6 +356,7 @@ public class ShinyAppsDeployDialog
    private final EventBus events_;
    
    private String sourceDir_;
+   private String sourceFile_;
    private String lastAppName_;
    private ThemedButton deployButton_;
    private ProgressIndicator indicator_;
