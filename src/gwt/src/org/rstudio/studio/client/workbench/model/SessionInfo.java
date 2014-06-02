@@ -359,10 +359,6 @@ public class SessionInfo extends JavaScriptObject
       return this.rmarkdown_available;
    }-*/;
    
-   public final native boolean allowRmdDeployment() /*-{
-      return this.allow_rmd_deployment;
-   }-*/;
-   
    public final native boolean getPackratAvailable() /*-{
       return this.packrat_available;
    }-*/;

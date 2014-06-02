@@ -120,6 +120,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("www-port",
          value<std::string>(&wwwPort_)->default_value("8787"),
          "port to listen on")
+      ("www-address",
+         value<std::string>(&wwwAddress_)->default_value("127.0.0.1"),
+         "port to listen on")
       ("standalone",
          value<bool>(&standalone_)->default_value(false),
          "run standalone");

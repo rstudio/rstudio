@@ -112,6 +112,11 @@ public:
       return std::string(wwwPort_.c_str());
    }
 
+   std::string wwwAddress() const
+   {
+      return std::string(wwwAddress_.c_str());
+   }
+
    std::string sharedSecret() const
    {
       return std::string(secret_.c_str());
@@ -408,6 +413,7 @@ private:
    std::string wwwLocalPath_;
    std::string wwwSymbolMapsPath_;
    std::string wwwPort_;
+   std::string wwwAddress_;
 
    // session
    std::string secret_;

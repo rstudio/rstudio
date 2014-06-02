@@ -114,6 +114,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
             Dependency.cranPackage("RJSONIO", "1.0"),
             Dependency.cranPackage("xtable", "1.7"),
             Dependency.cranPackage("digest", "0.6"),
+            Dependency.cranPackage("htmltools", "0.2.4"),
             Dependency.embeddedPackage("shiny")
           }, 
           command

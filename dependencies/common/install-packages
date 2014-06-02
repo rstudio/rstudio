@@ -46,7 +46,7 @@ GithubRepo: $PACKAGE
 GithubUsername: rstudio
 GithubRef: $PACKAGE_VERSION
 GithubSHA1: $PACKAGE_SHA1
-Repository: RStudioIDE
+Origin: RStudioIDE
 EOF
 
 # create source package (remove previous first)

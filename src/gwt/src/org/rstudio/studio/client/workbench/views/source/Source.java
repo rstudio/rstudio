@@ -2276,9 +2276,8 @@ public class Source implements InsertSourceHandler,
             session_.getSessionInfo().getShinyappsInstalled() &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
-            (activeEditor_.getExtendedFileType() == "shiny" ||
-            (activeEditor_.getExtendedFileType() == "rmarkdown" &&
-              session_.getSessionInfo().allowRmdDeployment()));
+            ((activeEditor_.getExtendedFileType() == "shiny" ||
+            (activeEditor_.getExtendedFileType() == "rmarkdown")));
       commands_.shinyAppsDeploy().setVisible(shinyCommandsAvailable);
       commands_.shinyAppsTerminate().setVisible(shinyCommandsAvailable);
    }
