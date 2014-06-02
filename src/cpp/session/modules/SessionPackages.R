@@ -447,6 +447,54 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
 })
 
+.rs.addFunction("loadedPackagesAndDependencies", function(pkgs) {
+  
+  # if the default set of namespaces in rstudio are loaded
+  # then skip the check
+  defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
+                         "methods", "stats", "tools", "utils")
+  if (identical(defaultNamespaces, loadedNamespaces()) && length(.dynLibs()) == 4)
+    return(character())
+  
+  packagesLoaded <- function(pkgList) {
+    
+    # first check loaded namespaces
+    loaded <- pkgList[pkgList %in% loadedNamespaces()]
+    
+    # now check if there are libraries still loaded in spite of the
+    # namespace being unloaded 
+    libs <- .dynLibs()
+    libnames <- vapply(libs, "[[", character(1), "name")
+    loaded <- c(loaded, pkgList[pkgList %in% libnames])
+    loaded
+  }
+  
+  # package loaded
+  loaded <- packagesLoaded(pkgs)
+  
+  # dependencies loaded
+  avail <- available.packages()
+  deps <- suppressMessages(suppressWarnings(
+    utils:::getDependencies(pkgs, available=avail)))
+  loaded <- c(loaded, packagesLoaded(deps))
+  
+  # return unique list
+  unique(loaded)  
+})
+
+.rs.addFunction("forceUnloadForPackageInstall", function(pkgs) {
+  
+  # figure out which packages are loaded and/or have dependencies loaded
+  pkgs <- .rs.loadedPackagesAndDependencies(pkgs)
+  
+  # force unload them
+  sapply(pkgs, .rs.forceUnloadPackage)
+  
+  # return packages unloaded
+  pkgs
+})
+
+
 .rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
 {
    .Call("rs_enqueLoadedPackageUpdates", installCmd)

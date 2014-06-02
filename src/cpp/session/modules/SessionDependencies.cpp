@@ -53,6 +53,21 @@ struct Dependency
    std::string version;
 };
 
+std::string nameFromDep(const Dependency& dep)
+{
+   return dep.name;
+}
+
+std::vector<std::string> packageNames(const std::vector<Dependency> deps)
+{
+   std::vector<std::string> names;
+   std::transform(deps.begin(),
+                  deps.end(),
+                  std::back_inserter(names),
+                  nameFromDep);
+   return names;
+}
+
 std::vector<Dependency> dependenciesFromJson(const json::Array& depsJson)
 {
    std::vector<Dependency> deps;
@@ -246,6 +261,12 @@ Error installDependencies(const json::JsonRpcRequest& request,
    error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();
    if (error)
       return error;
+
+   // force unload as necessary
+   std::vector<std::string> names = packageNames(deps);
+   error = r::exec::RFunction(".rs.forceUnloadForPackageInstall", names).call();
+   if (error)
+      LOG_ERROR(error);
 
    // R binary
    FilePath rProgramPath;
