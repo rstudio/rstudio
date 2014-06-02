@@ -71,6 +71,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentFiles;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
@@ -3269,7 +3270,7 @@ public class RemoteServer implements Server
 
    @Override
    public void getDeploymentFiles(String dir,
-         ServerRequestCallback<JsArrayString> requestCallback)
+         ServerRequestCallback<ShinyAppsDeploymentFiles> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));

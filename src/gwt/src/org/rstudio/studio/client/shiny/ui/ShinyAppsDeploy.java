@@ -16,6 +16,7 @@ package org.rstudio.studio.client.shiny.ui;
 
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 
@@ -84,6 +85,11 @@ public class ShinyAppsDeploy extends Composite
    {
       deployLabel_.setText(dir);
       appName.setText(FilePathUtils.friendlyFileName(dir));
+   }
+
+   public void setDirSize(int size)
+   {
+      sizeLabel_.setText(" (" + StringUtil.formatFileSize(size) + ")");
    }
    
    public void setAccountList(JsArrayString accounts, String selected)
@@ -229,6 +235,7 @@ public class ShinyAppsDeploy extends Composite
    @UiField DeployStyle style;
    @UiField FlowPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
+   @UiField InlineLabel sizeLabel_;
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;

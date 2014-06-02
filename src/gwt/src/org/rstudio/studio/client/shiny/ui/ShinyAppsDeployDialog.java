@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentFiles;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 
 import com.google.gwt.core.client.JsArray;
@@ -48,7 +50,7 @@ public class ShinyAppsDeployDialog
    public ShinyAppsDeployDialog(ShinyAppsServerOperations server, 
                                 final GlobalDisplay display, 
                                 EventBus events,
-                                String sourceDir, 
+                                final String sourceDir, 
                                 String sourceFile,
                                 final String lastAccount, 
                                 String lastAppName)
@@ -81,16 +83,34 @@ public class ShinyAppsDeployDialog
          }
       });
       
+      // don't enable the deploy button until we're done getting the file list
+      deployButton_.setEnabled(false);
+      
       indicator_ = addProgressIndicator(false);
 
       // Get the files to be deployed
       server_.getDeploymentFiles(sourceDir,
-            new ServerRequestCallback<JsArrayString>()
+            new ServerRequestCallback<ShinyAppsDeploymentFiles>()
             {
                @Override 
-               public void onResponseReceived(JsArrayString files)
+               public void onResponseReceived(ShinyAppsDeploymentFiles files)
                {
-                  contents_.setFileList(files);
+                  if (files.getDirSize() > files.getMaxSize())
+                  {
+                     hide();
+                     display_.showErrorMessage("Directory Too Large", 
+                           "The directory to be deployed (" + sourceDir + ") " +
+                           "exceeds the maximum deployment size, which is " +
+                           StringUtil.formatFileSize(files.getMaxSize()) + "." +
+                           " Consider creating a new directory containing " + 
+                           "only the content you wish to deploy.");
+                  }
+                  else
+                  {
+                     contents_.setFileList(files.getDirList());
+                     contents_.setDirSize(files.getDirSize());
+                     deployButton_.setEnabled(true);
+                  }
                }
                @Override
                public void onError(ServerError error)

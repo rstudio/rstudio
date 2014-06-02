@@ -100,6 +100,7 @@
       <g:FlowPanel>
         <g:InlineLabel text="Deploy From: "></g:InlineLabel>
         <g:InlineLabel styleName="{style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
+        <g:InlineLabel ui:field="sizeLabel_"></g:InlineLabel>
         <g:ScrollPanel styleName="{style.fileList}">
           <g:FlowPanel ui:field="fileListPanel_">
           </g:FlowPanel>
