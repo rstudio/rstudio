@@ -626,8 +626,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    bool shinyAppsInstalled = 
       module_context::isPackageVersionInstalled("shinyapps", "0.3.5");
    sessionInfo["shinyapps_installed"] = shinyAppsInstalled;
-   sessionInfo["allow_rmd_deployment"] = shinyAppsInstalled;
-
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
 
