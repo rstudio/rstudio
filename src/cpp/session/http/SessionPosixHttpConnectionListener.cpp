@@ -57,7 +57,7 @@ void initializeHttpConnectionListener()
       else
       {
          s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
-                                            "127.0.0.1",
+                                            options.wwwAddress(),
                                             options.wwwPort(),
                                             options.sharedSecret());
       }
@@ -67,7 +67,7 @@ void initializeHttpConnectionListener()
       if (session::options().standalone())
       {
          s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
-                                            "127.0.0.1",
+                                            options.wwwAddress(),
                                             options.wwwPort(),
                                             ""); // no shared secret
       }
