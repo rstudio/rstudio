@@ -37,7 +37,7 @@ echo GithubRepo: %PACKAGE% >> DESCRIPTION
 echo GithubUsername: rstudio >> DESCRIPTION
 echo GithubRef: %PACKAGE_VERSION% >> DESCRIPTION
 echo GithubSHA1: %PACKAGE_SHA1% >> DESCRIPTION
-echo Repository: RStudioIDE >> DESCRIPTION
+echo Origin: RStudioIDE >> DESCRIPTION
 
 REM create source package
 popd

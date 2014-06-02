@@ -99,7 +99,7 @@
   if (.rs.isPackageInstalled(name))
   {
      f <- utils::packageDescription(name, fields=c("Repository", "GithubSHA1"))
-     identical(f$Repository, "RStudioIDE") && !identical(f$GithubSHA1, sha1)
+     identical(f$Origin, "RStudioIDE") && !identical(f$GithubSHA1, sha1)
   }
   else
   {
