@@ -34,7 +34,9 @@
    files <- list.files(dir, recursive = TRUE, all.files = FALSE, 
                        include.dirs = FALSE)
    # hide the shinyapps folder
-   files[substr(files, 1, nchar("shinyapps/")) != "shinyapps/"] 
+   files <- files[substr(files, 1, nchar("shinyapps/")) != "shinyapps/"] 
+   files <- files[!grepl(glob2rx("*.Rproj"), files)]
+   files
 })
 
 .rs.addJsonRpcHandler("get_shinyapps_account_list", function() {
