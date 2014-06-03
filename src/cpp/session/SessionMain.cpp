@@ -624,7 +624,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // light up shinyapps-related UI features if shinyapps is installed
    bool shinyAppsInstalled = 
-      module_context::isPackageVersionInstalled("shinyapps", "0.3.5");
+      module_context::isPackageVersionInstalled("shinyapps", "0.3.52");
    sessionInfo["shinyapps_installed"] = shinyAppsInstalled;
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
