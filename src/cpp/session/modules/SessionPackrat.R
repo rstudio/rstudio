@@ -16,3 +16,7 @@
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {
    packrat::status(dir, quiet = TRUE)
 })
+
+.rs.addJsonRpcHandler("packrat_bootstrap", function(dir) {
+   packrat::bootstrap(dir)
+})

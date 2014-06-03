@@ -3462,6 +3462,16 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
+   
+   @Override
+   public void bootstrap(String dir,
+                         ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  PACKRAT_BOOTSTRAP,
+                  dir,
+                  requestCallback);
+   }
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -3761,5 +3771,6 @@ public class RemoteServer implements Server
    private static final String GET_RMD_TEMPLATE = "get_rmd_template";
    
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
+   private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    
 }
