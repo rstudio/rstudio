@@ -97,7 +97,8 @@ private:
 
             // check to see if a source file was specified; if so return a URL
             // with the source file appended
-            if (!sourceFile_.empty())
+            if (!sourceFile_.empty() &&
+                (string_utils::toLower(sourceFile_) != "index.rmd"))
             {
                // append / to the URL if it doesn't already have one
                if (deployedUrl_[deployedUrl_.length() - 1] != '/')
