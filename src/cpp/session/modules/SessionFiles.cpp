@@ -308,7 +308,7 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
 }
    
    
-void copySourceFile(const FilePath& sourceDir, 
+bool copySourceFile(const FilePath& sourceDir, 
                     const FilePath& destDir,
                     int level,
                     const FilePath& sourceFilePath)
@@ -331,6 +331,7 @@ void copySourceFile(const FilePath& sourceDir,
       if (error)
          LOG_ERROR(error);
    }
+   return true;
 }
    
 // IN: String sourcePath, String targetPath

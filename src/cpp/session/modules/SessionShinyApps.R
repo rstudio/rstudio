@@ -29,14 +29,6 @@
    return(ret)
 })
 
-.rs.addJsonRpcHandler("get_deployment_files", function(dir) {
-   # get a list of all the files to be published
-   files <- list.files(dir, recursive = TRUE, all.files = FALSE, 
-                       include.dirs = FALSE)
-   # hide the shinyapps folder
-   files[substr(files, 1, nchar("shinyapps/")) != "shinyapps/"] 
-})
-
 .rs.addJsonRpcHandler("get_shinyapps_account_list", function() {
    shinyapps::accounts()
 })

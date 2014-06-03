@@ -16,6 +16,8 @@ package org.rstudio.studio.client.shiny.ui;
 
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 
@@ -82,10 +84,11 @@ public class ShinyAppsDeploy extends Composite
    
    public void setSourceDir(String dir)
    {
+      dir = StringUtil.shortPathName(FileSystemItem.createDir(dir), 250);
       deployLabel_.setText(dir);
       appName.setText(FilePathUtils.friendlyFileName(dir));
    }
-   
+
    public void setAccountList(JsArrayString accounts, String selected)
    {
       accountList.clear();

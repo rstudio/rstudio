@@ -30,11 +30,13 @@ public class ShinyAppsDeployInitiatedEvent extends GwtEvent<ShinyAppsDeployIniti
       new GwtEvent.Type<ShinyAppsDeployInitiatedEvent.Handler>();
    
    public ShinyAppsDeployInitiatedEvent(String path, 
+                                        String sourceFile,
                                         boolean launchBrowser, 
                                         ShinyAppsDeploymentRecord record)
    {
       path_ = path;
       record_ = record;
+      sourceFile_ = sourceFile;
       launchBrowser_ = launchBrowser;
    }
    
@@ -46,6 +48,11 @@ public class ShinyAppsDeployInitiatedEvent extends GwtEvent<ShinyAppsDeployIniti
    public String getPath()
    {
       return path_; 
+   }
+   
+   public String getSourceFile()
+   {
+      return sourceFile_;
    }
    
    public boolean getLaunchBrowser()
@@ -67,5 +74,6 @@ public class ShinyAppsDeployInitiatedEvent extends GwtEvent<ShinyAppsDeployIniti
    
    private ShinyAppsDeploymentRecord record_;
    private String path_;
+   private String sourceFile_;
    private boolean launchBrowser_;
 }

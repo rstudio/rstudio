@@ -1,4 +1,6 @@
-This R Markdown document is made interactive using Shiny. For more information on authoring Shiny content in R Markdown documents, see [Shiny in R Markdown](http://rmarkdown.rstudio.com/authoring_shiny.html). 
+This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately. 
+
+To learn more, see [Interative Documents (Shiny Docs)](http://rmarkdown.rstudio.com/authoring_shiny.html).
 
 ## Inputs and Outputs
 
@@ -22,39 +24,9 @@ renderPlot({
 })
 ```
 
-## Embedded Applications
+## Embedded Application
 
-It's also possible to embed an entire Shiny application within an R Markdown document. There are two syntaxes for this: 
-
-1) Defining the application inline using the `shinyApp` function; or
-
-2) Referring to an external application directory using the `shinyAppDir` function.
-
-This example uses an inline definition:
-
-```{r, echo=FALSE}
-shinyApp(
-  
-  ui = fluidPage(
-    selectInput("region", "Region:", 
-                choices = colnames(WorldPhones)),
-    plotOutput("phonePlot")
-  ),
-  
-  server = function(input, output) {
-    output$phonePlot <- renderPlot({
-      barplot(WorldPhones[,input$region]*1000, 
-              ylab = "Number of Telephones", xlab = "Year")
-    })
-  },
-  
-  options = list(height = 500)
-)
-```
-
-Note the use of the `height` parameter to determine how much vertical space the embedded application should occupy.
-
-This example embeds a Shiny application defined in another directory:
+It's also possible to embed an entire Shiny application within an R Markdown document using the `shinyAppDir` function. This example embeds a Shiny application located in another directory:
 
 ```{r, echo=FALSE}
 shinyAppDir(
@@ -65,6 +37,11 @@ shinyAppDir(
 )
 ```
 
-Note that in all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
+Note the use of the `height` parameter to determine how much vertical space the embedded application should occupy.
+
+You can also use the `shinyApp` function to define an application inline rather then in an external directory.
+
+In all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
+
 
 
