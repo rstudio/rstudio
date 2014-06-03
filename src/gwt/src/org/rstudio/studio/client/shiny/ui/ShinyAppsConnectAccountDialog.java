@@ -39,8 +39,8 @@ public class ShinyAppsConnectAccountDialog
       setText("Connect ShinyApps account");
       setWidth("450px");
       HTML createLink = new HTML("<small>Need a ShinyApps account?<br />" +
-            "Get started at <a href=\"http://www.shinyapps.io/\"" + 
-            "target=\"blank\">http://www.shinyapps.io</a></small>");
+            "Get started at <a href=\"http://shinyapps.io/\"" + 
+            "target=\"blank\">http://shinyapps.io</a></small>");
       createLink.setStyleName(contents_.getStyle().spaced());
       addLeftWidget(createLink);
       connectButton_ = new ThemedButton("Connect");
