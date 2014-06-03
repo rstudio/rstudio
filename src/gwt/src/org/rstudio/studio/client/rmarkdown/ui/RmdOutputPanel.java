@@ -114,8 +114,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       publishButtonSeparator_.setVisible(showPublish);
       
       // ShinyApps
-      boolean showDeploy = enableDeploy && 
-            (params.getResult().isHtml() || params.isShinyDocument());
+      boolean showDeploy = enableDeploy && params.isShinyDocument();
       deployButton_.setVisible(showDeploy);
       deployButton_.setText("Deploy");
       deployButtonSeparator_.setVisible(showDeploy);
