@@ -414,7 +414,7 @@ public class Projects implements OpenProjectFileHandler,
                   newProject.getProjectFile()
                ).getParentPathString();
                
-               packratServer_.bootstrap(projDir, new VoidServerRequestCallback() {
+               packratServer_.bootstrap(projDir, new VoidServerRequestCallback(indicator) {
 
                   @Override
                   public void onError(ServerError error) {
