@@ -18,7 +18,7 @@ package com.google.gwt.core.client.impl;
 import static com.google.gwt.core.client.impl.StackTraceCreator.extractFunctionName;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChromeNoSourceMap;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz;
@@ -208,10 +208,9 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
     return new StackTraceElement("Unknown", methodName, fileName, lineNumber);
   }
 
-  private static void assertStackTrace(JavaScriptObject exception, CollectorMoz collector,
+  private static void assertStackTrace(JavaScriptObject exception, Collector collector,
       StackTraceElement[] expected) {
-    JsArrayString stack = collector.inferFrom(exception);
-    assertEquals(expected, collector.getStackTrace(stack));
+    assertEquals(expected, collector.getStackTrace(exception));
   }
 
   private static void assertEquals(StackTraceElement[] expecteds, StackTraceElement[] actuals) {
