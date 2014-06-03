@@ -161,7 +161,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftSeparator();
       
       // packrat
-      if (session_.getSessionInfo().getPackratAvailable())
+      if (session_.getSessionInfo().isPackratEligibleProject())
       {
          ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
          packratMenu.addItem(commands_.packratSnapshot().createMenuItem(false));

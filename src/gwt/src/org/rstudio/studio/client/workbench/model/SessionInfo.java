@@ -14,10 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -31,6 +27,10 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentCo
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class SessionInfo extends JavaScriptObject
 {
@@ -357,6 +357,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean getRMarkdownPackageAvailable() /*-{
       return this.rmarkdown_available;
+   }-*/;
+   
+   public final native boolean isPackratEligibleProject() /*-{
+      return this.packrat_eligible_project;
    }-*/;
    
    public final native boolean getPackratAvailable() /*-{

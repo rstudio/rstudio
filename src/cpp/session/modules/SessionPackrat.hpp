@@ -25,6 +25,7 @@ namespace modules {
 namespace packrat {
 
 bool isPackratModeOn();
+bool isPackratAvailable();
 bool isPackratManagedRPackage();
 bool isPackratEligibleProject();
 

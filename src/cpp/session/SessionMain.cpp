@@ -631,7 +631,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
          modules::rmarkdown::rmarkdownPackageAvailable();
 
    sessionInfo["packrat_mode_on"] = modules::packrat::isPackratModeOn();
-   sessionInfo["packrat_available"] = modules::packrat::isPackratEligibleProject();
+   sessionInfo["packrat_available"] = modules::packrat::isPackratAvailable();
+   sessionInfo["packrat_eligible_project"] = modules::packrat::isPackratEligibleProject();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

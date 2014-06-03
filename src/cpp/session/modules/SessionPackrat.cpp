@@ -193,14 +193,19 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 }
 } // anonymous namespace
 
+bool isPackratAvailable()
+{
+    return module_context::isPackageVersionInstalled("packrat", "0.2.0");
+}
+
 // returns true if we're in a project and packrat is installed
 bool isPackratEligibleProject()
 {
    if (!projects::projectContext().hasProject())
       return false;
 
-   if (!module_context::isPackageVersionInstalled("packrat", "0.2.0"))
-      return false;
+   if (!isPackratAvailable())
+       return false;
 
    return true;
 }
@@ -235,7 +240,7 @@ bool isPackratManagedRPackage()
    // check if the project is packified
    bool isPackratProject;
    r::exec::RFunction("packrat:::checkPackified",
-                      /* projDir = */ dir.absolutePath(),
+                      /* project = */ dir.absolutePath(),
                       /* silent = */ true).call(&isPackratProject);
    return isPackratProject;
 }
