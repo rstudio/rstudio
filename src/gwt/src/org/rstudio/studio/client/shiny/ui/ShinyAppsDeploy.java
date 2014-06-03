@@ -84,16 +84,11 @@ public class ShinyAppsDeploy extends Composite
    
    public void setSourceDir(String dir)
    {
-      dir = StringUtil.shortPathName(FileSystemItem.createDir(dir), 200);
+      dir = StringUtil.shortPathName(FileSystemItem.createDir(dir), 250);
       deployLabel_.setText(dir);
       appName.setText(FilePathUtils.friendlyFileName(dir));
    }
 
-   public void setDirSize(int size)
-   {
-      sizeLabel_.setText(" (" + StringUtil.formatFileSize(size) + ")");
-   }
-   
    public void setAccountList(JsArrayString accounts, String selected)
    {
       accountList.clear();
@@ -237,7 +232,6 @@ public class ShinyAppsDeploy extends Composite
    @UiField DeployStyle style;
    @UiField FlowPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
-   @UiField InlineLabel sizeLabel_;
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;

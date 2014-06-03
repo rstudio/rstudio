@@ -108,7 +108,6 @@ public class ShinyAppsDeployDialog
                   else
                   {
                      contents_.setFileList(files.getDirList());
-                     contents_.setDirSize(files.getDirSize());
                      deployButton_.setEnabled(true);
                   }
                }
