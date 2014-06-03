@@ -56,7 +56,8 @@ public:
             "appName = '" + app + "', " 
             "launch.browser = function (url) { "
             "   message('" kFinishedMarker "', url) "
-            "})");
+            "}, "
+            "launch.rmd = NULL)");
       pDeploy->start(cmd.c_str(), FilePath());
       return pDeploy;
    }
