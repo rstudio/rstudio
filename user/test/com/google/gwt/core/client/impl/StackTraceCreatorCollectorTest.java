@@ -46,26 +46,6 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
     assertEquals("anonymous", extractFunctionName("abc"));
   }
 
-  public void testChromeExtractName() {
-    CollectorChrome c = new CollectorChrome();
-
-    assertEquals("anonymous@@file.js:1:2", c.extractName(" at file.js:1:2"));
-    assertEquals("functionName@@file.js:1:2", c.extractName(" at functionName (file.js:1:2)"));
-    assertEquals("functionName@@file.js:1:2", c.extractName(" at Type.functionName (file.js:1:2)"));
-    assertEquals("functionName@@file.js:1:2",
-        c.extractName(" at Type.functionName [as methodName] (file.js:1:2)"));
-
-    // iOS style
-    assertEquals("functionName@@file.js:1", c.extractName("functionName@file.js:1"));
-  }
-
-  public void testFirefox14ExtractName() {
-    CollectorMoz c = new CollectorMoz();
-
-    assertEquals("anonymous", c.extractName("@file.js:1"));
-    assertEquals("functionName", c.extractName("functionName@file.js:1"));
-  }
-
   public void testChrome_25() {
     StackTraceElement[] expected = new StackTraceElement[] {
         createSTE("$third", "http://www.example.com/test/ABCD.cache.js@10", 300),

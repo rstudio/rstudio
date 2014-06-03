@@ -328,6 +328,9 @@ public class StackTraceCreator {
     @Override
     protected StackTraceElement[] getStackTrace(JsArrayString stack) {
       int length = stack.length();
+      if (length == 0) {
+        return null;
+      }
       StackTraceElement[] stackTrace = new StackTraceElement[length];
       for (int i = 0; i < length; i++) {
         String stackElements[] = stack.get(i).split("@@");

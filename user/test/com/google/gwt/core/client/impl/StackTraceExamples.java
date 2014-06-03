@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.client.impl;
 
+import static junit.framework.Assert.fail;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
@@ -26,16 +28,81 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 public class StackTraceExamples {
 
+  public static final Object JAVA = new Object();
+  public static final Object RECURSION = new Object();
+  public static final Object TYPE_ERROR = new Object();
+
+  private static final Object NO_THROW = new Object();
+  private static final int NO_OF_RECURSION = 3;
+
+  public static Exception getLiveException(Object whatToThrow) {
+    try {
+      throwException1(whatToThrow);
+      fail("No exception thrown");
+      return null; // shouldn't happen
+    } catch (Exception e) {
+      return e;
+    }
+  }
+
+  private static void throwException1(Object whatToThrow) throws Exception {
+    throwException2(whatToThrow);
+  }
+
+  private static void throwException2(Object whatToThrow) throws Exception {
+    if (whatToThrow == JAVA) {
+      throw new Exception("broken");
+    } else if (whatToThrow == RECURSION) {
+      throwRecursive(NO_OF_RECURSION);
+    } else {
+      throwJse(whatToThrow);
+    }
+  }
+
+  private static void throwRecursive(int count) throws Exception {
+    if (count > 1) {
+      throwRecursive(count - 1);
+    } else {
+      throwException1(JAVA);
+    }
+  }
+
+  public static String[] getNativeMethodNames() {
+    return throwJse(NO_THROW);
+  }
+
+  private static native String[] throwJse(Object whatToThrow) /*-{
+    function native1() {
+      return native2();
+    }
+    function native2() {
+      if (whatToThrow == @StackTraceExamples::TYPE_ERROR) {
+        null.a();
+      }
+
+      if (whatToThrow != @StackTraceExamples::NO_THROW) {
+        throw whatToThrow;
+      }
+
+      return [
+        @StackTraceCreator::getFunctionName(*)(arguments.callee),
+        @StackTraceCreator::getFunctionName(*)(arguments.callee.caller),
+      ];
+    }
+    return native1();
+  }-*/;
+
   // Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.22 (KHTML, like Gecko)
   // Chrome/25.0.1364.97 Safari/537.22
+  // Modified to test 'xxx [as yyy]' and 'xxx.yyy' scenarios
   public static native JavaScriptObject chrome_25() /*-{
     return {
         message: "Cannot read property 'length' of undefined",
         name: "TypeError",
         stack: "TypeError: Cannot read property 'length' of undefined\n" +
-            "    at $third (http://www.example.com/test/ABCD.cache.js:300:10)\n" +
-            "    at $second (http://www.example.com/test/ABCD.cache.js:200:10)\n" +
-            "    at $first (http://www.example.com/test/ABCD.cache.js:100:10)\n" +
+            "    at C.$third [as alt2](http://www.example.com/test/ABCD.cache.js:300:10)\n" +
+            "    at B.$second (http://www.example.com/test/ABCD.cache.js:200:10)\n" +
+            "    at $first [as alt1] (http://www.example.com/test/ABCD.cache.js:100:10)\n" +
             "    at $entry0 (http://www.example.com/test/ABCD.cache.js:50:10)"
     };
   }-*/;

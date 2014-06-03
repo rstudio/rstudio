@@ -29,8 +29,10 @@ import com.google.gwt.core.client.ScriptInjectorTest;
 import com.google.gwt.core.client.impl.ImplTest;
 import com.google.gwt.core.client.impl.SchedulerImplTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorCollectorTest;
-import com.google.gwt.core.client.impl.StackTraceCreatorEmulTest;
-import com.google.gwt.core.client.impl.StackTraceCreatorTest;
+import com.google.gwt.core.client.impl.StackTraceDevTest;
+import com.google.gwt.core.client.impl.StackTraceEmulTest;
+import com.google.gwt.core.client.impl.StackTraceNativeTest;
+import com.google.gwt.core.client.impl.StackTraceStripTest;
 import com.google.gwt.core.client.prefetch.RunAsyncCodeTest;
 import com.google.gwt.core.shared.SerializableThrowableTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -60,8 +62,10 @@ public class CoreSuite {
     suite.addTestSuite(ScriptInjectorTest.class);
     suite.addTestSuite(SerializableThrowableTest.class);
     suite.addTestSuite(StackTraceCreatorCollectorTest.class);
-    suite.addTestSuite(StackTraceCreatorEmulTest.class);
-    suite.addTestSuite(StackTraceCreatorTest.class);
+    suite.addTestSuite(StackTraceDevTest.class);
+    suite.addTestSuite(StackTraceEmulTest.class);
+    suite.addTestSuite(StackTraceNativeTest.class);
+    suite.addTestSuite(StackTraceStripTest.class);
 
     // Uncomment to print native stack traces for different platforms
     // suite.addTestSuite(com.google.gwt.core.client.impl.StackTraceGenerator.class);
