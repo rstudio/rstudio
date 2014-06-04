@@ -183,6 +183,7 @@ public class FileTypeRegistry
       register("README", TEXT, icons.iconText());
       register(".gitignore", TEXT, icons.iconText());
       register(".Rbuildignore", TEXT, icons.iconText());
+      register("packrat.lock", DCF, icons.iconText());
       register("*.r", R, icons.iconRdoc());
       register("*.q", R, icons.iconRdoc());
       register("*.s", R, icons.iconRdoc());

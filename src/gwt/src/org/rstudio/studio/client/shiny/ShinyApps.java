@@ -27,6 +27,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -64,6 +66,7 @@ public class ShinyApps implements SessionInitHandler,
    public ShinyApps(EventBus events, 
                     Commands commands, 
                     Session session,
+                    Satellite satellite,
                     GlobalDisplay display, 
                     Binder binder, 
                     ShinyAppsServerOperations server)
@@ -74,6 +77,7 @@ public class ShinyApps implements SessionInitHandler,
       session_ = session;
       server_ = server;
       events_ = events;
+      satellite_ = satellite;
 
       binder.bind(commands, this);
 
@@ -88,43 +92,7 @@ public class ShinyApps implements SessionInitHandler,
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
-      // "Manage accounts" can be invoked any time the package is available
-      commands_.shinyAppsManageAccounts().setVisible(
-            session_.getSessionInfo().getShinyappsInstalled());
-      
-      // This object keeps track of the most recent deployment we made of each
-      // directory, and is used to default directory deployments to last-used
-      // settings.
-      new JSObjectStateValue(
-            "shinyapps",
-            "shinyAppsDirectories",
-            ClientState.PERSISTENT,
-            session_.getSessionInfo().getClientState(),
-            false)
-       {
-          @Override
-          protected void onInit(JsObject value)
-          {
-             dirState_ = (ShinyAppsDirectoryState) (value == null ?
-                   ShinyAppsDirectoryState.create() :
-                   value.cast());
-          }
-   
-          @Override
-          protected JsObject getValue()
-          {
-             dirStateDirty_ = false;
-             return (JsObject) (dirState_ == null ?
-                   ShinyAppsDirectoryState.create().cast() :
-                   dirState_.cast());
-          }
-   
-          @Override
-          protected boolean hasChanged()
-          {
-             return dirStateDirty_;
-          }
-       };
+      ensureSessionInit();
    }
    
    @Override
@@ -132,22 +100,28 @@ public class ShinyApps implements SessionInitHandler,
    {
       if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_DEPLOY)
       {
-         // ignore this request if there's already a modal up (we particularly
-         // don't want to stack this modal with itself since the deploy request
-         // can be initiated from a satellite window, which has no knowledge of
-         // whether there's already a dialog up)
+         // ignore this request if there's already a modal up 
          if (ModalDialogTracker.numModalsShowing() > 0)
-            return;
-         
+            return;    
+
          final String dir = FilePathUtils.dirFromFile(event.getPath());
          ShinyAppsDeploymentRecord record = dirState_.getLastDeployment(dir);
          final String lastAccount = record == null ? null : record.getAccount();
          final String lastAppName = record == null ? null : record.getName();
+         
+         // don't consider this to be a deployment of a specific file unless
+         // we're deploying R Markdown content
+         String file = "";
+         if (event.getPath().toLowerCase().endsWith(".rmd"))
+         {
+            file = FilePathUtils.friendlyFileName(event.getPath());
+         }
 
          ShinyAppsDeployDialog dialog = 
                new ShinyAppsDeployDialog(
                          server_, display_, events_, 
-                         dir, lastAccount, lastAppName);
+                         dir, file, lastAccount, lastAppName,
+                         satellite_.isCurrentWindowSatellite());
          dialog.showModal();
       }
       else if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_TERMINATE)
@@ -161,6 +135,7 @@ public class ShinyApps implements SessionInitHandler,
          final ShinyAppsDeployInitiatedEvent event)
    {
       server_.deployShinyApp(event.getPath(), 
+                             event.getSourceFile(),
                              event.getRecord().getAccount(), 
                              event.getRecord().getName(), 
       new ServerRequestCallback<Boolean>()
@@ -213,8 +188,58 @@ public class ShinyApps implements SessionInitHandler,
       dialog.showModal();
    }
    
-   public static native void deployFromSatellite(String filename) /*-{
-      $wnd.opener.deployToShinyApps(filename);
+   public void ensureSessionInit()
+   {
+      if (sessionInited_)
+         return;
+      
+      // "Manage accounts" can be invoked any time the package is available
+      commands_.shinyAppsManageAccounts().setVisible(
+            session_.getSessionInfo().getShinyappsInstalled());
+      
+      // This object keeps track of the most recent deployment we made of each
+      // directory, and is used to default directory deployments to last-used
+      // settings.
+      new JSObjectStateValue(
+            "shinyapps",
+            "shinyAppsDirectories",
+            ClientState.PERSISTENT,
+            session_.getSessionInfo().getClientState(),
+            false)
+       {
+          @Override
+          protected void onInit(JsObject value)
+          {
+             dirState_ = (ShinyAppsDirectoryState) (value == null ?
+                   ShinyAppsDirectoryState.create() :
+                   value.cast());
+          }
+   
+          @Override
+          protected JsObject getValue()
+          {
+             dirStateDirty_ = false;
+             return (JsObject) (dirState_ == null ?
+                   ShinyAppsDirectoryState.create().cast() :
+                   dirState_.cast());
+          }
+   
+          @Override
+          protected boolean hasChanged()
+          {
+             return dirStateDirty_;
+          }
+       };
+       
+       sessionInited_ = true;
+   }
+   
+   public static native void deployFromSatellite(
+         String path,
+         String file, 
+         boolean launch, 
+         JavaScriptObject record) /*-{
+      $wnd.opener.deployToShinyApps(path, file, launch, record);
    }-*/;
    
    // Private methods ---------------------------------------------------------
@@ -348,13 +373,14 @@ public class ShinyApps implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToShinyApps = $entry(
-         function(file) {
-            thiz.@org.rstudio.studio.client.shiny.ShinyApps::deployToShinyApps(Ljava/lang/String;)(file);
+         function(path, file, launch, record) {
+            thiz.@org.rstudio.studio.client.shiny.ShinyApps::deployToShinyApps(Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, file, launch, record);
          }
       ); 
    }-*/;
    
-   private void deployToShinyApps(String file)
+   private void deployToShinyApps(String path, String file, boolean launch, 
+                                  JavaScriptObject jsoRecord)
    {
       // this can be invoked by a satellite, so bring the main frame to the
       // front if we can
@@ -363,8 +389,9 @@ public class ShinyApps implements SessionInitHandler,
       else
          WindowEx.get().focus();
       
-      events_.fireEvent(new ShinyAppsActionEvent(
-            ShinyAppsActionEvent.ACTION_TYPE_DEPLOY, file));
+      ShinyAppsDeploymentRecord record = jsoRecord.cast();
+      events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
+            path, file, launch, record));
    }
    
    private final Commands commands_;
@@ -372,7 +399,9 @@ public class ShinyApps implements SessionInitHandler,
    private final Session session_;
    private final ShinyAppsServerOperations server_;
    private final EventBus events_;
+   private final Satellite satellite_;
    private boolean launchBrowser_ = false;
+   private boolean sessionInited_ = false;
    
    private ShinyAppsDirectoryState dirState_;
    private boolean dirStateDirty_ = false;

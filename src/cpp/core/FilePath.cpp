@@ -865,7 +865,12 @@ Error FilePath::childrenRecursive(
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         iterationFunction(itr.level(),FilePath(BOOST_FS_PATH2STR(itr->path())));
+         if (!iterationFunction(itr.level(),
+                                FilePath(BOOST_FS_PATH2STR(itr->path()))))
+         {
+            // end the iteration if requested
+            break;
+         }
       }
 
       return Success() ;

@@ -39,7 +39,7 @@ class Error ;
 class FilePath
 {
 public:
-   typedef boost::function<void(int, const FilePath&)>  
+   typedef boost::function<bool(int, const FilePath&)>  
                                                 RecursiveIterationFunction;
 
 public:

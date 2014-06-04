@@ -3343,7 +3343,8 @@ public class TextEditingTarget implements
    
    void renderRmd()
    { 
-      boolean renderSourceOnly = (docUpdateSentinel_.getPath() == null);
+      boolean renderSourceOnly = (docUpdateSentinel_.getPath() == null) &&
+                                  !isShinyDoc();
           
       if (renderSourceOnly)
       {

@@ -89,6 +89,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentFiles;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
@@ -3285,13 +3286,14 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void deployShinyApp(String dir, String account, String appName,
-         ServerRequestCallback<Boolean> requestCallback)
+   public void deployShinyApp(String dir, String file, String account, 
+         String appName, ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
-      params.set(1, new JSONString(account));
-      params.set(2, new JSONString(appName));
+      params.set(1, new JSONString(file));
+      params.set(2, new JSONString(account));
+      params.set(3, new JSONString(appName));
       sendRequest(RPC_SCOPE,
             DEPLOY_SHINY_APP,
             params,
@@ -3300,7 +3302,7 @@ public class RemoteServer implements Server
 
    @Override
    public void getDeploymentFiles(String dir,
-         ServerRequestCallback<JsArrayString> requestCallback)
+         ServerRequestCallback<ShinyAppsDeploymentFiles> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));

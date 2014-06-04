@@ -1,8 +1,8 @@
 ## Shiny Presentation
 
-This R Markdown presentation is made interactive using Shiny. For more information on authoring Shiny content in R Markdown documents, see [Shiny in R Markdown](http://rmarkdown.rstudio.com/authoring_shiny.html). 
+This R Markdown presentation is made interactive using Shiny. The viewers of the presentation can change the assumptions underlying what's presented and see the results immediately. 
 
-When you click the **Run Document** button a presentation will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+To learn more, see [Interative Documents (Shiny Docs)](http://rmarkdown.rstudio.com/authoring_shiny.html).
 
 ## Slide with Interactive Plot
 

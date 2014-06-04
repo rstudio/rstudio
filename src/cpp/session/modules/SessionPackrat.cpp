@@ -70,7 +70,7 @@ void setStoredHash(PackratHashType hashType, const std::string& hash)
 
 // adds content from the given file to the given file if it's a 
 // DESCRIPTION file (used to summarize library content for hashing)
-void addDescContent(int level, const FilePath& path, std::string* pDescContent)
+bool addDescContent(int level, const FilePath& path, std::string* pDescContent)
 {
    std::string newDescContent;
    if (path.filename() == "DESCRIPTION") 
@@ -78,6 +78,7 @@ void addDescContent(int level, const FilePath& path, std::string* pDescContent)
       Error error = readStringFromFile(path, &newDescContent);
       pDescContent->append(newDescContent);
    }
+   return true;
 }
 
 // computes a hash of the content of all DESCRIPTION files in the Packrat

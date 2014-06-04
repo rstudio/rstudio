@@ -98,7 +98,6 @@
 	<g:Grid><g:row>
     <g:customCell styleName="{style.rootCell}">
       <g:FlowPanel>
-        <g:InlineLabel text="Deploy From: "></g:InlineLabel>
         <g:InlineLabel styleName="{style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
         <g:ScrollPanel styleName="{style.fileList}">
           <g:FlowPanel ui:field="fileListPanel_">
