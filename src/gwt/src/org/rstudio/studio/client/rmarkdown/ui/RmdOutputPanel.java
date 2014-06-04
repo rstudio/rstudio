@@ -51,7 +51,9 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.shiny.ShinyApps;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
+import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
 import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
@@ -59,6 +61,7 @@ import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEve
 import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent;
 import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent.Handler;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
+import org.rstudio.studio.client.common.satellite.Satellite;
 
 public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                             implements RmdOutputPresenter.Display
@@ -66,12 +69,20 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Inject
    public RmdOutputPanel(Commands commands, 
                          FileTypeRegistry fileTypeRegistry,
-                         RMarkdownServerOperations server)
+                         RMarkdownServerOperations server,
+                         EventBus events, 
+                         ShinyApps shinyApps,
+                         Satellite satellite)
    {
       super(commands);
       fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
       shinyFrame_ = new ShinyFrameHelper();
+      events_ = events;
+      
+      // if this window is a satellite, ensure that the shinyapps instance
+      // is initialized
+      shinyApps.ensureSessionInit();
    }
    
    @Override
@@ -197,8 +208,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          @Override
          public void onClick(ClickEvent evt)
          {
-            if (targetFile_ != null)
-              ShinyApps.deployFromSatellite(targetFile_.getPath());
+            events_.fireEvent(new ShinyAppsActionEvent(
+                  ShinyAppsActionEvent.ACTION_TYPE_DEPLOY, 
+                  targetFile_.getPath()));
          }
       });
       toolbar.addLeftWidget(deployButton_);
@@ -526,8 +538,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private String title_;
    
    private FileTypeRegistry fileTypeRegistry_;
-   
    private RMarkdownServerOperations server_;
+   private EventBus events_;
+
    private int scrollPosition_ = 0;
    
    private FileSystemItem targetFile_ = null;
