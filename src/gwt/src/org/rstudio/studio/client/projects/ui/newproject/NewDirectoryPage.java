@@ -26,6 +26,7 @@ import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -90,24 +91,30 @@ public class NewDirectoryPage extends NewProjectWizardPage
       addWidget(newProjectParent_);
       
       // if git is available then add git init
+      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
-      chkGitInit_ = new CheckBox("Create a git repository for this project");
+      HorizontalPanel optionsPanel = new HorizontalPanel();
+      chkGitInit_ = new CheckBox("Create a git repository");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
-         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
          chkGitInit_.setValue(uiPrefs.newProjGitInit().getValue());
-         
-         addWidget(chkGitInit_);
+         chkGitInit_.getElement().getStyle().setMarginRight(7, Unit.PX);
+         optionsPanel.add(chkGitInit_);
       }
       
       // Initialize project with packrat
-      chkPackratInit_ = new CheckBox("Use Packrat to manage this project");
+      chkPackratInit_ = new CheckBox("Use packrat with this project");
       if (sessionInfo.getPackratAvailable())
       {
-         addSpacer();
-         addWidget(chkPackratInit_);
+         chkPackratInit_.setValue(uiPrefs.newProjUsePackrat().getValue());
+         optionsPanel.add(chkPackratInit_);
+      }
+      
+      if (optionsPanel.getWidgetCount() > 0)
+      {
+         addWidget(optionsPanel);
       }
    }
    

@@ -258,6 +258,13 @@ public class Projects implements OpenProjectFileHandler,
                                           newProject.getCreateGitRepo());
                }
                
+               if (newProject.getUsePackrat() !=
+                   uiPrefs.newProjUsePackrat().getValue())
+               {
+                  uiPrefs.newProjUsePackrat().setGlobalValue(
+                                          newProject.getUsePackrat());
+               }
+               
                // call the server -- in all cases continue on with
                // creating the project (swallow errors updating the pref)
                projServer_.setUiPrefs(
@@ -414,18 +421,9 @@ public class Projects implements OpenProjectFileHandler,
                   newProject.getProjectFile()
                ).getParentPathString();
                
-               packratServer_.bootstrap(projDir, new VoidServerRequestCallback() {
-
-                  @Override
-                  public void onError(ServerError error) {
-                     
-                     // TODO Auto-generated method stub
-                     
-                  }
-                  
-               });
-               
-               
+               packratServer_.bootstrap(
+                  projDir, 
+                  new VoidServerRequestCallback(indicator));
             }
          }, false);
       }
