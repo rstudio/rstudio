@@ -26,7 +26,8 @@ public class PackageLibraryUtils
       System
    }
 
-   public static PackageLibraryType typeOfLibrary(Session session, String library)
+   public static PackageLibraryType typeOfLibrary(Session session, 
+                                                  String library)
    {
       if (library.startsWith(
            session.getSessionInfo().getActiveProjectDir().getPath()))

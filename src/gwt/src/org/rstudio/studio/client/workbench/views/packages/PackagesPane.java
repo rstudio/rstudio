@@ -39,10 +39,12 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Style.Unit;
@@ -57,6 +59,7 @@ import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
+import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -234,7 +237,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
       
-      packagesTable_ = new DataGrid<PackageInfo>();
+      packagesTable_ = new DataGrid<PackageInfo>(-1, 
+            (PackagesDataGridResources) GWT.create(PackagesDataGridResources.class));
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
         
@@ -290,6 +294,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.setTableBuilder(new 
             PackageTableBuilder(packagesTable_));
       packagesTable_.setSkipRowHoverCheck(true);
+      packagesTable_.setRowStyles(new PackageRowStyles());
      
       packagesDataProvider_.addDataDisplay(packagesTable_);
 
@@ -412,6 +417,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       private String lastLibrary_ = "";
       private int lastIdx_ = 0;
    }   
+   
+   private class PackageRowStyles implements RowStyles<PackageInfo>
+   {
+      public String getStyleNames(PackageInfo row, int rowIndex)
+      {
+         // TODO: return styles applying highlighted color, etc. 
+         return "";
+      }
+   }
   
    private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
