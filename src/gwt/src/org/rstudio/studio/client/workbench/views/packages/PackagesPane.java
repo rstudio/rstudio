@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -35,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
@@ -53,6 +53,7 @@ import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
@@ -215,8 +216,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
          sb.appendHtmlConstant("<div title=\"");
-         sb.appendEscaped(friendlyNameOfLibrary(value.getLibrary()) + " (" +
-                          value.getLibrary() + ")");
+         sb.appendEscaped(PackageLibraryUtils.getLibraryDescription(
+               session_, value.getLibrary()) + " (" +
+               value.getLibrary() + ")");
          sb.appendHtmlConstant("\"");
          sb.appendHtmlConstant(" class=\"");
          sb.appendEscaped(ThemeStyles.INSTANCE.adornedText());
@@ -233,7 +235,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
       
       packagesTable_ = new DataGrid<PackageInfo>();
-      // packagesTable_.setTableBuilder(new PackageTableBuilder(packagesTable_));
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
         
@@ -286,6 +287,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       packagesTable_.setHeaderBuilder(new 
             PackageHeaderBuilder(packagesTable_, false));
+      packagesTable_.setTableBuilder(new 
+            PackageTableBuilder(packagesTable_));
+      packagesTable_.setSkipRowHoverCheck(true);
      
       packagesDataProvider_.addDataDisplay(packagesTable_);
 
@@ -346,23 +350,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
-   private String friendlyNameOfLibrary(String library)
-   {
-      if (library.startsWith(
-            session_.getSessionInfo().getActiveProjectDir().getPath()))
-      {
-         return "Project Library";
-      }
-      else if (library.startsWith(FileSystemItem.HOME_PATH))
-      {
-         return "User Library";
-      } 
-      else
-      {
-         return "System Library";
-      }
-   }
-         
    private class PackageHeaderBuilder 
            extends AbstractHeaderOrFooterBuilder<PackageInfo>
    {
@@ -389,6 +376,43 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          return true;
       }
    }
+   
+   class PackageTableBuilder extends DefaultCellTableBuilder<PackageInfo>
+   {
+      public PackageTableBuilder(AbstractCellTable<PackageInfo> cellTable)
+      {
+         super(cellTable);
+      }
+
+      @Override
+      public void buildRowImpl(PackageInfo pkg, int idx)
+      {
+         String library = pkg.getLibrary();
+         if ((idx == lastIdx_ + 1 && !lastLibrary_.equals(library)) || 
+             idx == 0)
+         {
+           TableRowBuilder row = startRow();
+           TableCellBuilder cell = row.startTD();
+           cell.colSpan(5).className(
+                 PackagesCellTableResources.INSTANCE.cellTableStyle()
+                 .libraryHeader());
+           cell.title(library);
+           cell.startH1().text(
+                 PackageLibraryUtils.getLibraryDescription(session_, library))
+                 .endH1();
+           row.endTD();
+           
+           row.endTR();
+           lastLibrary_ = library;
+         }
+         super.buildRowImpl(pkg, idx);
+         lastIdx_ = idx;
+      }
+      
+      private String lastLibrary_ = "";
+      private int lastIdx_ = 0;
+   }   
+  
    private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;

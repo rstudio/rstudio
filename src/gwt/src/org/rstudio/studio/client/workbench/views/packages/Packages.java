@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
@@ -115,6 +116,7 @@ public class Packages
       events_ = events ;
       defaultCRANMirror_ = defaultCRANMirror;
       workbenchContext_ = workbenchContext;
+      session_ = session;
       binder.bind(commands, this);
 
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
@@ -532,7 +534,15 @@ public class Packages
             Collections.sort(allPackages_, new Comparator<PackageInfo>() {
                public int compare(PackageInfo o1, PackageInfo o2)
                {
-                  return o1.getName().compareToIgnoreCase(o2.getName());
+                  // sort first by library, then by name
+                  int library = 
+                        PackageLibraryUtils.typeOfLibrary(
+                              session_, o1.getLibrary()).compareTo(
+                        PackageLibraryUtils.typeOfLibrary(
+                              session_, o2.getLibrary()));
+                  return library == 0 ? 
+                        o1.getName().compareToIgnoreCase(o2.getName()) :
+                        library;
                }
             });
             
@@ -828,6 +838,7 @@ public class Packages
    private final GlobalDisplay globalDisplay_ ;
    private final WorkbenchContext workbenchContext_;
    private final DefaultCRANMirror defaultCRANMirror_;
+   private final Session session_;
    private PackageInstallOptions installOptions_ = 
                                   PackageInstallOptions.create(true, "", true);
 }
