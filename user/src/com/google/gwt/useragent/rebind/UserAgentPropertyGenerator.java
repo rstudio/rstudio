@@ -69,7 +69,7 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
    * that the correct user agent permutation is executing.
    */
   static void writeUserAgentPropertyJavaScript(SourceWriter body,
-      SortedSet<String> possibleValues) {
+      SortedSet<String> possibleValues, String fallback) {
 
     // write preamble
     body.println("var ua = navigator.userAgent.toLowerCase();");
@@ -85,7 +85,10 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
     }
 
     // default return
-    body.println("return 'unknown';");
+    if (fallback == null) {
+      fallback = "unknown";
+    }
+    body.println("return '" + fallback + "';");
   }
 
   @Override
@@ -96,7 +99,7 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
     StringSourceWriter body = new StringSourceWriter();
     body.println("{");
     body.indent();
-    writeUserAgentPropertyJavaScript(body, possibleValues);
+    writeUserAgentPropertyJavaScript(body, possibleValues, fallback);
     body.outdent();
     body.println("}");
 

@@ -54,10 +54,33 @@ public class UserAgentAsserter implements EntryPoint {
 
     if (!compileTimeValue.equals(runtimeValue)) {
       // Let it escape and get handled by UCEH:
-      throw new AssertionError("Possible problem with your *.gwt.xml module file.\n"
-          + "The compile time user.agent value (" + compileTimeValue + ") "
-          + "does not match the runtime user.agent value (" + runtimeValue + ").\n"
-          + "Expect more errors.");
+      throw new UserAgentAssertionError(compileTimeValue, runtimeValue);
+    }
+  }
+
+  /**
+   * An error object that indicates that the user agent detected at runtime did
+   * not match the user agent that the module expected to find.
+   */
+  public static class UserAgentAssertionError extends AssertionError {
+    /**
+     * Default constructor for serialization.
+     */
+    public UserAgentAssertionError() {
+    }
+
+    /**
+     * Creates an error with the given expected and actual user.agent value.
+     *
+     * @param compileTimeValue the compile time user.agent value, either in this
+     *                         permutation or soft permutation
+     * @param runtimeValue the detected user.agent value after the module started
+     */
+    public UserAgentAssertionError(String compileTimeValue, String runtimeValue) {
+      super("Possible problem with your *.gwt.xml module file.\n"
+              + "The compile time user.agent value (" + compileTimeValue + ") "
+              + "does not match the runtime user.agent value (" + runtimeValue + ").\n"
+              + "Expect more errors.");
     }
   }
 }

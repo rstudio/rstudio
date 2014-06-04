@@ -89,7 +89,7 @@ public class UserAgentGenerator extends Generator {
       sw.println("public native String getRuntimeValue() /*-{");
       sw.indent();
       UserAgentPropertyGenerator.writeUserAgentPropertyJavaScript(sw,
-          selectionProperty.getPossibleValues());
+          selectionProperty.getPossibleValues(), null);
       sw.outdent();
       sw.println("}-*/;");
       sw.println();
