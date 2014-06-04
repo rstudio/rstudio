@@ -20,12 +20,10 @@ import java.util.List;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
@@ -42,13 +40,14 @@ public class PackratStatusDialogContents extends Composite
    public PackratStatusDialogContents(JsArray<PackratStatus> prStatusArray) {
       
       // jsArray -> List
-      List<PackratStatus> prStatusList = new ArrayList<PackratStatus>();
-      JsArrayUtil.fillList(prStatusArray, prStatusList);
+      prStatusList_ = new ArrayList<PackratStatus>();
+      JsArrayUtil.fillList(prStatusArray, prStatusList_);
       
       // create the status table
       statusTable_ = new DataGrid<PackratStatus>();
-      statusTable_.setRowData(prStatusList);
+      statusTable_.setRowData(prStatusList_);
       
+      // init
       initTableColumns();
       
       // create it
@@ -56,58 +55,21 @@ public class PackratStatusDialogContents extends Composite
       
    }
    
-   private void initTableColumns() {
-      
-      // package name column
-      Column<PackratStatus, String> packageNameColumn = new Column<PackratStatus, String>(new TextCell()) {
-         @Override
-         public String getValue(PackratStatus obj) {
-            return obj.getPackageName();
-         }
-      };
-      
-      statusTable_.addColumn(packageNameColumn, "Package");
-      
-      Column<PackratStatus, String> packratVersionColumn = new Column<PackratStatus, String>(new TextCell()) {
-         @Override
-         public String getValue(PackratStatus obj) {
-            return obj.getPackageVersion();
-         }
-      };
-      
-      statusTable_.addColumn(packratVersionColumn, "Packrat Version");
-      
-      Column<PackratStatus, String> packageSourceColumn = new Column<PackratStatus, String>(new TextCell()) {
-         @Override
-         public String getValue(PackratStatus obj) {
-            return obj.getPackageSource();
-         }
-      };
-      
-      statusTable_.addColumn(packageSourceColumn, "Source");
-      
-      // package name column
-      Column<PackratStatus, String> packratLibraryVersionColumn = new Column<PackratStatus, String>(new TextCell()) {
-         @Override
-         public String getValue(PackratStatus obj) {
-            return obj.getLibraryVersion();
-         }
-      };
-      
-      statusTable_.addColumn(packratLibraryVersionColumn, "Library Version");
-      
-      // package name column
-      Column<PackratStatus, String> currentlyUsedColumn = new Column<PackratStatus, String>(new TextCell()) {
-         @Override
-         public String getValue(PackratStatus obj) {
-            return obj.getCurrentlyUsed();
-         }
-      };
-      
-      statusTable_.addColumn(currentlyUsedColumn, "Currently Used");
-      
+   private void addColumn(DataGrid<PackratStatus> statusTable, SortableColumnWithHeader<PackratStatus> col) {
+      statusTable.addColumn(col.getColumn(), col.getHeader());
    }
    
+   private void initTableColumns() {
+      
+      addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "package", "Package"));
+      addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "packrat.source", "Source"));
+      addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "packrat.version", "Lockfile Version"));
+      addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "library.version", "Library Version"));
+      addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "currently.used", "Currently Used?"));
+
+   }
+   
+   private final List<PackratStatus> prStatusList_;
    @UiField (provided = true) DataGrid<PackratStatus> statusTable_;
 
 }
