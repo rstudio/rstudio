@@ -24,22 +24,16 @@ renderPlot({
 })
 ```
 
-## Slide with Embedded Shiny Application
+## Slide with Bullets
 
-```{r, echo=FALSE}
-shinyAppDir(
-  system.file("examples/04_mpg", package="shiny"),
-  options=list(
-    width="100%", height=500
-  )
-)
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide with R Code and Output
+
+```{r}
+summary(cars)
 ```
-
-## Summary
-
-- The first slide illustrates including Shiny inputs and outputs directly within an R code chunk.
-- The second slide demonstrates embedding a full Shiny application using the `shinyAppDir` function (referencing a directory that contains an existing Shiny application).
-- You can also use the `shinyApp` function to define an application inline.
-
 
 
