@@ -21,11 +21,13 @@ import java.util.Map;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.ShinyApps;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentFiles;
@@ -53,7 +55,8 @@ public class ShinyAppsDeployDialog
                                 final String sourceDir, 
                                 String sourceFile,
                                 final String lastAccount, 
-                                String lastAppName)
+                                String lastAppName, 
+                                boolean isSatellite)
                                 
    {
       super(server, display, new ShinyAppsDeploy());
@@ -66,6 +69,7 @@ public class ShinyAppsDeployDialog
       sourceFile_ = sourceFile;
       events_ = events;
       lastAppName_ = lastAppName;
+      isSatellite_ = isSatellite;
 
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
@@ -350,12 +354,35 @@ public class ShinyAppsDeployDialog
       
       String account = contents_.getSelectedAccount();
       
-      // let everyone know a deployment has started 
-      events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
-            sourceDir_,
-            sourceFile_,
-            launchCheck_.getValue(),
-            ShinyAppsDeploymentRecord.create(appName, account, "")));
+      if (isSatellite_)
+      {
+         // in a satellite window, call back to the main window to do a 
+         // deployment
+         ShinyApps.deployFromSatellite(
+               sourceDir_, 
+               sourceFile_, 
+               launchCheck_.getValue(), 
+               ShinyAppsDeploymentRecord.create(appName, account, ""));
+
+         // we can't raise the main window if we aren't in desktop mode, so show
+         // a dialog to guide the user there
+         if (!Desktop.isDesktop())
+         {
+            display_.showMessage(GlobalDisplay.MSG_INFO, "Deployment Started",
+                  "RStudio is deploying " + appName + " to ShinyApps. " + 
+                  "Check the Deploy console tab in the main window for " + 
+                  "status updates. ");
+         }
+      }
+      else
+      {
+         // in the main window, initiate the deployment directly
+         events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
+               sourceDir_,
+               sourceFile_,
+               launchCheck_.getValue(),
+               ShinyAppsDeploymentRecord.create(appName, account, "")));
+      }
 
       closeDialog();
    }
@@ -373,6 +400,7 @@ public class ShinyAppsDeployDialog
    }
    
    private final EventBus events_;
+   private final boolean isSatellite_;
    
    private String sourceDir_;
    private String sourceFile_;
