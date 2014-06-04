@@ -1756,7 +1756,8 @@ std::string githubUrl(const std::string& view,
    }
    else if (result.exitStatus != 0)
    {
-      LOG_ERROR_MESSAGE(result.stdErr);
+      if (!result.stdErr.empty())
+         LOG_ERROR_MESSAGE(result.stdErr);
       return std::string();
    }
 
