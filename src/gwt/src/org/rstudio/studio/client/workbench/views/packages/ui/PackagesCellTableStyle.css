@@ -1,4 +1,5 @@
 @def selectionBorderWidth 2px;
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
 .cellTableCell input[type=checkbox] {
    margin-top: 0;
@@ -38,4 +39,24 @@
 	margin-top: 0px;
 	margin-bottom: 3px;
 	font-size: x-small;
+}
+
+.packageTableHeader
+{
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   font-family: proportionalFont;
+   border-bottom: 1px solid #d6dadc;
+   border-right: 1px solid #d6dadc;
+   border-top: 1px solid white;
+   border-left: 1px solid white;
+   padding: 1px 2px;
+   color: #3c474d;
+   background-color: #eeeff1;
+   font-weight: normal;
+   text-align: left;
+   border-collapse: separate;
+   font-size: 11px;
+   padding-left: 15px;
 }

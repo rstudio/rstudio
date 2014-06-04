@@ -43,16 +43,20 @@ import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableRe
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.dom.builder.shared.TableCellBuilder;
+import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.AbstractCellTable;
+import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -228,18 +232,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
       
-      packagesTable_ = new CellTable<PackageInfo>(
-        15,
-        PackagesCellTableResources.INSTANCE);
+      packagesTable_ = new DataGrid<PackageInfo>();
+      // packagesTable_.setTableBuilder(new PackageTableBuilder(packagesTable_));
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
-      packagesTable_.setWidth("100%", false);
         
       LoadedColumn loadedColumn = new LoadedColumn();
-      packagesTable_.addColumn(loadedColumn);
+      packagesTable_.addColumn(loadedColumn, new TextHeader(""));
       
       NameColumn nameColumn = new NameColumn();
-      packagesTable_.addColumn(nameColumn);
+      packagesTable_.addColumn(nameColumn, new TextHeader("Name"));
     
       TextColumn<PackageInfo> descColumn = new TextColumn<PackageInfo>() {
          @Override
@@ -249,7 +251,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          } 
       };  
       
-      packagesTable_.addColumn(descColumn);
+      packagesTable_.addColumn(descColumn, new TextHeader("Description"));
       
       Column<PackageInfo, PackageInfo> versionColumn = 
          new Column<PackageInfo, PackageInfo>(new VersionCell()) {
@@ -261,7 +263,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             }
       };
       
-      packagesTable_.addColumn(versionColumn);
+      packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
       
       ImageButtonColumn<PackageInfo> removeColumn = 
         new ImageButtonColumn<PackageInfo>(
@@ -274,15 +276,20 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             }  
           },
           "Remove package");
-      packagesTable_.addColumn(removeColumn);
-      packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
+      packagesTable_.addColumn(removeColumn, new TextHeader(""));
+
+      packagesTable_.setColumnWidth(loadedColumn, 5, Unit.PCT);
+      packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
+      packagesTable_.setColumnWidth(descColumn, 60, Unit.PCT);
+      packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
+      packagesTable_.setColumnWidth(removeColumn, 5, Unit.PCT);
       
+      packagesTable_.setHeaderBuilder(new 
+            PackageHeaderBuilder(packagesTable_, false));
      
       packagesDataProvider_.addDataDisplay(packagesTable_);
-      
-      ScrollPanel scrollPanel = new ScrollPanel();
-      scrollPanel.setWidget(packagesTable_);
-      return scrollPanel;
+
+      return packagesTable_;
    }
    
    
@@ -356,7 +363,33 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
          
-   private CellTable<PackageInfo> packagesTable_;
+   private class PackageHeaderBuilder 
+           extends AbstractHeaderOrFooterBuilder<PackageInfo>
+   {
+      public PackageHeaderBuilder(AbstractCellTable<PackageInfo> table,
+                                  boolean isFooter)
+      {
+         super(table, isFooter);
+      }
+
+      @Override
+      protected boolean buildHeaderOrFooterImpl()
+      {
+         TableRowBuilder row = startRow();
+         for (int i = 0; i < packagesTable_.getColumnCount(); i++)
+         {
+            TableCellBuilder cell = row.startTH();
+            cell.className(PackagesCellTableResources.INSTANCE
+                           .cellTableStyle().packageTableHeader());
+            TextHeader header = (TextHeader)packagesTable_.getHeader(i);
+            cell.text(header.getValue());
+            cell.endTH();
+         }
+         row.end();
+         return true;
+      }
+   }
+   private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
