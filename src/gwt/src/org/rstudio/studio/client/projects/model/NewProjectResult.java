@@ -45,7 +45,8 @@ public class NewProjectResult
       return createGitRepo_;
    }
    
-   public boolean getUsePackrat() {
+   public boolean getUsePackrat() 
+   {
       return usePackrat_;
    }
    

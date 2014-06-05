@@ -37,7 +37,8 @@ public class PackratStatusDialogContents extends Composite
 
    interface PackratStatusUiBinder extends UiBinder<Widget, PackratStatusDialogContents> {}
 
-   public PackratStatusDialogContents(JsArray<PackratStatus> prStatusArray) {
+   public PackratStatusDialogContents(JsArray<PackratStatus> prStatusArray) 
+   {
       
       // jsArray -> List
       prStatusList_ = new ArrayList<PackratStatus>();
@@ -55,18 +56,18 @@ public class PackratStatusDialogContents extends Composite
       
    }
    
-   private void addColumn(DataGrid<PackratStatus> statusTable, SortableColumnWithHeader<PackratStatus> col) {
+   private void addColumn(DataGrid<PackratStatus> statusTable, SortableColumnWithHeader<PackratStatus> col) 
+   {
       statusTable.addColumn(col.getColumn(), col.getHeader());
    }
    
-   private void initTableColumns() {
-      
+   private void initTableColumns() 
+   {   
       addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "package", "Package"));
       addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "packrat.source", "Source"));
       addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "packrat.version", "Lockfile Version"));
       addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "library.version", "Library Version"));
       addColumn(statusTable_, new SortableColumnWithHeader<PackratStatus>(prStatusList_, "currently.used", "Currently Used?"));
-
    }
    
    private final List<PackratStatus> prStatusList_;

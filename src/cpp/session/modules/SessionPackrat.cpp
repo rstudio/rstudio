@@ -159,15 +159,11 @@ void checkHashes(
 
 void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
 {
-   std::cerr << "detected lockfile change (" 
-      << oldHash << " -> " << newHash << ")" << std::endl;
    setStoredHash(HASH_TYPE_LOCKFILE, newHash);
 }
 
 void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 {
-   std::cerr << "detected library change (" 
-      << oldHash << " -> " << newHash << ")" << std::endl;
    setStoredHash(HASH_TYPE_LIBRARY, newHash);
 }
 

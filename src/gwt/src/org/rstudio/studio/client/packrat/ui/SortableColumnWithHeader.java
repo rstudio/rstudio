@@ -11,12 +11,12 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 
-public class SortableColumnWithHeader<T extends IGetValue> {
-   
+public class SortableColumnWithHeader<T extends IGetValue> 
+{   
    public SortableColumnWithHeader(List<T> list,
                                    String key,
-                                   String headerLabel) {
-      
+                                   String headerLabel) 
+   {   
       list_ = list;
       key_ = key;
       headerLabel_ = headerLabel;
@@ -60,11 +60,13 @@ public class SortableColumnWithHeader<T extends IGetValue> {
       
    }
    
-   public Column<T, String> getColumn() {
+   public Column<T, String> getColumn() 
+   {
       return column_;
    }
    
-   public Header<String> getHeader() {
+   public Header<String> getHeader() 
+   {
       return header_;
    }
    

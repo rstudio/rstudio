@@ -490,7 +490,8 @@ bool restore(const FilePath& statePath,
    }
 
    // restore libpaths -- but only if packrat mode is off
-   if (error || !packratModeOn) {
+   if (error || !packratModeOn)
+   {
       error = restoreLibPaths(statePath.complete(kLibPathsFile));
       if (error)
          reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
