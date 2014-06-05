@@ -66,7 +66,6 @@ import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -343,11 +342,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
           "Remove package");
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
 
-      packagesTable_.setColumnWidth(loadedColumn, 5, Unit.PCT);
+      packagesTable_.setColumnWidth(loadedColumn, 30, Unit.PX);
       packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
       packagesTable_.setColumnWidth(descColumn, 60, Unit.PCT);
       packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
-      packagesTable_.setColumnWidth(removeColumn, 5, Unit.PCT);
+      packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
       
       packagesTable_.setHeaderBuilder(new 
             PackageHeaderBuilder(packagesTable_, false));

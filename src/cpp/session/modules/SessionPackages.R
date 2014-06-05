@@ -284,7 +284,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
   
 })
 
-.rs.addJsonRpcHandler( "list_packages", function()
+.rs.addFunction("listInstalledPackages", function()
 {
    # calculate unique libpaths
    uniqueLibPaths <- .rs.uniqueLibraryPaths()
@@ -330,6 +330,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    # sort and return
    packages[order(packages$name),]
+}
+
+.rs.addJsonRpcHandler( "list_packages", function()
+{
+   .rs.listInstalledPackages()
 })
 
 .rs.addJsonRpcHandler( "get_package_install_context", function()
