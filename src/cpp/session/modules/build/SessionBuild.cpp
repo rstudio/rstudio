@@ -51,7 +51,6 @@
 #include "SessionBuildEnvironment.hpp"
 #include "SessionBuildErrors.hpp"
 #include "SessionSourceCpp.hpp"
-#include "../SessionPackrat.hpp"
 #include "SessionInstallRtools.hpp"
 
 using namespace core;
