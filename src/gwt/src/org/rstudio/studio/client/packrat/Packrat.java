@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -45,17 +46,24 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.Singleton;
 
-
-
-@Singleton
-public class Packrat {
+public class Packrat
+{
+   public interface Display
+   {
+      public void setPackratContext(PackratContext context);
+   }
    
    public interface Binder extends CommandBinder<Commands, Packrat> {}
 
+   public Packrat(Display display)
+   {
+      display_ = display;
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
    @Inject
-   public Packrat(
+   public void initialize(
          Binder binder,
          Commands commands,
          EventBus eventBus,
@@ -75,6 +83,11 @@ public class Packrat {
       server_ = server;
       pFileDialogs_ = pFileDialogs;
       binder.bind(commands, this);
+   }
+  
+   public void onPackratContextChanged(PackratContextChangedEvent event)
+   {
+      display_.setPackratContext(event.getContext());
    }
 
    @Handler
@@ -234,13 +247,13 @@ public class Packrat {
       });
       
    }
-
+  
+   private final Display display_;
    private DependencyManager dependencyManager_;
-   private final GlobalDisplay globalDisplay_;
-   private final EventBus eventBus_;
-   private final RemoteFileSystemContext fsContext_;
-   private final WorkbenchContext workbenchContext_;
-   private final Provider<FileDialogs> pFileDialogs_;
-   private final RemoteServer server_;
-
+   private GlobalDisplay globalDisplay_;
+   private EventBus eventBus_;
+   private RemoteFileSystemContext fsContext_;
+   private WorkbenchContext workbenchContext_;
+   private Provider<FileDialogs> pFileDialogs_;
+   private RemoteServer server_;
 }

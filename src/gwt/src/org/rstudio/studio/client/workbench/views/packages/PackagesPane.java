@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.packrat.Packrat;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -72,7 +73,8 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 
-public class PackagesPane extends WorkbenchPane implements Packages.Display
+public class PackagesPane extends WorkbenchPane implements Packages.Display,
+                                                           Packrat.Display
 {
    @Inject
    public PackagesPane(Commands commands, 

@@ -95,7 +95,7 @@ public class Workbench implements BusyHandler,
                     ProfilerPresenter prof,  // required to force gin to create
                     ShinyApplication sApp,   // required to force gin to create
                     DependencyManager dm,    // required to force gin to create
-                    RmdOutput rmdOutput)     // required to force gin to create
+                    RmdOutput rmdOutput)     // required to force gin to create    
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
