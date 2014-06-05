@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.packages;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -61,7 +63,10 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.cellview.client.RowStyles;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -249,9 +254,51 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    protected Widget createMainWidget()
    {
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
+      packagesTableContainer_ = new ResizeLayoutPanel();
+      createPackagesTable();
+      return packagesTableContainer_;
+   }
+   
+   private void createPackagesTable()
+   {
+      try
+      {
+         packagesTable_ = new DataGrid<PackageInfo>(-1, 
+            (PackagesDataGridResources) GWT.create(
+                  PackagesDataGridResources.class));
+      }
+      catch (Exception e)
+      {
+         // constructing the data grid can fail in superdevmode; so if we're
+         // in superdevmode, try a few times 
+         if (SuperDevMode.isActive())
+         {
+            if (gridRenderRetryCount_ >= 5)
+            {
+               Debug.log("WARNING: Failed to render packages pane data grid");
+            }
+            gridRenderRetryCount_++;
+            Debug.log("WARNING: Retrying packages data grid render (" + 
+                      gridRenderRetryCount_ + ")");
+            Timer t = new Timer() {
+               @Override
+               public void run()
+               {
+                  createPackagesTable();
+               }
+            };
+            t.schedule(5);
+         }
+      }
       
-      packagesTable_ = new DataGrid<PackageInfo>(-1, 
-            (PackagesDataGridResources) GWT.create(PackagesDataGridResources.class));
+      if (packagesTable_ != null)
+      {
+         initPackagesTable();
+      }
+   }
+   
+   private void initPackagesTable()
+   {
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
         
@@ -310,10 +357,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.setRowStyles(new PackageRowStyles());
      
       packagesDataProvider_.addDataDisplay(packagesTable_);
-
-      return packagesTable_;
+      packagesTableContainer_.add(packagesTable_);
    }
-   
    
    class LoadedColumn extends Column<PackageInfo, Boolean>
    {
@@ -448,6 +493,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ToolbarButton packratBootstrapButton_;
    private ToolbarButton packratMenuButton_;
    private Widget packratSeparator_;
+   private ResizeLayoutPanel packagesTableContainer_;
+   private int gridRenderRetryCount_;
 
    private final Commands commands_;
    private final Session session_;
