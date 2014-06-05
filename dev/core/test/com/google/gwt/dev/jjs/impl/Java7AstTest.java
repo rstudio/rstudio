@@ -61,13 +61,52 @@ public class Java7AstTest extends JJSTestBase {
         "}");
   }
 
-
   public void testCompileDiamondOperator() throws Exception {
     addSnippetImport("java.util.List");
     addSnippetImport("java.util.ArrayList");
     assertEqualBlock(
         "List l = new ArrayList();",
         "List<String> l = new ArrayList<>();");
+  }
+
+  public void testCastingToPrimitiveTypes() throws UnableToCompleteException {
+    assertEqualBlock(
+        "Object o = null; byte s = (byte) ((Byte) o).byteValue();",
+        "Object o = null; byte s = (byte) o;");
+
+    assertEqualBlock(
+        "Object o = null; short s = (short) ((Short) o).shortValue();",
+        "Object o = null; short s = (short) o;");
+
+    assertEqualBlock(
+        "Object o = null; int s = (int) ((Integer) o).intValue();",
+        "Object o = null; int s = (int) o;");
+
+    assertEqualBlock(
+        "Object o = null; long s = (long) ((Long) o).longValue();",
+        "Object o = null; long s = (long) o;");
+
+    assertEqualBlock(
+        "Object o = null; float s = (float) ((Float) o).floatValue();",
+        "Object o = null; float s = (float) o;");
+
+    assertEqualBlock(
+        "Object o = null; double s = (double) ((Double) o).doubleValue();",
+        "Object o = null; double s = (double) o;");
+
+    assertEqualBlock(
+        "Object o = null; char s = (char) ((Character) o).charValue();",
+        "Object o = null; char s = (char) o;");
+
+    assertEqualBlock(
+        "Object o = null; char s = (char) ((Character) o).charValue();",
+        "Object o = null; char s = (char) o;");
+
+    // This is the expected behaviour, however JDT 3.8.3 emits a compiler error.
+    // TODO(rluble): uncomment when JDT is updated.
+    // assertEqualBlock(
+    //    "Number o = 1; int s = (int) ((Integer) o).intValue();",
+    //    "Number o= 1 ; int s = (int) o;");
   }
 
   private void addAll(Resource... sourceFiles) {

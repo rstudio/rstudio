@@ -67,4 +67,7 @@ public class Java7Test extends GWTTestCase {
 
   public void testAddSuppressedExceptions() {
   }
+
+  public void testPrimitiveCastsFromObject() {
+  }
 }
