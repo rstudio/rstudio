@@ -38,6 +38,8 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.Packrat;
 import org.rstudio.studio.client.packrat.events.PackratContextChangedEvent;
+import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -104,6 +106,7 @@ public class Packages
    public Packages(Display view, 
                    EventBus events,
                    PackagesServerOperations server,
+                   PackratServerOperations packratServer,
                    GlobalDisplay globalDisplay,
                    Session session,
                    Binder binder,
@@ -114,6 +117,7 @@ public class Packages
       super(view);
       view_ = view;
       server_ = server;
+      packratServer_ = packratServer;
       globalDisplay_ = globalDisplay ;
       view_.setObserver(this) ;
       events_ = events ;
@@ -516,45 +520,16 @@ public class Packages
    public void listPackages()
    {
       view_.setProgress(true);
-      server_.listPackages(
-            new SimpleRequestCallback<JsArray<PackageInfo>>("Error Listing Packages")
+      if (session_.getSessionInfo().getPackratContext().isModeOn())
       {
-         @Override
-         public void onError(ServerError error)
-         {
-            // don't show errors during restart
-            if (!workbenchContext_.isRestartInProgress())
-               super.onError(error);
-            
-            view_.setProgress(false);
-         }
-
-         @Override
-         public void onResponseReceived(JsArray<PackageInfo> response)
-         {
-            // sort the packages
-            allPackages_ = new ArrayList<PackageInfo>();
-            for (int i=0; i<response.length(); i++)
-               allPackages_.add(response.get(i));
-            Collections.sort(allPackages_, new Comparator<PackageInfo>() {
-               public int compare(PackageInfo o1, PackageInfo o2)
-               {
-                  // sort first by library, then by name
-                  int library = 
-                        PackageLibraryUtils.typeOfLibrary(
-                              session_, o1.getLibrary()).compareTo(
-                        PackageLibraryUtils.typeOfLibrary(
-                              session_, o2.getLibrary()));
-                  return library == 0 ? 
-                        o1.getName().compareToIgnoreCase(o2.getName()) :
-                        library;
-               }
-            });
-            
-            view_.setProgress(false);
-            setViewPackageList();
-         }
-      });
+         packratServer_.listPackagesPackrat(
+               session_.getSessionInfo().getActiveProjectDir().getPath(), 
+               new HandlePackageList<PackratPackageInfo>());
+      }
+      else
+      {
+         server_.listPackages(new HandlePackageList<PackageInfo>());
+      }
    }
 
    public void loadPackage(final String packageName, final String libName)
@@ -838,9 +813,54 @@ public class Packages
             true);   
    }
 
+      private class HandlePackageList <T extends PackageInfo>
+                    extends SimpleRequestCallback<JsArray<T>>
+      {
+         public HandlePackageList()
+         {
+            super("Error Listing Packages");
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // don't show errors during restart
+            if (!workbenchContext_.isRestartInProgress())
+               super.onError(error);
+            
+            view_.setProgress(false);
+         }
+
+         @Override
+         public void onResponseReceived(JsArray<T> response)
+         {
+            // sort the packages
+            allPackages_ = new ArrayList<PackageInfo>();
+            for (int i=0; i<response.length(); i++)
+               allPackages_.add(response.get(i));
+            Collections.sort(allPackages_, new Comparator<PackageInfo>() {
+               public int compare(PackageInfo o1, PackageInfo o2)
+               {
+                  // sort first by library, then by name
+                  int library = 
+                        PackageLibraryUtils.typeOfLibrary(
+                              session_, o1.getLibrary()).compareTo(
+                        PackageLibraryUtils.typeOfLibrary(
+                              session_, o2.getLibrary()));
+                  return library == 0 ? 
+                        o1.getName().compareToIgnoreCase(o2.getName()) :
+                        library;
+               }
+            });
+            
+            view_.setProgress(false);
+            setViewPackageList();
+         }
+   };
 
    private final Display view_;
    private final PackagesServerOperations server_;
+   private final PackratServerOperations packratServer_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<PackageInfo>();
    private String packageFilter_ = new String();
    private HandlerRegistration consolePromptHandlerReg_ = null;

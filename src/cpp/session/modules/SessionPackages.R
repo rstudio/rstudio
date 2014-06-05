@@ -330,7 +330,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    # sort and return
    packages[order(packages$name),]
-}
+})
 
 .rs.addJsonRpcHandler( "list_packages", function()
 {
