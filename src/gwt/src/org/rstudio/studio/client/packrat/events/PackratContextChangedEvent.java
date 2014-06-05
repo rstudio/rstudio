@@ -12,9 +12,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.packrat.events;
+package org.rstudio.studio.client.packrat.events;
 
-import org.rstudio.studio.client.common.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratContext;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
