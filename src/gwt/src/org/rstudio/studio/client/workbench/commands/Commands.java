@@ -244,7 +244,7 @@ public abstract class
    public abstract AppCommand activatePackages();
    
    // // packrat
-   public abstract AppCommand packratButton();
+   public abstract AppCommand packratBootstrap();
    public abstract AppCommand packratSnapshot();
    public abstract AppCommand packratRestore();
    public abstract AppCommand packratClean();

@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -86,6 +87,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       observer_ = observer ;  
    }
 
+   @Override
+   public void setPackratContext(PackratContext context)
+   {
+      packratMenuButton_.setVisible(context.isPackified());
+      packratBootstrapButton_.setVisible(!context.isPackified());
+      packratSeparator_.setVisible(context.isApplicable());
+   }
+   
    @Override
    public void listPackages(List<PackageInfo> packages)
    {
@@ -169,25 +178,29 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftSeparator();
       
       // packrat
-      if (session_.getSessionInfo().getPackratContext().isApplicable())
-      {
-         ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
-         packratMenu.addItem(commands_.packratSnapshot().createMenuItem(false));
-         packratMenu.addItem(commands_.packratRestore().createMenuItem(false));
-         packratMenu.addItem(commands_.packratClean().createMenuItem(false));
-         packratMenu.addSeparator();
-         packratMenu.addItem(commands_.packratStatus().createMenuItem(false));
-         packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
-         packratMenu.addSeparator();
-         packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
-         
-         ToolbarButton packratButton = new ToolbarButton(
-               "Packrat", commands_.packratButton().getImageResource(), packratMenu
-          );
-         
-         toolbar.addLeftWidget(packratButton);
-         toolbar.addLeftSeparator();
-      }
+
+      // create packrat bootstrap button
+      packratBootstrapButton_ = commands_.packratBootstrap().createToolbarButton(false);
+      toolbar.addLeftWidget(packratBootstrapButton_);
+      
+      // create packrat menu + button
+      ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
+      packratMenu.addItem(commands_.packratSnapshot().createMenuItem(false));
+      packratMenu.addItem(commands_.packratRestore().createMenuItem(false));
+      packratMenu.addItem(commands_.packratClean().createMenuItem(false));
+      packratMenu.addSeparator();
+      packratMenu.addItem(commands_.packratStatus().createMenuItem(false));
+      packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
+      packratMenu.addSeparator();
+      packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
+      packratMenuButton_ = new ToolbarButton(
+            "Packrat", commands_.packratBootstrap().getImageResource(), 
+            packratMenu
+       );
+      toolbar.addLeftWidget(packratMenuButton_);
+      packratSeparator_ = toolbar.addLeftSeparator();
+      
+      setPackratContext(session_.getSessionInfo().getPackratContext());
       
       toolbar.addLeftWidget(commands_.refreshPackages().createToolbarButton());
       
@@ -431,6 +444,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
+   
+   private ToolbarButton packratBootstrapButton_;
+   private ToolbarButton packratMenuButton_;
+   private Widget packratSeparator_;
 
    private final Commands commands_;
    private final Session session_;

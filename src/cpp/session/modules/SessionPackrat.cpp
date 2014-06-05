@@ -194,6 +194,37 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
       onFileChanged(changedFilePath);
    }
 }
+
+Error getPackratContext(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(packrat::contextAsJson());
+   return Success();
+}
+
+Error packratBootstrap(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string dir;
+   Error error = json::readParams(request.params, &dir);
+   if (error)
+      return error;
+
+   // convert to file path then to system encoding
+   FilePath dirPath = module_context::resolveAliasedPath(dir);
+   dir = string_utils::utf8ToSystem(dirPath.absolutePath());
+
+   // bootstrap
+   error = r::exec::RFunction("packrat:::bootstrap", dir).call();
+   if (error)
+      LOG_ERROR(error); // will also be reported in the console
+
+   // return status
+   pResponse->setResult(packrat::contextAsJson());
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Object contextAsJson()
@@ -221,6 +252,8 @@ Error initialize()
    ExecBlock initBlock;
 
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
+      (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
       (bind(sourceModuleRFile, "SessionPackrat.R"));
 
    return initBlock.execute();

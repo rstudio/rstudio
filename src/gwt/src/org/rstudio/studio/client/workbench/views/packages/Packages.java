@@ -36,6 +36,8 @@ import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
+import org.rstudio.studio.client.common.packrat.events.PackratContextChangedEvent;
+import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -76,6 +78,7 @@ public class Packages
       extends BasePresenter
       implements InstalledPackagesChangedHandler,
                  PackageStatusChangedHandler,
+                 PackratContextChangedEvent.Handler,
                  DeferredInitCompletedEvent.Handler,
                  PackagesDisplayObserver
 {
@@ -95,6 +98,8 @@ public class Packages
   
       void setObserver(PackagesDisplayObserver observer) ;
       void setProgress(boolean showProgress);
+      
+      void setPackratContext(PackratContext context);
    }
    
    @Inject
@@ -621,6 +626,11 @@ public class Packages
                                                     packageInfo.asUnloaded());
          }
       }
+   }
+  
+   public void onPackratContextChanged(PackratContextChangedEvent event)
+   {
+      view_.setPackratContext(event.getContext());
    }
    
    private void setViewPackageList()

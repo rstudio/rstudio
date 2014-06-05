@@ -31,7 +31,6 @@ import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
-import org.rstudio.studio.client.packrat.ui.PackratInstallDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
@@ -53,6 +52,17 @@ public class DependencyManager implements InstallShinyEvent.Handler
       server_ = server;
       
       eventBus.addHandler(InstallShinyEvent.TYPE, this);
+   }
+   
+   public void withDependencies(String progressCaption,
+                                Dependency[] dependencies, 
+                                Command command)
+   {
+      withDependencies(progressCaption,
+                       null,
+                       null,
+                       dependencies,
+                       command);
    }
    
    public void withDependencies(String progressCaption,
@@ -116,29 +126,6 @@ public class DependencyManager implements InstallShinyEvent.Handler
             Dependency.cranPackage("digest", "0.6"),
             Dependency.cranPackage("htmltools", "0.2.4"),
             Dependency.embeddedPackage("shiny")
-          }, 
-          command
-       ); 
-   }
-   
-   public void withPackrat(final String userAction, final Command command)
-   {
-      CommandWithArg<Command> userPrompt = new CommandWithArg<Command>() {
-         @Override
-         public void execute(final Command yesCommand)
-         {
-            PackratInstallDialog dialog = 
-                  new PackratInstallDialog(userAction, yesCommand);
-            dialog.showModal();
-         }
-       };
-       
-       // perform dependency resolution 
-       withDependencies(
-          "Checking installed packages",
-          userPrompt,
-          new Dependency[] {
-            Dependency.embeddedPackage("packrat")
           }, 
           command
        ); 
@@ -292,19 +279,26 @@ public class DependencyManager implements InstallShinyEvent.Handler
                "\n\nDo you want to install these packages now?";
       }
       
-      globalDisplay_.showYesNoMessage(
-         MessageDialog.QUESTION,
-         "Install Required Packages", 
-         userAction + " " + msg,
-         new Operation() {
-
-            @Override
-            public void execute()
-            {
-               onConfirmed.execute();
-            }
-         },
-         true);
+      if (userAction != null)
+      {
+         globalDisplay_.showYesNoMessage(
+            MessageDialog.QUESTION,
+            "Install Required Packages", 
+            userAction + " " + msg,
+            new Operation() {
+   
+               @Override
+               public void execute()
+               {
+                  onConfirmed.execute();
+               }
+            },
+            true);
+      }
+      else
+      {
+         onConfirmed.execute();
+      }
    }
    
    private final GlobalDisplay globalDisplay_;

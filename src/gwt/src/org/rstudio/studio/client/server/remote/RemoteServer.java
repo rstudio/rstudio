@@ -53,6 +53,7 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -3452,6 +3453,14 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getPackratContext(
+                     ServerRequestCallback<PackratContext> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PACKRAT_CONTEXT, requestCallback);
+   }
+   
+   
+   @Override
    public void getPackratStatus(String dir,
          ServerRequestCallback<JsArray<PackratStatus>> requestCallback)
    {
@@ -3466,8 +3475,8 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void bootstrap(String dir,
-                         ServerRequestCallback<Void> requestCallback)
+   public void packratBootstrap(String dir,
+                                ServerRequestCallback<PackratContext> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   PACKRAT_BOOTSTRAP,
@@ -3772,6 +3781,7 @@ public class RemoteServer implements Server
    private static final String CREATE_RMD_FROM_TEMPLATE = "create_rmd_from_template";
    private static final String GET_RMD_TEMPLATE = "get_rmd_template";
    
+   private static final String GET_PACKRAT_CONTEXT = "get_packrat_context";
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    

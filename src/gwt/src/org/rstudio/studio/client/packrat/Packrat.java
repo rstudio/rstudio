@@ -19,12 +19,18 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.dependencies.model.Dependency;
+import org.rstudio.studio.client.common.packrat.events.PackratContextChangedEvent;
+import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
 import org.rstudio.studio.client.server.ServerError;
@@ -53,7 +59,7 @@ public class Packrat {
          Binder binder,
          Commands commands,
          EventBus eventBus,
-         GlobalDisplay display,
+         GlobalDisplay globalDisplay,
          WorkbenchContext workbenchContext,
          RemoteFileSystemContext fsContext,
          DependencyManager dependencyManager,
@@ -62,7 +68,7 @@ public class Packrat {
          Provider<FileDialogs> pFileDialogs) {
       
       eventBus_ = eventBus;
-      display_ = display;
+      globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
       dependencyManager_ = dependencyManager;
@@ -72,107 +78,143 @@ public class Packrat {
    }
 
    @Handler
-   public void onPackratHelp() {
-      display_.openRStudioLink("packrat");
+   public void onPackratBootstrap() 
+   {
+      // get status
+      server_.getPackratContext(
+         new SimpleRequestCallback<PackratContext>() {
+            @Override
+            public void onResponseReceived(PackratContext context)
+            {
+               String message =
+                  "Packrat is a dependency management tool that makes your " +
+                  "R code more isolated, portable, and reproducible by " +
+                  "giving your project its own privately managed package " +
+                  "library.\n\n" +
+                  "Do you want to use packrat with this project?";
+               
+               globalDisplay_.showYesNoMessage(
+                   MessageDialog.QUESTION, 
+                   "Use Packrat",
+                   message,
+                   new Operation() {
+
+                     @Override
+                     public void execute()
+                     {
+                        bootstrapPackrat();
+                     }
+                      
+                   },
+                   true);
+            }
+         });
    }
    
-   // packrat::bundle
-   private void bundlePackratProject() {
+   private void bootstrapPackrat()
+   {
+      dependencyManager_.withDependencies(
+         "Packrat", 
+         new Dependency[] {
+            Dependency.embeddedPackage("packrat")
+         },
+         new Command() {
+            @Override
+            public void execute()
+            {
+               server_.packratBootstrap(
+                  workbenchContext_.getActiveProjectDir().getPath(), 
+                  new SimpleRequestCallback<PackratContext>() {
+                     @Override
+                     public void onResponseReceived(PackratContext ctx)
+                     {
+                        eventBus_.fireEvent(
+                              new PackratContextChangedEvent(ctx));
+                     }
+                  });
+            } 
+         });
+   }
+   
+   
+   @Handler
+   public void onPackratHelp() 
+   {
+      globalDisplay_.openRStudioLink("packrat");
+   }
+   
+   private void fireConsoleEvent(final String userAction) 
+   {
+      eventBus_.fireEvent(new SendToConsoleEvent(userAction, true, false));
+   }
+
+   @Handler
+   public void onPackratSnapshot() 
+   {
+      fireConsoleEvent("packrat::snapshot()");
+   }
+
+   @Handler
+   public void onPackratRestore() 
+   {
+      fireConsoleEvent("packrat::restore()");
+   }
+
+   @Handler
+   public void onPackratClean() 
+   {
+      fireConsoleEvent("packrat::clean()");
+   }
+
+   @Handler
+   public void onPackratBundle() 
+   {
       pFileDialogs_.get().saveFile(
-         "Save Bundled Packrat Project...",
-         fsContext_,
-         workbenchContext_.getCurrentWorkingDir(),
-         "zip",
-         false,
-         new ProgressOperationWithInput<FileSystemItem>() {
+            "Save Bundled Packrat Project...",
+            fsContext_,
+            workbenchContext_.getCurrentWorkingDir(),
+            "zip",
+            false,
+            new ProgressOperationWithInput<FileSystemItem>() {
 
-            @Override
-            public void execute(FileSystemItem input,
-                                ProgressIndicator indicator) {
+               @Override
+               public void execute(FileSystemItem input,
+                                   ProgressIndicator indicator) {
 
-               if (input == null)
-                  return;
+                  if (input == null)
+                     return;
 
-               indicator.onCompleted();
+                  indicator.onCompleted();
 
-               String bundleFile = input.getPath();
-               if (bundleFile == null)
-                  return;
+                  String bundleFile = input.getPath();
+                  if (bundleFile == null)
+                     return;
 
-               StringBuilder cmd = new StringBuilder();
-               // We use 'overwrite = TRUE' since the UI dialog will prompt
-               // us if we want to overwrite
-               cmd
-               .append("packrat::bundle(file = '")
-               .append(bundleFile)
-               .append("', overwrite = TRUE)")
-               ;
+                  StringBuilder cmd = new StringBuilder();
+                  // We use 'overwrite = TRUE' since the UI dialog will prompt
+                  // us if we want to overwrite
+                  cmd
+                  .append("packrat::bundle(file = '")
+                  .append(bundleFile)
+                  .append("', overwrite = TRUE)")
+                  ;
 
-               eventBus_.fireEvent(
-                  new SendToConsoleEvent(
-                     cmd.toString(),
-                     true,
-                     false
-                  )
-               );
+                  eventBus_.fireEvent(
+                     new SendToConsoleEvent(
+                        cmd.toString(),
+                        true,
+                        false
+                     )
+                  );
 
-            }
+               }
 
-         });
-
-   }
-
-   // Fire a console event with packrat, while checking that packrat exists
-   private void fireConsoleEventWithPackrat(final String userAction) {
-
-      dependencyManager_.withPackrat(
-         userAction,
-         new Command() {
-
-            @Override
-            public void execute() {
-               eventBus_.fireEvent(
-                  new SendToConsoleEvent(userAction, true, false)
-               );
-            }
-         }
-      );
-
+            });
    }
 
    @Handler
-   public void onPackratSnapshot() {
-      // When Packrat commands are invoked, use DependencyManager to check
-      // for packrat installation (see withRMarkdownPackage for an example)
-      fireConsoleEventWithPackrat("packrat::snapshot()");
-   }
-
-   @Handler
-   public void onPackratRestore() {
-      fireConsoleEventWithPackrat("packrat::restore()");
-   }
-
-   @Handler
-   public void onPackratClean() {
-      fireConsoleEventWithPackrat("packrat::clean()");
-   }
-
-   @Handler
-   public void onPackratBundle() {
-      dependencyManager_.withPackrat(
-         "packrat::bundle()",
-         new Command() {
-            
-            @Override
-            public void execute() {
-               bundlePackratProject();
-            }
-
-         });
-   }
-
-   @Handler
-   public void onPackratStatus() {
+   public void onPackratStatus() 
+   {
       
       String projDir = workbenchContext_.getActiveProjectDir().getPath();
       
@@ -194,7 +236,7 @@ public class Packrat {
    }
 
    private DependencyManager dependencyManager_;
-   private final GlobalDisplay display_;
+   private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final RemoteFileSystemContext fsContext_;
    private final WorkbenchContext workbenchContext_;

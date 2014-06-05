@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
@@ -410,7 +411,8 @@ public class Projects implements OpenProjectFileHandler,
       
       // Generate a new packrat project
       if (newProject.getUsePackrat()) {
-         createProjectCmds.addCommand(new SerializedCommand() {
+         createProjectCmds.addCommand(new SerializedCommand() 
+         {
             
             @Override
             public void onExecute(final Command continuation) {
@@ -421,9 +423,23 @@ public class Projects implements OpenProjectFileHandler,
                   newProject.getProjectFile()
                ).getParentPathString();
                
-               packratServer_.bootstrap(
+               packratServer_.packratBootstrap(
                   projDir, 
-                  new VoidServerRequestCallback(indicator));
+                  new ServerRequestCallback<PackratContext>() {
+
+                     @Override
+                     public void onResponseReceived(PackratContext context)
+                     {
+                        indicator.onCompleted();
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        indicator.onError(error.getUserMessage());
+                     }
+                     
+                  });
             }
          }, false);
       }
