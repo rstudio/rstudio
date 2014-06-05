@@ -16,7 +16,6 @@ package org.rstudio.studio.client.packrat.model;
 
 import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
 
