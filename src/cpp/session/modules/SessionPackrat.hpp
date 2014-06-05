@@ -16,6 +16,8 @@
 #ifndef SESSION_PACKRAT_HPP
 #define SESSION_PACKRAT_HPP
 
+#include <core/json/Json.hpp>
+
 namespace core {
    class Error;
 }
@@ -24,10 +26,7 @@ namespace session {
 namespace modules { 
 namespace packrat {
 
-bool isPackratModeOn();
-bool isPackratAvailable();
-bool isPackratManagedRPackage();
-bool isPackratEligibleProject();
+core::json::Object contextAsJson();
 
 core::Error initialize();
                        

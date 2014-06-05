@@ -26,6 +26,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <session/SessionUserSettings.hpp>
+
 #include "SessionPackages.hpp"
 
 using namespace core;
@@ -194,56 +196,15 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 }
 } // anonymous namespace
 
-bool isPackratAvailable()
+json::Object contextAsJson()
 {
-    return module_context::isPackageVersionInstalled("packrat", "0.2.0");
-}
-
-// returns true if we're in a project and packrat is installed
-bool isPackratEligibleProject()
-{
-   if (!projects::projectContext().hasProject())
-      return false;
-
-   if (!isPackratAvailable())
-       return false;
-
-   return true;
-}
-
-bool isPackratModeOn()
-{
-   if (!isPackratEligibleProject())
-      return false;
-
-   // if we are in a project, attempt to ascertain whether Packrat mode is on
-   // for the project (it's OK if this fails; by default we presume packrat
-   // mode to be off)
-   bool packratMode = false;
-   FilePath dir = projects::projectContext().directory();
-   r::exec::RFunction("packrat:::isPackratModeOn", 
-                      dir.absolutePath()).call(&packratMode);
-   return packratMode;
-}
-
-bool isPackratManagedRPackage()
-{
-   if (!isPackratEligibleProject())
-      return false;
-
-   // get the current working directory
-   FilePath dir = projects::projectContext().directory();
-
-   // bail if this isn't a package
-   if (!core::r_util::isPackageDirectory(dir))
-      return false;
-
-   // check if the project is packified
-   bool isPackratProject;
-   r::exec::RFunction("packrat:::checkPackified",
-                      /* project = */ dir.absolutePath(),
-                      /* silent = */ true).call(&isPackratProject);
-   return isPackratProject;
+   module_context::PackratContext context = module_context::packratContext();
+   json::Object contextJson;
+   contextJson["available"] = context.available;
+   contextJson["applicable"] = context.applicable;
+   contextJson["packified"] = context.packified;
+   contextJson["mode_on"] = context.modeOn;
+   return contextJson;
 }
 
 Error initialize()
@@ -267,5 +228,45 @@ Error initialize()
 
 } // namespace packrat
 } // namespace modules
+
+namespace module_context {
+
+PackratContext packratContext()
+{
+   PackratContext context;
+
+   bool installed = module_context::isPackageVersionInstalled("packrat",
+                                                              "0.2.0");
+
+   context.available = userSettings().packratAvailable() || installed;
+
+   context.applicable = context.available &&
+                        projects::projectContext().hasProject();
+
+   if (installed && context.applicable)
+   {
+      FilePath projectDir = projects::projectContext().directory();
+      Error error = r::exec::RFunction(
+                           "packrat:::checkPackified",
+                           /* project = */ projectDir.absolutePath(),
+                           /* silent = */ true).call(&context.packified);
+      if (error)
+         LOG_ERROR(error);
+
+      if (context.packified)
+      {
+         error = r::exec::RFunction(
+                            "packrat:::isPackratModeOn",
+                            projectDir.absolutePath()).call(&context.modeOn);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   return context;
+}
+
+
+} // namespace module_context
 } // namespace session
 

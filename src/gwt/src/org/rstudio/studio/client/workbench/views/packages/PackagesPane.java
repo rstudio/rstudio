@@ -169,7 +169,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftSeparator();
       
       // packrat
-      if (session_.getSessionInfo().isPackratEligibleProject())
+      if (session_.getSessionInfo().getPackratContext().isApplicable())
       {
          ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
          packratMenu.addItem(commands_.packratSnapshot().createMenuItem(false));
@@ -345,7 +345,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                      observer_.showHelp(packageInfo);
                   }
                },
-               true);
+               false);
       }
       
       @Override

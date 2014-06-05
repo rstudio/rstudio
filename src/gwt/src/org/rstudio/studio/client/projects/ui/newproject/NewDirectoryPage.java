@@ -106,7 +106,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       // Initialize project with packrat
       chkPackratInit_ = new CheckBox("Use packrat with this project");
-      if (sessionInfo.getPackratAvailable())
+      if (sessionInfo.getPackratContext().isAvailable())
       {
          chkPackratInit_.setValue(uiPrefs.newProjUsePackrat().getValue());
          optionsPanel.add(chkPackratInit_);

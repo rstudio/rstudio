@@ -558,7 +558,8 @@ private:
       // being managed by packrat
       // presumedly, if a user is managing an R package with packrat, he wants to
       // install his package into a user library, not the packrat private library
-      if (!session::modules::packrat::isPackratManagedRPackage()) {
+      if (!session::module_context::packratContext().packified)
+      {
          std::string libPaths = module_context::libPathsString();
          if (!libPaths.empty())
             core::system::setenv(&childEnv, "R_LIBS", libPaths);

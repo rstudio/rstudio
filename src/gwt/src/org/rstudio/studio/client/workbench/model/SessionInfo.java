@@ -21,6 +21,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
+import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
@@ -359,15 +360,7 @@ public class SessionInfo extends JavaScriptObject
       return this.rmarkdown_available;
    }-*/;
    
-   public final native boolean isPackratEligibleProject() /*-{
-      return this.packrat_eligible_project;
-   }-*/;
-   
-   public final native boolean getPackratAvailable() /*-{
-      return this.packrat_available;
-   }-*/;
-
-   public final native boolean packratModeOn() /*-{
-      return this.packrat_mode_on;
+   public final native PackratContext getPackratContext() /*-{
+      return this.packrat_context;
    }-*/;
 }

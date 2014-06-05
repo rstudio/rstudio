@@ -541,6 +541,23 @@ private:
 
 UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt);
 
+struct PackratContext
+{
+   PackratContext() :
+      available(false),
+      applicable(false),
+      packified(false),
+      modeOn(false)
+   {
+   }
+
+   bool available;
+   bool applicable;
+   bool packified;
+   bool modeOn;
+};
+
+PackratContext packratContext();
 
 } // namespace module_context
 } // namespace session
