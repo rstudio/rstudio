@@ -17,17 +17,37 @@
    packrat::status(dir, quiet = TRUE)
 })
 
-.rs.addJsonRpcHandler("list_packages_packrat", function(dir) {
+.rs.addFunction("listPackagesPackrat", function(dir) {
    # get the status from the library and packrat
    packratStatus <- packrat::status(dir, quiet = TRUE)
    libraryList <- .rs.listInstalledPackages()
 
-   # overlay packrat status on library status and return the result
-   merge(libraryList, 
-         packratStatus, 
-         by.x = "name", 
-         by.y = "package", 
-         all.x = TRUE,
-         all.y = TRUE)
+   # overlay packrat status on library status 
+   mergedList <- merge(libraryList, 
+                       packratStatus, 
+                       by.x = "name", 
+                       by.y = "package", 
+                       all.x = TRUE,
+                       all.y = TRUE)
+
+   # for each package, indicate whether it's in the private library
+   # (this is largely a convenience for the client since a lot of behavior
+   # is driven from this value)
+   projectPath <- normalizePath(dir) 
+   libraryPaths <- normalizePath(as.character(mergedList[,"library"]))
+   mergedList["in.packrat.library"] <- 
+      substr(libraryPaths, 1, nchar(projectPath)) ==
+      projectPath
+
+   # exclude manipulate and rstudio packages 
+   mergedList <- subset(mergedList, !(mergedList[,"name"] == "rstudio"))
+   mergedList <- subset(mergedList, !(mergedList[,"name"] == "manipulate"))
+
+   # return the combined list
+   mergedList
+})
+
+.rs.addJsonRpcHandler("list_packages_packrat", function(dir) {
+   .rs.listPackagesPackrat(dir)
 })
 

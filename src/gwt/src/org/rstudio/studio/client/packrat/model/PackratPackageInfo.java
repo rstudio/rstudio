@@ -33,4 +33,8 @@ public class PackratPackageInfo extends PackageInfo
    public final native boolean getCurrentlyUsed() /*-{
       return this["currently.used"];
    }-*/;
+
+   public final native boolean getInPackratLibary() /*-{
+      return this["in.packrat.library"];
+   }-*/;
 }

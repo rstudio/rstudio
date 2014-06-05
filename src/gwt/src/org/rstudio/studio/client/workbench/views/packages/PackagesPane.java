@@ -71,6 +71,7 @@ import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -360,7 +361,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
                   public String getValue(PackageInfo pkgInfo)
                   {
                      PackratPackageInfo packratInfo = pkgInfo.cast();
-                     return packratInfo.getPackratVersion();
+                     if (packratInfo.getInPackratLibary())
+                        return packratInfo.getPackratVersion();
+                     else
+                        return "";
                   }
          };
          TextColumn<PackageInfo> packratSourceColumn = 
@@ -369,7 +373,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
                   public String getValue(PackageInfo pkgInfo)
                   {
                      PackratPackageInfo packratInfo = pkgInfo.cast();
-                     return packratInfo.getPackratSource();
+                     if (packratInfo.getInPackratLibary())
+                        return packratInfo.getPackratSource();
+                     else
+                        return "";
                   }
          };
          packagesTable_.addColumn(loadedColumn, new TextHeader(""));
@@ -395,6 +402,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
          packagesTable_.setSkipRowHoverCheck(true);
          packagesTable_.setRowStyles(new PackageRowStyles(
                (PackagesDataGridResources) GWT.create(PackagesDataGridResources.class)));
+         packagesTableContainer_.add(packagesTable_);
       }
       else
       {
@@ -403,10 +411,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
          packagesTable_.addColumn(descColumn);
          packagesTable_.addColumn(versionColumn);
          packagesTable_.addColumn(removeColumn);
+         packagesTableContainer_.add(new ScrollPanel(packagesTable_));
       }
      
       packagesDataProvider_.addDataDisplay(packagesTable_);
-      packagesTableContainer_.add(packagesTable_);
    }
    
    class LoadedColumn extends Column<PackageInfo, Boolean>
@@ -535,14 +543,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
       public String getStyleNames(PackageInfo row, int rowIndex)
       {
          PackratPackageInfo pkgInfo = row.cast();
-         if (pkgInfo.getPackratVersion() != pkgInfo.getVersion())
+         if (pkgInfo.getInPackratLibary() &&
+             pkgInfo.getPackratVersion() != pkgInfo.getVersion())
          {
-            if (PackageLibraryUtils.typeOfLibrary(session_, 
-                                                  pkgInfo.getLibrary()) ==
-                PackageLibraryType.Project)
-            {
-               return res_.dataGridStyle().packageOutOfSyncRow();
-            }
+            return res_.dataGridStyle().packageOutOfSyncRow();
          }
          return "";
       }
