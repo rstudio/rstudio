@@ -57,6 +57,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
+import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
@@ -96,6 +97,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
    @Override
    public void setPackratContext(PackratContext context)
    {
+      packratContext_ = context;
       packratMenuButton_.setVisible(context.isPackified());
       packratBootstrapButton_.setVisible(!context.isPackified());
       packratSeparator_.setVisible(context.isApplicable());
@@ -264,9 +266,18 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
    {
       try
       {
-         packagesTable_ = new DataGrid<PackageInfo>(-1, 
-            (PackagesDataGridResources) GWT.create(
-                  PackagesDataGridResources.class));
+         if (packratContext_ != null && 
+             packratContext_.isModeOn())
+         {
+            packagesTable_ = new DataGrid<PackageInfo>(-1, 
+               (PackagesDataGridResources) GWT.create(
+                     PackagesDataGridResources.class));
+         }
+         else
+         {
+            packagesTable_ = new CellTable<PackageInfo>(15, 
+                  PackagesCellTableResources.INSTANCE);
+         }
       }
       catch (Exception e)
       {
@@ -304,10 +315,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
         
       LoadedColumn loadedColumn = new LoadedColumn();
-      packagesTable_.addColumn(loadedColumn, new TextHeader(""));
       
       NameColumn nameColumn = new NameColumn();
-      packagesTable_.addColumn(nameColumn, new TextHeader("Name"));
     
       TextColumn<PackageInfo> descColumn = new TextColumn<PackageInfo>() {
          @Override
@@ -316,8 +325,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
             return packageInfo.getDesc();
          } 
       };  
-      
-      packagesTable_.addColumn(descColumn, new TextHeader("Description"));
       
       Column<PackageInfo, PackageInfo> versionColumn = 
          new Column<PackageInfo, PackageInfo>(new VersionCell()) {
@@ -328,8 +335,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
                return object;
             }
       };
-      
-      packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
       
       ImageButtonColumn<PackageInfo> removeColumn = 
         new ImageButtonColumn<PackageInfo>(
@@ -342,20 +347,37 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
             }  
           },
           "Remove package");
-      packagesTable_.addColumn(removeColumn, new TextHeader(""));
 
-      packagesTable_.setColumnWidth(loadedColumn, 30, Unit.PX);
-      packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
-      packagesTable_.setColumnWidth(descColumn, 60, Unit.PCT);
-      packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
-      packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
-      
-      packagesTable_.setHeaderBuilder(new 
-            PackageHeaderBuilder(packagesTable_, false));
-      packagesTable_.setTableBuilder(new 
-            PackageTableBuilder(packagesTable_));
-      packagesTable_.setSkipRowHoverCheck(true);
-      packagesTable_.setRowStyles(new PackageRowStyles());
+      if (packratContext_ != null &&
+          packratContext_.isModeOn())
+      {
+         packagesTable_.addColumn(loadedColumn, new TextHeader(""));
+         packagesTable_.addColumn(nameColumn, new TextHeader("Name"));
+         packagesTable_.addColumn(descColumn, new TextHeader("Description"));
+         packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
+         packagesTable_.addColumn(removeColumn, new TextHeader(""));
+
+         packagesTable_.setColumnWidth(loadedColumn, 30, Unit.PX);
+         packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 60, Unit.PCT);
+         packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
+         packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
+         
+         packagesTable_.setHeaderBuilder(new 
+               PackageHeaderBuilder(packagesTable_, false));
+         packagesTable_.setTableBuilder(new 
+               PackageTableBuilder(packagesTable_));
+         packagesTable_.setSkipRowHoverCheck(true);
+         packagesTable_.setRowStyles(new PackageRowStyles());
+      }
+      else
+      {
+         packagesTable_.addColumn(loadedColumn);
+         packagesTable_.addColumn(nameColumn);
+         packagesTable_.addColumn(descColumn);
+         packagesTable_.addColumn(versionColumn);
+         packagesTable_.addColumn(removeColumn);
+      }
      
       packagesDataProvider_.addDataDisplay(packagesTable_);
       packagesTableContainer_.add(packagesTable_);
@@ -486,7 +508,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
       }
    }
   
-   private DataGrid<PackageInfo> packagesTable_;
+   private AbstractCellTable<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
@@ -496,6 +518,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
    private Widget packratSeparator_;
    private ResizeLayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
+   private PackratContext packratContext_;
 
    private final Commands commands_;
    private final Session session_;
