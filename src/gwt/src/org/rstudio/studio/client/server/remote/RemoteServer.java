@@ -116,7 +116,6 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
@@ -3495,18 +3494,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-   @Override
-   public void listPackagesPackrat(String dir,
-           ServerRequestCallback<JsArray<PackageInfo>> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(dir));
-      sendRequest(RPC_SCOPE,
-                  LIST_PACKAGES_PACKRAT,
-                  params,
-                  requestCallback);
-   }
-   
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3808,5 +3795,4 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String GET_PACKRAT_RESTORE_ACTIONS="get_packrat_restore_actions";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
-   private static final String LIST_PACKAGES_PACKRAT = "list_packages_packrat";
 }
