@@ -230,8 +230,11 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
    if (error)
       LOG_ERROR(error); // will also be reported in the console
 
+   // fire installed packages changed
+   ClientEvent event(client_events::kInstalledPackagesChanged);
+   module_context::enqueClientEvent(event);
+
    // return status
-   pResponse->setResult(module_context::packratContextAsJson());
    return Success();
 }
 

@@ -3475,7 +3475,7 @@ public class RemoteServer implements Server
    
    @Override
    public void packratBootstrap(String dir,
-                                ServerRequestCallback<PackratContext> requestCallback)
+                                ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   PACKRAT_BOOTSTRAP,
