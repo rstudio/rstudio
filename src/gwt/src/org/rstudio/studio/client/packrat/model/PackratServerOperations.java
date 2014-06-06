@@ -27,4 +27,7 @@ public interface PackratServerOperations
    
    void packratBootstrap(String dir,
                          ServerRequestCallback<PackratContext> requestCallback);
+
+   void listPackagesPackrat(String dir,
+                            ServerRequestCallback<JsArray<PackratPackageInfo>> requestCallback);
 }

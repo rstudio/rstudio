@@ -71,6 +71,7 @@ import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
@@ -3467,7 +3468,6 @@ public class RemoteServer implements Server
       
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
-      
       sendRequest(RPC_SCOPE,
                   GET_PACKRAT_STATUS,
                   params,
@@ -3484,6 +3484,18 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
+   @Override
+   public void listPackagesPackrat(String dir,
+           ServerRequestCallback<JsArray<PackratPackageInfo>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(dir));
+      sendRequest(RPC_SCOPE,
+                  LIST_PACKAGES_PACKRAT,
+                  params,
+                  requestCallback);
+   }
+   
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3784,5 +3796,5 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_CONTEXT = "get_packrat_context";
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
-   
+   private static final String LIST_PACKAGES_PACKRAT = "list_packages_packrat";
 }

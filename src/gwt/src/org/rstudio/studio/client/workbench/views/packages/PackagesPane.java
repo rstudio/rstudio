@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.packrat.Packrat;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -39,11 +40,13 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils.PackageLibraryType;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridStyle;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -57,6 +60,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
+import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
@@ -67,6 +71,7 @@ import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -96,6 +101,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
    @Override
    public void setPackratContext(PackratContext context)
    {
+      packratContext_ = context;
       packratMenuButton_.setVisible(context.isPackified());
       packratBootstrapButton_.setVisible(!context.isPackified());
       packratSeparator_.setVisible(context.isApplicable());
@@ -264,9 +270,18 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
    {
       try
       {
-         packagesTable_ = new DataGrid<PackageInfo>(-1, 
-            (PackagesDataGridResources) GWT.create(
-                  PackagesDataGridResources.class));
+         if (packratContext_ != null && 
+             packratContext_.isModeOn())
+         {
+            packagesTable_ = new DataGrid<PackageInfo>(-1, 
+               (PackagesDataGridResources) GWT.create(
+                     PackagesDataGridResources.class));
+         }
+         else
+         {
+            packagesTable_ = new CellTable<PackageInfo>(15, 
+                  PackagesCellTableResources.INSTANCE);
+         }
       }
       catch (Exception e)
       {
@@ -304,10 +319,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
         
       LoadedColumn loadedColumn = new LoadedColumn();
-      packagesTable_.addColumn(loadedColumn, new TextHeader(""));
       
       NameColumn nameColumn = new NameColumn();
-      packagesTable_.addColumn(nameColumn, new TextHeader("Name"));
     
       TextColumn<PackageInfo> descColumn = new TextColumn<PackageInfo>() {
          @Override
@@ -316,8 +329,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
             return packageInfo.getDesc();
          } 
       };  
-      
-      packagesTable_.addColumn(descColumn, new TextHeader("Description"));
       
       Column<PackageInfo, PackageInfo> versionColumn = 
          new Column<PackageInfo, PackageInfo>(new VersionCell()) {
@@ -328,8 +339,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
                return object;
             }
       };
-      
-      packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
       
       ImageButtonColumn<PackageInfo> removeColumn = 
         new ImageButtonColumn<PackageInfo>(
@@ -342,23 +351,70 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
             }  
           },
           "Remove package");
-      packagesTable_.addColumn(removeColumn, new TextHeader(""));
 
-      packagesTable_.setColumnWidth(loadedColumn, 5, Unit.PCT);
-      packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
-      packagesTable_.setColumnWidth(descColumn, 60, Unit.PCT);
-      packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
-      packagesTable_.setColumnWidth(removeColumn, 5, Unit.PCT);
-      
-      packagesTable_.setHeaderBuilder(new 
-            PackageHeaderBuilder(packagesTable_, false));
-      packagesTable_.setTableBuilder(new 
-            PackageTableBuilder(packagesTable_));
-      packagesTable_.setSkipRowHoverCheck(true);
-      packagesTable_.setRowStyles(new PackageRowStyles());
+      if (packratContext_ != null &&
+          packratContext_.isModeOn())
+      {
+         TextColumn<PackageInfo> packratVersionColumn = 
+               new TextColumn<PackageInfo>() {
+                  @Override
+                  public String getValue(PackageInfo pkgInfo)
+                  {
+                     PackratPackageInfo packratInfo = pkgInfo.cast();
+                     if (packratInfo.getInPackratLibary())
+                        return packratInfo.getPackratVersion();
+                     else
+                        return "";
+                  }
+         };
+         TextColumn<PackageInfo> packratSourceColumn = 
+               new TextColumn<PackageInfo>() {
+                  @Override
+                  public String getValue(PackageInfo pkgInfo)
+                  {
+                     PackratPackageInfo packratInfo = pkgInfo.cast();
+                     if (packratInfo.getInPackratLibary())
+                        return packratInfo.getPackratSource();
+                     else
+                        return "";
+                  }
+         };
+         packagesTable_.addColumn(loadedColumn, new TextHeader(""));
+         packagesTable_.addColumn(nameColumn, new TextHeader("Name"));
+         packagesTable_.addColumn(descColumn, new TextHeader("Description"));
+         packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
+         packagesTable_.addColumn(packratVersionColumn, new TextHeader("Packrat"));
+         packagesTable_.addColumn(packratSourceColumn, new TextHeader("Source"));
+         packagesTable_.addColumn(removeColumn, new TextHeader(""));
+
+         packagesTable_.setColumnWidth(loadedColumn, 30, Unit.PX);
+         packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 50, Unit.PCT);
+         packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
+         packagesTable_.setColumnWidth(packratVersionColumn, 10, Unit.PCT);
+         packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
+         packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
+         
+         packagesTable_.setHeaderBuilder(new 
+               PackageHeaderBuilder(packagesTable_, false));
+         packagesTable_.setTableBuilder(new 
+               PackageTableBuilder(packagesTable_));
+         packagesTable_.setSkipRowHoverCheck(true);
+         packagesTable_.setRowStyles(new PackageRowStyles(
+               (PackagesDataGridResources) GWT.create(PackagesDataGridResources.class)));
+         packagesTableContainer_.add(packagesTable_);
+      }
+      else
+      {
+         packagesTable_.addColumn(loadedColumn);
+         packagesTable_.addColumn(nameColumn);
+         packagesTable_.addColumn(descColumn);
+         packagesTable_.addColumn(versionColumn);
+         packagesTable_.addColumn(removeColumn);
+         packagesTableContainer_.add(new ScrollPanel(packagesTable_));
+      }
      
       packagesDataProvider_.addDataDisplay(packagesTable_);
-      packagesTableContainer_.add(packagesTable_);
    }
    
    class LoadedColumn extends Column<PackageInfo, Boolean>
@@ -479,14 +535,26 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
    
    private class PackageRowStyles implements RowStyles<PackageInfo>
    {
+      public PackageRowStyles(PackagesDataGridResources res)
+      {
+         res_ = res;
+      }
+
       public String getStyleNames(PackageInfo row, int rowIndex)
       {
-         // TODO: return styles applying highlighted color, etc. 
+         PackratPackageInfo pkgInfo = row.cast();
+         if (pkgInfo.getInPackratLibary() &&
+             pkgInfo.getPackratVersion() != pkgInfo.getVersion())
+         {
+            return res_.dataGridStyle().packageOutOfSyncRow();
+         }
          return "";
       }
+
+      private final PackagesDataGridResources res_;
    }
   
-   private DataGrid<PackageInfo> packagesTable_;
+   private AbstractCellTable<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
@@ -496,6 +564,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
    private Widget packratSeparator_;
    private ResizeLayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
+   private PackratContext packratContext_;
 
    private final Commands commands_;
    private final Session session_;

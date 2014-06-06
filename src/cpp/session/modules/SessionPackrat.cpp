@@ -32,6 +32,14 @@
 
 using namespace core;
 
+#ifdef TRACE_PACKRAT_OUTPUT
+#define PACKRAT_TRACE(x) \
+   std::cerr << "(packrat) " << x << std::endl;
+#else
+#define PACKRAT_TRACE(x) 
+#endif
+
+
 namespace session {
 namespace modules { 
 namespace packrat {
@@ -64,6 +72,7 @@ std::string getStoredHash(PackratHashType hashType)
 
 void setStoredHash(PackratHashType hashType, const std::string& hash)
 {
+   PACKRAT_TRACE("updating " << keyOfHashType(hashType) << " -> " <<  hash);
    r::session::clientState().putProjectPersistent(
          "packrat", 
          keyOfHashType(hashType), 
@@ -137,6 +146,7 @@ void checkHashes(
 {
    std::string oldHash = getStoredHash(primary);
    std::string newHash = getComputedHash(primary);
+   PACKRAT_TRACE("checking hashes: " << oldHash << " -> " << newHash);
 
    // hashes match, no work needed
    if (oldHash == newHash)
@@ -151,9 +161,10 @@ void checkHashes(
    // primary and secondary hashes mismatch
    else 
    {
-      // TODO: invoke status() to see if we're in a consistent state.
-      // yes -> update both hashes
-      // no -> prompt user
+      // TODO: don't do this until the user has resolved any conflicts that
+      // may exist, and packrat::status() is clean
+      setStoredHash(primary, newHash);
+      setStoredHash(secondary, getComputedHash(secondary));
    }
 }
 
@@ -174,10 +185,12 @@ void onFileChanged(FilePath sourceFilePath)
 
    if (sourceFilePath.filename() == "packrat.lock")
    {
+      PACKRAT_TRACE("detected change to lockfile " << sourceFilePath);
       checkHashes(HASH_TYPE_LOCKFILE, HASH_TYPE_LIBRARY, onLockfileUpdate);
    }
    else if (sourceFilePath.isWithin(libraryPath)) 
    {
+      PACKRAT_TRACE("detected change to library file " << sourceFilePath);
       checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
    }
 }
