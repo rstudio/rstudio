@@ -16,3 +16,7 @@
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {
    packrat::status(dir, quiet = TRUE)
 })
+
+.rs.addJsonRpcHandler("get_packrat_restore_actions", function(dir) {
+   packrat:::getRestoreActionMessages(dir)
+})

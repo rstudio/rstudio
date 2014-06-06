@@ -51,6 +51,18 @@ public class JsObject extends JavaScriptObject
       else
          return this[key];
    }-*/;
+   
+   public final native String getAsString(String key) /*-{
+      if (this[key] === null) {
+         return "NULL";
+      } else if (this[key] === true) {
+         return "TRUE";
+      } else if (this[key] === false) {
+         return "FALSE";
+      } else {
+         return "" + this[key];
+      }
+   }-*/;
 
    public final native void setString(String key, String value) /*-{
       this[key] = value;
@@ -136,4 +148,5 @@ public class JsObject extends JavaScriptObject
       }
       return keys;
    }-*/;
+   
 }

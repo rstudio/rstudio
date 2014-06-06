@@ -1,8 +1,24 @@
+/*
+ * SortableColumnWithHeader.java
+ *
+ * Copyright (C) 2014 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.packrat.ui;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import org.rstudio.core.client.js.JsObject;
 
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
@@ -11,7 +27,8 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 
-public class SortableColumnWithHeader<T extends IGetValue> 
+// TODO: Header click events don't sort
+public class SortableColumnWithHeader<T extends JsObject>
 {   
    public SortableColumnWithHeader(List<T> list,
                                    String key,
@@ -24,7 +41,7 @@ public class SortableColumnWithHeader<T extends IGetValue>
       column_ = new Column<T, String>(new TextCell()) {
          @Override
          public String getValue(T obj) {
-            return obj.getValue(key_);
+            return obj.getAsString(key_);
          }
       };
       

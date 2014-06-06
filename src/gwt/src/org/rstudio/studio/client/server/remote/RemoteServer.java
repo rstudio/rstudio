@@ -72,6 +72,7 @@ import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
@@ -3483,6 +3484,16 @@ public class RemoteServer implements Server
                   dir,
                   requestCallback);
    }
+   
+   @Override
+   public void getPackratRestoreActions(String dir,
+      ServerRequestCallback<JsArray<PackratRestoreActions>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_PACKRAT_RESTORE_ACTIONS,
+                  dir,
+                  requestCallback);
+   }
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -3783,6 +3794,7 @@ public class RemoteServer implements Server
    
    private static final String GET_PACKRAT_CONTEXT = "get_packrat_context";
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
+   private static final String GET_PACKRAT_RESTORE_ACTIONS="get_packrat_restore_actions";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    
 }

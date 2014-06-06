@@ -31,7 +31,9 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.packrat.events.PackratContextChangedEvent;
 import org.rstudio.studio.client.common.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
+import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -157,7 +159,31 @@ public class Packrat {
    @Handler
    public void onPackratRestore() 
    {
-      fireConsoleEvent("packrat::restore()");
+      String projDir = workbenchContext_.getActiveProjectDir().getPath();
+      
+      // Ask the server for the current project status
+      server_.getPackratRestoreActions(projDir, new ServerRequestCallback<JsArray<PackratRestoreActions>>() {
+         
+         @Override
+         public void onResponseReceived(JsArray<PackratRestoreActions> prRestoreActions) {
+            if (prRestoreActions == null) {
+               globalDisplay_.showMessage(
+                  GlobalDisplay.MSG_INFO,
+                  "Restore packages...",
+                  "All packages are up to date."
+               );
+            } else {
+               new PackratRestoreDialog(prRestoreActions, eventBus_).showModal();
+            }
+         }
+
+         @Override
+         public void onError(ServerError error) {
+            Debug.logError(error);
+         }
+         
+      });
+      
    }
 
    @Handler
@@ -170,7 +196,7 @@ public class Packrat {
    public void onPackratBundle() 
    {
       pFileDialogs_.get().saveFile(
-            "Save Bundled Packrat Project...",
+            "Bundle Packrat Project...",
             fsContext_,
             workbenchContext_.getCurrentWorkingDir(),
             "zip",
@@ -215,7 +241,6 @@ public class Packrat {
    @Handler
    public void onPackratStatus() 
    {
-      
       String projDir = workbenchContext_.getActiveProjectDir().getPath();
       
       // Ask the server for the current project status
