@@ -438,13 +438,24 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             @Override
             public void update(int index, PackageInfo packageInfo, Boolean value)
             {
-               if (value.booleanValue())
-                  observer_.loadPackage(packageInfo.getName(),
-                                        packageInfo.getLibrary()) ;
+               if (packageInfo.getLibrary() == null ||
+                   packageInfo.getLibrary().length() == 0)
+               {
+                  display_.showMessage(GlobalDisplay.MSG_INFO, 
+                        "Package Not Loaded",
+                        "The package '" + packageInfo.getName() + "' cannot " +
+                        "be loaded because it is not installed. Install the " +
+                        "package to make it available for loading.");
+               }
                else
-                  observer_.unloadPackage(packageInfo.getName(),
-                                          packageInfo.getLibrary()) ;
-               
+               {
+                  if (value.booleanValue())
+                     observer_.loadPackage(packageInfo.getName(),
+                                           packageInfo.getLibrary()) ;
+                  else
+                     observer_.unloadPackage(packageInfo.getName(),
+                                             packageInfo.getLibrary()) ;
+               }
             }    
          });
       }
