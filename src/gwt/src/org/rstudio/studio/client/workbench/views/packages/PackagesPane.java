@@ -113,6 +113,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // show the separator if either of the above are visible
       packratSeparator_.setVisible(packratBootstrapButton_.isVisible() ||
                                    packratMenuButton_.isVisible());
+
+      // always show the separator before the packrat commands
+      prePackratSeparator_.setVisible(true);
    }
    
    @Override
@@ -188,8 +191,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       // update packages
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftSeparator();
+      prePackratSeparator_ = toolbar.addLeftSeparator();
       
       // packrat (all packrat UI starts out hidden and then appears
       // in response to changes in the packages state)
@@ -581,6 +583,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ToolbarButton packratBootstrapButton_;
    private ToolbarButton packratMenuButton_;
    private Widget packratSeparator_;
+   private Widget prePackratSeparator_;
    private ResizeLayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
    private PackratContext packratContext_;
