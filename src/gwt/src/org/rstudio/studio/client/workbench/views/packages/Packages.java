@@ -618,6 +618,19 @@ public class Packages
                   packages.add(pkgInfo);
             }
          }
+
+         // sort results by library (to preserve grouping)
+         Collections.sort(packages, new Comparator<PackageInfo>()
+               {
+                  @Override
+                  public int compare(PackageInfo o1, PackageInfo o2)
+                  {
+                     return PackageLibraryUtils.typeOfLibrary(
+                                   session_, o1.getLibrary()).compareTo(
+                             PackageLibraryUtils.typeOfLibrary(
+                                   session_, o2.getLibrary()));
+                  }
+               });
       }
       else
       {
