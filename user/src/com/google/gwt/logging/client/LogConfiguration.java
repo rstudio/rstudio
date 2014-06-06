@@ -20,7 +20,6 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.Window.Location;
-import com.google.gwt.user.client.ui.HasWidgets;
 
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -125,16 +124,12 @@ public class LogConfiguration implements EntryPoint {
       addHandlerIfNotNull(l, console);
       Handler dev = GWT.create(DevelopmentModeLogHandler.class);
       addHandlerIfNotNull(l, dev);
-      Handler firebug = GWT.create(FirebugLogHandler.class);
-      addHandlerIfNotNull(l, firebug);
       Handler system = GWT.create(SystemLogHandler.class);
       addHandlerIfNotNull(l, system);
       Handler remote = GWT.create(SimpleRemoteLogHandler.class);
       addHandlerIfNotNull(l, remote);
-      HasWidgets loggingWidget = GWT.create(LoggingPopup.class);
-      if (!(loggingWidget instanceof NullLoggingPopup)) {
-        addHandlerIfNotNull(l, new HasWidgetsLogHandler(loggingWidget));
-      }
+      Handler loggingWidget = GWT.create(HasWidgetsLogHandler.class);
+      addHandlerIfNotNull(l, loggingWidget);
     }
 
     private void setLevels(Logger l) {

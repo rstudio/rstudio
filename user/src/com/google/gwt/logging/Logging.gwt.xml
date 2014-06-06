@@ -14,5 +14,5 @@
 
 <module type="fileset">
   <inherits name="com.google.gwt.logging.LoggingDisabled"/>
-  <set-property name="gwt.logging.enabled" value="TRUE"/> 
+  <set-property name="gwt.logging.enabled" value="SEVERE"/>
 </module>

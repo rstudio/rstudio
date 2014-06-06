@@ -62,9 +62,7 @@ public class ConsoleLogHandler extends Handler {
   }
 
   private native boolean isSupported() /*-{
-    return ((window.console != null) &&
-            // See note in FirebugLogHandler
-            (window.console.firebug == null));
+    return !!window.console;
   }-*/;
 
   private native void error(String message) /*-{
