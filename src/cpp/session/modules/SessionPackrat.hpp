@@ -17,16 +17,23 @@
 #define SESSION_PACKRAT_HPP
 
 #include <core/json/Json.hpp>
+#include <session/SessionModuleContext.hpp>
 
 namespace core {
    class Error;
 }
- 
+
 namespace session {
 namespace modules { 
 namespace packrat {
 
 core::Error initialize();
+
+// return the current Packrat context
+core::json::Object contextAsJson();
+
+// return the given Packrat context
+core::json::Object contextAsJson(const module_context::PackratContext& context);
                        
 } // namespace packrat
 } // namespace modules

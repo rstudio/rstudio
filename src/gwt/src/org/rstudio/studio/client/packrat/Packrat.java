@@ -37,6 +37,7 @@ import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -129,7 +130,7 @@ public class Packrat
             {
                server_.packratBootstrap(
                   workbenchContext_.getActiveProjectDir().getPath(), 
-                  new SimpleRequestCallback<PackratContext>());
+                  new VoidServerRequestCallback());
             } 
          });
    }

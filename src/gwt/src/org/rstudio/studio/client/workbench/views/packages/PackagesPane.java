@@ -30,7 +30,6 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.packrat.model.PackratContext;
-import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -58,7 +57,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
@@ -69,7 +67,6 @@ import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -85,7 +82,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       super("Packages");
       commands_ = commands;
       session_ = session;
-     
+      dataGridRes_ = (PackagesDataGridResources) 
+            GWT.create(PackagesDataGridResources.class);
       ensureWidget();
    }
    
@@ -96,10 +94,28 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
    
    @Override
-   public void listPackages(List<PackageInfo> packages)
+   public void setPackageState(PackratContext packratContext, 
+                               List<PackageInfo> packages)
    {
-      packagesTable_.setPageSize(packages.size());
+      packratContext_ = packratContext;
       packagesDataProvider_.setList(packages);
+      createPackagesTable();
+
+      // show the bootstrap button if this state is eligible for Packrat but the
+      // project isn't currently under Packrat control
+      packratBootstrapButton_.setVisible(
+         packratContext_.isApplicable() && 
+         !packratContext_.isPackified());
+      
+      // show the toolbar button if Packrat mode is on
+      packratMenuButton_.setVisible(packratContext_.isModeOn());
+      
+      // show the separator if either of the above are visible
+      packratSeparator_.setVisible(packratBootstrapButton_.isVisible() ||
+                                   packratMenuButton_.isVisible());
+
+      // always show the separator before the packrat commands
+      prePackratSeparator_.setVisible(true);
    }
    
    @Override
@@ -175,7 +191,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       // update packages
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
-      toolbar.addLeftSeparator();
+      prePackratSeparator_ = toolbar.addLeftSeparator();
       
       // packrat (all packrat UI starts out hidden and then appears
       // in response to changes in the packages state)
@@ -252,7 +268,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
       packagesTableContainer_ = new ResizeLayoutPanel();
-      createPackagesTable();
       return packagesTableContainer_;
    }
    
@@ -260,18 +275,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       try
       {
-         if (packratContext_ != null && 
-             packratContext_.isModeOn())
-         {
-            packagesTable_ = new DataGrid<PackageInfo>(-1, 
-               (PackagesDataGridResources) GWT.create(
-                     PackagesDataGridResources.class));
-         }
-         else
-         {
-            packagesTable_ = new CellTable<PackageInfo>(15, 
-                  PackagesCellTableResources.INSTANCE);
-         }
+         packagesTableContainer_.clear();
+         packagesTable_ = new DataGrid<PackageInfo>(
+            packagesDataProvider_.getList().size(), dataGridRes_);
       }
       catch (Exception e)
       {
@@ -312,12 +318,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       NameColumn nameColumn = new NameColumn();
     
-      TextColumn<PackageInfo> descColumn = new TextColumn<PackageInfo>() {
-         @Override
-         public String getValue(PackageInfo packageInfo)
-         {
-            return packageInfo.getDesc();
-         } 
+      Column<PackageInfo, PackageInfo> descColumn = 
+         new Column<PackageInfo, PackageInfo>(new DescriptionCell()) {
+
+            @Override
+            public PackageInfo getValue(PackageInfo object)
+            {
+               return object;
+            } 
       };  
       
       Column<PackageInfo, PackageInfo> versionColumn = 
@@ -342,6 +350,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
           },
           "Remove package");
 
+      // add common columns
+      packagesTable_.addColumn(loadedColumn, new TextHeader(""));
+      packagesTable_.addColumn(nameColumn, new TextHeader("Name"));
+      packagesTable_.addColumn(descColumn, new TextHeader("Description"));
+      packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
+      packagesTable_.setColumnWidth(loadedColumn, 30, Unit.PX);
+
+      // set up Packrat-specific columns
       if (packratContext_ != null &&
           packratContext_.isModeOn())
       {
@@ -350,9 +366,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   @Override
                   public String getValue(PackageInfo pkgInfo)
                   {
-                     PackratPackageInfo packratInfo = pkgInfo.cast();
-                     if (packratInfo.getInPackratLibary())
-                        return packratInfo.getPackratVersion();
+                     if (pkgInfo.getInPackratLibary())
+                        return pkgInfo.getPackratVersion();
                      else
                         return "";
                   }
@@ -362,48 +377,52 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   @Override
                   public String getValue(PackageInfo pkgInfo)
                   {
-                     PackratPackageInfo packratInfo = pkgInfo.cast();
-                     if (packratInfo.getInPackratLibary())
-                        return packratInfo.getPackratSource();
+                     if (pkgInfo.getInPackratLibary())
+                     {
+                        String source = pkgInfo.getPackratSource();
+                        if (source.equals("github"))
+                           return "GitHub";
+                        else if (source.equals("Bioconductor"))
+                           return "BioC";
+                        else
+                           return source;
+                     }
                      else
                         return "";
                   }
          };
-         packagesTable_.addColumn(loadedColumn, new TextHeader(""));
-         packagesTable_.addColumn(nameColumn, new TextHeader("Name"));
-         packagesTable_.addColumn(descColumn, new TextHeader("Description"));
-         packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
+
          packagesTable_.addColumn(packratVersionColumn, new TextHeader("Packrat"));
          packagesTable_.addColumn(packratSourceColumn, new TextHeader("Source"));
-         packagesTable_.addColumn(removeColumn, new TextHeader(""));
 
-         packagesTable_.setColumnWidth(loadedColumn, 30, Unit.PX);
+         // distribute columns for extended package information
          packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
-         packagesTable_.setColumnWidth(descColumn, 50, Unit.PCT);
-         packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
-         packagesTable_.setColumnWidth(packratVersionColumn, 10, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 40, Unit.PCT);
+         packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
+         packagesTable_.setColumnWidth(packratVersionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
-         packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
          
-         packagesTable_.setHeaderBuilder(new 
-               PackageHeaderBuilder(packagesTable_, false));
-         packagesTable_.setTableBuilder(new 
-               PackageTableBuilder(packagesTable_));
-         packagesTable_.setSkipRowHoverCheck(true);
-         packagesTable_.setRowStyles(new PackageRowStyles(
-               (PackagesDataGridResources) GWT.create(PackagesDataGridResources.class)));
-         packagesTableContainer_.add(packagesTable_);
+         // highlight rows that are out of sync in packrat
+         packagesTable_.setRowStyles(new PackageRowStyles());
       }
       else
       {
-         packagesTable_.addColumn(loadedColumn);
-         packagesTable_.addColumn(nameColumn);
-         packagesTable_.addColumn(descColumn);
-         packagesTable_.addColumn(versionColumn);
-         packagesTable_.addColumn(removeColumn);
-         packagesTableContainer_.add(new ScrollPanel(packagesTable_));
+         // distribute columns for non-extended package information
+         packagesTable_.setColumnWidth(nameColumn, 30, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 55, Unit.PCT);
+         packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
       }
      
+      // remove column is common
+      packagesTable_.addColumn(removeColumn, new TextHeader(""));
+      packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
+
+      packagesTable_.setHeaderBuilder(new 
+            PackageHeaderBuilder(packagesTable_, false));
+      packagesTable_.setTableBuilder(new 
+            PackageTableBuilder(packagesTable_));
+      packagesTable_.setSkipRowHoverCheck(true);
+      packagesTableContainer_.add(packagesTable_);
       packagesDataProvider_.addDataDisplay(packagesTable_);
    }
    
@@ -527,25 +546,35 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private class PackageRowStyles implements RowStyles<PackageInfo>
    {
-      public PackageRowStyles(PackagesDataGridResources res)
-      {
-         res_ = res;
-      }
-
       public String getStyleNames(PackageInfo row, int rowIndex)
       {
-         PackratPackageInfo pkgInfo = row.cast();
+         PackageInfo pkgInfo = row.cast();
          if (pkgInfo.getInPackratLibary() &&
              pkgInfo.getPackratVersion() != pkgInfo.getVersion())
          {
-            return res_.dataGridStyle().packageOutOfSyncRow();
+            return dataGridRes_.dataGridStyle().packageOutOfSyncRow();
          }
          return "";
       }
-
-      private final PackagesDataGridResources res_;
    }
-  
+   
+   private class DescriptionCell extends AbstractCell<PackageInfo>
+   {
+      @Override
+      public void render(Context context, PackageInfo pkgInfo, 
+                         SafeHtmlBuilder sb)
+      {
+         if (pkgInfo.getDesc().length() > 0)
+            sb.appendEscaped(pkgInfo.getDesc());
+         else
+         {
+            sb.appendHtmlConstant("<span class=\"" + 
+                    dataGridRes_.dataGridStyle().packageNotApplicableColumn() +
+                    "\">Not installed</span>");
+         }
+      }
+   }
+   
    private AbstractCellTable<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
@@ -554,10 +583,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ToolbarButton packratBootstrapButton_;
    private ToolbarButton packratMenuButton_;
    private Widget packratSeparator_;
+   private Widget prePackratSeparator_;
    private ResizeLayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
    private PackratContext packratContext_;
 
    private final Commands commands_;
    private final Session session_;
+   private final PackagesDataGridResources dataGridRes_;
 }

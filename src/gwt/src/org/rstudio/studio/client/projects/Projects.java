@@ -35,7 +35,6 @@ import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
-import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
@@ -418,20 +417,12 @@ public class Projects implements OpenProjectFileHandler,
                
                packratServer_.packratBootstrap(
                   projDir, 
-                  new ServerRequestCallback<PackratContext>() {
-
+                  new VoidServerRequestCallback(indicator) {
                      @Override
-                     public void onResponseReceived(PackratContext context)
+                     public void onSuccess()
                      {
                         continuation.execute();
                      }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        indicator.onError(error.getUserMessage());
-                     }
-                     
                   });
             }
          }, false);

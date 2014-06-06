@@ -230,12 +230,31 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
    if (error)
       LOG_ERROR(error); // will also be reported in the console
 
+   // fire installed packages changed
+   ClientEvent event(client_events::kInstalledPackagesChanged);
+   module_context::enqueClientEvent(event);
+
    // return status
-   pResponse->setResult(module_context::packratContextAsJson());
    return Success();
 }
 
 } // anonymous namespace
+
+json::Object contextAsJson(const module_context::PackratContext& context)
+{
+   json::Object contextJson;
+   contextJson["available"] = context.available;
+   contextJson["applicable"] = context.applicable;
+   contextJson["packified"] = context.packified;
+   contextJson["mode_on"] = context.modeOn;
+   return contextJson;
+}
+
+json::Object contextAsJson()
+{
+   module_context::PackratContext context = module_context::packratContext();
+   return contextAsJson(context);
+}
 
 Error initialize()
 {
@@ -301,13 +320,7 @@ PackratContext packratContext()
 
 json::Object packratContextAsJson()
 {
-   module_context::PackratContext context = module_context::packratContext();
-   json::Object contextJson;
-   contextJson["available"] = context.available;
-   contextJson["applicable"] = context.applicable;
-   contextJson["packified"] = context.packified;
-   contextJson["mode_on"] = context.modeOn;
-   return contextJson;
+   return modules::packrat::contextAsJson();
 }
 
 

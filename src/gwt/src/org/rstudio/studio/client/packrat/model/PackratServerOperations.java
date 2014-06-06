@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.packrat.model;
 
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
@@ -26,6 +27,7 @@ public interface PackratServerOperations
             ServerRequestCallback<JsArray<PackratStatus>> requestCallback);
    
    void packratBootstrap(String dir,
+                         ServerRequestCallback<Void> requestCallback);
                          ServerRequestCallback<PackratContext> requestCallback);
    
    void getPackratRestoreActions(String dir,
