@@ -1199,16 +1199,6 @@ private:
          // build C++ code at all
          if (!pkgInfo_.empty() && !module_context::canBuildCpp())
          {
-            if (buildToolsWarning_.empty())
-            {
-               buildToolsWarning_ =
-                 "WARNING: The tools required to build R packages "
-                 "are not currently installed. Additional information on "
-                 "installing the required tools for your platform can be "
-                 "found here:\n\n"
-                 "http://www.rstudio.com/ide/docs/packages/prerequisites";
-            }
-
             // prompted install of Rtools on Windows (but don't prompt if
             // we used devtools since it likely has it's own prompt)
 #ifdef _WIN32
