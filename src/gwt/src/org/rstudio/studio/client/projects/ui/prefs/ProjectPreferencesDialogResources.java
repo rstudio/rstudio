@@ -45,6 +45,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
    Styles styles();
   
    ImageResource iconBuild();
+   ImageResource iconPackrat();
    
    static ProjectPreferencesDialogResources INSTANCE = (ProjectPreferencesDialogResources)GWT.create(ProjectPreferencesDialogResources.class);
 }
