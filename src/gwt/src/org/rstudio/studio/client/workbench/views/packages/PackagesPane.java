@@ -417,7 +417,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
      
       // remove column is common
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
-      packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
+      packagesTable_.setColumnWidth(removeColumn, 35, Unit.PX);
 
       packagesTable_.setHeaderBuilder(new 
             PackageHeaderBuilder(packagesTable_, false));

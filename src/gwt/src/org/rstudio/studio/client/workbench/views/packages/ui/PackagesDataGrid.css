@@ -31,6 +31,12 @@
 	text-align: center;
 }
 
+.dataGridLastColumn
+{
+	padding-top: 3px;
+	padding-left: 3px;
+}
+
 .packageOutOfSyncRow
 {
    background-color: #fff9e2;	
