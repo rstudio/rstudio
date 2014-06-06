@@ -82,7 +82,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       super("Packages");
       commands_ = commands;
       session_ = session;
-     
+      dataGridRes_ = (PackagesDataGridResources) 
+            GWT.create(PackagesDataGridResources.class);
       ensureWidget();
    }
    
@@ -274,9 +275,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       {
          packagesTableContainer_.clear();
          packagesTable_ = new DataGrid<PackageInfo>(
-            packagesDataProvider_.getList().size(), 
-            (PackagesDataGridResources) GWT.create(
-                  PackagesDataGridResources.class));
+            packagesDataProvider_.getList().size(), dataGridRes_);
       }
       catch (Exception e)
       {
@@ -317,12 +316,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       NameColumn nameColumn = new NameColumn();
     
-      TextColumn<PackageInfo> descColumn = new TextColumn<PackageInfo>() {
-         @Override
-         public String getValue(PackageInfo packageInfo)
-         {
-            return packageInfo.getDesc();
-         } 
+      Column<PackageInfo, PackageInfo> descColumn = 
+         new Column<PackageInfo, PackageInfo>(new DescriptionCell()) {
+
+            @Override
+            public PackageInfo getValue(PackageInfo object)
+            {
+               return object;
+            } 
       };  
       
       Column<PackageInfo, PackageInfo> versionColumn = 
@@ -375,7 +376,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   public String getValue(PackageInfo pkgInfo)
                   {
                      if (pkgInfo.getInPackratLibary())
-                        return pkgInfo.getPackratSource();
+                     {
+                        String source = pkgInfo.getPackratSource();
+                        if (source.equals("github"))
+                           return "GitHub";
+                        else if (source.equals("Bioconductor"))
+                           return "BioC";
+                        else
+                           return source;
+                     }
                      else
                         return "";
                   }
@@ -392,8 +401,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
          
          // highlight rows that are out of sync in packrat
-         packagesTable_.setRowStyles(new PackageRowStyles(
-               (PackagesDataGridResources) GWT.create(PackagesDataGridResources.class)));
+         packagesTable_.setRowStyles(new PackageRowStyles());
       }
       else
       {
@@ -403,6 +411,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
       }
      
+      // remove column is common
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
       packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
 
@@ -535,25 +544,35 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private class PackageRowStyles implements RowStyles<PackageInfo>
    {
-      public PackageRowStyles(PackagesDataGridResources res)
-      {
-         res_ = res;
-      }
-
       public String getStyleNames(PackageInfo row, int rowIndex)
       {
          PackageInfo pkgInfo = row.cast();
          if (pkgInfo.getInPackratLibary() &&
              pkgInfo.getPackratVersion() != pkgInfo.getVersion())
          {
-            return res_.dataGridStyle().packageOutOfSyncRow();
+            return dataGridRes_.dataGridStyle().packageOutOfSyncRow();
          }
          return "";
       }
-
-      private final PackagesDataGridResources res_;
    }
-  
+   
+   private class DescriptionCell extends AbstractCell<PackageInfo>
+   {
+      @Override
+      public void render(Context context, PackageInfo pkgInfo, 
+                         SafeHtmlBuilder sb)
+      {
+         if (pkgInfo.getDesc().length() > 0)
+            sb.appendEscaped(pkgInfo.getDesc());
+         else
+         {
+            sb.appendHtmlConstant("<span class=\"" + 
+                    dataGridRes_.dataGridStyle().packageNotApplicableColumn() +
+                    "\">Not installed</span>");
+         }
+      }
+   }
+   
    private AbstractCellTable<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
@@ -568,4 +587,5 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private final Commands commands_;
    private final Session session_;
+   private final PackagesDataGridResources dataGridRes_;
 }

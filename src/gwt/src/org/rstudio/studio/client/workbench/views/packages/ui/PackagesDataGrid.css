@@ -1,6 +1,7 @@
 .dataGridCell
 {
 	padding: 1px;
+	vertical-align: top;
 }
 
 .dataGridOddRow
@@ -33,4 +34,9 @@
 .packageOutOfSyncRow
 {
    background-color: #fff9e2;	
+}
+
+.packageNotApplicableColumn
+{
+	color: #b0b0b0;
 }
