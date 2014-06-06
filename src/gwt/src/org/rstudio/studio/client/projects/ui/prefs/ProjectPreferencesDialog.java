@@ -37,6 +37,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    public static final int SWEAVE = 2;
    public static final int BUILD = 3;
    public static final int VCS = 4;
+   public static final int PACKRAT = 5;
    
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
@@ -46,18 +47,23 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    ProjectEditingPreferencesPane editing,
                                    ProjectCompilePdfPreferencesPane compilePdf,
                                    ProjectSourceControlPreferencesPane source,
-                                   ProjectBuildToolsPreferencesPane build)
+                                   ProjectBuildToolsPreferencesPane build,
+                                   ProjectPackratPreferencesPane packrat)
    {      
       super("Project Options",
             RES.styles().panelContainer(),
             false,
-            new ProjectPreferencesPane[] {general, editing, compilePdf, build, source});
+            new ProjectPreferencesPane[] {general, editing, compilePdf, build, 
+                                          source, packrat});
            
       server_ = server;
       pUIPrefs_ = pUIPrefs;  
       
       if (!session.getSessionInfo().getAllowVcs())
-         hidePane(4);
+         hidePane(VCS);
+      
+      if (!session.getSessionInfo().getPackratAvailable())
+         hidePane(PACKRAT);
    }
    
    @Override

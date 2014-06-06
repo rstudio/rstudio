@@ -363,13 +363,6 @@ public class Projects implements OpenProjectFileHandler,
                      @Override
                      public void onSuccess()
                      {
-                        if (!newProject.getOpenInNewWindow())
-                        {
-                           applicationQuit_.performQuit(
-                                             saveChanges,
-                                             newProject.getProjectFile());
-                        }
-
                         continuation.execute();
                      }
                   });
@@ -430,7 +423,7 @@ public class Projects implements OpenProjectFileHandler,
                      @Override
                      public void onResponseReceived(PackratContext context)
                      {
-                        indicator.onCompleted();
+                        continuation.execute();
                      }
                      
                      @Override
@@ -466,6 +459,14 @@ public class Projects implements OpenProjectFileHandler,
          public void onExecute(Command continuation)
          {
             indicator.onCompleted();
+            
+            if (!newProject.getOpenInNewWindow())
+            {
+               applicationQuit_.performQuit(
+                                 saveChanges,
+                                 newProject.getProjectFile());
+            }
+            
             continuation.execute();
          }
       }, false);

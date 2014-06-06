@@ -208,7 +208,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 Error getPackratContext(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(packrat::contextAsJson());
+   pResponse->setResult(module_context::packratContextAsJson());
    return Success();
 }
 
@@ -231,7 +231,7 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
       LOG_ERROR(error); // will also be reported in the console
 
    // return status
-   pResponse->setResult(packrat::contextAsJson());
+   pResponse->setResult(module_context::packratContextAsJson());
    return Success();
 }
 
@@ -312,6 +312,18 @@ PackratContext packratContext()
    }
 
    return context;
+}
+
+
+json::Object packratContextAsJson()
+{
+   module_context::PackratContext context = module_context::packratContext();
+   json::Object contextJson;
+   contextJson["available"] = context.available;
+   contextJson["applicable"] = context.applicable;
+   contextJson["packified"] = context.packified;
+   contextJson["mode_on"] = context.modeOn;
+   return contextJson;
 }
 
 

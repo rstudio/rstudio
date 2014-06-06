@@ -354,6 +354,7 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["vcs_context"] = projectVcsContextJson();
    optionsJson["build_options"] = projectBuildOptionsJson();
    optionsJson["build_context"] = projectBuildContextJson();
+   optionsJson["packrat_context"] = module_context::packratContextAsJson();
 
    pResponse->setResult(optionsJson);
    return Success();
