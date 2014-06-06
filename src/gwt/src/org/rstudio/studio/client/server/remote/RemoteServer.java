@@ -71,7 +71,6 @@ import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
-import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
@@ -116,8 +115,8 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
@@ -615,10 +614,10 @@ public class RemoteServer implements Server
    }
 
 
-   public void listPackages(
-         ServerRequestCallback<JsArray<PackageInfo>> requestCallback)
+   public void getPackageState(
+         ServerRequestCallback<PackageState> requestCallback)
    {
-      sendRequest(RPC_SCOPE, LIST_PACKAGES, requestCallback);
+      sendRequest(RPC_SCOPE, GET_PACKAGE_STATE, requestCallback);
    }
    
    public void getPackageInstallContext(
@@ -3476,23 +3475,11 @@ public class RemoteServer implements Server
    
    @Override
    public void packratBootstrap(String dir,
-                                ServerRequestCallback<PackratContext> requestCallback)
+                                ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   PACKRAT_BOOTSTRAP,
                   dir,
-                  requestCallback);
-   }
-
-   @Override
-   public void listPackagesPackrat(String dir,
-           ServerRequestCallback<JsArray<PackratPackageInfo>> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(dir));
-      sendRequest(RPC_SCOPE,
-                  LIST_PACKAGES_PACKRAT,
-                  params,
                   requestCallback);
    }
    
@@ -3566,7 +3553,7 @@ public class RemoteServer implements Server
    private static final String EDIT_COMPLETED = "edit_completed";
    private static final String CHOOSE_FILE_COMPLETED = "choose_file_completed";
 
-   private static final String LIST_PACKAGES = "list_packages";
+   private static final String GET_PACKAGE_STATE = "get_package_state";
    private static final String AVAILABLE_PACKAGES = "available_packages";
    private static final String CHECK_FOR_PACKAGE_UPDATES = "check_for_package_updates";
    private static final String INIT_DEFAULT_USER_LIBRARY = "init_default_user_library";
@@ -3796,5 +3783,4 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_CONTEXT = "get_packrat_context";
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
-   private static final String LIST_PACKAGES_PACKRAT = "list_packages_packrat";
 }

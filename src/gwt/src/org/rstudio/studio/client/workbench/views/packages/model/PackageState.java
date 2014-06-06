@@ -1,5 +1,5 @@
 /*
- * PackagesDataGridStyle.java
+ * PackageList.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,12 +12,24 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.packages.ui;
+package org.rstudio.studio.client.workbench.views.packages.model;
 
-import com.google.gwt.user.cellview.client.DataGrid;
+import org.rstudio.studio.client.packrat.model.PackratContext;
 
-public interface PackagesDataGridStyle extends DataGrid.Style
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+
+public class PackageState extends JavaScriptObject
 {
-   String packageOutOfSyncRow();
-   String packageNotApplicableColumn();
+   protected PackageState()
+   {
+   }
+   
+   public final native JsArray<PackageInfo> getPackageList() /*-{
+      return this.package_list;
+   }-*/;
+   
+   public final native PackratContext getPackratContext() /*-{
+      return this.packrat_context;
+   }-*/;
 }

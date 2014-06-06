@@ -332,11 +332,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    packages[order(packages$name),]
 })
 
-.rs.addJsonRpcHandler( "list_packages", function()
-{
-   .rs.listInstalledPackages()
-})
-
 .rs.addJsonRpcHandler( "get_package_install_context", function()
 {
    # cran mirror configured

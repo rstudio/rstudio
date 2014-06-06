@@ -48,6 +48,40 @@ public class PackageInfo extends JavaScriptObject
       return this.loaded;
    }-*/;
    
+   public final native String getPackratStringField(String name) /*-{
+      if (typeof this[name] === "undefined" || this[name] === null)
+         return "";
+      else
+         return this[name];
+   }-*/;
+   
+   public final native boolean getPackratBoolField(String name) /*-{
+      if (typeof this[name] === "undefined" || this[name] === null)
+         return false;
+      else
+         return this[name];
+   }-*/;
+   
+   public final String getPackratVersion() 
+   {
+      return getPackratStringField("packrat.version");
+   }
+   
+   public final String getPackratSource() 
+   {
+      return getPackratStringField("packrat.source");
+   }
+   
+   public final boolean getCurrentlyUsed() 
+   {
+      return getPackratBoolField("currently.used");
+   }
+
+   public final boolean getInPackratLibary()
+   {
+      return getPackratBoolField("in.packrat.library");
+   }
+
    public final PackageInfo asLoaded()
    {
       return asLoadedState(true);
@@ -60,11 +94,8 @@ public class PackageInfo extends JavaScriptObject
    
    private final native PackageInfo asLoadedState(boolean loaded) /*-{
       var packageInfo = new Object();
-      packageInfo.name = this.name;
-      packageInfo.library = this.library;
-      packageInfo.version = this.version;
-      packageInfo.desc = this.desc;
-      packageInfo.url = this.url;
+      for (var key in this)
+         packageInfo[key] = this[key];
       packageInfo.loaded = loaded;
       return packageInfo;
    }-*/;
