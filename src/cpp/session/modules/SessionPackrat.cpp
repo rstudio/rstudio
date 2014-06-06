@@ -205,17 +205,6 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
-json::Object contextAsJson()
-{
-   module_context::PackratContext context = module_context::packratContext();
-   json::Object contextJson;
-   contextJson["available"] = context.available;
-   contextJson["applicable"] = context.applicable;
-   contextJson["packified"] = context.packified;
-   contextJson["mode_on"] = context.modeOn;
-   return contextJson;
-}
-
 Error getPackratContext(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -247,6 +236,22 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
 }
 
 } // anonymous namespace
+
+json::Object contextAsJson(const module_context::PackratContext& context)
+{
+   json::Object contextJson;
+   contextJson["available"] = context.available;
+   contextJson["applicable"] = context.applicable;
+   contextJson["packified"] = context.packified;
+   contextJson["mode_on"] = context.modeOn;
+   return contextJson;
+}
+
+json::Object contextAsJson()
+{
+   module_context::PackratContext context = module_context::packratContext();
+   return contextAsJson(context);
+}
 
 Error initialize()
 {

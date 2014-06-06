@@ -32,8 +32,12 @@
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
+
+#include "SessionPackrat.hpp"
 
 #include "session-config.h"
 
@@ -265,6 +269,45 @@ void onDeferredInit(bool newSession)
    module_context::events().onDetectChanges.connect(onDetectChanges);
 }
 
+Error listPackages(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   Error error = Success();
+   module_context::PackratContext context = module_context::packratContext();
+   json::Object result;
+   json::Value packageListJson;
+   r::sexp::Protect protect;
+   SEXP packageList;
+
+   // determine the appropriate package listing method from the current 
+   // packrat mode status
+   if (context.modeOn)
+   {
+      FilePath projectDir = projects::projectContext().directory();
+      error = r::exec::RFunction(".rs.listPackagesPackrat", 
+                                 string_utils::utf8ToSystem(
+                                    projectDir.absolutePath()))
+              .call(&packageList, &protect);
+   }
+   else
+   {
+      error = r::exec::RFunction(".rs.listInstalledPackages")
+              .call(&packageList, &protect);
+   }
+
+   if (error)
+      LOG_ERROR(error);
+   else
+      r::json::jsonValueFromObject(packageList, &packageListJson);
+
+   // return the generated package list and the Packrat context 
+   result["package_list"] = packageListJson;
+   result["packrat_context"] = packrat::contextAsJson(context);
+   pResponse->setResult(result);
+
+   return error;
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -295,6 +338,7 @@ Error initialize()
             availablePackagesBegin,
             availablePackagesEnd))
       (bind(sourceModuleRFile, "SessionPackages.R"))
+      (bind(registerRpcMethod, "list_packages", listPackages))
       (bind(r::exec::executeString, ".rs.packages.initialize()"));
    return initBlock.execute();
 }

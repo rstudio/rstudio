@@ -1,5 +1,5 @@
 /*
- * PackratServerOperations.java
+ * PackageList.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,19 +12,24 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.packrat.model;
+package org.rstudio.studio.client.workbench.views.packages.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.packrat.model.PackratContext;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public interface PackratServerOperations
+public class PackageList extends JavaScriptObject
 {
-   void getPackratContext(ServerRequestCallback<PackratContext> requestCallback);
+   protected PackageList()
+   {
+   }
    
-   void getPackratStatus(String dir,
-            ServerRequestCallback<JsArray<PackratStatus>> requestCallback);
+   public final native JsArray<PackageInfo> getPackageList() /*-{
+      return this.package_list;
+   }-*/;
    
-   void packratBootstrap(String dir,
-                         ServerRequestCallback<PackratContext> requestCallback);
+   public final native PackratContext getPackratContext() /*-{
+      return this.packrat_context;
+   }-*/;
 }

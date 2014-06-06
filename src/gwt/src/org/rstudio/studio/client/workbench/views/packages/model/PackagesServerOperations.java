@@ -27,7 +27,7 @@ public interface PackagesServerOperations
 {
    // list installed packages
    void listPackages(
-         ServerRequestCallback<JsArray<PackageInfo>> requestCallback);
+         ServerRequestCallback<PackageList> requestCallback);
    
    void availablePackages(
          String repository,

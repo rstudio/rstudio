@@ -71,7 +71,6 @@ import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
-import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
@@ -116,8 +115,8 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageList;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
@@ -616,7 +615,7 @@ public class RemoteServer implements Server
 
 
    public void listPackages(
-         ServerRequestCallback<JsArray<PackageInfo>> requestCallback)
+         ServerRequestCallback<PackageList> requestCallback)
    {
       sendRequest(RPC_SCOPE, LIST_PACKAGES, requestCallback);
    }
@@ -3483,18 +3482,6 @@ public class RemoteServer implements Server
                   dir,
                   requestCallback);
    }
-
-   @Override
-   public void listPackagesPackrat(String dir,
-           ServerRequestCallback<JsArray<PackratPackageInfo>> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(dir));
-      sendRequest(RPC_SCOPE,
-                  LIST_PACKAGES_PACKRAT,
-                  params,
-                  requestCallback);
-   }
    
    private String clientId_;
    private double clientVersion_ = 0;
@@ -3796,5 +3783,4 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_CONTEXT = "get_packrat_context";
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
-   private static final String LIST_PACKAGES_PACKRAT = "list_packages_packrat";
 }
