@@ -99,6 +99,19 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packratContext_ = packratContext;
       packagesDataProvider_.setList(packages);
       createPackagesTable();
+
+      // show the bootstrap button if this state is eligible for Packrat but the
+      // project isn't currently under Packrat control
+      packratBootstrapButton_.setVisible(
+         packratContext_.isApplicable() && 
+         !packratContext_.isPackified());
+      
+      // show the toolbar button if Packrat mode is on
+      packratMenuButton_.setVisible(packratContext_.isModeOn());
+      
+      // show the separator if either of the above are visible
+      packratSeparator_.setVisible(packratBootstrapButton_.isVisible() ||
+                                   packratMenuButton_.isVisible());
    }
    
    @Override
@@ -174,6 +187,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       // update packages
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
+      toolbar.addLeftSeparator();
       toolbar.addLeftSeparator();
       
       // packrat (all packrat UI starts out hidden and then appears
@@ -372,9 +386,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
          // distribute columns for extended package information
          packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
-         packagesTable_.setColumnWidth(descColumn, 50, Unit.PCT);
-         packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
-         packagesTable_.setColumnWidth(packratVersionColumn, 10, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 40, Unit.PCT);
+         packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
+         packagesTable_.setColumnWidth(packratVersionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
          
          // highlight rows that are out of sync in packrat
@@ -385,8 +399,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       {
          // distribute columns for non-extended package information
          packagesTable_.setColumnWidth(nameColumn, 30, Unit.PCT);
-         packagesTable_.setColumnWidth(descColumn, 60, Unit.PCT);
-         packagesTable_.setColumnWidth(versionColumn, 10, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 55, Unit.PCT);
+         packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
       }
      
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
