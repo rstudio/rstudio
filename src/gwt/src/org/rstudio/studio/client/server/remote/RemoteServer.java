@@ -73,6 +73,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;

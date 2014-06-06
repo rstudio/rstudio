@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
