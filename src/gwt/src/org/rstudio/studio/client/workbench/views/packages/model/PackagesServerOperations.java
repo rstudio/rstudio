@@ -25,9 +25,8 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 
 public interface PackagesServerOperations
 {
-   // list installed packages
-   void listPackages(
-         ServerRequestCallback<PackageList> requestCallback);
+   void getPackageState(
+         ServerRequestCallback<PackageState> requestCallback);
    
    void availablePackages(
          String repository,

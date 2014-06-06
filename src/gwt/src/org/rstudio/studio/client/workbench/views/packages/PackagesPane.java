@@ -94,8 +94,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
    
    @Override
-   public void listPackages(PackratContext packratContext, 
-                            List<PackageInfo> packages)
+   public void setPackageState(PackratContext packratContext, 
+                               List<PackageInfo> packages)
    {
       packratContext_ = packratContext;
       packagesDataProvider_.setList(packages);

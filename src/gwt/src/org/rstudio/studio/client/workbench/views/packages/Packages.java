@@ -63,7 +63,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageList;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
@@ -86,8 +86,8 @@ public class Packages
 
    public interface Display extends WorkbenchView
    {
-      void listPackages(PackratContext packratContext, 
-                        List<PackageInfo> packagesDS);
+      void setPackageState(PackratContext packratContext, 
+                           List<PackageInfo> packagesDS);
       
       void installPackage(PackageInstallContext installContext,
                           PackageInstallOptions defaultInstallOptions,
@@ -162,7 +162,7 @@ public class Packages
          private PackageInstallOptions lastKnownState_;
       };
       
-      listPackages();
+      updatePackageState();
    }
    
    void onInstallPackage()
@@ -461,7 +461,7 @@ public class Packages
    @Handler
    public void onRefreshPackages()
    {
-      listPackages();
+      updatePackageState();
    }
    
    public void removePackage(final PackageInfo packageInfo)
@@ -514,10 +514,11 @@ public class Packages
       });
    }
       
-   public void listPackages()
+   @Override
+   public void updatePackageState()
    {
       view_.setProgress(true);
-      server_.listPackages(new HandlePackageList());
+      server_.getPackageState(new PackageStateUpdater());
    }
 
    public void loadPackage(final String packageName, final String libName)
@@ -558,13 +559,13 @@ public class Packages
    
    public void onInstalledPackagesChanged(InstalledPackagesChangedEvent event)
    {
-      listPackages() ;
+      updatePackageState() ;
    }
    
    @Override
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
-      listPackages();
+      updatePackageState();
    }
    
    public void onPackageFilterChanged(String filter)
@@ -623,7 +624,7 @@ public class Packages
          packages = allPackages_;
       }
       
-      view_.listPackages(packratContext_, packages);
+      view_.setPackageState(packratContext_, packages);
    }
    
    private void checkPackageStatusOnNextConsolePrompt(
@@ -796,9 +797,9 @@ public class Packages
             true);   
    }
 
-   private class HandlePackageList extends SimpleRequestCallback<PackageList>
+   private class PackageStateUpdater extends SimpleRequestCallback<PackageState>
    {
-      public HandlePackageList()
+      public PackageStateUpdater()
       {
          super("Error Listing Packages");
       }
@@ -814,7 +815,7 @@ public class Packages
       }
 
       @Override
-      public void onResponseReceived(PackageList response)
+      public void onResponseReceived(PackageState response)
       {
          // sort the packages
          allPackages_ = new ArrayList<PackageInfo>();

@@ -269,8 +269,8 @@ void onDeferredInit(bool newSession)
    module_context::events().onDetectChanges.connect(onDetectChanges);
 }
 
-Error listPackages(const json::JsonRpcRequest& request,
-                   json::JsonRpcResponse* pResponse)
+Error getPackageState(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
 {
    Error error = Success();
    module_context::PackratContext context = module_context::packratContext();
@@ -338,7 +338,7 @@ Error initialize()
             availablePackagesBegin,
             availablePackagesEnd))
       (bind(sourceModuleRFile, "SessionPackages.R"))
-      (bind(registerRpcMethod, "list_packages", listPackages))
+      (bind(registerRpcMethod, "get_package_state", getPackageState))
       (bind(r::exec::executeString, ".rs.packages.initialize()"));
    return initBlock.execute();
 }

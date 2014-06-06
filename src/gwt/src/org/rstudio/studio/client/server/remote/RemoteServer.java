@@ -116,7 +116,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageList;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
@@ -614,10 +614,10 @@ public class RemoteServer implements Server
    }
 
 
-   public void listPackages(
-         ServerRequestCallback<PackageList> requestCallback)
+   public void getPackageState(
+         ServerRequestCallback<PackageState> requestCallback)
    {
-      sendRequest(RPC_SCOPE, LIST_PACKAGES, requestCallback);
+      sendRequest(RPC_SCOPE, GET_PACKAGE_STATE, requestCallback);
    }
    
    public void getPackageInstallContext(
@@ -3553,7 +3553,7 @@ public class RemoteServer implements Server
    private static final String EDIT_COMPLETED = "edit_completed";
    private static final String CHOOSE_FILE_COMPLETED = "choose_file_completed";
 
-   private static final String LIST_PACKAGES = "list_packages";
+   private static final String GET_PACKAGE_STATE = "get_package_state";
    private static final String AVAILABLE_PACKAGES = "available_packages";
    private static final String CHECK_FOR_PACKAGE_UPDATES = "check_for_package_updates";
    private static final String INIT_DEFAULT_USER_LIBRARY = "init_default_user_library";

@@ -19,9 +19,9 @@ import org.rstudio.studio.client.packrat.model.PackratContext;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class PackageList extends JavaScriptObject
+public class PackageState extends JavaScriptObject
 {
-   protected PackageList()
+   protected PackageState()
    {
    }
    
