@@ -32,10 +32,10 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
-import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
+import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
@@ -363,13 +363,6 @@ public class Projects implements OpenProjectFileHandler,
                      @Override
                      public void onSuccess()
                      {
-                        if (!newProject.getOpenInNewWindow())
-                        {
-                           applicationQuit_.performQuit(
-                                             saveChanges,
-                                             newProject.getProjectFile());
-                        }
-
                         continuation.execute();
                      }
                   });
@@ -430,7 +423,7 @@ public class Projects implements OpenProjectFileHandler,
                      @Override
                      public void onResponseReceived(PackratContext context)
                      {
-                        indicator.onCompleted();
+                        continuation.execute();
                      }
                      
                      @Override
@@ -466,6 +459,14 @@ public class Projects implements OpenProjectFileHandler,
          public void onExecute(Command continuation)
          {
             indicator.onCompleted();
+            
+            if (!newProject.getOpenInNewWindow())
+            {
+               applicationQuit_.performQuit(
+                                 saveChanges,
+                                 newProject.getProjectFile());
+            }
+            
             continuation.execute();
          }
       }, false);

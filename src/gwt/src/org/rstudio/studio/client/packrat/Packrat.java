@@ -23,15 +23,14 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
-import org.rstudio.studio.client.common.packrat.events.PackratContextChangedEvent;
-import org.rstudio.studio.client.common.packrat.model.PackratContext;
-import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
@@ -42,22 +41,25 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.packages.Packages;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.Singleton;
 
-
-
-@Singleton
-public class Packrat {
-   
+public class Packrat
+{
    public interface Binder extends CommandBinder<Commands, Packrat> {}
 
+   public Packrat(Packages.Display display)
+   {
+      display_ = display;
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
    @Inject
-   public Packrat(
+   public void initialize(
          Binder binder,
          Commands commands,
          EventBus eventBus,
@@ -126,14 +128,7 @@ public class Packrat {
             {
                server_.packratBootstrap(
                   workbenchContext_.getActiveProjectDir().getPath(), 
-                  new SimpleRequestCallback<PackratContext>() {
-                     @Override
-                     public void onResponseReceived(PackratContext ctx)
-                     {
-                        eventBus_.fireEvent(
-                              new PackratContextChangedEvent(ctx));
-                     }
-                  });
+                  new SimpleRequestCallback<PackratContext>());
             } 
          });
    }
@@ -259,13 +254,14 @@ public class Packrat {
       });
       
    }
-
+  
+   @SuppressWarnings("unused")
+   private final Packages.Display display_;
    private DependencyManager dependencyManager_;
-   private final GlobalDisplay globalDisplay_;
-   private final EventBus eventBus_;
-   private final RemoteFileSystemContext fsContext_;
-   private final WorkbenchContext workbenchContext_;
-   private final Provider<FileDialogs> pFileDialogs_;
-   private final RemoteServer server_;
-
+   private GlobalDisplay globalDisplay_;
+   private EventBus eventBus_;
+   private RemoteFileSystemContext fsContext_;
+   private WorkbenchContext workbenchContext_;
+   private Provider<FileDialogs> pFileDialogs_;
+   private RemoteServer server_;
 }

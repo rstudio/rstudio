@@ -45,8 +45,6 @@ import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
-import org.rstudio.studio.client.common.packrat.events.PackratContextChangedEvent;
-import org.rstudio.studio.client.common.packrat.model.PackratContext;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -602,11 +600,6 @@ public class ClientEventDispatcher
          {
             String userAction = event.getData();
             eventBus_.fireEvent(new InstallShinyEvent(userAction));
-         }
-         else if (type.equals(ClientEvent.PackageStatusChanged))
-         {
-            PackratContext context = event.getData();
-            eventBus_.fireEvent(new PackratContextChangedEvent(context));
          }
          else
          {

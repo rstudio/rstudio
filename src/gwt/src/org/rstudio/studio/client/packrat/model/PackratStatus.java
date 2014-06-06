@@ -31,9 +31,6 @@ public class PackratStatus extends JsObject
    
    protected PackratStatus() {}
 
-   // One JSNI native method per field in the data frame returned by 
-   // packrat::status.
-   
    public final native int length() /*-{
       return Object.keys(this).length;
    }-*/;

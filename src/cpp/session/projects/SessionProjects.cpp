@@ -60,6 +60,7 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    json::Object contextJson;
 
    contextJson["rcpp_available"] = module_context::isPackageInstalled("Rcpp");
+   contextJson["packrat_available"] = module_context::packratContext().available;
 
    pResponse->setResult(contextJson);
 
@@ -353,6 +354,7 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["vcs_context"] = projectVcsContextJson();
    optionsJson["build_options"] = projectBuildOptionsJson();
    optionsJson["build_context"] = projectBuildContextJson();
+   optionsJson["packrat_context"] = module_context::packratContextAsJson();
 
    pResponse->setResult(optionsJson);
    return Success();

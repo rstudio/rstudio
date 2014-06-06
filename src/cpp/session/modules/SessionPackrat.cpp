@@ -29,8 +29,17 @@
 #include <session/SessionUserSettings.hpp>
 
 #include "SessionPackages.hpp"
+#include "session-config.h"
 
 using namespace core;
+
+#ifdef TRACE_PACKRAT_OUTPUT
+#define PACKRAT_TRACE(x) \
+   std::cerr << "(packrat) " << x << std::endl;
+#else
+#define PACKRAT_TRACE(x) 
+#endif
+
 
 namespace session {
 namespace modules { 
@@ -64,6 +73,7 @@ std::string getStoredHash(PackratHashType hashType)
 
 void setStoredHash(PackratHashType hashType, const std::string& hash)
 {
+   PACKRAT_TRACE("updating " << keyOfHashType(hashType) << " -> " <<  hash);
    r::session::clientState().putProjectPersistent(
          "packrat", 
          keyOfHashType(hashType), 
@@ -137,6 +147,7 @@ void checkHashes(
 {
    std::string oldHash = getStoredHash(primary);
    std::string newHash = getComputedHash(primary);
+   PACKRAT_TRACE("checking hashes: " << oldHash << " -> " << newHash);
 
    // hashes match, no work needed
    if (oldHash == newHash)
@@ -151,9 +162,10 @@ void checkHashes(
    // primary and secondary hashes mismatch
    else 
    {
-      // TODO: invoke status() to see if we're in a consistent state.
-      // yes -> update both hashes
-      // no -> prompt user
+      // TODO: don't do this until the user has resolved any conflicts that
+      // may exist, and packrat::status() is clean
+      setStoredHash(primary, newHash);
+      setStoredHash(secondary, getComputedHash(secondary));
    }
 }
 
@@ -174,10 +186,12 @@ void onFileChanged(FilePath sourceFilePath)
 
    if (sourceFilePath.filename() == "packrat.lock")
    {
+      PACKRAT_TRACE("detected change to lockfile " << sourceFilePath);
       checkHashes(HASH_TYPE_LOCKFILE, HASH_TYPE_LIBRARY, onLockfileUpdate);
    }
    else if (sourceFilePath.isWithin(libraryPath)) 
    {
+      PACKRAT_TRACE("detected change to library file " << sourceFilePath);
       checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
    }
 }
@@ -194,7 +208,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 Error getPackratContext(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(packrat::contextAsJson());
+   pResponse->setResult(module_context::packratContextAsJson());
    return Success();
 }
 
@@ -217,22 +231,11 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
       LOG_ERROR(error); // will also be reported in the console
 
    // return status
-   pResponse->setResult(packrat::contextAsJson());
+   pResponse->setResult(module_context::packratContextAsJson());
    return Success();
 }
 
 } // anonymous namespace
-
-json::Object contextAsJson()
-{
-   module_context::PackratContext context = module_context::packratContext();
-   json::Object contextJson;
-   contextJson["available"] = context.available;
-   contextJson["applicable"] = context.applicable;
-   contextJson["packified"] = context.packified;
-   contextJson["mode_on"] = context.modeOn;
-   return contextJson;
-}
 
 Error initialize()
 {
@@ -293,6 +296,18 @@ PackratContext packratContext()
    }
 
    return context;
+}
+
+
+json::Object packratContextAsJson()
+{
+   module_context::PackratContext context = module_context::packratContext();
+   json::Object contextJson;
+   contextJson["available"] = context.available;
+   contextJson["applicable"] = context.applicable;
+   contextJson["packified"] = context.packified;
+   contextJson["mode_on"] = context.modeOn;
+   return contextJson;
 }
 
 

@@ -29,8 +29,14 @@ public class PackageLibraryUtils
    public static PackageLibraryType typeOfLibrary(Session session, 
                                                   String library)
    {
-      if (library.startsWith(
-           session.getSessionInfo().getActiveProjectDir().getPath()))
+      FileSystemItem projectDir = 
+            session.getSessionInfo().getActiveProjectDir();
+
+      // if there's an active project and this package is in its library or
+      // the package has no recorded library (i.e. it's not installed), it
+      // belongs in the project library
+      if ((projectDir != null && library.startsWith(projectDir.getPath())) ||
+          library.length() == 0)
       {
          return PackageLibraryType.Project;
       }
@@ -47,7 +53,7 @@ public class PackageLibraryUtils
    public static String nameOfLibraryType(PackageLibraryType type)
    {
       if (type == PackageLibraryType.Project)
-         return "Project Library";
+         return "Packrat Library";
       else if (type == PackageLibraryType.User)
          return "User Library";
       else if (type == PackageLibraryType.System)

@@ -26,8 +26,6 @@ namespace session {
 namespace modules { 
 namespace packrat {
 
-core::json::Object contextAsJson();
-
 core::Error initialize();
                        
 } // namespace packrat

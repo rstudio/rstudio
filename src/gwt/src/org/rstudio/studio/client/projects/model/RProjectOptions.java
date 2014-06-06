@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import org.rstudio.studio.client.packrat.model.PackratContext;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class RProjectOptions extends JavaScriptObject
@@ -60,4 +62,11 @@ public class RProjectOptions extends JavaScriptObject
    public native final RProjectBuildContext getBuildContext() /*-{
       return this.build_context;
    }-*/;
+   
+   public native final PackratContext getPackratContext() /*-{
+      return this.packrat_context;
+   }-*/;
+   
+   
+   
 }
