@@ -29,6 +29,7 @@
 #include <session/SessionUserSettings.hpp>
 
 #include "SessionPackages.hpp"
+#include "session-config.h"
 
 using namespace core;
 

@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils.PackageLibraryType;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
@@ -497,7 +498,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       public void buildRowImpl(PackageInfo pkg, int idx)
       {
          String library = pkg.getLibrary();
-         if ((idx == lastIdx_ + 1 && !lastLibrary_.equals(library)) || 
+         PackageLibraryType libraryType = 
+               PackageLibraryUtils.typeOfLibrary(session_, library);
+         if ((idx == lastIdx_ + 1 && !lastLibrary_.equals(libraryType)) || 
              idx == 0)
          {
            TableRowBuilder row = startRow();
@@ -512,13 +515,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
            row.endTD();
            
            row.endTR();
-           lastLibrary_ = library;
+           lastLibrary_ = libraryType;
          }
          super.buildRowImpl(pkg, idx);
          lastIdx_ = idx;
       }
       
-      private String lastLibrary_ = "";
+      private PackageLibraryType lastLibrary_;
       private int lastIdx_ = 0;
    }   
    

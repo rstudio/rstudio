@@ -29,15 +29,15 @@ public class PackageInfo extends JavaScriptObject
    }-*/;
    
    public final native String getLibrary() /*-{
-      return this.library;
+      return this.library == null ? "" : this.library;
    }-*/;
 
    public final native String getVersion() /*-{
-      return this.version;
+      return this.version == null ? "" : this.version;
    }-*/;
    
    public final native String getDesc() /*-{
-      return this.desc;
+      return this.desc == null ? "" : this.desc;
    }-*/;
    
    public final native String getUrl() /*-{
