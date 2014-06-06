@@ -16,6 +16,7 @@ package org.rstudio.studio.client.packrat.model;
 
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 
 import com.google.gwt.core.client.JsArray;
 
@@ -28,11 +29,10 @@ public interface PackratServerOperations
    
    void packratBootstrap(String dir,
                          ServerRequestCallback<Void> requestCallback);
-                         ServerRequestCallback<PackratContext> requestCallback);
    
    void getPackratRestoreActions(String dir,
                                  ServerRequestCallback<JsArray<PackratRestoreActions>> requestCallback);
 
    void listPackagesPackrat(String dir,
-                            ServerRequestCallback<JsArray<PackratPackageInfo>> requestCallback);
+                            ServerRequestCallback<JsArray<PackageInfo>> requestCallback);
 }
