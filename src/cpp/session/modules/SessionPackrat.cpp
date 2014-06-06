@@ -317,13 +317,7 @@ PackratContext packratContext()
 
 json::Object packratContextAsJson()
 {
-   module_context::PackratContext context = module_context::packratContext();
-   json::Object contextJson;
-   contextJson["available"] = context.available;
-   contextJson["applicable"] = context.applicable;
-   contextJson["packified"] = context.packified;
-   contextJson["mode_on"] = context.modeOn;
-   return contextJson;
+   return modules::packrat::contextAsJson();
 }
 
 
