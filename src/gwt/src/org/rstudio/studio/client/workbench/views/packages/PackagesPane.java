@@ -29,7 +29,6 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
-import org.rstudio.studio.client.packrat.Packrat;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -76,8 +75,7 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 
-public class PackagesPane extends WorkbenchPane implements Packages.Display,
-                                                           Packrat.Display
+public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
    @Inject
    public PackagesPane(Commands commands, 
@@ -94,15 +92,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
    public void setObserver(PackagesDisplayObserver observer)
    {
       observer_ = observer ;  
-   }
-
-   @Override
-   public void setPackratContext(PackratContext context)
-   {
-      packratContext_ = context;
-      packratMenuButton_.setVisible(context.isPackified());
-      packratBootstrapButton_.setVisible(!context.isPackified());
-      packratSeparator_.setVisible(context.isApplicable());
    }
    
    @Override
@@ -187,11 +176,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
       toolbar.addLeftSeparator();
       
-      // packrat
+      // packrat (all packrat UI starts out hidden and then appears
+      // in response to changes in the packages state)
 
       // create packrat bootstrap button
       packratBootstrapButton_ = commands_.packratBootstrap().createToolbarButton(false);
       toolbar.addLeftWidget(packratBootstrapButton_);
+      packratBootstrapButton_.setVisible(false);
       
       // create packrat menu + button
       ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
@@ -208,10 +199,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display,
             packratMenu
        );
       toolbar.addLeftWidget(packratMenuButton_);
+      packratMenuButton_.setVisible(false);
       packratSeparator_ = toolbar.addLeftSeparator();
-      
-      setPackratContext(session_.getSessionInfo().getPackratContext());
-      
+      packratSeparator_.setVisible(false);
+          
       toolbar.addLeftWidget(commands_.refreshPackages().createToolbarButton());
       
       searchWidget_ = new SearchWidget(new SuggestOracle() {

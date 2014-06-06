@@ -60,6 +60,7 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    json::Object contextJson;
 
    contextJson["rcpp_available"] = module_context::isPackageInstalled("Rcpp");
+   contextJson["packrat_available"] = module_context::packratContext().available;
 
    pResponse->setResult(contextJson);
 

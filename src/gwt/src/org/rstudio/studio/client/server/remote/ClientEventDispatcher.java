@@ -52,8 +52,6 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
-import org.rstudio.studio.client.packrat.events.PackratContextChangedEvent;
-import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
@@ -602,11 +600,6 @@ public class ClientEventDispatcher
          {
             String userAction = event.getData();
             eventBus_.fireEvent(new InstallShinyEvent(userAction));
-         }
-         else if (type.equals(ClientEvent.PackageStatusChanged))
-         {
-            PackratContext context = event.getData();
-            eventBus_.fireEvent(new PackratContextChangedEvent(context));
          }
          else
          {

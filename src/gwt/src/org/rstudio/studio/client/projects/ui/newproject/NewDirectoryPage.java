@@ -118,20 +118,18 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       // Initialize project with packrat
       chkPackratInit_ = new CheckBox("Use packrat with this project");
-      if (sessionInfo.getPackratContext().isAvailable())
+      chkPackratInit_.setValue(uiPrefs.newProjUsePackrat().getValue());
+      
+      if (optionsPanel != null)
       {
-         chkPackratInit_.setValue(uiPrefs.newProjUsePackrat().getValue());
-         
-         if (optionsPanel != null)
-         {
-            optionsPanel.add(chkPackratInit_);
-         }
-         else
-         {
-            addSpacer();
-            addWidget(chkPackratInit_);
-         }
+         optionsPanel.add(chkPackratInit_);
       }
+      else
+      {
+         addSpacer();
+         addWidget(chkPackratInit_);
+      }
+      
       
       if (optionsPanel != null)
       {
@@ -169,6 +167,12 @@ public class NewDirectoryPage extends NewProjectWizardPage
       super.initialize(input);
           
       newProjectParent_.setText(input.getDefaultNewProjectLocation().getPath());
+      
+      if (!input.getContext().isPackratAvailable())
+      {
+         chkPackratInit_.setValue(false);
+         chkPackratInit_.setVisible(false);
+      }
    }
 
 

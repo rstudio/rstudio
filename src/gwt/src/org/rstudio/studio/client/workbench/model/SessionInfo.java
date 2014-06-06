@@ -22,7 +22,6 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
-import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
@@ -358,9 +357,5 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean getRMarkdownPackageAvailable() /*-{
       return this.rmarkdown_available;
-   }-*/;
-   
-   public final native PackratContext getPackratContext() /*-{
-      return this.packrat_context;
    }-*/;
 }

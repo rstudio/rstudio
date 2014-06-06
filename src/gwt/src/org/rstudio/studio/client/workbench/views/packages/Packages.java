@@ -37,7 +37,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.Packrat;
-import org.rstudio.studio.client.packrat.events.PackratContextChangedEvent;
 import org.rstudio.studio.client.packrat.model.PackratPackageInfo;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.server.ServerDataSource;
@@ -80,13 +79,12 @@ public class Packages
       extends BasePresenter
       implements InstalledPackagesChangedHandler,
                  PackageStatusChangedHandler,
-                 PackratContextChangedEvent.Handler,
                  DeferredInitCompletedEvent.Handler,
                  PackagesDisplayObserver
 {
    public interface Binder extends CommandBinder<Commands, Packages> {}
 
-   public interface Display extends WorkbenchView, Packrat.Display
+   public interface Display extends WorkbenchView
    {
       void listPackages(List<PackageInfo> packagesDS);
       
@@ -520,7 +518,7 @@ public class Packages
    public void listPackages()
    {
       view_.setProgress(true);
-      if (session_.getSessionInfo().getPackratContext().isModeOn())
+      if (false) // TODO: use unified call for packages list/state
       {
          packratServer_.listPackagesPackrat(
                session_.getSessionInfo().getActiveProjectDir().getPath(), 
@@ -601,11 +599,6 @@ public class Packages
                                                     packageInfo.asUnloaded());
          }
       }
-   }
-  
-   public void onPackratContextChanged(PackratContextChangedEvent event)
-   {
-      packrat_.onPackratContextChanged(event);
    }
    
    private void setViewPackageList()
@@ -869,6 +862,7 @@ public class Packages
    private final WorkbenchContext workbenchContext_;
    private final DefaultCRANMirror defaultCRANMirror_;
    private final Session session_;
+   @SuppressWarnings("unused")
    private final Packrat packrat_;
    private PackageInstallOptions installOptions_ = 
                                   PackageInstallOptions.create(true, "", true);
