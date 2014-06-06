@@ -296,16 +296,19 @@ Error getPackageState(const json::JsonRpcRequest& request,
    }
 
    if (error)
+   {
       LOG_ERROR(error);
+      return error;
+   }
    else
+   {
+      // return the generated package list and the Packrat context
       r::json::jsonValueFromObject(packageList, &packageListJson);
-
-   // return the generated package list and the Packrat context 
-   result["package_list"] = packageListJson;
-   result["packrat_context"] = packrat::contextAsJson(context);
-   pResponse->setResult(result);
-
-   return error;
+      result["package_list"] = packageListJson;
+      result["packrat_context"] = packrat::contextAsJson(context);
+      pResponse->setResult(result);
+      return Success();
+   }
 }
 
 } // anonymous namespace
