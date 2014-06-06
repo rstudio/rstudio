@@ -105,6 +105,7 @@ private:
             // check to see if a source file was specified; if so return a URL
             // with the source file appended
             if (!sourceFile_.empty() &&
+                !boost::algorithm::iends_with(deployedUrl_, ".rmd") &&
                 (string_utils::toLower(sourceFile_) != "index.rmd"))
             {
                // append / to the URL if it doesn't already have one
