@@ -30,7 +30,8 @@ public class PackageLibraryUtils
                                                   String library)
    {
       if (library.startsWith(
-           session.getSessionInfo().getActiveProjectDir().getPath()))
+           session.getSessionInfo().getActiveProjectDir().getPath()) ||
+          library.length() == 0)
       {
          return PackageLibraryType.Project;
       }

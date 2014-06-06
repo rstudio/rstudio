@@ -22,29 +22,39 @@
    packratStatus <- packrat::status(dir, quiet = TRUE)
    libraryList <- .rs.listInstalledPackages()
 
-   # overlay packrat status on library status 
-   mergedList <- merge(libraryList, 
+   # for each package, indicate whether it's in the private library (this is
+   # largely a convenience for the client since a lot of behavior is driven
+   # from this value)
+   projectPath <- normalizePath(dir) 
+   libraryPaths <- normalizePath(as.character(libraryList[,"library"]))
+   libraryList["in.packrat.library"] <- 
+      substr(libraryPaths, 1, nchar(projectPath)) ==
+      projectPath
+
+   packratList <- subset(libraryList, in.packrat.library) 
+   nonPackratList <- subset(libraryList, !in.packrat.library) 
+
+   # overlay packrat status on the packrat library status
+   mergedList <- merge(packratList, 
                        packratStatus, 
                        by.x = "name", 
                        by.y = "package", 
                        all.x = TRUE,
                        all.y = TRUE)
 
-   # for each package, indicate whether it's in the private library
-   # (this is largely a convenience for the client since a lot of behavior
-   # is driven from this value)
-   projectPath <- normalizePath(dir) 
-   libraryPaths <- normalizePath(as.character(mergedList[,"library"]))
-   mergedList["in.packrat.library"] <- 
-      substr(libraryPaths, 1, nchar(projectPath)) ==
-      projectPath
+   # mark all packages in the merged list 
+   mergedList[,"in.packrat.library"] <- rep(TRUE, nrow(mergedList))
 
    # exclude manipulate and rstudio packages 
    mergedList <- subset(mergedList, !(mergedList[,"name"] == "rstudio"))
    mergedList <- subset(mergedList, !(mergedList[,"name"] == "manipulate"))
 
+   # create empty packrat columns for the packages in non-Packrat libraries
+   packratCols <- setdiff(colnames(mergedList), colnames(nonPackratList))
+   nonPackratList[,packratCols] <- NA
+
    # return the combined list
-   mergedList
+   rbind(mergedList, nonPackratList)
 })
 
 .rs.addJsonRpcHandler("list_packages_packrat", function(dir) {
