@@ -56,8 +56,15 @@ public:
             "appName = '" + app + "', " 
             "launch.browser = function (url) { "
             "   message('" kFinishedMarker "', url) "
-            "}, "
-            "launch.rmd = NULL)");
+            "}");
+
+      // append launch.rmd arg for older versions of shinyapps package
+      if (!module_context::isPackageVersionInstalled("shinyapps", "0.3.54"))
+      {
+         cmd += ", launch.rmd = NULL";
+      }
+      cmd += ")";
+
       pDeploy->start(cmd.c_str(), FilePath());
       return pDeploy;
    }
