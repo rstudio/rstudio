@@ -29,15 +29,6 @@ public class PackratRestoreDialog extends ModalDialogBase
    public PackratRestoreDialog(JsArray<PackratRestoreActions> prRestore, final EventBus eventBus)
    {
       setText("Restore packages...");
-      ThemedButton CancelButton = new ThemedButton("Cancel", new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            closeDialog();
-         }
-      });
-      
       ThemedButton RestoreButton = new ThemedButton("Restore", new ClickHandler()
       {
          @Override
@@ -48,7 +39,7 @@ public class PackratRestoreDialog extends ModalDialogBase
       });
       
       addOkButton(RestoreButton);
-      addCancelButton(CancelButton);
+      addCancelButton();
       contents_ = new PackratRestoreDialogContents(prRestore);
       setWidth("500px");
    }
