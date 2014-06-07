@@ -2334,6 +2334,7 @@ public class GenerateJavaScriptAST {
       catchBlock.getStatements().add(errCall.makeStmt());
       errCall.setQualifier(errFn.makeRef(sourceInfo));
       errCall.getArguments().add(modName.makeRef(sourceInfo));
+      errCall.getArguments().add(jsCatch.getParameter().getName().makeRef(sourceInfo));
 
       // }());
       JsInvocation createGwtOnLoadCall = new JsInvocation(sourceInfo);

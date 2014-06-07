@@ -23,9 +23,8 @@ the License.
 <body>
 <script language='javascript'>
 <!--
-function junitOnLoadErrorFn(moduleName) {
-  junitLaunchError('Failed to load module "' + moduleName +
-    '".\nPlease see the log for details.');
+function junitOnLoadErrorFn(moduleName, e) {
+  junitLaunchError('Failed to load module ' + moduleName + ': ' + e);
 }
 
 function junitOnPropertyErrorFn(propName, allowedValues, badValue) {
