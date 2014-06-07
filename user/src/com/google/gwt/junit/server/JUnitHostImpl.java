@@ -24,6 +24,7 @@ import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitHost;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.linker.JUnitSymbolMapsLinker;
+import com.google.gwt.logging.shared.RemoteLoggingService;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.server.rpc.RPCServletUtils;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -31,6 +32,8 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +44,7 @@ import javax.servlet.http.HttpServletResponse;
  * communication between the unit test code running in a browser and the real
  * test process.
  */
-public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
+public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost, RemoteLoggingService {
 
   /**
    * A hook into GWTUnitTestShell, the underlying unit test process.
@@ -157,6 +160,16 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     if (throwable != null) {
       deobfuscateStackTrace(throwable);
     }
+  }
+
+  @Override
+  public String logOnServer(LogRecord lr) {
+    lr.setMessage("<BROWSER> " + lr.getMessage());
+    if (lr.getThrown() != null) {
+      deobfuscateStackTrace(lr.getThrown());
+    }
+    Logger.getLogger(lr.getLoggerName()).log(lr);
+    return null;
   }
 
   private void deobfuscateStackTrace(Throwable throwable) {

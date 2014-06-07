@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.logging.client;
+package com.google.gwt.logging;
 
 import com.google.gwt.junit.GWTMockUtilities;
+import com.google.gwt.logging.client.LogConfiguration;
 
 import junit.framework.TestCase;
 

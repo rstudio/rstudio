@@ -15,8 +15,6 @@
  */
 package com.google.gwt.logging;
 
-import com.google.gwt.logging.client.LogConfigurationJreTest;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 

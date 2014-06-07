@@ -17,8 +17,12 @@
 <!-- Do not inherit this module directly.  Running GWTTestCase under JUnit  -->
 <!-- will inherit this module automatically.                                -->
 <module type="fileset">
+  <inherits name="com.google.gwt.logging.Logging"/>
   <inherits name="com.google.gwt.user.User"/>
   <inherits name="com.google.gwt.junit.JUnit3"/>
+
+  <set-property name="gwt.logging.developmentModeHandler" value="DISABLED" />
+  <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
 
   <super-source path="translatable"/>
 
@@ -40,6 +44,11 @@
   <!-- Override the regular symbolMaps linker to put the data somewhere we can find it -->
   <define-linker name="symbolMaps" class="com.google.gwt.junit.linker.JUnitSymbolMapsLinker" />
 
-  <servlet path='/junithost/*' class='com.google.gwt.junit.server.JUnitHostImpl'/>
+  <!--
+    Note that only one servlet will be instantiated for both following paths which makes it
+    easy to share deobfuscator logic and state.
+  -->
+  <servlet path="/junithost/*" class="com.google.gwt.junit.server.JUnitHostImpl"/>
+  <servlet path="/remote_logging" class="com.google.gwt.junit.server.JUnitHostImpl"/>
 
 </module>

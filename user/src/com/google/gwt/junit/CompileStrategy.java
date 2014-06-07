@@ -25,6 +25,7 @@ import com.google.gwt.junit.JUnitShell.Strategy;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
+import com.google.gwt.logging.client.LogConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -168,6 +169,9 @@ public abstract class CompileStrategy {
 
     // Replace any user entry points with our test runner.
     moduleDef.clearEntryPoints();
+
+    // LogConfiguration needs to be earlier otherwise it will override UncaughtExceptionHandler.
+    moduleDef.addEntryPointTypeName(LogConfiguration.class.getName());
     moduleDef.addEntryPointTypeName(GWTRunner.class.getName());
 
     // Squirrel away the name of the active module for GWTRunnerGenerator

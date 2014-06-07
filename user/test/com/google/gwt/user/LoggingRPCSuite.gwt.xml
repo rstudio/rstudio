@@ -21,13 +21,6 @@
 
   <servlet path='/loggingrpc'
     class='com.google.gwt.user.server.rpc.LoggingRPCTestServiceImpl' />
-  <servlet path="/remote_logging" class="com.google.gwt.logging.server.RemoteLoggingServiceImpl"/>
-
-  <set-property name="gwt.logging.logLevel" value="WARNING"/>
-  <set-property name="gwt.logging.enabled" value="TRUE"/>
-  <set-property name="gwt.logging.consoleHandler" value="ENABLED"/>
-  <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
-
 
   <set-property name="compiler.useSourceMaps" value="true"/>
 
