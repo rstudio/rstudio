@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 public class PackageLibraryUtils
 {
@@ -29,8 +30,10 @@ public class PackageLibraryUtils
    public static PackageLibraryType typeOfLibrary(Session session, 
                                                   String library)
    {
-      FileSystemItem projectDir = 
-            session.getSessionInfo().getActiveProjectDir();
+      FileSystemItem projectDir = null;
+      SessionInfo sessionInfo = session.getSessionInfo();
+      if (sessionInfo != null)
+         projectDir = sessionInfo.getActiveProjectDir();
 
       // if there's an active project and this package is in its library or
       // the package has no recorded library (i.e. it's not installed), it
