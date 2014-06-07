@@ -151,13 +151,14 @@ final class Cast {
   /**
    * Determine if object is an instanceof jsType regardless of window or frame.
    */
-  static native boolean jsInstanceOf(Object obj, String jsType) /*-{
+  static native boolean jsInstanceOf(Object obj, String jsTypeStr) /*-{
     if (!obj) {
         return false;
     }
 
     // fast check for $wnd versions when CastNormalizer can pass function refs directly
     // TODO(cromwellian) restore JSymbolLiteral to allow JS reference literals to be passed through
+    var jsType = window[jsTypeStr];
     if (typeof(jsType) === 'function'  && obj instanceof jsType) {
         return true;
     }
@@ -170,14 +171,14 @@ final class Cast {
     // hack workaround for HtmlUnit and fast early exit
     // This *ONLY* works for functions in JS that are non-anonymous and doesn't obey hierarchy
     // TODO(cromwellian) TEMPORARY: fix HtmlUnit patch upstream and remove this
-    if (obj.constructor && obj.constructor.name == jsType) {
+    if (obj.constructor && obj.constructor.name == jsTypeStr) {
         return true;
     }
 
     // More general check, works on all browsers
     if (obj.constructor) {
       // TODO: remove support for $wnd
-      var isMainWindow = jsType.substring(0, 5) == '$wnd.';
+      var isMainWindow = jsTypeStr.substring(0, 5) == '$wnd.';
       var jsFunction = obj.constructor;
       var jsTypeInContext = $wnd;
       if (!isMainWindow) {
@@ -188,11 +189,12 @@ final class Cast {
         // eval 'return this' in context to get global scope which defines obj's constructor
         var jsTypeInContext = jsFunction("return window || self;")();
       } else {
-          // strip of $wnd.
-          jsType = jsType.substring(5);
+        // strip of $wnd.
+        jsTypeStr = jsTypeStr.substring(5);
       }
       // build up contextWindow.some.type.Path
-      for (var parts = jsType.split("."), i = 0, l = parts.length; i < l && jsTypeInContext; i++) {
+      for (var parts = jsTypeStr.split("."), i = 0, l = parts.length; i < l && jsTypeInContext;
+          i++) {
           jsTypeInContext = jsTypeInContext[parts[i]];
       }
       return obj instanceof jsTypeInContext;
