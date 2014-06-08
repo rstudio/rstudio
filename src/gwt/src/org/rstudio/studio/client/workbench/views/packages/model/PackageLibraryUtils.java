@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.model;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -38,8 +39,8 @@ public class PackageLibraryUtils
       // if there's an active project and this package is in its library or
       // the package has no recorded library (i.e. it's not installed), it
       // belongs in the project library
-      if ((projectDir != null && library.startsWith(projectDir.getPath())) ||
-          library.length() == 0)
+      if (StringUtil.isNullOrEmpty(library) ||
+          (projectDir != null && library.startsWith(projectDir.getPath())))
       {
          return PackageLibraryType.Project;
       }
