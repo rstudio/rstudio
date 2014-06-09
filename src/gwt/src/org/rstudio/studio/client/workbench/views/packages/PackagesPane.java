@@ -105,7 +105,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // project isn't currently under Packrat control
       packratBootstrapButton_.setVisible(
          packratContext_.isApplicable() && 
-         !packratContext_.isPackified());
+         (!packratContext_.isPackified() || !packratContext_.isModeOn()));
       
       // show the toolbar button if Packrat mode is on
       packratMenuButton_.setVisible(packratContext_.isModeOn());

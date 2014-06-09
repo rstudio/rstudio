@@ -22,7 +22,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
@@ -32,7 +31,6 @@ import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 
 import com.google.gwt.core.client.JsArray;
@@ -53,42 +51,37 @@ public class Packrat
    public void initialize(
          Binder binder,
          Commands commands,
-         EventBus eventBus,
          WorkbenchContext workbenchContext,
          RemoteFileSystemContext fsContext,
          PackratStatus prStatus,
          RemoteServer server,
+         PackratUtil util,
          Provider<FileDialogs> pFileDialogs) {
       
-      eventBus_ = eventBus;
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
       server_ = server;
+      util_ = util;
       pFileDialogs_ = pFileDialogs;
       binder.bind(commands, this);
-   }
-   
-   private void fireConsoleEvent(final String userAction) 
-   {
-      eventBus_.fireEvent(new SendToConsoleEvent(userAction, true, false));
    }
 
    @Handler
    public void onPackratSnapshot() 
    {
-      fireConsoleEvent("packrat::snapshot()");
+      util_.executePackratFunction("snapshot");
    }
 
    @Handler
    public void onPackratRestore() 
    {
-      fireConsoleEvent("packrat::restore()");
+      util_.executePackratFunction("restore");
    }
 
    @Handler
    public void onPackratClean() 
    {
-      fireConsoleEvent("packrat::clean()");
+      util_.executePackratFunction("clean");
    }
 
    @Handler
@@ -115,23 +108,16 @@ public class Packrat
                   if (bundleFile == null)
                      return;
 
-                  StringBuilder cmd = new StringBuilder();
+                  StringBuilder args = new StringBuilder();
                   // We use 'overwrite = TRUE' since the UI dialog will prompt
                   // us if we want to overwrite
-                  cmd
-                  .append("packrat::bundle(file = '")
+                  args
+                  .append("file = '")
                   .append(bundleFile)
-                  .append("', overwrite = TRUE)")
+                  .append("', overwrite = TRUE")
                   ;
 
-                  eventBus_.fireEvent(
-                     new SendToConsoleEvent(
-                        cmd.toString(),
-                        true,
-                        false
-                     )
-                  );
-
+                  util_.executePackratFunction("bundle", args.toString());
                }
 
             });
@@ -162,7 +148,7 @@ public class Packrat
   
    @SuppressWarnings("unused")
    private final Packages.Display display_;
-   private EventBus eventBus_;
+   private PackratUtil util_;
    private RemoteFileSystemContext fsContext_;
    private WorkbenchContext workbenchContext_;
    private Provider<FileDialogs> pFileDialogs_;

@@ -321,6 +321,71 @@ json::Object packratContextAsJson()
    return modules::packrat::contextAsJson();
 }
 
+namespace {
+
+void copyOption(SEXP optionsSEXP, const std::string& listName,
+                json::Object* pOptionsJson, const std::string& jsonName,
+                bool defaultValue)
+{
+   bool value = defaultValue;
+   Error error = r::sexp::getNamedListElement(optionsSEXP,
+                                              listName,
+                                              &value,
+                                              defaultValue);
+   if (error)
+   {
+      error.addProperty("option", listName);
+      LOG_ERROR(error);
+   }
+
+   (*pOptionsJson)[jsonName] = value;
+}
+
+} // anonymous namespace
+
+json::Value packratOptionsAsJson()
+{
+   PackratContext context = packratContext();
+   if (context.packified)
+   {
+      // create options to return and record mode
+      json::Object optionsJson;
+      optionsJson["mode_on"] = context.modeOn;
+
+      // get the options from packrat
+      FilePath projectDir = projects::projectContext().directory();
+      r::exec::RFunction getOpts("packrat:::get_opts");
+      getOpts.addParam("simplify", false);
+      getOpts.addParam("project", module_context::createAliasedPath(
+                                                            projectDir));
+      r::sexp::Protect rProtect;
+      SEXP optionsSEXP;
+      Error error = getOpts.call(&optionsSEXP, &rProtect);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Value();
+      }
+
+      // copy the options into json
+      copyOption(optionsSEXP, "auto.snapshot",
+                 &optionsJson, "auto_snapshot", true);
+
+      copyOption(optionsSEXP, "vcs.ignore.lib",
+                 &optionsJson, "vcs_ignore_lib", true);
+
+      copyOption(optionsSEXP, "vcs.ignore.src",
+                 &optionsJson, "vcs_ignore_src", false);
+
+      return optionsJson;
+   }
+   else
+   {
+      return json::Value();
+   }
+}
+
+
 
 } // namespace module_context
 } // namespace session

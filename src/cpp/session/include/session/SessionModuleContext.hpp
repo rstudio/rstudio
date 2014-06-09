@@ -560,6 +560,8 @@ struct PackratContext
 PackratContext packratContext();
 core::json::Object packratContextAsJson();
 
+core::json::Value packratOptionsAsJson();
+
 } // namespace module_context
 } // namespace session
 
