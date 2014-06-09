@@ -82,7 +82,13 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) browseUrl: (NSString*) url
 {
-   NSURL* nsurl = [NSURL URLWithString: url];
+   // this may have already been escaped at some point -- so first normalize it by decoding
+   // it and then proceed with re-encoding it
+   NSString *decodedURL = [url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+   NSString *encodedURL = [decodedURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+   NSURL* nsurl = [NSURL URLWithString: encodedURL];
+   
+   // launch the browser
    desktop::utils::browseURL(nsurl);
 }
 

@@ -644,9 +644,4 @@ void UserSettings::setUseDevtools(bool useDevtools)
    settings_.set("useDevtools", useDevtools);
 }
 
-bool UserSettings::packratAvailable() const
-{
-   return settings_.getBool("packratAvailable", false);
-}
-
 }// namespace session

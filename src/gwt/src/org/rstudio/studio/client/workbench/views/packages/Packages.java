@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.packages;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
@@ -103,7 +104,7 @@ public class Packages
    
    @Inject
    public Packages(Display view, 
-                   EventBus events,
+                   final EventBus events,
                    PackagesServerOperations server,
                    GlobalDisplay globalDisplay,
                    Session session,
@@ -127,7 +128,6 @@ public class Packages
 
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
-      events.addHandler(DeferredInitCompletedEvent.TYPE, this);
       
       // make the install options persistent
       new JSObjectStateValue("packages-pane", "installOptions", ClientState.PROJECT_PERSISTENT,
@@ -163,6 +163,18 @@ public class Packages
       };
       
       updatePackageState();
+      
+      // after 2 seconds also add the DeferredInitCompleted handler
+      // (we wait because if we don't then on first load in a new 
+      // session where the packages tab is showing updatePackageState 
+      // will be called twice)
+      new Timer() {
+         @Override
+         public void run()
+         {
+            events.addHandler(DeferredInitCompletedEvent.TYPE, Packages.this); 
+         }
+      }.schedule(2000);
    }
    
    void onInstallPackage()
@@ -618,6 +630,19 @@ public class Packages
                   packages.add(pkgInfo);
             }
          }
+
+         // sort results by library (to preserve grouping)
+         Collections.sort(packages, new Comparator<PackageInfo>()
+               {
+                  @Override
+                  public int compare(PackageInfo o1, PackageInfo o2)
+                  {
+                     return PackageLibraryUtils.typeOfLibrary(
+                                   session_, o1.getLibrary()).compareTo(
+                             PackageLibraryUtils.typeOfLibrary(
+                                   session_, o2.getLibrary()));
+                  }
+               });
       }
       else
       {

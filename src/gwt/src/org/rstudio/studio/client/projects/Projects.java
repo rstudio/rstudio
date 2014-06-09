@@ -589,6 +589,18 @@ public class Projects implements OpenProjectFileHandler,
       }
    }
    
+   @Handler
+   public void onPackratBootstrap()
+   {
+      showProjectOptions(ProjectPreferencesDialog.PACKRAT);
+   }
+   
+   @Handler
+   public void onPackratOptions()
+   {
+      showProjectOptions(ProjectPreferencesDialog.PACKRAT);
+   }
+   
    private void showProjectOptions(final int initialPane)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(

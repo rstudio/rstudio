@@ -33,6 +33,9 @@ if (is.null(getOption("viewer"))) {
    })
 }
 
+# provide restart function
+options(restart = .rs.restartR)
+
 # custom pager implementation
 options(pager = .rs.pager)
 

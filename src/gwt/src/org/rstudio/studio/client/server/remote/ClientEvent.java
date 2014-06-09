@@ -110,6 +110,7 @@ class ClientEvent extends JavaScriptObject
    public static final String UserPrompt = "user_prompt";
    public static final String InstallRtools = "install_r_tools";
    public static final String InstallShiny = "install_shiny";
+   public static final String SuspendAndRestart = "suspend_and_restart";
    
    protected ClientEvent()
    {

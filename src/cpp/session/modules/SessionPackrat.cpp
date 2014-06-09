@@ -286,15 +286,13 @@ PackratContext packratContext()
 {
    PackratContext context;
 
-   bool installed = module_context::isPackageVersionInstalled("packrat",
-                                                              "0.2.0");
-
-   context.available = userSettings().packratAvailable() || installed;
+   context.available = module_context::isPackageVersionInstalled("packrat",
+                                                                 "0.2.0.100");
 
    context.applicable = context.available &&
                         projects::projectContext().hasProject();
 
-   if (installed && context.applicable)
+   if (context.applicable)
    {
       FilePath projectDir = projects::projectContext().directory();
       Error error = r::exec::RFunction(

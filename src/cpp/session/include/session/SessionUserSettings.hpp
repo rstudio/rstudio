@@ -167,8 +167,6 @@ public:
    bool useDevtools() const;
    void setUseDevtools(bool useDevtools);
 
-   bool packratAvailable() const;
-
 private:
 
    void onSettingsFileChanged(
