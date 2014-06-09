@@ -82,6 +82,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         // create the check boxes (we'll add them later if appropriate)
         
         chkModeOn_ = new CheckBox("Packrat mode on (enable private library)");
+        chkModeOn_.getElement().getStyle().setMarginTop(10, Unit.PX);
         chkModeOn_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)

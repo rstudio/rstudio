@@ -19,6 +19,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -30,14 +31,16 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
-import org.rstudio.studio.client.packrat.Packrat;
+import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
@@ -47,6 +50,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -111,7 +115,10 @@ public class Packages
                    Binder binder,
                    Commands commands,
                    WorkbenchContext workbenchContext,
-                   DefaultCRANMirror defaultCRANMirror)
+                   DefaultCRANMirror defaultCRANMirror,
+                   RemoteFileSystemContext fsContext,
+                   PackratUtil packratUtil,
+                   Provider<FileDialogs> pFileDialogs)
    {
       super(view);
       view_ = view;
@@ -121,11 +128,12 @@ public class Packages
       events_ = events ;
       defaultCRANMirror_ = defaultCRANMirror;
       workbenchContext_ = workbenchContext;
+      fsContext_ = fsContext;
+      packratUtil_ = packratUtil;
+      pFileDialogs_ = pFileDialogs;
       session_ = session;
       binder.bind(commands, this);
       
-      packrat_ = new Packrat(view);
-
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
       
@@ -475,6 +483,46 @@ public class Packages
    {
       updatePackageState();
    }
+   
+   @Handler
+   public void onPackratBundle() 
+   {
+      pFileDialogs_.get().saveFile(
+         "Save Bundled Packrat Project",
+         fsContext_,
+         workbenchContext_.getCurrentWorkingDir(),
+         "zip",
+         false,
+         new ProgressOperationWithInput<FileSystemItem>() {
+   
+            @Override
+            public void execute(FileSystemItem input,
+                                ProgressIndicator indicator) {
+   
+               if (input == null)
+                  return;
+   
+               indicator.onCompleted();
+   
+               String bundleFile = input.getPath();
+               if (bundleFile == null)
+                  return;
+   
+               StringBuilder args = new StringBuilder();
+               // We use 'overwrite = TRUE' since the UI dialog will prompt
+               // us if we want to overwrite
+               args
+               .append("file = '")
+               .append(bundleFile)
+               .append("', overwrite = TRUE")
+               ;
+   
+               packratUtil_.executePackratFunction("bundle", args.toString());
+            }
+
+            });
+   }
+  
    
    public void removePackage(final PackageInfo packageInfo)
    {
@@ -877,10 +925,11 @@ public class Packages
    private final EventBus events_ ;
    private final GlobalDisplay globalDisplay_ ;
    private final WorkbenchContext workbenchContext_;
+   private final PackratUtil packratUtil_;
+   private final RemoteFileSystemContext fsContext_;
+   private final Provider<FileDialogs> pFileDialogs_;
    private final DefaultCRANMirror defaultCRANMirror_;
    private final Session session_;
-   @SuppressWarnings("unused")
-   private final Packrat packrat_;
    private PackageInstallOptions installOptions_ = 
                                   PackageInstallOptions.create(true, "", true);
 }

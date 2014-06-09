@@ -205,12 +205,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       // create packrat menu + button
       ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
-      packratMenu.addItem(commands_.packratStatus().createMenuItem(false));
-      packratMenu.addSeparator();
-      packratMenu.addItem(commands_.packratSnapshot().createMenuItem(false));
-      packratMenu.addItem(commands_.packratRestore().createMenuItem(false));
-      packratMenu.addItem(commands_.packratClean().createMenuItem(false));
-      packratMenu.addSeparator();
       packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
       packratMenu.addSeparator();
       packratMenu.addItem(commands_.packratOptions().createMenuItem(false));
