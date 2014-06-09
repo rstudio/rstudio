@@ -118,7 +118,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                  
               });
            spaced(button);
-           button.getElement().getStyle().setMarginTop(15, Unit.PX);
+           button.getElement().getStyle().setMarginTop(10, Unit.PX);
            add(button);
         }
         else
