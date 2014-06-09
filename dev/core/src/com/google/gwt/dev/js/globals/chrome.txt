@@ -37,6 +37,7 @@ CSSValue
 CSSValueList
 CSSVariablesMap
 CSSViewportRule
+CSSUnknownRule
 CanvasGradient
 CanvasPattern
 CanvasRenderingContext2D
@@ -83,9 +84,12 @@ FileReader
 Float32Array
 Float64Array
 FocusEvent
+FontFace
 FormData
 Function
 GainNode
+Gamepad
+GamepadEvent
 HTMLAllCollection
 HTMLAnchorElement
 HTMLAppletElement
@@ -392,6 +396,7 @@ Screen
 ScriptProcessorNode
 SecurityPolicy
 Selection
+ShadowRoot
 SharedWorker
 SpeechInputEvent
 SpeechSynthesisUtterance
@@ -445,6 +450,7 @@ WebKitCSSKeyframesRule
 WebKitCSSMatrix
 WebKitCSSMixFunctionValue
 WebKitCSSTransformValue
+WebKitGamepad
 WebKitMediaSource
 WebKitMutationObserver
 WebKitPoint
