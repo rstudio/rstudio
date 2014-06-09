@@ -21,6 +21,7 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 #include <r/session/RClientState.hpp>
 
 #include <session/projects/SessionProjects.hpp>
@@ -230,7 +231,32 @@ private:
 
 void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
 {
-   setStoredHash(HASH_TYPE_LOCKFILE, newHash);
+   // check to see if there are any restore actions pending 
+   SEXP actions;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.pendingRestoreActions", 
+         projects::projectContext().directory().absolutePath())
+         .call(&actions, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (r::sexp::length(actions) == 0)
+   {
+      PACKRAT_TRACE("no pending restore actions found, updating hash");
+      setStoredHash(HASH_TYPE_LOCKFILE, newHash);
+   }
+   else
+   {
+      PACKRAT_TRACE("found pending restore actions, alerting client");
+      json::Value restoreActions;
+      r::json::jsonValueFromObject(actions, &restoreActions);
+      ClientEvent event(client_events::kPackratRestoreNeeded, restoreActions);
+      module_context::enqueClientEvent(event);
+   }
 }
 
 void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)

@@ -61,3 +61,12 @@
    paste(packrat:::buildSnapshotHookCall(dir), collapse = "; ")
 })
 
+.rs.addFunction("pendingRestoreActions", function(dir) {
+   msgs <- packrat:::getRestoreActionMessages(dir)
+   # Transform NAs into explicit missing text
+   for (i in seq_along(msgs)) {
+      msgs[[i]][ is.na(msgs[[i]]) ] <- "<missing>"
+   }
+   msgs
+})
+
