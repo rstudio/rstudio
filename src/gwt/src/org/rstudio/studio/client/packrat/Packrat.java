@@ -72,8 +72,8 @@ public class Packrat
          DependencyManager dependencyManager,
          PackratStatus prStatus,
          RemoteServer server,
-         Provider<FileDialogs> pFileDialogs) {
-      
+         Provider<FileDialogs> pFileDialogs)
+   {
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
@@ -89,7 +89,8 @@ public class Packrat
    {
       // get status
       server_.getPackratContext(
-         new SimpleRequestCallback<PackratContext>() {
+         new SimpleRequestCallback<PackratContext>() 
+         {
             @Override
             public void onResponseReceived(PackratContext context)
             {
@@ -104,7 +105,8 @@ public class Packrat
                    MessageDialog.QUESTION, 
                    "Use Packrat",
                    message,
-                   new Operation() {
+                   new Operation()
+                   {
 
                      @Override
                      public void execute()
@@ -112,8 +114,7 @@ public class Packrat
                         bootstrapPackrat();
                      }
                       
-                   },
-                   true);
+                   }, true);
             }
          });
    }
@@ -122,10 +123,12 @@ public class Packrat
    {
       dependencyManager_.withDependencies(
          "Packrat", 
-         new Dependency[] {
+         new Dependency[]
+         {
             Dependency.embeddedPackage("packrat")
          },
-         new Command() {
+         new Command()
+         {
             @Override
             public void execute()
             {
@@ -215,46 +218,43 @@ public class Packrat
    public void onPackratBundle() 
    {
       pFileDialogs_.get().saveFile(
-            "Bundle Packrat Project...",
+            "Save Packrat Bundle As",
             fsContext_,
             workbenchContext_.getCurrentWorkingDir(),
             "zip",
             false,
-            new ProgressOperationWithInput<FileSystemItem>() {
+            new ProgressOperationWithInput<FileSystemItem>()
+      {
 
-               @Override
-               public void execute(FileSystemItem input,
-                                   ProgressIndicator indicator) {
+         @Override
+         public void execute(FileSystemItem input,
+                             ProgressIndicator indicator)
+         {
+            if (input == null)
+               return;
 
-                  if (input == null)
-                     return;
+            indicator.onCompleted();
 
-                  indicator.onCompleted();
+            String bundleFile = input.getPath();
+            if (bundleFile == null)
+               return;
 
-                  String bundleFile = input.getPath();
-                  if (bundleFile == null)
-                     return;
+            StringBuilder cmd = new StringBuilder();
+            // We use 'overwrite = TRUE' since the UI dialog will prompt
+            // us if we want to overwrite
+            cmd
+            .append("packrat::bundle(file = '")
+            .append(bundleFile)
+            .append("', overwrite = TRUE)")
+            ;
 
-                  StringBuilder cmd = new StringBuilder();
-                  // We use 'overwrite = TRUE' since the UI dialog will prompt
-                  // us if we want to overwrite
-                  cmd
-                  .append("packrat::bundle(file = '")
-                  .append(bundleFile)
-                  .append("', overwrite = TRUE)")
-                  ;
-
-                  eventBus_.fireEvent(
-                     new SendToConsoleEvent(
-                        cmd.toString(),
-                        true,
-                        false
-                     )
-                  );
-
-               }
-
-            });
+            eventBus_.fireEvent(new SendToConsoleEvent(
+               cmd.toString(),
+               true,
+               false
+            ));
+         }
+      });
    }
 
    @Handler
@@ -263,15 +263,18 @@ public class Packrat
       String projDir = workbenchContext_.getActiveProjectDir().getPath();
       
       // Ask the server for the current project status
-      server_.getPackratStatus(projDir, new ServerRequestCallback<JsArray<PackratStatus>>() {
-         
+      server_.getPackratStatus(projDir,
+            new ServerRequestCallback<JsArray<PackratStatus>>()
+      {
          @Override
-         public void onResponseReceived(JsArray<PackratStatus> prStatus) {
+         public void onResponseReceived(JsArray<PackratStatus> prStatus)
+         {
             new PackratStatusDialog(prStatus).showModal();
          }
 
          @Override
-         public void onError(ServerError error) {
+         public void onError(ServerError error)
+         {
             Debug.logError(error);
          }
          
