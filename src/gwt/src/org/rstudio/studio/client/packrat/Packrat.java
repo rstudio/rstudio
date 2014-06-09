@@ -19,21 +19,15 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -60,7 +54,6 @@ public class Packrat
          Binder binder,
          Commands commands,
          EventBus eventBus,
-         GlobalDisplay globalDisplay,
          WorkbenchContext workbenchContext,
          RemoteFileSystemContext fsContext,
          PackratStatus prStatus,
@@ -68,61 +61,11 @@ public class Packrat
          Provider<FileDialogs> pFileDialogs) {
       
       eventBus_ = eventBus;
-      globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
       server_ = server;
       pFileDialogs_ = pFileDialogs;
       binder.bind(commands, this);
-   }
-
-   @Handler
-   public void onPackratBootstrap() 
-   {
-      // get status
-      server_.getPackratContext(
-         new SimpleRequestCallback<PackratContext>() {
-            @Override
-            public void onResponseReceived(PackratContext context)
-            {
-               String message =
-                  "Packrat is a dependency management tool that makes your " +
-                  "R code more isolated, portable, and reproducible by " +
-                  "giving your project its own privately managed package " +
-                  "library.\n\n" +
-                  "Do you want to use packrat with this project?";
-               
-               globalDisplay_.showYesNoMessage(
-                   MessageDialog.QUESTION, 
-                   "Use Packrat",
-                   message,
-                   new Operation() {
-
-                     @Override
-                     public void execute()
-                     {
-                        bootstrapPackrat();
-                     }
-                      
-                   },
-                   true);
-            }
-         });
-   }
-   
-   private void bootstrapPackrat()
-   {
-      server_.packratBootstrap(
-         workbenchContext_.getActiveProjectDir().getPath(), 
-         new VoidServerRequestCallback());
-            
-   }
-   
-   
-   @Handler
-   public void onPackratHelp() 
-   {
-      globalDisplay_.openRStudioLink("packrat");
    }
    
    private void fireConsoleEvent(final String userAction) 
@@ -219,7 +162,6 @@ public class Packrat
   
    @SuppressWarnings("unused")
    private final Packages.Display display_;
-   private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;
    private RemoteFileSystemContext fsContext_;
    private WorkbenchContext workbenchContext_;
