@@ -77,11 +77,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
    @Inject
    public PackagesPane(Commands commands, 
-                       Session session)
+                       Session session,
+                       GlobalDisplay display)
    {
       super("Packages");
       commands_ = commands;
       session_ = session;
+      display_ = display;
       dataGridRes_ = (PackagesDataGridResources) 
             GWT.create(PackagesDataGridResources.class);
       ensureWidget();
@@ -397,8 +399,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.addColumn(packratSourceColumn, new TextHeader("Source"));
 
          // distribute columns for extended package information
-         packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
-         packagesTable_.setColumnWidth(descColumn, 40, Unit.PCT);
+         packagesTable_.setColumnWidth(nameColumn, 15, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 45, Unit.PCT);
          packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratVersionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
@@ -409,14 +411,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       else
       {
          // distribute columns for non-extended package information
-         packagesTable_.setColumnWidth(nameColumn, 30, Unit.PCT);
-         packagesTable_.setColumnWidth(descColumn, 55, Unit.PCT);
+         packagesTable_.setColumnWidth(nameColumn, 25, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 60, Unit.PCT);
          packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
       }
      
       // remove column is common
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
-      packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
+      packagesTable_.setColumnWidth(removeColumn, 35, Unit.PX);
 
       packagesTable_.setHeaderBuilder(new 
             PackageHeaderBuilder(packagesTable_, false));
@@ -437,13 +439,24 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             @Override
             public void update(int index, PackageInfo packageInfo, Boolean value)
             {
-               if (value.booleanValue())
-                  observer_.loadPackage(packageInfo.getName(),
-                                        packageInfo.getLibrary()) ;
+               if (packageInfo.getLibrary() == null ||
+                   packageInfo.getLibrary().length() == 0)
+               {
+                  display_.showMessage(GlobalDisplay.MSG_INFO, 
+                        "Package Not Loaded",
+                        "The package '" + packageInfo.getName() + "' cannot " +
+                        "be loaded because it is not installed. Install the " +
+                        "package to make it available for loading.");
+               }
                else
-                  observer_.unloadPackage(packageInfo.getName(),
-                                          packageInfo.getLibrary()) ;
-               
+               {
+                  if (value.booleanValue())
+                     observer_.loadPackage(packageInfo.getName(),
+                                           packageInfo.getLibrary()) ;
+                  else
+                     observer_.unloadPackage(packageInfo.getName(),
+                                             packageInfo.getLibrary()) ;
+               }
             }    
          });
       }
@@ -467,7 +480,19 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   @Override
                   public void execute(PackageInfo packageInfo)
                   {
-                     observer_.showHelp(packageInfo);
+                     if (packageInfo.getUrl() == null || 
+                         packageInfo.getUrl().length() == 0)
+                     {
+                        display_.showMessage(GlobalDisplay.MSG_INFO, 
+                              "Help Not Available", 
+                              "The package '" + packageInfo.getName() + "' " + 
+                              "is not installed. Install the package to make " +
+                              "its help content available.");
+                     }
+                     else
+                     {
+                        observer_.showHelp(packageInfo);
+                     }
                   }
                },
                false);
@@ -591,5 +616,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private final Commands commands_;
    private final Session session_;
+   private final GlobalDisplay display_;
    private final PackagesDataGridResources dataGridRes_;
 }
