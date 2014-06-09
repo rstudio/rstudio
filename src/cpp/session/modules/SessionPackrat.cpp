@@ -341,9 +341,19 @@ void copyOption(SEXP optionsSEXP, const std::string& listName,
    (*pOptionsJson)[jsonName] = value;
 }
 
+json::Object defaultPackratOptions()
+{
+   json::Object optionsJson;
+   optionsJson["mode_on"] = false;
+   optionsJson["auto_snapshot"] = true;
+   optionsJson["vcs_ignore_lib"] = true;
+   optionsJson["vcs_ignore_src"] = false;
+   return optionsJson;
+}
+
 } // anonymous namespace
 
-json::Value packratOptionsAsJson()
+json::Object packratOptionsAsJson()
 {
    PackratContext context = packratContext();
    if (context.packified)
@@ -364,7 +374,7 @@ json::Value packratOptionsAsJson()
       if (error)
       {
          LOG_ERROR(error);
-         return json::Value();
+         return defaultPackratOptions();
       }
 
       // copy the options into json
@@ -381,7 +391,7 @@ json::Value packratOptionsAsJson()
    }
    else
    {
-      return json::Value();
+      return defaultPackratOptions();
    }
 }
 
