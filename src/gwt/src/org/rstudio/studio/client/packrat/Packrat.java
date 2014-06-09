@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -159,23 +160,44 @@ public class Packrat
       String projDir = workbenchContext_.getActiveProjectDir().getPath();
       
       // Ask the server for the current project status
-      server_.getPackratRestoreActions(projDir, new ServerRequestCallback<JsArray<PackratRestoreActions>>() {
+      server_.getPackratRestoreActions(projDir, 
+            new ServerRequestCallback<JsArray<PackratRestoreActions>>()
+      {
          
          @Override
-         public void onResponseReceived(JsArray<PackratRestoreActions> prRestoreActions) {
-            if (prRestoreActions == null) {
+         public void onResponseReceived(
+               JsArray<PackratRestoreActions> prRestoreActions)
+         {
+            if (prRestoreActions == null)
+            {
                globalDisplay_.showMessage(
                   GlobalDisplay.MSG_INFO,
-                  "Restore packages...",
+                  "Packrat Restore",
                   "All packages are up to date."
                );
-            } else {
-               new PackratRestoreDialog(prRestoreActions, eventBus_).showModal();
+            }
+            else
+            {
+               new PackratRestoreDialog(
+                     prRestoreActions,
+                     new OperationWithInput<Void>()
+                     {
+                        
+                        @Override
+                        public void execute(Void input)
+                        {
+                           // prompt is false as the UI handles any prompting
+                           // ie, the user will have been prompted by the
+                           // dialog already
+                           fireConsoleEvent("packrat::restore(prompt = FALSE)");
+                        }
+                     }).showModal();
             }
          }
 
          @Override
-         public void onError(ServerError error) {
+         public void onError(ServerError error)
+         {
             Debug.logError(error);
          }
          
