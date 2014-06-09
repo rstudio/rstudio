@@ -202,6 +202,16 @@ SEXP rs_canInstallPackages()
                           &rProtect);
 }
 
+void rs_packageLibraryMutated()
+{
+   // broadcast event to server
+   module_context::events().onPackageLibraryMutated();
+
+   // broadcast event to client
+   ClientEvent event(client_events::kInstalledPackagesChanged);
+   module_context::enqueClientEvent(event);
+}
+
 void detectLibPathsChanges()
 {
    static std::vector<std::string> s_lastLibPaths;
@@ -331,6 +341,11 @@ Error initialize()
    methodDef2.numArgs = 0;
    r::routines::addCallMethod(methodDef2);
 
+   R_CallMethodDef methodDef3 ;
+   methodDef3.name = "rs_packageLibraryMutated" ;
+   methodDef3.fun = (DL_FUNC) rs_packageLibraryMutated ;
+   methodDef3.numArgs = 0;
+   r::routines::addCallMethod(methodDef3);
 
    using boost::bind;
    using namespace module_context;

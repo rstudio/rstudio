@@ -24,8 +24,8 @@
 #include <r/session/RClientState.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>
-
 #include <session/SessionUserSettings.hpp>
 
 #include "SessionPackages.hpp"
@@ -46,6 +46,8 @@ namespace modules {
 namespace packrat {
 
 namespace {
+
+// Library and lockfile hashing and comparison -------------------------------
 
 enum PackratHashType
 {
@@ -145,29 +147,86 @@ void checkHashes(
       PackratHashType secondary, 
       boost::function<void(const std::string&, const std::string&)> onPrimaryMismatch)
 {
-   std::string oldHash = getStoredHash(primary);
-   std::string newHash = getComputedHash(primary);
-   PACKRAT_TRACE("checking hashes: " << oldHash << " -> " << newHash);
-
-   // hashes match, no work needed
-   if (oldHash == newHash)
-      return;
-
-   // primary hashes mismatch, secondary hashes match
-   else if (getStoredHash(secondary) == getComputedHash(secondary)) 
+   // several requests to check hashes can come in at once on different threads
+   // as the file monitor discovers changes; don't try to compute or react to
+   // hashes in parallel
+   static boost::mutex hashMutex;
+   LOCK_MUTEX(hashMutex)
    {
-      onPrimaryMismatch(oldHash, newHash);
-   }
+      std::string oldHash = getStoredHash(primary);
+      std::string newHash = getComputedHash(primary);
+      PACKRAT_TRACE("checking hashes: " << oldHash << " -> " << newHash);
 
-   // primary and secondary hashes mismatch
-   else 
-   {
-      // TODO: don't do this until the user has resolved any conflicts that
-      // may exist, and packrat::status() is clean
-      setStoredHash(primary, newHash);
-      setStoredHash(secondary, getComputedHash(secondary));
+      // hashes match, no work needed
+      if (oldHash == newHash)
+         return;
+
+      // primary hashes mismatch, secondary hashes match
+      else if (getStoredHash(secondary) == getComputedHash(secondary)) 
+      {
+         onPrimaryMismatch(oldHash, newHash);
+      }
+
+      // primary and secondary hashes mismatch
+      else 
+      {
+         // TODO: don't do this until the user has resolved any conflicts that
+         // may exist, and packrat::status() is clean
+         setStoredHash(primary, newHash);
+         setStoredHash(secondary, getComputedHash(secondary));
+      }
    }
+   END_LOCK_MUTEX
 }
+
+// Auto-snapshot -------------------------------------------------------------
+
+class AutoSnapshot: public async_r::AsyncRProcess
+{
+public:
+   static boost::shared_ptr<AutoSnapshot> create(const FilePath& projectDir)
+   {
+      boost::shared_ptr<AutoSnapshot> pSnapshot(new AutoSnapshot());
+      std::string snapshotCmd;
+      Error error = r::exec::RFunction(
+            ".rs.getAutoSnapshotCmd",
+            projectDir.absolutePath()).call(&snapshotCmd);
+      if (error)
+         LOG_ERROR(error); // will also be reported in the console
+      PACKRAT_TRACE("starting auto snapshot, R command: " << snapshotCmd);
+      pSnapshot->start(snapshotCmd.c_str(), projectDir);
+      return pSnapshot;
+   }
+  
+private:
+   void onStderr(const std::string& output)
+   {
+      PACKRAT_TRACE("(auto snapshot) " << output);
+   }
+
+   void onStdout(const std::string& output)
+   {
+      PACKRAT_TRACE("(auto snapshot) " << output);
+   }
+   
+   void onCompleted(int exitStatus)
+   {
+      PACKRAT_TRACE("finished auto snapshot, exit status = " << exitStatus);
+
+      if (exitStatus != 0)
+         return;
+
+      // record the update to the lockfile
+      setStoredHash(HASH_TYPE_LOCKFILE, computeLockfileHash());
+
+      // let the client know that it needs to refresh the list of packages
+      // (this will also fetch the newly snapshotted status from packrat)
+      ClientEvent event(client_events::kInstalledPackagesChanged);
+      module_context::enqueClientEvent(event);
+   }
+};
+
+// Library and lockfile monitoring -------------------------------------------
 
 void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
 {
@@ -176,6 +235,17 @@ void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
 
 void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 {
+   static boost::shared_ptr<AutoSnapshot> pAutoSnapshot;
+   if (pAutoSnapshot && pAutoSnapshot->isRunning())
+   {
+      // don't start a snapshot if there's already one running
+      PACKRAT_TRACE("snapshot already running, not performing auto snapshot");
+      return;
+   }
+
+   // start a new auto-snapshot
+   pAutoSnapshot = AutoSnapshot::create(
+         projects::projectContext().directory());
    setStoredHash(HASH_TYPE_LIBRARY, newHash);
 }
 
@@ -189,11 +259,18 @@ void onFileChanged(FilePath sourceFilePath)
       PACKRAT_TRACE("detected change to lockfile " << sourceFilePath);
       checkHashes(HASH_TYPE_LOCKFILE, HASH_TYPE_LIBRARY, onLockfileUpdate);
    }
-   else if (sourceFilePath.isWithin(libraryPath)) 
+   else if (sourceFilePath.isWithin(libraryPath) && 
+            sourceFilePath.filename() == "DESCRIPTION") 
    {
       PACKRAT_TRACE("detected change to library file " << sourceFilePath);
       checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
    }
+}
+
+void onPackageLibraryMutated()
+{
+   PACKRAT_TRACE("detected user modification to library");
+   checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
@@ -204,6 +281,8 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
       onFileChanged(changedFilePath);
    }
 }
+
+// RPC -----------------------------------------------------------------------
 
 Error getPackratContext(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
@@ -266,6 +345,8 @@ Error initialize()
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Packrat", cb);
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
+   module_context::events().onPackageLibraryMutated.connect(
+         onPackageLibraryMutated);
 
    ExecBlock initBlock;
 

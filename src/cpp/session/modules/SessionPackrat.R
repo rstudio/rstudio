@@ -57,7 +57,7 @@
    rbind(mergedList, nonPackratList)
 })
 
-.rs.addJsonRpcHandler("list_packages_packrat", function(dir) {
-   .rs.listPackagesPackrat(dir)
+.rs.addFunction("getAutoSnapshotCmd", function(dir) {
+   paste(packrat:::buildSnapshotHookCall(dir), collapse = "; ")
 })
 
