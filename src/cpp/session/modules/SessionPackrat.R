@@ -19,9 +19,9 @@
 
 .rs.addJsonRpcHandler("get_packrat_restore_actions", function(dir) {
    msgs <- packrat:::getRestoreActionMessages(dir)
-   ## Transform NAs into explicit < missing> values
+   # Transform NAs into explicit missing text
    for (i in seq_along(msgs)) {
-      msgs[[i]][ is.na(msgs[[i]]) ] <- "< missing >"
+      msgs[[i]][ is.na(msgs[[i]]) ] <- "<missing>"
    }
    msgs
 })
