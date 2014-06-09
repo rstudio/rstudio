@@ -56,13 +56,20 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             new ProjectPreferencesPane[] {general, editing, compilePdf, build, 
                                           source, packrat});
            
+      session_ = session;
       server_ = server;
       pUIPrefs_ = pUIPrefs;  
+   }
+   
+   @Override
+   public void initialize(RProjectOptions options)
+   {
+      super.initialize(options);
       
-      if (!session.getSessionInfo().getAllowVcs())
+      if (!session_.getSessionInfo().getAllowVcs())
          hidePane(VCS);
       
-      if (!session.getSessionInfo().getPackratAvailable())
+      if (!options.getPackratContext().isAvailable())
          hidePane(PACKRAT);
    }
    
@@ -126,6 +133,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    }
    
  
+   private final Session session_;
    private final ProjectsServerOperations server_;
    private final Provider<UIPrefs> pUIPrefs_;
    

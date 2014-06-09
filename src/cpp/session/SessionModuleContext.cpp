@@ -264,6 +264,16 @@ SEXP rs_userPrompt(SEXP typeSEXP,
    return r::sexp::create(response, &rProtect);
 }
 
+SEXP rs_restartR(SEXP afterRestartSEXP)
+{
+   std::string afterRestart = r::sexp::safeAsString(afterRestartSEXP);
+   json::Object dataJson;
+   dataJson["after_restart"] = afterRestart;
+   ClientEvent event(client_events::kSuspendAndRestart, dataJson);
+   module_context::enqueClientEvent(event);
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 
@@ -482,6 +492,13 @@ Error initialize()
    methodDef13.fun = (DL_FUNC) rs_userPrompt;
    methodDef13.numArgs = 7;
    r::routines::addCallMethod(methodDef13);
+
+   // register rs_restartR
+   R_CallMethodDef methodDef14;
+   methodDef14.name = "rs_restartR" ;
+   methodDef14.fun = (DL_FUNC) rs_restartR;
+   methodDef14.numArgs = 1;
+   r::routines::addCallMethod(methodDef14);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

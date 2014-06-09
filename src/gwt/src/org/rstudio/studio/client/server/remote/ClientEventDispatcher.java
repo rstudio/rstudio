@@ -601,6 +601,11 @@ public class ClientEventDispatcher
             String userAction = event.getData();
             eventBus_.fireEvent(new InstallShinyEvent(userAction));
          }
+         else if (type.equals(ClientEvent.SuspendAndRestart))
+         {
+            SuspendAndRestartEvent.Data data = event.getData();
+            eventBus_.fireEvent(new SuspendAndRestartEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

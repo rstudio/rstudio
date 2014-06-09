@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.events;
 
 import org.rstudio.studio.client.application.model.SuspendOptions;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
@@ -23,16 +24,38 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
    public static final GwtEvent.Type<SuspendAndRestartHandler> TYPE =
       new GwtEvent.Type<SuspendAndRestartHandler>();
    
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+      
+      public native final SuspendOptions getOptions() /*-{
+         return this.options;
+      }-*/;
+      
+      public native final String getAfterRestartCommand() /*-{
+         return this.after_restart;
+      }-*/;
+   }
+   
+   public SuspendAndRestartEvent(Data data)
+   {
+      this(data.getOptions(), data.getAfterRestartCommand());
+   }
+   
    public SuspendAndRestartEvent(SuspendOptions suspendOptions,
                                  String afterRestartCommand)
    {
+      if (suspendOptions == null)
+         suspendOptions = SuspendOptions.createSaveAll(false);
       suspendOptions_ = suspendOptions;
       afterRestartCommand_ = afterRestartCommand;
    }
    
    public SuspendAndRestartEvent(String afterRestartCommand)
    {
-      this(SuspendOptions.createSaveAll(false), afterRestartCommand);
+      this(null, afterRestartCommand);
    }
  
    public SuspendOptions getSuspendOptions()
