@@ -1199,6 +1199,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Status"
         menuLabel="_Status"
         desc="Packrat Project Status" />
+   
+   <cmd id="packratHelp"
+        buttonLabel="Help"
+        menuLabel="_Help"
+        desc="Packrat Help" />
         
    <cmd id="versionControlOptions"
         menuLabel="_Options..."
