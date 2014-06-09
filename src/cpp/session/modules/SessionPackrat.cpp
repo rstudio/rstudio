@@ -362,6 +362,29 @@ json::Object contextAsJson()
    return contextAsJson(context);
 }
 
+void addPendingActions(json::Object* pJson)
+{
+   Error error;
+   SEXP actions;
+   r::sexp::Protect protect;
+
+   // get the full matrix of hashes
+   bool libHashDiffers = getComputedHash(HASH_TYPE_LIBRARY) != 
+                         getStoredHash(HASH_TYPE_LIBRARY);
+   bool lockHashDiffers = getComputedHash(HASH_TYPE_LOCKFILE) != 
+                          getStoredHash(HASH_TYPE_LOCKFILE);
+
+   json::Object& obj = *pJson;
+
+   if (libHashDiffers && !lockHashDiffers) 
+   {
+      error = r::exec::RFunction(".rs.pendingRestoreActions", 
+            projects::projectContext().directory().absolutePath())
+            .call(&actions, &protect);
+      obj["pending_restore_actions"] = actions;
+   }
+}
+
 Error initialize()
 {
    using boost::bind;
