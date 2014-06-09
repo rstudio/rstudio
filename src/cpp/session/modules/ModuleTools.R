@@ -153,7 +153,7 @@
       stop("Invalid result")
 })
 
-.rs.addFunction("restartR", function(afterRestartCommand) {
+.rs.addFunction("restartR", function(afterRestartCommand = "") {
    afterRestartCommand <- paste(as.character(afterRestartCommand),
                                 collapse = "\n")
    .Call("rs_restartR", afterRestartCommand)
