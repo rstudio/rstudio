@@ -28,6 +28,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -35,6 +36,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
@@ -181,9 +183,18 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
               }
               else
               {
-                 server_.installBuildTools(
-                    "Managing packages with Packrat",
-                    new SimpleRequestCallback<Boolean>() {});
+                 // install build tools (with short delay to allow
+                 // the progress indicator to clear)
+                 new Timer() {
+                  @Override
+                  public void run()
+                  {
+                     server_.installBuildTools(
+                           "Managing packages with Packrat",
+                           new SimpleRequestCallback<Boolean>() {});  
+                  }   
+                 }.schedule(250);;
+                
               }
            }
 
