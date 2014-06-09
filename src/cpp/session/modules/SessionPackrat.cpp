@@ -286,7 +286,8 @@ void onFileChanged(FilePath sourceFilePath)
       checkHashes(HASH_TYPE_LOCKFILE, HASH_TYPE_LIBRARY, onLockfileUpdate);
    }
    else if (sourceFilePath.isWithin(libraryPath) && 
-            sourceFilePath.filename() == "DESCRIPTION") 
+            (sourceFilePath.isDirectory() || 
+             sourceFilePath.filename() == "DESCRIPTION"))
    {
       PACKRAT_TRACE("detected change to library file " << sourceFilePath);
       checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
