@@ -14,13 +14,19 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectPackratOptions;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -37,10 +43,12 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
    public ProjectPackratPreferencesPane(Session session,
-                                        PackratUtil packrat)
+                                        PackratServerOperations server,
+                                        PackratUtil packratUtil)
    {
       session_ = session;
-      packratUtil_ = packrat;
+      server_ = server;
+      packratUtil_ = packratUtil;
    }
 
    @Override
@@ -80,6 +88,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
             manageCheckBoxes();
          }
         });
+        
         chkModeOn_.setValue(packratOptions.getModeOn());
         
         chkAutoSnapshot_ = new CheckBox("Automatically snapshot local changes");
@@ -103,10 +112,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                  @Override
                  public void onClick(ClickEvent event)
                  {
-                    forceClosed(new Command() { public void execute()
-                    {
-                       packratUtil_.executePackratFunction("bootstrap");
-                    }});
+                    bootstrapPackrat();
                  }
                  
               });
@@ -156,8 +162,49 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       return false;
    }
   
-   private final Session session_;
+   private void bootstrapPackrat()
+   {
+      final ProgressIndicator indicator = getProgressIndicator();
+      
+      indicator.onProgress("Verifying prequisites...");
+      
+      server_.getCppCapabilities(
+        new ServerRequestCallback<CppCapabilities>() {
+           @Override
+           public void onResponseReceived(CppCapabilities capabilities)
+           {
+              indicator.onCompleted();
+              
+              if (capabilities.getCanBuild())
+              {
+                 executeBootstrap();
+              }
+              else
+              {
+                 server_.installBuildTools(
+                    "Managing packages with Packrat",
+                    new SimpleRequestCallback<Boolean>() {});
+              }
+           }
 
+         @Override
+         public void onError(ServerError error)
+         {
+            indicator.onError(error.getUserMessage());
+         }
+        });  
+   }
+
+   private void executeBootstrap()
+   {
+      forceClosed(new Command() { public void execute()
+      {
+         packratUtil_.executePackratFunction("bootstrap");
+      }});
+   }
+   
+   private final Session session_;
+   private final PackratServerOperations server_;
    private final PackratUtil packratUtil_;
    
    private CheckBox chkModeOn_;

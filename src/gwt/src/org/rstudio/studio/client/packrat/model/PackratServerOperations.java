@@ -16,11 +16,11 @@ package org.rstudio.studio.client.packrat.model;
 
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
 import com.google.gwt.core.client.JsArray;
 
-public interface PackratServerOperations
+public interface PackratServerOperations extends BuildServerOperations
 {
    void getPackratContext(ServerRequestCallback<PackratContext> requestCallback);
    
