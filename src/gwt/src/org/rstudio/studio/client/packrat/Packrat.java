@@ -28,8 +28,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.packrat.ui.PackratStatusDialog;
@@ -44,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -66,7 +63,6 @@ public class Packrat
          GlobalDisplay globalDisplay,
          WorkbenchContext workbenchContext,
          RemoteFileSystemContext fsContext,
-         DependencyManager dependencyManager,
          PackratStatus prStatus,
          RemoteServer server,
          Provider<FileDialogs> pFileDialogs) {
@@ -75,7 +71,6 @@ public class Packrat
       globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
-      dependencyManager_ = dependencyManager;
       server_ = server;
       pFileDialogs_ = pFileDialogs;
       binder.bind(commands, this);
@@ -117,20 +112,10 @@ public class Packrat
    
    private void bootstrapPackrat()
    {
-      dependencyManager_.withDependencies(
-         "Packrat", 
-         new Dependency[] {
-            Dependency.embeddedPackage("packrat")
-         },
-         new Command() {
-            @Override
-            public void execute()
-            {
-               server_.packratBootstrap(
-                  workbenchContext_.getActiveProjectDir().getPath(), 
-                  new VoidServerRequestCallback());
-            } 
-         });
+      server_.packratBootstrap(
+         workbenchContext_.getActiveProjectDir().getPath(), 
+         new VoidServerRequestCallback());
+            
    }
    
    
@@ -234,7 +219,6 @@ public class Packrat
   
    @SuppressWarnings("unused")
    private final Packages.Display display_;
-   private DependencyManager dependencyManager_;
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;
    private RemoteFileSystemContext fsContext_;
