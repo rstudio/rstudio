@@ -13,33 +13,20 @@
  */
 
 package org.rstudio.studio.client.packrat.ui;
-import org.rstudio.core.client.widget.ModalDialogBase;
-import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class PackratRestoreDialog extends ModalDialogBase
+public class PackratRestoreDialog extends ModalDialog<Void>
 {
-   public PackratRestoreDialog(JsArray<PackratRestoreActions> prRestore, final EventBus eventBus)
+   public PackratRestoreDialog(
+         JsArray<PackratRestoreActions> prRestore,
+         final OperationWithInput<Void> operation)
    {
-      setText("Restore packages...");
-      ThemedButton RestoreButton = new ThemedButton("Restore", new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event) {
-            eventBus.fireEvent(new SendToConsoleEvent("packrat::restore(prompt = FALSE)", true, false));
-            closeDialog();
-         }
-      });
-      
-      addOkButton(RestoreButton);
-      addCancelButton();
+      super("Packrat Restore", operation);
+      setOkButtonCaption("Restore");
       contents_ = new PackratRestoreDialogContents(prRestore);
       setWidth("500px");
    }
@@ -51,4 +38,16 @@ public class PackratRestoreDialog extends ModalDialogBase
    }
    
    private PackratRestoreDialogContents contents_;
+
+   @Override
+   protected Void collectInput()
+   {
+      return null; // no input to collect
+   }
+
+   @Override
+   protected boolean validate(Void input)
+   {
+      return true;
+   }
 }

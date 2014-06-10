@@ -21,15 +21,16 @@ import com.google.gwt.core.client.JsArray;
 
 public interface PackratServerOperations
 {
-   void getPackratContext(ServerRequestCallback<PackratContext> requestCallback);
+   void getPackratContext(
+         ServerRequestCallback<PackratContext> requestCallback);
    
    void getPackratStatus(String dir,
-            ServerRequestCallback<JsArray<PackratStatus>> requestCallback);
+         ServerRequestCallback<JsArray<PackratStatus>> requestCallback);
    
    void packratBootstrap(String dir,
                          ServerRequestCallback<Void> requestCallback);
    
    void getPackratRestoreActions(String dir,
-                                 ServerRequestCallback<JsArray<PackratRestoreActions>> requestCallback);
+         ServerRequestCallback<JsArray<PackratRestoreActions>> requestCallback);
 
 }
