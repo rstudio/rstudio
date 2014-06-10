@@ -49,7 +49,7 @@ namespace {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.100");
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.101");
 }
 
 } // anonymous namespace

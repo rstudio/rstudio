@@ -151,10 +151,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
       if (options.getModeOn() != initialPackratOptions_.getModeOn())
       {
-         b.append("packrat::packrat_mode(on = " + asR(options.getModeOn()));
+         b.append("packrat::");
+         b.append(options.getModeOn() ? "on" : "off");
+         b.append("(");
          String projectArg = pPackratUtil_.get().packratProjectArg();
          if (projectArg.length() > 0)
-            b.append(", " + projectArg); 
+            b.append(projectArg); 
          b.append(");\n");
       }
       
