@@ -21,7 +21,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
@@ -260,9 +259,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          sb.appendHtmlConstant("<div title=\"");
          if (!packratVersion_)
             sb.appendEscaped(value.getLibrary());
-         sb.appendHtmlConstant("\"");
-         sb.appendHtmlConstant(" class=\"");
-         sb.appendEscaped(ThemeStyles.INSTANCE.adornedText());
          sb.appendHtmlConstant("\"");
          sb.appendHtmlConstant(">");
          if (packratVersion_)
