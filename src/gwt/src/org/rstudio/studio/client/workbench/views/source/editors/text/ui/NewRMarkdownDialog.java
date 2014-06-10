@@ -428,7 +428,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private final RMarkdownContext context_;
    
    private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
-   private final static String TEMPLATE_SHINY = "Shiny";
+   private final static String TEMPLATE_SHINY = "Shiny Doc";
    private final static String SHINY_DOC_NAME = "Shiny Document";
    private final static String SHINY_PRESENTATION_NAME = "Shiny Presentation";
 }

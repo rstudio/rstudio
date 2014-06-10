@@ -7,12 +7,12 @@
 
 	<ui:style>
 	@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
-	.StatusTable {
+	.RestoreActionsTable {
 		height: 300px;
 		width: 600px;
 	}
 	
-	.StatusTable th {
+	.RestoreActionsTable th {
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -26,14 +26,14 @@
 		color: black;
 		background-color: #eeeff1;
 		font-weight: normal;
-		text-align: left;
+		text-align: center;
 		border-collapse: separate;
 		font-size: 11px;
 	}
 	</ui:style>
 
 	<g:HTMLPanel>
-		<c:DataGrid ui:field="statusTable_" styleName="{style.StatusTable}" />
+		<c:DataGrid ui:field="table_" styleName="{style.RestoreActionsTable}" />
 	</g:HTMLPanel>
 
 </ui:UiBinder> 

@@ -15,13 +15,11 @@
 package org.rstudio.studio.client.packrat.model;
 
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.packrat.ui.IGetValue;
-
 import com.google.gwt.view.client.ProvidesKey;
 
 // This class represents the JSON value the server returns from
 // get_packrat_status.
-public class PackratStatus extends JsObject implements IGetValue
+public class PackratStatus extends JsObject
 {
    
    public static final ProvidesKey<PackratStatus> KEY_PROVIDER =
@@ -57,7 +55,4 @@ public class PackratStatus extends JsObject implements IGetValue
       return this["currently.used"] ? "TRUE" : "FALSE";
    }-*/;
    
-   public final native String getValue(String key) /*-{
-      return "" + this[key];
-  }-*/;
 }

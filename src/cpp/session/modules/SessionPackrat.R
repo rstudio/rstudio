@@ -17,6 +17,15 @@
    packrat::status(dir, quiet = TRUE)
 })
 
+.rs.addJsonRpcHandler("get_packrat_restore_actions", function(dir) {
+   msgs <- packrat:::getRestoreActionMessages(dir)
+   # Transform NAs into explicit missing text
+   for (i in seq_along(msgs)) {
+      msgs[[i]][ is.na(msgs[[i]]) ] <- "<missing>"
+   }
+   msgs
+})
+
 .rs.addFunction("listPackagesPackrat", function(dir) {
    # get the status from the library and packrat
    packratStatus <- packrat::status(dir, quiet = TRUE)

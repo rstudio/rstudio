@@ -39,7 +39,6 @@ import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
-import org.rstudio.studio.client.packrat.Packrat;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
@@ -91,7 +90,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetPresentationHelper presHelper);
    void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
-   void injectMembers(Packrat packrat);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

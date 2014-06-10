@@ -981,6 +981,58 @@ bool isPackageVersionInstalled(const std::string& packageName,
    return !error ? installed : false;
 }
 
+Error installPackage(const std::string& pkgPath, const std::string& libPath)
+{
+   // get R bin directory
+   FilePath rBinDir;
+   Error error = module_context::rBinDir(&rBinDir);
+   if (error)
+      return error;
+
+   // setup options and command
+   core::system::ProcessOptions options;
+   RCommand installCommand(rBinDir);
+   installCommand << "INSTALL";
+
+
+   // if there is a lib path then provide it
+   if (!libPath.empty())
+   {
+      installCommand << "-l";
+      installCommand << "\"" + libPath + "\"";
+   }
+   // otherwise just propagate our R_LIBS
+   else
+   {
+      core::system::Options env;
+      core::system::environment(&env);
+      core::system::setenv(&env, "R_LIBS", libPathsString());
+      options.environment = env;
+   }
+
+   // add pakage path
+   installCommand << "\"" + pkgPath + "\"";
+   core::system::ProcessResult result;
+
+   // run the command
+   error = core::system::runCommand(installCommand.commandString(),
+                                    options,
+                                    &result);
+
+   if (error)
+      return error;
+
+   if ((result.exitStatus != EXIT_SUCCESS) && !result.stdErr.empty())
+   {
+      return systemError(boost::system::errc::state_not_recoverable,
+                         "Error installing package: " + result.stdErr,
+                         ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
 {
    // check whether we are in a package
@@ -1525,6 +1577,19 @@ std::string CRANReposURL()
       url = userSettings().cranMirror().url;
    return url;
 }
+
+shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
+{
+#if defined(_WIN32)
+   shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
+#else
+   shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
+   rCmd << "CMD";
+#endif
+   return rCmd;
+}
+
+
 
 } // namespace module_context         
 } // namespace session

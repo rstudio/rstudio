@@ -44,6 +44,16 @@ using namespace core;
 
 
 namespace session {
+
+namespace {
+
+bool isRequiredPackratInstalled()
+{
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.100");
+}
+
+} // anonymous namespace
+
 namespace modules { 
 namespace packrat {
 
@@ -391,6 +401,37 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 
 // RPC -----------------------------------------------------------------------
 
+Error installPackrat(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   Error error = module_context::installEmbeddedPackage("packrat");
+   if (error)
+   {
+      std::string desc = error.getProperty("description");
+      if (desc.empty())
+         desc = error.summary();
+
+      module_context::consoleWriteError(desc + "\n");
+
+      LOG_ERROR(error);
+   }
+
+   pResponse->setResult(!error);
+
+   return Success();
+}
+
+Error getPackratPrerequisites(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   json::Object prereqJson;
+   prereqJson["build_tools_available"] = module_context::canBuildCpp();
+   prereqJson["package_available"] = isRequiredPackratInstalled();
+   pResponse->setResult(prereqJson);
+   return Success();
+}
+
+
 Error getPackratContext(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -458,6 +499,8 @@ Error initialize()
    ExecBlock initBlock;
 
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "install_packrat", installPackrat))
+      (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
       (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
       (bind(sourceModuleRFile, "SessionPackrat.R"));
@@ -474,8 +517,13 @@ PackratContext packratContext()
 {
    PackratContext context;
 
-   context.available = module_context::isPackageVersionInstalled("packrat",
-                                                                 "0.2.0.100");
+   // NOTE: when we switch to auto-installing packrat we need to update
+   // this check to look for R >= whatever packrat requires (we don't
+   // need to look for R >= 3.0 as we do for rmarkdown/shiny because
+   // build tools will be installed prior to attempting to auto-install
+   // the embedded version of packrat
+
+   context.available = isRequiredPackratInstalled();
 
    context.applicable = context.available &&
                         projects::projectContext().hasProject();
@@ -508,6 +556,81 @@ json::Object packratContextAsJson()
 {
    return modules::packrat::contextAsJson();
 }
+
+namespace {
+
+void copyOption(SEXP optionsSEXP, const std::string& listName,
+                json::Object* pOptionsJson, const std::string& jsonName,
+                bool defaultValue)
+{
+   bool value = defaultValue;
+   Error error = r::sexp::getNamedListElement(optionsSEXP,
+                                              listName,
+                                              &value,
+                                              defaultValue);
+   if (error)
+   {
+      error.addProperty("option", listName);
+      LOG_ERROR(error);
+   }
+
+   (*pOptionsJson)[jsonName] = value;
+}
+
+json::Object defaultPackratOptions()
+{
+   json::Object optionsJson;
+   optionsJson["mode_on"] = false;
+   optionsJson["auto_snapshot"] = true;
+   optionsJson["vcs_ignore_lib"] = true;
+   optionsJson["vcs_ignore_src"] = false;
+   return optionsJson;
+}
+
+} // anonymous namespace
+
+json::Object packratOptionsAsJson()
+{
+   PackratContext context = packratContext();
+   if (context.packified)
+   {
+      // create options to return and record mode
+      json::Object optionsJson;
+      optionsJson["mode_on"] = context.modeOn;
+
+      // get the options from packrat
+      FilePath projectDir = projects::projectContext().directory();
+      r::exec::RFunction getOpts("packrat:::get_opts");
+      getOpts.addParam("simplify", false);
+      getOpts.addParam("project", module_context::createAliasedPath(
+                                                            projectDir));
+      r::sexp::Protect rProtect;
+      SEXP optionsSEXP;
+      Error error = getOpts.call(&optionsSEXP, &rProtect);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return defaultPackratOptions();
+      }
+
+      // copy the options into json
+      copyOption(optionsSEXP, "auto.snapshot",
+                 &optionsJson, "auto_snapshot", true);
+
+      copyOption(optionsSEXP, "vcs.ignore.lib",
+                 &optionsJson, "vcs_ignore_lib", true);
+
+      copyOption(optionsSEXP, "vcs.ignore.src",
+                 &optionsJson, "vcs_ignore_src", false);
+
+      return optionsJson;
+   }
+   else
+   {
+      return defaultPackratOptions();
+   }
+}
+
 
 
 } // namespace module_context

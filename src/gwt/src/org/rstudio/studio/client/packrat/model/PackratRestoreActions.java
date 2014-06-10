@@ -1,7 +1,7 @@
 /*
- * SessionDependencies.hpp
+ * PackratRestoreActions.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2014 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,24 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.packrat.model;
 
-#ifndef SESSION_SESSION_DEPENDENCIES_HPP
-#define SESSION_SESSION_DEPENDENCIES_HPP
+import org.rstudio.core.client.js.JsObject;
 
-#include <string>
-
-namespace core {
-   class Error ;
+public class PackratRestoreActions extends JsObject {
+   
+   protected PackratRestoreActions() {}
+   
 }
-
-namespace session {
-namespace modules { 
-namespace dependencies {
-
-core::Error initialize();
-
-} // namespace dependencies
-} // namespace modules
-} // namesapce session
-
-#endif // SESSION_SESSION_DEPENDENCIES_HPP
