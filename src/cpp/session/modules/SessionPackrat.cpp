@@ -42,6 +42,11 @@ using namespace core;
 #define PACKRAT_TRACE(x) 
 #endif
 
+#define PACKRAT_FOLDER "packrat/"
+#define PACKRAT_LOCKFILE "packrat.lock"
+#define PACKRAT_LIB_PATH PACKRAT_FOLDER "lib"
+#define PACKRAT_LOCKFILE_PATH PACKRAT_FOLDER PACKRAT_LOCKFILE
+
 
 namespace session {
 
@@ -118,7 +123,7 @@ bool addDescContent(int level, const FilePath& path, std::string* pDescContent)
 std::string computeLibraryHash()
 {
    FilePath libraryPath = 
-      projects::projectContext().directory().complete("packrat/lib");
+      projects::projectContext().directory().complete(PACKRAT_LIB_PATH);
 
    // find all DESCRIPTION files in the library and concatenate them to form
    // a hashable state
@@ -136,7 +141,7 @@ std::string computeLibraryHash()
 std::string computeLockfileHash()
 {
    FilePath lockFilePath = 
-      projects::projectContext().directory().complete("packrat/packrat.lock");
+      projects::projectContext().directory().complete(PACKRAT_LOCKFILE_PATH);
 
    if (!lockFilePath.exists()) 
       return "";
@@ -352,9 +357,9 @@ void onFileChanged(FilePath sourceFilePath)
    // we only care about mutations to files in the Packrat library directory
    // (and packrat.lock)
    FilePath libraryPath = 
-      projects::projectContext().directory().complete("packrat/lib");
+      projects::projectContext().directory().complete(PACKRAT_LIB_PATH);
 
-   if (sourceFilePath.filename() == "packrat.lock")
+   if (sourceFilePath.filename() == PACKRAT_LOCKFILE)
    {
       PACKRAT_TRACE("detected change to lockfile " << sourceFilePath);
       checkHashes(HASH_TYPE_LOCKFILE, HASH_TYPE_LIBRARY, onLockfileUpdate);
@@ -382,7 +387,7 @@ void onPackageLibraryMutated()
    // make sure a Packrat library exists (we don't care about monitoring 
    // mutations to other libraries)
    FilePath libraryPath = 
-      projects::projectContext().directory().complete("packrat/lib");
+      projects::projectContext().directory().complete(PACKRAT_LIB_PATH);
    if (libraryPath.exists())
    {
       PACKRAT_TRACE("detected user modification to library");
@@ -465,6 +470,29 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error initPackratMonitoring()
+{
+   FilePath lockfilePath = 
+      projects::projectContext().directory().complete(PACKRAT_LOCKFILE_PATH);
+
+   // if there's no lockfile, presume that this isn't a Packrat project
+   if (!lockfilePath.exists())
+      return Success();
+
+   // listen for changes to the project files 
+   PACKRAT_TRACE("found " << lockfilePath.absolutePath() << 
+                 ", init monitoring");
+
+   session::projects::FileMonitorCallbacks cb;
+   cb.onFilesChanged = onFilesChanged;
+   projects::projectContext().subscribeToFileMonitor("Packrat", cb);
+   module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
+   module_context::events().onPackageLibraryMutated.connect(
+         onPackageLibraryMutated);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Object contextAsJson(const module_context::PackratContext& context)
@@ -488,14 +516,6 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   // listen for changes to the project files 
-   session::projects::FileMonitorCallbacks cb;
-   cb.onFilesChanged = onFilesChanged;
-   projects::projectContext().subscribeToFileMonitor("Packrat", cb);
-   module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
-   module_context::events().onPackageLibraryMutated.connect(
-         onPackageLibraryMutated);
-
    ExecBlock initBlock;
 
    initBlock.addFunctions()
@@ -503,7 +523,8 @@ Error initialize()
       (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
       (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
-      (bind(sourceModuleRFile, "SessionPackrat.R"));
+      (bind(sourceModuleRFile, "SessionPackrat.R"))
+      (initPackratMonitoring);
 
    return initBlock.execute();
 }

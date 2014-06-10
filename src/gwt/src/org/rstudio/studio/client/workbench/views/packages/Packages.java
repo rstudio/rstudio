@@ -28,6 +28,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
@@ -65,6 +67,7 @@ import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackag
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
+import org.rstudio.studio.client.workbench.views.packages.events.PackratRestoreNeededEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
@@ -87,7 +90,8 @@ public class Packages
       implements InstalledPackagesChangedHandler,
                  PackageStatusChangedHandler,
                  DeferredInitCompletedEvent.Handler,
-                 PackagesDisplayObserver
+                 PackagesDisplayObserver,
+                 PackratRestoreNeededEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, Packages> {}
 
@@ -138,6 +142,7 @@ public class Packages
       
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
+      events.addHandler(PackratRestoreNeededEvent.TYPE, this);
       
       // make the install options persistent
       new JSObjectStateValue("packages-pane", "installOptions", ClientState.PROJECT_PERSISTENT,
@@ -187,6 +192,25 @@ public class Packages
       }.schedule(2000);
    }
    
+   @Override
+   public void onPackratRestoreNeeded(PackratRestoreNeededEvent event)
+   {
+      // don't push this dialog up over another modal
+      if (ModalDialogTracker.numModalsShowing() > 0)
+         return;
+      
+      // show the Packrat restore dialog
+      new PackratRestoreDialog(
+           event.getActions(), 
+           new OperationWithInput<Void>(){
+             @Override
+             public void execute(Void input)
+             {
+                packratUtil_.executePackratFunction("restore");
+             } 
+          }).showModal();
+   }
+
    void onInstallPackage()
    {
       withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
@@ -524,38 +548,6 @@ public class Packages
 
             });
    }
-   
-   @Handler
-   public void onPackratTest()
-   {
-      server_.getPackratRestoreActions(
-         session_.getSessionInfo().getActiveProjectDir().getPath(), 
-         new SimpleRequestCallback<JsArray<PackratRestoreActions>>() {
-            @Override
-            public void onResponseReceived(
-                                 JsArray<PackratRestoreActions> actions)
-            {
-               if (actions != null)
-               {
-                  new PackratRestoreDialog(actions, 
-                                           new OperationWithInput<Void>(){
-                     @Override
-                     public void execute(Void input)
-                     {
-                        packratUtil_.executePackratFunction("restore");
-                     } 
-                  });
-               }
-               else
-               {
-                  globalDisplay_.showMessage(MessageDialog.INFO, 
-                    "Packrat Restore", 
-                    "Packrat library is already up to date.");
-               }
-            }
-         });
-   }
-  
    
    public void removePackage(final PackageInfo packageInfo)
    {
