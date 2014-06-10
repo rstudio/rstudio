@@ -17,15 +17,15 @@
 
 namespace core {
 
-RecursionGuard::RecursionGuard (int& counter): 
-   counter_(counter) 
+RecursionGuard::RecursionGuard (int* pCounter):
+   pCounter_(pCounter)
 { 
-   counter_++; 
+   *pCounter_ = *pCounter_ + 1;
 }
 
 RecursionGuard::~RecursionGuard() 
 { 
-   counter_--; 
+   *pCounter_ = *pCounter_ - 1;
 }
 
 } // namespace core

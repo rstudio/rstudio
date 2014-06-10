@@ -13,11 +13,13 @@
  *
  */
 
+#include <boost/utility.hpp>
+
 #define DROP_RECURSIVE_CALLS \
    static int recursionCount; \
    if (recursionCount > 0) \
       return; \
-   RecursionGuard rg(recursionCount)
+   RecursionGuard rg(&recursionCount)
 
 namespace core {
 
@@ -25,13 +27,13 @@ namespace core {
 // single function or other scoped block.  Given a reference to an appropriately
 // scoped static, it can indicate how many instances of itself are on the 
 // stack. 
-class RecursionGuard
+class RecursionGuard : boost::noncopyable
 {
 public:
-   RecursionGuard(int& counter);
+   explicit RecursionGuard(int* pCounter);
    ~RecursionGuard();
 private:
-   int& counter_;
+   int* pCounter_;
 };
 
 }
