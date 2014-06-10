@@ -1174,8 +1174,6 @@ public abstract class JavaToJavaScriptCompiler {
         // EntryMethodHolder class.
         synthesizeEntryMethodHolderInit(unifyAst, entryMethodHolderTypeName);
       }
-      // Ensures that unification traversal starts from these methods.
-      jprogram.addEntryMethod(jprogram.getIndexedMethod("Impl.registerEntry"));
       if (entryMethodHolderTypeName != null) {
         // Only register the init method in the EntryMethodHolder class as an entry method, if there
         // is an EntryMethodHolder class.

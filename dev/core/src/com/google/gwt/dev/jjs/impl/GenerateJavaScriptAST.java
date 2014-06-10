@@ -160,6 +160,7 @@ import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -167,6 +168,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1385,13 +1387,12 @@ public class GenerateJavaScriptAST {
         // TODO(rluble): Ideally we would want to construct the inheritance chain the JS way and
         // then we could do Type.prototype.polyname.call(this, ...). Currently prototypes do not
         // have global names instead they are stuck into the prototypesByTypeId array.
-        JsNameRef getClassProtoFunctionRef = indexedFunctions.get(
-            "JavaClassHierarchySetupUtil.getClassPrototype").getName().makeRef(x.getSourceInfo());
-        JsInvocation getPrototypeCall = new JsInvocation(x.getSourceInfo());
-        getPrototypeCall.setQualifier(getClassProtoFunctionRef);
         final JDeclaredType superMethodTargetType = method.getEnclosingType();
-        getPrototypeCall.getArguments()
-            .add(convertJavaLiteral(typeIdsByType.get(superMethodTargetType)));
+
+        JsInvocation getPrototypeCall = constructInvocation(x.getSourceInfo(),
+            "JavaClassHierarchySetupUtil.getClassPrototype",
+            convertJavaLiteral(typeIdsByType.get(superMethodTargetType)));
+
         JsNameRef methodNameRef = polymorphicNames.get(method).makeRef(x.getSourceInfo());
         methodNameRef.setQualifier(getPrototypeCall);
 
@@ -1653,7 +1654,7 @@ public class GenerateJavaScriptAST {
 
       // Generate entry methods. Needs to be after class literal insertion since class literal will
       // be referenced by runtime rebind and property provider bootstrapping.
-      generateGwtOnLoad(entryFunctions, globalStmts);
+      setupGwtOnLoad(entryFunctions, globalStmts);
 
       if (program.getRunAsyncs().size() > 0) {
         // Prevent onLoad from being pruned.
@@ -2115,231 +2116,131 @@ public class GenerateJavaScriptAST {
         setupStringCastMap(program.getTypeJavaLangString(), globalStmts);
 
         //  Perform necessary polyfills.
-        JsFunction modernizerFn =
-            indexedFunctions.get("JavaClassHierarchySetupUtil.modernizeBrowser");
-        JsName modernizerFnName = modernizerFn.getName();
-        JsInvocation callModernizerFn = new JsInvocation(x.getSourceInfo());
-        callModernizerFn.setQualifier(modernizerFnName.makeRef(x.getSourceInfo()));
-        globalStmts.add(callModernizerFn.makeStmt());
+        globalStmts.add(constructInvocation(x.getSourceInfo(),
+            "JavaClassHierarchySetupUtil.modernizeBrowser").makeStmt());
       }
     }
 
     /**
-     * Creates gwtOnLoad bootstrapping code. Unusually, the created code is executed as part of
+     * Sets up gwtOnLoad bootstrapping code. Unusually, the created code is executed as part of
      * source loading and runs in the global scope (not inside of any function scope).
      */
-    // TODO(stalcup): get rid of manually synthesized AST and replace it either with calls to static
-    // functions that vary only in their data arguments or else create source with a Generator.
-    private void generateGwtOnLoad(JsFunction[] entryFuncs,
-        List<JsStatement> globalStmts) {
+    private void setupGwtOnLoad(JsFunction[] entryFuncs, List<JsStatement> globalStmts) {
       /**
        * <pre>
+       * var $entry = Impl.registerEntry();
+       * var gwtOnLoad = ModuleUtils.gwtOnLoad();
        * {MODULE_RuntimeRebindRegistrator}.register();
        * {MODULE_PropertyProviderRegistrator}.register();
-       * var $entry = Impl.registerEntry();
-       * // Stub gwtOnLoad at top level so that HtmlUnit can find it.
-       * // On first execution this will assign a value of null into gwtOnLoad.
-       * // It's value will actually be built inside of the following anonymous
-       * // function and subsequent executions will preserve the existing value.
-       * // Since gwtOnLoad is being varred, this will work in the global scope
-       * // as well as in speculative future scopes in which linkers might
-       * // choose to place the output.
-       * var gwtOnLoad = typeof gwtOnLoad === 'undefined' ? null : gwtOnLoad;
-       * // Create gwtOnLoad in function scope so the previousGwtOnLoad reference is preserved.
-       * (function() {
-       *   var previousGwtOnLoad = gwtOnLoad;
-       *   gwtOnLoad = function(errFn, modName, modBase, softPermutationId) {
-       *     if (previousGwtOnLoad) {
-       *       previousGwtOnLoad(errFn, modName, modBase, softPermutationId);
-       *     }
-       *     $moduleName = modName;
-       *     $moduleBase = modBase;
-       *     CollapsedPropertyHolder.permutationId = softPermutationId;
-       *     if (errFn) {
-       *       try {
-       *         $entry(init)();
-       *       } catch(e) {
-       *         errFn(modName);
-       *       }
-       *     } else {
-       *       $entry(init)();
-       *     }
-       *   }
-       * }());
+       * ModuleUtils.addInitFunctions(init1, init2,...)
        * </pre>
        */
 
-      SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
+      final SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
 
-      String moduleRuntimeRebindRegistratorSourceName =
-          program.getRuntimeRebindRegistratorTypeSourceName();
-      // Skip if no runtime rebind registry code in this module, probably a monolithic compile.
-      if (moduleRuntimeRebindRegistratorSourceName != null) {
-        // RuntimeRebindRegistrator.register();
-        String runtimeRebindRegistratorTypeShortName =
-            SourceName.getShortClassName(moduleRuntimeRebindRegistratorSourceName);
-        JsFunction registerRuntimeRebindsFunction =
-            indexedFunctions.get(runtimeRebindRegistratorTypeShortName + ".register");
-        JsInvocation registerRuntimeRebindsCall = new JsInvocation(sourceInfo);
-        registerRuntimeRebindsCall.setQualifier(
-            registerRuntimeRebindsFunction.getName().makeRef(sourceInfo));
-        globalStmts.add(registerRuntimeRebindsCall.makeStmt());
-      }
-
-      String modulepropertyProviderRegistratorSourceName =
-          program.getPropertyProviderRegistratorTypeSourceName();
-      // Skip if no runtime property registry code in this module, probably a monolithic compile.
-      if (modulepropertyProviderRegistratorSourceName != null) {
-        // PropertyProviderRegistrator.register();
-        String propertyProviderRegistratorTypeShortName =
-            SourceName.getShortClassName(program.getPropertyProviderRegistratorTypeSourceName());
-        JsFunction registerPropertyProvidersFunction =
-            indexedFunctions.get(propertyProviderRegistratorTypeShortName + ".register");
-        JsInvocation registerPropertyProvidersCall = new JsInvocation(sourceInfo);
-        registerPropertyProvidersCall.setQualifier(
-            registerPropertyProvidersFunction.getName().makeRef(sourceInfo));
-        globalStmts.add(registerPropertyProvidersCall.makeStmt());
-      }
-
-      // var $entry = Impl.registerEntry();
-      JsName entryName = topScope.declareName("$entry");
-      JsVar entryVar = new JsVar(sourceInfo, entryName);
-      JsInvocation registerEntryCall = new JsInvocation(sourceInfo);
-      JsFunction registerEntryFunction = indexedFunctions.get("Impl.registerEntry");
-      registerEntryCall.setQualifier(registerEntryFunction.getName().makeRef(sourceInfo));
-      entryVar.setInitExpr(registerEntryCall);
-      JsVars entryVars = new JsVars(sourceInfo);
-      entryVars.add(entryVar);
+      // var $entry = ModuleUtils.registerEntry();
+      JsStatement entryVars = constructFunctionCallStatement(
+          topScope.declareName("$entry"), "ModuleUtils.registerEntry");
       globalStmts.add(entryVars);
 
-      // Stub gwtOnLoad at top level so that HtmlUnit can find it.
-      // var gwtOnLoad = typeof gwtOnLoad === 'undefined' ? null : gwtOnLoad;
-      JsName gwtOnLoadName = topScope.findExistingUnobfuscatableName("gwtOnLoad");
-      JsVar gwtOnLoadNameVar = new JsVar(sourceInfo, gwtOnLoadName);
-      gwtOnLoadNameVar.setInitExpr(new JsConditional(sourceInfo, new JsBinaryOperation(sourceInfo,
-          JsBinaryOperator.REF_EQ, new JsPrefixOperation(
-              sourceInfo, JsUnaryOperator.TYPEOF, gwtOnLoadName.makeRef(sourceInfo)),
-          new JsStringLiteral(sourceInfo, "undefined")), JsNullLiteral.INSTANCE,
-          gwtOnLoadName.makeRef(sourceInfo)));
-      JsVars gwtOnLoadNameVars = new JsVars(sourceInfo);
-      gwtOnLoadNameVars.add(gwtOnLoadNameVar);
-      globalStmts.add(gwtOnLoadNameVars);
+      // var gwtOnLoad = ModuleUtils.gwtOnLoad;
+      JsName gwtOnLoad = topScope.findExistingUnobfuscatableName("gwtOnLoad");
+      JsVar varGwtOnLoad = new JsVar(sourceInfo, gwtOnLoad);
+      varGwtOnLoad.setInitExpr(createAssignment(gwtOnLoad.makeRef(sourceInfo),
+          indexedFunctions.get("ModuleUtils.gwtOnLoad").getName().makeRef(sourceInfo)));
+      globalStmts.add(new JsVars(sourceInfo, varGwtOnLoad));
 
-      // Create gwtOnLoad in function scope so the previousGwtOnLoad reference is preserved.
-      // (function() {
-      JsFunction createGwtOnLoadFunction = new JsFunction(sourceInfo, topScope);
-      JsBlock createGwtOnLoadBody = new JsBlock(sourceInfo);
-      createGwtOnLoadFunction.setBody(createGwtOnLoadBody);
-
-      // var previousGwtOnLoad = gwtOnLoad;
-      JsName previousGwtOnLoadName =
-          createGwtOnLoadFunction.getScope().declareName("previousGwtOnLoad");
-      JsVar previousGwtOnLoadNameVar = new JsVar(sourceInfo, previousGwtOnLoadName);
-      previousGwtOnLoadNameVar.setInitExpr(gwtOnLoadName.makeRef(sourceInfo));
-      JsVars previousGwtOnLoadNameVars = new JsVars(sourceInfo);
-      previousGwtOnLoadNameVars.add(previousGwtOnLoadNameVar);
-      createGwtOnLoadBody.getStatements().add(previousGwtOnLoadNameVars);
-
-      // gwtOnLoad = function(errFn, modName, modBase, softPermutationId) {
-      JsFunction gwtOnLoad = new JsFunction(sourceInfo, createGwtOnLoadFunction.getScope());
-      gwtOnLoad.setArtificiallyRescued(true);
-      JsBlock gwtOnLoadFunctionBody = new JsBlock(sourceInfo);
-      gwtOnLoad.setBody(gwtOnLoadFunctionBody);
-      JsExpression gwtOnLoadAssignment =
-          createAssignment(gwtOnLoadName.makeRef(sourceInfo), gwtOnLoad);
-      createGwtOnLoadBody.getStatements().add(gwtOnLoadAssignment.makeStmt());
-      JsScope fnScope = gwtOnLoad.getScope();
-      List<JsParameter> gwtOnLoadParams = gwtOnLoad.getParameters();
-      JsName errFn = fnScope.declareName("errFn");
-      JsName modName = fnScope.declareName("modName");
-      JsName modBase = fnScope.declareName("modBase");
-      JsName softPermutationId = fnScope.declareName("softPermutationId");
-      gwtOnLoadParams.add(new JsParameter(sourceInfo, errFn));
-      gwtOnLoadParams.add(new JsParameter(sourceInfo, modName));
-      gwtOnLoadParams.add(new JsParameter(sourceInfo, modBase));
-      gwtOnLoadParams.add(new JsParameter(sourceInfo, softPermutationId));
-
-      // if (previousGwtOnLoad) {
-      //   previousGwtOnLoad();
-      // }
-      JsIf previousGwtOnLoadIf = new JsIf(sourceInfo);
-      gwtOnLoadFunctionBody.getStatements().add(previousGwtOnLoadIf);
-      previousGwtOnLoadIf.setIfExpr(previousGwtOnLoadName.makeRef(sourceInfo));
-      JsInvocation previousGwtOnLoadCall = new JsInvocation(sourceInfo);
-      previousGwtOnLoadCall.setQualifier(previousGwtOnLoadName.makeRef(sourceInfo));
-      List<JsExpression> previousGwtOnLoadCallArguments = previousGwtOnLoadCall.getArguments();
-      previousGwtOnLoadCallArguments.add(errFn.makeRef(sourceInfo));
-      previousGwtOnLoadCallArguments.add(modName.makeRef(sourceInfo));
-      previousGwtOnLoadCallArguments.add(modBase.makeRef(sourceInfo));
-      previousGwtOnLoadCallArguments.add(softPermutationId.makeRef(sourceInfo));
-      previousGwtOnLoadIf.setThenStmt(previousGwtOnLoadCall.makeStmt());
-
-      // $moduleName = modName;
-      JsExpression moduleNameAssignment =
-          createAssignment(topScope.findExistingUnobfuscatableName("$moduleName").makeRef(
-              sourceInfo), modName.makeRef(sourceInfo));
-      gwtOnLoadFunctionBody.getStatements().add(moduleNameAssignment.makeStmt());
-
-      // $moduleBase = modBase;
-      JsExpression moduleBaseAssignment =
-          createAssignment(topScope.findExistingUnobfuscatableName("$moduleBase").makeRef(
-              sourceInfo), modBase.makeRef(sourceInfo));
-      gwtOnLoadFunctionBody.getStatements().add(moduleBaseAssignment.makeStmt());
-
-      // Assignment to CollapsedPropertyHolder.permutationId only if it's used
-      // CollapsedPropertyHolder.permutationId = softPermutationId;
-      JsName permutationIdFieldName =
-          names.get(program.getIndexedField("CollapsedPropertyHolder.permutationId"));
-      if (permutationIdFieldName != null) {
-        JsExpression permutationIdAssignment =
-            createAssignment(permutationIdFieldName.makeRef(sourceInfo), softPermutationId
-                .makeRef(sourceInfo));
-        gwtOnLoadFunctionBody.getStatements().add(permutationIdAssignment.makeStmt());
+      // {MODULE_RuntimeRebindRegistrator}.register();
+      // {MODULE_PropertyProviderRegistrator}.register();
+      List<String> registerFnList = Lists.newArrayList();
+      mayAddProviderRegisterFn(registerFnList,
+          program.getRuntimeRebindRegistratorTypeSourceName());
+      mayAddProviderRegisterFn(registerFnList,
+          program.getPropertyProviderRegistratorTypeSourceName());
+      for (String registerFnName : registerFnList) {
+        globalStmts.add(constructInvocation(sourceInfo, registerFnName).makeStmt());
       }
 
-      // if (errFn) {
-      //   try {
-      //     $entry(init)();
-      //   } catch(e) {
-      //     errFn(modName);
-      //   }
-      // } else {
-      //   $entry(init)();
-      // }
-      JsIf jsIf = new JsIf(sourceInfo);
-      gwtOnLoadFunctionBody.getStatements().add(jsIf);
-      jsIf.setIfExpr(errFn.makeRef(sourceInfo));
-      JsTry jsTry = new JsTry(sourceInfo);
-      jsIf.setThenStmt(jsTry);
-      JsBlock callBlock = new JsBlock(sourceInfo);
-      jsIf.setElseStmt(callBlock);
-      jsTry.setTryBlock(callBlock);
-      for (JsFunction func : entryFuncs) {
-        if (func == registerEntryFunction) {
-          continue;
-        } else if (func != null) {
-          JsInvocation call = new JsInvocation(sourceInfo);
-          call.setQualifier(entryName.makeRef(sourceInfo));
-          call.getArguments().add(func.getName().makeRef(sourceInfo));
-          JsInvocation entryCall = new JsInvocation(sourceInfo);
-          entryCall.setQualifier(call);
-          callBlock.getStatements().add(entryCall.makeStmt());
-        }
-      }
-      JsCatch jsCatch = new JsCatch(sourceInfo, fnScope, "e");
-      jsTry.getCatches().add(jsCatch);
-      JsBlock catchBlock = new JsBlock(sourceInfo);
-      jsCatch.setBody(catchBlock);
-      JsInvocation errCall = new JsInvocation(sourceInfo);
-      catchBlock.getStatements().add(errCall.makeStmt());
-      errCall.setQualifier(errFn.makeRef(sourceInfo));
-      errCall.getArguments().add(modName.makeRef(sourceInfo));
-      errCall.getArguments().add(jsCatch.getParameter().getName().makeRef(sourceInfo));
+      // ModuleUtils.addInitFunctions(init1, init2,...)
+      List<JsExpression> arguments = Lists.transform(Arrays.asList(entryFuncs),
+              new Function<JsFunction, JsExpression>() {
+                @Override
+                public JsExpression apply(JsFunction jsFunction) {
+                  return jsFunction.getName().makeRef(sourceInfo);
+                }
+              });
 
-      // }());
-      JsInvocation createGwtOnLoadCall = new JsInvocation(sourceInfo);
-      createGwtOnLoadCall.setQualifier(createGwtOnLoadFunction);
-      globalStmts.add(createGwtOnLoadCall.makeStmt());
+        JsStatement createGwtOnLoadFunctionCall = constructInvocation(
+          "ModuleUtils.addInitFunctions", arguments).makeStmt();
+
+      globalStmts.add(createGwtOnLoadFunctionCall);
+    }
+
+    private void mayAddProviderRegisterFn(List<String> providerFnNames,
+        String providerTypeSourceName) {
+      // ProviderClass.register();
+      if (providerTypeSourceName == null) {
+        return;
+      }
+      providerFnNames.add(SourceName.getShortClassName(providerTypeSourceName) + ".register");
+    }
+
+    /**
+     * Creates a (var) assignment a statement for a function call to an indexed function.
+     */
+    private JsStatement constructFunctionCallStatement(JsName assignToVariableName,
+        String indexedFunctionName, JsExpression... args) {
+      return constructFunctionCallStatement(assignToVariableName, indexedFunctionName,
+          Arrays.asList(args));
+    }
+
+    /**
+     * Creates a (var) assignment a statement for a function call to an indexed function.
+     */
+    private JsStatement constructFunctionCallStatement(JsName assignToVariableName,
+        String indexedFunctionName, List<JsExpression> args) {
+
+      SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
+      JsInvocation invocation = constructInvocation(indexedFunctionName, args);
+      JsVar var = new JsVar(sourceInfo, assignToVariableName);
+      var.setInitExpr(invocation);
+      JsVars entryVars = new JsVars(sourceInfo);
+      entryVars.add(var);
+      return entryVars;
+    }
+
+    /**
+     * Constructs an invocation for an indexed function.
+     */
+    private JsInvocation constructInvocation(SourceInfo sourceInfo,
+        String indexedFunctionName, JsExpression... args) {
+      return constructInvocation(sourceInfo, indexedFunctionName, Arrays.asList(args));
+    }
+
+    /**
+     * Constructs an invocation for an indexed function.
+     */
+    private JsInvocation constructInvocation(String indexedFunctionName,
+        JsExpression... args) {
+      return constructInvocation(indexedFunctionName, Arrays.asList(args));
+    }
+
+    /**
+     * Constructs an invocation for an indexed function.
+     */
+    private JsInvocation constructInvocation(String indexedFunctionName,
+        List<JsExpression> args) {
+      SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
+      return constructInvocation(sourceInfo, indexedFunctionName, args);
+    }
+
+    /**
+     * Constructs an invocation for an indexed function.
+     */
+    private JsInvocation constructInvocation(SourceInfo sourceInfo,
+        String indexedFunctionName, List<JsExpression> args) {
+      JsFunction functionToInvoke = indexedFunctions.get(indexedFunctionName);
+      return new JsInvocation(sourceInfo, functionToInvoke, args);
     }
 
     private void generateImmortalTypes(JsVars globals) {
@@ -2438,8 +2339,6 @@ public class GenerateJavaScriptAST {
       SourceInfo sourceInfo = x.getSourceInfo();
       assert x != program.getTypeJavaLangString();
 
-      JsInvocation defineClass = new JsInvocation(sourceInfo);
-
       JLiteral typeId = getRuntimeTypeReference(x);
       JClassType superClass = x.getSuperClass();
       JLiteral superTypeId = (superClass == null) ? JNullLiteral.INSTANCE :
@@ -2447,31 +2346,27 @@ public class GenerateJavaScriptAST {
       // check if there's an overriding prototype
       JInterfaceType jsPrototypeIntf = JProgram.maybeGetJsInterfaceFromPrototype(superClass);
       String jsPrototype = jsPrototypeIntf != null ? jsPrototypeIntf.getJsPrototype() : null;
-      // choose appropriate setup function
-      JsName defineClassRef = indexedFunctions.get(
-          jsPrototype == null ? "JavaClassHierarchySetupUtil.defineClass" :
-              "JavaClassHierarchySetupUtil.defineClassWithPrototype").getName();
 
-      defineClass.setQualifier(defineClassRef.makeRef(sourceInfo));
+      List<JsExpression> defineClassArguments = Lists.newArrayList();
 
-      // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
-      defineClass.getArguments().add(convertJavaLiteral(typeId));
+      defineClassArguments.add(convertJavaLiteral(typeId));
       // setup superclass normally
       if (jsPrototype == null) {
-        defineClass.getArguments().add(convertJavaLiteral(superTypeId));
+        defineClassArguments.add(convertJavaLiteral(superTypeId));
       } else {
         // setup extension of native JS object
-        JsNameRef jsProtoClassRef = javaToJavaScriptLiteralConverter.convertQualifiedPrototypeToNameRef(
-          x.getSourceInfo(), jsPrototype);
+        JsNameRef jsProtoClassRef =
+            javaToJavaScriptLiteralConverter.convertQualifiedPrototypeToNameRef(
+                x.getSourceInfo(), jsPrototype);
         // TODO(cromwellian) deal with module vs global scoping issue
         // jsProtoClassRef.setQualifier(new JsNameRef(x.getSourceInfo(), "$wnd"));
         JsNameRef jsProtoFieldRef = new JsNameRef(x.getSourceInfo(), "prototype");
 
         jsProtoFieldRef.setQualifier(jsProtoClassRef);
-        defineClass.getArguments().add(jsProtoClassRef);
+        defineClassArguments.add(jsProtoClassRef);
       }
       JsExpression castMap = generateCastableTypeMap(x);
-      defineClass.getArguments().add(castMap);
+      defineClassArguments.add(castMap);
 
       // Chain assign the same prototype to every live constructor.
       for (JMethod method : x.getMethods()) {
@@ -2479,13 +2374,17 @@ public class GenerateJavaScriptAST {
           // Some constructors are never newed hence don't need to be registered with defineClass.
           continue;
         }
-
-        defineClass.getArguments().add(names.get(method).makeRef(sourceInfo));
+        defineClassArguments.add(names.get(method).makeRef(sourceInfo));
       }
 
-      JsStatement tmpAsgStmt = defineClass.makeStmt();
-      globalStmts.add(tmpAsgStmt);
-      typeForStatMap.put(tmpAsgStmt, x);
+      // choose appropriate setup function
+      // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
+      JsStatement defineClassStatement = constructInvocation(sourceInfo,
+          jsPrototype == null ? "JavaClassHierarchySetupUtil.defineClass" :
+              "JavaClassHierarchySetupUtil.defineClassWithPrototype",
+          defineClassArguments).makeStmt();
+      globalStmts.add(defineClassStatement);
+      typeForStatMap.put(defineClassStatement, x);
     }
 
     /*
@@ -2515,10 +2414,9 @@ public class GenerateJavaScriptAST {
         JsNameRef lhs = createNativeToStringRef(globalTemp.makeRef(sourceInfo));
 
         // rhs
-        JsInvocation call = new JsInvocation(sourceInfo);
         JsNameRef toStringRef = new JsNameRef(sourceInfo, polymorphicNames.get(toStringMeth));
         toStringRef.setQualifier(new JsThisRef(sourceInfo));
-        call.setQualifier(toStringRef);
+        JsInvocation call = new JsInvocation(sourceInfo, toStringRef);
         JsReturn jsReturn = new JsReturn(sourceInfo, call);
         JsFunction rhs = new JsFunction(sourceInfo, topScope);
         JsBlock body = new JsBlock(sourceInfo);
@@ -2673,11 +2571,10 @@ public class GenerateJavaScriptAST {
     private String exportProvidedNamespace(JClassType x, List<JsStatement> globalStmts,
                                            String lastProvidedNamespace, Pair<String, String> exportNamespacePair) {
       if (!lastProvidedNamespace.equals(exportNamespacePair.getLeft())) {
-        JsName provideFunc = indexedFunctions.get("JavaClassHierarchySetupUtil.provide").getName();
-        JsInvocation provideCall = new JsInvocation(x.getSourceInfo());
-        provideCall.setQualifier(provideFunc.makeRef(x.getSourceInfo()));
-        provideCall.getArguments().add(new JsStringLiteral(x.getSourceInfo(),
-            exportNamespacePair.getLeft()));
+        JsInvocation provideCall = constructInvocation(x.getSourceInfo(),
+            "JavaClassHierarchySetupUtil.provide",
+            new JsStringLiteral(x.getSourceInfo(), exportNamespacePair.getLeft()));
+
         JsExprStmt provideStat = createAssignment(globalTemp.makeRef(x.getSourceInfo()),
             provideCall).makeStmt();
         globalStmts.add(provideStat);
@@ -2753,9 +2650,7 @@ public class GenerateJavaScriptAST {
 
       JMethod clinitMethod = targetType.getClinitMethod();
       SourceInfo sourceInfo = x.getSourceInfo();
-      JsInvocation jsInvocation = new JsInvocation(sourceInfo);
-      jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
-      return jsInvocation;
+      return new JsInvocation(sourceInfo, names.get(clinitMethod).makeRef(sourceInfo));
     }
 
     private JsInvocation maybeCreateClinitCall(JMethod x) {
@@ -2777,9 +2672,7 @@ public class GenerateJavaScriptAST {
 
       JMethod clinitMethod = enclosingType.getClinitTarget().getClinitMethod();
       SourceInfo sourceInfo = x.getSourceInfo();
-      JsInvocation jsInvocation = new JsInvocation(sourceInfo);
-      jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
-      return jsInvocation;
+      return new JsInvocation(sourceInfo, names.get(clinitMethod).makeRef(sourceInfo));
     }
 
     /**
