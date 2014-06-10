@@ -456,9 +456,8 @@ public class JsStackEmulator {
       JsName paramName = c.getParameter().getName();
 
       // wrap(e)
-      JsInvocation wrapCall = new JsInvocation(info);
-      wrapCall.setQualifier(wrapFunction.getName().makeRef(info));
-      wrapCall.getArguments().add(paramName.makeRef(info));
+      JsInvocation wrapCall = new JsInvocation(info, wrapFunction.getName().makeRef(info),
+          paramName.makeRef(info));
 
       // e = wrap(e)
       JsBinaryOperation asg = new JsBinaryOperation(info, JsBinaryOperator.ASG,

@@ -117,14 +117,13 @@ public class JsNamerTest extends TestCase {
     // Function declaration statement.
     JsName name = scope.declareName("package-info", "package-info");
     List<JsStatement> statements = jsProgram.getFragment(0).getGlobalBlock().getStatements();
-    JsFunction function = new JsFunction(SourceOrigin.UNKNOWN, scope, name);
-    function.setBody(new JsBlock(SourceOrigin.UNKNOWN));
-    statements.add(new JsExprStmt(SourceOrigin.UNKNOWN, function));
+    final SourceOrigin sourceInfo = SourceOrigin.UNKNOWN;
+    JsFunction function = new JsFunction(sourceInfo, scope, name);
+    function.setBody(new JsBlock(sourceInfo));
+    statements.add(new JsExprStmt(sourceInfo, function));
 
     // Function invocation statement.
-    JsInvocation invocation = new JsInvocation(SourceOrigin.UNKNOWN);
-    invocation.setQualifier(new JsNameRef(SourceOrigin.UNKNOWN, name));
-    statements.add(new JsExprStmt(SourceOrigin.UNKNOWN, invocation));
+    statements.add(new JsInvocation(sourceInfo, new JsNameRef(sourceInfo, name)).makeStmt());
 
     // Verify that the illegal "-" character is translated.
     assertEquals(

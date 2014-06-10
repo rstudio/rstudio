@@ -244,10 +244,9 @@ public class FragmentExtractorTest extends JJSTestBase {
 
   private JsExprStmt createDefineClassStatement(final JsName barConstructorName) {
     SourceInfo nullSourceInfo = new MockSourceInfo();
-    JsInvocation defineClassInvocation = new JsInvocation(nullSourceInfo);
-    defineClassInvocation.getArguments().add(new JsNameRef(nullSourceInfo, barConstructorName));
-    defineClassInvocation.setQualifier(new JsNameRef(nullSourceInfo, DEFINE_CLASS_FUNCTION_NAME));
-    final JsExprStmt defineClassStatement = new JsExprStmt(nullSourceInfo, defineClassInvocation);
-    return defineClassStatement;
+    JsInvocation defineClassInvocation =
+        new JsInvocation(nullSourceInfo, new JsNameRef(nullSourceInfo, DEFINE_CLASS_FUNCTION_NAME),
+        new JsNameRef(nullSourceInfo, barConstructorName));
+    return defineClassInvocation.makeStmt();
   }
 }

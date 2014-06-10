@@ -500,10 +500,8 @@ public class FragmentExtractor {
    */
   private JsInvocation wrapWithEntry(JsExpression exp) {
     SourceInfo sourceInfo = exp.getSourceInfo();
-    JsInvocation call = new JsInvocation(sourceInfo);
-    JsName entryFunctionName = jsprogram.getScope().findExistingName("$entry");
-    call.setQualifier(entryFunctionName.makeRef(sourceInfo));
-    call.getArguments().add(exp);
+    JsInvocation call = new JsInvocation(sourceInfo,
+        jsprogram.getScope().findExistingName("$entry").makeRef(sourceInfo), exp);
     return call;
   }
 }

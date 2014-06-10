@@ -2174,10 +2174,9 @@ public class JsInliner {
     JsNameRef newTarget = new JsNameRef(oldTarget.getSourceInfo(),
         oldTarget.getName());
     newTarget.setQualifier(oldArgs.get(0));
-    JsInvocation newCall = new JsInvocation(x.getSourceInfo());
-    newCall.setQualifier(newTarget);
-    // Don't have to clone because the returned invocation is transient.
-    newCall.getArguments().addAll(oldArgs.subList(1, oldArgs.size()));
+    JsInvocation newCall = new JsInvocation(x.getSourceInfo(), newTarget,
+        // Don't need to clone because the returned invocation is transient.
+        oldArgs.subList(1, oldArgs.size()));
     return newCall;
   }
 

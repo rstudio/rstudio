@@ -140,8 +140,7 @@ public class Jsni {
         // Use a clone instead of modifying the original JSNI
         // __gwt_makeTearOff(obj, dispId, paramCount)
         SourceInfo info = x.getSourceInfo();
-        JsInvocation rewritten = new JsInvocation(info);
-        rewritten.setQualifier(new JsNameRef(info, "__gwt_makeTearOff"));
+        JsInvocation rewritten = new JsInvocation(info, new JsNameRef(info, "__gwt_makeTearOff"));
 
         List<JsExpression> arguments = rewritten.getArguments();
         if (q == null) {
@@ -202,9 +201,8 @@ public class Jsni {
             }
 
             SourceInfo info = x.getSourceInfo();
-            JsInvocation inner = new JsInvocation(info);
-            inner.setQualifier(new JsNameRef(info, "__gwt_makeJavaInvoke"));
-            inner.getArguments().add(new JsNumberLiteral(info, paramCount));
+            JsInvocation inner = new JsInvocation(info,
+                new JsNameRef(info, "__gwt_makeJavaInvoke"), new JsNumberLiteral(info, paramCount));
 
             JsInvocation outer = new JsInvocation(info);
             outer.setQualifier(inner);
