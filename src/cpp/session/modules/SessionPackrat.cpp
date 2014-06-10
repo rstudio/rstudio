@@ -339,6 +339,8 @@ void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 
 void onFileChanged(FilePath sourceFilePath)
 {
+   // we only care about mutations to files in the Packrat library directory
+   // (and packrat.lock)
    FilePath libraryPath = 
       projects::projectContext().directory().complete("packrat/lib");
 
@@ -351,6 +353,15 @@ void onFileChanged(FilePath sourceFilePath)
             (sourceFilePath.isDirectory() || 
              sourceFilePath.filename() == "DESCRIPTION"))
    {
+      // ignore changes in the RStudio-managed manipulate and rstudio 
+      // directories and the files within them
+      if (sourceFilePath.filename() == "manipulate" ||
+          sourceFilePath.filename() == "rstudio" ||
+          sourceFilePath.parent().filename() == "manipulate" || 
+          sourceFilePath.parent().filename() == "rstudio")
+      {
+         return;
+      }
       PACKRAT_TRACE("detected change to library file " << sourceFilePath);
       checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
    }
@@ -358,8 +369,15 @@ void onFileChanged(FilePath sourceFilePath)
 
 void onPackageLibraryMutated()
 {
-   PACKRAT_TRACE("detected user modification to library");
-   checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
+   // make sure a Packrat library exists (we don't care about monitoring 
+   // mutations to other libraries)
+   FilePath libraryPath = 
+      projects::projectContext().directory().complete("packrat/lib");
+   if (libraryPath.exists())
+   {
+      PACKRAT_TRACE("detected user modification to library");
+      checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
+   }
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
