@@ -249,21 +249,34 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private class VersionCell extends AbstractCell<PackageInfo>
    {
+      public VersionCell (boolean packratVersion)
+      {
+         packratVersion_ = packratVersion;
+      }
+
       @Override
       public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
          sb.appendHtmlConstant("<div title=\"");
-         sb.appendEscaped(PackageLibraryUtils.getLibraryDescription(
-               session_, value.getLibrary()) + " (" +
-               value.getLibrary() + ")");
+         if (!packratVersion_)
+            sb.appendEscaped(value.getLibrary());
          sb.appendHtmlConstant("\"");
          sb.appendHtmlConstant(" class=\"");
          sb.appendEscaped(ThemeStyles.INSTANCE.adornedText());
          sb.appendHtmlConstant("\"");
          sb.appendHtmlConstant(">");
-         sb.appendEscaped(value.getVersion());
+         if (packratVersion_)
+         {
+            sb.appendEscaped(value.getVersion());
+         }
+         else
+         {
+            sb.appendEscaped(value.getPackratVersion());
+         }
          sb.appendHtmlConstant("</div>"); 
       }
+      
+      private boolean packratVersion_;
    }
    
    @Override
@@ -332,7 +345,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       };  
       
       Column<PackageInfo, PackageInfo> versionColumn = 
-         new Column<PackageInfo, PackageInfo>(new VersionCell()) {
+         new Column<PackageInfo, PackageInfo>(new VersionCell(false)) {
 
             @Override
             public PackageInfo getValue(PackageInfo object)
@@ -364,17 +377,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       if (packratContext_ != null &&
           packratContext_.isModeOn())
       {
-         TextColumn<PackageInfo> packratVersionColumn = 
-               new TextColumn<PackageInfo>() {
-                  @Override
-                  public String getValue(PackageInfo pkgInfo)
-                  {
-                     if (pkgInfo.getInPackratLibary())
-                        return pkgInfo.getPackratVersion();
-                     else
-                        return "";
-                  }
+         Column<PackageInfo, PackageInfo> packratVersionColumn = 
+            new Column<PackageInfo, PackageInfo>(new VersionCell(true)) {
+
+               @Override
+               public PackageInfo getValue(PackageInfo object)
+               {
+                  return object;
+               }
          };
+      
          TextColumn<PackageInfo> packratSourceColumn = 
                new TextColumn<PackageInfo>() {
                   @Override
