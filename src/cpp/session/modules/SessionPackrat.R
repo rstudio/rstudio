@@ -31,6 +31,17 @@
    packratStatus <- packrat::status(dir, quiet = TRUE)
    libraryList <- .rs.listInstalledPackages()
 
+   # resolve symlinks 
+   resolvedLinks <- Sys.readlink(by(libraryList, 1:nrow(libraryList),
+         function(pkg) { 
+                system.file(package = pkg$name, lib.loc = pkg$library) 
+         }))
+
+   # for links that got resolved, replace the library indicated with the 
+   # actual (resolved) parent folder of the library
+   symlinks <- nchar(resolvedLinks) > 3
+   libraryList[symlinks,"library"] <- dirname(resolvedLinks[symlinks])
+
    # for each package, indicate whether it's in the private library (this is
    # largely a convenience for the client since a lot of behavior is driven
    # from this value)
@@ -58,12 +69,18 @@
    mergedList <- subset(mergedList, !(mergedList[,"name"] == "rstudio"))
    mergedList <- subset(mergedList, !(mergedList[,"name"] == "manipulate"))
 
-   # create empty packrat columns for the packages in non-Packrat libraries
-   packratCols <- setdiff(colnames(mergedList), colnames(nonPackratList))
-   nonPackratList[,packratCols] <- NA
+   if (nrow(nonPackratList) > 0) {
+      # if there are non-Packrat packages, create empty packrat columns for
+      # the packages 
+      packratCols <- setdiff(colnames(mergedList), colnames(nonPackratList))
+      nonPackratList[,packratCols] <- NA
 
-   # return the combined list
-   rbind(mergedList, nonPackratList)
+      # return the combined list
+      rbind(mergedList, nonPackratList)
+   } else {
+      # only Packrat packages, just return the merged list
+      mergedList
+   }
 })
 
 .rs.addFunction("getAutoSnapshotCmd", function(dir) {
