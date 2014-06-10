@@ -42,6 +42,8 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -521,6 +523,37 @@ public class Packages
             }
 
             });
+   }
+   
+   @Handler
+   public void onPackratTest()
+   {
+      server_.getPackratRestoreActions(
+         session_.getSessionInfo().getActiveProjectDir().getPath(), 
+         new SimpleRequestCallback<JsArray<PackratRestoreActions>>() {
+            @Override
+            public void onResponseReceived(
+                                 JsArray<PackratRestoreActions> actions)
+            {
+               if (actions != null)
+               {
+                  new PackratRestoreDialog(actions, 
+                                           new OperationWithInput<Void>(){
+                     @Override
+                     public void execute(Void input)
+                     {
+                        packratUtil_.executePackratFunction("restore");
+                     } 
+                  });
+               }
+               else
+               {
+                  globalDisplay_.showMessage(MessageDialog.INFO, 
+                    "Packrat Restore", 
+                    "Packrat library is already up to date.");
+               }
+            }
+         });
    }
   
    
