@@ -19,6 +19,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/Hash.hpp>
 #include <core/system/FileMonitor.hpp>
+#include <core/RecursionGuard.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -148,36 +149,32 @@ void checkHashes(
       PackratHashType secondary, 
       boost::function<void(const std::string&, const std::string&)> onPrimaryMismatch)
 {
-   // several requests to check hashes can come in at once on different threads
-   // as the file monitor discovers changes; don't try to compute or react to
-   // hashes in parallel
-   static boost::mutex hashMutex;
-   LOCK_MUTEX(hashMutex)
+   // if a request to check hashes comes in while we're already checking hashes,
+   // drop it: it's very likely that the file monitor has discovered a change
+   // to a file we've already hashed.
+   DROP_RECURSIVE_CALLS;
+
+   std::string oldHash = getStoredHash(primary);
+   std::string newHash = getComputedHash(primary);
+
+   // hashes match, no work needed
+   if (oldHash == newHash)
+      return;
+
+   // primary hashes mismatch, secondary hashes match
+   else if (getStoredHash(secondary) == getComputedHash(secondary)) 
    {
-      std::string oldHash = getStoredHash(primary);
-      std::string newHash = getComputedHash(primary);
-      PACKRAT_TRACE("checking hashes: " << oldHash << " -> " << newHash);
-
-      // hashes match, no work needed
-      if (oldHash == newHash)
-         return;
-
-      // primary hashes mismatch, secondary hashes match
-      else if (getStoredHash(secondary) == getComputedHash(secondary)) 
-      {
-         onPrimaryMismatch(oldHash, newHash);
-      }
-
-      // primary and secondary hashes mismatch
-      else 
-      {
-         // TODO: don't do this until the user has resolved any conflicts that
-         // may exist, and packrat::status() is clean
-         setStoredHash(primary, newHash);
-         setStoredHash(secondary, getComputedHash(secondary));
-      }
+      onPrimaryMismatch(oldHash, newHash);
    }
-   END_LOCK_MUTEX
+
+   // primary and secondary hashes mismatch
+   else 
+   {
+      // TODO: don't do this until the user has resolved any conflicts that
+      // may exist, and packrat::status() is clean
+      setStoredHash(primary, newHash);
+      setStoredHash(secondary, getComputedHash(secondary));
+   }
 }
 
 // Auto-snapshot -------------------------------------------------------------
