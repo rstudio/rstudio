@@ -17,15 +17,19 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.projects.model.RProjectPackratOptions;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectBuildToolsPreferencesPane;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -42,7 +46,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
                                    Provider<UIPrefs> pUIPrefs,
-                                   Session session,
+                                   Provider<EventBus> pEventBus,
+                                   Provider<PackratUtil> pPackratUtil,
+                                   Provider<Session> session,
                                    ProjectGeneralPreferencesPane general,
                                    ProjectEditingPreferencesPane editing,
                                    ProjectCompilePdfPreferencesPane compilePdf,
@@ -58,7 +64,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
            
       session_ = session;
       server_ = server;
-      pUIPrefs_ = pUIPrefs;  
+      pUIPrefs_ = pUIPrefs;
+      pEventBus_ = pEventBus;
+      pPackratUtil_ = pPackratUtil;
    }
    
    @Override
@@ -66,7 +74,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    {
       super.initialize(options);
       
-      if (!session_.getSessionInfo().getAllowVcs())
+      initialPackratOptions_ = options.getPackratOptions();
+      
+      if (!session_.get().getSessionInfo().getAllowVcs())
          hidePane(VCS);
       
       if (!options.getPackratContext().isAvailable())
@@ -117,6 +127,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
                 
+                // convert packrat option changes to console actions
+                emitPackratConsoleActions(options.getPackratOptions());
+                
                 if (onCompleted != null)
                    onCompleted.execute();
                 if (reload)
@@ -132,10 +145,59 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
    }
    
+   private void emitPackratConsoleActions(RProjectPackratOptions options)
+   {
+      StringBuilder b = new StringBuilder();
+      
+      if (options.getModeOn() != initialPackratOptions_.getModeOn())
+      {
+         b.append("packrat::packrat_mode(on = " + asR(options.getModeOn()));
+         String projectArg = pPackratUtil_.get().packratProjectArg();
+         if (projectArg.length() > 0)
+            b.append(", " + projectArg); 
+         b.append(");\n");
+      }
+      
+      if (options.getAutoSnapshot() != initialPackratOptions_.getAutoSnapshot())
+         b.append(packratOption("auto.snapshot", options.getAutoSnapshot()));
+
+      if (options.getVcsIgnoreLib() != initialPackratOptions_.getVcsIgnoreLib())
+         b.append(packratOption("vcs.ignore.lib", options.getVcsIgnoreLib()));
+      
+      if (options.getVcsIgnoreSrc() != initialPackratOptions_.getVcsIgnoreSrc())
+         b.append(packratOption("vcs.ignore.src", options.getVcsIgnoreSrc()));
+      
+      // remove trailing newline
+      if (b.length() > 0)
+         b.deleteCharAt(b.length()-1);
+      
+      pEventBus_.get().fireEvent(new SendToConsoleEvent(b.toString(), 
+                                                        true, 
+                                                        true));
+      
+   }
+   
+   private String packratOption(String name, boolean value)
+   {
+      String args = name + " = " + asR(value);
+      String projectArg = pPackratUtil_.get().packratProjectArg();
+      if (projectArg.length() > 0)
+         args = args + ", " + projectArg;
+      return "packrat::set_opts(" + args + ")\n";
+   }
  
-   private final Session session_;
+   private String asR(boolean value)
+   {
+      return value ? "TRUE" : "FALSE";
+   }
+   
+   private final Provider<Session> session_;
    private final ProjectsServerOperations server_;
    private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<EventBus> pEventBus_;
+   private final Provider<PackratUtil> pPackratUtil_;
+   
+   private RProjectPackratOptions initialPackratOptions_ = null;
    
    private static final ProjectPreferencesDialogResources RES =
                                  ProjectPreferencesDialogResources.INSTANCE;

@@ -2861,6 +2861,12 @@ int main (int argc, char * const argv[])
          // do the same for port number, for rpostback in rdesktop configs
          core::system::setenv(kRSessionPortNumber, options.wwwPort());
       }
+
+      // set the standalone port if we are running in standalone mode
+      if (options.standalone())
+      {
+         core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
+      }
            
       // ensure we aren't being started as a low (priviliged) account
       if (serverMode &&

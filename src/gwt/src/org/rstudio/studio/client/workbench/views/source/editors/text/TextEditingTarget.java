@@ -2323,7 +2323,17 @@ public class TextEditingTarget implements
          @Override
          public void execute(RmdYamlData arg)
          {
-            if (!arg.parseSucceeded())
+            String errCaption = "Edit Format Failed";
+            String errMsg = 
+               "The YAML front matter in this document could not be " +
+               "successfully parsed. This parse error needs to be " + 
+               "resolved before format options can be edited.";
+            
+            if (arg == null)
+            {
+               globalDisplay_.showErrorMessage(errCaption, errMsg);
+            }
+            else if (!arg.parseSucceeded())
             {
                // try to find where the YAML segment begins in the document
                // so we can show an adjusted line number for the error
@@ -2338,11 +2348,8 @@ public class TextEditingTarget implements
                      break;
                   }
                }
-               globalDisplay_.showErrorMessage("Edit Format Failed", 
-                     "The YAML front matter in this document could not be " +
-                     "successfully parsed. This parse error needs to be " + 
-                     "resolved before format options can be edited: \n\n" + 
-                     arg.getOffsetParseError(offsetLine));
+               globalDisplay_.showErrorMessage(errCaption, 
+                   errMsg + "\n\n" + arg.getOffsetParseError(offsetLine));
             }
             else
             {

@@ -246,12 +246,8 @@ public abstract class
    // // packrat
    public abstract AppCommand packratBootstrap();
    public abstract AppCommand packratOptions();
-   public abstract AppCommand packratSnapshot();
-   public abstract AppCommand packratRestore();
-   public abstract AppCommand packratClean();
    public abstract AppCommand packratBundle();
    public abstract AppCommand packratStatus();
-   public abstract AppCommand packratHelp();
 
    // Version control
    public abstract AppCommand versionControlHelp();
