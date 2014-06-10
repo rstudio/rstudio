@@ -211,6 +211,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     clearImpl();
   }
 
+  @SpecializeMethod(params = {String.class}, target = "hasStringValue")
   @Override
   public boolean containsKey(Object key) {
     return (key == null) ? nullSlotLive : (!(key instanceof String)
@@ -413,7 +414,10 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   /**
    * Returns true if the given key exists in the stringMap.
    */
-  private native boolean hasStringValue(String key) /*-{
+  protected native boolean hasStringValue(String key) /*-{
+    if (key == null) {
+      return this.@java.util.AbstractHashMap::nullSlotLive;
+    }
     return (':' + key) in this.@java.util.AbstractHashMap::stringMap;
   }-*/;
 
