@@ -66,7 +66,16 @@
    rbind(mergedList, nonPackratList)
 })
 
-.rs.addJsonRpcHandler("list_packages_packrat", function(dir) {
-   .rs.listPackagesPackrat(dir)
+.rs.addFunction("getAutoSnapshotCmd", function(dir) {
+   paste(packrat:::buildSnapshotHookCall(dir), collapse = "; ")
+})
+
+.rs.addFunction("pendingRestoreActions", function(dir) {
+   msgs <- packrat:::getRestoreActionMessages(dir)
+   # Transform NAs into explicit missing text
+   for (i in seq_along(msgs)) {
+      msgs[[i]][ is.na(msgs[[i]]) ] <- "<missing>"
+   }
+   msgs
 })
 

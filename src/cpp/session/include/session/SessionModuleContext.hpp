@@ -267,6 +267,7 @@ struct Events : boost::noncopyable
    boost::signal<void(bool)>                 onShutdown;
    boost::signal<void ()>                    onQuit;
    boost::signal<void (const std::string&)>  onPackageLoaded;
+   boost::signal<void ()>                    onPackageLibraryMutated;
 
    // signal for detecting extended type of documents
    boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),

@@ -45,6 +45,7 @@ set (CORE_SOURCE_FILES
    PerformanceTimer.cpp
    ProgramOptions.cpp
    RegexUtils.cpp
+   RecursionGuard.cpp
    SafeConvert.cpp
    Settings.cpp
    StderrLogWriter.cpp

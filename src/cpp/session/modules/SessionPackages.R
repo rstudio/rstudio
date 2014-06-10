@@ -130,7 +130,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       # do housekeeping after we execute the original
       on.exit({
          .rs.updatePackageEvents()
-         .rs.enqueClientEvent("installed_packages_changed")
+         .Call("rs_packageLibraryMutated")
          .rs.restorePreviousPath()
       })
 
@@ -147,7 +147,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                                ...) 
    {
       # do housekeeping after we execute the original
-      on.exit(.rs.enqueClientEvent("installed_packages_changed"))
+      on.exit(.Call("rs_packageLibraryMutated"))
                          
       # call original
       original(pkgs, lib, ...) 

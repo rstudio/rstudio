@@ -19,6 +19,7 @@
 #include <algorithm>
 
 #include <core/Exec.hpp>
+#include <core/RecursionGuard.hpp>
 
 #define INTERNAL_R_FUNCTIONS
 #include <r/RJson.hpp>
@@ -810,13 +811,8 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   // Prevent recursive calls to this function (see notes in
-   // EventRecursionGuard)
-   static int inDetectChanges = 0;
-   if (inDetectChanges > 0)
-      return;
-
-   EventRecursionGuard guard(inDetectChanges);
+   // Prevent recursive calls to this function
+   DROP_RECURSIVE_CALLS;
 
    s_pEnvironmentMonitor->checkForChanges();
 }
@@ -826,13 +822,8 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
                      boost::shared_ptr<bool> pCapturingDebugOutput,
                      boost::shared_ptr<RCNTXT*> pCurrentContext)
 {
-   // Prevent recursive calls to this function (see notes in
-   // EventRecursionGuard)
-   static int inConsolePrompt = 0;
-   if (inConsolePrompt > 0)
-      return;
-
-   EventRecursionGuard guard(inConsolePrompt);
+   // Prevent recursive calls to this function
+   DROP_RECURSIVE_CALLS;
 
    int depth = 0;
    SEXP environmentTop = NULL;

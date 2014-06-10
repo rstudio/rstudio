@@ -21,7 +21,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
@@ -243,21 +242,31 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private class VersionCell extends AbstractCell<PackageInfo>
    {
+      public VersionCell (boolean packratVersion)
+      {
+         packratVersion_ = packratVersion;
+      }
+
       @Override
       public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
          sb.appendHtmlConstant("<div title=\"");
-         sb.appendEscaped(PackageLibraryUtils.getLibraryDescription(
-               session_, value.getLibrary()) + " (" +
-               value.getLibrary() + ")");
-         sb.appendHtmlConstant("\"");
-         sb.appendHtmlConstant(" class=\"");
-         sb.appendEscaped(ThemeStyles.INSTANCE.adornedText());
+         if (!packratVersion_)
+            sb.appendEscaped(value.getLibrary());
          sb.appendHtmlConstant("\"");
          sb.appendHtmlConstant(">");
-         sb.appendEscaped(value.getVersion());
+         if (packratVersion_)
+         {
+            sb.appendEscaped(value.getPackratVersion());
+         }
+         else
+         {
+            sb.appendEscaped(value.getVersion());
+         }
          sb.appendHtmlConstant("</div>"); 
       }
+      
+      private boolean packratVersion_;
    }
    
    @Override
@@ -326,7 +335,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       };  
       
       Column<PackageInfo, PackageInfo> versionColumn = 
-         new Column<PackageInfo, PackageInfo>(new VersionCell()) {
+         new Column<PackageInfo, PackageInfo>(new VersionCell(false)) {
 
             @Override
             public PackageInfo getValue(PackageInfo object)
@@ -358,17 +367,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       if (packratContext_ != null &&
           packratContext_.isModeOn())
       {
-         TextColumn<PackageInfo> packratVersionColumn = 
-               new TextColumn<PackageInfo>() {
-                  @Override
-                  public String getValue(PackageInfo pkgInfo)
-                  {
-                     if (pkgInfo.getInPackratLibary())
-                        return pkgInfo.getPackratVersion();
-                     else
-                        return "";
-                  }
+         Column<PackageInfo, PackageInfo> packratVersionColumn = 
+            new Column<PackageInfo, PackageInfo>(new VersionCell(true)) {
+
+               @Override
+               public PackageInfo getValue(PackageInfo object)
+               {
+                  return object;
+               }
          };
+      
          TextColumn<PackageInfo> packratSourceColumn = 
                new TextColumn<PackageInfo>() {
                   @Override

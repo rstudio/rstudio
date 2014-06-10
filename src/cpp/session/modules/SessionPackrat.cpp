@@ -19,13 +19,15 @@
 #include <core/FileSerializer.hpp>
 #include <core/Hash.hpp>
 #include <core/system/FileMonitor.hpp>
+#include <core/RecursionGuard.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 #include <r/session/RClientState.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>
-
 #include <session/SessionUserSettings.hpp>
 
 #include "SessionPackages.hpp"
@@ -57,10 +59,18 @@ namespace packrat {
 
 namespace {
 
+// Library and lockfile hashing and comparison -------------------------------
+
 enum PackratHashType
 {
    HASH_TYPE_LOCKFILE = 0,
    HASH_TYPE_LIBRARY = 1
+};
+
+enum PendingSnapshotAction
+{
+   SET_PENDING_SNAPSHOT = 0,
+   COMPLETE_SNAPSHOT = 1
 };
 
 std::string keyOfHashType(PackratHashType hashType)
@@ -155,9 +165,13 @@ void checkHashes(
       PackratHashType secondary, 
       boost::function<void(const std::string&, const std::string&)> onPrimaryMismatch)
 {
+   // if a request to check hashes comes in while we're already checking hashes,
+   // drop it: it's very likely that the file monitor has discovered a change
+   // to a file we've already hashed.
+   DROP_RECURSIVE_CALLS;
+
    std::string oldHash = getStoredHash(primary);
    std::string newHash = getComputedHash(primary);
-   PACKRAT_TRACE("checking hashes: " << oldHash << " -> " << newHash);
 
    // hashes match, no work needed
    if (oldHash == newHash)
@@ -179,18 +193,164 @@ void checkHashes(
    }
 }
 
+// Auto-snapshot -------------------------------------------------------------
+
+// forward declarations
+void performAutoSnapshot(const std::string& targetHash);
+void pendingSnapshot(PendingSnapshotAction action);
+
+class AutoSnapshot: public async_r::AsyncRProcess
+{
+public:
+   static boost::shared_ptr<AutoSnapshot> create(
+         const FilePath& projectDir, 
+         const std::string& targetHash)
+   {
+      boost::shared_ptr<AutoSnapshot> pSnapshot(new AutoSnapshot());
+      std::string snapshotCmd;
+      Error error = r::exec::RFunction(
+            ".rs.getAutoSnapshotCmd",
+            projectDir.absolutePath()).call(&snapshotCmd);
+      if (error)
+         LOG_ERROR(error); // will also be reported in the console
+
+      PACKRAT_TRACE("starting auto snapshot, R command: " << snapshotCmd);
+      pSnapshot->setTargetHash(targetHash);
+      pSnapshot->start(snapshotCmd.c_str(), projectDir);
+      return pSnapshot;
+   }
+
+   std::string getTargetHash()
+   {
+      return targetHash_;
+   }
+  
+private:
+   void setTargetHash(const std::string& targetHash)
+   {
+      targetHash_ = targetHash;
+   }
+
+   void onStderr(const std::string& output)
+   {
+      PACKRAT_TRACE("(auto snapshot) " << output);
+   }
+
+   void onStdout(const std::string& output)
+   {
+      PACKRAT_TRACE("(auto snapshot) " << output);
+   }
+   
+   void onCompleted(int exitStatus)
+   {
+      PACKRAT_TRACE("finished auto snapshot, exit status = " << exitStatus);
+      if (exitStatus != 0)
+         return;
+      pendingSnapshot(COMPLETE_SNAPSHOT);
+   }
+
+   std::string targetHash_;
+};
+
+void pendingSnapshot(PendingSnapshotAction action)
+{
+   static int pendingSnapshots = 0;
+   if (action == SET_PENDING_SNAPSHOT)
+   {
+      pendingSnapshots++;
+      PACKRAT_TRACE("snapshot requested while running, queueing ("
+                    << pendingSnapshots << ")");
+      return;
+   }
+   else if (action == COMPLETE_SNAPSHOT)
+   {
+      if (pendingSnapshots > 0)
+      {
+         PACKRAT_TRACE("executing pending snapshot");
+         pendingSnapshots = 0;
+         performAutoSnapshot(computeLibraryHash());
+      }
+      else
+      {
+         // library and lockfile are now in sync
+         setStoredHash(HASH_TYPE_LOCKFILE, computeLockfileHash());
+         setStoredHash(HASH_TYPE_LIBRARY, computeLibraryHash());
+
+         // let the client know that it needs to refresh the list of packages
+         // (this will also fetch the newly snapshotted status from packrat)
+         ClientEvent event(client_events::kInstalledPackagesChanged);
+         module_context::enqueClientEvent(event);
+      }
+   }
+}
+
+void performAutoSnapshot(const std::string& newHash)
+{
+   static boost::shared_ptr<AutoSnapshot> pAutoSnapshot;
+   if (pAutoSnapshot && 
+       pAutoSnapshot->isRunning())
+   {
+      // is the requested snapshot for the same state we're already 
+      // snapshotting? if it is, ignore the request
+      if (pAutoSnapshot->getTargetHash() == newHash)
+      {
+         PACKRAT_TRACE("snapshot already running (" << newHash << ")");
+         return;
+      }
+      else
+      {
+         pendingSnapshot(SET_PENDING_SNAPSHOT);
+         return;
+      }
+   }
+
+   // start a new auto-snapshot
+   pAutoSnapshot = AutoSnapshot::create(
+         projects::projectContext().directory(),
+         newHash);
+}
+
+// Library and lockfile monitoring -------------------------------------------
+
 void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
 {
-   setStoredHash(HASH_TYPE_LOCKFILE, newHash);
+   // check to see if there are any restore actions pending 
+   SEXP actions;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.pendingRestoreActions", 
+         projects::projectContext().directory().absolutePath())
+         .call(&actions, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (r::sexp::length(actions) == 0)
+   {
+      PACKRAT_TRACE("no pending restore actions found, updating hash");
+      setStoredHash(HASH_TYPE_LOCKFILE, newHash);
+   }
+   else
+   {
+      PACKRAT_TRACE("found pending restore actions, alerting client");
+      json::Value restoreActions;
+      r::json::jsonValueFromObject(actions, &restoreActions);
+      ClientEvent event(client_events::kPackratRestoreNeeded, restoreActions);
+      module_context::enqueClientEvent(event);
+   }
 }
 
 void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 {
-   setStoredHash(HASH_TYPE_LIBRARY, newHash);
+   performAutoSnapshot(newHash);
 }
 
 void onFileChanged(FilePath sourceFilePath)
 {
+   // we only care about mutations to files in the Packrat library directory
+   // (and packrat.lock)
    FilePath libraryPath = 
       projects::projectContext().directory().complete("packrat/lib");
 
@@ -199,9 +359,33 @@ void onFileChanged(FilePath sourceFilePath)
       PACKRAT_TRACE("detected change to lockfile " << sourceFilePath);
       checkHashes(HASH_TYPE_LOCKFILE, HASH_TYPE_LIBRARY, onLockfileUpdate);
    }
-   else if (sourceFilePath.isWithin(libraryPath)) 
+   else if (sourceFilePath.isWithin(libraryPath) && 
+            (sourceFilePath.isDirectory() || 
+             sourceFilePath.filename() == "DESCRIPTION"))
    {
+      // ignore changes in the RStudio-managed manipulate and rstudio 
+      // directories and the files within them
+      if (sourceFilePath.filename() == "manipulate" ||
+          sourceFilePath.filename() == "rstudio" ||
+          sourceFilePath.parent().filename() == "manipulate" || 
+          sourceFilePath.parent().filename() == "rstudio")
+      {
+         return;
+      }
       PACKRAT_TRACE("detected change to library file " << sourceFilePath);
+      checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
+   }
+}
+
+void onPackageLibraryMutated()
+{
+   // make sure a Packrat library exists (we don't care about monitoring 
+   // mutations to other libraries)
+   FilePath libraryPath = 
+      projects::projectContext().directory().complete("packrat/lib");
+   if (libraryPath.exists())
+   {
+      PACKRAT_TRACE("detected user modification to library");
       checkHashes(HASH_TYPE_LIBRARY, HASH_TYPE_LOCKFILE, onLibraryUpdate);
    }
 }
@@ -214,6 +398,8 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
       onFileChanged(changedFilePath);
    }
 }
+
+// RPC -----------------------------------------------------------------------
 
 Error installPackrat(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
@@ -244,7 +430,6 @@ Error getPackratPrerequisites(const json::JsonRpcRequest& request,
    pResponse->setResult(prereqJson);
    return Success();
 }
-
 
 
 Error getPackratContext(const json::JsonRpcRequest& request,
@@ -308,6 +493,8 @@ Error initialize()
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Packrat", cb);
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
+   module_context::events().onPackageLibraryMutated.connect(
+         onPackageLibraryMutated);
 
    ExecBlock initBlock;
 
