@@ -1174,6 +1174,7 @@ well as menu structures (for main menu and popup menus).
          buttonLabel="Options"
          menuLabel="_Options..."
          desc="Configure packrat options for this project" />		
+         
    <cmd id="packratBundle"
    		buttonLabel="Bundle"
    		menuLabel="_Bundle..."
