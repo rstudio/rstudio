@@ -22,6 +22,12 @@ import com.google.gwt.core.client.JsArray;
 
 public interface PackratServerOperations extends BuildServerOperations
 {
+   void getPackratPrerequisites(
+         ServerRequestCallback<PackratPrerequisites> requestCallback);
+   
+   void installPackrat(
+         ServerRequestCallback<Boolean> requestCallback);
+   
    void getPackratContext(
          ServerRequestCallback<PackratContext> requestCallback);
    

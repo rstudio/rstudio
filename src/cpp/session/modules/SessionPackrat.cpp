@@ -42,6 +42,16 @@ using namespace core;
 
 
 namespace session {
+
+namespace {
+
+bool isRequiredPackratInstalled()
+{
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.100");
+}
+
+} // anonymous namespace
+
 namespace modules { 
 namespace packrat {
 
@@ -205,6 +215,38 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
+Error installPackrat(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   Error error = module_context::installEmbeddedPackage("packrat");
+   if (error)
+   {
+      std::string desc = error.getProperty("description");
+      if (desc.empty())
+         desc = error.summary();
+
+      module_context::consoleWriteError(desc + "\n");
+
+      LOG_ERROR(error);
+   }
+
+   pResponse->setResult(!error);
+
+   return Success();
+}
+
+Error getPackratPrerequisites(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   json::Object prereqJson;
+   prereqJson["build_tools_available"] = module_context::canBuildCpp();
+   prereqJson["package_available"] = isRequiredPackratInstalled();
+   pResponse->setResult(prereqJson);
+   return Success();
+}
+
+
+
 Error getPackratContext(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -270,6 +312,8 @@ Error initialize()
    ExecBlock initBlock;
 
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "install_packrat", installPackrat))
+      (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
       (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
       (bind(sourceModuleRFile, "SessionPackrat.R"));
@@ -286,8 +330,13 @@ PackratContext packratContext()
 {
    PackratContext context;
 
-   context.available = module_context::isPackageVersionInstalled("packrat",
-                                                                 "0.2.0.100");
+   // NOTE: when we switch to auto-installing packrat we need to update
+   // this check to look for R >= whatever packrat requires (we don't
+   // need to look for R >= 3.0 as we do for rmarkdown/shiny because
+   // build tools will be installed prior to attempting to auto-install
+   // the embedded version of packrat
+
+   context.available = isRequiredPackratInstalled();
 
    context.applicable = context.available &&
                         projects::projectContext().hasProject();

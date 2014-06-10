@@ -14,19 +14,22 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectPackratOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -44,10 +47,12 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
    public ProjectPackratPreferencesPane(Session session,
+                                        GlobalDisplay globalDisplay,
                                         PackratServerOperations server,
                                         PackratUtil packratUtil)
    {
       session_ = session;
+      globalDisplay_ = globalDisplay;
       server_ = server;
       packratUtil_ = packratUtil;
    }
@@ -108,7 +113,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         if (!context.isPackified())
         {
            ThemedButton button = new ThemedButton(
-              "Use Packrat with this Project",
+              "Use Packrat with this Project...",
               new ClickHandler() {
    
                  @Override
@@ -171,16 +176,16 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       
       indicator.onProgress("Verifying prequisites...");
       
-      server_.getCppCapabilities(
-        new ServerRequestCallback<CppCapabilities>() {
+      server_.getPackratPrerequisites(
+        new ServerRequestCallback<PackratPrerequisites>() {
            @Override
-           public void onResponseReceived(CppCapabilities capabilities)
+           public void onResponseReceived(PackratPrerequisites prereqs)
            {
               indicator.onCompleted();
               
-              if (capabilities.getCanBuild())
+              if (prereqs.getBuildToolsAvailable())
               {
-                 executeBootstrap();
+                 executeBootstrap(prereqs);
               }
               else
               {
@@ -207,15 +212,62 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         });  
    }
 
-   private void executeBootstrap()
+   private void executeBootstrap(final PackratPrerequisites prereqs)
    {
-      forceClosed(new Command() { public void execute()
-      {
-         packratUtil_.executePackratFunction("bootstrap");
-      }});
+      globalDisplay_.showYesNoMessage(
+         MessageDialog.QUESTION, 
+         "Use Packrat", 
+         "Using packrat with this project will configure the project with " +
+         "it's own package library, keeping it isolated from other projects " +
+         "and making it easier to preserve and reproduce.\n\n" +
+         "Setup this project to use packrat now?", 
+         new Operation() {
+            @Override
+            public void execute()
+            {
+               final Command bootstrapCommand = new Command() { 
+                  @Override
+                  public void execute()  
+                  {
+                     packratUtil_.executePackratFunction("bootstrap");
+                  }
+               };
+               
+               if (prereqs.getPackageAvailable())
+               {
+                  forceClosed(bootstrapCommand);
+               }
+               else
+               {
+                  final ProgressIndicator indicator = getProgressIndicator();
+                  indicator.onProgress("Installing Packrat...");
+                  
+                  server_.installPackrat(new ServerRequestCallback<Boolean>() {
+
+                     @Override
+                     public void onResponseReceived(Boolean success)
+                     {
+                        indicator.onCompleted();
+                        
+                        if (success)
+                           forceClosed(bootstrapCommand);
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        indicator.onError(error.getUserMessage());
+                     }
+                     
+                  });
+               }
+            }
+         },
+         true);
    }
    
    private final Session session_;
+   private final GlobalDisplay globalDisplay_;
    private final PackratServerOperations server_;
    private final PackratUtil packratUtil_;
    

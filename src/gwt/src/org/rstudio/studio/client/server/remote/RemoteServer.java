@@ -72,6 +72,7 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
 import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
@@ -3454,6 +3455,20 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public  void getPackratPrerequisites(
+         ServerRequestCallback<PackratPrerequisites> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PACKRAT_PREREQUISITES, requestCallback);
+   }
+   
+   @Override
+   public void installPackrat(
+                   ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, INSTALL_PACKRAT, requestCallback);
+   }
+   
+   @Override
    public void getPackratContext(
                      ServerRequestCallback<PackratContext> requestCallback)
    {
@@ -3791,6 +3806,8 @@ public class RemoteServer implements Server
    private static final String CREATE_RMD_FROM_TEMPLATE = "create_rmd_from_template";
    private static final String GET_RMD_TEMPLATE = "get_rmd_template";
    
+   private static final String GET_PACKRAT_PREREQUISITES = "get_packrat_prerequisites";
+   private static final String INSTALL_PACKRAT = "install_packrat";
    private static final String GET_PACKRAT_CONTEXT = "get_packrat_context";
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String GET_PACKRAT_RESTORE_ACTIONS="get_packrat_restore_actions";

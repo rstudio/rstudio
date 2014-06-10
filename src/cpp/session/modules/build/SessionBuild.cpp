@@ -86,18 +86,6 @@ std::string packageArgsVector(std::string args)
    return ostr.str();
 }
 
-shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
-{
-#if defined(_WIN32)
-   shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
-#else
-   shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
-   rCmd << "CMD";
-#endif
-   return rCmd;
-}
-
-
 bool isPackageBuildError(const std::string& output)
 {
    std::string input = boost::algorithm::trim_copy(output);
@@ -106,58 +94,6 @@ bool isPackageBuildError(const std::string& output)
           boost::algorithm::ends_with(input, "WARNING");
 }
 
-// R command invocation -- has two representations, one to be submitted
-// (shellCmd_) and one to show the user (cmdString_)
-class RCommand
-{
-public:
-   explicit RCommand(const FilePath& rBinDir)
-      : shellCmd_(buildRCmd(rBinDir))
-   {
-#ifdef _WIN32
-      cmdString_ = "Rcmd.exe";
-#else
-      cmdString_ = "R CMD";
-#endif
-
-      // set escape mode to files-only. this is so that when we
-      // add the group of extra arguments from the user that we
-      // don't put quotes around it.
-      shellCmd_ << shell_utils::EscapeFilesOnly;
-   }
-
-   RCommand& operator<<(const std::string& arg)
-   {
-      if (!arg.empty())
-      {
-         cmdString_ += " " + arg;
-         shellCmd_ << arg;
-      }
-      return *this;
-   }
-
-   RCommand& operator<<(const FilePath& arg)
-   {
-      cmdString_ += " " + arg.absolutePath();
-      shellCmd_ << arg;
-      return *this;
-   }
-
-
-   const std::string& commandString() const
-   {
-      return cmdString_;
-   }
-
-   const shell_utils::ShellCommand& shellCommand() const
-   {
-      return shellCmd_;
-   }
-
-private:
-   std::string cmdString_;
-   shell_utils::ShellCommand shellCmd_;
-};
 
 } // anonymous namespace
 
@@ -597,7 +533,7 @@ private:
          restartR_ = true;
 
          // build command
-         RCommand rCmd(rBinDir);
+         module_context::RCommand rCmd(rBinDir);
          rCmd << "INSTALL";
 
          // get extra args
@@ -670,7 +606,7 @@ private:
                            const core::system::ProcessCallbacks& cb)
    {
       // compose the build command
-      RCommand rCmd(rBinDir);
+      module_context::RCommand rCmd(rBinDir);
       rCmd << "build";
 
       // add extra args if provided
@@ -700,7 +636,7 @@ private:
                            const core::system::ProcessCallbacks& cb)
    {
       // compose the INSTALL --binary
-      RCommand rCmd(rBinDir);
+      module_context::RCommand rCmd(rBinDir);
       rCmd << "INSTALL";
       rCmd << "--build";
       rCmd << "--preclean";
@@ -732,7 +668,7 @@ private:
       // first build then check
 
       // compose the build command
-      RCommand rCmd(rBinDir);
+      module_context::RCommand rCmd(rBinDir);
       rCmd << "build";
 
       // add extra args if provided
@@ -750,7 +686,7 @@ private:
 
       // compose the check command (will be executed by the onExit
       // handler of the build cmd)
-      RCommand rCheckCmd(rBinDir);
+      module_context::RCommand rCheckCmd(rBinDir);
       rCheckCmd << "check";
 
       // add extra args if provided
@@ -954,7 +890,7 @@ private:
 
    void onBuildForCheckCompleted(
                          int exitStatus,
-                         const RCommand& checkCmd,
+                         const module_context::RCommand& checkCmd,
                          const core::system::ProcessOptions& checkOptions,
                          const core::system::ProcessCallbacks& checkCb)
    {
@@ -1556,29 +1492,16 @@ SEXP rs_installBuildTools()
 
 SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
 {
-   // get R bin directory
-   FilePath rBinDir;
-   Error error = module_context::rBinDir(&rBinDir);
+   using namespace r::sexp;
+   Error error = module_context::installPackage(safeAsString(pkgPathSEXP),
+                                                safeAsString(libPathSEXP));
    if (error)
    {
+      std::string desc = error.getProperty("description");
+      if (!desc.empty())
+         module_context::consoleWriteError(desc + "\n");
       LOG_ERROR(error);
-      return R_NilValue;
    }
-
-   // run command
-   RCommand installCommand(rBinDir);
-   installCommand << "INSTALL";
-   installCommand << "-l";
-   installCommand << "\"" + r::sexp::asString(libPathSEXP) + "\"";
-   installCommand << "\"" + r::sexp::asString(pkgPathSEXP) + "\"";
-   core::system::ProcessResult result;
-   error = core::system::runCommand(installCommand.commandString(),
-                                    core::system::ProcessOptions(),
-                                    &result);
-   if (error)
-      LOG_ERROR(error);
-   if ((result.exitStatus != EXIT_SUCCESS) && !result.stdErr.empty())
-      LOG_ERROR_MESSAGE("Error install package: " + result.stdErr);
 
    return R_NilValue;
 }

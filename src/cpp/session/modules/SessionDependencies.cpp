@@ -34,6 +34,65 @@
 using namespace core;
 
 namespace session {
+
+namespace {
+
+struct EmbeddedPackage
+{
+   bool empty() const { return archivePath.empty(); }
+
+   std::string name;
+   std::string version;
+   std::string sha1;
+   std::string archivePath;
+};
+
+EmbeddedPackage embeddedPackageInfo(const std::string& name)
+{
+   // determine location of archives
+   FilePath archivesDir = session::options().sessionPackageArchivesPath();
+   std::vector<FilePath> children;
+   Error error = archivesDir.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return EmbeddedPackage();
+   }
+
+   // we saw the regex with explicit character class ranges fail to match
+   // on a windows 8.1 system so we are falling back to a simpler regex
+   //
+   // (note see below for another approach involving setting the locale
+   // of the regex directly -- this assumes that the matching issue is
+   // somehow related to locales)
+   boost::regex re(name + "_([^_]+)_([^\\.]+)\\.tar\\.gz");
+
+   /* another approach (which we didn't try) based on setting the regex locale
+   boost::regex re;
+   re.imbue(std::locale("en_US.UTF-8"));
+   re.assign(name + "_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
+   */
+
+   BOOST_FOREACH(const FilePath& child, children)
+   {
+      boost::smatch match;
+      if (boost::regex_match(child.filename(), match, re))
+      {
+         EmbeddedPackage pkg;
+         pkg.name = name;
+         pkg.version = match[1];
+         pkg.sha1 = match[2];
+         pkg.archivePath = string_utils::utf8ToSystem(child.absolutePath());
+         return pkg;
+      }
+   }
+
+   // none found
+   return EmbeddedPackage();
+}
+
+} // anonymous namespace
+
 namespace modules {
 namespace dependencies {
 
@@ -108,59 +167,7 @@ json::Array dependenciesToJson(const std::vector<Dependency>& deps)
    return depsJson;
 }
 
-struct EmbeddedPackage
-{
-   bool empty() const { return archivePath.empty(); }
 
-   std::string name;
-   std::string version;
-   std::string sha1;
-   std::string archivePath;
-};
-
-EmbeddedPackage embeddedPackageInfo(const std::string& name)
-{
-   // determine location of archives
-   FilePath archivesDir = session::options().sessionPackageArchivesPath();
-   std::vector<FilePath> children;
-   Error error = archivesDir.children(&children);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return EmbeddedPackage();
-   }
-
-   // we saw the regex with explicit character class ranges fail to match
-   // on a windows 8.1 system so we are falling back to a simpler regex
-   //
-   // (note see below for another approach involving setting the locale
-   // of the regex directly -- this assumes that the matching issue is
-   // somehow related to locales)
-   boost::regex re(name + "_([^_]+)_([^\\.]+)\\.tar\\.gz");
-
-   /* another approach (which we didn't try) based on setting the regex locale
-   boost::regex re;
-   re.imbue(std::locale("en_US.UTF-8"));
-   re.assign(name + "_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
-   */
-
-   BOOST_FOREACH(const FilePath& child, children)
-   {
-      boost::smatch match;
-      if (boost::regex_match(child.filename(), match, re))
-      {
-         EmbeddedPackage pkg;
-         pkg.name = name;
-         pkg.version = match[1];
-         pkg.sha1 = match[2];
-         pkg.archivePath = string_utils::utf8ToSystem(child.absolutePath());
-         return pkg;
-      }
-   }
-
-   // none found
-   return EmbeddedPackage();
-}
 
 bool embeddedPackageRequiresUpdate(const EmbeddedPackage& pkg)
 {
@@ -345,7 +352,8 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
 
 } // anonymous namespace
- 
+
+
 Error initialize()
 {         
    // install handlers
@@ -361,5 +369,16 @@ Error initialize()
 
 } // namepsace dependencies
 } // namespace modules
+
+namespace module_context {
+
+Error installEmbeddedPackage(const std::string& name)
+{
+   EmbeddedPackage pkg = embeddedPackageInfo(name);
+   return module_context::installPackage(pkg.archivePath);
+}
+
+} // anonymous namespace
+
 } // namesapce session
 

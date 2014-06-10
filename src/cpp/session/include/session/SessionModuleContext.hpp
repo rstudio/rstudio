@@ -24,6 +24,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -101,6 +102,11 @@ bool isPackageInstalled(const std::string& packageName);
 // check if a package is installed with a specific version
 bool isPackageVersionInstalled(const std::string& packageName,
                                const std::string& version);
+
+core::Error installPackage(const std::string& pkgPath,
+                           const std::string& libPath = std::string());
+
+core::Error installEmbeddedPackage(const std::string& name);
 
 // find the package name for a source file
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath);
@@ -561,6 +567,64 @@ PackratContext packratContext();
 core::json::Object packratContextAsJson();
 
 core::json::Object packratOptionsAsJson();
+
+// R command invocation -- has two representations, one to be submitted
+// (shellCmd_) and one to show the user (cmdString_)
+class RCommand
+{
+public:
+   explicit RCommand(const core::FilePath& rBinDir)
+      : shellCmd_(buildRCmd(rBinDir))
+   {
+#ifdef _WIN32
+      cmdString_ = "Rcmd.exe";
+#else
+      cmdString_ = "R CMD";
+#endif
+
+      // set escape mode to files-only. this is so that when we
+      // add the group of extra arguments from the user that we
+      // don't put quotes around it.
+      shellCmd_ << core::shell_utils::EscapeFilesOnly;
+   }
+
+   RCommand& operator<<(const std::string& arg)
+   {
+      if (!arg.empty())
+      {
+         cmdString_ += " " + arg;
+         shellCmd_ << arg;
+      }
+      return *this;
+   }
+
+   RCommand& operator<<(const core::FilePath& arg)
+   {
+      cmdString_ += " " + arg.absolutePath();
+      shellCmd_ << arg;
+      return *this;
+   }
+
+
+   const std::string& commandString() const
+   {
+      return cmdString_;
+   }
+
+   const core::shell_utils::ShellCommand& shellCommand() const
+   {
+      return shellCmd_;
+   }
+
+private:
+   static core::shell_utils::ShellCommand buildRCmd(
+                                 const core::FilePath& rBinDir);
+
+private:
+   std::string cmdString_;
+   core::shell_utils::ShellCommand shellCmd_;
+};
+
 
 } // namespace module_context
 } // namespace session
