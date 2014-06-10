@@ -57,6 +57,12 @@ enum PackratHashType
    HASH_TYPE_LIBRARY = 1
 };
 
+enum PendingSnapshotAction
+{
+   SET_PENDING_SNAPSHOT = 0,
+   COMPLETE_SNAPSHOT = 1
+};
+
 std::string keyOfHashType(PackratHashType hashType)
 {
    return hashType == HASH_TYPE_LOCKFILE ?
@@ -179,10 +185,16 @@ void checkHashes(
 
 // Auto-snapshot -------------------------------------------------------------
 
+// forward declarations
+void performAutoSnapshot(const std::string& targetHash);
+void pendingSnapshot(PendingSnapshotAction action);
+
 class AutoSnapshot: public async_r::AsyncRProcess
 {
 public:
-   static boost::shared_ptr<AutoSnapshot> create(const FilePath& projectDir)
+   static boost::shared_ptr<AutoSnapshot> create(
+         const FilePath& projectDir, 
+         const std::string& targetHash)
    {
       boost::shared_ptr<AutoSnapshot> pSnapshot(new AutoSnapshot());
       std::string snapshotCmd;
@@ -191,12 +203,24 @@ public:
             projectDir.absolutePath()).call(&snapshotCmd);
       if (error)
          LOG_ERROR(error); // will also be reported in the console
+
       PACKRAT_TRACE("starting auto snapshot, R command: " << snapshotCmd);
+      pSnapshot->setTargetHash(targetHash);
       pSnapshot->start(snapshotCmd.c_str(), projectDir);
       return pSnapshot;
    }
+
+   std::string getTargetHash()
+   {
+      return targetHash_;
+   }
   
 private:
+   void setTargetHash(const std::string& targetHash)
+   {
+      targetHash_ = targetHash;
+   }
+
    void onStderr(const std::string& output)
    {
       PACKRAT_TRACE("(auto snapshot) " << output);
@@ -210,19 +234,71 @@ private:
    void onCompleted(int exitStatus)
    {
       PACKRAT_TRACE("finished auto snapshot, exit status = " << exitStatus);
-
       if (exitStatus != 0)
          return;
-
-      // record the update to the lockfile
-      setStoredHash(HASH_TYPE_LOCKFILE, computeLockfileHash());
-
-      // let the client know that it needs to refresh the list of packages
-      // (this will also fetch the newly snapshotted status from packrat)
-      ClientEvent event(client_events::kInstalledPackagesChanged);
-      module_context::enqueClientEvent(event);
+      pendingSnapshot(COMPLETE_SNAPSHOT);
    }
+
+   std::string targetHash_;
 };
+
+void pendingSnapshot(PendingSnapshotAction action)
+{
+   static int pendingSnapshots = 0;
+   if (action == SET_PENDING_SNAPSHOT)
+   {
+      pendingSnapshots++;
+      PACKRAT_TRACE("snapshot requested while running, queueing ("
+                    << pendingSnapshots << ")");
+      return;
+   }
+   else if (action == COMPLETE_SNAPSHOT)
+   {
+      if (pendingSnapshots > 0)
+      {
+         PACKRAT_TRACE("executing pending snapshot");
+         pendingSnapshots = 0;
+         performAutoSnapshot(computeLibraryHash());
+      }
+      else
+      {
+         // library and lockfile are now in sync
+         setStoredHash(HASH_TYPE_LOCKFILE, computeLockfileHash());
+         setStoredHash(HASH_TYPE_LIBRARY, computeLibraryHash());
+
+         // let the client know that it needs to refresh the list of packages
+         // (this will also fetch the newly snapshotted status from packrat)
+         ClientEvent event(client_events::kInstalledPackagesChanged);
+         module_context::enqueClientEvent(event);
+      }
+   }
+}
+
+void performAutoSnapshot(const std::string& newHash)
+{
+   static boost::shared_ptr<AutoSnapshot> pAutoSnapshot;
+   if (pAutoSnapshot && 
+       pAutoSnapshot->isRunning())
+   {
+      // is the requested snapshot for the same state we're already 
+      // snapshotting? if it is, ignore the request
+      if (pAutoSnapshot->getTargetHash() == newHash)
+      {
+         PACKRAT_TRACE("snapshot already running (" << newHash << ")");
+         return;
+      }
+      else
+      {
+         pendingSnapshot(SET_PENDING_SNAPSHOT);
+         return;
+      }
+   }
+
+   // start a new auto-snapshot
+   pAutoSnapshot = AutoSnapshot::create(
+         projects::projectContext().directory(),
+         newHash);
+}
 
 // Library and lockfile monitoring -------------------------------------------
 
@@ -258,18 +334,7 @@ void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
 
 void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 {
-   static boost::shared_ptr<AutoSnapshot> pAutoSnapshot;
-   if (pAutoSnapshot && pAutoSnapshot->isRunning())
-   {
-      // don't start a snapshot if there's already one running
-      PACKRAT_TRACE("snapshot already running, not performing auto snapshot");
-      return;
-   }
-
-   // start a new auto-snapshot
-   pAutoSnapshot = AutoSnapshot::create(
-         projects::projectContext().directory());
-   setStoredHash(HASH_TYPE_LIBRARY, newHash);
+   performAutoSnapshot(newHash);
 }
 
 void onFileChanged(FilePath sourceFilePath)
