@@ -22,6 +22,7 @@ package(
     default_visibility = [
         "//third_party/java_src/gwt:__pkg__",
         "//third_party/java_src/gwt/legacy:__pkg__",
+        "//third_party/java_src/gwt/svn/trunk/dev/codeserver:__pkg__",
         "//third_party/java_src/gwt/svn/trunk/user:__pkg__",
     ],
 )

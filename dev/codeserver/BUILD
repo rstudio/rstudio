@@ -20,21 +20,13 @@
 # released under various licenses, but Google owns the copyright
 licenses(["unencumbered"])
 
-package_group(
-    name = "friends",
-    packages = [
-        "//java/com/google/gwt/dev/codeserver",
-    ],
-)
+subinclude("//third_party/java_src/gwt:build-macros")
 
-package(
-    default_visibility = [
-        ":friends",
-    ],
-)
-
+# The codeserver jar, built the open source way.
+# For GWT internal use only.
+# It must be jarjar-ed and dependencies stripped before exposing to google3.
 java_library(
-    name = "codeserver",
+    name = "codeserver-bare",
     srcs = glob(["java/**/*.java"]),
     resources = glob([
         "java/**/*.html",
@@ -42,13 +34,32 @@ java_library(
         "java/**/*.js",
     ]),
     deps = [
-        # approved dependencies (for open source code)
+        # dependencies for open source code (should match ant)
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
+        "//third_party/java_src/gwt/svn/tools:dev_deps",
+        "//third_party/java_src/gwt/svn/tools:servlet_api_3",
+    ],
+)
+
+# Repackaged codeserver for google3.
+AugmentedJar(
+    name = "codeserver",
+    srcs = [],
+    added_jars = [
+        ":libcodeserver-bare.jar",
+    ],
+    constraints = [],
+    dojarjar = 1,
+    export_deps = [
+        # Dependencies for google3 (after jarjar).
         "//third_party/java_src/gwt:gwt-dev",
         "//third_party/java_src/gwt:gwt-dev-private",
-        # Codeserver is known to leak servlet_api_3 - dependents should be cautious
+        # The codeserver needs servlet_api_3. Be careful about adding dependencies.
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
-        "//third_party/java/json",  # undeclared dependency of SourceMapConsumer. TODO: fix
+        # Undeclared dependency of SourceMapConsumer. TODO: fix
+        "//third_party/java/json",
     ],
+    visibility = ["//java/com/google/gwt/dev/codeserver:__pkg__"],
 )
 
 # allow the top-level ant build to call us

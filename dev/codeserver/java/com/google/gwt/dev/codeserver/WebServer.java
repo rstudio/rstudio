@@ -20,15 +20,16 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
-import com.google.gwt.thirdparty.org.eclipse.jetty.http.MimeTypes;
-import com.google.gwt.thirdparty.org.eclipse.jetty.io.Buffer;
-import com.google.gwt.thirdparty.org.eclipse.jetty.server.AbstractHttpConnection;
-import com.google.gwt.thirdparty.org.eclipse.jetty.server.Request;
-import com.google.gwt.thirdparty.org.eclipse.jetty.server.Server;
-import com.google.gwt.thirdparty.org.eclipse.jetty.server.nio.SelectChannelConnector;
-import com.google.gwt.thirdparty.org.eclipse.jetty.servlet.ServletContextHandler;
-import com.google.gwt.thirdparty.org.eclipse.jetty.servlet.ServletHolder;
-import com.google.gwt.thirdparty.org.eclipse.jetty.servlets.GzipFilter;
+
+import org.eclipse.jetty.http.MimeTypes;
+import org.eclipse.jetty.io.Buffer;
+import org.eclipse.jetty.server.AbstractHttpConnection;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.GzipFilter;
 
 import java.io.BufferedReader;
 import java.io.File;

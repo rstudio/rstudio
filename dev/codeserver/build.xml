@@ -5,30 +5,9 @@
 
   <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
-  <!-- location of preprocessed source -->
-  <property name="src" value="${project.build}/src" />
-
-  <!--
-    Nasty hack to fix the source code for the open source build.
-    Constraint: the code in the "java/" directory is how we want it inside Google.
-    But outside Google, Jetty is not repackaged, so we need to fix the import statements.
-    (The right way to do this is probably to repackage Jetty.)
-  -->
-  <target name="preprocess">
-    <delete dir="${src}"/>
-    <mkdir dir="${src}"/>
-    <copy todir="${src}">
-      <fileset dir="java">
-        <include name="**/*.java"/>
-      </fileset>
-    </copy>
-    <replace dir="${src}" token="com.google.gwt.thirdparty.org.eclipse.jetty."
-             value="org.eclipse.jetty."/>
-  </target>
-
-  <target name="compile" depends="preprocess">
+  <target name="compile">
     <mkdir dir="${javac.out}" />
-    <gwt.javac srcdir="${src}">
+    <gwt.javac srcdir="java">
       <classpath>
         <pathelement location="${gwt.dev.jar}" />
       </classpath>
@@ -37,9 +16,9 @@
 
   <target name="build" depends="compile" description="builds gwt-codeserver.jar">
     <gwt.jar>
-      <fileset dir="${src}" />
       <fileset dir="${javac.out}"/>
       <fileset dir="java">
+        <include name="**/*.java"/>
         <include name="**/*.html"/>
         <include name="**/*.ico"/>
         <include name="**/*.js"/>
