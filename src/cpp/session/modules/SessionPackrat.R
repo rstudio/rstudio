@@ -27,9 +27,21 @@
 })
 
 .rs.addFunction("listPackagesPackrat", function(dir) {
-   # get the status from the library and packrat
-   packratStatus <- packrat::status(dir, quiet = TRUE)
+   # retrieve the raw list of packages
    libraryList <- .rs.listInstalledPackages()
+
+   # try to get the status from packrat
+   packratStatus <- tryCatch({
+     packrat::status(dir, quiet = TRUE)
+   }, 
+   error = function(e) {
+      NULL
+   })
+
+   # if we weren't able to get a data frame from packrat::status, just return 
+   # the unannotated library list
+   if (!is.data.frame(packratStatus))
+      return(libraryList)
 
    # resolve symlinks 
    resolvedLinks <- Sys.readlink(by(libraryList, 1:nrow(libraryList),
