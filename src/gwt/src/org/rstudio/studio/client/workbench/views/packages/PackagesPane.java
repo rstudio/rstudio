@@ -263,11 +263,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          sb.appendHtmlConstant(">");
          if (packratVersion_)
          {
-            sb.appendEscaped(value.getVersion());
+            sb.appendEscaped(value.getPackratVersion());
          }
          else
          {
-            sb.appendEscaped(value.getPackratVersion());
+            sb.appendEscaped(value.getVersion());
          }
          sb.appendHtmlConstant("</div>"); 
       }
