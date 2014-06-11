@@ -26,8 +26,8 @@ import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMultiset;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
@@ -115,7 +115,7 @@ public abstract class ResolveRuntimeTypeReferences {
   // TODO(rluble): Maybe this pass should insert the defineClass in Java.
   private class RuntimeTypeCollectorVisitor extends JVisitor {
 
-    private final Multiset<JReferenceType> typesRequiringRuntimeIds = HashMultiset.create();
+    private final Multiset<JReferenceType> typesRequiringRuntimeIds = LinkedHashMultiset.create();
 
     @Override
     public void endVisit(JRuntimeTypeReference x, Context ctx) {

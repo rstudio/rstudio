@@ -16,17 +16,24 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Set;
 
 /**
  * Test for {@link Compiler}.
  */
 public class CompilerTest extends ArgProcessorTestBase {
 
+  public static final String GWT_PERSISTENTUNITCACHE = "gwt.persistentunitcache";
   private final Compiler.ArgProcessor argProcessor;
   private final CompilerOptionsImpl options = new CompilerOptionsImpl();
 
@@ -124,5 +131,52 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6u3"));
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6b3"));
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7b3"));
+  }
+
+  public void testDeterministicBuild_Draft() throws UnableToCompleteException, IOException {
+    final CompilerOptionsImpl options = new CompilerOptionsImpl();
+    options.setOptimizationLevel(0);
+    assertDeterministicBuild(options);
+  }
+
+  public void testDeterministicBuild_Optimized() throws UnableToCompleteException, IOException {
+    final CompilerOptionsImpl options = new CompilerOptionsImpl();
+    options.setOptimizationLevel(9);
+    assertDeterministicBuild(options);
+  }
+
+  public void assertDeterministicBuild(CompilerOptions options)
+      throws UnableToCompleteException, IOException {
+    File firstCompileWorkDir = Utility.makeTemporaryDirectory(null, "hellowork");
+    File secondCompileWorkDir = Utility.makeTemporaryDirectory(null, "hellowork");
+    String oldPersistentUnitCacheValue = System.setProperty(GWT_PERSISTENTUNITCACHE, "false");
+    try {
+      options.addModuleName("com.google.gwt.sample.hello.Hello");
+      options.setWarDir(new File(firstCompileWorkDir, "war"));
+      options.setExtraDir(new File(firstCompileWorkDir, "extra"));
+      PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
+      logger.setMaxDetail(TreeLogger.ERROR);
+
+      // Run the compiler once here.
+      new Compiler(options).run(logger);
+      Set<String> firstTimeOutput =
+          Sets.newHashSet(new File(options.getWarDir() + "/hello").list());
+
+      options.setWarDir(new File(secondCompileWorkDir, "war"));
+      options.setExtraDir(new File(secondCompileWorkDir, "extra"));
+      // Run the compiler for a second time here.
+      new Compiler(options).run(logger);
+      Set<String> secondTimeOutput =
+          Sets.newHashSet(new File(options.getWarDir() + "/hello").list());
+
+      // It is only necessary to check that the filenames in the output directory are the same
+      // because the names of the files for the JavaScript outputs are the hash of its contents.
+      assertEquals("First and second compile produced different outputs",
+          firstTimeOutput, secondTimeOutput);
+    } finally {
+      System.setProperty(GWT_PERSISTENTUNITCACHE, oldPersistentUnitCacheValue);
+      Util.recursiveDelete(firstCompileWorkDir, false);
+      Util.recursiveDelete(secondCompileWorkDir, false);
+    }
   }
 }
