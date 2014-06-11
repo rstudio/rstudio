@@ -603,7 +603,6 @@ void copyOption(SEXP optionsSEXP, const std::string& listName,
 json::Object defaultPackratOptions()
 {
    json::Object optionsJson;
-   optionsJson["mode_on"] = false;
    optionsJson["auto_snapshot"] = true;
    optionsJson["vcs_ignore_lib"] = true;
    optionsJson["vcs_ignore_src"] = false;
@@ -617,9 +616,8 @@ json::Object packratOptionsAsJson()
    PackratContext context = packratContext();
    if (context.packified)
    {
-      // create options to return and record mode
+      // create options to return
       json::Object optionsJson;
-      optionsJson["mode_on"] = context.modeOn;
 
       // get the options from packrat
       FilePath projectDir = projects::projectContext().directory();

@@ -24,19 +24,10 @@ public class RProjectPackratOptions extends JavaScriptObject
    
    public native static final RProjectPackratOptions createEmpty() /*-{
       var options = new Object();
-      options.mode_on = true;
       options.auto_snapshot = true;
       options.vcs_ignore_lib = true;
       options.vcs_ignore_src = false;
       return options;
-   }-*/;
-   
-   public native final boolean getModeOn() /*-{
-      return this.mode_on;
-   }-*/;
-   
-   public native final void setModeOn(boolean modeOn) /*-{
-      this.mode_on = modeOn;
    }-*/;
    
    public native final boolean getAutoSnapshot() /*-{

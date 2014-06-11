@@ -149,17 +149,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    {
       StringBuilder b = new StringBuilder();
       
-      if (options.getModeOn() != initialPackratOptions_.getModeOn())
-      {
-         b.append("packrat::");
-         b.append(options.getModeOn() ? "on" : "off");
-         b.append("(");
-         String projectArg = pPackratUtil_.get().packratProjectArg();
-         if (projectArg.length() > 0)
-            b.append(projectArg); 
-         b.append(");\n");
-      }
-      
       if (options.getAutoSnapshot() != initialPackratOptions_.getAutoSnapshot())
          b.append(packratOption("auto.snapshot", options.getAutoSnapshot()));
 

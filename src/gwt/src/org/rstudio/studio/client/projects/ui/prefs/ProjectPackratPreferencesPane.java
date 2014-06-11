@@ -34,8 +34,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -84,20 +82,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         PackratContext context = options.getPackratContext();
         RProjectPackratOptions packratOptions = options.getPackratOptions();
         
-        // create the check boxes (we'll add them later if appropriate)
-        
-        chkModeOn_ = new CheckBox("Packrat mode on (enable private library)");
-        chkModeOn_.getElement().getStyle().setMarginTop(10, Unit.PX);
-        chkModeOn_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            manageCheckBoxes();
-         }
-        });
-        
-        chkModeOn_.setValue(packratOptions.getModeOn());
-        
+        // create the check boxes (we'll add them later if appropriate)    
         chkAutoSnapshot_ = new CheckBox("Automatically snapshot local changes");
         chkAutoSnapshot_.setValue(packratOptions.getAutoSnapshot());
         
@@ -129,9 +114,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         }
         else
         {
-           spaced(chkModeOn_);
-           add(chkModeOn_);
-
            spaced(chkAutoSnapshot_);
            add(chkAutoSnapshot_);
            
@@ -151,19 +133,16 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    
    private void manageCheckBoxes()
    {
-      boolean modeOn = chkModeOn_.getValue();
       boolean vcsActive = !session_.getSessionInfo().getVcsName().equals("");
-      
-      chkAutoSnapshot_.setVisible(modeOn);
-      chkVcsIgnoreLib_.setVisible(modeOn && vcsActive);
-      chkVcsIgnoreSrc_.setVisible(modeOn && vcsActive);
+
+      chkVcsIgnoreLib_.setVisible(vcsActive);
+      chkVcsIgnoreSrc_.setVisible(vcsActive);
    }
 
    @Override
    public boolean onApply(RProjectOptions options)
    {
       RProjectPackratOptions packratOptions = options.getPackratOptions();
-      packratOptions.setModeOn(chkModeOn_.getValue());
       packratOptions.setAutoSnapshot(chkAutoSnapshot_.getValue());
       packratOptions.setVcsIgnoreLib(chkVcsIgnoreLib_.getValue());
       packratOptions.setVcsIgnoreSrc(chkVcsIgnoreSrc_.getValue());
@@ -271,7 +250,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    private final PackratServerOperations server_;
    private final PackratUtil packratUtil_;
    
-   private CheckBox chkModeOn_;
    private CheckBox chkAutoSnapshot_;
    private CheckBox chkVcsIgnoreLib_;
    private CheckBox chkVcsIgnoreSrc_;
