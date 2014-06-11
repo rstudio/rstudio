@@ -20,12 +20,14 @@ public class NewProjectResult
 {
    public NewProjectResult(String projectFile, 
                            boolean createGitRepo,
+                           boolean usePackrat,
                            String newDefaultProjectLocation,
                            VcsCloneOptions vcsCloneOptions,
                            NewPackageOptions newPackageOptions, NewShinyAppOptions newShinyAppOptions)
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;
+      usePackrat_ = usePackrat;
       openInNewWindow_ = false;
       newDefaultProjectLocation_ = newDefaultProjectLocation;
       vcsCloneOptions_ = vcsCloneOptions;
@@ -41,6 +43,11 @@ public class NewProjectResult
    public boolean getCreateGitRepo()
    {
       return createGitRepo_;
+   }
+   
+   public boolean getUsePackrat() 
+   {
+      return usePackrat_;
    }
    
    public boolean getOpenInNewWindow()
@@ -74,6 +81,7 @@ public class NewProjectResult
    }
 
    private final boolean createGitRepo_;
+   private final boolean usePackrat_;
    private boolean openInNewWindow_;
    private final String projectFile_;
    private final String newDefaultProjectLocation_;

@@ -54,7 +54,7 @@ namespace {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.101");
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.102");
 }
 
 } // anonymous namespace
@@ -444,6 +444,34 @@ Error getPackratContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error packratBootstrap(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string dir;
+   bool enter = false;
+   Error error = json::readParams(request.params, &dir, &enter);
+   if (error)
+      return error;
+
+   // convert to file path then to system encoding
+   FilePath dirPath = module_context::resolveAliasedPath(dir);
+   dir = string_utils::utf8ToSystem(dirPath.absolutePath());
+
+   // bootstrap
+   r::exec::RFunction bootstrap("packrat:::bootstrap");
+   bootstrap.addParam("project", dir);
+   bootstrap.addParam("enter", enter);
+   bootstrap.addParam("restart", false);
+
+   error = bootstrap.call();
+   if (error)
+      LOG_ERROR(error); // will also be reported in the console
+
+   // return status
+   return Success();
+}
+
 Error initPackratMonitoring()
 {
    FilePath lockfilePath = 
@@ -496,6 +524,7 @@ Error initialize()
       (bind(registerRpcMethod, "install_packrat", installPackrat))
       (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
+      (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
       (bind(sourceModuleRFile, "SessionPackrat.R"))
       (initPackratMonitoring);
 
