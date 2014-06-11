@@ -1388,7 +1388,9 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    else
    {
       loadInitFile = !s_suspendedSessionPath.exists()
-                     || options.rProfileOnResume;
+                     || options.rProfileOnResume
+                     || r::session::state::packratModeEnabled(
+                                                s_suspendedSessionPath);
    }
 
    // quiet for resume cases

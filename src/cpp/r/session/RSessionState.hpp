@@ -41,6 +41,8 @@ bool saveMinimal(const core::FilePath& statePath,
 
 bool rProfileOnRestore(const core::FilePath& statePath);
 
+bool packratModeEnabled(const core::FilePath& statePath);
+
 bool restore(const core::FilePath& statePath, 
              bool serverMode,
              boost::function<core::Error()>* pDeferredRestoreAction,

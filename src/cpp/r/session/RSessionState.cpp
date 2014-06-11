@@ -417,17 +417,33 @@ bool saveMinimal(const core::FilePath& statePath,
    return saved;
 }
 
-bool rProfileOnRestore(const core::FilePath& statePath)
+namespace {
+
+bool getBoolSetting(const core::FilePath& statePath,
+                    const std::string& name,
+                    bool defaultValue)
 {
    Settings settings ;
    Error error = settings.initialize(statePath.complete(kSettingsFile));
    if (error)
    {
       LOG_ERROR(error);
-      return true;
+      return defaultValue;
    }
 
-   return settings.getBool(kRProfileOnRestore, true);
+   return settings.getBool(name, defaultValue);
+}
+
+} // anonymous namespace
+
+bool rProfileOnRestore(const core::FilePath& statePath)
+{
+   return getBoolSetting(statePath, kRProfileOnRestore, true);
+}
+
+bool packratModeEnabled(const core::FilePath& statePath)
+{
+   return getBoolSetting(statePath, kPackratModeOn, false);
 }
 
 Error deferredRestore(const FilePath& statePath, bool serverMode)
