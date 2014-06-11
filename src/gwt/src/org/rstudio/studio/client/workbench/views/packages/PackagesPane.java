@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOp
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
+import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCenter;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -63,6 +64,7 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.cellview.client.RowStyles;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -119,6 +121,54 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       prePackratSeparator_.setVisible(true);
    }
    
+   @Override
+   public void setActions(ArrayList<Packages.Action> actions)
+   {
+      final int kLayoutAnimationMs = 250;
+      
+      // command that manages the layout of the packages list and action center
+      Command manageActionCenterLayout = new Command() {
+         @Override
+         public void execute()
+         {
+            packagesTableContainer_.setWidgetLeftRight(
+                  actionCenter_, 
+                  0, Unit.PX, 
+                  0, Unit.PX);
+            packagesTableContainer_.setWidgetTopHeight(
+                  actionCenter_, 
+                  0, Unit.PX, 
+                  actionCenter_.getHeight(), Unit.PX);
+
+            layoutPackagesTable(actionCenter_.getHeight());
+            packagesTableContainer_.animate(kLayoutAnimationMs);
+         }
+      };
+      
+      if (actions == null)
+      {
+         if (actionCenter_ != null)
+         {
+            packagesTableContainer_.remove(actionCenter_);
+            actionCenter_ = null;
+            layoutPackagesTable();
+            packagesTableContainer_.animate(kLayoutAnimationMs);
+         }
+      }
+      else
+      {
+         if (actionCenter_ == null)
+         {
+            actionCenter_ = new ActionCenter(manageActionCenterLayout);
+            packagesTableContainer_.add(actionCenter_);
+         }
+         
+         actionCenter_.setActions(actions);
+         
+         manageActionCenterLayout.execute();
+      }
+   }
+    
    @Override
    public void installPackage(PackageInstallContext installContext,
                               PackageInstallOptions defaultInstallOptions,
@@ -277,11 +327,23 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       return packagesTableContainer_;
    }
    
+   
+   @Override
+   public void onResize()
+   {
+      super.onResize();
+      
+      if (packagesTable_ != null)
+         packagesTable_.onResize();
+   }
+   
+   
    private void createPackagesTable()
    {
       try
       {
          packagesTableContainer_.clear();
+         actionCenter_ = null;
          packagesTable_ = new DataGrid<PackageInfo>(
             packagesDataProvider_.getList().size(), dataGridRes_);
       }
@@ -429,12 +491,22 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.setSkipRowHoverCheck(true);
       
       packagesTableContainer_.add(packagesTable_);
-      packagesTableContainer_.setWidgetTopBottom(
-                                    packagesTable_, 0, Unit.PX, 0, Unit.PX);
-      packagesTableContainer_.setWidgetLeftRight(
-                                    packagesTable_, 0, Unit.PX, 0, Unit.PX);
+      layoutPackagesTable();
       
       packagesDataProvider_.addDataDisplay(packagesTable_);
+   }
+
+   private void layoutPackagesTable()
+   {
+      layoutPackagesTable(0);
+   }
+   
+   private void layoutPackagesTable(double top)
+   {
+      packagesTableContainer_.setWidgetLeftRight(
+            packagesTable_, 0, Unit.PX, 0, Unit.PX);
+      packagesTableContainer_.setWidgetTopBottom(
+            packagesTable_, top, Unit.PX, 0, Unit.PX);
    }
    
    class LoadedColumn extends Column<PackageInfo, Boolean>
@@ -609,7 +681,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
-   private AbstractCellTable<PackageInfo> packagesTable_;
+   private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
@@ -619,6 +691,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private Widget packratSeparator_;
    private Widget prePackratSeparator_;
    private LayoutPanel packagesTableContainer_;
+   private ActionCenter actionCenter_ = null;
    private int gridRenderRetryCount_;
    private PackratContext packratContext_;
 

@@ -108,6 +108,8 @@ public class Packages
   
       void setObserver(PackagesDisplayObserver observer) ;
       void setProgress(boolean showProgress);
+      
+      void setActions(ArrayList<Action> actions);
    }
    
    @Inject
@@ -938,6 +940,35 @@ public class Packages
          setViewPackageList();
       }
    };
+   
+   public static class Action
+   {
+      public Action(String message, String buttonText, Command onExecute)
+      {
+         message_ = message;
+         buttonText_ = buttonText;
+         onExecute_ = onExecute;
+      }
+      
+      public String getMessage()
+      {
+         return message_;
+      }
+      
+      public String getButtonText()
+      {
+         return buttonText_;
+      }
+      
+      public Command getOnExecute()
+      {
+         return onExecute_;
+      }
+      
+      private final String message_;
+      private final String buttonText_;
+      private final Command onExecute_;
+   }
 
    private final Display view_;
    private final PackagesServerOperations server_;

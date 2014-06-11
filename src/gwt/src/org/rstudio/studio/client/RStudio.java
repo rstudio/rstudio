@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
+import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCenter;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
@@ -244,6 +245,7 @@ public class RStudio implements EntryPoint
       NewProjectResources.INSTANCE.styles().ensureInjected();
       AboutDialogContents.ensureStylesInjected();
       CompileNotebookv2OptionsDialog.ensureStylesInjected();
+      ActionCenter.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
