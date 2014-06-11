@@ -31,6 +31,27 @@ namespace system {
 #endif
 
 
+bool realPathsEqual(const FilePath& a, const FilePath& b)
+{
+   FilePath aReal, bReal;
+
+   Error error = realPath(a, &aReal);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   error = realPath(b, &bReal);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   return aReal == bReal;
+}
+
 void addToSystemPath(const FilePath& path, bool prepend)
 {
    std::string systemPath = system::getenv("PATH");

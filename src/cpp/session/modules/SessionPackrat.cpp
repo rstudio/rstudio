@@ -55,7 +55,7 @@ namespace {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.105");
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.106");
 }
 
 } // anonymous namespace
@@ -516,6 +516,10 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
 
 Error initPackratMonitoring()
 {
+   // if there's no project then don't monitor
+   if (!projects::projectContext().hasProject())
+      return Success();
+
    FilePath lockfilePath = 
       projects::projectContext().directory().complete(PACKRAT_LOCKFILE_PATH);
 
@@ -540,8 +544,23 @@ Error initPackratMonitoring()
 // Notification that a packrat action has either started or
 // stopped (indicated by the "running" flag). Possible values for
 // action are: "snapshot", "restore", and "clean"
-void onPackratAction(const std::string& action, bool running)
+void onPackratAction(const std::string& project,
+                     const std::string& action,
+                     bool running)
 {
+   // if there's no project then skip this
+   if (!projects::projectContext().hasProject())
+   {
+      return;
+   }
+
+   // if this doesn't apply to the current project then skip it
+   if (!core::system::realPathsEqual(
+          projects::projectContext().directory(), FilePath(project)))
+   {
+      return;
+   }
+
    static std::string preLibraryHash;
    static std::string preLockfileHash;
 
@@ -591,12 +610,13 @@ void onPackratAction(const std::string& action, bool running)
 }
 
 
-SEXP rs_onPackratAction(SEXP actionSEXP, SEXP runningSEXP)
+SEXP rs_onPackratAction(SEXP projectSEXP, SEXP actionSEXP, SEXP runningSEXP)
 {
+   std::string project = r::sexp::safeAsString(projectSEXP);
    std::string action = r::sexp::safeAsString(actionSEXP);
    bool running = r::sexp::asLogical(runningSEXP);
 
-   onPackratAction(action, running);
+   onPackratAction(project, action, running);
 
    return R_NilValue;
 }

@@ -56,6 +56,7 @@ enum LogLevel
 
 // portable realPath
 Error realPath(const FilePath& filePath, FilePath* pRealPath);
+bool realPathsEqual(const FilePath& a, const FilePath& b);
 
 void addToSystemPath(const FilePath& path, bool prepend = false);
 
