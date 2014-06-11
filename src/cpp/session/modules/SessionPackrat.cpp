@@ -65,6 +65,31 @@ namespace packrat {
 
 namespace {
 
+// Current Packrat actions and state -----------------------------------------
+
+enum PackratActionType 
+{
+   PACKRAT_ACTION_NONE = 0,
+   PACKRAT_ACTION_SNAPSHOT = 1,
+   PACKRAT_ACTION_RESTORE = 2,
+   PACKRAT_ACTION_CLEAN = 3,
+   PACKRAT_ACTION_UNKNOWN = 4
+};
+
+PackratActionType packratAction(const std::string& str)
+{
+   if (str == "snapshot") 
+      return PACKRAT_ACTION_SNAPSHOT;
+   else if (str == "restore")
+      return PACKRAT_ACTION_RESTORE;
+   else if (str == "clean")
+      return PACKRAT_ACTION_CLEAN;
+   else 
+      return PACKRAT_ACTION_UNKNOWN;
+}
+
+static PackratActionType s_runningPackratAction = PACKRAT_ACTION_NONE;
+
 // Library and lockfile hashing and comparison -------------------------------
 
 enum PackratHashType
@@ -318,7 +343,10 @@ void performAutoSnapshot(const std::string& newHash)
 
 // Library and lockfile monitoring -------------------------------------------
 
-void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
+// checks to see whether a restore is needed; if no restore is needed, updates
+// the stored library hash. optionally notifies the client if a restore is
+// necessary.
+void checkRestoreNeeded(const std::string& lockfileHash, bool notifyClient)
 {
    // check to see if there are any restore actions pending 
    SEXP actions;
@@ -336,9 +364,9 @@ void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
    if (r::sexp::length(actions) == 0)
    {
       PACKRAT_TRACE("no pending restore actions found, updating hash");
-      setStoredHash(HASH_TYPE_LOCKFILE, newHash);
+      setStoredHash(HASH_TYPE_LOCKFILE, lockfileHash);
    }
-   else
+   else if (notifyClient)
    {
       PACKRAT_TRACE("found pending restore actions, alerting client");
       json::Value restoreActions;
@@ -348,6 +376,11 @@ void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
    }
 }
 
+void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
+{
+   checkRestoreNeeded(newHash, true);
+}
+
 void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 {
    performAutoSnapshot(newHash);
@@ -355,6 +388,10 @@ void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 
 void onFileChanged(FilePath sourceFilePath)
 {
+   // ignore file changes while Packrat is running
+   if (s_runningPackratAction != PACKRAT_ACTION_NONE)
+      return;
+   
    // we only care about mutations to files in the Packrat library directory
    // (and packrat.lock)
    FilePath libraryPath = 
@@ -385,6 +422,10 @@ void onFileChanged(FilePath sourceFilePath)
 
 void onPackageLibraryMutated()
 {
+   // ignore library changes while Packrat is running
+   if (s_runningPackratAction != PACKRAT_ACTION_NONE)
+      return;
+   
    // make sure a Packrat library exists (we don't care about monitoring 
    // mutations to other libraries)
    FilePath libraryPath = 
@@ -501,6 +542,52 @@ Error initPackratMonitoring()
 // action are: "snapshot", "restore", and "clean"
 void onPackratAction(const std::string& action, bool running)
 {
+   static std::string preLibraryHash;
+   static std::string preLockfileHash;
+
+   if (running && (s_runningPackratAction != PACKRAT_ACTION_NONE))
+      PACKRAT_TRACE("warning: '" << action << "' executed while action " << 
+                    s_runningPackratAction << " was already running");
+
+   PACKRAT_TRACE("packrat action '" << action << "' " <<
+                 (running ? "started" : "finished"));
+   // action started, cache it and return
+   if (running) 
+   {
+      preLibraryHash = computeLibraryHash();
+      preLockfileHash = computeLockfileHash();
+      s_runningPackratAction = packratAction(action);
+      return;
+   }
+
+   PackratActionType completedAction = s_runningPackratAction;
+   s_runningPackratAction = PACKRAT_ACTION_NONE;
+   std::string postLockfileHash = computeLockfileHash();
+
+   // action ended, update hashes accordingly
+   switch (completedAction)
+   {
+      case PACKRAT_ACTION_RESTORE:
+         // when a restore completes, check the list of pending restore actions
+         // to ensure the command completed successfully. if it did, mark
+         // the lockfile as clean.
+         checkRestoreNeeded(postLockfileHash, false);
+         break;
+      case PACKRAT_ACTION_SNAPSHOT:
+         // when a snapshot completes, check to see if it mutated the lockfile.
+         // if it did, mark the lockfile and library as clean, and have the
+         // client refresh the list of installed packages. 
+         if (preLockfileHash != postLockfileHash)
+         {
+            setStoredHash(HASH_TYPE_LOCKFILE, postLockfileHash);
+            setStoredHash(HASH_TYPE_LIBRARY, computeLibraryHash());
+            ClientEvent event(client_events::kInstalledPackagesChanged);
+            module_context::enqueClientEvent(event);
+         }
+         break;
+      default:
+         break;
+   }
 }
 
 
