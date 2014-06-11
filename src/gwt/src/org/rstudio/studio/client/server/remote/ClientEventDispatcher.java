@@ -52,6 +52,7 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
+import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
@@ -101,6 +102,7 @@ import org.rstudio.studio.client.workbench.views.output.sourcecpp.model.SourceCp
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackratRestoreNeededEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
@@ -605,6 +607,11 @@ public class ClientEventDispatcher
          {
             SuspendAndRestartEvent.Data data = event.getData();
             eventBus_.fireEvent(new SuspendAndRestartEvent(data));
+         }
+         else if (type.equals(ClientEvent.PackratRestoreNeeded))
+         {
+            JsArray<PackratRestoreActions> data = event.getData();
+            eventBus_.fireEvent(new PackratRestoreNeededEvent(data));
          }
          else
          {
