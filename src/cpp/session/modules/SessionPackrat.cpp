@@ -645,7 +645,7 @@ Error initialize()
    R_CallMethodDef onPackratActionMethodDef ;
    onPackratActionMethodDef.name = "rs_onPackratAction" ;
    onPackratActionMethodDef.fun = (DL_FUNC) rs_onPackratAction ;
-   onPackratActionMethodDef.numArgs = 2;
+   onPackratActionMethodDef.numArgs = 3;
    r::routines::addCallMethod(onPackratActionMethodDef);
 
    using boost::bind;

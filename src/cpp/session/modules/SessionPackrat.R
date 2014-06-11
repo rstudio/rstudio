@@ -13,8 +13,8 @@
 #
 #
 
-setHook("packrat.onAction", function(action, running) {
-   .Call("rs_onPackratAction", action, running)
+setHook("packrat.onAction", function(project, action, running) {
+   .Call("rs_onPackratAction", project, action, running)
 })
 
 
