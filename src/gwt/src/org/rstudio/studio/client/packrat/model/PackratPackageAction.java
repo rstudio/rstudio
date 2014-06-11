@@ -1,5 +1,5 @@
 /*
- * PackratRestoreActions.java
+ * PackratPackageAction.java
  *
  * Copyright (C) 2014 by RStudio, Inc.
  *
@@ -16,8 +16,8 @@ package org.rstudio.studio.client.packrat.model;
 
 import org.rstudio.core.client.js.JsObject;
 
-public class PackratRestoreActions extends JsObject {
+public class PackratPackageAction extends JsObject {
    
-   protected PackratRestoreActions() {}
+   protected PackratPackageAction() {}
    
 }

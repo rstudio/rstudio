@@ -73,7 +73,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
-import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
@@ -3505,7 +3505,7 @@ public class RemoteServer implements Server
    
    @Override
    public void getPackratRestoreActions(String dir,
-      ServerRequestCallback<JsArray<PackratRestoreActions>> requestCallback)
+      ServerRequestCallback<JsArray<PackratPackageAction>> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   GET_PACKRAT_RESTORE_ACTIONS,

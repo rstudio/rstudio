@@ -43,11 +43,14 @@ using namespace core;
 #define PACKRAT_TRACE(x) 
 #endif
 
-#define PACKRAT_FOLDER "packrat/"
-#define PACKRAT_LOCKFILE "packrat.lock"
-#define PACKRAT_LIB_PATH PACKRAT_FOLDER "lib"
-#define PACKRAT_LOCKFILE_PATH PACKRAT_FOLDER PACKRAT_LOCKFILE
+#define kPackratFolder "packrat/"
+#define kPackratLockfile "packrat.lock"
+#define kPackratLibPath kPackratFolder "lib"
+#define kPackratLockfilePath kPackratFolder kPackratLockfile
 
+#define kPackratActionRestore "restore"
+#define kPackratActionClean "clean"
+#define kPackratActionSnapshot "snapshot"
 
 namespace session {
 
@@ -55,7 +58,7 @@ namespace {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.106");
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.107");
 }
 
 } // anonymous namespace
@@ -78,14 +81,31 @@ enum PackratActionType
 
 PackratActionType packratAction(const std::string& str)
 {
-   if (str == "snapshot") 
+   if (str == kPackratActionSnapshot) 
       return PACKRAT_ACTION_SNAPSHOT;
-   else if (str == "restore")
+   else if (str == kPackratActionRestore)
       return PACKRAT_ACTION_RESTORE;
-   else if (str == "clean")
+   else if (str == kPackratActionClean)
       return PACKRAT_ACTION_CLEAN;
    else 
       return PACKRAT_ACTION_UNKNOWN;
+}
+
+std::string packratActionName(PackratActionType action)
+{
+   switch (action) {
+      case PACKRAT_ACTION_SNAPSHOT:
+         return kPackratActionSnapshot;
+         break;
+      case PACKRAT_ACTION_RESTORE: 
+         return kPackratActionRestore;
+         break;
+      case PACKRAT_ACTION_CLEAN:
+         return kPackratActionClean;
+         break;
+      default:
+         return "";
+   }
 }
 
 static PackratActionType s_runningPackratAction = PACKRAT_ACTION_NONE;
@@ -149,7 +169,7 @@ bool addDescContent(int level, const FilePath& path, std::string* pDescContent)
 std::string computeLibraryHash()
 {
    FilePath libraryPath = 
-      projects::projectContext().directory().complete(PACKRAT_LIB_PATH);
+      projects::projectContext().directory().complete(kPackratLibPath);
 
    // find all DESCRIPTION files in the library and concatenate them to form
    // a hashable state
@@ -167,7 +187,7 @@ std::string computeLibraryHash()
 std::string computeLockfileHash()
 {
    FilePath lockFilePath = 
-      projects::projectContext().directory().complete(PACKRAT_LOCKFILE_PATH);
+      projects::projectContext().directory().complete(kPackratLockfilePath);
 
    if (!lockFilePath.exists()) 
       return "";
@@ -303,12 +323,14 @@ void pendingSnapshot(PendingSnapshotAction action)
       }
       else
       {
-         // library and lockfile are now in sync
+         // if we cleared the pending actions list, library and lockfile are
+         // now in sync
          setStoredHash(HASH_TYPE_LOCKFILE, computeLockfileHash());
          setStoredHash(HASH_TYPE_LIBRARY, computeLibraryHash());
 
          // let the client know that it needs to refresh the list of packages
          // (this will also fetch the newly snapshotted status from packrat)
+         // TODO: only do this if the lockfile changed
          ClientEvent event(client_events::kInstalledPackagesChanged);
          module_context::enqueClientEvent(event);
       }
@@ -343,25 +365,40 @@ void performAutoSnapshot(const std::string& newHash)
 
 // Library and lockfile monitoring -------------------------------------------
 
+// indicates whether there are any actions that would be performed if the given
+// action were executed; if there are actions, they are returned in pActions
+bool getPendingActions(PackratActionType action, json::Value* pActions)
+{
+   // get the list of actions from Packrat
+   SEXP actions;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.pendingActions", 
+         packratActionName(action), 
+         projects::projectContext().directory().absolutePath())
+         .call(&actions, &protect);
+
+   // return nothing if an error occurs or there are no actions
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   if (r::sexp::length(actions) == 0)
+      return false;
+
+   // convert the action list to JSON
+   error = r::json::jsonValueFromObject(actions, pActions);
+   return !error;
+}
+
 // checks to see whether a restore is needed; if no restore is needed, updates
 // the stored library hash. optionally notifies the client if a restore is
 // necessary.
 void checkRestoreNeeded(const std::string& lockfileHash, bool notifyClient)
 {
    // check to see if there are any restore actions pending 
-   SEXP actions;
-   r::sexp::Protect protect;
-   Error error = r::exec::RFunction(".rs.pendingRestoreActions", 
-         projects::projectContext().directory().absolutePath())
-         .call(&actions, &protect);
-
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   if (r::sexp::length(actions) == 0)
+   json::Value restoreActions;
+   if (!getPendingActions(PACKRAT_ACTION_RESTORE, &restoreActions))
    {
       PACKRAT_TRACE("no pending restore actions found, updating hash");
       setStoredHash(HASH_TYPE_LOCKFILE, lockfileHash);
@@ -370,7 +407,6 @@ void checkRestoreNeeded(const std::string& lockfileHash, bool notifyClient)
    {
       PACKRAT_TRACE("found pending restore actions, alerting client");
       json::Value restoreActions;
-      r::json::jsonValueFromObject(actions, &restoreActions);
       ClientEvent event(client_events::kPackratRestoreNeeded, restoreActions);
       module_context::enqueClientEvent(event);
    }
@@ -395,9 +431,9 @@ void onFileChanged(FilePath sourceFilePath)
    // we only care about mutations to files in the Packrat library directory
    // (and packrat.lock)
    FilePath libraryPath = 
-      projects::projectContext().directory().complete(PACKRAT_LIB_PATH);
+      projects::projectContext().directory().complete(kPackratLibPath);
 
-   if (sourceFilePath.filename() == PACKRAT_LOCKFILE)
+   if (sourceFilePath.filename() == kPackratLockfile)
    {
       PACKRAT_TRACE("detected change to lockfile " << sourceFilePath);
       checkHashes(HASH_TYPE_LOCKFILE, HASH_TYPE_LIBRARY, onLockfileUpdate);
@@ -429,7 +465,7 @@ void onPackageLibraryMutated()
    // make sure a Packrat library exists (we don't care about monitoring 
    // mutations to other libraries)
    FilePath libraryPath = 
-      projects::projectContext().directory().complete(PACKRAT_LIB_PATH);
+      projects::projectContext().directory().complete(kPackratLibPath);
    if (libraryPath.exists())
    {
       PACKRAT_TRACE("detected user modification to library");
@@ -521,7 +557,7 @@ Error initPackratMonitoring()
       return Success();
 
    FilePath lockfilePath = 
-      projects::projectContext().directory().complete(PACKRAT_LOCKFILE_PATH);
+      projects::projectContext().directory().complete(kPackratLockfilePath);
 
    // if there's no lockfile, presume that this isn't a Packrat project
    if (!lockfilePath.exists())
@@ -637,6 +673,30 @@ json::Object contextAsJson()
 {
    module_context::PackratContext context = module_context::packratContext();
    return contextAsJson(context);
+}
+
+void annotatePendingActions(json::Object *pJson)
+{
+   json::Value restoreActions;
+   json::Value snapshotActions;
+   json::Value cleanActions;
+   json::Object& json = *pJson;
+
+   bool libraryDirty = 
+      getComputedHash(HASH_TYPE_LIBRARY) == getStoredHash(HASH_TYPE_LIBRARY);
+   bool lockfileDirty = 
+      getComputedHash(HASH_TYPE_LOCKFILE) == getStoredHash(HASH_TYPE_LOCKFILE);
+
+   if (libraryDirty && !lockfileDirty)
+      getPendingActions(PACKRAT_ACTION_SNAPSHOT, &snapshotActions);
+   else if (lockfileDirty && !libraryDirty)
+      getPendingActions(PACKRAT_ACTION_RESTORE, &restoreActions);
+
+   getPendingActions(PACKRAT_ACTION_CLEAN, &cleanActions);
+      
+   json["restore_actions"] = restoreActions;
+   json["snapshot_actions"] = snapshotActions;
+   json["clean_actions"] = cleanActions;
 }
 
 Error initialize()

@@ -15,14 +15,14 @@
 package org.rstudio.studio.client.packrat.ui;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PackratRestoreDialog extends ModalDialog<Void>
 {
    public PackratRestoreDialog(
-         JsArray<PackratRestoreActions> prRestore,
+         JsArray<PackratPackageAction> prRestore,
          final OperationWithInput<Void> operation)
    {
       super("Packrat Restore", operation);

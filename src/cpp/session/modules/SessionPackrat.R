@@ -23,7 +23,7 @@ setHook("packrat.onAction", function(project, action, running) {
 })
 
 .rs.addJsonRpcHandler("get_packrat_restore_actions", function(dir) {
-   msgs <- packrat:::getRestoreActionMessages(dir)
+   msgs <- packrat:::getActionMessages("restore", dir)
    # Transform NAs into explicit missing text
    for (i in seq_along(msgs)) {
       msgs[[i]][ is.na(msgs[[i]]) ] <- "<missing>"
@@ -104,8 +104,8 @@ setHook("packrat.onAction", function(project, action, running) {
    paste(packrat:::buildSnapshotHookCall(dir), collapse = "; ")
 })
 
-.rs.addFunction("pendingRestoreActions", function(dir) {
-   msgs <- packrat:::getRestoreActionMessages(dir)
+.rs.addFunction("pendingActions", function(action, dir) {
+   capture.output(msgs <- packrat:::getActionMessages(action, dir))
    # Transform NAs into explicit missing text
    for (i in seq_along(msgs)) {
       msgs[[i]][ is.na(msgs[[i]]) ] <- "<missing>"
