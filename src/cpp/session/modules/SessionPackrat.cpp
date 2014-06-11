@@ -24,6 +24,7 @@
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/session/RClientState.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -495,6 +496,24 @@ Error initPackratMonitoring()
    return Success();
 }
 
+// Notification that a packrat action has either started or
+// stopped (indicated by the "running" flag). Possible values for
+// action are: "snapshot", "restore", and "clean"
+void onPackratAction(const std::string& action, bool running)
+{
+}
+
+
+SEXP rs_onPackratAction(SEXP actionSEXP, SEXP runningSEXP)
+{
+   std::string action = r::sexp::safeAsString(actionSEXP);
+   bool running = r::sexp::asLogical(runningSEXP);
+
+   onPackratAction(action, running);
+
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 json::Object contextAsJson(const module_context::PackratContext& context)
@@ -515,11 +534,16 @@ json::Object contextAsJson()
 
 Error initialize()
 {
+   // register packrat action hook
+   R_CallMethodDef onPackratActionMethodDef ;
+   onPackratActionMethodDef.name = "rs_onPackratAction" ;
+   onPackratActionMethodDef.fun = (DL_FUNC) rs_onPackratAction ;
+   onPackratActionMethodDef.numArgs = 2;
+   r::routines::addCallMethod(onPackratActionMethodDef);
+
    using boost::bind;
    using namespace module_context;
-
    ExecBlock initBlock;
-
    initBlock.addFunctions()
       (bind(registerRpcMethod, "install_packrat", installPackrat))
       (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))

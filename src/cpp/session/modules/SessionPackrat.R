@@ -13,6 +13,11 @@
 #
 #
 
+setHook("packrat.onAction", function(action, running) {
+   .Call("rs_onPackratAction", action, running)
+})
+
+
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {
    packrat::status(dir, quiet = TRUE)
 })
@@ -107,4 +112,5 @@
    }
    msgs
 })
+
 
