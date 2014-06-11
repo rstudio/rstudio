@@ -34,6 +34,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -81,49 +83,54 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         
         PackratContext context = options.getPackratContext();
         RProjectPackratOptions packratOptions = options.getPackratOptions();
+               
+        usePackratButton_ = new ThemedButton(
+           "Use Packrat with this Project...",
+           new ClickHandler() {
+
+              @Override
+              public void onClick(ClickEvent event)
+              {
+                 bootstrapPackrat();
+              }
+              
+           });
+        spaced(usePackratButton_);
+        usePackratButton_.getElement().getStyle().setMarginTop(10, Unit.PX);
+        add(usePackratButton_);
+   
+        chkUsePackrat_ = new CheckBox("Use packrat with this project");
+        chkUsePackrat_.setValue(true);
+        chkUsePackrat_.addValueChangeHandler(
+                                new ValueChangeHandler<Boolean>() {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            confirmRemovePackrat();
+         }
+        });
+       
+        spaced(chkUsePackrat_);
+        add(chkUsePackrat_);
         
-        // create the check boxes (we'll add them later if appropriate)    
         chkAutoSnapshot_ = new CheckBox("Automatically snapshot local changes");
         chkAutoSnapshot_.setValue(packratOptions.getAutoSnapshot());
+        spaced(chkAutoSnapshot_);
+        add(chkAutoSnapshot_);
         
         String vcsName = session_.getSessionInfo().getVcsName();
         chkVcsIgnoreLib_ = new CheckBox(vcsName + " ignore packrat library"); 
         chkVcsIgnoreLib_.setValue(packratOptions.getVcsIgnoreLib());
+        spaced(chkVcsIgnoreLib_);
+        add(chkVcsIgnoreLib_);
         
         chkVcsIgnoreSrc_ = new CheckBox(vcsName + " ignore packrat sources");
         chkVcsIgnoreSrc_.setValue(packratOptions.getVcsIgnoreSrc());
+        spaced(chkVcsIgnoreSrc_);
+        add(chkVcsIgnoreSrc_);
         
-        manageCheckBoxes();
-        
-        if (!context.isPackified())
-        {
-           ThemedButton button = new ThemedButton(
-              "Use Packrat with this Project...",
-              new ClickHandler() {
-   
-                 @Override
-                 public void onClick(ClickEvent event)
-                 {
-                    bootstrapPackrat();
-                 }
-                 
-              });
-           spaced(button);
-           button.getElement().getStyle().setMarginTop(10, Unit.PX);
-           add(button);
-        }
-        else
-        {
-           spaced(chkAutoSnapshot_);
-           add(chkAutoSnapshot_);
-           
-           spaced(chkVcsIgnoreLib_);
-           add(chkVcsIgnoreLib_);
-           
-           spaced(chkVcsIgnoreSrc_);
-           add(chkVcsIgnoreSrc_);
-        }
-        
+        manageUI(context.isPackified());
 
         HelpLink helpLink = new HelpLink("Learn more about Packrat", "packrat");
         helpLink.getElement().getStyle().setMarginTop(15, Unit.PX);
@@ -131,12 +138,45 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         add(helpLink);
    }
    
-   private void manageCheckBoxes()
+   private void manageUI(boolean packified)
    {
       boolean vcsActive = !session_.getSessionInfo().getVcsName().equals("");
 
-      chkVcsIgnoreLib_.setVisible(vcsActive);
-      chkVcsIgnoreSrc_.setVisible(vcsActive);
+      usePackratButton_.setVisible(!packified);
+      chkUsePackrat_.setVisible(packified);
+      chkAutoSnapshot_.setVisible(packified);
+      chkVcsIgnoreLib_.setVisible(packified && vcsActive);
+      chkVcsIgnoreSrc_.setVisible(packified && vcsActive);
+   }
+   
+   private void confirmRemovePackrat()
+   {
+      globalDisplay_.showYesNoMessage(
+          MessageDialog.QUESTION, 
+          "Remove Packrat", 
+          "Removing packrat from this project will delete your private " +
+          "library folder and revert to the use of standard system and " +
+          "user libraries.\n\n" +
+          "Remove packrat from this project now?",
+          false,
+          new Operation() {
+            @Override
+            public void execute()
+            {
+               packratUtil_.executePackratFunction("disable");
+               
+               chkUsePackrat_.setValue(true, false);
+               manageUI(false);
+            }   
+          },
+          new Operation() {
+            @Override
+            public void execute()
+            {
+               chkUsePackrat_.setValue(true, false);  
+            }
+          },
+          true);
    }
 
    @Override
@@ -250,8 +290,10 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    private final PackratServerOperations server_;
    private final PackratUtil packratUtil_;
    
+   private CheckBox chkUsePackrat_;
    private CheckBox chkAutoSnapshot_;
    private CheckBox chkVcsIgnoreLib_;
    private CheckBox chkVcsIgnoreSrc_;
    
+   private ThemedButton usePackratButton_;   
 }
