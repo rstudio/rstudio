@@ -111,7 +111,11 @@ import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.SizeBreakdown;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
+import com.google.gwt.dev.js.ast.JsBinaryOperation;
+import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExprStmt;
+import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsLabel;
@@ -124,7 +128,6 @@ import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
-import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Empty;
@@ -469,15 +472,14 @@ public abstract class JavaToJavaScriptCompiler {
         permProps.getExpressions().add(entryList);
       }
 
-      // Generate: var $permProps = ...;
-      JsVar var = new JsVar(SourceOrigin.UNKNOWN,
-          jsProgram.getScope().findExistingUnobfuscatableName("$permProps"));
-      var.setInitExpr(permProps);
-      JsVars vars = new JsVars(SourceOrigin.UNKNOWN);
-      vars.add(var);
+      // Generate: $permProps = ...;
+      JsName permPropsName = jsProgram.getScope().findExistingUnobfuscatableName("$permProps");
+      JsExpression assign = new JsBinaryOperation(SourceOrigin.UNKNOWN, JsBinaryOperator.ASG,
+          new JsNameRef(SourceOrigin.UNKNOWN, permPropsName), permProps);
 
       // Put it at the beginning for easy reference.
-      jsProgram.getGlobalBlock().getStatements().add(0, vars);
+      jsProgram.getGlobalBlock().getStatements().add(0,
+          new JsExprStmt(SourceOrigin.UNKNOWN, assign));
     }
 
     /**

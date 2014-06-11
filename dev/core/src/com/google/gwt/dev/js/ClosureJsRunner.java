@@ -331,6 +331,7 @@ public class ClosureJsRunner {
         + "    var $doc;\n"
         + "    var $moduleName\n"
         + "    var $moduleBase;\n"
+        + "    var $permProps\n"
         + "    var $strongName;\n"
         + "    var $stats;\n"
         + "    var $sessionId;\n"
