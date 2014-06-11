@@ -35,7 +35,6 @@ import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
-import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
@@ -82,7 +81,6 @@ public class Projects implements OpenProjectFileHandler,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations projServer,
-                   PackratServerOperations packratServer,
                    GitServerOperations gitServer,
                    EventBus eventBus,
                    Binder binder,
@@ -94,7 +92,6 @@ public class Projects implements OpenProjectFileHandler,
       pMRUList_ = pMRUList;
       applicationQuit_ = applicationQuit;
       projServer_ = projServer;
-      packratServer_ = packratServer;
       gitServer_ = gitServer;
       fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
@@ -258,13 +255,6 @@ public class Projects implements OpenProjectFileHandler,
                                           newProject.getCreateGitRepo());
                }
                
-               if (newProject.getUsePackrat() !=
-                   uiPrefs.newProjUsePackrat().getValue())
-               {
-                  uiPrefs.newProjUsePackrat().setGlobalValue(
-                                          newProject.getUsePackrat());
-               }
-               
                // call the server -- in all cases continue on with
                // creating the project (swallow errors updating the pref)
                projServer_.setUiPrefs(
@@ -397,33 +387,6 @@ public class Projects implements OpenProjectFileHandler,
                            continuation.execute();
                         }
                      });
-            }
-         }, false);
-      }
-      
-      // Generate a new packrat project
-      if (newProject.getUsePackrat()) {
-         createProjectCmds.addCommand(new SerializedCommand() 
-         {
-            
-            @Override
-            public void onExecute(final Command continuation) {
-               
-               indicator.onProgress("Initializing packrat project...");
-               
-               String projDir = FileSystemItem.createFile(
-                  newProject.getProjectFile()
-               ).getParentPathString();
-               
-               packratServer_.packratBootstrap(
-                  projDir, 
-                  new VoidServerRequestCallback(indicator) {
-                     @Override
-                     public void onSuccess()
-                     {
-                        continuation.execute();
-                     }
-                  });
             }
          }, false);
       }
@@ -699,7 +662,6 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;
-   private final PackratServerOperations packratServer_;
    private final GitServerOperations gitServer_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;

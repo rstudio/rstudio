@@ -3490,16 +3490,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void packratBootstrap(String dir,
-                                ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE,
-                  PACKRAT_BOOTSTRAP,
-                  dir,
-                  requestCallback);
-   }
-   
-   @Override
    public void getPackratRestoreActions(String dir,
       ServerRequestCallback<JsArray<PackratRestoreActions>> requestCallback)
    {
@@ -3811,5 +3801,4 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_CONTEXT = "get_packrat_context";
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String GET_PACKRAT_RESTORE_ACTIONS="get_packrat_restore_actions";
-   private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
 }

@@ -444,32 +444,6 @@ Error getPackratContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error packratBootstrap(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
-{
-   // read params
-   std::string dir;
-   Error error = json::readParams(request.params, &dir);
-   if (error)
-      return error;
-
-   // convert to file path then to system encoding
-   FilePath dirPath = module_context::resolveAliasedPath(dir);
-   dir = string_utils::utf8ToSystem(dirPath.absolutePath());
-
-   // bootstrap
-   error = r::exec::RFunction("packrat:::bootstrap", dir).call();
-   if (error)
-      LOG_ERROR(error); // will also be reported in the console
-
-   // fire installed packages changed
-   ClientEvent event(client_events::kInstalledPackagesChanged);
-   module_context::enqueClientEvent(event);
-
-   // return status
-   return Success();
-}
-
 Error initPackratMonitoring()
 {
    FilePath lockfilePath = 
@@ -522,7 +496,6 @@ Error initialize()
       (bind(registerRpcMethod, "install_packrat", installPackrat))
       (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
-      (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
       (bind(sourceModuleRFile, "SessionPackrat.R"))
       (initPackratMonitoring);
 

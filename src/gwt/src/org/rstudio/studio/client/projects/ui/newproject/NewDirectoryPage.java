@@ -94,53 +94,16 @@ public class NewDirectoryPage extends NewProjectWizardPage
       UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
-      
-      HorizontalPanel optionsPanel = null;
-      if (getOptionsSideBySide())
-         optionsPanel = new HorizontalPanel();
-      
+       
       chkGitInit_ = new CheckBox("Create a git repository");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
          chkGitInit_.setValue(uiPrefs.newProjGitInit().getValue());
          chkGitInit_.getElement().getStyle().setMarginRight(7, Unit.PX);
-         if (optionsPanel != null)
-         {
-            optionsPanel.add(chkGitInit_);
-         }
-         else
-         {
-            addSpacer();
-            addWidget(chkGitInit_);
-         }
-      }
-      
-      // Initialize project with packrat
-      chkPackratInit_ = new CheckBox("Use packrat with this project");
-      chkPackratInit_.setValue(uiPrefs.newProjUsePackrat().getValue());
-      
-      if (optionsPanel != null)
-      {
-         optionsPanel.add(chkPackratInit_);
-      }
-      else
-      {
          addSpacer();
-         addWidget(chkPackratInit_);
+         addWidget(chkGitInit_);
       }
-      
-      
-      if (optionsPanel != null)
-      {
-         addSpacer();
-         addWidget(optionsPanel);
-      }
-   }
-   
-   protected boolean getOptionsSideBySide()
-   {
-      return false;
    }
    
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
@@ -167,12 +130,6 @@ public class NewDirectoryPage extends NewProjectWizardPage
       super.initialize(input);
           
       newProjectParent_.setText(input.getDefaultNewProjectLocation().getPath());
-      
-      if (!input.getContext().isPackratAvailable())
-      {
-         chkPackratInit_.setValue(false);
-         chkPackratInit_.setVisible(false);
-      }
    }
 
 
@@ -210,7 +167,6 @@ public class NewDirectoryPage extends NewProjectWizardPage
          
          return new NewProjectResult(projFile, 
                                      chkGitInit_.getValue(), 
-                                     chkPackratInit_.getValue(), 
                                      newDefaultLocation,
                                      null,
                                      getNewPackageOptions(), getNewShinyAppOptions());
@@ -231,7 +187,6 @@ public class NewDirectoryPage extends NewProjectWizardPage
    protected Label dirNameLabel_;
    protected TextBox txtProjectName_;
    private CheckBox chkGitInit_;
-   private CheckBox chkPackratInit_;
    
    private DirectoryChooserTextBox newProjectParent_;
 

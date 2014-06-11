@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.packrat.model;
 
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
@@ -33,9 +32,6 @@ public interface PackratServerOperations extends BuildServerOperations
    
    void getPackratStatus(String dir,
          ServerRequestCallback<JsArray<PackratStatus>> requestCallback);
-   
-   void packratBootstrap(String dir,
-                         ServerRequestCallback<Void> requestCallback);
    
    void getPackratRestoreActions(String dir,
          ServerRequestCallback<JsArray<PackratRestoreActions>> requestCallback);
