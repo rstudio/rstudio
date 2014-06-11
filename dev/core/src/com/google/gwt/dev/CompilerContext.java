@@ -21,6 +21,9 @@ import com.google.gwt.dev.cfg.LibraryGroupPublicResourceOracle;
 import com.google.gwt.dev.cfg.LibraryWriter;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.NullLibraryWriter;
+import com.google.gwt.dev.javac.CombinedCompilationErrorsIndex;
+import com.google.gwt.dev.javac.CompilationErrorsIndex;
+import com.google.gwt.dev.javac.CompilationErrorsIndexImpl;
 import com.google.gwt.dev.javac.MemoryUnitCache;
 import com.google.gwt.dev.javac.UnitCache;
 import com.google.gwt.dev.resource.ResourceOracle;
@@ -43,8 +46,11 @@ public class CompilerContext {
 
     private ResourceOracle buildResourceOracle;
     private boolean compileMonolithic = true;
+    private CompilationErrorsIndex globalCompilationErrorsIndex;
+    private CompilationErrorsIndex libraryCompilationErrorsIndex;
     private LibraryGroup libraryGroup = new ImmutableLibraryGroup();
     private LibraryWriter libraryWriter = new NullLibraryWriter();
+    private CompilationErrorsIndex localCompilationErrorsIndex;
     private ModuleDef module;
     private PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     private ResourceOracle publicResourceOracle;
@@ -53,6 +59,7 @@ public class CompilerContext {
 
     public CompilerContext build() {
       initializeResourceOracles();
+      initializeCompilationErrorIndexes();
 
       CompilerContext compilerContext = new CompilerContext();
       compilerContext.buildResourceOracle = buildResourceOracle;
@@ -63,6 +70,8 @@ public class CompilerContext {
       compilerContext.options = options;
       compilerContext.publicResourceOracle = publicResourceOracle;
       compilerContext.sourceResourceOracle = sourceResourceOracle;
+      compilerContext.localCompilationErrorsIndex = localCompilationErrorsIndex;
+      compilerContext.globalCompilationErrorsIndex = globalCompilationErrorsIndex;
       compilerContext.unitCache = unitCache;
       return compilerContext;
     }
@@ -104,6 +113,14 @@ public class CompilerContext {
     public Builder unitCache(UnitCache unitCache) {
       this.unitCache = unitCache;
       return this;
+    }
+
+    private void initializeCompilationErrorIndexes() {
+      localCompilationErrorsIndex = new CompilationErrorsIndexImpl();
+      libraryCompilationErrorsIndex = libraryGroup != null
+          ? libraryGroup.getCompilationErrorsIndex() : new CompilationErrorsIndexImpl();
+      globalCompilationErrorsIndex = new CombinedCompilationErrorsIndex(localCompilationErrorsIndex,
+          libraryCompilationErrorsIndex);
     }
 
     /**
@@ -154,18 +171,29 @@ public class CompilerContext {
   private boolean compileMonolithic = true;
   private LibraryGroup libraryGroup = new ImmutableLibraryGroup();
   private LibraryWriter libraryWriter = new NullLibraryWriter();
+  private CompilationErrorsIndex localCompilationErrorsIndex = new CompilationErrorsIndexImpl();
+  private CompilationErrorsIndex globalCompilationErrorsIndex = new CombinedCompilationErrorsIndex(
+      localCompilationErrorsIndex, new CompilationErrorsIndexImpl());
   private ModuleDef module;
-  private TinyCompileSummary tinyCompileSummary = new TinyCompileSummary();
-
   // TODO(stalcup): split this into module parsing, precompilation, compilation, and linking option
   // sets.
   private PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
+
   private ResourceOracle publicResourceOracle;
   private ResourceOracle sourceResourceOracle;
+  private TinyCompileSummary tinyCompileSummary = new TinyCompileSummary();
   private UnitCache unitCache = new MemoryUnitCache();
 
   public ResourceOracle getBuildResourceOracle() {
     return buildResourceOracle;
+  }
+
+  /**
+   * Returns the immutable compilation errors index that provides a combined view of compilation
+   * errors for both the current compile as well as previously compiled libraries.
+   */
+  public CompilationErrorsIndex getGlobalCompilationErrorsIndex() {
+    return globalCompilationErrorsIndex;
   }
 
   public LibraryGroup getLibraryGroup() {
@@ -174,6 +202,13 @@ public class CompilerContext {
 
   public LibraryWriter getLibraryWriter() {
     return libraryWriter;
+  }
+
+  /**
+   * Returns the mutable index of compilation errors for the current compile.
+   */
+  public CompilationErrorsIndex getLocalCompilationErrorsIndex() {
+    return localCompilationErrorsIndex;
   }
 
   public ModuleDef getModule() {
@@ -216,15 +251,15 @@ public class CompilerContext {
     return sourceResourceOracle;
   }
 
+  public TinyCompileSummary getTinyCompileSummary() {
+    return tinyCompileSummary;
+  }
+
   public UnitCache getUnitCache() {
     return unitCache;
   }
 
   public boolean shouldCompileMonolithic() {
     return compileMonolithic;
-  }
-
-  public TinyCompileSummary getTinyCompileSummary() {
-    return tinyCompileSummary;
   }
 }

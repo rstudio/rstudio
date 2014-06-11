@@ -16,6 +16,8 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
 
@@ -82,8 +84,27 @@ public class CompilationUnitInvalidatorTest extends TestCase {
     Map<String, CompiledClass> knownValidClasses =
         new HashMap<String, CompiledClass>(validClasses);
 
+    // Collect more compilation errors where extra units are thrown out by unit invalidation.
+    CompilerContext compilerContext = new CompilerContext.Builder().build();
+
     // Invoke the method under test
-    CompilationUnitInvalidator.retainValidUnits(TreeLogger.NULL, units, validClasses);
+    CompilationUnitInvalidator.retainValidUnits(TreeLogger.NULL, units, validClasses,
+        compilerContext.getLocalCompilationErrorsIndex());
+
+    // Check that the compilation errors index was correctly populated.
+    UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
+    loggerBuilder.setLowestLogLevel(TreeLogger.INFO);
+    loggerBuilder.expectInfo("Tracing compile failure path for type 'bad6'", null);
+    loggerBuilder.expectError("Errors in '/mock/bad6.java'", null);
+    loggerBuilder.expectError("bad5 cannot be resolved to a type", null);
+    loggerBuilder.expectError("Errors in '/mock/bad5.java'", null);
+    loggerBuilder.expectError("bad3 cannot be resolved to a type", null);
+    loggerBuilder.expectError("Errors in '/mock/bad3.java'", null);
+    loggerBuilder.expectError("bad1 cannot be resolved to a type", null);
+    UnitTestTreeLogger testLogger = loggerBuilder.createLogger();
+    CompilationProblemReporter.logErrorTrace(testLogger, TreeLogger.ERROR, compilerContext, "bad6",
+        false);
+    testLogger.assertCorrectLogEntries();
 
     // Check that validClasses is not mutated
     assertEquals(knownValidClasses, validClasses);

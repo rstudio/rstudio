@@ -63,6 +63,7 @@ import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
+import org.eclipse.jdt.internal.compiler.lookup.MissingTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
@@ -863,6 +864,12 @@ public class JdtCompiler {
       public boolean visit(TypeDeclaration typeDeclaration, CompilationUnitScope scope) {
         traverse(typeDeclaration);
         return false;
+      }
+
+      @Override
+      protected void onMissingTypeRef(MissingTypeBinding referencedType,
+          CompilationUnitDeclaration unitOfReferrer, Expression expression) {
+        addReference(referencedType);
       }
 
       @Override

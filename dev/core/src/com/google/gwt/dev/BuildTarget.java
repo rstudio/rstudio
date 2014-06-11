@@ -58,7 +58,7 @@ class BuildTarget {
 
   @VisibleForTesting
   public static String formatCompilingModuleMessage(String canonicalModuleName) {
-    return "Compiling module " + canonicalModuleName;
+    return "\n" + "Compiling module " + canonicalModuleName;
   }
 
   @VisibleForTesting

@@ -1,0 +1,4 @@
+<module>
+  <source path="" includes="DoesNotExist.baja" />
+  <super-source path="super" />
+</module>

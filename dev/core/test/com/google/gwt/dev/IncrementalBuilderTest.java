@@ -33,6 +33,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Test for {@link IncrementalBuilder}.
@@ -217,6 +218,61 @@ public class IncrementalBuilderTest extends TestCase {
         "com.google.gwt.dev.testdata.incrementalbuildsystem.DuplicateRight");
     assertBuildResult("com.google.gwt.dev.testdata.incrementalbuildsystem.DuplicateRoot", false,
         duplicateCompilationUnitError);
+  }
+
+  public void testEntryPointWithFailedCrossModuleTypeReference() throws MalformedURLException {
+    String victimTypeName =
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.EntryPointCompileFails";
+
+    UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
+    loggerBuilder.setLowestLogLevel(TreeLogger.INFO);
+    loggerBuilder.expectInfo("Tracing compile failure path for type '" + victimTypeName + "'",
+        null);
+    loggerBuilder.expectError(Pattern.compile("Errors in '.*EntryPointCompileFails\\.java'"), null);
+    loggerBuilder.expectError("Line 24: ImmediateCompileFails cannot be resolved to a type", null);
+    loggerBuilder.expectError(Pattern.compile("Errors in '.*ImmediateCompileFails\\.java'"), null);
+    loggerBuilder.expectError("Line 20: List cannot be resolved to a type", null);
+    UnitTestTreeLogger testLogger = loggerBuilder.createLogger();
+
+    IncrementalBuilder incrementalBuilder = createIncrementalBuilder(
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.CrossModuleCompileFails",
+        createGwtClassPathResourceLoader());
+    incrementalBuilder.clean();
+
+    boolean buildSucceeded = incrementalBuilder.build(testLogger).isSuccess();
+    assertFalse(buildSucceeded);
+    testLogger.assertLogEntriesContainExpected();
+  }
+
+  public void testEntryPointWithFailedSameModuleTypeReference() throws MalformedURLException {
+    String victimTypeName =
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.EntryPointCompileFails";
+    String causeTypeName =
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.ImmediateCompileFails";
+
+    UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
+    loggerBuilder.setLowestLogLevel(TreeLogger.INFO);
+    loggerBuilder.expectInfo("Tracing compile failure path for type '" + victimTypeName + "'",
+        null);
+    loggerBuilder.expectError(Pattern.compile("Errors in '.*EntryPointCompileFails\\.java'"), null);
+    loggerBuilder.expectError(causeTypeName + " cannot be resolved to a type", null);
+    loggerBuilder.expectError(Pattern.compile("Errors in '.*ImmediateCompileFails\\.java'"), null);
+    loggerBuilder.expectError("Line 20: List cannot be resolved to a type", null);
+    UnitTestTreeLogger testLogger = loggerBuilder.createLogger();
+
+    IncrementalBuilder incrementalBuilder = createIncrementalBuilder(
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.SameModuleCompileFails",
+        createGwtClassPathResourceLoader());
+    incrementalBuilder.clean();
+
+    boolean buildSucceeded = incrementalBuilder.build(testLogger).isSuccess();
+    assertFalse(buildSucceeded);
+    testLogger.assertLogEntriesContainExpected();
+  }
+
+  public void testIgnoresCompileFailuresInUnreachableTypes() throws MalformedURLException {
+    assertBuildResult(
+        "com.google.gwt.dev.testdata.incrementalbuildsystem.UnreachableTypeCompileFails", true);
   }
 
   public void testUnableToFindModule() throws MalformedURLException {

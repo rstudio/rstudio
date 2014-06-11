@@ -19,12 +19,14 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationUnitBuilder.GeneratedCompilationUnit;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.Messages;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
@@ -34,7 +36,6 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -43,6 +44,21 @@ import java.util.Set;
  * console.
  */
 public class CompilationProblemReporter {
+
+  /**
+   * Traverses a set of compilation units to record enough information to enable accurate and
+   * detailed compilation error cause traces.
+   */
+  public static void indexErrors(CompilationErrorsIndex compilationErrorsIndex,
+      List<CompilationUnit> units) {
+    for (CompilationUnit unit : units) {
+      if (unit.isError()) {
+        Dependencies dependencies = unit.getDependencies();
+        compilationErrorsIndex.add(unit.getTypeName(), unit.getResourceLocation(),
+            dependencies.getApiRefs(), CompilationProblemReporter.formatErrors(unit));
+      }
+    }
+  }
 
   /**
    * Used as a convenience to catch all exceptions thrown by the compiler. For
@@ -98,47 +114,53 @@ public class CompilationProblemReporter {
   }
 
   /**
-   * Provides a meaningful error message when a type is missing from the
-   * {@link com.google.gwt.core.ext.typeinfo.TypeOracle} or
-   * {@link com.google.gwt.dev.shell.CompilingClassLoader}.
-   *
-   * @param logger logger for logging errors to the console
-   * @param missingType The qualified source name of the type to report
+   * Provides meaningful error messages and hints for types that failed to compile or are otherwise
+   * missing.
    */
-  public static void logMissingTypeErrorWithHints(TreeLogger logger, String missingType,
-      CompilationState compilationState) {
-    logDependentErrors(logger, missingType, compilationState);
-    logger = logger.branch(TreeLogger.ERROR, "Unable to find type '" + missingType + "'", null);
+  public static int logErrorTrace(TreeLogger logger, Type logLevel,
+      CompilerContext compilerContext, List<CompilationUnit> units, boolean hint) {
+    int errorCount = 0;
+    for (CompilationUnit unit : units) {
+      if (unit.isError()) {
+        logErrorTrace(logger, logLevel, compilerContext, unit.getTypeName(), hint);
+        errorCount++;
 
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (logger.isLoggable(TreeLogger.INFO) && unit instanceof GeneratedCompilationUnit) {
+          CompilationProblemReporter.maybeDumpSource(logger,
+              ((GeneratedCompilationUnit) unit).getSource(), unit.getTypeName());
+        }
+      }
+    }
+    return errorCount++;
+  }
 
-    URL sourceURL = Util.findSourceInClassPath(cl, missingType);
-    if (sourceURL != null) {
-      Messages.HINT_PRIOR_COMPILER_ERRORS.log(logger, null);
-      if (missingType.indexOf(".client.") != -1) {
-        Messages.HINT_CHECK_MODULE_INHERITANCE.log(logger, null);
-      } else {
-        Messages.HINT_CHECK_MODULE_NONCLIENT_SOURCE_DECL.log(logger, null);
-      }
-    } else if (!missingType.equals("java.lang.Object")) {
-      boolean strictSourceResources =
-          compilationState.getCompilerContext().getOptions().enforceStrictSourceResources();
-      if (strictSourceResources) {
-        Messages.HINT_STRICT_SOURCE_ENTRIES.log(logger, null);
-      }
-      Messages.HINT_CHECK_TYPENAME.log(logger, missingType, null);
-      Messages.HINT_CHECK_CLASSPATH_SOURCE_ENTRIES.log(logger, null);
+  /**
+   * Provides a meaning error message and hints for a type that failed to compile or is otherwise
+   * missing.
+   */
+  public static void logErrorTrace(TreeLogger logger, Type logLevel,
+      CompilerContext compilerContext, String typeSourceName, boolean hint) {
+    TreeLogger branch = logger.branch(TreeLogger.INFO,
+        "Tracing compile failure path for type '" + typeSourceName + "'");
+    if (logErrorChain(branch, logLevel, typeSourceName,
+        compilerContext.getGlobalCompilationErrorsIndex())) {
+      return;
     }
 
-    /*
-     * For missing JRE emulated classes (e.g. Object), or the main GWT
-     * libraries, there are special warnings.
-     */
-    if (missingType.indexOf("java.lang.") == 0 || missingType.indexOf("com.google.gwt.core.") == 0) {
-      Messages.HINT_CHECK_INHERIT_CORE.log(logger, null);
-    } else if (missingType.indexOf("com.google.gwt.user.") == 0) {
-      Messages.HINT_CHECK_INHERIT_USER.log(logger, null);
+    if (hint) {
+      logHints(logger, compilerContext, typeSourceName);
     }
+  }
+
+  public static int logWarnings(TreeLogger logger, Type logLevelForWarnings,
+      List<CompilationUnit> units) {
+    int warningCount = 0;
+    for (CompilationUnit unit : units) {
+      if (CompilationProblemReporter.logWarnings(logger, logLevelForWarnings, unit)) {
+        warningCount++;
+      }
+    }
+    return warningCount++;
   }
 
   /**
@@ -146,14 +168,14 @@ public class CompilationProblemReporter {
    *
    * @param logger logger for reporting errors to the console
    * @param unit Compilation unit that may have errors
-   * @param suppressErrors Controls he log level for logging errors. If
-   *          <code>false</code> is passed, compilation errors are logged at
-   *          TreeLogger.ERROR and warnings logged at TreeLogger.WARN. If
-   *          <code>true</code> is passed, compilation errors are logged at
+   * @param suppressErrors Controls he log level for logging errors. If <code>false</code> is passed,
+   *          compilation errors are logged at TreeLogger.ERROR and warnings logged at
+   *          TreeLogger.WARN. If <code>true</code> is passed, compilation errors are logged at
    *          TreeLogger.TRACE and TreeLogger.DEBUG.
    * @return <code>true</code> if an error was logged.
    */
-  public static boolean reportErrors(TreeLogger logger, CompilationUnit unit, boolean suppressErrors) {
+  public static boolean reportErrors(TreeLogger logger, CompilationUnit unit,
+      boolean suppressErrors) {
     CategorizedProblem[] problems = unit.getProblems();
     if (problems == null || problems.length == 0) {
       return false;
@@ -184,15 +206,6 @@ public class CompilationProblemReporter {
         // Ignore all other problems.
         continue;
       }
-      // Append 'Line #: msg' to the error message.
-      StringBuffer msgBuf = new StringBuffer();
-      int line = problem.getSourceLineNumber();
-      if (line > 0) {
-        msgBuf.append("Line ");
-        msgBuf.append(line);
-        msgBuf.append(": ");
-      }
-      msgBuf.append(problem.getMessage());
 
       HelpInfo helpInfo = null;
       if (problem instanceof GWTProblem) {
@@ -204,7 +217,7 @@ public class CompilationProblemReporter {
         String branchString = isError ? "Errors" : "Warnings";
         branch = logger.branch(branchType, branchString + " in '" + fileName + "'", null);
       }
-      branch.log(logLevel, msgBuf.toString(), null, helpInfo);
+      branch.log(logLevel, toMessageWithLineNumber(problem), null, helpInfo);
     }
 
     if (branch != null && branch.isLoggable(TreeLogger.INFO)) {
@@ -217,23 +230,54 @@ public class CompilationProblemReporter {
     return branch != null;
   }
 
-  private static void addUnitToVisit(Map<String, CompiledClass> classMap, String typeName,
-      Queue<CompilationUnit> toVisit, Set<CompilationUnit> visited) {
-    CompiledClass found = classMap.get(typeName);
-    if (found != null) {
-      CompilationUnit unit = found.getUnit();
-      if (!visited.contains(unit)) {
-        toVisit.add(unit);
-        visited.add(unit);
+  private static void addUnitToVisit(CompilationErrorsIndex compilationErrorsIndex,
+      String typeSourceName, Queue<String> toVisit, Set<String> visited) {
+    if (compilationErrorsIndex.hasCompileErrors(typeSourceName)) {
+      if (!visited.contains(typeSourceName)) {
+        toVisit.add(typeSourceName);
+        visited.add(typeSourceName);
       }
     }
   }
 
-  private static void logDependentErrors(TreeLogger logger, String missingType,
-      CompilationState compilationState) {
-    final Set<CompilationUnit> visited = new HashSet<CompilationUnit>();
-    final Queue<CompilationUnit> toVisit = new LinkedList<CompilationUnit>();
-    Map<String, CompiledClass> classMap = compilationState.getClassFileMapBySource();
+  /**
+   * Returns readable compilation error messages for a compilation unit.
+   * <p>
+   * Should only be run on CompilationUnits that actually have problems.
+   */
+  private static List<String> formatErrors(CompilationUnit unit) {
+    CategorizedProblem[] problems = unit.getProblems();
+    assert problems != null && problems.length > 0;
+
+    List<String> errorMessages = Lists.newArrayList();
+    for (CategorizedProblem problem : problems) {
+      if (!problem.isError()) {
+        continue;
+      }
+
+      errorMessages.add(toMessageWithLineNumber(problem));
+    }
+
+    return errorMessages;
+  }
+
+  private static boolean hasWarnings(CompilationUnit unit) {
+    CategorizedProblem[] problems = unit.getProblems();
+    if (problems == null || problems.length == 0) {
+      return false;
+    }
+    for (CategorizedProblem problem : problems) {
+      if (problem.isWarning() && problem instanceof GWTProblem) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean logErrorChain(TreeLogger logger, Type logLevel,
+      String typeSourceName, CompilationErrorsIndex compilationErrorsIndex) {
+    final Set<String> visited = new HashSet<String>();
+    final Queue<String> toVisit = new LinkedList<String>();
 
     /*
      * Traverses CompilationUnits enqueued in toVisit(), calling {@link
@@ -241,17 +285,85 @@ public class CompilationProblemReporter {
      * CompilationUnit is visited only once, and only if it is reachable via the
      * {@link Dependencies} graph.
      */
-    addUnitToVisit(classMap, missingType, toVisit, visited);
+    addUnitToVisit(compilationErrorsIndex, typeSourceName, toVisit, visited);
 
     while (!toVisit.isEmpty()) {
-      CompilationUnit unit = toVisit.remove();
-      CompilationProblemReporter.reportErrors(logger, unit, false);
+      String dependentTypeSourceName = toVisit.remove();
 
-      for (String apiRef : unit.getDependencies().getApiRefs()) {
-        addUnitToVisit(classMap, apiRef, toVisit, visited);
+      Set<String> compileErrors = compilationErrorsIndex.getCompileErrors(dependentTypeSourceName);
+      TreeLogger branch = logger.branch(logLevel,
+          "Errors in '" + compilationErrorsIndex.getFileName(dependentTypeSourceName) + "'");
+      for (String compileError : compileErrors) {
+        branch.log(logLevel, compileError);
+      }
+
+      Set<String> typeReferences =
+          compilationErrorsIndex.getTypeReferences(dependentTypeSourceName);
+      if (typeReferences != null) {
+        for (String typeReference : typeReferences) {
+          addUnitToVisit(compilationErrorsIndex, typeReference, toVisit, visited);
+        }
       }
     }
     logger.log(TreeLogger.DEBUG, "Checked " + visited.size() + " dependencies for errors.");
+    return visited.size() > 1;
+  }
+
+  private static void logHints(TreeLogger logger, CompilerContext compilerContext,
+      String typeSourceName) {
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+
+    URL sourceURL = Util.findSourceInClassPath(cl, typeSourceName);
+    if (sourceURL != null) {
+      if (typeSourceName.indexOf(".client.") != -1) {
+        Messages.HINT_CHECK_MODULE_INHERITANCE.log(logger, null);
+      } else {
+        Messages.HINT_CHECK_MODULE_NONCLIENT_SOURCE_DECL.log(logger, null);
+      }
+    } else if (!typeSourceName.equals("java.lang.Object")) {
+      boolean strictSourceResources =
+          compilerContext.getOptions().enforceStrictSourceResources();
+      if (strictSourceResources) {
+        Messages.HINT_STRICT_SOURCE_ENTRIES.log(logger, null);
+      }
+      Messages.HINT_CHECK_TYPENAME.log(logger, typeSourceName, null);
+      Messages.HINT_CHECK_CLASSPATH_SOURCE_ENTRIES.log(logger, null);
+    }
+
+    /*
+     * For missing JRE emulated classes (e.g. Object), or the main GWT libraries, there are special
+     * warnings.
+     */
+    if (typeSourceName.indexOf("java.lang.") == 0
+        || typeSourceName.indexOf("com.google.gwt.core.") == 0) {
+      Messages.HINT_CHECK_INHERIT_CORE.log(logger, null);
+    } else if (typeSourceName.indexOf("com.google.gwt.user.") == 0) {
+      Messages.HINT_CHECK_INHERIT_USER.log(logger, null);
+    }
+  }
+
+  private static boolean logWarnings(TreeLogger logger, TreeLogger.Type logLevel,
+      CompilationUnit unit) {
+    if (!hasWarnings(unit)) {
+      return false;
+    }
+
+    TreeLogger branch =
+        logger.branch(logLevel, "Warnings in '" + unit.getResourceLocation() + "'", null);
+    for (CategorizedProblem problem : unit.getProblems()) {
+      if (!problem.isWarning() || !(problem instanceof GWTProblem)) {
+        continue;
+      }
+
+      branch.log(logLevel, toMessageWithLineNumber(problem), null,
+          ((GWTProblem) problem).getHelpInfo());
+    }
+
+    if (branch.isLoggable(TreeLogger.INFO) && unit instanceof GeneratedCompilationUnit) {
+      CompilationProblemReporter.maybeDumpSource(branch,
+          ((GeneratedCompilationUnit) unit).getSource(), unit.getTypeName());
+    }
+    return true;
   }
 
   /**
@@ -276,5 +388,10 @@ public class CompilationProblemReporter {
       caught = e;
     }
     logger.log(TreeLogger.INFO, "Unable to dump source to disk", caught);
+  }
+
+  private static String toMessageWithLineNumber(CategorizedProblem problem) {
+    int lineNumber = problem.getSourceLineNumber();
+    return (lineNumber > 0 ? "Line " + lineNumber + ": " : "") + problem.getMessage();
   }
 }

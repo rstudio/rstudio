@@ -76,8 +76,8 @@ public class ConditionWhenTypeAssignableTo extends Condition {
     String testType = query.getTestType();
     JClassType fromType = typeOracle.findType(testType);
     if (fromType == null) {
-      CompilationProblemReporter.logMissingTypeErrorWithHints(logger, testType,
-          query.getCompilationState());
+      CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
+          query.getCompilationState().getCompilerContext(), testType, true);
       throw new UnableToCompleteException();
     }
 

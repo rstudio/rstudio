@@ -16,6 +16,7 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
+import com.google.gwt.dev.javac.CompilationErrorsIndexImpl;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.CompilerIoException;
 import com.google.gwt.dev.jjs.PermutationResult;
@@ -128,6 +129,33 @@ public class ZipLibrary implements Library {
         throw new CompilerIoException(
             "Failed to read " + entryName + " in " + zipFile.getName() + " as bytes.", e);
       }
+    }
+
+    private CompilationErrorsIndexImpl readCompilationErrorsIndex() {
+      ZipEntry compilationErrorsIndexEntry =
+          zipFile.getEntry(Libraries.COMPILATION_ERRORS_INDEX_ENTRY_NAME);
+      if (compilationErrorsIndexEntry == null) {
+        return null;
+      }
+
+      InputStream compilationErrorsIndexInputStream = getInputStream(compilationErrorsIndexEntry);
+
+      CompilationErrorsIndexImpl newCompilationErrorsIndex;
+      try {
+        ObjectInputStream objectInputStream =
+            new ObjectInputStream(compilationErrorsIndexInputStream);
+        newCompilationErrorsIndex = (CompilationErrorsIndexImpl) objectInputStream.readObject();
+        objectInputStream.close();
+      } catch (IOException e) {
+        throw new CompilerIoException(
+            "Failed to read the compilation errors index for deserialization.", e);
+      } catch (ClassNotFoundException e) {
+        throw new CompilerIoException(
+            "Failed to deserialize the compilation errors index because a "
+            + "referenced type could not be found.", e);
+      }
+
+      return newCompilationErrorsIndex;
     }
 
     private CompilationUnit readCompilationUnitByTypeSourceName(String typeSourceName) {
@@ -275,6 +303,7 @@ public class ZipLibrary implements Library {
   private Set<String> buildResourcePaths;
   private Map<String, Resource> buildResourcesByPath = Maps.newHashMap();
   private Set<String> classFilePaths;
+  private CompilationErrorsIndexImpl compilationErrorsIndex;
   private Multimap<String, String> compilationUnitNamesByNestedBinaryName = HashMultimap.create();
   private Multimap<String, String> compilationUnitNamesByNestedSourceName = HashMultimap.create();
   private Map<String, CompilationUnit> compilationUnitsByTypeBinaryName = Maps.newHashMap();
@@ -326,6 +355,19 @@ public class ZipLibrary implements Library {
   @Override
   public InputStream getClassFileStream(String classFilePath) {
     return zipLibraryReader.getClassFileStream(classFilePath);
+  }
+
+  @Override
+  public CompilationErrorsIndexImpl getCompilationErrorsIndex() {
+    if (compilationErrorsIndex == null) {
+      compilationErrorsIndex = zipLibraryReader.readCompilationErrorsIndex();
+      // There may have been no compilation error index data to read but libraries must still return
+      // an empty index instead of null.
+      if (compilationErrorsIndex == null) {
+        compilationErrorsIndex = new CompilationErrorsIndexImpl();
+      }
+    }
+    return compilationErrorsIndex;
   }
 
   @Override

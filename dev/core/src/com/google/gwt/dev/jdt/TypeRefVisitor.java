@@ -32,6 +32,7 @@ import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
+import org.eclipse.jdt.internal.compiler.lookup.MissingTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.RawTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
@@ -158,19 +159,34 @@ public abstract class TypeRefVisitor extends SafeASTVisitor {
    */
   protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
       CompilationUnitDeclaration unitOfReferrer, Expression expression) {
+    // To allow for optional subclass overriding.
+  }
+
+  /**
+   * @param referencedType
+   * @param unitOfReferrer
+   * @param expression
+   */
+  protected void onMissingTypeRef(MissingTypeBinding referencedType,
+      CompilationUnitDeclaration unitOfReferrer, Expression expression) {
+    // To allow for optional subclass overriding.
   }
 
   protected abstract void onTypeRef(SourceTypeBinding referencedType,
       CompilationUnitDeclaration unitOfReferrer);
 
   private void maybeDispatch(Expression expression, TypeBinding binding) {
-    assert (binding != null);
+    if (binding == null) {
+      return;
+    }
 
     if (binding instanceof SourceTypeBinding) {
       SourceTypeBinding type = (SourceTypeBinding) binding;
       onTypeRef(type, cud);
     } else if (binding instanceof ArrayBinding) {
       maybeDispatch(expression, ((ArrayBinding) binding).leafComponentType);
+    } else if (binding instanceof MissingTypeBinding) {
+      onMissingTypeRef((MissingTypeBinding) binding, cud, expression);
     } else if (binding instanceof BinaryTypeBinding) {
       onBinaryTypeRef((BinaryTypeBinding) binding, cud, expression);
     } else if (binding instanceof ParameterizedTypeBinding) {

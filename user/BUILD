@@ -158,7 +158,7 @@ AugmentedJar(
     srcs = [],
     added_root_globs = {
         "test": [
-            "test/com/google/gwt/dev/testdata/incrementalbuildsystem/*",
+            "test/com/google/gwt/dev/testdata/incrementalbuildsystem/**/*",
         ],
     },
     # We only need the Java classes so don't wait for the rest of :gwt-dev.

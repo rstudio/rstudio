@@ -1,4 +1,6 @@
 <module>
   <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.MultipleFailLeft" />
   <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.MultipleFailRight" />
+  <source path="" includes="EntryPointCompileFails.java" />
+  <super-source path="super" />
 </module>

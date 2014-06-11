@@ -253,8 +253,8 @@ public class CompilationState {
     // Performed after compilation unit invalidator because only valid units should be saved in the
     // library.
     if (saveInLibrary) {
-      CompilationUnitInvalidator.retainValidUnits(logger, units,
-          compileMoreLater.getValidClasses());
+      CompilationUnitInvalidator.retainValidUnits(logger, units, compileMoreLater.getValidClasses(),
+          compilerContext.getLocalCompilationErrorsIndex());
       for (CompilationUnit compilationUnit : units) {
         compilerContext.getLibraryWriter().addCompilationUnit(compilationUnit);
       }

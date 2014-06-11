@@ -14,6 +14,7 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.dev.javac.CompilationErrorsIndexImpl;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
@@ -110,6 +111,11 @@ public interface Library {
    * processed by that generator in this library.
    */
   Multimap<String, String> getProcessedReboundTypeSourceNamesByGenerator();
+
+  /**
+   * Returns a source of compilation error information to support detailed logging.
+   */
+  CompilationErrorsIndexImpl getCompilationErrorsIndex();
 
   /**
    * Returns a resource handle or null for the provided path.

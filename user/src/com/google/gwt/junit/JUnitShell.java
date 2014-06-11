@@ -762,7 +762,8 @@ public class JUnitShell extends DevMode {
       errMsg = "The test class '" + typeName + "' was not found in module '"
           + moduleName + "'; no compilation unit for that type was seen";
     } else {
-      CompilationProblemReporter.logMissingTypeErrorWithHints(logger, typeName, compilationState);
+      CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
+          compilationState.getCompilerContext(), typeName, true);
       errMsg = "The test class '" + typeName
           + "' had compile errors; check log for details";
     }

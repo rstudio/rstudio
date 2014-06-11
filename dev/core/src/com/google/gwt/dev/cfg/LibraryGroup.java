@@ -17,6 +17,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
+import com.google.gwt.dev.javac.CompilationErrorsIndex;
+import com.google.gwt.dev.javac.CompilationErrorsIndexImpl;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.PermutationResult;
@@ -126,6 +128,8 @@ public class LibraryGroup {
     return fromLibraries(zipLibraries, true);
   }
 
+  private SetMultimap<String, String> compilationErrorsByTypeSourceName;
+  private CompilationErrorsIndexImpl compilationErrorsIndex;
   private Set<String> compilationUnitTypeSourceNames;
   private ArtifactSet generatedArtifacts;
   private List<Library> libraries = Lists.newArrayList();
@@ -139,6 +143,7 @@ public class LibraryGroup {
   private SetMultimap<String, String> processedReboundTypeSourceNamesByGenerator =
       HashMultimap.create();
   private Set<String> reboundTypeSourceNames;
+  private SetMultimap<String, String> referencesByTypeSourceName;
   private List<Library> rootLibraries;
   private Set<String> superSourceCompilationUnitTypeSourceNames;
 
@@ -199,6 +204,16 @@ public class LibraryGroup {
     Library library =
         getLibrariesByClassFilePath().get(Libraries.computeClassFileName(classFilePath));
     return library.getClassFileStream(classFilePath);
+  }
+
+  public CompilationErrorsIndex getCompilationErrorsIndex() {
+    if (compilationErrorsIndex == null) {
+      compilationErrorsIndex = new CompilationErrorsIndexImpl();
+      for (Library library : libraries) {
+        compilationErrorsIndex.merge(library.getCompilationErrorsIndex());
+      }
+    }
+    return compilationErrorsIndex;
   }
 
   /**
@@ -355,6 +370,19 @@ public class LibraryGroup {
         Maps.filterKeys(librariesByName, Predicates.in(libraryNames)).values());
   }
 
+  /**
+   * Throws an exception if the referenced compilation unit (which is being provided by the
+   * referenced new library) is already being provided by some older library.
+   */
+  private void assertUniquelyProvided(Library newLibrary, String compilationUnitTypeSourceName) {
+    if (librariesByCompilationUnitTypeSourceName.containsKey(compilationUnitTypeSourceName)) {
+      Library oldLibrary =
+          librariesByCompilationUnitTypeSourceName.get(compilationUnitTypeSourceName);
+      throw new CollidingCompilationUnitException(formatDuplicateCompilationUnitMessage(
+          compilationUnitTypeSourceName, oldLibrary.getLibraryName(), newLibrary.getLibraryName()));
+    }
+  }
+
   private void buildLibraryIndexes(boolean verifyLibraryReferences) {
     // Start processing with a consistent library order to ensure consistently ordered output.
     Collections.sort(libraries, LIBRARY_NAME_COMPARATOR);
@@ -415,19 +443,6 @@ public class LibraryGroup {
     }
 
     libraries = librariesInLinkOrder;
-  }
-
-  /**
-   * Throws an exception if the referenced compilation unit (which is being provided by the
-   * referenced new library) is already being provided by some older library.
-   */
-  private void assertUniquelyProvided(Library newLibrary, String compilationUnitTypeSourceName) {
-    if (librariesByCompilationUnitTypeSourceName.containsKey(compilationUnitTypeSourceName)) {
-      Library oldLibrary =
-          librariesByCompilationUnitTypeSourceName.get(compilationUnitTypeSourceName);
-      throw new CollidingCompilationUnitException(formatDuplicateCompilationUnitMessage(
-          compilationUnitTypeSourceName, oldLibrary.getLibraryName(), newLibrary.getLibraryName()));
-    }
   }
 
   private Map<String, Library> getLibrariesByBuildResourcePath() {

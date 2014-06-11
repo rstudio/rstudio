@@ -17,6 +17,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
+import com.google.gwt.dev.javac.CompilationErrorsIndex;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jjs.CompilerIoException;
@@ -72,6 +73,18 @@ public class ZipLibraryWriter implements LibraryWriter {
 
     private ZipWriter(String zipFileName) {
       zipFile = new File(zipFileName);
+    }
+
+    public void writeCompilationErrorsIndex() {
+      startEntry(Libraries.COMPILATION_ERRORS_INDEX_ENTRY_NAME);
+      try {
+        ObjectOutputStream out = new ObjectOutputStream(zipOutputStream);
+        out.writeObject(compilationErrorsIndex);
+      } catch (IOException e) {
+        throw new CompilerIoException(
+            "Failed to serialize the compilation errors index in new library " + zipFile.getPath()
+            + ".", e);
+      }
     }
 
     public void writeProcessedReboundTypeSourceNamesForGenerators() {
@@ -167,6 +180,7 @@ public class ZipLibraryWriter implements LibraryWriter {
         writeClassFilePaths();
         writeCompilationUnitTypeSourceNames();
         writeNestedNamesByCompilationUnitName();
+        writeCompilationErrorsIndex();
 
         // Resources
         writeBuildResources();
@@ -360,6 +374,7 @@ public class ZipLibraryWriter implements LibraryWriter {
   }
 
   private Map<String, Resource> buildResourcesByPath = Maps.newHashMap();
+  private CompilationErrorsIndex compilationErrorsIndex;
   private Map<String, CompilationUnit> compilationUnitsByTypeSourceName = Maps.newHashMap();
   private Set<String> dependencyLibraryNames = Sets.newHashSet();
   private ArtifactSet generatedArtifacts = new ArtifactSet();
@@ -372,9 +387,9 @@ public class ZipLibraryWriter implements LibraryWriter {
   private SetMultimap<String, String> processedReboundTypeSourceNamesByGenerator =
       HashMultimap.create();
   private Map<String, Resource> publicResourcesByPath = Maps.newHashMap();
+  private Set<String> reboundTypeSourceNames = Sets.newHashSet();
   private Set<String> regularClassFilePaths = Sets.newHashSet();
   private Set<String> regularCompilationUnitTypeSourceNames = Sets.newLinkedHashSet();
-  private Set<String> reboundTypeSourceNames = Sets.newHashSet();
   private Set<String> superSourceClassFilePaths = Sets.newHashSet();
   private Set<String> superSourceCompilationUnitTypeSourceNames = Sets.newLinkedHashSet();
   private ZipWriter zipWriter;
@@ -465,14 +480,19 @@ public class ZipLibraryWriter implements LibraryWriter {
   }
 
   @Override
+  public void markReboundTypeProcessed(String processedReboundTypeSourceName,
+      String generatorName) {
+    processedReboundTypeSourceNamesByGenerator.put(generatorName, processedReboundTypeSourceName);
+  }
+
+  @Override
   public void markReboundTypesProcessed(Set<String> reboundTypeSourceNames) {
     this.reboundTypeSourceNames = reboundTypeSourceNames;
   }
 
   @Override
-  public void markReboundTypeProcessed(String processedReboundTypeSourceName,
-      String generatorName) {
-    processedReboundTypeSourceNamesByGenerator.put(generatorName, processedReboundTypeSourceName);
+  public void setCompilationErrorsIndex(CompilationErrorsIndex compilationErrorsIndex) {
+    this.compilationErrorsIndex = compilationErrorsIndex;
   }
 
   @Override

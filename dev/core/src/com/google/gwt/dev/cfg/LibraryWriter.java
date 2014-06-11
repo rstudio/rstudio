@@ -14,6 +14,7 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.dev.javac.CompilationErrorsIndex;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
@@ -90,6 +91,11 @@ public interface LibraryWriter {
    * for this library.
    */
   void markReboundTypesProcessed(Set<String> reboundTypeSourceNames);
+
+  /**
+   * Records a source of compilation error information to support detailed logging.
+   */
+  void setCompilationErrorsIndex(CompilationErrorsIndex compilationErrorsIndex);
 
   /**
    * Records the library name.<br />

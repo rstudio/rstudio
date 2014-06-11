@@ -199,6 +199,7 @@ public class LibraryCompiler {
 
       generatedArtifacts = precompilation.getGeneratedArtifacts();
       libraryWriter.addGeneratedArtifacts(generatedArtifacts);
+      libraryWriter.setCompilationErrorsIndex(compilerContext.getLocalCompilationErrorsIndex());
     } finally {
       // Even if a compile problem occurs, close the library cleanly so that it can be examined.
       libraryWriter.write();
@@ -301,8 +302,6 @@ public class LibraryCompiler {
   private void normalizeOptions(TreeLogger logger) throws UnableToCompleteException {
     Preconditions.checkArgument(compilerOptions.getModuleNames().size() == 1);
 
-    // Fail early on errors to avoid confusion later.
-    compilerOptions.setStrict(true);
     // Current optimization passes are not safe with only partial data.
     compilerOptions.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
     // Protects against rampant overlapping source inclusion.

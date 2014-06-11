@@ -1,0 +1,5 @@
+<module>
+  <source path="" includes="EntryPointCompileFails.java" />
+  <super-source path="super" />
+  <entry-point class="com.google.gwt.dev.testdata.incrementalbuildsystem.EntryPointCompileFails"/>
+</module>

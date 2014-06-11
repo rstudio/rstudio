@@ -967,8 +967,8 @@ public class ModuleDef implements DepsInfoProvider {
     boolean seedTypesMissing = false;
     TypeOracle typeOracle = compilationState.getTypeOracle();
     if (typeOracle.findType("java.lang.Object") == null) {
-      CompilationProblemReporter.logMissingTypeErrorWithHints(logger, "java.lang.Object",
-          compilationState);
+      CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
+          compilationState.getCompilerContext(), "java.lang.Object", true);
       seedTypesMissing = true;
     } else {
       TreeLogger branch = logger.branch(TreeLogger.TRACE, "Finding entry point classes", null);
@@ -976,8 +976,8 @@ public class ModuleDef implements DepsInfoProvider {
       for (int i = 0; i < typeNames.length; i++) {
         String typeName = typeNames[i];
         if (typeOracle.findType(typeName) == null) {
-          CompilationProblemReporter.logMissingTypeErrorWithHints(branch, typeName,
-              compilationState);
+          CompilationProblemReporter.logErrorTrace(branch, TreeLogger.ERROR,
+              compilationState.getCompilerContext(), typeName, true);
           seedTypesMissing = true;
         }
       }

@@ -43,16 +43,17 @@ public class Libraries {
   }
 
   public static final String BUILD_RESOURCE_PATHS_ENTRY_NAME = "buildResourcePaths.txt";
+  public static final String COMPILATION_ERRORS_INDEX_ENTRY_NAME = "compilationErrorsIndex.ser";
   public static final String DEPENDENCY_LIBRARY_NAMES_ENTRY_NAME = "dependencyLibraryNames.txt";
   public static final String DIRECTORY_BUILD_RESOURCES = "buildResources/";
   public static final String DIRECTORY_BYTECODE = "bytecode/";
   public static final String DIRECTORY_COMPILATION_UNITS = "compilationUnits/";
   public static final String DIRECTORY_GENERATED_ARTIFACTS = "generatedArtifacts/";
   public static final String DIRECTORY_PUBLIC_RESOURCES = "publicResources/";
+  public static final char ENCODE_PREFIX = '%';
   public static final String EXTENSION_CLASS_FILE = ".class";
   public static final String EXTENSION_COMPILATION_UNITS = ".compilationUnit";
   public static final String GENERATED_ARTIFACT_NAMES_ENTRY_NAME = "generatedArtifactNames.txt";
-  public static final char ENCODE_PREFIX = '%';
   public static final char KEY_VALUE_SEPARATOR = ':';
   public static final String LIBRARY_NAME_ENTRY_NAME = "libraryName.txt";
   public static final char LINE_SEPARATOR = '\n';
@@ -61,10 +62,10 @@ public class Libraries {
   public static final String NESTED_SOURCE_NAMES_BY_ENCLOSING_NAME_ENTRY_NAME =
       "nestedSourceNamesByEnclosingName.txt";
   public static final String PERMUTATION_RESULT_ENTRY_NAME = "permutationResult.ser";
-  public static final String PUBLIC_RESOURCE_PATHS_ENTRY_NAME = "publicResourcePaths.txt";
-  public static final String REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME = "reboundTypeSourceNames.txt";
   public static final String PROCESSED_REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME =
       "processedReboundTypeSourceNames.txt";
+  public static final String PUBLIC_RESOURCE_PATHS_ENTRY_NAME = "publicResourcePaths.txt";
+  public static final String REBOUND_TYPE_SOURCE_NAMES_ENTRY_NAME = "reboundTypeSourceNames.txt";
   public static final String REGULAR_CLASS_FILE_PATHS_ENTRY_NAME = "regularClassFilePaths.txt";
   public static final String REGULAR_COMPILATION_UNIT_TYPE_SOURCE_NAMES_ENTRY_NAME =
       "regularCompilationUnitTypeSourceNames.txt";

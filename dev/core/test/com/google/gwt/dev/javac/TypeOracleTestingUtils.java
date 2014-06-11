@@ -110,7 +110,7 @@ public class TypeOracleTestingUtils {
       Collection<CompilationUnit> oldCompilationUnits =
           Lists.newArrayList(oldState.getCompilationUnits());
       CompilationUnitInvalidator.retainValidUnits(logger, oldCompilationUnits,
-          oldState.getValidClasses());
+          oldState.getValidClasses(), new CompilationErrorsIndexImpl());
       for (CompilationUnit compilationUnit : oldCompilationUnits) {
         oldLibrary.addCompilationUnit(compilationUnit);
       }

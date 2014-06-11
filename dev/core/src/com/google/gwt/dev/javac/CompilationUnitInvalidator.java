@@ -17,13 +17,13 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -43,8 +43,8 @@ public class CompilationUnitInvalidator {
    * {@code units} or {@code validClasses}.
    * </ul>
    */
-  public static void retainValidUnits(TreeLogger logger,
-      Collection<CompilationUnit> units, Map<String, CompiledClass> validClasses) {
+  public static void retainValidUnits(TreeLogger logger, Collection<CompilationUnit> units,
+      Map<String, CompiledClass> validClasses, CompilationErrorsIndex compilationErrorsIndex) {
     logger = logger.branch(TreeLogger.TRACE, "Removing invalidated units");
 
     // Build a map of api-refs -> dependent units.
@@ -119,6 +119,11 @@ public class CompilationUnitInvalidator {
               "Compilation unit '" + brokenUnit
               + "' is removed due to invalid reference(s):");
           branch.log(TreeLogger.DEBUG, brokenEntry.getKey());
+          // Record inferred errors resulting from references to broken types so that accurate
+          // errors chains can be reported.
+          compilationErrorsIndex.add(brokenUnit.getTypeName(), brokenUnit.getResourceLocation(),
+              brokenUnit.getDependencies().getApiRefs(),
+              ImmutableList.of(brokenEntry.getKey() + " cannot be resolved to a type"));
         }
       }
 

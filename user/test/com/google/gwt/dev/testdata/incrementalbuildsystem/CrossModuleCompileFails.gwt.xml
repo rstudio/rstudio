@@ -1,0 +1,5 @@
+<module>
+  <inherits name="com.google.gwt.dev.testdata.incrementalbuildsystem.UnreachableTypeCompileFails"/>
+  <source path="" includes="EntryPointCompileFails.java" />
+  <entry-point class="com.google.gwt.dev.testdata.incrementalbuildsystem.EntryPointCompileFails"/>
+</module>

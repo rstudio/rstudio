@@ -138,7 +138,11 @@ public class UnifyAst {
       this.compiledClassesByTypeName = compiledClassesByTypeName;
     }
 
+    protected abstract boolean hasCompileErrors(String typeName);
+
     protected abstract CompilationUnit getCompilationUnitFromLibrary(String typeName);
+
+    protected abstract void logErrorTrace(TreeLogger branch, Type logLevel, String sourceName);
 
     protected CompilationUnit getCompilationUnitFromSource(String typeName) {
       return compiledClassesByTypeName.get(typeName).getUnit();
@@ -708,10 +712,15 @@ public class UnifyAst {
 
     // If this is a library compile.
     if (!compilerContext.shouldCompileMonolithic()) {
+      boolean errorStateBeforeForcedTraversal = errorsFound;
       // Trace execution from all types supplied as source and resolve references.
       Set<String> internalNames = ImmutableSet.copyOf(compiledClassesByInternalName.keySet());
       for (String internalName : internalNames) {
         JDeclaredType type = internalFindType(internalName, internalNameBasedTypeLocator);
+        if (type == null) {
+          continue;
+        }
+
         instantiate(type);
         for (JField field : type.getFields()) {
           flowInto(field);
@@ -719,6 +728,11 @@ public class UnifyAst {
         for (JMethod method : type.getMethods()) {
           flowInto(method);
         }
+      }
+      // If the compile isn't strict then errors in types that were only seen by the full traversal
+      // of all local types that occurs in incremental compiles, should be suppressed.
+      if (!compilerContext.getOptions().isStrict()) {
+        errorsFound = errorStateBeforeForcedTraversal;
       }
     }
 
@@ -805,7 +819,8 @@ public class UnifyAst {
   private void assimilateLibraryUnit(CompilationUnit referencedCompilationUnit) {
     if (referencedCompilationUnit.isError()) {
       if (failedUnits.add(referencedCompilationUnit)) {
-        CompilationProblemReporter.reportErrors(logger, referencedCompilationUnit, false);
+        CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
+            compilerContext, referencedCompilationUnit.getTypeName(), true);
         errorsFound = true;
       }
       return;
@@ -829,7 +844,8 @@ public class UnifyAst {
   private void assimilateSourceUnit(CompilationUnit unit) {
     if (unit.isError()) {
       if (failedUnits.add(unit)) {
-        CompilationProblemReporter.reportErrors(logger, unit, false);
+        CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
+            compilerContext, unit.getTypeName(), true);
         errorsFound = true;
       }
       return;
@@ -1082,6 +1098,17 @@ public class UnifyAst {
       protected CompilationUnit getCompilationUnitFromLibrary(String sourceName) {
         return compilerContext.getLibraryGroup().getCompilationUnitByTypeSourceName(sourceName);
       }
+
+      @Override
+      protected boolean hasCompileErrors(String sourceName) {
+        return compilerContext.getGlobalCompilationErrorsIndex().hasCompileErrors(sourceName);
+      }
+
+      @Override
+      protected void logErrorTrace(TreeLogger branch, Type logLevel, String sourceName) {
+        CompilationProblemReporter.logErrorTrace(branch, logLevel, compilerContext, sourceName,
+            false);
+      }
     };
     binaryNameBasedTypeLocator = new NameBasedTypeLocator(null) {
       @Override
@@ -1101,6 +1128,17 @@ public class UnifyAst {
         // There is no binary name based index for this, use the internal name based one instead.
         return internalNameBasedTypeLocator.sourceCompilationUnitIsAvailable(
             BinaryName.toInternalName(binaryName));
+      }
+
+      @Override
+      protected boolean hasCompileErrors(String binaryName) {
+        return sourceNameBasedTypeLocator.hasCompileErrors(BinaryName.toSourceName(binaryName));
+      }
+
+      @Override
+      protected void logErrorTrace(TreeLogger branch, Type logLevel, String binaryName) {
+        sourceNameBasedTypeLocator.logErrorTrace(branch, logLevel,
+            BinaryName.toSourceName(binaryName));
       }
     };
     internalNameBasedTypeLocator = new NameBasedTypeLocator(compiledClassesByInternalName) {
@@ -1122,6 +1160,17 @@ public class UnifyAst {
         // There is no internal name based index for this, use the binary name based one instead.
         return binaryNameBasedTypeLocator.resolvedTypeIsAvailable(
             InternalName.toBinaryName(internalName));
+      }
+
+      @Override
+      protected boolean hasCompileErrors(String internalName) {
+        return sourceNameBasedTypeLocator.hasCompileErrors(InternalName.toSourceName(internalName));
+      }
+
+      @Override
+      protected void logErrorTrace(TreeLogger branch, Type logLevel, String internalName) {
+        sourceNameBasedTypeLocator.logErrorTrace(branch, logLevel,
+            BinaryName.toSourceName(internalName));
       }
     };
   }
@@ -1296,8 +1345,16 @@ public class UnifyAst {
     }
 
     if (compilerContext.shouldCompileMonolithic()) {
-      logger.log(TreeLogger.ERROR, String.format("Could not find %s in types compiled from source. "
-          + "It was either unavailable or failed to compile.", typeName));
+      if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
+        TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
+            "Type %s could not be referenced because it previously failed to "
+            + "compile with errors:"));
+        nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
+      } else {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Could not find %s in types compiled from source. Is the source glob too strict?",
+            typeName));
+      }
       errorsFound = true;
       return null;
     }
@@ -1307,10 +1364,16 @@ public class UnifyAst {
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
-    logger.log(TreeLogger.ERROR, String.format(
-        "Could not find %s in types compiled from source or in provided dependency libraries. "
-        + "Either the source file was unavailable, failed to compile or there is a missing "
-        + "dependency.", typeName));
+    if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
+      TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
+          "Type %s could not be referenced because it previously failed to compile with errors:"));
+      nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
+    } else {
+      logger.log(TreeLogger.ERROR, String.format(
+          "Could not find %s in types compiled from source or in provided dependency libraries. "
+              + "Either the source file was unavailable or there is a missing dependency.",
+          typeName));
+    }
     errorsFound = true;
     return null;
   }

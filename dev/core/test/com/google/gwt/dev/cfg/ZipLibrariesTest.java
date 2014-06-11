@@ -14,6 +14,7 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
+import com.google.gwt.dev.javac.CompilationErrorsIndexImpl;
 import com.google.gwt.dev.javac.CompilationStateTestBase;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.JdtCompilerTest;
@@ -92,6 +93,9 @@ public class ZipLibrariesTest extends CompilationStateTestBase {
     rebuildCompilationState();
     List<CompilationUnit> compilationUnits =
         Lists.newArrayList(state.getCompilationUnitMap().values());
+    CompilationErrorsIndexImpl expectedCompilationErrorsIndex = new CompilationErrorsIndexImpl();
+    expectedCompilationErrorsIndex.add("com.google.Foo", "/project/src/com/google/Foo.java",
+        Lists.newArrayList("com.google.Bang"), Lists.newArrayList("Unresolved type 'Bang'"));
 
     // Put data in the library and save it.
     ZipLibraryWriter zipLibraryWriter = new ZipLibraryWriter(zipFile.getPath());
@@ -109,6 +113,7 @@ public class ZipLibrariesTest extends CompilationStateTestBase {
     for (CompilationUnit compilationUnit : compilationUnits) {
       zipLibraryWriter.addCompilationUnit(compilationUnit);
     }
+    zipLibraryWriter.setCompilationErrorsIndex(expectedCompilationErrorsIndex);
     zipLibraryWriter.write();
 
     // Read data back from disk.
@@ -147,6 +152,9 @@ public class ZipLibrariesTest extends CompilationStateTestBase {
     assertTrue(zipLibrary.getNestedBinaryNamesByCompilationUnitName().get(
         JdtCompilerTest.OUTER_INNER.getTypeName()).contains(
         JdtCompilerTest.OUTER_INNER.getTypeName() + "$Inner"));
+
+    // The reloaded compilation errors index contains the same data as before writing to disk.
+    assertEquals(expectedCompilationErrorsIndex, zipLibrary.getCompilationErrorsIndex());
   }
 
   public void testVersionNumberException() throws IOException {

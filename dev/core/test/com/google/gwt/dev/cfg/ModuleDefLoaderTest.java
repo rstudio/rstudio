@@ -69,33 +69,28 @@ public class ModuleDefLoaderTest extends TestCase {
     assertHonorsStrictResources(false);
   }
 
-  public void testErrorReporting_badXml() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_badXml() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.BadModule",
         "Line 3, column 1 : Element type \"inherits\" must be followed by either "
             + "attribute specifications, \">\" or \"/>\".");
   }
 
-  public void testErrorReporting_badLinker() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_badLinker() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.BadLinker",
         "Line 2: Invalid linker name 'X'");
   }
 
-  public void testErrorReporting_badProperty() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_badProperty() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.BadProperty",
         "Line 2: Property 'X' not found");
   }
 
-  public void testErrorReporting_badPropertyValue() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_badPropertyValue() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.BadPropertyValue",
         "Line 3: Value 'z' in not a valid value for property 'X'");
   }
 
-  public void testErrorReporting_deepError() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_deepError() {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.DEBUG);
     builder.expectDebug(
@@ -121,34 +116,29 @@ public class ModuleDefLoaderTest extends TestCase {
     logger.assertLogEntriesContainExpected();
   }
 
-  public void testErrorReporting_inheritNotFound() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_inheritNotFound() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.InheritNotFound",
         "Unable to find 'com/google/gwt/dev/cfg/testdata/NonExistentModule.gwt.xml' on your "
             + "classpath; could be a typo, or maybe you forgot to include a classpath entry "
             + "for source?");
   }
 
-  public void testErrorReporting_invalidName() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_invalidName() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.InvalidName",
         "Line 2: Invalid property name '123:33'");
   }
 
-  public void testErrorReporting_multipleErrors() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_multipleErrors() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.MultipleErrors",
         "Line 1: Unexpected attribute 'blah' in element 'module'");
   }
 
-  public void testErrorReporting_unexpectedAttribute() throws UnableToCompleteException,
-      IOException, IncompatibleLibraryVersionException {
+  public void testErrorReporting_unexpectedAttribute() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.UnexpectedAttribute",
         "Line 2: Unexpected attribute 'blah' in element 'inherits'");
   }
 
-  public void testErrorReporting_unexpectedTag() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
+  public void testErrorReporting_unexpectedTag() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.UnexpectedTag",
         "Line 2: Unexpected element 'inherited'");
   }

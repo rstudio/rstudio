@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
@@ -147,9 +148,9 @@ public class CompilationStateBuilder {
 
             // Only run this pass if JDT was able to compile the unit with no errors, otherwise
             // the JDT AST traversal might throw exceptions.
-            apiRefs = compiler.collectApiRefs(cud);
             methodArgs = MethodParamCollector.collect(cud, builder.getSourceMapPath());
           }
+          apiRefs = compiler.collectApiRefs(cud);
 
           final Interner<String> interner = StringInterner.get();
           String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
@@ -383,21 +384,34 @@ public class CompilationStateBuilder {
       // stale cache files.
       unitCache.cleanup(logger);
 
-      // Sort, then report all errors (re-report for cached units).
-      Collections.sort(resultUnits, CompilationUnit.COMPARATOR);
-      logger = logger.branch(TreeLogger.DEBUG, "Validating units:");
-      int errorCount = 0;
-      for (CompilationUnit unit : resultUnits) {
-        if (CompilationProblemReporter.reportErrors(logger, unit, suppressErrors)) {
-          errorCount++;
-        }
+      // Report warnings.
+      Type logLevelForWarnings = suppressErrors ? TreeLogger.DEBUG : TreeLogger.WARN;
+      int warningCount =
+          CompilationProblemReporter.logWarnings(logger, logLevelForWarnings, resultUnits);
+      if (warningCount > 0 && !logger.isLoggable(logLevelForWarnings)) {
+        logger.log(TreeLogger.INFO, "Ignored " + warningCount + " unit"
+            + (warningCount > 1 ? "s" : "") + " with compilation errors in first pass.\n"
+            + "Compile with -strict or with -logLevel set to DEBUG or WARN to see all errors.");
       }
-      if (suppressErrors && errorCount > 0 && !logger.isLoggable(TreeLogger.TRACE)
+
+      // Index errors so that error chains can be reported.
+      CompilationProblemReporter.indexErrors(compilerContext.getLocalCompilationErrorsIndex(),
+          resultUnits);
+
+      // Report error chains and hints.
+      Type logLevelForErrors = suppressErrors ? TreeLogger.TRACE : TreeLogger.ERROR;
+      int errorCount = CompilationProblemReporter.logErrorTrace(logger, logLevelForErrors,
+          compilerContext, resultUnits, false);
+      if (errorCount > 0 && !logger.isLoggable(logLevelForErrors)
           && logger.isLoggable(TreeLogger.INFO)) {
         logger.log(TreeLogger.INFO, "Ignored " + errorCount + " unit" + (errorCount > 1 ? "s" : "")
             + " with compilation errors in first pass.\n"
             + "Compile with -strict or with -logLevel set to TRACE or DEBUG to see all errors.");
       }
+
+      // Sort units to ensure stable output.
+      Collections.sort(resultUnits, CompilationUnit.COMPARATOR);
+
       return resultUnits;
     }
 

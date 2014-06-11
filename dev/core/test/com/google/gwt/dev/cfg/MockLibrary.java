@@ -14,6 +14,7 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.dev.javac.CompilationErrorsIndexImpl;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jjs.PermutationResult;
@@ -59,6 +60,7 @@ public class MockLibrary implements Library {
   }
 
   private Set<String> buildResourcePaths = Sets.newHashSet();
+  private CompilationErrorsIndexImpl compilationErrorsIndex = new CompilationErrorsIndexImpl();
   private Multimap<String, String> compilationUnitNamesByNestedBinaryName = HashMultimap.create();
   private Multimap<String, String> compilationUnitNamesByNestedSourceName = HashMultimap.create();
   private Map<String, CompilationUnit> compilationUnitsByTypeName = Maps.newHashMap();
@@ -133,6 +135,11 @@ public class MockLibrary implements Library {
   }
 
   @Override
+  public CompilationErrorsIndexImpl getCompilationErrorsIndex() {
+    return compilationErrorsIndex;
+  }
+
+  @Override
   public CompilationUnit getCompilationUnitByTypeBinaryName(String typeBinaryName) {
     // Convert nested binary name to enclosing type source name.
     String typeSourceName =
@@ -193,6 +200,11 @@ public class MockLibrary implements Library {
   }
 
   @Override
+  public Set<String> getReboundTypeSourceNames() {
+    return reboundTypeNames;
+  }
+
+  @Override
   public Set<String> getRegularClassFilePaths() {
     return null;
   }
@@ -200,11 +212,6 @@ public class MockLibrary implements Library {
   @Override
   public Set<String> getRegularCompilationUnitTypeSourceNames() {
     return compilationUnitTypeNames;
-  }
-
-  @Override
-  public Set<String> getReboundTypeSourceNames() {
-    return reboundTypeNames;
   }
 
   @Override
