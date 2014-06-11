@@ -20,4 +20,28 @@ public class PackratPackageAction extends JsObject {
    
    protected PackratPackageAction() {}
    
+   public final String getPackage() 
+   {
+      return getAsString("package");
+   }
+   
+   public final String getAction()
+   {
+      return getAsString("action");
+   }
+   
+   public final String getPackratVersion()
+   {
+      return getAsString("packrat.version");
+   }
+
+   public final String getLibraryVersion()
+   {
+      return getAsString("library.version");
+   }
+   
+   public final String getMessage()
+   {
+      return getAsString("message");
+   }
 }

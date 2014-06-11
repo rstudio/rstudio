@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
@@ -935,9 +936,9 @@ public class Packages
             }
          });
          packratContext_ = response.getPackratContext();
-         
          view_.setProgress(false);
          setViewPackageList();
+         setViewActions(response);
       }
    };
    
@@ -968,6 +969,63 @@ public class Packages
       private final String message_;
       private final String buttonText_;
       private final Command onExecute_;
+   }
+   
+   private void setViewActions(PackageState packageState)
+   {
+      ArrayList<Action> actions = new ArrayList<Action>();
+      if (packageState.getCleanActions().length() > 0) 
+      {
+         actions.add(new Action(messageFromActions(
+               packageState.getCleanActions()),
+               "Clean...", 
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     
+                  }
+               }));
+      }
+      if (packageState.getRestoreActions().length() > 0) 
+      {
+         actions.add(new Action(messageFromActions(
+               packageState.getRestoreActions()),
+               "Apply...", 
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     
+                  }
+               }));
+      }
+      if (packageState.getRestoreActions().length() > 0) 
+      {
+         actions.add(new Action(messageFromActions(
+               packageState.getRestoreActions()),
+               "Save...", 
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     
+                  }
+               }));
+      }
+      view_.setActions(actions);
+   }
+   
+   private String messageFromActions(JsArray<PackratPackageAction> actions)
+   {
+      if (actions.length() == 1)
+      {
+         return actions.get(0).getMessage();
+      }
+      else
+      {
+         return actions.length() + " actions";
+      }
    }
 
    private final Display view_;
