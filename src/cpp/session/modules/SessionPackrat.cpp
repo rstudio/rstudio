@@ -516,10 +516,6 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
 
 Error initPackratMonitoring()
 {
-   // if there's no project then don't monitor
-   if (!projects::projectContext().hasProject())
-      return Success();
-
    FilePath lockfilePath = 
       projects::projectContext().directory().complete(PACKRAT_LOCKFILE_PATH);
 
@@ -548,12 +544,6 @@ void onPackratAction(const std::string& project,
                      const std::string& action,
                      bool running)
 {
-   // if there's no project then skip this
-   if (!projects::projectContext().hasProject())
-   {
-      return;
-   }
-
    // if this doesn't apply to the current project then skip it
    if (!core::system::realPathsEqual(
           projects::projectContext().directory(), FilePath(project)))
@@ -656,10 +646,22 @@ Error initialize()
       (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
       (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
-      (bind(sourceModuleRFile, "SessionPackrat.R"))
-      (initPackratMonitoring);
+      (bind(sourceModuleRFile, "SessionPackrat.R"));
+   Error error = initBlock.execute();
+   if (error)
+      return error;
 
-   return initBlock.execute();
+   // additional stuff if we are in packrat mode
+   if (packratContext().modeOn)
+   {
+      Error error = r::exec::RFunction(".rs.installPackratActionHook").call();
+      if (error)
+         LOG_ERROR(error);
+
+      initPackratMonitoring();
+   }
+
+   return Success();
 }
 
 } // namespace packrat
