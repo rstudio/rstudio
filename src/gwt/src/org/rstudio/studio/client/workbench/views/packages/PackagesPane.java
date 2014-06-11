@@ -65,7 +65,7 @@ import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -273,7 +273,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    protected Widget createMainWidget()
    {
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
-      packagesTableContainer_ = new ResizeLayoutPanel();
+      packagesTableContainer_ = new LayoutPanel();
       return packagesTableContainer_;
    }
    
@@ -427,7 +427,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.setTableBuilder(new 
             PackageTableBuilder(packagesTable_));
       packagesTable_.setSkipRowHoverCheck(true);
+      
       packagesTableContainer_.add(packagesTable_);
+      packagesTableContainer_.setWidgetTopBottom(
+                                    packagesTable_, 0, Unit.PX, 0, Unit.PX);
+      packagesTableContainer_.setWidgetLeftRight(
+                                    packagesTable_, 0, Unit.PX, 0, Unit.PX);
+      
       packagesDataProvider_.addDataDisplay(packagesTable_);
    }
    
@@ -612,7 +618,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ToolbarButton packratMenuButton_;
    private Widget packratSeparator_;
    private Widget prePackratSeparator_;
-   private ResizeLayoutPanel packagesTableContainer_;
+   private LayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
    private PackratContext packratContext_;
 
