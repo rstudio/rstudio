@@ -27,13 +27,13 @@ import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
-public class PackratRestoreDialogContents extends Composite {
+public class PackratActionDialogContents extends Composite {
 
    private static PackratRestoreDialogContentsUiBinder uiBinder = GWT.create(PackratRestoreDialogContentsUiBinder.class);
 
-   interface PackratRestoreDialogContentsUiBinder extends UiBinder<Widget, PackratRestoreDialogContents> {}
+   interface PackratRestoreDialogContentsUiBinder extends UiBinder<Widget, PackratActionDialogContents> {}
 
-   public PackratRestoreDialogContents(JsArray<PackratPackageAction> prRestoreActionsArray)
+   public PackratActionDialogContents(JsArray<PackratPackageAction> prRestoreActionsArray)
    {
       
       prRestoreActionsList_ = new ArrayList<PackratPackageAction>();

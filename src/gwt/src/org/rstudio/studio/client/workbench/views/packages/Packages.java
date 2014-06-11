@@ -44,7 +44,7 @@ import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
-import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
+import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -66,7 +66,6 @@ import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackag
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
-import org.rstudio.studio.client.workbench.views.packages.events.PackratRestoreNeededEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
@@ -89,8 +88,7 @@ public class Packages
       implements InstalledPackagesChangedHandler,
                  PackageStatusChangedHandler,
                  DeferredInitCompletedEvent.Handler,
-                 PackagesDisplayObserver,
-                 PackratRestoreNeededEvent.Handler
+                 PackagesDisplayObserver
 {
    public interface Binder extends CommandBinder<Commands, Packages> {}
 
@@ -143,7 +141,6 @@ public class Packages
       
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
-      events.addHandler(PackratRestoreNeededEvent.TYPE, this);
       
       // make the install options persistent
       new JSObjectStateValue("packages-pane", "installOptions", ClientState.PROJECT_PERSISTENT,
@@ -193,25 +190,6 @@ public class Packages
       }.schedule(2000);
    }
    
-   @Override
-   public void onPackratRestoreNeeded(PackratRestoreNeededEvent event)
-   {
-      // don't push this dialog up over another modal
-      if (ModalDialogTracker.numModalsShowing() > 0)
-         return;
-      
-      // show the Packrat restore dialog
-      new PackratRestoreDialog(
-           event.getActions(), 
-           new OperationWithInput<Void>(){
-             @Override
-             public void execute(Void input)
-             {
-                packratUtil_.executePackratFunction("restore");
-             } 
-          }).showModal();
-   }
-
    void onInstallPackage()
    {
       withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
@@ -971,7 +949,22 @@ public class Packages
       private final Command onExecute_;
    }
    
-   private void setViewActions(PackageState packageState)
+   private void confirmPackratActions(JsArray<PackratPackageAction> actions, 
+                                      String actionTitle, 
+                                      final String packratFunction)
+   {
+      new PackratActionDialog(actionTitle, actions, 
+            new OperationWithInput<Void>()
+            {
+               @Override
+               public void execute(Void input)
+               {
+                  packratUtil_.executePackratFunction(packratFunction);
+               }
+            }).showModal();
+   }
+   
+   private void setViewActions(final PackageState packageState)
    {
       ArrayList<Action> actions = new ArrayList<Action>();
       if (packageState.getCleanActions().length() > 0) 
@@ -983,7 +976,8 @@ public class Packages
                   @Override
                   public void execute()
                   {
-                     
+                     confirmPackratActions(packageState.getCleanActions(),
+                                           "Clean", "clean");
                   }
                }));
       }
@@ -996,7 +990,8 @@ public class Packages
                   @Override
                   public void execute()
                   {
-                     
+                     confirmPackratActions(packageState.getRestoreActions(),
+                                           "Restore", "restore");
                   }
                }));
       }
@@ -1009,7 +1004,8 @@ public class Packages
                   @Override
                   public void execute()
                   {
-                     
+                     confirmPackratActions(packageState.getRestoreActions(),
+                                           "Snapshot", "snapshot");
                   }
                }));
       }
