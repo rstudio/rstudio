@@ -107,7 +107,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
              call. = FALSE)
       }
       
-      if (!is.null(repos) && .rs.loadedPackageUpdates(pkgs)) {
+      packratMode <- !is.na(Sys.getenv("R_PACKRAT_MODE", unset = NA))
+      
+      if (!is.null(repos) && !packratMode && .rs.loadedPackageUpdates(pkgs)) {
 
          # attempt to determine the install command
          if (length(sys.calls()) > 7) {
