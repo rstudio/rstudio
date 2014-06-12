@@ -658,7 +658,9 @@ Error initialize()
       if (error)
          LOG_ERROR(error);
 
-      initPackratMonitoring();
+      error = initPackratMonitoring();
+      if (error)
+         LOG_ERROR(error);
    }
 
    return Success();
