@@ -694,9 +694,11 @@ PackratContext packratContext()
    if (context.applicable)
    {
       FilePath projectDir = projects::projectContext().directory();
+      std::string projectPath =
+         string_utils::utf8ToSystem(projectDir.absolutePath());
       Error error = r::exec::RFunction(
                            "packrat:::checkPackified",
-                           /* project = */ projectDir.absolutePath(),
+                           /* project = */ projectPath,
                            /* silent = */ true).call(&context.packified);
       if (error)
          LOG_ERROR(error);
@@ -704,8 +706,8 @@ PackratContext packratContext()
       if (context.packified)
       {
          error = r::exec::RFunction(
-                            "packrat:::isPackratModeOn",
-                            projectDir.absolutePath()).call(&context.modeOn);
+                            ".rs.isPackratModeOn",
+                            projectPath).call(&context.modeOn);
          if (error)
             LOG_ERROR(error);
       }

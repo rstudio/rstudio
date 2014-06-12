@@ -20,6 +20,15 @@
 })
 
 
+.rs.addFunction("isPackratModeOn", function(dir) {
+   on <- packrat:::isPackratModeOn(dir)
+   if (on) {
+      identical(.libPaths()[[1]], packrat:::libDir(dir))
+   } else {
+      FALSE
+   }
+})
+
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {
    packrat::status(dir, quiet = TRUE)
 })
