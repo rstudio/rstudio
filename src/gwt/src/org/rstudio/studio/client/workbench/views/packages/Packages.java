@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -88,6 +89,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class Packages
       extends BasePresenter
@@ -991,9 +993,82 @@ public class Packages
             }).showModal();
    }
    
+   private void resolvePackratConflicts(
+         JsArray<PackratPackageAction> restoreActions,
+         JsArray<PackratPackageAction> snapshotActions)
+   {
+      new PackratResolveConflictDialog(
+            createConflictsFromActions(restoreActions, snapshotActions), 
+            new OperationWithInput<PackratConflictResolution>()
+            {
+               @Override
+               public void execute(PackratConflictResolution input)
+               {
+                  if (input == PackratConflictResolution.Library)
+                  {
+                     packratUtil_.executePackratFunction("snapshot");
+                  }
+                  else if (input == PackratConflictResolution.Snapshot)
+                  {
+                     packratUtil_.executePackratFunction("restore");
+                  }
+               }
+            }).showModal();
+   }
+   
    private void setViewActions(final PackageState packageState)
    {
       ArrayList<Action> actions = new ArrayList<Action>();
+      // if we have both restore and snapshot actions possible, we need to 
+      // have the user manually pick one
+      if (packageState.getRestoreActions().length() > 0 &&
+          packageState.getSnapshotActions().length() > 0)
+      {
+         ArrayList<PackratPackageAction> allActions = 
+                 new ArrayList<PackratPackageAction>();
+         JsArrayUtil.fillList(packageState.getRestoreActions(), allActions);
+         JsArrayUtil.fillList(packageState.getSnapshotActions(), allActions);
+         actions.add(new Action(conflictMessageFromActions(allActions),
+               "Resolve...",
+               new Command() 
+               {
+                  @Override
+                  public void execute()
+                  {
+                     resolvePackratConflicts(
+                           packageState.getRestoreActions(),
+                           packageState.getSnapshotActions());
+                  }
+               }));
+      }
+      else if (packageState.getRestoreActions().length() > 0) 
+      {
+         actions.add(new Action(messageFromActions(
+               packageState.getRestoreActions()),
+               "Apply...", 
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     confirmPackratActions(packageState.getRestoreActions(),
+                                           "Restore", "restore");
+                  }
+               }));
+      }
+      else if (packageState.getSnapshotActions().length() > 0) 
+      {
+         actions.add(new Action(messageFromActions(
+               packageState.getSnapshotActions()),
+               "Save...", 
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     confirmPackratActions(packageState.getSnapshotActions(),
+                                           "Snapshot", "snapshot");
+                  }
+               }));
+      }
       if (packageState.getCleanActions().length() > 0) 
       {
          actions.add(new Action(messageFromActions(
@@ -1008,35 +1083,22 @@ public class Packages
                   }
                }));
       }
-      if (packageState.getRestoreActions().length() > 0) 
-      {
-         actions.add(new Action(messageFromActions(
-               packageState.getRestoreActions()),
-               "Apply...", 
-               new Command() {
-                  @Override
-                  public void execute()
-                  {
-                     confirmPackratActions(packageState.getRestoreActions(),
-                                           "Restore", "restore");
-                  }
-               }));
-      }
-      if (packageState.getSnapshotActions().length() > 0) 
-      {
-         actions.add(new Action(messageFromActions(
-               packageState.getSnapshotActions()),
-               "Save...", 
-               new Command() {
-                  @Override
-                  public void execute()
-                  {
-                     confirmPackratActions(packageState.getSnapshotActions(),
-                                           "Snapshot", "snapshot");
-                  }
-               }));
-      }
       view_.setActions(actions);
+   }
+   
+   private String conflictMessageFromActions(List<PackratPackageAction> actions)
+   {
+      // count the unique packages involved
+      Set<String> packageNames = new TreeSet<String>();
+      for (PackratPackageAction action: actions)
+      {
+         packageNames.add(action.getPackage());
+      }
+      
+      if (packageNames.size() == 1)
+         return "Package '" + actions.get(0).getPackage() + "' out of sync";
+      else
+         return packageNames.size() + " packages out of sync";
    }
    
    private String messageFromActions(JsArray<PackratPackageAction> actions)
@@ -1045,8 +1107,8 @@ public class Packages
       {
          // If there's just one action, show it
          PackratPackageAction action = actions.get(0);
-         return StringUtil.capitalize(action.getAction()) + " " + 
-                action.getPackage();
+         return StringUtil.capitalize(action.getAction()) + " '" + 
+                action.getPackage() + "'";
       }
       else
       {
@@ -1086,6 +1148,56 @@ public class Packages
             summary += ", and ";
       }
       return summary;
+   }
+
+   private TreeMap<String, PackratPackageAction> createMapFromActions(
+         JsArray<PackratPackageAction> actions)
+   {
+      TreeMap<String, PackratPackageAction> result = 
+            new TreeMap<String, PackratPackageAction>();
+      for (int i = 0; i < actions.length(); i++)
+      {
+         result.put(actions.get(i).getPackage(), actions.get(i));
+      }
+      return result;
+   }
+
+   private ArrayList<PackratConflictActions> createConflictsFromActions(
+         JsArray<PackratPackageAction> restoreActions, 
+         JsArray<PackratPackageAction> snapshotActions)
+   {
+      // build a map of all the package actions
+      ArrayList<PackratConflictActions> conflicts = 
+            new ArrayList<PackratConflictActions>();
+      TreeMap<String, PackratPackageAction> restoreMap = 
+            createMapFromActions(restoreActions);
+      TreeMap<String, PackratPackageAction> snapshotMap = 
+            createMapFromActions(snapshotActions);
+
+      // build a union of all affected package names
+      Set<String> packageNames = new TreeSet<String>();
+      for (int i = 0; 
+           i < Math.max(restoreActions.length(), snapshotActions.length());
+           i++)
+      {
+         if (i < restoreActions.length())
+            packageNames.add(restoreActions.get(i).getPackage());
+         if (i < snapshotActions.length())
+            packageNames.add(snapshotActions.get(i).getPackage());
+      }
+      
+      // find the action for each package
+      for (String packageName: packageNames)
+      {
+         conflicts.add(PackratConflictActions.create(
+               packageName,
+               restoreMap.containsKey(packageName) ? 
+                     restoreMap.get(packageName).getMessage() : "",
+               snapshotMap.containsKey(packageName) ? 
+                     snapshotMap.get(packageName).getMessage() : ""));
+      }
+
+      return conflicts;
    }
 
    private final Display view_;
