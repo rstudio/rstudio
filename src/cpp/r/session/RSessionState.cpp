@@ -266,7 +266,7 @@ void saveWorkingContext(const FilePath& statePath,
    
 bool isPackratModeOn()
 {
-   return core::system::getenv("R_PACKRAT_MODE") == "1";
+   return !core::system::getenv("R_PACKRAT_MODE").empty();
 }
 
 } // anonymous namespace
