@@ -1036,7 +1036,7 @@ public class Packages
       Map<String, Integer> actionCounts = new TreeMap<String, Integer>();
       for (int i = 0; i < actions.length(); i++)
       {
-         PackratPackageAction action = actions.get(0);
+         PackratPackageAction action = actions.get(i);
          String actionName = action.getAction();
          if (actionCounts.containsKey(actionName))
             actionCounts.put(actionName, actionCounts.get(actionName) + 1);
@@ -1047,7 +1047,11 @@ public class Packages
       for (int i = 0; i < actionNames.length; i++)
       {
          String actionName = actionNames[i];
-         summary += StringUtil.capitalize(actionName) + " ";
+         if (i == 0)
+            summary += StringUtil.capitalize(actionName);
+         else
+            summary += actionName;
+         summary += " ";
          if (actionCounts.get(actionName).equals(1))
             summary += "1 package";
          else
@@ -1055,7 +1059,7 @@ public class Packages
          if (i < actionNames.length - 2)
             summary += ", ";
          if (i == actionNames.length - 2)
-            summary += " and ";
+            summary += ", and ";
       }
       return summary;
    }

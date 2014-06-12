@@ -76,7 +76,42 @@ enum PackratActionType
    PACKRAT_ACTION_SNAPSHOT = 1,
    PACKRAT_ACTION_RESTORE = 2,
    PACKRAT_ACTION_CLEAN = 3,
-   PACKRAT_ACTION_UNKNOWN = 4
+   PACKRAT_ACTION_UNKNOWN = 4 
+};
+
+enum PackratHashType
+{
+   HASH_TYPE_LOCKFILE = 0,
+   HASH_TYPE_LIBRARY = 1
+};
+
+// Hash states are used for two purposes:
+// 1) To ascertain whether an object has undergone a meaningful change--for
+//    instance, if the library state is different after an operation
+// 2) To track the last-resolved state of an object, as an aid for discovering
+//    what actions are appropriate on the object
+//
+// As an example, take the lockfile hash:
+// HASH_STATE_COMPUTED != HASH_STATE_OBSERVED
+//    The client's view reflects a different lockfile state. Refresh the client
+//    view.
+// HASH_STATE_OBSERVED != HASH_STATE_RESOLVED
+//    The content in the lockfile has changed since the last time a snapshot or
+//    restore was performed. The user should perform a 'restore'.
+// HASH_STATE_COMPUTED == HASH_STATE_RESOLVED
+//    The content of the lockfile is up-to-date and no action is needed.
+//
+enum PackratHashState
+{
+   HASH_STATE_RESOLVED = 0,  // The state last known to be consistent (stored)
+   HASH_STATE_OBSERVED = 1,  // The state last viewed by the client (stored)
+   HASH_STATE_COMPUTED = 2   // The current state (not stored)
+};
+
+enum PendingSnapshotAction
+{
+   SET_PENDING_SNAPSHOT = 0,
+   COMPLETE_SNAPSHOT = 1
 };
 
 PackratActionType packratAction(const std::string& str)
@@ -110,26 +145,20 @@ std::string packratActionName(PackratActionType action)
 
 static PackratActionType s_runningPackratAction = PACKRAT_ACTION_NONE;
 
+// Forward declarations ------------------------------------------------------
+
+void performAutoSnapshot(const std::string& targetHash);
+void pendingSnapshot(PendingSnapshotAction action);
+bool getPendingActions(PackratActionType action, json::Value* pActions);
+void emitPackagesChanged();
+void resolveStateAfterAction(PackratActionType action, 
+                             PackratHashType hashType);
+std::string computeLockfileHash();
+std::string computeLibraryHash();
+
 // Library and lockfile hashing and comparison -------------------------------
 
-enum PackratHashType
-{
-   HASH_TYPE_LOCKFILE = 0,
-   HASH_TYPE_LIBRARY = 1
-};
-
-enum PackratHashState
-{
-   HASH_STATE_RESOLVED = 0,
-   HASH_STATE_OBSERVED = 1
-};
-
-enum PendingSnapshotAction
-{
-   SET_PENDING_SNAPSHOT = 0,
-   COMPLETE_SNAPSHOT = 1
-};
-
+// Returns the storage key for the given hash type and state
 std::string keyOfHashType(PackratHashType hashType, PackratHashState hashState)
 {
    std::string hashKey  = "packrat";
@@ -138,8 +167,18 @@ std::string keyOfHashType(PackratHashType hashType, PackratHashState hashState)
    return hashKey;
 }
 
-std::string getStoredHash(PackratHashType hashType, PackratHashState hashState)
+// Given the hash type and state, return the hash
+std::string getHash(PackratHashType hashType, PackratHashState hashState)
 {
+   // For computed hashes, do the computation
+   if (hashState == HASH_STATE_COMPUTED)
+   {
+      if (hashType == HASH_TYPE_LOCKFILE)
+         return computeLockfileHash();
+      else
+         return computeLibraryHash();
+   }
+   // For stored hashes, look up in project persistent storage
    json::Value hash = 
       r::session::clientState().getProjectPersistent(
             "packrat",
@@ -150,15 +189,20 @@ std::string getStoredHash(PackratHashType hashType, PackratHashState hashState)
       return "";
 }
 
-void setStoredHash(PackratHashType hashType, PackratHashState hashState, 
-                   const std::string& hash)
+std::string updateHash(PackratHashType hashType, PackratHashState hashState)
 {
-   PACKRAT_TRACE("updating " << keyOfHashType(hashType, hashState) << 
-                 " -> " <<  hash);
-   r::session::clientState().putProjectPersistent(
-         "packrat", 
-         keyOfHashType(hashType, hashState), 
-         hash);
+   std::string newHash = getHash(hashType, HASH_STATE_COMPUTED);
+   std::string oldHash = getHash(hashType, hashState);
+   if (newHash != oldHash)
+   {
+      PACKRAT_TRACE("updating " << keyOfHashType(hashType, hashState) << 
+                    " (" << oldHash << " -> " << newHash << ")");
+      r::session::clientState().putProjectPersistent(
+            "packrat", 
+            keyOfHashType(hashType, hashState), 
+            newHash);
+   }
+   return newHash;
 }
 
 // adds content from the given file to the given file if it's a 
@@ -213,14 +257,6 @@ std::string computeLockfileHash()
    return hash::crc32HexHash(lockFileContent);
 }
 
-std::string getComputedHash(PackratHashType hashType)
-{
-   if (hashType == HASH_TYPE_LOCKFILE)
-      return computeLockfileHash();
-   else
-      return computeLibraryHash();
-}
-
 void checkHashes(
       PackratHashType hashType, 
       PackratHashState hashState,
@@ -231,8 +267,8 @@ void checkHashes(
    // to a file we've already hashed.
    DROP_RECURSIVE_CALLS;
 
-   std::string oldHash = getStoredHash(hashType, hashState);
-   std::string newHash = getComputedHash(hashType);
+   std::string oldHash = getHash(hashType, hashState);
+   std::string newHash = getHash(hashType, HASH_STATE_COMPUTED);
 
    // hashes match, no work needed
    if (oldHash == newHash)
@@ -243,22 +279,14 @@ void checkHashes(
 
 bool isHashUnresolved(PackratHashType hashType)
 {
-   std::string observedHash = getStoredHash(hashType, HASH_STATE_OBSERVED);
-   std::string resolvedHash = getStoredHash(hashType, HASH_STATE_RESOLVED);
+   std::string observedHash = getHash(hashType, HASH_STATE_OBSERVED);
+   std::string resolvedHash = getHash(hashType, HASH_STATE_RESOLVED);
    if (observedHash.empty() || resolvedHash.empty())
       return false;
    return observedHash != resolvedHash;
 }
 
 // Auto-snapshot -------------------------------------------------------------
-
-// forward declarations
-void performAutoSnapshot(const std::string& targetHash);
-void pendingSnapshot(PendingSnapshotAction action);
-bool getPendingActions(PackratActionType action, json::Value* pActions);
-void emitPackagesChanged();
-void resolveStateAfterAction(PackratActionType action, 
-                             PackratHashType hashType);
 
 class AutoSnapshot: public async_r::AsyncRProcess
 {
@@ -408,9 +436,9 @@ void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
    else 
    {
       PACKRAT_TRACE("lockfile observed hash " << 
-                    getStoredHash(HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED) << 
+                    getHash(HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED) << 
                     " doesn't match resolved hash " <<
-                    getStoredHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED) <<
+                    getHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED) <<
                     ", skipping auto snapshot"); 
       emitPackagesChanged();
    }
@@ -560,8 +588,8 @@ void resolveStateAfterAction(PackratActionType action,
 {
    // if the action changed the underlying store, tell the client to refresh
    // its view
-   if (getStoredHash(hashType, HASH_STATE_OBSERVED) != 
-         getComputedHash(hashType))
+   if (getHash(hashType, HASH_STATE_OBSERVED) != 
+         getHash(hashType, HASH_STATE_COMPUTED))
    {
       emitPackagesChanged();
    }
@@ -570,10 +598,8 @@ void resolveStateAfterAction(PackratActionType action,
    // resolved
    if (!getPendingActions(action, NULL))
    {
-      setStoredHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED, 
-                    computeLibraryHash());
-      setStoredHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED, 
-                    computeLockfileHash());
+      updateHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED);
+      updateHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED);
    }
 }
 
@@ -673,19 +699,16 @@ void annotatePendingActions(json::Object *pJson)
    json::Object& json = *pJson;
 
    // compute new hashes and mark them observed
-   std::string libraryHash = getComputedHash(HASH_TYPE_LIBRARY);
-   if (getStoredHash(HASH_TYPE_LIBRARY, HASH_STATE_OBSERVED) != libraryHash)
-      setStoredHash(HASH_TYPE_LIBRARY, HASH_STATE_OBSERVED, libraryHash);
-
-   std::string lockfileHash = getComputedHash(HASH_TYPE_LOCKFILE);
-   if (getStoredHash(HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED) != lockfileHash)
-      setStoredHash(HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED, lockfileHash);
+   std::string libraryHash = 
+      updateHash(HASH_TYPE_LIBRARY, HASH_STATE_OBSERVED);
+   std::string lockfileHash = 
+      updateHash(HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED);
 
    // check for resolved states
    bool libraryDirty = 
-      libraryHash != getStoredHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED);
+      libraryHash != getHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED);
    bool lockfileDirty = 
-      lockfileHash != getStoredHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED);
+      lockfileHash != getHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED);
 
    if (libraryDirty)
       getPendingActions(PACKRAT_ACTION_SNAPSHOT, &snapshotActions);
