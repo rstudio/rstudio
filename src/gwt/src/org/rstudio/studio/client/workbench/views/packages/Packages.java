@@ -42,7 +42,10 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.PackratUtil;
+import org.rstudio.studio.client.packrat.model.PackratConflictActions;
+import org.rstudio.studio.client.packrat.model.PackratConflictResolution;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.packrat.ui.PackratRestoreDialog;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
@@ -508,6 +511,27 @@ public class Packages
    public void onRefreshPackages()
    {
       updatePackageState();
+   }
+   
+   @Handler 
+   public void onPackratTest()
+   {
+      
+      ArrayList<PackratConflictActions> actions = new ArrayList<PackratConflictActions>();
+      actions.add(PackratConflictActions.create("xtable", null, "Upgrade to 1.02"));
+      actions.add(PackratConflictActions.create("knitr", null, "Upgrade to 1.7"));
+      
+      new PackratResolveConflictDialog(
+            actions, 
+            new OperationWithInput<PackratConflictResolution>() {
+
+               @Override
+               public void execute(PackratConflictResolution input)
+               {
+                  // TODO Auto-generated method stub
+                  
+               }
+      }).showModal();;
    }
    
    @Handler
