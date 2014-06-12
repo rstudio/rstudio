@@ -422,7 +422,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $strongName = '" + strongName + "';");
     out.newlineOpt();
-    out.print("var $permProps;");
+    out.print("var $gwt;");
     out.newlineOpt();
     out.print("var $doc = $wnd.document;");
     out.newlineOpt();
@@ -488,7 +488,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("$sendStats('moduleStartup', 'end');");
     out.newlineOpt();
-    out.print("$permProps && __gwtModuleFunction.__moduleStartupDone($permProps);");
+    out.print("$gwt && $gwt.permProps && __gwtModuleFunction.__moduleStartupDone($gwt.permProps);");
 
     writeMagicComments(out, context, 0, strongName);
     return out.toString();

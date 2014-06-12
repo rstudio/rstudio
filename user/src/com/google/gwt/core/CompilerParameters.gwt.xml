@@ -121,7 +121,7 @@
                                 value="false" />
 
   <!--
-    Specifies that a binding property should be included in the $permProps variable
+    Specifies that a binding property should be included in the $gwt.permProps variable
     in the generated JavaScript. This will allow Super Dev Mode to pick it up
     regardless of how many permutations are generated.
   -->

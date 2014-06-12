@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.PermProps;
@@ -161,6 +162,7 @@ import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -1656,6 +1658,8 @@ public class GenerateJavaScriptAST {
       // be referenced by runtime rebind and property provider bootstrapping.
       setupGwtOnLoad(entryFunctions, globalStmts);
 
+      embedBindingProperties();
+
       if (program.getRunAsyncs().size() > 0) {
         // Prevent onLoad from being pruned.
         JMethod onLoadMethod = program.getIndexedMethod("AsyncFragmentLoader.onLoad");
@@ -1664,6 +1668,33 @@ public class GenerateJavaScriptAST {
         JsFunction func = (JsFunction) name.getStaticRef();
         func.setArtificiallyRescued(true);
       }
+    }
+
+    /**
+     * Embeds properties into permProps for easy access from JavaScript.
+     */
+    private void embedBindingProperties() {
+      SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
+
+      // Generates a list of lists of pairs: [[["key", "value"], ...], ...]
+      // The outermost list is indexed by soft permutation id. Each item represents
+      // a map from binding properties to their values, but is stored as a list of pairs
+      // for easy iteration.
+      JsArrayLiteral permProps = new JsArrayLiteral(sourceInfo);
+      for (ImmutableMap<String, String> propMap : props.findEmbeddedProperties(TreeLogger.NULL)) {
+        JsArrayLiteral entryList = new JsArrayLiteral(sourceInfo);
+        for (Entry<String, String> entry : propMap.entrySet()) {
+          JsArrayLiteral pair = new JsArrayLiteral(sourceInfo,
+              new JsStringLiteral(sourceInfo, entry.getKey()),
+              new JsStringLiteral(sourceInfo, entry.getValue()));
+          entryList.getExpressions().add(pair);
+        }
+        permProps.getExpressions().add(entryList);
+      }
+
+      jsProgram.getGlobalBlock().getStatements().add(
+        constructInvocation(sourceInfo, "ModuleUtils.setGwtProperty",
+            new JsStringLiteral(sourceInfo, "permProps"), permProps).makeStmt());
     }
 
     @Override
@@ -2005,12 +2036,12 @@ public class GenerateJavaScriptAST {
         SourceInfo sourceInfo) {
       JsObjectLiteral objLit = new JsObjectLiteral(sourceInfo);
       objLit.setInternable();
-      List<JsPropertyInitializer> props = objLit.getPropertyInitializers();
+      List<JsPropertyInitializer> propInitializers = objLit.getPropertyInitializers();
       JsNumberLiteral one = new JsNumberLiteral(sourceInfo, 1);
       for (JsExpression runtimeTypeIdLiteral : runtimeTypeIdLiterals) {
-        JsPropertyInitializer prop = new JsPropertyInitializer(sourceInfo,
+        JsPropertyInitializer propInitializer = new JsPropertyInitializer(sourceInfo,
             runtimeTypeIdLiteral, one);
-        props.add(prop);
+        propInitializers.add(propInitializer);
       }
       return objLit;
     }
@@ -3099,6 +3130,8 @@ public class GenerateJavaScriptAST {
 
   private final Map<JType, JLiteral> typeIdsByType;
 
+  private final PermProps props;
+
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
       CompilerContext compilerContext, Map<JType, JLiteral> typeIdsByType,
       Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
@@ -3112,6 +3145,7 @@ public class GenerateJavaScriptAST {
     this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic();
     this.symbolTable = symbolTable;
     this.typeIdsByType = typeIdsByType;
+    this.props = props;
 
     this.stripStack = JsStackEmulator.getStackMode(props) == JsStackEmulator.StackMode.STRIP;
     this.jsExportClosureStyle = props.getConfigProps().getBoolean(

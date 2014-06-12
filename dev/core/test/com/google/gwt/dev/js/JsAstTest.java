@@ -29,21 +29,14 @@ public class JsAstTest extends TestCase {
 
   // TODO(rluble): flesh out the test.
   public void testEquality() {
-    JsNumberLiteral one = new JsNumberLiteral(SourceOrigin.UNKNOWN, 1);
-    JsNumberLiteral two = new JsNumberLiteral(SourceOrigin.UNKNOWN, 2);
-    JsArrayLiteral arrayOneTwoLiteral = new JsArrayLiteral(SourceOrigin.UNKNOWN);
-    arrayOneTwoLiteral.getExpressions().add(one);
-    arrayOneTwoLiteral.getExpressions().add(two);
+    final SourceOrigin sourceInfo = SourceOrigin.UNKNOWN;
+    JsNumberLiteral one = new JsNumberLiteral(sourceInfo, 1);
+    JsNumberLiteral two = new JsNumberLiteral(sourceInfo, 2);
+    JsArrayLiteral arrayOneTwoLiteral = new JsArrayLiteral(sourceInfo, one, two);
+    JsArrayLiteral arrayOneTwoLiteral2 = new JsArrayLiteral(sourceInfo, one,two);
+    JsArrayLiteral arrayTwoOneLiteral = new JsArrayLiteral(sourceInfo, two, one);
 
-    JsArrayLiteral arrayOneTwoLiteral2 = new JsArrayLiteral(SourceOrigin.UNKNOWN);
-    arrayOneTwoLiteral2.getExpressions().add(one);
-    arrayOneTwoLiteral2.getExpressions().add(two);
-
-    JsArrayLiteral arrayTwoOneLiteral = new JsArrayLiteral(SourceOrigin.UNKNOWN);
-    arrayTwoOneLiteral.getExpressions().add(two);
-    arrayTwoOneLiteral.getExpressions().add(one);
-
-    JsObjectLiteral emptyObject = new JsObjectLiteral(SourceOrigin.UNKNOWN);
+    JsObjectLiteral emptyObject = new JsObjectLiteral(sourceInfo);
 
     assertEquals(arrayOneTwoLiteral, arrayOneTwoLiteral2);
     assertEquals(arrayOneTwoLiteral2, arrayOneTwoLiteral);

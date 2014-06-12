@@ -14,8 +14,9 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,12 +24,13 @@ import java.util.List;
  */
 public final class JsArrayLiteral extends JsLiteral {
 
-  private final List<JsExpression> exprs = new ArrayList<JsExpression>();
+  private final List<JsExpression> exprs = Lists.newArrayList();
 
   private boolean internable = false;
 
-  public JsArrayLiteral(SourceInfo sourceInfo) {
+  public JsArrayLiteral(SourceInfo sourceInfo, JsExpression... expressions) {
     super(sourceInfo);
+    Collections.addAll(this.exprs, expressions);
   }
 
   public List<JsExpression> getExpressions() {

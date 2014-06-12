@@ -330,7 +330,8 @@ public final class JsRootScope extends JsScope {
       // GWT-defined identifiers
       // If adding a new variable, don't forget to update ClosureJsRunner#getClosureCompilerExterns.
       "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version", "$sessionId", "gwtOnLoad",
-      "$permProps",
+      // Any new gwt-related global should be a property of $gwt.
+      "$gwt",
 
       // typeMarker 'tM' field will break JSO detection on window object if nullMethod is called 'tM'
       "tM",

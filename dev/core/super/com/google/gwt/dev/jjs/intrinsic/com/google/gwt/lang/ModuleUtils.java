@@ -40,7 +40,7 @@ public final class ModuleUtils {
     @CollapsedPropertyHolder::permutationId = softPermutationId;
 
     function initializeModules() {
-      for (i = 0; i < initFnList.length; i++) {
+      for (var i = 0; i < initFnList.length; i++) {
         initFnList[i]();
       }
     }
@@ -62,13 +62,22 @@ public final class ModuleUtils {
   public static native void addInitFunctions() /*-{
     @ModuleUtils::ensureModuleInit()();
     var initFnList = @ModuleUtils::initFnList;
-    for (i = 0;  i < arguments.length; i++) {
+    for (var i = 0;  i < arguments.length; i++) {
       initFnList.push(arguments[i]);
     }
   }-*/;
 
   public static native JavaScriptObject registerEntry() /*-{
     return @com.google.gwt.core.client.impl.Impl::registerEntry()();
+  }-*/;
+
+  public static native void setGwtProperty(String propertyName, JavaScriptObject propertyValue) /*-{
+    // Access $gwt as a global object property so that it does not get optimized out when
+    // using the closure backend.
+    if (!$wnd['$gwt']) {
+      $wnd['$gwt'] = {}
+    }
+    $wnd['$gwt'][propertyName] = propertyValue;
   }-*/;
 
   private static native void ensureModuleInit() /*-{
