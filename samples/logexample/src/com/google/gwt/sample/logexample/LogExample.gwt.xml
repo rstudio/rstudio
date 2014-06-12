@@ -21,9 +21,6 @@
   <source path='client'/>
   <source path='shared'/>
   
-  <!-- Disable the firebug handler as an example -->
-  <set-property name="gwt.logging.firebugHandler" value="DISABLED" />
-  
   <!-- Enable the simple remote handler -->
   <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
 
@@ -32,7 +29,7 @@
   <set-property name="gwt.logging.logLevel" value="FINE"/>
   <set-property name="gwt.logging.consoleHandler" value="DISABLED" />
   <set-property name="gwt.logging.developmentModeHandler" value="DISABLED" />
-  <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+  <set-property name="gwt.logging.hasWidgetsHandler" value="DISABLED" />
   <set-property name="gwt.logging.systemHandler" value="DISABLED" />
    -->
 </module>

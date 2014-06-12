@@ -21,8 +21,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.logging.client.DevelopmentModeLogHandler;
-import com.google.gwt.logging.client.FirebugLogHandler;
-import com.google.gwt.logging.client.HasWidgetsLogHandler;
+import com.google.gwt.logging.client.PopupLogHandler;
 import com.google.gwt.logging.client.SimpleRemoteLogHandler;
 import com.google.gwt.logging.client.SystemLogHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -64,7 +63,6 @@ public class HandlerController {
   private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
   @UiField CheckBox consoleCheckbox;
   @UiField CheckBox devmodeCheckbox;
-  @UiField CheckBox firebugCheckbox;
   @UiField CheckBox popupCheckbox;
   @UiField CheckBox systemCheckbox;
   @UiField CheckBox remoteCheckbox;
@@ -85,8 +83,7 @@ public class HandlerController {
     setupHandler(SystemLogHandler.class, systemCheckbox);
     setupHandler(ConsoleLogHandler.class, consoleCheckbox);
     setupHandler(DevelopmentModeLogHandler.class, devmodeCheckbox);
-    setupHandler(FirebugLogHandler.class, firebugCheckbox);
-    setupHandler(HasWidgetsLogHandler.class, popupCheckbox);
+    setupHandler(PopupLogHandler.class, popupCheckbox);
     setupHandler(SimpleRemoteLogHandler.class, remoteCheckbox);
   }
 
