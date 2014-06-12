@@ -58,7 +58,7 @@ namespace {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.107");
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.108");
 }
 
 } // anonymous namespace
@@ -552,10 +552,6 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
 
 Error initPackratMonitoring()
 {
-   // if there's no project then don't monitor
-   if (!projects::projectContext().hasProject())
-      return Success();
-
    FilePath lockfilePath = 
       projects::projectContext().directory().complete(kPackratLockfilePath);
 
@@ -584,12 +580,6 @@ void onPackratAction(const std::string& project,
                      const std::string& action,
                      bool running)
 {
-   // if there's no project then skip this
-   if (!projects::projectContext().hasProject())
-   {
-      return;
-   }
-
    // if this doesn't apply to the current project then skip it
    if (!core::system::realPathsEqual(
           projects::projectContext().directory(), FilePath(project)))
@@ -657,6 +647,21 @@ SEXP rs_onPackratAction(SEXP projectSEXP, SEXP actionSEXP, SEXP runningSEXP)
    return R_NilValue;
 }
 
+void onDeferredInit(bool)
+{
+   // additional stuff if we are in packrat mode
+   if (module_context::packratContext().modeOn)
+   {
+      Error error = r::exec::RFunction(".rs.installPackratActionHook").call();
+      if (error)
+         LOG_ERROR(error);
+
+      error = initPackratMonitoring();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 } // anonymous namespace
 
 json::Object contextAsJson(const module_context::PackratContext& context)
@@ -701,6 +706,12 @@ void annotatePendingActions(json::Object *pJson)
 
 Error initialize()
 {
+   // register deferred init (since we need to call into the packrat package
+   // we need to wait until all other modules initialize and all R routines
+   // are initialized -- otherwise the package load hook attempts to call
+   // rs_packageLoaded and can't find it
+   module_context::events().onDeferredInit.connect(onDeferredInit);
+
    // register packrat action hook
    R_CallMethodDef onPackratActionMethodDef ;
    onPackratActionMethodDef.name = "rs_onPackratAction" ;
@@ -716,9 +727,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
       (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
-      (bind(sourceModuleRFile, "SessionPackrat.R"))
-      (initPackratMonitoring);
-
+      (bind(sourceModuleRFile, "SessionPackrat.R"));
    return initBlock.execute();
 }
 
