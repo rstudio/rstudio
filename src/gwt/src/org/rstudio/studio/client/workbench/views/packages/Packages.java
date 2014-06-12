@@ -998,16 +998,16 @@ public class Packages
                   }
                }));
       }
-      if (packageState.getRestoreActions().length() > 0) 
+      if (packageState.getSnapshotActions().length() > 0) 
       {
          actions.add(new Action(messageFromActions(
-               packageState.getRestoreActions()),
+               packageState.getSnapshotActions()),
                "Save...", 
                new Command() {
                   @Override
                   public void execute()
                   {
-                     confirmPackratActions(packageState.getRestoreActions(),
+                     confirmPackratActions(packageState.getSnapshotActions(),
                                            "Snapshot", "snapshot");
                   }
                }));
@@ -1020,7 +1020,9 @@ public class Packages
       if (actions.length() == 1)
       {
          // If there's just one action, show it
-         return actions.get(0).getMessage();
+         PackratPackageAction action = actions.get(0);
+         return StringUtil.capitalize(action.getAction()) + " " + 
+                action.getPackage();
       }
       else
       {

@@ -243,8 +243,11 @@ void checkHashes(
 
 bool isHashUnresolved(PackratHashType hashType)
 {
-   return getStoredHash(hashType, HASH_STATE_OBSERVED) != 
-          getStoredHash(hashType, HASH_STATE_RESOLVED);
+   std::string observedHash = getStoredHash(hashType, HASH_STATE_OBSERVED);
+   std::string resolvedHash = getStoredHash(hashType, HASH_STATE_RESOLVED);
+   if (observedHash.empty() || resolvedHash.empty())
+      return false;
+   return observedHash != resolvedHash;
 }
 
 // Auto-snapshot -------------------------------------------------------------
@@ -330,8 +333,7 @@ void pendingSnapshot(PendingSnapshotAction action)
       }
       else
       {
-         resolveStateAfterAction(PACKRAT_ACTION_SNAPSHOT, 
-                                 HASH_TYPE_LIBRARY);
+         resolveStateAfterAction(PACKRAT_ACTION_SNAPSHOT, HASH_TYPE_LIBRARY);
       }
    }
 }
@@ -681,13 +683,13 @@ void annotatePendingActions(json::Object *pJson)
 
    // check for resolved states
    bool libraryDirty = 
-      libraryHash == getStoredHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED);
+      libraryHash != getStoredHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED);
    bool lockfileDirty = 
-      lockfileHash == getStoredHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED);
+      lockfileHash != getStoredHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED);
 
-   if (libraryDirty && !lockfileDirty)
+   if (libraryDirty)
       getPendingActions(PACKRAT_ACTION_SNAPSHOT, &snapshotActions);
-   else if (lockfileDirty && !libraryDirty)
+   if (lockfileDirty)
       getPendingActions(PACKRAT_ACTION_RESTORE, &restoreActions);
 
    getPendingActions(PACKRAT_ACTION_CLEAN, &cleanActions);
