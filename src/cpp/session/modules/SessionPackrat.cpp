@@ -25,6 +25,7 @@
 #include <r/RJson.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/RRoutines.hpp>
+#include <r/ROptions.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -658,6 +659,30 @@ SEXP rs_onPackratAction(SEXP projectSEXP, SEXP actionSEXP, SEXP runningSEXP)
    return R_NilValue;
 }
 
+
+void detectReposChanges()
+{
+   static SEXP s_lastReposSEXP = R_UnboundValue;
+   SEXP reposSEXP = r::options::getOption("repos");
+   if (s_lastReposSEXP == R_UnboundValue)
+   {
+      s_lastReposSEXP = reposSEXP;
+   }
+   else if (reposSEXP != s_lastReposSEXP)
+   {
+      s_lastReposSEXP = reposSEXP;
+
+      // TODO: ensure that a snapshot takes place
+
+   }
+}
+
+void onDetectChanges(module_context::ChangeSource source)
+{
+   if (source == module_context::ChangeSourceREPL)
+      detectReposChanges();
+}
+
 void onDeferredInit(bool)
 {
    // additional stuff if we are in packrat mode
@@ -670,6 +695,8 @@ void onDeferredInit(bool)
       error = initPackratMonitoring();
       if (error)
          LOG_ERROR(error);
+
+      module_context::events().onDetectChanges.connect(onDetectChanges);
    }
 }
 
