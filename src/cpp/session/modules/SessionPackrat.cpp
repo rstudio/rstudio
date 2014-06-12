@@ -611,6 +611,21 @@ SEXP rs_onPackratAction(SEXP projectSEXP, SEXP actionSEXP, SEXP runningSEXP)
    return R_NilValue;
 }
 
+void onDeferredInit(bool)
+{
+   // additional stuff if we are in packrat mode
+   if (module_context::packratContext().modeOn)
+   {
+      Error error = r::exec::RFunction(".rs.installPackratActionHook").call();
+      if (error)
+         LOG_ERROR(error);
+
+      error = initPackratMonitoring();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 } // anonymous namespace
 
 json::Object contextAsJson(const module_context::PackratContext& context)
@@ -631,6 +646,12 @@ json::Object contextAsJson()
 
 Error initialize()
 {
+   // register deferred init (since we need to call into the packrat package
+   // we need to wait until all other modules initialize and all R routines
+   // are initialized -- otherwise the package load hook attempts to call
+   // rs_packageLoaded and can't find it
+   module_context::events().onDeferredInit.connect(onDeferredInit);
+
    // register packrat action hook
    R_CallMethodDef onPackratActionMethodDef ;
    onPackratActionMethodDef.name = "rs_onPackratAction" ;
@@ -647,23 +668,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
       (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
       (bind(sourceModuleRFile, "SessionPackrat.R"));
-   Error error = initBlock.execute();
-   if (error)
-      return error;
-
-   // additional stuff if we are in packrat mode
-   if (packratContext().modeOn)
-   {
-      Error error = r::exec::RFunction(".rs.installPackratActionHook").call();
-      if (error)
-         LOG_ERROR(error);
-
-      error = initPackratMonitoring();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   return Success();
+   return initBlock.execute();
 }
 
 } // namespace packrat
