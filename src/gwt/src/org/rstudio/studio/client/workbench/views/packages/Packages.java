@@ -1069,7 +1069,7 @@ public class Packages
                   }
                }));
       }
-      if (packageState.getCleanActions().length() > 0) 
+      else if (packageState.getCleanActions().length() > 0) 
       {
          actions.add(new Action(messageFromActions(
                packageState.getCleanActions()),
