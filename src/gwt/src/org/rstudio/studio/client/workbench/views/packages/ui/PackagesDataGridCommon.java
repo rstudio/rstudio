@@ -1,5 +1,5 @@
-/*
- * PackagesDataGridResources.java
+/* 
+ * PackagesDataGridCommon.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -16,9 +16,12 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import com.google.gwt.user.cellview.client.DataGrid;
 
-public interface PackagesDataGridResources extends DataGrid.Resources
+public interface PackagesDataGridCommon extends DataGrid.Resources
 {
-   @Source({DataGrid.Style.DEFAULT_CSS, "PackagesDataGridCommon.css", 
-            "PackagesDataGrid.css"})
-   PackagesDataGridStyle dataGridStyle();
+   public interface PackagesDataGridCommonStyle extends DataGrid.Style
+   {
+   }
+
+   @Source({DataGrid.Style.DEFAULT_CSS, "PackagesDataGridCommon.css"})
+   PackagesDataGridCommonStyle dataGridStyle();
 }

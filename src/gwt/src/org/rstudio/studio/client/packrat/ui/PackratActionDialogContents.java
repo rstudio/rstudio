@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridCommon;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -39,7 +40,8 @@ public class PackratActionDialogContents extends Composite {
       prRestoreActionsList_ = new ArrayList<PackratPackageAction>();
       JsArrayUtil.fillList(prRestoreActionsArray, prRestoreActionsList_);
       
-      table_ = new DataGrid<PackratPackageAction>();
+      table_ = new DataGrid<PackratPackageAction>(prRestoreActionsList_.size(),
+            (PackagesDataGridCommon)GWT.create(PackagesDataGridCommon.class));
       table_.setRowData(prRestoreActionsList_);
       
       initTableColumns();
