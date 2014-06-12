@@ -82,6 +82,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class Packages
       extends BasePresenter
@@ -1016,12 +1019,43 @@ public class Packages
    {
       if (actions.length() == 1)
       {
+         // If there's just one action, show it
          return actions.get(0).getMessage();
       }
       else
       {
-         return actions.length() + " actions";
+         return summarizeActions(actions);
       }
+   }
+   
+   private String summarizeActions(JsArray<PackratPackageAction> actions)
+   {
+      String summary = "";
+      Map<String, Integer> actionCounts = new TreeMap<String, Integer>();
+      for (int i = 0; i < actions.length(); i++)
+      {
+         PackratPackageAction action = actions.get(0);
+         String actionName = action.getAction();
+         if (actionCounts.containsKey(actionName))
+            actionCounts.put(actionName, actionCounts.get(actionName) + 1);
+         else 
+            actionCounts.put(actionName, 1);
+      }
+      String actionNames[] = actionCounts.keySet().toArray(new String[]{});
+      for (int i = 0; i < actionNames.length; i++)
+      {
+         String actionName = actionNames[i];
+         summary += StringUtil.capitalize(actionName) + " ";
+         if (actionCounts.get(actionName).equals(1))
+            summary += "1 package";
+         else
+            summary += actionCounts.get(actionName) + " packages";
+         if (i < actionNames.length - 2)
+            summary += ", ";
+         if (i == actionNames.length - 2)
+            summary += " and ";
+      }
+      return summary;
    }
 
    private final Display view_;

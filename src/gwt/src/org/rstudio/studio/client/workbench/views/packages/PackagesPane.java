@@ -145,7 +145,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
       };
       
-      if (actions == null)
+      if (actions == null || actions.size() == 0)
       {
          if (actionCenter_ != null)
          {
