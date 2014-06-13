@@ -113,7 +113,8 @@ enum PackratHashState
 enum PendingSnapshotAction
 {
    SET_PENDING_SNAPSHOT = 0,
-   COMPLETE_SNAPSHOT = 1
+   EXEC_PENDING_SNAPSHOT = 1,
+   COMPLETE_SNAPSHOT = 2
 };
 
 PackratActionType packratAction(const std::string& str)
@@ -341,19 +342,21 @@ void pendingSnapshot(PendingSnapshotAction action)
    if (action == SET_PENDING_SNAPSHOT)
    {
       pendingSnapshots++;
-      PACKRAT_TRACE("snapshot requested while running, queueing ("
+      PACKRAT_TRACE("queueing pending snapshot ("
                     << pendingSnapshots << ")");
       return;
    }
-   else if (action == COMPLETE_SNAPSHOT)
+   else if (action == EXEC_PENDING_SNAPSHOT || action == COMPLETE_SNAPSHOT)
    {
+      // prefer execution of any pending snapshots in either case
       if (pendingSnapshots > 0)
       {
          PACKRAT_TRACE("executing pending snapshot");
          pendingSnapshots = 0;
          performAutoSnapshot(computeLibraryHash());
       }
-      else
+      // when a snapshot finishes, resolve the library state
+      else if (action == COMPLETE_SNAPSHOT)
       {
          resolveStateAfterAction(PACKRAT_ACTION_SNAPSHOT, HASH_TYPE_LIBRARY);
       }
@@ -426,7 +429,9 @@ void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 {
    // perform an auto-snapshot if we don't have a pending restore
    if (!isHashUnresolved(HASH_TYPE_LOCKFILE)) 
-      performAutoSnapshot(newHash);
+   {
+      pendingSnapshot(SET_PENDING_SNAPSHOT);
+   }
    else 
    {
       PACKRAT_TRACE("lockfile observed hash " << 
@@ -479,6 +484,14 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
       FilePath changedFilePath(fileChange.fileInfo().absolutePath());
       onFileChanged(changedFilePath);
    }
+}
+
+void onConsolePrompt(const std::string& prompt)
+{
+   // Execute pending auto-snapshots if any exist. We don't execute these
+   // immediately on detecting a change since a bulk change may be in-flight
+   // (e.g. installing a package and several upon which it depends)
+   pendingSnapshot(EXEC_PENDING_SNAPSHOT);
 }
 
 void emitPackagesChanged()
@@ -572,6 +585,7 @@ Error initPackratMonitoring()
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Packrat", cb);
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
+   module_context::events().onConsolePrompt.connect(onConsolePrompt);
 
    return Success();
 }
