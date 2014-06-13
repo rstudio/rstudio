@@ -24,6 +24,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StyleUtils;
 import org.rstudio.studio.client.packrat.model.PackratConflictActions;
 import org.rstudio.studio.client.packrat.model.PackratConflictResolution;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridCommon;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -68,7 +69,8 @@ public class PackratResolveConflictDialog
       mainWidget_.add(label);
             
       // table
-      table_ = new DataGrid<PackratConflictActions>(conflictActions.size());
+      table_ = new DataGrid<PackratConflictActions>(conflictActions.size(),
+            (PackagesDataGridCommon)GWT.create(PackagesDataGridCommon.class));
       StyleUtils.forceMacScrollbars(table_);
       table_.setWidth(kTableWidth);
       table_.setHeight("225px");

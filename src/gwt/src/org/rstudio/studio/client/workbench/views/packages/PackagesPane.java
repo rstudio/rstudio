@@ -145,7 +145,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
       };
       
-      if (actions == null)
+      if (actions == null || actions.size() == 0)
       {
          if (actionCenter_ != null)
          {
@@ -484,8 +484,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
       packagesTable_.setColumnWidth(removeColumn, 35, Unit.PX);
 
-      packagesTable_.setHeaderBuilder(new 
-            PackageHeaderBuilder(packagesTable_, false));
       packagesTable_.setTableBuilder(new 
             PackageTableBuilder(packagesTable_));
       packagesTable_.setSkipRowHoverCheck(true);
@@ -582,33 +580,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       public String getValue(PackageInfo packageInfo)
       {
          return packageInfo.getName();
-      }
-   }
-   
-   private class PackageHeaderBuilder 
-           extends AbstractHeaderOrFooterBuilder<PackageInfo>
-   {
-      public PackageHeaderBuilder(AbstractCellTable<PackageInfo> table,
-                                  boolean isFooter)
-      {
-         super(table, isFooter);
-      }
-
-      @Override
-      protected boolean buildHeaderOrFooterImpl()
-      {
-         TableRowBuilder row = startRow();
-         for (int i = 0; i < packagesTable_.getColumnCount(); i++)
-         {
-            TableCellBuilder cell = row.startTH();
-            cell.className(PackagesCellTableResources.INSTANCE
-                           .cellTableStyle().packageTableHeader());
-            TextHeader header = (TextHeader)packagesTable_.getHeader(i);
-            cell.text(header.getValue());
-            cell.endTH();
-         }
-         row.end();
-         return true;
       }
    }
    

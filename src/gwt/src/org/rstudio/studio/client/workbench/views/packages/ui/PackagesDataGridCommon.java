@@ -1,7 +1,7 @@
-/*
- * PackratRestoreActions.java
+/* 
+ * PackagesDataGridCommon.java
  *
- * Copyright (C) 2014 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,12 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.packrat.model;
+package org.rstudio.studio.client.workbench.views.packages.ui;
 
-import org.rstudio.core.client.js.JsObject;
+import com.google.gwt.user.cellview.client.DataGrid;
 
-public class PackratRestoreActions extends JsObject {
-   
-   protected PackratRestoreActions() {}
-   
+public interface PackagesDataGridCommon extends DataGrid.Resources
+{
+   public interface PackagesDataGridCommonStyle extends DataGrid.Style
+   {
+   }
+
+   @Source({DataGrid.Style.DEFAULT_CSS, "PackagesDataGridCommon.css"})
+   PackagesDataGridCommonStyle dataGridStyle();
 }

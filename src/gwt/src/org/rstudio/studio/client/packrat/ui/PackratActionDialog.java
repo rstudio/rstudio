@@ -1,4 +1,4 @@
-/* PackratRestoreDialog.java
+/* PackratActionDialog.java
  *
  * Copyright (C) 2014 by RStudio, Inc.
  *
@@ -15,19 +15,20 @@
 package org.rstudio.studio.client.packrat.ui;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.Widget;
 
-public class PackratRestoreDialog extends ModalDialog<Void>
+public class PackratActionDialog extends ModalDialog<Void>
 {
-   public PackratRestoreDialog(
-         JsArray<PackratRestoreActions> prRestore,
+   public PackratActionDialog(
+         String packratAction,
+         JsArray<PackratPackageAction> actions,
          final OperationWithInput<Void> operation)
    {
-      super("Packrat Restore", operation);
-      setOkButtonCaption("Restore");
-      contents_ = new PackratRestoreDialogContents(prRestore);
+      super("Packrat " + packratAction, operation);
+      setOkButtonCaption(packratAction);
+      contents_ = new PackratActionDialogContents(actions);
       setWidth("500px");
    }
 
@@ -37,7 +38,7 @@ public class PackratRestoreDialog extends ModalDialog<Void>
       return contents_;
    }
    
-   private PackratRestoreDialogContents contents_;
+   private PackratActionDialogContents contents_;
 
    @Override
    protected Void collectInput()

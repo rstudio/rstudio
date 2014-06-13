@@ -17,7 +17,8 @@ package org.rstudio.studio.client.packrat.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.model.PackratPackageAction;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridCommon;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -27,19 +28,20 @@ import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
-public class PackratRestoreDialogContents extends Composite {
+public class PackratActionDialogContents extends Composite {
 
    private static PackratRestoreDialogContentsUiBinder uiBinder = GWT.create(PackratRestoreDialogContentsUiBinder.class);
 
-   interface PackratRestoreDialogContentsUiBinder extends UiBinder<Widget, PackratRestoreDialogContents> {}
+   interface PackratRestoreDialogContentsUiBinder extends UiBinder<Widget, PackratActionDialogContents> {}
 
-   public PackratRestoreDialogContents(JsArray<PackratRestoreActions> prRestoreActionsArray)
+   public PackratActionDialogContents(JsArray<PackratPackageAction> prRestoreActionsArray)
    {
       
-      prRestoreActionsList_ = new ArrayList<PackratRestoreActions>();
+      prRestoreActionsList_ = new ArrayList<PackratPackageAction>();
       JsArrayUtil.fillList(prRestoreActionsArray, prRestoreActionsList_);
       
-      table_ = new DataGrid<PackratRestoreActions>();
+      table_ = new DataGrid<PackratPackageAction>(prRestoreActionsList_.size(),
+            (PackagesDataGridCommon)GWT.create(PackagesDataGridCommon.class));
       table_.setRowData(prRestoreActionsList_);
       
       initTableColumns();
@@ -47,7 +49,7 @@ public class PackratRestoreDialogContents extends Composite {
       initWidget(uiBinder.createAndBindUi(this));
    }
    
-   private void addColumn(DataGrid<PackratRestoreActions> table, SortableColumnWithHeader<PackratRestoreActions> col)
+   private void addColumn(DataGrid<PackratPackageAction> table, SortableColumnWithHeader<PackratPackageAction> col)
    {
       table.addColumn(col.getColumn(), col.getHeader());
    }
@@ -57,11 +59,11 @@ public class PackratRestoreDialogContents extends Composite {
 //      package action packrat.version library.version                    message
 //      1  digest    add         0.6.4.1            <NA> Install 'digest' (0.6.4.1)
       
-      addColumn(table_, new SortableColumnWithHeader<PackratRestoreActions>(prRestoreActionsList_, "package", "Package"));
+      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "package", "Package"));
 //      addColumn(table_, new SortableColumnWithHeader<PackratRestoreActions>(prRestoreActionsList_, "action", "Action"));
-      addColumn(table_, new SortableColumnWithHeader<PackratRestoreActions>(prRestoreActionsList_, "packrat.version", "Lockfile Version"));
-      addColumn(table_, new SortableColumnWithHeader<PackratRestoreActions>(prRestoreActionsList_, "library.version", "Library Version"));
-      addColumn(table_, new SortableColumnWithHeader<PackratRestoreActions>(prRestoreActionsList_, "message", "Action to Perform"));
+      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "packrat.version", "Lockfile Version"));
+      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "library.version", "Library Version"));
+      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "message", "Action to Perform"));
       
       table_.setColumnWidth(0, "15%");
       table_.setColumnWidth(1, "15%");
@@ -70,8 +72,8 @@ public class PackratRestoreDialogContents extends Composite {
       
    }
    
-   private ArrayList<PackratRestoreActions> prRestoreActionsList_;
-   @UiField (provided = true) DataGrid<PackratRestoreActions> table_;
+   private ArrayList<PackratPackageAction> prRestoreActionsList_;
+   @UiField (provided = true) DataGrid<PackratPackageAction> table_;
    
 
 }

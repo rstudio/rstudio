@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.events;
 
-import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
@@ -27,12 +27,12 @@ public class PackratRestoreNeededEvent extends GwtEvent<PackratRestoreNeededEven
       void onPackratRestoreNeeded(PackratRestoreNeededEvent event);
    }
 
-   public PackratRestoreNeededEvent(JsArray<PackratRestoreActions> actions)
+   public PackratRestoreNeededEvent(JsArray<PackratPackageAction> actions)
    {
       actions_ = actions;
    }
 
-   public JsArray<PackratRestoreActions> getActions()
+   public JsArray<PackratPackageAction> getActions()
    {
       return actions_;
    }
@@ -49,7 +49,7 @@ public class PackratRestoreNeededEvent extends GwtEvent<PackratRestoreNeededEven
       handler.onPackratRestoreNeeded(this);
    }
 
-   private final JsArray<PackratRestoreActions> actions_;
+   private final JsArray<PackratPackageAction> actions_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

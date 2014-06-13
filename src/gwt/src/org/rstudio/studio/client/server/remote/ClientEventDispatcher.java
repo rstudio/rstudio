@@ -52,7 +52,7 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
-import org.rstudio.studio.client.packrat.model.PackratRestoreActions;
+import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
@@ -610,7 +610,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.PackratRestoreNeeded))
          {
-            JsArray<PackratRestoreActions> data = event.getData();
+            JsArray<PackratPackageAction> data = event.getData();
             eventBus_.fireEvent(new PackratRestoreNeededEvent(data));
          }
          else

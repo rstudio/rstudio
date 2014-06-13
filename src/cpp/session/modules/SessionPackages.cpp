@@ -316,6 +316,8 @@ Error getPackageState(const json::JsonRpcRequest& request,
       r::json::jsonValueFromObject(packageList, &packageListJson);
       result["package_list"] = packageListJson;
       result["packrat_context"] = packrat::contextAsJson(context);
+      if (context.modeOn)
+         packrat::annotatePendingActions(&result);
       pResponse->setResult(result);
       return Success();
    }
