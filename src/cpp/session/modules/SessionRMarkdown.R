@@ -16,14 +16,16 @@
 .rs.addFunction("scalarListFromList", function(l)
 {
    # hint that every non-list element of the hierarchical list l
-   # is a scalar value
+   # is a scalar value if it is of length 1
    l <- lapply(l, function(ele) {
       if (is.null(ele))
          NULL
       else if (is.list(ele)) 
          .rs.scalarListFromList(ele)
-      else
+      else if (length(ele) == 1)
          .rs.scalar(ele)
+      else
+         ele
    })
 })
 
