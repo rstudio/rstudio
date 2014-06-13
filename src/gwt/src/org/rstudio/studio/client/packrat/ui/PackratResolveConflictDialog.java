@@ -54,25 +54,27 @@ public class PackratResolveConflictDialog
       mainWidget_ = new VerticalPanel();
       
       // layout constants
-      final String kTableWidth = "540px";
-      final String kPackageColWidth = "24%";
-      final String kActionColWidth = "38%";
+      final int kTableWidth = 540;
+      final int kPackageColWidth = 120;
+      final int kActionCol1Width = 190;
+      final int kActionCol2Width = 200;
       
       // create label
       Label label = new Label(
-        "Packrat's snapshot of package versions and the packages currently " +
-        "installed in your library are out of sync. To bring packrat back " + 
-        "into sync you need to either update the snapshot or update the " +
-        "library:");
+        "Packrat's snapshot of package versions is out of sync with " +
+        "the packages currently installed in your library. To resolve " +
+        "the conflict you need to either update the packrat snapshot or " +
+        "update the library:");
       label.addStyleName(RESOURCES.styles().conflictLabel());
-      label.setWidth(kTableWidth);
+      label.setWidth(kTableWidth + "px");
       mainWidget_.add(label);
             
       // table
       table_ = new DataGrid<PackratConflictActions>(conflictActions.size(),
             (PackagesDataGridCommon)GWT.create(PackagesDataGridCommon.class));
       StyleUtils.forceMacScrollbars(table_);
-      table_.setWidth(kTableWidth);
+      table_.addStyleName(RESOURCES.styles().conflictsTable());
+      table_.setWidth(kTableWidth + "px");
       table_.setHeight("225px");
       table_.setRowData(conflictActions);
       table_.addColumn(
@@ -92,7 +94,7 @@ public class PackratResolveConflictDialog
                return StringUtil.notNull(item.getSnapshotAction());
             } 
          },
-         "Snapshot"
+         "Packrat Snapshot"
       );
         
       table_.addColumn(
@@ -105,17 +107,17 @@ public class PackratResolveConflictDialog
          "Library"
       );
       
-      table_.setColumnWidth(0, kPackageColWidth);
-      table_.setColumnWidth(1, kActionColWidth);
-      table_.setColumnWidth(2, kActionColWidth);    
+      table_.setColumnWidth(0, kPackageColWidth + "px");
+      table_.setColumnWidth(1, kActionCol1Width + "px");
+      table_.setColumnWidth(2, kActionCol2Width + "px");    
       mainWidget_.add(table_);
       
       // create radio buttons
       Grid choiceGrid = new Grid(1, 3);
-      choiceGrid.setWidth(kTableWidth);
-      choiceGrid.getColumnFormatter().setWidth(0, kPackageColWidth);
-      choiceGrid.getColumnFormatter().setWidth(1, kActionColWidth);
-      choiceGrid.getColumnFormatter().setWidth(2, kActionColWidth);
+      choiceGrid.setWidth(kTableWidth + "px");
+      choiceGrid.getColumnFormatter().setWidth(0, (kPackageColWidth-3) + "px");
+      choiceGrid.getColumnFormatter().setWidth(1, (kActionCol1Width+3) + "px");
+      choiceGrid.getColumnFormatter().setWidth(2, kActionCol2Width + "px");
       choiceGrid.addStyleName(RESOURCES.styles().choicesGrid());
       Label resolutionLabel =new Label("Resolution:");
       resolutionLabel.addStyleName(RESOURCES.styles().resolutionLabel());
@@ -196,6 +198,7 @@ public class PackratResolveConflictDialog
       String choicesGrid();
       String choiceButton();
       String resolutionLabel();
+      String conflictsTable();
    }
   
    static interface Resources extends ClientBundle

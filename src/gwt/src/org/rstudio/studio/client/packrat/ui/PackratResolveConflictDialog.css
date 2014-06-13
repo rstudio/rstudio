@@ -1,12 +1,12 @@
 
 .conflictLabel {
-	margin-bottom: 15px;
+	margin-bottom: 10px;
 }
 
 
 .choicesGrid {
 	margin-top: 15px;
-	margin-bottom: 15px;
+	margin-bottom: 20px;
 }
 
 .choiceButton {
@@ -17,3 +17,7 @@
 	font-weight: bold;
 }
 
+.conflictsTable {
+  border: 1px solid #BBB;  
+  background-color: white;
+}
