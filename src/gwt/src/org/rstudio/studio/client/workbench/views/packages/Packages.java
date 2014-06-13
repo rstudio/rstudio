@@ -1010,7 +1010,8 @@ public class Packages
                @Override
                public void execute(Void input)
                {
-                  packratUtil_.executePackratFunction(packratFunction);
+                  packratUtil_.executePackratFunction(packratFunction, 
+                        "prompt = FALSE");
                }
             }).showModal();
    }
@@ -1028,11 +1029,13 @@ public class Packages
                {
                   if (input == PackratConflictResolution.Library)
                   {
-                     packratUtil_.executePackratFunction("snapshot");
+                     packratUtil_.executePackratFunction("snapshot", 
+                           "prompt = FALSE");
                   }
                   else if (input == PackratConflictResolution.Snapshot)
                   {
-                     packratUtil_.executePackratFunction("restore");
+                     packratUtil_.executePackratFunction("restore",
+                           "prompt = FALSE");
                   }
                }
             }).showModal();
