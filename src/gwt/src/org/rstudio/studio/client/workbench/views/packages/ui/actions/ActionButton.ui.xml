@@ -1,0 +1,14 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:with field='res' type='org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionButton.Resources'/>
+   <button class="{res.styles.actionButton}">
+      <table ui:field="table_" cellpadding='0' cellspacing='0' border='0'>
+         <tr>
+            <td class='{res.styles.buttonLeft}'></td>
+            <td class='{res.styles.buttonCenter}'><div ui:field='content_' class='{res.styles.buttonContent}'></div></td>
+            <td class='{res.styles.buttonRight}'></td>
+         </tr>
+      </table>
+   </button>
+</ui:UiBinder>

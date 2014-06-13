@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui.actions;
 
-import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -35,7 +34,7 @@ public class ActionWidget extends Composite
       label.addStyleName(STYLES.actionLabel());
       panel.add(label);
       
-      SmallButton button = new SmallButton(action.getButtonText());
+      ActionButton button = new ActionButton(action.getButtonText());
       button.addClickHandler(new ClickHandler() {
 
          @Override
