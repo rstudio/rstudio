@@ -58,7 +58,7 @@ public class PackratActionDialog extends ModalDialog<Void>
       try
       {
          JsArray<PackratPackageAction> actions = JsArray.createArray().cast();
-         new PackratActionDialogContents(actions);
+         new PackratActionDialogContents("", actions);
       }
       catch(Exception e)
       { 
