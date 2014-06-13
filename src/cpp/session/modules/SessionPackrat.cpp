@@ -31,6 +31,7 @@
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionPersistentState.hpp>
 
 #include "SessionPackages.hpp"
 #include "session-config.h"
@@ -179,15 +180,9 @@ std::string getHash(PackratHashType hashType, PackratHashState hashState)
       else
          return computeLibraryHash();
    }
-   // For stored hashes, look up in project persistent storage
-   json::Value hash = 
-      r::session::clientState().getProjectPersistent(
-            "packrat",
-            keyOfHashType(hashType, hashState));
-   if (hash.type() == json::StringType) 
-      return hash.get_str();
    else
-      return "";
+      return persistentState().getStoredHash(keyOfHashType(hashType, 
+                                                           hashState));
 }
 
 std::string updateHash(PackratHashType hashType, PackratHashState hashState)
@@ -198,10 +193,8 @@ std::string updateHash(PackratHashType hashType, PackratHashState hashState)
    {
       PACKRAT_TRACE("updating " << keyOfHashType(hashType, hashState) << 
                     " (" << oldHash << " -> " << newHash << ")");
-      r::session::clientState().putProjectPersistent(
-            "packrat", 
-            keyOfHashType(hashType, hashState), 
-            newHash);
+      persistentState().setStoredHash(keyOfHashType(hashType, hashState), 
+                                      newHash);
    }
    return newHash;
 }
