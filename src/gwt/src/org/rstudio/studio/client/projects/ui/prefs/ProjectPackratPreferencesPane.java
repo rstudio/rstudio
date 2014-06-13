@@ -132,7 +132,9 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         
         manageUI(context.isPackified());
 
-        HelpLink helpLink = new HelpLink("Learn more about Packrat", "packrat");
+        HelpLink helpLink = new HelpLink("Learn more about Packrat", 
+                                         "packrat", 
+                                         false);
         helpLink.getElement().getStyle().setMarginTop(15, Unit.PX);
         nudgeRight(helpLink);
         add(helpLink);

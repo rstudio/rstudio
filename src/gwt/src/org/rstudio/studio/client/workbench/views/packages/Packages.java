@@ -497,6 +497,20 @@ public class Packages
    }
    
    @Handler
+   public void onPackratHelp()
+   {
+      globalDisplay_.openRStudioLink("packrat", false);
+   }
+   
+   @Handler
+   public void onPackratClean()
+   {
+      // TODO: create subclass of PackageActionConfirmationDialog
+      
+      globalDisplay_.showErrorMessage("Packrat Clean", "Not yet implemented");
+   }
+   
+   @Handler
    public void onPackratBundle() 
    {
       pFileDialogs_.get().saveFile(

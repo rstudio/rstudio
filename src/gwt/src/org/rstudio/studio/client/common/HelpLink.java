@@ -30,10 +30,17 @@ public class HelpLink extends Composite
    // for use in UiBinder
    public HelpLink()
    {
-      this("", "");
+      this("", "", true);
+   }
+   
+   public HelpLink(String caption, String rstudioLink)
+   {
+      this(caption, rstudioLink, true);
    }
 
-   public HelpLink(String caption, String rstudioLink)
+   public HelpLink(String caption, 
+                   String rstudioLink, 
+                   final boolean withVersionInfo)
    {
       rstudioLink_ = rstudioLink;
 
@@ -47,7 +54,8 @@ public class HelpLink extends Composite
          public void onClick(ClickEvent event)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
-                                                         rstudioLink_);
+                                                         rstudioLink_,
+                                                         withVersionInfo);
          }  
       });
       helpPanel.add(helpLink_);
