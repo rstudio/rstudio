@@ -514,7 +514,7 @@ public class Packages
    public void onPackratBundle() 
    {
       pFileDialogs_.get().saveFile(
-         "Save Bundled Packrat Project",
+         "Export Project Bundle (Zip)",
          fsContext_,
          workbenchContext_.getCurrentWorkingDir(),
          "zip",

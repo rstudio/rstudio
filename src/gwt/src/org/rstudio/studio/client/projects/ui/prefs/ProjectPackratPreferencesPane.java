@@ -85,7 +85,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         RProjectPackratOptions packratOptions = options.getPackratOptions();
                
         usePackratButton_ = new ThemedButton(
-           "Use Packrat with this Project...",
+           "Use Packrat with this Project",
            new ClickHandler() {
 
               @Override
@@ -155,11 +155,10 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    {
       globalDisplay_.showYesNoMessage(
           MessageDialog.QUESTION, 
-          "Remove Packrat", 
-          "Removing packrat from this project will delete your private " +
-          "library folder and revert to the use of standard system and " +
-          "user libraries.\n\n" +
-          "Remove packrat from this project now?",
+          "Disable Packrat", 
+          "Disabling packrat for this project will revert to the use of " +
+          "standard user and system package libraries.\n\n" +
+          "Disable packrat for this project now?",
           false,
           new Operation() {
             @Override
@@ -235,56 +234,44 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
 
    private void executeBootstrap(final PackratPrerequisites prereqs)
    {
-      globalDisplay_.showYesNoMessage(
-         MessageDialog.QUESTION, 
-         "Use Packrat", 
-         "Using packrat with this project will configure the project with " +
-         "it's own package library, keeping it isolated from other projects " +
-         "and making it easier to preserve and reproduce.\n\n" +
-         "Setup this project to use packrat now?", 
-         new Operation() {
-            @Override
-            public void execute()
-            {
-               final Command bootstrapCommand = new Command() { 
-                  @Override
-                  public void execute()  
-                  {
-                     packratUtil_.executePackratFunction("bootstrap");
-                  }
-               };
-               
-               if (prereqs.getPackageAvailable())
-               {
-                  forceClosed(bootstrapCommand);
-               }
-               else
-               {
-                  final ProgressIndicator indicator = getProgressIndicator();
-                  indicator.onProgress("Installing Packrat...");
-                  
-                  server_.installPackrat(new ServerRequestCallback<Boolean>() {
+      
+      final Command bootstrapCommand = new Command() { 
+         @Override
+         public void execute()  
+         {
+            packratUtil_.executePackratFunction("bootstrap");
+         }
+      };
 
-                     @Override
-                     public void onResponseReceived(Boolean success)
-                     {
-                        indicator.onCompleted();
-                        
-                        if (success)
-                           forceClosed(bootstrapCommand);
-                     }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        indicator.onError(error.getUserMessage());
-                     }
-                     
-                  });
-               }
+      if (prereqs.getPackageAvailable())
+      {
+         forceClosed(bootstrapCommand);
+      }
+      else
+      {
+         final ProgressIndicator indicator = getProgressIndicator();
+         indicator.onProgress("Installing Packrat...");
+
+         server_.installPackrat(new ServerRequestCallback<Boolean>() {
+
+            @Override
+            public void onResponseReceived(Boolean success)
+            {
+               indicator.onCompleted();
+
+               if (success)
+                  forceClosed(bootstrapCommand);
             }
-         },
-         true);
+
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }
+
+         });
+      }
+
    }
    
    private final Session session_;
