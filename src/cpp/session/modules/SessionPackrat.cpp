@@ -717,7 +717,6 @@ void annotatePendingActions(json::Object *pJson)
 {
    json::Value restoreActions;
    json::Value snapshotActions;
-   json::Value cleanActions;
    json::Object& json = *pJson;
 
    // compute new hashes and mark them observed
@@ -736,12 +735,9 @@ void annotatePendingActions(json::Object *pJson)
       getPendingActions(PACKRAT_ACTION_SNAPSHOT, &snapshotActions);
    if (lockfileDirty)
       getPendingActions(PACKRAT_ACTION_RESTORE, &restoreActions);
-
-   getPendingActions(PACKRAT_ACTION_CLEAN, &cleanActions);
       
    json["restore_actions"] = restoreActions;
    json["snapshot_actions"] = snapshotActions;
-   json["clean_actions"] = cleanActions;
 }
 
 Error initialize()

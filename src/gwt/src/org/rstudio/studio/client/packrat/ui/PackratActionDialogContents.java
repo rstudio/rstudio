@@ -65,13 +65,6 @@ public class PackratActionDialogContents extends Composite {
                "Packrat. Select Restore to apply these changes to your " +
                "project's private library.");
       }
-      else if (packratAction == "Clean")
-      {
-         summaryLabel_.setText("The following packages do not appear to be " +
-               "used by any code in your project, and are not dependencies " +
-               "of any used packages. Select Clean to remove these packages " +
-               "from your project's private library.");
-      }
    }
    
    private void addColumn(
