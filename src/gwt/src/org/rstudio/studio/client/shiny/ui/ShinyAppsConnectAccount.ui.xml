@@ -27,7 +27,7 @@
 	           text="Connecting your ShinyApps account"></g:Label>
 	  <g:HTML>
      <ol>
-       <li><p>Go to <a href="http://my.shinyapps.io/" target="_blank">your 
+       <li><p>Go to <a href="http://www.shinyapps.io/" target="_blank">your 
            account on ShinyApps</a> and log in.</p></li>
        <li><p>Click your name, then choose <b>Tokens</b> from your account menu.
            </p></li>
