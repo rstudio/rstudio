@@ -15,7 +15,7 @@
       }
       .actions {
          font-size: 11px;
-         margin-top: 6px;
+         margin-top: 7px;
          color: #555;
       }
       .chevron {
