@@ -60,7 +60,7 @@ namespace {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.109");
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.120");
 }
 
 } // anonymous namespace
@@ -555,7 +555,7 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
    dir = string_utils::utf8ToSystem(dirPath.absolutePath());
 
    // bootstrap
-   r::exec::RFunction bootstrap("packrat:::bootstrap");
+   r::exec::RFunction bootstrap("packrat:::init");
    bootstrap.addParam("project", dir);
    bootstrap.addParam("enter", enter);
    bootstrap.addParam("restart", false);

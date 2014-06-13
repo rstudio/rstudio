@@ -239,7 +239,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
          @Override
          public void execute()  
          {
-            packratUtil_.executePackratFunction("bootstrap");
+            packratUtil_.executePackratFunction("init");
          }
       };
 
