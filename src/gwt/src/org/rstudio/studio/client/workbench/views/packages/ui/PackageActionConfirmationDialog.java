@@ -38,6 +38,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -102,6 +104,15 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
    @Override
    protected Widget createMainWidget()
    {
+      FlowPanel flowPanel = new FlowPanel();
+      String explanatoryText = getExplanatoryText();
+      if (explanatoryText.length() > 0)
+      {
+         Label text = new Label(explanatoryText);
+         text.setStylePrimaryName(RESOURCES.styles().explanatoryText());
+         flowPanel.add(text);
+      }
+      
       actionsTable_ = new CellTable<PendingAction>(
             15,
             GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
@@ -117,8 +128,9 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
      
       
       ScrollPanel scrollPanel = new ScrollPanel();
-      scrollPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       scrollPanel.setWidget(actionsTable_);
+      scrollPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
+      flowPanel.add(scrollPanel);
       
       // query for updates
       actionsDS_.requestData(new SimpleRequestCallback<JsArray<T>>() {
@@ -155,7 +167,12 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          }  
       });
  
-      return scrollPanel;
+      return flowPanel;
+   }
+
+   protected String getExplanatoryText()
+   {
+      return "";
    }
    
    protected abstract void showNoActionsRequired(); 
@@ -225,6 +242,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
    static interface Styles extends CssResource
    {
       String mainWidget();
+      String explanatoryText();
    }
 
    static interface Resources extends ClientBundle

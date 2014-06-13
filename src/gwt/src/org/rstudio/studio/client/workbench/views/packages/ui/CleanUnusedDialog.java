@@ -48,7 +48,16 @@ public class CleanUnusedDialog
             "No unused packages were found in the library.");
    }
 
-    protected void addTableColumns(CellTable<PendingAction> table)
+   @Override
+   protected String getExplanatoryText()
+   {
+      return "These packages are present in your library, but do not " +
+        "appear to be used by code in your project. Select any you'd like to " +
+        "clean up.";
+   }
+   
+   @Override
+   protected void addTableColumns(CellTable<PendingAction> table)
    {
      TextColumn<PendingAction> nameColumn = new TextColumn<PendingAction>() {
          public String getValue(PendingAction action)
