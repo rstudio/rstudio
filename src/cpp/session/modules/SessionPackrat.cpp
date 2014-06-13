@@ -672,8 +672,10 @@ void detectReposChanges()
    {
       s_lastReposSEXP = reposSEXP;
 
-      // TODO: ensure that a snapshot takes place
-
+      // if there aren't unresolved changes from restore, perform an 
+      // auto-snapshot to capture the new repros setting
+      if (!isHashUnresolved(HASH_TYPE_LOCKFILE)) 
+         performAutoSnapshot(getHash(HASH_TYPE_LIBRARY, HASH_STATE_COMPUTED));
    }
 }
 
