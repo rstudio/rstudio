@@ -174,7 +174,11 @@ public class CompilerTest extends ArgProcessorTestBase {
       assertEquals("First and second compile produced different outputs",
           firstTimeOutput, secondTimeOutput);
     } finally {
-      System.setProperty(GWT_PERSISTENTUNITCACHE, oldPersistentUnitCacheValue);
+      if (oldPersistentUnitCacheValue == null) {
+        System.clearProperty(GWT_PERSISTENTUNITCACHE);
+      } else {
+        System.setProperty(GWT_PERSISTENTUNITCACHE, oldPersistentUnitCacheValue);
+      }
       Util.recursiveDelete(firstCompileWorkDir, false);
       Util.recursiveDelete(secondCompileWorkDir, false);
     }
