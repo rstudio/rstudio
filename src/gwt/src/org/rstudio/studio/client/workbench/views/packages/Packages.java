@@ -496,27 +496,6 @@ public class Packages
       updatePackageState();
    }
    
-   @Handler 
-   public void onPackratTest()
-   {
-      
-      ArrayList<PackratConflictActions> actions = new ArrayList<PackratConflictActions>();
-      actions.add(PackratConflictActions.create("xtable", null, "Upgrade to 1.02"));
-      actions.add(PackratConflictActions.create("knitr", null, "Upgrade to 1.7"));
-      
-      new PackratResolveConflictDialog(
-            actions, 
-            new OperationWithInput<PackratConflictResolution>() {
-
-               @Override
-               public void execute(PackratConflictResolution input)
-               {
-                  // TODO Auto-generated method stub
-                  
-               }
-      }).showModal();;
-   }
-   
    @Handler
    public void onPackratBundle() 
    {

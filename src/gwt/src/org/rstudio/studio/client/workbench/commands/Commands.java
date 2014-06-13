@@ -247,7 +247,6 @@ public abstract class
    public abstract AppCommand packratBootstrap();
    public abstract AppCommand packratOptions();
    public abstract AppCommand packratBundle();
-   public abstract AppCommand packratTest();
 
    // Version control
    public abstract AppCommand versionControlHelp();
