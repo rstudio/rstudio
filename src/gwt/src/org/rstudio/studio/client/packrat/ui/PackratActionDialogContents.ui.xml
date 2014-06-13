@@ -11,9 +11,14 @@
 		height: 300px;
 		width: 600px;
 	}
+
+	.Summary {
+	  margin-bottom: 15px;
+	}
 	</ui:style>
 
 	<g:HTMLPanel>
+	   <g:Label ui:field="summaryLabel_" styleName="{style.Summary}"></g:Label>
 		<c:DataGrid ui:field="table_" styleName="{style.RestoreActionsTable}" />
 	</g:HTMLPanel>
 

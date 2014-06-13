@@ -16,6 +16,7 @@ package org.rstudio.studio.client.packrat.ui;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
+
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -28,7 +29,7 @@ public class PackratActionDialog extends ModalDialog<Void>
    {
       super("Packrat " + packratAction, operation);
       setOkButtonCaption(packratAction);
-      contents_ = new PackratActionDialogContents(actions);
+      contents_ = new PackratActionDialogContents(packratAction, actions);
       setWidth("500px");
    }
 
