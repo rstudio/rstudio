@@ -37,4 +37,8 @@ public interface PackratServerOperations extends BuildServerOperations
    void packratBootstrap(String dir,
                          boolean enter,
                          ServerRequestCallback<Void> requestCallback);
+   
+   void getPendingActions(String action, 
+                          String dir,
+                          ServerRequestCallback<JsArray<PackratPackageAction>> requestCallback);
 }

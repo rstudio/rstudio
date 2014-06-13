@@ -46,6 +46,7 @@ import org.rstudio.studio.client.packrat.model.PackratConflictActions;
 import org.rstudio.studio.client.packrat.model.PackratConflictResolution;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.server.ServerDataSource;
@@ -79,6 +80,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
+import org.rstudio.studio.client.workbench.views.packages.ui.CleanUnusedDialog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -122,6 +124,7 @@ public class Packages
    public Packages(Display view, 
                    final EventBus events,
                    PackagesServerOperations server,
+                   PackratServerOperations packratServer,
                    GlobalDisplay globalDisplay,
                    Session session,
                    Binder binder,
@@ -135,6 +138,7 @@ public class Packages
       super(view);
       view_ = view;
       server_ = server;
+      packratServer_ = packratServer;
       globalDisplay_ = globalDisplay ;
       view_.setObserver(this) ;
       events_ = events ;
@@ -505,9 +509,35 @@ public class Packages
    @Handler
    public void onPackratClean()
    {
-      // TODO: create subclass of PackageActionConfirmationDialog
-      
-      globalDisplay_.showErrorMessage("Packrat Clean", "Not yet implemented");
+      new CleanUnusedDialog(
+         globalDisplay_,
+         new ServerDataSource<JsArray<PackratPackageAction>>()
+         {
+            @Override
+            public void requestData(
+                  ServerRequestCallback<JsArray<PackratPackageAction>> requestCallback)
+            {
+               packratServer_.getPendingActions("clean", 
+                     session_.getSessionInfo().getActiveProjectDir().getPath(), 
+                     requestCallback);
+            }
+         },
+         new OperationWithInput<ArrayList<PackratPackageAction>>()
+         {
+            @Override
+            public void execute(ArrayList<PackratPackageAction> input)
+            {
+               executeRemoveCommand(input);
+            }
+         },
+         new Operation() 
+         {
+            @Override
+            public void execute()
+            {
+               // No work needed here
+            }
+         }).showModal();
    }
    
    @Handler
@@ -1178,8 +1208,29 @@ public class Packages
       return conflicts;
    }
 
+   public void executeRemoveCommand(ArrayList<PackratPackageAction> actions)
+   {
+      String cmd = "remove.packages(";
+      if (actions.size() == 1)
+         cmd += "\"" + actions.get(0).getPackage() +"\"";
+      else 
+      {
+         cmd += "c(";
+         for (int i = 0; i < actions.size(); i++)
+         {
+            cmd += "\"" + actions.get(i).getPackage() + "\"";
+            if (i < actions.size() - 1)
+               cmd += ", ";
+         }
+         cmd += ")";
+      }
+      cmd += ")";
+      events_.fireEvent(new SendToConsoleEvent(cmd, true));
+   }
+
    private final Display view_;
    private final PackagesServerOperations server_;
+   private final PackratServerOperations packratServer_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<PackageInfo>();
    private PackratContext packratContext_;
    private String packageFilter_ = new String();
