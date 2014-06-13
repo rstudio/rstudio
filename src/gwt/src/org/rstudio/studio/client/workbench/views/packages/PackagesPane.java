@@ -337,6 +337,17 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.onResize();
    }
    
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      
+      // If the packages table is created while the tab isn't visible, it will
+      // have a cached height of 0. Refresh this height when the tab is 
+      // selected.
+      if (packagesTable_ != null)
+         packagesTable_.onResize();
+   }
    
    private void createPackagesTable()
    {
