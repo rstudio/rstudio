@@ -29,7 +29,7 @@ public class PackratActionDialog extends ModalDialog<Void>
    {
       super("Packrat " + packratAction, operation);
       setOkButtonCaption(packratAction);
-      contents_ = new PackratActionDialogContents(actions);
+      contents_ = new PackratActionDialogContents(packratAction, actions);
       setWidth("500px");
    }
 
@@ -58,7 +58,7 @@ public class PackratActionDialog extends ModalDialog<Void>
       try
       {
          JsArray<PackratPackageAction> actions = JsArray.createArray().cast();
-         new PackratActionDialogContents(actions);
+         new PackratActionDialogContents("", actions);
       }
       catch(Exception e)
       { 

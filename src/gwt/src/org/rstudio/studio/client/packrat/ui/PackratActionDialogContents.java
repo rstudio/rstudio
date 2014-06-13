@@ -26,15 +26,20 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PackratActionDialogContents extends Composite {
 
-   private static PackratRestoreDialogContentsUiBinder uiBinder = GWT.create(PackratRestoreDialogContentsUiBinder.class);
+   private static PackratRestoreDialogContentsUiBinder uiBinder = 
+         GWT.create(PackratRestoreDialogContentsUiBinder.class);
 
-   interface PackratRestoreDialogContentsUiBinder extends UiBinder<Widget, PackratActionDialogContents> {}
+   interface PackratRestoreDialogContentsUiBinder 
+         extends UiBinder<Widget, PackratActionDialogContents> {}
 
-   public PackratActionDialogContents(JsArray<PackratPackageAction> prRestoreActionsArray)
+   public PackratActionDialogContents(
+         String packratAction, 
+         JsArray<PackratPackageAction> prRestoreActionsArray)
    {
       
       prRestoreActionsList_ = new ArrayList<PackratPackageAction>();
@@ -47,9 +52,31 @@ public class PackratActionDialogContents extends Composite {
       initTableColumns();
       
       initWidget(uiBinder.createAndBindUi(this));
+
+      if (packratAction == "Snapshot")
+      {
+         summaryLabel_.setText("The following packages have been changed in " +
+               "your project's private library. Select Snapshot to save " + 
+               "these changes in Packrat.");
+      }
+      else if (packratAction == "Restore")
+      {
+         summaryLabel_.setText("The following packages have been changed in " +
+               "Packrat. Select Restore to apply these changes to your " +
+               "project's private library.");
+      }
+      else if (packratAction == "Clean")
+      {
+         summaryLabel_.setText("The following packages do not appear to be " +
+               "used by any code in your project, and are not dependencies " +
+               "of any used packages. Select Clean to remove these packages " +
+               "from your project's private library.");
+      }
    }
    
-   private void addColumn(DataGrid<PackratPackageAction> table, SortableColumnWithHeader<PackratPackageAction> col)
+   private void addColumn(
+         DataGrid<PackratPackageAction> table, 
+         SortableColumnWithHeader<PackratPackageAction> col)
    {
       table.addColumn(col.getColumn(), col.getHeader());
    }
@@ -61,9 +88,9 @@ public class PackratActionDialogContents extends Composite {
       
       addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "package", "Package"));
 //      addColumn(table_, new SortableColumnWithHeader<PackratRestoreActions>(prRestoreActionsList_, "action", "Action"));
-      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "packrat.version", "Lockfile Version"));
-      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "library.version", "Library Version"));
-      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "message", "Action to Perform"));
+      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "packrat.version", "Packrat"));
+      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "library.version", "Library"));
+      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "message", "Action"));
       
       table_.setColumnWidth(0, "15%");
       table_.setColumnWidth(1, "15%");
@@ -74,6 +101,5 @@ public class PackratActionDialogContents extends Composite {
    
    private ArrayList<PackratPackageAction> prRestoreActionsList_;
    @UiField (provided = true) DataGrid<PackratPackageAction> table_;
-   
-
+   @UiField Label summaryLabel_;
 }
