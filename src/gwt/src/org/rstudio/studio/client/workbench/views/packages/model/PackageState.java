@@ -41,8 +41,4 @@ public class PackageState extends JavaScriptObject
    public final native JsArray<PackratPackageAction> getSnapshotActions() /*-{
       return this.snapshot_actions ? this.snapshot_actions : [];
    }-*/;
-   
-   public final native JsArray<PackratPackageAction> getCleanActions() /*-{
-      return this.clean_actions ? this.clean_actions : [];
-   }-*/;
 }

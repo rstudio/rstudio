@@ -1068,20 +1068,6 @@ public class Packages
                   }
                }));
       }
-      else if (packageState.getCleanActions().length() > 0) 
-      {
-         actions.add(new Action(messageFromActions(
-               packageState.getCleanActions()),
-               "Clean...", 
-               new Command() {
-                  @Override
-                  public void execute()
-                  {
-                     confirmPackratActions(packageState.getCleanActions(),
-                                           "Clean", "clean");
-                  }
-               }));
-      }
       view_.setActions(actions);
    }
    
