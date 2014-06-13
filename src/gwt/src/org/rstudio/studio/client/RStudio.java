@@ -59,6 +59,7 @@ import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
+import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
@@ -248,6 +249,7 @@ public class RStudio implements EntryPoint
       CompileNotebookv2OptionsDialog.ensureStylesInjected();
       ActionCenter.ensureStylesInjected();
       PackratResolveConflictDialog.ensureStylesInjected();
+      PackratActionDialog.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

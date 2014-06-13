@@ -16,6 +16,7 @@ package org.rstudio.studio.client.packrat.ui;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
+
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -50,5 +51,17 @@ public class PackratActionDialog extends ModalDialog<Void>
    protected boolean validate(Void input)
    {
       return true;
+   }
+   
+   public static void ensureStylesInjected()
+   {
+      try
+      {
+         JsArray<PackratPackageAction> actions = JsArray.createArray().cast();
+         new PackratActionDialogContents(actions);
+      }
+      catch(Exception e)
+      { 
+      }
    }
 }
