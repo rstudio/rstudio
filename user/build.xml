@@ -145,7 +145,7 @@
           depends="compile.dev.tests, compile.emma.if.enabled"
           unless="compile.tests.complete">
     <mkdir dir="${javac.junit.out}"/>
-    <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
+    <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**,**/super/**" destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
