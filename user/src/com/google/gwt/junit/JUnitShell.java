@@ -1114,7 +1114,13 @@ public class JUnitShell extends DevMode {
             userAgents.toArray(new String[0]));
       }
     }
-    if (!new Compiler(options).run(getTopLogger(), module)) {
+    boolean success = false;
+    try {
+      success = new Compiler(options).run(getTopLogger(), module);
+    } catch (Exception e) {
+      getTopLogger().log(Type.ERROR, "Compiler aborted with an exception ", e);
+    }
+    if (!success) {
       throw new UnableToCompleteException();
     }
     // TODO(scottb): prepopulate currentCompilationState somehow?
