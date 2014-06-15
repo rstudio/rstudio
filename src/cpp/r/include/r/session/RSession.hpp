@@ -96,9 +96,11 @@ struct RInitInfo
 struct RConsoleInput
 {
    RConsoleInput() : cancel(true) {}
-   RConsoleInput(const std::string& text) : cancel(false), text(text) {}
+   RConsoleInput(const std::string& text)
+      : cancel(false), text(text), original(text) {}
    bool cancel ;
    std::string text;
+   std::string original;
 };
 
 // forward declare DisplayState
