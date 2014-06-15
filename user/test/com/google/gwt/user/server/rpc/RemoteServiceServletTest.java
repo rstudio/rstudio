@@ -304,6 +304,10 @@ public class RemoteServiceServletTest extends TestCase {
     public void setSessionTrackingModes(Set<SessionTrackingMode> arg0) {
       throw new UnsupportedOperationException();
     }
+
+    public String getVirtualServerName() {
+      throw new UnsupportedOperationException();
+    }
   }
 
   public void testDoGetSerializationPolicy_FailToOpenMD5Resource()

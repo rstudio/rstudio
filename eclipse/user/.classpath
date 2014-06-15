@@ -6,23 +6,22 @@
 	<classpathentry kind="src" path="core/javadoc"/>
 	<classpathentry excluding="**/super/**" kind="src" path="core/test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
-	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.jar"/>
-	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jsr305/jsr305.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpclient-4.3.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpcore-4.3.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpmime-4.3.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpclient-4.5.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpcore-4.4.4.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpmime-4.5.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/james/apache-mime4j-0.6.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-codec-1.8.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-codec-1.10.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-lang3-3.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-lang3-3.4.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-logging-1.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-io-2.4.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.11.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.18.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/gss/2015-11-04/closure-stylesheets-library-20151104-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/mockito/1.9.5/mockito-all-1.9.5.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.19.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.22.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar" sourcepath="/GWT_TOOLS/lib/selenium/selenium-java-client-driver-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cup/java-cup-11a.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1-nocup.jar"/>
@@ -35,17 +34,16 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/objenesis/objenesis-1.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/objectweb/asm-5.0.3/lib/asm-all-5.0.3.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.13/htmlunit-2.13.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.13/htmlunit-core-js-2.13.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.19/htmlunit-2.19.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.19/htmlunit-core-js-2.15.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/json/android-sdk-19.1/json-android-rebased.jar" sourcepath="/GWT_TOOLS/lib/json/android-sdk-19.1/json-android-rebased-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA.jar" sourcepath="/GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/hibernate/validator/hibernate-validator-4.1.0.Final-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/hibernate/validator/hibernate-validator-4.1.0.Final.jar" sourcepath="/GWT_TOOLS/lib/hibernate/validator/hibernate-validator-4.1.0.Final-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/log4j/log4j-1.2.16.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/slf4j/slf4j-api/slf4j-api-1.6.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/log4j/log4j-1.2.17.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/slf4j/slf4j-api/slf4j-api-1.7.12.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/slf4j/slf4j-log4j12/slf4j-log4j12-1.7.12.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-18.0/guava-18.0-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/50.1.1/icu4j.jar"/>
@@ -67,4 +65,3 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
-

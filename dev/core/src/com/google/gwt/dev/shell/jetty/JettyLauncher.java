@@ -24,20 +24,22 @@ import com.google.gwt.dev.util.Util;
 
 import org.apache.tools.ant.taskdefs.Javac;
 import org.eclipse.jdt.core.JDTCompilerAdapter;
+import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpFields;
-import org.eclipse.jetty.http.HttpFields.Field;
-import org.eclipse.jetty.server.AbstractConnector;
-import org.eclipse.jetty.server.AbstractHttpConnection;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSocketConnector;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.ClasspathPattern;
 import org.eclipse.jetty.webapp.WebAppClassLoader;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -140,18 +142,17 @@ public class JettyLauncher extends ServletContainerLauncher {
             + " - " + request.getMethod() + ' ' + request.getUri() + " ("
             + userString + request.getRemoteHost() + ')' + bytesString);
         if (branch.isLoggable(logHeaders)) {
-          AbstractHttpConnection connection = request.getConnection();
           logHeaders(branch.branch(logHeaders, "Request headers"), logHeaders,
-              connection.getRequestFields());
+              request.getHttpFields());
           logHeaders(branch.branch(logHeaders, "Response headers"), logHeaders,
-              connection.getResponseFields());
+              response.getHttpFields());
         }
       }
     }
 
     private void logHeaders(TreeLogger logger, TreeLogger.Type logLevel, HttpFields fields) {
       for (int i = 0; i < fields.size(); ++i) {
-        Field field = fields.getField(i);
+        HttpField field = fields.getField(i);
         logger.log(logLevel, field.getName() + ": " + field.getValue());
       }
     }
@@ -173,6 +174,10 @@ public class JettyLauncher extends ServletContainerLauncher {
         throw new NullPointerException();
       }
       this.logger = logger;
+    }
+
+    public void debug(String msg, long arg) {
+      logger.log(TreeLogger.SPAM, format(msg, arg));
     }
 
     public void debug(String msg, Object... args) {
@@ -586,7 +591,7 @@ public class JettyLauncher extends ServletContainerLauncher {
    * @param bindAddress
    * @param port
    */
-  private static void setupConnector(AbstractConnector connector,
+  private static void setupConnector(ServerConnector connector,
       String bindAddress, int port) {
     if (bindAddress != null) {
       connector.setHost(bindAddress.toString());
@@ -726,7 +731,7 @@ public class JettyLauncher extends ServletContainerLauncher {
 
     Server server = new Server();
 
-    AbstractConnector connector = getConnector(logger);
+    ServerConnector connector = getConnector(server, logger);
     setupConnector(connector, bindAddress, port);
     server.addConnector(connector);
 
@@ -750,9 +755,6 @@ public class JettyLauncher extends ServletContainerLauncher {
       branch.log(TreeLogger.ERROR, String.format(
           "Failed to connect to open channel with port %d (return value %d)",
           port, connectorPort));
-      if (connector.getConnection() == null) {
-        branch.log(TreeLogger.TRACE, "Connection is null");
-      }
     }
     return createServletContainer(logger, appRootDir, server, wac,
         connectorPort);
@@ -767,40 +769,52 @@ public class JettyLauncher extends ServletContainerLauncher {
     return new WebAppContextWithReload(logger, appRootDir.getAbsolutePath(), "/");
   }
 
-  @SuppressWarnings("deprecation")
-  protected AbstractConnector getConnector(TreeLogger logger) {
+  protected ServerConnector getConnector(Server server, TreeLogger logger) {
+    HttpConfiguration config = defaultConfig();
     if (useSsl) {
       TreeLogger sslLogger = logger.branch(TreeLogger.INFO,
           "Listening for SSL connections");
       if (sslLogger.isLoggable(TreeLogger.TRACE)) {
         sslLogger.log(TreeLogger.TRACE, "Using keystore " + keyStore);
       }
-      SslSocketConnector conn = new SslSocketConnector();
+      SslContextFactory ssl = new SslContextFactory();
       if (clientAuth != null) {
         switch (clientAuth) {
           case NONE:
-            conn.setWantClientAuth(false);
-            conn.setNeedClientAuth(false);
+            ssl.setWantClientAuth(false);
+            ssl.setNeedClientAuth(false);
             break;
           case WANT:
             sslLogger.log(TreeLogger.TRACE, "Requesting client certificates");
-            conn.setWantClientAuth(true);
-            conn.setNeedClientAuth(false);
+            ssl.setWantClientAuth(true);
+            ssl.setNeedClientAuth(false);
             break;
           case REQUIRE:
             sslLogger.log(TreeLogger.TRACE, "Requiring client certificates");
-            conn.setWantClientAuth(true);
-            conn.setNeedClientAuth(true);
+            ssl.setWantClientAuth(true);
+            ssl.setNeedClientAuth(true);
             break;
         }
       }
-      conn.setKeystore(keyStore);
-      conn.setTruststore(keyStore);
-      conn.setKeyPassword(keyStorePassword);
-      conn.setTrustPassword(keyStorePassword);
-      return conn;
+      ssl.setKeyStorePath(keyStore);
+      ssl.setTrustStorePath(keyStore);
+      ssl.setKeyStorePassword(keyStorePassword);
+      ssl.setTrustStorePassword(keyStorePassword);
+      config.addCustomizer(new SecureRequestCustomizer());
+      return new ServerConnector(server,
+          null, null, null, 0, 2,
+          new SslConnectionFactory(ssl, "http/1.1"),
+          new HttpConnectionFactory(config));
     }
-    return new SelectChannelConnector();
+    return new ServerConnector(server, new HttpConnectionFactory(config));
+  }
+
+  protected HttpConfiguration defaultConfig() {
+     HttpConfiguration config = new HttpConfiguration();
+     config.setRequestHeaderSize(16386);
+     config.setSendServerVersion(false);
+     config.setSendDateHeader(true);
+     return config;
   }
 
   private void checkStartParams(TreeLogger logger, int port, File appRootDir) {

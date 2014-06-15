@@ -134,10 +134,10 @@
       classname="com.google.web.bindery.requestfactory.vm.RequestFactoryJreSuite">
       <jvmarg value="-Xss8m" />
       <classpath>
-        <fileset dir="${gwt.tools.lib}" includes="jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar" />
-        <fileset dir="${gwt.tools.lib}" includes="apache/log4j/log4j-1.2.16.jar" />
-        <fileset dir="${gwt.tools.lib}" includes="slf4j/slf4j-api/slf4j-api-1.6.1.jar" />
-        <fileset dir="${gwt.tools.lib}" includes="slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar" />
+        <fileset dir="${gwt.tools.lib}" includes="tomcat/tomcat-servlet-api-8.0.28.jar" />
+        <fileset dir="${gwt.tools.lib}" includes="apache/log4j/log4j-1.2.17.jar" />
+        <fileset dir="${gwt.tools.lib}" includes="slf4j/slf4j-api/slf4j-api-1.7.12.jar" />
+        <fileset dir="${gwt.tools.lib}" includes="slf4j/slf4j-log4j12/slf4j-log4j12-1.7.12.jar" />
         <fileset dir="${gwt.tools.lib}" includes="hibernate/validator/hibernate-validator-4.1.0.Final.jar" />
         <fileset dir="${gwt.tools.lib}" includes="javax/validation/validation-api-1.0.0.GA.jar" />
         <fileset dir="${gwt.tools.lib}" includes="javax/xml/bind/jaxb-api-2.1.jar" />

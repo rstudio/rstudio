@@ -67,8 +67,7 @@
           <include name="objectweb/asm-5.0.3/lib/asm-all-5.0.3.jar"/>
           <include name="guava/guava-18.0/guava-18.0-rebased.jar"/>
           <include name="icu4j/50.1.1/icu4j.jar"/>
-          <include name="jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar"/>
-          <include name="jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
+          <include name="jetty/jetty-9.2.14.v20151106/jetty-all-9.2.14.v20151106.jar"/>
           <include name="jscomp/20131118.json.rebased/compiler-rebased.jar"/>
           <include name="jscomp/20131118.json.rebased/sourcemap-rebased.jar"/>
           <include name="jsr305/jsr305.jar"/>
@@ -79,20 +78,21 @@
           <include name="tomcat/jasper-runtime-1.0.jar"/>
           <include name="tomcat/jsp-api-2.0.jar"/>
           <!-- dependencies needed for JSP support in DevMode: END -->
+          <include name="tomcat/tomcat-servlet-api-8.0.28.jar"/>
           <include name="apache/commons/commons-collections-3.2.1.jar"/>
           <!-- htmlunit dependencies not already included: BEGIN -->
-          <include name="apache/http/httpclient-4.3.1.jar"/>
-          <include name="apache/http/httpcore-4.3.jar"/>
-          <include name="apache/http/httpmime-4.3.1.jar"/>
+          <include name="apache/http/httpclient-4.5.1.jar"/>
+          <include name="apache/http/httpcore-4.4.4.jar"/>
+          <include name="apache/http/httpmime-4.5.1.jar"/>
           <include name="apache/james/apache-mime4j-0.6.jar"/>
-          <include name="apache/commons/commons-codec-1.8.jar"/>
+          <include name="apache/commons/commons-codec-1.10.jar"/>
           <include name="apache/commons/commons-io-2.4.jar"/>
-          <include name="apache/commons/commons-lang3-3.1.jar"/>
-          <include name="apache/commons/commons-logging-1.1.3.jar"/>
-          <include name="cssparser/cssparser-0.9.11.jar"/>
-          <include name="htmlunit/htmlunit-2.13/htmlunit-2.13.jar"/>
-          <include name="htmlunit/htmlunit-2.13/htmlunit-core-js-2.13.jar"/>
-          <include name="nekohtml/nekohtml-1.9.19.jar"/>
+          <include name="apache/commons/commons-lang3-3.4"/>
+          <include name="apache/commons/commons-logging-1.2.jar"/>
+          <include name="cssparser/cssparser-0.9.18.jar"/>
+         <include name="htmlunit/htmlunit-2.19/htmlunit-2.19.jar"/>
+         <include name="htmlunit/htmlunit-2.19/htmlunit-core-js-2.15.jar"/>
+          <include name="nekohtml/nekohtml-1.9.22.jar"/>
           <include name="cup/java-cup-11a.jar"/>
           <include name="xalan/xalan-2.7.1-nocup.jar"/>
           <include name="xerces/xerces-2_11_0/serializer-2.7.1.jar"/>
@@ -120,9 +120,7 @@
           <zipfileset src="${gwt.tools.lib}/guava/guava-18.0/guava-18.0-rebased.jar"/>
           <zipfileset src="${gwt.tools.lib}/icu4j/50.1.1/icu4j.jar"/>
           <zipfileset
-              src="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar"/>
-          <zipfileset
-              src="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
+              src="${gwt.tools.lib}/jetty/jetty-9.2.14.v20151106/jetty-all-9.2.14.v20151106.jar"/>
           <zipfileset src="${gwt.tools.lib}/jscomp/20131118.json.rebased/compiler-rebased.jar"/>
           <zipfileset src="${gwt.tools.lib}/jscomp/20131118.json.rebased/sourcemap-rebased.jar"/>
           <zipfileset src="${gwt.tools.lib}/jsr305/jsr305.jar"/>
@@ -134,22 +132,23 @@
           <zipfileset src="${gwt.tools.lib}/tomcat/jasper-runtime-1.0.jar"/>
           <zipfileset src="${gwt.tools.lib}/tomcat/jsp-api-2.0.jar"/>
           <!-- dependencies needed for JSP support in DevMode: END -->
+          <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-servlet-api-8.0.28.jar"/>
           <zipfileset
               src="${gwt.tools.lib}/apache/commons/commons-collections-3.2.1.jar"/>
           <!-- htmlunit dependencies not already included: BEGIN -->
-          <zipfileset src="${gwt.tools.lib}/apache/http/httpclient-4.3.1.jar"/>
-          <zipfileset src="${gwt.tools.lib}/apache/http/httpcore-4.3.jar"/>
-          <zipfileset src="${gwt.tools.lib}/apache/http/httpmime-4.3.1.jar"/>
+          <zipfileset src="${gwt.tools.lib}/apache/http/httpclient-4.5.1.jar"/>
+          <zipfileset src="${gwt.tools.lib}/apache/http/httpcore-4.4.4.jar"/>
+          <zipfileset src="${gwt.tools.lib}/apache/http/httpmime-4.5.1.jar"/>
           <zipfileset src="${gwt.tools.lib}/apache/james/apache-mime4j-0.6.jar"/>
-          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-codec-1.8.jar"/>
+          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-codec-1.10.jar"/>
           <zipfileset src="${gwt.tools.lib}/apache/commons/commons-io-2.4.jar"/>
-          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-lang3-3.1.jar"/>
-          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-logging-1.1.3.jar"/>
-          <zipfileset src="${gwt.tools.lib}/cssparser/cssparser-0.9.11.jar"/>
-          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-2.13/htmlunit-2.13.jar"/>
+          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-lang3-3.4.jar"/>
+          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-logging-1.2.jar"/>
+          <zipfileset src="${gwt.tools.lib}/cssparser/cssparser-0.9.18.jar"/>
+          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-2.19/htmlunit-2.19.jar"/>
           <zipfileset
-              src="${gwt.tools.lib}/htmlunit/htmlunit-2.13/htmlunit-core-js-2.13.jar"/>
-          <zipfileset src="${gwt.tools.lib}/nekohtml/nekohtml-1.9.19.jar"/>
+              src="${gwt.tools.lib}/htmlunit/htmlunit-2.19/htmlunit-core-js-2.15.jar"/>
+          <zipfileset src="${gwt.tools.lib}/nekohtml/nekohtml-1.9.22.jar"/>
           <zipfileset src="${gwt.tools.lib}/cup/java-cup-11a.jar"/>
           <zipfileset src="${gwt.tools.lib}/xalan/xalan-2.7.1-nocup.jar"/>
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_11_0/serializer-2.7.1.jar"/>

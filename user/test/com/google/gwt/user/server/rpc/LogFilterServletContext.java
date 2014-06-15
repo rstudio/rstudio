@@ -279,5 +279,9 @@ abstract class LogFilterServletContext implements ServletContext {
     realContext.setSessionTrackingModes(arg0);
   }
 
+  public String getVirtualServerName() {
+    return realContext.getVirtualServerName();
+  }
+
   protected abstract boolean shouldLog(Throwable t, String msg);
 }

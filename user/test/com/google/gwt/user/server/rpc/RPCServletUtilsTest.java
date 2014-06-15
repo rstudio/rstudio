@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
+import javax.servlet.ReadListener;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -92,6 +93,20 @@ public class RPCServletUtilsTest extends TestCase {
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
       return realStream.read(b, off, len);
+    }
+
+    @Override
+    public boolean isFinished() {
+      return !isReady();
+    }
+
+    @Override
+    public boolean isReady() {
+      return realStream.available() > 0;
+    }
+
+    @Override
+    public void setReadListener(ReadListener arg0) {
     }
   }
 

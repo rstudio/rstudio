@@ -83,6 +83,11 @@ public class LoggingRPCTestServiceImpl extends RemoteServiceServlet implements
   }
 
   private String getJunitSymbolMapsPath() {
-    return getRequestModuleBasePath() + "/" + JUnitSymbolMapsLinker.SYMBOL_MAP_DIR;
+    String path = getRequestModuleBasePath();
+    if (!path.endsWith("/")) {
+      path += "/";
+    }
+    path += JUnitSymbolMapsLinker.SYMBOL_MAP_DIR;
+    return path;
   }
 }

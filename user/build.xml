@@ -67,7 +67,7 @@
     <pathelement location="${gwt.build}/out/dev/bin-test"/>
     <pathelement location="test-super"/>
     <pathelement location="test_i18n_${gwt.i18n.test.InnerClassChar}"/>
-    <pathelement location="${gwt.tools.lib}/apache/log4j/log4j-1.2.16.jar"/>
+    <pathelement location="${gwt.tools.lib}/apache/log4j/log4j-1.2.17.jar"/>
     <pathelement location="${gwt.tools.lib}/cglib/cglib-3.1.jar"/>
     <pathelement location="${gwt.tools.lib}/mockito/1.9.5/mockito-all-1.9.5.jar"/>
     <pathelement location="${gwt.tools.lib}/objenesis/objenesis-1.2.jar"/>
@@ -78,8 +78,8 @@
         location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final.jar"/>
     <pathelement
         location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final-sources.jar"/>
-    <pathelement location="${gwt.tools.lib}/slf4j/slf4j-api/slf4j-api-1.6.1.jar"/>
-    <pathelement location="${gwt.tools.lib}/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar"/>
+    <pathelement location="${gwt.tools.lib}/slf4j/slf4j-api/slf4j-api-1.7.12.jar"/>
+    <pathelement location="${gwt.tools.lib}/slf4j/slf4j-log4j12/slf4j-log4j12-1.7.12.jar"/>
     <pathelement
         location="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
     <!-- TCK jars -->
@@ -106,9 +106,9 @@
     <mkdir dir="${javac.out}"/>
     <gwt.javac excludes="**/super/**">
       <classpath>
+        <pathelement location="${gwt.tools.lib}/gss/2015-10-07/closure-stylesheets-library-20151007-rebased.jar"/>
         <pathelement location="${gwt.tools.lib}/gss/2015-11-04/closure-stylesheets-library-20151104-rebased.jar"/>
-        <pathelement
-            location="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
+        <pathelement location="${gwt.tools.lib}/tomcat/tomcat-servlet-api-8.0.28.jar"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar"/>
         <pathelement location="${gwt.tools.lib}/w3c/sac/sac-1.3.jar"/>
@@ -163,7 +163,7 @@
       <fileset dir="src" excludes="**/package.html"/>
       <fileset dir="super" excludes="**/package.html"/>
       <fileset dir="${javac.out}"/>
-      <zipfileset src="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"
+      <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-servlet-api-8.0.28.jar"
                   excludes="**/*.java"/>
       <zipfileset src="${gwt.tools.lib}/w3c/sac/sac-1.3.jar"/>
       <zipfileset src="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar"/>

@@ -35,6 +35,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
 import javax.servlet.http.Part;
 
 /**
@@ -304,6 +305,19 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
   public AsyncContext startAsync(ServletRequest arg0, ServletResponse arg1)
       throws IllegalStateException {
+    throw new UnsupportedOperationException();
+  }
+
+  public String changeSessionId() {
+    throw new UnsupportedOperationException();
+  }
+
+  public long getContentLengthLong() {
+    throw new UnsupportedOperationException();
+  }
+
+  public <T extends HttpUpgradeHandler> T upgrade(Class<T> arg0)
+    throws IOException, ServletException {
     throw new UnsupportedOperationException();
   }
 }

@@ -24,6 +24,7 @@ import com.gargoylesoftware.htmlunit.AlertHandler;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
+import com.gargoylesoftware.htmlunit.InteractivePage;
 import com.gargoylesoftware.htmlunit.OnbeforeunloadHandler;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.ScriptException;
@@ -107,21 +108,21 @@ public class RunStyleHtmlUnit extends RunStyle {
       webClient.setJavaScriptErrorListener(new JavaScriptErrorListener() {
 
         @Override
-        public void loadScriptError(HtmlPage htmlPage, URL scriptUrl,
+        public void loadScriptError(InteractivePage htmlPage, URL scriptUrl,
             Exception exception) {
             treeLogger.log(TreeLogger.ERROR,
               "Load Script Error: " + exception, exception);
         }
 
         @Override
-        public void malformedScriptURL(HtmlPage htmlPage, String url,
+        public void malformedScriptURL(InteractivePage htmlPage, String url,
             MalformedURLException malformedURLException) {
           treeLogger.log(TreeLogger.ERROR,
               "Malformed Script URL: " + malformedURLException.getLocalizedMessage());
         }
 
         @Override
-        public void scriptException(HtmlPage htmlPage,
+        public void scriptException(InteractivePage htmlPage,
             ScriptException scriptException) {
           treeLogger.log(TreeLogger.DEBUG,
               "Script Exception: " + scriptException.getLocalizedMessage() +
@@ -129,7 +130,7 @@ public class RunStyleHtmlUnit extends RunStyle {
         }
 
         @Override
-        public void timeoutError(HtmlPage htmlPage, long allowedTime,
+        public void timeoutError(InteractivePage htmlPage, long allowedTime,
             long executionTime) {
           treeLogger.log(TreeLogger.ERROR,
               "Script Timeout Error " + executionTime + " > " + allowedTime);
@@ -197,11 +198,12 @@ public class RunStyleHtmlUnit extends RunStyle {
   private static final Map<BrowserVersion, String> USER_AGENT_MAP  = Maps.newHashMap();
 
   static {
-    addBrowser(BrowserVersion.FIREFOX_17, "gecko1_8");
+    // “Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36 Edge/12.0″
+    addBrowser(BrowserVersion.EDGE, "safari");
+    addBrowser(BrowserVersion.FIREFOX_38, "gecko1_8");
     addBrowser(BrowserVersion.CHROME, "safari");
     addBrowser(BrowserVersion.INTERNET_EXPLORER_8, "ie8");
-    addBrowser(BrowserVersion.INTERNET_EXPLORER_9, "ie9");
-    addBrowser(BrowserVersion.INTERNET_EXPLORER_10, "ie10");
+    addBrowser(BrowserVersion.INTERNET_EXPLORER_11, "gecko1_8");
   }
 
   private static void addBrowser(BrowserVersion browser, String userAgent) {
@@ -237,8 +239,8 @@ public class RunStyleHtmlUnit extends RunStyle {
   @Override
   public int initialize(String args) {
     if (args == null || args.length() == 0) {
-      // If no browsers specified, default to Firefox 17.
-      args = "FF17";
+      // If no browsers specified, default to Firefox 38.
+      args = "FF38";
     }
     Set<BrowserVersion> browserSet = new HashSet<BrowserVersion>();
     Set<String> userAgentSet = new HashSet<String>();

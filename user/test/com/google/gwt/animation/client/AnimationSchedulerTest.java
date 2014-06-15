@@ -20,6 +20,8 @@ import com.google.gwt.animation.client.AnimationScheduler.AnimationHandle;
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 
@@ -68,6 +70,9 @@ public class AnimationSchedulerTest extends GWTTestCase {
     }.schedule(TIMER_DELAY);
   }
 
+  // TODO(davido): doesn't work on htmlunit-2.19 (works in 2.18)
+  // Presumably because of: http://sourceforge.net/p/htmlunit/code/11004
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testRequestAnimationFrame() {
     delayTestFinish(TEST_TIMEOUT);
     final double startTime = Duration.currentTimeMillis();
@@ -82,6 +87,8 @@ public class AnimationSchedulerTest extends GWTTestCase {
     }, element);
   }
 
+  // The same as above
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testRequestAnimationFrameWithoutElement() {
     delayTestFinish(TEST_TIMEOUT);
     final double startTime = Duration.currentTimeMillis();

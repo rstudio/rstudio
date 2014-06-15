@@ -16,7 +16,7 @@
 package com.google.web.bindery.requestfactory.server;
 
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.bio.SocketConnector;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlets.GzipFilter;
@@ -32,7 +32,7 @@ public class RequestFactoryTestServer {
   public static void main(String[] args) {
     Server server = new Server();
 
-    SocketConnector connector = new SocketConnector();
+    ServerConnector connector = new ServerConnector(server);
     connector.setPort(9999);
     server.addConnector(connector);
 
