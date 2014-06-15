@@ -1756,6 +1756,13 @@ void reissueLastConsolePrompt()
    consolePrompt(s_lastPrompt, false);
 }
 
+r::session::RConsoleInput popConsoleInput()
+{
+   r::session::RConsoleInput input = s_consoleInputBuffer.front();
+   s_consoleInputBuffer.pop();
+   return input;
+}
+
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
                   r::session::RConsoleInput* pConsoleInput)
@@ -1772,8 +1779,7 @@ bool rConsoleRead(const std::string& prompt,
 
    if (!s_consoleInputBuffer.empty())
    {
-      *pConsoleInput = s_consoleInputBuffer.front();
-      s_consoleInputBuffer.pop();
+      *pConsoleInput = popConsoleInput();
    }
    // otherwise prompt and wait for console_input from the client
    else
@@ -1805,8 +1811,7 @@ bool rConsoleRead(const std::string& prompt,
          LOG_ERROR(error);
          *pConsoleInput = r::session::RConsoleInput("");
       }
-      *pConsoleInput = s_consoleInputBuffer.front();
-      s_consoleInputBuffer.pop();
+      *pConsoleInput = popConsoleInput();
    }
 
    // fire onBeforeExecute and onConsoleInput events if this isn't a cancel
