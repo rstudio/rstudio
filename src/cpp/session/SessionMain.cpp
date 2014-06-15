@@ -1756,32 +1756,10 @@ void reissueLastConsolePrompt()
    consolePrompt(s_lastPrompt, false);
 }
 
-void filterConsoleInput(r::session::RConsoleInput* pInput)
-{
-   // Call devtools::install_github via packrat if appropriate (this
-   // ensures that devtools can be found via the original library paths).
-   // Note that we only do this if devtools is not currently installed
-   // on the private lirary path
-   const char* const kDevtoolsInstallGithub = "devtools::install_github";
-   if (boost::algorithm::starts_with(pInput->text, kDevtoolsInstallGithub) &&
-       r::session::utils::isPackratModeOn() &&
-       module_context::isRequiredPackratInstalled() &&
-       !module_context::isPackageInstalled("devtools"))
-   {
-      boost::algorithm::replace_first(pInput->text, "devtools::", "packrat::");
-   }
-}
-
 r::session::RConsoleInput popConsoleInput()
 {
-   // pop the console input
    r::session::RConsoleInput input = s_consoleInputBuffer.front();
    s_consoleInputBuffer.pop();
-
-   // apply any filters
-   filterConsoleInput(&input);
-
-   // return the input
    return input;
 }
 
@@ -1848,7 +1826,7 @@ bool rConsoleRead(const std::string& prompt,
 
    ClientEvent promptEvent(kConsoleWritePrompt, prompt);
    session::clientEventQueue().add(promptEvent);
-   ClientEvent inputEvent(kConsoleWriteInput, pConsoleInput->original + "\n");
+   ClientEvent inputEvent(kConsoleWriteInput, pConsoleInput->text + "\n");
    session::clientEventQueue().add(inputEvent);
 
    // always return true (returning false causes the process to exit)
