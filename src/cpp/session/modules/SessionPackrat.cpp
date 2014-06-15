@@ -56,15 +56,6 @@ using namespace core;
 
 namespace session {
 
-namespace {
-
-bool isRequiredPackratInstalled()
-{
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.120");
-}
-
-} // anonymous namespace
-
 namespace modules { 
 namespace packrat {
 
@@ -552,7 +543,8 @@ Error getPackratPrerequisites(const json::JsonRpcRequest& request,
                               json::JsonRpcResponse* pResponse)
 {
    json::Object prereqJson;
-   prereqJson["build_tools_available"] = module_context::canBuildCpp();
+   using namespace module_context;
+   prereqJson["build_tools_available"] = canBuildCpp();
    prereqJson["package_available"] = isRequiredPackratInstalled();
    pResponse->setResult(prereqJson);
    return Success();
@@ -819,6 +811,11 @@ Error initialize()
 } // namespace modules
 
 namespace module_context {
+
+bool isRequiredPackratInstalled()
+{
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.120");
+}
 
 PackratContext packratContext()
 {

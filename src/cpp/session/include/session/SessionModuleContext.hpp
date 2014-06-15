@@ -564,6 +564,8 @@ struct PackratContext
    bool modeOn;
 };
 
+bool isRequiredPackratInstalled();
+
 PackratContext packratContext();
 core::json::Object packratContextAsJson();
 
