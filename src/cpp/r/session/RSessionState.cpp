@@ -263,11 +263,6 @@ void saveWorkingContext(const FilePath& statePath,
       *pSaved = false;
    }
 }
-   
-bool isPackratModeOn()
-{
-   return !core::system::getenv("R_PACKRAT_MODE").empty();
-}
 
 } // anonymous namespace
  
@@ -284,7 +279,7 @@ bool save(const FilePath& statePath,
    initSaveContext(statePath, &settings, &saved);
    
    // check and save packrat mode status
-   bool packratModeOn = isPackratModeOn();
+   bool packratModeOn = r::session::utils::isPackratModeOn();
    settings.set(kPackratModeOn, packratModeOn);
 
    // set r profile on restore (always run the .Rprofile in packrat mode)
@@ -387,7 +382,7 @@ bool saveMinimal(const core::FilePath& statePath,
    settings.set(kRProfileOnRestore, true);
 
    // save packrat mode
-   settings.set(kPackratModeOn, isPackratModeOn());
+   settings.set(kPackratModeOn, r::session::utils::isPackratModeOn());
 
    // handle dev mode
    saveDevMode(&settings);

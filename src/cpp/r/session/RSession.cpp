@@ -1625,6 +1625,11 @@ bool isR3()
    return s_isR3;
 }
 
+bool isPackratModeOn()
+{
+   return !core::system::getenv("R_PACKRAT_MODE").empty();
+}
+
 bool isDefaultPrompt(const std::string& prompt)
 {
    return prompt == r::options::getOption<std::string>("prompt");
