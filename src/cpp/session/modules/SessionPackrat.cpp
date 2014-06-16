@@ -54,6 +54,9 @@ using namespace core;
 #define kPackratActionClean "clean"
 #define kPackratActionSnapshot "snapshot"
 
+#define kAutoSnapshotName "auto.snapshot"
+#define kAutoSnapshotDefault true
+
 namespace session {
 
 namespace modules { 
@@ -359,6 +362,24 @@ void pendingSnapshot(PendingSnapshotAction action)
    }
 }
 
+
+// Checks Packrat options to see whether auto-snapshotting is enabled 
+bool isAutoSnapshotEnabled()
+{
+   bool enabled = kAutoSnapshotDefault;
+   r::sexp::Protect rProtect;
+   SEXP optionsSEXP;
+   Error error = modules::packrat::getPackratOptions(&optionsSEXP, &rProtect);
+   if (!error)
+   {
+      error = r::sexp::getNamedListElement(optionsSEXP,
+                                           kAutoSnapshotName,
+                                           &enabled,
+                                           kAutoSnapshotDefault);
+   }
+   return enabled;
+}
+
 // Performs an automatic snapshot of the Packrat library, either immediately
 // or later (if queue == false).  In either case, does not perform a snapshot
 // if one is already running for the requested state, or if there are 
@@ -398,6 +419,12 @@ void performAutoSnapshot(const std::string& newHash, bool queue)
    }
    else
    {
+      if (!isAutoSnapshotEnabled())
+      {
+         PACKRAT_TRACE("not performing automatic snapshot; automatic "
+                       "snapshots currently disabled in options");
+         return;
+      }
       // start a new auto-snapshot
       pendingSnapshot(CLEAR_PENDING_SNAPSHOT);
       pAutoSnapshot = AutoSnapshot::create(
@@ -746,6 +773,15 @@ void onDeferredInit(bool)
 
 } // anonymous namespace
 
+Error getPackratOptions(SEXP* pOptionsSEXP, r::sexp::Protect* pRProtect)
+{
+   FilePath projectDir = projects::projectContext().directory();
+   r::exec::RFunction getOpts("packrat:::get_opts");
+   getOpts.addParam("simplify", false);
+   getOpts.addParam("project", module_context::createAliasedPath(projectDir));
+   return getOpts.call(pOptionsSEXP, pRProtect);
+}
+
 json::Object contextAsJson(const module_context::PackratContext& context)
 {
    json::Object contextJson;
@@ -906,7 +942,7 @@ void copyOption(SEXP optionsSEXP, const std::string& listName,
 json::Object defaultPackratOptions()
 {
    json::Object optionsJson;
-   optionsJson["auto_snapshot"] = true;
+   optionsJson["auto_snapshot"] = kAutoSnapshotDefault;
    optionsJson["vcs_ignore_lib"] = true;
    optionsJson["vcs_ignore_src"] = false;
    return optionsJson;
@@ -922,15 +958,10 @@ json::Object packratOptionsAsJson()
       // create options to return
       json::Object optionsJson;
 
-      // get the options from packrat
-      FilePath projectDir = projects::projectContext().directory();
-      r::exec::RFunction getOpts("packrat:::get_opts");
-      getOpts.addParam("simplify", false);
-      getOpts.addParam("project", module_context::createAliasedPath(
-                                                            projectDir));
       r::sexp::Protect rProtect;
       SEXP optionsSEXP;
-      Error error = getOpts.call(&optionsSEXP, &rProtect);
+      Error error = modules::packrat::getPackratOptions(&optionsSEXP, 
+                                                        &rProtect);
       if (error)
       {
          LOG_ERROR(error);
@@ -938,7 +969,7 @@ json::Object packratOptionsAsJson()
       }
 
       // copy the options into json
-      copyOption(optionsSEXP, "auto.snapshot",
+      copyOption(optionsSEXP, kAutoSnapshotName,
                  &optionsJson, "auto_snapshot", true);
 
       copyOption(optionsSEXP, "vcs.ignore.lib",

@@ -17,6 +17,7 @@
 #define SESSION_PACKRAT_HPP
 
 #include <core/json/Json.hpp>
+#include <r/RSexp.hpp>
 #include <session/SessionModuleContext.hpp>
 
 namespace core {
@@ -37,7 +38,10 @@ void annotatePendingActions(core::json::Object *pJson);
 
 // return the given Packrat context
 core::json::Object contextAsJson(const module_context::PackratContext& context);
-                       
+
+// get Packrat options (as an SEXP)
+core::Error getPackratOptions(SEXP* pOptionsSEXP, r::sexp::Protect* pRProtect);
+
 } // namespace packrat
 } // namespace modules
 } // namespace session
