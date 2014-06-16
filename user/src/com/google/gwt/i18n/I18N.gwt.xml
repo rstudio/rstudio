@@ -13,9 +13,9 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Internationalization support.                                          -->
-<!--                                                                        -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.core.Core" />
+  <inherits name="com.google.gwt.event.Event" />
   <inherits name="com.google.gwt.regexp.RegExp"/>
   <inherits name="com.google.gwt.safehtml.SafeHtml"/>
   <source path="" includes="client/,shared/" />

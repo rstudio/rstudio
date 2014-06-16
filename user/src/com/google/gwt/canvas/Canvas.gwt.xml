@@ -15,7 +15,6 @@
 -->
 <module type="fileset">
   <inherits name="com.google.gwt.user.User"/>
-  <inherits name="com.google.gwt.canvas.dom.DOM"/>
 
   <!-- Define the support property -->
   <define-property name="canvasElementSupport" values="maybe,no" />

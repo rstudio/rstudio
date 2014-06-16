@@ -23,7 +23,6 @@ import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.i18n.shared.WordCountDirectionEstimator;
-import com.google.gwt.user.client.ui.HasText;
 
 /**
  * Utility class for handling auto-direction adjustment.
@@ -40,7 +39,11 @@ public class AutoDirectionHandler implements KeyUpHandler,
    *
    * TODO(tomerigo): add Paste and Input events once they're available in GWT.
    */
-  public interface Target extends HasText, HasDirection, HasKeyUpHandlers {
+  public interface Target extends HasDirection, HasKeyUpHandlers {
+    /**
+     * Gets this object's text.
+     */
+    String getText();
   }
 
   /**
@@ -92,9 +95,7 @@ public class AutoDirectionHandler implements KeyUpHandler,
    */
   public static AutoDirectionHandler addTo(Target target, DirectionEstimator
       directionEstimator) {
-    AutoDirectionHandler autoDirHandler = new AutoDirectionHandler(target,
-        directionEstimator);
-    return autoDirHandler;
+    return new AutoDirectionHandler(target, directionEstimator);
   }
 
   /**

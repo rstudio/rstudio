@@ -13,29 +13,36 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Remote Procedure Call support.                                         -->
-<!--                                                                        -->
-<!-- This module is typically inherited via com.google.gwt.user.User        -->
-<!--                                                                        -->
-<module type="fileset">
-	<inherits name="com.google.gwt.http.HTTP"/>  
-	
-	<!-- 
-		Declare a property to determine whether warnings for final instance 
-		fields should be suppressed.
-	-->
-	<define-property name="gwt.suppressNonStaticFinalFieldWarnings" values="true,false" />
-	
-	<!-- 
-	    Default warning for non-static, final fields enabled 
-	-->
-	<set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="false" />
+<module>
+  <inherits name="com.google.gwt.http.HTTP"/>
+  <inherits name="com.google.gwt.user.RemoteServiceDTO" />
+  <source path="client" includes="rpc/">
+    <skip name="rpc/GwtTransient.java" />
+    <skip name="rpc/CustomFieldSerializer.java" />
+    <skip name="rpc/SerializationException.java" />
+    <skip name="rpc/SerializationStreamReader.java" />
+    <skip name="rpc/SerializationStreamWriter.java" />
+    <skip name="rpc/IsSerializable.java" />
+  </source>
+  <super-source path="translatable" includes="com/google/gwt/user/client/rpc/**" />
 
-    <!--
-        If this is ever turned on by default, fix up RPCSuiteWithElision 
-    -->
-    <define-configuration-property name="gwt.elideTypeNamesFromRPC" is-multi-valued="false" />
-    <set-configuration-property name="gwt.elideTypeNamesFromRPC" value="false" />
-    
+  <!--
+    Declare a property to determine whether warnings for final instance
+    fields should be suppressed.
+  -->
+  <define-property name="gwt.suppressNonStaticFinalFieldWarnings" values="true,false" />
+
+  <!--
+      Default warning for non-static, final fields enabled
+  -->
+  <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="false" />
+
+  <!--
+      If this is ever turned on by default, fix up RPCSuiteWithElision
+  -->
+  <define-configuration-property name="gwt.elideTypeNamesFromRPC" is-multi-valued="false" />
+  <set-configuration-property name="gwt.elideTypeNamesFromRPC" value="false" />
+
   <!--
       Contains regular expressions, optionally prefixed with '+' or '-'.
       Each type being considered for serialization is tested against the
@@ -46,7 +53,7 @@
       expression is applied to just the base class's fully qualified name.
   -->
   <define-configuration-property name="rpc.blacklist" is-multi-valued="true" />
-  
+
   <!--
       Contains a list of fully-qualified class names indicating classes that
       should be treated as being enhanced on the server with additional fields.
@@ -54,13 +61,13 @@
   -->
   <define-configuration-property name="rpc.enhancedClasses" is-multi-valued="true"/>
 
-	<generate-with class="com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator">
-		<when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
-	</generate-with>
-  
-    <define-linker name="rpcLog" class="com.google.gwt.user.linker.rpc.RpcLogLinker" />
-    <add-linker name="rpcLog" />
+  <generate-with class="com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator">
+    <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
+  </generate-with>
 
-    <define-linker name="rpcPolicyManifest" class="com.google.gwt.user.linker.rpc.RpcPolicyManifestLinker" />
-    <add-linker name="rpcPolicyManifest" /> 
+  <define-linker name="rpcLog" class="com.google.gwt.user.linker.rpc.RpcLogLinker" />
+  <add-linker name="rpcLog" />
+
+  <define-linker name="rpcPolicyManifest" class="com.google.gwt.user.linker.rpc.RpcPolicyManifestLinker" />
+  <add-linker name="rpcPolicyManifest" />
 </module>

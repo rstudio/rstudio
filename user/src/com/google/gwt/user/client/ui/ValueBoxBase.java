@@ -47,7 +47,7 @@ import java.text.ParseException;
  */
 public class ValueBoxBase<T> extends FocusWidget implements
     HasChangeHandlers, HasName, HasDirectionEstimator,
-    HasValue<T>, AutoDirectionHandler.Target, IsEditor<ValueBoxEditor<T>> {
+    HasValue<T>, HasText, AutoDirectionHandler.Target, IsEditor<ValueBoxEditor<T>> {
 
   /**
    * Alignment values for {@link ValueBoxBase#setAlignment}.

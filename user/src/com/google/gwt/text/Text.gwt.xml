@@ -13,8 +13,9 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.i18n.I18N"/>
   <source path="shared"/>
   <source path="client"/>
   <public path="public" />

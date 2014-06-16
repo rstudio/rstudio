@@ -13,9 +13,11 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module type="fileset">
-  <inherits name="com.google.gwt.event.EventBase" />
+<module>
+  <inherits name="com.google.web.bindery.event.Event" />
+  <inherits name="com.google.gwt.dom.DOM" />
   <inherits name="com.google.gwt.event.dom.DomEvent" />
   <inherits name="com.google.gwt.event.logical.LogicalEvent" />
+  <source path="shared" />
   <public path="public" />
 </module>

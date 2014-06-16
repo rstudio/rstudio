@@ -16,10 +16,10 @@
 
 <!-- SafeCss - facilities for avoiding XSS attacks                         -->
 <!--                                                                       -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.core.Core"/>
-  <inherits name="com.google.gwt.user.UserAgent"/>
-  <public path="public" />
+  <inherits name="com.google.gwt.dom.DOM" />
+  <inherits name="com.google.gwt.useragent.UserAgent"/>
 
   <replace-with class="com.google.gwt.safecss.shared.SafeStylesUtils.ImplIE6To8">
     <when-type-is class="com.google.gwt.safecss.shared.SafeStylesUtils.Impl" />

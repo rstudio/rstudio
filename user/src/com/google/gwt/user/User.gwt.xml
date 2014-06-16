@@ -26,6 +26,7 @@
   <inherits name="com.google.gwt.editor.Editor" />
   <inherits name="com.google.gwt.event.Event"/>
   <inherits name="com.google.gwt.geolocation.Geolocation" />
+  <inherits name="com.google.gwt.http.HTTP"/>
   <inherits name="com.google.gwt.i18n.I18N"/>
   <inherits name="com.google.gwt.layout.Layout"/>
   <inherits name="com.google.gwt.media.Media"/>
@@ -46,7 +47,6 @@
   <inherits name="com.google.gwt.user.Form"/>
   <inherits name="com.google.gwt.user.History"/>
   <inherits name="com.google.gwt.user.HTMLTable"/>
-  <inherits name="com.google.gwt.user.HTTPRequest"/>
   <inherits name="com.google.gwt.user.Hyperlink"/>
   <inherits name="com.google.gwt.user.ImageBundle"/>
   <inherits name="com.google.gwt.user.Popup"/>
@@ -59,7 +59,6 @@
   <inherits name="com.google.gwt.user.Tree"/>
   <inherits name="com.google.gwt.user.Window" />
 
-  <super-source path="translatable"/>
-  <source path="client" />
+  <source path="client" skips="rpc/**/*"/>
   <public path="public" />
 </module>

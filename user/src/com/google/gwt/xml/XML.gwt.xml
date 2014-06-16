@@ -14,8 +14,8 @@
 
 <!-- XML parsing support.                                                   -->
 <!--                                                                        -->
-<module type="fileset">
-  <inherits name="com.google.gwt.user.User"/>
+<module>
+  <inherits name="com.google.gwt.useragent.UserAgent"/>
   
   <!-- Fall through to this rule for all other browsers -->
   <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplStandard">

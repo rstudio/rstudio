@@ -14,9 +14,10 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module type="fileset">
-  <inherits name="com.google.gwt.user.User" />
+<module>
   <inherits name="com.google.gwt.regexp.RegExp" />
+  <inherits name="com.google.gwt.i18n.I18N" />
+  <inherits name="com.google.gwt.user.RemoteServiceDTO" />
   <inherits name="javax.validation.Validation" />
   <source path="client" />
   <super-source path="super" />

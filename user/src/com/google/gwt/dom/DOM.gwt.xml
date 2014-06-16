@@ -16,10 +16,12 @@
 <!--                                                                        -->
 <!-- This module is typically inherited via com.google.gwt.user.User        -->
 <!--                                                                        -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.canvas.dom.DOM"/>
+  <inherits name="com.google.gwt.media.dom.DOM"/>
   <inherits name="com.google.gwt.safehtml.SafeHtml"/>
-  <inherits name="com.google.gwt.user.UserAgent"/>
+  <inherits name="com.google.gwt.useragent.UserAgent"/>
   <source path="client" />
   <public path="public" />
 
