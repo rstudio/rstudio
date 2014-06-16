@@ -172,7 +172,7 @@ public class TextEditingTargetRMarkdownHelper
                // check if this is a Shiny Doc
                if (isShinyDoc)
                {
-                  dependencyManager_.withShiny("Running Shiny documents",
+                  dependencyManager_.withShiny("Running shiny documents",
                                                callReadyCommand);
                }
                else

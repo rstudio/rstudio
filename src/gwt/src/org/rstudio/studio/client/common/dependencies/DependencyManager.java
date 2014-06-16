@@ -100,8 +100,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
             globalDisplay_.showYesNoMessage(
               MessageDialog.QUESTION,
               "Install Shiny Package", 
-              userAction + " requires installation of the development " +
-              "version of Shiny.\n\nDo you want to install this package now?",
+              userAction + " requires installation of an updated version " +
+              "of the shiny package.\n\nDo you want to install shiny now?",
                   new Operation() {
 
                      @Override
@@ -125,7 +125,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
             Dependency.cranPackage("xtable", "1.7"),
             Dependency.cranPackage("digest", "0.6"),
             Dependency.cranPackage("htmltools", "0.2.4"),
-            Dependency.embeddedPackage("shiny")
+            Dependency.cranPackage("shiny", "0.10.0")
           }, 
           command
        ); 
