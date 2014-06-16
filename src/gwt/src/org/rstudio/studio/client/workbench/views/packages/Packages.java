@@ -186,7 +186,7 @@ public class Packages
          private PackageInstallOptions lastKnownState_;
       };
       
-      updatePackageState();
+      updatePackageState(true);
       
       // after 2 seconds also add the DeferredInitCompleted handler
       // (we wait because if we don't then on first load in a new 
@@ -497,7 +497,7 @@ public class Packages
    @Handler
    public void onRefreshPackages()
    {
-      updatePackageState();
+      updatePackageState(true);
    }
    
    @Handler
@@ -630,9 +630,10 @@ public class Packages
    }
       
    @Override
-   public void updatePackageState()
+   public void updatePackageState(boolean showProgress)
    {
-      view_.setProgress(true);
+      if (showProgress)
+         view_.setProgress(true);
       server_.getPackageState(new PackageStateUpdater());
    }
 
@@ -674,13 +675,13 @@ public class Packages
    
    public void onInstalledPackagesChanged(InstalledPackagesChangedEvent event)
    {
-      updatePackageState() ;
+      updatePackageState(false) ;
    }
    
    @Override
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
-      updatePackageState();
+      updatePackageState(false);
    }
    
    public void onPackageFilterChanged(String filter)
