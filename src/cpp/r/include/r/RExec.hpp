@@ -229,6 +229,8 @@ private:
 
 void warning(const std::string& warning);
    
+void message(const std::string& message);
+
 // special exception type used to raise R errors. allows for correct
 // exiting from c++ context (with destructors called, etc.) while still
 // propagating the error to a point where it will be re-raised to r

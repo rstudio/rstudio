@@ -438,6 +438,12 @@ void warning(const std::string& warning)
    Rf_warning(warning.c_str());
 }
 
+void message(const std::string& message)
+{
+   Error error = r::exec::RFunction("message", message).call();
+   if (error)
+      LOG_ERROR(error);
+}
 
 bool interruptsPending()
 {

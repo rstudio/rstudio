@@ -23,9 +23,9 @@
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
-#include <r/session/RClientState.hpp>
 #include <r/RRoutines.hpp>
 #include <r/ROptions.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -517,6 +517,25 @@ void emitPackagesChanged()
    module_context::enqueClientEvent(event);
 }
 
+void printDevtoolsMessage()
+{
+   r::exec::message(
+      "To install GitHub packages within packrat projects please use:\n\n"
+      "    packrat::install_github\n");
+}
+
+void onConsoleInput(const std::string& input)
+{
+   // if there is about to be a devtools not found error then print
+   // a message indicating that packrat::devtools should be used
+   if (boost::algorithm::starts_with(input, "devtools::install_github") &&
+       !module_context::isPackageInstalled("devtools"))
+   {
+      module_context::scheduleDelayedWork(boost::posix_time::milliseconds(50),
+                                          printDevtoolsMessage);
+   }
+}
+
 // RPC -----------------------------------------------------------------------
 
 Error installPackrat(const json::JsonRpcRequest& request,
@@ -721,6 +740,7 @@ void onDeferredInit(bool)
          LOG_ERROR(error);
 
       module_context::events().onDetectChanges.connect(onDetectChanges);
+      module_context::events().onConsoleInput.connect(onConsoleInput);
    }
 }
 
