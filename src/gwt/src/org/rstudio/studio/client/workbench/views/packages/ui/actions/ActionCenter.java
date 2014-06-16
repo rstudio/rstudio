@@ -94,6 +94,16 @@ public class ActionCenter extends Composite
       return container_.getOffsetHeight() + 1;
    }
    
+   public int getActionCount()
+   {
+      return actionWidgets_.size();
+   }
+   
+   public boolean collapsed()
+   {
+      return collapsed_;
+   }
+   
    private void manageUI()
    {
       // action label visibility

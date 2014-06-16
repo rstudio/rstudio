@@ -138,7 +138,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          @Override
          public void onResponseReceived(JsArray<T> actions)
          {
-            if (actions.length() > 0)
+            if (actions != null && actions.length() > 0)
             {
                ArrayList<PendingAction> pendingActions = new ArrayList<PendingAction>();
                for (int i=0; i<actions.length(); i++)

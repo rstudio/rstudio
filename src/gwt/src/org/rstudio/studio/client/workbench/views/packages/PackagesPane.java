@@ -26,12 +26,14 @@ import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
@@ -78,12 +80,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Inject
    public PackagesPane(Commands commands, 
                        Session session,
-                       GlobalDisplay display)
+                       GlobalDisplay display,
+                       EventBus events)
    {
       super("Packages");
       commands_ = commands;
       session_ = session;
       display_ = display;
+      events_ = events;
       dataGridRes_ = (PackagesDataGridResources) 
             GWT.create(PackagesDataGridResources.class);
       ensureWidget();
@@ -123,24 +127,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    public void setActions(ArrayList<Packages.Action> actions)
    {
-      final int kLayoutAnimationMs = 250;
-      
       // command that manages the layout of the packages list and action center
       Command manageActionCenterLayout = new Command() {
          @Override
          public void execute()
          {
-            packagesTableContainer_.setWidgetLeftRight(
-                  actionCenter_, 
-                  0, Unit.PX, 
-                  0, Unit.PX);
-            packagesTableContainer_.setWidgetTopHeight(
-                  actionCenter_, 
-                  0, Unit.PX, 
-                  actionCenter_.getHeight(), Unit.PX);
-
-            layoutPackagesTable(actionCenter_.getHeight());
-            packagesTableContainer_.animate(kLayoutAnimationMs);
+            resizeActionCenter();
          }
       };
       
@@ -151,11 +143,21 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             packagesTableContainer_.remove(actionCenter_);
             actionCenter_ = null;
             layoutPackagesTable();
-            packagesTableContainer_.animate(kLayoutAnimationMs);
+            packagesTableContainer_.animate(ACTION_CENTER_ANIMATION_MS);
          }
       }
       else
       {
+         // if we have no action center or we're changing the number of actions
+         // in a non-collapsed center, raise the packages pane
+         if (actionCenter_ == null ||
+             ((!actionCenter_.collapsed()) && 
+              (actionCenter_.getActionCount() != actions.size())))
+         {
+            events_.fireEvent(new RaisePackagePaneEvent());
+         }
+
+         // create the action center if it doesn't already exist
          if (actionCenter_ == null)
          {
             actionCenter_ = new ActionCenter(manageActionCenterLayout);
@@ -163,8 +165,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
          
          actionCenter_.setActions(actions);
-         
-         manageActionCenterLayout.execute();
+         resizeActionCenter();
       }
    }
     
@@ -349,6 +350,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // selected.
       if (packagesTable_ != null)
          packagesTable_.onResize();
+      
+      if (actionCenter_ != null)
+         resizeActionCenter();
    }
    
    private void createPackagesTable()
@@ -464,6 +468,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                            return "GitHub";
                         else if (source.equals("Bioconductor"))
                            return "BioC";
+                        else if (source.equals("source"))
+                           return "Source";
                         else
                            return source;
                      }
@@ -665,6 +671,21 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
+   private void resizeActionCenter()
+   {
+      packagesTableContainer_.setWidgetLeftRight(
+            actionCenter_, 
+            0, Unit.PX, 
+            0, Unit.PX);
+      packagesTableContainer_.setWidgetTopHeight(
+            actionCenter_, 
+            0, Unit.PX, 
+            actionCenter_.getHeight(), Unit.PX);
+
+      layoutPackagesTable(actionCenter_.getHeight());
+      packagesTableContainer_.animate(ACTION_CENTER_ANIMATION_MS);
+   }
+   
    private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
@@ -683,4 +704,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Session session_;
    private final GlobalDisplay display_;
    private final PackagesDataGridResources dataGridRes_;
+   private final EventBus events_;
+   
+   private final static int ACTION_CENTER_ANIMATION_MS = 250;
 }
