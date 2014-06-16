@@ -15,6 +15,7 @@
  */
 package com.google.gwt.animation.client;
 
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -24,6 +25,18 @@ import com.google.gwt.dom.client.Element;
  * installed.
  */
 public abstract class AnimationScheduler {
+
+  /**
+   * Helper to detect native support for animations.
+   * <p>
+   * Note: This class solely exists to provide opportunity for mocking frameworks to intercept
+   * the native call.
+   */
+  public static class AnimationSupportDetector {
+    public native boolean isNativelySupported() /*-{
+      return !!$wnd.requestAnimationFrame && !!$wnd.cancelAnimationFrame;
+    }-*/;
+  }
 
   /**
    * The callback used when an animation frame becomes available.
@@ -56,10 +69,11 @@ public abstract class AnimationScheduler {
    */
   public static AnimationScheduler get() {
     if (instance == null) {
-      instance = AnimationSchedulerImplStandard.isNativelySupported()
-              ? new AnimationSchedulerImplStandard() : new AnimationSchedulerImplTimer();
-    }
-    return instance;
+      AnimationSupportDetector supportDetector = GWT.create(AnimationSupportDetector.class);
+      instance = (supportDetector != null && supportDetector.isNativelySupported())
+             ? new AnimationSchedulerImplStandard() : new AnimationSchedulerImplTimer();
+   }
+   return instance;
   }
 
   /**

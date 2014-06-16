@@ -23,15 +23,6 @@ import com.google.gwt.dom.client.Element;
  */
 class AnimationSchedulerImplStandard extends AnimationScheduler {
 
-  /**
-   * Check if the implementation is natively supported.
-   *
-   * @return {@code true} if natively supported, {@code false} if not
-   */
-  static native boolean isNativelySupported() /*-{
-    return !!$wnd.requestAnimationFrame && !!$wnd.cancelAnimationFrame;
-  }-*/;
-
   @Override
   public AnimationHandle requestAnimationFrame(AnimationCallback callback, Element element) {
     final JavaScriptObject handle = requestImpl(callback, element);
