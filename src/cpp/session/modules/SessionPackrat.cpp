@@ -834,7 +834,7 @@ namespace module_context {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.120");
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.121");
 }
 
 PackratContext packratContext()
