@@ -482,8 +482,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.addColumn(packratSourceColumn, new TextHeader("Source"));
 
          // distribute columns for extended package information
-         packagesTable_.setColumnWidth(nameColumn, 15, Unit.PCT);
-         packagesTable_.setColumnWidth(descColumn, 45, Unit.PCT);
+         packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
+         packagesTable_.setColumnWidth(descColumn, 40, Unit.PCT);
          packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratVersionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
