@@ -44,7 +44,7 @@ public class CleanUnusedDialog
    @Override
    protected void showNoActionsRequired()
    {
-      globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, "Library Clean", 
+      globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, "Packrat Clean", 
             "No unused packages were found in the library.");
    }
 

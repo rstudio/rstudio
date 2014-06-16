@@ -55,13 +55,13 @@ public class PackratActionDialogContents extends Composite {
 
       if (packratAction == "Snapshot")
       {
-         summaryLabel_.setText("The following packages have been changed in " +
+         summaryLabel_.setText("The following packages have changed in " +
                "your project's private library. Select Snapshot to save " + 
                "these changes in Packrat.");
       }
       else if (packratAction == "Restore")
       {
-         summaryLabel_.setText("The following packages have been changed in " +
+         summaryLabel_.setText("The following packages have changed in " +
                "Packrat. Select Restore to apply these changes to your " +
                "project's private library.");
       }
@@ -75,12 +75,8 @@ public class PackratActionDialogContents extends Composite {
    }
    
    private void initTableColumns()
-   {
-//      package action packrat.version library.version                    message
-//      1  digest    add         0.6.4.1            <NA> Install 'digest' (0.6.4.1)
-      
+   {      
       addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "package", "Package"));
-//      addColumn(table_, new SortableColumnWithHeader<PackratRestoreActions>(prRestoreActionsList_, "action", "Action"));
       addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "packrat.version", "Packrat"));
       addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "library.version", "Library"));
       addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "message", "Action"));

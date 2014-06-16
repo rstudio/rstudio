@@ -64,7 +64,7 @@ public class PackratResolveConflictDialog
         "Packrat's snapshot of package versions is out of sync with " +
         "the packages currently installed in your library. To resolve " +
         "the conflict you need to either update the packrat snapshot or " +
-        "update the library:");
+        "restore your project's private library:");
       label.addStyleName(RESOURCES.styles().conflictLabel());
       label.setWidth(kTableWidth + "px");
       mainWidget_.add(label);
@@ -94,7 +94,7 @@ public class PackratResolveConflictDialog
                return StringUtil.notNull(item.getSnapshotAction());
             } 
          },
-         "Packrat Snapshot"
+         "Packrat"
       );
         
       table_.addColumn(
@@ -122,7 +122,7 @@ public class PackratResolveConflictDialog
       Label resolutionLabel =new Label("Resolution:");
       resolutionLabel.addStyleName(RESOURCES.styles().resolutionLabel());
       choiceGrid.setWidget(0, 0, resolutionLabel);
-      snapshotChoice_ = new RadioButton("snapshot", "Update Snapshot");
+      snapshotChoice_ = new RadioButton("snapshot", "Snapshot");
       snapshotChoice_.addStyleName(RESOURCES.styles().choiceButton());
       choiceGrid.setWidget(0, 1, snapshotChoice_);
       snapshotChoice_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -132,7 +132,7 @@ public class PackratResolveConflictDialog
             libraryChoice_.setValue(!event.getValue(), false);
          }
       });
-      libraryChoice_ = new RadioButton("library", "Update Library");
+      libraryChoice_ = new RadioButton("library", "Restore");
       libraryChoice_.addStyleName(RESOURCES.styles().choiceButton());
       choiceGrid.setWidget(0, 2, libraryChoice_);
       libraryChoice_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -176,7 +176,8 @@ public class PackratResolveConflictDialog
          RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                MessageDialog.ERROR, 
                "No Selection Made", 
-               "You must choose to update either the snapshot or the library.");
+               "You must choose to either update the packrat snapshot or " +
+               "restore the project's private library.");
          return false;
       }
       else

@@ -1070,7 +1070,7 @@ public class Packages
       {
          actions.add(new Action(messageFromActions(
                packageState.getRestoreActions()),
-               "Apply...", 
+               "Install...", 
                new Command() {
                   @Override
                   public void execute()
@@ -1084,7 +1084,7 @@ public class Packages
       {
          actions.add(new Action(messageFromActions(
                packageState.getSnapshotActions()),
-               "Save...", 
+               "Snapshot...", 
                new Command() {
                   @Override
                   public void execute()
