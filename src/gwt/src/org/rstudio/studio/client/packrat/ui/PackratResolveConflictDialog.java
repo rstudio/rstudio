@@ -61,10 +61,10 @@ public class PackratResolveConflictDialog
       
       // create label
       Label label = new Label(
-        "Packrat's snapshot of package versions is out of sync with " +
-        "the packages currently installed in your library. To resolve " +
-        "the conflict you need to either update the packrat snapshot or " +
-        "restore your project's private library:");
+        "Packrat's packages are out of sync with the packages currently " +
+        "installed in your library. To resolve the conflict you need to " +
+        "either update Packrat to match your library or update your library " +
+        "to match Packrat.");
       label.addStyleName(RESOURCES.styles().conflictLabel());
       label.setWidth(kTableWidth + "px");
       mainWidget_.add(label);
@@ -176,8 +176,8 @@ public class PackratResolveConflictDialog
          RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                MessageDialog.ERROR, 
                "No Selection Made", 
-               "You must choose to either update the packrat snapshot or " +
-               "restore the project's private library.");
+               "You must choose to either update Packrat (snapshot) or " +
+               "update the project's private library (restore).");
          return false;
       }
       else

@@ -1030,12 +1030,12 @@ public class Packages
                {
                   if (input == PackratConflictResolution.Library)
                   {
-                     packratUtil_.executePackratFunction("snapshot", 
+                     packratUtil_.executePackratFunction("restore", 
                            "prompt = FALSE");
                   }
                   else if (input == PackratConflictResolution.Snapshot)
                   {
-                     packratUtil_.executePackratFunction("restore",
+                     packratUtil_.executePackratFunction("snapshot",
                            "prompt = FALSE");
                   }
                }
@@ -1071,7 +1071,7 @@ public class Packages
       {
          actions.add(new Action(messageFromActions(
                packageState.getRestoreActions()),
-               "Install...", 
+               "Apply...", 
                new Command() {
                   @Override
                   public void execute()
@@ -1203,10 +1203,10 @@ public class Packages
       {
          conflicts.add(PackratConflictActions.create(
                packageName,
-               restoreMap.containsKey(packageName) ? 
-                     restoreMap.get(packageName).getMessage() : "",
                snapshotMap.containsKey(packageName) ? 
-                     snapshotMap.get(packageName).getMessage() : ""));
+                     snapshotMap.get(packageName).getMessage() : "",
+               restoreMap.containsKey(packageName) ? 
+                     restoreMap.get(packageName).getMessage() : ""));
       }
 
       return conflicts;
