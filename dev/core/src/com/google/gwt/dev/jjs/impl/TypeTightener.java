@@ -541,7 +541,7 @@ public class TypeTightener {
        * The only information that we can infer about native methods is if they
        * are declared to return a leaf type.
        */
-      if (x.isNative()) {
+      if (x.isNative() || program.typeOracle.isJsTypeMethod(x)) {
         return;
       }
 

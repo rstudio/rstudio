@@ -636,7 +636,7 @@ public class ControlFlowAnalyzer {
         if (dependencyRecorder != null) {
           curMethodStack.remove(curMethodStack.size() - 1);
         }
-        if (method.isNative()) {
+        if (method.isNative() || program.typeOracle.isJsTypeMethod(method)) {
             /*
              * SPECIAL: returning from this method passes a value from
              * JavaScript into Java.
