@@ -22,59 +22,30 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class ThrowableTest extends GWTTestCase {
 
-  // Line number for exception thrown in throwException below.
-  private static final int THROWN_EXCEPTION_LINE_NUMBER = 37;
-
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  private void throwException(String arg) {
-    // prevent inlining by double referencing arg
-    String result = arg.substring(1) + "test";
-    // THROWN_EXCEPTION_LINE_NUMBER should point to this line below
-    throw new RuntimeException(result.charAt(0) + result.substring(1));
-  }
-
   public void testStackTraceContainsConstructorLineNumber() {
-    // NOTE: changing the line number of this object creation will affect
-    // the test case.
-    final int lineNumber = 44;  // should be the next line.
+
+    final int lineNumber1 = 33; // should be the next line.
     Throwable throwable = new Throwable("stacktrace");
     StackTraceElement[] trace = throwable.getStackTrace();
-    assertNotNull(trace);
-    String traceStr = getTraceAsString(trace);
-    assertTrue("stack trace has length: " + trace.length + ", full trace: \n" +
-        traceStr, trace.length > 2);
-    StackTraceElement e = findTraceElementForThisFile(trace,
-        (isObfuscated(trace) ? 7 : 3));
-    assertNotNull("Unable to find trace element: \n" + traceStr, e);
-    assertEquals(lineNumber, e.getLineNumber());
+    assertTrace(trace, lineNumber1, isObfuscated(trace) ? 7 : 3);
+
+    final int lineNumber2 = 38; // should be the next line.
+    throwable.fillInStackTrace();
+    assertTrace(throwable.getStackTrace(), lineNumber2, 1);
+
+    // break fillinstacktrace and test again
   }
 
-  public void testGetStackTraceOnThrownException() {
-    RuntimeException caughtException = null;
-    try {
-      throwException("Runtime Exception");
-    } catch (RuntimeException exception) {
-      caughtException = exception;
-    }
-    assertNotNull(caughtException);
-    StackTraceElement[] trace = caughtException.getStackTrace();
+  private void assertTrace(StackTraceElement[] trace, final int lineNumber, int maxDepthToExamine) {
     assertNotNull(trace);
-    String traceStr =  getTraceAsString(trace);
-    StackTraceElement e = findTraceElementForThisFile(trace,
-        (isObfuscated(trace) ? 9 : 5));
-    assertNotNull("Unable to find trace element: \n" + traceStr, e);
-    assertEquals(traceStr, THROWN_EXCEPTION_LINE_NUMBER,
-        e.getLineNumber());
-    // Don't compare method names for obfuscated cases.
-    if (!isObfuscated(trace)) {
-      assertTrue("actual method is <<" + e.getMethodName() + ">>" +
-          ", full trace is:\n" + traceStr,
-          e.getMethodName().contains("throwException"));
-    }
+    assertTrue("StackTrace too short: \n" + getTraceAsString(trace), trace.length > 2);
+    StackTraceElement e = getFirstElementMentionsTest(trace, maxDepthToExamine);
+    assertEquals(lineNumber, e.getLineNumber());
   }
 
   public void testSetStackTrace() {
@@ -95,35 +66,24 @@ public class ThrowableTest extends GWTTestCase {
     assertEquals("TestClass.testCaller(fakefile2:97)", trace[1].toString());
   }
 
-  // Returns true if stack trace is obfuscated.
   private boolean isObfuscated(StackTraceElement[] trace) {
-    if (trace == null || trace.length == 0) {
-      throw new RuntimeException("null trace");
-    }
+    assertTrue(trace.length > 0);
     return trace[0].getClassName().equals("Unknown");
   }
 
-  // Finds first trace element that mentions this file, ThrowableTest, going
-  // at most maxDepthToExamine depth.
-  private StackTraceElement findTraceElementForThisFile(
-      StackTraceElement[] trace, int maxDepthToExamine) {
-    if (trace == null) {
-      throw new RuntimeException("null trace");
-    }
+  private StackTraceElement getFirstElementMentionsTest(StackTraceElement[] trace,
+      int maxDepthToExamine) {
     for (int i = 0; i < maxDepthToExamine && i < trace.length; i++) {
       StackTraceElement e = trace[i];
-      if (e.getFileName() != null &&
-          e.getFileName().contains("ThrowableTest")) {
+      if (e.getFileName().contains("ThrowableTest")) {
         return e;
       }
     }
-    return null;
+    fail("Unable to find trace element: \n" + getTraceAsString(trace));
+    return null; // shouldn't happen
   }
 
   private String getTraceAsString(StackTraceElement[] trace) {
-    if (trace == null) {
-      throw new RuntimeException("null trace");
-    }
     String result = "";
     for (StackTraceElement e : trace) {
       result += e.toString() + "\n";

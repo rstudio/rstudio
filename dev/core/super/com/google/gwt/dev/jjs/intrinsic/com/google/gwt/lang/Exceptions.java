@@ -16,6 +16,7 @@
 package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.impl.StackTraceCreator;
 
 /**
  * This is a magic class the compiler uses to throw and check exceptions.
@@ -26,7 +27,7 @@ final class Exceptions {
     if (e instanceof Throwable) {
       return e;
     }
-    return e == null ? new JavaScriptException(null) : getCachableJavaScriptException(e);
+    return getCachableJavaScriptException(e);
   }
 
   static Object unwrap(Object e) {
@@ -40,18 +41,27 @@ final class Exceptions {
   }
 
   private static native JavaScriptException getCachableJavaScriptException(Object e)/*-{
-    var jse = e.__gwt$exception;
+    var jse = e && e.__gwt$exception;
     if (!jse) {
-      jse = @com.google.gwt.core.client.JavaScriptException::new(Ljava/lang/Object;)(e);
-      try {
-        // See https://code.google.com/p/google-web-toolkit/issues/detail?id=8449
-        e.__gwt$exception = jse;
-      } catch (e) {
-        // The exception is not cachable
+      jse = @Exceptions::makeJavaScriptException(*)(e);
+
+      // Cache if possible
+      if (typeof e == 'object') {
+        try {
+          e.__gwt$exception = jse;
+        } catch (e1) {
+          // See https://code.google.com/p/google-web-toolkit/issues/detail?id=8449
+        }
       }
     }
     return jse;
   }-*/;
+
+  private static JavaScriptException makeJavaScriptException(Object e) {
+    JavaScriptException jse = new JavaScriptException(e);
+    StackTraceCreator.captureStackTrace(jse, e);
+    return jse;
+  }
 
   static AssertionError makeAssertionError() {
     return new AssertionError();

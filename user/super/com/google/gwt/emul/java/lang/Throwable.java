@@ -74,12 +74,12 @@ public class Throwable implements Serializable {
    */
   protected Throwable(String message, Throwable cause, boolean enableSuppression,
       boolean writetableStackTrace) {
-    if (writetableStackTrace) {
-      fillInStackTrace();
-    }
     this.cause = cause;
     this.detailMessage = message;
     this.disableSuppression = !enableSuppression;
+    if (writetableStackTrace) {
+      fillInStackTrace();
+    }
   }
 
   /**
@@ -112,7 +112,8 @@ public class Throwable implements Serializable {
    * @return this
    */
   public Throwable fillInStackTrace() {
-    StackTraceCreator.fillInStackTrace(this);
+    stackTrace = null; // Invalidate the cached trace
+    StackTraceCreator.captureStackTrace(this, null);
     return this;
   }
 
@@ -135,7 +136,7 @@ public class Throwable implements Serializable {
    */
   public StackTraceElement[] getStackTrace() {
     if (stackTrace == null) {
-      return new StackTraceElement[0];
+      stackTrace = StackTraceCreator.constructJavaStackTrace(this);
     }
     return stackTrace;
   }
