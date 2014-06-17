@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
