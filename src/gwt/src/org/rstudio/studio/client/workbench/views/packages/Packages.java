@@ -66,7 +66,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHan
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
@@ -95,8 +94,7 @@ import java.util.TreeSet;
 
 public class Packages
       extends BasePresenter
-      implements PackageStateChangedHandler,
-                 PackageStatusChangedHandler,
+      implements PackageStatusChangedHandler,
                  DeferredInitCompletedEvent.Handler,
                  PackagesDisplayObserver
 {
@@ -151,7 +149,6 @@ public class Packages
       session_ = session;
       binder.bind(commands, this);
       
-      events.addHandler(PackageStateChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
       
       // make the install options persistent
@@ -677,10 +674,16 @@ public class Packages
       events_.fireEvent(new ShowHelpEvent(packageInfo.getUrl())) ;
    }
    
-   
    public void onPackageStateChanged(PackageStateChangedEvent event)
    {
-      updatePackageState(false) ;
+      PackageState newState = event.getPackageState();
+      
+      // if the event contains embedded state, apply it directly; if it doesn't,
+      // fetch the new state from the server.
+      if (newState != null)
+         setPackageState(newState);
+      else
+         updatePackageState(false);
    }
    
    @Override
@@ -951,29 +954,7 @@ public class Packages
       @Override
       public void onResponseReceived(PackageState response)
       {
-         // sort the packages
-         allPackages_ = new ArrayList<PackageInfo>();
-         JsArray<PackageInfo> serverPackages = response.getPackageList();
-         for (int i = 0; i < serverPackages.length(); i++)
-            allPackages_.add(serverPackages.get(i));
-         Collections.sort(allPackages_, new Comparator<PackageInfo>() {
-            public int compare(PackageInfo o1, PackageInfo o2)
-            {
-               // sort first by library, then by name
-               int library = 
-                     PackageLibraryUtils.typeOfLibrary(
-                           session_, o1.getLibrary()).compareTo(
-                     PackageLibraryUtils.typeOfLibrary(
-                           session_, o2.getLibrary()));
-               return library == 0 ? 
-                     o1.getName().compareToIgnoreCase(o2.getName()) :
-                     library;
-            }
-         });
-         packratContext_ = response.getPackratContext();
-         view_.setProgress(false);
-         setViewPackageList();
-         setViewActions(response);
+         setPackageState(response);
       }
    };
    
@@ -1237,6 +1218,33 @@ public class Packages
       events_.fireEvent(new SendToConsoleEvent(cmd, true));
    }
 
+   private void setPackageState(PackageState newState)
+   {
+      // sort the packages
+      allPackages_ = new ArrayList<PackageInfo>();
+      JsArray<PackageInfo> serverPackages = newState.getPackageList();
+      for (int i = 0; i < serverPackages.length(); i++)
+         allPackages_.add(serverPackages.get(i));
+      Collections.sort(allPackages_, new Comparator<PackageInfo>() {
+         public int compare(PackageInfo o1, PackageInfo o2)
+         {
+            // sort first by library, then by name
+            int library = 
+                  PackageLibraryUtils.typeOfLibrary(
+                        session_, o1.getLibrary()).compareTo(
+                  PackageLibraryUtils.typeOfLibrary(
+                        session_, o2.getLibrary()));
+            return library == 0 ? 
+                  o1.getName().compareToIgnoreCase(o2.getName()) :
+                  library;
+         }
+      });
+      packratContext_ = newState.getPackratContext();
+      view_.setProgress(false);
+      setViewPackageList();
+      setViewActions(newState);
+   }
+   
    private final Display view_;
    private final PackagesServerOperations server_;
    private final PackratServerOperations packratServer_;
