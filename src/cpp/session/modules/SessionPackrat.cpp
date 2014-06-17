@@ -748,9 +748,10 @@ void onDetectChanges(module_context::ChangeSource source)
 
 void activatePackagesIfPendingActions()
 {
-   core::json::Object actions;
-   annotatePendingActions(&actions);
-   if (!actions.empty())
+   // activate the packages pane if the library or lockfile states are 
+   // unresolved (i.e. there is a pending snapshot or restore)
+   if (isHashUnresolved(HASH_TYPE_LOCKFILE) || 
+       isHashUnresolved(HASH_TYPE_LIBRARY))
       module_context::activatePane("packages");
 }
 
