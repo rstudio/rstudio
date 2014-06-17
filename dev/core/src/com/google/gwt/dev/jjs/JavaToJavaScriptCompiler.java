@@ -847,6 +847,8 @@ public abstract class JavaToJavaScriptCompiler {
 
         // (1) Initialize local state
         createJProgram();
+        jprogram.typeOracle.setJsInteropMode(options.getJsInteropMode());
+
         jsProgram = new JsProgram();
         if (additionalRootTypes == null) {
           additionalRootTypes = Empty.STRINGS;

@@ -651,7 +651,8 @@ public class UnifyAst {
 
   public void addRootTypes(Collection<String> sourceTypeNames) throws UnableToCompleteException {
     for (String sourceTypeName : sourceTypeNames) {
-      JDeclaredType type = internalFindTypeViaLocator(sourceTypeName, sourceNameBasedTypeLocator);
+      JDeclaredType type = internalFindTypeViaLocator(sourceTypeName,
+          sourceNameBasedTypeLocator);
       if (type != null && hasAnyExports(type)) {
         instantiate(type);
       }
@@ -731,12 +732,13 @@ public class UnifyAst {
           flowInto(method);
         }
       }
-    } else {
+    } else if (program.typeOracle.isInteropEnabled()) {
       boolean savedErrorsFound = errorsFound;
       Set<String> internalNames = ImmutableSet.copyOf(compiledClassesByInternalName.keySet());
       for (String internalName : internalNames) {
-        JDeclaredType type = internalFindTypeViaLocator(internalName, internalNameBasedTypeLocator);
-        if (type != null && (type.isJsType() || hasAnyExports(type))) {
+        JDeclaredType type = internalFindTypeViaLocator(internalName,
+            internalNameBasedTypeLocator);
+        if (type != null && (isJsType(type) || hasAnyExports(type))) {
           instantiate(type);
           for (JField field : type.getFields()) {
             flowInto(field);
@@ -881,13 +883,17 @@ public class UnifyAst {
           || hasAnyExports(t)) {
         instantiate(t);
       }
-      if (t.isJsType()) {
+      if (isJsType(t)) {
         instantiate(t);
       }
     }
   }
 
   private boolean hasAnyExports(JDeclaredType t) {
+    if (!program.typeOracle.isInteropEnabled()) {
+      return false;
+    }
+
     for (JMethod method : t.getMethods()) {
       if (program.typeOracle.isExportedMethod(method)) {
         return true;
@@ -1151,7 +1157,8 @@ public class UnifyAst {
 
       @Override
       protected boolean hasCompileErrors(String binaryName) {
-        return sourceNameBasedTypeLocator.hasCompileErrors(BinaryName.toSourceName(binaryName));
+        return sourceNameBasedTypeLocator.hasCompileErrors(
+            BinaryName.toSourceName(binaryName));
       }
 
       @Override
@@ -1183,7 +1190,8 @@ public class UnifyAst {
 
       @Override
       protected boolean hasCompileErrors(String internalName) {
-        return sourceNameBasedTypeLocator.hasCompileErrors(InternalName.toSourceName(internalName));
+        return sourceNameBasedTypeLocator.hasCompileErrors(
+            InternalName.toSourceName(internalName));
       }
 
       @Override
@@ -1213,7 +1221,7 @@ public class UnifyAst {
         instantiate(intf);
       }
       staticInitialize(type);
-      boolean isJsType = type.isJsType();
+      boolean isJsType = isJsType(type);
 
       // Flow into any reachable virtual methods.
       for (JMethod method : type.getMethods()) {
@@ -1269,7 +1277,11 @@ public class UnifyAst {
     return false;
   }
 
-  private boolean isJsType(JInterfaceType intf) {
+  private boolean isJsType(JDeclaredType intf) {
+    if (!program.typeOracle.isInteropEnabled()) {
+      return false;
+    }
+
     if (intf.isJsType()) {
       return true;
     }

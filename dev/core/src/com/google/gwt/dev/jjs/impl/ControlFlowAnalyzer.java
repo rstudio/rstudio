@@ -968,7 +968,7 @@ public class ControlFlowAnalyzer {
   private final JMethod getClassMethod;
   private final JProgram program;
   private Set<JReferenceType> referencedTypes = Sets.newHashSet();
-  private final RescueVisitor rescuer = new RescueVisitor();
+  private final RescueVisitor rescuer;
   private final Set<JReferenceType> rescuedViaCast = Sets.newHashSet();
   private final JMethod runAsyncOnsuccess;
   private JMethod stringValueOfChar = null;
@@ -993,6 +993,7 @@ public class ControlFlowAnalyzer {
     methodsThatOverrideMe = cfa.methodsThatOverrideMe;
     getClassField = program.getIndexedField("Object.___clazz");
     getClassMethod = program.getIndexedMethod("Object.getClass");
+    rescuer = new RescueVisitor();
   }
 
   public ControlFlowAnalyzer(JProgram program) {
@@ -1004,6 +1005,7 @@ public class ControlFlowAnalyzer {
     getClassMethod = program.getIndexedMethod("Object.getClass");
     rescuedViaCast.addAll(program.typeOracle.getInstantiatedJsoTypesViaCast());
     buildMethodsOverriding();
+    rescuer = new RescueVisitor();
   }
 
   /**
