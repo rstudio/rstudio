@@ -119,7 +119,6 @@ extern const int kUserPrompt;
 extern const int kInstallRtools;
 extern const int kInstallShiny;
 extern const int kSuspendAndRestart;
-extern const int kPackratRestoreNeeded;
 }
    
 class ClientEvent

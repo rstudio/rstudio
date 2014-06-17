@@ -120,7 +120,6 @@ const int kUserPrompt = 96;
 const int kInstallRtools = 97;
 const int kInstallShiny = 98;
 const int kSuspendAndRestart = 99;
-const int kPackratRestoreNeeded = 100;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -322,8 +321,6 @@ std::string ClientEvent::typeName() const
          return "install_shiny";
       case client_events::kSuspendAndRestart:
          return "suspend_and_restart";
-      case client_events::kPackratRestoreNeeded:
-         return "packrat_restore_needed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
