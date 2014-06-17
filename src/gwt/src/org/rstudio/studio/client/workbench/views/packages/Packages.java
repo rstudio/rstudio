@@ -547,10 +547,10 @@ public class Packages
    public void onPackratBundle() 
    {
       pFileDialogs_.get().saveFile(
-         "Export Project Bundle as Zip Archive",
+         "Export Project Bundle to Gzipped Tarball",
          fsContext_,
          workbenchContext_.getCurrentWorkingDir(),
-         "zip",
+         ".tar.gz",
          false,
          new ProgressOperationWithInput<FileSystemItem>() {
    
