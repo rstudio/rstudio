@@ -75,6 +75,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils.PackageLibraryType;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
@@ -1174,15 +1175,8 @@ public class Packages
 
       // build a union of all affected package names
       Set<String> packageNames = new TreeSet<String>();
-      for (int i = 0; 
-           i < Math.max(restoreActions.length(), snapshotActions.length());
-           i++)
-      {
-         if (i < restoreActions.length())
-            packageNames.add(restoreActions.get(i).getPackage());
-         if (i < snapshotActions.length())
-            packageNames.add(snapshotActions.get(i).getPackage());
-      }
+      getPackageNamesFromActions(restoreActions, packageNames);
+      getPackageNamesFromActions(snapshotActions, packageNames);
       
       // find the action for each package
       for (String packageName: packageNames)
@@ -1239,12 +1233,49 @@ public class Packages
                   library;
          }
       });
+      
+      // mark packages out of sync if they have pending actions, and mark 
+      // which packages are first in their respective libraries
+      // (used later to render headers)
+      Set<String> outOfSyncPackages = new TreeSet<String>();
+      getPackageNamesFromActions(newState.getRestoreActions(), 
+                                 outOfSyncPackages);
+      getPackageNamesFromActions(newState.getSnapshotActions(),
+                                 outOfSyncPackages);
+      PackageLibraryType libraryType = PackageLibraryType.None;
+      for (PackageInfo pkgInfo: allPackages_)
+      {
+         if (pkgInfo.getInPackratLibary() && 
+             outOfSyncPackages.contains(pkgInfo.getName()))
+         {
+            pkgInfo.setOutOfSync(true);
+         }
+         PackageLibraryType pkgLibraryType = PackageLibraryUtils.typeOfLibrary(
+               session_, pkgInfo.getLibrary());
+         if (pkgLibraryType != libraryType)
+         {
+            pkgInfo.setFirstInLibrary(true);
+            libraryType = pkgLibraryType;
+         }
+      }
+      
       packratContext_ = newState.getPackratContext();
       view_.setProgress(false);
       setViewPackageList();
       setViewActions(newState);
    }
    
+   private void getPackageNamesFromActions(
+         JsArray<PackratPackageAction> actions,
+         Set<String> pkgNames)
+   {
+      if (actions == null)
+         return;
+
+      for (int i = 0; i < actions.length(); i++)
+         pkgNames.add(actions.get(i).getPackage());
+   }
+      
    private final Display view_;
    private final PackagesServerOperations server_;
    private final PackratServerOperations packratServer_;

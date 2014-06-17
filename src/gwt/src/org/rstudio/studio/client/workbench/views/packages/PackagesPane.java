@@ -39,7 +39,6 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils.PackageLibraryType;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
@@ -613,10 +612,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       public void buildRowImpl(PackageInfo pkg, int idx)
       {
          String library = pkg.getLibrary();
-         PackageLibraryType libraryType = 
-               PackageLibraryUtils.typeOfLibrary(session_, library);
-         if ((idx == lastIdx_ + 1 && !lastLibrary_.equals(libraryType)) || 
-             idx == 0)
+         if (pkg.isFirstInLibrary())
          {
            TableRowBuilder row = startRow();
            TableCellBuilder cell = row.startTD();
@@ -630,14 +626,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
            row.endTD();
            
            row.endTR();
-           lastLibrary_ = libraryType;
          }
          super.buildRowImpl(pkg, idx);
-         lastIdx_ = idx;
       }
-      
-      private PackageLibraryType lastLibrary_;
-      private int lastIdx_ = 0;
    }   
    
    private class PackageRowStyles implements RowStyles<PackageInfo>
@@ -645,8 +636,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       public String getStyleNames(PackageInfo row, int rowIndex)
       {
          PackageInfo pkgInfo = row.cast();
-         if (pkgInfo.getInPackratLibary() &&
-             pkgInfo.getPackratVersion() != pkgInfo.getVersion())
+         if (pkgInfo.getOutOfSync())
          {
             return dataGridRes_.dataGridStyle().packageOutOfSyncRow();
          }
@@ -705,6 +695,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final GlobalDisplay display_;
    private final PackagesDataGridResources dataGridRes_;
    private final EventBus events_;
+   
    
    private final static int ACTION_CENTER_ANIMATION_MS = 250;
 }

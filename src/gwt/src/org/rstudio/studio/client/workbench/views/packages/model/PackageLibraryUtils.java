@@ -23,6 +23,7 @@ public class PackageLibraryUtils
 {
    public enum PackageLibraryType
    {
+      None,
       Project,
       User,
       System

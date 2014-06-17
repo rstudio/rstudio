@@ -48,6 +48,15 @@ public class PackageInfo extends JavaScriptObject
       return this.loaded;
    }-*/;
    
+   public final native boolean isFirstInLibrary() /*-{
+      return (typeof this.first_in_library === "undefined") ? 
+         false : this.first_in_library;
+   }-*/;
+   
+   public final native boolean setFirstInLibrary(boolean isFirst) /*-{
+      this.first_in_library = isFirst;
+   }-*/;
+   
    public final native String getPackratStringField(String name) /*-{
       if (typeof this[name] === "undefined" || this[name] === null)
          return "";
@@ -81,6 +90,15 @@ public class PackageInfo extends JavaScriptObject
    {
       return getPackratBoolField("in.packrat.library");
    }
+   
+   public final boolean getOutOfSync()
+   {
+      return getPackratBoolField("out.of.sync");
+   }
+   
+   public final native void setOutOfSync(boolean outOfSync) /*-{
+      this["out.of.sync"] = outOfSync;
+   }-*/;
 
    public final PackageInfo asLoaded()
    {
