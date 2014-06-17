@@ -15,8 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -52,6 +54,34 @@ public class HistoryTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
+  }
+
+  public void testClickLink() {
+    AnchorElement anchorElement = Document.get().createAnchorElement();
+    anchorElement.setHref("#href1");
+    Document.get().getBody().appendChild(anchorElement);
+
+    try {
+      History.newItem("something_as_base");
+
+      addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+        @Override
+        public void onValueChange(ValueChangeEvent<String> event) {
+          assertEquals("href1", event.getValue());
+          finishTest();
+        }
+      });
+
+      delayTestFinish(200);
+
+      NativeEvent clickEvent =
+          Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+      anchorElement.dispatchEvent(clickEvent);
+
+    } finally {
+      Document.get().getBody().removeChild(anchorElement);
+    }
   }
 
   /* Tests against issue #572: Double unescaping of history tokens. */
