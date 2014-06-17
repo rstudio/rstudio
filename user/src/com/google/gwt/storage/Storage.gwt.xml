@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <module>
-  <inherits name='com.google.gwt.event.Event'/>
+  <inherits name='com.google.gwt.event.EventBase'/>
   <inherits name='com.google.gwt.useragent.UserAgent'/>
 
   <source path="client" />
