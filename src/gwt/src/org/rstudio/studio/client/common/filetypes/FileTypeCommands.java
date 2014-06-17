@@ -24,8 +24,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -52,10 +52,10 @@ public class FileTypeCommands
    {
       session_ = session;
           
-      eventBus.addHandler(InstalledPackagesChangedEvent.TYPE,
-                          new InstalledPackagesChangedHandler() {
+      eventBus.addHandler(PackageStateChangedEvent.TYPE,
+                          new PackageStateChangedHandler() {
          @Override
-         public void onInstalledPackagesChanged(InstalledPackagesChangedEvent e)
+         public void onPackageStateChanged(PackageStateChangedEvent e)
          {
             server.getHTMLCapabilities(
                   new ServerRequestCallback<HTMLCapabilities>() {

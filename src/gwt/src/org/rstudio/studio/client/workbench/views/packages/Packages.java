@@ -65,8 +65,8 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEve
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
@@ -95,7 +95,7 @@ import java.util.TreeSet;
 
 public class Packages
       extends BasePresenter
-      implements InstalledPackagesChangedHandler,
+      implements PackageStateChangedHandler,
                  PackageStatusChangedHandler,
                  DeferredInitCompletedEvent.Handler,
                  PackagesDisplayObserver
@@ -151,7 +151,7 @@ public class Packages
       session_ = session;
       binder.bind(commands, this);
       
-      events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
+      events.addHandler(PackageStateChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
       
       // make the install options persistent
@@ -678,7 +678,7 @@ public class Packages
    }
    
    
-   public void onInstalledPackagesChanged(InstalledPackagesChangedEvent event)
+   public void onPackageStateChanged(PackageStateChangedEvent event)
    {
       updatePackageState(false) ;
    }

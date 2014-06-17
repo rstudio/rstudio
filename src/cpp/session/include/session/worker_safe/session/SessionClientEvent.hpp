@@ -45,7 +45,7 @@ extern const int kWorkingDirChanged;
 extern const int kPlotsStateChanged;
 extern const int kViewData;
 extern const int kPackageStatusChanged;
-extern const int kInstalledPackagesChanged;
+extern const int kPackageStateChanged;
 extern const int kLocator;
 extern const int kConsoleResetHistory;
 extern const int kSessionSerialization;

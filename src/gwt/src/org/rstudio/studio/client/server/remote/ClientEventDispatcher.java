@@ -98,9 +98,10 @@ import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEv
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppStartedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.model.SourceCppState;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
@@ -238,9 +239,10 @@ public class ClientEventDispatcher
             DataView dataView = event.getData();
             eventBus_.fireEvent(new ViewDataEvent(dataView));
          }
-         else if (type.equals(ClientEvent.InstalledPackagesChanged))
+         else if (type.equals(ClientEvent.PackageStateChanged))
          {
-            eventBus_.fireEvent(new InstalledPackagesChangedEvent());
+            PackageState newState = event.getData();
+            eventBus_.fireEvent(new PackageStateChangedEvent(newState));
          }
          else if (type.equals(ClientEvent.PackageStatusChanged))
          {

@@ -183,6 +183,44 @@ Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+
+Error getPackageStateJson(json::Object* pJson)
+{
+   Error error = Success();
+   module_context::PackratContext context = module_context::packratContext();
+   json::Value packageListJson;
+   r::sexp::Protect protect;
+   SEXP packageList;
+
+   // determine the appropriate package listing method from the current 
+   // packrat mode status
+   if (context.modeOn)
+   {
+      FilePath projectDir = projects::projectContext().directory();
+      error = r::exec::RFunction(".rs.listPackagesPackrat", 
+                                 string_utils::utf8ToSystem(
+                                    projectDir.absolutePath()))
+              .call(&packageList, &protect);
+   }
+   else
+   {
+      error = r::exec::RFunction(".rs.listInstalledPackages")
+              .call(&packageList, &protect);
+   }
+
+   if (!error)
+   {
+      // return the generated package list and the Packrat context
+      r::json::jsonValueFromObject(packageList, &packageListJson);
+      (*pJson)["package_list"] = packageListJson;
+      (*pJson)["packrat_context"] = packrat::contextAsJson(context);
+      if (context.modeOn)
+         packrat::annotatePendingActions(pJson);
+   }
+
+   return error;
+}
+
 SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
 {
    std::string installCmd;
@@ -208,8 +246,7 @@ void rs_packageLibraryMutated()
    module_context::events().onPackageLibraryMutated();
 
    // broadcast event to client
-   ClientEvent event(client_events::kInstalledPackagesChanged);
-   module_context::enqueClientEvent(event);
+   enquePackageStateChanged();
 }
 
 void detectLibPathsChanges()
@@ -225,8 +262,7 @@ void detectLibPathsChanges()
       }
       else if (libPaths != s_lastLibPaths)
       {
-         ClientEvent event(client_events::kInstalledPackagesChanged);
-         module_context::enqueClientEvent(event);
+         enquePackageStateChanged();
          s_lastLibPaths = libPaths;
       }
    }
@@ -282,48 +318,29 @@ void onDeferredInit(bool newSession)
 Error getPackageState(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   Error error = Success();
-   module_context::PackratContext context = module_context::packratContext();
    json::Object result;
-   json::Value packageListJson;
-   r::sexp::Protect protect;
-   SEXP packageList;
-
-   // determine the appropriate package listing method from the current 
-   // packrat mode status
-   if (context.modeOn)
-   {
-      FilePath projectDir = projects::projectContext().directory();
-      error = r::exec::RFunction(".rs.listPackagesPackrat", 
-                                 string_utils::utf8ToSystem(
-                                    projectDir.absolutePath()))
-              .call(&packageList, &protect);
-   }
-   else
-   {
-      error = r::exec::RFunction(".rs.listInstalledPackages")
-              .call(&packageList, &protect);
-   }
-
-   if (error)
-   {
+   Error error = getPackageStateJson(&result);
+   if (error) 
       LOG_ERROR(error);
-      return error;
-   }
    else
-   {
-      // return the generated package list and the Packrat context
-      r::json::jsonValueFromObject(packageList, &packageListJson);
-      result["package_list"] = packageListJson;
-      result["packrat_context"] = packrat::contextAsJson(context);
-      if (context.modeOn)
-         packrat::annotatePendingActions(&result);
       pResponse->setResult(result);
-      return Success();
-   }
+   return error;
 }
 
 } // anonymous namespace
+
+void enquePackageStateChanged()
+{
+   json::Object pkgState;
+   Error error = getPackageStateJson(&pkgState);
+   if (error)
+      LOG_ERROR(error);
+   else
+   {
+      ClientEvent event(client_events::kPackageStateChanged, pkgState);
+      module_context::enqueClientEvent(event);
+   }
+}
 
 Error initialize()
 {

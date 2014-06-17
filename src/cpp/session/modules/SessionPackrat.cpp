@@ -148,7 +148,6 @@ static PackratActionType s_runningPackratAction = PACKRAT_ACTION_NONE;
 void performAutoSnapshot(const std::string& targetHash, bool queue);
 void pendingSnapshot(PendingSnapshotAction action);
 bool getPendingActions(PackratActionType action, json::Value* pActions);
-void emitPackagesChanged();
 void resolveStateAfterAction(PackratActionType action, 
                              PackratHashType hashType);
 std::string computeLockfileHash();
@@ -466,7 +465,7 @@ bool getPendingActions(PackratActionType action, json::Value* pActions)
 void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
 {
    // if the lockfile changed, refresh to show the new Packrat state 
-   emitPackagesChanged();
+   packages::enquePackageStateChanged();
 }
 
 void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
@@ -483,7 +482,7 @@ void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
                     " doesn't match resolved hash " <<
                     getHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED) <<
                     ", skipping auto snapshot"); 
-      emitPackagesChanged();
+      packages::enquePackageStateChanged();
    }
 }
 
@@ -536,12 +535,6 @@ void onConsolePrompt(const std::string& prompt)
    // immediately on detecting a change since a bulk change may be in-flight
    // (e.g. installing a package and several upon which it depends)
    pendingSnapshot(EXEC_PENDING_SNAPSHOT);
-}
-
-void emitPackagesChanged()
-{
-   ClientEvent event(client_events::kInstalledPackagesChanged);
-   module_context::enqueClientEvent(event);
 }
 
 void printDevtoolsMessage()
@@ -658,12 +651,12 @@ Error initPackratMonitoring()
 void resolveStateAfterAction(PackratActionType action, 
                              PackratHashType hashType)
 {
-   // if the action changed the underlying store, tell the client to refresh
-   // its view
+   // if the action changed the underlying store, send the new state to the
+   // client
    if (getHash(hashType, HASH_STATE_OBSERVED) != 
          getHash(hashType, HASH_STATE_COMPUTED))
    {
-      emitPackagesChanged();
+      packages::enquePackageStateChanged();
    }
 
    // if the action moved us to a consistent state, mark the state as 
