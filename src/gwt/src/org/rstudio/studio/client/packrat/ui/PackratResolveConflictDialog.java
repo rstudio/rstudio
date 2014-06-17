@@ -122,7 +122,7 @@ public class PackratResolveConflictDialog
       Label resolutionLabel =new Label("Resolution:");
       resolutionLabel.addStyleName(RESOURCES.styles().resolutionLabel());
       choiceGrid.setWidget(0, 0, resolutionLabel);
-      snapshotChoice_ = new RadioButton("snapshot", "Snapshot");
+      snapshotChoice_ = new RadioButton("snapshot", "Update Packrat (Snapshot)");
       snapshotChoice_.addStyleName(RESOURCES.styles().choiceButton());
       choiceGrid.setWidget(0, 1, snapshotChoice_);
       snapshotChoice_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -132,7 +132,7 @@ public class PackratResolveConflictDialog
             libraryChoice_.setValue(!event.getValue(), false);
          }
       });
-      libraryChoice_ = new RadioButton("library", "Restore");
+      libraryChoice_ = new RadioButton("library", "Update Library (Restore)");
       libraryChoice_.addStyleName(RESOURCES.styles().choiceButton());
       choiceGrid.setWidget(0, 2, libraryChoice_);
       libraryChoice_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {

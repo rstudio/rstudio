@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackag
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
+import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
@@ -262,6 +263,10 @@ public class Packages
       });
    }
    
+   void onRaisePackagePane(RaisePackagePaneEvent event)
+   {
+      view_.bringToFront();
+   }
    
    private void continueInstallPackage(
                            final PackageInstallContext installContext)
