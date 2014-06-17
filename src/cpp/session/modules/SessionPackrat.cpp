@@ -753,7 +753,15 @@ void onDetectChanges(module_context::ChangeSource source)
       detectReposChanges();
 }
 
-void onDeferredInit(bool)
+void activatePackagesIfPendingActions()
+{
+   core::json::Object actions;
+   annotatePendingActions(&actions);
+   if (!actions.empty())
+      module_context::activatePane("packages");
+}
+
+void onDeferredInit(bool newSession)
 {
    // additional stuff if we are in packrat mode
    if (module_context::packratContext().modeOn)
@@ -768,6 +776,18 @@ void onDeferredInit(bool)
 
       module_context::events().onDetectChanges.connect(onDetectChanges);
       module_context::events().onConsoleInput.connect(onConsoleInput);
+
+      // check whether there are pending actions and if there are then
+      // ensure that the packages pane is activated. we do this on a
+      // delayed basis to allow all of the other IDE initialization
+      // RPC calls (list files, list environment, etc.) to occur before
+      // we begin the (more latent) listing of packages + actions
+      if (newSession)
+      {
+         module_context::scheduleDelayedWork(
+                  boost::posix_time::milliseconds(250),
+                  activatePackagesIfPendingActions);
+      }
    }
 }
 
