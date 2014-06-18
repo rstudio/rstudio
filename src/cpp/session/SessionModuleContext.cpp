@@ -123,8 +123,6 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
       int type = -1 ;
       if (name == "package_status_changed")
          type = session::client_events::kPackageStatusChanged;
-      else if (name == "installed_packages_changed")
-         type = session::client_events::kInstalledPackagesChanged;
       else if (name == "unhandled_error")
          type = session::client_events::kUnhandledError;
       

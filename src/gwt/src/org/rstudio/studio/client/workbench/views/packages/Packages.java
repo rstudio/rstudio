@@ -65,8 +65,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEve
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
@@ -76,6 +75,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils.PackageLibraryType;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
@@ -95,8 +95,7 @@ import java.util.TreeSet;
 
 public class Packages
       extends BasePresenter
-      implements InstalledPackagesChangedHandler,
-                 PackageStatusChangedHandler,
+      implements PackageStatusChangedHandler,
                  DeferredInitCompletedEvent.Handler,
                  PackagesDisplayObserver
 {
@@ -151,7 +150,6 @@ public class Packages
       session_ = session;
       binder.bind(commands, this);
       
-      events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
       
       // make the install options persistent
@@ -549,10 +547,10 @@ public class Packages
    public void onPackratBundle() 
    {
       pFileDialogs_.get().saveFile(
-         "Export Project Bundle as Zip Archive",
+         "Export Project Bundle to Gzipped Tarball",
          fsContext_,
          workbenchContext_.getCurrentWorkingDir(),
-         "zip",
+         ".tar.gz",
          false,
          new ProgressOperationWithInput<FileSystemItem>() {
    
@@ -677,10 +675,16 @@ public class Packages
       events_.fireEvent(new ShowHelpEvent(packageInfo.getUrl())) ;
    }
    
-   
-   public void onInstalledPackagesChanged(InstalledPackagesChangedEvent event)
+   public void onPackageStateChanged(PackageStateChangedEvent event)
    {
-      updatePackageState(false) ;
+      PackageState newState = event.getPackageState();
+      
+      // if the event contains embedded state, apply it directly; if it doesn't,
+      // fetch the new state from the server.
+      if (newState != null)
+         setPackageState(newState);
+      else
+         updatePackageState(false);
    }
    
    @Override
@@ -951,29 +955,7 @@ public class Packages
       @Override
       public void onResponseReceived(PackageState response)
       {
-         // sort the packages
-         allPackages_ = new ArrayList<PackageInfo>();
-         JsArray<PackageInfo> serverPackages = response.getPackageList();
-         for (int i = 0; i < serverPackages.length(); i++)
-            allPackages_.add(serverPackages.get(i));
-         Collections.sort(allPackages_, new Comparator<PackageInfo>() {
-            public int compare(PackageInfo o1, PackageInfo o2)
-            {
-               // sort first by library, then by name
-               int library = 
-                     PackageLibraryUtils.typeOfLibrary(
-                           session_, o1.getLibrary()).compareTo(
-                     PackageLibraryUtils.typeOfLibrary(
-                           session_, o2.getLibrary()));
-               return library == 0 ? 
-                     o1.getName().compareToIgnoreCase(o2.getName()) :
-                     library;
-            }
-         });
-         packratContext_ = response.getPackratContext();
-         view_.setProgress(false);
-         setViewPackageList();
-         setViewActions(response);
+         setPackageState(response);
       }
    };
    
@@ -1193,15 +1175,8 @@ public class Packages
 
       // build a union of all affected package names
       Set<String> packageNames = new TreeSet<String>();
-      for (int i = 0; 
-           i < Math.max(restoreActions.length(), snapshotActions.length());
-           i++)
-      {
-         if (i < restoreActions.length())
-            packageNames.add(restoreActions.get(i).getPackage());
-         if (i < snapshotActions.length())
-            packageNames.add(snapshotActions.get(i).getPackage());
-      }
+      getPackageNamesFromActions(restoreActions, packageNames);
+      getPackageNamesFromActions(snapshotActions, packageNames);
       
       // find the action for each package
       for (String packageName: packageNames)
@@ -1237,6 +1212,70 @@ public class Packages
       events_.fireEvent(new SendToConsoleEvent(cmd, true));
    }
 
+   private void setPackageState(PackageState newState)
+   {
+      // sort the packages
+      allPackages_ = new ArrayList<PackageInfo>();
+      JsArray<PackageInfo> serverPackages = newState.getPackageList();
+      for (int i = 0; i < serverPackages.length(); i++)
+         allPackages_.add(serverPackages.get(i));
+      Collections.sort(allPackages_, new Comparator<PackageInfo>() {
+         public int compare(PackageInfo o1, PackageInfo o2)
+         {
+            // sort first by library, then by name
+            int library = 
+                  PackageLibraryUtils.typeOfLibrary(
+                        session_, o1.getLibrary()).compareTo(
+                  PackageLibraryUtils.typeOfLibrary(
+                        session_, o2.getLibrary()));
+            return library == 0 ? 
+                  o1.getName().compareToIgnoreCase(o2.getName()) :
+                  library;
+         }
+      });
+      
+      // mark packages out of sync if they have pending actions, and mark 
+      // which packages are first in their respective libraries
+      // (used later to render headers)
+      Set<String> outOfSyncPackages = new TreeSet<String>();
+      getPackageNamesFromActions(newState.getRestoreActions(), 
+                                 outOfSyncPackages);
+      getPackageNamesFromActions(newState.getSnapshotActions(),
+                                 outOfSyncPackages);
+      PackageLibraryType libraryType = PackageLibraryType.None;
+      for (PackageInfo pkgInfo: allPackages_)
+      {
+         if (pkgInfo.getInPackratLibary() && 
+             outOfSyncPackages.contains(pkgInfo.getName()))
+         {
+            pkgInfo.setOutOfSync(true);
+         }
+         PackageLibraryType pkgLibraryType = PackageLibraryUtils.typeOfLibrary(
+               session_, pkgInfo.getLibrary());
+         if (pkgLibraryType != libraryType)
+         {
+            pkgInfo.setFirstInLibrary(true);
+            libraryType = pkgLibraryType;
+         }
+      }
+      
+      packratContext_ = newState.getPackratContext();
+      view_.setProgress(false);
+      setViewPackageList();
+      setViewActions(newState);
+   }
+   
+   private void getPackageNamesFromActions(
+         JsArray<PackratPackageAction> actions,
+         Set<String> pkgNames)
+   {
+      if (actions == null)
+         return;
+
+      for (int i = 0; i < actions.length(); i++)
+         pkgNames.add(actions.get(i).getPackage());
+   }
+      
    private final Display view_;
    private final PackagesServerOperations server_;
    private final PackratServerOperations packratServer_;

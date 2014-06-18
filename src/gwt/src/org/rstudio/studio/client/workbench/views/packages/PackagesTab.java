@@ -25,6 +25,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 
 public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
@@ -34,7 +36,8 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
    public abstract static class Shim
          extends DelayLoadTabShim<Packages, PackagesTab> 
          implements LoadedPackageUpdatesEvent.Handler,
-                    RaisePackagePaneEvent.Handler
+                    RaisePackagePaneEvent.Handler,
+                    PackageStateChangedHandler
    {
       @Handler
       public abstract void onInstallPackage();
@@ -54,6 +57,7 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
       binder.bind(commands, shim);
       events.addHandler(LoadedPackageUpdatesEvent.TYPE, shim);
       events.addHandler(RaisePackagePaneEvent.TYPE, shim);
+      events.addHandler(PackageStateChangedEvent.TYPE, shim);
       uiPrefs_ = uiPrefs;
       session_ = session;
    }

@@ -37,7 +37,7 @@ class ClientEvent extends JavaScriptObject
    public static final String PlotsStateChanged = "plots_state_changed";
    public static final String ViewData = "view_data";
    public static final String PackageStatusChanged = "package_status_changed";
-   public static final String InstalledPackagesChanged = "installed_packages_changed";
+   public static final String PackageStateChanged = "package_state_changed";
    public static final String Locator = "locator";
    public static final String ConsoleResetHistory = "console_reset_history";
    public static final String SessionSerialization = "session_serialization";

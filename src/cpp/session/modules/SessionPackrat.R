@@ -50,8 +50,9 @@
    if (!is.data.frame(packratStatus))
       return(libraryList)
 
-   # resolve symlinks 
-   resolvedLinks <- Sys.readlink(by(libraryList, 1:nrow(libraryList),
+   # resolve symlinks (use normalizePath rather than Sys.readlink since we want
+   # to resolve symlinks anywhere in the heirarchy)
+   resolvedLinks <- normalizePath(by(libraryList, 1:nrow(libraryList),
          function(pkg) { 
                 system.file(package = pkg$name, lib.loc = pkg$library) 
          }))
@@ -59,7 +60,8 @@
    # for links that got resolved, replace the library indicated with the 
    # actual (resolved) parent folder of the library
    symlinks <- nchar(resolvedLinks) > 3
-   libraryList[symlinks,"library"] <- dirname(resolvedLinks[symlinks])
+   libraryList[symlinks,"library"] <- 
+      .rs.createAliasedPath(dirname(resolvedLinks[symlinks]))
 
    # for each package, indicate whether it's in the private library (this is
    # largely a convenience for the client since a lot of behavior is driven

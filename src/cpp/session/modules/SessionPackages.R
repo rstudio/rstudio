@@ -46,7 +46,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       function(pkgname, ...)
       {
          packageStatus = list(name=pkgname,
-                              path=.rs.pathPackage(pkgname, quiet=TRUE),
+                              path=.rs.createAliasedPath(
+                                     .rs.pathPackage(pkgname, quiet=TRUE)),
                               loaded=status)
          .rs.enqueClientEvent("package_status_changed", packageStatus)
       }
@@ -198,12 +199,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
   .libPaths()[1]
 })
 
+.rs.addFunction("isPackageLoaded", function(packageName, libName)
+{
+   if (packageName %in% .packages())
+   {
+      # get the raw path to the package 
+      packagePath <- .rs.pathPackage(packageName, quiet=TRUE)
+
+      # alias (for comparison against libName, which comes from the client and
+      # is alised)
+      packagePath <- .rs.createAliasedPath(packagePath)
+
+      # compare with the library given by the client
+      .rs.scalar(identical(packagePath, paste(libName, packageName, sep="/")))
+   }
+   else 
+      .rs.scalar(FALSE)
+})
+
 .rs.addJsonRpcHandler( "is_package_loaded", function(packageName, libName)
 {
-   .rs.scalar( (packageName %in% .packages()) &&
-               identical(.rs.pathPackage(packageName, quiet=TRUE),
-                         paste(libName, packageName, sep="/"))
-             )
+   .rs.isPackageLoaded(packageName, libName)
 })
 
 .rs.addFunction("forceUnloadPackage", function(name)

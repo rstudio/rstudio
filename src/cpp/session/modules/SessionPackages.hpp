@@ -25,6 +25,7 @@ namespace modules {
 namespace packages {
    
 core::Error initialize();
+void enquePackageStateChanged();
                        
 } // namespace packages
 } // namespace modules

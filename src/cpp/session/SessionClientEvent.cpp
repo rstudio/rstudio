@@ -47,7 +47,7 @@ const int kWorkingDirChanged = 18;
 const int kPlotsStateChanged = 19;
 const int kViewData = 20;
 const int kPackageStatusChanged = 21;
-const int kInstalledPackagesChanged = 22;
+const int kPackageStateChanged = 22;
 const int kLocator = 23;
 const int kConsoleResetHistory = 25;
 const int kSessionSerialization = 26;
@@ -175,8 +175,8 @@ std::string ClientEvent::typeName() const
          return "view_data";
       case client_events::kPackageStatusChanged: 
          return "package_status_changed";
-      case client_events::kInstalledPackagesChanged: 
-         return "installed_packages_changed";
+      case client_events::kPackageStateChanged: 
+         return "package_state_changed";
       case client_events::kLocator:
          return "locator";
       case client_events::kConsoleResetHistory:
