@@ -908,7 +908,7 @@ void handlePreviewRequest(const http::Request& request,
    // if there isn't a current preview this is an error
    if (!s_pCurrentPreview_)
    {
-      pResponse->setError(http::status::NotFound, "No preview available");
+      pResponse->setNotFoundError(request.uri());
       return;
    }
 

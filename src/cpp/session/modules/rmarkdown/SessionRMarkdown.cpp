@@ -848,14 +848,14 @@ void handleRmdOutputRequest(const http::Request& request,
    size_t pos = path.find('/', 1);
    if (pos == std::string::npos)
    {
-      pResponse->setError(http::status::NotFound, "No output file found");
+      pResponse->setNotFoundError(request.uri());
       return;
    }
    std::string outputFile = http::util::urlDecode(path.substr(0, pos));
    FilePath outputFilePath(module_context::resolveAliasedPath(outputFile));
    if (!outputFilePath.exists())
    {
-      pResponse->setError(http::status::NotFound, outputFile + " not found");
+      pResponse->setNotFoundError(outputFile);
       return;
    }
 

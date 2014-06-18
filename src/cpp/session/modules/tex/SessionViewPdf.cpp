@@ -40,7 +40,7 @@ void handleViewPdf(const http::Request& request, http::Response* pResponse)
    FilePath filePath(request.queryParamValue("path"));
    if (!filePath.exists())
    {
-      pResponse->setError(http::status::NotFound, "File not found");
+      pResponse->setNotFoundError(request.uri());
       return;
    }
 

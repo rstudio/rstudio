@@ -618,7 +618,7 @@ void handleRdPreviewRequest(const http::Request& request,
    FilePath filePath = module_context::resolveAliasedPath(file);
    if (!filePath.exists())
    {
-      pResponse->setError(http::status::NotFound, request.uri());
+      pResponse->setNotFoundError(request.uri());
       return;
    }
 
@@ -812,7 +812,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    // ensure that this path does not contain ..
    if (uri.find("..") != std::string::npos)
    {
-      pResponse->setError(http::status::NotFound, uri + " not found");
+      pResponse->setNotFoundError(request.uri());
       return;
    }
 

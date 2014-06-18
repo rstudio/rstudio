@@ -958,7 +958,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    else
    {
       http::Response response;
-      response.setError(http::status::NotFound, request.uri() + " not found");
+      response.setNotFoundError(request.uri());
       ptrConnection->sendResponse(response);
    }
 }

@@ -261,7 +261,7 @@ public:
       // ensure that the file exists
       if (!filePath.exists())
       {
-         setError(http::status::NotFound, request.uri() + " not found");
+         setNotFoundError(request.uri());
          return;
       }
       
@@ -292,7 +292,7 @@ public:
       // ensure that the file exists
       if (!filePath.exists())
       {
-         setError(http::status::NotFound, request.uri() + " not found");
+         setNotFoundError(request.uri());
          return;
       }
       
@@ -322,6 +322,7 @@ public:
    // these calls do no stream io or encoding so don't return errors
    void setBodyUnencoded(const std::string& body);
    void setError(int statusCode, const std::string& message);
+   void setNotFoundError(const std::string& uri);
    void setError(const Error& error);
    
    void setMovedPermanently(const http::Request& request, const std::string& location);

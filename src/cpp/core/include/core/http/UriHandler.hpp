@@ -79,9 +79,7 @@ private:
 
 inline void notFoundHandler(const Request& request, Response* pResponse)
 {
-   pResponse->setStatusCode(http::status::NotFound);
-   pResponse->setContentType("text/plain");
-   pResponse->setBody(request.uri() + " not found");
+   pResponse->setNotFoundError(request.uri());
 }
 
    

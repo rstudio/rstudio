@@ -537,8 +537,7 @@ void proxyLocalhostRequest(
    boost::smatch match;
    if (!boost::regex_search(request.uri(), match, re))
    {
-      ptrConnection->response().setError(http::status::NotFound,
-                                         request.uri() + " not found");
+      ptrConnection->response().setNotFoundError(request.uri());
       return;
    }
    std::string port = match[1];
