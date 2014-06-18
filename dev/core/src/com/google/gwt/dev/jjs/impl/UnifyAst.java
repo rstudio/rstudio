@@ -1426,7 +1426,8 @@ public class UnifyAst {
 
     if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
       TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
-          "Type %s could not be referenced because it previously failed to compile with errors:"));
+          "Type %s could not be referenced because it previously failed to compile with errors:",
+          typeName));
       nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
     } else {
       logger.log(TreeLogger.ERROR, String.format(
