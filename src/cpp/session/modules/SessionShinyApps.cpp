@@ -29,6 +29,7 @@
 
 #define kFinishedMarker "ShinyApps deployment completed: "
 #define kShinyAppsFolder "shinyapps/"
+#define kPackratFolder "packrat/"
 
 #define kMaxDeploymentSize 104857600
 
@@ -177,8 +178,9 @@ bool directorySummer(int level, const FilePath& file, const FilePath& root,
    if (relPath.substr(0, 1) == ".")
       return true;
 
-   // ignore shinyapps folder 
-   if (relPath.substr(0, sizeof(kShinyAppsFolder) - 1) == kShinyAppsFolder)
+   // ignore shinyapps and packrat folders
+   if (relPath.substr(0, sizeof(kShinyAppsFolder) - 1) == kShinyAppsFolder ||
+       relPath.substr(0, sizeof(kPackratFolder) - 1) == kPackratFolder)
       return true;
 
    // ignore the R project file
