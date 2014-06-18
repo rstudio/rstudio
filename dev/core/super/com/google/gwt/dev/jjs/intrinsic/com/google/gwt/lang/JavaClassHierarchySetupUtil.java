@@ -59,6 +59,9 @@ public class JavaClassHierarchySetupUtil {
       _ = prototype;
     } else {
       _ = prototypesByTypeId[typeId]  = (!superTypeId) ? {} : createSubclassPrototype(superTypeId);
+      // Make polymorphic dispatch work in v8 for overridden methods.
+      // TODO(dankurka): remove this once we have new style cast maps.
+      _['__$objectId_' + typeId] = 1;
       _.@java.lang.Object::castableTypeMap = castableTypeMap;
       _.constructor = _;
       if (!superTypeId) {
@@ -99,6 +102,9 @@ public class JavaClassHierarchySetupUtil {
           var superPrototype = jsSuperClass && jsSuperClass.prototype || {};
           _ = prototypesByTypeId[typeId] =  @com.google.gwt.lang.JavaClassHierarchySetupUtil::
               portableObjCreate(Lcom/google/gwt/core/client/JavaScriptObject;)(superPrototype);
+          // Make polymorphic dispatch work in v8 for overridden methods.
+          // TODO(dankurka): remove this once we have new style cast maps.
+          _['__$objectId_' + typeId] = 1;
           _.@java.lang.Object::castableTypeMap = castableTypeMap;
       }
       for (var i = 3; i < arguments.length; ++i) {
