@@ -98,7 +98,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
             if (!sessionInfo.isDevtoolsInstalled())
             {
                commands.devtoolsLoadAll().remove();
-               commands.checkPackage().remove();
+               commands.testPackage().remove();
             }
             
             // adapt or remove package commands if this isn't a package
