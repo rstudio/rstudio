@@ -234,14 +234,13 @@ void Response::setError(int statusCode, const std::string& message)
 {
    setStatusCode(statusCode);
    removeCachingHeaders();
-   setContentType("text/plain");
-   setBodyUnencoded(message);
+   setContentType("text/html");
+   setBodyUnencoded(string_utils::htmlEscape(message));
 }
 
 void Response::setNotFoundError(const std::string& uri)
 {
-   setError(http::status::NotFound,
-            string_utils::htmlEscape(uri) + " not found");
+   setError(http::status::NotFound, uri + " not found");
 }
    
 void Response::setError(const Error& error)
