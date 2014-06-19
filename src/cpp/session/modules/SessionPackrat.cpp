@@ -501,8 +501,11 @@ void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
                     " doesn't match resolved hash " <<
                     getHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED) <<
                     ", skipping auto snapshot"); 
-      packages::enquePackageStateChanged();
    }
+
+   // send the new state to the client if Packrat isn't busy
+   if (s_runningPackratAction == PACKRAT_ACTION_NONE)
+      packages::enquePackageStateChanged();
 }
 
 void onFileChanged(FilePath sourceFilePath)
