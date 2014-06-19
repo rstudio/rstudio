@@ -913,7 +913,7 @@ namespace module_context {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.124");
+   return module_context::isPackageVersionInstalled("packrat", "0.2.0.125");
 }
 
 PackratContext packratContext()
