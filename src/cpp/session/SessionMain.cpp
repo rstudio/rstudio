@@ -116,6 +116,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPackrat.hpp"
 #include "modules/SessionProfiler.hpp"
 #include "modules/SessionRPubs.hpp"
+#include "modules/SessionRHooks.hpp"
 #include "modules/SessionShinyApps.hpp"
 #include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
@@ -1627,6 +1628,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::shiny_viewer::initialize)
       (modules::shiny_apps::initialize)
       (modules::packrat::initialize)
+      (modules::rhooks::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -1725,6 +1727,9 @@ void rDeferredInit(bool newSession)
 {
    module_context::events().onDeferredInit(newSession);
 
+   // allow any packages listening to complete initialization
+   modules::rhooks::invokeHook(kSessionInitHook, newSession);
+   
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted);
    module_context::enqueClientEvent(event);
