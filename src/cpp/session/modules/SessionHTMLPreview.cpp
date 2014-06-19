@@ -214,7 +214,8 @@ private:
       outputPathTempFile_ = outputFileTempFile;
       encoding_ = encoding;
 
-      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent());
+      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent(),
+                                    async_r::R_PROCESS_REDIRECTSTDERR);
    }
 
    bool targetIsRMarkdown()
@@ -392,11 +393,6 @@ private:
                                 htmlPreviewFile(),
                                 isMarkdown(),
                                 !isNotebook());
-   }
-
-   bool redirectStdErrToStdOut()
-   {
-      return true;
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)

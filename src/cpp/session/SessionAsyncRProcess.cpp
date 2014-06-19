@@ -31,7 +31,8 @@ AsyncRProcess::AsyncRProcess():
 }
 
 void AsyncRProcess::start(const char* rCommand, 
-                          const core::FilePath& workingDir)
+                          const core::FilePath& workingDir, 
+                          AsyncRProcessOptions rOptions)
 {
    // R binary
    core::FilePath rProgramPath;
@@ -46,14 +47,16 @@ void AsyncRProcess::start(const char* rCommand,
    // args
    std::vector<std::string> args;
    args.push_back("--slave");
-   args.push_back("--vanilla");
+   if (rOptions & R_PROCESS_VANILLA)
+      args.push_back("--vanilla");
    args.push_back("-e");
    args.push_back(rCommand);
 
    // options
    core::system::ProcessOptions options;
    options.terminateChildren = true;
-   options.redirectStdErrToStdOut = redirectStdErrToStdOut();
+   if (rOptions & R_PROCESS_REDIRECTSTDERR)
+      options.redirectStdErrToStdOut = true;
 
    // if a working directory was specified, use it
    if (!workingDir.empty())
@@ -135,11 +138,6 @@ void AsyncRProcess::terminate()
 void AsyncRProcess::markCompleted() 
 {
    isRunning_ = false;
-}
-
-bool AsyncRProcess::redirectStdErrToStdOut()
-{
-   return false;
 }
 
 AsyncRProcess::~AsyncRProcess()

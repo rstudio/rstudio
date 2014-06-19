@@ -222,7 +222,8 @@ private:
 
       // start the async R process with the render command
       allOutput_.clear();
-      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent());
+      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent(),
+                                    async_r::R_PROCESS_NORMAL);
    }
 
    void onStdout(const std::string& output)
@@ -516,7 +517,8 @@ public:
    static boost::shared_ptr<DiscoverTemplates> create()
    {
       boost::shared_ptr<DiscoverTemplates> pDiscover(new DiscoverTemplates());
-      pDiscover->start("rmarkdown:::list_template_dirs()", FilePath());
+      pDiscover->start("rmarkdown:::list_template_dirs()", FilePath(),
+                       async_r::R_PROCESS_VANILLA);
       return pDiscover;
    }
 
