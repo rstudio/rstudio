@@ -422,7 +422,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $strongName = '" + strongName + "';");
     out.newlineOpt();
-    out.print("var $gwt;");
+    out.print("var $gwt = {};");
     out.newlineOpt();
     out.print("var $doc = $wnd.document;");
     out.newlineOpt();

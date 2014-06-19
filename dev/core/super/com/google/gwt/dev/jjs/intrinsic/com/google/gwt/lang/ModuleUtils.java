@@ -74,10 +74,11 @@ public final class ModuleUtils {
   public static native void setGwtProperty(String propertyName, JavaScriptObject propertyValue) /*-{
     // Access $gwt as a global object property so that it does not get optimized out when
     // using the closure backend.
-    if (!$wnd['$gwt']) {
-      $wnd['$gwt'] = {}
+
+    // The linker should create the $gwt variable. If not, do nothing.
+    if (typeof(window) === "object" && typeof(window["$gwt"]) === "object") {
+        window["$gwt"][propertyName] = propertyValue;
     }
-    $wnd['$gwt'][propertyName] = propertyValue;
   }-*/;
 
   private static native void ensureModuleInit() /*-{
