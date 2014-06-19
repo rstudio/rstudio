@@ -489,16 +489,10 @@ private:
       core::system::Options childEnv;
       core::system::environment(&childEnv);
 
-      // allow child process to inherit our R_LIBS -- but only if package is not
-      // being managed by packrat
-      // presumedly, if a user is managing an R package with packrat, he wants to
-      // install his package into a user library, not the packrat private library
-      if (!session::module_context::packratContext().packified)
-      {
-         std::string libPaths = module_context::libPathsString();
-         if (!libPaths.empty())
-            core::system::setenv(&childEnv, "R_LIBS", libPaths);
-      }
+      // allow child process to inherit our R_LIBS
+      std::string libPaths = module_context::libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&childEnv, "R_LIBS", libPaths);
 
       // prevent spurious cygwin warnings on windows
 #ifdef _WIN32
@@ -753,8 +747,7 @@ private:
       // build args
       std::vector<std::string> args;
       args.push_back("--slave");
-      args.push_back("--no-save");
-      args.push_back("--no-restore");
+      args.push_back("--vanilla");
       args.push_back("-e");
       args.push_back(command);
 
