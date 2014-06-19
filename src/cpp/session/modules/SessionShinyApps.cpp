@@ -66,7 +66,7 @@ public:
       }
       cmd += ")";
 
-      pDeploy->start(cmd.c_str(), FilePath());
+      pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
       return pDeploy;
    }
 

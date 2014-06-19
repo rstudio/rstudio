@@ -24,6 +24,13 @@ namespace core
 
 namespace session {   
 namespace async_r {
+
+enum AsyncRProcessOptions
+{
+   R_PROCESS_NORMAL         = 1 << 0,
+   R_PROCESS_REDIRECTSTDERR = 1 << 1,
+   R_PROCESS_VANILLA        = 1 << 2
+};
     
 class AsyncRProcess :
       boost::noncopyable,
@@ -33,7 +40,8 @@ public:
    AsyncRProcess();
    virtual ~AsyncRProcess();
 
-   void start(const char* rCommand, const core::FilePath& workingDir);
+   void start(const char* rCommand, const core::FilePath& workingDir,
+              AsyncRProcessOptions rOptions);
    bool isRunning();
    void terminate();
    void markCompleted();
@@ -44,7 +52,6 @@ protected:
    virtual void onStderr(const std::string& output);
 
    virtual void onCompleted(int exitStatus) = 0;
-   virtual bool redirectStdErrToStdOut();
 
 private:
    void onProcessCompleted(int exitStatus);

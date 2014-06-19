@@ -303,7 +303,8 @@ public:
 
       PACKRAT_TRACE("starting auto snapshot, R command: " << snapshotCmd);
       pSnapshot->setTargetHash(targetHash);
-      pSnapshot->start(snapshotCmd.c_str(), projectDir);
+      pSnapshot->start(snapshotCmd.c_str(), projectDir, 
+                       async_r::R_PROCESS_VANILLA);
       return pSnapshot;
    }
 
