@@ -18,7 +18,16 @@ package java.util;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * A simple wrapper around JavaScriptObject to provide {@link java.util.Map}-like semantics.
+ * A simple wrapper around JavaScriptObject to provide {@link java.util.Map}-like semantics where
+ * the key type is string.
+ * <p>
+ * Implementation notes:
+ * <p>
+ * String keys are mapped to their values via a JS associative map. String keys could collide with
+ * intrinsic properties (like watch, constructor). To avoid that; {@link InternalJsStringMap})
+ * prepends each key with a ':' while storing and {@link InternalJsStringMapModern} uses
+ * {@code Object.create(null)} in the first place to avoid inheriting any properties (only available
+ * in modern browsers).
  */
 class InternalJsStringMap<V> {
 
