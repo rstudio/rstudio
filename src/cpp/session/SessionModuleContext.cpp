@@ -989,17 +989,9 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
 
    // setup options and command
    core::system::ProcessOptions options;
+   RCommand installCommand(rBinDir);
+   installCommand << "INSTALL";
 
-   // R exe path differs by platform
-#ifdef _WIN32
-   shell_utils::ShellCommand installCommand(rBinDir.childPath("R.exe"));
-#else
-   shell_utils::ShellCommand installCommand(rBinDir.childPath("R"));
-#endif
-
-   installCommand << core::shell_utils::EscapeFilesOnly;
-   installCommand << "--vanilla";
-   installCommand << "CMD" << "INSTALL";
 
    // if there is a lib path then provide it
    if (!libPath.empty())
@@ -1021,7 +1013,7 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
    core::system::ProcessResult result;
 
    // run the command
-   error = core::system::runCommand(installCommand,
+   error = core::system::runCommand(installCommand.commandString(),
                                     options,
                                     &result);
 
