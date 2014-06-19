@@ -470,12 +470,15 @@ bool getPendingActions(PackratActionType action, json::Value* pActions)
          projects::projectContext().directory().absolutePath())
          .call(&actions, &protect);
 
-   // return nothing if an error occurs or there are no actions
+   // if an error occurs, presume that there are pending actions (i.e. don't
+   // resolve the state) 
    if (error)
    {
       LOG_ERROR(error);
-      return false;
+      return true;
    }
+
+   // if an empty list comes back, we can savely resolve the state
    if (r::sexp::length(actions) == 0)
       return false;
 
