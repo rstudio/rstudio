@@ -1058,7 +1058,7 @@ public class Packages
       {
          actions.add(new Action(messageFromActions(
                packageState.getRestoreActions()),
-               "Apply...", 
+               "Update Library...", 
                new Command() {
                   @Override
                   public void execute()
@@ -1072,7 +1072,7 @@ public class Packages
       {
          actions.add(new Action(messageFromActions(
                packageState.getSnapshotActions()),
-               "Snapshot...", 
+               "Update Packrat...", 
                new Command() {
                   @Override
                   public void execute()
