@@ -330,8 +330,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // build args
    std::vector<std::string> args;
    args.push_back("--slave");
-   args.push_back("--no-save");
-   args.push_back("--no-restore");
+   args.push_back("--vanilla");
    args.push_back("-e");
    args.push_back(cmd);
 

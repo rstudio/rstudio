@@ -991,6 +991,7 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
    core::system::ProcessOptions options;
    RCommand installCommand(rBinDir);
    installCommand << "INSTALL";
+   installCommand << "--vanilla";
 
 
    // if there is a lib path then provide it
