@@ -979,6 +979,24 @@ bool isPackageVersionInstalled(const std::string& packageName,
    return !error ? installed : false;
 }
 
+PackageCompatStatus getPackageCompatStatus(
+      const std::string& packageName,
+      const std::string& packageVersion,
+      int protocolVersion)
+{
+   r::session::utils::SuppressOutputInScope suppressOutput;
+   int compatStatus = COMPAT_UNKNOWN;
+   r::exec::RFunction func(".rs.getPackageCompatStatus",
+                           packageName, packageVersion, protocolVersion);
+   Error error = func.call(&compatStatus);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return COMPAT_UNKNOWN;
+   }
+   return static_cast<PackageCompatStatus>(compatStatus);
+}
+
 Error installPackage(const std::string& pkgPath, const std::string& libPath)
 {
    // get R bin directory

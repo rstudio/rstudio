@@ -94,6 +94,27 @@
   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
 })
 
+.rs.addFunction("getPackageCompatStatus", 
+  function(name, packageVersion, protocolVersion) 
+  {  
+     if (!.rs.isPackageInstalled(name))
+       return(1L)  # COMPAT_MISSING
+     else if (!.rs.getPackageVersion(name) >= packageVersion) 
+       return(2L)  # COMPAT_TOO_OLD
+     else if (!.rs.getPackageRStudioProtocol(name) >= protocolVersion) 
+       return(3L)  # COMPAT_TOO_NEW
+     return (0L)   # COMPAT_OK
+  }
+)
+
+.rs.addFunction("getPackageRStudioProtocol", function(name) {
+   if (exists(".RStudio_protocol_version", envir = asNamespace(name),
+              mode = "integer")) 
+      get(".RStudio_protocol_version", envir = asNamespace(name))
+   else 
+      0
+})
+
 .rs.addFunction("rstudioIDEPackageRequiresUpdate", function(name, sha1) {
    
   if (.rs.isPackageInstalled(name))
