@@ -140,7 +140,7 @@ public class CompilationProblemReporter {
    */
   public static void logErrorTrace(TreeLogger logger, Type logLevel,
       CompilerContext compilerContext, String typeSourceName, boolean hint) {
-    TreeLogger branch = logger.branch(TreeLogger.INFO,
+    TreeLogger branch = logger.branch(TreeLogger.TRACE,
         "Tracing compile failure path for type '" + typeSourceName + "'");
     if (logErrorChain(branch, logLevel, typeSourceName,
         compilerContext.getGlobalCompilationErrorsIndex())) {

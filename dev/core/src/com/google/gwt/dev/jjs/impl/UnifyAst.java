@@ -150,7 +150,6 @@ public class UnifyAst {
 
     protected JDeclaredType getResolvedType(String typeName) {
       JDeclaredType resolvedType = program.getFromTypeMap(typeName);
-      assert resolvedType != null || errorsFound;
       return resolvedType;
     }
 
@@ -461,7 +460,7 @@ public class UnifyAst {
 
       ArrayList<JExpression> instantiationExpressions = new ArrayList<JExpression>(answers.size());
       for (String answer : answers) {
-        JDeclaredType answerType = internalFindType(answer, sourceNameBasedTypeLocator);
+        JDeclaredType answerType = internalFindType(answer, sourceNameBasedTypeLocator, true);
         if (answerType == null) {
           error(gwtCreateCall, "Rebind result '" + answer + "' could not be found");
           return null;
@@ -651,8 +650,7 @@ public class UnifyAst {
 
   public void addRootTypes(Collection<String> sourceTypeNames) throws UnableToCompleteException {
     for (String sourceTypeName : sourceTypeNames) {
-      JDeclaredType type = internalFindTypeViaLocator(sourceTypeName,
-          sourceNameBasedTypeLocator);
+      JDeclaredType type = internalFindType(sourceTypeName, sourceNameBasedTypeLocator, true);
       if (type != null && hasAnyExports(type)) {
         instantiate(type);
       }
@@ -670,7 +668,7 @@ public class UnifyAst {
   public void buildEverything() throws UnableToCompleteException {
     for (String internalName : compiledClassesByInternalName.keySet()) {
       String typeName = InternalName.toBinaryName(internalName);
-      internalFindType(typeName, binaryNameBasedTypeLocator);
+      internalFindType(typeName, binaryNameBasedTypeLocator, true);
     }
 
     for (JDeclaredType type : program.getDeclaredTypes()) {
@@ -713,13 +711,17 @@ public class UnifyAst {
       }
     }
 
-    // If this is a library compile.
-    if (!compilerContext.shouldCompileMonolithic()) {
-      boolean errorStateBeforeForcedTraversal = errorsFound;
+    boolean isLibraryCompile = !compilerContext.shouldCompileMonolithic();
+    if (isLibraryCompile) {
       // Trace execution from all types supplied as source and resolve references.
       Set<String> internalNames = ImmutableSet.copyOf(compiledClassesByInternalName.keySet());
       for (String internalName : internalNames) {
-        JDeclaredType type = internalFindType(internalName, internalNameBasedTypeLocator);
+        // Library compilation needs to walk all local types so that they can be in the library
+        // output. If one of these types contains errors but is not locally reachable the
+        // compilation might still be a success. So ignore errors in this set of types.
+        boolean reportErrors = false;
+        JDeclaredType type =
+            internalFindType(internalName, internalNameBasedTypeLocator, reportErrors);
         if (type == null) {
           continue;
         }
@@ -733,11 +735,9 @@ public class UnifyAst {
         }
       }
     } else if (program.typeOracle.isInteropEnabled()) {
-      boolean savedErrorsFound = errorsFound;
       Set<String> internalNames = ImmutableSet.copyOf(compiledClassesByInternalName.keySet());
       for (String internalName : internalNames) {
-        JDeclaredType type = internalFindTypeViaLocator(internalName,
-            internalNameBasedTypeLocator);
+        JDeclaredType type = internalFindType(internalName, internalNameBasedTypeLocator, false);
         if (type != null && (isJsType(type) || hasAnyExports(type))) {
           instantiate(type);
           for (JField field : type.getFields()) {
@@ -748,7 +748,6 @@ public class UnifyAst {
           }
         }
       }
-      errorsFound = savedErrorsFound;
     }
 
     /*
@@ -831,9 +830,10 @@ public class UnifyAst {
     }
   }
 
-  private void assimilateLibraryUnit(CompilationUnit referencedCompilationUnit) {
+  private void assimilateLibraryUnit(CompilationUnit referencedCompilationUnit,
+      boolean reportErrors) {
     if (referencedCompilationUnit.isError()) {
-      if (failedUnits.add(referencedCompilationUnit)) {
+      if (failedUnits.add(referencedCompilationUnit) && reportErrors) {
         CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
             compilerContext, referencedCompilationUnit.getTypeName(), true);
         errorsFound = true;
@@ -856,9 +856,9 @@ public class UnifyAst {
     }
   }
 
-  private void assimilateSourceUnit(CompilationUnit unit) {
+  private void assimilateSourceUnit(CompilationUnit unit, boolean reportErrors) {
     if (unit.isError()) {
-      if (failedUnits.add(unit)) {
+      if (failedUnits.add(unit) && reportErrors) {
         CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
             compilerContext, unit.getTypeName(), true);
         errorsFound = true;
@@ -1365,14 +1365,14 @@ public class UnifyAst {
   private JDeclaredType findPackageInfo(JDeclaredType type) {
     String pkg = type.getName();
     pkg = pkg.substring(0, pkg.lastIndexOf('.'));
-    JDeclaredType pkgInfo = internalFindTypeViaLocator(pkg + ".package-info",
-        binaryNameBasedTypeLocator);
+    JDeclaredType pkgInfo =
+        internalFindType(pkg + ".package-info", binaryNameBasedTypeLocator, false);
     return pkgInfo;
   }
 
   public JDeclaredType findType(String typeName, NameBasedTypeLocator nameBasedTypeLocator)
       throws UnableToCompleteException {
-    JDeclaredType type = internalFindType(typeName, nameBasedTypeLocator);
+    JDeclaredType type = internalFindType(typeName, nameBasedTypeLocator, true);
     if (errorsFound) {
       // Already logged.
       throw new UnableToCompleteException();
@@ -1380,62 +1380,56 @@ public class UnifyAst {
     return type;
   }
 
-  private JDeclaredType internalFindTypeViaLocator(String typeName,
-      NameBasedTypeLocator nameBasedTypeLocator) {
+  private JDeclaredType internalFindType(String typeName,
+      NameBasedTypeLocator nameBasedTypeLocator, boolean reportErrors) {
+
     if (nameBasedTypeLocator.resolvedTypeIsAvailable(typeName)) {
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
     if (nameBasedTypeLocator.sourceCompilationUnitIsAvailable(typeName)) {
-      assimilateSourceUnit(
-          nameBasedTypeLocator.getCompilationUnitFromSource(typeName));
+      assimilateSourceUnit(nameBasedTypeLocator.getCompilationUnitFromSource(typeName),
+          reportErrors);
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
-    return null;
-  }
-
-  private JDeclaredType internalFindType(String typeName,
-      NameBasedTypeLocator nameBasedTypeLocator) {
-
-    JDeclaredType toReturn = internalFindTypeViaLocator(typeName,
-        nameBasedTypeLocator);
-    if (toReturn != null) {
-      return toReturn;
-    }
-
     if (compilerContext.shouldCompileMonolithic()) {
-      if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
-        TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
-            "Type %s could not be referenced because it previously failed to "
-            + "compile with errors:", typeName));
-        nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
-      } else {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Could not find %s in types compiled from source. Is the source glob too strict?",
-            typeName));
+      if (reportErrors) {
+        if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
+          TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
+              "Type %s could not be referenced because it previously failed to "
+              + "compile with errors:", typeName));
+          nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
+        } else {
+          logger.log(TreeLogger.ERROR, String.format(
+              "Could not find %s in types compiled from source. Is the source glob too strict?",
+              typeName));
+        }
+        errorsFound = true;
       }
-      errorsFound = true;
       return null;
     }
 
     if (nameBasedTypeLocator.libraryCompilationUnitIsAvailable(typeName)) {
-      assimilateLibraryUnit(nameBasedTypeLocator.getCompilationUnitFromLibrary(typeName));
+      assimilateLibraryUnit(nameBasedTypeLocator.getCompilationUnitFromLibrary(typeName),
+          reportErrors);
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
     if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
-      TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
-          "Type %s could not be referenced because it previously failed to compile with errors:",
-          typeName));
-      nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
-    } else {
-      logger.log(TreeLogger.ERROR, String.format(
-          "Could not find %s in types compiled from source or in provided dependency libraries. "
-              + "Either the source file was unavailable or there is a missing dependency.",
-          typeName));
+      if (reportErrors) {
+        TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
+            "Type %s could not be referenced because it previously failed to compile with errors:",
+            typeName));
+        nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
+      } else {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Could not find %s in types compiled from source or in provided dependency libraries. "
+            + "Either the source file was unavailable or there is a missing dependency.",
+            typeName));
+      }
+      errorsFound = true;
     }
-    errorsFound = true;
     return null;
   }
 
@@ -1479,7 +1473,7 @@ public class UnifyAst {
       return type;
     }
     String typeName = type.getName();
-    JDeclaredType newType = internalFindType(typeName, binaryNameBasedTypeLocator);
+    JDeclaredType newType = internalFindType(typeName, binaryNameBasedTypeLocator, true);
     if (newType == null) {
       assert errorsFound;
       return type;

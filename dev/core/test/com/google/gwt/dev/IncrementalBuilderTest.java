@@ -225,8 +225,8 @@ public class IncrementalBuilderTest extends TestCase {
         "com.google.gwt.dev.testdata.incrementalbuildsystem.EntryPointCompileFails";
 
     UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
-    loggerBuilder.setLowestLogLevel(TreeLogger.INFO);
-    loggerBuilder.expectInfo("Tracing compile failure path for type '" + victimTypeName + "'",
+    loggerBuilder.setLowestLogLevel(TreeLogger.TRACE);
+    loggerBuilder.expectTrace("Tracing compile failure path for type '" + victimTypeName + "'",
         null);
     loggerBuilder.expectError(Pattern.compile("Errors in '.*EntryPointCompileFails\\.java'"), null);
     loggerBuilder.expectError("Line 24: ImmediateCompileFails cannot be resolved to a type", null);
@@ -251,8 +251,8 @@ public class IncrementalBuilderTest extends TestCase {
         "com.google.gwt.dev.testdata.incrementalbuildsystem.ImmediateCompileFails";
 
     UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
-    loggerBuilder.setLowestLogLevel(TreeLogger.INFO);
-    loggerBuilder.expectInfo("Tracing compile failure path for type '" + victimTypeName + "'",
+    loggerBuilder.setLowestLogLevel(TreeLogger.TRACE);
+    loggerBuilder.expectTrace("Tracing compile failure path for type '" + victimTypeName + "'",
         null);
     loggerBuilder.expectError(Pattern.compile("Errors in '.*EntryPointCompileFails\\.java'"), null);
     loggerBuilder.expectError(causeTypeName + " cannot be resolved to a type", null);

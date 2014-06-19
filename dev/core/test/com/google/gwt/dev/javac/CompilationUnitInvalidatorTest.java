@@ -93,8 +93,8 @@ public class CompilationUnitInvalidatorTest extends TestCase {
 
     // Check that the compilation errors index was correctly populated.
     UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
-    loggerBuilder.setLowestLogLevel(TreeLogger.INFO);
-    loggerBuilder.expectInfo("Tracing compile failure path for type 'bad6'", null);
+    loggerBuilder.setLowestLogLevel(TreeLogger.TRACE);
+    loggerBuilder.expectTrace("Tracing compile failure path for type 'bad6'", null);
     loggerBuilder.expectError("Errors in '/mock/bad6.java'", null);
     loggerBuilder.expectError("bad5 cannot be resolved to a type", null);
     loggerBuilder.expectError("Errors in '/mock/bad5.java'", null);
