@@ -13,12 +13,22 @@
 #
 #
 
+# attempts to fetch the Packrat status for a project directory as quietly as
+# possible -- ignores warnings returns NULL in the case of an error
+.rs.addFunction("quietPackratStatus", function(dir) {
+   tryCatch({
+      suppressWarnings(packrat::status(dir, quiet = TRUE))
+   },
+   error = function(e) {
+      NULL
+   })
+})
+
 .rs.addFunction ("installPackratActionHook", function() {
   setHook("packrat.onAction", function(project, action, running) {
     .Call("rs_onPackratAction", project, action, running)
   })
 })
-
 
 .rs.addFunction("isPackratModeOn", function(dir) {
    on <- packrat:::isPackratModeOn(dir)
@@ -30,7 +40,7 @@
 })
 
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {
-   packrat::status(dir, quiet = TRUE)
+   .rs.quietPackratStatus(dir)
 })
 
 .rs.addFunction("listPackagesPackrat", function(dir) {
@@ -38,12 +48,7 @@
    libraryList <- .rs.listInstalledPackages()
 
    # try to get the status from packrat
-   packratStatus <- tryCatch({
-     packrat::status(dir, quiet = TRUE)
-   }, 
-   error = function(e) {
-      NULL
-   })
+   packratStatus <- .rs.quietPackratStatus(dir)
 
    # if we weren't able to get a data frame from packrat::status, just return 
    # the unannotated library list
