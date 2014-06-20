@@ -49,6 +49,7 @@ import com.google.gwt.dev.jjs.test.MethodInterfaceTest;
 import com.google.gwt.dev.jjs.test.MiscellaneousTest;
 import com.google.gwt.dev.jjs.test.NativeLongTest;
 import com.google.gwt.dev.jjs.test.ObjectIdentityTest;
+import com.google.gwt.dev.jjs.test.ObjectKeysPolyfillTest;
 import com.google.gwt.dev.jjs.test.RunAsyncContentTest;
 import com.google.gwt.dev.jjs.test.RunAsyncFailureTest;
 import com.google.gwt.dev.jjs.test.RunAsyncMetricsIntegrationTest;
@@ -105,6 +106,7 @@ public class CompilerSuite {
     suite.addTestSuite(MiscellaneousTest.class);
     suite.addTestSuite(NativeLongTest.class);
     suite.addTestSuite(ObjectIdentityTest.class);
+    suite.addTestSuite(ObjectKeysPolyfillTest.class);
     suite.addTestSuite(RunAsyncContentTest.class);
     suite.addTestSuite(RunAsyncFailureTest.class);
     suite.addTestSuite(RunAsyncMetricsIntegrationTest.class);

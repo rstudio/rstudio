@@ -202,10 +202,42 @@ public class JavaClassHierarchySetupUtil {
    */
   public static native void modernizeBrowser() /*-{
     // Patch up Array.isArray for browsers that don't support the fast native check.
+    // This is only needed for IE8
     if (!Array.isArray) {
         Array.isArray = function (vArg) {
           return Object.prototype.toString.call(vArg) === "[object Array]";
         };
+    }
+
+    // Implemented similar to:
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+    // This is only needed for IE8
+    if (!Object.keys) {
+      var hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
+      dontEnums = ['constructor', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable',
+          'toLocaleString', 'toString', 'valueOf'];
+
+      Object.keys = function(obj) {
+        if (obj === null || (typeof obj !== 'object' && typeof obj !== 'function')) {
+          throw new TypeError('Object.keys called on non-object');
+        }
+
+        var result = [], prop, i;
+        for (prop in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+            result.push(prop);
+          }
+        }
+
+        if (hasDontEnumBug) {
+          for (i = 0; i < dontEnums.length; i++) {
+            if (Object.prototype.hasOwnProperty.call(obj, dontEnums[i])) {
+              result.push(dontEnums[i]);
+            }
+          }
+        }
+        return result;
+      };
     }
   }-*/;
 
