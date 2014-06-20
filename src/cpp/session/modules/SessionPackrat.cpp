@@ -57,6 +57,11 @@ using namespace core;
 #define kAutoSnapshotName "auto.snapshot"
 #define kAutoSnapshotDefault true
 
+// aligned with a corresponding protocol version in Packrat (see
+// getPackageRStudioProtocol), and bumped in Packrat to indicate breaks in
+// compatibility with older versions of RStudio
+#define kPackratRStudioProtocolVersion 1
+
 namespace session {
 
 namespace modules { 
@@ -465,12 +470,15 @@ bool getPendingActions(PackratActionType action, json::Value* pActions)
          projects::projectContext().directory().absolutePath())
          .call(&actions, &protect);
 
-   // return nothing if an error occurs or there are no actions
+   // if an error occurs, presume that there are pending actions (i.e. don't
+   // resolve the state) 
    if (error)
    {
       LOG_ERROR(error);
-      return false;
+      return true;
    }
+
+   // if an empty list comes back, we can savely resolve the state
    if (r::sexp::length(actions) == 0)
       return false;
 
@@ -917,7 +925,8 @@ namespace module_context {
 
 bool isRequiredPackratInstalled()
 {
-   return module_context::isPackageVersionInstalled("packrat", "0.2.0.125");
+   return getPackageCompatStatus("packrat", "0.2.0.128", 
+                                  kPackratRStudioProtocolVersion) == COMPAT_OK;
 }
 
 PackratContext packratContext()

@@ -57,6 +57,15 @@ namespace session {
 
 namespace session {   
 namespace module_context {
+
+enum PackageCompatStatus
+{
+   COMPAT_OK      = 0,
+   COMPAT_MISSING = 1,
+   COMPAT_TOO_OLD = 2,
+   COMPAT_TOO_NEW = 3,
+   COMPAT_UNKNOWN = 4
+};
     
 // paths 
 core::FilePath userHomePath();
@@ -102,6 +111,14 @@ bool isPackageInstalled(const std::string& packageName);
 // check if a package is installed with a specific version
 bool isPackageVersionInstalled(const std::string& packageName,
                                const std::string& version);
+
+// check if a package is installed with a specific version and RStudio protocol
+// version (used to allow packages to disable compatibility with older RStudio
+// releases)
+PackageCompatStatus getPackageCompatStatus(
+      const std::string& packageName,
+      const std::string& packageVersion,
+      int protocolVersion);
 
 core::Error installPackage(const std::string& pkgPath,
                            const std::string& libPath = std::string());
