@@ -448,7 +448,7 @@ void performAutoSnapshot(const std::string& newHash, bool queue)
       return;
    }
 
-   if (queue)
+   if (queue && isAutoSnapshotEnabled())
    {
       pendingSnapshot(SET_PENDING_SNAPSHOT);
    }
