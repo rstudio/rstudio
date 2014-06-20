@@ -114,10 +114,17 @@
 })
 
 .rs.addFunction("pendingActions", function(action, dir) {
-   capture.output(msgs <- packrat:::getActionMessages(action, dir))
+   capture.output(msgs <- tryCatch({
+        suppressWarnings(packrat:::getActionMessages(action, dir))
+      }, 
+      error = function(e) {
+         NULL
+      }))
    # Transform NAs into explicit missing text
-   for (i in seq_along(msgs)) {
-      msgs[[i]][ is.na(msgs[[i]]) ] <- "<missing>"
+   if (!is.null(msgs)) {
+      for (i in seq_along(msgs)) {
+         msgs[[i]][ is.na(msgs[[i]]) ] <- "<missing>"
+      }
    }
    msgs
 })
