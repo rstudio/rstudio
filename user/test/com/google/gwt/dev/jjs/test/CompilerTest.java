@@ -363,6 +363,42 @@ public class CompilerTest extends GWTTestCase {
     byte[] bytes = new byte[10];
     bytes[0] = (byte) '1';
     assertEquals(49, bytes[0]);
+
+    Object[] disguisedApple = apple;
+    expectArrayStoreException(disguisedApple, "Hello");
+    expectArrayStoreException(disguisedApple, true);
+    expectArrayStoreException(disguisedApple, 42.0);
+  }
+
+  private void expectArrayStoreException(Object[] array, Object o) {
+    try {
+      array[0] = o;
+      fail("Expected ArrayStoreException");
+    } catch (ArrayStoreException e) {
+    }
+  }
+
+  public void testUnboxedArrays() {
+    Double[] doubleArray = new Double[1];
+    doubleArray[0] = 42.0;
+
+    expectArrayStoreException(doubleArray, true);
+    expectArrayStoreException(doubleArray, "Hello");
+    expectArrayStoreException(doubleArray, new Integer(23));
+
+    Boolean[] booleanArray = new Boolean[1];
+    booleanArray[0] = true;
+
+    expectArrayStoreException(booleanArray, 42.0);
+    expectArrayStoreException(booleanArray, "Hello");
+    expectArrayStoreException(booleanArray, new Integer(23));
+
+    String[] stringArray = new String[1];
+    stringArray[0] = "Hello";
+
+    expectArrayStoreException(stringArray, 42.0);
+    expectArrayStoreException(stringArray, true);
+    expectArrayStoreException(stringArray, new Integer(23));
   }
 
   /**

@@ -413,7 +413,6 @@ public class ControlFlowAnalyzer {
       }
 
       rescueArgumentsIfParametersCanBeRead(call);
-
       return false;
     }
 
@@ -514,7 +513,8 @@ public class ControlFlowAnalyzer {
     private boolean canBeInstantiatedInJavaScript(JType type) {
       // Technically, JsType/JsFunction are also instantiatable in JavaScript but we don't track
       // them using similar to JSO as if we do that then after cast normalization, they got pruned.
-      if (program.typeOracle.canBeJavaScriptObject(type) || program.isJavaLangString(type)) {
+      if (program.typeOracle.canBeJavaScriptObject(type)
+          || program.isRepresentedAsNativeJsPrimitive(type)) {
         return true;
       }
 

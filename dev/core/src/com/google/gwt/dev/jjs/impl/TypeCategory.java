@@ -25,14 +25,17 @@ import com.google.gwt.dev.jjs.ast.JType;
  *
  * These are used in Cast checking and array implementation.
  */
-public  enum TypeCategory {
+public enum TypeCategory {
   /* Make sure this list is kept in sync with the one in Array.java */
 
   TYPE_JAVA_OBJECT,
   TYPE_JAVA_OBJECT_OR_JSO,
   TYPE_JSO,
   TYPE_JAVA_LANG_OBJECT,
+  // If the next three are renamed, please update JProgram.DispatchType's constructor
   TYPE_JAVA_LANG_STRING,
+  TYPE_JAVA_LANG_DOUBLE,
+  TYPE_JAVA_LANG_BOOLEAN,
   TYPE_JS_PROTOTYPE,
   TYPE_JS_FUNCTION,
   TYPE_PRIMITIVE_LONG,
@@ -57,8 +60,8 @@ public  enum TypeCategory {
     type = type.getUnderlyingType();
     if (type == program.getTypeJavaLangObject()) {
       return TypeCategory.TYPE_JAVA_LANG_OBJECT;
-    } else if (type == program.getTypeJavaLangString()) {
-      return TypeCategory.TYPE_JAVA_LANG_STRING;
+    } else if (program.getRepresentedAsNativeTypesDispatchMap().containsKey(type)) {
+      return program.getRepresentedAsNativeTypesDispatchMap().get(type).getTypeCategory();
     } else if (program.typeOracle.isEffectivelyJavaScriptObject(type)) {
       return TypeCategory.TYPE_JSO;
     } else if (program.typeOracle.isDualJsoInterface(type)

@@ -188,104 +188,7 @@ public final class String implements Comparable<String>, CharSequence,
     return replaceStr;
   }
 
-  /**
-   * @skip
-   */
-  static String _String() {
-    return "";
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(byte[] bytes) {
-    return _String(bytes, 0, bytes.length);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(byte[] bytes, int ofs, int len) {
-    return _String(bytes, ofs, len, EmulatedCharset.UTF_8);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(byte[] bytes, int ofs, int len, String charsetName)
-      throws UnsupportedEncodingException {
-    return _String(bytes, ofs, len, getCharset(charsetName));
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(byte[] bytes, int ofs, int len, Charset charset) {
-    return valueOf(((EmulatedCharset) charset).decodeString(bytes, ofs, len));
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(byte[] bytes, String charsetName)
-      throws UnsupportedEncodingException {
-    return _String(bytes, 0, bytes.length, charsetName);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(byte[] bytes, Charset charset)
-      throws UnsupportedEncodingException {
-    return _String(bytes, 0, bytes.length, charset.name());
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(char value[]) {
-    return valueOf(value);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(char value[], int offset, int count) {
-    return valueOf(value, offset, count);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(int[] codePoints, int offset, int count) {
-    char[] chars = new char[count * 2];
-    int charIdx = 0;
-    while (count-- > 0) {
-      charIdx += Character.toChars(codePoints[offset++], chars, charIdx);
-    }
-    return valueOf(chars, 0, charIdx);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(String other) {
-    return other;
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(StringBuffer sb) {
-    return valueOf(sb);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(StringBuilder sb) {
-    return valueOf(sb);
-  }
+ 
 
   // CHECKSTYLE_ON
 
@@ -316,71 +219,123 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public String() {
-    // magic delegation to _String
-    _String();
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString();
   }
 
   public String(byte[] bytes) {
-    // magic delegation to _String
-    _String(bytes);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(bytes);
   }
 
   public String(byte[] bytes, int ofs, int len) {
-    // magic delegation to _String
-    _String(bytes, ofs, len);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(bytes, ofs, len);
   }
 
   public String(byte[] bytes, int ofs, int len, String charsetName)
       throws UnsupportedEncodingException {
-    // magic delegation to _String
-    _String(bytes, ofs, len, charsetName);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(bytes, ofs, len, charsetName);
   }
 
   public String(byte[] bytes, int ofs, int len, Charset charset) {
-    // magic delegation to _String
-    _String(bytes, ofs, len, charset);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(bytes, ofs, len, charset);
   }
 
   public String(byte[] bytes, String charsetName)
       throws UnsupportedEncodingException {
-    // magic delegation to _String
-    _String(bytes, charsetName);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(bytes, charsetName);
   }
 
   public String(byte[] bytes, Charset charset)
       throws UnsupportedEncodingException {
-    // magic delegation to _String
-    _String(bytes, charset);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(bytes, charset);
   }
 
   public String(char value[]) {
-    // magic delegation to _String
-    _String(value);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(value);
   }
 
   public String(char value[], int offset, int count) {
-    // magic delegation to _String
-    _String(value, offset, count);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(value, offset, count);
   }
 
   public String(int codePoints[], int offset, int count) {
-    // magic delegation to _String
-    _String(codePoints, offset, count);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(codePoints, offset, count);
   }
 
   public String(String other) {
-    // magic delegation to _String
-    _String(other);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(other);
   }
 
   public String(StringBuffer sb) {
-    // magic delegation to _String
-    _String(sb);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(sb);
   }
 
   public String(StringBuilder sb) {
-    // magic delegation to _String
-    _String(sb);
+    /*
+     * Call to $createString(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $createString(args) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createString(sb);
   }
 
   @Override
@@ -793,4 +748,67 @@ public final class String implements Comparable<String>, CharSequence,
     }
     return start > 0 || end < length ? substring(start, end) : this;
   }
+
+  // CHECKSTYLE_OFF: Utility Methods for unboxed String.
+
+  static String $createString() {
+    return "";
+  }
+
+  static String $createString(byte[] bytes) {
+    return $createString(bytes, 0, bytes.length);
+  }
+
+  static String $createString(byte[] bytes, int ofs, int len) {
+    return $createString(bytes, ofs, len, EmulatedCharset.UTF_8);
+  }
+
+  static String $createString(byte[] bytes, int ofs, int len, String charsetName)
+      throws UnsupportedEncodingException {
+    return $createString(bytes, ofs, len, String.getCharset(charsetName));
+  }
+
+  static String $createString(byte[] bytes, int ofs, int len, Charset charset) {
+    return String.valueOf(((EmulatedCharset) charset).decodeString(bytes, ofs, len));
+  }
+
+  static String $createString(byte[] bytes, String charsetName)
+      throws UnsupportedEncodingException {
+    return $createString(bytes, 0, bytes.length, charsetName);
+  }
+
+  static String $createString(byte[] bytes, Charset charset)
+      throws UnsupportedEncodingException {
+    return $createString(bytes, 0, bytes.length, charset.name());
+  }
+
+  static String $createString(char value[]) {
+    return String.valueOf(value);
+  }
+
+  static String $createString(char value[], int offset, int count) {
+    return String.valueOf(value, offset, count);
+  }
+
+  static String $createString(int[] codePoints, int offset, int count) {
+    char[] chars = new char[count * 2];
+    int charIdx = 0;
+    while (count-- > 0) {
+      charIdx += Character.toChars(codePoints[offset++], chars, charIdx);
+    }
+    return String.valueOf(chars, 0, charIdx);
+  }
+
+  static String $createString(String other) {
+    return other;
+  }
+
+  static String $createString(StringBuffer sb) {
+    return String.valueOf(sb);
+  }
+
+  static String $createString(StringBuilder sb) {
+    return String.valueOf(sb);
+  }
+  // CHECKSTYLE_ON: end utility methods
 }

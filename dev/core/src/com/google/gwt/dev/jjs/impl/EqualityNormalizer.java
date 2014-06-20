@@ -24,8 +24,11 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JProgram.DispatchType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
+
+import java.util.Map;
 
 /**
  * <p>
@@ -40,16 +43,16 @@ import com.google.gwt.dev.jjs.ast.JType;
  * <code>undefined</code> as a valid translation of a Java <code>null</code>.
  * </p>
  * <p>
- * However, whenever something that may be a String is compared to something
- * that may not be a <code>String</code>, use <code>===</code>. A Java object
+ * However, whenever something that may be an unboxed type is compared to something
+ * that may not be a unboxed type, use <code>===</code>. A Java object
  * compared to a string should always yield false, but that's not true when
  * comparing in JavaScript using <code>==</code>. The cases where
  * <code>===</code> must be used are:
  * </p>
  * <ul>
- * <li>One or both sides have unknown <code>String</code> status.</li>
- * <li>One side is definitely <code>String</code> and one side is definitely !
- * <code>String</code>. <br/>
+ * <li>One or both sides have unknown <i>unboxed type</i> status.</li>
+ * <li>One side is definitely an <i>unboxed type</i> and one side is definitely !
+ * <i>unboxed type</i>. <br/>
  * TODO: This case could be optimized as
  * <code>(a == null) &amp; (b == null)</code>.</li>
  * </ul>
@@ -58,6 +61,8 @@ import com.google.gwt.dev.jjs.ast.JType;
  * <code>null</code> vs. <code>undefined</code> if it's possible for one side to
  * be <code>null</code> and the other to be <code>undefined</code>.
  * </p>
+ * <p> An "unboxed type" is a String, Boolean, or Double that is represented as a naked raw
+ * JS type.
  */
 public class EqualityNormalizer {
 
@@ -81,12 +86,12 @@ public class EqualityNormalizer {
         return;
       }
 
-      StringStatus lhsStatus = getStringStatus((JReferenceType) lhsType);
-      StringStatus rhsStatus = getStringStatus((JReferenceType) rhsType);
-      int strat = COMPARISON_STRAT[lhsStatus.getIndex()][rhsStatus.getIndex()];
+      UnboxedTypeStatus lhsStatus = getUnboxedTypeStatus((JReferenceType) lhsType);
+      UnboxedTypeStatus rhsStatus = getUnboxedTypeStatus((JReferenceType) rhsType);
+      int comparisonStrategy = COMPARISON_TABLE[lhsStatus.getIndex()][rhsStatus.getIndex()];
 
-      switch (strat) {
-        case STRAT_TRIPLE: {
+      switch (comparisonStrategy) {
+        case T: {
           if (canBeNull(lhs) && canBeNull(rhs)) {
             /*
              * If it's possible for one side to be null and the other side
@@ -102,11 +107,11 @@ public class EqualityNormalizer {
           break;
         }
 
-        case STRAT_DOUBLE: {
+        case D: {
           boolean lhsNullLit = lhs == program.getLiteralNull();
           boolean rhsNullLit = rhs == program.getLiteralNull();
-          if ((lhsNullLit && rhsStatus == StringStatus.NOTSTRING)
-              || (rhsNullLit && lhsStatus == StringStatus.NOTSTRING)) {
+          if ((lhsNullLit && rhsStatus == UnboxedTypeStatus.NOT_UNBOXEDTYPE)
+              || (rhsNullLit && lhsStatus == UnboxedTypeStatus.NOT_UNBOXEDTYPE)) {
             /*
              * If either side is a null literal and the other is non-String,
              * replace with a null-check.
@@ -139,21 +144,33 @@ public class EqualityNormalizer {
       }
     }
 
-    private StringStatus getStringStatus(JReferenceType type) {
-      JClassType stringType = program.getTypeJavaLangString();
+    private UnboxedTypeStatus getUnboxedTypeStatus(JReferenceType type) {
       if (type.isNullType()) {
-        return StringStatus.NULL;
-      } else if (program.typeOracle.castSucceedsTrivially(type, stringType)) {
-        return StringStatus.STRING;
-      } else if (program.typeOracle.castFailsTrivially(type, stringType)) {
-        return StringStatus.NOTSTRING;
+        return UnboxedTypeStatus.NULL;
       } else {
-        return StringStatus.UNKNOWN;
+        for (Map.Entry<JClassType, DispatchType> nativeDispatchType :
+            program.getRepresentedAsNativeTypesDispatchMap().entrySet()) {
+          if (program.typeOracle.castSucceedsTrivially(type, nativeDispatchType.getKey())) {
+            switch (nativeDispatchType.getValue()) {
+              case DOUBLE:
+                return UnboxedTypeStatus.DOUBLE;
+              case BOOLEAN:
+                return UnboxedTypeStatus.BOOLEAN;
+              case STRING:
+                return UnboxedTypeStatus.STRING;
+              default:
+                throw new IllegalStateException("Shouldn't happen");
+            }
+          } else if (!program.typeOracle.castFailsTrivially(type, nativeDispatchType.getKey())) {
+            return UnboxedTypeStatus.UNKNOWN;
+          }
+        }
+        return UnboxedTypeStatus.NOT_UNBOXEDTYPE;
       }
     }
 
     private JExpression maskUndefined(JExpression lhs) {
-      assert ((JReferenceType) lhs.getType()).canBeNull();
+      assert lhs.getType().canBeNull();
 
       JMethod maskMethod = program.getIndexedMethod("Cast.maskUndefined");
       JMethodCall lhsCall = new JMethodCall(lhs.getSourceInfo(), null, maskMethod, lhs.getType());
@@ -166,12 +183,12 @@ public class EqualityNormalizer {
    * Represents what we know about an operand type in terms of its type and
    * <code>null</code> status.
    */
-  private enum StringStatus {
-    NOTSTRING(2), NULL(3), STRING(1), UNKNOWN(0);
+  private enum UnboxedTypeStatus {
+    NOT_UNBOXEDTYPE(4), NULL(5), DOUBLE(3), BOOLEAN(2) ,STRING(1), UNKNOWN(0);
 
     private int index;
 
-    StringStatus(int index) {
+    UnboxedTypeStatus(int index) {
       this.index = index;
     }
 
@@ -181,32 +198,41 @@ public class EqualityNormalizer {
   }
 
   /**
-   * A map of the combinations where each comparison strategy should be used.
-   */
-  private static int[][] COMPARISON_STRAT = {
-      // ..U..S.!S..N
-      {1, 1, 1, 0,}, // UNKNOWN
-      {1, 0, 1, 0,}, // STRING
-      {1, 1, 0, 0,}, // NOTSTRING
-      {0, 0, 0, 0,}, // NULL
-  };
-
-  /**
    * The comparison strategy of using ==.
+   * Mnemonic: D = double eq
    */
-  private static final int STRAT_DOUBLE = 0;
+  private static final int D = 0;
 
   /**
    * The comparison strategy of using ===.
+   * Mnemonic: T = triple eq
    */
-  private static final int STRAT_TRIPLE = 1;
+  private static final int T = 1;
+
+  /**
+   * A map of the combinations where each comparison strategy should be used.
+   */
+  private static int[][] COMPARISON_TABLE = {
+      // any type compared to unknown uses triple eq
+      {T, T, T, T, T, D,}, // UNKNOWN
+      // string type uses D only against String and null
+      {T, D, T, T, T, D,}, // STRING
+      // double type uses D only against Double and null
+      {T, T, D, T, T, D,}, // DOUBLE
+      // boolean type uses D only against Boolean and null
+      {T, T, T, D, T, D,}, // BOOLEAN
+      // non-unboxed type uses D only against other non-unboxed types and null
+      {T, T, T, T, D, D,}, // NOT_UNBOXEDTYPE
+      // null vs null is safe everywhere
+      {D, D, D, D, D, D,}, // NULL
+  };
 
   public static void exec(JProgram program) {
     new EqualityNormalizer(program).execImpl();
   }
 
   private static boolean canBeNull(JExpression x) {
-    return ((JReferenceType) x.getType()).canBeNull();
+    return x.getType().canBeNull();
   }
 
   private final JProgram program;

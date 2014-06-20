@@ -385,7 +385,7 @@ public class SourceMapTest extends TestCase {
           return true;
         }
         // only $init and $clinit will match the below if
-        if (relaxName.startsWith("$")) {
+        if (relaxName.startsWith("$") && !relaxName.startsWith("$create")) {
           return strictName.equals(relaxName.substring(1));
         }
         return false;

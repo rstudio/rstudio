@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JProgram.DispatchType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -41,6 +42,8 @@ import com.google.gwt.dev.jjs.impl.MakeCallsStatic.StaticCallConverter;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -109,16 +112,16 @@ public class Devirtualizer {
       }
       JType instanceType = x.getInstance().getType().getUnderlyingType();
 
-      // If the instance can't possibly be a JSO, String or an interface implemented by String, do
-      // not devirtualize.
+      // If the instance can't possibly be a JSO, String, Number, or an interface implemented by
+      // either, do not devirtualize.
       if (instanceType != program.getTypeJavaLangObject()
           && !program.typeOracle.canBeJavaScriptObject(instanceType)
           // not a string
-          && instanceType != program.getTypeJavaLangString()
+          && !(program.isRepresentedAsNativeJsPrimitive(instanceType))
           // not an array
           && !(instanceType instanceof JArrayType)
           // not an interface of String, e.g. CharSequence or Comparable
-          && !program.getTypeJavaLangString().getImplements().contains(instanceType)
+          && !isSuperOfRepresentedAsNativeType(instanceType)
           // it is a super.m() call and the superclass is not a JSO. (this case is NOT reached if
           // MakeCallsStatic was called).
           || x.isStaticDispatchOnly()
@@ -203,9 +206,18 @@ public class Devirtualizer {
           || program.typeOracle.isSingleJsoImpl(targetType)
           || program.typeOracle.isDualJsoInterface(targetType)
           || targetType == program.getTypeJavaLangObject()
-          || targetType == program.getTypeJavaLangString()
-          || program.getTypeJavaLangString().getImplements().contains(targetType)) {
+          || isSuperOfRepresentedAsNativeType(targetType)) {
         return true;
+      }
+      return false;
+    }
+
+    private boolean isSuperOfRepresentedAsNativeType(JType targetType) {
+      for (JClassType type : program.getRepresentedAsNativeTypes()) {
+        if (program.typeOracle.isInstantiatedType(type) &&
+            program.typeOracle.castSucceedsTrivially(type, targetType)) {
+          return true;
+        }
       }
       return false;
     }
@@ -234,11 +246,6 @@ public class Devirtualizer {
    * Contains the Cast.hasJavaObjectVirtualDispatch method.
    */
   private final JMethod hasJavaObjectVirtualDispatch;
-
-  /**
-   * Contains the Cast.isJavaString method.
-   */
-  private final JMethod isJavaStringMethod;
 
   /**
    * Contains the Cast.instanceofArray method.
@@ -297,7 +304,7 @@ public class Devirtualizer {
 
   private Devirtualizer(JProgram program) {
     this.program = program;
-    this.isJavaStringMethod = program.getIndexedMethod("Cast.isJavaString");
+
     this.hasJavaObjectVirtualDispatch =
         program.getIndexedMethod("Cast.hasJavaObjectVirtualDispatch");
     this.isJavaArray = program.getIndexedMethod("Cast.isJavaArray");
@@ -325,6 +332,7 @@ public class Devirtualizer {
     if (target == null) {
       return null;
     }
+
     for (JMethod overridingMethod : target.getMethods()) {
       if (JTypeOracle.methodsDoMatch(method, overridingMethod)) {
         return overridingMethod;
@@ -385,13 +393,6 @@ public class Devirtualizer {
     return dispatchCall;
   }
 
-  // Byte mask used by {@link ::getÓrCreateDevirtualMethod} to determine possible dispatches of a
-  // method.
-  private static final byte STRING = 0x01;
-  private static final byte HAS_JAVA_VIRTUAL_DISPATCH = 0x02;
-  private static final byte JAVA_ARRAY = 0x04;
-  private static final byte JSO = 0x08;
-
   /**
    * Create a conditional method to discriminate between static and virtual
    * dispatch.
@@ -413,42 +414,27 @@ public class Devirtualizer {
     /////////////////////////////////////////////////////////////////
     // 1. Determine which types of object are target of this dispatch
     /////////////////////////////////////////////////////////////////
-    byte possibleTargetTypes = 0x0;
     JReferenceType enclosingType = method.getEnclosingType();
-    if (enclosingType == program.getTypeJavaLangObject()) {
-      // Object methods can be dispatched to all four possible classes.
-      possibleTargetTypes = STRING | HAS_JAVA_VIRTUAL_DISPATCH | JAVA_ARRAY | JSO;
-    } else if (enclosingType == program.getTypeJavaLangString()) {
-      // String is final and can not be extended.
-      possibleTargetTypes |= STRING;
-    }
-
-    if (program.typeOracle.isDualJsoInterface(enclosingType)) {
-      // If it is an interface implemented both by JSOs and regular Java Objects;
-      possibleTargetTypes = HAS_JAVA_VIRTUAL_DISPATCH | JSO;
-    } else if (program.typeOracle.isSingleJsoImpl(enclosingType) || enclosingType.isJsoType()) {
-      // If it is either an interface implemented by JSOs or JavaScriptObject or one of its
-      // subclasses.
-      possibleTargetTypes = JSO;
-    }
-
-    if (program.getTypeJavaLangString().getImplements().contains(enclosingType)) {
-      // If it is an interface implemented by String.
-      possibleTargetTypes |= (byte) (STRING | HAS_JAVA_VIRTUAL_DISPATCH);
-    }
+    EnumSet<DispatchType> possibleTargetTypes = program.getDispatchType(
+        enclosingType.getUnderlyingType());
 
     /////////////////////////////////////////////////////////////////
     // 2. Compute the dispatch to method for each relevant case.
     /////////////////////////////////////////////////////////////////
-    Map<Byte, JMethod> dispatchToMethodByTargetType = Maps.newTreeMap();
-    if ((possibleTargetTypes & STRING) != 0) {
-      JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangString());
-      assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
-          method.getName() + " not overridden by String";
-      dispatchToMethodByTargetType.put(STRING,
-          staticImplCreator.getOrCreateStaticImpl(program, overridingMethod));
+    EnumMap<DispatchType, JMethod> dispatchToMethodByTargetType = new EnumMap<>(DispatchType.class);
+    for (Map.Entry<JClassType, DispatchType> nativeRepresentedType :
+        program.getRepresentedAsNativeTypesDispatchMap().entrySet()) {
+      // skip non-instantiated boxed types, which have been pruned from the AST.
+      if (program.typeOracle.isInstantiatedType(nativeRepresentedType.getKey())) {
+        maybeCreateDispatchFor(method, nativeRepresentedType.getValue(), possibleTargetTypes,
+            dispatchToMethodByTargetType, nativeRepresentedType.getKey());
+      }
     }
-    if ((possibleTargetTypes & JSO) != 0) {
+
+    maybeCreateDispatchFor(method, DispatchType.JAVA_ARRAY, possibleTargetTypes,
+        dispatchToMethodByTargetType, program.getTypeJavaLangObject());
+
+    if (possibleTargetTypes.contains(DispatchType.JSO)) {
       JMethod overridingMethod = findOverridingMethod(method,
           program.typeOracle.getSingleJsoImpl(enclosingType));
       if (overridingMethod == null && enclosingType == program.getTypeJavaLangObject()) {
@@ -456,19 +442,12 @@ public class Devirtualizer {
       }
       assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
           method.getName() + " not overridden by JavaScriptObject";
-      dispatchToMethodByTargetType.put(JSO,
+      dispatchToMethodByTargetType.put(DispatchType.JSO,
           staticImplCreator.getOrCreateStaticImpl(program, overridingMethod));
     }
-    if ((possibleTargetTypes & JAVA_ARRAY) != 0) {
-      // Arrays only implement Object methods as the Clonable interface is not supported in GWT.
-      JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangObject());
-      assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
-          method.getName() + " not overridden by Object";
-      dispatchToMethodByTargetType.put(JAVA_ARRAY,
-          staticImplCreator.getOrCreateStaticImpl(program, overridingMethod));
-    }
-    if ((possibleTargetTypes & HAS_JAVA_VIRTUAL_DISPATCH) != 0) {
-      dispatchToMethodByTargetType.put(HAS_JAVA_VIRTUAL_DISPATCH, method);
+
+    if (possibleTargetTypes.contains(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH)) {
+      dispatchToMethodByTargetType.put(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH, method);
     }
 
     /////////////////////////////////////////////////////////////////
@@ -483,17 +462,27 @@ public class Devirtualizer {
     JClassType devirtualMethodEnclosingClass  = null;
     if (method.getEnclosingType() instanceof JClassType) {
       devirtualMethodEnclosingClass = (JClassType) method.getEnclosingType();
-    } else if (dispatchToMethodByTargetType.get(STRING) != null) {
-      // Methods from interfaces implemented by String end up in String.
-      devirtualMethodEnclosingClass = program.getTypeJavaLangString();
-    } else if (dispatchToMethodByTargetType.get(JSO) != null) {
-      // This is an interface method implemented by a JSO, place in the JSO class.
-      devirtualMethodEnclosingClass = (JClassType)
-          dispatchToMethodByTargetType.get(JSO).getEnclosingType();
-    } else {
-      // It is an interface implemented by String or arrays, place it in Object.
-      devirtualMethodEnclosingClass = program.getTypeJavaLangObject();
+    }  else {
+      for (Map.Entry<JClassType, DispatchType> nativeRepresentedType :
+          program.getRepresentedAsNativeTypesDispatchMap().entrySet()) {
+        if (dispatchToMethodByTargetType.containsKey(nativeRepresentedType.getValue())) {
+          devirtualMethodEnclosingClass = nativeRepresentedType.getKey();
+          break;
+        }
+      }
     }
+
+    if (devirtualMethodEnclosingClass == null) {
+      if (dispatchToMethodByTargetType.get(DispatchType.JSO) != null) {
+        // This is an interface method implemented by a JSO, place in the JSO class.
+        devirtualMethodEnclosingClass = (JClassType)
+            dispatchToMethodByTargetType.get(DispatchType.JSO).getEnclosingType();
+      } else {
+        // It is an interface implemented by String or arrays, place it in Object.
+        devirtualMethodEnclosingClass = program.getTypeJavaLangObject();
+      }
+    }
+
     // Devirtualization of external methods stays external and devirtualization of internal methods
     // stays internal.
     assert program.isReferenceOnly(devirtualMethodEnclosingClass)
@@ -521,13 +510,13 @@ public class Devirtualizer {
 
     // Construct back to fort. Last is JSO.
     JExpression dispatchExpression =
-        maybeCreateDispatch(dispatchToMethodByTargetType.get(JSO), devirtualMethod);
+        maybeCreateDispatch(dispatchToMethodByTargetType.get(DispatchType.JSO), devirtualMethod);
 
     // Dispatch to array
     dispatchExpression = constructMinimalCondition(
         isJavaArray,
         new JParameterRef(thisParam.getSourceInfo(), thisParam),
-        maybeCreateDispatch(dispatchToMethodByTargetType.get(JAVA_ARRAY), devirtualMethod),
+        maybeCreateDispatch(dispatchToMethodByTargetType.get(DispatchType.JAVA_ARRAY), devirtualMethod),
         dispatchExpression);
 
     // Dispatch to regular object
@@ -535,15 +524,19 @@ public class Devirtualizer {
         hasJavaObjectVirtualDispatch,
         new JParameterRef(thisParam.getSourceInfo(), thisParam),
         maybeCreateDispatch(
-            dispatchToMethodByTargetType.get(HAS_JAVA_VIRTUAL_DISPATCH), devirtualMethod),
+            dispatchToMethodByTargetType.get(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH), devirtualMethod),
         dispatchExpression);
 
-    // Dispatch to regular string
-    dispatchExpression = constructMinimalCondition(
-        isJavaStringMethod,
-        new JParameterRef(thisParam.getSourceInfo(), thisParam),
-        maybeCreateDispatch(dispatchToMethodByTargetType.get(STRING), devirtualMethod),
-        dispatchExpression);
+    // Dispatch to regular string, double, boolean
+    for (Map.Entry<JClassType, DispatchType> nativeRepresentedType
+        : program.getRepresentedAsNativeTypesDispatchMap().entrySet()) {
+      DispatchType dispatchType = nativeRepresentedType.getValue();
+      dispatchExpression = constructMinimalCondition(
+          program.getIndexedMethod(dispatchType.getInstanceOfMethod()),
+          new JParameterRef(thisParam.getSourceInfo(), thisParam),
+          maybeCreateDispatch(dispatchToMethodByTargetType.get(dispatchType), devirtualMethod),
+          dispatchExpression);
+    }
 
     // return dispatchConditional;
     JReturnStatement returnStatement = new JReturnStatement(sourceInfo, dispatchExpression);
@@ -552,5 +545,17 @@ public class Devirtualizer {
     methodByDevirtualMethod.put(method, devirtualMethod);
 
     return devirtualMethod;
+  }
+
+  private void maybeCreateDispatchFor(JMethod method, DispatchType target,
+      EnumSet<DispatchType> possibleTargetTypes,
+      EnumMap<DispatchType, JMethod> dispatchToMethodByTargetType, JClassType targetDevirtualType) {
+    if (possibleTargetTypes.contains(target)) {
+      JMethod overridingMethod = findOverridingMethod(method, targetDevirtualType);
+      assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
+          method.getName() + " not overridden by " + targetDevirtualType.getSimpleName();
+      dispatchToMethodByTargetType.put(target,
+          staticImplCreator.getOrCreateStaticImpl(program, overridingMethod));
+    }
   }
 }

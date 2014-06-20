@@ -76,16 +76,20 @@ public final class Double extends Number implements Comparable<Double> {
   // 2^-1022 (smallest double non-denorm)
   private static final double POWER_MINUS_1022 = 2.2250738585072014E-308;
 
-  private static final double[] powers = {
-    POWER_512, POWER_256, POWER_128, POWER_64, POWER_32, POWER_16, POWER_8,
-    POWER_4, POWER_2, POWER_1
-  };
 
-  private static final double[] invPowers = {
-    POWER_MINUS_512, POWER_MINUS_256, POWER_MINUS_128, POWER_MINUS_64,
-    POWER_MINUS_32, POWER_MINUS_16, POWER_MINUS_8, POWER_MINUS_4, POWER_MINUS_2,
-    POWER_MINUS_1
-  };
+
+  private static class PowersTable {
+    private static final double[] powers = {
+        POWER_512, POWER_256, POWER_128, POWER_64, POWER_32, POWER_16, POWER_8,
+        POWER_4, POWER_2, POWER_1
+    };
+
+    private static final double[] invPowers = {
+        POWER_MINUS_512, POWER_MINUS_256, POWER_MINUS_128, POWER_MINUS_64,
+        POWER_MINUS_32, POWER_MINUS_16, POWER_MINUS_8, POWER_MINUS_4, POWER_MINUS_2,
+        POWER_MINUS_1
+    };
+  }
 
   public static int compare(double x, double y) {
     if (x < y) {
@@ -141,8 +145,8 @@ public final class Double extends Number implements Comparable<Double> {
     if (value < 1.0) {
       int bit = 512;
       for (int i = 0; i < 10; i++, bit >>= 1) {
-        if (value < invPowers[i] && exp - bit >= -1023) {
-          value *= powers[i];
+        if (value < PowersTable.invPowers[i] && exp - bit >= -1023) {
+          value *= PowersTable.powers[i];
           exp -= bit;
         }
       }
@@ -154,8 +158,8 @@ public final class Double extends Number implements Comparable<Double> {
     } else if (value >= 2.0) {
       int bit = 512;
       for (int i = 0; i < 10; i++, bit >>= 1) {
-        if (value >= powers[i]) {
-          value *= invPowers[i];
+        if (value >= PowersTable.powers[i]) {
+          value *= PowersTable.invPowers[i];
           exp += bit;
         }
       }
@@ -237,7 +241,7 @@ public final class Double extends Number implements Comparable<Double> {
       int bit = 512;
       for (int i = 0; i < 10; i++, bit >>= 1) {
         if (exp >= bit) {
-          d *= powers[i];
+          d *= PowersTable.powers[i];
           exp -= bit;
         }
       }
@@ -246,7 +250,7 @@ public final class Double extends Number implements Comparable<Double> {
         int bit = 512;
         for (int i = 0; i < 10; i++, bit >>= 1) {
           if (exp <= -bit) {
-            d *= invPowers[i];
+            d *= PowersTable.invPowers[i];
             exp += bit;
           }
         }
@@ -271,39 +275,47 @@ public final class Double extends Number implements Comparable<Double> {
     return new Double(s);
   }
 
-  private final transient double value;
-
   public Double(double value) {
-    this.value = value;
+    /*
+     * Call to $createDouble(value) must be here so that the method is referenced and not
+     * pruned before new Double(value) is replaced by $createDouble(value) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createDouble(value);
   }
 
   public Double(String s) {
-    value = parseDouble(s);
+    /*
+     * Call to $createDouble(value) must be here so that the method is referenced and not
+     * pruned before new Double(value) is replaced by $createDouble(value) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createDouble(s);
   }
 
   @Override
   public byte byteValue() {
-    return (byte) value;
+    return (byte) doubleValue();
   }
 
   @Override
   public int compareTo(Double b) {
-    return compare(this.value, b.value);
+    return compare(doubleValue(), b.doubleValue());
   }
 
   @Override
-  public double doubleValue() {
-    return value;
-  }
+  public native double doubleValue() /*-{
+    return @javaemul.internal.InternalPreconditions::checkNotNull(Ljava/lang/Object;)(this);
+  }-*/;
 
   @Override
-  public boolean equals(Object o) {
-    return (o instanceof Double) && (((Double) o).value == value);
-  }
+  public native boolean equals(Object o) /*-{
+    return this === o;
+  }-*/;
 
   @Override
   public float floatValue() {
-    return (float) value;
+    return (float) doubleValue();
   }
 
   /**
@@ -317,34 +329,44 @@ public final class Double extends Number implements Comparable<Double> {
    */
   @Override
   public int hashCode() {
-    return hashCode(value);
+    return hashCode(doubleValue());
   }
 
   @Override
   public int intValue() {
-    return (int) value;
+    return (int) doubleValue();
   }
 
   public boolean isInfinite() {
-    return isInfinite(value);
+    return isInfinite(doubleValue());
   }
 
   public boolean isNaN() {
-    return isNaN(value);
+    return isNaN(doubleValue());
   }
 
   @Override
   public long longValue() {
-    return (long) value;
+    return (long) doubleValue();
   }
 
   @Override
   public short shortValue() {
-    return (short) value;
+    return (short) doubleValue();
   }
 
   @Override
   public String toString() {
-    return toString(value);
+    return toString(doubleValue());
   }
+
+  // CHECKSTYLE_OFF: Utility Methods for unboxed Double.
+  static native Double $createDouble(double x) /*-{
+    return x;
+  }-*/;
+
+  static Double $createDouble(String s) {
+    return $createDouble(Double.parseDouble(s));
+  }
+  // CHECKSTYLE_ON: End utility methods
 }

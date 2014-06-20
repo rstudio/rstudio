@@ -70,37 +70,55 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
     return valueOf(parseBoolean(s));
   }
 
-  private final transient boolean value;
-
   public Boolean(boolean value) {
-    this.value = value;
+    /*
+     * Call to $createBoolean(value) must be here so that the method is referenced and not pruned
+     * before new Boolean(value) is replaced by $createBoolean(value) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createBoolean(value);
   }
 
   public Boolean(String s) {
-    this(parseBoolean(s));
+     /*
+     * Call to $createBoolean(value) must be here so that the method is referenced and not pruned
+     * before new Boolean(value) is replaced by $createBoolean(value) by
+     * RewriteConstructorCallsForUnboxedTypes.
+     */
+    $createBoolean(s);
   }
 
-  public boolean booleanValue() {
-    return value;
-  }
+  public native boolean booleanValue() /*-{
+    return @javaemul.internal.InternalPreconditions::checkNotNull(Ljava/lang/Object;)(this);
+  }-*/;
 
   @Override
   public int compareTo(Boolean b) {
-    return compare(value, b.value);
-  }
+    return compare(booleanValue(), b.booleanValue());
+  };
 
   @Override
-  public boolean equals(Object o) {
-    return (o instanceof Boolean) && (((Boolean) o).value == value);
-  }
+  public native boolean equals(Object o) /*-{
+    return this === o;
+  }-*/;
 
   @Override
   public int hashCode() {
-    return hashCode(value);
+    return hashCode(booleanValue());
   }
 
   @Override
   public String toString() {
-    return toString(value);
+    return toString(booleanValue());
   }
+
+  // CHECKSTYLE_OFF: Utility Methods for unboxed Boolean.
+  static native Boolean $createBoolean(boolean x) /*-{
+    return x;
+  }-*/;
+
+  static Boolean $createBoolean(String x) {
+    return $createBoolean(Boolean.parseBoolean(x));
+  }
+  // CHECKSTYLE_ON: End utility methods
 }

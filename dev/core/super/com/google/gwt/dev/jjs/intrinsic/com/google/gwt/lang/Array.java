@@ -34,11 +34,13 @@ public final class Array {
   private static final int TYPE_JSO = 2;
   private static final int TYPE_JAVA_LANG_OBJECT = 3;
   private static final int TYPE_JAVA_LANG_STRING = 4;
-  private static final int TYPE_JS_PROTOTYPE = 5;
-  private static final int TYPE_JS_FUNCTION = 6;
-  private static final int TYPE_PRIMITIVE_LONG = 7;
-  private static final int TYPE_PRIMITIVE_NUMBER = 8;
-  private static final int TYPE_PRIMITIVE_BOOLEAN = 9;
+  private static final int TYPE_JAVA_LANG_DOUBLE = 5;
+  private static final int TYPE_JAVA_LANG_BOOLEAN = 6;
+  private static final int TYPE_JS_PROTOTYPE = 7;
+  private static final int TYPE_JS_FUNCTION = 8;
+  private static final int TYPE_PRIMITIVE_LONG = 9;
+  private static final int TYPE_PRIMITIVE_NUMBER = 10;
+  private static final int TYPE_PRIMITIVE_BOOLEAN = 11;
 
   public static <T> T[] stampJavaTypeInfo(Object array, T[] referenceType) {
     initValues(referenceType.getClass(), Util.getCastableTypeMap(referenceType),
@@ -157,6 +159,10 @@ public final class Array {
     switch (Array.getElementTypeCategory(array)) {
       case TYPE_JAVA_LANG_STRING:
         return Cast.isJavaString(value);
+      case TYPE_JAVA_LANG_DOUBLE:
+        return Cast.isJavaDouble(value);
+      case TYPE_JAVA_LANG_BOOLEAN:
+        return Cast.isJavaBoolean(value);
       case TYPE_JAVA_OBJECT:
         return Cast.canCast(value, Array.getElementTypeId(array));
       case TYPE_JSO:

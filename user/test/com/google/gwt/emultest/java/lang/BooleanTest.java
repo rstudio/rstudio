@@ -78,4 +78,32 @@ public class BooleanTest extends GWTTestCase {
     assertFalse(Boolean.valueOf(false4));
   }
 
+  public void testNPE() {
+   Boolean b = Math.random() < 0 ? Boolean.TRUE : null;
+    try {
+      assertEquals(null, b.booleanValue());
+      fail("Should have thrown exception");
+    } catch (Exception e) {
+    }
+
+    try {
+      boolean bb = b;
+      fail("Should have thrown exception" + bb);
+    } catch (Exception e) {
+    }
+  }
+
+  public void testEqualityNormalizer() {
+    Boolean b = false;
+    if (b != null) {
+      assertEquals(b.booleanValue(), false);
+    } else {
+      fail("false should not evaluate to null");
+    }
+    Object s = "";
+    assertTrue(b != s);
+
+    Object d = 0.0;
+    assertTrue(b != d);
+  }
 }

@@ -3283,24 +3283,6 @@ public class GwtAstBuilder {
         }
       }
 
-      if (ctor.getEnclosingType() == javaLangString) {
-        /*
-         * MAGIC: java.lang.String is implemented as a JavaScript String
-         * primitive with a modified prototype. This requires funky handling of
-         * constructor calls. We find a method named _String() whose signature
-         * matches the requested constructor
-         *
-         * TODO(scottb): consider moving this to a later pass.
-         */
-        MethodBinding staticBinding =
-            targetBinding.getExactMethod(_STRING, b.parameters, curCud.scope);
-        assert staticBinding.isStatic();
-        JMethod staticMethod = typeMap.get(staticBinding);
-        JMethodCall newCall = new JMethodCall(info, null, staticMethod);
-        newCall.addArgs(call.getArgs());
-        call = newCall;
-      }
-
       push(call);
     }
 

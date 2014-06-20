@@ -81,6 +81,7 @@ import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JProgram.DispatchType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -2348,8 +2349,12 @@ public class GenerateJavaScriptAST {
         // special: setup a "toString" alias for java.lang.Object.toString()
         generateToStringAlias(x, globalStmts);
 
-        // Set up the artificial castmap for string.
-        setupStringCastMap(program.getTypeJavaLangString(), globalStmts);
+        // Set up the artificial castmap for string, double, and boolean
+        for (Map.Entry<JClassType, DispatchType> nativeRepresentedType :
+            program.getRepresentedAsNativeTypesDispatchMap().entrySet()) {
+          setupCastMapForUnboxedType(nativeRepresentedType.getKey(), globalStmts,
+              nativeRepresentedType.getValue().getCastMapField());
+        }
 
         //  Perform necessary polyfills.
         globalStmts.add(constructInvocation(x.getSourceInfo(),
@@ -2661,11 +2666,12 @@ public class GenerateJavaScriptAST {
     }
 
     /*
-     * Sets up the catmap for String.
+     * Sets up the castmap for type X
      */
-    private void setupStringCastMap(JClassType x, List<JsStatement> globalStmts) {
-      //  Cast.stringCastMap = /* String cast map */ { ..:1, ..:1}
-      JField castableTypeMapField = program.getIndexedField("Cast.stringCastMap");
+    private void setupCastMapForUnboxedType(JClassType x, List<JsStatement> globalStmts,
+        String castMapField) {
+      //  Cast.[castMapName] = /* cast map */ { ..:1, ..:1}
+      JField castableTypeMapField = program.getIndexedField(castMapField);
       JsName castableTypeMapName = names.get(castableTypeMapField);
       JsNameRef ctmRef = castableTypeMapName.makeRef(x.getSourceInfo());
 
