@@ -996,7 +996,25 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
 #endif
 
    installCommand << core::shell_utils::EscapeFilesOnly;
-   installCommand << "--vanilla";
+
+   // for packrat projects we execute the profile and set the working
+   // directory to the project directory; for other contexts we just
+   // propagate the R_LIBS
+   if (module_context::packratContext().modeOn)
+   {
+      options.workingDir = projects::projectContext().directory();
+   }
+   else
+   {
+      installCommand << "--vanilla";
+      core::system::Options env;
+      core::system::environment(&env);
+      std::string libPaths = libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&env, "R_LIBS", libPathsString());
+      options.environment = env;
+   }
+
    installCommand << "CMD" << "INSTALL";
 
    // if there is a lib path then provide it
@@ -1004,14 +1022,6 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
    {
       installCommand << "-l";
       installCommand << "\"" + libPath + "\"";
-   }
-   // otherwise just propagate our R_LIBS
-   else
-   {
-      core::system::Options env;
-      core::system::environment(&env);
-      core::system::setenv(&env, "R_LIBS", libPathsString());
-      options.environment = env;
    }
 
    // add pakage path
