@@ -30,6 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace core;
 
@@ -281,17 +282,10 @@ Error installDependencies(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // options/environment
+   // options
    core::system::ProcessOptions options;
    options.terminateChildren = true;
    options.redirectStdErrToStdOut = true;
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
-   // allow child process to inherit our R_LIBS
-   std::string libPaths = module_context::libPathsString();
-   if (!libPaths.empty())
-      core::system::setenv(&childEnv, "R_LIBS", libPaths);
-   options.environment = childEnv;
 
    // build lists of cran packages and archives
    std::vector<std::string> cranPackages;
@@ -330,7 +324,25 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // build args
    std::vector<std::string> args;
    args.push_back("--slave");
-   args.push_back("--vanilla");
+
+   // for packrat projects we execute the profile and set the working
+   // directory to the project directory; for other contexts we just
+   // propagate the R_LIBS
+   if (module_context::packratContext().modeOn)
+   {
+      options.workingDir = projects::projectContext().directory();
+   }
+   else
+   {
+      args.push_back("--vanilla");
+      core::system::Options childEnv;
+      core::system::environment(&childEnv);
+      std::string libPaths = module_context::libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      options.environment = childEnv;
+   }
+
    args.push_back("-e");
    args.push_back(cmd);
 
