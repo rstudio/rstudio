@@ -16,6 +16,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.cfg.DepsInfoProvider;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.CharMatcher;
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.SetMultimap;
@@ -25,7 +26,6 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
@@ -122,7 +122,7 @@ public class TypeRefDepsCheckerTest extends TestCase {
         + "ToModule1|ToModule2|ToModule3\tcom/google/gwt/ToModule1.gwt.xml|"
         + "com/google/gwt/ToModule2.gwt.xml|com/google/gwt/ToModule3.gwt.xml\t"
         + "Type 'FromType' wants to reference type 'ToType'.",
-        CharMatcher.WHITESPACE.trimFrom(Files.toString(missingDepsFile, StandardCharsets.UTF_8)));
+        CharMatcher.WHITESPACE.trimFrom(Files.toString(missingDepsFile, Charsets.UTF_8)));
   }
 
   public void testOptionsDisabled() {
@@ -179,6 +179,6 @@ public class TypeRefDepsCheckerTest extends TestCase {
     assertEquals(
         "BarModule\tcom/google/gwt/BarModule.gwt.xml\tBazModule\tcom/google/gwt/BazModule.gwt.xml"
         + "\tType 'BangType' wants to reference type 'ZingType'.",
-        CharMatcher.WHITESPACE.trimFrom(Files.toString(missingDepsFile, StandardCharsets.UTF_8)));
+        CharMatcher.WHITESPACE.trimFrom(Files.toString(missingDepsFile, Charsets.UTF_8)));
   }
 }
