@@ -56,6 +56,8 @@ public class HistoryTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  // TODO(dankurka): Fix up HTML unit hash change handling
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testClickLink() {
     AnchorElement anchorElement = Document.get().createAnchorElement();
     anchorElement.setHref("#href1");
