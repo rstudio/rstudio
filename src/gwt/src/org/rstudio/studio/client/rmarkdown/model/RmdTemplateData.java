@@ -29,7 +29,7 @@ public class RmdTemplateData
             format_extension: "html",
             format_options: [ "toc", "highlight", "theme", "css", "fig_width", 
                               "fig_height", "fig_caption", "number_sections",
-                              "smart", "self_contained" ],
+                              "smart", "self_contained", "keep_md" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
@@ -122,6 +122,14 @@ public class RmdTemplateData
             option_list: [ "pdflatex", "lualatex", "xelatex" ]
             },
             {
+            option_name: "keep_md",
+            option_ui_name: "Keep markdown source file", 
+            option_type: "boolean", 
+            option_for_create: false,
+            option_category: "Advanced",
+            option_default: "false",
+            },
+            {
             option_name: "keep_tex",
             option_ui_name: "Keep tex source file used to produce PDF", 
             option_type: "boolean", 
@@ -200,7 +208,7 @@ public class RmdTemplateData
             format_options: [ "logo", "fig_width", "fig_height", "fig_caption", 
                               "fig_retina", "incremental", "smaller",
                               "widescreen", "highlight", "transition", 
-                              "self_contained", "smart" ],
+                              "self_contained", "smart", "keep_md" ],
             format_notes: "HTML presentation viewable with any browser (you can also print ioslides to PDF with Chrome)."
             },
             {
@@ -386,6 +394,14 @@ public class RmdTemplateData
             option_nullable: true,
             option_category: "Figures",
             option_default: "2"
+            },
+            {
+            option_name: "keep_md",
+            option_ui_name: "Keep markdown source file", 
+            option_type: "boolean", 
+            option_for_create: false,
+            option_category: "Advanced",
+            option_default: "false",
             },
             {
             option_name: "keep_tex",
