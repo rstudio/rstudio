@@ -937,20 +937,29 @@ void annotatePendingActions(json::Object *pJson)
    if (!s_autoSnapshotPending && !s_autoSnapshotRunning && 
        s_runningPackratAction == PACKRAT_ACTION_NONE) 
    {
-      bool libraryDirty = 
-         newLibraryHash != getHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED);
-      bool lockfileDirty = 
-         newLockfileHash != getHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED);
-
-      if (libraryDirty)
-      {
+      // check for pending restore and snapshot actions
+      bool hasPendingSnapshotActions = 
          getPendingActions(PACKRAT_ACTION_SNAPSHOT, newLibraryHash, 
                            newLockfileHash, &snapshotActions);
-      }
-      if (lockfileDirty)
-      {
+      bool hasPendingRestoreActions = 
          getPendingActions(PACKRAT_ACTION_RESTORE, newLibraryHash,
                            newLockfileHash, &restoreActions);
+      
+      // if the state could be interpreted as either a pending restore or a
+      // pending snapsot, try to guess which is appropriate
+      if (hasPendingRestoreActions && hasPendingSnapshotActions)
+      {
+         bool libraryDirty = 
+            newLibraryHash != getHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED);
+         bool lockfileDirty = 
+            newLockfileHash != getHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED);
+
+         // hide the list of pending restore actions if we think a snapshot is
+         // appropriate, and vice versa
+         if (libraryDirty && !lockfileDirty)
+            restoreActions = json::Value();
+         if (!libraryDirty && lockfileDirty)
+            snapshotActions = json::Value();
       }
    }
       
