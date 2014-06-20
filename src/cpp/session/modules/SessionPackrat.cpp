@@ -925,7 +925,7 @@ namespace module_context {
 
 bool isRequiredPackratInstalled()
 {
-   return getPackageCompatStatus("packrat", "0.2.0.128", 
+   return getPackageCompatStatus("packrat", "0.2.0.129",
                                   kPackratRStudioProtocolVersion) == COMPAT_OK;
 }
 
