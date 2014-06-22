@@ -69,6 +69,44 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
+std::string inferPackageFileSubdirectory(FilePath const& filePath)
+{
+
+   using boost::algorithm::iends_with;
+   std::string path = filePath.absolutePath();
+
+   if (iends_with(path, ".r") ||
+       iends_with(path, ".s"))
+   {
+      return "R";
+   }
+
+   else if (iends_with(path, ".Rmd") ||
+            iends_with(path, ".Rnw"))
+   {
+      return "vignettes";
+   }
+
+   else if (iends_with(path, ".c") ||
+            iends_with(path, ".cpp") ||
+            iends_with(path, ".h") ||
+            iends_with(path, ".hpp") ||
+            iends_with(path, ".f") ||
+            iends_with(path, ".f90") ||
+            iends_with(path, ".f95") ||
+            filePath.filename() == "Makevars" ||
+            filePath.filename() == "Makevars.win")
+   {
+      return "src";
+   }
+
+   else
+   {
+      return "";
+   }
+
+}
+
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -94,6 +132,7 @@ Error createProject(const json::JsonRpcRequest& request,
                                      "code_files", &codeFilesJson);
       if (error)
          return error;
+
       std::vector<FilePath> codeFiles;
       BOOST_FOREACH(const json::Value codeFile, codeFilesJson)
       {
@@ -112,6 +151,40 @@ Error createProject(const json::JsonRpcRequest& request,
       FilePath packageDir = projectFilePath.parent();
       if (packageDir.exists())
          return core::fileExistsError(ERROR_LOCATION);
+
+      // if devtools is available, and the user has opted in to using devtools,
+      // short circuit and use devtools::create
+      if (module_context::isPackageInstalled("devtools") &&
+          userSettings().useDevtools())
+      {
+         error = r::exec::RFunction("devtools:::create")
+               .addParam("path", packageDir.absolutePath())
+               .addParam("rstudio", false)
+               .call();
+
+         if (error)
+            return error;
+
+         // copy files to the appropriate sub-directories
+         BOOST_FOREACH(const FilePath& codeFilePath, codeFiles)
+         {
+            std::string subDir = inferPackageFileSubdirectory(codeFilePath);
+            FilePath outputDir = packageDir.complete(subDir);
+
+            outputDir.ensureDirectory();
+
+            Error error = codeFilePath.copy(
+                             outputDir.complete(codeFilePath.filename()));
+            if (error)
+               return error;
+
+         }
+
+         return r_util::writeProjectFile(projectFilePath,
+                                         ProjectContext::buildDefaults(),
+                                         ProjectContext::defaultConfig());
+
+      }
 
       // create a temp dir (so we can import the list of code files)
       FilePath tempDir = module_context::tempFile("newpkg", "dir");
