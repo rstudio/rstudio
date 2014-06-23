@@ -106,9 +106,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
     }
 
     public V setValue(V value) {
-      V old = getValue();
-      values[key.ordinal()] = value;
-      return old;
+      return set(key.ordinal(), value);
     }
   }
 
