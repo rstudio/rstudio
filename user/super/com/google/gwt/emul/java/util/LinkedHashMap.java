@@ -249,8 +249,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
       }
       return null;
     } else {
-      V oldValue = old.getValue();
-      old.setValue(value);
+      V oldValue = old.setValue(value);
       recordAccess(old);
       return oldValue;
     }
