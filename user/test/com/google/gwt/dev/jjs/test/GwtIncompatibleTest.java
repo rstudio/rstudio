@@ -125,4 +125,35 @@ public class GwtIncompatibleTest extends GWTTestCase {
         getAnonymousDummyBarWithAnonymousIncompatibleClass().getClassFooNbrConstructors());
     assertEquals(-1, new DifferentPackageAnnotations().getClassFooNbrConstructors());
   }
+
+  @GwtIncompatible("Incompatible enum")
+  static enum GwtIncompatibleEnum {
+
+    VAL1("Text1"),
+    VAL2("Text2");
+
+    private final String key;
+
+    private GwtIncompatibleEnum(String key) {
+      this.key = key;
+    }
+
+    public String key() {
+      return key;
+    }
+
+    public String value() {
+      return System.getProperty(key);
+    }
+
+    @Override
+    public String toString() {
+      return key() + "=" + value();
+    }
+  }
+
+  public void testIncompatibleEnum()  {
+    GwtIncompatibleEnum gwtIncompatibleEnum = null;
+    assertNull(gwtIncompatibleEnum);
+  }
 }
