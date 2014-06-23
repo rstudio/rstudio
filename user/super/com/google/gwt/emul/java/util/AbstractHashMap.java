@@ -105,28 +105,6 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     }
   }
 
-  private final class MapEntryString extends AbstractMapEntry<K, V> {
-
-    private final String key;
-
-    public MapEntryString(String key) {
-      this.key = key;
-    }
-
-    @SuppressWarnings("unchecked")
-    public K getKey() {
-      return (K) key;
-    }
-
-    public V getValue() {
-      return getStringValue(key);
-    }
-
-    public V setValue(V object) {
-      return putStringValue(key, object);
-    }
-  }
-
   /**
    * A map of integral hashCodes onto entries.
    */
@@ -206,7 +184,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public int size() {
-    return size;
+    return size + stringMap.size();
   }
 
   /**
@@ -234,7 +212,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   }
 
   private void addAllStringEntries(Collection<?> dest) {
-    stringMap.addAllEntries(dest, this);
+    stringMap.addAllEntries(dest);
   }
 
   private void clearImpl() {
@@ -267,10 +245,6 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   @SuppressWarnings("unused")
   private boolean equalsBridge(Object value1, Object value2) {
     return equals(value1, value2);
-  }
-
-  private MapEntryString newMapEntryString(String key) {
-    return new MapEntryString(key);
   }
 
   /**
@@ -323,18 +297,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * key did not exist.
    */
   protected V putStringValue(String key, V value) {
-    if (key == null) {
-      return putHashValue(null, value);
-    }
-
-    V oldValue = null;
-    if (stringMap.contains(key)) {
-      oldValue = stringMap.get(key);
-    } else {
-      ++size;
-    }
-    stringMap.set(key, value);
-    return oldValue;
+    return key == null ? putHashValue(null, value) : stringMap.put(key, value);
   }
 
   /**
@@ -353,16 +316,6 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * exist.
    */
   protected V removeStringValue(String key) {
-    if (key == null) {
-      return removeHashValue(null);
-    }
-
-    V value = null;
-    if (stringMap.contains(key)) {
-      value = stringMap.get(key);
-      --size;
-      stringMap.remove(key);
-    }
-    return value;
+    return key == null ? removeHashValue(null) : stringMap.remove(key);
   }
 }

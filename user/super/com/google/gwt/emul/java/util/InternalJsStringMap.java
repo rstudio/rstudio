@@ -38,24 +38,9 @@ class InternalJsStringMap<V> {
     }-*/;
 
     @Override
-    public native V get(String key) /*-{
-      return this.@InternalJsStringMap::backingMap[key];
-    }-*/;
-
-    @Override
-    public native void set(String key, V value) /*-{
-      this.@InternalJsStringMap::backingMap[key] = value;
-    }-*/;
-
-    @Override
-    public native void remove(String key) /*-{
-      delete this.@InternalJsStringMap::backingMap[key];
-    }-*/;
-
-    @Override
-    public native boolean contains(String key) /*-{
-      return key in this.@InternalJsStringMap::backingMap;
-    }-*/;
+    String normalize(String key) {
+      return key;
+    }
 
     @Override
     public native boolean containsValue(Object value, AbstractHashMap<?, ?> host) /*-{
@@ -69,34 +54,72 @@ class InternalJsStringMap<V> {
     }-*/;
 
     @Override
-    public native void addAllEntries(Collection<?> dest, AbstractHashMap<?, ?> host) /*-{
+    public native void addAllEntries(Collection<?> dest) /*-{
       for (var key in this.@InternalJsStringMap::backingMap) {
-        var entry = host.@AbstractHashMap::newMapEntryString(*)(key);
-        dest.@java.util.Collection::add(Ljava/lang/Object;)(entry);
+        var entry = this.@InternalJsStringMap::newMapEntry(*)(key);
+        dest.@Collection::add(Ljava/lang/Object;)(entry);
       }
     }-*/;
   }
 
   private final JavaScriptObject backingMap = createMap();
+  private int size;
 
   native JavaScriptObject createMap() /*-{
     return {};
   }-*/;
 
-  public native V get(String key) /*-{
-    return this.@InternalJsStringMap::backingMap[':' + key];
+  String normalize(String key) {
+    return ':' + key;
+  }
+
+  public final int size() {
+    return size;
+  }
+
+  public final boolean contains(String key) {
+    return !isUndefined(get(key));
+  }
+
+  public final V get(String key) {
+    return at(normalize(key));
+  }
+
+  public final V put(String key, V value) {
+    key = normalize(key);
+
+    V oldValue = at(key);
+    if (isUndefined(oldValue)) {
+      size++;
+    }
+
+    set(key, toNullIfUndefined(value));
+
+    return oldValue;
+  }
+
+  public final V remove(String key) {
+    key = normalize(key);
+
+    V value = at(key);
+    if (!isUndefined(value)) {
+      delete(key);
+      size--;
+    }
+
+    return value;
+  }
+
+  private native V at(String key) /*-{
+    return this.@InternalJsStringMap::backingMap[key];
   }-*/;
 
-  public native void set(String key, V value) /*-{
-    this.@InternalJsStringMap::backingMap[':' + key] = value;
+  private native void set(String key, V value) /*-{
+    return this.@InternalJsStringMap::backingMap[key] = value;
   }-*/;
 
-  public native void remove(String key) /*-{
-    delete this.@InternalJsStringMap::backingMap[':' + key];
-  }-*/;
-
-  public native boolean contains(String key) /*-{
-    return (':' + key) in this.@InternalJsStringMap::backingMap;
+  private native void delete(String key) /*-{
+    delete this.@InternalJsStringMap::backingMap[key];
   }-*/;
 
   public native boolean containsValue(Object value, AbstractHashMap<?, ?> host) /*-{
@@ -113,13 +136,38 @@ class InternalJsStringMap<V> {
     return false;
   }-*/;
 
-  public native void addAllEntries(Collection<?> dest, AbstractHashMap<?, ?> host) /*-{
+  public native void addAllEntries(Collection<?> dest) /*-{
     for (var key in this.@InternalJsStringMap::backingMap) {
       // only keys that start with a colon ':' count
       if (key.charCodeAt(0) == 58) {
-        var entry = host.@AbstractHashMap::newMapEntryString(*)(key.substring(1));
+        var entry = this.@InternalJsStringMap::newMapEntry(*)(key.substring(1));
         dest.@Collection::add(Ljava/lang/Object;)(entry);
       }
     }
+  }-*/;
+
+  private AbstractMapEntry<String, V> newMapEntry(final String key) {
+    return new AbstractMapEntry<String, V>() {
+      @Override
+      public String getKey() {
+        return key;
+      }
+      @Override
+      public V getValue() {
+        return get(key);
+      }
+      @Override
+      public V setValue(V object) {
+        return put(key, object);
+      }
+    };
+  }
+
+  private static <T> T toNullIfUndefined(T value) {
+    return isUndefined(value) ? null : value;
+  }
+
+  private static native boolean isUndefined(Object value) /*-{
+    return value === undefined;
   }-*/;
 }
