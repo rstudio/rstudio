@@ -179,14 +179,6 @@ public class RmdTemplateData
             option_ui_name: "Render figures with captions", 
             option_category: "Figures",
             option_type: "boolean", 
-            option_default: "true"
-            },
-            {
-            option_name: "fig_caption",
-            option_format: "html_document",
-            option_ui_name: "Render figures with captions", 
-            option_category: "Figures",
-            option_type: "boolean", 
             option_default: "false"
             },
             {
