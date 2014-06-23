@@ -371,11 +371,10 @@ public class TextEditingTargetRMarkdownHelper
          private void quoteField(YamlTree yamlTree, String field)
          {
             String value = yamlTree.getKeyValue(field);
-            if (value.length() > 0)
+
+            // The string should be quoted if it's a single line.
+            if (value.length() > 0 && value.indexOf("\n") == -1) 
             {
-               // The string should be quoted--if it isn't, apply quotes
-               // manually (consider: do we need to deal with multi-line titles 
-               // here?)
                if (!((value.startsWith("\"") && value.endsWith("\"")) ||
                      (value.startsWith("'") && value.endsWith("'"))))
                   yamlTree.setKeyValue(field, "\"" + value + "\"");
