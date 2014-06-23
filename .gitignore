@@ -1,2 +1,6 @@
+# NOTE: we don't include IDE-specific files (e.g. IntelliJ's *.iml and .idea/) on-purpose.
+# Those patterns should go in a global gitignore or repository-specific excludes.
+# See http://www.gwtproject.org/makinggwtbetter.html#global_gitignore
+
 # Working folder of ant build script
 /build/
