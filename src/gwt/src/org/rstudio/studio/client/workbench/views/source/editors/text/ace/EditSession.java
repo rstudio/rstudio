@@ -74,7 +74,13 @@ public class EditSession extends JavaScriptObject
 
    public native final void setEditorMode(String parserName,
                                           boolean suppressHighlighting) /*-{
+      // find the appropriate editor mode and check to see whether it matches
+      // the existing mode; if it does, no need to recreate it
       var Mode = $wnd.require(parserName).Mode;
+      var existingMode = this.getMode();
+      if (existingMode && existingMode.constructor == Mode)
+         return;
+
       this.setMode(new Mode(suppressHighlighting, this.getDocument(), this));
    }-*/;
 
