@@ -646,7 +646,8 @@ public class TypeTightener {
        * Explicitly NOT visiting native methods since we can't infer further
        * type information.
        */
-      return !x.isNative();
+      return !x.isNative() || program.typeOracle.isJsTypeMethod(x) ||
+          program.typeOracle.isExportedMethod(x);
     }
 
     /**
@@ -694,6 +695,10 @@ public class TypeTightener {
         return;
       }
       JReferenceType refType = (JReferenceType) x.getType();
+
+      if (program.typeOracle.isJsType(refType)) {
+        return;
+      }
 
       if (refType == typeNull) {
         return;

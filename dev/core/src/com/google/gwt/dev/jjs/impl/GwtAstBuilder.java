@@ -1945,7 +1945,7 @@ public class GwtAstBuilder {
           }
           if (m.getAccess() == AccessModifier.PUBLIC
             && (m.isStatic() ||
-              (m instanceof JConstructor && !((JConstructor) m).isDefaultConstructor()))) {
+              (m instanceof JConstructor))) {
             m.setExportName("");
           }
         }

@@ -109,6 +109,7 @@ import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
+import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsBreak;
 import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsCatch;
@@ -555,8 +556,7 @@ public class GenerateJavaScriptAST {
             polyName = interfaceScope.declareName(mangleNameSpecialObfuscate(x));
             polyName.setObfuscatable(false);
             // if a JsType and we can set set the interface method to non-obfuscatable
-          } else if (
-              !x.isNoExport() && program.typeOracle.isJsTypeMethod(x) &&
+          } else if (!x.isNoExport() && program.typeOracle.isJsTypeMethod(x) &&
               !program.typeOracle.needsJsInteropBridgeMethod(x)) {
               polyName = interfaceScope.declareName(name, name);
               polyName.setObfuscatable(false);
@@ -1459,14 +1459,59 @@ public class GenerateJavaScriptAST {
             throw new InternalCompilerException("JsProperty not a setter, getter, or has.");
           }
         } else {
-          // Dispatch polymorphically (normal case).
-          qualifier = polyName.makeRef(x.getSourceInfo());
-          qualifier.setQualifier((JsExpression) pop()); // instance
+          // insert trampoline (_ = instance, trampoline(_, _.jsBridgeMethRef,
+          // _.javaMethRef)).bind(_)(args)
+          if (program.typeOracle.needsJsInteropBridgeMethod(method)) {
+            maybeDispatchViaTrampolineToBridgeMethod(x, method, jsInvocation,
+                unnecessaryQualifier, result, polyName);
+
+            return;
+          } else {
+            // Dispatch polymorphically (normal case).
+            qualifier = polyName.makeRef(x.getSourceInfo());
+            qualifier.setQualifier((JsExpression) pop()); // instance
+          }
         }
       }
       if (!isJsProperty) {
         jsInvocation.setQualifier(qualifier);
       }
+      push(createCommaExpression(unnecessaryQualifier, result));
+    }
+
+    private void maybeDispatchViaTrampolineToBridgeMethod(JMethodCall x,
+        JMethod method, JsInvocation jsInvocation,
+        JsExpression unnecessaryQualifier, JsExpression result,
+        JsName polyName) {
+      // _ = instance value
+      JsExpression tmp = createAssignment(globalTemp.makeRef(
+              x.getSourceInfo()), ((JsExpression) pop()));
+      JsName trampMethName = indexedFunctions.get(
+          "JavaClassHierarchySetupUtil.trampolineBridgeMethod").getName();
+
+      // _.jsBridgeMethRef
+      JsName bridgejsName = polyName.getEnclosing().findExistingName(method.getName());
+      JsNameRef bridgeRef = bridgejsName != null ? bridgejsName.makeRef(x.getSourceInfo())
+          : new JsNameRef(x.getSourceInfo(), method.getName());
+      bridgeRef.setQualifier(globalTemp.makeRef(x.getSourceInfo()));
+
+      // _.javaMethRef
+      JsNameRef javaMethRef = polyName.makeRef(x.getSourceInfo());
+      javaMethRef.setQualifier(globalTemp.makeRef(x.getSourceInfo()));
+
+      JsInvocation callTramp = new JsInvocation(x.getSourceInfo(),
+          trampMethName.makeRef(x.getSourceInfo()),
+          globalTemp.makeRef(x.getSourceInfo()),
+          bridgeRef,
+          javaMethRef);
+
+      JsNameRef bind = new JsNameRef(x.getSourceInfo(), "bind");
+      JsInvocation callBind = new JsInvocation(x.getSourceInfo());
+      callBind.setQualifier(bind);
+      callBind.getArguments().add(globalTemp.makeRef(x.getSourceInfo()));
+      // (_ = instance, tramp(_, _.bridgeRef, _.javaRef)).bind(_)
+      bind.setQualifier(createCommaExpression(tmp, callTramp));
+      jsInvocation.setQualifier(callBind);
       push(createCommaExpression(unnecessaryQualifier, result));
     }
 
@@ -2567,13 +2612,26 @@ public class GenerateJavaScriptAST {
       String lastProvidedNamespace = "";
       boolean createdClinit = false;
 
+      // export 1 constructor
+      JConstructor ctor = null;
       for (JMethod m : x.getMethods()) {
-        if (m.isNoExport()) {
+        if (m instanceof JConstructor) {
+          if (!((JConstructor) m).isDefaultConstructor()
+              && program.typeOracle.isExportedMethod(m)) {
+            ctor = (JConstructor) m;
+            break;
+          }
+        }
+      }
+
+      for (JMethod m : x.getMethods()) {
+        if (m instanceof JConstructor && m != ctor) {
           continue;
         }
         // static functions or constructors may be exported
-        if ((m.isStatic() || m instanceof JConstructor
-          && !((JConstructor) m).isDefaultConstructor()) && program.typeOracle.isExportedMethod(m)) {
+        if (m == ctor && !m.isPrivate() ||
+            (m.isStatic()) && program.typeOracle.isExportedMethod(m)) {
+
           createdClinit = maybeHoistClinit(exportStmts, createdClinit, maybeCreateClinitCall(m));
           JsExpression exportRhs = createJsInteropBridgeMethod(m,
               names.get(m).makeRef(m.getSourceInfo()));
@@ -2603,6 +2661,17 @@ public class GenerateJavaScriptAST {
         JsInvocation invokeBridge = new JsInvocation(methodRef.getSourceInfo());
         invokeBridge.setQualifier(makeBridgeMethodRef);
         invokeBridge.getArguments().add(methodRef);
+        invokeBridge.getArguments().add(m.getType() == JPrimitiveType.LONG ?
+            JsBooleanLiteral.TRUE : JsBooleanLiteral.FALSE);
+        JsArrayLiteral arrayLiteral = new JsArrayLiteral(m.getSourceInfo());
+        for (JParameter p : m.getParams()) {
+          if (p.getType() == JPrimitiveType.LONG) {
+            arrayLiteral.getExpressions().add(JsBooleanLiteral.TRUE);
+          } else {
+            arrayLiteral.getExpressions().add(JsBooleanLiteral.FALSE);
+          }
+        }
+        invokeBridge.getArguments().add(arrayLiteral);
         return invokeBridge;
       }
     }

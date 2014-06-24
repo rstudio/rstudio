@@ -191,10 +191,55 @@ public class JavaClassHierarchySetupUtil {
   /**
    * Create a function that invokes the specified method reference.
    */
-  public static native JavaScriptObject makeBridgeMethod(JavaScriptObject methodRef) /*-{
+  public static native JavaScriptObject makeBridgeMethod(
+      JavaScriptObject methodRef, boolean returnsLong, boolean[] longParams) /*-{
     return function() {
-      return methodRef.apply(this, arguments);
+      var args = [];
+      for (var i = 0; i < arguments.length; i++) {
+        var maybeCoerced = @JavaClassHierarchySetupUtil::maybeCoerceToLong(Ljava/lang/Object;Z)(arguments[i], longParams[i]);
+        args.push(maybeCoerced);
+      }
+      var result = methodRef.apply(this, args);
+      return returnsLong ? @JavaClassHierarchySetupUtil::maybeCoerceFromLong(Ljava/lang/Object;Z)(result, returnsLong) : result;
     };
+  }-*/;
+
+  /**
+   * If the parameter o is a Javascript object, return the bridge method reference,
+   * otherwise return the nonbridge reference.
+   * @param o an instance object we want to invoke a method on
+   * @param bridgeRef a reference to an exported, bridgereference or jstype method
+   * @param nonbridgeRef the internal reference to Java obfuscated method
+   * @return
+   */
+  public static native boolean trampolineBridgeMethod(Object o, Object bridgeRef,
+      Object nonbridgeRef) /*-{
+    return @com.google.gwt.lang.Cast::isJavaScriptObject(Ljava/lang/Object;)(o)
+        ? bridgeRef : nonbridgeRef;
+  }-*/;
+
+  /**
+   * Converts an input object (LongEmul) to a double, otherwise return the value.
+   */
+  private static native Object maybeCoerceToLong(Object o, boolean isLong) /*-{
+    if (!isLong) {
+      return o;
+    }
+    if (typeof(o) == 'number') {
+      return @com.google.gwt.lang.LongLib::fromDouble(D)(o);
+    }
+    return o;
+  }-*/;
+
+  /**
+   * Convert a double to a long if a long is expected.
+   */
+  private static native Object maybeCoerceFromLong(Object o, boolean isLong) /*-{
+      if (!isLong) {
+          return o;
+      }
+
+      return @com.google.gwt.lang.LongLib::toDouble(Lcom/google/gwt/lang/LongLibBase$LongEmul;)(o);
   }-*/;
 
   /**

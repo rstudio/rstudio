@@ -81,6 +81,18 @@ public class JTypeOracle implements Serializable {
         }
       }
     }
+
+    // implicit builtin @JsConvert, longs are converted
+    if (isInteropEnabled() && isJsTypeMethod(x) || isExportedMethod(x)) {
+      if (x.getOriginalReturnType() == JPrimitiveType.LONG) {
+        return true;
+      }
+      for (JParameter p : x.getParams()) {
+        if (p.getType() == JPrimitiveType.LONG) {
+          return true;
+        }
+      }
+    }
     // TODO (cromwellian): add SAM and JsAware/Convert cases in follow up
     return false;
   }
@@ -90,7 +102,8 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean isExportedMethod(JMethod method) {
-    return isInteropEnabled() && method.getExportName() != null;
+    return isInteropEnabled() && method.getExportName() != null
+        && !method.isNoExport();
   }
 
   public boolean isInteropEnabled() {
@@ -823,6 +836,10 @@ public class JTypeOracle implements Serializable {
    */
   public boolean isInstantiatedType(JReferenceType type) {
     type = type.getUnderlyingType();
+    // any type that can be JS or exported to JS is considered instantiated
+    if (isJsType(type) || hasAnyExports(type)) {
+      return true;
+    }
     if (instantiatedTypes == null || instantiatedTypes.contains(type)) {
       return true;
     }
@@ -845,6 +862,22 @@ public class JTypeOracle implements Serializable {
       JArrayType arrayType = (JArrayType) type;
       if (arrayType.getLeafType() instanceof JNullType) {
         return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean hasAnyExports(JReferenceType type) {
+    if (type instanceof JDeclaredType) {
+      for (JMethod meth : ((JDeclaredType) type).getMethods()) {
+        if (isExportedMethod(meth)) {
+          return true;
+        }
+      }
+      for (JField field : ((JDeclaredType) type).getFields()) {
+        if (isExportedField(field)) {
+          return true;
+        }
       }
     }
     return false;
