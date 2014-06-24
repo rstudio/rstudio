@@ -138,8 +138,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          shinyDoc_ = null;
          return;
       }
-      if (!result.getSucceeded())
-         return;
       
       if (result.hasShinyContent() && !result.isShinyDocument())
       {
@@ -153,7 +151,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                switch (input)
                {
                case ShinyDocumentWarningDialog.RENDER_SHINY_NO:
-                  displayRenderResult(result);
+                  if (result.getSucceeded())
+                     displayRenderResult(result);
                   break;
                case ShinyDocumentWarningDialog.RENDER_SHINY_ONCE:
                   rerenderAsShiny(result);
@@ -166,7 +165,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             }
          }).showModal();
       }
-      else
+      else if (result.getSucceeded())
       {
          displayRenderResult(event.getResult());
       }
