@@ -98,7 +98,13 @@ public class StackTraceCreator {
     @Override
     public StackTraceElement[] getStackTrace(Object t) {
       JsArrayString stack = getFnStack(t);
-      return fnStacktoSte(stack);
+
+      int length = stack.length();
+      StackTraceElement[] stackTrace = new StackTraceElement[length];
+      for (int i = 0; i < length; i++) {
+        stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i), null, LINE_NUMBER_UNKNOWN);
+      }
+      return stackTrace;
     }
   }
 
@@ -150,7 +156,17 @@ public class StackTraceCreator {
   /**
    * Modern browsers provide a <code>stack</code> property in thrown objects.
    */
-  abstract static class CollectorModern extends Collector {
+  static class CollectorModern extends Collector {
+
+    static {
+      increaseStackTraceLimit();
+    }
+
+    // As of today, only available in IE10+ and Chrome.
+    private static native void increaseStackTraceLimit() /*-{
+      // TODO(cromwellian) make this a configurable?
+      Error.stackTraceLimit = 64;
+    }-*/;
 
     @Override
     public native void collect(Object t, Object jsThrown) /*-{
@@ -167,76 +183,6 @@ public class StackTraceCreator {
         return e;
       }
     }-*/;
-  }
-
-  static class CollectorMoz extends CollectorModern {
-
-    @Override
-    public StackTraceElement[] getStackTrace(Object t) {
-      JsArrayString stack = inferFrom(t);
-      return fnStacktoSte(stack);
-    }
-
-    private JsArrayString inferFrom(Object t) {
-      JsArrayString stack = split(t);
-      for (int i = 0, j = stack.length(); i < j; i++) {
-        stack.set(i, extractName(stack.get(i)));
-      }
-      return stack;
-    }
-
-    /**
-     * Extract the name of a function from it's toString() representation.
-     */
-    private String extractName(String fnToString) {
-      String toReturn = "";
-      fnToString = fnToString.trim();
-      int index = fnToString.indexOf("(");
-      int start = fnToString.startsWith("function") ? 8 : 0;
-      if (index == -1) {
-        // Firefox 14 does not include parenthesis and uses '@' symbol instead to terminate symbol
-        index = fnToString.indexOf('@');
-        /**
-         * Firefox 14 doesn't return strings like 'function()' for anonymous methods, so
-         * we assert a space must trail 'function' keyword for a method named 'functionName', e.g.
-         * functionName:file.js:2 won't accidentally strip off the 'function' prefix which is part
-         * of the name.
-         */
-        start = fnToString.startsWith("function ") ? 9 : 0;
-      }
-      if (index != -1) {
-        toReturn = fnToString.substring(start, index).trim();
-      }
-      return toReturn.length() > 0 ? toReturn : ANONYMOUS;
-    }
-  }
-
-  /**
-   * Chrome uses a slightly different format to Mozilla.
-   *
-   * See http://code.google.com/p/v8/source/browse/branches/bleeding_edge/src/
-   * messages.js?r=2340#712 for formatting code.
-   *
-   * Function calls can be of the four following forms:
-   *
-   * <pre>
-   * at file.js:1:2
-   * at functionName (file.js:1:2)
-   * at Type.functionName (file.js:1:2)
-   * at Type.functionName [as methodName] (file.js:1:2)
-   * </pre>
-   */
-  static class CollectorChrome extends CollectorModern {
-
-    static {
-      increaseChromeStackTraceLimit();
-    }
-
-    // TODO(cromwellian) make this a configurable?
-    private static native void increaseChromeStackTraceLimit() /*-{
-      // 128 seems like a reasonable maximum
-      Error.stackTraceLimit = 128;
-    }-*/;
 
     private JsArrayString inferFrom(Object t) {
       JsArrayString stack = split(t);
@@ -245,7 +191,7 @@ public class StackTraceCreator {
       }
 
       if (stack.length() > 0 && stack.get(0).startsWith(ANONYMOUS + "@@")) {
-        // Chrome contains the error itself as the first line of the stack (iOS doesn't).
+        // Chrome, IE10+ contains the error msg as the first line of stack (iOS, Firefox doesn't).
         stack = splice(stack, 1);
       }
       return stack;
@@ -270,7 +216,7 @@ public class StackTraceCreator {
 
       int index = toReturn.indexOf("(");
       if (index == -1) {
-        // No bracketed items found, try '@' (used by iOS).
+        // No bracketed items found, try '@' (used by iOS & Firefox).
         index = toReturn.indexOf("@");
         if (index == -1) {
           // No bracketed items nor '@' found, hence no function name available
@@ -292,6 +238,12 @@ public class StackTraceCreator {
       if (index != -1) {
         toReturn = toReturn.substring(index + 1);
       }
+
+      // IE has also special naming for anonymous functions.
+      if (toReturn.equals("Anonymous function")) {
+         toReturn = "";
+      }
+
       return (toReturn.length() > 0 ? toReturn : ANONYMOUS) + "@@" + location;
     }
 
@@ -321,9 +273,9 @@ public class StackTraceCreator {
           int lastColon = location.lastIndexOf(':');
           // colon between file url and line number
           int endFileUrl = location.lastIndexOf(':', lastColon - 1);
-          fileName = location.substring(0, endFileUrl);
 
           if (lastColon != -1 && endFileUrl != -1) {
+              fileName = location.substring(0, endFileUrl);
               line = parseInt(location.substring(endFileUrl + 1, lastColon));
               col = parseInt(location.substring(lastColon + 1));
           }
@@ -339,7 +291,7 @@ public class StackTraceCreator {
    * Subclass that forces reported line numbers to -1 (fetch from symbolMap) if source maps are
    * disabled.
    */
-  static class CollectorChromeNoSourceMap extends CollectorChrome {
+  static class CollectorModernNoSourceMap extends CollectorModern {
     @Override
     protected int replaceIfNoSourceMap(int line) {
       return LINE_NUMBER_UNKNOWN;
@@ -395,22 +347,13 @@ public class StackTraceCreator {
 
   static {
     Collector c = GWT.create(Collector.class);
-    // Ensure old Safari falls back to default Collector implementation.
-    collector = (c instanceof CollectorChrome && !supportsErrorStack()) ? new CollectorLegacy() : c;
+    // Ensure old Safari falls back to legacy Collector implementation.
+    collector = (c instanceof CollectorModern && !supportsErrorStack()) ? new CollectorLegacy() : c;
   }
 
   private static native boolean supportsErrorStack() /*-{
     return "stack" in new Error; // Checked via 'in' to avoid execution of stack getter in Chrome
   }-*/;
-
-  private static StackTraceElement[] fnStacktoSte(JsArrayString stack) {
-    int length = stack.length();
-    StackTraceElement[] stackTrace = new StackTraceElement[length];
-    for (int i = 0; i < length; i++) {
-      stackTrace[i] = new StackTraceElement(UNKNOWN, stack.get(i), null, LINE_NUMBER_UNKNOWN);
-    }
-    return stackTrace;
-  }
 
   private static native JsArrayString getFnStack(Object e) /*-{
     return (e && e.fnStack && e.fnStack instanceof Array) ? e.fnStack : [];

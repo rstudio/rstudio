@@ -19,9 +19,7 @@ import static com.google.gwt.core.client.impl.StackTraceCreator.extractFunctionN
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
-import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome;
-import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChromeNoSourceMap;
-import com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz;
+import com.google.gwt.core.client.impl.StackTraceCreator.CollectorModern;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -53,7 +51,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("$first", "http://www.example.com/test/ABCD.cache.js@10", 100),
         createSTE("$entry0", "http://www.example.com/test/ABCD.cache.js@10", 50),
     };
-    assertStackTrace(StackTraceExamples.chrome_25(), new CollectorChrome(), expected);
+    assertStackTrace(StackTraceExamples.chrome_25(), expected);
   }
 
   public void testChrome_31_file() {
@@ -61,7 +59,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("dumpException6", "file:///E:/test/ExceptionLab.html@20", 82),
         createSTE("onclick", "file:///E:/test/ExceptionLab.html@122", 101),
     };
-    assertStackTrace(StackTraceExamples.chrome_31_file(), new CollectorChrome(), expected);
+    assertStackTrace(StackTraceExamples.chrome_31_file(), expected);
   }
 
   // Asserts expected behavior but it is broken
@@ -70,10 +68,10 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("dumpException6", "http://www.example.com/test/ABCD.cache.js@20", 82),
         createSTE("onclick", "http://www.example.com/test/ABCD.cache.js@122", 101),
     };
-    assertStackTrace(StackTraceExamples.chrome_31_multiline(), new CollectorChrome(), expected);
+    assertStackTrace(StackTraceExamples.chrome_31_multiline(), expected);
   }
 
-  public void testAndroid_gingerbread_broken() {
+  public void testAndroid_gingerbread() {
     StackTraceElement[] expected = new StackTraceElement[] {
         createSTE("Kj", "http://www.example.com/test/ABCD.cache.js@9", 300),
         createSTE("$third", "http://www.example.com/test/ABCD.cache.js@10", 300),
@@ -82,7 +80,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("$entry0", "http://www.example.com/test/ABCD.cache.js@10", 50),
         createSTE("anonymous", "http://www.example.com/test/ABCD.cache.js@10", 40),
     };
-    assertStackTrace(StackTraceExamples.android_gingerbread(), new CollectorChrome(), expected);
+    assertStackTrace(StackTraceExamples.android_gingerbread(), expected);
   }
 
   // Asserts expected behavior but it is broken
@@ -93,7 +91,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("onclick", "http://www.example.com/test/ABCD.cache.js", 82),
         createSTE("anonymous", "Unknown", -1),
     };
-    assertStackTrace(StackTraceExamples.safari_6(), new CollectorChromeNoSourceMap(), expected);
+    assertStackTrace(StackTraceExamples.safari_6(), expected);
   }
 
   // Asserts current broken behavior
@@ -103,7 +101,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("onclick", "http@82", -1),
         createSTE("anonymous", "Unknown@-1", -1),
     };
-    assertStackTrace(StackTraceExamples.safari_6(), new CollectorChromeNoSourceMap(), expected);
+    assertStackTrace(StackTraceExamples.safari_6(), expected);
   }
 
   // Asserts expected behavior but it is broken
@@ -117,7 +115,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("anonymous", "http://www.example.com/test/ABCD.cache.js", 5),
         createSTE("anonymous", "Unknown", -1),
     };
-    assertStackTrace(StackTraceExamples.safari_6_ios(), new CollectorChromeNoSourceMap(), expected);
+    assertStackTrace(StackTraceExamples.safari_6_ios(), expected);
   }
 
   // Asserts current broken behavior
@@ -131,7 +129,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("anonymous", "http@5", -1),
         createSTE("anonymous", "Unknown@-1", -1),
     };
-    assertStackTrace(StackTraceExamples.safari_6_ios(), new CollectorChromeNoSourceMap(), expected);
+    assertStackTrace(StackTraceExamples.safari_6_ios(), expected);
   }
 
   // Asserts expected behavior but it is broken
@@ -146,23 +144,22 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("anonymous", "stacktrace.js", 24),
         createSTE("anonymous", "stacktrace.js", -1),
     };
-    assertStackTrace(StackTraceExamples.firefox_3_6(), new CollectorMoz(), expected);
+    assertStackTrace(StackTraceExamples.firefox_3_6(), expected);
   }
 
   // Asserts current broken behavior
   public void testFirefox_3_6_broken() {
     StackTraceElement[] expected = new StackTraceElement[] {
-        createSTE("anonymous", null, -1),
-        createSTE("anonymous", null, -1),
-        createSTE("printStackTrace", null, -1),
-        createSTE("bar", null, -1),
-        createSTE("bar", null, -1),
-        createSTE("foo", null, -1),
-        createSTE("anonymous", null, -1),
-        createSTE("anonymous", null, -1),
-        createSTE("anonymous", null, -1),
+        createSTE("anonymous", "Unknown@-1", -1),
+        createSTE("printStackTrace", "Unknown@-1", -1),
+        createSTE("bar", "Unknown@-1", -1),
+        createSTE("bar", "Unknown@-1", -1),
+        createSTE("foo", "Unknown@-1", -1),
+        createSTE("anonymous", "http@24", -1),
+        createSTE("anonymous", "Unknown@-1", -1),
+        createSTE("anonymous", "Unknown@-1", -1),
     };
-    assertStackTrace(StackTraceExamples.firefox_3_6(), new CollectorMoz(), expected);
+    assertStackTrace(StackTraceExamples.firefox_3_6(), expected);
   }
 
   // Asserts expected behavior but it is broken
@@ -176,40 +173,38 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
         createSTE("onclick", "http://www.example.com/test/ABCD.cache.js", 1),
         createSTE("anonymous", "Unknown", -1),
     };
-    assertStackTrace(StackTraceExamples.firefox_22(), new CollectorMoz(), expected);
+    assertStackTrace(StackTraceExamples.firefox_22(), expected);
   }
 
   // Asserts current broken behavior
   public void testFirefox_22_broken() {
     StackTraceElement[] expected = new StackTraceElement[] {
-        createSTE("anonymous", null, -1),
-        createSTE("createException", null, -1),
-        createSTE("createException4", null, -1),
-        createSTE("dumpException4", null, -1),
-        createSTE("Ul/<[\"a.b\"].xyz", null, -1),
-        createSTE("onclick", null, -1),
-        createSTE("anonymous", null, -1),
+        createSTE("createException", "http@8", -1),
+        createSTE("createException4", "http@56", -1),
+        createSTE("dumpException4", "http@60", -1),
+        createSTE("xyz", "http@7", -1),
+        createSTE("onclick", "http@1", -1),
+        createSTE("anonymous", "Unknown@-1", -1),
     };
-    assertStackTrace(StackTraceExamples.firefox_22(), new CollectorMoz(), expected);
+    assertStackTrace(StackTraceExamples.firefox_22(), expected);
   }
 
   // Asserts expected behavior but it is broken
-  // TODO(goktug): IE10 actually uses default collector so we are manually generating the stack.
-  public void _disabled_testIE_10() {
+  public void testIE_10() {
     StackTraceElement[] expected = new StackTraceElement[] {
         createSTE("anonymous", "http://www.example.com/test/ABCD.cache.js@13", 48),
-        createSTE("dumpException4", "http://www.example.com/test/ABCD.cache.js@9", 46),
+        createSTE("dumpException3", "http://www.example.com/test/ABCD.cache.js@9", 46),
         createSTE("onclick", "http://www.example.com/test/ABCD.cache.js@1", 82),
     };
-    assertStackTrace(StackTraceExamples.ie_10(), new CollectorMoz(), expected);
+    assertStackTrace(StackTraceExamples.ie_10(), expected);
   }
 
   private static StackTraceElement createSTE(String methodName, String fileName, int lineNumber) {
     return new StackTraceElement("Unknown", methodName, fileName, lineNumber);
   }
 
-  private static void assertStackTrace(JavaScriptObject exception, Collector collector,
-      StackTraceElement[] expected) {
+  private static void assertStackTrace(JavaScriptObject exception, StackTraceElement[] expected) {
+    Collector collector = new CollectorModern();
     assertEquals(expected, collector.getStackTrace(exception));
   }
 

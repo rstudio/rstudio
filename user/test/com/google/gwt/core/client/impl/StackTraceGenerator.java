@@ -24,7 +24,7 @@ public class StackTraceGenerator extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.core.StackTraceNoEmul";
+    return "com.google.gwt.core.StackTraceNative";
   }
 
   public void testPrintStackTrace() {
@@ -47,6 +47,6 @@ public class StackTraceGenerator extends GWTTestCase {
         return e.stack;
       }
     }
-    return native1();
+    return (function() {return native1();})();
   }-*/;
 }

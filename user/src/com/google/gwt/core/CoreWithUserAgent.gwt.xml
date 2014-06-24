@@ -24,33 +24,26 @@
     </none>
   </replace-with>
 
-  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz">
-    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
-    <when-property-is name="compiler.stackMode" value="native" />
-    <when-property-is name="user.agent" value="gecko1_8" />
-  </replace-with>
-
   <!-- Disable source maps for non-Chrome browsers -->
+  <!-- TODO(goktug): enable source maps for non-Chrome browsers -->
   <set-property name="compiler.useSourceMaps" value="false">
     <none> 
       <when-property-is name="user.agent" value="safari"/>
     </none> 
   </set-property>
 
-  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome">
+  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorModern">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
     <when-property-is name="compiler.stackMode" value="native" />
-    <!-- For now, only Chrome provides Error.stack support, so we hijack the
-         entire WebKit permutation -->
     <when-property-is name="user.agent" value="safari" />
     <when-property-is name="compiler.useSourceMaps" value="true"/>
   </replace-with>
 
-  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorChromeNoSourceMap">
+  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorModernNoSourceMap">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
     <when-property-is name="compiler.stackMode" value="native" />
-    <!-- For now, only Chrome provides Error.stack support, so we hijack the
-         entire WebKit permutation -->
+    <when-property-is name="user.agent" value="gecko1_8" />
+    <when-property-is name="user.agent" value="ie10"/>
     <when-property-is name="user.agent" value="safari" />
     <when-property-is name="compiler.useSourceMaps" value="false"/>
   </replace-with>
