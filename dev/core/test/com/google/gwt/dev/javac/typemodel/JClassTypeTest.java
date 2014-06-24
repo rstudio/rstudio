@@ -234,6 +234,74 @@ public class JClassTypeTest extends TestCase {
     }
   }
 
+  public void testNestedProtectedTypesHaveCorrectScope() throws TypeOracleException {
+    TypeOracle typeOracle = moduleContext.getOracle();
+
+    JClassType publicIntf =
+        typeOracle.getType("com.google.gwt.dev."
+            + "javac.typemodel.test.ClassWithNestedTypesOfVariousScopes.PublicNestedInterface");
+    assertTrue(publicIntf + " should be public", publicIntf.isPublic());
+    assertFalse(publicIntf + " should not be protected", publicIntf.isProtected());
+    assertFalse(publicIntf + " should not be pkg protected", publicIntf.isPackageProtected());
+    assertFalse(publicIntf + " should not be private", publicIntf.isPrivate());
+
+    JClassType privateIntf =
+        typeOracle.getType("com.google.gwt.dev."
+            + "javac.typemodel.test.ClassWithNestedTypesOfVariousScopes.PrivateNestedInterface");
+    assertTrue(privateIntf + " should be private", privateIntf.isPrivate());
+    assertFalse(privateIntf + " should not be public", privateIntf.isPublic());
+    assertFalse(privateIntf + " should not be protected", privateIntf.isProtected());
+    assertFalse(privateIntf + " should not be pkg protected", privateIntf.isPackageProtected());
+
+    JClassType protectedIntf =
+        typeOracle.getType("com.google.gwt.dev."
+            + "javac.typemodel.test.ClassWithNestedTypesOfVariousScopes.ProtectedNestedInterface");
+    assertTrue(protectedIntf + " should be protected", protectedIntf.isProtected());
+    assertFalse(protectedIntf + " should not be public", protectedIntf.isPublic());
+    assertFalse(protectedIntf + " should not be pkg protected", protectedIntf.isPackageProtected());
+    assertFalse(protectedIntf + " should not be private", protectedIntf.isPrivate());
+
+    JClassType pkgProtectedIntf =
+        typeOracle.getType("com.google.gwt.dev.javac."
+            + "typemodel.test.ClassWithNestedTypesOfVariousScopes.PackageProtectedNestedInterface");
+    assertTrue(pkgProtectedIntf + " should be pkg protected", pkgProtectedIntf.isPackageProtected());
+    assertFalse(pkgProtectedIntf + " should not be public", pkgProtectedIntf.isPublic());
+    assertFalse(pkgProtectedIntf + " should not be protected", pkgProtectedIntf.isProtected());
+    assertFalse(pkgProtectedIntf + " should not be private", pkgProtectedIntf.isPrivate());
+
+    JClassType publicCls =
+        typeOracle.getType("com.google.gwt.dev."
+            + "javac.typemodel.test.ClassWithNestedTypesOfVariousScopes.PublicNestedClass");
+    assertTrue(publicCls + " should be public", publicCls.isPublic());
+    assertFalse(publicCls + " should not be protected", publicCls.isProtected());
+    assertFalse(publicCls + " should not be pkg protected", publicCls.isPackageProtected());
+    assertFalse(publicCls + " should not be private", publicCls.isPrivate());
+
+    JClassType protectedCls =
+        typeOracle.getType("com.google.gwt.dev."
+            + "javac.typemodel.test.ClassWithNestedTypesOfVariousScopes.ProtectedNestedClass");
+    assertTrue(protectedCls + " should be protected", protectedCls.isProtected());
+    assertFalse(protectedCls + " should not be public", protectedCls.isPublic());
+    assertFalse(protectedCls + " should not be pkg protected", protectedCls.isPackageProtected());
+    assertFalse(protectedCls + " should not be private", protectedCls.isPrivate());
+
+    JClassType pkgProtectedCls =
+        typeOracle.getType("com.google.gwt.dev.javac."
+            + "typemodel.test.ClassWithNestedTypesOfVariousScopes.PackageProtectedNestedClass");
+    assertTrue(pkgProtectedCls + " should be pkg protected", pkgProtectedCls.isPackageProtected());
+    assertFalse(pkgProtectedCls + " should not be public", pkgProtectedCls.isPublic());
+    assertFalse(pkgProtectedCls + " should not be protected", pkgProtectedCls.isProtected());
+    assertFalse(pkgProtectedCls + " should not be private", pkgProtectedCls.isPrivate());
+
+    JClassType privateCls =
+        typeOracle.getType("com.google.gwt.dev."
+            + "javac.typemodel.test.ClassWithNestedTypesOfVariousScopes.PrivateNestedClass");
+    assertTrue(privateCls + " should be private", privateCls.isPrivate());
+    assertFalse(privateCls + " should not be public", privateCls.isPublic());
+    assertFalse(privateCls + " should not be protected", privateCls.isProtected());
+    assertFalse(privateCls + " should not be pkg protected", privateCls.isPackageProtected());
+  }
+
   private void assertMethodInheritableNotOverridable(TypeOracle typeOracle,
       String expectedTypeName, String searchTypeName, String methodName,
       String[] paramTypeNames) throws TypeOracleException {

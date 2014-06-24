@@ -203,7 +203,7 @@ public class CollectClassDataTest extends AsmTestCase {
   public void testTwo() {
     CollectClassData cd = collect(Two.class);
     // Don't check for super bit, as it will depend on the JDK used to compile.
-    assertEquals(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, cd.getAccess()
+    assertEquals(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC, cd.getAccess()
         & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Nested, cd.getClassType());
     List<CollectFieldData> fields = cd.getFields();

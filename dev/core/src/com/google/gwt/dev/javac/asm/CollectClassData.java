@@ -326,16 +326,12 @@ public class CollectClassData extends EmptyVisitor {
 
     buildNestedSourceName(internalName, enclosingInternalName, innerName);
 
-    // If this inner class is ourselves, merge the access flags, since
-    // static, for example, only appears in the InnerClass attribute.
+    // If this inner class is ourselves, take the access flags defined in the InnerClass attribute.
     if (this.internalName.equals(internalName)) {
       if (enclosingInternalName != null) {
         this.enclosingInternalName = enclosingInternalName;
       }
-      // TODO(jat): should we only pull in a subset of these flags? Use only
-      // these flags, or what? For now, just grab ACC_STATIC and ACC_PRIVATE
-      int copyFlags = access & (Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE);
-      this.access |= copyFlags;
+      this.access = access;
       boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
       switch (classType) {
         case TopLevel:
