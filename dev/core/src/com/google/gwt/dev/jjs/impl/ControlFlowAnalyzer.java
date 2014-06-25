@@ -651,13 +651,17 @@ public class ControlFlowAnalyzer {
              * instantiated types that are implemented in JS. This code prevents parameters
              * that are JS interface types from being considered un-instantiated. This logic
              * needs to be tightened up here and elsewhere, we want to be conservative as
-             * possible to avoid code size bloat.
+             * possible to avoid code size bloat. Parameters in JsExport methods or
+             * JsType methods should not be pruned in order to keep the calling API
+             * consistent between optimized Java and JS.
              */
-            if (program.typeOracle.isJsType(param.getType())) {
+            rescue(param);
+            // Strings, JSOs, and JsTypes can all be instantiatd in Javascript
+            if (param.getType() == program.getTypeJavaLangString() ||
+                program.typeOracle.canBeInstantiatedInJavascript(param.getType())) {
               // Param can be read from external JS if this method is implemented in JS
               // this should really be done in rescueArgumentsIfParametersCanBeRead, but
               // there is no JMethodCall to process since it might be from external JS
-              rescue(param);
               // arg supplied from external caller can be from JS, so treat type as instantiated
               rescue((JReferenceType) param.getType(), true, true);
             }
