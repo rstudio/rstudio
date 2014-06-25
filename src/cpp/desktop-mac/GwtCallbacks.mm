@@ -326,50 +326,53 @@ NSString* resolveAliasedPath(NSString* path)
    
    // figure out what application is associated with this path
    NSURL* appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL: [NSURL fileURLWithPath: path]];
-   NSString* app = [appURL absoluteString];
-   NSArray* splat = [app componentsSeparatedByString: @"/"];
-   
-   // URLs should be stored in the format, e.g.
-   // file://<path>/<app>/
-   // and so we want the second last component
-   NSString* appName = [splat objectAtIndex: [splat count] - 2];
-   
-   // infer whether the application is Word
-   BOOL defaultAppIsWord = [appName rangeOfString: @"Word.app"].location != NSNotFound;
-
-   if (defaultAppIsWord)
+   if (appURL != nil)
    {
-      // looks like Word is installed. try to reopen this Word document if it's
-      // already open, while preserving its scroll position; if it isn't already
-      // open, open it.
-      NSString *openDocScript = [NSString stringWithFormat:
-         @"tell application \"Microsoft Word\"\n"
-         "  activate\n"
-         "  set reopened to false\n"
-         "  repeat with i from 1 to (count of documents)\n"
-         "     set docPath to path of document i\n"
-         "     if POSIX path of docPath is equal to \"%@\" then\n"
-         "        set w to active window of document i\n"
-         "        set h to horizontal percent scrolled of w\n"
-         "        set v to vertical percent scrolled of w\n"
-         "        close document i\n"
-         "        set d to open file name docPath with read only\n"
-         "        set reopened to true\n"
-         "        set w to active window of d\n"
-         "        set horizontal percent scrolled of w to h\n"
-         "        set vertical percent scrolled of w to v\n"
-         "        exit repeat\n"
-         "     end if\n"
-         "  end repeat\n"
-         "  if not reopened then open file name POSIX file \"%@\" with read only\n"
-         "end tell\n" , path, path];
-
-      NSAppleScript *openDoc =
-         [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
-   
-      if ([openDoc executeAndReturnError: nil] != nil)
+      NSString* app = [appURL absoluteString];
+      NSArray* splat = [app componentsSeparatedByString: @"/"];
+      
+      // URLs should be stored in the format, e.g.
+      // file://<path>/<app>/
+      // and so we want the second last component
+      NSString* appName = [splat objectAtIndex: [splat count] - 2];
+      
+      // infer whether the application is Word
+      BOOL defaultAppIsWord = [appName rangeOfString: @"Word.app"].location != NSNotFound;
+      
+      if (defaultAppIsWord)
       {
-         opened = true;
+         // looks like Word is installed. try to reopen this Word document if it's
+         // already open, while preserving its scroll position; if it isn't already
+         // open, open it.
+         NSString *openDocScript = [NSString stringWithFormat:
+            @"tell application \"Microsoft Word\"\n"
+            "  activate\n"
+            "  set reopened to false\n"
+            "  repeat with i from 1 to (count of documents)\n"
+            "     set docPath to path of document i\n"
+            "     if POSIX path of docPath is equal to \"%@\" then\n"
+            "        set w to active window of document i\n"
+            "        set h to horizontal percent scrolled of w\n"
+            "        set v to vertical percent scrolled of w\n"
+            "        close document i\n"
+            "        set d to open file name docPath with read only\n"
+            "        set reopened to true\n"
+            "        set w to active window of d\n"
+            "        set horizontal percent scrolled of w to h\n"
+            "        set vertical percent scrolled of w to v\n"
+            "        exit repeat\n"
+            "     end if\n"
+            "  end repeat\n"
+            "  if not reopened then open file name POSIX file \"%@\" with read only\n"
+            "end tell\n" , path, path];
+         
+         NSAppleScript *openDoc =
+         [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
+         
+         if ([openDoc executeAndReturnError: nil] != nil)
+         {
+            opened = true;
+         }
       }
    }
    
