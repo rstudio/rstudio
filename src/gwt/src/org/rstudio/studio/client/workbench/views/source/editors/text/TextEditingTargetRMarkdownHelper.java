@@ -52,6 +52,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
@@ -429,11 +430,13 @@ public class TextEditingTargetRMarkdownHelper
          if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
             return null;
          
-         // Find the template appropriate to the first output format listed
+         // Find the template appropriate to the first output format listed.
+         // If no output format is present, assume HTML document (as the 
+         // renderer does).
          List<String> outFormats = getOutputFormats(tree);
-         if (outFormats == null)
-            return null;
-         String outFormat = outFormats.get(0);
+         String outFormat = outFormats == null ? 
+               RmdOutputFormat.OUTPUT_HTML_DOCUMENT :
+               outFormats.get(0);
          
          RmdTemplate template = getTemplateForFormat(outFormat);
          if (template == null)

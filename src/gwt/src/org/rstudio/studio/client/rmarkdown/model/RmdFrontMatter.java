@@ -71,6 +71,11 @@ public class RmdFrontMatter extends JavaScriptObject
    
    public final native void setOutputOption(String format, 
          JavaScriptObject options) /*-{
+     
+     // handle missing output type 
+     if (typeof this.output === "undefined")
+        this.output = {};
+        
      if (Object.getOwnPropertyNames(options).length === 0)
      {
         if (typeof this.output === "undefined" ||
