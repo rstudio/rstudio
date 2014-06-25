@@ -89,18 +89,23 @@ public class ShinyAppsDeploy extends Composite
       appName.setText(FilePathUtils.friendlyFileName(dir));
    }
 
-   public void setAccountList(JsArrayString accounts, String selected)
+   public void setAccountList(JsArrayString accounts)
    {
       accountList.clear();
-      int selectedIdx = 0;
       for (int i = 0; i < accounts.length(); i++)
+         accountList.addItem(accounts.get(i));
+   }
+   
+   public void setDefaultAccount(String defaultAccount)
+   {
+      for (int i = 0; i < accountList.getItemCount(); i++)
       {
-         String account = accounts.get(i);
-         accountList.addItem(account);
-         if (account.equals(selected))
-            selectedIdx = i;
+         if (accountList.getItemText(i).equals(defaultAccount))
+         {
+            accountList.setSelectedIndex(i);
+            break;
+         }
       }
-      accountList.setSelectedIndex(selectedIdx);
    }
    
    public String getSelectedAccount()
@@ -220,7 +225,7 @@ public class ShinyAppsDeploy extends Composite
       else if (!isValid && onDeployDisabled_ != null)
          onDeployDisabled_.execute();
    }
-
+   
    @UiField Anchor urlAnchor;
    @UiField Label nameLabel;
    @UiField InlineLabel statusLabel;

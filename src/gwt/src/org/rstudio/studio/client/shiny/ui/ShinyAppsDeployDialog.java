@@ -70,6 +70,7 @@ public class ShinyAppsDeployDialog
       events_ = events;
       lastAppName_ = lastAppName;
       isSatellite_ = isSatellite;
+      defaultAccount_ = lastAccount;
 
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
@@ -132,6 +133,11 @@ public class ShinyAppsDeployDialog
                JsArray<ShinyAppsDeploymentRecord> records)
          {
             processDeploymentRecords(records);
+            if (records.length() == 1 && defaultAccount_ == null)
+            {
+               defaultAccount_ = records.get(0).getAccount();
+               contents_.setDefaultAccount(defaultAccount_);
+            }
          }
 
          @Override
@@ -166,11 +172,9 @@ public class ShinyAppsDeployDialog
             }
             else
             {
-               // pre-select the last account used to deploy this app, or 
-               // the first account if we don't have any deployment records
-               String initialAccount = lastAccount == null ? 
-                                          accounts.get(0) : lastAccount;
-               contents_.setAccountList(accounts, initialAccount);
+               contents_.setAccountList(accounts);
+               if (defaultAccount_ != null)
+                  contents_.setDefaultAccount(defaultAccount_);
                updateApplicationList();
             }
          }
@@ -330,7 +334,8 @@ public class ShinyAppsDeployDialog
             else
             {
                // We have an account, show it and re-display ourselves
-               contents_.setAccountList(accounts, accounts.get(0));
+               contents_.setAccountList(accounts);
+               contents_.setDefaultAccount(accounts.get(0));
                updateApplicationList();
                showModal();
             }
@@ -408,6 +413,7 @@ public class ShinyAppsDeployDialog
    private ThemedButton deployButton_;
    private ProgressIndicator indicator_;
    private CheckBox launchCheck_;
+   private String defaultAccount_;
    
    // Map of account name to a list of applications owned by that account
    private Map<String, JsArray<ShinyAppsApplicationInfo>> apps_ = 
