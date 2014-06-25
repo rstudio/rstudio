@@ -22,8 +22,13 @@
          NULL
       else if (is.list(ele)) 
          .rs.scalarListFromList(ele)
-      else if (length(ele) == 1)
+      else if (length(ele) == 1) {
+         # mark strings with encoding unless already marked (see comment
+         # below in convert_to_yaml)
+         if (is.character(ele) && Encoding(ele) == "unknown")
+            Encoding(ele) <- "UTF-8"
          .rs.scalar(ele)
+      }
       else
          ele
    })
@@ -92,7 +97,16 @@
 
 .rs.addJsonRpcHandler("convert_to_yaml", function(input)
 {
-   list(yaml = .rs.scalar(yaml::as.yaml(input)))
+   yaml <- yaml::as.yaml(input)
+
+   # the yaml package produces UTF-8 output strings, but doesn't mark them
+   # as such, which leads to trouble (in particular: on Windows the string
+   # may be later interpreted in system default encoding, which is not UTF-8.)
+   # see: https://github.com/viking/r-yaml/issues/6
+   if (Encoding(yaml) == "unknown")
+      Encoding(yaml) <- "UTF-8"
+
+   list(yaml = .rs.scalar(yaml))
 })
 
 .rs.addJsonRpcHandler("convert_from_yaml", function(yaml)
