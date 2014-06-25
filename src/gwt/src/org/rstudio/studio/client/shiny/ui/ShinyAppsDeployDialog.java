@@ -166,10 +166,28 @@ public class ShinyAppsDeployDialog
             }
             else
             {
-               // pre-select the last account used to deploy this app, or 
-               // the first account if we don't have any deployment records
-               String initialAccount = lastAccount == null ? 
-                                          accounts.get(0) : lastAccount;
+               // use the last account if available; otherwise, infer an
+               // appropriate account from the deployment records
+               String initialAccount;
+               if (lastAccount != null)
+               {
+                  initialAccount = lastAccount;
+               }
+               else
+               {
+                  // check the deployment records -- if there is only one,
+                  // use that
+                  if (deployments_.size() == 1)
+                  {
+                     initialAccount = deployments_.get(
+                           deployments_.keySet().iterator().next())
+                           .getAccount();
+                  }
+                  else
+                  {
+                     initialAccount = accounts.get(0);
+                  }
+               }
                contents_.setAccountList(accounts, initialAccount);
                updateApplicationList();
             }
