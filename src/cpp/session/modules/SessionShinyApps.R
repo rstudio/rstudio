@@ -45,6 +45,72 @@
    .rs.scalarListFromFrame(shinyapps::deployments(dir))
 })
 
+.rs.addFunction("maxDirectoryList", function(dir, root, cur_size, max_size, 
+                                             exclude_dirs, exclude_ext) {
+  # generate a list of files at this level
+  contents <- list.files(dir, recursive = FALSE, all.files = FALSE,
+                         include.dirs = TRUE, no.. = TRUE, full.names = FALSE)
+  
+  # exclude those with a forbidden extension
+  contents <- contents[regexpr(glob2rx(paste("*", exclude_ext, sep=".")),
+                               contents) < 0]
+  
+  # sum the size of the files in the directory
+  info <- file.info(file.path(dir, contents))
+  size <- sum(info$size)
+  if (is.na(size))
+    size <- 0
+  cur_size <- cur_size + size
+  subdir_contents <- NULL
+
+  # if we haven't exceeded the maximum size, check each subdirectory
+  if (cur_size < max_size) {
+    subdirs <- contents[info$isdir]
+    for (subdir in subdirs) {
+      if (subdir %in% exclude_dirs)
+        next;
+
+      # get the list of files in the subdirectory
+      dirList <- .rs.maxDirectoryList(file.path(dir, subdir), 
+                                      file.path(root, subdir), 
+                                      cur_size, max_size, 
+                                      exclude_dirs, exclude_ext)
+      cur_size <- cur_size + dirList$size
+      subdir_contents <- append(subdir_contents, dirList$contents)
+
+      # abort if we've reached the maximum size
+      if (cur_size > max_size)
+        break;
+    }
+  }
+
+  # return the new size and accumulated contents
+  list(
+    size = size,
+    cur_size = cur_size,
+    contents = append(file.path(root, contents[!info$isdir]), 
+                      subdir_contents))
+})
+
+.rs.addFunction("shinyAppsDeployList", function(dir) {
+  max_size <- 104857600   # 100MB
+  dirlist <- .rs.maxDirectoryList(dir, ".", 0, max_size, 
+                                  c("shinyapps", "packrat"), "Rproj")
+  list (
+    # if the directory is too large, no need to bother sending a potentially
+    # large blob of data to the client
+    dir_list = if (dirlist$cur_size >= max_size)
+                  NULL 
+               else
+                  substr(dirlist$contents, 3, nchar(dirlist$contents)),
+    max_size = .rs.scalar(max_size), 
+    dir_size = .rs.scalar(dirlist$cur_size))
+})
+
+.rs.addJsonRpcHandler("get_deployment_files", function(dir) {
+   .rs.shinyAppsDeployList(dir)
+})
+
 # The parameter to this function is a string containing the R command from
 # the ShinyApps service; we just need to parse and execute it directly.
 # The client is responsible for verifying that the statement corresponds to

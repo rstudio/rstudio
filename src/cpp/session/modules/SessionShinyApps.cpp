@@ -162,69 +162,6 @@ Error deployShinyApp(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// sums the sizes of files in a directory, stopping when the sizes exceed
-// maxSize
-bool directorySummer(int level, const FilePath& file, const FilePath& root, 
-                     uintmax_t maxSize, std::vector<std::string>* pFileNames, 
-                     uintmax_t* pRunningSum)
-{
-   // ignore directory nodes
-   if (file.isDirectory())
-      return true;
-
-   // ignore hidden files (note that this leads to a slightly incorrect result
-   // since some hidden files are in fact pushed to the server by shinyapps)
-   std::string relPath = file.relativePath(root);
-   if (relPath.substr(0, 1) == ".")
-      return true;
-
-   // ignore shinyapps and packrat folders
-   if (relPath.substr(0, sizeof(kShinyAppsFolder) - 1) == kShinyAppsFolder ||
-       relPath.substr(0, sizeof(kPackratFolder) - 1) == kPackratFolder)
-      return true;
-
-   // ignore the R project file
-   if (file.hasExtensionLowerCase(".rproj"))
-      return true;
-
-   // add the file to the list and update the running sum
-   pFileNames->push_back(relPath);
-   *pRunningSum += file.size();
-   return *pRunningSum < maxSize;
-}
-
-// returns the list of files to be deployed, given a source directory
-Error getDeploymentFiles(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse* pResponse)
-{
-   std::string sourceDir;
-   Error error = json::readParams(request.params, &sourceDir);
-   FilePath sourcePath = module_context::resolveAliasedPath(sourceDir);
-   json::Object result;
-
-   // sum the sizes of the files in the source directory
-   uintmax_t dirSize = 0;
-   std::vector<std::string> fileNames;
-   sourcePath.childrenRecursive(
-         boost::bind(directorySummer, _1, _2, sourcePath, 
-                     kMaxDeploymentSize, &fileNames, &dirSize));
-   
-   if (dirSize < kMaxDeploymentSize)
-   {
-      // the result is reasonably sized; return it
-      result["dir_list"] = json::toJsonArray(fileNames);
-   }
-   else
-   {
-      // the result is too big; don't return it 
-      result["dir_list"] = json::Value();
-   }
-   result["max_size"] = kMaxDeploymentSize;
-   result["dir_size"] = static_cast<int>(dirSize);
-   pResponse->setResult(result);
-   return Success();
-}
-
 
 } // anonymous namespace
 
@@ -236,7 +173,6 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "deploy_shiny_app", deployShinyApp))
-      (bind(registerRpcMethod, "get_deployment_files", getDeploymentFiles))
       (bind(sourceModuleRFile, "SessionShinyApps.R"));
 
    return initBlock.execute();
