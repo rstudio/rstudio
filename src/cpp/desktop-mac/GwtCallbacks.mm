@@ -324,15 +324,20 @@ NSString* resolveAliasedPath(NSString* path)
    // create the structure describing the doc to open
    path = resolveAliasedPath(path);
    
-   // check to see if Word is installed; if it is, we'll try scripting it
-   // momentarily
-   FSRef wordRef;
-   NSString* wordBundleId = @"com.microsoft.Word";
-   OSStatus status =
-      LSFindApplicationForInfo(kLSUnknownCreator, (CFStringRef) wordBundleId,
-                               NULL, &wordRef, NULL);
+   // figure out what application is associated with this path
+   NSURL* appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL: [NSURL fileURLWithPath: path]];
+   NSString* app = [appURL absoluteString];
+   NSArray* splat = [app componentsSeparatedByString: @"/"];
    
-   if (status == noErr)
+   // URLs should be stored in the format, e.g.
+   // file://<path>/<app>/
+   // and so we want the second last component
+   NSString* appName = [splat objectAtIndex: [splat count] - 2];
+   
+   // infer whether the application is Word
+   BOOL defaultAppIsWord = [appName rangeOfString: @"Word.app"].location != NSNotFound;
+
+   if (defaultAppIsWord)
    {
       // looks like Word is installed. try to reopen this Word document if it's
       // already open, while preserving its scroll position; if it isn't already
@@ -379,7 +384,7 @@ NSString* resolveAliasedPath(NSString* path)
                     &kCFTypeArrayCallBacks);
       
       // ask the OS to open the doc for us in an appropriate viewer
-      status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
       if (status != noErr)
       {
          // if we failed to open in the viewer role, just invoke the default
