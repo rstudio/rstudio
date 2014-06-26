@@ -74,7 +74,11 @@ public class JTypeOracle implements Serializable {
    * 3) the method returns or accepts JsAware/JsConvert types.
    */
   public boolean needsJsInteropBridgeMethod(JMethod x) {
-    if (isInteropEnabled() && x.needsVtable() && isJsTypeMethod(x)) {
+    if (!isInteropEnabled()) {
+      return false;
+    }
+    
+    if (x.needsVtable() && isJsTypeMethod(x)) {
       for (JMethod override : getAllOverriddenMethods(x)) {
         if (!isJsTypeMethod(override)) {
           return true;
@@ -83,7 +87,7 @@ public class JTypeOracle implements Serializable {
     }
 
     // implicit builtin @JsConvert, longs are converted
-    if (isInteropEnabled() && isJsTypeMethod(x) || isExportedMethod(x)) {
+    if (isJsTypeMethod(x) || isExportedMethod(x)) {
       if (x.getOriginalReturnType() == JPrimitiveType.LONG) {
         return true;
       }
