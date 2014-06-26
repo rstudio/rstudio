@@ -2262,15 +2262,26 @@ public class GenerateJavaScriptAST {
     private void setupGwtOnLoad(JsFunction[] entryFuncs, List<JsStatement> globalStmts) {
       /**
        * <pre>
-       * var $entry = Impl.registerEntry();
-       * var gwtOnLoad = ModuleUtils.gwtOnLoad();
        * {MODULE_RuntimeRebindRegistrator}.register();
        * {MODULE_PropertyProviderRegistrator}.register();
+       * var $entry = Impl.registerEntry();
+       * var gwtOnLoad = ModuleUtils.gwtOnLoad();
        * ModuleUtils.addInitFunctions(init1, init2,...)
        * </pre>
        */
 
       final SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
+
+      // {MODULE_RuntimeRebindRegistrator}.register();
+      // {MODULE_PropertyProviderRegistrator}.register();
+      List<String> registerFnList = Lists.newArrayList();
+      mayAddProviderRegisterFn(registerFnList,
+          program.getRuntimeRebindRegistratorTypeSourceName());
+      mayAddProviderRegisterFn(registerFnList,
+          program.getPropertyProviderRegistratorTypeSourceName());
+      for (String registerFnName : registerFnList) {
+        globalStmts.add(constructInvocation(sourceInfo, registerFnName).makeStmt());
+      }
 
       // var $entry = ModuleUtils.registerEntry();
       JsStatement entryVars = constructFunctionCallStatement(
@@ -2284,16 +2295,6 @@ public class GenerateJavaScriptAST {
           indexedFunctions.get("ModuleUtils.gwtOnLoad").getName().makeRef(sourceInfo)));
       globalStmts.add(new JsVars(sourceInfo, varGwtOnLoad));
 
-      // {MODULE_RuntimeRebindRegistrator}.register();
-      // {MODULE_PropertyProviderRegistrator}.register();
-      List<String> registerFnList = Lists.newArrayList();
-      mayAddProviderRegisterFn(registerFnList,
-          program.getRuntimeRebindRegistratorTypeSourceName());
-      mayAddProviderRegisterFn(registerFnList,
-          program.getPropertyProviderRegistratorTypeSourceName());
-      for (String registerFnName : registerFnList) {
-        globalStmts.add(constructInvocation(sourceInfo, registerFnName).makeStmt());
-      }
 
       // ModuleUtils.addInitFunctions(init1, init2,...)
       List<JsExpression> arguments = Lists.transform(Arrays.asList(entryFuncs),
