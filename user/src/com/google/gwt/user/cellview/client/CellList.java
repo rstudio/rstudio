@@ -521,6 +521,9 @@ public class CellList<T> extends AbstractHasData<T> {
       if (isSelected) {
         classesBuilder.append(selectedItem);
       }
+      if (i == keyboardSelectedRow) {
+        classesBuilder.append(keyboardSelectedItem);
+      }
 
       SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
       Context context = new Context(i, 0, getValueKey(value));
