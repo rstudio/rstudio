@@ -42,9 +42,11 @@
   <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorModernNoSourceMap">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
     <when-property-is name="compiler.stackMode" value="native" />
-    <when-property-is name="user.agent" value="gecko1_8" />
-    <when-property-is name="user.agent" value="ie10"/>
-    <when-property-is name="user.agent" value="safari" />
+    <any>
+      <when-property-is name="user.agent" value="gecko1_8" />
+      <when-property-is name="user.agent" value="ie10"/>
+      <when-property-is name="user.agent" value="safari" />
+    </any>
     <when-property-is name="compiler.useSourceMaps" value="false"/>
   </replace-with>
 
