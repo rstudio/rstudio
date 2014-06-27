@@ -35,7 +35,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -308,7 +307,6 @@ public class EnumOrdinalizer {
    * <li>is explicitly cast to another type (or vice-versa).</li>
    * <li>is tested in an instanceof expression.</li>
    * <li>it's class literal is used explicitly.</li>
-   * <li>it has an artificial rescue recorded for it.</li>
    * <li>has any field referenced, except for:</li>
    * <ul>
    * <li>static fields, other than the synthetic $VALUES field.</li>
@@ -401,16 +399,6 @@ public class EnumOrdinalizer {
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
-      // black-list any artificially rescued classes recorded for this class
-      List<JNode> rescues = x.getArtificialRescues();
-      if (rescues != null && rescues.size() > 0) {
-        for (JNode rescueNode : rescues) {
-          if (rescueNode instanceof JType) {
-            blackListIfEnum((JType) rescueNode, x.getSourceInfo());
-          }
-        }
-      }
-
       // keep track of all enum classes visited
       JEnumType maybeEnum = x.isEnumOrSubclass();
       if (maybeEnum != null) {

@@ -969,16 +969,6 @@ public class GenerateJavaScriptAST {
         generateExports(x, exportStmts);
       }
 
-      for (JNode node : x.getArtificialRescues()) {
-        if (node instanceof JMethod) {
-          JsName jsName = names.get(node);
-          if (jsName != null) {
-            JsFunction func = (JsFunction) jsName.getStaticRef();
-            func.setArtificiallyRescued(true);
-          }
-        }
-      }
-
       // TODO(zundel): Check that each unique method has a unique
       // name / poly name.
     }

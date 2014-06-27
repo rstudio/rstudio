@@ -51,12 +51,6 @@ public abstract class JDeclaredType extends JReferenceType {
   private String jsNamespace = "";
 
   /**
-   * The other nodes that this node should implicitly rescue. Special
-   * serialization treatment.
-   */
-  protected transient List<JNode> artificialRescues = Lists.create();
-
-  /**
    * This type's fields. Special serialization treatment.
    */
   protected transient List<JField> fields = Lists.create();
@@ -102,10 +96,6 @@ public abstract class JDeclaredType extends JReferenceType {
 
   public JDeclaredType(SourceInfo info, String name, JsInteropType interopType) {
     this(info, name, interopType, null);
-  }
-
-  public void addArtificialRescue(JNode node) {
-    artificialRescues = Lists.add(artificialRescues, node);
   }
 
   /**
@@ -200,10 +190,6 @@ public abstract class JDeclaredType extends JReferenceType {
       }
     }
     return null;
-  }
-
-  public List<JNode> getArtificialRescues() {
-    return artificialRescues;
   }
 
   /**
@@ -370,12 +356,9 @@ public abstract class JDeclaredType extends JReferenceType {
   /**
    * Resolves external references during AST stitching.
    */
-  public void resolve(List<JInterfaceType> resolvedInterfaces, List<JNode> resolvedRescues,
-      String jsNamespace) {
+  public void resolve(List<JInterfaceType> resolvedInterfaces, String jsNamespace) {
     assert JType.replaces(resolvedInterfaces, superInterfaces);
     superInterfaces = Lists.normalize(resolvedInterfaces);
-    assert JNameOf.replacesNamedElements(resolvedRescues, artificialRescues);
-    artificialRescues = Lists.normalize(resolvedRescues);
     if (this.jsNamespace.isEmpty()) {
       this.jsNamespace = jsNamespace;
     }
@@ -433,7 +416,6 @@ public abstract class JDeclaredType extends JReferenceType {
       throws IOException, ClassNotFoundException {
     fields = (List<JField>) stream.readObject();
     methods = (List<JMethod>) stream.readObject();
-    artificialRescues = (List<JNode>) stream.readObject();
   }
 
   /**
@@ -476,7 +458,6 @@ public abstract class JDeclaredType extends JReferenceType {
   void writeMembers(ObjectOutputStream stream) throws IOException {
     stream.writeObject(fields);
     stream.writeObject(methods);
-    stream.writeObject(artificialRescues);
   }
 
   /**

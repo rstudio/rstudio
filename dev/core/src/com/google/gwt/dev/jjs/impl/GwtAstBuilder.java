@@ -1923,21 +1923,6 @@ public class GwtAstBuilder {
         addBridgeMethods(x.binding);
       }
 
-      Binding[] rescues = artificialRescues.get(x);
-      if (rescues != null) {
-        for (Binding rescue : rescues) {
-          if (rescue instanceof TypeBinding) {
-            type.addArtificialRescue(typeMap.get((TypeBinding) rescue));
-          } else if (rescue instanceof FieldBinding) {
-            type.addArtificialRescue(typeMap.get((FieldBinding) rescue));
-          } else if (rescue instanceof MethodBinding) {
-            type.addArtificialRescue(typeMap.get((MethodBinding) rescue));
-          } else {
-            throw new InternalCompilerException("Unknown artificial rescue binding type.");
-          }
-        }
-      }
-
       if (JsInteropUtil.isClassWideJsExport(x)) {
         for (JMethod m : type.getMethods()) {
           if (m.getExportName() != null) {
@@ -3070,8 +3055,6 @@ public class GwtAstBuilder {
     return false;
   }
 
-  Map<TypeDeclaration, Binding[]> artificialRescues;
-
   CudInfo curCud = null;
 
   JClassType javaLangClass = null;
@@ -3109,19 +3092,16 @@ public class GwtAstBuilder {
    *
    * @param cud The compiled form of the Java source from the JDT.
    * @param sourceMapPath the path that should be included in a sourcemap.
-   * @param artificialRescues Used to decorate the AST.
    * @param jsniMethods Native methods to add to the AST.
    * @param jsniRefs Map from JSNI references to their JDT definitions.
    * @return All the types seen in this source file.
    */
   public List<JDeclaredType> process(CompilationUnitDeclaration cud, String sourceMapPath,
-      Map<TypeDeclaration, Binding[]> artificialRescues,
       Map<MethodDeclaration, JsniMethod> jsniMethods, Map<String, Binding> jsniRefs) {
     if (cud.types == null) {
       return Collections.emptyList();
     }
     this.sourceMapPath = sourceMapPath;
-    this.artificialRescues = artificialRescues;
     this.jsniRefs = jsniRefs;
     this.jsniMethods = jsniMethods;
     newTypes = Lists.newArrayList();

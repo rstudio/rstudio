@@ -40,7 +40,6 @@ public class JavaCompilationSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite(JavaCompilationSuite.class.getName());
 
-    suite.addTestSuite(ArtificialRescueCheckerTest.class);
     suite.addTestSuite(BinaryTypeReferenceRestrictionsCheckerTest.class);
     suite.addTestSuite(BytecodeSignatureMakerTest.class);
     suite.addTestSuite(CompilationStateTest.class);

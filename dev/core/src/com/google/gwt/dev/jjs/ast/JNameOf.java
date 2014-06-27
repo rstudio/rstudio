@@ -18,8 +18,6 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 
-import java.util.List;
-
 /**
  * An AST node whose evaluation results in the string name of its node.
  */
@@ -40,20 +38,6 @@ public class JNameOf extends JExpression {
       }
     } else {
       throw new InternalCompilerException("Unexpected node type.");
-    }
-    return true;
-  }
-
-  static boolean replacesNamedElements(List<JNode> newElements, List<JNode> oldElements) {
-    if (newElements.size() != oldElements.size()) {
-      return false;
-    }
-    for (int i = 0, c = newElements.size(); i < c; ++i) {
-      JNode node = newElements.get(i);
-      JNode oldNode = oldElements.get(i);
-      if (!replacesNamedElement(node, oldNode)) {
-        return false;
-      }
     }
     return true;
   }

@@ -72,11 +72,6 @@ public abstract class CompilationUnitBuilder {
       return new GeneratedCompilationUnit(generatedUnit, compiledClasses, types, dependencies,
           jsniMethods, methodArgs, problems);
     }
-
-    @Override
-    boolean isGenerated() {
-      return true;
-    }
   }
 
   static class ResourceCompilationUnitBuilder extends CompilationUnitBuilder {
@@ -361,11 +356,4 @@ public abstract class CompilationUnitBuilder {
       List<JDeclaredType> types, Dependencies dependencies,
       Collection<? extends JsniMethod> jsniMethods, MethodArgNamesLookup methodArgs,
       CategorizedProblem[] errors);
-
-  /**
-   * This only matters for {@link ArtificialRescueChecker}.
-   */
-  boolean isGenerated() {
-    return false;
-  }
 }

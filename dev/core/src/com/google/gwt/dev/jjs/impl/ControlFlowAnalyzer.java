@@ -737,19 +737,6 @@ public class ControlFlowAnalyzer {
       if (!(type instanceof JDeclaredType)) {
         return;
       }
-
-      List<JNode> artificialRescues = ((JDeclaredType) type).getArtificialRescues();
-      if (artificialRescues != null) {
-        for (JNode artificial : artificialRescues) {
-          if (artificial instanceof JReferenceType) {
-            rescue((JReferenceType) artificial, true, true);
-          } else if (artificial instanceof JVariable) {
-            rescue((JVariable) artificial);
-          } else if (artificial instanceof JMethod) {
-            rescue((JMethod) artificial);
-          }
-        }
-      }
     }
 
     private void rescue(JVariable var) {

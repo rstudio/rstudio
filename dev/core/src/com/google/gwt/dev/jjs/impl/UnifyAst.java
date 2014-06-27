@@ -1343,23 +1343,8 @@ public class UnifyAst {
     for (JInterfaceType intf : type.getImplements()) {
       resolvedInterfaces.add((JInterfaceType) translate(intf));
     }
-    List<JNode> resolvedRescues = new ArrayList<JNode>();
-    for (JNode node : type.getArtificialRescues()) {
-      if (node instanceof JType) {
-        node = translate((JType) node);
-      } else if (node instanceof JField) {
-        node = translate((JField) node);
-      } else if (node instanceof JMethod) {
-        node = translate((JMethod) node);
-      } else {
-        assert false : "Unknown artificial rescue node.";
-      }
-      resolvedRescues.add(node);
-    }
-
     JDeclaredType pkgInfo = findPackageInfo(type);
-    type.resolve(resolvedInterfaces, resolvedRescues,
-        pkgInfo != null ? pkgInfo.getJsNamespace() : null);
+    type.resolve(resolvedInterfaces, pkgInfo != null ? pkgInfo.getJsNamespace() : null);
   }
 
   private JDeclaredType findPackageInfo(JDeclaredType type) {
@@ -1443,23 +1428,6 @@ public class UnifyAst {
       flowInto(clinit);
       if (type.getSuperClass() != null) {
         staticInitialize(type.getSuperClass());
-      }
-      for (JNode node : type.getArtificialRescues()) {
-        if (node instanceof JType) {
-          if (node instanceof JDeclaredType) {
-            instantiate((JDeclaredType) node);
-          }
-        } else if (node instanceof JField) {
-          JField field = (JField) node;
-          flowInto(field);
-          if (!field.isFinal()) {
-            field.setVolatile();
-          }
-        } else if (node instanceof JMethod) {
-          flowInto((JMethod) node);
-        } else {
-          assert false : "Unknown artificial rescue node.";
-        }
       }
     }
   }

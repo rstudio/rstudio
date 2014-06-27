@@ -45,7 +45,6 @@ import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.ImportReference;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
@@ -92,8 +91,7 @@ public class CompilationStateBuilder {
           MethodArgNamesLookup methodArgs = new MethodArgNamesLookup();
 
           if (!cud.compilationResult().hasErrors()) {
-            // Only collect jsniMethod, artificial rescues, etc if the compilation unit
-            // does not have errors.
+            // Only collect jsniMethods, etc if the compilation unit does not have errors.
             jsniMethods =
                 JsniMethodCollector.collectJsniMethods(cud, builder.getSourceMapPath(),
                     builder.getSource(), JsRootScope.INSTANCE, DummyCorrelationFactory.INSTANCE);
@@ -114,8 +112,6 @@ public class CompilationStateBuilder {
                       }
                     });
 
-            final Map<TypeDeclaration, Binding[]> artificialRescues = Maps.newHashMap();
-            ArtificialRescueChecker.check(cud, builder.isGenerated(), artificialRescues);
             if (compilerContext.shouldCompileMonolithic()) {
               // GWT drives JDT in a way that allows missing references in the source to be
               // resolved to precompiled bytecode on disk (see INameEnvironment). This is
@@ -142,8 +138,7 @@ public class CompilationStateBuilder {
             if (!cud.compilationResult().hasErrors()) {
               // The above checks might have recorded errors; so we need to check here again.
               // So only construct the GWT AST if no JDT errors and no errors from our checks.
-              types = astBuilder.process(cud, builder.getSourceMapPath(), artificialRescues,
-                  jsniMethods, jsniRefs);
+              types = astBuilder.process(cud, builder.getSourceMapPath(), jsniMethods, jsniRefs);
             }
 
             // Only run this pass if JDT was able to compile the unit with no errors, otherwise
