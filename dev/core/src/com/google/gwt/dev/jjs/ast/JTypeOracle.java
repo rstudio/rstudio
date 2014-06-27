@@ -77,7 +77,69 @@ public class JTypeOracle implements Serializable {
     if (!isInteropEnabled()) {
       return false;
     }
-    
+
+    /*
+     * We need Javascript bridge methods for exports in this class
+     * @JsType
+     * interface A {
+     *   X m();
+     * }
+     * Y is a subtype of X
+     * interface B extends A {
+     *   Y m();
+     * }
+     *
+     * We now have an 'overload' situation, but there's only one concrete
+     * implementor.
+     *
+     * class C implements B {
+     *   Y m() { }
+     * }
+     *
+     * JDT/GwtAstBuilder will insert a synthetic method to make sure A is
+     * implemented.
+     *
+     * class C implements B {
+     *   X m() { return this.m(); [targetd at Y] }
+     *   Y m() { }
+     * }
+     *
+     * Since both methods are part of JsType interfaces, both are considered
+     * exportable, but they can't own the same JsName. It doesn't matter
+     * which one is exported since they do the same thing.  Here we detect
+     * that a covariant return situation exists and assert that a JS bridge
+     * method is needed. That is, we will not let either of these methods
+     * 'own' the JsName. If we don't do this, and the X m() get's exported,
+     * you end up with an infinite loop and other oddities (because it's
+     * an exported method and it invoked itself through it's own exported
+     * name).
+     *
+     * This change lets both methods have their Java obfuscated name.
+     */
+    // covariant methods need JS bridges
+    List<JParameter> xParams = x.getParams();
+    if (isJsTypeMethod(x)) {
+      for (JMethod other : x.getEnclosingType().getMethods()) {
+         if (other == x) {
+           continue;
+         }
+         if (isJsTypeMethod(other) && x.getName().equals(other.getName())) {
+           List<JParameter> otherParams = other.getParams();
+           if (otherParams.size() == xParams.size()) {
+             for (int i = 0; i < otherParams.size(); i++) {
+               if (otherParams.get(i).getType() != xParams.get(i).getType()) {
+                 break;
+               }
+             }
+             // found exact method match, covariant return
+             return true;
+           } else {
+             break;
+           }
+         }
+      }
+    }
+
     if (x.needsVtable() && isJsTypeMethod(x)) {
       for (JMethod override : getAllOverriddenMethods(x)) {
         if (!isJsTypeMethod(override)) {
@@ -91,7 +153,7 @@ public class JTypeOracle implements Serializable {
       if (x.getOriginalReturnType() == JPrimitiveType.LONG) {
         return true;
       }
-      for (JParameter p : x.getParams()) {
+      for (JParameter p : xParams) {
         if (p.getType() == JPrimitiveType.LONG) {
           return true;
         }

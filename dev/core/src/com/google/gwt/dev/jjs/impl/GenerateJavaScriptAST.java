@@ -1531,8 +1531,9 @@ public class GenerateJavaScriptAST {
       callBind.setQualifier(bind);
       callBind.getArguments().add(tempLocal.makeRef(x.getSourceInfo()));
       // (tempLocal = instance, tramp(tempLocal, tempLocal.bridgeRef, tempLocal.javaRef)).bind(tempLocal)
-      bind.setQualifier(createCommaExpression(tmp, callTramp));
+      bind.setQualifier(callTramp);
       jsInvocation.setQualifier(callBind);
+      result = createCommaExpression(tmp, jsInvocation);
       push(createCommaExpression(unnecessaryQualifier, result));
     }
 
