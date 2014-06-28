@@ -89,6 +89,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
                           boolean enableDeploy, boolean refresh)
    {
+      // remember output parameters
+      outputParms_ = params;
+
       // remember target file (for invoking editor)
       targetFile_ = FileSystemItem.createFile(params.getTargetFile());
       
@@ -140,37 +143,18 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       scrollPosition_ = refresh ? 
             getScrollPosition() : params.getScrollPosition();
      
+      // get the URL to load
+      String url = getDocumentUrl();
+
       // check for an anchor implied by a preview_slide field
       String anchor = "";
       if (params.getResult().getPreviewSlide() > 0)
          anchor = String.valueOf(params.getResult().getPreviewSlide());
             
-      // load url      
-      String url;
-      if (refresh)
-      {
-         url = getCurrentUrl();
-         
-         // if there's an anchor then strip any anchor we already have
-         if (anchor.length() > 0)
-         {
-            int anchorPos = url.lastIndexOf('#');
-            if (anchorPos != -1)
-               url = url.substring(0, anchorPos);
-         }
-      }
-      else
-      {
-         if (isShiny_)
-            url = shinyUrl_;
-         else
-            url = server_.getApplicationURL(params.getOutputUrl());
-         
-         // check for an explicit anchor if there wasn't one implied
-         // by the preview_slide
-         if (anchor.length() == 0)
-            anchor = params.getAnchor();
-      }
+      // check for an explicit anchor if there wasn't one implied
+      // by the preview_slide
+      if (anchor.length() == 0)
+         anchor = params.getAnchor();
       
       // add the anchor if necessary
       if (anchor.length() > 0)
@@ -361,12 +345,19 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // cache the scroll position, so we can re-apply it when the page loads
       scrollPosition_ = getScrollPosition();
       
+      // recompute the URL (we can't pick up the URL from the document since 
+      // it may have encoding problems--see case 3994)
+      String url = getDocumentUrl();
+      String anchor = getAnchor();
+      if (anchor.length() > 0)
+         url += "#" + anchor;
+      
       // re-initialize the shiny frame with the URL (so it waits for the new 
       // window object to become available after refresh)
       if (isShiny_)
-         shinyFrame_.initialize(getCurrentUrl(), null);
+         shinyFrame_.initialize(url, null);
 
-      showUrl(getCurrentUrl());
+      showUrl(url);
    }
 
    @Override
@@ -406,18 +397,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void navigate(int index)
    {
       getFrame().getIFrame().focus();
-      
-      String url = getCurrentUrl();
-      int anchorPos = url.lastIndexOf("#");
-      if (anchorPos > 0)
-         url = url.substring(0, anchorPos);
-      
       String hash = "" + (index + 1);
 
       if (isShiny_)
          shinyFrame_.setHash(hash);
       else
-         showUrl(url + "#" + hash);
+         showUrl(getDocumentUrl() + "#" + hash);
    }
 
    @Override
@@ -527,6 +512,13 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       return doc.readyState || null;
    }-*/;
    
+   private String getDocumentUrl() 
+   {
+      return isShiny_ ?
+            shinyUrl_ :
+            server_.getApplicationURL(outputParms_.getOutputUrl());
+   }
+   
    private SlideNavigationToolbarMenu slideNavigationMenu_;
 
    private Label fileLabel_;
@@ -537,14 +529,15 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private Widget deployButtonSeparator_;
    private String title_;
    
-   private FileTypeRegistry fileTypeRegistry_;
-   private RMarkdownServerOperations server_;
-   private EventBus events_;
+   private final FileTypeRegistry fileTypeRegistry_;
+   private final RMarkdownServerOperations server_;
+   private final EventBus events_;
 
    private int scrollPosition_ = 0;
    
    private FileSystemItem targetFile_ = null;
    private SlideNavigation slideNavigation_ = null;
+   private RmdPreviewParams outputParms_ = null;
    
    private FindTextBox findTextBox_;
    private Widget findSeparator_;
