@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -166,6 +167,30 @@ public class TextEditingTargetWidget
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
       toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
+      ToolbarPopupMenu rmdViewerWindow = new ToolbarPopupMenu();
+      rmdViewerWindow.addItem(new MenuItem("View in Pane", new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            uiPrefs_.rmdViewerType().setProjectValue(
+                  RmdOutput.RMD_VIEWER_TYPE_PANE, true);
+         }
+      }));
+      rmdViewerWindow.addItem(new MenuItem("View in Window", new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            uiPrefs_.rmdViewerType().setProjectValue(
+                  RmdOutput.RMD_VIEWER_TYPE_WINDOW, true);
+         }
+      }));
+      rmdViewerButton_ = new ToolbarButton("", 
+            StandardIcons.INSTANCE.viewer_window(), 
+            rmdViewerWindow, true);
+      toolbar.addLeftWidget(rmdViewerButton_);
+
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
@@ -239,6 +264,7 @@ public class TextEditingTargetWidget
                        true);
       shinyLaunchButton_.setVisible(false);
       toolbar.addRightWidget(shinyLaunchButton_);
+      
       return toolbar;
    }
    
@@ -335,6 +361,7 @@ public class TextEditingTargetWidget
       rmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setEnabled(isRMarkdown2);
+      rmdViewerButton_.setVisible(isRMarkdown2);
 
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
@@ -688,6 +715,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
+   private ToolbarButton rmdViewerButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    
    private Widget texSeparatorWidget_;

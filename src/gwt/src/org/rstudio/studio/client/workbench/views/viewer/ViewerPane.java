@@ -17,19 +17,22 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
    @Inject
-   public ViewerPane(Commands commands, GlobalDisplay globalDisplay)
+   public ViewerPane(Commands commands, GlobalDisplay globalDisplay, EventBus events)
    {
       super("Viewer");
       commands_ = commands;
       globalDisplay_ = globalDisplay;
+      events_ = events;
       ensureWidget();
    }
    
@@ -51,18 +54,20 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       frame_ = new RStudioFrame() ;
       frame_.setSize("100%", "100%");
-      navigate(ABOUT_BLANK);
+      navigate(ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
    }
    
    @Override
-   public void navigate(String url)
+   public void navigate(String url, boolean useRawURL)
    {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
       
       // append the viewer_pane query parameter
-      if ((unmodifiedUrl_ != null) && !unmodifiedUrl_.equals(ABOUT_BLANK))
+      if ((unmodifiedUrl_ != null) && 
+          !unmodifiedUrl_.equals(ABOUT_BLANK) &&
+          !useRawURL)
       {
          // first split into base and anchor
          String base = new String(unmodifiedUrl_);
@@ -91,8 +96,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       {
          frame_.setUrl(unmodifiedUrl_);
       }
+      
+      events_.fireEvent(new ViewerNavigatedEvent(url, frame_));
    }
-   
    
    @Override
    public String getUrl()
@@ -119,5 +125,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private String unmodifiedUrl_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
+   private final EventBus events_;
    private static final String ABOUT_BLANK = "about:blank";
 }

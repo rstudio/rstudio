@@ -39,7 +39,7 @@ public class ViewerPresenter extends BasePresenter
    
    public interface Display extends WorkbenchView
    {
-      void navigate(String url);
+      void navigate(String url, boolean useRawURL);
       String getUrl();
       void popout();
       void refresh();
@@ -94,11 +94,11 @@ public class ViewerPresenter extends BasePresenter
          if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
          
-         navigate(event.getURL());
+         navigate(event.getURL(), event.useRawURL());
       }
       else
       {
-         navigate("about:blank");
+         navigate("about:blank", false);
       }
    }
    
@@ -112,7 +112,7 @@ public class ViewerPresenter extends BasePresenter
       {
          enableCommands(true);
          display_.bringToFront();
-         navigate(event.getParams().getUrl());
+         navigate(event.getParams().getUrl(), false);
          runningShinyAppParams_ = event.getParams();
       }
    }
@@ -149,17 +149,17 @@ public class ViewerPresenter extends BasePresenter
       stop(true);
    }
  
-   private void navigate(String url)
+   private void navigate(String url, boolean useRawUrl)
    {
       if (Desktop.isDesktop())
          Desktop.getFrame().setViewerUrl(url);
-      display_.navigate(url);
+      display_.navigate(url, useRawUrl);
    }
    
    private void stop(boolean interruptR)
    {
       enableCommands(false);
-      navigate("about:blank");
+      navigate("about:blank", false);
       if (interruptR)
          commands_.interruptR().execute();
       server_.viewerStopped(new VoidServerRequestCallback());
