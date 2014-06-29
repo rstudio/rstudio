@@ -70,58 +70,56 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   }
 
   /**
-   * Iterator for <code>EntrySetImpl</code>.
+   * Iterator for <code>EntrySet</code>.
    */
   private final class EntrySetIterator implements Iterator<Entry<K, V>> {
-    private final Iterator<Map.Entry<K, V>> iter;
-    private Map.Entry<K, V> last = null;
+    private Iterator<Entry<K, V>> stringMapEntries = stringMap.entries();
+    private Iterator<Entry<K, V>> current = stringMapEntries;
+    private Iterator<Entry<K, V>> last;
 
-    /**
-     * Constructor for <code>EntrySetIterator</code>.
-     */
-    public EntrySetIterator() {
-      List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>();
-      addAllStringEntries(list);
-      addAllHashEntries(list);
-      this.iter = list.iterator();
-    }
-
+    @Override
     public boolean hasNext() {
-      return iter.hasNext();
+      if (current.hasNext()) {
+        return true;
+      }
+      if (current != stringMapEntries) {
+        return false;
+      }
+      current = hashCodeMap.entries();
+      return current.hasNext();
     }
 
-    public Map.Entry<K, V> next() {
-      return last = iter.next();
+    @Override
+    public Entry<K, V> next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      last = current;
+      return current.next();
     }
 
+    @Override
     public void remove() {
       if (last == null) {
-        throw new IllegalStateException("Must call next() before remove().");
-      } else {
-        iter.remove();
-        AbstractHashMap.this.remove(last.getKey());
-        last = null;
+        throw new IllegalStateException();
       }
+      last.remove();
+      last = null;
     }
   }
 
   /**
    * A map of integral hashCodes onto entries.
    */
-  private transient InternalJsHashcodeMap<K, V> hashCodeMap;
+  private transient InternalJsHashCodeMap<K, V> hashCodeMap;
 
   /**
    * A map of Strings onto values.
    */
-  private transient InternalJsStringMap<V> stringMap;
-
-  private int size;
-
-  {
-    clearImpl();
-  }
+  private transient InternalJsStringMap<K, V> stringMap;
 
   public AbstractHashMap() {
+    reset();
   }
 
   public AbstractHashMap(int ignored) {
@@ -135,26 +133,35 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
       throw new IllegalArgumentException(
           "initial capacity was negative or load factor was non-positive");
     }
+    reset();
   }
 
   public AbstractHashMap(Map<? extends K, ? extends V> toBeCopied) {
+    reset();
     this.putAll(toBeCopied);
   }
 
   @Override
   public void clear() {
-    clearImpl();
+    reset();
+  }
+
+  private void reset() {
+    hashCodeMap = GWT.create(InternalJsHashCodeMap.class);
+    hashCodeMap.host = this;
+    stringMap = GWT.create(InternalJsStringMap.class);
+    stringMap.host = this;
   }
 
   @SpecializeMethod(params = {String.class}, target = "hasStringValue")
   @Override
   public boolean containsKey(Object key) {
-    return !(key instanceof String) ? hasHashValue(key) : hasStringValue((String) key);
+    return key instanceof String ? hasStringValue((String) key) : hasHashValue(key);
   }
 
   @Override
   public boolean containsValue(Object value) {
-    return containsStringValue(value) || containsHashValue(value);
+    return stringMap.containsValue(value) || hashCodeMap.containsValue(value);
   }
 
   @Override
@@ -165,26 +172,24 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   @SpecializeMethod(params = {String.class}, target = "getStringValue")
   @Override
   public V get(Object key) {
-    return !(key instanceof String) ? getHashValue(key) : getStringValue((String) key);
+    return key instanceof String ? getStringValue((String) key) : getHashValue(key);
   }
 
   @SpecializeMethod(params = {String.class, Object.class}, target = "putStringValue")
   @Override
   public V put(K key, V value) {
-    return !(key instanceof String)
-        ? putHashValue(key, value)
-        : putStringValue((String) key, value);
+    return key instanceof String ? putStringValue((String) key, value) : putHashValue(key, value);
   }
 
   @SpecializeMethod(params = {String.class}, target = "removeStringValue")
   @Override
   public V remove(Object key) {
-    return !(key instanceof String) ? removeHashValue(key) : removeStringValue((String) key);
+    return key instanceof String ? removeStringValue((String) key) : removeHashValue(key);
   }
 
   @Override
   public int size() {
-    return size + stringMap.size();
+    return hashCodeMap.size() + stringMap.size();
   }
 
   /**
@@ -200,61 +205,13 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   abstract int getHashCode(Object key);
 
   /**
-   * Returns hash code of the key as calculated by {@link #getHashCode(Object)} but also handles
-   * null keys as well.
-   */
-  private int hash(Object key) {
-    return key == null ? 0 : getHashCode(key);
-  }
-
-  private void addAllHashEntries(Collection<?> dest) {
-    hashCodeMap.addAllEntries(dest);
-  }
-
-  private void addAllStringEntries(Collection<?> dest) {
-    stringMap.addAllEntries(dest);
-  }
-
-  private void clearImpl() {
-    hashCodeMap = GWT.create(InternalJsHashcodeMap.class);
-    stringMap = GWT.create(InternalJsStringMap.class);
-    size = 0;
-  }
-
-  /**
-   * Returns true if hashCodeMap contains any Map.Entry whose value is Object
-   * equal to <code>value</code>.
-   */
-  private boolean containsHashValue(Object value) {
-    return hashCodeMap.containsValue(value, this);
-  }
-
-  /**
-   * Returns true if stringMap contains any key whose value is Object equal to
-   * <code>value</code>.
-   */
-  private boolean containsStringValue(Object value) {
-    return stringMap.containsValue(value, this);
-  }
-
-  /**
-   * Bridge method from JSNI that keeps us from having to make polymorphic calls
-   * in JSNI. By putting the polymorphism in Java code, the compiler can do a
-   * better job of optimizing in most cases.
-   */
-  @SuppressWarnings("unused")
-  private boolean equalsBridge(Object value1, Object value2) {
-    return equals(value1, value2);
-  }
-
-  /**
    * Returns the Map.Entry whose key is Object equal to <code>key</code>,
    * provided that <code>key</code>'s hash code is <code>hashCode</code>;
    * or <code>null</code> if no such Map.Entry exists at the specified
    * hashCode.
    */
   private V getHashValue(Object key) {
-    Entry<K, V> entry = hashCodeMap.getEntry(key, hash(key), this);
+    Entry<K, V> entry = hashCodeMap.getEntry(key);
     return entry == null ? null : entry.getValue();
   }
 
@@ -272,7 +229,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * <code>hashCode</code>.
    */
   private boolean hasHashValue(Object key) {
-    return hashCodeMap.getEntry(key, hash(key), this) != null;
+    return hashCodeMap.getEntry(key) != null;
   }
 
   /**
@@ -288,7 +245,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * specified key did not exist.
    */
   private V putHashValue(K key, V value) {
-    return hashCodeMap.put(key, value, hash(key), this);
+    return hashCodeMap.put(key, value);
   }
 
   /**
@@ -307,7 +264,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * removed key, or null if no such key existed.
    */
   private V removeHashValue(Object key) {
-    return hashCodeMap.remove(key, hash(key), this);
+    return hashCodeMap.remove(key);
   }
 
   /**

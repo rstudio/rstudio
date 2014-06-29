@@ -17,6 +17,8 @@ package java.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.util.Map.Entry;
+
 /**
  * A simple wrapper around JavaScriptObject to provide {@link java.util.Map}-like semantics where
  * the key type is string.
@@ -29,9 +31,9 @@ import com.google.gwt.core.client.JavaScriptObject;
  * {@code Object.create(null)} in the first place to avoid inheriting any properties (only available
  * in modern browsers).
  */
-class InternalJsStringMap<V> {
+class InternalJsStringMap<K, V> {
 
-  static class InternalJsStringMapModern<V> extends InternalJsStringMap<V> {
+  static class InternalJsStringMapModern<K, V> extends InternalJsStringMap<K, V> {
     @Override
     native JavaScriptObject createMap() /*-{
       return Object.create(null);
@@ -43,10 +45,10 @@ class InternalJsStringMap<V> {
     }
 
     @Override
-    public native boolean containsValue(Object value, AbstractHashMap<?, ?> host) /*-{
+    public native boolean containsValue(Object value) /*-{
       var map = this.@InternalJsStringMap::backingMap;
       for (var key in map) {
-        if (host.@AbstractHashMap::equalsBridge(*)(value, map[key])) {
+        if (this.@InternalJsStringMap::equalsBridge(*)(value, map[key])) {
           return true;
         }
       }
@@ -54,16 +56,40 @@ class InternalJsStringMap<V> {
     }-*/;
 
     @Override
-    public native void addAllEntries(Collection<?> dest) /*-{
-      for (var key in this.@InternalJsStringMap::backingMap) {
-        var entry = this.@InternalJsStringMap::newMapEntry(*)(key);
-        dest.@Collection::add(Ljava/lang/Object;)(entry);
-      }
+    public Iterator<Entry<K, V>> entries() {
+      final String[] keys = keys();
+      return new Iterator<Map.Entry<K,V>>() {
+        int i = 0, last = -1;
+        @Override
+        public boolean hasNext() {
+          return i < keys.length;
+        }
+        @Override
+        public Entry<K, V> next() {
+          if (!hasNext()) {
+            throw new NoSuchElementException();
+          }
+          return newMapEntry(keys[last = i++]);
+        }
+        @Override
+        public void remove() {
+          if (last < 0) {
+            throw new IllegalStateException();
+          }
+          InternalJsStringMapModern.this.remove(keys[last]);
+          last = -1;
+        }
+      };
+    }
+
+    private native String[] keys() /*-{
+      return Object.keys(this.@InternalJsStringMap::backingMap);
     }-*/;
   }
 
   private final JavaScriptObject backingMap = createMap();
   private int size;
+  AbstractHashMap<K,V> host;
 
   native JavaScriptObject createMap() /*-{
     return {};
@@ -115,20 +141,20 @@ class InternalJsStringMap<V> {
   }-*/;
 
   private native void set(String key, V value) /*-{
-    return this.@InternalJsStringMap::backingMap[key] = value;
+    this.@InternalJsStringMap::backingMap[key] = value;
   }-*/;
 
   private native void delete(String key) /*-{
     delete this.@InternalJsStringMap::backingMap[key];
   }-*/;
 
-  public native boolean containsValue(Object value, AbstractHashMap<?, ?> host) /*-{
+  public native boolean containsValue(Object value) /*-{
     var map = this.@InternalJsStringMap::backingMap;
     for (var key in map) {
       // only keys that start with a colon ':' count
       if (key.charCodeAt(0) == 58) {
         var entryValue = map[key];
-        if (host.@AbstractHashMap::equalsBridge(*)(value, entryValue)) {
+        if (this.@InternalJsStringMap::equalsBridge(*)(value, entryValue)) {
           return true;
         }
       }
@@ -136,21 +162,37 @@ class InternalJsStringMap<V> {
     return false;
   }-*/;
 
-  public native void addAllEntries(Collection<?> dest) /*-{
+  public native Iterator<Entry<K, V>> entries() /*-{
+    var list = this.@InternalJsStringMap::newEntryList()();
     for (var key in this.@InternalJsStringMap::backingMap) {
       // only keys that start with a colon ':' count
       if (key.charCodeAt(0) == 58) {
         var entry = this.@InternalJsStringMap::newMapEntry(*)(key.substring(1));
-        dest.@Collection::add(Ljava/lang/Object;)(entry);
+        list.@ArrayList::add(Ljava/lang/Object;)(entry);
       }
     }
+    return list.@ArrayList::iterator()();
   }-*/;
 
-  private AbstractMapEntry<String, V> newMapEntry(final String key) {
-    return new AbstractMapEntry<String, V>() {
+  /**
+   * Returns a custom ArrayList so that we could intercept removal to forward into our map.
+   */
+  private ArrayList<Entry<K, V>> newEntryList() {
+    return new ArrayList<Entry<K, V>>() {
       @Override
-      public String getKey() {
-        return key;
+      public Entry<K, V> remove(int index) {
+        Entry<K, V> removed = super.remove(index);
+        InternalJsStringMap.this.remove((String) removed.getKey());
+        return removed;
+      }
+    };
+  }
+
+  protected final Entry<K, V> newMapEntry(final String key) {
+    return new AbstractMapEntry<K, V>() {
+      @Override
+      public K getKey() {
+        return (K) key;
       }
       @Override
       public V getValue() {
@@ -161,6 +203,15 @@ class InternalJsStringMap<V> {
         return put(key, object);
       }
     };
+  }
+
+  /**
+   * Bridge method from JSNI that keeps us from having to make polymorphic calls
+   * in JSNI. By putting the polymorphism in Java code, the compiler can do a
+   * better job of optimizing in most cases.
+   */
+  protected final boolean equalsBridge(Object value1, Object value2) {
+    return host.equals(value1, value2);
   }
 
   private static <T> T toNullIfUndefined(T value) {
