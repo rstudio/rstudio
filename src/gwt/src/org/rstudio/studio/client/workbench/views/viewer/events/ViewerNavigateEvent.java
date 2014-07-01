@@ -88,4 +88,5 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    private final Data data_;
   
    public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final int HEIGHT_MAXIMIZE = -1;
 }

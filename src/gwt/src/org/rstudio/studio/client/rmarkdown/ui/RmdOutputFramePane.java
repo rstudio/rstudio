@@ -55,7 +55,9 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    {
       super.showRmdPreview(params);
       ViewerNavigateEvent.Data data = ViewerNavigateEvent.Data.create(
-            params.getOutputUrl(), params.getPreferredSize().height, 
+            params.getOutputUrl(), 
+            frame_ == null ?
+                  ViewerNavigateEvent.HEIGHT_MAXIMIZE : 0,
             true);
       events_.fireEvent(new ViewerNavigateEvent(data));
    }
