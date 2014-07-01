@@ -24,4 +24,5 @@ public interface RmdOutputFrame
 	public void showRmdPreview(RmdPreviewParams params);
 	public int getViewerType();
    RmdPreviewParams getPreviewParams();
+   public int getScrollPosition();
 }

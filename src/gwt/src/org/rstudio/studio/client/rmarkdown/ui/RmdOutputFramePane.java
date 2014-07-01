@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.ScrollUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -44,9 +45,9 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    @Override
    public WindowEx getWindowObject()
    {
-     if (frame_ == null)
-        return null;
-     return frame_.getWindow();
+      if (frame_ == null)
+         return null;
+      return frame_.getWindow();
    }
 
    @Override
@@ -62,9 +63,12 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    @Override
    public void onViewerNavigated(ViewerNavigatedEvent event)
    {
-      if (outputUrl_.equals(event.getURL()))
+      if (getPreviewParams() != null &&
+          getPreviewParams().getOutputUrl().equals(event.getURL()))
       {
          frame_ = event.getFrame();
+         ScrollUtil.setScrollPositionOnLoad(
+               frame_, getPreviewParams().getScrollPosition());
       }
       else
       {
@@ -78,7 +82,16 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
       return RmdOutput.RMD_VIEWER_TYPE_PANE;
    }
    
-   private String outputUrl_;
+   @Override
+   public int getScrollPosition()
+   {
+      if (frame_ == null ||
+          frame_.getIFrame() == null ||
+          frame_.getIFrame().getContentWindow() == null)
+         return 0;
+      return frame_.getIFrame().getContentWindow().getScrollTop();
+   }
+   
    private RStudioFrame frame_;
    private final EventBus events_;
 }

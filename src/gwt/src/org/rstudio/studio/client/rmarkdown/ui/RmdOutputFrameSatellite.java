@@ -8,6 +8,7 @@ import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 
 public class RmdOutputFrameSatellite extends RmdOutputFrameBase
@@ -53,6 +54,25 @@ public class RmdOutputFrameSatellite extends RmdOutputFrameBase
    {
       return RmdOutput.RMD_VIEWER_TYPE_WINDOW;
    }
+   
+   @Override
+   public int getScrollPosition()
+   {
+      return getScrollPositionNative(getWindowObject());
+   }
+
+   private final native int getScrollPositionNative(JavaScriptObject win) /*-{
+      var scrollPosition;
+      try {
+         scrollPosition = win.getRstudioFrameScrollPosition();
+      }
+      catch (e) {
+         // fail gracefully with top of document
+      }
+      if (typeof(scrollPosition) === "undefined")
+         scrollPosition = 0;
+      return scrollPosition;
+   }-*/;
    
    private final SatelliteManager satelliteManager_;
 }

@@ -415,7 +415,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       final RmdPreviewParams params = RmdPreviewParams.create(
             result, scrollPosition, anchor);
       
-      outputFrame_ = createOutputFrame(prefs_.rmdViewerType().getValue());
+      if (outputFrame_ == null)
+         outputFrame_ = createOutputFrame(prefs_.rmdViewerType().getValue());
 
       WindowEx win = outputFrame_.getWindowObject();
       
@@ -458,13 +459,14 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // position of the old document before we replace it
       if (!isRefresh && result_ != null && win != null)
       {
-         cacheDocPosition(result_, getScrollPosition(win), getAnchor(win));
+         cacheDocPosition(result_, outputFrame_.getScrollPosition(), 
+                          getAnchor(win));
       }
 
       // if it is a refresh, use the doc's existing positions
       if (isRefresh)
       {
-         params.setScrollPosition(getScrollPosition(win));
+         params.setScrollPosition(outputFrame_.getScrollPosition());
          params.setAnchor(getAnchor(win));
       }
 
@@ -482,19 +484,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             registry.@org.rstudio.studio.client.rmarkdown.RmdOutput::notifyRmdOutputClosed(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
          }
       ); 
-   }-*/;
-   
-   private final native int getScrollPosition(JavaScriptObject win) /*-{
-      var scrollPosition;
-      try {
-         scrollPosition = win.getRstudioFrameScrollPosition();
-      }
-      catch (e) {
-         // fail gracefully with top of document
-      }
-      if (typeof(scrollPosition) === "undefined")
-         scrollPosition = 0;
-      return scrollPosition;
    }-*/;
    
    private final native String getAnchor(JavaScriptObject win) /*-{
