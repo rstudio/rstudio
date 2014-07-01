@@ -15,4 +15,9 @@
 <module type="fileset">
   <inherits name="com.google.gwt.logging.LoggingDisabled"/>
   <set-property name="gwt.logging.enabled" value="SEVERE"/>
+
+  <!-- Preserve the logging level in superdevmode -->
+  <set-property name="gwt.logging.enabled" value="TRUE">
+    <when-property-is name="superdevmode" value="on"/>
+  </set-property>
 </module>

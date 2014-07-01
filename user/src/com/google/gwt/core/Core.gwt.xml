@@ -18,6 +18,15 @@
 <!-- Every module should directly or indirectly inherit this module.        -->
 <!--                                                                        -->
 <module>
+
+  <!--
+    A property that can be used to see if Super Dev Mode is on.
+    It should only be set by Super Dev Mode and defined on the top so that
+    all modules can use it.
+  -->
+  <define-property name="superdevmode" values="off, on"/>
+  <set-property name="superdevmode" value="off"/>
+
   <inherits name="com.google.gwt.dev.jjs.intrinsic.Intrinsic" />
   <inherits name="com.google.gwt.emul.Emulation" />
   <inherits name="com.google.gwt.core.StackTrace" />
@@ -43,13 +52,6 @@
       <when-type-is class="com.google.gwt.core.client.impl.UnloadSupport"/>
   </replace-with>
 
-  <!--
-    A property that can be used to see if Super Dev Mode is on. It should only be set
-    by Super Dev Mode.
-  -->
-  <define-property name="superdevmode" values="off, on"/>
-  <set-property name="superdevmode" value="off"/>
-
   <replace-with class="com.google.gwt.core.client.impl.SuperDevModeLogger">
       <when-property-is name="superdevmode" value="on"/>
       <when-type-is class="com.google.gwt.core.shared.impl.JsLogger"/>
@@ -62,5 +64,4 @@
 
   <add-linker name="soycReport" />
   <add-linker name="symbolMaps" />
-  
 </module>

@@ -16,6 +16,9 @@
 
 package java.util.logging;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.logging.impl.LoggerConfigurator;
+
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -46,13 +49,14 @@ public class LogManager {
     return singleton;
   }
   
+  private LoggerConfigurator loggerConfigurator = GWT.create(LoggerConfigurator.class);
   private HashMap<String, Logger> loggerList;
   private Logger rootLogger;
   
   protected LogManager() {
     loggerList = new HashMap<String, Logger>();
     rootLogger = new RootLogger();
-    loggerList.put("", rootLogger);
+    addLoggerImpl(rootLogger);
   }
   
   public boolean addLogger(Logger logger) {
@@ -82,9 +86,13 @@ public class LogManager {
   private void addLoggerWithoutDuplicationChecking(Logger logger) {
     String name = logger.getName();
     String parentName = name.substring(0, Math.max(0, name.lastIndexOf('.')));
-    Logger parent = getOrAddLogger(parentName);
+    logger.setParent(getOrAddLogger(parentName));
+    addLoggerImpl(logger);
+  }
+
+  private void addLoggerImpl(Logger logger) {
+    loggerConfigurator.configure(logger);
     loggerList.put(logger.getName(), logger);
-    logger.setParent(parent);
   }
   
   /**

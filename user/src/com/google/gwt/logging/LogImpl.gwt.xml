@@ -1,4 +1,6 @@
 <module type="fileset">
+  <inherits name="com.google.gwt.core.Core"/>
+
   <source path="impl" />
   
   <!-- Set up and handle the gwt.logging property
@@ -35,4 +37,12 @@
   
   <set-property name="gwt.logging.enabled" value="FALSE"/> 
   
+  <!-- Enable simple console logging by default for superdevmode -->
+  <replace-with class="com.google.gwt.logging.impl.LoggerConfiguratorConsole">
+    <when-type-is class="com.google.gwt.logging.impl.LoggerConfigurator"/>
+    <when-property-is name="superdevmode" value="on"/>
+  </replace-with>
+  <set-property name="gwt.logging.enabled" value="TRUE">
+    <when-property-is name="superdevmode" value="on"/>
+  </set-property>
 </module>
