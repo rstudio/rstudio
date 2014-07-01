@@ -283,6 +283,13 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          outputFrame_ = createOutputFrame(newViewerType);
          outputFrame_.showRmdPreview(params);
       }
+      else if (outputFrame_ != null && 
+               outputFrame_.getWindowObject() == null)
+      {
+         // output frame exists but doesn't have a loaded doc, clear it so we'll
+         // create the frame appropriate to this type on next render
+         outputFrame_ = null;
+      }
    }
    
    // perform the given render after terminating the currently running Shiny

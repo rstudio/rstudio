@@ -30,17 +30,20 @@ public class ScrollUtil
          public boolean execute()
          {
             if (frame.getIFrame() == null)
-               return false;
+               return true;
             
             if (frame.getIFrame().getContentDocument() == null)
-               return false;
+               return true;
 
             Document doc = frame.getIFrame().getContentDocument();
             String readyState = getDocumentReadyState(doc);
             if (readyState == null)
-               return false;
+               return true;
             
             if (!readyState.equals("complete"))
+               return true;
+            
+            if (doc.getScrollTop() > 0)
                return true;
 
             // restore scroll position
