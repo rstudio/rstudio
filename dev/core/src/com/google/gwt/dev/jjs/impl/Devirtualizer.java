@@ -73,8 +73,6 @@ import java.util.Map;
  * expressions.
  */
 public class Devirtualizer {
-  // TODO(rluble): rename the class as Devirtualizer as it deals with all three instances of
-  // devirtualization (arrays, strings and JSOs).
 
   /**
    * Rewrite any virtual dispatches to Object, Strings or JavaScriptObject such that
