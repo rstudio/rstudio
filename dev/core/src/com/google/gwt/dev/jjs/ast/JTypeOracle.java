@@ -410,13 +410,6 @@ public class JTypeOracle implements Serializable {
       new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
 
   /**
-   * A map of all interfaces to the set of interfaces that extend them, directly
-   * or indirectly.
-   */
-  private final Map<JInterfaceType, Set<JInterfaceType>> subInterfaceMap =
-      new IdentityHashMap<JInterfaceType, Set<JInterfaceType>>();
-
-  /**
    * A map of all classes to the set of classes they extend, directly or
    * indirectly.
    */
@@ -666,7 +659,6 @@ public class JTypeOracle implements Serializable {
     superClassMap.clear();
     subClassMap.clear();
     superInterfaceMap.clear();
-    subInterfaceMap.clear();
     implementsMap.clear();
     couldImplementMap.clear();
     isImplementedMap.clear();
@@ -1392,9 +1384,7 @@ public class JTypeOracle implements Serializable {
       JInterfaceType cur) {
     for (JInterfaceType intf : cur.getImplements()) {
       superSet.add(intf);
-      add(subInterfaceMap, intf, base);
       recordSuperSubInfo(base, superSet, intf);
     }
   }
-
 }
