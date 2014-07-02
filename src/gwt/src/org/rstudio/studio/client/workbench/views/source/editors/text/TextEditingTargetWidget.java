@@ -44,6 +44,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.ui.RmdViewerTypeMenuItem;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -168,27 +169,9 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(rmdFormatButton_);
       toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
       ToolbarPopupMenu rmdViewerWindow = new ToolbarPopupMenu();
-      rmdViewerWindow.addItem(new MenuItem("View in Pane", new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            uiPrefs_.rmdViewerType().setProjectValue(
-                  RmdOutput.RMD_VIEWER_TYPE_PANE, true);
-         }
-      }));
-      rmdViewerWindow.addItem(new MenuItem("View in Window", new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            uiPrefs_.rmdViewerType().setProjectValue(
-                  RmdOutput.RMD_VIEWER_TYPE_WINDOW, true);
-         }
-      }));
       rmdViewerButton_ = new ToolbarButton("", 
             StandardIcons.INSTANCE.viewer_window(), 
-            rmdViewerWindow, true);
+            buildRmdViewerMenu(), true);
       toolbar.addLeftWidget(rmdViewerButton_);
 
       toolbar.addLeftSeparator();
@@ -302,6 +285,7 @@ public class TextEditingTargetWidget
          codeTransform_ = new ToolbarButton("", icon, menu);
          codeTransform_.setTitle("Code Tools");
       }
+      
       return codeTransform_;
    }
    
@@ -690,7 +674,22 @@ public class TextEditingTargetWidget
    {
       return rmdFormatButton_.addValueChangeHandler(handler);
    }
+   
+   private ToolbarPopupMenu buildRmdViewerMenu()
+   {
+      ToolbarPopupMenu rmdViewerWindow = new ToolbarPopupMenu();
+      MenuItem rmdViewerPaneMenuItem = new RmdViewerTypeMenuItem(
+            RmdOutput.RMD_VIEWER_TYPE_PANE, 
+            "View in Pane", uiPrefs_);
+      MenuItem rmdViewerWindowMenuItem = new RmdViewerTypeMenuItem(
+            RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
+            "View in Window", uiPrefs_);
+      rmdViewerWindow.addItem(rmdViewerPaneMenuItem);
+      rmdViewerWindow.addItem(rmdViewerWindowMenuItem);
 
+      return rmdViewerWindow;
+   }
+   
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final FileTypeRegistry fileTypeRegistry_;
