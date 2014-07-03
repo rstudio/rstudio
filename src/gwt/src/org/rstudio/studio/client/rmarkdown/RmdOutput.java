@@ -252,7 +252,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // terminated renders)
       if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED) 
       {
-         outputFrame_.closeOutputFrame();
+         outputFrame_.closeOutputFrame(false);
          restarting_ = true;
       }
       else
@@ -277,7 +277,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       {
          // close the existing frame
          RmdPreviewParams params = outputFrame_.getPreviewParams();
-         outputFrame_.closeOutputFrame();
+         outputFrame_.closeOutputFrame(true);
          
          // open a new one with the same parameters
          outputFrame_ = createOutputFrame(newViewerType);
@@ -300,7 +300,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       {
          // there is a Shiny doc running; we'll need to terminate it before 
          // we can render this document
-         outputFrame_.closeOutputFrame();
+         outputFrame_.closeOutputFrame(false);
          server_.terminateRenderRmd(true, new ServerRequestCallback<Void>()
          {
             @Override
@@ -433,7 +433,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
           result_ != null && 
           !result_.getFormatName().equals(result.getFormatName()))
       {
-         outputFrame_.closeOutputFrame();
+         outputFrame_.closeOutputFrame(false);
          win = null;
          // let window finish closing before continuing
          Scheduler.get().scheduleDeferred(new ScheduledCommand()

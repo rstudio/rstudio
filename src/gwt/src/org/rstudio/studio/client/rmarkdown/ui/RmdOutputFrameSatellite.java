@@ -20,8 +20,10 @@ public class RmdOutputFrameSatellite extends RmdOutputFrameBase
    }
    
    @Override
-   public void closeOutputFrame() 
+   public void closeOutputFrame(boolean forReopen) 
    {
+      if (forReopen)
+         SatelliteManager.callNotifyPendingReactivate(getWindowObject());
       satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
    }
 

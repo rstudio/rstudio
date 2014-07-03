@@ -40,7 +40,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    }
 
    @Override
-   public void closeOutputFrame()
+   public void closeOutputFrame(boolean forReopen)
    {
       if (frame_ != null)
          frame_.setUrl("about:blank");

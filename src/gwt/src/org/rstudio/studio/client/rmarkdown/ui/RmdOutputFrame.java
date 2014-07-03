@@ -19,7 +19,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 
 public interface RmdOutputFrame 
 {
-	public void closeOutputFrame();
+	public void closeOutputFrame(boolean forReopen);
 	public WindowEx getWindowObject();
 	public void showRmdPreview(RmdPreviewParams params);
 	public int getViewerType();

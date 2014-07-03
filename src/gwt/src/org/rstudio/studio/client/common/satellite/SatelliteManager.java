@@ -354,6 +354,11 @@ public class SatelliteManager implements CloseHandler<Window>
       closeAllSatellites();
    }
    
+   // call notifyPendingReactivate on a satellite
+   public native static void callNotifyPendingReactivate(JavaScriptObject satellite) /*-{
+      satellite.notifyPendingReactivate();
+   }-*/;
+
    // called by satellites to connect themselves with the main window
    private void registerAsSatellite(final String name, JavaScriptObject wnd)
    {
@@ -474,11 +479,6 @@ public class SatelliteManager implements CloseHandler<Window>
       satellite.dispatchCommandToRStudioSatellite(commandId);
    }-*/;
    
-   // call notifyPendingReactivate on a satellite
-   private native void callNotifyPendingReactivate(JavaScriptObject satellite) /*-{
-      satellite.notifyPendingReactivate();
-   }-*/;
-
    // check whether the current window is a satellite (note this method
    // is also implemented in the Satellite class -- we don't want this class
    // to depend on Satellite so we duplicate the definition)
