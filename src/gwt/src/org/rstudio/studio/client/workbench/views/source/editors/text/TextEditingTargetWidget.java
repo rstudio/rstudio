@@ -552,8 +552,12 @@ public class TextEditingTargetWidget
    {
       rmdFormatButton_.clearMenu();
       int parenPos = selectedOption.indexOf('(');
+      boolean hasSubFormat = false;
       if (parenPos != -1)
+      {
          selectedOption = selectedOption.substring(0, parenPos).trim();
+         hasSubFormat = true;
+      }
       setFormatText(selectedOption);
       String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit ";
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
@@ -565,7 +569,8 @@ public class TextEditingTargetWidget
                                               null, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
-      rmdViewerButton_.setVisible(selectedOption.equals("HTML"));
+      rmdViewerButton_.setVisible(!hasSubFormat &&
+                                  selectedOption.equals("HTML"));
       setFormatOptionsVisible(true);
    }
 

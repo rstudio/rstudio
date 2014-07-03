@@ -279,6 +279,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          RmdPreviewParams params = outputFrame_.getPreviewParams();
          outputFrame_.closeOutputFrame(true);
          
+         // reset the scroll position (as it will vary with the document width,
+         // which will change)
+         params.setScrollPosition(0);
+         
          // open a new one with the same parameters
          outputFrame_ = createOutputFrame(newViewerType);
          outputFrame_.showRmdPreview(params);
@@ -422,18 +426,26 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       final RmdPreviewParams params = RmdPreviewParams.create(
             result, scrollPosition, anchor);
       
-      if (outputFrame_ == null)
-         outputFrame_ = createOutputFrame(prefs_.rmdViewerType().getValue());
-
-      WindowEx win = outputFrame_.getWindowObject();
+      // don't host presentations in the viewer pane--ioslides doesn't scale
+      // slides well without help
+      final int newViewerType = result.isHtmlPresentation() ?
+            RMD_VIEWER_TYPE_WINDOW :
+            prefs_.rmdViewerType().getValue();
+      
+      // get the window object if available
+      WindowEx win = null;
+      if (outputFrame_ != null)
+         win = outputFrame_.getWindowObject();
       
       // if there's a window up but it's showing a different document type, 
       // close it so that we can create a new one better suited to this doc type
       if (win != null && 
           result_ != null && 
-          !result_.getFormatName().equals(result.getFormatName()))
+          (!result_.getFormatName().equals(result.getFormatName()) ||
+           outputFrame_.getViewerType() != newViewerType))
       {
          outputFrame_.closeOutputFrame(false);
+         outputFrame_ = null;
          win = null;
          // let window finish closing before continuing
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -441,19 +453,25 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             @Override
             public void execute()
             {
-               displayRenderResult(null, params);
+               displayRenderResult(null, newViewerType, params);
             }
          });
       }
       else
       {
-         displayRenderResult(win, params);
+         displayRenderResult(win, newViewerType, params);
       }
    }
    
-   private void displayRenderResult(WindowEx win, RmdPreviewParams params)
+   private void displayRenderResult(WindowEx win, int viewerType, 
+                                    RmdPreviewParams params)
    {
       RmdRenderResult result = params.getResult();
+      
+      if (win == null && outputFrame_ == null)
+      {
+         outputFrame_ = createOutputFrame(viewerType);
+      }
       
       // we're refreshing if the window is up and we're pulling the same
       // output file as the last one

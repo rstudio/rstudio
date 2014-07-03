@@ -126,5 +126,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
-   private static final String ABOUT_BLANK = "about:blank";
+
+   public static final String ABOUT_BLANK = "about:blank";
 }

@@ -23,6 +23,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 
@@ -43,7 +44,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    public void closeOutputFrame(boolean forReopen)
    {
       if (frame_ != null)
-         frame_.setUrl("about:blank");
+         frame_.setUrl(ViewerPane.ABOUT_BLANK);
    }
 
    @Override
