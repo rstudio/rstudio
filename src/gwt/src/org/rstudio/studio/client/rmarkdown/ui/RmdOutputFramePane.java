@@ -15,11 +15,14 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.core.client.ScrollUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.shiny.ShinyFrameHelper;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 
@@ -33,6 +36,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    {
       events_ = events;
       events.addHandler(ViewerNavigatedEvent.TYPE, this);
+      shinyFrame_ = new ShinyFrameHelper();
    }
 
    @Override
@@ -65,12 +69,29 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    @Override
    public void onViewerNavigated(ViewerNavigatedEvent event)
    {
-      if (getPreviewParams() != null &&
-          getPreviewParams().getOutputUrl().equals(event.getURL()))
+      final RmdPreviewParams params = getPreviewParams();
+      if (params != null &&
+          params.getOutputUrl().equals(event.getURL()))
       {
          frame_ = event.getFrame();
-         ScrollUtil.setScrollPositionOnLoad(
-               frame_, getPreviewParams().getScrollPosition());
+         if (params.isShinyDocument())
+         {
+            shinyFrame_.initialize(
+               StringUtil.makeAbsoluteUrl(params.getOutputUrl()),
+               new Operation() {
+                  @Override
+                  public void execute()
+                  {
+                     shinyFrame_.setScrollPosition(
+                           params.getScrollPosition());
+                  }
+               });
+         }
+         else
+         {
+            ScrollUtil.setScrollPositionOnLoad(
+                  frame_, getPreviewParams().getScrollPosition());
+         }
       }
       else
       {
@@ -95,5 +116,6 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    }
    
    private RStudioFrame frame_;
+   private ShinyFrameHelper shinyFrame_;
    private final EventBus events_;
 }

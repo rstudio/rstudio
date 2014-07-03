@@ -168,7 +168,6 @@ public class TextEditingTargetWidget
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
       toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
-      ToolbarPopupMenu rmdViewerWindow = new ToolbarPopupMenu();
       rmdViewerButton_ = new ToolbarButton("", 
             StandardIcons.INSTANCE.viewer_window(), 
             buildRmdViewerMenu(), true);
@@ -566,6 +565,7 @@ public class TextEditingTargetWidget
                                               null, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
+      rmdViewerButton_.setVisible(selectedOption.equals("HTML"));
       setFormatOptionsVisible(true);
    }
 
