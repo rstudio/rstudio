@@ -18,6 +18,7 @@ package com.google.gwt.core.client.impl;
 import static com.google.gwt.core.client.impl.StackTraceExamples.TYPE_ERROR;
 
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorLegacy;
+import com.google.gwt.core.client.impl.StackTraceCreator.CollectorModern;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 
@@ -94,7 +95,28 @@ public class StackTraceNativeTest extends StackTraceTestBase {
     return (isLegacyCollector() || thrown != TYPE_ERROR) ? limited : full;
   }
 
+  public void testCollectorType() {
+    if (isIE8() || isSafari5()) {
+      assertTrue(isLegacyCollector());
+    } else {
+      assertTrue(isModernCollector());
+    }
+  }
+
   private static boolean isLegacyCollector() {
     return StackTraceCreator.collector instanceof CollectorLegacy;
   }
+
+  private static boolean isModernCollector() {
+    return StackTraceCreator.collector instanceof CollectorModern;
+  }
+
+  private static native boolean isIE8() /*-{
+    return navigator.userAgent.toLowerCase().indexOf('msie') != -1 && $doc.documentMode == 8;
+  }-*/;
+
+  private static native boolean isSafari5() /*-{
+    return navigator.userAgent.match(' Safari/') && !navigator.userAgent.match(' Chrom')
+        && !!navigator.userAgent.match(' Version/5.');
+  }-*/;
 }

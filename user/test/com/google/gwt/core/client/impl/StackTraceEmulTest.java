@@ -28,6 +28,11 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
     return "com.google.gwt.core.Core";
   }
 
+  @Override
+  public void testCollectorType() {
+    assertTrue(StackTraceCreator.collector instanceof StackTraceCreator.CollectorEmulated);
+  }
+
   /**
    * Verifies throw/try/catch doesn't poison the emulated stack frames.
    */

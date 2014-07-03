@@ -171,18 +171,8 @@ public class StackTraceCreator {
     @Override
     public native void collect(Object t, Object jsThrown) /*-{
       // TODO(goktug): optimize for Chrome by not evaluating stack (use Error.captureStackTrace)
-      t.stack = (jsThrown && jsThrown.stack) || @CollectorModern::makeException()().stack;
+      t.stack = (jsThrown && jsThrown.stack) || @StackTraceCreator::makeException()().stack;
      }-*/;
-
-    private static native JavaScriptObject makeException() /*-{
-      // TODO(goktug): new Error().stack is broken for htmlunit:
-      // https://sourceforge.net/p/htmlunit/bugs/1606/
-      try {
-        null.a();
-      } catch (e) {
-        return e;
-      }
-    }-*/;
 
     private JsArrayString inferFrom(Object t) {
       JsArrayString stack = split(t);
@@ -346,13 +336,25 @@ public class StackTraceCreator {
   static final Collector collector;
 
   static {
-    Collector c = GWT.create(Collector.class);
     // Ensure old Safari falls back to legacy Collector implementation.
-    collector = (c instanceof CollectorModern && !supportsErrorStack()) ? new CollectorLegacy() : c;
+    boolean enforceLegacy = !supportsErrorStack();
+    Collector c = GWT.create(Collector.class);
+    collector = (c instanceof CollectorModern && enforceLegacy) ? new CollectorLegacy() : c;
   }
 
   private static native boolean supportsErrorStack() /*-{
-    return "stack" in new Error; // Checked via 'in' to avoid execution of stack getter in Chrome
+    // Error.stackTraceLimit is cheaper to check and available in both IE and Chrome
+    return !!Error.stackTraceLimit || "stack" in @StackTraceCreator::makeException()();
+  }-*/;
+
+  private static native JavaScriptObject makeException() /*-{
+    // TODO(goktug): new Error().stack is broken for htmlunit:
+    // https://sourceforge.net/p/htmlunit/bugs/1606/
+    try {
+      null.a();
+    } catch (e) {
+      return e;
+    }
   }-*/;
 
   private static native JsArrayString getFnStack(Object e) /*-{
