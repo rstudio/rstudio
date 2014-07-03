@@ -29,6 +29,11 @@ public class ScrollUtil
          @Override
          public boolean execute()
          {
+            // don't wait indefinitely for
+            retries_++;
+            if (retries_ > MAX_SCROLL_RETRIES)
+               return false;
+
             if (frame.getIFrame() == null)
                return true;
             
@@ -52,11 +57,15 @@ public class ScrollUtil
 
             return false;
          }
-      }, 50);
+         
+         private int retries_ = 0;
+      }, SCROLL_RETRY_MS);
    }
 
    private final native static String getDocumentReadyState(Document doc) /*-{
       return doc.readyState || null;
    }-*/;
    
+   private final static int SCROLL_RETRY_MS = 50;
+   private final static int MAX_SCROLL_RETRIES = 200;  // 10s
 }
