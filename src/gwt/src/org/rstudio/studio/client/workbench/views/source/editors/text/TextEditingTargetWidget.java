@@ -588,14 +588,17 @@ public class TextEditingTargetWidget
    }
    
    @Override
-   public void setIsShinyFormat()
+   public void setIsShinyFormat(boolean isPresentation)
    {
       // hide the format picker for Shiny documents
       rmdFormatButton_.setVisible(false);
       rmdFormatButton_.setEnabled(false);
+      rmdViewerButton_.setVisible(!isPresentation);
+      String docType = isPresentation ? "Presentation" : "Document";
       
-      knitCommandText_ = "Run Document";
-      knitDocumentButton_.setTitle("View the current document with Shiny (" +
+      knitCommandText_ = "Run " + docType;
+      knitDocumentButton_.setTitle("View the current " + docType.toLowerCase() + 
+            " with Shiny (" +
             DomUtils.htmlToText(
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);

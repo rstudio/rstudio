@@ -80,6 +80,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
@@ -177,7 +178,7 @@ public class TextEditingTarget implements
       void debug_dumpContents();
       void debug_importDump();
       
-      void setIsShinyFormat();
+      void setIsShinyFormat(boolean isPresentation);
       void setFormatOptions(TextFileType fileType,
                             List<String> options, 
                             List<String> values, 
@@ -2453,7 +2454,9 @@ public class TextEditingTarget implements
       
       else if (selTemplate.isShiny)
       {
-         view_.setIsShinyFormat();
+         view_.setIsShinyFormat(selTemplate.format != null &&
+                                selTemplate.format.endsWith(
+                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX));
          return;
       }
       
