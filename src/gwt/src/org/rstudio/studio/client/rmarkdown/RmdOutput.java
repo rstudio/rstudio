@@ -434,15 +434,20 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       
       // get the window object if available
       WindowEx win = null;
+      boolean needsReopen = false;
       if (outputFrame_ != null)
+      {
          win = outputFrame_.getWindowObject();
+         if (outputFrame_.getViewerType() != newViewerType)
+            needsReopen = true;
+      }
       
       // if there's a window up but it's showing a different document type, 
       // close it so that we can create a new one better suited to this doc type
-      if (win != null && 
-          result_ != null && 
-          (!result_.getFormatName().equals(result.getFormatName()) ||
-           outputFrame_.getViewerType() != newViewerType))
+      if (needsReopen || 
+            (win != null && 
+             result_ != null && 
+             !result_.getFormatName().equals(result.getFormatName())))
       {
          outputFrame_.closeOutputFrame(false);
          outputFrame_ = null;
@@ -468,10 +473,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       RmdRenderResult result = params.getResult();
       
-      if (win == null && outputFrame_ == null)
-      {
+      if (outputFrame_ == null)
          outputFrame_ = createOutputFrame(viewerType);
-      }
       
       // we're refreshing if the window is up and we're pulling the same
       // output file as the last one

@@ -21,22 +21,28 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
-import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 
 import com.google.inject.Inject;
 
 public class RmdOutputFramePane extends RmdOutputFrameBase 
-                                implements ViewerNavigatedEvent.Handler
+                                implements ViewerNavigatedEvent.Handler,
+                                           ViewerClearedEvent.Handler
 {
    @Inject
-   public RmdOutputFramePane(EventBus events)
+   public RmdOutputFramePane(EventBus events, 
+                             RMarkdownServerOperations server)
    {
       events_ = events;
+      server_ = server;
       events.addHandler(ViewerNavigatedEvent.TYPE, this);
+      events.addHandler(ViewerClearedEvent.TYPE, this);
       shinyFrame_ = new ShinyFrameHelper();
    }
 
@@ -44,7 +50,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    public void closeOutputFrame(boolean forReopen)
    {
       if (frame_ != null)
-         frame_.setUrl(ViewerPane.ABOUT_BLANK);
+         frame_.setUrl("about:blank");
    }
 
    @Override
@@ -59,6 +65,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    public void showRmdPreview(RmdPreviewParams params)
    {
       super.showRmdPreview(params);
+      isShiny_ = params.isShinyDocument();
       ViewerNavigateEvent.Data data = ViewerNavigateEvent.Data.create(
             params.getOutputUrl(), 
             frame_ == null ?
@@ -101,6 +108,18 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    }
    
    @Override
+   public void onViewerCleared(ViewerClearedEvent event)
+   {
+      // if a Shiny document is running in the viewer, stop render when the
+      // viewer is cleared
+      if (isShiny_)
+      {
+         server_.terminateRenderRmd(true, new VoidServerRequestCallback());
+         isShiny_ = false;
+      }
+   }
+
+   @Override
    public int getViewerType()
    {
       return RmdOutput.RMD_VIEWER_TYPE_PANE;
@@ -118,5 +137,8 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    
    private RStudioFrame frame_;
    private ShinyFrameHelper shinyFrame_;
+   private boolean isShiny_;
+   
+   private final RMarkdownServerOperations server_;
    private final EventBus events_;
 }

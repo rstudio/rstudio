@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
@@ -175,6 +176,8 @@ public class ViewerPresenter extends BasePresenter
                runningShinyAppParams_));
       }
       runningShinyAppParams_ = null;
+      
+      events_.fireEvent(new ViewerClearedEvent());
    }
    
    private void enableCommands(boolean enable)
