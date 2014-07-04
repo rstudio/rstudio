@@ -683,10 +683,12 @@ public class TextEditingTargetWidget
    private ToolbarPopupMenu buildRmdViewerMenu()
    {
       ToolbarPopupMenu rmdViewerWindow = new ToolbarPopupMenu();
-      MenuItem rmdViewerPaneMenuItem = new RmdViewerTypeMenuItem(
+      MenuItem rmdViewerPaneMenuItem = new UIPrefMenuItem<Integer>(
+            uiPrefs_.rmdViewerType(),
             RmdOutput.RMD_VIEWER_TYPE_PANE, 
             "View in Pane", uiPrefs_);
-      MenuItem rmdViewerWindowMenuItem = new RmdViewerTypeMenuItem(
+      MenuItem rmdViewerWindowMenuItem = new UIPrefMenuItem<Integer>(
+            uiPrefs_.rmdViewerType(),
             RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
             "View in Window", uiPrefs_);
       rmdViewerWindow.addItem(rmdViewerPaneMenuItem);
