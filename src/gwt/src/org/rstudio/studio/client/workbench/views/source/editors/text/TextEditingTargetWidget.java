@@ -579,6 +579,7 @@ public class TextEditingTargetWidget
       if (!visible)
       {
          setFormatText("");
+         rmdViewerButton_.setVisible(false);
       }
       rmdFormatButton_.setVisible(visible);
       editRmdFormatButton_.setVisible(visible);

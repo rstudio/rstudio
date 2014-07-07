@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -273,7 +274,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       if (outputFrame_ != null && 
           outputFrame_.getWindowObject() != null && 
-          prefs_.rmdViewerType().getValue() != outputFrame_.getViewerType())
+          newViewerType != outputFrame_.getViewerType())
       {
          // close the existing frame
          RmdPreviewParams params = outputFrame_.getPreviewParams();
@@ -288,7 +289,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          outputFrame_.showRmdPreview(params);
       }
       else if (outputFrame_ != null && 
-               outputFrame_.getWindowObject() == null)
+               outputFrame_.getWindowObject() == null &&
+               outputFrame_.getViewerType() != newViewerType)
       {
          // output frame exists but doesn't have a loaded doc, clear it so we'll
          // create the frame appropriate to this type on next render
