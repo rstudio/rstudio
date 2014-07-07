@@ -1369,49 +1369,41 @@ public class UnifyAst {
       NameBasedTypeLocator nameBasedTypeLocator, boolean reportErrors) {
 
     if (nameBasedTypeLocator.resolvedTypeIsAvailable(typeName)) {
+      // The type was already resolved.
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
     if (nameBasedTypeLocator.sourceCompilationUnitIsAvailable(typeName)) {
+      // Resolve from source.
       assimilateSourceUnit(nameBasedTypeLocator.getCompilationUnitFromSource(typeName),
           reportErrors);
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
-    if (compilerContext.shouldCompileMonolithic()) {
-      if (reportErrors) {
-        if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
-          TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
-              "Type %s could not be referenced because it previously failed to "
-              + "compile with errors:", typeName));
-          nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
-        } else {
-          logger.log(TreeLogger.ERROR, String.format(
-              "Could not find %s in types compiled from source. Is the source glob too strict?",
-              typeName));
-        }
-        errorsFound = true;
-      }
-      return null;
-    }
-
-    if (nameBasedTypeLocator.libraryCompilationUnitIsAvailable(typeName)) {
+    if (!compilerContext.shouldCompileMonolithic() &&
+        nameBasedTypeLocator.libraryCompilationUnitIsAvailable(typeName)) {
+      // Resolve from a library in modular compiles.
       assimilateLibraryUnit(nameBasedTypeLocator.getCompilationUnitFromLibrary(typeName),
           reportErrors);
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
-    if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
-      if (reportErrors) {
+    if (reportErrors) {
+      // The type could not be resolved as source nor from a library; report the appropriate error.
+      if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
         TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
-            "Type %s could not be referenced because it previously failed to compile with errors:",
-            typeName));
-        nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
-      } else {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Could not find %s in types compiled from source or in provided dependency libraries. "
-            + "Either the source file was unavailable or there is a missing dependency.",
-            typeName));
+              "Type %s could not be referenced because it previously failed to "
+              + "compile with errors:", typeName));
+          nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
+        } else if (compilerContext.shouldCompileMonolithic())  {
+          logger.log(TreeLogger.ERROR, String.format(
+              "Could not find %s in types compiled from source. Is the source glob too strict?",
+              typeName));
+        } else {
+          logger.log(TreeLogger.ERROR, String.format(
+          "Could not find %s in types compiled from source or in provided dependency libraries. "
+              + "Either the source file was unavailable or there is a missing dependency.",
+          typeName));
       }
       errorsFound = true;
     }
