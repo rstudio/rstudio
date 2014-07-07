@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
-import org.rstudio.studio.client.rmarkdown.ui.RmdViewerTypeMenuItem;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;

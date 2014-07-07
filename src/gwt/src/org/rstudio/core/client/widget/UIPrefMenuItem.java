@@ -22,6 +22,9 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 
+// A menu item that represents a given value for a given UIPref. Shows a check
+// when the UIPref is set to the value. Invoking the menu item sets the UIPref
+// to the value.
 public class UIPrefMenuItem <T> extends CheckableMenuItem
 {
    public UIPrefMenuItem(PrefValue<T> prefValue, T targetValue, 

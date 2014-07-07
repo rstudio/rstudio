@@ -17,12 +17,15 @@ package org.rstudio.studio.client.rmarkdown.ui;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 
+// Represents a frame that contains a rendered R Markdown document.
+// Implementations currently include a frame in an IDE pane (RmdOutputFramePane)
+// and a frame embedded in a satellite window (RmdOutputFrameSatellite)
 public interface RmdOutputFrame 
 {
-	public void closeOutputFrame(boolean forReopen);
-	public WindowEx getWindowObject();
-	public void showRmdPreview(RmdPreviewParams params);
-	public int getViewerType();
+   public void closeOutputFrame(boolean forReopen);
+   public WindowEx getWindowObject();
+   public void showRmdPreview(RmdPreviewParams params);
+   public int getViewerType();
    RmdPreviewParams getPreviewParams();
    public int getScrollPosition();
 }

@@ -29,7 +29,7 @@ public class ScrollUtil
          @Override
          public boolean execute()
          {
-            // don't wait indefinitely for
+            // don't wait indefinitely for the document to load
             retries_++;
             if (retries_ > MAX_SCROLL_RETRIES)
                return false;

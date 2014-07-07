@@ -7,6 +7,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.MenuItem;
 
+// A menu item that can be checked or unchecked--appears similarly to a
+// checkable AppCommand but isn't backed by an AppCommand.
 public abstract class CheckableMenuItem extends MenuItem
 {
    public CheckableMenuItem()

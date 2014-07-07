@@ -25,6 +25,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
@@ -50,7 +51,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    public void closeOutputFrame(boolean forReopen)
    {
       if (frame_ != null)
-         frame_.setUrl("about:blank");
+         frame_.setUrl(ViewerPane.ABOUT_BLANK);
    }
 
    @Override
@@ -66,6 +67,8 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    {
       super.showRmdPreview(params);
       isShiny_ = params.isShinyDocument();
+      // maximize the frame if we're taking control of it, but don't maximize on
+      // reload (we want to keep any user adjustments)
       ViewerNavigateEvent.Data data = ViewerNavigateEvent.Data.create(
             params.getOutputUrl(), 
             frame_ == null ?
