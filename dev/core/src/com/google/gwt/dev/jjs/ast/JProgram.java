@@ -340,8 +340,6 @@ public class JProgram extends JNode {
 
   private final Map<String, JDeclaredType> typeNameMap = Maps.newHashMap();
 
-  private List<JReferenceType> typesByQueryId;
-
   private Map<JField, JType> typesByClassLiteralField;
 
   private JClassType typeSpecialClassLiteralHolder;
@@ -949,10 +947,6 @@ public class JProgram extends JNode {
 
   public JPrimitiveType getTypePrimitiveShort() {
     return JPrimitiveType.SHORT;
-  }
-
-  public List<JReferenceType> getTypesByQueryId() {
-    return typesByQueryId;
   }
 
   public JPrimitiveType getTypeVoid() {
