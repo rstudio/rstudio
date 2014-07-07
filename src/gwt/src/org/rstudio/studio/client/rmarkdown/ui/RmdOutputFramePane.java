@@ -131,11 +131,18 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    @Override
    public int getScrollPosition()
    {
-      if (frame_ == null ||
-          frame_.getIFrame() == null ||
-          frame_.getIFrame().getContentWindow() == null)
-         return 0;
-      return frame_.getIFrame().getContentWindow().getScrollTop();
+      if (isShiny_ && shinyFrame_ != null)
+      {
+         return shinyFrame_.getScrollPosition();
+      }
+      else
+      {
+         if (frame_ == null ||
+             frame_.getIFrame() == null ||
+             frame_.getIFrame().getContentWindow() == null)
+            return 0;
+         return frame_.getIFrame().getContentWindow().getScrollTop();
+      }
    }
    
    private RStudioFrame frame_;
