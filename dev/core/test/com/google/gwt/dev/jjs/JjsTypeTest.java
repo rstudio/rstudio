@@ -277,8 +277,8 @@ public class JjsTypeTest extends TestCase {
   }
 
   private void assertSuperHierarchy(JReferenceType type, JReferenceType... superHierarchyTypes) {
-    assertEquals(typeOracle.getSuperHierarchyTypes(type),
-        Sets.<JReferenceType> newHashSet(superHierarchyTypes));
+    assertEquals(Sets.<JReferenceType> newHashSet(superHierarchyTypes),
+        typeOracle.getSuperHierarchyTypes(type));
   }
 
   private JClassType createClass(String className, JClassType superClass, boolean isAbstract,
