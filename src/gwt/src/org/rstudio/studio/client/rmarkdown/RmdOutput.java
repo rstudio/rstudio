@@ -17,7 +17,7 @@ package org.rstudio.studio.client.rmarkdown;
 import java.util.Map;
 import java.util.HashMap;
 
-import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -25,13 +25,13 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
@@ -45,17 +45,22 @@ import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
+import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrame;
 import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -66,11 +71,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RmdShinyDocStartedEvent.Handler,
                                   RenderRmdEvent.Handler,
                                   RenderRmdSourceEvent.Handler,
-                                  RestartStatusEvent.Handler
+                                  RestartStatusEvent.Handler,
+                                  UiPrefsChangedHandler
 {
    public interface Binder
    extends CommandBinder<Commands, RmdOutput> {}
-
+   
    @Inject
    public RmdOutput(EventBus eventBus, 
                     Commands commands,
@@ -80,10 +86,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                     Binder binder,
                     UIPrefs prefs,
                     PDFViewer pdfViewer,
-                    final SatelliteManager satelliteManager,
                     RMarkdownServerOperations server)
    {
-      satelliteManager_ = satelliteManager;
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       pViewFilePanel_ = pViewFilePanel;
@@ -98,6 +102,16 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       eventBus.addHandler(RenderRmdEvent.TYPE, this);
       eventBus.addHandler(RenderRmdSourceEvent.TYPE, this);
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
+      eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
+
+      prefs_.rmdViewerType().addValueChangeHandler(new ValueChangeHandler<Integer>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Integer> e)
+         {
+            onViewerTypeChanged(e.getValue());
+         }
+      });
 
       binder.bind(commands, this);
       
@@ -239,7 +253,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // terminated renders)
       if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED) 
       {
-         satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
+         outputFrame_.closeOutputFrame(false);
          restarting_ = true;
       }
       else
@@ -248,7 +262,41 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
    }
 
+   @Override
+   public void onUiPrefsChanged(UiPrefsChangedEvent e)
+   {
+      onViewerTypeChanged(prefs_.rmdViewerType().getValue());
+   }
+   
    // Private methods ---------------------------------------------------------
+   
+   private void onViewerTypeChanged(int newViewerType)
+   {
+      if (outputFrame_ != null && 
+          outputFrame_.getWindowObject() != null && 
+          newViewerType != outputFrame_.getViewerType())
+      {
+         // close the existing frame
+         RmdPreviewParams params = outputFrame_.getPreviewParams();
+         outputFrame_.closeOutputFrame(true);
+         
+         // reset the scroll position (as it will vary with the document width,
+         // which will change)
+         params.setScrollPosition(0);
+         
+         // open a new one with the same parameters
+         outputFrame_ = createOutputFrame(newViewerType);
+         outputFrame_.showRmdPreview(params);
+      }
+      else if (outputFrame_ != null && 
+               outputFrame_.getWindowObject() == null &&
+               outputFrame_.getViewerType() != newViewerType)
+      {
+         // output frame exists but doesn't have a loaded doc, clear it so we'll
+         // create the frame appropriate to this type on next render
+         outputFrame_ = null;
+      }
+   }
    
    // perform the given render after terminating the currently running Shiny
    // application if there is one
@@ -258,7 +306,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       {
          // there is a Shiny doc running; we'll need to terminate it before 
          // we can render this document
-         satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
+         outputFrame_.closeOutputFrame(false);
          server_.terminateRenderRmd(true, new ServerRequestCallback<Void>()
          {
             @Override
@@ -379,17 +427,32 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
       final RmdPreviewParams params = RmdPreviewParams.create(
             result, scrollPosition, anchor);
-
-      WindowEx win = satelliteManager_.getSatelliteWindowObject(
-            RmdOutputSatellite.NAME);
+      
+      // don't host presentations in the viewer pane--ioslides doesn't scale
+      // slides well without help
+      final int newViewerType = result.isHtmlPresentation() ?
+            RMD_VIEWER_TYPE_WINDOW :
+            prefs_.rmdViewerType().getValue();
+      
+      // get the window object if available
+      WindowEx win = null;
+      boolean needsReopen = false;
+      if (outputFrame_ != null)
+      {
+         win = outputFrame_.getWindowObject();
+         if (outputFrame_.getViewerType() != newViewerType)
+            needsReopen = true;
+      }
       
       // if there's a window up but it's showing a different document type, 
       // close it so that we can create a new one better suited to this doc type
-      if (win != null && 
-          result_ != null && 
-          !result_.getFormatName().equals(result.getFormatName()))
+      if (needsReopen || 
+            (win != null && 
+             result_ != null && 
+             !result_.getFormatName().equals(result.getFormatName())))
       {
-         satelliteManager_.closeSatelliteWindow(RmdOutputSatellite.NAME);
+         outputFrame_.closeOutputFrame(false);
+         outputFrame_ = null;
          win = null;
          // let window finish closing before continuing
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -397,19 +460,23 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             @Override
             public void execute()
             {
-               displayRenderResult(null, params);
+               displayRenderResult(null, newViewerType, params);
             }
          });
       }
       else
       {
-         displayRenderResult(win, params);
+         displayRenderResult(win, newViewerType, params);
       }
    }
    
-   private void displayRenderResult(WindowEx win, RmdPreviewParams params)
+   private void displayRenderResult(WindowEx win, int viewerType, 
+                                    RmdPreviewParams params)
    {
       RmdRenderResult result = params.getResult();
+      
+      if (outputFrame_ == null)
+         outputFrame_ = createOutputFrame(viewerType);
       
       // we're refreshing if the window is up and we're pulling the same
       // output file as the last one
@@ -422,27 +489,18 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // position of the old document before we replace it
       if (!isRefresh && result_ != null && win != null)
       {
-         cacheDocPosition(result_, getScrollPosition(win), getAnchor(win));
+         cacheDocPosition(result_, outputFrame_.getScrollPosition(), 
+                          getAnchor(win));
       }
 
       // if it is a refresh, use the doc's existing positions
       if (isRefresh)
       {
-         params.setScrollPosition(getScrollPosition(win));
+         params.setScrollPosition(outputFrame_.getScrollPosition());
          params.setAnchor(getAnchor(win));
       }
 
-      if (win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
-      {
-         satelliteManager_.forceReopenSatellite(RmdOutputSatellite.NAME, 
-                                                params);
-      }
-      else
-      {
-         satelliteManager_.openSatellite(RmdOutputSatellite.NAME,     
-                                         params,
-                                         params.getPreferredSize());   
-      }
+      outputFrame_.showRmdPreview(params);
 
       // save the result so we know if the next render is a re-render of the
       // same document
@@ -456,19 +514,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             registry.@org.rstudio.studio.client.rmarkdown.RmdOutput::notifyRmdOutputClosed(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
          }
       ); 
-   }-*/;
-   
-   private final native int getScrollPosition(JavaScriptObject win) /*-{
-      var scrollPosition;
-      try {
-         scrollPosition = win.getRstudioFrameScrollPosition();
-      }
-      catch (e) {
-         // fail gracefully with top of document
-      }
-      if (typeof(scrollPosition) === "undefined")
-         scrollPosition = 0;
-      return scrollPosition;
    }-*/;
    
    private final native String getAnchor(JavaScriptObject win) /*-{
@@ -523,8 +568,19 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       else
          return result.getOutputFile() + "-" + result.getFormatName();
    }
+   
+   private RmdOutputFrame createOutputFrame(int viewerType)
+   {
+      switch(viewerType)
+      {
+      case RMD_VIEWER_TYPE_WINDOW:
+         return RStudioGinjector.INSTANCE.getRmdOutputFrameSatellite();
+      case RMD_VIEWER_TYPE_PANE:
+         return RStudioGinjector.INSTANCE.getRmdOutputFramePane();
+      }
+      return null;
+   }
 
-   private final SatelliteManager satelliteManager_;
    private final GlobalDisplay globalDisplay_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final UIPrefs prefs_;
@@ -543,4 +599,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private RmdRenderResult result_;
    private RmdShinyDocInfo shinyDoc_;
    private Operation onRenderCompleted_;
+   private RmdOutputFrame outputFrame_;
+   
+   public final static int RMD_VIEWER_TYPE_WINDOW = 0;
+   public final static int RMD_VIEWER_TYPE_PANE = 1;
 }

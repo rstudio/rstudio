@@ -97,7 +97,7 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
 
    public final boolean isHtmlPresentation()
    {
-      return isHtml() && getFormatName().endsWith(
+      return (isShinyDocument() || isHtml()) && getFormatName().endsWith(
                   RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX);
    }
    

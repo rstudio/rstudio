@@ -26,6 +26,15 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       {
       }
       
+      public native final static Data create(String url, int height, 
+                                             boolean useRawURL) /*-{
+         return {
+            url: url,
+            height: height,
+            use_raw_url: useRawURL
+         };
+      }-*/;
+      
       public native final String getURL() /*-{
          return this.url;
       }-*/;
@@ -34,7 +43,9 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
          return this.height;
       }-*/;
       
-      
+      public native final boolean useRawURL() /*-{
+         return !!this.use_raw_url;
+      }-*/;
    }
    
    public interface Handler extends EventHandler
@@ -57,6 +68,11 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       return data_.getHeight();
    }
    
+   public boolean useRawURL()
+   {
+      return data_.useRawURL();
+   }
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -72,4 +88,5 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    private final Data data_;
   
    public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final int HEIGHT_MAXIMIZE = -1;
 }

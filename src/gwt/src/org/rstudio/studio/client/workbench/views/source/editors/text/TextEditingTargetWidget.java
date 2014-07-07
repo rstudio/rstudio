@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -166,6 +167,11 @@ public class TextEditingTargetWidget
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
       toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
+      rmdViewerButton_ = new ToolbarButton("", 
+            StandardIcons.INSTANCE.viewer_window(), 
+            buildRmdViewerMenu(), true);
+      toolbar.addLeftWidget(rmdViewerButton_);
+
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
@@ -239,6 +245,7 @@ public class TextEditingTargetWidget
                        true);
       shinyLaunchButton_.setVisible(false);
       toolbar.addRightWidget(shinyLaunchButton_);
+      
       return toolbar;
    }
    
@@ -276,6 +283,7 @@ public class TextEditingTargetWidget
          codeTransform_ = new ToolbarButton("", icon, menu);
          codeTransform_.setTitle("Code Tools");
       }
+      
       return codeTransform_;
    }
    
@@ -335,6 +343,7 @@ public class TextEditingTargetWidget
       rmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setEnabled(isRMarkdown2);
+      rmdViewerButton_.setVisible(isRMarkdown2);
 
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
@@ -542,8 +551,12 @@ public class TextEditingTargetWidget
    {
       rmdFormatButton_.clearMenu();
       int parenPos = selectedOption.indexOf('(');
+      boolean hasSubFormat = false;
       if (parenPos != -1)
+      {
          selectedOption = selectedOption.substring(0, parenPos).trim();
+         hasSubFormat = true;
+      }
       setFormatText(selectedOption);
       String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit ";
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
@@ -555,6 +568,8 @@ public class TextEditingTargetWidget
                                               null, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
+      rmdViewerButton_.setVisible(!hasSubFormat &&
+                                  selectedOption.equals("HTML"));
       setFormatOptionsVisible(true);
    }
 
@@ -564,6 +579,7 @@ public class TextEditingTargetWidget
       if (!visible)
       {
          setFormatText("");
+         rmdViewerButton_.setVisible(false);
       }
       rmdFormatButton_.setVisible(visible);
       editRmdFormatButton_.setVisible(visible);
@@ -572,14 +588,17 @@ public class TextEditingTargetWidget
    }
    
    @Override
-   public void setIsShinyFormat()
+   public void setIsShinyFormat(boolean isPresentation)
    {
       // hide the format picker for Shiny documents
       rmdFormatButton_.setVisible(false);
       rmdFormatButton_.setEnabled(false);
+      rmdViewerButton_.setVisible(!isPresentation);
+      String docType = isPresentation ? "Presentation" : "Document";
       
-      knitCommandText_ = "Run Document";
-      knitDocumentButton_.setTitle("View the current document with Shiny (" +
+      knitCommandText_ = "Run " + docType;
+      knitDocumentButton_.setTitle("View the current " + docType.toLowerCase() + 
+            " with Shiny (" +
             DomUtils.htmlToText(
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
@@ -663,7 +682,24 @@ public class TextEditingTargetWidget
    {
       return rmdFormatButton_.addValueChangeHandler(handler);
    }
+   
+   private ToolbarPopupMenu buildRmdViewerMenu()
+   {
+      ToolbarPopupMenu rmdViewerWindow = new ToolbarPopupMenu();
+      MenuItem rmdViewerPaneMenuItem = new UIPrefMenuItem<Integer>(
+            uiPrefs_.rmdViewerType(),
+            RmdOutput.RMD_VIEWER_TYPE_PANE, 
+            "View in Pane", uiPrefs_);
+      MenuItem rmdViewerWindowMenuItem = new UIPrefMenuItem<Integer>(
+            uiPrefs_.rmdViewerType(),
+            RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
+            "View in Window", uiPrefs_);
+      rmdViewerWindow.addItem(rmdViewerPaneMenuItem);
+      rmdViewerWindow.addItem(rmdViewerWindowMenuItem);
 
+      return rmdViewerWindow;
+   }
+   
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final FileTypeRegistry fileTypeRegistry_;
@@ -688,6 +724,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
+   private ToolbarButton rmdViewerButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    
    private Widget texSeparatorWidget_;

@@ -20,6 +20,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
@@ -360,6 +361,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<String> rmdPreferredTemplatePath()
    {
       return string("rmd_preferred_template_path", "");
+   }
+   
+   public PrefValue<Integer> rmdViewerType()
+   {
+      return integer("rmd_viewer_type", RmdOutput.RMD_VIEWER_TYPE_WINDOW);
    }
 
    private String getDefaultPdfPreview()

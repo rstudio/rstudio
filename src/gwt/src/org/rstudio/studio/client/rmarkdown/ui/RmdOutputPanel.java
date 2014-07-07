@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.ScrollUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -312,7 +313,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                
                // Even though the document exists, it may not have rendered all
                // its content yet
-               setScrollPositionOnLoad();
+               ScrollUtil.setScrollPositionOnLoad(frame, scrollPosition_);
 
                return false;
             }
@@ -481,36 +482,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          return 0;
       }
    }
-   
-   private void setScrollPositionOnLoad()
-   {
-      Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
-         @Override
-         public boolean execute()
-         {
-            // check to see whether the document has finished loading--
-            // we don't want to apply the scroll position until all content
-            // has been fully rendered
-            Document doc = getFrame().getIFrame().getContentDocument();
-            String readyState = getDocumentReadyState(doc);
-            if (readyState == null)
-               return false;
-            
-            if (!readyState.equals("complete"))
-               return true;
-
-            // restore scroll position
-            if (scrollPosition_ > 0)
-               doc.setScrollTop(scrollPosition_);
-
-            return false;
-         }
-      }, 50);
-   }
-   
-   private final native String getDocumentReadyState(Document doc) /*-{
-      return doc.readyState || null;
-   }-*/;
    
    private String getDocumentUrl() 
    {
