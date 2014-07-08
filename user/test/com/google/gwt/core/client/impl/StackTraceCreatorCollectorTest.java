@@ -18,13 +18,15 @@ package com.google.gwt.core.client.impl;
 import static com.google.gwt.core.client.impl.StackTraceCreator.extractFunctionName;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorModern;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Tests different {@link StackTraceCreator.Collector} implementations.
  */
+@DoNotRunWith(Platform.Devel)
 public class StackTraceCreatorCollectorTest extends GWTTestCase {
 
   @Override
@@ -204,8 +206,7 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
   }
 
   private static void assertStackTrace(JavaScriptObject exception, StackTraceElement[] expected) {
-    Collector collector = new CollectorModern();
-    assertEquals(expected, collector.getStackTrace(exception));
+    assertEquals(expected, new CollectorModern().getStackTrace(exception));
   }
 
   private static void assertEquals(StackTraceElement[] expecteds, StackTraceElement[] actuals) {

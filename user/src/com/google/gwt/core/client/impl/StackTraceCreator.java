@@ -174,28 +174,45 @@ public class StackTraceCreator {
       t.stack = (jsThrown && jsThrown.stack) || @StackTraceCreator::makeException()().stack;
      }-*/;
 
-    private JsArrayString inferFrom(Object t) {
+    @Override
+    public StackTraceElement[] getStackTrace(Object t) {
       JsArrayString stack = split(t);
-      for (int i = 0, j = stack.length(); i < j; i++) {
-        stack.set(i, extractName(stack.get(i)));
+
+      // We are in script-mode - let the array auto grow.
+      StackTraceElement[] stackTrace = new StackTraceElement[0];
+      int addIndex = 0, length = stack.length();
+
+      if (length == 0) {
+        // Nothing to parse...
+        return stackTrace;
       }
 
-      if (stack.length() > 0 && stack.get(0).startsWith(ANONYMOUS + "@@")) {
-        // Chrome, IE10+ contains the error msg as the first line of stack (iOS, Firefox doesn't).
-        stack = splice(stack, 1);
+      // Chrome & IE10+ contains the error msg as the first line of stack (iOS, Firefox doesn't).
+      StackTraceElement ste = parse(stack.get(0));
+      if (!ste.getMethodName().equals(ANONYMOUS)) {
+        stackTrace[addIndex++] = ste;
       }
-      return stack;
+
+      // Parse and put the rest of the elements in to the stack trace.
+      for (int i = 1; i < length; i++) {
+        stackTrace[addIndex++] = parse(stack.get(i));
+      }
+
+      return stackTrace;
     }
 
-    private String extractName(String fnToString) {
-      String extractedName = ANONYMOUS;
+    /**
+     * Parses a stack trace line from the browser and returns a new {@link StackTraceElement}
+     * constructed with the extracted data.
+     */
+    private StackTraceElement parse(String stString) {
       String location = "";
 
-      if (fnToString.length() == 0) {
-        return extractedName;
+      if (stString.isEmpty()) {
+        return createSte(UNKNOWN, ANONYMOUS, LINE_NUMBER_UNKNOWN, -1);
       }
 
-      String toReturn = fnToString.trim();
+      String toReturn = stString.trim();
 
       // Strip the "at " prefix:
       if (toReturn.startsWith("at ")) {
@@ -229,52 +246,37 @@ public class StackTraceCreator {
         toReturn = toReturn.substring(index + 1);
       }
 
-      // IE has also special naming for anonymous functions.
-      if (toReturn.equals("Anonymous function")) {
-         toReturn = "";
+      final String ieAnonymousFunctionName = "Anonymous function";
+      if (toReturn.isEmpty() || toReturn.equals(ieAnonymousFunctionName)) {
+        toReturn = ANONYMOUS;
       }
 
-      return (toReturn.length() > 0 ? toReturn : ANONYMOUS) + "@@" + location;
+      // colon between line and column
+      int lastColonIndex = location.lastIndexOf(':');
+      // colon between file url and line number
+      int endFileUrlIndex = location.lastIndexOf(':', lastColonIndex - 1);
+
+      int line = LINE_NUMBER_UNKNOWN;
+      int col = -1;
+      String fileName = UNKNOWN;
+
+      if (lastColonIndex != -1 && endFileUrlIndex != -1) {
+        fileName = location.substring(0, endFileUrlIndex);
+        line = parseInt(location.substring(endFileUrlIndex + 1, lastColonIndex));
+        col = parseInt(location.substring(lastColonIndex + 1));
+      }
+
+      return createSte(fileName, toReturn, line, col);
+    }
+
+    protected StackTraceElement createSte(String fileName, String method, int line, int col) {
+      return new StackTraceElement(UNKNOWN, method, fileName + "@" + col,
+          line < 0 ? LINE_NUMBER_UNKNOWN : line);
     }
 
     private native String stripSquareBrackets(String toReturn) /*-{
       return toReturn.replace(/\[.*?\]/g,"")
     }-*/;
-
-    protected int replaceIfNoSourceMap(int line) {
-         return line;
-    }
-
-    @Override
-    public StackTraceElement[] getStackTrace(Object t) {
-      JsArrayString stack = inferFrom(t);
-
-      int length = stack.length();
-      StackTraceElement[] stackTrace = new StackTraceElement[length];
-      for (int i = 0; i < length; i++) {
-        String stackElements[] = stack.get(i).split("@@");
-
-        int line = LINE_NUMBER_UNKNOWN;
-        int col = -1;
-        String fileName = UNKNOWN;
-        if (stackElements.length == 2 && stackElements[1] != null) {
-          String location = stackElements[1];
-          // colon between line and column
-          int lastColon = location.lastIndexOf(':');
-          // colon between file url and line number
-          int endFileUrl = location.lastIndexOf(':', lastColon - 1);
-
-          if (lastColon != -1 && endFileUrl != -1) {
-              fileName = location.substring(0, endFileUrl);
-              line = parseInt(location.substring(endFileUrl + 1, lastColon));
-              col = parseInt(location.substring(lastColon + 1));
-          }
-        }
-        stackTrace[i] = new StackTraceElement(UNKNOWN, stackElements[0], fileName + "@" + col,
-            replaceIfNoSourceMap(line < 0 ? LINE_NUMBER_UNKNOWN : line));
-      }
-      return stackTrace;
-    }
   }
 
   /**
@@ -283,8 +285,8 @@ public class StackTraceCreator {
    */
   static class CollectorModernNoSourceMap extends CollectorModern {
     @Override
-    protected int replaceIfNoSourceMap(int line) {
-      return LINE_NUMBER_UNKNOWN;
+    protected StackTraceElement createSte(String fileName, String method, int line, int col) {
+      return new StackTraceElement(UNKNOWN, method, fileName, LINE_NUMBER_UNKNOWN);
     }
   }
 
