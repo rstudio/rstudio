@@ -252,7 +252,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // terminated renders)
       if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED) 
       {
-         outputFrame_.closeOutputFrame(false);
+         if (outputFrame_ != null)
+            outputFrame_.closeOutputFrame(false);
          restarting_ = true;
       }
       else
