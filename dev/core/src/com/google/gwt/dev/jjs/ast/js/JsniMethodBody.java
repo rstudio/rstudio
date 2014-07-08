@@ -47,6 +47,17 @@ public class JsniMethodBody extends JAbstractMethodBody {
     super(info);
   }
 
+  public JsniMethodBody(SourceInfo info, JsFunction function, List<JsniClassLiteral> classRefs,
+      List<JsniFieldRef> jsniFieldRefs, List<JsniMethodRef> jsniMethodRefs,
+      Set<String> stringLiterals) {
+    super(info);
+    this.jsFunction = function;
+    this.classRefs = classRefs;
+    this.jsniFieldRefs = jsniFieldRefs;
+    this.jsniMethodRefs = jsniMethodRefs;
+    this.stringLiterals = stringLiterals;
+  }
+
   /**
    * Adds a reference from this method to a Java class literal.
    */

@@ -80,7 +80,7 @@ public final class Array {
    * Creates an array like "new T[a][b][c][][]" by passing in a native JSON
    * array, [a, b, c].
    *
-   * @param arrayClass the class of the array
+   * @param leafClassLiteral the class literal for the leaf class
    * @param castableTypeMap the map of types to which this array can be casted,
    *          in the form of a JSON map object
    * @param elementTypeId the typeId of array elements
@@ -91,12 +91,14 @@ public final class Array {
    *        or some primitive type {@link TYPE_PRIMITIVE_BOOLEAN}, {@link TYPE_PRIMITIVE_LONG} or
    *        {@link TYPE_PRIMITIVE_NUMBER}.
    * @param length the length of the array
+   * @param dimensions the number of dimensions of the array
    * @return the new array
    */
-  public static Object initDim(Class<?> arrayClass, JavaScriptObject castableTypeMap,
-      JavaScriptObject elementTypeId, int length, int elementTypeCategory) {
+  public static Object initDim(Class<?> leafClassLiteral, JavaScriptObject castableTypeMap,
+      JavaScriptObject elementTypeId, int length, int elementTypeCategory, int dimensions) {
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    initValues(arrayClass, castableTypeMap, elementTypeId, elementTypeCategory, result);
+    initValues(Class.getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
+        elementTypeId, elementTypeCategory, result);
     return result;
   }
 
@@ -104,7 +106,7 @@ public final class Array {
    * Creates an array like "new T[a][b][c][][]" by passing in a native JSON
    * array, [a, b, c].
    *
-   * @param arrayClasses the class of each dimension of the array
+   * @param leafClassLiteral the class literal for the leaf class
    * @param castableTypeMapExprs the JSON castableTypeMap of each dimension,
    *          from highest to lowest
    * @param elementTypeIds the elementTypeId of each dimension, from highest to lowest
@@ -117,9 +119,9 @@ public final class Array {
    * @param dimExprs the length of each dimension, from highest to lower
    * @return the new array
    */
-  public static Object initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
+  public static Object initDims(Class<?> leafClassLiteral, JavaScriptObject[] castableTypeMapExprs,
       JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs, int count) {
-    return initDims(arrayClasses, castableTypeMapExprs, elementTypeIds, leafElementTypeCategory,
+    return initDims(leafClassLiteral, castableTypeMapExprs, elementTypeIds, leafElementTypeCategory,
         dimExprs, 0, count);
   }
 
@@ -305,7 +307,7 @@ public final class Array {
     return array;
   }-*/;
 
-  private static Object initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
+  private static Object initDims(Class<?> leafClassLiteral, JavaScriptObject[] castableTypeMapExprs,
       JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs,
       int index, int count) {
     int length = dimExprs[index];
@@ -314,14 +316,14 @@ public final class Array {
     int elementTypeCategory = isLastDim ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    initValues(arrayClasses[index], castableTypeMapExprs[index],
-        elementTypeIds[index], elementTypeCategory, result);
+    initValues(Class.getClassLiteralForArray(leafClassLiteral, count - index),
+        castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);
 
     if (!isLastDim) {
       // Recurse to next dimension.
       ++index;
       for (int i = 0; i < length; ++i) {
-        set(result, i, initDims(arrayClasses, castableTypeMapExprs,
+        set(result, i, initDims(leafClassLiteral, castableTypeMapExprs,
             elementTypeIds, leafElementTypeCategory, dimExprs, index, count));
       }
     }

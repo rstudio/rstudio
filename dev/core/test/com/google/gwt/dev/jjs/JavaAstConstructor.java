@@ -124,6 +124,7 @@ public class JavaAstConstructor {
           "    return new Class<T>(); }",
           "  static <T> Class<T> createForPrimitive(String packageName, String className,",
           "      String jni) { return new Class<T>(); }",
+          "  static <T> Class<T> getClassLiteralForArray() { return null; }",
           "  static boolean isClassMetadataEnabled() { return true; }",
           "  public boolean desiredAssertionStatus() { return true; }",
           "  public String getName() { return null; }",

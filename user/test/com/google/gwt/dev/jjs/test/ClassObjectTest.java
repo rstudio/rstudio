@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.test;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -168,6 +169,25 @@ public class ClassObjectTest extends GWTTestCase {
     assertFalse(int.class.isInterface());
     assertTrue(int.class.isPrimitive());
     assertNull(int.class.getEnumConstants());
+  }
+
+  private static class JSO extends JavaScriptObject {
+    protected JSO() {
+    }
+  }
+
+  private static native JSO getJSO() /*-{
+    return {};
+  }-*/;
+
+  public void testSpecialClassLiterals() {
+    if (expectClassMetadata()) {
+      assertEquals("com.google.gwt.core.client.JavaScriptObject$", JSO.class.getName());
+      assertEquals("[Lcom.google.gwt.core.client.JavaScriptObject$;",
+          new JSO[3].getClass().getName());
+      assertEquals("com.google.gwt.core.client.JavaScriptObject$",
+          getJSO().getClass().getName());
+    }
   }
 
   private boolean expectClassMetadata() {

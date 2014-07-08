@@ -40,18 +40,36 @@ public final class Class<T> implements Type {
    *
    * @skip
    */
-  static <T> Class<T> createForArray(String packageName, String className,
-      JavaScriptObject typeId, Class<?> componentType) {
-    // Initialize here to avoid method inliner
+  public static native <T> Class<T> getClassLiteralForArray(Class<?> leafClass, int dimensions) /*-{
+    return leafClass.@java.lang.Class::arrayLiterals[dimensions] ||
+        (leafClass.@java.lang.Class::arrayLiterals[dimensions] =
+            leafClass.@java.lang.Class::createClassLiteralForArray(I)(dimensions));
+  }-*/;
+
+  private <T> Class<T> createClassLiteralForArray(int dimensions) {
     Class<T> clazz = new Class<T>();
     if (clazz.isClassMetadataEnabled()) {
-      initializeNames(clazz, packageName, className);
+      if (this.isPrimitive()) {
+        // Primitives have an additional prepended space.
+        clazz.typeName = this.simpleName.substring(1);
+      } else {
+        clazz.typeName = "L" + this.typeName;
+      }
+      clazz.simpleName = this.simpleName;
+      for (int i = 0; i < dimensions; i++) {
+        clazz.typeName = "[" + clazz.typeName;
+        clazz.simpleName += "[]";
+      }
+      if (!this.isPrimitive()) {
+        clazz.typeName += ";";
+      }
     } else {
-      synthesizeClassNamesFromTypeId(clazz, typeId);
+      // TODO(rluble): add meaninful ids to arrays when there is no metadata.
+      synthesizeClassNamesFromTypeId(clazz, null);
     }
     clazz.modifiers = ARRAY;
     clazz.superclass = Object.class;
-    clazz.componentType = componentType;
+    clazz.componentType = this;
     return clazz;
   }
 
@@ -124,7 +142,8 @@ public final class Class<T> implements Type {
     // Initialize here to avoid method inliner
     Class<?> clazz = new Class<Object>();
     if (clazz.isClassMetadataEnabled()) {
-      initializeNames(clazz, packageName, className);
+      clazz.typeName = className;
+      clazz.simpleName = primitiveTypeId;
     } else {
       synthesizePrimitiveNamesFromTypeId(clazz, primitiveTypeId);
     }
@@ -243,7 +262,9 @@ public final class Class<T> implements Type {
 
   private String typeName;
 
-  private int typeId;
+  private JavaScriptObject typeId;
+
+  private JavaScriptObject arrayLiterals = JavaScriptObject.createArray();
 
   /**
    * Not publicly instantiable.

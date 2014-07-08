@@ -16,8 +16,10 @@
 package com.google.gwt.dev.jjs.ast.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JVisitor;
 
 /**
  * JSNI reference to a Java class literal.
@@ -32,7 +34,18 @@ public class JsniClassLiteral extends JClassLiteral {
     this.ident = ident;
   }
 
+  public JsniClassLiteral(SourceInfo info, JType type) {
+    this(info, "@" + type.getName() + "::class", type);
+  }
+
   public String getIdent() {
     return ident;
+  }
+
+  @Override
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+    }
+    visitor.endVisit(this, ctx);
   }
 }

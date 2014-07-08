@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -41,13 +42,24 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
+import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsInvocation;
+import com.google.gwt.dev.js.ast.JsModVisitor;
+import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Create fields to represent the mechanical implementation of class literals.
@@ -72,6 +84,104 @@ public class ImplementClassLiteralsAsFields {
   private class NormalizeVisitor extends JModVisitor {
     @Override
     public void endVisit(JClassLiteral x, Context ctx) {
+      JType type = x.getRefType();
+      if (type instanceof JArrayType) {
+        // Replace array class literals by an expression to obtain the class literal from the
+        // leaf type of the array.
+        JArrayType arrayType = (JArrayType) type;
+        JType leafType = arrayType.getLeafType();
+        JField field = resolveClassLiteralField(leafType);
+
+        JExpression arrayClassLiteralExpression = program.createArrayClassLiteralExpression(
+            x.getSourceInfo(), field, leafType, arrayType.getDims());
+        ctx.replaceMe(arrayClassLiteralExpression);
+      } else {
+        // Just resolve the class literal.
+        resolveClassLiteral(x);
+      }
+    }
+
+    @Override
+    public void endVisit(JsniClassLiteral x, Context ctx) {
+      // JsniClassLiterals will be traversed explicitly in JsniMethodBody. For each JsniClassLiteral
+      // in JsniMethodBody.classRefs there is at least a corresponding JsNameRef (with a jsni
+      // identifier) that needs to be altered accordingly.
+    }
+
+    @Override
+    public void endVisit(final JsniMethodBody jsniMethodBody, Context ctx) {
+      final Map<String, JsniClassLiteral> jsniClassLiteralsByJsniReference = Maps.newHashMap();
+      final JMethod getArrayClassLiteralMethod =
+          program.getIndexedMethod("Class.getClassLiteralForArray");
+      final String getClassLiteralForArrayMethodIdent = "@" + createIdent(getArrayClassLiteralMethod);
+
+      // Map JSNI reference string to the actual JsniClassLiterals.
+      for (JsniClassLiteral jsniClassLiteral : jsniMethodBody.getClassRefs()) {
+        Object o = jsniClassLiteralsByJsniReference.put(jsniClassLiteral.getIdent(),
+            jsniClassLiteral);
+        assert o == null;
+      }
+
+      final Set<JsniClassLiteral> newClassRefs = Sets.newLinkedHashSet();
+
+      // Replace all arrays JSNI class literals with the its construction via the leaf type class
+      // literal.
+      JsModVisitor replaceJsniClassLiteralVisitor = new JsModVisitor() {
+
+        @Override
+        public void endVisit(JsNameRef x, JsContext ctx) {
+          if (!x.isJsniReference()) {
+            return;
+          }
+
+          JsniClassLiteral jsniClassLiteral = jsniClassLiteralsByJsniReference.get(
+              x.getIdent());
+
+          if (jsniClassLiteral == null) {
+            return;
+          }
+
+          if (jsniClassLiteral.getRefType() instanceof JArrayType) {
+            // Replace the array class literal by an expression that retrieves it from
+            // that of the leaf type.
+            JArrayType arrayType = (JArrayType) jsniClassLiteral.getRefType();
+            JType leafType = arrayType.getLeafType();
+
+            jsniClassLiteral = new JsniClassLiteral(jsniClassLiteral.getSourceInfo(), leafType);
+
+            // Class.getClassLiteralForArray(leafType.class, dimensions)
+            SourceInfo info = x.getSourceInfo();
+            JsNameRef getArrayClassLiteralMethodNameRef =
+                new JsNameRef(info, getClassLiteralForArrayMethodIdent);
+            JsInvocation invocation = new JsInvocation(info, getArrayClassLiteralMethodNameRef,
+                new JsNameRef(info, jsniClassLiteral.getIdent()),
+                new JsNumberLiteral(info, arrayType.getDims()));
+            ctx.replaceMe(invocation);
+          }
+          // Finally resolve the class literal.
+          resolveClassLiteral(jsniClassLiteral);
+          newClassRefs.add(jsniClassLiteral);
+        }
+      };
+      replaceJsniClassLiteralVisitor.accept(jsniMethodBody.getFunc());
+      if (!replaceJsniClassLiteralVisitor.didChange()) {
+        // Nothing was changed, no need to replace JsniMethodBody.
+        return;
+      }
+
+      JsniMethodBody newBody = new JsniMethodBody(jsniMethodBody.getSourceInfo(), jsniMethodBody.getFunc(),
+          Lists.newArrayList(newClassRefs), jsniMethodBody.getJsniFieldRefs(),
+          jsniMethodBody.getJsniMethodRefs(), jsniMethodBody.getUsedStrings());
+
+      // Add getClassLiteralForArray as a JsniMethodRef.
+      newBody.addJsniRef(
+          new JsniMethodRef(jsniMethodBody.getSourceInfo(), getClassLiteralForArrayMethodIdent,
+              getArrayClassLiteralMethod, program.getJavaScriptObject()));
+
+      ctx.replaceMe(newBody);
+    }
+
+    private void resolveClassLiteral(JClassLiteral x) {
       JField field = resolveClassLiteralField(x.getRefType());
       x.setField(field);
     }
@@ -136,17 +246,12 @@ public class ImplementClassLiteralsAsFields {
    * Class.createForInterface(&quot;java.lang.&quot;, &quot;Comparable&quot;)
    * </pre>
    *
+   * Arrays are lazily created.
+   *
    * Primitive:
    *
    * <pre>
    * Class.createForPrimitive(&quot;&quot;, &quot;int&quot;, &quot; I&quot;)
-   * </pre>
-   *
-   * Array:
-   *
-   * <pre>
-   * Class.createForArray("", "[I", /JRuntimeTypeReference/"com.google.gwt.lang.Array", int.class)
-   * Class.createForArray("[Lcom.example.", "Foo;", /JRuntimeTypeReference/"com.google.gwt.lang.Array", Foo.class)
    * </pre>
    *
    * Enum:
@@ -164,6 +269,8 @@ public class ImplementClassLiteralsAsFields {
    * </pre>
    */
   private JMethodCall computeClassObjectAllocation(SourceInfo info, JType type) {
+    assert !(type instanceof JArrayType);
+
     String typeName = getTypeName(type);
 
     JMethod method = program.getIndexedMethod(type.getClassLiteralFactoryMethod());
@@ -188,7 +295,7 @@ public class ImplementClassLiteralsAsFields {
     JStringLiteral className = program.getStringLiteral(info, getClassName(typeName));
     call.addArgs(packageName, className);
 
-    if (type instanceof JArrayType || type instanceof JClassType) {
+    if (type instanceof JClassType) {
       // Add a runtime type reference.
       call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
           (JReferenceType) type));
@@ -252,13 +359,9 @@ public class ImplementClassLiteralsAsFields {
         call.addArg(JNullLiteral.INSTANCE);
         call.addArg(JNullLiteral.INSTANCE);
       }
-    } else if (type instanceof JArrayType) {
-      JArrayType arrayType = (JArrayType) type;
-      JClassLiteral componentLiteral =
-          createDependentClassLiteral(info, arrayType.getElementType());
-      call.addArg(componentLiteral);
     } else {
-      assert (type instanceof JInterfaceType || type instanceof JPrimitiveType);
+      assert (type instanceof JInterfaceType || type instanceof JPrimitiveType ||
+          type instanceof JArrayType);
     }
     assert call.getArgs().size() == method.getParams().size() : "Argument / param mismatch "
         + call.toString() + " versus " + method.toString();
@@ -288,32 +391,20 @@ public class ImplementClassLiteralsAsFields {
 
   private String getTypeName(JType type) {
     String typeName;
-    if (type instanceof JArrayType) {
-      typeName = type.getJsniSignatureName().replace('/', '.');
-      // Mangle the class name to match hosted mode.
-      if (program.isJavaScriptObject(((JArrayType) type).getLeafType())) {
-        typeName = typeName.replace(";", "$;");
-      }
-    } else {
-      typeName = type.getName();
-      // Mangle the class name to match hosted mode.
-      if (program.isJavaScriptObject(type)) {
-        typeName += '$';
-      }
+    assert !(type instanceof JArrayType);
+
+    typeName = type.getName();
+    // Mangle the class name to match hosted mode.
+    if (program.isJavaScriptObject(type)) {
+      typeName += '$';
     }
     return typeName;
   }
 
   private JType normalizeJsoType(JType type) {
+    assert !(type instanceof JArrayType);
     if (program.isJavaScriptObject(type)) {
       return program.getJavaScriptObject();
-    }
-
-    if (type instanceof JArrayType) {
-      JArrayType aType = (JArrayType) type;
-      if (program.isJavaScriptObject(aType.getLeafType())) {
-        return program.getTypeArray(program.getJavaScriptObject(), aType.getDims());
-      }
     }
 
     return type;

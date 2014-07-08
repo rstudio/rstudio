@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -524,6 +525,20 @@ public class EnumOrdinalizer {
 
       // defer to ImplicitUpcastAnalyzer to check method call args & params
       super.endVisit(x, ctx);
+    }
+
+    @Override
+    public boolean visit(JNewArray x, Context ctx) {
+      // Do not visit the implicit Class literal.
+
+      if (x.dims != null) {
+        accept(x.dims);
+      }
+
+      if (x.initializers != null) {
+        accept(x.initializers);
+      }
+      return false;
     }
 
     @Override
