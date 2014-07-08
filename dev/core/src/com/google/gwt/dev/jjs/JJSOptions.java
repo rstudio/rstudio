@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
 import com.google.gwt.dev.util.arg.OptionCheckedMode;
 import com.google.gwt.dev.util.arg.OptionClusterSimilarFunctions;
+import com.google.gwt.dev.util.arg.OptionCompilePerFile;
 import com.google.gwt.dev.util.arg.OptionDisableCastChecking;
 import com.google.gwt.dev.util.arg.OptionDisableClassMetadata;
 import com.google.gwt.dev.util.arg.OptionEnableAssertions;
@@ -47,10 +48,10 @@ import com.google.gwt.dev.util.arg.OptionStrictSourceResources;
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
 public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
-    OptionClusterSimilarFunctions, OptionDisableClassMetadata, OptionDisableCastChecking,
-    OptionEnableAssertions, OptionInlineLiteralParameters, OptionOptimizeDataflow,
-    OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled, OptionSoycDetailed,
-    OptionJsonSoycEnabled, OptionOptimizePrecompile, OptionOrdinalizeEnums,
+    OptionClusterSimilarFunctions, OptionCompilePerFile, OptionDisableClassMetadata,
+    OptionDisableCastChecking, OptionEnableAssertions, OptionInlineLiteralParameters,
+    OptionOptimizeDataflow, OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled,
+    OptionSoycDetailed, OptionJsonSoycEnabled, OptionOptimizePrecompile, OptionOrdinalizeEnums,
     OptionRemoveDuplicateFunctions, OptionStrict, OptionStrictSourceResources,
     OptionStrictPublicResources, OptionSoycHtmlDisabled, OptionEnableClosureCompiler,
     OptionFragmentsMerge, OptionFragmentCount, OptionSourceLevel, OptionNamespace,

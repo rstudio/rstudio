@@ -256,6 +256,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
+  public void setCompilePerFile(boolean enabled) {
+    jjsOptions.setCompilePerFile(enabled);
+  }
+
+  @Override
   public void setCompilerMetricsEnabled(boolean enabled) {
     jjsOptions.setCompilerMetricsEnabled(enabled);
   }
@@ -418,6 +423,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public boolean shouldClusterSimilarFunctions() {
     return jjsOptions.shouldClusterSimilarFunctions();
+  }
+
+  @Override
+  public boolean shouldCompilePerFile() {
+    return jjsOptions.shouldCompilePerFile();
   }
 
   @Override

@@ -35,6 +35,7 @@ import java.util.List;
  */
 class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final CompileDir compileDir;
+  private final boolean compilePerFile;
   private final boolean failOnError;
   private final TreeLogger.Type logLevel;
   private final List<String> moduleNames;
@@ -44,6 +45,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
+    this.compilePerFile = options.shouldCompilePerFile();
     this.moduleNames = Lists.newArrayList(moduleName);
     this.sourceLevel = options.getSourceLevel();
     this.failOnError = options.isFailOnError();
@@ -258,6 +260,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  public boolean shouldCompilePerFile() {
+    return compilePerFile;
+  }
+
+  @Override
   public boolean shouldInlineLiteralParameters() {
     return false;
   }
@@ -302,7 +309,8 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     return false;
   }
 
-  @Override public JsInteropMode getJsInteropMode() {
+  @Override
+  public JsInteropMode getJsInteropMode() {
     return JsInteropMode.NONE;
   }
 }

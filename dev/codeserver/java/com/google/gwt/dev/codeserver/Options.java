@@ -43,6 +43,7 @@ import java.util.List;
  */
 public class Options {
   private boolean compileIncremental = false;
+  private boolean compilePerFile = false;
   private boolean noPrecompile = false;
   private boolean isCompileTest = false;
   private File workDir;
@@ -73,6 +74,11 @@ public class Options {
 
     if (isCompileTest && noPrecompile) {
       System.err.println("Usage: -noprecompile and -compiletest are incompatible");
+      return false;
+    }
+
+    if (compilePerFile && compileIncremental) {
+      System.err.println("Usage: -XcompilePerFile and -Xincremental are incompatible");
       return false;
     }
 
@@ -122,6 +128,14 @@ public class Options {
    */
   boolean shouldCompileIncremental() {
     return compileIncremental;
+  }
+
+  /**
+   * Compiles faster by creating a JavaScript file per class. Can't be turned on at the same time as
+   * shouldCompileIncremental().
+   */
+  boolean shouldCompilePerFile() {
+    return compilePerFile;
   }
 
   /**
@@ -211,6 +225,7 @@ public class Options {
       registerHandler(new FailOnErrorFlag());
       registerHandler(new StrictResourcesFlag());
       registerHandler(new CompileIncrementalFlag());
+      registerHandler(new CompilePerFileFlag());
       registerHandler(new ArgHandlerSourceLevel(new OptionSourceLevel() {
         @Override
         public SourceLevel getSourceLevel() {
@@ -262,6 +277,36 @@ public class Options {
     @Override
     public boolean getDefaultValue() {
       return !noPrecompile;
+    }
+  }
+
+  private class CompilePerFileFlag extends ArgHandlerFlag {
+
+    @Override
+    public String getLabel() {
+      return "compilePerFile";
+    }
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Compiles faster by creating a JavaScript file per class. "
+          + "Can't be used with -Xincremental.";
+    }
+
+    @Override
+    public boolean setFlag(boolean value) {
+      compilePerFile = value;
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return false;
+    }
+
+    @Override
+    public boolean isExperimental() {
+      return true;
     }
   }
 
