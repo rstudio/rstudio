@@ -71,16 +71,12 @@ public class JSONParser {
   }
 
   /**
-   * Evaluates a JSON string and returns its JSONValue representation. Where
-   * possible, the browser's {@code JSON.parse function} is used. For older
-   * browsers including IE6 and IE7 that lack a {@code JSON.parse} function, the
-   * input is validated as described in RFC 4627 for safety and passed to
-   * {@code eval()}.
-   * 
+   * Evaluates a JSON string and returns its JSONValue representation. The
+   * browser's {@code JSON.parse function} is used.
+   *
    * @param jsonString a JSON object to parse
    * @return a JSONValue that has been built by parsing the JSON string
-   * @throws NullPointerException if <code>jsonString</code> is
-   *           <code>null</code>
+   * @throws NullPointerException if <code>jsonString</code> is <code>null</code>
    * @throws IllegalArgumentException if <code>jsonString</code> is empty
    */
   public static JSONValue parseStrict(String jsonString) {
@@ -155,7 +151,7 @@ public class JSONParser {
   /**
    * This method converts <code>jsonString</code> into a JSONValue.
    * In strict mode (strict == true), one of two code paths is taken:
-   * 1) Call JSON.parse if available, or
+   * 1) Call JSON.parse, or
    * 2) Validate the input and call eval()
    * 
    * In lenient mode (strict == false), eval() is called without validation.
@@ -167,19 +163,13 @@ public class JSONParser {
     // to return a result for inputs whose outermost type is 'string' in
     // dev mode.
     var v;
-    if (strict && @com.google.gwt.core.client.JsonUtils::hasJsonParse) {
+    if (strict) {
       try {
         v = JSON.parse(json);
       } catch (e) {
         return @com.google.gwt.json.client.JSONParser::throwJSONException(Ljava/lang/String;)("Error parsing JSON: " + e);
       }
     } else {
-      if (strict) {
-        // Validate the input according to RFC 4627.
-        if (!@com.google.gwt.core.client.JsonUtils::safeToEval(Ljava/lang/String;)(json)) {
-          return @com.google.gwt.json.client.JSONParser::throwJSONException(Ljava/lang/String;)("Illegal character in JSON string");
-        }
-      }
       json = @com.google.gwt.core.client.JsonUtils::escapeJsonForEval(Ljava/lang/String;)(json);
       try {
         v = eval('(' + json + ')');

@@ -19,17 +19,32 @@ package com.google.gwt.core.client;
  * Provides JSON-related utility methods.
  */
 public class JsonUtils {
-  private static JavaScriptObject escapeTable = initEscapeTable();
 
-  private static final boolean hasJsonParse = hasJsonParse();
+  /**
+   * Converts a value to JSON.
+   */
+  public static native String stringify(JavaScriptObject obj) /*-{
+    return JSON.stringify(obj);
+  }-*/;
+
+  /**
+   * Converts a value to JSON.
+   *
+   * @param space controls the spacing in the final string. Successive levels in the stringification
+   *        will each be indented by this string (or the first ten characters of it).
+   */
+  public static native String stringify(JavaScriptObject obj, String space) /*-{
+    return JSON.stringify(obj, null, space);
+  }-*/;
 
   /**
    * Escapes characters within a JSON string than cannot be passed directly to
    * eval(). Control characters, quotes and backslashes are not affected.
    */
   public static native String escapeJsonForEval(String toEscape) /*-{
+    var escapeTable = @JsonUtils::getEscapeTable()();
     var s = toEscape.replace(/[\xad\u0600-\u0603\u06dd\u070f\u17b4\u17b5\u200b-\u200f\u2028-\u202e\u2060-\u2064\u206a-\u206f\ufeff\ufff9-\ufffb]/g, function(x) {
-      return @com.google.gwt.core.client.JsonUtils::escapeChar(Ljava/lang/String;)(x);
+      return @JsonUtils::escapeChar(*)(x, escapeTable);
     });
     return s;
   }-*/;
@@ -38,8 +53,9 @@ public class JsonUtils {
    * Returns a quoted, escaped JSON String.
    */
   public static native String escapeValue(String toEscape) /*-{
+    var escapeTable = @JsonUtils::getEscapeTable()();
     var s = toEscape.replace(/[\x00-\x1f\xad\u0600-\u0603\u06dd\u070f\u17b4\u17b5\u200b-\u200f\u2028-\u202e\u2060-\u2064\u206a-\u206f\ufeff\ufff9-\ufffb"\\]/g, function(x) {
-      return @com.google.gwt.core.client.JsonUtils::escapeChar(Ljava/lang/String;)(x);
+      return @JsonUtils::escapeChar(*)(x, escapeTable);
     });
     return "\"" + s + "\"";
   }-*/;
@@ -55,23 +71,10 @@ public class JsonUtils {
    * @throws IllegalArgumentException if the input is not valid JSON
    */
   public static native <T extends JavaScriptObject> T safeEval(String json) /*-{
-    var v;
-    if (@com.google.gwt.core.client.JsonUtils::hasJsonParse) {
-      try {
-        return JSON.parse(json);
-      } catch (e) {
-        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
-      }
-    } else {
-      if (!@com.google.gwt.core.client.JsonUtils::safeToEval(Ljava/lang/String;)(json)) {
-        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(*)("Illegal character in JSON string", json);
-      }
-      json = @com.google.gwt.core.client.JsonUtils::escapeJsonForEval(Ljava/lang/String;)(json);
-      try {
-        return eval('(' + json + ')');
-      } catch (e) {
-        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
-      }
+    try {
+      return JSON.parse(json);
+    } catch (e) {
+      return @JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
     }
   }-*/;
   
@@ -106,11 +109,11 @@ public class JsonUtils {
    * @return The evaluated object
    */
   public static native <T extends JavaScriptObject> T unsafeEval(String json) /*-{
-    var escaped = @com.google.gwt.core.client.JsonUtils::escapeJsonForEval(Ljava/lang/String;)(json);
+    var escaped = @JsonUtils::escapeJsonForEval(Ljava/lang/String;)(json);
     try {
       return eval('(' + escaped + ')');
     } catch (e) {
-      return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
+      return @JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
     }
   }-*/;
 
@@ -118,17 +121,19 @@ public class JsonUtils {
     throw new IllegalArgumentException(message + "\n" + data);
   }
 
-  private static native String escapeChar(String c) /*-{
-    var lookedUp = @com.google.gwt.core.client.JsonUtils::escapeTable[c.charCodeAt(0)];
+  private static native String escapeChar(String c, JavaScriptObject escapeTable) /*-{
+    var lookedUp = @JsonUtils::escapeTable[c.charCodeAt(0)];
     return (lookedUp == null) ? c : lookedUp;
   }-*/;
 
-  /**
-   * Returns true if the JSON.parse function is present, false otherwise.
-   */
-  private static native boolean hasJsonParse() /*-{
-    return typeof JSON == "object" && typeof JSON.parse == "function";
-  }-*/;
+  private static JavaScriptObject escapeTable; // Lazily initialized.
+
+  private static JavaScriptObject getEscapeTable() {
+    if (escapeTable == null) {
+      escapeTable = initEscapeTable();
+    }
+    return escapeTable;
+  }
 
   private static native JavaScriptObject initEscapeTable() /*-{
     var out = [
