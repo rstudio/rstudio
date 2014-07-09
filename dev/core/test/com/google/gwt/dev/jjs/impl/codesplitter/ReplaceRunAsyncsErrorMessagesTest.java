@@ -149,7 +149,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     logger = testLogger;
 
     try {
-      JProgram program = compileSnippet("void", codeSnippet);
+      JProgram program = compileSnippet("void", codeSnippet, true);
       ReplaceRunAsyncs.exec(logger, program);
       fail("Expected a compile error");
     } catch (UnableToCompleteException e) {

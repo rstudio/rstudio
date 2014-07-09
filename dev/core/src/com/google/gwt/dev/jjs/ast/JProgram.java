@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -241,7 +242,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     public static boolean isClinit(JMethod method) {
     JDeclaredType enclosingType = method.getEnclosingType();
     if ((enclosingType != null) && (method == enclosingType.getClinitMethod())) {
-      assert (method.getName().equals("$clinit"));
+      assert (method.getName().equals(GwtAstBuilder.CLINIT_NAME));
       return true;
     } else {
       return false;

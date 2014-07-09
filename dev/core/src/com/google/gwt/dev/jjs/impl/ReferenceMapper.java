@@ -44,6 +44,7 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
+import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
 
@@ -110,7 +111,7 @@ public class ReferenceMapper {
       } else {
         method = createMethod(SourceOrigin.UNKNOWN, binding, null);
       }
-      assert method.isExternal();
+      assert binding instanceof SyntheticMethodBinding || method.isExternal();
       methods.put(key, method);
     }
     return method;
@@ -120,6 +121,7 @@ public class ReferenceMapper {
     binding = binding.erasure();
     String key = signature(binding);
     JReferenceType sourceType = sourceTypes.get(key);
+
     if (sourceType != null) {
       assert !sourceType.isExternal();
       return sourceType;
@@ -170,9 +172,8 @@ public class ReferenceMapper {
          */
       }
       // Emulate clinit method for super clinit calls.
-      JMethod clinit =
-          new JMethod(SourceOrigin.UNKNOWN, "$clinit", declType, JPrimitiveType.VOID, false, true,
-              true, AccessModifier.PRIVATE);
+      JMethod clinit = new JMethod(SourceOrigin.UNKNOWN, GwtAstBuilder.CLINIT_NAME, declType,
+          JPrimitiveType.VOID, false, true, true, AccessModifier.PRIVATE);
       clinit.freezeParamTypes();
       clinit.setSynthetic();
       declType.addMethod(clinit);

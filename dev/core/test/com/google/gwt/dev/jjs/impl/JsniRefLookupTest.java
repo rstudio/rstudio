@@ -183,7 +183,7 @@ public class JsniRefLookupTest extends JJSTestBase {
     try {
       // The snippet must reference the classes so they will be compiled in
       program = compileSnippet("void",
-          "new test.Foo(); new test.Bar(); new ClassWithBridge(); new PrivateSub();");
+          "new test.Foo(); new test.Bar(); new ClassWithBridge(); new PrivateSub();", true);
     } catch (UnableToCompleteException e) {
       throw new RuntimeException(e);
     }

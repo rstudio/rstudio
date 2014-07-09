@@ -401,6 +401,7 @@ public class JdtCompiler {
       }
       String internalName = CharOperation.charToString(classFile.fileName());
       String sourceName = JdtUtil.getSourceName(classFile.referenceBinding);
+      // TODO(cromwellian) implement Retrolambda on output?
       CompiledClass result = new CompiledClass(classFile.getBytes(), enclosingClass,
           isLocalType(classFile), internalName, sourceName);
       results.put(classFile, result);
@@ -607,7 +608,6 @@ public class JdtCompiler {
     };
 
     long jdtSourceLevel = jdtLevelByGwtLevel.get(SourceLevel.DEFAULT_SOURCE_LEVEL);
-
     options.originalSourceLevel = jdtSourceLevel;
     options.complianceLevel = jdtSourceLevel;
     options.sourceLevel = jdtSourceLevel;
@@ -758,7 +758,8 @@ public class JdtCompiler {
   private static final Map<SourceLevel, Long> jdtLevelByGwtLevel =
       ImmutableMap.<SourceLevel, Long>of(
           SourceLevel.JAVA6, ClassFileConstants.JDK1_6,
-          SourceLevel.JAVA7, ClassFileConstants.JDK1_7);
+          SourceLevel.JAVA7, ClassFileConstants.JDK1_7,
+          SourceLevel.JAVA8, ClassFileConstants.JDK1_8);
 
   public JdtCompiler(CompilerContext compilerContext, UnitProcessor processor) {
     this.compilerContext = compilerContext;

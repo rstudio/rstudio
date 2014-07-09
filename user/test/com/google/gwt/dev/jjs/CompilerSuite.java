@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.test.InnerClassTest;
 import com.google.gwt.dev.jjs.test.InnerOuterSuperTest;
 import com.google.gwt.dev.jjs.test.JStaticEvalTest;
 import com.google.gwt.dev.jjs.test.Java7Test;
+import com.google.gwt.dev.jjs.test.Java8Test;
 import com.google.gwt.dev.jjs.test.JavaAccessFromJavaScriptTest;
 import com.google.gwt.dev.jjs.test.JsStaticEvalTest;
 import com.google.gwt.dev.jjs.test.JsniConstructorTest;
@@ -90,6 +91,7 @@ public class CompilerSuite {
     // Java7Test cannot be the first one in a suite. It uses a hack
     // to avoid executing if not in a Java 7+ environment.
     suite.addTestSuite(Java7Test.class);
+    suite.addTestSuite(Java8Test.class);
     suite.addTestSuite(JavaAccessFromJavaScriptTest.class);
     suite.addTestSuite(JsniConstructorTest.class);
     suite.addTestSuite(JsniDispatchTest.class);

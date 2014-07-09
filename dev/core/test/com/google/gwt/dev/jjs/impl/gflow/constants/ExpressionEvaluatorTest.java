@@ -92,7 +92,7 @@ public class ExpressionEvaluatorTest extends JJSTestBase {
 
     String codeSnippet = decls;
     codeSnippet += "return " + expr + ";";
-    JProgram program = compileSnippet(type, codeSnippet);
+    JProgram program = compileSnippet(type, codeSnippet, true);
     JMethod mainMethod = findMainMethod(program);
     JBlock block = ((JMethodBody) mainMethod.getBody()).getBlock();
 

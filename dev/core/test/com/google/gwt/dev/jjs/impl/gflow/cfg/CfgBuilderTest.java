@@ -1686,7 +1686,7 @@ public class CfgBuilderTest extends JJSTestBase {
 
   private CfgBuilderResult assertCfg(String returnType, String ...codeSnippet)
       throws UnableToCompleteException {
-    JProgram program = compileSnippet(returnType, Joiner.on("\n").join(codeSnippet));
+    JProgram program = compileSnippet(returnType, Joiner.on("\n").join(codeSnippet), true);
     JMethodBody body = (JMethodBody) findMainMethod(program).getBody();
     Cfg cfgGraph = CfgBuilder.build(program, body.getBlock());
     return new CfgBuilderResult(cfgGraph);

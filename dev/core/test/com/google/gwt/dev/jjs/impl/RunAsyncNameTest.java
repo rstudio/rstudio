@@ -69,7 +69,8 @@ public class RunAsyncNameTest extends JJSTestBase {
 
     addSnippetImport("com.google.gwt.core.client.GWT");
     try {
-      JProgram program = compileSnippet("void", "GWT.runAsync((new Object()).getClass(), null);");
+      JProgram program = compileSnippet("void", "GWT.runAsync((new Object()).getClass(), null);",
+          true);
       ReplaceRunAsyncs.exec(logger, program);
       fail("Expected compilation to fail");
     } catch (UnableToCompleteException e) {

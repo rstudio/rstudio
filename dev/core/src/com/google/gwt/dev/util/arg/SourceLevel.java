@@ -27,7 +27,8 @@ import com.google.gwt.util.tools.Utility;
 public enum SourceLevel {
   // Source levels must appear in ascending order for the default setting logic to work.
   JAVA6("1.6", "6"),
-  JAVA7("1.7", "7");
+  JAVA7("1.7", "7"),
+  JAVA8("1.8", "8");
 
   /**
    * The default java sourceLevel.

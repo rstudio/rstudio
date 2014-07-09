@@ -137,7 +137,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
   }
 
   public void testInsertedClass() throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", "new test.B().func();");
+    JProgram program = compileSnippet("void", "new test.B().func();", true);
 
     // Make sure the compiled classes appeared.
     JDeclaredType bType = findDeclaredType(program, "test.B");
@@ -147,7 +147,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
   }
 
   public void testInsertedClass2() throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", "new test.B1().func();");
+    JProgram program = compileSnippet("void", "new test.B1().func();", true);
 
     // Make sure the compiled classes appeared.
     JDeclaredType bType = findDeclaredType(program, "test.B1");
@@ -158,7 +158,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
 
   // Make sure regular code not using the AdditionalTypeProviderDelegate still works.
   public void testSimpleParse() throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", "new test.A();");
+    JProgram program = compileSnippet("void", "new test.A();", true);
     JDeclaredType goodClassType = findDeclaredType(program, "test.A");
     assertNotNull("Unknown class A", goodClassType);
   }
@@ -181,7 +181,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
       }
     });
     try {
-      compileSnippet("void", "new test.C();");
+      compileSnippet("void", "new test.C();", true);
       fail("Shouldn't have compiled");
     } catch (UnableToCompleteException expected) {
     }
@@ -205,7 +205,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
       }
     });
     try {
-      compileSnippet("void", "new test.D();");
+      compileSnippet("void", "new test.D();", true);
       fail("Shouldn't have compiled");
     } catch (UnableToCompleteException expected) {
     }

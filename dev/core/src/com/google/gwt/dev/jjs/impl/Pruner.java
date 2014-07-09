@@ -409,7 +409,7 @@ public class Pruner {
         if (!isInstantiated || !referencedNonTypes.contains(method)) {
           methodWasRemoved(method);
           type.removeMethod(i);
-          assert program.instanceMethodForStaticImpl(method) == null;
+          program.removeStaticImplMapping(method);
           madeChanges();
           --i;
         }

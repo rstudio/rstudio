@@ -26,14 +26,20 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -209,7 +215,7 @@ public abstract class JJSTestBase extends TestCase {
   /**
    * Adds a snippet of code, for example a field declaration, to the class that
    * encloses the snippet subsequently passed to
-   * {@link #compileSnippet(String, String)}.
+   * {@link #compileSnippet(String, String, boolean)}.
    */
   protected void addSnippetClassDecl(String...decl) {
     snippetClassDecls.add(Joiner.on("\n").join(decl));
@@ -217,7 +223,7 @@ public abstract class JJSTestBase extends TestCase {
 
   /**
    * Adds an import statement for any code subsequently passed to
-   * {@link #compileSnippet(String, String)}.
+   * {@link #compileSnippet(String, String, boolean)}.
    */
   protected void addSnippetImport(String typeName) {
     snippetImports.add(typeName);
@@ -226,28 +232,41 @@ public abstract class JJSTestBase extends TestCase {
   /**
    * Returns the program that results from compiling the specified code snippet
    * as the body of an entry point method.
-   *
-   * @param returnType the return type of the method to compile; use "void" if
+   *  @param returnType the return type of the method to compile; use "void" if
    *          the code snippet has no return statement
    * @param codeSnippet the body of the entry method
    */
   protected JProgram compileSnippet(final String returnType,
       final String codeSnippet) throws UnableToCompleteException {
-    return compileSnippet(returnType, "", codeSnippet, true);
+    return compileSnippet(returnType, "", codeSnippet, true, false);
   }
 
   /**
    * Returns the program that results from compiling the specified code snippet
    * as the body of an entry point method.
-   *
+   *  @param returnType the return type of the method to compile; use "void" if
+   *          the code snippet has no return statement
+   * @param codeSnippet the body of the entry method
+   * @param staticMethod whether to make the method static
+   */
+  protected JProgram compileSnippet(final String returnType,
+      final String codeSnippet, boolean staticMethod) throws UnableToCompleteException {
+    return compileSnippet(returnType, "", codeSnippet, true, staticMethod);
+  }
+
+  /**
+   * Returns the program that results from compiling the specified code snippet
+   * as the body of an entry point method.
    * @param returnType the return type of the method to compile; use "void" if
    *          the code snippet has no return statement
    * @param params the parameter list of the method to compile
    * @param codeSnippet the body of the entry method
    * @param compileMonolithic whether the compile is monolithic
+   * @param staticMethod whether the entryPoint should be static
    */
   protected JProgram compileSnippet(final String returnType,
-      final String params, final String codeSnippet, boolean compileMonolithic)
+      final String params, final String codeSnippet, boolean compileMonolithic,
+      final boolean staticMethod)
       throws UnableToCompleteException {
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
@@ -261,8 +280,8 @@ public abstract class JJSTestBase extends TestCase {
         for (String snippetClassDecl : snippetClassDecls) {
           code.append(snippetClassDecl + ";\n");
         }
-        code.append("  public static " + returnType + " onModuleLoad(" + params
-            + ") {\n");
+        code.append("  public " + (staticMethod ? "static " : "") + returnType + " onModuleLoad(" +
+            params + ") {\n");
         code.append(codeSnippet);
         code.append("  }\n");
         code.append("}\n");
@@ -302,10 +321,61 @@ public abstract class JJSTestBase extends TestCase {
 
   public Result assertTransform(String codeSnippet, JVisitor visitor)
       throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", codeSnippet);
+    JProgram program = compileSnippet("void", codeSnippet, true);
     JMethod mainMethod = findMainMethod(program);
     visitor.accept(mainMethod);
     return new Result("void", codeSnippet, mainMethod.getBody().toSource());
+  }
+
+  protected JMethod getMethod(JProgram program, String name) {
+    return findMethod(program, name);
+  }
+
+  protected JReferenceType getType(JProgram program, String name) {
+    return program.getFromTypeMap(name);
+  }
+
+  protected JBlock getStatement(String statement)
+      throws UnableToCompleteException {
+    JProgram program = compileSnippet("void", statement, false);
+    JMethod mainMethod = findMainMethod(program);
+    JMethodBody body = (JMethodBody) mainMethod.getBody();
+    return body.getBlock();
+  }
+
+  /**
+   * Removes most whitespace while still leaving one space separating words.
+   *
+   * Used to make the assertEquals ignore whitespace (mostly) while still retaining meaningful
+   * output when the test fails.
+   */
+  protected String formatSource(String source) {
+    return source.replaceAll("\\s+", " ") // substitutes multiple whitespaces into one.
+      .replaceAll("\\s([\\p{Punct}&&[^$]])", "$1")  // removes whitespace preceding symbols
+                                                    // (except $ which can be part of an identifier)
+      .replaceAll("([\\p{Punct}&&[^$]])\\s", "$1"); // removes whitespace succeeding symbols.
+  }
+
+  protected void assertEqualBlock(String expected, String input)
+      throws UnableToCompleteException {
+    JBlock testExpression = getStatement(input);
+    assertEquals(formatSource("{ " + expected + "}"),
+        formatSource(testExpression.toSource()));
+  }
+
+  protected void addAll(Resource... sourceFiles) {
+    for (Resource sourceFile : sourceFiles) {
+      sourceOracle.addOrReplace(sourceFile);
+    }
+  }
+
+  protected JExpression getExpression(String type, String expression)
+      throws UnableToCompleteException {
+    JProgram program = compileSnippet(type, "return " + expression + ";", false);
+    JMethod mainMethod = findMainMethod(program);
+    JMethodBody body = (JMethodBody) mainMethod.getBody();
+    JReturnStatement returnStmt = (JReturnStatement) body.getStatements().get(0);
+    return returnStmt.getExpr();
   }
 
   /**
@@ -323,7 +393,7 @@ public abstract class JJSTestBase extends TestCase {
     }
 
     public void into(String expected) throws UnableToCompleteException {
-      JProgram program = compileSnippet(returnType, expected);
+      JProgram program = compileSnippet(returnType, expected, true);
       expected = getMainMethodSource(program);
       assertEquals(userCode, expected, optimized);
     }

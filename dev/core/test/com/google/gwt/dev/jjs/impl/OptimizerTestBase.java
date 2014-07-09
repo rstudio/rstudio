@@ -92,7 +92,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     public void into(String... expected) throws UnableToCompleteException {
       // We can't compile expected code into non-main method.
       Preconditions.checkState(methodName.equals(MAIN_METHOD_NAME));
-      JProgram program = compileSnippet(returnType, Joiner.on("\n").join(expected));
+      JProgram program = compileSnippet(returnType, Joiner.on("\n").join(expected), true);
       String expectedSource =
         OptimizerTestBase.findMethod(program, methodName).getBody().toSource();
       String actualSource =
@@ -239,7 +239,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
           "return " + expressionSnippets[expressionSnippets.length - 1];
     }
     String snippet = Joiner.on(";\n").join(expressionSnippets) + ";\n";
-    final JProgram program = compileSnippet(returnType, snippet);
+    final JProgram program = compileSnippet(returnType, snippet, true);
     JMethod method = findMethod(program, MAIN_METHOD_NAME);
     JMethodBody body = (JMethodBody) method.getBody();
     JMultiExpression multi = new JMultiExpression(body.getSourceInfo());
@@ -293,7 +293,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
       final String mainMethodReturnType, final String... mainMethodSnippet)
       throws UnableToCompleteException {
     String snippet = Joiner.on("\n").join(mainMethodSnippet);
-    JProgram program = compileSnippet(mainMethodReturnType, snippet);
+    JProgram program = compileSnippet(mainMethodReturnType, snippet, true);
     JMethod method = findMethod(program, methodName);
     boolean madeChanges = optimizeMethod(program, method);
     if (madeChanges && runDeadCodeElimination) {

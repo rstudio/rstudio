@@ -174,7 +174,7 @@ public class ExpressionAnalyzerTest extends JJSTestBase {
 
   private Result analyzeExpression(String type, String expression)
       throws UnableToCompleteException {
-    JProgram program = compileSnippet(type, "return " + expression + ";");
+    JProgram program = compileSnippet(type, "return " + expression + ";", true);
     ExpressionAnalyzer ea = new ExpressionAnalyzer();
     JMethod mainMethod = findMainMethod(program);
     JMethodBody body = (JMethodBody) mainMethod.getBody();

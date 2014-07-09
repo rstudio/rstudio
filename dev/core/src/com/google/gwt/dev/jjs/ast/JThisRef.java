@@ -22,14 +22,14 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JThisRef extends JExpression {
 
-  private final JClassType type;
+  private final JDeclaredType type;
 
-  public JThisRef(SourceInfo info, JClassType type) {
+  public JThisRef(SourceInfo info, JDeclaredType type) {
     super(info);
     this.type = type;
   }
 
-  public JClassType getClassType() {
+  public JDeclaredType getClassType() {
     return type;
   }
 

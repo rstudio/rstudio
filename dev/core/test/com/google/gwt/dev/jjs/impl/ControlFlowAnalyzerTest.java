@@ -261,7 +261,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
 
   private Result analyzeSnippet(String codeSnippet)
       throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", codeSnippet);
+    JProgram program = compileSnippet("void", codeSnippet, true);
     ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
     cfa.traverseFrom(findMainMethod(program));
     return new Result(program, cfa);

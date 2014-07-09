@@ -18,13 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.Java7MockResources;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
-import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethodBody;
-import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReturnStatement;
-import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 /**
@@ -109,52 +103,9 @@ public class Java7AstTest extends JJSTestBase {
     //    "Number o= 1 ; int s = (int) o;");
   }
 
-  private void addAll(Resource... sourceFiles) {
-    for (Resource sourceFile : sourceFiles) {
-      sourceOracle.addOrReplace(sourceFile);
-    }
-  }
-
   private void assertEqualExpression(String type, String expected, String expression)
       throws UnableToCompleteException {
     JExpression testExpresssion = getExpression(type, expression);
     assertEquals(expected, testExpresssion.toSource());
-  }
-
-  private JExpression getExpression(String type, String expression)
-      throws UnableToCompleteException {
-    JProgram program = compileSnippet(type, "return " + expression + ";");
-    JMethod mainMethod = findMainMethod(program);
-    JMethodBody body = (JMethodBody) mainMethod.getBody();
-    JReturnStatement returnStmt = (JReturnStatement) body.getStatements().get(0);
-    return returnStmt.getExpr();
-  }
-
-  private void assertEqualBlock(String expected, String input)
-      throws UnableToCompleteException {
-    JBlock testExpression = getStatement(input);
-    assertEquals(formatSource("{ " + expected + "}"),
-        formatSource(testExpression.toSource()));
-  }
-
-  /**
-   * Removes most whitespace while still leaving one space separating words.
-   *
-   * Used to make the assertEquals ignore whitespace (mostly) while still retaining meaningful
-   * output when the test fails.
-   */
-  private String formatSource(String source) {
-    return source.replaceAll("\\s+", " ") // substitutes multiple whitespaces into one.
-      .replaceAll("\\s([\\p{Punct}&&[^$]])", "$1")  // removes whitespace preceding symbols
-                                                    // (except $ which can be part of an identifier)
-      .replaceAll("([\\p{Punct}&&[^$]])\\s", "$1"); // removes whitespace succeeding symbols.
-  }
-
-  private JBlock getStatement(String statement)
-      throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", statement);
-    JMethod mainMethod = findMainMethod(program);
-    JMethodBody body = (JMethodBody) mainMethod.getBody();
-    return body.getBlock();
   }
 }
