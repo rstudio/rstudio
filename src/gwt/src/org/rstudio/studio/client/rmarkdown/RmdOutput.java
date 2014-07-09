@@ -17,7 +17,6 @@ package org.rstudio.studio.client.rmarkdown;
 import java.util.Map;
 import java.util.HashMap;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -253,7 +252,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // terminated renders)
       if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED) 
       {
-         outputFrame_.closeOutputFrame(false);
+         if (outputFrame_ != null)
+            outputFrame_.closeOutputFrame(false);
          restarting_ = true;
       }
       else

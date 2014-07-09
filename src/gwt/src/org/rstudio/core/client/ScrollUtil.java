@@ -15,6 +15,7 @@
 package org.rstudio.core.client;
 
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -34,12 +35,14 @@ public class ScrollUtil
             if (retries_ > MAX_SCROLL_RETRIES)
                return false;
 
+            // wait for a document to become available in the frame
             if (frame.getIFrame() == null)
                return true;
             
             if (frame.getIFrame().getContentDocument() == null)
                return true;
 
+            // wait for the document to finish loading
             Document doc = frame.getIFrame().getContentDocument();
             String readyState = getDocumentReadyState(doc);
             if (readyState == null)
@@ -48,9 +51,13 @@ public class ScrollUtil
             if (!readyState.equals("complete"))
                return true;
             
+            // wait for a real document to load (about:blank may be intermediate)
             if (doc.getScrollTop() > 0)
                return true;
 
+            if (doc.getURL().equals(ViewerPane.ABOUT_BLANK))
+               return true;
+            
             // restore scroll position
             if (scrollPosition > 0)
                doc.setScrollTop(scrollPosition);

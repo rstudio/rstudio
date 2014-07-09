@@ -167,10 +167,6 @@ public class TextEditingTargetWidget
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
       toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
-      rmdViewerButton_ = new ToolbarButton("", 
-            StandardIcons.INSTANCE.viewer_window(), 
-            buildRmdViewerMenu(), true);
-      toolbar.addLeftWidget(rmdViewerButton_);
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
@@ -343,7 +339,6 @@ public class TextEditingTargetWidget
       rmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setEnabled(isRMarkdown2);
-      rmdViewerButton_.setVisible(isRMarkdown2);
 
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
@@ -568,8 +563,11 @@ public class TextEditingTargetWidget
                                               null, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
-      rmdViewerButton_.setVisible(!hasSubFormat &&
-                                  selectedOption.equals("HTML"));
+      if (!hasSubFormat && selectedOption.equals("HTML"))
+      {
+         rmdFormatButton_.getMenu().addSeparator();
+         addRmdViewerMenuItems(rmdFormatButton_.getMenu());
+      }
       setFormatOptionsVisible(true);
    }
 
@@ -579,7 +577,6 @@ public class TextEditingTargetWidget
       if (!visible)
       {
          setFormatText("");
-         rmdViewerButton_.setVisible(false);
       }
       rmdFormatButton_.setVisible(visible);
       editRmdFormatButton_.setVisible(visible);
@@ -590,10 +587,16 @@ public class TextEditingTargetWidget
    @Override
    public void setIsShinyFormat(boolean isPresentation)
    {
-      // hide the format picker for Shiny documents
-      rmdFormatButton_.setVisible(false);
-      rmdFormatButton_.setEnabled(false);
-      rmdViewerButton_.setVisible(!isPresentation);
+      if (isPresentation)
+      {
+         rmdFormatButton_.setVisible(false);
+      }
+      else
+      {
+         rmdFormatButton_.setVisible(true);
+         rmdFormatButton_.clearMenu();
+         addRmdViewerMenuItems(rmdFormatButton_.getMenu());
+      }
       String docType = isPresentation ? "Presentation" : "Document";
       
       knitCommandText_ = "Run " + docType;
@@ -683,21 +686,20 @@ public class TextEditingTargetWidget
       return rmdFormatButton_.addValueChangeHandler(handler);
    }
    
-   private ToolbarPopupMenu buildRmdViewerMenu()
+   private void addRmdViewerMenuItems(ToolbarPopupMenu menu)
    {
-      ToolbarPopupMenu rmdViewerWindow = new ToolbarPopupMenu();
-      MenuItem rmdViewerPaneMenuItem = new UIPrefMenuItem<Integer>(
-            uiPrefs_.rmdViewerType(),
-            RmdOutput.RMD_VIEWER_TYPE_PANE, 
-            "View in Pane", uiPrefs_);
-      MenuItem rmdViewerWindowMenuItem = new UIPrefMenuItem<Integer>(
-            uiPrefs_.rmdViewerType(),
-            RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
-            "View in Window", uiPrefs_);
-      rmdViewerWindow.addItem(rmdViewerPaneMenuItem);
-      rmdViewerWindow.addItem(rmdViewerWindowMenuItem);
-
-      return rmdViewerWindow;
+      if (rmdViewerPaneMenuItem_ == null)
+         rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
+               uiPrefs_.rmdViewerType(),
+               RmdOutput.RMD_VIEWER_TYPE_PANE, 
+               "View in Pane", uiPrefs_);
+      if (rmdViewerWindowMenuItem_ == null)
+         rmdViewerWindowMenuItem_ = new UIPrefMenuItem<Integer>(
+               uiPrefs_.rmdViewerType(),
+               RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
+               "View in Window", uiPrefs_);
+      menu.addItem(rmdViewerPaneMenuItem_);
+      menu.addItem(rmdViewerWindowMenuItem_);
    }
    
    private final Commands commands_;
@@ -724,8 +726,9 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
-   private ToolbarButton rmdViewerButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
+   private MenuItem rmdViewerPaneMenuItem_;
+   private MenuItem rmdViewerWindowMenuItem_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;

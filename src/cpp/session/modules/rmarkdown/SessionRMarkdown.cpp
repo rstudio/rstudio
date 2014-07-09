@@ -66,6 +66,15 @@ enum RenderTerminateType
    renderTerminateQuiet
 };
 
+// s_renderOutputs is a rotating buffer that maps an output identifier to a
+// target location on disk, to give the client access to the last few renders
+// that occurred in this session. it's unlikely that the client will ever 
+// request a render output other than the one that was just completed, so 
+// keeping > 2 render paths is conservative.
+#define kMaxRenderOutputs 5
+std::string s_renderOutputs[kMaxRenderOutputs];
+int s_currentRenderOutput = 0;
+
 class RenderRmd : public async_r::AsyncRProcess
 {
 public:
@@ -353,21 +362,14 @@ private:
       resultJson["output_file"] = outputFile;
       resultJson["knitr_errors"] = build::compileErrorsAsJson(knitrErrors_);
 
-      // A component of the output URL is the full (aliased) path of the output
-      // file, on which the renderer bases requests. This path is a URL
-      // component (see notes in handleRmdOutputRequest) and thus needs to
-      // arrive URL-escaped.
       std::string outputUrl(kRmdOutput "/");
-      std::string encodedOutputFile =
-                       http::util::urlEncode(
-                       http::util::urlEncode(outputFile, false), false);
-#ifndef __APPLE__
-      // on the desktop (except Cocoa) we need to make another escaping pass
-      if (session::options().programMode() == kSessionProgramModeDesktop)
-         encodedOutputFile = http::util::urlEncode(encodedOutputFile, false);
-#endif
-      outputUrl.append(encodedOutputFile);
+
+      // assign the result to one of our output slots
+      s_currentRenderOutput = (s_currentRenderOutput + 1) % kMaxRenderOutputs;
+      s_renderOutputs[s_currentRenderOutput] = outputFile;
+      outputUrl.append(boost::lexical_cast<std::string>(s_currentRenderOutput));
       outputUrl.append("/");
+
       resultJson["output_url"] = outputUrl;
 
       resultJson["output_format"] = outputFormat_;
@@ -846,14 +848,28 @@ void handleRmdOutputRequest(const http::Request& request,
    std::string path = http::util::pathAfterPrefix(request,
                                                   kRmdOutputLocation);
 
-   // Read the desired output file name from the URL
+   // find the portion of the URL containing the output identifier
    size_t pos = path.find('/', 1);
    if (pos == std::string::npos)
    {
       pResponse->setNotFoundError(request.uri());
       return;
    }
-   std::string outputFile = http::util::urlDecode(path.substr(0, pos));
+
+   // extract the output identifier
+   int outputId = 0;
+   try
+   {
+      outputId = boost::lexical_cast<int>(path.substr(0, pos));
+   }
+   catch (boost::bad_lexical_cast const&)
+   {
+      pResponse->setNotFoundError(request.uri());
+      return ;
+   }
+
+   // make sure the output identifier refers to a valid file
+   std::string outputFile = s_renderOutputs[outputId];
    FilePath outputFilePath(module_context::resolveAliasedPath(outputFile));
    if (!outputFilePath.exists())
    {
@@ -861,7 +877,7 @@ void handleRmdOutputRequest(const http::Request& request,
       return;
    }
 
-   // Strip the output file name from the URL
+   // strip the output identifier from the URL
    path = path.substr(pos + 1, path.length());
 
    if (path.empty())
