@@ -249,7 +249,6 @@ public class GwtAstBuilder {
      * compile time constants by their corresponding constant value.
      */
     private class JsniReferenceCollector extends JsModVisitor {
-      private final GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals();
       private final JsniMethodBody nativeMethodBody;
 
       private JsniReferenceCollector(JsniMethodBody nativeMethodBody) {
@@ -277,8 +276,7 @@ public class GwtAstBuilder {
           if (isCompileTimeConstant(fieldBinding)) {
             assert !ctx.isLvalue();
             JExpression constant = getConstant(info, fieldBinding.constant());
-            generator.accept(constant);
-            JsExpression result = generator.pop();
+            JsExpression result = JjsUtils.translateLiteral((JLiteral) constant);
             assert (result != null);
             ctx.replaceMe(result);
           } else {

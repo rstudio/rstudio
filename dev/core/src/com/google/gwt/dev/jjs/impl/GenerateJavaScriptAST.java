@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.PermProps;
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
@@ -158,13 +159,16 @@ import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.arg.JsInteropMode;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -740,7 +744,7 @@ public class GenerateJavaScriptAST {
     }
   }
 
-  private class GenerateJavaScriptVisitor extends GenerateJavaScriptLiterals {
+  private class GenerateJavaScriptVisitor extends JVisitor {
 
     private final Set<JClassType> alreadyRan = Sets.newHashSet();
 
@@ -1224,6 +1228,11 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
+    public void endVisit(JLiteral x, Context ctx) {
+      push(JjsUtils.translateLiteral(x));
+    }
+
+    @Override
     public void endVisit(JLocal x, Context ctx) {
       push(names.get(x).makeRef(x.getSourceInfo()));
     }
@@ -1235,8 +1244,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JLongLiteral x, Context ctx) {
-      super.endVisit(x, ctx);
-      JsExpression longLiteralAllocation = pop();
+      JsExpression longLiteralAllocation = JjsUtils.translateLiteral(x);
 
       // My seed function name
       String nameString = Long.toString(x.getValue(), 16);
@@ -1601,7 +1609,7 @@ public class GenerateJavaScriptAST {
         JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
         methodRef = new JsNameRef(methodRef.getSourceInfo(), method.getName());
         // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
-        protoRef.setQualifier(javaToJavaScriptLiteralConverter.convertQualifiedPrototypeToNameRef(
+        protoRef.setQualifier(JsInteropUtil.convertQualifiedPrototypeToNameRef(
             x.getSourceInfo(), jsPrototype));
         methodRef.setQualifier(protoRef);
         qualifier.setQualifier(methodRef);
@@ -2453,12 +2461,8 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private final GenerateJavaScriptLiterals javaToJavaScriptLiteralConverter =
-        new GenerateJavaScriptLiterals();
-
     private JsLiteral convertJavaLiteral(JLiteral javaLiteral) {
-      javaToJavaScriptLiteralConverter.accept(javaLiteral);
-      return (JsLiteral) javaToJavaScriptLiteralConverter.pop();
+      return JjsUtils.translateLiteral(javaLiteral);
     }
 
     private void generateClassDefinition(JClassType x, List<JsStatement> globalStmts) {
@@ -2482,7 +2486,7 @@ public class GenerateJavaScriptAST {
       } else {
         // setup extension of native JS object
         JsNameRef jsProtoClassRef =
-            javaToJavaScriptLiteralConverter.convertQualifiedPrototypeToNameRef(
+            JsInteropUtil.convertQualifiedPrototypeToNameRef(
                 x.getSourceInfo(), jsPrototype);
         // TODO(cromwellian) deal with module vs global scoping issue
         // jsProtoClassRef.setQualifier(new JsNameRef(x.getSourceInfo(), "$wnd"));
@@ -2929,6 +2933,31 @@ public class GenerateJavaScriptAST {
       }
       // should be safe to initialize at top-scope, as no one can observe the difference
       return true;
+    }
+
+    // Keep track of a translation stack.
+    private final ArrayList<JsVisitable> nodeStack = Lists.newArrayList();
+
+    @SuppressWarnings("unchecked")
+    private <T extends JsVisitable> T pop() {
+      return (T) nodeStack.remove(nodeStack.size() - 1);
+    }
+
+    private <T extends JsVisitable> List<T> popList(int count) {
+      int size = nodeStack.size();
+      List<T> nodesToPop = (List<T>) nodeStack.subList(size - count, size);
+      List<T> result = Lists.newArrayList(Iterables.filter(nodesToPop, Predicates.notNull()));
+      nodesToPop.clear();
+      return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends JsVisitable> void popList(List<T> collection, int count) {
+      collection.addAll((List<T>) popList(count));
+    }
+
+    private <T extends JsVisitable> void push(T node) {
+      nodeStack.add(node);
     }
   }
 

@@ -15,11 +15,13 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.js.ast.JsNameRef;
 
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
@@ -135,5 +137,17 @@ public final class JsInteropUtil {
         }
       }
     }
+  }
+
+  public static JsNameRef convertQualifiedPrototypeToNameRef(SourceInfo sourceInfo, String jsPrototype) {
+    String parts[] = jsPrototype.split("\\.");
+    JsNameRef toReturn = new JsNameRef(sourceInfo, parts[parts.length - 1]);
+    JsNameRef ref = toReturn;
+    for (int i = parts.length - 2; i >= 0; i--) {
+      JsNameRef qualifier = new JsNameRef(sourceInfo, parts[i]);
+      ref.setQualifier(qualifier);
+      ref = qualifier;
+    }
+    return toReturn;
   }
 }
