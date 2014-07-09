@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
@@ -44,6 +45,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -78,6 +80,7 @@ public class TextEditingTargetWidget
                   new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
+      handlerManager_ = new HandlerManager(this);
       
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
@@ -558,9 +561,19 @@ public class TextEditingTargetWidget
       {
          ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
                      extensions.get(i));
+         final String valueName = values.get(i);
+         ScheduledCommand cmd = new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               handlerManager_.fireEvent(
+                     new RmdOutputFormatChangedEvent(valueName));
+            }
+         };
          MenuItem item = ImageMenuItem.create(img, 
                                               prefix + options.get(i), 
-                                              null, 2);
+                                              cmd, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
       if (!hasSubFormat && selectedOption.equals("HTML"))
@@ -681,9 +694,10 @@ public class TextEditingTargetWidget
    
    @Override
    public HandlerRegistration addRmdFormatChangedHandler(
-         ValueChangeHandler<String> handler)
+         RmdOutputFormatChangedEvent.Handler handler)
    {
-      return rmdFormatButton_.addValueChangeHandler(handler);
+      return handlerManager_.addHandler(
+            RmdOutputFormatChangedEvent.TYPE, handler);
    }
    
    private void addRmdViewerMenuItems(ToolbarPopupMenu menu)
@@ -729,6 +743,7 @@ public class TextEditingTargetWidget
    private ToolbarPopupMenuButton rmdFormatButton_;
    private MenuItem rmdViewerPaneMenuItem_;
    private MenuItem rmdViewerWindowMenuItem_;
+   private HandlerManager handlerManager_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;

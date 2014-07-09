@@ -78,6 +78,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -186,7 +187,7 @@ public class TextEditingTarget implements
                             String selected);
       void setFormatOptionsVisible(boolean visible);
       HandlerRegistration addRmdFormatChangedHandler(
-            ValueChangeHandler<String> handler);
+            RmdOutputFormatChangedEvent.Handler handler);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -916,12 +917,12 @@ public class TextEditingTarget implements
       if (extendedType_.equals("rmarkdown"))
          updateRmdFormatList();
       
-      view_.addRmdFormatChangedHandler(new ValueChangeHandler<String>()
+      view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<String> event)
+         public void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event)
          {
-            setRmdFormat(event.getValue());
+            setRmdFormat(event.getFormat());
          }
       });
 
