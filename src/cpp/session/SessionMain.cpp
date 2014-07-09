@@ -1686,9 +1686,10 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       registerGwtHandlers();
    }
 
-   // enque abend warning event if necessary.
+   // enque abend warning event if necessary (but not in standalone
+   // mode since those processes are often aborted unceremoniously)
    using namespace session::client_events;
-   if (session::persistentState().hadAbend())
+   if (session::persistentState().hadAbend() && !options().standalone())
    {
       LOG_ERROR_MESSAGE("session hadabend");
 
@@ -2821,9 +2822,12 @@ int main (int argc, char * const argv[])
       monitor::initializeMonitorClient(kMonitorSocketPath,
                                        options.monitorSharedSecret());
 
-      // register monitor log writer
-      core::system::addLogWriter(monitor::client().createLogWriter(
+      // register monitor log writer (but not in standalone mode)
+      if (!options.standalone())
+      {
+         core::system::addLogWriter(monitor::client().createLogWriter(
                                                 options.programIdentity()));
+      }
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
