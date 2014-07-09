@@ -79,7 +79,10 @@ public:
       return std::string(programMode_.c_str()); 
    }
 
-
+   bool logStderr() const
+   {
+      return logStderr_;
+   }
    
    // agreement
    core::FilePath agreementFilePath() const
@@ -402,6 +405,9 @@ private:
    // program
    std::string programIdentity_;
    std::string programMode_;
+
+   // log
+   bool logStderr_;
 
    // agreement
    std::string agreementFilePath_;

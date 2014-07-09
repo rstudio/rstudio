@@ -31,6 +31,11 @@ public:
                      core::system::LogLevel level,
                      const std::string& message);
 
+    virtual void setLogToStderr(bool logToStderr)
+    {
+       logToStderr_ = logToStderr;
+    }
+
 private:
     std::string programIdentity_;
     bool logToStderr_;

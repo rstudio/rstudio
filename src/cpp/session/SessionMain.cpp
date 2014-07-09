@@ -2818,6 +2818,9 @@ int main (int argc, char * const argv[])
       if (status.exit())
          return status.exitCode() ;
 
+      // reflect stderr logging
+      core::system::setLogToStderr(options.logStderr());
+
       // initialize monitor
       monitor::initializeMonitorClient(kMonitorSocketPath,
                                        options.monitorSharedSecret());

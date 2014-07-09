@@ -93,6 +93,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          value<std::string>(&programMode_)->default_value("server"),
          "program mode (desktop or server");
    
+   // log -- logging options
+   options_description log("log");
+   log.add_options()
+      ("log-stderr",
+      value<bool>(&logStderr_)->default_value(true),
+      "write log entries to stderr");
+
    // agreement
    options_description agreement("agreement");
    agreement.add_options()
@@ -295,6 +302,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    optionsDesc.commandLine.add(verify);
    optionsDesc.commandLine.add(program);
+   optionsDesc.commandLine.add(log);
    optionsDesc.commandLine.add(agreement);
    optionsDesc.commandLine.add(docs);
    optionsDesc.commandLine.add(www);
@@ -307,6 +315,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // define groups included in config-file processing
    optionsDesc.configFile.add(program);
+   optionsDesc.configFile.add(log);
    optionsDesc.configFile.add(agreement);
    optionsDesc.configFile.add(docs);
    optionsDesc.configFile.add(www);
