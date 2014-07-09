@@ -133,6 +133,11 @@ public:
 
    // is this a hidden file?
    bool isHidden() const ;
+
+   // is this a Windows junction point?
+#ifdef _WIN32
+  bool isJunction() const ;
+#endif
    
    // is this a directory?
    bool isDirectory() const ;
