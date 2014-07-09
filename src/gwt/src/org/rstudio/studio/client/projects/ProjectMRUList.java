@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.projects;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -64,5 +67,13 @@ public class ProjectMRUList extends MRUList
    {
       return FileSystemItem.createFile(entryPath).getParentPathString();
    }
+   
+   @Override
+   protected ArrayList<String> generateLabels(
+		   ArrayList<String> mruEntries, boolean includeExt)
+   {
+	   return DuplicateHelper.getPathLabels(mruEntries, true);
+   }
+   
 
 }

@@ -92,6 +92,12 @@ public class MRUList
       mruList_.clear();
    }
    
+   protected ArrayList<String> generateLabels(
+		   ArrayList<String> entries, boolean includeExt)
+   {
+	   return DuplicateHelper.getPathLabels(entries, includeExt);
+   }
+   
    public String getQualifiedLabel(String mruEntry)
    { 
       // make a copy of the existing mru entries and prepend the specified
@@ -110,7 +116,7 @@ public class MRUList
          mruEntries.set(i, transformMruEntryPath(mruEntries.get(i)));
       
       // generate labels
-      mruEntries = DuplicateHelper.getPathLabels(mruEntries, includeExt_);
+      mruEntries = generateLabels(mruEntries, includeExt_);
       
       // return the label
       return mruEntries.get(index);    
@@ -129,8 +135,7 @@ public class MRUList
          entries.add(transformMruEntryPath(entry));
       
       // generate labels
-      ArrayList<String> labels = DuplicateHelper.getPathLabels(entries,
-                                                               includeExt_);
+      ArrayList<String> labels = generateLabels(entries, includeExt_);
 
       for (int i = 0; i < mruCmds_.length; i++)
       {
