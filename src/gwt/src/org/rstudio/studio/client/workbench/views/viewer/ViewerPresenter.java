@@ -123,6 +123,8 @@ public class ViewerPresenter extends BasePresenter
       if (!event.isRefresh())
          display_.maximize();
       rmdPreviewParams_ = event.getParams();
+      if (Desktop.isDesktop())
+         Desktop.getFrame().setViewerUrl(event.getParams().getOutputUrl());
       display_.previewRmd(event.getParams());
    }
    
