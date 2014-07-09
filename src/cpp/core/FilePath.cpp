@@ -676,6 +676,31 @@ bool FilePath::isHidden() const
    return system::isHiddenFile(*this) ;
 }
 
+bool FilePath::isJunction() const
+{
+#ifndef _WIN32
+   return false;
+#else
+   if (!exists())
+      return false;
+
+   const wchar_t* path = pImpl_->path.c_str();
+   DWORD fa = GetFileAttributesW(path);
+   if (fa == INVALID_FILE_ATTRIBUTES)
+   {
+      return false;
+   }
+   if (fa & FILE_ATTRIBUTE_REPARSE_POINT &&
+       fa & FILE_ATTRIBUTE_DIRECTORY)
+   {
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+#endif
+}
 
 bool FilePath::isDirectory() const
 {
@@ -684,7 +709,13 @@ bool FilePath::isDirectory() const
       if (!exists())
          return false;
       else
-         return boost::filesystem::is_directory(pImpl_->path) ;
+      {
+         return boost::filesystem::is_directory(pImpl_->path)
+      #ifdef _WIN32
+               || isJunction()
+      #endif
+               ;
+      }
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
