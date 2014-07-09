@@ -1005,7 +1005,7 @@ public class JTypeOracle implements Serializable {
         String dualIntf = it.next();
         Set<String> implementors = get(isImplementedMap, dualIntf);
         for (String implementorName : implementors) {
-          JReferenceType implementor = referenceTypesByName.get(implementorName);
+          JClassType implementor = (JClassType) referenceTypesByName.get(implementorName);
           if (isInstantiatedType(implementor) && !program.isJavaScriptObject(implementor)) {
             // This dual is still implemented by a Java class.
             continue nextDual;
@@ -1020,7 +1020,7 @@ public class JTypeOracle implements Serializable {
       Iterator<Entry<String, String>> jit = jsoSingleImpls.entrySet().iterator();
       while (jit.hasNext()) {
         Entry<String, String> jsoSingleImplEntry = jit.next();
-        JDeclaredType clazz = (JDeclaredType) referenceTypesByName.get(jsoSingleImplEntry.getValue());
+        JClassType clazz = (JClassType) referenceTypesByName.get(jsoSingleImplEntry.getValue());
         if (isInstantiatedType(clazz)) {
           continue;
         }
