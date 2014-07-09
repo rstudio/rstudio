@@ -683,16 +683,18 @@ public final class String implements Comparable<String>, CharSequence,
 
   @Override
   public boolean equals(Object other) {
-    if (!(other instanceof String)) {
-      return false;
-    }
-    return __equals(this, other);
+    return (other instanceof String) && __equals(this, other);
   }
 
   public native boolean equalsIgnoreCase(String other) /*-{
-    if (other == null)
+    if (other == null) {
       return false;
-    return (this == other) || (this.toLowerCase() == other.toLowerCase());
+    }
+    // Coerce to a primitive string to force string comparison
+    if (String(this) == other) {
+      return true;
+    }
+    return (this.length == other.length) && (this.toLowerCase() == other.toLowerCase());
   }-*/;
 
   public byte[] getBytes() {
