@@ -1,7 +1,7 @@
 /*
- * ViewerNavigateEvent.java
+ * ViewerPreviewRmdEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,45 +14,32 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer.events;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
+public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handler>
 {
-   public static class Data extends JavaScriptObject
-   {
-      protected Data()
-      {
-      }
-      
-      public native final String getURL() /*-{
-         return this.url;
-      }-*/;
-      
-      public native final int getHeight() /*-{
-         return this.height;
-      }-*/;
-   }
-   
    public interface Handler extends EventHandler
    {
-      void onViewerNavigate(ViewerNavigateEvent event);
+      void onViewerPreviewRmd(ViewerPreviewRmdEvent event);
    }
 
-   public ViewerNavigateEvent(Data data)
+   public ViewerPreviewRmdEvent(RmdPreviewParams params, boolean isRefresh)
    {
-      data_ = data;
+      params_ = params;
+      isRefresh_ = isRefresh;
    }
    
-   public String getURL()
+   public RmdPreviewParams getParams()
    {
-      return data_.getURL();
+      return params_;
    }
    
-   public int getHeight()
+   public boolean isRefresh()
    {
-      return data_.getHeight();
+      return isRefresh_;
    }
    
    @Override
@@ -64,10 +51,11 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onViewerNavigate(this);
+      handler.onViewerPreviewRmd(this);
    }
    
-   private final Data data_;
+   private final RmdPreviewParams params_;
+   private final boolean isRefresh_;
   
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

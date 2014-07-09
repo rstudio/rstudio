@@ -27,8 +27,8 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
 import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
-import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
 
 import com.google.inject.Inject;
 
@@ -67,14 +67,8 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    {
       super.showRmdPreview(params);
       isShiny_ = params.isShinyDocument();
-      // maximize the frame if we're taking control of it, but don't maximize on
-      // reload (we want to keep any user adjustments)
-      ViewerNavigateEvent.Data data = ViewerNavigateEvent.Data.create(
-            params.getOutputUrl(), 
-            frame_ == null ?
-                  ViewerNavigateEvent.HEIGHT_MAXIMIZE : 0,
-            true);
-      events_.fireEvent(new ViewerNavigateEvent(data));
+      
+      events_.fireEvent(new ViewerPreviewRmdEvent(params, frame_ != null));
    }
 
    @Override

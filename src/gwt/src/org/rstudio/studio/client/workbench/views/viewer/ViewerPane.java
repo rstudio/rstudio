@@ -17,9 +17,11 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
@@ -42,6 +44,13 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.viewerPopout().createToolbarButton());
       
+      // add publish button 
+      publishButtonSeparator_ = toolbar.addLeftSeparator();
+      publishButton_ = commands_.publishHTML().createToolbarButton(false);
+      toolbar.addLeftWidget(publishButton_);
+      publishButtonSeparator_.setVisible(false);
+      publishButton_.setVisible(false);
+      
       toolbar.addRightWidget(commands_.viewerClear().createToolbarButton());
       toolbar.addRightWidget(commands_.viewerStop().createToolbarButton());
       toolbar.addRightSeparator();
@@ -54,20 +63,64 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       frame_ = new RStudioFrame() ;
       frame_.setSize("100%", "100%");
-      navigate(ABOUT_BLANK, false);
+      navigate(ABOUT_BLANK);
       return new AutoGlassPanel(frame_);
    }
    
    @Override
-   public void navigate(String url, boolean useRawURL)
+   public void navigate(String url)
+   {
+      navigate(url, false);
+      publishButton_.setVisible(false);
+      publishButtonSeparator_.setVisible(false);
+   }
+
+   @Override
+   public void previewRmd(RmdPreviewParams params)
+   {
+      navigate(params.getOutputUrl(), true);
+      publishButton_.setVisible(!params.isShinyDocument());
+      publishButtonSeparator_.setVisible(!params.isShinyDocument());
+      if (!params.isShinyDocument())
+         publishButton_.setText(params.getResult().getRpubsPublished() ? 
+               "Republish" : "Publish");
+   }
+   
+   @Override
+   public String getUrl()
+   {
+      return frame_.getUrl();
+   }
+   
+   @Override
+   public String getTitle()
+   {
+      return frame_.getTitle();
+   }
+   
+   @Override
+   public void popout()
+   {
+      if (unmodifiedUrl_ != null)
+         globalDisplay_.openWindow(unmodifiedUrl_);
+   }
+
+   @Override
+   public void refresh()
+   {
+      String url = frame_.getUrl();
+      if (url != null)
+         frame_.setUrl(url);
+   }
+   
+   private void navigate(String url, boolean useRawURL)
    {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
       
       // append the viewer_pane query parameter
       if ((unmodifiedUrl_ != null) && 
-          !unmodifiedUrl_.equals(ABOUT_BLANK) &&
-          !useRawURL)
+          !unmodifiedUrl_.equals(ABOUT_BLANK))
       {
          // first split into base and anchor
          String base = new String(unmodifiedUrl_);
@@ -99,33 +152,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       events_.fireEvent(new ViewerNavigatedEvent(url, frame_));
    }
-   
-   @Override
-   public String getUrl()
-   {
-      return frame_.getUrl();
-   }
-   
-   @Override
-   public void popout()
-   {
-      if (unmodifiedUrl_ != null)
-         globalDisplay_.openWindow(unmodifiedUrl_);
-   }
 
-   @Override
-   public void refresh()
-   {
-      String url = frame_.getUrl();
-      if (url != null)
-         frame_.setUrl(url);
-   }
-   
    private RStudioFrame frame_;
    private String unmodifiedUrl_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
+   
+   private ToolbarButton publishButton_;
+   private Widget publishButtonSeparator_;
 
    public static final String ABOUT_BLANK = "about:blank";
 }

@@ -19,8 +19,11 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -31,17 +34,23 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
 public class ViewerPresenter extends BasePresenter 
-                             implements ShinyApplicationStatusEvent.Handler
+                             implements ViewerNavigateEvent.Handler, 
+                                        ViewerPreviewRmdEvent.Handler,
+                                        ShinyApplicationStatusEvent.Handler,
+                                        RPubsPresenter.Context
 {
    public interface Binder extends CommandBinder<Commands, ViewerPresenter> {}
    
    public interface Display extends WorkbenchView
    {
-      void navigate(String url, boolean useRawURL);
+      void navigate(String url);
+      void previewRmd(RmdPreviewParams params);
       String getUrl();
+      String getTitle();
       void popout();
       void refresh();
    }
@@ -52,7 +61,8 @@ public class ViewerPresenter extends BasePresenter
                           Commands commands,
                           Binder binder,
                           ViewerServerOperations server,
-                          SourceShim sourceShim)
+                          SourceShim sourceShim,
+                          RPubsPresenter rpubsPresenter)
    {
       super(display);
       display_ = display;
@@ -60,6 +70,7 @@ public class ViewerPresenter extends BasePresenter
       server_ = server;
       events_ = eventBus;
       sourceShim_ = sourceShim;
+      rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);
       
@@ -83,6 +94,7 @@ public class ViewerPresenter extends BasePresenter
       initializeEvents();
    }
    
+   @Override
    public void onViewerNavigate(ViewerNavigateEvent event)
    {
       enableCommands(true);
@@ -92,17 +104,26 @@ public class ViewerPresenter extends BasePresenter
          display_.bringToFront();
       
          int ensureHeight = event.getHeight();
-         if (ensureHeight == ViewerNavigateEvent.HEIGHT_MAXIMIZE)
-            display_.maximize();
-         else if (ensureHeight > 0)
+         if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
          
-         navigate(event.getURL(), event.useRawURL());
+         navigate(event.getURL());
       }
       else
       {
-         navigate("about:blank", false);
+         navigate(ViewerPane.ABOUT_BLANK);
       }
+   }
+   
+   @Override
+   public void onViewerPreviewRmd(ViewerPreviewRmdEvent event)
+   {
+      enableCommands(true);
+      display_.bringToFront();
+      if (!event.isRefresh())
+         display_.maximize();
+      rmdPreviewParams_ = event.getParams();
+      display_.previewRmd(event.getParams());
    }
    
    @Override
@@ -115,7 +136,7 @@ public class ViewerPresenter extends BasePresenter
       {
          enableCommands(true);
          display_.bringToFront();
-         navigate(event.getParams().getUrl(), false);
+         navigate(event.getParams().getUrl());
          runningShinyAppParams_ = event.getParams();
       }
    }
@@ -151,18 +172,63 @@ public class ViewerPresenter extends BasePresenter
    {
       stop(true);
    }
- 
-   private void navigate(String url, boolean useRawUrl)
+   
+   @Override
+   public String getContextId()
+   {
+      return "RMarkdownPreview";
+   }
+
+   @Override
+   public String getTitle()
+   {
+      String title = display_.getTitle();
+      if (title != null && !title.isEmpty())
+         return title;
+      
+      String htmlFile = null;
+      if (rmdPreviewParams_ != null)
+         htmlFile = rmdPreviewParams_.getOutputFile();
+      if (htmlFile != null)
+      {
+         FileSystemItem fsi = FileSystemItem.createFile(htmlFile);
+         return fsi.getStem();
+      }
+      else
+      {
+         return "(Untitled)";
+      }
+   }
+
+   @Override
+   public String getHtmlFile()
+   {
+      if (rmdPreviewParams_ != null)
+         return rmdPreviewParams_.getOutputFile();
+      else
+         return "";
+   }
+
+   @Override
+   public boolean isPublished()
+   {
+      if (rmdPreviewParams_ != null)
+         return rmdPreviewParams_.getResult().getRpubsPublished();
+      else
+         return false;
+   }
+
+   private void navigate(String url)
    {
       if (Desktop.isDesktop())
          Desktop.getFrame().setViewerUrl(url);
-      display_.navigate(url, useRawUrl);
+      display_.navigate(url);
    }
    
    private void stop(boolean interruptR)
    {
       enableCommands(false);
-      navigate("about:blank", false);
+      navigate(ViewerPane.ABOUT_BLANK);
       if (interruptR)
          commands_.interruptR().execute();
       server_.viewerStopped(new VoidServerRequestCallback());
@@ -222,4 +288,5 @@ public class ViewerPresenter extends BasePresenter
    private final SourceShim sourceShim_; 
    
    private ShinyApplicationParams runningShinyAppParams_;
+   private RmdPreviewParams rmdPreviewParams_;
 }
