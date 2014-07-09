@@ -371,6 +371,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    userHomePath_ = userDirs.homePath;
    userScratchPath_ = userDirs.scratchPath;
 
+   // set HOME if we are in standalone mode (this enables us to reflect
+   // R_USER back into HOME on Linux)
+   if (standalone())
+      core::system::setenv("HOME", userHomePath_);
+
    // session timeout seconds is always -1 in desktop mode
    if (programMode_ == kSessionProgramModeDesktop)
       timeoutMinutes_ = 0;
