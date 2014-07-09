@@ -676,9 +676,11 @@ bool FilePath::isHidden() const
    return system::isHiddenFile(*this) ;
 }
 
-#ifdef _WIN32
 bool FilePath::isJunction() const
 {
+#ifndef _WIN32
+   return false;
+#else
    if (!exists())
       return false;
 
@@ -697,8 +699,8 @@ bool FilePath::isJunction() const
    {
       return false;
    }
-}
 #endif
+}
 
 bool FilePath::isDirectory() const
 {

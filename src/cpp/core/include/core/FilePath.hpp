@@ -135,9 +135,7 @@ public:
    bool isHidden() const ;
 
    // is this a Windows junction point?
-#ifdef _WIN32
-  bool isJunction() const ;
-#endif
+   bool isJunction() const ;
    
    // is this a directory?
    bool isDirectory() const ;
