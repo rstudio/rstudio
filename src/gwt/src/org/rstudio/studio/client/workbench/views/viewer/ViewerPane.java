@@ -73,6 +73,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       navigate(url, false);
       publishButton_.setVisible(false);
       publishButtonSeparator_.setVisible(false);
+      rmdPreviewParams_ = null;
    }
 
    @Override
@@ -84,6 +85,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       if (!params.isShinyDocument())
          publishButton_.setText(params.getResult().getRpubsPublished() ? 
                "Republish" : "Publish");
+      rmdPreviewParams_ = params;
    }
    
    @Override
@@ -101,8 +103,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void popout()
    {
-      if (unmodifiedUrl_ != null)
+      if (rmdPreviewParams_ != null && 
+          !rmdPreviewParams_.isShinyDocument())
+      {
+         globalDisplay_.showHtmlFile(rmdPreviewParams_.getOutputFile());
+      }
+      else if (unmodifiedUrl_ != null)
+      {
          globalDisplay_.openWindow(unmodifiedUrl_);
+      }
    }
 
    @Override
@@ -120,7 +129,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       // append the viewer_pane query parameter
       if ((unmodifiedUrl_ != null) && 
-          !unmodifiedUrl_.equals(ABOUT_BLANK))
+          !unmodifiedUrl_.equals(ABOUT_BLANK) &&
+          !useRawURL)
       {
          // first split into base and anchor
          String base = new String(unmodifiedUrl_);
@@ -155,6 +165,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
    private RStudioFrame frame_;
    private String unmodifiedUrl_;
+   private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;

@@ -139,6 +139,28 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
       }
    }
    
+   @Override
+   public String getAnchor()
+   {
+      String url = null;
+      if (isShiny_ && shinyFrame_ != null)
+      {
+         url = shinyFrame_.getUrl();
+      }
+      else
+      {
+         if (frame_ == null ||
+             frame_.getIFrame() == null ||
+             frame_.getIFrame().getContentDocument() == null)
+            return "";
+         url = frame_.getIFrame().getContentDocument().getURL();
+      }
+      if (url == null)
+         return "";
+      int anchorPos = url.lastIndexOf("#");
+      return anchorPos > 0 ? url.substring(anchorPos + 1) : "";
+   }
+   
    private RStudioFrame frame_;
    private ShinyFrameHelper shinyFrame_;
    private boolean isShiny_;
