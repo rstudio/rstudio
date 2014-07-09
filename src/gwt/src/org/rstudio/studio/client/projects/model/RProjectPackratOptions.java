@@ -24,10 +24,19 @@ public class RProjectPackratOptions extends JavaScriptObject
    
    public native static final RProjectPackratOptions createEmpty() /*-{
       var options = new Object();
+      options.use_packrat = false;
       options.auto_snapshot = true;
       options.vcs_ignore_lib = true;
       options.vcs_ignore_src = false;
       return options;
+   }-*/;
+   
+   public native final boolean getUsePackrat() /*-{
+      return this.use_packrat;
+   }-*/;
+   
+   public native final void setUsePackrat(boolean usePackrat) /*-{
+      this.use_packrat = usePackrat;
    }-*/;
    
    public native final boolean getAutoSnapshot() /*-{
