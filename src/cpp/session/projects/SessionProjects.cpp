@@ -154,7 +154,7 @@ Error createProject(const json::JsonRpcRequest& request,
 
 
       // devtools specific dispatch
-      if (userSettings().useDevtools())
+      if (userSettings().useDevtools() && module_context::isPackageVersionInstalled("devtools", "1.5.0.99"))
       {
          // rstudio is a param devtools uses to create the .Rproj file by hand -- not
          // needed here since RStudio does it by default
@@ -182,7 +182,7 @@ Error createProject(const json::JsonRpcRequest& request,
          }
 
          // add Rcpp infrastructure if requested
-         if (usingRcpp && module_context::isPackageVersionInstalled("devtools", "1.5.0.99"))
+         if (usingRcpp)
          {
             error = r::exec::RFunction("devtools:::use_rcpp")
                   .addParam(packageDir.absolutePath())
