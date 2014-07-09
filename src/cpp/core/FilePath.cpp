@@ -682,14 +682,15 @@ bool FilePath::isJunction() const
    if (!exists())
       return false;
 
-   DWORD fa = GetFileAttributesW(pImpl_->path.c_str());
+   const wchar_t* path = pImpl_->path.c_str();
+   DWORD fa = GetFileAttributesW(path);
    if (fa == INVALID_FILE_ATTRIBUTES)
    {
       return false;
    }
-   if (fa & FILE_ATTRIBUTE_REPARSE_POINT)
+   if (fa & FILE_ATTRIBUTE_REPARSE_POINT &&
+       fa & FILE_ATTRIBUTE_DIRECTORY)
    {
-      // TODO: verify this is actually a junction (which is a sub-type of reparse point)
       return true;
    }
    else
