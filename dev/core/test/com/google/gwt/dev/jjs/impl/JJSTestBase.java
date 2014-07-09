@@ -143,7 +143,7 @@ public abstract class JJSTestBase extends TestCase {
     }
 
     if (type != null && dimensions > 0) {
-      type = program.getTypeArray(type, dimensions);
+      type = program.getOrCreateArrayType(type, dimensions);
     }
     return type;
   }

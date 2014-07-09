@@ -60,6 +60,7 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JTypeOracle.StandardTypes;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
@@ -263,7 +264,7 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): this stage shouldn't exist, move into optimize.
         postNormalizationOptimizeJava();
-        jprogram.typeOracle.recomputeAfterOptimizations();
+        jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
 
         // (5) Construct the Js AST
         Pair<? extends JavaToJavaScriptMap, Set<JsNode>> jjsMapAndInlineableFunctions =
@@ -959,7 +960,8 @@ public abstract class JavaToJavaScriptCompiler {
 
       // Free up memory.
       rpo.clear();
-      jprogram.typeOracle.computeBeforeAST();
+      jprogram.typeOracle.computeBeforeAST(StandardTypes.createFrom(jprogram),
+          jprogram.getDeclaredTypes());
       return compilationState;
     }
 
@@ -1338,7 +1340,7 @@ public abstract class JavaToJavaScriptCompiler {
   private OptimizerStats optimizeJavaOneTime(String passName, int numNodes) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "loop");
     // Clinits might have become empty become empty.
-    jprogram.typeOracle.recomputeAfterOptimizations();
+    jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
     OptimizerStats stats = new OptimizerStats(passName);
     stats.add(Pruner.exec(jprogram, true).recordVisits(numNodes));
     stats.add(Finalizer.exec(jprogram).recordVisits(numNodes));

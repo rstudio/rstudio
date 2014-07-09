@@ -395,7 +395,7 @@ public class ImplementClassLiteralsAsFields {
 
     typeName = type.getName();
     // Mangle the class name to match hosted mode.
-    if (program.isJavaScriptObject(type)) {
+    if (program.typeOracle.isJavaScriptObject(type)) {
       typeName += '$';
     }
     return typeName;
@@ -403,10 +403,9 @@ public class ImplementClassLiteralsAsFields {
 
   private JType normalizeJsoType(JType type) {
     assert !(type instanceof JArrayType);
-    if (program.isJavaScriptObject(type)) {
+    if (program.typeOracle.isJavaScriptObject(type)) {
       return program.getJavaScriptObject();
     }
-
     return type;
   }
 

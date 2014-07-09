@@ -57,7 +57,7 @@ public class ComputeInstantiatedJsoInterfaces {
       // if it's a class, and the superType is JSO, rescue it too
       if (toType instanceof JClassType) {
         JClassType superType = ((JClassType) toType).getSuperClass();
-        if (superType != null && program.isJavaScriptObject(superType)) {
+        if (superType != null && program.typeOracle.isJavaScriptObject(superType)) {
           instantiateJsoInterface(superType);
         }
       }

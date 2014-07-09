@@ -414,7 +414,7 @@ public class MakeCallsStatic {
 
     private boolean isJso(JMethodCall call) {
       JDeclaredType type = call.getTarget().getEnclosingType();
-      return type != null && program.isJavaScriptObject(type);
+      return type != null && program.typeOracle.isJavaScriptObject(type);
     }
   }
 

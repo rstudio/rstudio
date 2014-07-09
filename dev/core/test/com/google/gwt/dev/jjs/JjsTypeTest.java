@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
+import com.google.gwt.dev.jjs.ast.JTypeOracle.StandardTypes;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
@@ -358,14 +359,15 @@ public class JjsTypeTest extends TestCase {
     arrayOfInt = program.getTypeArray(program.getTypePrimitiveInt());
 
     // 2 dimensional
-    arrayOfArrayOfBase = program.getTypeArray(classBase, 2);
-    arrayOfArrayOfObject = program.getTypeArray(classObject, 2);
-    arrayOfArrayOfIntfI = program.getTypeArray(intfI, 2);
-    arrayOfArrayOfIntfIBase = program.getTypeArray(intfIBase, 2);
-    arrayOfArrayOfInt = program.getTypeArray(program.getTypePrimitiveInt(), 2);
-    arrayOfArrayOfB = program.getTypeArray(classB, 2);
+    arrayOfArrayOfBase = program.getOrCreateArrayType(classBase, 2);
+    arrayOfArrayOfObject = program.getOrCreateArrayType(classObject, 2);
+    arrayOfArrayOfIntfI = program.getOrCreateArrayType(intfI, 2);
+    arrayOfArrayOfIntfIBase = program.getOrCreateArrayType(intfIBase, 2);
+    arrayOfArrayOfInt = program.getOrCreateArrayType(program.getTypePrimitiveInt(), 2);
+    arrayOfArrayOfB = program.getOrCreateArrayType(classB, 2);
 
-    program.typeOracle.computeBeforeAST();
+    program.typeOracle.computeBeforeAST(StandardTypes.createFrom(program),
+        program.getDeclaredTypes());
 
     // Save off some miscellaneous types to test against
     typeNull = program.getTypeNull();

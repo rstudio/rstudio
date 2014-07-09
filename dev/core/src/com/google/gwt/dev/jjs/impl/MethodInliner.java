@@ -192,7 +192,8 @@ public class MethodInliner {
         // Access from this class to the target class won't trigger a clinit
         return null;
       }
-      if (program.isStaticImpl(x.getTarget()) && !program.isJavaScriptObject(x.getTarget().getEnclosingType())) {
+      if (program.isStaticImpl(x.getTarget()) &&
+          !program.typeOracle.isJavaScriptObject(x.getTarget().getEnclosingType())) {
         // No clinit needed; target is really a non-jso instance method.
         return null;
       }

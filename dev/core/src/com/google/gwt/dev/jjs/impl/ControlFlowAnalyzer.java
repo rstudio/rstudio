@@ -119,18 +119,19 @@ public class ControlFlowAnalyzer {
         JClassType superClass = ((JClassType) leafType).getSuperClass();
         if (superClass != null) {
           // FooSub[] -> Foo[]
-          rescue(program.getTypeArray(superClass, dims), true, isInstantiated);
+          rescue(program.getOrCreateArrayType(superClass, dims), true, isInstantiated);
           didSuperType = true;
         }
       } else if (leafType instanceof JInterfaceType) {
         // Intf[] -> Object[]
-        rescue(program.getTypeArray(program.getTypeJavaLangObject(), dims), true, isInstantiated);
+        rescue(program.getOrCreateArrayType(program.getTypeJavaLangObject(), dims),
+            true, isInstantiated);
         didSuperType = true;
       }
       if (!didSuperType) {
         if (dims > 1) {
           // anything[][] -> Object[]
-          rescue(program.getTypeArray(program.getTypeJavaLangObject(), dims - 1), true,
+          rescue(program.getOrCreateArrayType(program.getTypeJavaLangObject(), dims - 1), true,
               isInstantiated);
         } else {
           // anything[] -> Object
@@ -142,7 +143,7 @@ public class ControlFlowAnalyzer {
       if (leafType instanceof JDeclaredType) {
         JDeclaredType dLeafType = (JDeclaredType) leafType;
         for (JInterfaceType intfType : dLeafType.getImplements()) {
-          JArrayType intfArray = program.getTypeArray(intfType, dims);
+          JArrayType intfArray = program.getOrCreateArrayType(intfType, dims);
           rescue(intfArray, true, isInstantiated);
         }
       }
@@ -359,7 +360,7 @@ public class ControlFlowAnalyzer {
     @Override
     public boolean visit(final JMethod x, Context ctx) {
       JReferenceType enclosingType = x.getEnclosingType();
-      if (program.isJavaScriptObject(enclosingType)) {
+      if (program.typeOracle.isJavaScriptObject(enclosingType)) {
         // Calls to JavaScriptObject types rescue those types.
         boolean instance = !x.isStatic() || program.isStaticImpl(x);
         rescue(enclosingType, true, instance);
@@ -410,7 +411,7 @@ public class ControlFlowAnalyzer {
          */
         return true;
       }
-      if (method.isStatic() || program.isJavaScriptObject(method.getEnclosingType())
+      if (method.isStatic() || program.typeOracle.isJavaScriptObject(method.getEnclosingType())
           || instantiatedTypes.contains(method.getEnclosingType())) {
         rescue(method);
       } else {
@@ -446,7 +447,7 @@ public class ControlFlowAnalyzer {
           if (newArray.dims.get(i) instanceof JAbsentArrayDimension) {
             break;
           }
-          rescue(program.getTypeArray(leafType, nDims - i), true, true);
+          rescue(program.getOrCreateArrayType(leafType, nDims - i), true, true);
         }
       } else {
         // just rescue my own specific type

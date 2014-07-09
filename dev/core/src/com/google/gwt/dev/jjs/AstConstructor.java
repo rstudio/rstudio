@@ -24,6 +24,7 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JTypeOracle.StandardTypes;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
@@ -78,7 +79,8 @@ public class AstConstructor {
     unifyAst.buildEverything();
 
     // Compute all super type/sub type info
-    jprogram.typeOracle.computeBeforeAST();
+    jprogram.typeOracle.computeBeforeAST(StandardTypes.createFrom(jprogram),
+        jprogram.getDeclaredTypes());
 
     // (3) Perform Java AST normalizations.
     FixAssignmentsToUnboxOrCast.exec(jprogram);

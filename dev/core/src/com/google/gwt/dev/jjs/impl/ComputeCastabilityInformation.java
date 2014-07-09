@@ -60,7 +60,6 @@ public class ComputeCastabilityInformation {
         HashMultimap.create();
 
     {
-      JTypeOracle typeOracle = program.typeOracle;
       for (JArrayType arrayType : program.getAllArrayTypes()) {
         if (typeOracle.isInstantiatedType(arrayType)) {
           instantiatedArrayTypes.add(arrayType);
@@ -133,7 +132,6 @@ public class ComputeCastabilityInformation {
          * runtime type of the lhs, we must record a cast from the rhs to the
          * prospective element type of the lhs.
          */
-        JTypeOracle typeOracle = program.typeOracle;
         JType rhsType = x.getRhs().getType();
         assert (rhsType instanceof JReferenceType);
 
@@ -167,18 +165,19 @@ public class ComputeCastabilityInformation {
       type = type.getUnderlyingType();
       qType = qType.getUnderlyingType();
 
-      if (program.typeOracle.canTriviallyCast(type, qType)) {
+      if (typeOracle.canTriviallyCast(type, qType)) {
         return true;
       }
 
       if (type instanceof JArrayType && qType instanceof JArrayType) {
         JArrayType aType = (JArrayType) type;
         JArrayType aqType = (JArrayType) qType;
-        return (program.isJavaScriptObject(aType.getLeafType()) && program
-                .isJavaScriptObject(aqType.getLeafType()));
+        return (typeOracle.isJavaScriptObject(aType.getLeafType()) &&
+            typeOracle.isJavaScriptObject(aqType.getLeafType()));
       }
 
-      return (program.isJavaScriptObject(type) && program.isJavaScriptObject(qType));
+      return (typeOracle.isJavaScriptObject(type) &&
+          typeOracle.isJavaScriptObject(qType));
     }
 
     /**
@@ -197,7 +196,8 @@ public class ComputeCastabilityInformation {
         computeCastMap(((JClassType) type).getSuperClass());
       }
 
-      if (!program.typeOracle.isInstantiatedType(type) || program.isJavaScriptObject(type)) {
+      if (!typeOracle.isInstantiatedType(type) ||
+          typeOracle.isJavaScriptObject(type)) {
         return;
       }
 
@@ -222,7 +222,7 @@ public class ComputeCastabilityInformation {
          */
         for (JReferenceType castSourceType : castSourceTypes) {
           if (canTriviallyCastJsoSemantics(type, castSourceType) ||
-              program.isJavaScriptObject(castTargetType)) {
+              typeOracle.isJavaScriptObject(castTargetType)) {
             if (castTargetType != program.getTypeJavaLangObject() &&
                 castTargetType != program.getJavaScriptObject()) {
               // ignore java.lang.Object.
@@ -256,12 +256,12 @@ public class ComputeCastabilityInformation {
       assert rhs.getType() instanceof JReferenceType;
 
       JReferenceType rhsType = ((JReferenceType) rhs.getType()).getUnderlyingType();
-      if (program.typeOracle.canTriviallyCast(rhsType, (JReferenceType) targetType)) {
+      if (typeOracle.canTriviallyCast(rhsType, (JReferenceType) targetType)) {
         // don't record a type for trivial casts that won't generate code
         return;
       }
 
-      if (program.isJavaScriptObject(targetType)) {
+      if (typeOracle.isJavaScriptObject(targetType)) {
         // If the target type is a JavaScriptObject, don't record an id.
         return;
       }
@@ -291,8 +291,11 @@ public class ComputeCastabilityInformation {
 
   private final JProgram program;
 
+  private final JTypeOracle typeOracle;
+
   private ComputeCastabilityInformation(JProgram program, boolean disableCastChecking) {
     this.program = program;
+    this.typeOracle = program.typeOracle;
     this.disableCastChecking = disableCastChecking;
   }
 

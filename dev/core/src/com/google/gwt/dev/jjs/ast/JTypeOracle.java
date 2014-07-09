@@ -27,6 +27,7 @@ import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -56,6 +57,37 @@ public class JTypeOracle implements Serializable {
      * A mapping from a class name to its directly implemented interfaces' names.
      */
     private Map<String, Set<String>> implementedIntfsByClass = new HashMap<String, Set<String>>();
+  }
+
+  /**
+   * A collection of types that are required to correctly run JTypeOracle.
+   */
+  public static class StandardTypes implements Serializable {
+
+    public static StandardTypes createFrom(JProgram program) {
+      StandardTypes requiredTypes = new StandardTypes();
+      JDeclaredType arrayType = program.getIndexedType("Array");
+      requiredTypes.baseArrayType = arrayType == null ? null : arrayType.getName();
+      requiredTypes.javaLangObject = program.getTypeJavaLangObject().getName();
+      JDeclaredType javaIoSerializableType = program.getFromTypeMap(Serializable.class.getName());
+      requiredTypes.javaIoSerializable =
+          javaIoSerializableType == null ? null : javaIoSerializableType.getName();
+      JDeclaredType javaLangConeableType = program.getFromTypeMap(Cloneable.class.getName());
+      requiredTypes.javaLangCloneable =
+          javaLangConeableType == null ? null : javaLangConeableType.getName();
+      requiredTypes.nullType = program.getTypeNull().getName();
+      return requiredTypes;
+    }
+
+    private String baseArrayType;
+
+    private String javaIoSerializable;
+
+    private String javaLangCloneable;
+
+    private String javaLangObject;
+
+    private String nullType;
   }
 
   private LinkedHashSet<JMethod> exportedMethods = new LinkedHashSet<JMethod>();
@@ -181,8 +213,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean isExportedMethod(JMethod method) {
-    return isInteropEnabled() && method.getExportName() != null
-        && !method.isNoExport();
+    return isInteropEnabled() && method.getExportName() != null && !method.isNoExport();
   }
 
   public boolean isInteropEnabled() {
@@ -351,8 +382,6 @@ public class JTypeOracle implements Serializable {
    */
   private Set<String> allClasses = new HashSet<String>();
 
-  private JDeclaredType baseArrayType;
-
   /**
    * A map of all interfaces to the set of classes that could theoretically
    * implement them.
@@ -377,8 +406,7 @@ public class JTypeOracle implements Serializable {
    * A map of all classes to the set of interfaces they directly implement,
    * possibly through inheritance.
    */
-  private final Map<String, Set<String>> implementsMap =
-      new HashMap<String, Set<String>>();
+  private final Map<String, Set<String>> implementsMap = new HashMap<String, Set<String>>();
 
   /**
    * The types in the program that are instantiable. All types in this set
@@ -394,21 +422,11 @@ public class JTypeOracle implements Serializable {
   private final Map<String, Set<String>> isImplementedMap =
       new HashMap<String, Set<String>>();
 
-  private JDeclaredType javaIoSerializable;
-
-  private JDeclaredType javaLangCloneable;
-
-  /**
-   * Caches the {@link Object} class.
-   */
-  private JClassType javaLangObject = null;
-
   /**
    * A map of all interfaces that are implemented by overlay types to the
    * overlay type that initially implements it.
    */
-  private final Map<String, String> jsoSingleImpls =
-      new HashMap<String, String>();
+  private final Map<String, String> jsoSingleImpls = new HashMap<String, String>();
 
   /**
    * A set of all JsTypes.
@@ -421,30 +439,22 @@ public class JTypeOracle implements Serializable {
   private Map<String, JReferenceType> referenceTypesByName = new HashMap<String, JReferenceType>();
 
   /**
-   * The associated {@link JProgram}.
-   */
-  private final JProgram program;
-
-  /**
    * A map of all classes to the set of classes that extend them, directly or
    * indirectly.
    */
-  private final Map<String, Set<String>> subClassMap =
-      new HashMap<String, Set<String>>();
+  private final Map<String, Set<String>> subClassMap = new HashMap<String, Set<String>>();
 
   /**
    * A map of all classes to the set of classes they extend, directly or
    * indirectly.
    */
-  private final Map<String, Set<String>> superClassMap =
-      new HashMap<String, Set<String>>();
+  private final Map<String, Set<String>> superClassMap = new HashMap<String, Set<String>>();
 
   /**
    * A map of all interfaces to the set of interfaces they extend, directly or
    * indirectly.
    */
-  private final Map<String, Set<String>> superInterfaceMap =
-      new HashMap<String, Set<String>>();
+  private final Map<String, Set<String>> superInterfaceMap = new HashMap<String, Set<String>>();
   /**
    * A map of all methods with virtual overrides, onto the collection of
    * overridden methods. Each key method's collections is a map of the set of
@@ -462,14 +472,17 @@ public class JTypeOracle implements Serializable {
       new IdentityHashMap<JClassType, Map<String, JMethod>>();
 
   private final boolean hasWholeWorldKnowledge;
+
   private ImmediateTypeRelations immediateTypeRelations;
+  private ArrayTypeCreator arrayTypeCreator;
+  private StandardTypes standardTypes;
 
   /**
    * Constructs a new JTypeOracle.
    */
-  public JTypeOracle(JProgram program, boolean hasWholeWorldKnowledge) {
+  public JTypeOracle(ArrayTypeCreator arrayTypeCreator, boolean hasWholeWorldKnowledge) {
     this.immediateTypeRelations = new ImmediateTypeRelations();
-    this.program = program;
+    this.arrayTypeCreator = arrayTypeCreator;
     this.hasWholeWorldKnowledge = hasWholeWorldKnowledge;
   }
 
@@ -480,7 +493,7 @@ public class JTypeOracle implements Serializable {
     if (type instanceof JNonNullType) {
       type = ((JNonNullType) type).getUnderlyingType();
     }
-    return program.isJavaScriptObject(type) || program.typeOracle.isSingleJsoImpl(type);
+    return isJavaScriptObject(type) || isSingleJsoImpl(type);
   }
 
   /**
@@ -489,9 +502,8 @@ public class JTypeOracle implements Serializable {
    */
   public boolean canCrossCastLikeJso(JType type) {
     JDeclaredType dtype = getNearestJsType(type, false);
-    return canBeJavaScriptObject(type) ||
-        (dtype instanceof JInterfaceType &&
-          isOrExtendsJsType(type, false) && !isOrExtendsJsType(type, true));
+    return canBeJavaScriptObject(type) || (dtype instanceof JInterfaceType
+        && isOrExtendsJsType(type, false) && !isOrExtendsJsType(type, true));
   }
 
   /**
@@ -499,8 +511,8 @@ public class JTypeOracle implements Serializable {
    * without the prototype that is not implemented by a Java class.
    */
   public boolean willCrossCastLikeJso(JType type) {
-    return isEffectivelyJavaScriptObject(type) || canCrossCastLikeJso(type) &&
-        type instanceof JInterfaceType && !hasLiveImplementors(type);
+    return isEffectivelyJavaScriptObject(type) || canCrossCastLikeJso(type)
+        && type instanceof JInterfaceType && !hasLiveImplementors(type);
   }
 
   public boolean hasLiveImplementors(JType type) {
@@ -525,7 +537,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean canTheoreticallyCast(JReferenceType type, JReferenceType qType) {
-    if (!type.canBeNull() && qType == program.getTypeNull()) {
+    if (!type.canBeNull() && qType.getName().equals(standardTypes.nullType)) {
       // Cannot cast non-nullable to null
       return false;
     }
@@ -534,8 +546,7 @@ public class JTypeOracle implements Serializable {
     type = type.getUnderlyingType();
     qType = qType.getUnderlyingType();
 
-    JClassType jlo = program.getTypeJavaLangObject();
-    if (type == qType || type == jlo) {
+    if (type == qType || type.getName().equals(standardTypes.javaLangObject)) {
       return true;
     }
 
@@ -563,7 +574,7 @@ public class JTypeOracle implements Serializable {
         int qDims = qaType.getDims();
 
         // null[] or Object[] -> int[][] might work, other combinations won't
-        if (dims < qDims && leafType != program.getTypeJavaLangObject()
+        if (dims < qDims && !leafType.getName().equals(standardTypes.javaLangObject)
             && !(leafType instanceof JNullType)) {
           return false;
         }
@@ -611,8 +622,7 @@ public class JTypeOracle implements Serializable {
     type = type.getUnderlyingType();
     qType = qType.getUnderlyingType();
 
-    JClassType jlo = program.getTypeJavaLangObject();
-    if (type == qType || qType == jlo) {
+    if (type == qType || qType.getName().equals(standardTypes.javaLangObject)) {
       return true;
     }
 
@@ -627,7 +637,9 @@ public class JTypeOracle implements Serializable {
         int qDims = qaType.getDims();
 
         // int[][] -> Object[] or null[] trivially true
-        if (dims > qDims && (qLeafType == jlo || qLeafType instanceof JNullType)) {
+        if (dims > qDims
+            && (qLeafType.getName().equals(standardTypes.javaLangObject)
+                || qLeafType instanceof JNullType)) {
           return true;
         }
 
@@ -638,7 +650,9 @@ public class JTypeOracle implements Serializable {
         }
       }
 
-      if (qType == javaIoSerializable || qType == javaLangCloneable || qType == baseArrayType) {
+      if (qType.getName().equals(standardTypes.javaIoSerializable)
+          || qType.getName().equals(standardTypes.javaLangCloneable)
+          || qType.getName().equals(standardTypes.baseArrayType)) {
         return true;
       }
     } else if (type instanceof JClassType) {
@@ -675,18 +689,15 @@ public class JTypeOracle implements Serializable {
     return false;
   }
 
-  public void computeBeforeAST() {
-    baseArrayType = program.getIndexedType("Array");
-    javaLangObject = program.getTypeJavaLangObject();
-    javaIoSerializable = program.getFromTypeMap(Serializable.class.getName());
-    javaLangCloneable = program.getFromTypeMap(Cloneable.class.getName());
-
-    recordImmediateTypeRelations(program.getDeclaredTypes());
+  public void computeBeforeAST(StandardTypes standardTypes,
+      Collection<JDeclaredType> declaredTypes) {
+    this.standardTypes = standardTypes;
+    recordImmediateTypeRelations(declaredTypes);
     computeExtendedTypeRelations();
 
     jsInterfaces.clear();
 
-    for (JDeclaredType type : program.getDeclaredTypes()) {
+    for (JDeclaredType type : declaredTypes) {
 
       if (type instanceof JInterfaceType) {
         if (((JInterfaceType) type).isJsType()) {
@@ -695,7 +706,7 @@ public class JTypeOracle implements Serializable {
       }
       // first time through, record all exported methods
       for (JMethod method : type.getMethods()) {
-        if (program.typeOracle.isExportedMethod(method)) {
+        if (isExportedMethod(method)) {
           exportedMethods.add(method);
         }
       }
@@ -706,7 +717,7 @@ public class JTypeOracle implements Serializable {
       }
     }
 
-    for (JDeclaredType type : program.getModuleDeclaredTypes()) {
+    for (JDeclaredType type : declaredTypes) {
       if (type instanceof JClassType) {
         computeVirtualUpRefs((JClassType) type);
       }
@@ -747,8 +758,7 @@ public class JTypeOracle implements Serializable {
   /**
    * Get the nearest JS type.
    */
-  public JDeclaredType getNearestJsType(JType type,
-      boolean mustHavePrototype) {
+  public JDeclaredType getNearestJsType(JType type, boolean mustHavePrototype) {
     if (isInteropEnabled()) {
       if (type instanceof JNonNullType) {
         type = ((JNonNullType) type).getUnderlyingType();
@@ -763,8 +773,7 @@ public class JTypeOracle implements Serializable {
       }
       if (type instanceof JDeclaredType) {
         for (JInterfaceType superIntf : ((JDeclaredType) type).getImplements()) {
-          JDeclaredType jsIntf = getNearestJsType(superIntf,
-              mustHavePrototype);
+          JDeclaredType jsIntf = getNearestJsType(superIntf, mustHavePrototype);
           if (jsIntf != null) {
             return jsIntf;
           }
@@ -792,14 +801,18 @@ public class JTypeOracle implements Serializable {
     if (type instanceof JArrayType) {
       JArrayType arrayType = (JArrayType) type;
       Set<JReferenceType> superHierarchyTypes = Sets.newHashSet();
-      superHierarchyTypes.add(javaLangObject);
+      JReferenceType javaLangObjectType = referenceTypesByName.get(standardTypes.javaLangObject);
+      // Make sure that the type is really available
+      assert javaLangObjectType != null;
+      superHierarchyTypes.add(javaLangObjectType);
       if (arrayType.getLeafType() instanceof JPrimitiveType) {
         superHierarchyTypes.add(arrayType);
       } else {
         // Class arrays reuse their leaf type super hierarchy.
         JDeclaredType leafType = (JDeclaredType) arrayType.getLeafType();
         for (JReferenceType leafSuperType : getSuperHierarchyTypes(leafType)) {
-          JArrayType superArrayType = program.getTypeArray(leafSuperType, arrayType.getDims());
+          JArrayType superArrayType = arrayTypeCreator.getOrCreateArrayType(
+              leafSuperType, arrayType.getDims());
           superHierarchyTypes.add(superArrayType);
         }
       }
@@ -860,11 +873,33 @@ public class JTypeOracle implements Serializable {
   public boolean isEffectivelyJavaScriptObject(JType type) {
     if (type instanceof JReferenceType) {
       JReferenceType refType = (JReferenceType) type;
-      return program.isJavaScriptObject(refType)
+      return isJavaScriptObject(refType)
           || (isSingleJsoImpl(refType) && !isDualJsoInterface(refType));
     } else {
       return false;
     }
+  }
+
+  public boolean isJavaScriptObject(JType type) {
+    if (!(type instanceof JReferenceType)) {
+      return false;
+    }
+
+    JReferenceType referenceType = (JReferenceType) type;
+    // compare the underlying type
+    referenceType = referenceType.getUnderlyingType();
+
+    // TODO(dankurka): Null should not be recognized as a possible JSO.
+    // Take a look on how to refactor this inside of the compiler
+    if (referenceType instanceof JNullType) {
+      return true;
+    }
+
+    String typeName = referenceType.getName();
+    if (typeName.equals(JProgram.JAVASCRIPTOBJECT)) {
+      return true;
+    }
+    return isSuperClass(typeName, JProgram.JAVASCRIPTOBJECT);
   }
 
   /**
@@ -954,8 +989,8 @@ public class JTypeOracle implements Serializable {
    * Whether the type is a JS interface (does not check supertypes).
    */
   public boolean isJsType(JType type) {
-    return isInteropEnabled() &&
-        (type instanceof JDeclaredType && ((JDeclaredType) type).isJsType());
+    return isInteropEnabled()
+        && (type instanceof JDeclaredType && ((JDeclaredType) type).isJsType());
   }
 
   /**
@@ -982,20 +1017,20 @@ public class JTypeOracle implements Serializable {
    * Returns true if qType is a superclass of type, directly or indirectly.
    */
   public boolean isSuperClass(JClassType type, JClassType qType) {
-    return get(superClassMap, type.getName()).contains(qType.getName());
+    return isSuperClass(type.getName(), qType.getName());
   }
 
   /**
    * This method should be called after altering the types that are live in the
    * associated JProgram.
    */
-  public void recomputeAfterOptimizations() {
+  public void recomputeAfterOptimizations(Collection<JDeclaredType> declaredTypes) {
     Set<JDeclaredType> computed = new IdentityHashSet<JDeclaredType>();
 
     if (hasWholeWorldKnowledge) {
       // Optimizations that only make sense in whole world compiles:
       //   (1) minimize clinit()s.
-      for (JDeclaredType type : program.getDeclaredTypes()) {
+      for (JDeclaredType type : declaredTypes) {
         computeClinitTarget(type, computed);
       }
 
@@ -1006,7 +1041,7 @@ public class JTypeOracle implements Serializable {
         Set<String> implementors = get(isImplementedMap, dualIntf);
         for (String implementorName : implementors) {
           JClassType implementor = (JClassType) referenceTypesByName.get(implementorName);
-          if (isInstantiatedType(implementor) && !program.isJavaScriptObject(implementor)) {
+          if (isInstantiatedType(implementor) && !isJavaScriptObject(implementor)) {
             // This dual is still implemented by a Java class.
             continue nextDual;
           }
@@ -1039,7 +1074,7 @@ public class JTypeOracle implements Serializable {
     getOrCreate(map, key).add(value);
   }
 
-  private void recordImmediateTypeRelations(List<JDeclaredType> types) {
+  private void recordImmediateTypeRelations(Collection<JDeclaredType> types) {
     referenceTypesByName.clear();
     for (JReferenceType type : types) {
       referenceTypesByName.put(type.getName(), type);
@@ -1049,7 +1084,8 @@ public class JTypeOracle implements Serializable {
         // Record immediate super class
         JClassType superClass = jClassType.getSuperClass();
         if (superClass != null) {
-          immediateTypeRelations.superClassesByClass.put(jClassType.getName(), superClass.getName());
+          immediateTypeRelations.superClassesByClass.put(jClassType.getName(),
+              superClass.getName());
         }
 
         List<JInterfaceType> list = jClassType.getImplements();
@@ -1136,7 +1172,7 @@ public class JTypeOracle implements Serializable {
       JInterfaceType jsoIntf = (JInterfaceType) referenceTypesByName.get(jsoIntfName);
       Set<JReferenceType> implementors = getTypes(isImplementedMap, jsoIntf);
       for (JReferenceType implementor : implementors) {
-        if (!hasWholeWorldKnowledge || !program.isJavaScriptObject(implementor)) {
+        if (!hasWholeWorldKnowledge || !isJavaScriptObject(implementor)) {
           // Assume always dualImpl for separate compilation. Due to the nature of separate
           // compilation, the compiler can not know if a specific interface is implemented in a
           // different module unless it is a monolithic whole world compile.
@@ -1337,7 +1373,8 @@ public class JTypeOracle implements Serializable {
    * pruned.
    */
   private void computeVirtualUpRefs(JClassType type) {
-    if (type.getSuperClass() == null || type.getSuperClass() == javaLangObject) {
+    if (type.getSuperClass() == null ||
+        type.getSuperClass().getName().equals(standardTypes.javaLangObject)) {
       return;
     }
 
@@ -1370,8 +1407,9 @@ public class JTypeOracle implements Serializable {
 
       // this class does not directly implement the interface method
       // if any super classes do, create a virtual up ref
-      for (JClassType superType = type.getSuperClass(); superType != javaLangObject; superType =
-          superType.getSuperClass()) {
+      for (JClassType superType = type.getSuperClass();
+          !superType.getName().equals(standardTypes.javaLangObject);
+          superType = superType.getSuperClass()) {
         for (JMethod superMethod : superType.getMethods()) {
           if (methodsDoMatch(intfMethod, superMethod)) {
             // this super class directly implements the interface method
@@ -1460,8 +1498,8 @@ public class JTypeOracle implements Serializable {
       if (superClass == null) {
         methodsBySignature = new HashMap<String, JMethod>();
       } else {
-        Map<String, JMethod> superMethodsBySignature = getOrCreateMethodsBySignatureForType(
-            type.getSuperClass());
+        Map<String, JMethod> superMethodsBySignature =
+            getOrCreateMethodsBySignatureForType(type.getSuperClass());
         methodsBySignature = new HashMap<String, JMethod>(superMethodsBySignature);
       }
       for (JMethod method : type.getMethods()) {
@@ -1514,5 +1552,9 @@ public class JTypeOracle implements Serializable {
    */
   private boolean implementsInterface(JClassType type, JInterfaceType qType) {
     return get(implementsMap, type.getName()).contains(qType.getName());
+  }
+
+  private boolean isSuperClass(String type, String qType) {
+    return get(superClassMap, type).contains(qType);
   }
 }
