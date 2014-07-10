@@ -35,7 +35,7 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
     QWebView(parent),
     baseUrl_(baseUrl),
     pWebInspector_(NULL),
-    dpiZoomScaling_(1.0)
+    dpiZoomScaling_(getDpiZoomScaling())
 {
 #ifdef Q_WS_X11
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
@@ -61,24 +61,6 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
            this, SLOT(downloadRequested(QNetworkRequest)));
    connect(page(), SIGNAL(unsupportedContent(QNetworkReply*)),
            this, SLOT(unsupportedContent(QNetworkReply*)));
-
-#ifdef _WIN32
-   // On Windows, check for high DPI; if present, scale the zoom factors
-   // accordingly.
-   HDC defaultDC = GetDC(NULL);
-   int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
-   if (dpi >= 192)
-   {
-      // Corresponds to 200% scaling (introduced in Windows 8.1)
-      dpiZoomScaling_ = 1.5;
-   }
-   else if (dpi >= 144)
-   {
-      // Corresponds to 150% scaling
-      dpiZoomScaling_ = 1.2;
-   }
-   ReleaseDC(NULL, defaultDC);
-#endif
 }
 
 void WebView::setBaseUrl(const QUrl& baseUrl)

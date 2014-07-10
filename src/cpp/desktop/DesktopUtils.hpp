@@ -69,6 +69,8 @@ bool supportsFullscreenMode(QMainWindow* pMainWindow);
 
 void initializeLang();
 
+double getDpiZoomScaling();
+
 QFileDialog::Options standardFileDialogOptions();
 
 } // namespace desktop

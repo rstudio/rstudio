@@ -215,6 +215,29 @@ bool isFixedWidthFont(const QFont& font)
    return true;
 }
 
+double getDpiZoomScaling()
+{
+   double dpiZoomScaling = 1.0;
+#ifdef _WIN32
+   // On Windows, check for high DPI; if present, scale the zoom factors
+   // accordingly.
+   HDC defaultDC = GetDC(NULL);
+   int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
+   if (dpi >= 192)
+   {
+      // Corresponds to 200% scaling (introduced in Windows 8.1)
+      dpiZoomScaling = 1.5;
+   }
+   else if (dpi >= 144)
+   {
+      // Corresponds to 150% scaling
+      dpiZoomScaling = 1.2;
+   }
+   ReleaseDC(NULL, defaultDC);
+#endif
+   return dpiZoomScaling;
+}
+
 #ifdef _WIN32
 
 // on Win32 open urls using our special urlopener.exe -- this is
