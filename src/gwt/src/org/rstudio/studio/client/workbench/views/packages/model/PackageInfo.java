@@ -96,6 +96,12 @@ public class PackageInfo extends JavaScriptObject
       return getPackratBoolField("out.of.sync");
    }
    
+   public final String getSourceLibrary()
+   {
+      String sourceLibrary = getPackratStringField("source.library");
+      return sourceLibrary.length() == 0 ? getLibrary() : sourceLibrary;
+   }
+   
    public final native void setOutOfSync(boolean outOfSync) /*-{
       this["out.of.sync"] = outOfSync;
    }-*/;

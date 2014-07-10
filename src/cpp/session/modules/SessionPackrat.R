@@ -55,27 +55,25 @@
    if (!is.data.frame(packratStatus))
       return(libraryList)
 
+   # for each package, indicate whether it's in the private library (this is
+   # largely a convenience for the client since a lot of behavior is driven
+   # from this value). do this before resolving symlinks since some packages
+   # may be symlinked out of the Packrat private library to a global cache.
+   projectPath <- file.path(normalizePath(dir), "packrat", "lib", "")
+   libraryPaths <- normalizePath(as.character(libraryList[,"library"]))
+   libraryList["in.packrat.library"] <- 
+      substr(libraryPaths, 1, nchar(projectPath)) == projectPath
+
    # resolve symlinks (use normalizePath rather than Sys.readlink since we want
    # to resolve symlinks anywhere in the heirarchy)
    resolvedLinks <- normalizePath(by(libraryList, 1:nrow(libraryList),
          function(pkg) { 
                 system.file(package = pkg$name, lib.loc = pkg$library) 
          }))
-
-   # for links that got resolved, replace the library indicated with the 
-   # actual (resolved) parent folder of the library
-   symlinks <- nchar(resolvedLinks) > 3
-   libraryList[symlinks,"library"] <- 
-      .rs.createAliasedPath(dirname(resolvedLinks[symlinks]))
-
-   # for each package, indicate whether it's in the private library (this is
-   # largely a convenience for the client since a lot of behavior is driven
-   # from this value)
-   projectPath <- normalizePath(dir) 
-   libraryPaths <- normalizePath(as.character(libraryList[,"library"]))
-   libraryList["in.packrat.library"] <- 
-      substr(libraryPaths, 1, nchar(projectPath)) ==
-      projectPath
+   libraryList[,"source.library"] <- 
+      .rs.createAliasedPath(libraryList[,"library"])
+   libraryList[,"library"] <- 
+      .rs.createAliasedPath(dirname(resolvedLinks))
 
    packratList <- subset(libraryList, in.packrat.library) 
    nonPackratList <- subset(libraryList, !in.packrat.library) 
