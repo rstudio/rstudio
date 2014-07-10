@@ -15,14 +15,16 @@
 <!-- Remote Procedure Call support.                                         -->
 <module>
   <inherits name="com.google.gwt.http.HTTP"/>
+  <inherits name="com.google.gwt.user.AsyncCallback" />
   <inherits name="com.google.gwt.user.RemoteServiceDTO" />
   <source path="client" includes="rpc/">
-    <skip name="rpc/GwtTransient.java" />
+    <skip name="rpc/AsyncCallback.java" />
     <skip name="rpc/CustomFieldSerializer.java" />
+    <skip name="rpc/GwtTransient.java" />
+    <skip name="rpc/IsSerializable.java" />
     <skip name="rpc/SerializationException.java" />
     <skip name="rpc/SerializationStreamReader.java" />
     <skip name="rpc/SerializationStreamWriter.java" />
-    <skip name="rpc/IsSerializable.java" />
   </source>
   <super-source path="translatable" includes="com/google/gwt/user/client/rpc/**" />
 

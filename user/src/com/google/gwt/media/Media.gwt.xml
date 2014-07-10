@@ -14,8 +14,7 @@
   the License.
 -->
 <module type="fileset">
-  <inherits name="com.google.gwt.user.User"/>
-  <inherits name="com.google.gwt.media.dom.DOM"/>
+  <inherits name="com.google.gwt.user.UI"/>
   <public path="public" />
 
   <!-- Define the support property for Video and Audio-->

@@ -16,6 +16,7 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
@@ -23,7 +24,6 @@ import com.google.gwt.dom.client.OptionElement;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.impl.DOMImpl;
-import com.google.gwt.user.client.ui.PotentialElement;
 
 /**
  * This class provides a set of static methods that allow you to manipulate the
@@ -92,11 +92,11 @@ public class DOM {
    * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
    */
   public static void appendChild(Element parent, Element child) {
-    assert !PotentialElement.isPotential(parent) : "Cannot append to a PotentialElement";
+    assert !isPotential(parent) : "Cannot append to a PotentialElement";
 
     // If child isn't a PotentialElement, resolve() returns
     // the Element itself.
-    parent.appendChild(PotentialElement.resolve(child));
+    parent.appendChild(resolve(child));
   }
 
   /**
@@ -1003,11 +1003,11 @@ public class DOM {
    * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
    */
   public static void insertBefore(Element parent, Element child, Element before) {
-    assert !PotentialElement.isPotential(parent) : "Cannot insert into a PotentialElement";
+    assert !isPotential(parent) : "Cannot insert into a PotentialElement";
 
     // If child isn't a PotentialElement, resolve() returns
     // the Element itself.
-    parent.insertBefore(PotentialElement.resolve(child).<Element> cast(), before);
+    parent.insertBefore(resolve(child), before);
   }
 
   /**
@@ -1025,11 +1025,11 @@ public class DOM {
    * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
    */
   public static void insertChild(Element parent, Element child, int index) {
-    assert !PotentialElement.isPotential(parent) : "Cannot insert into a PotentialElement";
+    assert !isPotential(parent) : "Cannot insert into a PotentialElement";
 
     // If child isn't a PotentialElement, resolve() returns
     // the Element itself.
-    impl.insertChild(parent, PotentialElement.resolve(child).<Element> cast(), index);
+    impl.insertChild(parent, resolve(child), index);
   }
 
   /**
@@ -1046,7 +1046,7 @@ public class DOM {
    */
   public static void insertListItem(Element selectElem, String item,
       String value, int index) {
-    assert !PotentialElement.isPotential(selectElem) : "Cannot insert into a PotentialElement";
+    assert !isPotential(selectElem) : "Cannot insert into a PotentialElement";
 
     SelectElement select = selectElem.<SelectElement> cast();
     OptionElement option = Document.get().createOptionElement();
@@ -1061,6 +1061,17 @@ public class DOM {
     }
   }
 
+  private static native boolean isPotential(JavaScriptObject o) /*-{
+    try {
+      return (!!o) &&  (!!o.__gwt_resolve);
+    } catch (e) {
+      return false;
+    }
+  }-*/;
+
+  private static native Element resolve(Element maybePotential) /*-{
+    return maybePotential.__gwt_resolve ? maybePotential.__gwt_resolve() : maybePotential;
+  }-*/;
   /**
    * Determine whether one element is equal to, or the child of, another.
    * 

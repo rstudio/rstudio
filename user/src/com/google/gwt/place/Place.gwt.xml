@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module type="fileset">
-  <inherits name='com.google.gwt.user.User'/>
+<module>
+  <inherits name='com.google.gwt.core.Core'/>
+  <inherits name='com.google.gwt.event.Event'/>
+  <!-- For History and Window -->
+  <inherits name='com.google.gwt.user.DOM'/>
 
   <source path="shared"/>
   <source path="impl"/>

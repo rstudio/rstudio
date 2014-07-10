@@ -188,6 +188,7 @@ public class CompileModule {
 
   public CompileModule(CompileModuleOptions options) {
     this.options = new CompileModuleOptionsImpl(options);
+    this.options.setEnforceStrictSourceResources(true);
   }
 
   /**

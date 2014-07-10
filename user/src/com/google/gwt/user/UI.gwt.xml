@@ -1,0 +1,67 @@
+<!--                                                                        -->
+<!-- Copyright 2014 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!-- UI support.                                                            -->
+<module>
+  <inherits name="com.google.gwt.animation.Animation"/>
+  <inherits name="com.google.gwt.canvas.Canvas"/>
+  <inherits name="com.google.gwt.cell.Cell"/>
+  <inherits name="com.google.gwt.debug.DebugBase"/>
+  <inherits name='com.google.gwt.dom.builder.DomBuilder'/>
+  <inherits name="com.google.gwt.editor.Editor" />
+  <inherits name="com.google.gwt.layout.Layout"/>
+  <inherits name="com.google.gwt.resources.Resources"/>
+  <inherits name="com.google.gwt.safecss.SafeCss" />
+  <inherits name="com.google.gwt.safehtml.SafeHtml" />
+  <inherits name="com.google.gwt.touch.Touch"/>
+  <inherits name="com.google.gwt.user.CaptionPanel" />
+  <inherits name="com.google.gwt.user.cellview.CellView"/>
+  <inherits name="com.google.gwt.user.ClippedImage"/>
+  <inherits name="com.google.gwt.user.datepicker.DatePicker"/>
+  <inherits name="com.google.gwt.user.DocumentMode"/>
+  <inherits name="com.google.gwt.user.DOM"/>
+  <inherits name="com.google.gwt.user.Focus"/>
+  <inherits name="com.google.gwt.user.Form"/>
+  <inherits name="com.google.gwt.user.HTMLTable"/>
+  <inherits name="com.google.gwt.user.Hyperlink"/>
+  <inherits name="com.google.gwt.user.ImageBundle"/>
+  <inherits name="com.google.gwt.user.Popup"/>
+  <inherits name="com.google.gwt.user.ResizeLayoutPanel"/>
+  <inherits name="com.google.gwt.user.RichText"/>
+  <inherits name="com.google.gwt.user.Scroll"/>
+  <inherits name="com.google.gwt.user.SplitPanel"/>
+  <inherits name="com.google.gwt.user.TextBox"/>
+  <inherits name="com.google.gwt.user.Timer"/>
+  <inherits name="com.google.gwt.user.Tree"/>
+  <inherits name="com.google.gwt.uibinder.UiBinder"/>
+
+  <source path="client">
+    <skip name="Timer.java" />
+    <skip name="BaseListenerWrapper.java" />
+    <skip name="Cookies.java" />
+    <skip name="Element.java" />
+    <skip name="Event.java" />
+    <skip name="EventListener.java" />
+    <skip name="EventPreview.java" />
+    <skip name="History*.java" />
+    <skip name="impl/History*.java" />
+    <skip name="DOM.java" />
+    <skip name="impl/DOM*.java" />
+    <skip name="impl/EventMap.java" />
+    <skip name="Window*.java" />
+    <skip name="impl/Window*.java" />
+    <skip name="rpc/**" />
+  </source>
+  <public path="public" />
+</module>

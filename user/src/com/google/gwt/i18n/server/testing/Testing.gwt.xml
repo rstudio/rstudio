@@ -15,8 +15,8 @@
 <!-- Sources used for tests.                                                -->
 
 <module type="fileset">
-  <inherits name="com.google.gwt.user.User" />
   <inherits name="com.google.gwt.i18n.I18N" />
+  <inherits name="com.google.gwt.safehtml.SafeHtml" />
   <source path="">
     <include name="*.java"/>
   </source>

@@ -12,8 +12,11 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module type="fileset">
-  <inherits name='com.google.gwt.user.User'/>
+<module>
+  <inherits name='com.google.gwt.core.Core'/>
+  <inherits name='com.google.gwt.dom.DOM'/>
+  <inherits name='com.google.gwt.user.AsyncCallback'/>
+  <inherits name='com.google.gwt.user.Timer'/>
+
   <source path="client"/>
-  <public path="public" />
 </module>

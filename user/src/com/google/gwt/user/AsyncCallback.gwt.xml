@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Copyright 2014 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -12,15 +12,10 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- Module used to include Animation class.                                -->
-<!--                                                                        -->
-<!-- This module is typically inherited via com.google.gwt.user.User        -->
-<!--                                                                        -->
+<!-- AsyncCallback interface.                                               -->
 <module>
-  <inherits name="com.google.gwt.core.Core"/>
-  <inherits name="com.google.gwt.dom.DOM"/>
-  <inherits name="com.google.gwt.user.Timer"/>
-  <inherits name="com.google.gwt.useragent.UserAgent"/>
-
-  <source path="client" />
+  <inherits name="com.google.gwt.core.Core" />
+  <source path="client">
+    <include name="rpc/AsyncCallback.java" />
+  </source>
 </module>

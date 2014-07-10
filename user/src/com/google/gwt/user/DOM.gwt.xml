@@ -16,10 +16,30 @@
 <!--                                                                        -->
 <!-- This module is typically inherited via com.google.gwt.user.User        -->
 <!--                                                                        -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.dom.DOM"/>
-  <inherits name="com.google.gwt.user.UserAgent"/>
+  <inherits name="com.google.gwt.event.Event"/>
+  <inherits name="com.google.gwt.user.History"/>
+  <!-- Following needed for WindowImplIE -->
+  <inherits name="com.google.gwt.resources.Resources"/>
+  <inherits name="com.google.gwt.useragent.UserAgent"/>
+
+  <source path="client">
+    <include name="BaseListenerWrapper.java" />
+    <include name="Cookies.java" />
+    <include name="Element.java" />
+    <include name="Event.java" />
+    <include name="EventListener.java" />
+    <include name="EventPreview.java" />
+    <include name="History*.java" />
+    <include name="impl/History*.java" />
+    <include name="DOM.java" />
+    <include name="impl/DOM*.java" />
+    <include name="impl/EventMap.java" />
+    <include name="Window*.java" />
+    <include name="impl/Window*.java" />
+  </source>
 
   <replace-with class="com.google.gwt.user.client.impl.DOMImplWebkit">
     <when-type-is class="com.google.gwt.user.client.impl.DOMImpl"/>

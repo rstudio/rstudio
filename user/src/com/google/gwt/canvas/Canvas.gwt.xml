@@ -14,7 +14,7 @@
   the License.
 -->
 <module type="fileset">
-  <inherits name="com.google.gwt.user.User"/>
+  <inherits name='com.google.gwt.useragent.UserAgent'/>
 
   <!-- Define the support property -->
   <define-property name="canvasElementSupport" values="maybe,no" />

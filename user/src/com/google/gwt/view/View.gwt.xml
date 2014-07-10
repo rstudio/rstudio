@@ -14,7 +14,6 @@
   the License.
 -->
 <module type="fileset">
-  <inherits name="com.google.gwt.user.User"/>
   <source path="client"/>
   <public path="public" />
 </module>

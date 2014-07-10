@@ -14,7 +14,8 @@
 
 <module type="fileset">
   <inherits name="com.google.gwt.json.JSON"/>
-  <inherits name="com.google.gwt.user.User" />
+  <inherits name="com.google.gwt.user.UI" />
+  <inherits name="com.google.gwt.user.RemoteService" />
   <inherits name="com.google.gwt.logging.LogImpl"/>
   <source path="client" />
   <source path="shared" />
