@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -40,7 +41,10 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
@@ -119,6 +123,11 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         spaced(chkAutoSnapshot_);
         add(chkAutoSnapshot_);
         
+        chkUseCache_ = new CheckBox("Use global cache for installed packages");
+        chkUseCache_.setValue(packratOptions.getUseCache());
+        spaced(chkUseCache_);
+        add(chkUseCache_);
+        
         String vcsName = session_.getSessionInfo().getVcsName();
         chkVcsIgnoreLib_ = new CheckBox(vcsName + " ignore packrat library"); 
         chkVcsIgnoreLib_.setValue(packratOptions.getVcsIgnoreLib());
@@ -129,6 +138,22 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         chkVcsIgnoreSrc_.setValue(packratOptions.getVcsIgnoreSrc());
         spaced(chkVcsIgnoreSrc_);
         add(chkVcsIgnoreSrc_);
+        
+        panelExternalPackages_ = new VerticalPanel();
+        panelExternalPackages_.add(
+              new HTML("External Packages (as comma-delimited values)"));
+        taExternalPackages_ = new FixedTextArea(4, 60);
+        taExternalPackages_.setText(packratOptions.getExternalPackages());
+        panelExternalPackages_.add(taExternalPackages_);
+        add(panelExternalPackages_);
+        
+        panelLocalRepos_ = new VerticalPanel();
+        panelExternalPackages_.add(
+              new HTML("Local Repositories (as comma-delimited values)"));
+        taLocalRepos_ = new FixedTextArea(4, 60);
+        taLocalRepos_.setText(packratOptions.getLocalRepos());
+        panelLocalRepos_.add(taLocalRepos_);
+        add(panelLocalRepos_);
         
         manageUI(context.isPackified());
 
@@ -147,6 +172,9 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       usePackratButton_.setVisible(!packified);
       chkUsePackrat_.setVisible(packified);
       chkAutoSnapshot_.setVisible(packified);
+      chkUseCache_.setVisible(packified);
+      panelExternalPackages_.setVisible(packified);
+      panelLocalRepos_.setVisible(packified);
       chkVcsIgnoreLib_.setVisible(packified && vcsActive);
       chkVcsIgnoreSrc_.setVisible(packified && vcsActive);
    }
@@ -187,6 +215,9 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       packratOptions.setAutoSnapshot(chkAutoSnapshot_.getValue());
       packratOptions.setVcsIgnoreLib(chkVcsIgnoreLib_.getValue());
       packratOptions.setVcsIgnoreSrc(chkVcsIgnoreSrc_.getValue());
+      packratOptions.setUseCache(chkUseCache_.getValue());
+      packratOptions.setExternalPackages(taExternalPackages_.getValue());
+      packratOptions.setLocalRepos(taLocalRepos_.getValue());
       return false;
    }
   
@@ -281,8 +312,15 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    
    private CheckBox chkUsePackrat_;
    private CheckBox chkAutoSnapshot_;
+   private CheckBox chkUseCache_;
    private CheckBox chkVcsIgnoreLib_;
    private CheckBox chkVcsIgnoreSrc_;
+   
+   private VerticalPanel panelExternalPackages_;
+   private TextArea taExternalPackages_;
+   
+   private VerticalPanel panelLocalRepos_;
+   private TextArea taLocalRepos_;
    
    private ThemedButton usePackratButton_;   
 }
