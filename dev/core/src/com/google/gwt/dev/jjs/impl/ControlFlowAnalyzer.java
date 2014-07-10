@@ -495,9 +495,7 @@ public class ControlFlowAnalyzer {
        * SPECIAL: each argument of the call passes a value from JavaScript into
        * Java.
        */
-      List<JParameter> params = x.getTarget().getParams();
-      for (int i = 0, c = params.size(); i < c; ++i) {
-        JParameter param = params.get(i);
+      for (JParameter param : x.getTarget().getParams()) {
         maybeRescueJavaScriptObjectPassingIntoJava(param.getType());
 
         /*

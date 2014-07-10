@@ -155,15 +155,6 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     reorderedIndices = Arrays.copyOf(clusteredIndices, statementRanges.numStatements());
     recomputeJsAndStatementRanges(clusteredIndices);
   }
-  /**
-   * Returns the array of reordered statement indices after clustering.
-   * @return The array of indices, where the element at index j represents
-   * the index of the statement in the original code that is moved to index j
-   * in the new code after clustering.
-   */
-  public int[] getReorderedIndices() {
-    return reorderedIndices;
-  }
 
   @Override
   protected void endStatements(StringBuilder newJs, ArrayList<Integer> starts,

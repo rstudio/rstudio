@@ -41,7 +41,7 @@ public class ArgHandlerJsInteropMode extends ArgHandlerString {
   @Override
   public String[] getTagArgs() {
     return new String[]{"[" + Joiner.on(", ").skipNulls().join(
-        (Object[]) JsInteropMode.values()) + "]"};
+        JsInteropMode.values()) + "]"};
   }
 
   @Override
@@ -55,7 +55,7 @@ public class ArgHandlerJsInteropMode extends ArgHandlerString {
 
     if (mode == null) {
       System.err.println("JsInteropMode must be one of [" +
-          Joiner.on(", ").skipNulls().join((Object[]) JsInteropMode.values()) + "].");
+          Joiner.on(", ").skipNulls().join(JsInteropMode.values()) + "].");
       return false;
     }
     options.setJsInteropMode(mode);

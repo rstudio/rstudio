@@ -66,7 +66,7 @@ public class SymbolMapsLinker extends AbstractLinker {
      * Operation type performed on script.
      */
     public enum Edit {
-      PREFIX, INSERT, REMOVE;
+      PREFIX, INSERT, REMOVE
     }
 
     private static class EditOperation {

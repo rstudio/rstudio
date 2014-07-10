@@ -439,8 +439,8 @@ public class JsVisitor {
   }
 
   protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
-    for (Iterator<T> it = collection.iterator(); it.hasNext();) {
-      doTraverse(it.next(), UNMODIFIABLE_CONTEXT);
+    for (T node : collection) {
+      doTraverse(node, UNMODIFIABLE_CONTEXT);
     }
   }
 

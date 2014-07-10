@@ -67,7 +67,7 @@ public class MemoryUnitCache implements UnitCache {
     /**
      * Unit was introduced by an add due to a run-time compile.
      */
-    RUN_TIME;
+    RUN_TIME
   }
 
   /**

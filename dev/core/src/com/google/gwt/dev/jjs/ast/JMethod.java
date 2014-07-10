@@ -183,18 +183,6 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     NULL_METHOD.freezeParamTypes();
   }
 
-  static boolean replaces(List<? extends JMethod> newMethods, List<? extends JMethod> oldMethods) {
-    if (newMethods.size() != oldMethods.size()) {
-      return false;
-    }
-    for (int i = 0, c = newMethods.size(); i < c; ++i) {
-      if (!newMethods.get(i).replaces(oldMethods.get(i))) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   private static void trace(String title, String code) {
     System.out.println("---------------------------");
     System.out.println(title + ":");

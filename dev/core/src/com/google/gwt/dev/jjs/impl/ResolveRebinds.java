@@ -31,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
 
@@ -65,31 +64,6 @@ public class ResolveRebinds {
         if (rebindResult.equals(rebindResults.get(i))) {
           // Replace with the associated instantiation expression.
           ctx.replaceMe(x.getInstantiationExpressions().get(i));
-          return;
-        }
-      }
-      throw new InternalCompilerException("No matching rebind result in all rebind results!");
-    }
-
-    @Override
-    public void endVisit(JReboundEntryPoint x, Context ctx) {
-
-      if (isSoftRebind(x.getSourceType())) {
-        JMethod method =
-            rebindMethod(x.getSourceInfo(), x.getSourceType(), x.getResultTypes(), x
-                .getEntryCalls());
-        JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
-        ctx.replaceMe(call.makeStatement());
-        return;
-      }
-
-      String rebindResult = rebind(x.getSourceType());
-      List<String> rebindResults = x.getResultTypes();
-      for (int i = 0; i < rebindResults.size(); ++i) {
-        // Find the matching rebound type.
-        if (rebindResult.equals(rebindResults.get(i))) {
-          // Replace with the associated instantiation expression.
-          ctx.replaceMe(x.getEntryCalls().get(i).makeStatement());
           return;
         }
       }

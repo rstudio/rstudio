@@ -26,13 +26,13 @@ public class StringKeyTest extends TestCase {
     public KeyA(String value) {
       super(value);
     }
-  };
+  }
 
   static final class KeyB extends StringKey {
     public KeyB(String value) {
       super(value);
     }
-  };
+  }
 
   /**
    * Assert that <code>a > b</code>.

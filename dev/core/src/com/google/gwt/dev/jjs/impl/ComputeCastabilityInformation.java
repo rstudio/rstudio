@@ -123,7 +123,7 @@ public class ComputeCastabilityInformation {
         }
 
         // element type being final means the assignment is statically correct
-        if (((JReferenceType) elementType).isFinal()) {
+        if (elementType.isFinal()) {
           return;
         }
 

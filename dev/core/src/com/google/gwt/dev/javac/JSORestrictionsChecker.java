@@ -92,7 +92,7 @@ public class JSORestrictionsChecker {
   static boolean LINT_MODE = false;
 
   private enum ClassState {
-    NORMAL, JSO, JSTYPE, JSTYPE_IMPL;
+    NORMAL, JSO, JSTYPE, JSTYPE_IMPL
   }
 
   /**

@@ -342,18 +342,6 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   /**
-   * Resets the clinitTarget to the current class. Used by optimizations that move initializers from
-   * superclasses down.
-   * <p/>
-   * Prerequisite: the $clinit method must exist and be non empty.
-   */
-  public void resetClinitTarget() {
-    assert !((JMethodBody) getClinitMethod().getBody()).getStatements().isEmpty() : "Attempted to "
-        + "reset the clinitTarget to an empty $clinit";
-    this.clinitTarget = this;
-  }
-
-  /**
    * Resolves external references during AST stitching.
    */
   public void resolve(List<JInterfaceType> resolvedInterfaces, String jsNamespace) {
@@ -399,13 +387,6 @@ public abstract class JDeclaredType extends JReferenceType {
    * {@link #isExternal()} is <code>true</code>.
    */
   protected abstract Object writeReplace();
-
-  /**
-   * Clears all existing implemented interfaces.
-   */
-  void clearImplements() {
-    superInterfaces = Lists.create();
-  }
 
   /**
    * See {@link #writeMembers(ObjectOutputStream)}.

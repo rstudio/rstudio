@@ -30,7 +30,7 @@ public @interface SpecializeMethod {
   /**
    * Represents a type that matches any type, even void.
    */
-  interface ANY { };
+  interface ANY { }
 
   /**
    * List of parameter types, matched via assignability.

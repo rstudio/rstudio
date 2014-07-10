@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -35,11 +34,6 @@ public class RecordRebinds {
   private class RebindVisitor extends JVisitor {
     @Override
     public void endVisit(JGwtCreate x, Context ctx) {
-      liveRebindRequests.add(x.getSourceType());
-    }
-
-    @Override
-    public void endVisit(JReboundEntryPoint x, Context ctx) {
       liveRebindRequests.add(x.getSourceType());
     }
   }

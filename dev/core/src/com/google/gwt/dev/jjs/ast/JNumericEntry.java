@@ -28,7 +28,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public final class JNumericEntry extends JExpression {
 
   private final String key;
-  private int value;
+  private final int value;
 
   public JNumericEntry(SourceInfo info, String key, int value) {
     super(info);
@@ -52,10 +52,6 @@ public final class JNumericEntry extends JExpression {
   @Override
   public boolean hasSideEffects() {
     return false;
-  }
-
-  public void setValue(int value) {
-    this.value = value;
   }
 
   @Override

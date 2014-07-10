@@ -79,7 +79,6 @@ import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -100,8 +99,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
-import com.google.gwt.dev.jjs.ast.js.JsonObject;
-import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsStackEmulator;
@@ -863,7 +860,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JBreakStatement x, Context ctx) {
       JsNameRef labelRef = null;
       if (x.getLabel() != null) {
-        JsLabel label = (JsLabel) pop(); // label
+        JsLabel label = pop(); // label
         labelRef = label.getName().makeRef(x.getSourceInfo());
       }
       push(new JsBreak(x.getSourceInfo(), labelRef));
@@ -989,7 +986,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JContinueStatement x, Context ctx) {
       JsNameRef labelRef = null;
       if (x.getLabel() != null) {
-        JsLabel label = (JsLabel) pop(); // label
+        JsLabel label = pop(); // label
         labelRef = label.getName().makeRef(x.getSourceInfo());
       }
       push(new JsContinue(x.getSourceInfo(), labelRef));
@@ -1012,8 +1009,8 @@ public class GenerateJavaScriptAST {
         return;
       }
 
-      JsExpression initializer = (JsExpression) pop(); // initializer
-      JsNameRef localRef = (JsNameRef) pop(); // localRef
+      JsExpression initializer = pop(); // initializer
+      JsNameRef localRef = pop(); // localRef
 
       JVariable target = x.getVariableRef().getTarget();
       if (target instanceof JField) {
@@ -1045,7 +1042,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
-      JsExpression expr = (JsExpression) pop(); // expr
+      JsExpression expr = pop(); // expr
       push(expr.makeStmt());
     }
 
@@ -1066,7 +1063,7 @@ public class GenerateJavaScriptAST {
         // setup the default value, see Issue 380
         accept(x.getType().getDefaultValue());
       }
-      JsExpression rhs = (JsExpression) pop();
+      JsExpression rhs = pop();
       JsName name = names.get(x);
 
       if (program.getIndexedFields().contains(x)) {
@@ -1111,7 +1108,7 @@ public class GenerateJavaScriptAST {
       }
 
       if (x.getInstance() != null) {
-        JsExpression qualifier = (JsExpression) pop();
+        JsExpression qualifier = pop();
         if (field.isStatic()) {
           // unnecessary qualifier, create a comma expression
           curExpr = createCommaExpression(qualifier, curExpr);
@@ -1221,8 +1218,8 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JLabeledStatement x, Context ctx) {
-      JsStatement body = (JsStatement) pop(); // body
-      JsLabel label = (JsLabel) pop(); // label
+      JsStatement body = pop(); // body
+      JsLabel label = pop(); // label
       label.setStmt(body);
       push(label);
     }
@@ -1316,7 +1313,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JMethodBody x, Context ctx) {
 
-      JsBlock body = (JsBlock) pop();
+      JsBlock body = pop();
       List<JsNameRef> locals = popList(x.getLocals().size()); // locals
 
       JsFunction jsFunc = methodBodyMap.get(x);
@@ -1393,7 +1390,7 @@ public class GenerateJavaScriptAST {
 
       if (method.isStatic()) {
         if (x.getInstance() != null) {
-          unnecessaryQualifier = (JsExpression) pop(); // instance
+          unnecessaryQualifier = pop(); // instance
         }
         qualifier = names.get(method).makeRef(x.getSourceInfo());
       } else if (x.isStaticDispatchOnly() && method.isConstructor()) {
@@ -1463,7 +1460,7 @@ public class GenerateJavaScriptAST {
               && type != program.getTypeJavaLangObject() &&
               program.typeOracle.canTriviallyCast(x.getTarget().getEnclosingType(),
                   ((JReferenceType) type).getUnderlyingType());
-          JsExpression qualExpr = (JsExpression) pop();
+          JsExpression qualExpr = pop();
 
           if (getter != null) {
             result = dispatchAsGetter(x, unnecessaryQualifier, getter, qualExpr);
@@ -1800,11 +1797,6 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JReboundEntryPoint x, Context ctx) {
-      throw new InternalCompilerException("Should not get here.");
-    }
-
-    @Override
     public void endVisit(JReturnStatement x, Context ctx) {
       if (x.getExpr() != null) {
         push(new JsReturn(x.getSourceInfo(), (JsExpression) pop())); // expr
@@ -1833,20 +1825,6 @@ public class GenerateJavaScriptAST {
       JsArrayLiteral jsArrayLiteral = new JsArrayLiteral(x.getSourceInfo());
       popList(jsArrayLiteral.getExpressions(), x.getExprs().size());
       push(jsArrayLiteral);
-    }
-
-    @Override
-    public void endVisit(JsonObject x, Context ctx) {
-      JsObjectLiteral jsObjectLiteral = new JsObjectLiteral(x.getSourceInfo());
-      popList(jsObjectLiteral.getPropertyInitializers(), x.propInits.size());
-      push(jsObjectLiteral);
-    }
-
-    @Override
-    public void endVisit(JsonPropInit init, Context ctx) {
-      JsExpression valueExpr = pop();
-      JsExpression labelExpr = pop();
-      push(new JsPropertyInitializer(init.getSourceInfo(), labelExpr, valueExpr));
     }
 
     @Override
@@ -2116,13 +2094,13 @@ public class GenerateJavaScriptAST {
           accept(stmt);
           if (stmt instanceof JCaseStatement) {
             // create a new switch member
-            JsSwitchMember switchMember = (JsSwitchMember) pop(); // stmt
+            JsSwitchMember switchMember = pop(); // stmt
             jsSwitch.getCases().add(switchMember);
             curStatements = switchMember.getStmts();
           } else {
             // add to statements for current case
             assert (curStatements != null);
-            JsStatement newStmt = (JsStatement) pop(); // stmt
+            JsStatement newStmt = pop(); // stmt
             if (newStmt != null) {
               // Empty JDeclarationStatement produces a null
               curStatements.add(newStmt);
@@ -2417,7 +2395,7 @@ public class GenerateJavaScriptAST {
             accept(method);
           }
           // add after var declaration, but before everything else
-          JsFunction func = (JsFunction) pop();
+          JsFunction func = pop();
           assert func.getName() != null;
           globalStmts.add(1, func.makeStmt());
         }

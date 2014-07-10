@@ -1662,16 +1662,6 @@ public class GwtAstBuilder {
       }
     }
 
-    public boolean isJavaScriptObject(JClassType type) {
-      if (type == null) {
-        return false;
-      }
-      if (JProgram.JAVASCRIPTOBJECT.equals(type.getName())) {
-        return true;
-      }
-      return isJavaScriptObject(type.getSuperClass());
-    }
-
     @Override
     public boolean visit(AnnotationMethodDeclaration x, ClassScope classScope) {
       return visit((MethodDeclaration) x, classScope);
@@ -2917,12 +2907,10 @@ public class GwtAstBuilder {
   }
 
   static class CudInfo {
-    public final String fileName;
     public final CompilationUnitScope scope;
     public final int[] separatorPositions;
 
     public CudInfo(CompilationUnitDeclaration cud) {
-      fileName = intern(cud.getFileName());
       separatorPositions = cud.compilationResult().getLineSeparatorPositions();
       scope = cud.scope;
     }

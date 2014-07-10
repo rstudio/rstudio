@@ -108,13 +108,8 @@ public class JsConstructExpressionVisitor extends JsVisitor {
   @SuppressWarnings("cast")
   @Override
   protected <T extends JsVisitable> T doAccept(T node) {
-    /*
-     * Extra casts to Object to prevent 'inconvertible types' compile errors due
-     * to http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6548436
-     * reproducible in jdk1.6.0_02.
-     */
-    if ((Object) node instanceof JsExpression) {
-      JsExpression expression = (JsExpression) (Object) node;
+    if (node instanceof JsExpression) {
+      JsExpression expression = (JsExpression) node;
       int precedence = JsPrecedenceVisitor.exec(expression);
       // Only visit expressions that won't automatically be surrounded by
       // parentheses

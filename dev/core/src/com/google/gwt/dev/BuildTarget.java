@@ -45,7 +45,7 @@ class BuildTarget {
    * also known to be bad.
    */
   public enum OutputFreshness {
-    FRESH_KNOWN_BAD, FRESH_KNOWN_GOOD, STALE, UNKNOWN;
+    FRESH_KNOWN_BAD, FRESH_KNOWN_GOOD, STALE, UNKNOWN
   }
 
   public static final Function<BuildTarget, String> LIBRARY_PATH_FUNCTION =

@@ -62,10 +62,6 @@ public final class JsProgram extends JsNode {
     setFragmentCount(1);
   }
 
-  public SourceInfo createSourceInfo(int startPos, int endPos, int startLine, String fileName) {
-    return correlator.makeSourceInfo(SourceOrigin.create(startPos, endPos, startLine, fileName));
-  }
-
   public SourceInfo createSourceInfo(int lineNumber, String location) {
     return correlator.makeSourceInfo(SourceOrigin.create(lineNumber, location));
   }

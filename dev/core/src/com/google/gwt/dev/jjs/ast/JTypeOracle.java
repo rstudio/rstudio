@@ -66,8 +66,6 @@ public class JTypeOracle implements Serializable {
 
     public static StandardTypes createFrom(JProgram program) {
       StandardTypes requiredTypes = new StandardTypes();
-      JDeclaredType arrayType = program.getIndexedType("Array");
-      requiredTypes.baseArrayType = arrayType == null ? null : arrayType.getName();
       requiredTypes.javaLangObject = program.getTypeJavaLangObject().getName();
       JDeclaredType javaIoSerializableType = program.getFromTypeMap(Serializable.class.getName());
       requiredTypes.javaIoSerializable =
@@ -78,8 +76,6 @@ public class JTypeOracle implements Serializable {
       requiredTypes.nullType = program.getTypeNull().getName();
       return requiredTypes;
     }
-
-    private String baseArrayType;
 
     private String javaIoSerializable;
 
@@ -651,8 +647,7 @@ public class JTypeOracle implements Serializable {
       }
 
       if (qType.getName().equals(standardTypes.javaIoSerializable)
-          || qType.getName().equals(standardTypes.javaLangCloneable)
-          || qType.getName().equals(standardTypes.baseArrayType)) {
+          || qType.getName().equals(standardTypes.javaLangCloneable)) {
         return true;
       }
     } else if (type instanceof JClassType) {
@@ -673,7 +668,6 @@ public class JTypeOracle implements Serializable {
         return extendsInterface(iType, (JInterfaceType) qType);
       }
     } else if (type instanceof JNullType) {
-
       return true;
     }
 
@@ -751,35 +745,34 @@ public class JTypeOracle implements Serializable {
     return results;
   }
 
-  public Set<JReferenceType> getInstantiatedTypes() {
-    return instantiatedTypes;
-  }
-
   /**
    * Get the nearest JS type.
    */
   public JDeclaredType getNearestJsType(JType type, boolean mustHavePrototype) {
-    if (isInteropEnabled()) {
-      if (type instanceof JNonNullType) {
-        type = ((JNonNullType) type).getUnderlyingType();
-      }
-      if (type instanceof JDeclaredType) {
-        JDeclaredType dtype = (JDeclaredType) type;
-        if (isJsType(type)) {
-          if (!mustHavePrototype || !Strings.isNullOrEmpty(dtype.getJsPrototype())) {
-            return dtype;
-          }
-        }
-      }
-      if (type instanceof JDeclaredType) {
-        for (JInterfaceType superIntf : ((JDeclaredType) type).getImplements()) {
-          JDeclaredType jsIntf = getNearestJsType(superIntf, mustHavePrototype);
-          if (jsIntf != null) {
-            return jsIntf;
-          }
-        }
+    if (!isInteropEnabled()) {
+      return null;
+    }
+
+    if (type instanceof JNonNullType) {
+      type = ((JNonNullType) type).getUnderlyingType();
+    }
+
+    if (!(type instanceof JDeclaredType)) {
+      return null;
+    }
+
+    JDeclaredType dtype = (JDeclaredType) type;
+    if (isJsType(dtype) && (!mustHavePrototype || !Strings.isNullOrEmpty(dtype.getJsPrototype()))) {
+      return dtype;
+    }
+
+    for (JInterfaceType superIntf : dtype.getImplements()) {
+      JDeclaredType jsIntf = getNearestJsType(superIntf, mustHavePrototype);
+      if (jsIntf != null) {
+        return jsIntf;
       }
     }
+
     return null;
   }
 

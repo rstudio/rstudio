@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.JavaAndJavaScript;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.JsHoister.Cloner;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -176,10 +175,6 @@ public class FragmentExtractor {
   private final JavaToJavaScriptMap map;
 
   private StatementLogger statementLogger = new NullStatementLogger();
-
-  public FragmentExtractor(JavaAndJavaScript javaAndJavaScript) {
-    this(javaAndJavaScript.jprogram, javaAndJavaScript.jsprogram, javaAndJavaScript.map);
-  }
 
   public FragmentExtractor(JProgram jprogram, JsProgram jsprogram, JavaToJavaScriptMap map) {
     this.jprogram = jprogram;

@@ -51,7 +51,8 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
     }
   }
 
-  // JsDuplicateFunctionRemover does not have a one parameter exec function.
+  // JsDuplicateFunctionRemover does not have a one parameter exec function. Test infrastructure
+  // call exec(JsProgram) reflectively.
   private static class JsDuplicateFunctionRemoverProxy {
     static public void exec(JsProgram program) {
       JsDuplicateFunctionRemover.exec(program, new MockNameGenerator());

@@ -54,8 +54,8 @@ public class AssumptionUtil {
    */
   public static <A extends Assumption<A>> A join(List<A> assumptions) {
     A result = null;
-    for (int i = 0; i < assumptions.size(); ++i) {
-      result = join(result, assumptions.get(i));
+    for (A assumption : assumptions) {
+      result = join(result, assumption);
     }
     return result;
   }
@@ -63,8 +63,8 @@ public class AssumptionUtil {
   public static <E, A extends Assumption<A>> A join(List<E> edges,
       AssumptionMap<E, A> assumptionMap) {
     A result = null;
-    for (int i = 0; i < edges.size(); ++i) {
-      result = join(result, assumptionMap.getAssumption(edges.get(i)));
+    for (E edge : edges) {
+      result = join(result, assumptionMap.getAssumption(edge));
     }
     return result;
   }
@@ -79,8 +79,8 @@ public class AssumptionUtil {
 
   public static <E, A extends Assumption<A>> void setAssumptions(List<E> edges,
       A assumption, AssumptionMap<E, A> assumptionMap) {
-    for (int i = 0; i < edges.size(); ++i) {
-      assumptionMap.setAssumption(edges.get(i), assumption);
+    for (E edge : edges) {
+      assumptionMap.setAssumption(edge, assumption);
     }
   }
 

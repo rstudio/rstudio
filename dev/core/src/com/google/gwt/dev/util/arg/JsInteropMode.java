@@ -31,5 +31,5 @@ public enum JsInteropMode {
   /**
    * For cases where GWT code is post-optimized and checked with the Closure Compiler.
    */
-  CLOSURE;
+  CLOSURE
 }

@@ -44,7 +44,7 @@ class Fragment {
    */
   enum Type {
     INITIAL, EXCLUSIVE, NOT_EXCLUSIVE
-  };
+  }
 
   public Fragment(Type type, Fragment... ancestorFragments) {
     this.type = type;

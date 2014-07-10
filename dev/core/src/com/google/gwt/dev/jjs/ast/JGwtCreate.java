@@ -83,15 +83,6 @@ public class JGwtCreate extends JExpression {
   private JType type;
 
   /**
-   * Public constructor used during AST creation.
-   */
-  public JGwtCreate(SourceInfo info, JReferenceType sourceType, Collection<JClassType> resultTypes,
-      JType type, JDeclaredType enclosingType) {
-    this(info, BinaryName.toSourceName(sourceType.getName()), nameOf(resultTypes), type,
-        createInstantiationExpressions(info, resultTypes, enclosingType));
-  }
-
-  /**
    * Constructor used for cloning an existing node.
    */
   public JGwtCreate(SourceInfo info, String sourceType, List<String> resultTypes, JType type,

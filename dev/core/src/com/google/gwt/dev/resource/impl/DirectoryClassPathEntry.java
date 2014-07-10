@@ -62,7 +62,7 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
       TreeLogger logger, List<PathPrefixSet> pathPrefixSets) {
     List<Map<AbstractResource, ResourceResolution>> results =
         new ArrayList<Map<AbstractResource, ResourceResolution>>(pathPrefixSets.size());
-    for (int i = 0, c = pathPrefixSets.size(); i < c; ++i) {
+    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
       results.add(new IdentityHashMap<AbstractResource, ResourceResolution>());
     }
     descendToFindResources(logger, pathPrefixSets, results, dir, "");

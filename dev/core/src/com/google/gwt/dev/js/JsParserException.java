@@ -80,10 +80,6 @@ public class JsParserException extends Exception {
 
   private final SourceDetail sourceDetail;
 
-  public JsParserException(String msg) {
-    this(msg, null);
-  }
-
   public JsParserException(String msg, int line, String lineSource,
       int lineOffset, String fileName) {
     this(msg, new SourceDetail(line, lineSource, lineOffset, fileName));

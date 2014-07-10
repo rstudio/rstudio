@@ -88,13 +88,12 @@ public class JModVisitor extends JVisitor {
     /**
      * Cause my list to be traversed by this context.
      */
-    protected List<T> traverse() {
+    protected void traverse() {
       try {
         for (index = 0; index < list.size(); ++index) {
           removed = replaced = false;
           list.get(index).traverse(JModVisitor.this, this);
         }
-        return list;
       } catch (Throwable e) {
         throw translateException(list.get(index), e);
       }

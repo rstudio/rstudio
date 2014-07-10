@@ -73,7 +73,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
-import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.js.ast.JsNestingScope;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsRootScope;
@@ -361,11 +360,6 @@ public class UnifyAst {
 
     @Override
     public void endVisit(JsonArray x, Context ctx) {
-      x.resolve(translate(x.getType()));
-    }
-
-    @Override
-    public void endVisit(JsonObject x, Context ctx) {
       x.resolve(translate(x.getType()));
     }
 

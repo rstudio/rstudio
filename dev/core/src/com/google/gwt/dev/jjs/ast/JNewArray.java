@@ -84,15 +84,15 @@ public class JNewArray extends JExpression {
   @Override
   public boolean hasSideEffects() {
     if (initializers != null) {
-      for (int i = 0, c = initializers.size(); i < c; ++i) {
-        if (initializers.get(i).hasSideEffects()) {
+      for (JExpression initializer : initializers) {
+        if (initializer.hasSideEffects()) {
           return true;
         }
       }
     }
     if (dims != null) {
-      for (int i = 0, c = dims.size(); i < c; ++i) {
-        if (dims.get(i).hasSideEffects()) {
+      for (JExpression dim : dims) {
+        if (dim.hasSideEffects()) {
           return true;
         }
       }

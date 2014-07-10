@@ -38,7 +38,6 @@ import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
@@ -624,14 +623,6 @@ public class CfgBuilder {
 
       addNode(new CfgMethodCallNode(parent, x));
 
-      return false;
-    }
-
-    @Override
-    public boolean visit(JReboundEntryPoint x, Context ctx) {
-      pushNode(new CfgStatementNode<JReboundEntryPoint>(parent, x));
-      accept(x.getEntryCalls());
-      popNode();
       return false;
     }
 

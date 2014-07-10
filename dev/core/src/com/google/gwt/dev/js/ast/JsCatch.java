@@ -18,7 +18,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Represents a JavaScript catch clause.
  */
-public class JsCatch extends JsNode implements HasCondition {
+public class JsCatch extends JsNode {
 
   protected final JsCatchScope scope;
 
@@ -39,7 +39,6 @@ public class JsCatch extends JsNode implements HasCondition {
     return body;
   }
 
-  @Override
   public JsExpression getCondition() {
     return condition;
   }
@@ -61,7 +60,6 @@ public class JsCatch extends JsNode implements HasCondition {
     this.body = body;
   }
 
-  @Override
   public void setCondition(JsExpression condition) {
     this.condition = condition;
   }

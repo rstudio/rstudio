@@ -251,8 +251,7 @@ public class TypeTightener {
       // the arguments from the caller
       Iterator<JExpression> argIt = x.getArgs().iterator();
       List<JParameter> params = x.getTarget().getParams();
-      for (int i = 0; i < params.size(); ++i) {
-        JParameter param = params.get(i);
+      for (JParameter param : params) {
         JExpression arg = argIt.next();
         if (param.getType() instanceof JReferenceType) {
           addAssignment(param, arg);

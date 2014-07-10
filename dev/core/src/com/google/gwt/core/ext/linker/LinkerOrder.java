@@ -48,7 +48,7 @@ public @interface LinkerOrder {
      * Defines the primary linker. Adding a primary linker to the Linker stack
      * will override the previously-set primary linker.
      */
-    PRIMARY;
+    PRIMARY
   }
 
   Order value();

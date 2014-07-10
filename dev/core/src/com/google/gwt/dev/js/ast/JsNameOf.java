@@ -21,10 +21,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JsNameOf extends JsExpression {
   private final JsName name;
 
-  public JsNameOf(SourceInfo info, HasName node) {
-    this(info, node.getName());
-  }
-
   public JsNameOf(SourceInfo info, JsName name) {
     super(info);
     this.name = name;

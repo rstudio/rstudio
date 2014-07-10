@@ -492,8 +492,7 @@ public class JRealClassType extends JClassType implements
     if (superclass != null) {
       superclass.acceptSubtype(me);
     }
-    for (int i = 0, n = interfaces.size(); i < n; ++i) {
-      JClassType intf = interfaces.get(i);
+    for (JClassType intf : interfaces) {
       intf.acceptSubtype(me);
     }
   }
@@ -506,9 +505,7 @@ public class JRealClassType extends JClassType implements
       superclass.removeSubtype(me);
     }
 
-    for (int i = 0, n = interfaces.size(); i < n; ++i) {
-      JClassType intf = interfaces.get(i);
-
+    for (JClassType intf : interfaces) {
       intf.removeSubtype(me);
     }
   }

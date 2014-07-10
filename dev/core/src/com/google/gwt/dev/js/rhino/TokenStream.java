@@ -1238,7 +1238,7 @@ public class TokenStream {
             if (in.match('*')) {
                 while ((c = in.read()) != -1 &&
                        !(c == '*' && in.match('/'))) {
-                    ; // empty loop body
+                  // empty loop body
                 }
                 if (c == EOF_CHAR) {
                     reportSyntaxError("msg.unterminated.comment", null);

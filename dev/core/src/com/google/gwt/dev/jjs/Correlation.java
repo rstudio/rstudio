@@ -64,7 +64,7 @@ public final class Correlation implements Serializable {
     /**
      * A Java method.
      */
-    METHOD;
+    METHOD
   }
 
   /**

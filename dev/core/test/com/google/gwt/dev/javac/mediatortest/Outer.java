@@ -24,5 +24,5 @@ public class Outer {
   /**
    * A static inner class.
    */
-  public static class Inner { };
+  public static class Inner { }
 }
