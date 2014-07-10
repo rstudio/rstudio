@@ -14,10 +14,6 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
-import java.util.ArrayList;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -35,7 +31,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
-import com.google.gwt.util.tools.shared.StringUtils;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
