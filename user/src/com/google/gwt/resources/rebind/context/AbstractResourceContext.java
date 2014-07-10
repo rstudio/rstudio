@@ -24,6 +24,7 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGenerator;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
+import com.google.gwt.thirdparty.guava.common.io.BaseEncoding;
 
 import java.io.IOException;
 import java.net.URL;
@@ -39,10 +40,7 @@ public abstract class AbstractResourceContext implements ResourceContext {
   protected static final int MAX_INLINE_SIZE = 2 << 15;
 
   protected static String toBase64(byte[] data) {
-    // This is bad, but I am lazy and don't want to write _another_ encoder
-    sun.misc.BASE64Encoder enc = new sun.misc.BASE64Encoder();
-    String base64Contents = enc.encode(data).replaceAll("\\s+", "");
-    return base64Contents;
+    return BaseEncoding.base64().encode(data).replaceAll("\\s+", "");
   }
 
   private final TreeLogger logger;
