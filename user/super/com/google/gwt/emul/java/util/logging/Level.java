@@ -16,7 +16,7 @@
 
 package java.util.logging;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.logging.impl.LevelImpl;
 import com.google.gwt.logging.impl.LevelImplNull;
 
@@ -28,16 +28,16 @@ import java.io.Serializable;
  *  The Java API doc for details</a>
  */
 public class Level implements Serializable {
-  private static LevelImpl staticImpl = GWT.create(LevelImplNull.class); 
-  public static Level ALL = GWT.create(LevelAll.class);
-  public static Level CONFIG = GWT.create(LevelConfig.class); 
-  public static Level FINE = GWT.create(LevelFine.class); 
-  public static Level FINER = GWT.create(LevelFiner.class); 
-  public static Level FINEST = GWT.create(LevelFinest.class); 
-  public static Level INFO = GWT.create(LevelInfo.class); 
-  public static Level OFF = GWT.create(LevelOff.class); 
-  public static Level SEVERE = GWT.create(LevelSevere.class); 
-  public static Level WARNING = GWT.create(LevelWarning.class);
+  private static LevelImpl staticImpl = GWT.create(LevelImplNull.class);
+  public static Level ALL = new LevelAll();
+  public static Level CONFIG = new LevelConfig();
+  public static Level FINE = new LevelFine();
+  public static Level FINER = new LevelFiner();
+  public static Level FINEST = new LevelFinest();
+  public static Level INFO = new LevelInfo();
+  public static Level OFF = new LevelOff();
+  public static Level SEVERE = new LevelSevere();
+  public static Level WARNING = new LevelWarning();
   
   private static class LevelAll extends Level {
     @Override public String getName() { return "ALL"; }

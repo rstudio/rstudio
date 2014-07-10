@@ -55,15 +55,6 @@ public class LoggerImplNull implements LoggerImpl {
     return null;
   }
   
-  public Logger getLoggerHelper(String name) {
-    // We need to return an actual logger here rather than null, because client
-    // code will make calls like Logger.getLogger().log(), and we don't want a
-    // NullPointerException. Since a LoggerImplNull will be behind this logger
-    // that we are returning, that will ensure that the log() call does nothing
-    // and gets compiled out.
-    return new LoggerWithExposedConstructor("");
-  }
-  
   public String getName() {
     return "";
   }

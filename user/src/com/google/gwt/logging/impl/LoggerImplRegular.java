@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
@@ -65,22 +64,6 @@ public class LoggerImplRegular implements LoggerImpl {
 
   public Level getLevel() {
     return level;
-  }
-
-  public Logger getLoggerHelper(String name) {
-    // Ideally, we'd just return LogManager.getLogManager.getOrAddLogger(name)
-    // here, since the code is basically the same, except that code gets to call
-    // addLoggerWithoutDuplicationChecking, which makes it somewhat more
-    // efficient. However, that means adding a public method to LogManager which
-    // is not in the API which is frowned upon.
-    LogManager manager = LogManager.getLogManager();
-    Logger logger = manager.getLogger(name);
-    if (logger == null) {
-      Logger newLogger = new LoggerWithExposedConstructor(name);
-      manager.addLogger(newLogger);
-      return newLogger;
-    }
-    return logger;
   }
 
   public String getName() {

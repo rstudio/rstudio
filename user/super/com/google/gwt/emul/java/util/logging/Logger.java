@@ -25,10 +25,13 @@ import com.google.gwt.logging.impl.LoggerImplNull;
  *  The Java API doc for details</a>
  */
 public class Logger {
-  private static LoggerImpl staticImpl = GWT.create(LoggerImplNull.class);
   
   public static Logger getLogger(String name) {
-    return staticImpl.getLoggerHelper(name);
+    // Use shortcut if logging is disabled to avoid parent logger creations in LogManager
+    if (GWT.create(LoggerImplNull.class) instanceof LoggerImplNull) {
+      return new Logger(name, "");
+    }
+    return LogManager.getLogManager().ensureLogger(name);
   }
 
   private LoggerImpl impl;

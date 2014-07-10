@@ -40,7 +40,6 @@ public interface LoggerImpl {
   Handler[] getHandlers();
 
   Level getLevel();
-  Logger getLoggerHelper(String name);
   String getName();
   Logger getParent();
   boolean getUseParentHandlers();

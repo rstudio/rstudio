@@ -29,50 +29,38 @@ import java.util.HashMap;
  *  The Java API doc for details</a>
  */
 public class LogManager {
-  /** 
-   * Since the Logger constructor is protected, the LogManager cannot create
-   * one directly, so we create a RootLogger which has an exposed constructor.
-   */
-  private class RootLogger extends Logger {
-    public RootLogger() {
-      super("", null);
-      setLevel(Level.ALL);
-    }
-  }
 
   private static LogManager singleton;
   
   public static LogManager getLogManager() {
     if (singleton == null) {
       singleton = new LogManager();
+      Logger rootLogger = new Logger("", null);
+      rootLogger.setLevel(Level.INFO);
+      singleton.addLoggerImpl(rootLogger);
     }
     return singleton;
   }
   
   private LoggerConfigurator loggerConfigurator = GWT.create(LoggerConfigurator.class);
-  private HashMap<String, Logger> loggerList;
-  private Logger rootLogger;
+  private HashMap<String, Logger> loggerMap = new HashMap<String, Logger>();
   
-  protected LogManager() {
-    loggerList = new HashMap<String, Logger>();
-    rootLogger = new RootLogger();
-    addLoggerImpl(rootLogger);
-  }
+  protected LogManager() { }
   
   public boolean addLogger(Logger logger) {
     if (getLogger(logger.getName()) != null) {
       return false;
     }
-    addLoggerWithoutDuplicationChecking(logger);
+    addLoggerAndEnsureParents(logger);
     return true;
   }
 
   public Logger getLogger(String name) {
-    return loggerList.get(name);
+    return loggerMap.get(name);
   }
 
   public Enumeration<String> getLoggerNames() {
-    return Collections.enumeration(loggerList.keySet());
+    return Collections.enumeration(loggerMap.keySet());
   }
   
   /**
@@ -83,16 +71,16 @@ public class LogManager {
    *  this is a simple way to ensure that the parent/child relationships are
    *  always correctly set up.
    */
-  private void addLoggerWithoutDuplicationChecking(Logger logger) {
+  private void addLoggerAndEnsureParents(Logger logger) {
     String name = logger.getName();
     String parentName = name.substring(0, Math.max(0, name.lastIndexOf('.')));
-    logger.setParent(getOrAddLogger(parentName));
+    logger.setParent(ensureLogger(parentName));
     addLoggerImpl(logger);
   }
 
   private void addLoggerImpl(Logger logger) {
     loggerConfigurator.configure(logger);
-    loggerList.put(logger.getName(), logger);
+    loggerMap.put(logger.getName(), logger);
   }
   
   /**
@@ -100,11 +88,11 @@ public class LogManager {
    *  APIs for getLogger and addLogger make it difficult to use those functions
    *  for this.
    */ 
-  private Logger getOrAddLogger(String name) {
+  Logger ensureLogger(String name) {
     Logger logger = getLogger(name);
     if (logger == null) {
       Logger newLogger = new Logger(name, null);
-      addLoggerWithoutDuplicationChecking(newLogger);
+      addLoggerAndEnsureParents(newLogger);
       return newLogger;
     }
     return logger;
