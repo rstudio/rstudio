@@ -162,6 +162,7 @@ import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -186,7 +187,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.Stack;
 
 /**
  * Creates a JavaScript AST from a <code>JProgram</code> node.
@@ -413,7 +413,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
-      pop();
+      scopeStack.pop();
     }
 
     @Override
@@ -427,10 +427,10 @@ public class GenerateJavaScriptAST {
       } else {
         JsName jsName;
         if (specialObfuscatedFields.containsKey(x)) {
-          jsName = peek().declareName(mangleNameSpecialObfuscate(x));
+          jsName = scopeStack.peek().declareName(mangleNameSpecialObfuscate(x));
           jsName.setObfuscatable(false);
         } else {
-          jsName = peek().declareName(mangleName, name);
+          jsName = scopeStack.peek().declareName(mangleName, name);
         }
         names.put(x, jsName);
         recordSymbol(x, jsName);
@@ -439,7 +439,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JInterfaceType x, Context ctx) {
-      pop();
+      scopeStack.pop();
     }
 
     @Override
@@ -447,25 +447,25 @@ public class GenerateJavaScriptAST {
       if (names.get(x) != null) {
         return;
       }
-      names.put(x, peek().declareName(x.getName()));
+      names.put(x, scopeStack.peek().declareName(x.getName()));
     }
 
     @Override
     public void endVisit(JLocal x, Context ctx) {
       // locals can conflict, that's okay just reuse the same variable
-      JsScope scope = peek();
+      JsScope scope = scopeStack.peek();
       JsName jsName = scope.declareName(x.getName());
       names.put(x, jsName);
     }
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      pop();
+      scopeStack.pop();
     }
 
     @Override
     public void endVisit(JParameter x, Context ctx) {
-      names.put(x, peek().declareName(x.getName()));
+      names.put(x, scopeStack.peek().declareName(x.getName()));
     }
 
     @Override
@@ -496,7 +496,7 @@ public class GenerateJavaScriptAST {
       // have I already been visited as a super type?
       JsScope myScope = classScopes.get(x);
       if (myScope != null) {
-        push(myScope);
+        scopeStack.push(myScope);
         return false;
       }
 
@@ -528,14 +528,14 @@ public class GenerateJavaScriptAST {
       }
       classScopes.put(x, myScope);
 
-      push(myScope);
+      scopeStack.push(myScope);
       return true;
     }
 
     @Override
     public boolean visit(JInterfaceType x, Context ctx) {
       // interfaces have no name at run time
-      push(interfaceScope);
+      scopeStack.push(interfaceScope);
       return true;
     }
 
@@ -572,7 +572,7 @@ public class GenerateJavaScriptAST {
 
       if (x.isAbstract()) {
         // just push a dummy scope that we can pop in endVisit
-        push(null);
+        scopeStack.push(null);
         return false;
       }
 
@@ -617,7 +617,7 @@ public class GenerateJavaScriptAST {
         polymorphicJsFunctions.add(jsFunction);
       }
       methodBodyMap.put(x.getBody(), jsFunction);
-      push(jsFunction.getScope());
+      scopeStack.push(jsFunction.getScope());
 
       if (program.getIndexedMethods().contains(x)) {
         indexedFunctions.put(x.getEnclosingType().getShortName() + "." + x.getName(), jsFunction);
@@ -634,15 +634,15 @@ public class GenerateJavaScriptAST {
       for (JTryStatement.CatchClause clause : x.getCatchClauses()) {
         JLocalRef arg = clause.getArg();
         JBlock catchBlock = clause.getBlock();
-        JsCatch jsCatch = new JsCatch(x.getSourceInfo(), peek(), arg.getTarget().getName());
+        JsCatch jsCatch = new JsCatch(x.getSourceInfo(), scopeStack.peek(), arg.getTarget().getName());
         JsParameter jsParam = jsCatch.getParameter();
         names.put(arg.getTarget(), jsParam.getName());
         catchMap.put(catchBlock, jsCatch);
         catchParamIdentifiers.add(jsParam.getName());
 
-        push(jsCatch.getScope());
+        scopeStack.push(jsCatch.getScope());
         accept(catchBlock);
-        pop();
+        scopeStack.pop();
       }
 
       // TODO: normalize this so it's never null?
@@ -667,18 +667,6 @@ public class GenerateJavaScriptAST {
         fileNameToUriString.put(fileName, uriString);
       }
       return uriString;
-    }
-
-    private JsScope peek() {
-      return scopeStack.peek();
-    }
-
-    private void pop() {
-      scopeStack.pop();
-    }
-
-    private void push(JsScope scope) {
-      scopeStack.push(scope);
     }
 
     private void recordSymbol(JReferenceType x, JsName jsName) {
@@ -2955,19 +2943,16 @@ public class GenerateJavaScriptAST {
     }
 
     // Keep track of a translation stack.
-    private final ArrayList<JsVisitable> nodeStack = Lists.newArrayList();
+    private final Stack<JsVisitable> nodeStack = new Stack<JsVisitable>();
 
     @SuppressWarnings("unchecked")
     private <T extends JsVisitable> T pop() {
-      return (T) nodeStack.remove(nodeStack.size() - 1);
+      return (T) nodeStack.pop();
     }
 
     private <T extends JsVisitable> List<T> popList(int count) {
-      int size = nodeStack.size();
-      List<T> nodesToPop = (List<T>) nodeStack.subList(size - count, size);
-      List<T> result = Lists.newArrayList(Iterables.filter(nodesToPop, Predicates.notNull()));
-      nodesToPop.clear();
-      return result;
+      return (List<T>)
+          Lists.newArrayList(Iterables.filter(nodeStack.pop(count), Predicates.notNull()));
     }
 
     @SuppressWarnings("unchecked")
@@ -2976,7 +2961,7 @@ public class GenerateJavaScriptAST {
     }
 
     private <T extends JsVisitable> void push(T node) {
-      nodeStack.add(node);
+      nodeStack.push(node);
     }
   }
 

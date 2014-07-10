@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
+import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -40,7 +41,6 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Stack;
 
 /**
  * Check a compilation unit for violations of

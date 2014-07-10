@@ -26,6 +26,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.JsniRef;
+import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -67,7 +68,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 
 /**
  * Resolves JSNI references to fields and methods and gives a informative errors if the references

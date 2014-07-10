@@ -62,6 +62,7 @@ import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -77,7 +78,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 /**
  * Perform inlining optimizations on the JavaScript AST.

@@ -25,8 +25,9 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.thirdparty.guava.common.collect.Queues;
 
-import java.util.Stack;
+import java.util.Deque;
 
 /**
  * A JModVisitor capable of creating temporary local variables and placing their declarations in an
@@ -38,7 +39,7 @@ public abstract class JModVisitorWithTemporaryVariableCreation extends JModVisit
    * Stack to keep track of where to insert the new variable declaration.
    * The top of the stack is the statement where declarations will be inserted.
    */
-  private final Stack<Context> currentDeclarationInsertionPoint = new Stack<Context>();
+  private final Deque<Context> currentDeclarationInsertionPoint = Queues.newArrayDeque();
   private JMethodBody currentMethodBody = null;
 
   @Override

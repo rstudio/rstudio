@@ -24,11 +24,12 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.thirdparty.guava.common.collect.Queues;
 
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.ListIterator;
 import java.util.Set;
-import java.util.Stack;
 
 /**
  * Force all functions to be evaluated at the top of the lexical scope in which
@@ -48,11 +49,11 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
 
   private final Set<JsFunction> dontMove = new HashSet<JsFunction>();
 
-  private final Stack<ListIterator<JsStatement>> itrStack = new Stack<ListIterator<JsStatement>>();
+  private final Deque<ListIterator<JsStatement>> itrStack = Queues.newArrayDeque();
 
   private JavaToJavaScriptMap java2jsMap;
 
-  private final Stack<JsBlock> scopeStack = new Stack<JsBlock>();
+  private final Deque<JsBlock> scopeStack = Queues.newArrayDeque();
 
   public EvalFunctionsAtTopScope(JavaToJavaScriptMap java2jsMap) {
     this.java2jsMap = java2jsMap;

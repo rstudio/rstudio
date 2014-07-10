@@ -51,6 +51,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -61,7 +62,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 /**
  * Remove globally unreferenced classes, interfaces, methods, parameters, and

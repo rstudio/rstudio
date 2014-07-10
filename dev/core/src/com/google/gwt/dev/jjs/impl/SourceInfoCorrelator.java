@@ -36,8 +36,7 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSuperVisitor;
-
-import java.util.Stack;
+import com.google.gwt.dev.util.collect.Stack;
 
 /**
  * Fix up SOYC parents and add correlations.

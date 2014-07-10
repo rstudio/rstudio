@@ -22,8 +22,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsVisitor;
-
-import java.util.Stack;
+import com.google.gwt.dev.util.collect.Stack;
 
 /**
  * Base class for any recursive resolver classes.

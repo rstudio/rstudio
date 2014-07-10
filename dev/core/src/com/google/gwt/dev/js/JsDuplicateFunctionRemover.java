@@ -26,12 +26,12 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
+import com.google.gwt.dev.util.collect.Stack;
 
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 /**
  * Replace references to functions which have post-obfuscation duplicate bodies
@@ -59,7 +59,7 @@ public class JsDuplicateFunctionRemover {
 
     public DuplicateFunctionBodyRecorder() {
       // Add sentinel to stop Stack.peek() from throwing exception.
-      invocationQualifiers.add(null);
+      invocationQualifiers.push(null);
     }
 
     @Override

@@ -39,10 +39,10 @@ import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.collect.Stack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * A utility class to clone JsExpression AST members for use by

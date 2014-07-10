@@ -72,12 +72,12 @@ import com.google.gwt.dev.js.rhino.IRFactory;
 import com.google.gwt.dev.js.rhino.Node;
 import com.google.gwt.dev.js.rhino.Parser;
 import com.google.gwt.dev.js.rhino.TokenStream;
+import com.google.gwt.dev.util.collect.Stack;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * Parses JavaScript source.

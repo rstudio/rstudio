@@ -107,6 +107,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.Interner;
@@ -222,7 +223,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 /**
  * Constructs a GWT Java AST from a single isolated compilation unit. The AST is
