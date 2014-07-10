@@ -79,8 +79,12 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
       // capture pending window params then clear them (one time only)
       QString name = pendingSatelliteWindow_.name;
       MainWindow* pMainWindow = pendingSatelliteWindow_.pMainWindow;
-      int width = pendingSatelliteWindow_.width;
-      int height = pendingSatelliteWindow_.height;
+
+      // get width and height, and adjust for high DPI
+      double dpiZoomScaling = getDpiZoomScaling();
+      int width = pendingSatelliteWindow_.width * dpiZoomScaling;
+      int height = pendingSatelliteWindow_.height * dpiZoomScaling;
+
       pendingSatelliteWindow_ = PendingSatelliteWindow();
 
       // check for an existing window of this name
