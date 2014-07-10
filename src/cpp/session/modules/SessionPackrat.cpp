@@ -890,7 +890,10 @@ Error getPackratOptions(SEXP* pOptionsSEXP, r::sexp::Protect* pRProtect)
    r::exec::RFunction getOpts("packrat:::get_opts");
    getOpts.addParam("simplify", false);
    getOpts.addParam("project", module_context::createAliasedPath(projectDir));
-   getOpts.addParam("split.fields", false);
+
+   if (module_context::isPackageVersionInstalled("packrat", "0.3.0.99"))
+      getOpts.addParam("split.fields", false);
+
    return getOpts.call(pOptionsSEXP, pRProtect);
 }
 
