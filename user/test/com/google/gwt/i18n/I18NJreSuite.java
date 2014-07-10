@@ -42,7 +42,6 @@ public class I18NJreSuite {
     suite.addTestSuite(AnyRtlDirectionEstimatorTest.class);
     suite.addTestSuite(BidiFormatterTest.class);
     suite.addTestSuite(BidiUtilsTest.class);
-    suite.addTestSuite(ConstantMapTest.class);
     suite.addTestSuite(FirstStrongDirectionEstimatorTest.class);
     suite.addTestSuite(GwtLocaleTest.class);
     suite.addTestSuite(LocaleUtilsTest.class);

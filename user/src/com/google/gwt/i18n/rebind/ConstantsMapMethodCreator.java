@@ -17,7 +17,6 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.i18n.client.impl.ConstantMap;
 import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.shared.GwtLocale;
@@ -26,7 +25,6 @@ import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Creator for methods of the form Map getX() .
@@ -67,13 +65,13 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
     // make sure cache exists
     enableCache();
     // check cache for array
-    String constantMapClassName = ConstantMap.class.getCanonicalName();
     println(GENERIC_STRING_MAP_TYPE + " args = (" + GENERIC_STRING_MAP_TYPE
         + ") cache.get(" + wrap(methodName) + ");");
     // if not found create Map
     println("if (args == null) {");
     indent();
-    println("args = new " + constantMapClassName + "(new String[] {");
+    println("args = new java.util.HashMap<String, String>();");
+
     String keyString;
     try {
       keyString = resourceList.getRequiredString(mapName);
@@ -106,25 +104,13 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
       }
     }
 
-    indent();
-    indent();
-    Set<Entry<String, String>> entries = map.entrySet();
-    for (Entry<String, String> entry : entries) {
-      println(wrap(entry.getKey()) + ", ");
+    for (Entry<String, String> entry : map.entrySet()) {
+      println("args.put(" + wrap(entry.getKey()) + ", " + wrap(entry.getValue()) + ");");
     }
-    outdent();
-    println("},");
-    indent();
-    println("new String[] {");
-    for (Entry<String, String> entry : entries) {
-      println(wrap(entry.getValue()) + ", ");
-    }
-    outdent();
-    println("});");
-    outdent();
+    println("args = java.util.Collections.unmodifiableMap(args);");
     println("cache.put(" + wrap(methodName) + ", args);");
     outdent();
-    println("};");
+    println("}");
     println("return args;");
   }
 }
