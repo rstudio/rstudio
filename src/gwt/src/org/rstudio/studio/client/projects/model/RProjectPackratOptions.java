@@ -28,8 +28,8 @@ public class RProjectPackratOptions extends JavaScriptObject
       options.vcs_ignore_lib = true;
       options.vcs_ignore_src = false;
       options.use_cache = false;
-      options.external_packages = [];
-      options.local_repos = [];
+      options.external_packages = "";
+      options.local_repos = "";
       return options;
    }-*/;
    
