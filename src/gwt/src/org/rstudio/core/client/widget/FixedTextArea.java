@@ -12,6 +12,7 @@ public class FixedTextArea extends TextArea
       setVisibleLines(numVisibleLines);
       setCharacterWidth(charWidth);
       addStyleName(ThemeStyles.INSTANCE.notResizable());
+      getElement().setAttribute("spellcheck", "false");
    }
    
 }
