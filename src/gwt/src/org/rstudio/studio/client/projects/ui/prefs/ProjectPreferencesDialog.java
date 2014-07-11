@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -147,20 +150,48 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    
    private void emitPackratConsoleActions(RProjectPackratOptions options)
    {
+      String packratFunction = null;
+      String packratArgs = null;
+      
+      // case: enabling packrat
+      if (options.getUsePackrat() && !initialPackratOptions_.getUsePackrat())
+      {
+         packratFunction = "init";
+         String optionArgs = packratArgs(options);
+         if (optionArgs.length() > 0)
+            packratArgs = "options = list(" + optionArgs + ")";
+      }
+      // case: disabling packart
+      else if (!options.getUsePackrat() && initialPackratOptions_.getUsePackrat())
+      {
+         packratFunction = "disable";
+      }
+      // case: changing packrat options
+      else
+      {
+         packratFunction = "set_opts";
+         packratArgs = packratArgs(options);
+      }
+      
+      // build the call
       StringBuilder b = new StringBuilder();
       
-      if (options.getAutoSnapshot() != initialPackratOptions_.getAutoSnapshot())
-         b.append(packratOption("auto.snapshot", options.getAutoSnapshot()));
-
-      if (options.getVcsIgnoreLib() != initialPackratOptions_.getVcsIgnoreLib())
-         b.append(packratOption("vcs.ignore.lib", options.getVcsIgnoreLib()));
+      b.append("packrat::");
+      b.append(packratFunction);
+      b.append("(");
       
-      if (options.getVcsIgnoreSrc() != initialPackratOptions_.getVcsIgnoreSrc())
-         b.append(packratOption("vcs.ignore.src", options.getVcsIgnoreSrc()));
+      String projectArg = pPackratUtil_.get().packratProjectArg();
+      if (projectArg.length() > 0)
+      {
+         b.append(projectArg);
+         if (packratArgs != null)
+            b.append(", ");
+      }
       
-      // remove trailing newline
-      if (b.length() > 0)
-         b.deleteCharAt(b.length()-1);
+      if (packratArgs != null)
+         b.append(packratArgs);
+      
+      b.append(")"); 
       
       pEventBus_.get().fireEvent(new SendToConsoleEvent(b.toString(), 
                                                         true, 
@@ -168,20 +199,27 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
    }
    
-   private String packratOption(String name, boolean value)
+   private String packratArgs(RProjectPackratOptions options)
    {
-      String args = name + " = " + asR(value);
-      String projectArg = pPackratUtil_.get().packratProjectArg();
-      if (projectArg.length() > 0)
-         args = args + ", " + projectArg;
-      return "packrat::set_opts(" + args + ")\n";
-   }
- 
-   private String asR(boolean value)
-   {
-      return value ? "TRUE" : "FALSE";
+      ArrayList<String> opts = new ArrayList<String>();
+      
+      if (options.getAutoSnapshot() != initialPackratOptions_.getAutoSnapshot())
+         opts.add(packratBoolArg("auto.snapshot", options.getAutoSnapshot()));
+
+      if (options.getVcsIgnoreLib() != initialPackratOptions_.getVcsIgnoreLib())
+         opts.add(packratBoolArg("vcs.ignore.lib", options.getVcsIgnoreLib()));
+      
+      if (options.getVcsIgnoreSrc() != initialPackratOptions_.getVcsIgnoreSrc())
+         opts.add(packratBoolArg("vcs.ignore.src", options.getVcsIgnoreSrc()));
+      
+      return StringUtil.joinStrings(opts, ", "); 
    }
    
+   private String packratBoolArg(String name, boolean value)
+   {
+      return name + " = " + (value ? "TRUE" : "FALSE");
+   }
+ 
    private final Provider<Session> session_;
    private final ProjectsServerOperations server_;
    private final Provider<UIPrefs> pUIPrefs_;

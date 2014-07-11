@@ -1074,6 +1074,7 @@ void copyOption(SEXP optionsSEXP, const std::string& listName,
 json::Object defaultPackratOptions()
 {
    json::Object optionsJson;
+   optionsJson["use_packrat"] = false;
    optionsJson["auto_snapshot"] = kAutoSnapshotDefault;
    optionsJson["vcs_ignore_lib"] = true;
    optionsJson["vcs_ignore_src"] = false;
@@ -1089,6 +1090,8 @@ json::Object packratOptionsAsJson()
    {
       // create options to return
       json::Object optionsJson;
+
+      optionsJson["use_packrat"] = true;
 
       r::sexp::Protect rProtect;
       SEXP optionsSEXP;

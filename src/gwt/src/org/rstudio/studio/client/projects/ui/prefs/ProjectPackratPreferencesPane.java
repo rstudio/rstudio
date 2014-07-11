@@ -129,6 +129,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    public boolean onApply(RProjectOptions options)
    {
       RProjectPackratOptions packratOptions = options.getPackratOptions();
+      packratOptions.setUsePackrat(chkUsePackrat_.getValue());
       packratOptions.setAutoSnapshot(chkAutoSnapshot_.getValue());
       packratOptions.setVcsIgnoreLib(chkVcsIgnoreLib_.getValue());
       packratOptions.setVcsIgnoreSrc(chkVcsIgnoreSrc_.getValue());
