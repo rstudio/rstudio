@@ -147,6 +147,7 @@ public class DocumentTest extends GWTTestCase {
     Document doc = Document.get();
 
     DivElement div = doc.createDivElement();
+    doc.getBody().removeAllChildren();
     doc.getBody().appendChild(div);
 
     div.setInnerHTML("<span><button id='foo'>foo</button><span><button>bar</button></span></span>");
