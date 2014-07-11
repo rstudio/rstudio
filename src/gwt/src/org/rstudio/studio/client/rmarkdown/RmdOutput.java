@@ -490,14 +490,14 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (!isRefresh && result_ != null && win != null)
       {
          cacheDocPosition(result_, outputFrame_.getScrollPosition(), 
-                          getAnchor(win));
+                          outputFrame_.getAnchor());
       }
 
       // if it is a refresh, use the doc's existing positions
       if (isRefresh)
       {
          params.setScrollPosition(outputFrame_.getScrollPosition());
-         params.setAnchor(getAnchor(win));
+         params.setAnchor(outputFrame_.getAnchor());
       }
 
       outputFrame_.showRmdPreview(params);
@@ -514,19 +514,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             registry.@org.rstudio.studio.client.rmarkdown.RmdOutput::notifyRmdOutputClosed(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
          }
       ); 
-   }-*/;
-   
-   private final native String getAnchor(JavaScriptObject win) /*-{
-      var anchor;
-      try { 
-         anchor = win.getRstudioFrameAnchor();
-      }
-      catch (e) {
-         // fail gracefully with no anchor
-      }
-      if (typeof(anchor) === "undefined")
-         anchor = "";
-      return anchor;
    }-*/;
    
    // when the window is closed, remember our position within it

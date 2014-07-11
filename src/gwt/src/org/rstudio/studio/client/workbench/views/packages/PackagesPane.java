@@ -548,10 +548,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                {
                   if (value.booleanValue())
                      observer_.loadPackage(packageInfo.getName(),
-                                           packageInfo.getLibrary()) ;
+                                           packageInfo.getSourceLibrary()) ;
                   else
                      observer_.unloadPackage(packageInfo.getName(),
-                                             packageInfo.getLibrary()) ;
+                                             packageInfo.getSourceLibrary()) ;
                }
             }    
          });
@@ -611,7 +611,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Override
       public void buildRowImpl(PackageInfo pkg, int idx)
       {
-         String library = pkg.getLibrary();
+         String library = pkg.getInPackratLibary() ? 
+               pkg.getSourceLibrary() : pkg.getLibrary();
          if (pkg.isFirstInLibrary())
          {
            TableRowBuilder row = startRow();

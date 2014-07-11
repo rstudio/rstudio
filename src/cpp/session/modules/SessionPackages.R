@@ -320,7 +320,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                          "html", 
                          "00Index.html")
    loaded.pkgs <- .rs.pathPackage()
-   pkgs.loaded <- !is.na(match(paste(pkgs.library,pkgs.name, sep="/"),
+   pkgs.loaded <- !is.na(match(normalizePath(
+                                  paste(pkgs.library,pkgs.name, sep="/")),
                                loaded.pkgs))
    
 

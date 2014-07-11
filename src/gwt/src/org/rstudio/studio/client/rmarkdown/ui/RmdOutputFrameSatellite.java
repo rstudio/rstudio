@@ -62,6 +62,12 @@ public class RmdOutputFrameSatellite extends RmdOutputFrameBase
    {
       return getScrollPositionNative(getWindowObject());
    }
+   
+   @Override
+   public String getAnchor()
+   {
+      return getAnchorNative(getWindowObject());
+   }
 
    private final native int getScrollPositionNative(JavaScriptObject win) /*-{
       var scrollPosition;
@@ -74,6 +80,19 @@ public class RmdOutputFrameSatellite extends RmdOutputFrameBase
       if (typeof(scrollPosition) === "undefined")
          scrollPosition = 0;
       return scrollPosition;
+   }-*/;
+   
+   private final native String getAnchorNative(JavaScriptObject win) /*-{
+      var anchor;
+      try { 
+         anchor = win.getRstudioFrameAnchor();
+      }
+      catch (e) {
+         // fail gracefully with no anchor
+      }
+      if (typeof(anchor) === "undefined")
+         anchor = "";
+      return anchor;
    }-*/;
    
    private final SatelliteManager satelliteManager_;
