@@ -110,16 +110,35 @@ public class ImplementClassLiteralsAsFields {
 
     @Override
     public void endVisit(final JsniMethodBody jsniMethodBody, Context ctx) {
+      if (jsniMethodBody.getClassRefs().size() == 0) {
+        return;
+      }
+
       final Map<String, JsniClassLiteral> jsniClassLiteralsByJsniReference = Maps.newHashMap();
       final JMethod getArrayClassLiteralMethod =
           program.getIndexedMethod("Class.getClassLiteralForArray");
       final String getClassLiteralForArrayMethodIdent = "@" + createIdent(getArrayClassLiteralMethod);
 
-      // Map JSNI reference string to the actual JsniClassLiterals.
+      boolean areThereArrayClassLiterals = false;
       for (JsniClassLiteral jsniClassLiteral : jsniMethodBody.getClassRefs()) {
+
+        // Check for the presence of array class literals.
+        if (jsniClassLiteral.getRefType() instanceof JArrayType) {
+          areThereArrayClassLiterals = true;
+        } else {
+          // Resolve non array class literals.
+          resolveClassLiteral(jsniClassLiteral);
+        }
+
+        // Map JSNI reference string to the actual JsniClassLiterals.
         Object o = jsniClassLiteralsByJsniReference.put(jsniClassLiteral.getIdent(),
-            jsniClassLiteral);
+              jsniClassLiteral);
         assert o == null;
+      }
+
+      if (!areThereArrayClassLiterals) {
+        // No array class literal no need to explore the body.
+        return;
       }
 
       final Set<JsniClassLiteral> newClassRefs = Sets.newLinkedHashSet();
@@ -156,10 +175,10 @@ public class ImplementClassLiteralsAsFields {
             JsInvocation invocation = new JsInvocation(info, getArrayClassLiteralMethodNameRef,
                 new JsNameRef(info, jsniClassLiteral.getIdent()),
                 new JsNumberLiteral(info, arrayType.getDims()));
+            // Finally resolve the class literal.
+            resolveClassLiteral(jsniClassLiteral);
             ctx.replaceMe(invocation);
           }
-          // Finally resolve the class literal.
-          resolveClassLiteral(jsniClassLiteral);
           newClassRefs.add(jsniClassLiteral);
         }
       };
