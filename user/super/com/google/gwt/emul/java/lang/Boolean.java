@@ -84,6 +84,6 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
 
   @Override
   public String toString() {
-    return value ? "true" : "false";
+    return toString(value);
   }
 }

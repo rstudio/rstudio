@@ -266,7 +266,7 @@ public final class Double extends Number implements Comparable<Double> {
   }
 
   public static Double valueOf(String s) throws NumberFormatException {
-    return new Double(Double.parseDouble(s));
+    return new Double(s);
   }
 
   private final transient double value;

@@ -158,7 +158,7 @@ public final class Float extends Number implements Comparable<Float> {
   }
 
   public static Float valueOf(String s) throws NumberFormatException {
-    return new Float(Float.parseFloat(s));
+    return new Float(s);
   }
 
   private final transient float value;
