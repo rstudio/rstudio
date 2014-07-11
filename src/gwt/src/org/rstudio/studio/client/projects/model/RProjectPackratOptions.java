@@ -27,6 +27,9 @@ public class RProjectPackratOptions extends JavaScriptObject
       options.auto_snapshot = true;
       options.vcs_ignore_lib = true;
       options.vcs_ignore_src = false;
+      options.use_cache = false;
+      options.external_packages = "";
+      options.local_repos = "";
       return options;
    }-*/;
    
@@ -53,4 +56,29 @@ public class RProjectPackratOptions extends JavaScriptObject
    public native final void setVcsIgnoreSrc(boolean ignoreSrc) /*-{
       this.vcs_ignore_src = ignoreSrc;
    }-*/;
+   
+   public native final boolean getUseCache() /*-{
+      return this.use_cache;
+   }-*/;
+   
+   public native final void setUseCache(boolean useCache) /*-{
+      this.use_cache = useCache;
+   }-*/;
+   
+   public native final String getExternalPackages() /*-{
+      return this.external_packages;
+   }-*/;
+   
+   public native final void setExternalPackages(String externalPackages) /*-{
+      this.external_packages = externalPackages;
+   }-*/;
+   
+   public native final String getLocalRepos() /*-{
+      return this.local_repos;
+   }-*/;
+   
+   public native final void setLocalRepos(String localRepos) /*-{
+      this.local_repos = localRepos;
+   }-*/;
+   
 }

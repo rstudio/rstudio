@@ -158,6 +158,15 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       if (options.getVcsIgnoreSrc() != initialPackratOptions_.getVcsIgnoreSrc())
          b.append(packratOption("vcs.ignore.src", options.getVcsIgnoreSrc()));
       
+      if (options.getUseCache() != initialPackratOptions_.getUseCache())
+         b.append(packratOption("use.cache", options.getUseCache()));
+      
+      if (options.getExternalPackages() != initialPackratOptions_.getExternalPackages())
+         b.append(packratOption("external.packages", options.getExternalPackages()));
+      
+      if (options.getLocalRepos() != initialPackratOptions_.getLocalRepos())
+         b.append(packratOption("local.repos", options.getLocalRepos()));
+      
       // remove trailing newline
       if (b.length() > 0)
          b.deleteCharAt(b.length()-1);
@@ -168,18 +177,23 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
    }
    
-   private String packratOption(String name, boolean value)
+   private String packratOption(String name, String value)
    {
-      String args = name + " = " + asR(value);
+      String args = name + " = " + "\"" + value.replaceAll("\"", "\\\\\"")+ "\"";
       String projectArg = pPackratUtil_.get().packratProjectArg();
       if (projectArg.length() > 0)
          args = args + ", " + projectArg;
       return "packrat::set_opts(" + args + ")\n";
    }
- 
-   private String asR(boolean value)
+   
+   private String packratOption(String name, boolean value)
    {
-      return value ? "TRUE" : "FALSE";
+      String args = name + " = " + (value ? "TRUE" : "FALSE");
+      String projectArg = pPackratUtil_.get().packratProjectArg();
+      if (projectArg.length() > 0)
+         args = args + ", " + projectArg;
+      return "packrat::set_opts(" + args + ")\n";
+      
    }
    
    private final Provider<Session> session_;

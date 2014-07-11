@@ -1120,3 +1120,7 @@ body.ubuntu_mono .searchBox {
   text-overflow: ellipsis;
   overflow: hidden;
 }
+
+.notResizable {
+	resize: none;
+}

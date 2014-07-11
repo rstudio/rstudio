@@ -890,6 +890,10 @@ Error getPackratOptions(SEXP* pOptionsSEXP, r::sexp::Protect* pRProtect)
    r::exec::RFunction getOpts("packrat:::get_opts");
    getOpts.addParam("simplify", false);
    getOpts.addParam("project", module_context::createAliasedPath(projectDir));
+
+   if (module_context::isPackageVersionInstalled("packrat", "0.3.0.99"))
+      getOpts.addParam("split.fields", false);
+
    return getOpts.call(pOptionsSEXP, pRProtect);
 }
 
@@ -1053,11 +1057,12 @@ json::Object packratContextAsJson()
 
 namespace {
 
+template <typename T>
 void copyOption(SEXP optionsSEXP, const std::string& listName,
                 json::Object* pOptionsJson, const std::string& jsonName,
-                bool defaultValue)
+                T defaultValue)
 {
-   bool value = defaultValue;
+   T value = defaultValue;
    Error error = r::sexp::getNamedListElement(optionsSEXP,
                                               listName,
                                               &value,
@@ -1077,6 +1082,9 @@ json::Object defaultPackratOptions()
    optionsJson["auto_snapshot"] = kAutoSnapshotDefault;
    optionsJson["vcs_ignore_lib"] = true;
    optionsJson["vcs_ignore_src"] = false;
+   optionsJson["use_cache"] = false;
+   optionsJson["external_packages"] = std::string();
+   optionsJson["local_repos"] = std::string();
    return optionsJson;
 }
 
@@ -1109,6 +1117,16 @@ json::Object packratOptionsAsJson()
 
       copyOption(optionsSEXP, "vcs.ignore.src",
                  &optionsJson, "vcs_ignore_src", false);
+
+      copyOption(optionsSEXP, "use.cache",
+                 &optionsJson, "use_cache", false);
+
+      copyOption(optionsSEXP, "external.packages",
+                 &optionsJson, "external_packages", std::string());
+
+      copyOption(optionsSEXP, "local.repos",
+                 &optionsJson, "local_repos", std::string());
+
 
       return optionsJson;
    }
