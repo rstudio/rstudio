@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -140,16 +141,16 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         
         panelExternalPackages_ = new VerticalPanel();
         panelExternalPackages_.add(
-              new HTML("External Packages (as comma-delimited values)"));
-        taExternalPackages_ = new FixedTextArea(4, 60);
+              new HTML("External Packages (as CSV / newline-delimited values"));
+        taExternalPackages_ = new FixedTextArea(3, 40);
         taExternalPackages_.setText(packratOptions.getExternalPackages());
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
         
         panelLocalRepos_ = new VerticalPanel();
         panelExternalPackages_.add(
-              new HTML("Local Repositories (as comma-delimited values)"));
-        taLocalRepos_ = new FixedTextArea(4, 60);
+              new HTML("Local Repositories (as CSV / newline-delimited values"));
+        taLocalRepos_ = new FixedTextArea(3, 40);
         taLocalRepos_.setText(packratOptions.getLocalRepos());
         panelLocalRepos_.add(taLocalRepos_);
         add(panelLocalRepos_);
