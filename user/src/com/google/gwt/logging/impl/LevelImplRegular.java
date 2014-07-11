@@ -16,32 +16,35 @@
 
 package com.google.gwt.logging.impl;
 
+import com.google.gwt.core.shared.impl.StringCase;
+
 import java.util.logging.Level;
 
 /**
  * Implementation for the Level class when logging is enabled.
  */
 public class LevelImplRegular implements LevelImpl {
+  @Override
   public Level parse(String name) {
-    if (name.equalsIgnoreCase("ALL")) {
+    name = StringCase.toUpper(name);
+    if (name.equals("ALL")) {
       return Level.ALL;
-    } else if (name.equalsIgnoreCase("CONFIG")) {
+    } else if (name.equals("CONFIG")) {
       return Level.CONFIG;
-    } else if (name.equalsIgnoreCase("FINE")) {
+    } else if (name.equals("FINE")) {
       return Level.FINE;
-    } else if (name.equalsIgnoreCase("FINER")) {
+    } else if (name.equals("FINER")) {
       return Level.FINER;
-    } else if (name.equalsIgnoreCase("FINEST")) {
+    } else if (name.equals("FINEST")) {
       return Level.FINEST;
-    } else if (name.equalsIgnoreCase("INFO")) {
+    } else if (name.equals("INFO")) {
       return Level.INFO;
-    } else if (name.equalsIgnoreCase("OFF")) {
+    } else if (name.equals("OFF")) {
       return Level.OFF;
-    } else if (name.equalsIgnoreCase("SEVERE")) {
+    } else if (name.equals("SEVERE")) {
       return Level.SEVERE;
-    } else if (name.equalsIgnoreCase("WARNING")) {
+    } else if (name.equals("WARNING")) {
       return Level.WARNING;
     }
-    return null;
-  }
+    throw new IllegalArgumentException("Invalid level \"" + name + "\"");  }
 }

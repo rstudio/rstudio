@@ -25,7 +25,13 @@ import com.google.gwt.logging.impl.LoggerImplNull;
  *  The Java API doc for details</a>
  */
 public class Logger {
-  
+
+  public static final String GLOBAL_LOGGER_NAME = "global";
+
+  public static Logger getGlobal() {
+    return getLogger(GLOBAL_LOGGER_NAME);
+  }
+
   public static Logger getLogger(String name) {
     // Use shortcut if logging is disabled to avoid parent logger creations in LogManager
     if (GWT.create(LoggerImplNull.class) instanceof LoggerImplNull) {
