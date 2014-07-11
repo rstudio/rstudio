@@ -120,37 +120,37 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         
         chkAutoSnapshot_ = new CheckBox("Automatically snapshot local changes");
         chkAutoSnapshot_.setValue(packratOptions.getAutoSnapshot());
-        spaced(chkAutoSnapshot_);
+        lessSpaced(chkAutoSnapshot_);
         add(chkAutoSnapshot_);
+        
+        String vcsName = session_.getSessionInfo().getVcsName();
+        chkVcsIgnoreLib_ = new CheckBox(vcsName + " ignore packrat library"); 
+        chkVcsIgnoreLib_.setValue(packratOptions.getVcsIgnoreLib());
+        lessSpaced(chkVcsIgnoreLib_);
+        add(chkVcsIgnoreLib_);
+        
+        chkVcsIgnoreSrc_ = new CheckBox(vcsName + " ignore packrat sources");
+        chkVcsIgnoreSrc_.setValue(packratOptions.getVcsIgnoreSrc());
+        lessSpaced(chkVcsIgnoreSrc_);
+        add(chkVcsIgnoreSrc_);
         
         chkUseCache_ = new CheckBox("Use global cache for installed packages");
         chkUseCache_.setValue(packratOptions.getUseCache());
         spaced(chkUseCache_);
         add(chkUseCache_);
         
-        String vcsName = session_.getSessionInfo().getVcsName();
-        chkVcsIgnoreLib_ = new CheckBox(vcsName + " ignore packrat library"); 
-        chkVcsIgnoreLib_.setValue(packratOptions.getVcsIgnoreLib());
-        spaced(chkVcsIgnoreLib_);
-        add(chkVcsIgnoreLib_);
-        
-        chkVcsIgnoreSrc_ = new CheckBox(vcsName + " ignore packrat sources");
-        chkVcsIgnoreSrc_.setValue(packratOptions.getVcsIgnoreSrc());
-        spaced(chkVcsIgnoreSrc_);
-        add(chkVcsIgnoreSrc_);
-        
         panelExternalPackages_ = new VerticalPanel();
         panelExternalPackages_.add(
-              new HTML("External Packages (as CSV / newline-delimited values"));
-        taExternalPackages_ = new FixedTextArea(3, 40);
+              new HTML("External packages (separate with comma or newline)"));
+        taExternalPackages_ = new FixedTextArea(3, 45);
         taExternalPackages_.setText(packratOptions.getExternalPackages());
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
         
         panelLocalRepos_ = new VerticalPanel();
         panelExternalPackages_.add(
-              new HTML("Local Repositories (as CSV / newline-delimited values"));
-        taLocalRepos_ = new FixedTextArea(3, 40);
+              new HTML("Local repositories (separate with comma or newline)"));
+        taLocalRepos_ = new FixedTextArea(3, 45);
         taLocalRepos_.setText(packratOptions.getLocalRepos());
         panelLocalRepos_.add(taLocalRepos_);
         add(panelLocalRepos_);
