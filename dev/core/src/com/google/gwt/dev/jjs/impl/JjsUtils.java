@@ -29,16 +29,14 @@ import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsLiteral;
-import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
-import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.lang.LongLib;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -97,19 +95,15 @@ public class JjsUtils {
       @Override
       JsLiteral translate(JExpression literal) {
         SourceInfo sourceInfo = literal.getSourceInfo();
-        int[] intArray = LongLib.getAsIntArray(((JLongLiteral) literal).getValue());
-        JsObjectLiteral objectLit = new JsObjectLiteral(sourceInfo);
-        List<JsPropertyInitializer> inits = objectLit.getPropertyInitializers();
-        JsExpression label0 = new JsNameRef(sourceInfo, "l");
-        JsExpression label1 = new JsNameRef(sourceInfo, "m");
-        JsExpression label2 = new JsNameRef(sourceInfo, "h");
-        JsExpression value0 = new JsNumberLiteral(sourceInfo, intArray[0]);
-        JsExpression value1 = new JsNumberLiteral(sourceInfo, intArray[1]);
-        JsExpression value2 = new JsNumberLiteral(sourceInfo, intArray[2]);
-        inits.add(new JsPropertyInitializer(sourceInfo, label0, value0));
-        inits.add(new JsPropertyInitializer(sourceInfo, label1, value1));
-        inits.add(new JsPropertyInitializer(sourceInfo, label2, value2));
-        return objectLit;
+        int[] values = LongLib.getAsIntArray(((JLongLiteral) literal).getValue());
+        JsObjectLiteral objectLiteral = new JsObjectLiteral(sourceInfo);
+        objectLiteral.setInternable();
+
+        assert values.length == names.length;
+        for (int i = 0; i < names.length; i++) {
+          addPropertyToObject(sourceInfo, names[i], values[i], objectLiteral);
+        }
+        return objectLiteral;
       }
     },
     STRING_LITERAL_TRANSLATOR() {
@@ -125,7 +119,29 @@ public class JjsUtils {
       }
     };
 
+    private static final JsName[] names;
+
+    static {
+      // The names of the components in an emulated long ('l', 'm', and 'h') are accessed directly
+      // through JSNI in LongLib (the implementor of emulated long operations), hence it is
+      // important that they don't get renamed hence the corresponding JsNames are created
+      // unscoped (null scope) and unobfuscatable.
+      String[] stringNames = {"l","m","h"};
+      names = new JsName[stringNames.length];
+      for (int i = 0; i < stringNames.length; i++) {
+        names[i] = new JsName(null, stringNames[i], stringNames[i]);
+        names[i].setObfuscatable(false);
+      }
+    }
+
     abstract JsLiteral translate(JExpression literal);
+  }
+
+  private static void addPropertyToObject(SourceInfo sourceInfo, JsName propertyName,
+      int propertyValue, JsObjectLiteral objectLiteral) {
+    JsExpression label = propertyName.makeRef(sourceInfo);
+    JsExpression value = new JsNumberLiteral(sourceInfo, propertyValue);
+    objectLiteral.addProperty(sourceInfo, label, value);
   }
 
   private JjsUtils() {

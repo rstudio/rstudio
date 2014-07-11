@@ -50,6 +50,7 @@ import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsRootScope;
@@ -1753,7 +1754,7 @@ public class JsInliner {
       } else if (callerName != null && callerName.equals(calleeName)) {
         // The names are known to us and are the same
 
-      } else if (calleeName.getEnclosing().equals(calleeScope)) {
+      } else if (calleeName != null && calleeName.getEnclosing().equals(calleeScope)) {
         // It's a local variable in the callee
 
       } else {
@@ -1763,6 +1764,15 @@ public class JsInliner {
 
     public boolean isStable() {
       return stable;
+    }
+
+    @Override
+    public boolean visit(JsObjectLiteral x, JsContext ctx) {
+      // Labels are always stable, so only check values.
+      for (JsPropertyInitializer propertyInitializer : x.getPropertyInitializers()) {
+        accept(propertyInitializer.getValueExpr());
+      }
+      return false;
     }
   }
 

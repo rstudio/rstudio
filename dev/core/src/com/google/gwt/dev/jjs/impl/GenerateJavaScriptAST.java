@@ -63,7 +63,6 @@ import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
-import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -1240,24 +1239,6 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JLongLiteral x, Context ctx) {
-      JsExpression longLiteralAllocation = JjsUtils.translateLiteral(x);
-
-      // My seed function name
-      String nameString = Long.toString(x.getValue(), 16);
-      if (nameString.charAt(0) == '-') {
-        nameString = "N" + nameString.substring(1);
-      } else {
-        nameString = "P" + nameString;
-      }
-      nameString += "_longLit";
-      JsName longLit = topScope.declareName(nameString);
-      longLits.put(x.getValue(), longLit);
-      longObjects.put(longLit, longLiteralAllocation);
-      push(longLit.makeRef(x.getSourceInfo()));
-    }
-
-    @Override
     public void endVisit(JMethod x, Context ctx) {
       if (x.isAbstract()) {
         push(null);
@@ -1736,8 +1717,6 @@ public class GenerateJavaScriptAST {
       vars.add(new JsVar(jsProgram.getSourceInfo(), globalTemp));
       globalStmts.add(0, vars);
 
-      // Long lits must go at the top, they can be constant field initializers.
-      generateLongLiterals(vars);
       generateImmortalTypes(vars);
 
       // Class objects, but only if there are any.
@@ -2426,16 +2405,6 @@ public class GenerateJavaScriptAST {
           }
           globals.add(fieldVar);
         }
-      }
-    }
-
-    private void generateLongLiterals(JsVars vars) {
-      for (Entry<Long, JsName> entry : longLits.entrySet()) {
-        JsName jsName = entry.getValue();
-        JsExpression longObjectAlloc = longObjects.get(jsName);
-        JsVar var = new JsVar(vars.getSourceInfo(), jsName);
-        var.setInitExpr(longObjectAlloc);
-        vars.add(var);
       }
     }
 
@@ -3269,12 +3238,6 @@ public class GenerateJavaScriptAST {
    */
   private final Set<JDeclaredType> canObserveSubclassFields = Sets.newHashSet();
 
-  /**
-   * Sorted to avoid nondeterministic iteration.
-   */
-  private final Map<Long, JsName> longLits = Maps.newTreeMap();
-
-  private final Map<JsName, JsExpression> longObjects = Maps.newIdentityHashMap();
   private final Map<JAbstractMethodBody, JsFunction> methodBodyMap = Maps.newIdentityHashMap();
   private final Map<HasName, JsName> names = Maps.newIdentityHashMap();
 

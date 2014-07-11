@@ -31,6 +31,15 @@ public final class JsObjectLiteral extends JsLiteral {
     super(sourceInfo);
   }
 
+  /**
+   * Adds a property and its initial value to the object literal.
+   * <p>
+   * NOTE: Does not check for duplicate names.
+   */
+  public void addProperty(SourceInfo sourceInfo, JsExpression label, JsExpression value) {
+    properties.add(new JsPropertyInitializer(sourceInfo, label, value));
+  }
+
   @Override
   public boolean equals(Object that) {
     if (that == null || this.getClass() != that.getClass()) {
