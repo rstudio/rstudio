@@ -775,6 +775,10 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return type;
   }
 
+  public Collection<JDeclaredType> getIndexedTypes() {
+    return Collections.unmodifiableCollection(indexedTypes.values());
+  }
+
   public LinkedHashSet<JRunAsync> getInitialAsyncSequence() {
     return initialAsyncSequence;
   }

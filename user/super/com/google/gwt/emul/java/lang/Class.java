@@ -41,6 +41,7 @@ public final class Class<T> implements Type {
    * @skip
    */
   public static native <T> Class<T> getClassLiteralForArray(Class<?> leafClass, int dimensions) /*-{
+    leafClass.@java.lang.Class::arrayLiterals = leafClass.@java.lang.Class::arrayLiterals || [];
     return leafClass.@java.lang.Class::arrayLiterals[dimensions] ||
         (leafClass.@java.lang.Class::arrayLiterals[dimensions] =
             leafClass.@java.lang.Class::createClassLiteralForArray(I)(dimensions));
@@ -264,7 +265,7 @@ public final class Class<T> implements Type {
 
   private JavaScriptObject typeId;
 
-  private JavaScriptObject arrayLiterals = JavaScriptObject.createArray();
+  private JavaScriptObject arrayLiterals;
 
   /**
    * Not publicly instantiable.

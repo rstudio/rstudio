@@ -957,7 +957,7 @@ public class ControlFlowAnalyzer {
   private final JField getClassField;
   private final JMethod getClassMethod;
   private final JProgram program;
-  private Set<JReferenceType> referencedTypes = Sets.newHashSet();
+  private Set<JReferenceType> referencedTypes = Sets.newLinkedHashSet();
   private final RescueVisitor rescuer;
   private final Set<JReferenceType> rescuedViaCast = Sets.newHashSet();
   private final JMethod runAsyncOnsuccess;

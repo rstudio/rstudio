@@ -340,6 +340,17 @@ public class JavaAstConstructor {
     }
   };
 
+  public static final MockJavaResource UTIL = new MockJavaResource("com.google.gwt.lang.Util") {
+    @Override
+    public CharSequence getContent() {
+      return Joiner.on("\n").join(
+          "package com.google.gwt.lang;",
+          "public class Util {",
+          "}"
+      );
+    }
+  };
+
   public static JProgram construct(TreeLogger logger, CompilationState state,
       PrecompileTaskOptions options, ConfigProps config,
       String... entryPoints) throws UnableToCompleteException {
@@ -367,7 +378,8 @@ public class JavaAstConstructor {
     result.remove(JavaResourceBase.ENUM);
     Collections.addAll(result, ASYNCFRAGMENTLOADER, ARRAY, CAST, CLASS, CLASSLITERALHOLDER,
         COLLAPSED_PROPERTY_HOLDER, ENUM, EXCEPTIONS, GWT, GWT_SHARED, IMPL,
-        JAVA_CLASS_HIERARCHY_SETUP_UTIL, LONGLIB, MODULE_UTILS, RUNASYNCCALLBACK, RUNASYNCCODE);
+        JAVA_CLASS_HIERARCHY_SETUP_UTIL, LONGLIB, MODULE_UTILS, RUNASYNCCALLBACK, RUNASYNCCODE,
+        UTIL);
     return result.toArray(new MockJavaResource[result.size()]);
   }
 }
