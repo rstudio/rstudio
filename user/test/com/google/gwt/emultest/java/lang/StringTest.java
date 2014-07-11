@@ -507,6 +507,20 @@ public class StringTest extends GWTTestCase {
     assertFalse(test.regionMatches(true, 1, "bCdx", 0, 4));
     assertFalse(test.regionMatches(true, 1, "bCdx", 1, 3));
     assertTrue(test.regionMatches(true, 0, "xaBcd", 1, 4));
+
+    try {
+      test.regionMatches(-1, null, -1, -1);
+      fail();
+    } catch (NullPointerException expected) {
+      // NPE must be thrown before any range checks
+    }
+
+    try {
+      test.regionMatches(true, -1, null, -1, -1);
+      fail();
+    } catch (NullPointerException expected) {
+      // NPE must be thrown before any range checks
+    }
   }
 
   public void testReplace() {

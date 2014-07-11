@@ -259,6 +259,10 @@ public final class String implements Comparable<String>, CharSequence,
     return new String[numElements];
   }
 
+  static native String __substr(String str, int beginIndex, int len) /*-{
+    return str.substr(beginIndex, len);
+  }-*/;
+
   /**
    * This method converts Java-escaped dollar signs "\$" into JavaScript-escaped
    * dollar signs "$$", and removes all other lone backslashes, which serve as
@@ -497,27 +501,6 @@ public final class String implements Comparable<String>, CharSequence,
     }
     return valueOf(chars);
   }
-
-  private static native boolean regionMatches(String thisStr,
-      boolean ignoreCase, int toffset, String other, int ooffset, int len) /*-{
-    if (toffset < 0 || ooffset < 0 || len <= 0) {
-      return false;
-    }
-
-    if (toffset + len > thisStr.length || ooffset + len > other.length) {
-      return false;
-    }
-
-    var left = thisStr.substr(toffset, len);
-    var right = other.substr(ooffset, len);
-
-    if (ignoreCase) {
-      left = left.toLowerCase();
-      right = right.toLowerCase();
-    }
-
-    return left == right;
-  }-*/;
 
   private static String utf8ToString(byte[] bytes, int ofs, int len) {
     // TODO(jat): consider using decodeURIComponent(escape(bytes)) instead
@@ -809,14 +792,20 @@ public final class String implements Comparable<String>, CharSequence,
     if (other == null) {
       throw new NullPointerException();
     }
-    return regionMatches(this, ignoreCase, toffset, other, ooffset, len);
+    if (toffset < 0 || ooffset < 0 || len <= 0) {
+      return false;
+    }
+    if (toffset + len > this.length() || ooffset + len > other.length()) {
+      return false;
+    }
+
+    String left = __substr(this, toffset, len);
+    String right = __substr(other, ooffset, len);
+    return ignoreCase ? left.equalsIgnoreCase(right) : left.equals(right);
   }
 
   public boolean regionMatches(int toffset, String other, int ooffset, int len) {
-    if (other == null) {
-      throw new NullPointerException();
-    }
-    return regionMatches(this, false, toffset, other, ooffset, len);
+    return regionMatches(false, toffset, other, ooffset, len);
   }
 
   public native String replace(char from, char to) /*-{
