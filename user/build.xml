@@ -5,18 +5,9 @@
   <property name="test.jvmargs" value="-ea"/>
 
   <!-- support old variables names -->
-  <condition property="gwt.hosts.web.remote" value="${gwt.remote.browsers}">
-    <isset property="gwt.remote.browsers"/>
-  </condition>
   <condition property="gwt.hosts.web.selenium" value="${gwt.selenium.hosts}">
     <isset property="gwt.selenium.hosts"/>
   </condition>
-
-  <!--
-    BrowserManagerServer_Stub compiled using rmic, which doesn't generate
-    full source code
-  -->
-  <property name="emma.filter.exclude" value="*BrowserManagerServer_Stub*"/>
 
   <import file="${gwt.root}/common.ant.xml"/>
 
@@ -38,12 +29,8 @@
   <!--
     Test args can be specified per test target type.
   -->
-  <property name="test.args.dev.remote"
-            value="${test.args} -out www -standardsMode -runStyle RemoteWeb:${gwt.hosts.dev.remote}"/>
   <property name="test.args.dev.selenium"
             value='${test.args} -out www -standardsMode -runStyle "Selenium:${gwt.hosts.dev.selenium}"'/>
-  <property name="test.args.web.remote"
-            value="${test.args} -out www -prod -standardsMode -runStyle RemoteWeb:${gwt.hosts.web.remote}"/>
   <property name="test.args.web.selenium"
             value='${test.args} -prod -standardsMode -out www -runStyle "Selenium:${gwt.hosts.web.selenium}"'/>
 
@@ -123,11 +110,6 @@
         <pathelement location="${gwt.dev.jar}"/>
       </classpath>
     </gwt.javac>
-
-    <!-- Build the BrowserManagerServer_Stub to allow remote browser testing -->
-    <rmic base="${javac.out}"
-          classname="com.google.gwt.junit.remote.BrowserManagerServer"
-          stubversion="1.2"/>
   </target>
 
   <!--
@@ -261,72 +243,6 @@
           depends="checkstyle-tests,checkstyle-source">
   </target>
 
-  <target name="test.remoteweb" depends="test.web.remote">
-    <echo message="DEPRECATED: test.remoteweb has been renamed test.web.remote"/>
-  </target>
-
-  <target name="test.web.remote"
-          description="Run web test with remote browsers"
-          if="gwt.hosts.web.remote"
-          unless="test.web.remote.disable">
-    <echo message="Performing web remote testing at ${gwt.hosts.web.remote}"/>
-    <property name="test.web.remote.args" value="${test.args.web.remote}"/>
-    <fileset id="test.web.remote.tests" dir="${javac.junit.out}"
-             includes="${gwt.junit.testcase.web.includes}"
-             excludes="${gwt.junit.testcase.web.excludes}"/>
-    <gwt.junit test.name="test.web.remote"
-               test.args="${test.web.remote.args}"
-               test.jvmargs="${test.jvmargs}"
-               test.out="${junit.out}/web-remote"
-               test.cases="test.web.remote.tests">
-      <extraclasspaths>
-        <path refid="test.extraclasspath"/>
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
-  <target name="test.dev.remote"
-          depends="compile, compile.tests"
-          description="Run dev-mode tests with remote browsers"
-          if="gwt.hosts.dev.remote"
-          unless="test.dev.remote.disable">
-    <echo message="Performing dev-mode remote testing at ${gwt.remote.browsers}"/>
-    <property name="test.dev.remote.args" value="${test.args.dev.remote}"/>
-    <fileset id="test.dev.remote.tests" dir="${javac.junit.out}"
-             includes="${gwt.junit.testcase.dev.includes}"
-             excludes="${gwt.junit.testcase.dev.excludes}"/>
-    <gwt.junit test.name="test.dev.remote"
-               test.args="${test.dev.remote.args}"
-               test.jvmargs="${test.jvmargs}"
-               test.out="${junit.out}/dev-remote" test.cases="test.dev.remote.tests">
-      <extraclasspaths>
-        <path refid="test.extraclasspath"/>
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
-  <target name="test.emma.remote"
-          depends="compile, compile.tests"
-          description="Run emma tests with remote browsers"
-          if="gwt.hosts.dev.remote"
-          unless="test.emma.remote.disable">
-    <echo message="Performing emma remote testing at ${gwt.hosts.dev.remote}"/>
-    <property name="test.emma.remote.args" value="${test.args.dev.remote}"/>
-    <fileset id="test.emma.remote.tests" dir="${javac.junit.out}"
-             includes="${gwt.junit.testcase.dev.includes}"
-             excludes="${gwt.junit.testcase.dev.excludes}"/>
-    <gwt.junit test.name="test.emma.remote"
-               test.args="${test.emma.remote.args}"
-               test.jvmargs="${test.jvmargs}"
-               test.out="${junit.out}/emma-remote"
-               test.cases="test.emma.remote.tests">
-      <extraclasspaths>
-        <path refid="test.extraclasspath"/>
-        <pathelement location="${gwt.tools.redist}/emma/emma.jar"/>
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
   <target name="test.emma.selenium"
           depends="compile, compile.tests"
           description="Run emma tests with Selenium-RC servers"
@@ -347,52 +263,6 @@
         <pathelement location="${gwt.tools.redist}/emma/emma.jar"/>
       </extraclasspaths>
     </gwt.junit>
-  </target>
-
-  <target name="test.draft.remote"
-          depends="compile, compile.tests"
-          description="Run draft compiled tests with remote browsers"
-          if="gwt.hosts.web.remote"
-          unless="test.draft.remote.disable">
-    <echo message="Performing draft remote testing at ${gwt.hosts.web.remote}"/>
-    <property name="test.draft.remote.args" value="${test.args.web.remote} -draftCompile"/>
-    <fileset id="test.draft.remote.tests" dir="${javac.junit.out}"
-             includes="${gwt.junit.testcase.web.includes}"
-             excludes="${gwt.junit.testcase.web.excludes}"/>
-    <gwt.junit test.name="test.draft.remote"
-               test.args="${test.draft.remote.args}"
-               test.jvmargs="${test.jvmargs}"
-               test.out="${junit.out}/draft-remote"
-               test.cases="test.draft.remote.tests">
-      <extraclasspaths>
-        <path refid="test.extraclasspath"/>
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
-  <target name="test.nometa.remote"
-          description="Run -XdisableClassMetadata tests with remote browsers"
-          if="gwt.hosts.web.remote"
-          unless="test.nometa.remote.disable">
-    <echo message="Performing nometa remote testing at ${gwt.hosts.web.remote}"/>
-    <property name="test.nometa.remote.args"
-              value="${test.args.web.remote} -XdisableClassMetadata"/>
-    <fileset id="test.nometa.remote.tests" dir="${javac.junit.out}"
-             includes="${gwt.junit.testcase.web.includes}"
-             excludes="${gwt.junit.testcase.web.excludes}"/>
-    <gwt.junit test.name="test.nometa.remote"
-               test.args="${test.nometa.remote.args}"
-               test.jvmargs="${test.jvmargs}"
-               test.out="${junit.out}/nometa-remote"
-               test.cases="test.nometa.remote.tests">
-      <extraclasspaths>
-        <path refid="test.extraclasspath"/>
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
-  <target name="test.selenium" depends="test.web.selenium">
-    <echo message="DEPRECATED: test.selenium has been renamed test.web.selenium"/>
   </target>
 
   <target name="test.web.selenium"
@@ -516,14 +386,6 @@
     </gwt.junit>
   </target>
 
-  <target name="test.hosted.emma" depends="test.emma">
-    <echo message="DEPRECATED: test.hosted.emma has been renamed test.emma"/>
-  </target>
-
-  <target name="test.hosted" depends="test.dev">
-    <echo message="DEPRECATED: test.hosted has been renamed test.dev"/>
-  </target>
-
   <target name="test.web.htmlunit"
           depends="compile, compile.tests"
           description="Run web-mode tests with HtmlUnit."
@@ -607,17 +469,6 @@
     <limit failonerror="true" hours="${test.timeout}">
       <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
                 threadCount="${gwt.threadCount}">
-        <!--
-          The remote targets must be run sequentially or BrowserManager will queue
-          requests, which will cause some tests to timeout while waiting.
-        -->
-        <sequential>
-          <antcall target="test.dev.remote"/>
-          <antcall target="test.emma.remote"/>
-          <antcall target="test.web.remote"/>
-          <antcall target="test.draft.remote"/>
-          <antcall target="test.nometa.remote"/>
-        </sequential>
         <antcall target="test.dev.selenium"/>
         <antcall target="test.emma.selenium"/>
         <antcall target="test.web.selenium"/>
@@ -685,8 +536,6 @@
       <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
                 threadCount="${gwt.threadCount}">
         <antcall target="test.dev.htmlunit"/>
-        <!-- no-op unless gwt.hosts.dev.remote is defined -->
-        <antcall target="test.dev.remote"/>
         <!-- no-op unless gwt.hosts.dev.selenium is defined -->
         <antcall target="test.dev.selenium"/>
       </parallel>
@@ -704,8 +553,6 @@
       <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
                 threadCount="${gwt.threadCount}">
         <antcall target="test.web.htmlunit"/>
-        <!-- no-op unless gwt.hosts.web.remote is defined -->
-        <antcall target="test.web.remote"/>
         <!-- no-op unless gwt.hosts.web.selenium is defined -->
         <antcall target="test.web.selenium"/>
       </parallel>
@@ -723,8 +570,6 @@
       <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
                 threadCount="${gwt.threadCount}">
         <antcall target="test.emma.htmlunit"/>
-        <!-- no-op unless gwt.hosts.dev.remote is defined -->
-        <antcall target="test.emma.remote"/>
         <!-- no-op unless gwt.hosts.dev.selenium is defined -->
         <antcall target="test.emma.selenium"/>
       </parallel>
@@ -742,8 +587,6 @@
       <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
                 threadCount="${gwt.threadCount}">
         <antcall target="test.draft.htmlunit"/>
-        <!-- no-op unless gwt.hosts.web.remote is defined -->
-        <antcall target="test.draft.remote"/>
         <!-- no-op unless gwt.hosts.web.selenium is defined -->
         <antcall target="test.draft.selenium"/>
       </parallel>
@@ -761,8 +604,6 @@
       <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
                 threadCount="${gwt.threadCount}">
         <antcall target="test.web.htmlunit"/>
-        <!-- no-op unless gwt.hosts.web.remote is defined -->
-        <antcall target="test.nometa.remote"/>
         <!-- no-op unless gwt.hosts.web.selenium is defined -->
         <antcall target="test.nometa.selenium"/>
       </parallel>
