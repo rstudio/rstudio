@@ -1104,7 +1104,7 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
    // length requires cast
    try
    {
-      entry["length"] = boost::numeric_cast<uint64_t>(fileInfo.size());
+      entry["length"] = boost::numeric_cast<boost::uint64_t>(fileInfo.size());
    }
    catch (const boost::bad_numeric_cast& e)
    {
