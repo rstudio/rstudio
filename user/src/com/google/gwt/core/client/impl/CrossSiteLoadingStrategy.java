@@ -47,7 +47,7 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
      * Get an entry. If there is no such entry, return 0.
      */
     public native int get(int x) /*-{
-      return this[x] ? this[x] : 0;
+      return this[x] || 0;
     }-*/;
     
     public native void put(int x, int y) /*-{
@@ -59,14 +59,10 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
       "Code download terminated");
 
   /**
-   * Clear callbacks on script objects. This is important on IE 6 and 7 to
-   * prevent a memory leak. If the callbacks aren't cleared, there is a cyclical
-   * chain of references between the script tag and the function callback, and
-   * IE 6/7 can't garbage collect them.
+   * Clear callbacks on script objects.
    */
   private static native void clearCallbacks(JavaScriptObject script) /*-{
-    var nop = new Function('');
-    script.onerror = script.onload = script.onreadystatechange = nop;
+    script.onerror = script.onload = script.onreadystatechange = null;
   }-*/;
 
   /**
@@ -77,15 +73,14 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
   }-*/;
 
   private static native JavaScriptObject createScriptTag(String url) /*-{
-    var head = document.getElementsByTagName('head').item(0);
     var script = document.createElement('script');
     script.src = url;
     return script;
   }-*/;
 
   private static native void installScriptTag(JavaScriptObject script) /*-{
-    var head = document.getElementsByTagName('head').item(0);
-    head.appendChild(script);
+    // IE8 does not have document.head
+    (document.head || document.getElementsByTagName("head")[0]).appendChild(script);
   }-*/;
 
   private static native JavaScriptObject removeTagAndCallErrorHandler(
@@ -96,10 +91,10 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
          // onSuccess or onFailure must have already been called.
          return;
        }
-       var head = document.getElementsByTagName('head').item(0);
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearOnSuccess(*)(fragment);
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearCallbacks(*)(tag);
-       head.removeChild(tag);
+       // IE8 does not have document.head
+       (document.head || document.getElementsByTagName("head")[0]).removeChild(tag);
        function callLoadTerminated() {
          loadFinishedHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler::loadTerminated(*)(exception);
        }
@@ -110,10 +105,10 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
   private static native JavaScriptObject removeTagAndEvalCode(int fragment,
       JavaScriptObject tag) /*-{
      return function(code) {
-       var head = document.getElementsByTagName('head').item(0);
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearOnSuccess(*)(fragment);
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearCallbacks(*)(tag);
-       head.removeChild(tag);
+       // IE8 does not have document.head
+       (document.head || document.getElementsByTagName("head")[0]).removeChild(tag);
        __gwtModuleFunction.installCode(code);
      }
    }-*/;
@@ -123,16 +118,15 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
     var exception = @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::LoadTerminated;
     script.onerror = function() {
       callback(exception);
-    }
+    };
     script.onload = function() {
       callback(exception);
-    }
+    };
     script.onreadystatechange = function () {
-      if (script.readyState == 'loaded' || script.readyState == 'complete') {
-        script.onreadystatechange = function () { }
+      if (/loaded|complete/.test(script.readyState)) {
         callback(exception);
       }
-    }
+    };
   }-*/;
 
   /**
