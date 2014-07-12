@@ -154,4 +154,6 @@ public interface ThemeStyles extends CssResource
    String fullscreenCaptionLabel();
    
    String presentationNavigatorLabel();
+   
+   String notResizable();
 }

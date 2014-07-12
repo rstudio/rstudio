@@ -27,6 +27,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
+
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
@@ -416,6 +417,12 @@ public abstract class ModalDialogBase extends DialogBox
          switch (nativeEvent.getKeyCode())
          {
             case KeyCodes.KEY_ENTER:
+               
+               // allow Enter on textareas
+               Element e = DomUtils.getActiveElement();
+               if (e.hasTagName("TEXTAREA"))
+                  return;
+               
                ThemedButton defaultButton = defaultOverrideButton_ == null
                                             ? okButton_
                                             : defaultOverrideButton_;

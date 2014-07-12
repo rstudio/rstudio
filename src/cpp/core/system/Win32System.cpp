@@ -197,6 +197,12 @@ void initializeLog(const std::string& programIdentity, int logLevel, const FileP
    s_pLogWriter = new FileLogWriter(programIdentity, logLevel, settingsDir);
 }
 
+void setLogToStderr(bool logToStderr)
+{
+   if (s_pLogWriter)
+      s_pLogWriter->setLogToStderr(logToStderr);
+}
+
 void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter)
 {
    s_logWriters.push_back(pLogWriter);

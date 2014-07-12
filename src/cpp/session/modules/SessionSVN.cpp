@@ -1059,7 +1059,7 @@ Error svnDiffFile(const json::JsonRpcRequest& request,
       error = systemError(boost::system::errc::file_too_large,
                           ERROR_LOCATION);
       pResponse->setError(error,
-                          json::Value(static_cast<uint64_t>(stdOut.size())));
+                          json::Value(static_cast<boost::uint64_t>(stdOut.size())));
    }
    else
    {
@@ -1484,7 +1484,7 @@ void svnShowEnd(bool noSizeWarning,
    {
       response.setError(
             systemError(boost::system::errc::file_too_large, ERROR_LOCATION),
-            json::Value(static_cast<uint64_t>(result.stdOut.size())));
+            json::Value(static_cast<boost::uint64_t>(result.stdOut.size())));
    }
    else
    {

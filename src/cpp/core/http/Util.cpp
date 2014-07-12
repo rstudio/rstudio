@@ -236,7 +236,7 @@ std::string urlEncode(const std::string& in, bool queryStringSpaces)
          std::ostringstream ostr ;
          ostr << "%" ;
          ostr << std::setw(2) << std::setfill('0') << std::hex << std::uppercase
-              << (int)(uint8_t)ch ;
+              << (int)(boost::uint8_t)ch ;
          std::string charAsHex = ostr.str();
          encodedURL += charAsHex;
       }

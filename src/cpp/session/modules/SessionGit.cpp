@@ -1581,7 +1581,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
       error = systemError(boost::system::errc::file_too_large,
                           ERROR_LOCATION);
       pResponse->setError(error,
-                          json::Value(static_cast<uint64_t>(output.size())));
+                          json::Value(static_cast<boost::uint64_t>(output.size())));
    }
    else
    {
@@ -1941,7 +1941,7 @@ Error vcsShow(const json::JsonRpcRequest& request,
       error = systemError(boost::system::errc::file_too_large,
                           ERROR_LOCATION);
       pResponse->setError(error,
-                          json::Value(static_cast<uint64_t>(output.size())));
+                          json::Value(static_cast<boost::uint64_t>(output.size())));
    }
    else
    {
