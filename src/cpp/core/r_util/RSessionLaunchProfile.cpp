@@ -69,7 +69,7 @@ Error cpuAffinityFromJson(const json::Array& affinityJson,
 
 json::Value toJson(RLimitType limit)
 {
-   uint64_t value = safe_convert::numberTo<uint64_t>(limit, 0);
+   boost::uint64_t value = safe_convert::numberTo<boost::uint64_t>(limit, 0);
    return json::Value(value);
 }
 
