@@ -31,31 +31,24 @@ public class ScriptInjectorTest extends GWTTestCase {
   private static final int TEST_DELAY = 10000;
 
   /**
-   * Check if the browser is IE6,7,8,9.
+   * Check if the browser is IE8,9.
    * 
-   * @return <code>true</code> if the browser is IE6, IE7, IE8, IE9
+   * @return <code>true</code> if the browser is IE8, IE9
    *         <code>false</code> any other browser
    */
   static boolean isIE() {
     if (!browserChecked) {
-      isIE = isIEImpl();
+      isIE = isIE8Or9Impl();
       browserChecked = true;
     }
     return isIE;
   }
 
-  private static native boolean isIEImpl() /*-{
+  private static native boolean isIE8Or9Impl() /*-{
     var ua = navigator.userAgent.toLowerCase();
-    if (ua.indexOf("msie") != -1) {
-      return true;
-    }
-    return false;
+    return ua.indexOf("msie") != -1 && $doc.documentMode <= 9;
   }-*/;
 
-  private native boolean isSafari3OrBefore() /*-{
-    return @com.google.gwt.dom.client.DOMImplWebkit::isWebkit525OrBefore()();
-  }-*/;
-  
   @Override
   public String getModuleName() {
     return "com.google.gwt.core.Core";
@@ -174,7 +167,7 @@ public class ScriptInjectorTest extends GWTTestCase {
    * 
    */
   public void testInjectUrlFail() {
-    if (isIE() || isSafari3OrBefore()) {
+    if (isIE()) {
       return;
     }
     
