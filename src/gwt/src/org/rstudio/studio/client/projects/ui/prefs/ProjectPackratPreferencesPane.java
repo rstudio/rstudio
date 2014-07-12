@@ -43,8 +43,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-// TODO: sticky uipref for various options
-
 public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
