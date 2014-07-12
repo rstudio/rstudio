@@ -181,7 +181,7 @@ private:
       // output to a specific format if specified
       if (!format.empty())
       {
-         renderOptions += ", output_format = rmarkdown::" + format + "()";
+         renderOptions += ", output_format = '" + format + "'";
       }
 
       // output to a temporary directory if specified (no need to do this
