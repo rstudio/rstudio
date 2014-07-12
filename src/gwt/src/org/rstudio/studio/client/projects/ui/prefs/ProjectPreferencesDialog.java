@@ -169,33 +169,37 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       // case: changing packrat options
       else
       {
-         packratFunction = "set_opts";
          packratArgs = packratArgs(options);
+         if (!StringUtil.isNullOrEmpty(packratArgs))
+            packratFunction = "set_opts";
       }
       
-      // build the call
-      StringBuilder b = new StringBuilder();
-      
-      b.append("packrat::");
-      b.append(packratFunction);
-      b.append("(");
-      
-      String projectArg = pPackratUtil_.get().packratProjectArg();
-      if (projectArg.length() > 0)
+      if (packratFunction != null)
       {
-         b.append(projectArg);
+         // build the call
+         StringBuilder b = new StringBuilder();
+         
+         b.append("packrat::");
+         b.append(packratFunction);
+         b.append("(");
+         
+         String projectArg = pPackratUtil_.get().packratProjectArg();
+         if (projectArg.length() > 0)
+         {
+            b.append(projectArg);
+            if (packratArgs != null)
+               b.append(", ");
+         }
+         
          if (packratArgs != null)
-            b.append(", ");
+            b.append(packratArgs);
+         
+         b.append(")"); 
+         
+         pEventBus_.get().fireEvent(new SendToConsoleEvent(b.toString(), 
+                                                           true, 
+                                                           true));
       }
-      
-      if (packratArgs != null)
-         b.append(packratArgs);
-      
-      b.append(")"); 
-      
-      pEventBus_.get().fireEvent(new SendToConsoleEvent(b.toString(), 
-                                                        true, 
-                                                        true));
       
    }
    
@@ -211,6 +215,16 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
       if (options.getVcsIgnoreSrc() != initialPackratOptions_.getVcsIgnoreSrc())
          opts.add(packratBoolArg("vcs.ignore.src", options.getVcsIgnoreSrc()));
+      
+      if (options.getUseCache() != initialPackratOptions_.getUseCache())
+         opts.add(packratBoolArg("use.cache", options.getUseCache()));
+      
+      if (!options.getExternalPackages().equals(initialPackratOptions_.getExternalPackages()))
+         opts.add(packratStringArg("external.packages", options.getExternalPackages()));
+      
+      if (!options.getLocalRepos().equals(initialPackratOptions_.getLocalRepos()))
+         opts.add(packratStringArg("local.repos", options.getLocalRepos()));
+      
       return StringUtil.joinStrings(opts, ", "); 
    }
    
@@ -218,6 +232,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    {
       return name + " = " + (value ? "TRUE" : "FALSE");
    }
+   
+   private String packratStringArg(String name, String value)
+   {
+      return name + " = '" +  value  + "'";
+   }
+ 
  
    private final Provider<Session> session_;
    private final ProjectsServerOperations server_;

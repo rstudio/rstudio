@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.HelpLink;
@@ -39,8 +43,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-// TODO: accept space, comma, or newline as separator
-// TODO: apply use.cache, external.packages, and local.repos in console
 // TODO: help links for external.packages and local.repos
 // TODO: sticky uipref for various options
 
@@ -122,7 +124,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         
         panelExternalPackages_ = new VerticalPanel();
         panelExternalPackages_.add(
-              new HTML("External packages (optional):"));
+              new HTML("External packages (comma separated):"));
         taExternalPackages_ = new FixedTextArea(3, 45);
         taExternalPackages_.setText(packratOptions.getExternalPackages());
         panelExternalPackages_.add(taExternalPackages_);
@@ -130,7 +132,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         
         panelLocalRepos_ = new VerticalPanel();
         panelExternalPackages_.add(
-              new HTML("Local repositories (optional):"));
+              new HTML("Local repositories (comma separated):"));
         taLocalRepos_ = new FixedTextArea(3, 45);
         taLocalRepos_.setText(packratOptions.getLocalRepos());
         panelLocalRepos_.add(taLocalRepos_);
@@ -167,9 +169,20 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       packratOptions.setVcsIgnoreLib(chkVcsIgnoreLib_.getValue());
       packratOptions.setVcsIgnoreSrc(chkVcsIgnoreSrc_.getValue());
       packratOptions.setUseCache(chkUseCache_.getValue());
-      packratOptions.setExternalPackages(taExternalPackages_.getValue());
-      packratOptions.setLocalRepos(taLocalRepos_.getValue());
+      packratOptions.setExternalPackages(getListValue(taExternalPackages_));
+      packratOptions.setLocalRepos(getListValue(taLocalRepos_));
       return false;
+   }
+   
+   
+   private String getListValue(TextArea textArea)
+   {
+      // convert newline to comma
+      String value = textArea.getValue().replace('\n', ',');
+      
+      // normalize whitespace (for comparison with previous options)
+      List<String> values = Arrays.asList(value.split("\\s*,\\s*"));
+      return StringUtil.join(values, ", ");
    }
   
    private void verifyPrerequisites()
