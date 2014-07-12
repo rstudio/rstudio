@@ -211,9 +211,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
       if (options.getVcsIgnoreSrc() != initialPackratOptions_.getVcsIgnoreSrc())
          opts.add(packratBoolArg("vcs.ignore.src", options.getVcsIgnoreSrc()));
-      
-      // TODO: use.cache, external.packages, and local.repos
-      
       return StringUtil.joinStrings(opts, ", "); 
    }
    

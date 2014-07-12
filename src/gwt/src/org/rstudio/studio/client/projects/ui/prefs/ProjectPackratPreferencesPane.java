@@ -39,6 +39,11 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+// TODO: accept space, comma, or newline as separator
+// TODO: apply use.cache, external.packages, and local.repos in console
+// TODO: help links for external.packages and local.repos
+// TODO: sticky uipref for various options
+
 public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
@@ -117,7 +122,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         
         panelExternalPackages_ = new VerticalPanel();
         panelExternalPackages_.add(
-              new HTML("External packages (separate with comma or newline)"));
+              new HTML("External packages (optional):"));
         taExternalPackages_ = new FixedTextArea(3, 45);
         taExternalPackages_.setText(packratOptions.getExternalPackages());
         panelExternalPackages_.add(taExternalPackages_);
@@ -125,7 +130,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         
         panelLocalRepos_ = new VerticalPanel();
         panelExternalPackages_.add(
-              new HTML("Local repositories (separate with comma or newline)"));
+              new HTML("Local repositories (optional):"));
         taLocalRepos_ = new FixedTextArea(3, 45);
         taLocalRepos_.setText(packratOptions.getLocalRepos());
         panelLocalRepos_.add(taLocalRepos_);
