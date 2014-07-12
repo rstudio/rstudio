@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FixedTextArea;
+import org.rstudio.core.client.widget.LabelWithHelp;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -37,13 +38,11 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-// TODO: help links for external.packages and local.repos
 // TODO: sticky uipref for various options
 
 public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
@@ -123,16 +122,21 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         add(chkUseCache_);
         
         panelExternalPackages_ = new VerticalPanel();
-        panelExternalPackages_.add(
-              new HTML("External packages (comma separated):"));
+        panelExternalPackages_.add(new LabelWithHelp(
+              "External packages (comma separated):",
+              "packrat_external_packages",
+              false));
         taExternalPackages_ = new FixedTextArea(3, 45);
         taExternalPackages_.setText(packratOptions.getExternalPackages());
+        taExternalPackages_.getElement().getStyle().setMarginBottom(8, Unit.PX);
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
         
         panelLocalRepos_ = new VerticalPanel();
-        panelExternalPackages_.add(
-              new HTML("Local repositories (comma separated):"));
+        panelExternalPackages_.add(new LabelWithHelp(
+              "Local repositories (comma separated):",
+              "packrat_local_repos",
+              false));
         taLocalRepos_ = new FixedTextArea(3, 45);
         taLocalRepos_.setText(packratOptions.getLocalRepos());
         panelLocalRepos_.add(taLocalRepos_);

@@ -24,10 +24,17 @@ public class LabelWithHelp extends Composite
 {
    public LabelWithHelp(String text, String helpTopic)
    {
+      this(text, helpTopic, true);
+   }
+   
+   public LabelWithHelp(String text, 
+                        String helpTopic, 
+                        boolean includeVersionInfo)
+   {
       HorizontalPanel labelPanel = new HorizontalPanel();
       Label label = new Label(text);
       labelPanel.add(label);
-      HelpButton helpButton =  new HelpButton(helpTopic);
+      HelpButton helpButton =  new HelpButton(helpTopic, includeVersionInfo);
       helpButton.getElement().getStyle().setMarginLeft(3, Unit.PX);
       labelPanel.add(helpButton);
       initWidget(labelPanel);
