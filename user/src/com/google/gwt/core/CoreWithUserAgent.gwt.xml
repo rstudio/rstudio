@@ -24,6 +24,14 @@
     </none>
   </replace-with>
 
+  <!-- Provides improved version of javascript HashCodeMap for modern browsers -->
+  <replace-with class="java.util.InternalJsHashCodeMap.InternalJsHashCodeMapModern">
+    <when-type-is class="java.util.InternalJsHashCodeMap"/>
+    <none>
+      <when-property-is name="user.agent" value="ie8"/>
+    </none>
+  </replace-with>
+
   <!-- Disable source maps for non-Chrome browsers -->
   <!-- TODO(goktug): enable source maps for non-Chrome browsers -->
   <set-property name="compiler.useSourceMaps" value="false">

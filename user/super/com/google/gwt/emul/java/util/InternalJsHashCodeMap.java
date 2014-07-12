@@ -31,9 +31,99 @@ import java.util.Map.Entry;
  */
 class InternalJsHashCodeMap<K, V> {
 
-  private final JavaScriptObject backingMap = JavaScriptObject.createArray();
+  static class InternalJsHashCodeMapModern<K, V> extends InternalJsHashCodeMap<K, V> {
+    @Override
+    native JavaScriptObject createMap() /*-{
+      return Object.create(null);
+    }-*/;
+
+    @Override
+    public native boolean containsValue(Object value) /*-{
+      var map = this.@InternalJsHashCodeMap::backingMap;
+      for (var hashCode in map) {
+        var array = map[hashCode];
+        for ( var i = 0, c = array.length; i < c; ++i) {
+          var entry = array[i];
+          var entryValue = entry.@Map.Entry::getValue()();
+          if (this.@InternalJsHashCodeMap::equalsBridge(*)(value, entryValue)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }-*/;
+
+    @Override
+    public Iterator<Entry<K, V>> entries() {
+      final String[] keys = keys();
+      return new Iterator<Map.Entry<K,V>>() {
+        int chainIndex = -1, itemIndex = 0;
+        Entry<K, V>[] chain = new Entry[0];
+        Entry<K, V>[] lastChain = null;
+        Entry<K, V> lastEntry = null;
+
+        @Override
+        public boolean hasNext() {
+          if (itemIndex < chain.length) {
+            return true;
+          }
+          if (chainIndex < keys.length - 1) {
+            // Move to the beginning of next chain
+            chain = get(keys[++chainIndex]);
+            itemIndex = 0;
+            return true;
+          }
+          return false;
+        }
+
+        @Override
+        public Entry<K, V> next() {
+          if (!hasNext()) {
+            throw new NoSuchElementException();
+          }
+
+          lastChain = chain;
+          lastEntry = chain[itemIndex++];
+          return lastEntry;
+        }
+
+        @Override
+        public void remove() {
+          if (lastChain == null) {
+            throw new IllegalStateException();
+          }
+
+          InternalJsHashCodeMapModern.this.remove(lastEntry.getKey());
+
+          // If we are sill in the same chain, our itemIndex just jumped an item. We can fix that
+          // by decrementing the itemIndex. However there is an exception: if there is only one
+          // item, the whole chain is simply dropped not the item. If we decrement in that case, as
+          // the item is not drop from the chain, we will end up returning the same item twice.
+          if (chain == lastChain && chain.length != 1) {
+            itemIndex--;
+          }
+
+          lastChain = null;
+        }
+      };
+    }
+
+    private native String[] keys() /*-{
+      return Object.keys(this.@InternalJsHashCodeMap::backingMap);
+    }-*/;
+
+    private native Entry<K, V>[] get(String key) /*-{
+      return this.@InternalJsHashCodeMap::backingMap[key];
+    }-*/;
+  }
+
+  private final JavaScriptObject backingMap = createMap();
   private int size;
   AbstractHashMap<K, V> host;
+
+  native JavaScriptObject createMap() /*-{
+    return {};
+  }-*/;
 
   public int size() {
     return size;
