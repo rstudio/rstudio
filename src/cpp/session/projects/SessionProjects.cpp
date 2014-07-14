@@ -610,6 +610,10 @@ void startup()
       if (nextSessionProject == kNextSessionProjectNone)
       {
          projectFilePath = FilePath();
+
+         // flush the last project path so restarts won't put us back into
+         // project context (see case 4015)
+         s_projectContext.setLastProjectPath(FilePath());
       }
       else
       {
