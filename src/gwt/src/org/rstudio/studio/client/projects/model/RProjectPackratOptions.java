@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RProjectPackratOptions extends JavaScriptObject
 {
@@ -29,8 +30,8 @@ public class RProjectPackratOptions extends JavaScriptObject
       options.vcs_ignore_lib = true;
       options.vcs_ignore_src = false;
       options.use_cache = false;
-      options.external_packages = "";
-      options.local_repos = "";
+      options.external_packages = [];
+      options.local_repos = [];
       return options;
    }-*/;
    
@@ -74,19 +75,19 @@ public class RProjectPackratOptions extends JavaScriptObject
       this.use_cache = useCache;
    }-*/;
    
-   public native final String getExternalPackages() /*-{
+   public native final JsArrayString getExternalPackages() /*-{
       return this.external_packages;
    }-*/;
    
-   public native final void setExternalPackages(String externalPackages) /*-{
+   public native final void setExternalPackages(JsArrayString externalPackages) /*-{
       this.external_packages = externalPackages;
    }-*/;
    
-   public native final String getLocalRepos() /*-{
+   public native final JsArrayString getLocalRepos() /*-{
       return this.local_repos;
    }-*/;
    
-   public native final void setLocalRepos(String localRepos) /*-{
+   public native final void setLocalRepos(JsArrayString localRepos) /*-{
       this.local_repos = localRepos;
    }-*/;
    

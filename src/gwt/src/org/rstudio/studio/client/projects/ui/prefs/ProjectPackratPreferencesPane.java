@@ -18,8 +18,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.LabelWithHelp;
+import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -32,9 +34,12 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -68,6 +73,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    @Override
    protected void initialize(RProjectOptions options)
    {
+      Styles styles = RES.styles();
       Label label = new Label(
             "Packrat is a dependency management tool that makes your " +
             "R code more isolated, portable, and reproducible by " +
@@ -124,21 +130,28 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
               "External packages (comma separated):",
               "packrat_external_packages",
               false));
-        taExternalPackages_ = new FixedTextArea(3, 45);
-        taExternalPackages_.setText(packratOptions.getExternalPackages());
+        taExternalPackages_ = new FixedTextArea(3);
+        taExternalPackages_.addStyleName(styles.externalPackages());
+        taExternalPackages_.setText(
+              StringUtil.join(
+                    Arrays.asList(
+                          JsUtil.toStringArray(
+                                packratOptions.getExternalPackages()
+                          )
+                    ),
+                    ", "));
         taExternalPackages_.getElement().getStyle().setMarginBottom(8, Unit.PX);
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
         
-        panelLocalRepos_ = new VerticalPanel();
-        panelExternalPackages_.add(new LabelWithHelp(
-              "Local repositories (comma separated):",
-              "packrat_local_repos",
-              false));
-        taLocalRepos_ = new FixedTextArea(3, 45);
-        taLocalRepos_.setText(packratOptions.getLocalRepos());
-        panelLocalRepos_.add(taLocalRepos_);
-        add(panelLocalRepos_);
+        widgetLocalRepos_ = new LocalRepositoriesWidget();
+        String[] localRepos = 
+              JsUtil.toStringArray(packratOptions.getLocalRepos());
+        for (int i = 0; i < localRepos.length; ++i)
+        {
+           widgetLocalRepos_.addItem(localRepos[i]);
+        }
+        add(widgetLocalRepos_);
         
         manageUI(context.isPackified());
 
@@ -157,7 +170,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       chkAutoSnapshot_.setVisible(packified);
       chkUseCache_.setVisible(packified);
       panelExternalPackages_.setVisible(packified);
-      panelLocalRepos_.setVisible(packified);
+      widgetLocalRepos_.setVisible(packified);
       chkVcsIgnoreLib_.setVisible(packified && vcsActive);
       chkVcsIgnoreSrc_.setVisible(packified && vcsActive);
    }
@@ -171,13 +184,19 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       packratOptions.setVcsIgnoreLib(chkVcsIgnoreLib_.getValue());
       packratOptions.setVcsIgnoreSrc(chkVcsIgnoreSrc_.getValue());
       packratOptions.setUseCache(chkUseCache_.getValue());
-      packratOptions.setExternalPackages(getListValue(taExternalPackages_));
-      packratOptions.setLocalRepos(getListValue(taLocalRepos_));
+      packratOptions.setExternalPackages(
+            JsUtil.toJsArrayString(
+                  Arrays.asList(
+                        getTextAreaValue(taExternalPackages_)
+                        .split("\\s*,\\s*"))));
+      packratOptions.setLocalRepos(
+            JsUtil.toJsArrayString(widgetLocalRepos_.getItems()));
+            
       return false;
    }
    
    
-   private String getListValue(TextArea textArea)
+   private String getTextAreaValue(TextArea textArea)
    {
       // convert newline to comma
       String value = textArea.getValue().replace('\n', ',');
@@ -263,6 +282,24 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       chkUsePackrat_.setValue(usePackrat, false); 
       manageUI(usePackrat);
    }
+   
+   interface Resources extends ClientBundle
+   {
+      @Source("ProjectPackratPreferencesPane.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   
+   public interface Styles extends CssResource
+   {
+      String externalPackages();
+   }
+   
+   static
+   {
+      RES.styles().ensureInjected();
+   }
  
    private final Session session_;
    private final PackratServerOperations server_;
@@ -276,6 +313,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    private VerticalPanel panelExternalPackages_;
    private TextArea taExternalPackages_;
    
-   private VerticalPanel panelLocalRepos_;
-   private TextArea taLocalRepos_;  
+   private LocalRepositoriesWidget widgetLocalRepos_;
+   
 }

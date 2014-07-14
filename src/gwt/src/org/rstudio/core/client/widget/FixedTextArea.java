@@ -7,10 +7,14 @@ import com.google.gwt.user.client.ui.TextArea;
 public class FixedTextArea extends TextArea
 {
    
-   public FixedTextArea(int numVisibleLines, int charWidth) {
+   public FixedTextArea(int numVisibleLines)
+   {
       super();
+      init();
       setVisibleLines(numVisibleLines);
-      setCharacterWidth(charWidth);
+   }
+   
+   private void init() {
       addStyleName(ThemeStyles.INSTANCE.notResizable());
       getElement().setAttribute("spellcheck", "false");
    }

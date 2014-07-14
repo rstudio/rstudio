@@ -890,7 +890,6 @@ Error getPackratOptions(SEXP* pOptionsSEXP, r::sexp::Protect* pRProtect)
    r::exec::RFunction getOpts("packrat:::get_opts");
    getOpts.addParam("simplify", false);
    getOpts.addParam("project", module_context::createAliasedPath(projectDir));
-   getOpts.addParam("split.fields", false);
 
    return getOpts.call(pOptionsSEXP, pRProtect);
 }
@@ -1074,6 +1073,25 @@ void copyOption(SEXP optionsSEXP, const std::string& listName,
    (*pOptionsJson)[jsonName] = value;
 }
 
+void copyOptionArrayString(SEXP optionsSEXP, const std::string& listName,
+                           json::Object* pOptionsJson, const std::string& jsonName,
+                           std::vector<std::string> defaultValue)
+{
+   std::vector<std::string> value = defaultValue;
+   Error error = r::sexp::getNamedListElement(optionsSEXP,
+                                              listName,
+                                              &value,
+                                              defaultValue);
+
+   if (error)
+   {
+      error.addProperty("option", listName);
+      LOG_ERROR(error);
+   }
+
+   (*pOptionsJson)[jsonName] = json::toJsonArray(value);
+}
+
 json::Object defaultPackratOptions()
 {
    json::Object optionsJson;
@@ -1082,8 +1100,8 @@ json::Object defaultPackratOptions()
    optionsJson["vcs_ignore_lib"] = true;
    optionsJson["vcs_ignore_src"] = false;
    optionsJson["use_cache"] = false;
-   optionsJson["external_packages"] = std::string();
-   optionsJson["local_repos"] = std::string();
+   optionsJson["external_packages"] = json::toJsonArray(std::vector<std::string>());
+   optionsJson["local_repos"] = json::toJsonArray(std::vector<std::string>());
    return optionsJson;
 }
 
@@ -1122,11 +1140,13 @@ json::Object packratOptionsAsJson()
       copyOption(optionsSEXP, "use.cache",
                  &optionsJson, "use_cache", false);
 
-      copyOption(optionsSEXP, "external.packages",
-                 &optionsJson, "external_packages", std::string());
+      copyOptionArrayString(optionsSEXP, "external.packages",
+                            &optionsJson, "external_packages",
+                            std::vector<std::string>());
 
-      copyOption(optionsSEXP, "local.repos",
-                 &optionsJson, "local_repos", std::string());
+      copyOptionArrayString(optionsSEXP, "local.repos",
+                            &optionsJson, "local_repos",
+                            std::vector<std::string>());
 
 
       return optionsJson;

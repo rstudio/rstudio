@@ -36,6 +36,7 @@ import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.SlideLabel;
@@ -250,6 +251,7 @@ public class RStudio implements EntryPoint
       ActionCenter.ensureStylesInjected();
       PackratResolveConflictDialog.ensureStylesInjected();
       PackratActionDialog.ensureStylesInjected();
+      LocalRepositoriesWidget.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
