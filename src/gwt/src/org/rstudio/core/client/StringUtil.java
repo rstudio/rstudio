@@ -491,6 +491,8 @@ public class StringUtil
    
    public static String ensureSurroundedWith(String string, char chr)
    {
+      if (isNullOrEmpty(string))
+         return "\"\"";
       String result = string;
       if (result.charAt(0) != chr)
          result = chr + result;
