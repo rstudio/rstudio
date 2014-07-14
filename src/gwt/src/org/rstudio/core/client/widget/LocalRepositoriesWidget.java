@@ -36,7 +36,7 @@ public class LocalRepositoriesWidget extends Composite
       hp.add(listBox_);
       
       VerticalPanel buttonPanel = new VerticalPanel();
-      SmallButton buttonAdd = createButton("Add");
+      SmallButton buttonAdd = createButton("Add...");
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);
       SmallButton buttonRemove = createButton("Remove");
