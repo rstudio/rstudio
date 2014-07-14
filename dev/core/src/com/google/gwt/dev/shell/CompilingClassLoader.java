@@ -745,6 +745,8 @@ public final class CompilingClassLoader extends ClassLoader implements
   private static final String CLASS_DUMP_PATH = System.getProperty(
       "gwt.dev.classDumpPath", "rewritten-classes");
 
+  private static final String JACOCO_ENTRYPOINT = "org.jacoco.core.JaCoCo";
+
   private static boolean emmaAvailable = false;
 
   private static EmmaStrategy emmaStrategy;
@@ -783,6 +785,18 @@ public final class CompilingClassLoader extends ClassLoader implements
     } catch (ClassNotFoundException ignored) {
     }
     emmaStrategy = EmmaStrategy.get(emmaAvailable);
+    
+    /* Bridging Jacoco's Offline entry point. */
+    try {
+      Class<?> jacoco = Class.forName(JACOCO_ENTRYPOINT,
+          false, Thread.currentThread().getContextClassLoader());
+      String offlineName = (String) jacoco.getDeclaredField("RUNTIMEPACKAGE").get(jacoco)
+          + ".Offline";
+      Class<?> offlineBridge = Class.forName(offlineName,
+          false, Thread.currentThread().getContextClassLoader());
+      BRIDGE_CLASS_NAMES.put(offlineName, offlineBridge);
+    } catch (Exception ignored) {
+    }
   }
 
   private static void classDump(String name, byte[] bytes) {
