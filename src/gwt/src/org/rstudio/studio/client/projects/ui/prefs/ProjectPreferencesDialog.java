@@ -205,6 +205,21 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
    }
    
+   private boolean equals(JsArrayString lhsJson, JsArrayString rhsJson)
+   {
+      String[] lhs = JsUtil.toStringArray(lhsJson);
+      String[] rhs = JsUtil.toStringArray(rhsJson);
+      if (lhs.length != rhs.length) return false;
+      for (int i = 0; i < lhs.length; ++i)
+      {
+         if (!lhs[i].equals(rhs[i]))
+         {
+            return false;
+         }
+      }
+      return true;
+   }
+   
    private String packratArgs(RProjectPackratOptions options)
    {
       ArrayList<String> opts = new ArrayList<String>();
@@ -221,12 +236,13 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       if (options.getUseCache() != initialPackratOptions_.getUseCache())
          opts.add(packratBoolArg("use.cache", options.getUseCache()));
       
-      if (!options.getExternalPackages().equals(
+      if (!equals(options.getExternalPackages(),
             initialPackratOptions_.getExternalPackages()))
          opts.add(packratVectorArg("external.packages",
                options.getExternalPackages()));
       
-      if (!options.getLocalRepos().equals(initialPackratOptions_.getLocalRepos()))
+      if (!equals(options.getLocalRepos(),
+            initialPackratOptions_.getLocalRepos()))
          opts.add(packratVectorArg("local.repos",
                options.getLocalRepos()));
       
