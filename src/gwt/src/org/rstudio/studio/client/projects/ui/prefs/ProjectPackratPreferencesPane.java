@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -186,9 +187,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       packratOptions.setUseCache(chkUseCache_.getValue());
       packratOptions.setExternalPackages(
             JsUtil.toJsArrayString(
-                  Arrays.asList(
-                        getTextAreaValue(taExternalPackages_)
-                        .split("\\s*,\\s*"))));
+                  getTextAreaValue(taExternalPackages_)));
       packratOptions.setLocalRepos(
             JsUtil.toJsArrayString(widgetLocalRepos_.getItems()));
             
@@ -196,14 +195,25 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    }
    
    
-   private String getTextAreaValue(TextArea textArea)
+   private ArrayList<String> getTextAreaValue(TextArea textArea)
    {
       // convert newline to comma
       String value = textArea.getValue().replace('\n', ',');
       
       // normalize whitespace (for comparison with previous options)
       List<String> values = Arrays.asList(value.split("\\s*,\\s*"));
-      return StringUtil.join(values, ", ");
+      
+      // remove entries that are only whitespace
+      ArrayList<String> result = new ArrayList<String>();
+      for (String s : values)
+      {
+         if (!s.equals(""))
+         {
+            result.add(s);
+         }
+      }
+      return result;
+      
    }
   
    private void verifyPrerequisites()
