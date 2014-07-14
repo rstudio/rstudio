@@ -19,6 +19,7 @@ import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
 import org.rstudio.core.client.widget.CaptionWithHelp;
+import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
@@ -92,6 +93,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetPresentationHelper presHelper);
    void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
+   void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

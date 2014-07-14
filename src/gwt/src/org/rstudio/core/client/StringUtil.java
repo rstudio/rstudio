@@ -489,6 +489,16 @@ public class StringUtil
       
    }
    
+   public static String ensureSurroundedWith(String string, char chr)
+   {
+      String result = string;
+      if (result.charAt(0) != chr)
+         result = chr + result;
+      if (result.charAt(result.length() - 1) != chr)
+         result += chr;
+      return result;
+   }
+   
    public static String capitalize(String input)
    {
       if (input == null || input.length() < 1)

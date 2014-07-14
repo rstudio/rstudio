@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -34,6 +35,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -219,11 +221,14 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       if (options.getUseCache() != initialPackratOptions_.getUseCache())
          opts.add(packratBoolArg("use.cache", options.getUseCache()));
       
-      if (!options.getExternalPackages().equals(initialPackratOptions_.getExternalPackages()))
-         opts.add(packratStringArg("external.packages", options.getExternalPackages()));
+      if (!options.getExternalPackages().equals(
+            initialPackratOptions_.getExternalPackages()))
+         opts.add(packratVectorArg("external.packages",
+               options.getExternalPackages()));
       
       if (!options.getLocalRepos().equals(initialPackratOptions_.getLocalRepos()))
-         opts.add(packratStringArg("local.repos", options.getLocalRepos()));
+         opts.add(packratVectorArg("local.repos",
+               options.getLocalRepos()));
       
       return StringUtil.joinStrings(opts, ", "); 
    }
@@ -238,6 +243,21 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       return name + " = '" +  value  + "'";
    }
  
+   private String packratVectorArg(String name, JsArrayString valueJson)
+   {
+      String[] value = JsUtil.toStringArray(valueJson);
+      String result = name + " = ";
+      if (value.length < 1) return result + "\"\"";
+      result += "c(";
+      for (int i = 0; i < value.length - 1; ++i)
+      {
+         result += StringUtil.ensureSurroundedWith(value[i], '"');
+         result += ", ";
+      }
+      result += StringUtil.ensureSurroundedWith(value[value.length - 1], '"');
+      result += ")";
+      return result;
+   }
  
    private final Provider<Session> session_;
    private final ProjectsServerOperations server_;

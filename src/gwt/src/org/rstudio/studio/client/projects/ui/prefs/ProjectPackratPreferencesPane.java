@@ -18,8 +18,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.LabelWithHelp;
+import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -125,20 +127,26 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
               "packrat_external_packages",
               false));
         taExternalPackages_ = new FixedTextArea(3, 45);
-        taExternalPackages_.setText(packratOptions.getExternalPackages());
+        taExternalPackages_.setText(
+              StringUtil.join(
+                    Arrays.asList(
+                          JsUtil.toStringArray(
+                                packratOptions.getExternalPackages()
+                          )
+                    ),
+                    ", "));
         taExternalPackages_.getElement().getStyle().setMarginBottom(8, Unit.PX);
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
         
-        panelLocalRepos_ = new VerticalPanel();
-        panelExternalPackages_.add(new LabelWithHelp(
-              "Local repositories (comma separated):",
-              "packrat_local_repos",
-              false));
-        taLocalRepos_ = new FixedTextArea(3, 45);
-        taLocalRepos_.setText(packratOptions.getLocalRepos());
-        panelLocalRepos_.add(taLocalRepos_);
-        add(panelLocalRepos_);
+        widgetLocalRepos_ = new LocalRepositoriesWidget();
+        String[] localRepos = 
+              JsUtil.toStringArray(packratOptions.getLocalRepos());
+        for (int i = 0; i < localRepos.length; ++i)
+        {
+           widgetLocalRepos_.addItem(localRepos[i]);
+        }
+        add(widgetLocalRepos_);
         
         manageUI(context.isPackified());
 
@@ -157,7 +165,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       chkAutoSnapshot_.setVisible(packified);
       chkUseCache_.setVisible(packified);
       panelExternalPackages_.setVisible(packified);
-      panelLocalRepos_.setVisible(packified);
+      widgetLocalRepos_.setVisible(packified);
       chkVcsIgnoreLib_.setVisible(packified && vcsActive);
       chkVcsIgnoreSrc_.setVisible(packified && vcsActive);
    }
@@ -171,13 +179,19 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       packratOptions.setVcsIgnoreLib(chkVcsIgnoreLib_.getValue());
       packratOptions.setVcsIgnoreSrc(chkVcsIgnoreSrc_.getValue());
       packratOptions.setUseCache(chkUseCache_.getValue());
-      packratOptions.setExternalPackages(getListValue(taExternalPackages_));
-      packratOptions.setLocalRepos(getListValue(taLocalRepos_));
+      packratOptions.setExternalPackages(
+            JsUtil.toJsArrayString(
+                  Arrays.asList(
+                        getTextAreaValue(taExternalPackages_)
+                        .split("\\s*,\\s*"))));
+      packratOptions.setLocalRepos(
+            JsUtil.toJsArrayString(widgetLocalRepos_.getItems()));
+            
       return false;
    }
    
    
-   private String getListValue(TextArea textArea)
+   private String getTextAreaValue(TextArea textArea)
    {
       // convert newline to comma
       String value = textArea.getValue().replace('\n', ',');
@@ -276,6 +290,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    private VerticalPanel panelExternalPackages_;
    private TextArea taExternalPackages_;
    
-   private VerticalPanel panelLocalRepos_;
-   private TextArea taLocalRepos_;  
+   private LocalRepositoriesWidget widgetLocalRepos_;
+   
 }
