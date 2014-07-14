@@ -483,6 +483,7 @@ java_library(
         "src/com/google/gwt/core/shared/GwtIncompatible.java",
     ],
     constraints = [
+        "android",
         "gwt",
         "public",
     ],
