@@ -251,10 +251,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       result += "c(";
       for (int i = 0; i < value.length - 1; ++i)
       {
-         result += StringUtil.ensureSurroundedWith(value[i], '"');
+         result += StringUtil.ensureSurroundedWith(
+               value[i].replaceAll("\"",  "\\\\\""), '"');
          result += ", ";
       }
-      result += StringUtil.ensureSurroundedWith(value[value.length - 1], '"');
+      result += StringUtil.ensureSurroundedWith(
+            value[value.length - 1].replaceAll("\"",  "\\\\\""), '"');
       result += ")";
       return result;
    }
