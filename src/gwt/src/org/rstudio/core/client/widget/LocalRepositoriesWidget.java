@@ -26,7 +26,7 @@ public class LocalRepositoriesWidget extends Composite
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       VerticalPanel panel = new VerticalPanel();
-      panel.add(new LabelWithHelp("Local Repositories",
+      panel.add(new LabelWithHelp("Local Repositories:",
             "packrat_local_repos"));
       
       HorizontalPanel hp = new HorizontalPanel();

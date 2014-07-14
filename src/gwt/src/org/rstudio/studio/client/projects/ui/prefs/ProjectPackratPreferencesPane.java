@@ -34,9 +34,12 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -70,6 +73,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    @Override
    protected void initialize(RProjectOptions options)
    {
+      Styles styles = RES.styles();
       Label label = new Label(
             "Packrat is a dependency management tool that makes your " +
             "R code more isolated, portable, and reproducible by " +
@@ -126,7 +130,8 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
               "External packages (comma separated):",
               "packrat_external_packages",
               false));
-        taExternalPackages_ = new FixedTextArea(3, 45);
+        taExternalPackages_ = new FixedTextArea(3);
+        taExternalPackages_.addStyleName(styles.externalPackages());
         taExternalPackages_.setText(
               StringUtil.join(
                     Arrays.asList(
@@ -276,6 +281,24 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    {
       chkUsePackrat_.setValue(usePackrat, false); 
       manageUI(usePackrat);
+   }
+   
+   interface Resources extends ClientBundle
+   {
+      @Source("ProjectPackratPreferencesPane.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   
+   public interface Styles extends CssResource
+   {
+      String externalPackages();
+   }
+   
+   static
+   {
+      RES.styles().ensureInjected();
    }
  
    private final Session session_;
