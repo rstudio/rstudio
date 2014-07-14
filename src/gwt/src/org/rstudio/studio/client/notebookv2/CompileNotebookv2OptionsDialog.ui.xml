@@ -24,7 +24,7 @@
       
       <p>
        For more information on compiling notebooks, see the documentation at
-        <a href="http://rmarkdown.rstudio.com/authoring_compile_notebook.html" target = "_blank">
+        <a href="http://rmarkdown.rstudio.com/r_notebook_format.html" target = "_blank">
            Compiling Notebooks from R Scripts
         </a>
       </p>
