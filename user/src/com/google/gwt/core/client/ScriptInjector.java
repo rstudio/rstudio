@@ -259,8 +259,7 @@ public class ScriptInjector {
   private static native void attachListeners(JavaScriptObject scriptElement,
       Callback<Void, Exception> callback, boolean removeTag) /*-{
     function clearCallbacks() {
-      scriptElement.onerror = scriptElement.onreadystatechange = scriptElement.onload = function() {
-      };
+      scriptElement.onerror = scriptElement.onreadystatechange = scriptElement.onload = null;
       if (removeTag) {
         @com.google.gwt.core.client.ScriptInjector::nativeRemove(Lcom/google/gwt/core/client/JavaScriptObject;)(scriptElement);
       }
@@ -280,14 +279,15 @@ public class ScriptInjector {
       }
     });
     scriptElement.onreadystatechange = $entry(function() {
-      if (scriptElement.readyState == 'complete' || scriptElement.readyState == 'loaded') {
+      if (/loaded|complete/.test(scriptElement.readyState)) {
         scriptElement.onload();
       }
     });
   }-*/;
 
   private static native void nativeAttachToHead(JavaScriptObject doc, JavaScriptObject scriptElement) /*-{
-    doc.getElementsByTagName("head")[0].appendChild(scriptElement);
+    // IE8 does not have document.head
+    (doc.head || doc.getElementsByTagName("head")[0]).appendChild(scriptElement);
   }-*/;
 
   private static native JavaScriptObject nativeDefaultWindow() /*-{
@@ -299,14 +299,11 @@ public class ScriptInjector {
   }-*/;
 
   private static native JavaScriptObject nativeMakeScriptElement(JavaScriptObject doc) /*-{
-    var element = doc.createElement("script");
-    element.type = "text/javascript";
-    return element;
+    return doc.createElement("script");
   }-*/;
 
   private static native void nativeRemove(JavaScriptObject scriptElement) /*-{
-    var p = scriptElement.parentNode;
-    p.removeChild(scriptElement);
+    scriptElement.parentNode.removeChild(scriptElement);
   }-*/;
 
   private static native void nativeSetSrc(JavaScriptObject element, String url) /*-{
