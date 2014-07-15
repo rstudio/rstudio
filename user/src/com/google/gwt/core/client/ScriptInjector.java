@@ -259,7 +259,8 @@ public class ScriptInjector {
   private static native void attachListeners(JavaScriptObject scriptElement,
       Callback<Void, Exception> callback, boolean removeTag) /*-{
     function clearCallbacks() {
-      scriptElement.onerror = scriptElement.onreadystatechange = scriptElement.onload = null;
+      scriptElement.onerror = scriptElement.onreadystatechange = scriptElement.onload = function() {
+      };
       if (removeTag) {
         @com.google.gwt.core.client.ScriptInjector::nativeRemove(Lcom/google/gwt/core/client/JavaScriptObject;)(scriptElement);
       }
@@ -279,14 +280,14 @@ public class ScriptInjector {
       }
     });
     scriptElement.onreadystatechange = $entry(function() {
-      if (/loaded|complete/.test(scriptElement.readyState)) {
+      if (scriptElement.readyState == 'complete' || scriptElement.readyState == 'loaded') {
         scriptElement.onload();
       }
     });
   }-*/;
 
   private static native void nativeAttachToHead(JavaScriptObject doc, JavaScriptObject scriptElement) /*-{
-    doc.head.appendChild(scriptElement);
+    doc.getElementsByTagName("head")[0].appendChild(scriptElement);
   }-*/;
 
   private static native JavaScriptObject nativeDefaultWindow() /*-{
@@ -298,7 +299,9 @@ public class ScriptInjector {
   }-*/;
 
   private static native JavaScriptObject nativeMakeScriptElement(JavaScriptObject doc) /*-{
-    return doc.createElement("script");
+    var element = doc.createElement("script");
+    element.type = "text/javascript";
+    return element;
   }-*/;
 
   private static native void nativeRemove(JavaScriptObject scriptElement) /*-{
