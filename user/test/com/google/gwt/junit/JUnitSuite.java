@@ -58,13 +58,6 @@ public class JUnitSuite {
     suite.addTestSuite(GWTMockUtilitiesTest.class);
     suite.addTestSuite(GWTTestCaseNoClientTest.class);
 
-    // Intended only to be run manually. See class comments
-    // suite.addTestSuite(ParallelRemoteTest.class);
-
-    // remote
-    // Run manually only, launches servers that die on port contention
-    // suite.addTestSuite(BrowserManagerServerTest.class);
-
     suite.addTestSuite(PropertyDefiningStrategyTest.class);
     suite.addTestSuite(PropertyDefiningGWTTest.class);
 
