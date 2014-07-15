@@ -48,7 +48,8 @@ public abstract class EnvironmentObjectDisplay
                                    EnvironmentObjectsObserver observer,
                                    String environmentName)
    {
-      super(1024, RObjectEntry.KEY_PROVIDER);
+      super(EnvironmentObjects.MAX_ENVIRONMENT_OBJECTS, 
+            RObjectEntry.KEY_PROVIDER);
 
       observer_ = observer;
       host_ = host;

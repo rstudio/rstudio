@@ -274,7 +274,7 @@ public class EnvironmentObjects extends ResizeComposite
          if (visible != entry.visible || visible)
          {
             entry.visible = visible;
-            objectDisplay_.redrawRow(i);
+            redrawRowSafely(i);
          }
       }
 
@@ -493,13 +493,13 @@ public class EnvironmentObjects extends ResizeComposite
       entry.expanded = false;
       entry.isExpanding = true;
       if (drawProgress)
-         objectDisplay_.redrawRow(idx);
+         redrawRowSafely(idx);
       observer_.fillObjectContents(entry.rObject, new Operation() {
          public void execute()
          {
             entry.expanded = true;
             entry.isExpanding = false;
-            objectDisplay_.redrawRow(idx);
+            redrawRowSafely(idx);
          }
       });
    }
@@ -595,7 +595,7 @@ public class EnvironmentObjects extends ResizeComposite
          if (leader != entry.isCategoryLeader
              && redrawUpdatedRows)
          {
-            objectDisplay_.redrawRow(i);
+            redrawRowSafely(i);
          }
       }
    }
@@ -668,7 +668,7 @@ public class EnvironmentObjects extends ResizeComposite
                          deferredExpandedObjects_.get(idxExpanded))
                      {
                         objects.get(idxObj).expanded = true;
-                        objectDisplay_.redrawRow(idxObj);
+                        redrawRowSafely(idxObj);
                      }
                   }
                }
@@ -693,6 +693,15 @@ public class EnvironmentObjects extends ResizeComposite
    private RObjectEntry entryFromRObject(RObject obj)
    {
       return new RObjectEntry(obj, matchesFilter(obj));
+   }
+   
+   // for very large environments, the number of objects may exceed the number
+   // of physical rows; avoid redrawing rows outside the bounds of the
+   // container's physical limit
+   private void redrawRowSafely(int idx)
+   {
+      if (idx < MAX_ENVIRONMENT_OBJECTS)
+         objectDisplay_.redrawRow(idx);
    }
    
    private final static String EMPTY_ENVIRONMENT_MESSAGE =
@@ -724,4 +733,6 @@ public class EnvironmentObjects extends ResizeComposite
    private boolean pendingCallFramePanelSize_ = false;
    private Integer deferredObjectDisplayType_ = new Integer(OBJECT_LIST_VIEW);
    private int gridRenderRetryCount_ = 0;
+   
+   public final static int MAX_ENVIRONMENT_OBJECTS = 1024;
 }
