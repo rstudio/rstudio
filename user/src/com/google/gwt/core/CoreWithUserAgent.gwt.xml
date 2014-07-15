@@ -16,20 +16,16 @@
 <module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
 
-  <!-- Provides improved version of javascript StringMap for modern browsers -->
-  <replace-with class="java.util.InternalJsStringMap.InternalJsStringMapModern">
+  <!-- Provides fallback version of StringMap for legacy browsers -->
+  <replace-with class="java.util.InternalJsStringMap.InternalJsStringMapLegacy">
     <when-type-is class="java.util.InternalJsStringMap"/>
-    <none>
-      <when-property-is name="user.agent" value="ie8"/>
-    </none>
+    <when-property-is name="user.agent" value="ie8"/>
   </replace-with>
 
-  <!-- Provides improved version of javascript HashCodeMap for modern browsers -->
-  <replace-with class="java.util.InternalJsHashCodeMap.InternalJsHashCodeMapModern">
+  <!-- Provides fallback version of javascript HashCodeMap for legacy browsers -->
+  <replace-with class="java.util.InternalJsHashCodeMap.InternalJsHashCodeMapLegacy">
     <when-type-is class="java.util.InternalJsHashCodeMap"/>
-    <none>
-      <when-property-is name="user.agent" value="ie8"/>
-    </none>
+    <when-property-is name="user.agent" value="ie8"/>
   </replace-with>
 
   <!-- Disable source maps for non-Chrome browsers -->

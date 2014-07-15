@@ -26,65 +26,65 @@ import java.util.Map.Entry;
  * Implementation notes:
  * <p>
  * String keys are mapped to their values via a JS associative map. String keys could collide with
- * intrinsic properties (like watch, constructor). To avoid that; {@link InternalJsStringMap})
- * prepends each key with a ':' while storing and {@link InternalJsStringMapModern} uses
- * {@code Object.create(null)} in the first place to avoid inheriting any properties (only available
- * in modern browsers).
+ * intrinsic properties (like watch, constructor). To avoid that; {@link InternalJsStringMap}) uses
+ * {@code Object.create(null)} so it doesn't inherit any properties. For legacy browsers where
+ * {@code Object.create} is not available, {@link InternalJsStringMapLegacy} prepends each key with
+ * a ':' while storing.
  */
 class InternalJsStringMap<K, V> {
 
-  static class InternalJsStringMapModern<K, V> extends InternalJsStringMap<K, V> {
+  static class InternalJsStringMapLegacy<K, V> extends InternalJsStringMap<K, V> {
     @Override
     native JavaScriptObject createMap() /*-{
-      return Object.create(null);
+      return {};
     }-*/;
 
     @Override
     String normalize(String key) {
-      return key;
+      return ':' + key;
     }
 
     @Override
     public native boolean containsValue(Object value) /*-{
       var map = this.@InternalJsStringMap::backingMap;
       for (var key in map) {
-        if (this.@InternalJsStringMap::equalsBridge(*)(value, map[key])) {
-          return true;
+        // only keys that start with a colon ':' count
+        if (key.charCodeAt(0) == 58) {
+          var entryValue = map[key];
+          if (this.@InternalJsStringMap::equalsBridge(*)(value, entryValue)) {
+            return true;
+          }
         }
       }
       return false;
     }-*/;
 
     @Override
-    public Iterator<Entry<K, V>> entries() {
-      final String[] keys = keys();
-      return new Iterator<Map.Entry<K,V>>() {
-        int i = 0, last = -1;
-        @Override
-        public boolean hasNext() {
-          return i < keys.length;
+    public native Iterator<Entry<K, V>> entries() /*-{
+      var list = this.@InternalJsStringMapLegacy::newEntryList()();
+      for (var key in this.@InternalJsStringMap::backingMap) {
+        // only keys that start with a colon ':' count
+        if (key.charCodeAt(0) == 58) {
+          var entry = this.@InternalJsStringMap::newMapEntry(*)(key.substring(1));
+          list.@ArrayList::add(Ljava/lang/Object;)(entry);
         }
+      }
+      return list.@ArrayList::iterator()();
+    }-*/;
+
+    /**
+     * Returns a custom ArrayList so that we could intercept removal to forward into our map.
+     */
+    private ArrayList<Entry<K, V>> newEntryList() {
+      return new ArrayList<Entry<K, V>>() {
         @Override
-        public Entry<K, V> next() {
-          if (!hasNext()) {
-            throw new NoSuchElementException();
-          }
-          return newMapEntry(keys[last = i++]);
-        }
-        @Override
-        public void remove() {
-          if (last < 0) {
-            throw new IllegalStateException();
-          }
-          InternalJsStringMapModern.this.remove(keys[last]);
-          last = -1;
+        public Entry<K, V> remove(int index) {
+          Entry<K, V> removed = super.remove(index);
+          InternalJsStringMapLegacy.this.remove((String) removed.getKey());
+          return removed;
         }
       };
     }
-
-    private native String[] keys() /*-{
-      return Object.keys(this.@InternalJsStringMap::backingMap);
-    }-*/;
   }
 
   private final JavaScriptObject backingMap = createMap();
@@ -92,11 +92,11 @@ class InternalJsStringMap<K, V> {
   AbstractHashMap<K,V> host;
 
   native JavaScriptObject createMap() /*-{
-    return {};
+    return Object.create(null);
   }-*/;
 
   String normalize(String key) {
-    return ':' + key;
+    return key;
   }
 
   public final int size() {
@@ -151,42 +151,42 @@ class InternalJsStringMap<K, V> {
   public native boolean containsValue(Object value) /*-{
     var map = this.@InternalJsStringMap::backingMap;
     for (var key in map) {
-      // only keys that start with a colon ':' count
-      if (key.charCodeAt(0) == 58) {
-        var entryValue = map[key];
-        if (this.@InternalJsStringMap::equalsBridge(*)(value, entryValue)) {
-          return true;
-        }
+      if (this.@InternalJsStringMap::equalsBridge(*)(value, map[key])) {
+        return true;
       }
     }
     return false;
   }-*/;
 
-  public native Iterator<Entry<K, V>> entries() /*-{
-    var list = this.@InternalJsStringMap::newEntryList()();
-    for (var key in this.@InternalJsStringMap::backingMap) {
-      // only keys that start with a colon ':' count
-      if (key.charCodeAt(0) == 58) {
-        var entry = this.@InternalJsStringMap::newMapEntry(*)(key.substring(1));
-        list.@ArrayList::add(Ljava/lang/Object;)(entry);
-      }
-    }
-    return list.@ArrayList::iterator()();
-  }-*/;
-
-  /**
-   * Returns a custom ArrayList so that we could intercept removal to forward into our map.
-   */
-  private ArrayList<Entry<K, V>> newEntryList() {
-    return new ArrayList<Entry<K, V>>() {
+  public Iterator<Entry<K, V>> entries() {
+    final String[] keys = keys();
+    return new Iterator<Map.Entry<K,V>>() {
+      int i = 0, last = -1;
       @Override
-      public Entry<K, V> remove(int index) {
-        Entry<K, V> removed = super.remove(index);
-        InternalJsStringMap.this.remove((String) removed.getKey());
-        return removed;
+      public boolean hasNext() {
+        return i < keys.length;
+      }
+      @Override
+      public Entry<K, V> next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        return newMapEntry(keys[last = i++]);
+      }
+      @Override
+      public void remove() {
+        if (last < 0) {
+          throw new IllegalStateException();
+        }
+        InternalJsStringMap.this.remove(keys[last]);
+        last = -1;
       }
     };
   }
+
+  private native String[] keys() /*-{
+    return Object.keys(this.@InternalJsStringMap::backingMap);
+  }-*/;
 
   protected final Entry<K, V> newMapEntry(final String key) {
     return new AbstractMapEntry<K, V>() {

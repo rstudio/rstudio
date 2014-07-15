@@ -31,22 +31,27 @@ import java.util.Map.Entry;
  */
 class InternalJsHashCodeMap<K, V> {
 
-  static class InternalJsHashCodeMapModern<K, V> extends InternalJsHashCodeMap<K, V> {
+  static class InternalJsHashCodeMapLegacy<K, V> extends InternalJsHashCodeMap<K, V> {
+
     @Override
     native JavaScriptObject createMap() /*-{
-      return Object.create(null);
+      return {};
     }-*/;
 
     @Override
     public native boolean containsValue(Object value) /*-{
       var map = this.@InternalJsHashCodeMap::backingMap;
       for (var hashCode in map) {
-        var array = map[hashCode];
-        for ( var i = 0, c = array.length; i < c; ++i) {
-          var entry = array[i];
-          var entryValue = entry.@Map.Entry::getValue()();
-          if (this.@InternalJsHashCodeMap::equalsBridge(*)(value, entryValue)) {
-            return true;
+        // sanity check that it's really one of ours
+        var hashCodeInt = parseInt(hashCode, 10);
+        if (hashCode == hashCodeInt) {
+          var array = map[hashCodeInt];
+          for ( var i = 0, c = array.length; i < c; ++i) {
+            var entry = array[i];
+            var entryValue = entry.@Map.Entry::getValue()();
+            if (this.@InternalJsHashCodeMap::equalsBridge(*)(value, entryValue)) {
+              return true;
+            }
           }
         }
       }
@@ -54,67 +59,35 @@ class InternalJsHashCodeMap<K, V> {
     }-*/;
 
     @Override
-    public Iterator<Entry<K, V>> entries() {
-      final String[] keys = keys();
-      return new Iterator<Map.Entry<K,V>>() {
-        int chainIndex = -1, itemIndex = 0;
-        Entry<K, V>[] chain = new Entry[0];
-        Entry<K, V>[] lastChain = null;
-        Entry<K, V> lastEntry = null;
-
-        @Override
-        public boolean hasNext() {
-          if (itemIndex < chain.length) {
-            return true;
+    public native Iterator<Entry<K, V>> entries() /*-{
+      var list = this.@InternalJsHashCodeMapLegacy::newEntryList()();
+      var map = this.@InternalJsHashCodeMap::backingMap;
+      for (var hashCode in map) {
+        // sanity check that it's really an integer
+        var hashCodeInt = parseInt(hashCode, 10);
+        if (hashCode == hashCodeInt) {
+          var array = map[hashCodeInt];
+          for ( var i = 0, c = array.length; i < c; ++i) {
+            list.@ArrayList::add(Ljava/lang/Object;)(array[i]);
           }
-          if (chainIndex < keys.length - 1) {
-            // Move to the beginning of next chain
-            chain = get(keys[++chainIndex]);
-            itemIndex = 0;
-            return true;
-          }
-          return false;
         }
+      }
+      return list.@ArrayList::iterator()();
+    }-*/;
 
+    /**
+     * Returns a custom ArrayList so that we could intercept removal to forward into our map.
+     */
+    private ArrayList<Entry<K, V>> newEntryList() {
+      return new ArrayList<Entry<K, V>>() {
         @Override
-        public Entry<K, V> next() {
-          if (!hasNext()) {
-            throw new NoSuchElementException();
-          }
-
-          lastChain = chain;
-          lastEntry = chain[itemIndex++];
-          return lastEntry;
-        }
-
-        @Override
-        public void remove() {
-          if (lastChain == null) {
-            throw new IllegalStateException();
-          }
-
-          InternalJsHashCodeMapModern.this.remove(lastEntry.getKey());
-
-          // If we are sill in the same chain, our itemIndex just jumped an item. We can fix that
-          // by decrementing the itemIndex. However there is an exception: if there is only one
-          // item, the whole chain is simply dropped not the item. If we decrement in that case, as
-          // the item is not drop from the chain, we will end up returning the same item twice.
-          if (chain == lastChain && chain.length != 1) {
-            itemIndex--;
-          }
-
-          lastChain = null;
+        public Entry<K, V> remove(int index) {
+          Entry<K, V> removed = super.remove(index);
+          InternalJsHashCodeMapLegacy.this.remove(removed.getKey());
+          return removed;
         }
       };
     }
-
-    private native String[] keys() /*-{
-      return Object.keys(this.@InternalJsHashCodeMap::backingMap);
-    }-*/;
-
-    private native Entry<K, V>[] get(String key) /*-{
-      return this.@InternalJsHashCodeMap::backingMap[key];
-    }-*/;
   }
 
   private final JavaScriptObject backingMap = createMap();
@@ -122,7 +95,7 @@ class InternalJsHashCodeMap<K, V> {
   AbstractHashMap<K, V> host;
 
   native JavaScriptObject createMap() /*-{
-    return {};
+    return Object.create(null);
   }-*/;
 
   public int size() {
@@ -200,51 +173,79 @@ class InternalJsHashCodeMap<K, V> {
   public native boolean containsValue(Object value) /*-{
     var map = this.@InternalJsHashCodeMap::backingMap;
     for (var hashCode in map) {
-      // sanity check that it's really one of ours
-      var hashCodeInt = parseInt(hashCode, 10);
-      if (hashCode == hashCodeInt) {
-        var array = map[hashCodeInt];
-        for ( var i = 0, c = array.length; i < c; ++i) {
-          var entry = array[i];
-          var entryValue = entry.@Map.Entry::getValue()();
-          if (this.@InternalJsHashCodeMap::equalsBridge(*)(value, entryValue)) {
-            return true;
-          }
+      var array = map[hashCode];
+      for ( var i = 0, c = array.length; i < c; ++i) {
+        var entry = array[i];
+        var entryValue = entry.@Map.Entry::getValue()();
+        if (this.@InternalJsHashCodeMap::equalsBridge(*)(value, entryValue)) {
+          return true;
         }
       }
     }
     return false;
   }-*/;
 
-  public native Iterator<Entry<K, V>> entries() /*-{
-    var list = this.@InternalJsHashCodeMap::newEntryList()();
-    var map = this.@InternalJsHashCodeMap::backingMap;
-    for (var hashCode in map) {
-      // sanity check that it's really an integer
-      var hashCodeInt = parseInt(hashCode, 10);
-      if (hashCode == hashCodeInt) {
-        var array = map[hashCodeInt];
-        for ( var i = 0, c = array.length; i < c; ++i) {
-          list.@ArrayList::add(Ljava/lang/Object;)(array[i]);
-        }
-      }
-    }
-    return list.@ArrayList::iterator()();
-  }-*/;
+  public Iterator<Entry<K, V>> entries() {
+    return new Iterator<Map.Entry<K,V>>() {
+      final String[] keys = keys();
+      int chainIndex = -1, itemIndex = 0;
+      Entry<K, V>[] chain = new Entry[0];
+      Entry<K, V>[] lastChain = null;
+      Entry<K, V> lastEntry = null;
 
-  /**
-   * Returns a custom ArrayList so that we could intercept removal to forward into our map.
-   */
-  private ArrayList<Entry<K, V>> newEntryList() {
-    return new ArrayList<Entry<K, V>>() {
       @Override
-      public Entry<K, V> remove(int index) {
-        Entry<K, V> removed = super.remove(index);
-        InternalJsHashCodeMap.this.remove(removed.getKey());
-        return removed;
+      public boolean hasNext() {
+        if (itemIndex < chain.length) {
+          return true;
+        }
+        if (chainIndex < keys.length - 1) {
+          // Move to the beginning of next chain
+          chain = getChain(keys[++chainIndex]);
+          itemIndex = 0;
+          return true;
+        }
+        return false;
+      }
+
+      @Override
+      public Entry<K, V> next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+
+        lastChain = chain;
+        lastEntry = chain[itemIndex++];
+        return lastEntry;
+      }
+
+      @Override
+      public void remove() {
+        if (lastChain == null) {
+          throw new IllegalStateException();
+        }
+
+        InternalJsHashCodeMap.this.remove(lastEntry.getKey());
+
+        // If we are sill in the same chain, our itemIndex just jumped an item. We can fix that
+        // by decrementing the itemIndex. However there is an exception: if there is only one
+        // item, the whole chain is simply dropped not the item. If we decrement in that case, as
+        // the item is not drop from the chain, we will end up returning the same item twice.
+        if (chain == lastChain && chain.length != 1) {
+          itemIndex--;
+        }
+
+        lastChain = null;
       }
     };
   }
+
+  private native String[] keys() /*-{
+    return Object.keys(this.@InternalJsHashCodeMap::backingMap);
+  }-*/;
+
+  private native Entry<K, V>[] getChain(String key) /*-{
+    return this.@InternalJsHashCodeMap::backingMap[key];
+  }-*/;
 
   /**
    * Bridge method from JSNI that keeps us from having to make polymorphic calls in JSNI. By putting
