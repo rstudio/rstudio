@@ -22,6 +22,9 @@ import java.lang.reflect.Type;
 /**
  * Generally unsupported. This class is provided so that the GWT compiler can
  * choke down class literal references.
+ * <p>
+ * NOTE: The code in this class is very sensitive and should keep its dependencies upon other
+ * classes to a minimum.
  *
  * @param <T> the type of the object
  */
@@ -35,16 +38,32 @@ public final class Class<T> implements Type {
   /**
    * Create a Class object for an array.<p>
    *
-   * Arrays are not registered in the prototype table and get the class literal explicitely at
+   * Arrays are not registered in the prototype table and get the class literal explicitly at
    * construction.<p>
    *
-   * @skip
    */
-  public static native <T> Class<T> getClassLiteralForArray(Class<?> leafClass, int dimensions) /*-{
-    leafClass.@java.lang.Class::arrayLiterals = leafClass.@java.lang.Class::arrayLiterals || [];
-    return leafClass.@java.lang.Class::arrayLiterals[dimensions] ||
-        (leafClass.@java.lang.Class::arrayLiterals[dimensions] =
-            leafClass.@java.lang.Class::createClassLiteralForArray(I)(dimensions));
+  public static <T> Class<T> getClassLiteralForArray(Class<?> leafClass, int dimensions) {
+    if (leafClass.arrayLiterals == null) {
+      leafClass.arrayLiterals = emptyArray();
+    }
+    Class<T> arrayLiteral = getAt(leafClass.arrayLiterals, dimensions);
+    if (arrayLiteral == null) {
+      arrayLiteral = leafClass.createClassLiteralForArray(dimensions);
+      putAt(leafClass.arrayLiterals, dimensions, arrayLiteral);
+    }
+    return arrayLiteral;
+  }
+
+  private static native <T> Class<T> getAt(JavaScriptObject array, int index) /*-{
+    return array[index];
+  }-*/;
+
+  private static native void putAt(JavaScriptObject array, int index, Class<?> clazz) /*-{
+    array[index] = clazz;
+  }-*/;
+
+  private static native JavaScriptObject emptyArray() /*-{
+    return [];
   }-*/;
 
   private <T> Class<T> createClassLiteralForArray(int dimensions) {
