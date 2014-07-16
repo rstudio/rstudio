@@ -265,7 +265,18 @@ Error initialize()
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"));
 
-   return initBlock.execute();
+   Error error = initBlock.execute();
+   if (error)
+       return error;
+
+   // initialize data viewer (don't make failure fatal because we are
+   // adding this code in a hot patch release)
+   bool server = session::options().programMode() == kSessionProgramModeServer;
+   error = r::exec::RFunction(".rs.initializeDataViewer", server).call();
+   if (error)
+       LOG_ERROR(error);
+
+   return Success();
 }
 
 
