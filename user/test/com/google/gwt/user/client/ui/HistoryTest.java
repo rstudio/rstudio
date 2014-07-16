@@ -75,11 +75,16 @@ public class HistoryTest extends GWTTestCase {
         }
       });
 
-      delayTestFinish(200);
+      delayTestFinish(5000);
 
       NativeEvent clickEvent =
           Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
-      anchorElement.dispatchEvent(clickEvent);
+
+      if (isIE8orIE9()) {
+        click(anchorElement);
+      } else {
+        anchorElement.dispatchEvent(clickEvent);
+      }
 
     } finally {
       Document.get().getBody().removeChild(anchorElement);
@@ -494,7 +499,11 @@ public class HistoryTest extends GWTTestCase {
     this.handlerRegistration = History.addValueChangeHandler(handler);
   }
 
-  private native boolean isI8orIE9() /*-{
+  private native void click(Element el) /*-{
+   el.click();
+  }-*/;
+
+  private native boolean isIE8orIE9() /*-{
     return $wnd.navigator.userAgent.toLowerCase().indexOf('msie') != -1 &&
         ($doc.documentMode == 8 || $doc.documentMode == 9);
   }-*/;

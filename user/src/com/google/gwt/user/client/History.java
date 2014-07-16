@@ -85,80 +85,56 @@ public class History {
     }
   }
 
-  private interface HistoryImpl {
-    void attachListener(JavaScriptObject handler);
-
-    void detachListener(JavaScriptObject handler);
-
-    void newToken(String historyToken);
-
-    void replaceToken(String historyToken);
-  }
-
-  /**
-   * This is the standard implementation for HistoryImpl using HTML pushstate.
-   */
-  private static class HistoryImplPushState implements HistoryImpl {
-    // List of browsers that do not support pushstate:
-    // IE8-9, Android 3.x, Android 4.0, Android 4.1
-    static native boolean isSupported() /*-{
-      return $wnd.history.pushState != null && $wnd.history.replaceState != null;
-    }-*/;
-
-    @Override
-    public native void attachListener(JavaScriptObject handler) /*-{
-      $wnd.addEventListener('popstate', handler);
-    }-*/;
-
-    @Override
-    public native void detachListener(JavaScriptObject handler) /*-{
-      $wnd.removeEventListener('popstate', handler);
-    }-*/;
-
-    @Override
-    public native void newToken(String historyToken) /*-{
-      $wnd.history.pushState({}, "", '#' + historyToken);
-    }-*/;
-
-    @Override
-    public native void replaceToken(String historyToken) /*-{
-      $wnd.history.replaceState({}, "", '#' + historyToken);
-    }-*/;
-  }
-
   /**
    * History implementation using hash tokens.
-   * <p>This is the fallback implementation for browsers that do not support HTML5
-   * pushstate.
+   * <p>This is the default implementation for all browsers except IE8.
    */
-  private static class HistoryImplHashToken implements HistoryImpl {
+  private static class HistoryImpl {
 
-    @Override
     public native void attachListener(JavaScriptObject handler) /*-{
-      $wnd.addEventListener('hashchange', handler);
+      // We explicitly use the third parameter for capture, since Firefox before version 6
+      // throws an exception if the parameter is missing.
+      // See: https://developer.mozilla.org/es/docs/DOM/elemento.addEventListener#Gecko_notes
+      $wnd.addEventListener('hashchange', handler, false);
     }-*/;
 
-    @Override
     public native void detachListener(JavaScriptObject handler) /*-{
-      $wnd.removeEventListener('hashchange', handler);
+      // We explicitly use the third parameter for capture, since Firefox before version 6
+      // throws an exception if the parameter is missing.
+      // See: https://developer.mozilla.org/es/docs/DOM/elemento.addEventListener#Gecko_notes
+      $wnd.removeEventListener('hashchange', handler, false);
     }-*/;
 
-    @Override
     public native void newToken(String historyToken) /*-{
       $wnd.location.hash = historyToken;
     }-*/;
 
-    @Override
     public void replaceToken(String historyToken) {
       Window.Location.replace("#" + historyToken);
     }
+
+    // Only kept in deferred binding to allow mocking frameworks to intercept calls
+    public native JavaScriptObject getHistoryChangeHandler() /*-{
+      return $entry(@com.google.gwt.user.client.History::onHashChanged());
+    }-*/;
+
+    // Only kept in deferred binding to allow mocking frameworks to intercept calls
+    public native String decodeHistoryToken(String historyToken) /*-{
+      return $wnd.decodeURI(historyToken.replace("%23", "#"));
+    }-*/;
+
+    // Only kept in deferred binding to allow mocking frameworks to intercept calls
+    public native String encodeHistoryToken(String historyToken) /*-{
+      // encodeURI() does *not* encode the '#' character.
+      return $wnd.encodeURI(historyToken).replace("#", "%23");
+    }-*/;
   }
 
   /**
    * History implementation for IE8 using onhashchange.
    */
   @SuppressWarnings("unused")
-  private static class HistoryImplIE8 extends HistoryImplHashToken {
+  private static class HistoryImplIE8 extends HistoryImpl {
 
     private JavaScriptObject oldHandler;
 
@@ -223,10 +199,10 @@ public class History {
   private static HistoryImpl impl;
 
   static {
-    impl = createHistoryImpl();
+    impl = GWT.create(HistoryImpl.class);
     historyEventSource = new HistoryEventSource();
     token = getDecodedHash();
-    final JavaScriptObject handler = getHistoryChangeHandler();
+    final JavaScriptObject handler = impl.getHistoryChangeHandler();
     impl.attachListener(handler);
     Impl.scheduleDispose(new Disposable() {
       @Override
@@ -234,15 +210,6 @@ public class History {
         impl.detachListener(handler);
       }
     });
-  }
-
-  private static HistoryImpl createHistoryImpl() {
-    HistoryImpl historyImpl = GWT.create(HistoryImpl.class);
-    // Feature test for HTML5 pushstate, otherwise use hashtoken version.
-    if (historyImpl instanceof HistoryImplPushState && !HistoryImplPushState.isSupported()) {
-      return new HistoryImplHashToken();
-    }
-    return historyImpl;
   }
 
   /**
@@ -281,10 +248,9 @@ public class History {
    * @param historyToken the token to encode
    * @return the encoded token, suitable for use as part of a URI
    */
-  public static native String encodeHistoryToken(String historyToken) /*-{
-    // encodeURI() does *not* encode the '#' character.
-    return $wnd.encodeURI(historyToken).replace("#", "%23");
-  }-*/;
+  public static String encodeHistoryToken(String historyToken) {
+    return impl.encodeHistoryToken(historyToken);
+  }
 
   /**
    * Fire
@@ -382,10 +348,10 @@ public class History {
   /**
    * Replace the current history token on top of the browsers history stack.
    *
-   * <p>Note: This method has problems on older browsers (IE8 and IE9). Since these
-   * do not support HTML5 pushState we update the URL with window.location.replace,
-   * this unfortunately has side effects when using the iframe linker. Make sure you are
-   * using the cross site iframe linker when using this method in your code.
+   * <p>Note: This method has problems. The URL is updated with window.location.replace,
+   * this unfortunately has side effects when using the deprecated iframe linker
+   * (ie. "std" linker). Make sure you are using the cross site iframe linker when using
+   * this method in your code.
    *
    * <p>Calling this method will cause
    * {@link ValueChangeHandler#onValueChange(com.google.gwt.event.logical.shared.ValueChangeEvent)}
@@ -400,10 +366,10 @@ public class History {
   /**
    * Replace the current history token on top of the browsers history stack.
    *
-   * <p>Note: This method has problems on older browsers (IE8 and IE9). Since these
-   * do not support HTML5 pushState we update the URL with window.location.replace,
-   * this unfortunately has side effects when using the iframe linker. Make sure you are
-   * using the cross site iframe linker when using this method in your code.
+   * <p>Note: This method has problems. The URL is updated with window.location.replace,
+   * this unfortunately has side effects when using the deprecated iframe linker
+   * (ie. "std" linker). Make sure you are using the cross site iframe linker when using
+   * this method in your code.
    *
    * <p>Calling this method will cause
    * {@link ValueChangeHandler#onValueChange(com.google.gwt.event.logical.shared.ValueChangeEvent)}
@@ -422,18 +388,13 @@ public class History {
     }
   }
 
-  private static native String decodeURI(String s) /*-{
-    return $wnd.decodeURI(s.replace("%23", "#"));
-  }-*/;
-
   private static String getDecodedHash() {
     String hashToken = Window.Location.getHash();
-    return hashToken.isEmpty() ? "" : decodeURI(hashToken.substring(1));
+    if (hashToken == null || hashToken.isEmpty()) {
+      return "";
+    }
+    return  impl.decodeHistoryToken(hashToken.substring(1));
   }
-
-  private static native JavaScriptObject getHistoryChangeHandler() /*-{
-    return $entry(@com.google.gwt.user.client.History::onHashChanged());
-  }-*/;
 
   // this is called from JS when the native onhashchange occurs
   private static void onHashChanged() {
