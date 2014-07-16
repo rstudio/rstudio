@@ -93,10 +93,14 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       {
          return new PackageInstallRequest(packagesTextBox_.getItems(), options);
       }
-      else
+      else if (installFromArchive())
       {
          return new PackageInstallRequest(archiveFilePath_, options);
-      }     
+      }
+      else
+      {
+         return new PackageInstallRequest(folderPath_, options);
+      }
    }
    
    
@@ -161,6 +165,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       packageSourceListBox_.addItem("Package Archive File (" + 
                                     installContext_.packageArchiveExtension() +
                                     ")");
+      packageSourceListBox_.addItem("Package Folder");
       mainPanel.add(packageSourceListBox_);
       
       // source panel container
@@ -189,6 +194,11 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                                               "Package archive:", 
                                               "Browse...",
                                               browseForArchiveClickHandler_);
+      
+      packageFolder_ = new TextBoxWithButton(
+            "Package Folder:",
+            "Browse...",
+            browseForFolderClickHandler_);
             
       // create check box here because manageUIState accesses it
       installDependenciesCheckBox_ = new CheckBox();
@@ -268,11 +278,18 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
          FocusHelper.setFocusDeferred(packagesSuggestBox_);
          installDependenciesCheckBox_.setVisible(true);
       }
-      else
+      else if (installFromArchive())
       {
          reposCaption_.setHelpVisible(false);
          sourcePanel_.setWidget(packageArchiveFile_);
          FocusHelper.setFocusDeferred(packageArchiveFile_);
+         installDependenciesCheckBox_.setVisible(false);
+      }
+      else
+      {
+         reposCaption_.setHelpVisible(false);
+         sourcePanel_.setWidget(packageFolder_);
+         FocusHelper.setFocusDeferred(packageFolder_);
          installDependenciesCheckBox_.setVisible(false);
       }
    }
@@ -280,6 +297,11 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    private boolean installFromRepository()
    {
       return packageSourceListBox_.getSelectedIndex() == 0;
+   }
+   
+   private boolean installFromArchive()
+   {
+      return packageSourceListBox_.getSelectedIndex() == 1;
    }
    
    private CanFocus getPackageInputWidget()
@@ -295,6 +317,42 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       else
          return packageArchiveFile_;
    }
+   
+   private ClickHandler browseForFolderClickHandler_ = new ClickHandler() {
+
+      @Override
+      public void onClick(ClickEvent event)
+      {
+         fileDialogs_.chooseFolder(
+               "Select Package Folder",
+               fileSystemContext_,
+               defaultArchiveDir_,
+               new ProgressOperationWithInput<FileSystemItem>()
+               {
+                  public void execute(FileSystemItem input, 
+                                      ProgressIndicator indicator)
+                  {
+                     indicator.onCompleted();
+                     
+                     if (input == null)
+                        return;
+                     
+                     // update default archive dir
+                     defaultArchiveDir_ = input.getParentPath();
+                     
+                     // set archive file path
+                     folderPath_ = input;
+                     
+                     // update UI
+                     packageFolder_.setText(
+                        StringUtil.shortPathName(input, "gwt-TextBox", 280));
+                  }
+               });
+         
+      }
+      
+   };
+   
    
    private ClickHandler browseForArchiveClickHandler_ = new ClickHandler() {
 
@@ -394,12 +452,14 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    private SimplePanel sourcePanel_;
    private FlowPanel reposSourcePanel_;
    private TextBoxWithButton packageArchiveFile_ = null;
+   private TextBoxWithButton packageFolder_ = null;
    
    private MultipleItemSuggestTextBox packagesTextBox_ = null;
    private SuggestBox packagesSuggestBox_ = null;
    private ListBox libraryListBox_ = null;
    private CheckBox installDependenciesCheckBox_ = null;
    
+   FileSystemItem folderPath_ = null;
    FileSystemItem archiveFilePath_ = null;
   
    private static FileSystemItem defaultArchiveDir_ = FileSystemItem.home();
