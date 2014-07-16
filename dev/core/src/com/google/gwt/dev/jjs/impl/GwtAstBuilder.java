@@ -2237,7 +2237,11 @@ public class GwtAstBuilder {
         Disposition disposition) {
       JType type = typeMap.get(arg.type);
       SourceInfo info = enclosingType.getSourceInfo();
-      JField field = new JField(info, intern(arg.name), enclosingType, type, false, disposition);
+      // Construct field name including position because JDT can sometimes create multiple synthetic
+      // fields with the same name. The increased name size won't affect optimized output since
+      // references are pruned and renamed.
+      String fieldName = intern(intern(arg.name) + arg.resolvedPosition);
+      JField field = new JField(info, fieldName, enclosingType, type, false, disposition);
       enclosingType.addField(field);
       curClass.syntheticFields.put(arg, field);
       if (arg.matchingField != null) {

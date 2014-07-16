@@ -115,8 +115,10 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
     @Override
     protected void postNormalizationOptimizeJava() {
-      RemoveSpecializations.exec(jprogram);
-      Pruner.exec(jprogram, false);
+      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+        RemoveSpecializations.exec(jprogram);
+        Pruner.exec(jprogram, false);
+      }
       ReplaceGetClassOverrides.exec(jprogram);
     }
 

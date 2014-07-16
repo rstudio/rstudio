@@ -16,8 +16,10 @@
 package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerOptionsImpl;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
@@ -36,7 +38,6 @@ import java.util.Map;
 
 /**
  * Basic tests for Source maps and (new) soyc reports.
- *
  */
 public class SymbolMapTest extends TestCase {
 
@@ -199,7 +200,8 @@ public class SymbolMapTest extends TestCase {
   /**
    * Tests for the presence of some elements.
    */
-  public void testSymbolMapSanity() throws Exception {
+  private void assertSymbolMapSanity(int optimizeLevel) throws IOException,
+      UnableToCompleteException, Exception {
     String benchmark = "hello";
     String module = "com.google.gwt.sample.hello.Hello";
 
@@ -209,7 +211,7 @@ public class SymbolMapTest extends TestCase {
       options.addModuleName(module);
       options.setWarDir(new File(work, "war"));
       options.setExtraDir(new File(work, "extra"));
-      options.setOptimizationLevel(0);
+      options.setOptimizationLevel(optimizeLevel);
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(TreeLogger.ERROR);
       new com.google.gwt.dev.Compiler(options).run(logger);
@@ -230,10 +232,22 @@ public class SymbolMapTest extends TestCase {
         assertTrue(symbolDataBySymbolName.get(JSE_CLASS).isClass());
         assertFalse(symbolDataBySymbolName.get(JSE_CLASS).isField());
         assertFalse(symbolDataBySymbolName.get(JSE_CLASS).isMethod());
-        assertNull(symbolDataBySymbolName.get(UNINSTANTIABLE_CLASS));
+        if (optimizeLevel == OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+          assertNotNull(symbolDataBySymbolName.get(UNINSTANTIABLE_CLASS));
+        } else {
+          assertNull(symbolDataBySymbolName.get(UNINSTANTIABLE_CLASS));
+        }
       }
     } finally {
       Util.recursiveDelete(work, false);
     }
+  }
+
+  public void testSymbolMapSanityDraft() throws Exception {
+    assertSymbolMapSanity(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
+  }
+
+  public void testSymbolMapSanityOptimized() throws Exception {
+    assertSymbolMapSanity(OptionOptimize.OPTIMIZE_LEVEL_MAX);
   }
 }

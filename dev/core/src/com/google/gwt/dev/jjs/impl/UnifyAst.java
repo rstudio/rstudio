@@ -798,10 +798,9 @@ public class UnifyAst {
   private void pruneDeadFieldsAndMethods() {
     for (JDeclaredType type : program.getDeclaredTypes()) {
       // Remove dead fields.
-      boolean isInstantiated = instantiatedTypes.contains(type);
       for (int fieldIndex = 0; fieldIndex < type.getFields().size(); ++fieldIndex) {
         JField field = type.getFields().get(fieldIndex);
-        if (!liveFieldsAndMethods.contains(field) || (!field.isStatic() && !isInstantiated)) {
+        if (!liveFieldsAndMethods.contains(field)) {
           type.removeField(fieldIndex);
           --fieldIndex;
         }
@@ -816,7 +815,7 @@ public class UnifyAst {
       // Remove dead methods.
       for (int methodIndex = 1; methodIndex < type.getMethods().size(); ++methodIndex) {
         JMethod method = type.getMethods().get(methodIndex);
-        if (!liveFieldsAndMethods.contains(method) || (!method.isStatic() && !isInstantiated)) {
+        if (!liveFieldsAndMethods.contains(method)) {
           type.removeMethod(methodIndex);
           --methodIndex;
         }
