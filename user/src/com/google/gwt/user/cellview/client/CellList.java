@@ -408,15 +408,6 @@ public class CellList<T> extends AbstractHasData<T> {
     return cellIsEditing;
   }
 
-  @Override
-  protected void onBlur() {
-    // Remove the keyboard selection style.
-    Element elem = getKeyboardSelectedElement();
-    if (elem != null) {
-      elem.removeClassName(style.cellListKeyboardSelectedItem());
-    }
-  }
-
   @SuppressWarnings("deprecation")
   @Override
   protected void onBrowserEvent2(Event event) {
@@ -461,15 +452,6 @@ public class CellList<T> extends AbstractHasData<T> {
       if (!previewEvent.isCanceled()) {
         fireEventToCell(context, event, cellParent, value);
       }
-    }
-  }
-
-  @Override
-  protected void onFocus() {
-    // Add the keyboard selection style.
-    Element elem = getKeyboardSelectedElement();
-    if (elem != null) {
-      elem.addClassName(style.cellListKeyboardSelectedItem());
     }
   }
 
