@@ -16,6 +16,7 @@
 #ifndef DESKTOP_SYNCTEX_EVINCEDAEMON_HPP
 #define DESKTOP_SYNCTEX_EVINCEDAEMON_HPP
 
+#undef QT_NO_CAST_FROM_ASCII
 #include <QtCore/QObject>
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
@@ -24,6 +25,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <QtDBus/QtDBus>
+#define QT_NO_CAST_FROM_ASCII
 
 namespace desktop {
 namespace synctex {

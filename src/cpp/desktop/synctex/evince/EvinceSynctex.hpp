@@ -16,10 +16,12 @@
 #ifndef DESKTOP_SYNCTEX_EVINCESYNCTEX_HPP
 #define DESKTOP_SYNCTEX_EVINCESYNCTEX_HPP
 
+#undef QT_NO_CAST_FROM_ASCII
 #include <QObject>
 #include <QMap>
 #include <QPoint>
 #include <QDBusPendingCallWatcher>
+#define QT_NO_CAST_FROM_ASCII
 
 #include <DesktopSynctex.hpp>
 
