@@ -185,7 +185,7 @@ QString Options::fixedWidthFont() const
          settings_.value(QString::fromAscii("font.fixedWidth")).toString();
    if (!font.isEmpty())
    {
-      return font;
+      return QString::fromAscii("\"") + font + QString::fromAscii("\"");
    }
 
    if (!detectedFont.isEmpty())
