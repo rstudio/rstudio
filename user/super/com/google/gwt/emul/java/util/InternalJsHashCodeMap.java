@@ -17,6 +17,7 @@ package java.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 
 /**
@@ -42,14 +43,13 @@ class InternalJsHashCodeMap<K, V> {
     public native boolean containsValue(Object value) /*-{
       var map = this.@InternalJsHashCodeMap::backingMap;
       for (var hashCode in map) {
-        // sanity check that it's really one of ours
-        var hashCodeInt = parseInt(hashCode, 10);
-        if (hashCode == hashCodeInt) {
-          var array = map[hashCodeInt];
+        // sanity check that it's really an integer
+        if (hashCode == parseInt(hashCode, 10)) {
+          var array = map[hashCode];
           for ( var i = 0, c = array.length; i < c; ++i) {
             var entry = array[i];
             var entryValue = entry.@Map.Entry::getValue()();
-            if (this.@InternalJsHashCodeMap::equalsBridge(*)(value, entryValue)) {
+            if (this.@InternalJsHashCodeMapLegacy::equalsBridge(*)(value, entryValue)) {
               return true;
             }
           }
@@ -64,9 +64,8 @@ class InternalJsHashCodeMap<K, V> {
       var map = this.@InternalJsHashCodeMap::backingMap;
       for (var hashCode in map) {
         // sanity check that it's really an integer
-        var hashCodeInt = parseInt(hashCode, 10);
-        if (hashCode == hashCodeInt) {
-          var array = map[hashCodeInt];
+        if (hashCode == parseInt(hashCode, 10)) {
+          var array = map[hashCode];
           for ( var i = 0, c = array.length; i < c; ++i) {
             list.@ArrayList::add(Ljava/lang/Object;)(array[i]);
           }
@@ -88,6 +87,15 @@ class InternalJsHashCodeMap<K, V> {
         }
       };
     }
+
+    /**
+     * Bridge method from JSNI that keeps us from having to make polymorphic calls in JSNI. By
+     * putting the polymorphism in Java code, the compiler can do a better job of optimizing in most
+     * cases.
+     */
+    private boolean equalsBridge(Object value1, Object value2) {
+      return host.equals(value1, value2);
+    }
   }
 
   private final JavaScriptObject backingMap = createMap();
@@ -103,87 +111,57 @@ class InternalJsHashCodeMap<K, V> {
   }
 
   public V put(K key, V value) {
-    return put(key, value, hash(key));
-  }
-
-  private native V put(K key, V value, int hashCode) /*-{
-    var array = this.@InternalJsHashCodeMap::backingMap[hashCode];
-    if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
-        var entry = array[i];
-        var entryKey = entry.@Map.Entry::getKey()();
-        if (this.@InternalJsHashCodeMap::equalsBridge(*)(key, entryKey)) {
-          // Found an exact match, just update the existing entry
-          return entry.@Map.Entry::setValue(*)(value);
-        }
+    Entry<K, V>[] chain = ensureChain(hash(key));
+    for (Entry<K, V> entry : chain) {
+      if (host.equals(key, entry.getKey())) {
+        // Found an exact match, just update the existing entry
+        return entry.setValue(value);
       }
-    } else {
-      array = this.@InternalJsHashCodeMap::backingMap[hashCode] = [];
     }
-    var entry = @AbstractMap.SimpleEntry::new(Ljava/lang/Object;Ljava/lang/Object;)(key, value);
-    array.push(entry);
-    this.@InternalJsHashCodeMap::size++;
+    chain[chain.length] = new SimpleEntry<K, V>(key, value);
+    size++;
     return null;
-  }-*/;
+  }
 
   public V remove(Object key) {
-    return remove(key, hash(key));
-  }
-
-  private native V remove(Object key, int hashCode) /*-{
-    var array = this.@InternalJsHashCodeMap::backingMap[hashCode];
-    if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
-        var entry = array[i];
-        var entryKey = entry.@Map.Entry::getKey()();
-        if (this.@InternalJsHashCodeMap::equalsBridge(*)(key, entryKey)) {
-          if (array.length == 1) {
-            // remove the whole array
-            delete this.@InternalJsHashCodeMap::backingMap[hashCode];
-          } else {
-            // splice out the entry we're removing
-            array.splice(i, 1);
-          }
-          this.@InternalJsHashCodeMap::size--;
-          return entry.@Map.Entry::getValue()();
+    String hashCode = hash(key);
+    Entry<K, V>[] chain = getChainOrEmpty(hashCode);
+    for (int i = 0; i < chain.length; i++) {
+      Entry<K, V> entry = chain[i];
+      if (host.equals(key, entry.getKey())) {
+        if (chain.length == 1) {
+          // remove the whole array
+          removeChain(hashCode);
+        } else {
+          // splice out the entry we're removing
+          splice(chain, i);
         }
+        size--;
+        return entry.getValue();
       }
     }
     return null;
-  }-*/;
+  }
 
   public Map.Entry<K, V> getEntry(Object key) {
-    return getEntry(key, hash(key));
-  }
-
-  private native Map.Entry<K, V> getEntry(Object key, int hashCode) /*-{
-    var array = this.@InternalJsHashCodeMap::backingMap[hashCode];
-    if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
-        var entry = array[i];
-        var entryKey = entry.@Map.Entry::getKey()();
-        if (this.@InternalJsHashCodeMap::equalsBridge(*)(key, entryKey)) {
-          return entry;
-        }
+    for (Entry<K, V> entry : getChainOrEmpty(hash(key))) {
+      if (host.equals(key, entry.getKey())) {
+        return entry;
       }
     }
     return null;
-  }-*/;
+  }
 
-  public native boolean containsValue(Object value) /*-{
-    var map = this.@InternalJsHashCodeMap::backingMap;
-    for (var hashCode in map) {
-      var array = map[hashCode];
-      for ( var i = 0, c = array.length; i < c; ++i) {
-        var entry = array[i];
-        var entryValue = entry.@Map.Entry::getValue()();
-        if (this.@InternalJsHashCodeMap::equalsBridge(*)(value, entryValue)) {
+  public boolean containsValue(Object value) {
+    for (String hashCode : keys()) {
+      for (Entry<K, V> entry : getChain(hashCode)) {
+        if (host.equals(value, entry.getValue())) {
           return true;
         }
       }
     }
     return false;
-  }-*/;
+  }
 
   public Iterator<Entry<K, V>> entries() {
     return new Iterator<Map.Entry<K,V>>() {
@@ -243,23 +221,32 @@ class InternalJsHashCodeMap<K, V> {
     return Object.keys(this.@InternalJsHashCodeMap::backingMap);
   }-*/;
 
-  private native Entry<K, V>[] getChain(String key) /*-{
-    return this.@InternalJsHashCodeMap::backingMap[key];
+  private native Entry<K, V>[] getChain(String hashCode) /*-{
+    return this.@InternalJsHashCodeMap::backingMap[hashCode];
   }-*/;
 
-  /**
-   * Bridge method from JSNI that keeps us from having to make polymorphic calls in JSNI. By putting
-   * the polymorphism in Java code, the compiler can do a better job of optimizing in most cases.
-   */
-  private boolean equalsBridge(Object value1, Object value2) {
-    return host.equals(value1, value2);
-  }
+  private native Entry<K, V>[] getChainOrEmpty(String hashCode) /*-{
+    return this.@InternalJsHashCodeMap::backingMap[hashCode] || [];
+  }-*/;
+
+  private native Entry<K, V>[] ensureChain(String hashCode) /*-{
+    var map = this.@InternalJsHashCodeMap::backingMap;
+    return map[hashCode] || (map[hashCode] = []);
+  }-*/;
+
+  private native void removeChain(String hashCode) /*-{
+    delete this.@InternalJsHashCodeMap::backingMap[hashCode];
+  }-*/;
 
   /**
    * Returns hash code of the key as calculated by {@link AbstractMap#getHashCode(Object)} but also
    * handles null keys as well.
    */
-  private int hash(Object key) {
-    return key == null ? 0 : host.getHashCode(key);
+  private String hash(Object key) {
+    return key == null ? "0" : String.valueOf(host.getHashCode(key));
   }
+
+  private static native void splice(Object arr, int index) /*-{
+    arr.splice(index, 1);
+  }-*/;
 }
