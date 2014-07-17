@@ -61,7 +61,7 @@ class ModuleState {
       defaultProps.put("user.agent", "safari");
       defaultProps.put("locale", "en");
       defaultProps.put("compiler.useSourceMaps", "true");
-      compileDir = recompiler.compile(defaultProps);
+      compileDir = recompiler.compile(defaultProps, new AtomicReference<Progress>());
     }
     current.set(compileDir);
   }
@@ -71,11 +71,14 @@ class ModuleState {
    * location of the output directory. (The log file changes both on success and on failure.
    *
    * @param bindingProperties The properties used to compile. (Chooses the permutation.)
+   * @param progress a variable to update with current progress while the compile is running.
    * @return true if the compile finished successfully.
+   *
+   * @see Modules#recompile for a thread-safe version.
    */
-  boolean recompile(Map<String, String> bindingProperties) {
+  boolean recompile(Map<String, String> bindingProperties, AtomicReference<Progress> progress) {
     try {
-      current.set(recompiler.compile(bindingProperties));
+      current.set(recompiler.compile(bindingProperties, progress));
       return true;
     } catch (UnableToCompleteException e) {
       logger.log(TreeLogger.Type.WARN, "continuing to serve previous version");

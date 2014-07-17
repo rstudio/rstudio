@@ -17,10 +17,13 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.json.JsonArray;
+import com.google.gwt.dev.json.JsonObject;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An in-memory directory of all the modules available on this code server. The {@link WebServer}
@@ -30,6 +33,8 @@ import java.util.Map;
 class Modules implements Iterable<String> {
   private final Map<String, ModuleState> moduleStateMap =
       new HashMap<String, ModuleState>();
+
+  private AtomicReference<Progress> progress = new AtomicReference<Progress>(Progress.IDLE);
 
   /**
    * Adds a {@link ModuleState} to the map.
@@ -58,6 +63,39 @@ class Modules implements Iterable<String> {
   void defaultCompileAll(boolean noPrecompile) throws UnableToCompleteException {
     for (ModuleState m: moduleStateMap.values()) {
       m.defaultCompile(noPrecompile);
+    }
+  }
+
+  /**
+   * Returns a configuration object containing the names of all the modules.
+   */
+  JsonObject getConfig() {
+    JsonObject config = JsonObject.create();
+    JsonArray moduleNames = new JsonArray();
+    for (String module : this) {
+      moduleNames.add(module);
+    }
+    config.put("moduleNames", moduleNames);
+    return config;
+  }
+
+  /**
+   * Returns the recompiler's current state.
+   */
+  JsonObject getProgress() {
+    return progress.get().toJsonObject();
+  }
+
+  /**
+   * Compiles a module.
+   *
+   * <p>Updates progress and ensures that only one compile happens at a time.
+   */
+  synchronized boolean recompile(ModuleState module, Map<String, String> bindingProperties) {
+    try {
+      return module.recompile(bindingProperties, progress);
+    } finally {
+      progress.set(Progress.IDLE);
     }
   }
 }

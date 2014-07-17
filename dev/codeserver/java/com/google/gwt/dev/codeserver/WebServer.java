@@ -18,7 +18,6 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
 
 import org.eclipse.jetty.http.MimeTypes;
@@ -170,14 +169,14 @@ public class WebServer {
 
     if (target.equals("/")) {
       setHandled(request);
-      JsonObject config = makeConfig();
+      JsonObject config = modules.getConfig();
       PageUtil.sendJsonAndHtml("config", config, "frontpage.html", response, logger);
       return;
     }
 
     if (target.equals("/dev_mode_on.js")) {
       setHandled(request);
-      JsonObject config = makeConfig();
+      JsonObject config = modules.getConfig();
       PageUtil
           .sendJsonAndJavaScript("__gwt_codeserver_config", config, "dev_mode_on.js", response,
               logger);
@@ -202,9 +201,9 @@ public class WebServer {
       // cause a spurious recompile, resulting in an unexpected permutation being loaded later.
       //
       // It would be unsafe to allow a configuration property to be changed.
-      boolean ok = moduleState.recompile(getBindingProperties(request));
+      boolean ok = modules.recompile(moduleState, getBindingProperties(request));
 
-      JsonObject config = makeConfig();
+      JsonObject config = modules.getConfig();
       config.put("status", ok ? "ok" : "failed");
       sendJsonpPage(config, request, response);
       return;
@@ -232,6 +231,12 @@ public class WebServer {
     if (target.equals("/policies/")) {
       setHandled(request);
       sendPolicyIndex(response);
+      return;
+    }
+
+    if (target.equals("/progress")) {
+      setHandled(request);
+      sendJsonpPage(modules.getProgress(), request, response);
       return;
     }
 
@@ -393,16 +398,6 @@ public class WebServer {
 
     logger.log(TreeLogger.Type.WARN, "policy file not found: " + rest);
     response.sendError(HttpServletResponse.SC_NOT_FOUND);
-  }
-
-  private JsonObject makeConfig() {
-    JsonArray moduleNames = new JsonArray();
-    for (String module : modules) {
-      moduleNames.add(module);
-    }
-    JsonObject config = JsonObject.create();
-    config.put("moduleNames", moduleNames);
-    return config;
   }
 
   private void sendJsonpPage(JsonObject json, HttpServletRequest request,

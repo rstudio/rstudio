@@ -77,8 +77,10 @@ class Recompiler {
     compilerContext = compilerContextBuilder.build();
   }
 
-  synchronized CompileDir compile(Map<String, String> bindingProperties)
+  synchronized CompileDir compile(Map<String, String> bindingProperties,
+      AtomicReference<Progress> progress)
       throws UnableToCompleteException {
+
     if (compilesDone == 0) {
       System.setProperty("java.awt.headless", "true");
       if (System.getProperty("gwt.speedtracerlog") == null) {
@@ -105,9 +107,12 @@ class Recompiler {
     boolean success = false;
     try {
       if (options.shouldCompileIncremental()) {
+        // Just have one message for now.
+        progress.set(new Progress.Compiling(moduleName.get(), compilesDone, 0, 1, "Compiling"));
+
         success = compileIncremental(compileLogger, compileDir);
       } else {
-        success = compileMonolithic(compileLogger, bindingProperties, compileDir);
+        success = compileMonolithic(compileLogger, bindingProperties, compileDir, progress);
       }
     } finally {
       try {
@@ -203,7 +208,9 @@ class Recompiler {
   }
 
   private boolean compileMonolithic(TreeLogger compileLogger, Map<String, String> bindingProperties,
-      CompileDir compileDir) throws UnableToCompleteException {
+      CompileDir compileDir, AtomicReference<Progress> progress) throws UnableToCompleteException {
+
+    progress.set(new Progress.Compiling(moduleName.get(), compilesDone, 0, 2, "Loading modules"));
 
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, originalModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).build();
@@ -212,6 +219,9 @@ class Recompiler {
     // Propagates module rename.
     String newModuleName = module.getName();
     moduleName.set(newModuleName);
+
+    progress.set(new Progress.Compiling(newModuleName, compilesDone, 1, 2, "Compiling"));
+    // TODO: use speed tracer to get more compiler events?
 
     CompilerOptions runOptions = new CompilerOptionsImpl(compileDir, newModuleName, options);
     compilerContext = compilerContextBuilder.options(runOptions).build();
