@@ -38,22 +38,9 @@ public class JUnitShellTest extends TestCase {
 
   public void testDefaultModuleUrl() throws Exception {
     parseGoodArgs();
-    assertEquals("http://localhost:1234/example/junit-standards.html?gwt.codesvr=localhost:456",
-        shell.getModuleUrl("localhost", 1234, "example", 456));
-  }
-
-  public void testExplicitStandardsModeModuleUrl() throws Exception {
-    parseGoodArgs("-standardsMode");
-    assertEquals("http://localhost:1234/example/junit-standards.html?gwt.codesvr=localhost:456",
-        shell.getModuleUrl("localhost", 1234, "example", 456));
-  }
-
-  public void testExplicitQuirksModeModuleUrl() throws Exception {
-    parseGoodArgs("-quirksMode");
     assertEquals("http://localhost:1234/example/junit.html?gwt.codesvr=localhost:456",
         shell.getModuleUrl("localhost", 1234, "example", 456));
   }
-
 
   public void testArgOptimize() throws Exception {
     parseGoodArgs("-optimize", "8", "-XdisableInlineLiteralParameters",

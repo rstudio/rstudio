@@ -204,39 +204,6 @@ public class JUnitShell extends DevMode {
     }
   }
 
-  private static class ArgHandlerRunInStandardsMode extends ArgHandlerFlag {
-
-    private JUnitShell shell;
-
-    public ArgHandlerRunInStandardsMode(JUnitShell shell) {
-      this.shell = shell;
-
-      addTagValue("-standardsMode", true);
-      addTagValue("-quirksMode", false);
-    }
-
-    @Override
-    public String getPurposeSnippet() {
-      return "Run each test using an HTML document in standards mode (rather than quirks mode).";
-    }
-
-    @Override
-    public String getLabel() {
-      return "runStandardsMode";
-    }
-
-    @Override
-    public boolean setFlag(boolean enabled) {
-      shell.setStandardsMode(enabled);
-      return true;
-    }
-
-    @Override
-    public boolean getDefaultValue() {
-      return shell.standardsMode;
-    }
-  }
-
   static class ArgProcessor extends ArgProcessorBase {
 
     @SuppressWarnings("deprecation")
@@ -508,8 +475,6 @@ public class JUnitShell extends DevMode {
           return true;
         }
       });
-
-      registerHandler(new ArgHandlerRunInStandardsMode(shell));
 
       registerHandler(new ArgHandlerInt() {
 
@@ -908,8 +873,6 @@ public class JUnitShell extends DevMode {
    */
   private String runStyleName = "HtmlUnit";
 
-  private boolean standardsMode = true;
-
   /**
    * Test method timeout as modified by the batching strategy.
    */
@@ -1127,8 +1090,7 @@ public class JUnitShell extends DevMode {
   }
 
   String getModuleUrl(String hostName, int port, String moduleName, int codeServerPort) {
-    String url = "http://" + hostName + ":" + port + "/" + moduleName
-        + (standardsMode ? "/junit-standards.html" : "/junit.html");
+    String url = "http://" + hostName + ":" + port + "/" + moduleName + "/junit.html";
     if (developmentMode) {
       url += "?gwt.codesvr=" + hostName + ":" + codeServerPort;
     }
@@ -1176,10 +1138,6 @@ public class JUnitShell extends DevMode {
     } else {
       compileForWebMode(module, userAgents);
     }
-  }
-
-  void setStandardsMode(boolean standardsMode) {
-    this.standardsMode = standardsMode;
   }
 
   private void checkArgs() {
