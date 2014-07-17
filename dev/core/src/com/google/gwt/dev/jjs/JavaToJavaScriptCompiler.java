@@ -74,6 +74,7 @@ import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
+import com.google.gwt.dev.jjs.impl.JsNoopTransformer;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallSpecializer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
@@ -470,15 +471,7 @@ public abstract class JavaToJavaScriptCompiler {
         JsSourceMap infoMap = (sourceInfoMaps != null) ? v.getSourceInfoMap() : null;
 
         JsAbstractTextTransformer transformer =
-            new JsAbstractTextTransformer(code, statementRanges, infoMap) {
-                @Override
-              public void exec() {
-              }
-
-                @Override
-              protected void updateSourceInfoMap() {
-              }
-            };
+            new JsNoopTransformer(code, statementRanges, infoMap);
 
         /**
          * Reorder function decls to improve compression ratios. Also restructures the top level

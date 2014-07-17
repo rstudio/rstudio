@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2014 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -15,31 +15,38 @@ package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Represents a JavaScript block statement.
+ * Represents the starting boundary for statements that make up one class.
  */
-public class JsBlock extends JsStatement {
+public class JsPositionMarker extends JsStatement {
 
-  private final List<JsStatement> stmts = new ArrayList<JsStatement>();
+  /**
+   * Categories of markers that can be placed in a JS AST.
+   */
+  public enum Type {
+    CLASS_END, CLASS_START, PROGRAM_END, PROGRAM_START
+  }
 
-  public JsBlock(SourceInfo sourceInfo) {
+  private String name;
+  private Type type;
+
+  public JsPositionMarker(SourceInfo sourceInfo, String name, Type type) {
     super(sourceInfo);
+    this.name = name;
+    this.type = type;
   }
 
   @Override
   public NodeKind getKind() {
-    return NodeKind.BLOCK;
+    return NodeKind.POSITION_MARKER;
   }
 
-  public List<JsStatement> getStatements() {
-    return stmts;
+  public String getName() {
+    return name;
   }
 
-  public boolean isGlobalBlock() {
-    return false;
+  public Type getType() {
+    return type;
   }
 
   @Override
@@ -49,19 +56,7 @@ public class JsBlock extends JsStatement {
 
   @Override
   public void traverse(JsVisitor v, JsContext ctx) {
-    if (v.visit(this, ctx)) {
-      v.acceptWithInsertRemove(stmts);
-    }
+    v.visit(this, ctx);
     v.endVisit(this, ctx);
-  }
-
-  @Override
-  public boolean unconditionalControlBreak() {
-    for (JsStatement stmt : stmts) {
-      if (stmt.unconditionalControlBreak()) {
-        return true;
-      }
-    }
-    return false;
   }
 }

@@ -25,6 +25,13 @@ public abstract class JsStatement extends JsNode {
   }
 
   /**
+   * Whether statement ranges should be recorded for this statement type.
+   */
+  public boolean shouldRecordPosition() {
+    return true;
+  }
+
+  /**
    * Returns true if this statement definitely causes an abrupt change in flow control.
    */
   public boolean unconditionalControlBreak() {

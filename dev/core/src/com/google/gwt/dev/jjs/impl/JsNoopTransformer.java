@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
+ * Copyright 2014 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -11,12 +11,25 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.google.gwt.dev.jjs.impl;
 
-package com.google.gwt.dev.js.ast;
+import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.dev.jjs.JsSourceMap;
 
 /**
- * NodeKind used to simplify direct AST iteration.
+ * A TextTransformer that makes no modifications.
  */
-public enum NodeKind {
-  ARRAY_ACCESS, ARRAY, BINARY_OP, BLOCK, BOOLEAN, BREAK, CASE, CATCH, CONDITIONAL, CONTINUE, DEBUGGER, DEFAULT, DO, EMPTY, EXPR_STMT, FOR, FOR_IN, FUNCTION, IF, INVOKE, LABEL, NAME_REF, NAME_OF, NEW, NULL, NUMBER, OBJECT, PARAMETER, POSTFIX_OP, PREFIX_OP, PROGRAM, PROGRAM_FRAGMENT, PROPERTY_INIT, POSITION_MARKER, REGEXP, RETURN, STRING, SWITCH, THIS, THROW, TRY, VARS, VAR, WHILE
+public class JsNoopTransformer extends JsAbstractTextTransformer {
+
+  public JsNoopTransformer(String js, StatementRanges statementRanges, JsSourceMap sourceInfoMap) {
+    super(js, statementRanges, sourceInfoMap);
+  }
+
+  @Override
+  public void exec() {
+  }
+
+  @Override
+  protected void updateSourceInfoMap() {
+  }
 }

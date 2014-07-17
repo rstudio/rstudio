@@ -212,6 +212,9 @@ public class JsVisitor {
   public void endVisit(JsParameter x, JsContext ctx) {
   }
 
+  public void endVisit(JsPositionMarker x, JsContext ctx) {
+  }
+
   public void endVisit(JsPostfixOperation x, JsContext ctx) {
   }
 
@@ -370,6 +373,10 @@ public class JsVisitor {
   }
 
   public boolean visit(JsParameter x, JsContext ctx) {
+    return true;
+  }
+
+  public boolean visit(JsPositionMarker x, JsContext ctx) {
     return true;
   }
 

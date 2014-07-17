@@ -99,7 +99,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.js.JsInliner;
-import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
@@ -137,6 +136,8 @@ import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsNumericEntry;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
+import com.google.gwt.dev.js.ast.JsPositionMarker;
+import com.google.gwt.dev.js.ast.JsPositionMarker.Type;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -171,7 +172,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -647,24 +647,6 @@ public class GenerateJavaScriptAST {
         accept(x.getFinallyBlock());
       }
       return false;
-    }
-
-    private JsName createGlobalJsFunctionFromSource(String functionName, String code) {
-      try {
-        List<JsStatement> stmts =
-            JsParser.parse(SourceOrigin.UNKNOWN, topScope, new StringReader(code));
-        assert stmts.size() == 1;
-        JsExprStmt stmt = (JsExprStmt) stmts.get(0);
-        JsFunction globalFunction =  (JsFunction) stmt.getExpression();
-
-        assert functionName == globalFunction.getName().getIdent();
-
-        List< JsStatement > globalStmts = jsProgram.getGlobalBlock().getStatements();
-        globalStmts.add(0, stmt);
-        return globalFunction.getName();
-      }  catch (Exception e) {
-        throw new InternalCompilerException("Unexpected exception parsing '" + code + "'", e);
-      }
     }
 
     /**
@@ -1875,14 +1857,18 @@ public class GenerateJavaScriptAST {
       topologicallySortedBodyTypes.removeAll(preambleTypes);
 
       // Iterate over each type in the right order.
+      markPosition(globalStmts, "Program", Type.PROGRAM_START);
       for (JDeclaredType type : topologicallySortedBodyTypes) {
+        markPosition(globalStmts, type.getName(), Type.CLASS_START);
         accept(type);
         JsVars classLiteralVars = new JsVars(jsProgram.getSourceInfo());
         maybeGenerateClassLiteral(type, classLiteralVars);
         if (!classLiteralVars.isEmpty()) {
           globalStmts.add(classLiteralVars);
         }
+        markPosition(globalStmts, type.getName(), Type.CLASS_END);
       }
+      markPosition(globalStmts, "Program", Type.PROGRAM_END);
 
       generateEpilogue(globalStmts);
 
@@ -2266,6 +2252,10 @@ public class GenerateJavaScriptAST {
       }
     }
 
+    private void markPosition(List<JsStatement> statements, String name, Type type) {
+      statements.add(new JsPositionMarker(SourceOrigin.UNKNOWN, name, type));
+    }
+
     /**
      * Sets up gwtOnLoad bootstrapping code. Unusually, the created code is executed as part of
      * source loading and runs in the global scope (not inside of any function scope).
@@ -2361,14 +2351,6 @@ public class GenerateJavaScriptAST {
     private JsInvocation constructInvocation(SourceInfo sourceInfo,
         String indexedFunctionName, JsExpression... args) {
       return constructInvocation(sourceInfo, indexedFunctionName, Arrays.asList(args));
-    }
-
-    /**
-     * Constructs an invocation for an indexed function.
-     */
-    private JsInvocation constructInvocation(String indexedFunctionName,
-        JsExpression... args) {
-      return constructInvocation(indexedFunctionName, Arrays.asList(args));
     }
 
     /**
