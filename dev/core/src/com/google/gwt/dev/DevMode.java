@@ -20,17 +20,17 @@ import com.google.gwt.core.ext.ServletContainerLauncher;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
-import com.google.gwt.dev.shell.BrowserListener;
-import com.google.gwt.dev.shell.CodeServerListener;
-import com.google.gwt.dev.shell.OophmSessionHandler;
-import com.google.gwt.dev.shell.SuperDevListener;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.ui.RestartServerCallback;
 import com.google.gwt.dev.ui.RestartServerEvent;
 import com.google.gwt.dev.util.InstalledHelpInfo;
+import com.google.gwt.dev.util.NullOutputFileSet;
+import com.google.gwt.dev.util.OutputFileSet;
+import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
@@ -42,7 +42,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
@@ -50,7 +49,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.BindException;
-import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -61,52 +59,6 @@ import java.util.regex.Pattern;
  * public API other than {@link #main(String[])}.
  */
 public class DevMode extends DevModeBase implements RestartServerCallback {
-
-  /**
-   * Handles the -superDevMode command line flag.
-   */
-  public interface HostedModeOptions extends HostedModeBaseOptions, CompilerOptions, OptionSuperDevMode {
-    ServletContainerLauncher getServletContainerLauncher();
-
-    String getServletContainerLauncherArgs();
-
-    void setServletContainerLauncher(ServletContainerLauncher scl);
-
-    void setServletContainerLauncherArgs(String args);
-  }
-
-  /**
-   * Runs the superdev-mode code server instead of classic one.
-   */
-  protected static class ArgHandlerSuperDevMode extends ArgHandlerFlag {
-    private final OptionSuperDevMode options;
-
-    public ArgHandlerSuperDevMode(OptionSuperDevMode options) {
-      this.options = options;
-      addTagValue("-superDevMode", true);
-    }
-
-    @Override
-    public boolean getDefaultValue() {
-      return false;
-    }
-
-    @Override
-    public String getLabel() {
-      return "superDevMode";
-    }
-
-    @Override
-    public String getPurposeSnippet() {
-      return "Runs Super Dev Mode instead of classic Development Mode.";
-    }
-
-    @Override
-    public boolean setFlag(boolean value) {
-      options.setSuperDevMode(value);
-      return true;
-    }
-  }
 
   /**
    * Handles the -server command line flag.
@@ -126,7 +78,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       if (options.isNoServer()) {
         return null;
       } else {
-        return new String[] {getTag(), DEFAULT_SCL};
+        return new String[]{getTag(), DEFAULT_SCL};
       }
     }
 
@@ -142,7 +94,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"servletContainerLauncher[:args]"};
+      return new String[]{"servletContainerLauncher[:args]"};
     }
 
     @Override
@@ -208,7 +160,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"url"};
+      return new String[]{"url"};
     }
 
     @Override
@@ -224,7 +176,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   protected static class ArgProcessor extends DevModeBase.ArgProcessor {
     public ArgProcessor(HostedModeOptions options) {
       super(options, false);
-      registerHandler(new ArgHandlerSuperDevMode(options));
       registerHandler(new ArgHandlerServer(options));
       registerHandler(new ArgHandlerStartupURLs(options));
       registerHandler(new ArgHandlerWarDir(options));
@@ -248,18 +199,29 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   /**
+   * Options controlling dev mode.
+   */
+  protected interface HostedModeOptions extends HostedModeBaseOptions, CompilerOptions {
+    ServletContainerLauncher getServletContainerLauncher();
+
+    String getServletContainerLauncherArgs();
+
+    void setServletContainerLauncher(ServletContainerLauncher scl);
+
+    void setServletContainerLauncherArgs(String args);
+  }
+
+  /**
    * Concrete class to implement all hosted mode options.
    */
-  @SuppressWarnings("serial")
   protected static class HostedModeOptionsImpl extends HostedModeBaseOptionsImpl implements
       HostedModeOptions {
-    private File deployDir;
     private File extraDir;
     private int localWorkers;
     private ServletContainerLauncher scl;
     private String sclArgs;
-    private boolean sdm;
     private File warDir;
+    private File deployDir;
 
     @Override
     public File getDeployDir() {
@@ -297,11 +259,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     }
 
     @Override
-    public boolean isSuperDevMode() {
-      return sdm;
-    }
-
-    @Override
     public void setDeployDir(File deployDir) {
       this.deployDir = deployDir;
     }
@@ -327,11 +284,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     }
 
     @Override
-    public void setSuperDevMode(boolean sdm) {
-      this.sdm = sdm;
-    }
-
-    @Override
     public void setServletContainerLauncher(ServletContainerLauncher scl) {
       this.scl = scl;
     }
@@ -345,15 +297,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     public void setWarDir(File warDir) {
       this.warDir = warDir;
     }
-  }
-
-  /**
-   * Determines whether to start the code server or not.
-   */
-  protected interface OptionSuperDevMode {
-    boolean isSuperDevMode();
-
-    void setSuperDevMode(boolean sdm);
   }
 
   /**
@@ -384,13 +327,12 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     System.exit(-1);
   }
 
-  protected CodeServerListener listener;
-
   /**
-   * Hiding super field because it's actually the same object, just with a stronger type.
+   * Hiding super field because it's actually the same object, just with a
+   * stronger type.
    */
   @SuppressWarnings("hiding")
-  protected final HostedModeOptions options = (HostedModeOptionsImpl) super.options;
+  protected final HostedModeOptionsImpl options = (HostedModeOptionsImpl) super.options;
 
   /**
    * The server that was started.
@@ -574,7 +516,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
         JettyLauncher jetty = (JettyLauncher) scl;
         jetty.setBaseRequestLogLevel(getBaseLogLevelForUI());
       }
-      scl.setBindAddress(options.getBindAddress());
+      scl.setBindAddress(bindAddress);
 
       if (serverLogger.isLoggable(TreeLogger.TRACE)) {
         serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(), null);
@@ -584,7 +526,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       clearCallback = false;
       return server.getPort();
     } catch (BindException e) {
-      System.err.println("Port " + options.getBindAddress() + ':' + getPort()
+      System.err.println("Port " + bindAddress + ':' + getPort()
           + " is already is use; you probably still have another session active");
     } catch (Exception e) {
       System.err.println("Unable to start embedded HTTP server");
@@ -597,20 +539,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       }
     }
     return -1;
-  }
-
-  @Override
-  protected void ensureCodeServerListener() {
-    if (listener == null) {
-      if (options.isSuperDevMode()) {
-        listener = new SuperDevListener(getTopLogger(), options);
-      } else {
-        listener =
-            new BrowserListener(getTopLogger(), options, new OophmSessionHandler(getTopLogger(),
-                browserHost));
-      }
-      listener.start();
-    }
   }
 
   protected String getWebServerName() {
@@ -646,14 +574,32 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   @Override
-  protected URL makeStartupUrl(String url) throws UnableToCompleteException {
-    return listener.makeStartupUrl(url);
-  }
-
-  @Override
   protected synchronized void produceOutput(TreeLogger logger, StandardLinkerContext linkerStack,
       ArtifactSet artifacts, ModuleDef module, boolean isRelink) throws UnableToCompleteException {
-    listener.writeCompilerOutput(linkerStack, artifacts, module, isRelink);
+    TreeLogger linkLogger =
+        logger.branch(TreeLogger.DEBUG, "Linking module '" + module.getName() + "'");
+
+    OutputFileSetOnDirectory outFileSet =
+        new OutputFileSetOnDirectory(options.getWarDir(), module.getName() + "/");
+    OutputFileSetOnDirectory deployFileSet =
+        new OutputFileSetOnDirectory(options.getDeployDir(), module.getName() + "/");
+    OutputFileSet extraFileSet = new NullOutputFileSet();
+    if (options.getExtraDir() != null) {
+      extraFileSet = new OutputFileSetOnDirectory(options.getExtraDir(), module.getName() + "/");
+    }
+
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Public, outFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Deploy, deployFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Private, extraFileSet);
+
+    outFileSet.close();
+    deployFileSet.close();
+    try {
+      extraFileSet.close();
+    } catch (IOException e) {
+      linkLogger.log(TreeLogger.ERROR, "Error emiting extra files", e);
+      throw new UnableToCompleteException();
+    }
   }
 
   @Override
@@ -684,5 +630,4 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       }
     }
   }
-
 }

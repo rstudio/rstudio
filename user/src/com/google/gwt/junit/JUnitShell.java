@@ -241,7 +241,7 @@ public class JUnitShell extends DevMode {
 
     @SuppressWarnings("deprecation")
     public ArgProcessor(final JUnitShell shell) {
-      final HostedModeOptions options = shell.options;
+      final HostedModeOptionsImpl options = shell.options;
       /*
        * ----- Options from DevModeBase -------
        */
@@ -605,6 +605,7 @@ public class JUnitShell extends DevMode {
      * system classloader to dominate. This makes JUnitHostImpl live in the
      * right classloader (mine).
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected WebAppContext createWebAppContext(TreeLogger logger,
         File appRootDir) {
@@ -949,7 +950,7 @@ public class JUnitShell extends DevMode {
   public String getModuleUrl(String moduleName) {
     // TODO(jat): consider using DevModeBase.processUrl instead
     String localhost = runStyle.getLocalHostName();
-    return getModuleUrl(localhost, getPort(), moduleName, listener.getSocketPort());
+    return getModuleUrl(localhost, getPort(), moduleName, codeServerPort);
   }
 
   public CompilerContext getCompilerContext() {

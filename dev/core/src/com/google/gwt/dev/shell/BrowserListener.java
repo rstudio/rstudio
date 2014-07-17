@@ -17,34 +17,24 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
-import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
-import com.google.gwt.dev.DevMode.HostedModeOptions;
-import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.BrowserChannelServer.SessionHandlerServer;
-import com.google.gwt.dev.util.NullOutputFileSet;
-import com.google.gwt.dev.util.OutputFileSet;
-import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.URL;
 
 /**
  * Listens for connections from OOPHM clients.
  */
-public class BrowserListener implements CodeServerListener {
+public class BrowserListener {
 
   /**
-   * Get a query parameter to be added to the URL that specifies the address of this listener.
+   * Get a query parameter to be added to the URL that specifies the address
+   * of this listener.
    *
    * @param address address of host to use for connections
    * @param port TCP port number to use for connection
@@ -60,10 +50,6 @@ public class BrowserListener implements CodeServerListener {
 
   private boolean ignoreRemoteDeath = false;
 
-  private HostedModeOptions options;
-
-  private TreeLogger logger;
-
   /**
    * Listens for new connections from browsers.
    *
@@ -71,19 +57,17 @@ public class BrowserListener implements CodeServerListener {
    * @param port
    * @param handler
    */
-  public BrowserListener(TreeLogger treeLogger, HostedModeOptions options,
-      final SessionHandlerServer handler) {
+  public BrowserListener(final TreeLogger logger, String bindAddress,
+      int port, final SessionHandlerServer handler) {
     try {
-      this.options = options;
-      this.logger = treeLogger;
       listenSocket = new ServerSocket();
       listenSocket.setReuseAddress(true);
-      InetAddress address = InetAddress.getByName(options.getBindAddress());
-      listenSocket.bind(new InetSocketAddress(address, options.getCodeServerPort()));
+      InetAddress address = InetAddress.getByName(bindAddress);
+      listenSocket.bind(new InetSocketAddress(address, port));
 
       if (logger.isLoggable(TreeLogger.TRACE)) {
-        logger.log(TreeLogger.TRACE, "Started code server on port " + listenSocket.getLocalPort(),
-            null);
+        logger.log(TreeLogger.TRACE, "Started code server on port "
+            + listenSocket.getLocalPort(), null);
       }
       listenThread = new Thread() {
         @Override
@@ -91,9 +75,10 @@ public class BrowserListener implements CodeServerListener {
           while (true) {
             try {
               Socket sock = listenSocket.accept();
-              TreeLogger branch =
-                  logger.branch(TreeLogger.TRACE, "Connection received from "
-                      + sock.getInetAddress().getCanonicalHostName() + ":" + sock.getPort());
+              TreeLogger branch = logger.branch(TreeLogger.TRACE,
+                  "Connection received from "
+                      + sock.getInetAddress().getCanonicalHostName() + ":"
+                      + sock.getPort());
               try {
                 sock.setTcpNoDelay(true);
                 sock.setKeepAlive(true);
@@ -101,8 +86,8 @@ public class BrowserListener implements CodeServerListener {
                 // Ignore non-critical errors.
               }
 
-              BrowserChannelServer server =
-                  new BrowserChannelServer(branch, sock, handler, ignoreRemoteDeath);
+              BrowserChannelServer server = new BrowserChannelServer(branch,
+                  sock, handler, ignoreRemoteDeath);
               /*
                * This object is special-cased by the SessionHandler, used for
                * methods needed by the client like hasMethod/hasProperty/etc.
@@ -120,79 +105,24 @@ public class BrowserListener implements CodeServerListener {
       listenThread.setName("Code server listener");
       listenThread.setDaemon(true);
     } catch (BindException e) {
-      logger.log(TreeLogger.ERROR, "Unable to bind socket on port " + options.getPort()
+      logger.log(TreeLogger.ERROR, "Unable to bind socket on port " + port
           + " -- is another session active?", e);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Communications error", e);
     }
   }
 
-  @Override
-  public int getSocketPort() {
+  /**
+   * @return the port number of the listening socket.
+   *
+   * @throws UnableToCompleteException if the listener is not running
+   */
+  public int getSocketPort() throws UnableToCompleteException {
+    if (listenSocket == null) {
+      // If we failed to initialize our socket, just bail here.
+      throw new UnableToCompleteException();
+    }
     return listenSocket.getLocalPort();
-  }
-
-  @Override
-  public URL makeStartupUrl(String url) throws UnableToCompleteException {
-    URL parsedUrl = null;
-    try {
-      parsedUrl = new URL(url);
-      String path = parsedUrl.getPath();
-      String query = parsedUrl.getQuery();
-      String hash = parsedUrl.getRef();
-      String hostedParam =
-          BrowserListener.getDevModeURLParams(options.getConnectAddress(), getSocketPort());
-      if (query == null) {
-        query = hostedParam;
-      } else {
-        query += '&' + hostedParam;
-      }
-      path += '?' + query;
-      if (hash != null) {
-        path += '#' + hash;
-      }
-      parsedUrl = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(), parsedUrl.getPort(), path);
-      url = parsedUrl.toExternalForm();
-    } catch (MalformedURLException e) {
-      logger.log(TreeLogger.ERROR, "Invalid URL " + url, e);
-      throw new UnableToCompleteException();
-    }
-    return parsedUrl;
-  }
-
-  @Override
-  public synchronized void writeCompilerOutput(StandardLinkerContext linkerStack,
-      ArtifactSet artifacts, ModuleDef module, boolean isRelink) throws UnableToCompleteException {
-    TreeLogger linkLogger =
-        logger.branch(TreeLogger.DEBUG, "Linking module '" + module.getName() + "'");
-
-    OutputFileSetOnDirectory outFileSet =
-        new OutputFileSetOnDirectory(options.getWarDir(), module.getName() + "/");
-    OutputFileSetOnDirectory deployFileSet =
-        new OutputFileSetOnDirectory(options.getDeployDir(), module.getName() + "/");
-    OutputFileSet extraFileSet = new NullOutputFileSet();
-    if (options.getExtraDir() != null) {
-      extraFileSet = new OutputFileSetOnDirectory(options.getExtraDir(), module.getName() + "/");
-    }
-
-    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Public, outFileSet);
-    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Deploy, deployFileSet);
-    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Private, extraFileSet);
-
-    outFileSet.close();
-    deployFileSet.close();
-    try {
-      extraFileSet.close();
-    } catch (IOException e) {
-      linkLogger.log(TreeLogger.ERROR, "Error emiting extra files", e);
-      throw new UnableToCompleteException();
-    }
-
-    // Update the timestamp for files that Super Dev Mode might previously have touched.
-    new File(options.getWarDir() + "/" + module.getName() + "/" + module.getName() + ".nocache.js")
-        .setLastModified(System.currentTimeMillis());
-    new File(options.getWarDir() + "/" + module.getName() + "/clear.cache.gif")
-        .setLastModified(System.currentTimeMillis());
   }
 
   /**
@@ -207,7 +137,9 @@ public class BrowserListener implements CodeServerListener {
     this.ignoreRemoteDeath = ignoreRemoteDeath;
   }
 
-  @Override
+  /**
+   * Start the listener thread.
+   */
   public void start() {
     if (listenThread != null) {
       listenThread.start();
