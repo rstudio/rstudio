@@ -98,9 +98,42 @@ std::string formatPath(const FilePath& filePath)
 template <typename T>
 bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
 {
+    // can we find ls.exe and gcc.exe on the path? if so then
+    // we assume Rtools are already there (this is the same test
+    // used by devtools)
+    bool rToolsOnPath = false;
+    Error error = r::exec::RFunction(".rs.isRtoolsOnPath").call(&rToolsOnPath);
+    if (error)
+       LOG_ERROR(error);
+    if (rToolsOnPath)
+    {
+       // perform an extra check to see if the version on the path is not
+       // compatible with the currenly running version of R
+       r_util::RToolsInfo rTools = scanPathForRTools();
+       if (!rTools.empty())
+       {
+          if (!isRtoolsCompatible(rTools))
+          {
+            boost::format fmt(
+             "WARNING: Rtools version %1% is on the PATH (intalled at %2%) "
+             "but is "
+             "not compatible with the currently running version of R."
+             "\n\nPlease download and install the appropriate version of "
+             "Rtools to ensure that packages are built correctly:"
+             "\n\nhttp://cran.rstudio.com/bin/windows/Rtools/"
+             "\n\nNote that in addition to installing a compatible verison you "
+             "also need to remove the incompatible version from your PATH");
+            *pWarningMessage = boost::str(
+               fmt % rTools.name() % formatPath(rTools.installPath()));
+          }
+       }
+
+       return false;
+    }
+
     // ok so scan for R tools
     std::vector<r_util::RToolsInfo> rTools;
-    Error error = core::r_util::scanRegistryForRTools(&rTools);
+    error = core::r_util::scanRegistryForRTools(&rTools);
     if (error)
     {
        LOG_ERROR(error);
