@@ -49,6 +49,7 @@ import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsNumericEntry;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
+import com.google.gwt.dev.js.ast.JsPositionMarker;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -638,6 +639,10 @@ public class ClosureJsAstTranslator {
     return getNameNodeFor(x);
   }
 
+  private Node transform(JsPositionMarker x) {
+    return IR.empty();
+  }
+
   private Node transform(JsPostfixOperation x) {
     Node n = new Node(getTokenForOp(x.getOperator()), transform(x.getArg()));
     n.putBooleanProp(Node.INCRDECR_PROP, true);
@@ -689,6 +694,8 @@ public class ClosureJsAstTranslator {
         return transform((JsIf) x);
       case LABEL:
         return transform((JsLabel) x);
+      case POSITION_MARKER:
+        return transform((JsPositionMarker) x);
       case RETURN:
         return transform((JsReturn) x);
       case SWITCH:
