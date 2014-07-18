@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.HTMLTest;
 import com.google.gwt.user.client.ui.HeaderPanelTest;
 import com.google.gwt.user.client.ui.HiddenTest;
 import com.google.gwt.user.client.ui.HistoryTest;
+import com.google.gwt.user.client.ui.HistoryTestNoopTokenEncoder;
 import com.google.gwt.user.client.ui.HorizontalPanelTest;
 import com.google.gwt.user.client.ui.HorizontalSplitPanelTest;
 import com.google.gwt.user.client.ui.HyperlinkTest;
@@ -85,6 +86,7 @@ public class UiPart2Suite {
     suite.addTestSuite(HeaderPanelTest.class);
     suite.addTestSuite(HiddenTest.class);
     suite.addTestSuite(HistoryTest.class);
+    suite.addTestSuite(HistoryTestNoopTokenEncoder.class);
     suite.addTestSuite(HorizontalPanelTest.class);
     suite.addTestSuite(HorizontalSplitPanelTest.class);
     suite.addTestSuite(HTMLPanelTest.class);

@@ -56,6 +56,14 @@ public class HistoryTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  protected String getHistoryToken2() {
+    return "token 2";
+  }
+
+  protected String getHistoryToken2_encoded() {
+    return "token%202";
+  }
+
   // TODO(dankurka): Fix up HTML unit hash change handling
   @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testClickLink() {
@@ -176,8 +184,8 @@ public class HistoryTest extends GWTTestCase {
      */
     History.newItem("if-you-see-this-then-history-went-back-too-far");
 
-    final String historyToken1 = "token 1";
-    final String historyToken2 = "token 2";
+    final String historyToken1 = "token1";
+    final String historyToken2 = getHistoryToken2();
     delayTestFinish(10000);
 
     addHistoryListenerImpl(new ValueChangeHandler<String>() {
@@ -243,12 +251,11 @@ public class HistoryTest extends GWTTestCase {
       }
     };
     addHistoryListenerImpl(new ValueChangeHandler<String>() {
-      final ArrayList<Object> counter = new ArrayList<Object>();
+      private int count = 0;
 
       @Override
       public void onValueChange(ValueChangeEvent<String> event) {
-        counter.add(null);
-        if (counter.size() != 1) {
+        if (count++ != 0) {
           fail("onHistoryChanged called multiple times");
         }
         // wait 500ms to see if we get called multiple times
@@ -268,9 +275,9 @@ public class HistoryTest extends GWTTestCase {
      */
     History.newItem("if-you-see-this-then-history-went-back-too-far");
 
-    final String historyToken1 = "token 1";
-    final String historyToken2 = "token 2";
-    final String historyToken3 = "token 3";
+    final String historyToken1 = "token1";
+    final String historyToken2 = getHistoryToken2();
+    final String historyToken3 = "token3";
 
     delayTestFinish(10000);
 
@@ -337,9 +344,10 @@ public class HistoryTest extends GWTTestCase {
      * app containing our test module.
      */
     History.newItem("if-you-see-this-then-history-went-back-too-far");
-    final String historyToken1 = "token 1";
-    final String historyToken2 = "token 2";
-    final String historyToken2_encoded = "token%202";
+
+    final String historyToken1 = "token1";
+    final String historyToken2 = getHistoryToken2();
+    final String historyToken2_encoded = getHistoryToken2_encoded();
 
     History.newItem(historyToken1);
 

@@ -83,6 +83,38 @@ public class History {
   }
 
   /**
+   * HistoryTokenEncoder is responsible for encoding and decoding history token,
+   * thus ensuring that tokens are safe to use in the browsers URL.
+   */
+  private static class HistoryTokenEncoder {
+    public native String encode(String toEncode) /*-{
+      // encodeURI() does *not* encode the '#' character.
+      return $wnd.encodeURI(toEncode).replace("#", "%23");
+    }-*/;
+
+    public native String decode(String toDecode) /*-{
+      return $wnd.decodeURI(toDecode.replace("%23", "#"));
+    }-*/;
+  }
+
+  /**
+   * NoopHistoryTokenEncoder does not perform any encoding.
+   */
+  // Used from rebinding
+  @SuppressWarnings("unused")
+  private static class NoopHistoryTokenEncoder extends HistoryTokenEncoder {
+    @Override
+    public String encode(String toEncode) {
+      return toEncode;
+    }
+
+    @Override
+    public String decode(String toDecode) {
+      return toDecode;
+    }
+  }
+
+  /**
    * History implementation using hash tokens.
    * <p>This is the default implementation for all browsers except IE8.
    */
@@ -107,17 +139,6 @@ public class History {
     public void replaceToken(String historyToken) {
       Window.Location.replace("#" + historyToken);
     }
-
-    // Only kept in deferred binding to allow mocking frameworks to intercept calls
-    public native String decodeHistoryToken(String historyToken) /*-{
-      return $wnd.decodeURI(historyToken.replace("%23", "#"));
-    }-*/;
-
-    // Only kept in deferred binding to allow mocking frameworks to intercept calls
-    public native String encodeHistoryToken(String historyToken) /*-{
-      // encodeURI() does *not* encode the '#' character.
-      return $wnd.encodeURI(historyToken).replace("#", "%23");
-    }-*/;
   }
 
   /**
@@ -177,6 +198,7 @@ public class History {
 
   private static HistoryImpl impl = GWT.create(HistoryImpl.class);
   private static HistoryEventSource historyEventSource = new HistoryEventSource();
+  private static HistoryTokenEncoder tokenEncoder = GWT.create(HistoryTokenEncoder.class);
   private static String token = getDecodedHash();
 
   /**
@@ -216,7 +238,7 @@ public class History {
    * @return the encoded token, suitable for use as part of a URI
    */
   public static String encodeHistoryToken(String historyToken) {
-    return impl.encodeHistoryToken(historyToken);
+    return tokenEncoder.encode(historyToken);
   }
 
   /**
@@ -360,7 +382,7 @@ public class History {
     if (hashToken == null || hashToken.isEmpty()) {
       return "";
     }
-    return  impl.decodeHistoryToken(hashToken.substring(1));
+    return tokenEncoder.decode(hashToken.substring(1));
   }
 
   // this is called from JS when the native onhashchange occurs

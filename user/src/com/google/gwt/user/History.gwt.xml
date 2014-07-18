@@ -20,6 +20,19 @@
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
 
+  <!-- Option to disable GWT double encoding of history tokens.               -->
+  <!-- This double encoding is necessary to make History work across          -->
+  <!-- browsers (especially Firefox).                                         -->
+  <!-- If applications choose to disable double encoding they are responsible -->
+  <!-- for ensuring that only tokens are used that work across browsers.      -->
+  <define-property name="history.noDoubleEncoding" values="true,false" />
+  <set-property name="history.noDoubleEncoding" value="false" />
+
+  <replace-with class="com.google.gwt.user.client.History.NoopHistoryTokenEncoder">
+    <when-type-is class="com.google.gwt.user.client.History.HistoryTokenEncoder" />
+    <when-property-is name="history.noDoubleEncoding" value="true" />
+  </replace-with>
+
   <!-- IE8 does not work with the standard implementation -->
   <replace-with class="com.google.gwt.user.client.History.HistoryImplIE8">
     <when-type-is class="com.google.gwt.user.client.History.HistoryImpl" />
