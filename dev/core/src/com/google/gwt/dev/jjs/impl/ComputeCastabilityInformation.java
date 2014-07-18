@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -39,7 +40,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -202,7 +202,7 @@ public class ComputeCastabilityInformation {
       }
 
       // Find all possible query types which I can satisfy
-      Set<JReferenceType> castableTypes = new TreeSet<JReferenceType>(TYPE_COMPARATOR);
+      Set<JReferenceType> castableTypes = new TreeSet<JReferenceType>(HasName.BY_NAME_COMPARATOR);
 
       /*
        * NOTE: non-deterministic iteration over HashSet and HashMap. Okay
@@ -275,13 +275,6 @@ public class ComputeCastabilityInformation {
       castSourceTypesPerCastTargetType.put(toType, rhsType);
     }
   }
-
-  private static final Comparator<JType> TYPE_COMPARATOR = new Comparator<JType>() {
-    @Override
-    public int compare(JType o1, JType o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
 
   public static void exec(JProgram program, boolean disableCastChecking) {
     new ComputeCastabilityInformation(program, disableCastChecking).execImpl();

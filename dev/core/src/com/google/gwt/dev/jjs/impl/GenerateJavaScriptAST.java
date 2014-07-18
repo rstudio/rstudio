@@ -168,6 +168,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -179,19 +180,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.Stack;
 
 /**
  * Creates a JavaScript AST from a <code>JProgram</code> node.
  */
 public class GenerateJavaScriptAST {
-
   /**
    * The GWT Java AST might contain different local variables with the same name in the same
    * scope. This fixup pass renames variables in the case they clash in a scope.
@@ -1852,11 +1852,9 @@ public class GenerateJavaScriptAST {
       // Sort normal types according to superclass relationship.
       Set<JDeclaredType> topologicallySortedBodyTypes = Sets.newLinkedHashSet();
       for (JDeclaredType type : x.getModuleDeclaredTypes()) {
-        if (preambleTypes.contains(type)) {
-          continue;
-        }
         insertInTopologicalOrder(type, topologicallySortedBodyTypes);
       }
+      // Remove all preamble types that might have been inserted here.
       topologicallySortedBodyTypes.removeAll(preambleTypes);
 
       // Iterate over each type in the right order.
@@ -1898,45 +1896,78 @@ public class GenerateJavaScriptAST {
       // Generate immortal types in the preamble.
       generateImmortalTypes(vars);
 
-      Set<JDeclaredType> alreadyProcessed =
-          Sets.<JDeclaredType>newHashSet(program.immortalCodeGenTypes);
+      Set<JDeclaredType> alreadyProcessed = Sets.<JDeclaredType>newLinkedHashSet(program.immortalCodeGenTypes);
       alreadyProcessed.add(program.getTypeClassLiteralHolder());
 
-      Set<JDeclaredType> classLiteralSupportClasses = generateClassLiteralsSupportClasses(program,
-          alreadyProcessed);
-      generateClassLiterals(globalStmts, (Set) classLiteralSupportClasses);
+      List<JDeclaredType> classLiteralSupportClasses =
+          computeClassLiteralsSupportClasses(program, alreadyProcessed);
 
-      Set<JDeclaredType> preambleTypes = Sets.newHashSet(alreadyProcessed);
+      // Make sure immortal classes are not doubly processed.
+      classLiteralSupportClasses.removeAll(alreadyProcessed);
+      for (JDeclaredType type : classLiteralSupportClasses) {
+        accept(type);
+      }
+      generateClassLiterals(globalStmts, classLiteralSupportClasses);
+
+      Set<JDeclaredType> preambleTypes = Sets.newLinkedHashSet(alreadyProcessed);
       preambleTypes.addAll(classLiteralSupportClasses);
       return preambleTypes;
     }
 
-    private Set<JDeclaredType> generateClassLiteralsSupportClasses(JProgram program,
-        Set<JDeclaredType> specialTypes) {
+    private List<JDeclaredType> computeClassLiteralsSupportClasses(JProgram program,
+        Set<JDeclaredType> alreadyProcessedTypes) {
       if (program.isReferenceOnly(program.getIndexedType("Class"))) {
-        return Collections.emptySet();
+        return Collections.emptyList();
       }
       // Include in the preamble all classes that are reachable for Class.createForClass and
       // Class.createForEnum that are not JSOs nor interfaces.
-      ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
-      cfa.setForPruning();
-      for (String classLiteralMethodName : new String[]{"Class.createForClass",
-          "Class.createForEnum"}) {
-        cfa.traverseFrom(program.getIndexedMethod(classLiteralMethodName));
-      }
+      SortedSet<JDeclaredType> reachableClasses = computeReachableTypes(
+          "Class.createForClass", "Class.createForEnum", "Class.createForInterface");
 
       Set<JDeclaredType> orderedPreambleClasses = Sets.newLinkedHashSet();
-      for (JType type : cfa.getReferencedTypes()) {
-        if (type instanceof JClassType && !specialTypes.contains(type) &&
-            !program.typeOracle.isJavaScriptObject(type)) {
-          insertInTopologicalOrder((JDeclaredType) type, orderedPreambleClasses);
+      for (JDeclaredType type : reachableClasses) {
+        if (!alreadyProcessedTypes.contains(type)) {
+          insertInTopologicalOrder(type, orderedPreambleClasses);
         }
       }
 
-      for (JDeclaredType type : orderedPreambleClasses) {
-        accept(type);
+      // TODO(rluble): The set of preamble types might be overly large, in particular will include
+      // JSOs that need clinit. This is due to {@link ControlFlowAnalyzer} making all JSOs live if
+      // there is a cast to that type anywhere in the program. See the use of
+      // {@link JTypeOracle.getInstantiatedJsoTypesViaCast} in the constructor.
+      return Lists.newArrayList(orderedPreambleClasses);
+    }
+
+    /**
+     * Computes the set of types whose methods or fields are reachable from any of the indexed
+     * method names {@code indexedMethodNames}.
+     */
+    private SortedSet<JDeclaredType> computeReachableTypes(String... indexedMethodNames) {
+      ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
+      for (String classLiteralMethodName : indexedMethodNames) {
+        cfa.traverseFrom(program.getIndexedMethod(classLiteralMethodName));
       }
-      return orderedPreambleClasses;
+
+      // Get the list of enclosing classes that were not excluded.
+      SortedSet<JDeclaredType> reachableTypes = ImmutableSortedSet.copyOf(HasName.BY_NAME_COMPARATOR,
+         Iterables.filter(
+          Iterables.transform(cfa.getLiveFieldsAndMethods(),
+              new Function<JNode, JDeclaredType>() {
+                @Override
+                public JDeclaredType apply(JNode member) {
+                  if (member instanceof JMethod) {
+                    return ((JMethod) member).getEnclosingType();
+                  } else if (member instanceof JField) {
+                    return ((JField) member).getEnclosingType();
+                  } else {
+                    assert member instanceof JParameter || member instanceof JLocal;
+                    // Discard locals and parameters, only need the enclosing instances of reachable
+                    // fields and methods.
+                    return null;
+                  }
+                }
+              }), Predicates.notNull()));
+      return reachableTypes;
     }
 
     private void generateEpilogue(List<JsStatement> globalStmts) {
@@ -1965,7 +1996,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateClassLiterals(List<JsStatement> globalStmts,
-        Iterable<JType> orderedTypes) {
+        Iterable<? extends JType> orderedTypes) {
       JsVars vars = new JsVars(jsProgram.getSourceInfo());
       for (JType type : orderedTypes) {
         maybeGenerateClassLiteral(type, vars);
@@ -3176,36 +3207,28 @@ public class GenerateJavaScriptAST {
   }
 
   private static class SortVisitor extends JVisitor {
-    private final HasNameSort hasNameSort = new HasNameSort();
-
-    private final Comparator<JMethod> methodSort = new Comparator<JMethod>() {
-      @Override
-      public int compare(JMethod m1, JMethod m2) {
-        return m1.getSignature().compareTo(m2.getSignature());
-      }
-    };
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
-      x.sortFields(hasNameSort);
-      x.sortMethods(methodSort);
+      x.sortFields(HasName.BY_NAME_COMPARATOR);
+      x.sortMethods(JMethod.BY_SIGNATURE_COMPARATOR);
     }
 
     @Override
     public void endVisit(JInterfaceType x, Context ctx) {
-      x.sortFields(hasNameSort);
-      x.sortMethods(methodSort);
+      x.sortFields(HasName.BY_NAME_COMPARATOR);
+      x.sortMethods(JMethod.BY_SIGNATURE_COMPARATOR);
     }
 
     @Override
     public void endVisit(JMethodBody x, Context ctx) {
-      x.sortLocals(hasNameSort);
+      x.sortLocals(HasName.BY_NAME_COMPARATOR);
     }
 
     @Override
     public void endVisit(JProgram x, Context ctx) {
-      Collections.sort(x.getEntryMethods(), methodSort);
-      Collections.sort(x.getDeclaredTypes(), hasNameSort);
+      Collections.sort(x.getEntryMethods(), JMethod.BY_SIGNATURE_COMPARATOR);
+      Collections.sort(x.getDeclaredTypes(), HasName.BY_NAME_COMPARATOR);
     }
 
     @Override

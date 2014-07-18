@@ -68,6 +68,7 @@ public class JavaAstConstructor {
           "      int[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs, int count) { }",
           "  static void initValues(Class arrayClass, JavaScriptObject castableTypeMap,",
           "      int elementTypeId, int elementTypeCategory, Object array) { }",
+          "  static <T> Class<T> getClassLiteralForArray() { return null; }",
           "}"
       );
     }
@@ -124,7 +125,6 @@ public class JavaAstConstructor {
           "    return new Class<T>(); }",
           "  static <T> Class<T> createForPrimitive(String packageName, String className,",
           "      String jni) { return new Class<T>(); }",
-          "  static <T> Class<T> getClassLiteralForArray() { return null; }",
           "  static boolean isClassMetadataEnabled() { return true; }",
           "  public boolean desiredAssertionStatus() { return true; }",
           "  public String getName() { return null; }",

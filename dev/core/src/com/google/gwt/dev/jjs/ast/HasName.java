@@ -25,16 +25,21 @@ import java.util.List;
 public interface HasName {
 
   /**
+   * Comparator by name.
+   */
+  Comparator<HasName> BY_NAME_COMPARATOR = new Comparator<HasName>() {
+    @Override
+    public int compare(HasName o1, HasName o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
+
+  /**
    * Collection of utilities to deal with HasName objects.
    */
   public static final class Util {
     public static <T extends HasName> void sortByName(List<T> list) {
-      Collections.sort(list, new Comparator<T>() {
-        @Override
-        public int compare(T o1, T o2) {
-          return o1.getName().compareTo(o2.getName());
-        }
-      });
+      Collections.sort(list, BY_NAME_COMPARATOR);
     }
   }
 

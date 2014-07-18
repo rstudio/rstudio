@@ -691,7 +691,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     JClassLiteral leafTypeClassLiteral = new JClassLiteral(sourceInfo, leafType);
     leafTypeClassLiteral.setField(field);
     return new JMethodCall(sourceInfo,null,
-        getIndexedMethod("Class.getClassLiteralForArray"),
+        getIndexedMethod("Array.getClassLiteralForArray"),
         new JFieldRef(sourceInfo, null, field, field.getEnclosingType()),
         getLiteralInt(dimensions));
   }

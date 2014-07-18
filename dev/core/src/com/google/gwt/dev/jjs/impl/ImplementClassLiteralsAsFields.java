@@ -115,9 +115,10 @@ public class ImplementClassLiteralsAsFields {
       }
 
       final Map<String, JsniClassLiteral> jsniClassLiteralsByJsniReference = Maps.newHashMap();
-      final JMethod getArrayClassLiteralMethod =
-          program.getIndexedMethod("Class.getClassLiteralForArray");
-      final String getClassLiteralForArrayMethodIdent = "@" + createIdent(getArrayClassLiteralMethod);
+      final JMethod getClassLiteralForArrayMethod =
+          program.getIndexedMethod("Array.getClassLiteralForArray");
+      final String getClassLiteralForArrayMethodIdent =
+          "@" + createIdent(getClassLiteralForArrayMethod);
 
       boolean areThereArrayClassLiterals = false;
       for (JsniClassLiteral jsniClassLiteral : jsniMethodBody.getClassRefs()) {
@@ -168,7 +169,7 @@ public class ImplementClassLiteralsAsFields {
 
             jsniClassLiteral = new JsniClassLiteral(jsniClassLiteral.getSourceInfo(), leafType);
 
-            // Class.getClassLiteralForArray(leafType.class, dimensions)
+            // Array.getClassLiteralForArray(leafType.class, dimensions)
             SourceInfo info = x.getSourceInfo();
             JsNameRef getArrayClassLiteralMethodNameRef =
                 new JsNameRef(info, getClassLiteralForArrayMethodIdent);
@@ -195,7 +196,7 @@ public class ImplementClassLiteralsAsFields {
       // Add getClassLiteralForArray as a JsniMethodRef.
       newBody.addJsniRef(
           new JsniMethodRef(jsniMethodBody.getSourceInfo(), getClassLiteralForArrayMethodIdent,
-              getArrayClassLiteralMethod, program.getJavaScriptObject()));
+              getClassLiteralForArrayMethod, program.getJavaScriptObject()));
 
       ctx.replaceMe(newBody);
     }

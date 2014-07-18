@@ -926,7 +926,6 @@ public class ControlFlowAnalyzer {
   private ListMultimap<JParameter, JExpression> argsToRescueIfParameterRead;
 
   private final JMethod asyncFragmentOnLoad;
-  private final JDeclaredType baseArrayType;
 
   /**
    * Schrodinger set of classLiterals to be rescued if type is instantiated AND getClass()
@@ -957,7 +956,7 @@ public class ControlFlowAnalyzer {
   private final JField getClassField;
   private final JMethod getClassMethod;
   private final JProgram program;
-  private Set<JReferenceType> referencedTypes = Sets.newLinkedHashSet();
+  private Set<JReferenceType> referencedTypes = Sets.newHashSet();
   private final RescueVisitor rescuer;
   private final Set<JReferenceType> rescuedViaCast = Sets.newHashSet();
   private final JMethod runAsyncOnsuccess;
@@ -967,7 +966,6 @@ public class ControlFlowAnalyzer {
     program = cfa.program;
     asyncFragmentOnLoad = cfa.asyncFragmentOnLoad;
     runAsyncOnsuccess = cfa.runAsyncOnsuccess;
-    baseArrayType = cfa.baseArrayType;
     fieldsWritten = Sets.newHashSet(cfa.fieldsWritten);
     instantiatedTypes = Sets.newHashSet(cfa.instantiatedTypes);
     liveFieldsAndMethods = Sets.newHashSet(cfa.liveFieldsAndMethods);
@@ -990,7 +988,6 @@ public class ControlFlowAnalyzer {
     this.program = program;
     asyncFragmentOnLoad = program.getIndexedMethod("AsyncFragmentLoader.onLoad");
     runAsyncOnsuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
-    baseArrayType = program.getIndexedType("Array");
     getClassField = program.getIndexedField("Object.___clazz");
     getClassMethod = program.getIndexedMethod("Object.getClass");
     rescuedViaCast.addAll(program.typeOracle.getInstantiatedJsoTypesViaCast());

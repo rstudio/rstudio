@@ -97,7 +97,7 @@ public final class Array {
   public static Object initDim(Class<?> leafClassLiteral, JavaScriptObject castableTypeMap,
       JavaScriptObject elementTypeId, int length, int elementTypeCategory, int dimensions) {
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    initValues(Class.getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
+    initValues(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
         elementTypeId, elementTypeCategory, result);
     return result;
   }
@@ -316,7 +316,7 @@ public final class Array {
     int elementTypeCategory = isLastDim ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    initValues(Class.getClassLiteralForArray(leafClassLiteral, count - index),
+    initValues(getClassLiteralForArray(leafClassLiteral, count - index),
         castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);
 
     if (!isLastDim) {
@@ -329,6 +329,22 @@ public final class Array {
     }
     return result;
   }
+
+  // This method is package protected so that it is indexed. {@link ImplementClassLiteralsAsFields}
+  // will insert calls to this method when array class literals are constructed.
+  //
+  // DO NOT turn this method into JSNI because it would substantially increase {@link JsInliner}
+  // execution time.
+  static <T> Class<T> getClassLiteralForArray(Class<?> clazz , int dimensions) {
+    return getClassLiteralForArrayImpl(clazz, dimensions);
+  }
+
+  // DO NOT INLINE this method into {@link getClassLiteralForArray}.
+  // The purpose of this method is to avoid introducing a public api to {@link java.lang.Class}.
+  private static native <T>  Class<T> getClassLiteralForArrayImpl(
+      Class<?> clazz , int dimensions) /*-{
+    return @java.lang.Class::getClassLiteralForArray(*)(clazz, dimensions);
+  }-*/;
 
   /**
    * Sets a value in the array.
