@@ -71,7 +71,23 @@ public enum CompilerEventType implements EventType {
   GRAPHICS_INIT("Graphics2D.createGraphics()", "Blue"), //
   ANALYZE_MODULE("AnalyzeModule", "LightBlue"), //
   COMPILE_MODULE("CompileModule", "LightBlue"),
-  LOAD_ARCHIVE("LoadArchive", "DarkSlateBlue"); //
+  LOAD_ARCHIVE("LoadArchive", "DarkSlateBlue"),
+
+  UNIFY_AST("UnifyAst", "Blue"),
+  VISIT_GWT_CREATE("VisitGwtCreate", "LightBlue"),
+
+  PERMUTATION_JAVA("PermutationJava", "Blue"),
+  JAVA_NORMALIZERS("JavaNormalizers", "Blue"),
+  JAVA_POST_NORMALIZER_OPTIMIZERS("JavaPostNormalizerOptimizers", "Blue"),
+
+  PERMUTATION_JAVASCRIPT("PermutationJavaScript", "Blue"),
+  GENERATE_JS_AST("GenerateJsAst", "Blue"),
+  GENERATE_JAVASCRIPT("GenerateJavaScript", "Green"),
+  PERMUTATION_ARTIFACTS("PermutationArtifacts", "LighBlue"),
+  SOURCE_MAP_RECORDER("SourceMapRecorder", "Blue"),
+
+  WRITE_SYMBOL_MAPS("WriteSymbolMaps", "Orange"),
+  WRITE_SOURCE_MAPS("WriteSourceMaps", "Red");
 
   final String cssColor;
   final String name;

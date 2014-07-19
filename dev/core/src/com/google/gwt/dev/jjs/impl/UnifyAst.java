@@ -81,6 +81,9 @@ import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
@@ -424,7 +427,16 @@ public class UnifyAst {
       }
 
       if (compilerContext.shouldCompileMonolithic()) {
-        return createStaticRebindExpression(gwtCreateCall, classLiteral);
+        Event event = SpeedTracerLogger.start(CompilerEventType.VISIT_GWT_CREATE,
+            "argument",
+            classLiteral.getRefType().getName(),
+            "caller",
+            gwtCreateCall.getSourceInfo().getFileName());
+        try {
+          return createStaticRebindExpression(gwtCreateCall, classLiteral);
+        } finally {
+            event.end();
+        }
       } else {
         return createRuntimeRebindExpression(gwtCreateCall, classLiteral);
       }

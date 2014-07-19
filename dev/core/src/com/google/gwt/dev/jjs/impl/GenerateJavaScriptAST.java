@@ -162,6 +162,9 @@ import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
@@ -3226,10 +3229,16 @@ public class GenerateJavaScriptAST {
   public static Pair<JavaToJavaScriptMap, Set<JsNode>> exec(JProgram program,
       JsProgram jsProgram, CompilerContext compilerContext, Map<JType, JLiteral> typeIdsByType,
       Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
-    GenerateJavaScriptAST generateJavaScriptAST =
-        new GenerateJavaScriptAST(program, jsProgram, compilerContext, typeIdsByType,
-            symbolTable, props);
-    return generateJavaScriptAST.execImpl();
+
+    Event event = SpeedTracerLogger.start(CompilerEventType.GENERATE_JS_AST);
+    try {
+      GenerateJavaScriptAST generateJavaScriptAST =
+          new GenerateJavaScriptAST(program, jsProgram, compilerContext, typeIdsByType,
+              symbolTable, props);
+      return generateJavaScriptAST.execImpl();
+    } finally {
+      event.end();
+    }
   }
 
   private final Map<JBlock, JsCatch> catchMap = Maps.newIdentityHashMap();

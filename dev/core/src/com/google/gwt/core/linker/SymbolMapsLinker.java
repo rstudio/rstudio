@@ -33,6 +33,9 @@ import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3.ExtensionMergeAction;
 
@@ -262,6 +265,8 @@ public class SymbolMapsLinker extends AbstractLinker {
       artifacts = new ArtifactSet(artifacts);
       Map<Integer, String> permMap = new HashMap<Integer, String>();
 
+      Event writeSymbolMapsEvent =
+          SpeedTracerLogger.start(CompilerEventType.WRITE_SYMBOL_MAPS);
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       for (CompilationResult result : artifacts.find(CompilationResult.class)) {
 
@@ -285,8 +290,10 @@ public class SymbolMapsLinker extends AbstractLinker {
           out.reset();
         }
       }
+      writeSymbolMapsEvent.end();
 
-
+      Event writeSourceMapsEvent =
+          SpeedTracerLogger.start(CompilerEventType.WRITE_SOURCE_MAPS);
       for (SourceMapArtifact se : artifacts.find(SourceMapArtifact.class)) {
         // filename is permutation_id/sourceMap<fragmentNumber>.json
         String sourceMapString = Util.readStreamAsString(se.getContents(logger));
@@ -340,6 +347,7 @@ public class SymbolMapsLinker extends AbstractLinker {
         artifacts.add(emArt);
         artifacts.remove(se);
       }
+      writeSourceMapsEvent.end();
     }
     return artifacts;
   }

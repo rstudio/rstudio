@@ -58,6 +58,9 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.arg.OptionOptimize;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -83,18 +86,23 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
     @Override
     protected Map<JType, JLiteral> normalizeSemantics() {
-      Devirtualizer.exec(jprogram);
-      CatchBlockNormalizer.exec(jprogram);
-      PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
-      LongCastNormalizer.exec(jprogram);
-      LongEmulationNormalizer.exec(jprogram);
-      TypeCoercionNormalizer.exec(jprogram);
-      ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
-      ComputeInstantiatedJsoInterfaces.exec(jprogram);
-      ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled());
-      ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
-      EqualityNormalizer.exec(jprogram);
-      return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram);
+      Event event = SpeedTracerLogger.start(CompilerEventType.JAVA_NORMALIZERS);
+      try {
+        Devirtualizer.exec(jprogram);
+        CatchBlockNormalizer.exec(jprogram);
+        PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
+        LongCastNormalizer.exec(jprogram);
+        LongEmulationNormalizer.exec(jprogram);
+        TypeCoercionNormalizer.exec(jprogram);
+        ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+        ComputeInstantiatedJsoInterfaces.exec(jprogram);
+        ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled());
+        ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
+        EqualityNormalizer.exec(jprogram);
+        return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram);
+      } finally {
+        event.end();
+      }
     }
 
     @Override
@@ -115,11 +123,16 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
     @Override
     protected void postNormalizationOptimizeJava() {
-      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
-        RemoveSpecializations.exec(jprogram);
-        Pruner.exec(jprogram, false);
+      Event event = SpeedTracerLogger.start(CompilerEventType.JAVA_POST_NORMALIZER_OPTIMIZERS);
+      try {
+        if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+          RemoveSpecializations.exec(jprogram);
+          Pruner.exec(jprogram, false);
+        }
+        ReplaceGetClassOverrides.exec(jprogram);
+      } finally {
+        event.end();
       }
-      ReplaceGetClassOverrides.exec(jprogram);
     }
 
     @Override

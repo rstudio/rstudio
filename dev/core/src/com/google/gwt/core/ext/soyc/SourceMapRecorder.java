@@ -23,6 +23,9 @@ import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceInfoCorrelation;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapParseException;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -86,6 +89,7 @@ public class SourceMapRecorder {
 
   private List<SyntheticArtifact> createArtifacts()
       throws IOException, JSONException, SourceMapParseException {
+    Event event = SpeedTracerLogger.start(CompilerEventType.SOURCE_MAP_RECORDER);
     List<SyntheticArtifact> toReturn = Lists.newArrayList();
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     SourceMapGeneratorV3 generator = new SourceMapGeneratorV3();
@@ -107,6 +111,7 @@ public class SourceMapRecorder {
           baos.toByteArray(), sourceRoot));
       fragment++;
     }
+    event.end();
     return toReturn;
   }
 
