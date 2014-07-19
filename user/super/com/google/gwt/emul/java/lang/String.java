@@ -263,6 +263,10 @@ public final class String implements Comparable<String>, CharSequence,
     return str.substr(beginIndex, len);
   }-*/;
 
+  static native String __substring(String str, int beginIndex, int endIndex) /*-{
+    return str.substring(beginIndex, endIndex);
+  }-*/;
+
   /**
    * This method converts Java-escaped dollar signs "\$" into JavaScript-escaped
    * dollar signs "$$", and removes all other lone backslashes, which serve as
@@ -940,16 +944,17 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public CharSequence subSequence(int beginIndex, int endIndex) {
-    return this.substring(beginIndex, endIndex);
+    return substring(beginIndex, endIndex);
   }
 
-  public native String substring(int beginIndex) /*-{
-    return this.substr(beginIndex, this.length - beginIndex);
-  }-*/;
+  public String substring(int beginIndex) {
+    return substring(beginIndex, this.length());
+  }
 
-  public native String substring(int beginIndex, int endIndex) /*-{
-    return this.substr(beginIndex, endIndex - beginIndex);
-  }-*/;
+  public String substring(int beginIndex, int endIndex) {
+    __checkBounds(this.length(), beginIndex, endIndex);
+    return __substring(this, beginIndex, endIndex);
+  }
 
   public char[] toCharArray() {
     int n = this.length();
