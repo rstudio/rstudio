@@ -441,18 +441,14 @@ public final class String implements Comparable<String>, CharSequence,
     throw new IllegalArgumentException("Character out of range: " + codePoint);
   }
 
-  private static native String fromCharCode(char ch) /*-{
-    return String.fromCharCode(ch);
-  }-*/;
-
   private static String fromCodePoint(int codePoint) {
     if (codePoint >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
       char hiSurrogate = Character.getHighSurrogate(codePoint);
       char loSurrogate = Character.getLowSurrogate(codePoint);
-      return String.fromCharCode(hiSurrogate)
-          + String.fromCharCode(loSurrogate);
+      return String.valueOf(hiSurrogate)
+          + String.valueOf(loSurrogate);
     } else {
-      return String.fromCharCode((char) codePoint);
+      return String.valueOf((char) codePoint);
     }
   }
 
@@ -751,7 +747,7 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public int indexOf(int codePoint, int startIndex) {
-    return this.indexOf(String.fromCodePoint(codePoint), startIndex);
+    return indexOf(fromCodePoint(codePoint), startIndex);
   }
 
   public native int indexOf(String str) /*-{
