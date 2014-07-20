@@ -508,6 +508,121 @@ public class StringUtil
       return input.substring(0, 1).toUpperCase() + input.substring(1); 
    }
    
+   public static int countMatches(String line, String match)
+   {
+      return line.length() - line.replace(match, "").length();
+   }
+   
+   public static String stripRComment(String string)
+   {
+      boolean inSingleQuotes = false;
+      boolean inDoubleQuotes = false;
+      boolean inQuotes = false;
+      
+      char currentChar = '\0';
+      char previousChar = '\0';
+      
+      int commentIndex = string.length();
+      
+      for (int i = 0; i < string.length(); i++)
+      {
+         currentChar = string.charAt(i);
+         inQuotes = inSingleQuotes || inDoubleQuotes;
+         
+         if (i > 0)
+         {
+            previousChar = string.charAt(i - 1);
+         }
+         
+         if (currentChar == '#' && !inQuotes)
+         {
+            commentIndex = i;
+            break;
+         }
+         
+         if (currentChar == '\'' && !inQuotes)
+         {
+            inSingleQuotes = true;
+            continue;
+         }
+         
+         if (currentChar == '\'' && previousChar != '\\' && inSingleQuotes)
+         {
+            inSingleQuotes = false;
+            continue;
+         }
+         
+         if (currentChar == '"' && !inQuotes)
+         {
+            inDoubleQuotes = true;
+            continue;
+         }
+         
+         if (currentChar == '"' && previousChar != '\\' && inDoubleQuotes)
+         {
+            inDoubleQuotes = false;
+            continue;
+         }
+      }
+      return string.substring(0, commentIndex);
+   }
+   
+   public static String stripBalancedQuotes(String string)
+   {
+      boolean inSingleQuotes = false;
+      boolean inDoubleQuotes = false;
+      boolean inQuotes = false;
+
+      int stringStart = 0;
+
+      char currentChar = '\0';
+      char previousChar = '\0';
+
+      StringBuilder result = new StringBuilder();
+
+      for (int i = 0; i < string.length(); i++)
+      {
+         currentChar = string.charAt(i);
+         inQuotes = inSingleQuotes || inDoubleQuotes;
+
+         if (i > 0)
+         {
+            previousChar = string.charAt(i - 1);
+         }
+
+         if (currentChar == '\'' && !inQuotes)
+         {
+            inSingleQuotes = true;
+            result.append(string.substring(stringStart, i));
+            continue;
+         }
+
+         if (currentChar == '\'' && previousChar != '\\' && inSingleQuotes)
+         {
+            inSingleQuotes = false;
+            stringStart = i + 1;
+            continue;
+         }
+
+         if (currentChar == '"' && !inQuotes)
+         {
+            inDoubleQuotes = true;
+            result.append(string.substring(stringStart, i));
+            continue;
+         }
+
+         if (currentChar == '"' && previousChar != '\\' && inDoubleQuotes)
+         {
+            inDoubleQuotes = false;
+            stringStart = i + 1;
+            continue;
+         }
+      }
+      result.append(string.substring(stringStart, string.length()));
+      return result.toString();
+   }
+   
+   
    private static final String[] LABELS = {
          "B",
          "KB",

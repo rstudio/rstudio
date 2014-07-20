@@ -38,6 +38,13 @@ public class Debug
       logToConsole(message) ;
    }
    
+   public static native void logObject(JavaScriptObject object) /*-{
+      if (typeof(console != "undefined"))
+      {
+         console.log(object);
+      }
+   }-*/;
+   
    public static native void logToConsole(String message) /*-{
     if (typeof(console) != "undefined")
     {

@@ -74,7 +74,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       this.moveToNextToken = function(maxRow)
       {
          if (this.$row > maxRow)
-            return;
+            return false;
 
          this.$offset++;
 
