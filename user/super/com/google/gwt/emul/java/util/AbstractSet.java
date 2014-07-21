@@ -46,17 +46,7 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements
 
   @Override
   public int hashCode() {
-    int hashCode = 0;
-    for (Iterator<E> iter = iterator(); iter.hasNext();) {
-      // Sets can have null members
-      E next = iter.next();
-      if (next != null) {
-        hashCode += next.hashCode();
-        // handle int overflow by coercing to int
-        hashCode = ~~hashCode;
-      }
-    }
-    return hashCode;
+    return Collections.hashCode(this);
   }
 
   @Override

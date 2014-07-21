@@ -198,15 +198,15 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static String toBinaryString(int value) {
-    return toRadixString(toUnsignedInt32(value), 2);
+    return toUnsignedRadixString(value, 2);
   }
 
   public static String toHexString(int value) {
-    return toRadixString(toUnsignedInt32(value), 16);
+    return toUnsignedRadixString(value, 16);
   }
 
   public static String toOctalString(int value) {
-    return toRadixString(toUnsignedInt32(value), 8);
+    return toUnsignedRadixString(value, 8);
   }
 
   public static String toString(int value) {
@@ -245,8 +245,9 @@ public final class Integer extends Number implements Comparable<Integer> {
     return value.toString(radix);
   }-*/;
 
-  private static native int toUnsignedInt32(int value) /*-{
-    return value >>> 0;
+  private static native String toUnsignedRadixString(int value, int radix) /*-{
+    // ">>> 0" converts the value to unsigned number.
+    return (value >>> 0).toString(radix);
   }-*/;
 
   private final transient int value;

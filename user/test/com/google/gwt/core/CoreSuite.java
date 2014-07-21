@@ -26,6 +26,7 @@ import com.google.gwt.core.client.JsIdentityTest;
 import com.google.gwt.core.client.JsonUtilsTest;
 import com.google.gwt.core.client.SchedulerTest;
 import com.google.gwt.core.client.ScriptInjectorTest;
+import com.google.gwt.core.client.impl.CoercionsTest;
 import com.google.gwt.core.client.impl.ImplTest;
 import com.google.gwt.core.client.impl.SchedulerImplTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorCollectorTest;
@@ -45,6 +46,7 @@ public class CoreSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("All core tests");
 
+    suite.addTestSuite(CoercionsTest.class);
     suite.addTestSuite(GwtServletBaseTest.class);
     suite.addTestSuite(GWTTest.class);
     suite.addTestSuite(HttpThrowableReporterTest.class);

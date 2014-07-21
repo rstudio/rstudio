@@ -180,12 +180,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
   @Override
   public int hashCode() {
-    int hashCode = 0;
-    for (Entry<K, V> entry : entrySet()) {
-      hashCode += entry.hashCode();
-      hashCode = ~~hashCode;
-    }
-    return hashCode;
+    return Collections.hashCode(entrySet());
   }
 
   public boolean isEmpty() {

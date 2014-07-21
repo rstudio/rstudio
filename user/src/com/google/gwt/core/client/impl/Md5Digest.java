@@ -88,6 +88,8 @@
  */
 package com.google.gwt.core.client.impl;
 
+import static com.google.gwt.core.client.impl.Coercions.ensureInt;
+
 import java.security.MessageDigest;
 
 /**
@@ -445,9 +447,9 @@ public final class Md5Digest extends MessageDigest {
     b = ii(b, c, d, a, x[9], 21, 0xeb86d391);
 
     // Coerce to 32-bits to compute the expression correctly in JavaScript.
-    state[0] = (state[0] + a) | 0;
-    state[1] = (state[1] + b) | 0;
-    state[2] = (state[2] + c) | 0;
-    state[3] = (state[3] + d) | 0;
+    state[0] = ensureInt(state[0] + a);
+    state[1] = ensureInt(state[1] + b);
+    state[2] = ensureInt(state[2] + c);
+    state[3] = ensureInt(state[3] + d);
   }
 }

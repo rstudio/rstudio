@@ -234,17 +234,6 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
   }
 
   /**
-   * Converts an integral double to an unsigned integer; ie 2^31 will be
-   * returned as 0x80000000.
-   * 
-   * @param val
-   * @return val as an unsigned int
-   */
-  private static native int toUnsignedInt(double val) /*-{
-    return ~~val;
-  }-*/;
-
-  /**
    * The magnitude of this big integer. This array is in little endian order and
    * each "digit" is a 32-bit unsigned integer. For example: {@code 13} is
    * represented as [ 13 ] {@code -13} is represented as [ 13 ] {@code 2^32 +
@@ -506,16 +495,14 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    */
   private BigInteger(int sign, double val) {
     // PRE: (val >= 0) && (sign >= -1) && (sign <= 1)
-    // ~~ forces coercion to 32 bits
     this.sign = sign;
     if (val < POW32) {
       // It fits in one 'int'
       numberLength = 1;
-      digits = new int[] { toUnsignedInt(val) };
+      digits = new int[] { (int) val };
     } else {
       numberLength = 2;
-      digits = new int[] { toUnsignedInt(val % POW32),
-          toUnsignedInt(val / POW32)};
+      digits = new int[] { (int) (val % POW32), (int) (val / POW32)};
     }
   }
 

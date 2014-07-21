@@ -34,6 +34,8 @@
  */
 package java.math;
 
+import static com.google.gwt.core.client.impl.Coercions.ensureInt;
+
 /**
  * Static library that provides all the <b>bit level</b> operations for
  * {@link BigInteger}. The operations are: <ul type="circle"> <li>Left Shifting</li>
@@ -90,8 +92,8 @@ class BitLevel {
       int i = val.getFirstNonzeroDigit();
       // We reduce the problem to the positive case.
       if (i == val.numberLength - 1) {
-        // ~~ is to handle int overflow
-        highDigit = ~~(highDigit - 1);
+        highDigit--;
+        highDigit = ensureInt(highDigit); // make sure we don't overflow
       }
     }
     // Subtracting all sign bits

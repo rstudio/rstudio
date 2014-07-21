@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import static com.google.gwt.core.client.impl.Coercions.ensureInt;
+
 import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
 import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElementIndex;
 
@@ -1159,6 +1161,15 @@ public class Collections {
   public static <T> SortedSet<T> unmodifiableSortedSet(
       SortedSet<? extends T> set) {
     return new UnmodifiableSortedSet<T>(set);
+  }
+
+  static <T> int hashCode(Collection<T> collection) {
+    int hashCode = 1;
+    for (T e : collection) {
+      hashCode = 31 * hashCode + Objects.hashCode(e);
+      hashCode = ensureInt(hashCode); // make sure we don't overflow
+    }
+    return hashCode;
   }
 
   /**
