@@ -42,7 +42,26 @@ import java.util.Map.Entry;
 public abstract class ResolveRuntimeTypeReferences {
 
   /**
-   * Sequentially creates int type ids for castable and instantiable types.
+   * Sequentially creates int type ids for types.
+   */
+  private static class IntTypeIdGenerator {
+
+    private final Map<String, Integer> typeIdByTypeName = Maps.newHashMap();
+    private int nextAvailableId =  0;
+
+    public int getOrCreateTypeId(String typeName) {
+      if (typeIdByTypeName.containsKey(typeName)) {
+        return typeIdByTypeName.get(typeName);
+      }
+
+      int nextId = nextAvailableId++;
+      typeIdByTypeName.put(typeName, nextId);
+      return nextId;
+    }
+  }
+
+  /**
+   * Sequentially creates int type id literals for castable and instantiable types.
    */
   public static class IntoIntLiterals extends ResolveRuntimeTypeReferences {
 
@@ -50,7 +69,7 @@ public abstract class ResolveRuntimeTypeReferences {
       if (typeIdLiteralsByType.containsKey(type)) {
         return;
       }
-      int id = nextAvailableId++;
+      int id = intTypeIdGenerator.getOrCreateTypeId(type.getName());
       assert (id != 0 || type == program.getJavaScriptObject());
       assert (id != 1 || type == program.getTypeJavaLangObject());
       assert (id != 2 || type == program.getTypeJavaLangString());
@@ -59,13 +78,15 @@ public abstract class ResolveRuntimeTypeReferences {
     }
 
     public static Map<JType, JLiteral> exec(JProgram program) {
-      return new ResolveRuntimeTypeReferences.IntoIntLiterals(program).execImpl();
+      return new ResolveRuntimeTypeReferences.IntoIntLiterals(program,
+          new IntTypeIdGenerator()).execImpl();
     }
 
-    private int nextAvailableId =  0;
+    private IntTypeIdGenerator intTypeIdGenerator;
 
-    private IntoIntLiterals(JProgram program) {
+    private IntoIntLiterals(JProgram program, IntTypeIdGenerator intTypeIdGenerator) {
       super(program);
+      this.intTypeIdGenerator = intTypeIdGenerator;
     }
 
     @Override
@@ -84,7 +105,7 @@ public abstract class ResolveRuntimeTypeReferences {
   }
 
   /**
-   * Predictably creates String type ids for castable and instantiable types.
+   * Predictably creates String type id literals for castable and instantiable types.
    */
   public static class IntoStringLiterals extends ResolveRuntimeTypeReferences {
 
