@@ -23,18 +23,22 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PersistenceBackedObject;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.ArgHandlerCompilePerFile;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerSaveSourceOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
+import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -59,6 +63,7 @@ public class Compiler {
 
       // Override the ArgHandlerWorkDirRequired in the super class.
       registerHandler(new ArgHandlerWorkDirOptional(options));
+      registerHandler(new ArgHandlerCompilePerFile(options));
 
       registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerDeployDir(options));
@@ -143,6 +148,16 @@ public class Compiler {
       if ((options.isSoycEnabled() || options.isJsonSoycEnabled()) &&
            options.getExtraDir() == null) {
         options.setExtraDir(new File("extras"));
+      }
+      if (options.shouldCompilePerFile()) {
+        // Disable options that disrupt contiguous output JS source per class.
+        options.setClusterSimilarFunctions(false);
+        options.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
+        options.setOutput(JsOutputOption.DETAILED);
+        options.setRunAsyncEnabled(false);
+
+        // Disable options not yet supported with a persistent JTypeOracle.
+        options.setJsInteropMode(JsInteropMode.NONE);
       }
 
       File persistentUnitCacheDir = null;
