@@ -19,10 +19,9 @@ package com.google.gwt.typedarrays.client;
  * An implementation class used for browsers which provide full native
  * implementations of all typed array classes.
  * <p>
- * Current versions of Opera are such browsers.
+ * IE11, Firefox are such browsers.
  */
 public class NativeImplFull extends NativeImpl {
-  // Opera 11.6+ (but not mini/mobile) supports typed arrays.
 
   @Override
   protected boolean checkDataViewSupport() {
