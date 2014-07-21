@@ -253,11 +253,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    {
       return name + " = " + (value ? "TRUE" : "FALSE");
    }
-   
-   private String packratStringArg(String name, String value)
-   {
-      return name + " = '" +  value  + "'";
-   }
  
    private String packratVectorArg(String name, JsArrayString valueJson)
    {
