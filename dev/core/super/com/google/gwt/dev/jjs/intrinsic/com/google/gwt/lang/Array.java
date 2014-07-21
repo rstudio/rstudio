@@ -335,14 +335,16 @@ public final class Array {
   //
   // DO NOT turn this method into JSNI because it would substantially increase {@link JsInliner}
   // execution time.
-  static <T> Class<T> getClassLiteralForArray(Class<?> clazz , int dimensions) {
-    return getClassLiteralForArrayImpl(clazz, dimensions);
+  // TODO(rluble): Add a @DoNotInline annotation once we implement those, note the method will not
+  // be inlined only because the parameters are accessed out of order in the body.
+  static <T> Class<T> getClassLiteralForArray(Class<?> clazz, int dimensions) {
+    return getClassLiteralForArrayImpl(dimensions, clazz);
   }
 
   // DO NOT INLINE this method into {@link getClassLiteralForArray}.
   // The purpose of this method is to avoid introducing a public api to {@link java.lang.Class}.
-  private static native <T>  Class<T> getClassLiteralForArrayImpl(
-      Class<?> clazz , int dimensions) /*-{
+  private static native <T>  Class<T> getClassLiteralForArrayImpl(int dimensions,
+      Class<?> clazz) /*-{
     return @java.lang.Class::getClassLiteralForArray(*)(clazz, dimensions);
   }-*/;
 
