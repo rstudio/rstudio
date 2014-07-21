@@ -30,6 +30,12 @@
 
 #include <session/SessionModuleContext.hpp>
 
+// TODO: remember size within a session (suspend)
+
+// TODO: ViewerHistory manager that can accept source documents
+// from e.g. run app or preview and can also save session temporary
+// based history items based on html widgets
+
 using namespace core;
 
 namespace session {
@@ -40,7 +46,7 @@ namespace {
 
 // track the current viewed url and whether it is a static widget
 std::string s_currentUrl;
-bool s_isStaticWidget = false;
+bool s_isHTMLWidget = false;
 
 // viewer stopped means clear the url
 Error viewerStopped(const json::JsonRpcRequest& request,
@@ -52,17 +58,17 @@ Error viewerStopped(const json::JsonRpcRequest& request,
 
 void viewerNavigate(const std::string& url,
                     int height,
-                    bool isStaticWidget)
+                    bool isHTMLWidget)
 {
    // record the url (for reloads)
    s_currentUrl = module_context::mapUrlPorts(url);
-   s_isStaticWidget = isStaticWidget;
+   s_isHTMLWidget = isHTMLWidget;
 
    // enque the event
    json::Object dataJson;
    dataJson["url"] = s_currentUrl;
    dataJson["height"] = height;
-   dataJson["static_widget"] = isStaticWidget;
+   dataJson["html_widget"] = isHTMLWidget;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
 }
@@ -150,7 +156,7 @@ void onResume(const Settings&)
 void onClientInit()
 {
    if (!s_currentUrl.empty())
-      viewerNavigate(s_currentUrl, 0, s_isStaticWidget);
+      viewerNavigate(s_currentUrl, 0, s_isHTMLWidget);
 }
 
 } // anonymous namespace

@@ -106,7 +106,7 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onViewerNavigate(ViewerNavigateEvent event)
    {
-      manageCommands(true, event.isStaticWidget());
+      manageCommands(true, event.isHTMLWidget());
       
       if (event.getURL().length() > 0)
       {
@@ -118,7 +118,7 @@ public class ViewerPresenter extends BasePresenter
          
          navigate(event.getURL());
          
-         if (event.isStaticWidget())
+         if (event.isHTMLWidget())
             updateZoomWindow(display_.getUrl());
       }
       else
@@ -293,14 +293,14 @@ public class ViewerPresenter extends BasePresenter
       events_.fireEvent(new ViewerClearedEvent());
    }
    
-   private void manageCommands(boolean enable, boolean isStaticWidget)
+   private void manageCommands(boolean enable, boolean isHTMLWidget)
    {
       commands_.viewerPopout().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
       
       commands_.viewerZoom().setEnabled(enable);
-      commands_.viewerZoom().setVisible(isStaticWidget);
+      commands_.viewerZoom().setVisible(isHTMLWidget);
    }
    
    private native void initializeEvents() /*-{  
