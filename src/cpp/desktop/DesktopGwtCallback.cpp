@@ -52,6 +52,10 @@ using namespace core;
 
 namespace desktop {
 
+namespace {
+   WindowTracker s_windowTracker;
+}
+
 extern QString scratchPath;
 
 GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
@@ -402,13 +406,11 @@ void GwtCallback::openMinimalWindow(QString name,
                                     int width,
                                     int height)
 {
-   static WindowTracker windowTracker;
-
    bool named = !name.isEmpty() && name != QString::fromAscii("_blank");
 
    BrowserWindow* browser = NULL;
    if (named)
-      browser = windowTracker.getWindow(name);
+      browser = s_windowTracker.getWindow(name);
 
    if (!browser)
    {
@@ -418,7 +420,7 @@ void GwtCallback::openMinimalWindow(QString name,
       browser->connect(browser->webView(), SIGNAL(onCloseWindowShortcut()),
                        browser, SLOT(onCloseRequested()));
       if (named)
-         windowTracker.addWindow(name, browser);
+         s_windowTracker.addWindow(name, browser);
    }
 
    browser->webView()->load(QUrl(url));
@@ -966,28 +968,27 @@ void GwtCallback::activateAndFocusOwner()
 
 void GwtCallback::reloadZoomWindow()
 {
-   QWidgetList topLevels = QApplication::topLevelWidgets();
-   for (int i = 0; i < topLevels.size(); i++)
-   {
-      QWidget* pWindow = topLevels.at(i);
-      if (!pWindow->isVisible())
-         continue;
-
-      if (pWindow->windowTitle() == QString::fromAscii("Plot Zoom"))
-      {
-         // do the reload
-         BrowserWindow* pBrowserWindow = (BrowserWindow*)pWindow;
-         pBrowserWindow->webView()->reload();
-
-         break;
-      }
-   }
+   BrowserWindow* pBrowser = s_windowTracker.getWindow(
+                     QString::fromAscii("_rstudio_zoom"));
+   if (pBrowser)
+      pBrowser->webView()->reload();
 }
 
 void GwtCallback::setViewerUrl(QString url)
 {
    pOwner_->webPage()->setViewerUrl(url);
 }
+
+void GwtCallback::reloadViewerZoomWindow(QString url)
+{
+   BrowserWindow* pBrowser = s_windowTracker.getWindow(
+                     QString::fromAscii("_rstudio_viewer_zoom"));
+   if (pBrowser)
+      pBrowser->webView()->setUrl(url);
+}
+
+
+
 
 bool GwtCallback::isOSXMavericks()
 {

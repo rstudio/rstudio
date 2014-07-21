@@ -156,6 +156,8 @@ public slots:
    void reloadZoomWindow();
 
    void setViewerUrl(QString url);
+   void reloadViewerZoomWindow(QString url);
+
    QString getScrollingCompensationType();
 
    bool isOSXMavericks();
