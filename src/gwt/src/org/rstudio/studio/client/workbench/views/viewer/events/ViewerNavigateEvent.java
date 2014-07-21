@@ -33,6 +33,10 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       public native final int getHeight() /*-{
          return this.height;
       }-*/;
+      
+      public native final boolean isStaticWidget() /*-{
+         return this.static_widget;
+      }-*/;
    }
    
    public interface Handler extends EventHandler
@@ -53,6 +57,11 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    public int getHeight()
    {
       return data_.getHeight();
+   }
+   
+   public boolean isStaticWidget()
+   {
+      return data_.isStaticWidget();
    }
    
    @Override

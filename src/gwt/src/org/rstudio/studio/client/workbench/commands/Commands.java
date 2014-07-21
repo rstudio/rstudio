@@ -289,6 +289,7 @@ public abstract class
    
    // Viewer
    public abstract AppCommand viewerPopout();
+   public abstract AppCommand viewerZoom();
    public abstract AppCommand viewerRefresh();
    public abstract AppCommand viewerSaveAllAndRefresh();
    public abstract AppCommand viewerStop();

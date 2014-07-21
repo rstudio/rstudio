@@ -38,8 +38,9 @@ namespace viewer {
 
 namespace {
 
-// track the current viewed url
+// track the current viewed url and whether it is a static widget
 std::string s_currentUrl;
+bool s_isStaticWidget = false;
 
 // viewer stopped means clear the url
 Error viewerStopped(const json::JsonRpcRequest& request,
@@ -49,15 +50,19 @@ Error viewerStopped(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void viewerNavigate(const std::string& url, int height = 0)
+void viewerNavigate(const std::string& url,
+                    int height,
+                    bool isStaticWidget)
 {
    // record the url (for reloads)
    s_currentUrl = module_context::mapUrlPorts(url);
+   s_isStaticWidget = isStaticWidget;
 
    // enque the event
    json::Object dataJson;
    dataJson["url"] = s_currentUrl;
    dataJson["height"] = height;
+   dataJson["static_widget"] = isStaticWidget;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
 }
@@ -66,6 +71,10 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
 {
    try
    {
+      // discern between static widgets (which are zoomable, exportable,
+      // and have history) and previews / dynamic / localhost content
+      bool isStaticWidget = false;
+
       // get the height parameter (0 if null)
       int height = 0;
       if (!r::sexp::isNull(heightSEXP))
@@ -76,6 +85,9 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
       std::string url = r::sexp::safeAsString(urlSEXP);
       if (!boost::algorithm::starts_with(url, "http"))
       {
+         // set static widget bit
+         isStaticWidget = true;
+
          // get the path to the tempdir and the file
          FilePath tempDir = r::session::utils::tempDir();
          FilePath filePath = module_context::resolveAliasedPath(url);
@@ -96,7 +108,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
                boost::format fmt("session/%1%");
                url = boost::str(fmt % path);
             }
-            viewerNavigate(url, height);
+            viewerNavigate(url, height, isStaticWidget);
          }
          else
          {
@@ -118,7 +130,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          }
 
          // navigate the viewer
-         viewerNavigate(url, height);
+         viewerNavigate(url, height, false);
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -132,13 +144,13 @@ void onSuspend(const r::session::RSuspendOptions&, Settings*)
 
 void onResume(const Settings&)
 {
-   viewerNavigate("", false);
+   viewerNavigate("", 0, false);
 }
 
 void onClientInit()
 {
    if (!s_currentUrl.empty())
-      viewerNavigate(s_currentUrl);
+      viewerNavigate(s_currentUrl, 0, s_isStaticWidget);
 }
 
 } // anonymous namespace

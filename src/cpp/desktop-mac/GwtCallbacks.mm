@@ -704,6 +704,15 @@ NSString* resolveAliasedPath(NSString* path)
    [[MainFrameController instance] setViewerURL: url];
 }
 
+- (void) reloadViewerZoomWindow: (NSString*) url
+{
+   WebViewController* controller =
+      [WebViewController windowNamed: @"_rstudio_viewer_zoom_minimal"];
+   if (controller) {
+      [[[controller webView] mainFrame] loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:url]]];
+   }
+}
+
 - (NSString*) getScrollingCompensationType
 {
    return @"None";
@@ -906,6 +915,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"setBusy";
    else if (sel == @selector(setWindowTitle:))
       return @"setWindowTitle";
+   else if (sel == @selector(reloadViewerZoomWindow:))
+      return @"reloadViewerZoomWindow";
   
    return nil;
 }
