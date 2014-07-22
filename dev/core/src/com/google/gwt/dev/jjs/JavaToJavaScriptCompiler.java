@@ -95,6 +95,7 @@ import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.BaselineCoverageGatherer;
 import com.google.gwt.dev.js.ClosureJsRunner;
 import com.google.gwt.dev.js.CoverageInstrumentor;
+import com.google.gwt.dev.js.DuplicateExecuteOnceRemover;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.FreshNameGenerator;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
@@ -710,6 +711,7 @@ public abstract class JavaToJavaScriptCompiler {
     }
 
     protected void optimizeJsLoop(Collection<JsNode> toInline) throws InterruptedException {
+      int optimizationLevel = options.getOptimizationLevel();
       List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
       int counter = 0;
       while (true) {
@@ -732,13 +734,15 @@ public abstract class JavaToJavaScriptCompiler {
         allOptimizerStats.add(stats);
 
         optimizeJsEvent.end();
-        int optimizationLevel = options.getOptimizationLevel();
         if ((optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX && counter > optimizationLevel)
             || !stats.didChange()) {
           break;
         }
       }
 
+      if (optimizationLevel > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+        DuplicateExecuteOnceRemover.exec(jsProgram);
+      }
       printJsOptimizeTrace(allOptimizerStats);
     }
 
