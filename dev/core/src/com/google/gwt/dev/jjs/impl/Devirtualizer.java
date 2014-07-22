@@ -269,6 +269,7 @@ public class Devirtualizer {
     String prefix = computeEscapedSignature(method.getSignature());
     JMethod devirtualMethod = new JMethod(sourceInfo, prefix + "__devirtual$",
         inClass, method.getType(), false, true, true, AccessModifier.PUBLIC);
+    devirtualMethod.setInliningAllowed(method.isInliningAllowed());
     devirtualMethod.setBody(new JMethodBody(sourceInfo));
     devirtualMethod.setSynthetic();
     inClass.addMethod(devirtualMethod);

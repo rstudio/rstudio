@@ -47,6 +47,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   private boolean jsProperty;
   private Specialization specialization;
   private boolean noExport = false;
+  private boolean inliningAllowed = true;
 
   public boolean isNoExport() {
     return noExport;
@@ -99,6 +100,14 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   private String getLeafName() {
     String shortName = getName();
     return shortName.substring(shortName.lastIndexOf('$') + 1);
+  }
+
+  public boolean isInliningAllowed() {
+    return inliningAllowed;
+  }
+
+  public void setInliningAllowed(boolean inliningAllowed) {
+    this.inliningAllowed = inliningAllowed;
   }
 
   /**

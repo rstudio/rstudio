@@ -360,7 +360,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    * Returns true if the inliner should try to inline {@code method}.
    */
   public boolean isInliningAllowed(JMethod method) {
-    return !pinnedMethods.contains(method);
+    return !pinnedMethods.contains(method) && method.isInliningAllowed();
   }
 
   /**

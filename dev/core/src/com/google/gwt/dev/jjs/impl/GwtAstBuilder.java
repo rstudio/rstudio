@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.client.impl.DoNotInline;
 import com.google.gwt.core.client.impl.SpecializeMethod;
 import com.google.gwt.dev.javac.JSORestrictionsChecker;
 import com.google.gwt.dev.javac.JdtUtil;
@@ -3343,8 +3344,21 @@ public class GwtAstBuilder {
     }
     enclosingType.addMethod(method);
     JsInteropUtil.maybeSetJsinteropMethodProperties(x, method);
-    maybeAddMethodSpecialization(x, method);
+    processAnnotations(x, method);
     typeMap.setMethod(b, method);
+  }
+
+  private void processAnnotations(AbstractMethodDeclaration x,
+      JMethod method) {
+    maybeAddMethodSpecialization(x, method);
+    maybeSetDoNotInline(x, method);
+  }
+
+  private void maybeSetDoNotInline(AbstractMethodDeclaration x,
+      JMethod method) {
+    if (JdtUtil.getAnnotation(x.binding, DoNotInline.class.getName()) != null) {
+      method.setInliningAllowed(false);
+    }
   }
 
   private void maybeAddMethodSpecialization(AbstractMethodDeclaration x,
