@@ -68,6 +68,13 @@ void viewerNavigate(const std::string& url, bool isHTMLWidget)
    return viewerNavigate(url, 0, isHTMLWidget);
 }
 
+void viewerNavigateToCurrent()
+{
+   module_context::ViewerHistoryEntry current = viewerHistory().current();
+   if (!current.empty())
+      viewerNavigate(current.url(), true);
+}
+
 Error viewerStopped(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -97,9 +104,7 @@ Error viewerForward(const json::JsonRpcRequest& request,
 Error viewerCurrent(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   module_context::ViewerHistoryEntry current = viewerHistory().current();
-   if (!current.empty())
-      viewerNavigate(current.url(), true);
+   viewerNavigateToCurrent();
    return Success();
 }
 
@@ -107,7 +112,8 @@ Error viewerClearCurrent(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    viewerHistory().clearCurrent();
-   return viewerCurrent(request, pResponse);
+   viewerNavigateToCurrent();
+   return Success();
 }
 
 
@@ -171,13 +177,27 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
    return R_NilValue;
 }
 
+FilePath historySerializationPath()
+{
+   FilePath historyPath = module_context::scopedScratchPath()
+                                    .childPath("viewer_history");
+   Error error = historyPath.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   return historyPath;
+}
+
 void onSuspend(const r::session::RSuspendOptions&, Settings*)
 {
+   viewerHistory().saveTo(historySerializationPath());
+
 }
 
 void onResume(const Settings&)
 {
-   viewerNavigate("", false);
+   viewerHistory().restoreFrom(historySerializationPath());
+
+   viewerNavigateToCurrent();
 }
 
 void onClientInit()

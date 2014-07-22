@@ -51,6 +51,9 @@ public:
    bool hasPrevious() const;
    module_context::ViewerHistoryEntry goBack();
 
+   void saveTo(const core::FilePath& serializationPath) const;
+   void restoreFrom(const core::FilePath& serializationPath);
+
 private:
    int currentIndex_;
    boost::circular_buffer<module_context::ViewerHistoryEntry> entries_;

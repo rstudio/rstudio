@@ -16,6 +16,10 @@
 #include "ViewerHistory.hpp"
 
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
+
+#include <core/SafeConvert.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -96,6 +100,132 @@ module_context::ViewerHistoryEntry ViewerHistory::goBack()
       return module_context::ViewerHistoryEntry();
 }
 
+namespace {
+
+FilePath historyEntriesPath(const core::FilePath& serializationPath)
+{
+   return serializationPath.complete("history_entries");
+}
+
+FilePath currentIndexPath(const core::FilePath& serializationPath)
+{
+   return serializationPath.complete("current_index");
+}
+
+std::string historyEntryToString(const module_context::ViewerHistoryEntry& entry)
+{
+   return entry.sessionTempPath();
+}
+
+ReadCollectionAction historyEntryFromString(
+         const std::string& url, module_context::ViewerHistoryEntry* pEntry)
+{
+   *pEntry = module_context::ViewerHistoryEntry(url);
+   return ReadCollectionAddLine;
+}
+
+
+} // anonymous namespace
+
+void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
+{
+   // blow away any existing serialization data
+   Error error = serializationPath.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   // skip if there is no current index
+   if (currentIndex_ == -1)
+      return;
+
+   // ensure the directory
+   error = serializationPath.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // save the current index
+   std::string currentIndex = safe_convert::numberToString(currentIndex_);
+   error = core::writeStringToFile(currentIndexPath(serializationPath),
+                                   currentIndex);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // save the list of entries
+   using module_context::ViewerHistoryEntry;
+   error = writeCollectionToFile<boost::circular_buffer<ViewerHistoryEntry> >(
+                                         historyEntriesPath(serializationPath),
+                                         entries_,
+                                         historyEntryToString);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // copy the files
+   FilePath tempDir = module_context::tempDir();
+   for (std::size_t i = 0; i<entries_.size(); i++)
+   {
+      ViewerHistoryEntry entry = entries_.at(i);
+      Error error = entry.copy(tempDir, serializationPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+void ViewerHistory::restoreFrom(const core::FilePath& serializationPath)
+{
+   // skip if the directory doesn't exist
+   if (!serializationPath.exists())
+      return;
+
+   // clear existing
+   currentIndex_ = -1;
+   entries_.clear();
+
+   // read the current index (bail if we can't find one)
+   std::string currentIndex;
+   Error error = core::readStringFromFile(currentIndexPath(serializationPath),
+                                          &currentIndex);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   currentIndex_ = safe_convert::stringTo<int>(currentIndex, -1);
+   if (currentIndex_ == -1)
+      return;
+
+   // read the entries
+   using module_context::ViewerHistoryEntry;
+   error = readCollectionFromFile<boost::circular_buffer<ViewerHistoryEntry> >(
+                                         historyEntriesPath(serializationPath),
+                                         &entries_,
+                                         historyEntryFromString);
+   if (error)
+   {
+      LOG_ERROR(error);
+      entries_.clear();
+      currentIndex_ = -1;
+      return;
+   }
+
+   // copy the files to the session temp dir
+   FilePath tempDir = module_context::tempDir();
+   BOOST_FOREACH(const ViewerHistoryEntry& entry, entries_)
+   {
+      Error error = entry.copy(serializationPath, tempDir);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 
 } // namespace viewer
 } // namespace modules
@@ -113,6 +243,27 @@ std::string ViewerHistoryEntry::url() const
    {
       boost::format fmt("session/%1%");
       return boost::str(fmt % sessionTempPath_);
+   }
+}
+
+
+core::Error ViewerHistoryEntry::copy(
+             const core::FilePath& sourceDir,
+             const core::FilePath& destinationDir) const
+{
+   // if this is a standalone file in the root of the temp dir then
+   // just copy the file
+   FilePath entryPath = sourceDir.childPath(sessionTempPath_);
+   if (entryPath.parent().isEquivalentTo(sourceDir))
+   {
+      return entryPath.copy(destinationDir.childPath(entryPath.filename()));
+   }
+
+   // otherwise copy the entire directory
+   else
+   {
+      FilePath parentDir = entryPath.parent();
+      return module_context::recursiveCopyDirectory(parentDir, destinationDir);
    }
 }
 
