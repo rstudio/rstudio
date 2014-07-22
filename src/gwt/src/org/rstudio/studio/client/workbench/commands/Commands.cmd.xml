@@ -1250,6 +1250,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="viewerPopout"
         buttonLabel=""
         desc="Show in new window"/>
+   <cmd id="viewerBack"
+        buttonLabel=""
+        desc="Go back"/>
+   <cmd id="viewerForward"
+        buttonLabel=""
+        desc="Go forward"/>
    <cmd id="viewerZoom"
         buttonLabel="Zoom"
         desc="View a larger version in a new window"/>

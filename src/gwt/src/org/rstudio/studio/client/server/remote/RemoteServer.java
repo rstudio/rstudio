@@ -2608,7 +2608,30 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, "viewer_stopped", requestCallback);
    }
-
+   
+   @Override
+   public void viewerBack(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "viewer_back", requestCallback);
+   }
+   
+   @Override
+   public void viewerForward(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "viewer_forward", requestCallback);
+   }
+   
+   @Override
+   public void viewerCurrent(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "viewer_current", requestCallback);
+   }
+   
+   @Override
+   public void viewerClearCurrent(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "viewer_clear_current", requestCallback);
+   }
    
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)

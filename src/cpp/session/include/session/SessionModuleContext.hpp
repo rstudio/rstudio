@@ -646,6 +646,25 @@ private:
 };
 
 
+class ViewerHistoryEntry
+{
+public:
+   ViewerHistoryEntry() {}
+   explicit ViewerHistoryEntry(const std::string& sessionTempPath)
+      : sessionTempPath_(sessionTempPath)
+   {
+   }
+
+   bool empty() const { return sessionTempPath_.empty(); }
+
+   std::string url() const;
+
+private:
+   std::string sessionTempPath_;
+};
+
+void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
+
 } // namespace module_context
 } // namespace session
 

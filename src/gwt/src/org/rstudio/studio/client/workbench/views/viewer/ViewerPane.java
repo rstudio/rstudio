@@ -44,7 +44,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       Toolbar toolbar = new Toolbar();
       
-      // add zoom button
+      // add html widget buttons
+      toolbar.addLeftWidget(commands_.viewerBack().createToolbarButton());
+      toolbar.addLeftWidget(commands_.viewerForward().createToolbarButton());
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.viewerZoom().createToolbarButton());
       
       // add publish button 
@@ -53,8 +56,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar.addLeftWidget(publishButton_);
       publishButtonSeparator_.setVisible(false);
       publishButton_.setVisible(false);
+     
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.viewerClear().createToolbarButton());
       
-      toolbar.addRightWidget(commands_.viewerClear().createToolbarButton());
       toolbar.addRightWidget(commands_.viewerStop().createToolbarButton());
       toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.viewerPopout().createToolbarButton());

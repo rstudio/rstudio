@@ -30,9 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-// TODO: ViewerHistory manager that can accept source documents
-// from e.g. run app or preview and can also save session temporary
-// based history items based on html widgets
+#include "ViewerHistory.hpp"
 
 using namespace core;
 
@@ -45,14 +43,6 @@ namespace {
 // track the current viewed url and whether it is a static widget
 std::string s_currentUrl;
 bool s_isHTMLWidget = false;
-
-// viewer stopped means clear the url
-Error viewerStopped(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   s_currentUrl.clear();
-   return Success();
-}
 
 void viewerNavigate(const std::string& url,
                     int height,
@@ -67,18 +57,64 @@ void viewerNavigate(const std::string& url,
    dataJson["url"] = s_currentUrl;
    dataJson["height"] = height;
    dataJson["html_widget"] = isHTMLWidget;
+   dataJson["has_next"] = isHTMLWidget && viewerHistory().hasNext();
+   dataJson["has_previous"] = isHTMLWidget && viewerHistory().hasPrevious();
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
 }
+
+void viewerNavigate(const std::string& url, bool isHTMLWidget)
+{
+   return viewerNavigate(url, 0, isHTMLWidget);
+}
+
+Error viewerStopped(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   // clear current state
+   s_currentUrl.clear();
+   s_isHTMLWidget = false;
+
+   return Success();
+}
+
+Error viewerBack(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   if (viewerHistory().hasPrevious())
+      viewerNavigate(viewerHistory().goBack().url(), true);
+   return Success();
+}
+
+Error viewerForward(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   if (viewerHistory().hasNext())
+      viewerNavigate(viewerHistory().goForward().url(), true);
+   return Success();
+}
+
+Error viewerCurrent(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   module_context::ViewerHistoryEntry current = viewerHistory().current();
+   if (!current.empty())
+      viewerNavigate(current.url(), true);
+   return Success();
+}
+
+Error viewerClearCurrent(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   viewerHistory().clearCurrent();
+   return viewerCurrent(request, pResponse);
+}
+
 
 SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
 {
    try
    {
-      // discern between HTML widgets (which are zoomable, exportable,
-      // and have history) and previews / dynamic / localhost content
-      bool isHTMLWidget = false;
-
       // get the height parameter (0 if null)
       int height = 0;
       if (!r::sexp::isNull(heightSEXP))
@@ -89,9 +125,6 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
       std::string url = r::sexp::safeAsString(urlSEXP);
       if (!boost::algorithm::starts_with(url, "http"))
       {
-         // set static widget bit
-         isHTMLWidget = true;
-
          // get the path to the tempdir and the file
          FilePath tempDir = r::session::utils::tempDir();
          FilePath filePath = module_context::resolveAliasedPath(url);
@@ -101,18 +134,14 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          // to show it in an external browser
          if (filePath.isWithin(tempDir) && r::util::hasRequiredVersion("2.14"))
          {
+            // calculate the relative path
             std::string path = filePath.relativePath(tempDir);
-            if (session::options().programMode() == kSessionProgramModeDesktop)
-            {
-               boost::format fmt("http://localhost:%1%/session/%2%");
-               url = boost::str(fmt % module_context::rLocalHelpPort() % path);
-            }
-            else
-            {
-               boost::format fmt("session/%1%");
-               url = boost::str(fmt % path);
-            }
-            viewerNavigate(url, height, isHTMLWidget);
+
+            // add it to our history
+            viewerHistory().add(module_context::ViewerHistoryEntry(path));
+
+            // view it
+            viewerNavigate(viewerHistory().current().url(), height, true);
          }
          else
          {
@@ -148,13 +177,13 @@ void onSuspend(const r::session::RSuspendOptions&, Settings*)
 
 void onResume(const Settings&)
 {
-   viewerNavigate("", 0, false);
+   viewerNavigate("", false);
 }
 
 void onClientInit()
 {
    if (!s_currentUrl.empty())
-      viewerNavigate(s_currentUrl, 0, s_isHTMLWidget);
+      viewerNavigate(s_currentUrl, s_isHTMLWidget);
 }
 
 } // anonymous namespace
@@ -183,7 +212,11 @@ Error initialize()
    using boost::bind;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "viewer_stopped", viewerStopped));
+      (bind(registerRpcMethod, "viewer_stopped", viewerStopped))
+      (bind(registerRpcMethod, "viewer_current", viewerCurrent))
+      (bind(registerRpcMethod, "viewer_clear_current", viewerClearCurrent))
+      (bind(registerRpcMethod, "viewer_forward", viewerForward))
+      (bind(registerRpcMethod, "viewer_back", viewerBack));
    return initBlock.execute();
 }
 

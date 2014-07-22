@@ -96,7 +96,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionSVN.cpp
    modules/SessionUpdates.cpp
    modules/SessionVCS.cpp
-   modules/SessionViewer.cpp
    modules/SessionWorkbench.cpp
    modules/build/SessionBuild.cpp
    modules/build/SessionBuildEnvironment.cpp
@@ -131,6 +130,8 @@ set (SESSION_SOURCE_FILES
    modules/tex/SessionViewPdf.cpp
    modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp
+   modules/viewer/SessionViewer.cpp
+   modules/viewer/ViewerHistory.cpp
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp

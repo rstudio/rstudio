@@ -123,7 +123,6 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionSource.hpp"
 #include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
-#include "modules/SessionViewer.hpp"
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
@@ -134,6 +133,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/presentation/SessionPresentation.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/shiny/SessionShiny.hpp"
+#include "modules/viewer/SessionViewer.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
