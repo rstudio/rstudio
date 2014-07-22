@@ -83,7 +83,7 @@ public class ViewerPresenter extends BasePresenter
       
       binder.bind(commands, this);
       
-      manageCommands(false, false);
+      manageCommands(false);
       
       // show a stop button when the console is busy (the stop and 
       // clear commands are mutually exclusive)
@@ -106,7 +106,7 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onViewerNavigate(ViewerNavigateEvent event)
    {
-      manageCommands(true, event.isHTMLWidget());
+      manageCommands(true, event);
       
       if (event.getURL().length() > 0)
       {
@@ -130,7 +130,7 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onViewerPreviewRmd(ViewerPreviewRmdEvent event)
    {
-      manageCommands(true, false);
+      manageCommands(true);
       display_.bringToFront();
       if (!event.isRefresh())
          display_.maximize();
@@ -148,7 +148,7 @@ public class ViewerPresenter extends BasePresenter
           event.getParams().getState() == 
             ShinyApplicationParams.STATE_STARTED)
       {
-         manageCommands(true, false);
+         manageCommands(true);
          display_.bringToFront();
          navigate(event.getParams().getUrl());
          runningShinyAppParams_ = event.getParams();
@@ -163,11 +163,13 @@ public class ViewerPresenter extends BasePresenter
    @Handler
    public void onViewerBack()
    {  
+      server_.viewerBack(new VoidServerRequestCallback());
    }
    
    @Handler
    public void onViewerForward()
    {
+      server_.viewerForward(new VoidServerRequestCallback());
    }
    
    @Handler
@@ -283,8 +285,12 @@ public class ViewerPresenter extends BasePresenter
    }
    
    private void stop(boolean interruptR)
-   {
-      manageCommands(false, false);
+   {      
+      // check whether this was a static widget (determine what we do
+      // visa-vi widget history clearing/restoration)
+      boolean wasStaticWidget = commands_.viewerZoom().isEnabled();
+      
+      manageCommands(false);
       navigate(ViewerPane.ABOUT_BLANK);
       if (interruptR)
          commands_.interruptR().execute();
@@ -301,17 +307,41 @@ public class ViewerPresenter extends BasePresenter
       runningShinyAppParams_ = null;
       
       events_.fireEvent(new ViewerClearedEvent());
+      
+      // if this was a static widget then clear the current widget
+      if (wasStaticWidget)
+         server_.viewerClearCurrent(new VoidServerRequestCallback()); 
+      
+      // otherwise restore the last static widget
+      else
+         server_.viewerCurrent(new VoidServerRequestCallback());
    }
    
-   private void manageCommands(boolean enable, boolean isHTMLWidget)
+   private void manageCommands(boolean enable)
+   {
+      manageCommands(enable, false, false, false);
+   }
+   
+   private void manageCommands(boolean enable, ViewerNavigateEvent event)
+   {
+      manageCommands(enable, 
+                     event.isHTMLWidget(),
+                     event.getHasNext(),
+                     event.getHasPrevious());
+   }
+   
+   private void manageCommands(boolean enable, 
+                               boolean isHTMLWidget,
+                               boolean hasNext,
+                               boolean hasPrevious)
    {
       commands_.viewerPopout().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
       
-      commands_.viewerBack().setEnabled(enable);
+      commands_.viewerBack().setEnabled(hasPrevious);
       commands_.viewerBack().setVisible(isHTMLWidget);
-      commands_.viewerForward().setEnabled(enable);
+      commands_.viewerForward().setEnabled(hasNext);
       commands_.viewerForward().setVisible(isHTMLWidget);
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);

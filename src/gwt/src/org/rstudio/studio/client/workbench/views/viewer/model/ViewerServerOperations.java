@@ -20,4 +20,9 @@ import org.rstudio.studio.client.server.Void;
 public interface ViewerServerOperations
 {
    void viewerStopped(ServerRequestCallback<Void> requestCallback);
+   
+   void viewerBack(ServerRequestCallback<Void> requestCallback);
+   void viewerForward(ServerRequestCallback<Void> requestCallback);
+   void viewerCurrent(ServerRequestCallback<Void> requestCallback);
+   void viewerClearCurrent(ServerRequestCallback<Void> requestCallback);
 }

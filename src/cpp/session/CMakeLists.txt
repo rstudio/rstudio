@@ -131,6 +131,7 @@ set (SESSION_SOURCE_FILES
    modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp
    modules/viewer/SessionViewer.cpp
+   modules/viewer/ViewerHistory.cpp
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
