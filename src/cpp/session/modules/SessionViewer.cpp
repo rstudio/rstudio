@@ -75,9 +75,9 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
 {
    try
    {
-      // discern between static widgets (which are zoomable, exportable,
+      // discern between HTML widgets (which are zoomable, exportable,
       // and have history) and previews / dynamic / localhost content
-      bool isStaticWidget = false;
+      bool isHTMLWidget = false;
 
       // get the height parameter (0 if null)
       int height = 0;
@@ -90,7 +90,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
       if (!boost::algorithm::starts_with(url, "http"))
       {
          // set static widget bit
-         isStaticWidget = true;
+         isHTMLWidget = true;
 
          // get the path to the tempdir and the file
          FilePath tempDir = r::session::utils::tempDir();
@@ -112,7 +112,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
                boost::format fmt("session/%1%");
                url = boost::str(fmt % path);
             }
-            viewerNavigate(url, height, isStaticWidget);
+            viewerNavigate(url, height, isHTMLWidget);
          }
          else
          {
