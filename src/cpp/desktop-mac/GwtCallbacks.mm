@@ -433,6 +433,9 @@ NSString* resolveAliasedPath(NSString* path)
                   [NSURLRequest requestWithURL: [NSURL URLWithString: url]]
                                           name: windowName
                                     clientName: name];
+      
+      if ([windowName isEqualToString: @"_rstudio_viewer_zoom_minimal"])
+         [[controller window] setTitle: @"Viewer Zoom"];
    }
    
    // reset window size (adjust for title bar height)
