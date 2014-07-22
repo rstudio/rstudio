@@ -589,7 +589,10 @@ private:
 
       else if (type == kTestPackage)
       {
-         devtoolsTestPackage(packagePath, pkgOptions, cb);
+         if (module_context::isPackageInstalled("devtools") && userSettings().useDevtools())
+            devtoolsTestPackage(packagePath, pkgOptions, cb);
+         else
+            testPackage(packagePath, pkgOptions, cb);
       }
    }
 
@@ -841,6 +844,42 @@ private:
       std::string command = "devtools::test()";
       enqueCommandString(command);
       devtoolsExecute(command, packagePath, pkgOptions, cb);
+   }
+
+   void testPackage(const FilePath& packagePath,
+                    core::system::ProcessOptions& pkgOptions,
+                    const core::system::ProcessCallbacks& cb)
+   {
+      FilePath rScriptPath;
+      Error error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError("Locating R script", error);
+         return;
+      }
+
+      // navigate to the tests directory and source all R
+      // scripts within
+      FilePath testsPath = packagePath.complete("tests");
+
+      // construct a shell command to execute
+      shell_utils::ShellCommand cmd(rScriptPath);
+      cmd << "--slave";
+      cmd << "--vanilla";
+      cmd << "-e";
+      std::vector<std::string> rSourceCommands;
+      rSourceCommands.push_back(
+               "setwd('" + testsPath.absolutePath() + "')");
+      rSourceCommands.push_back(
+               "invisible(lapply(list.files(pattern = '\\.[rR]$'), source))");
+      cmd << boost::algorithm::join(rSourceCommands, "; ");
+
+      pkgOptions.workingDir = testsPath;
+      enqueCommandString("Sourcing R files in 'tests' directory");
+      module_context::processSupervisor().runCommand(cmd,
+                                                     pkgOptions,
+                                                     cb);
+
    }
 
    void devtoolsBuildPackage(const FilePath& packagePath,
