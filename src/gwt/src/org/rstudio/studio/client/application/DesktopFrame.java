@@ -126,6 +126,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void reloadZoomWindow();
    
    void setViewerUrl(String url);
+   void reloadViewerZoomWindow(String url);
    
    boolean isOSXMavericks();
 

@@ -15,14 +15,20 @@ package org.rstudio.studio.client.workbench.views.viewer;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
+import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
@@ -53,11 +59,13 @@ public class ViewerPresenter extends BasePresenter
       String getTitle();
       void popout();
       void refresh();
+      Size getViewerFrameSize();
    }
    
    @Inject
    public ViewerPresenter(Display display, 
                           EventBus eventBus,
+                          GlobalDisplay globalDisplay,
                           Commands commands,
                           Binder binder,
                           ViewerServerOperations server,
@@ -69,12 +77,13 @@ public class ViewerPresenter extends BasePresenter
       commands_ = commands;
       server_ = server;
       events_ = eventBus;
+      globalDisplay_ = globalDisplay;
       sourceShim_ = sourceShim;
       rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);
       
-      enableCommands(false);
+      manageCommands(false, false);
       
       // show a stop button when the console is busy (the stop and 
       // clear commands are mutually exclusive)
@@ -97,7 +106,7 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onViewerNavigate(ViewerNavigateEvent event)
    {
-      enableCommands(true);
+      manageCommands(true, event.isHTMLWidget());
       
       if (event.getURL().length() > 0)
       {
@@ -108,6 +117,9 @@ public class ViewerPresenter extends BasePresenter
             display_.ensureHeight(ensureHeight);
          
          navigate(event.getURL());
+         
+         if (event.isHTMLWidget())
+            updateZoomWindow(display_.getUrl());
       }
       else
       {
@@ -118,7 +130,7 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onViewerPreviewRmd(ViewerPreviewRmdEvent event)
    {
-      enableCommands(true);
+      manageCommands(true, false);
       display_.bringToFront();
       if (!event.isRefresh())
          display_.maximize();
@@ -136,7 +148,7 @@ public class ViewerPresenter extends BasePresenter
           event.getParams().getState() == 
             ShinyApplicationParams.STATE_STARTED)
       {
-         enableCommands(true);
+         manageCommands(true, false);
          display_.bringToFront();
          navigate(event.getParams().getUrl());
          runningShinyAppParams_ = event.getParams();
@@ -147,7 +159,32 @@ public class ViewerPresenter extends BasePresenter
    public void onViewerPopout() { display_.popout(); }
    @Handler
    public void onViewerRefresh() { display_.refresh(); }
-        
+   
+   @Handler
+   public void onViewerZoom()
+   {
+      Size windowSize = ZoomUtils.getZoomWindowSize(
+            display_.getViewerFrameSize(), zoomWindowDefaultSize_);
+
+      // open and activate window
+      NewWindowOptions options = new NewWindowOptions();
+      options.setName("_rstudio_viewer_zoom");
+      options.setFocus(true);
+      options.setCallback(new OperationWithInput<WindowEx>() {
+         @Override
+         public void execute(WindowEx input)
+         {
+            zoomWindow_ = input;
+         }
+      });
+      
+      globalDisplay_.openMinimalWindow(display_.getUrl(),
+            false,
+            windowSize.width,
+            windowSize.height,
+            options);
+   }
+   
    @Handler
    public void onViewerSaveAllAndRefresh()
    {
@@ -227,9 +264,17 @@ public class ViewerPresenter extends BasePresenter
       display_.navigate(url);
    }
    
+   private void updateZoomWindow(String url)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().reloadViewerZoomWindow(url);
+      else if ((zoomWindow_ != null) && !zoomWindow_.isClosed())
+         zoomWindow_.setLocationHref(url);
+   }
+   
    private void stop(boolean interruptR)
    {
-      enableCommands(false);
+      manageCommands(false, false);
       navigate(ViewerPane.ABOUT_BLANK);
       if (interruptR)
          commands_.interruptR().execute();
@@ -248,11 +293,14 @@ public class ViewerPresenter extends BasePresenter
       events_.fireEvent(new ViewerClearedEvent());
    }
    
-   private void enableCommands(boolean enable)
+   private void manageCommands(boolean enable, boolean isHTMLWidget)
    {
       commands_.viewerPopout().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
+      
+      commands_.viewerZoom().setEnabled(enable);
+      commands_.viewerZoom().setVisible(isHTMLWidget);
    }
    
    private native void initializeEvents() /*-{  
@@ -285,10 +333,14 @@ public class ViewerPresenter extends BasePresenter
    
    private final Display display_ ;
    private final Commands commands_;
+   private final GlobalDisplay globalDisplay_;
    private final ViewerServerOperations server_;
    private final EventBus events_;
    private final SourceShim sourceShim_; 
    
    private ShinyApplicationParams runningShinyAppParams_;
    private RmdPreviewParams rmdPreviewParams_;
+   
+   private WindowEx zoomWindow_ = null;
+   private Size zoomWindowDefaultSize_ = null;
 }

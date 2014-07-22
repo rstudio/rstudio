@@ -33,6 +33,10 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       public native final int getHeight() /*-{
          return this.height;
       }-*/;
+      
+      public native final boolean isHTMLWidget() /*-{
+         return this.html_widget;
+      }-*/;
    }
    
    public interface Handler extends EventHandler
@@ -53,6 +57,11 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    public int getHeight()
    {
       return data_.getHeight();
+   }
+   
+   public boolean isHTMLWidget()
+   {
+      return data_.isHTMLWidget();
    }
    
    @Override

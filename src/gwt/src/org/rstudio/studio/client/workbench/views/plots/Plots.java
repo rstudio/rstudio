@@ -21,7 +21,6 @@ import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
@@ -30,7 +29,6 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
-import org.rstudio.core.client.dom.NativeScreen;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
@@ -42,7 +40,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -415,40 +413,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    
    void onZoomPlot()
    {
-      int width, height;
-      if (zoomWindowDefaultSize_ != null)
-      {
-         // trim based on available screen size
-         NativeScreen screen = NativeScreen.get();
-         width = Math.min(screen.getAvailWidth(), 
-                          zoomWindowDefaultSize_.width);
-         height = Math.min(screen.getAvailHeight(), 
-                           zoomWindowDefaultSize_.height); 
-      }
-      else
-      {
-         final int PADDING = 20;
-   
-         Size currentPlotSize = view_.getPlotFrameSize();
-   
-         // calculate ideal heigh and width. try to be as large as possible
-         // within the bounds of the current client size
-         Size bounds = new Size(Window.getClientWidth() - PADDING,
-                                Window.getClientHeight() - PADDING);
-   
-         float widthRatio = bounds.width / ((float)currentPlotSize.width);
-         float heightRatio = bounds.height / ((float)currentPlotSize.height);
-         float ratio = Math.min(widthRatio, heightRatio);
-   
-         // constrain initial width to between 300 and 1,200 pixels
-         width = Math.max(300, (int) (ratio * currentPlotSize.width));
-         width = Math.min(1200, width);
-         
-         // constrain initial height to between 300 and 900 pixels
-         height = Math.max(300, (int) (ratio * currentPlotSize.height));
-         height = Math.min(900, height);
-      }
-      
+      Size windowSize = ZoomUtils.getZoomWindowSize(
+                              view_.getPlotFrameSize(), zoomWindowDefaultSize_);
       
       // determine whether we should scale (see comment in ImageFrame.onLoad
       // for why we wouldn't want to scale)
@@ -458,27 +424,23 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       
       // compose url string
       String url = server_.getGraphicsUrl("plot_zoom?" +
-                                          "width=" + width + "&" +
-                                          "height=" + height + "&" +
+                                          "width=" + windowSize.width + "&" +
+                                          "height=" + windowSize.height + "&" +
                                           "scale=" + scale);
 
-
-      // open and activate window
-      NewWindowOptions options = new NewWindowOptions();
-      options.setName("_rstudio_zoom");
-      options.setFocus(true);
-      options.setCallback(new OperationWithInput<WindowEx>() {
-         @Override
-         public void execute(WindowEx input)
-         {
-            zoomWindow_ = input;
+      // open the window
+      ZoomUtils.openZoomWindow(
+         "_rstudio_zoom", 
+         url, 
+         windowSize, 
+         new OperationWithInput<WindowEx>() {
+            @Override
+            public void execute(WindowEx input)
+            {
+               zoomWindow_ = input;
+            }
          }
-      });
-      globalDisplay_.openMinimalWindow(url,
-                                       false,
-                                       width,
-                                       height,
-                                       options);
+      );
    }
 
    void onRefreshPlot()

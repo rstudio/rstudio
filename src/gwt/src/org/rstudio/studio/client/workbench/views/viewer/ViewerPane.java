@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.viewer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -42,7 +43,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
-      toolbar.addLeftWidget(commands_.viewerPopout().createToolbarButton());
+      
+      // add zoom button
+      toolbar.addLeftWidget(commands_.viewerZoom().createToolbarButton());
       
       // add publish button 
       publishButtonSeparator_ = toolbar.addLeftSeparator();
@@ -53,6 +56,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       toolbar.addRightWidget(commands_.viewerClear().createToolbarButton());
       toolbar.addRightWidget(commands_.viewerStop().createToolbarButton());
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.viewerPopout().createToolbarButton());
       toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.viewerRefresh().createToolbarButton());
       return toolbar;
@@ -120,6 +125,12 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       String url = frame_.getUrl();
       if (url != null)
          frame_.setUrl(url);
+   }
+   
+   @Override
+   public Size getViewerFrameSize()
+   {
+      return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
    }
    
    private void navigate(String url, boolean useRawURL)
