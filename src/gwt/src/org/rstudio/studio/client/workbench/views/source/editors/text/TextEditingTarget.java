@@ -431,6 +431,34 @@ public class TextEditingTarget implements
                event.stopPropagation();
                commands_.interruptR().execute();
             }
+            
+            else if (mod == (KeyboardShortcut.ALT + KeyboardShortcut.SHIFT)
+                  && ne.getKeyCode() == 190) // period
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               
+               int currentRow = docDisplay_.getCurrentLineNum();
+               String currentLine = docDisplay_.getLine(currentRow);
+               
+               // move cursor to end of line
+               docDisplay_.setCursorPosition(
+                     Position.create(currentRow, currentLine.length()));
+               
+               // insert a space if there isn't a space behind the cursor
+               if (!currentLine.endsWith(" "))
+               {
+                  docDisplay_.insertCode(" %>%\n", false);
+               }
+               else
+               {
+                  docDisplay_.insertCode("%>%\n", false);
+               }
+               
+               docDisplay_.reindent(docDisplay_.getSelectionRange());
+               
+            }
+ 
          }
       });
       
