@@ -44,7 +44,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       Toolbar toolbar = new Toolbar();
       
-      // add zoom button
+      // add html widget buttons
+      toolbar.addLeftWidget(commands_.viewerBack().createToolbarButton());
+      toolbar.addLeftWidget(commands_.viewerForward().createToolbarButton());
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.viewerZoom().createToolbarButton());
       
       // add publish button 

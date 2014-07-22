@@ -161,6 +161,16 @@ public class ViewerPresenter extends BasePresenter
    public void onViewerRefresh() { display_.refresh(); }
    
    @Handler
+   public void onViewerBack()
+   {  
+   }
+   
+   @Handler
+   public void onViewerForward()
+   {
+   }
+   
+   @Handler
    public void onViewerZoom()
    {
       Size windowSize = ZoomUtils.getZoomWindowSize(
@@ -299,6 +309,10 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
       
+      commands_.viewerBack().setEnabled(enable);
+      commands_.viewerBack().setVisible(isHTMLWidget);
+      commands_.viewerForward().setEnabled(enable);
+      commands_.viewerForward().setVisible(isHTMLWidget);
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
    }
