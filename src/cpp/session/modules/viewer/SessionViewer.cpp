@@ -30,10 +30,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-// TODO: ViewerHistory manager that can accept source documents
-// from e.g. run app or preview and can also save session temporary
-// based history items based on html widgets
-
 using namespace core;
 
 namespace session {
