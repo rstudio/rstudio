@@ -105,11 +105,11 @@ public class ViewerPresenter extends BasePresenter
    
    @Override
    public void onViewerNavigate(ViewerNavigateEvent event)
-   {
-      manageCommands(true, event);
-      
+   { 
       if (event.getURL().length() > 0)
       {
+         manageCommands(true, event);
+         
          display_.bringToFront();
       
          int ensureHeight = event.getHeight();
@@ -123,6 +123,8 @@ public class ViewerPresenter extends BasePresenter
       }
       else
       {
+         manageCommands(false);
+         
          navigate(ViewerPane.ABOUT_BLANK);
       }
    }
