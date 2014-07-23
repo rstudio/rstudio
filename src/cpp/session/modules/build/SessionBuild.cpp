@@ -590,7 +590,7 @@ private:
       else if (type == kTestPackage)
       {
 
-         if (module_context::isPackageInstalled("devtools") && userSettings().useDevtools())
+         if (useDevtools())
             devtoolsTestPackage(packagePath, pkgOptions, cb);
          else
             testPackage(packagePath, pkgOptions, cb);
