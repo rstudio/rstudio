@@ -12,14 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.ui.export.impl;
+package org.rstudio.studio.client.workbench.exportplot.impl;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotDialog;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
-import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotDialog;
-import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;

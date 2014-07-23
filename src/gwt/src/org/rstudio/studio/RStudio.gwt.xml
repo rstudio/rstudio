@@ -93,11 +93,11 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
 
-    <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.export.impl.ExportPlotWeb">
-       <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot"/>
+    <replace-with class="org.rstudio.studio.client.workbench.exportplot.impl.ExportPlotWeb">
+       <when-type-is class="org.rstudio.studio.client.workbench.exportplot.ExportPlot"/>
     </replace-with>
-    <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.export.impl.ExportPlotDesktop">
-       <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot"/>
+    <replace-with class="org.rstudio.studio.client.workbench.exportplot.impl.ExportPlotDesktop">
+       <when-type-is class="org.rstudio.studio.client.workbench.exportplot.ExportPlot"/>
        <when-property-is name="rstudio.desktop" value="true"/>
     </replace-with>
 

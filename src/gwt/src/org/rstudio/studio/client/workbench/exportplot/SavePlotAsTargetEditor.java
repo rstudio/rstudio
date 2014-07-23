@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.ui.export;
+package org.rstudio.studio.client.workbench.exportplot;
 
 import java.util.HashMap;
 
@@ -24,8 +24,8 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageFormat;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageFormat;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;

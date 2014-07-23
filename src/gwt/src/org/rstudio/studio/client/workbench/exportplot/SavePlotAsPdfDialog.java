@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.ui.export;
+package org.rstudio.studio.client.workbench.exportplot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +31,9 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;

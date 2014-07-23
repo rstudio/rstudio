@@ -12,17 +12,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.ui.export;
+package org.rstudio.studio.client.workbench.exportplot;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
 import com.google.gwt.user.client.ui.TextBox;
 

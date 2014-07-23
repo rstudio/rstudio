@@ -67,6 +67,7 @@ import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResou
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
@@ -78,7 +79,6 @@ import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDial
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCenter;
-import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
