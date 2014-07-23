@@ -189,10 +189,14 @@ void ViewerHistory::restoreFrom(const core::FilePath& serializationPath)
    currentIndex_ = -1;
    entries_.clear();
 
-   // read the current index (bail if we can't find one)
+   // check if we have an index path (bail if we can't find one)
+   FilePath indexPath = currentIndexPath(serializationPath);
+   if (!indexPath.exists())
+      return;
+
+   // read the index
    std::string currentIndex;
-   Error error = core::readStringFromFile(currentIndexPath(serializationPath),
-                                          &currentIndex);
+   Error error = core::readStringFromFile(indexPath, &currentIndex);
    if (error)
    {
       LOG_ERROR(error);
