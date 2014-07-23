@@ -339,9 +339,13 @@ public class FindReplace
       boolean caseSensitive = display_.getCaseSensitive().getValue();
       boolean regex = display_.getRegex().getValue();
       String find = display_.getFindValue().getValue();
+      boolean wholeWord = display_.getWholeWord().getValue();
 
       String flags = caseSensitive ? "gm" : "igm";
       String query = regex ? find : Pattern.escape(find);
+      if (wholeWord)
+         query = "\\b" + query + "\\b";
+      
       return Pattern.create(query, flags);
    }
 
