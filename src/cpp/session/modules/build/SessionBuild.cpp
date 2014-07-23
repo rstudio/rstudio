@@ -848,7 +848,7 @@ private:
    }
 
    void testPackage(const FilePath& packagePath,
-                    core::system::ProcessOptions& pkgOptions,
+                    core::system::ProcessOptions pkgOptions,
                     const core::system::ProcessCallbacks& cb)
    {
       FilePath rScriptPath;
