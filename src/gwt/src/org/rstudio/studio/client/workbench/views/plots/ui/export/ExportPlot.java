@@ -34,7 +34,8 @@ public class ExportPlot
                                OperationWithInput<ExportPlotOptions> onClose)
    {
       new SavePlotAsImageDialog(globalDisplay,
-                                server, 
+                                new PlotsPaneSaveAsImageOperation(globalDisplay,
+                                                                  server), 
                                 new PlotsPanePreviewer(server),
                                 context, 
                                 options, 

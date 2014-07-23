@@ -20,11 +20,8 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.Bool;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -35,7 +32,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
 {
    public SavePlotAsImageDialog(
                            GlobalDisplay globalDisplay,
-                           PlotsServerOperations server,
+                           SavePlotAsImageOperation saveOperation,
                            ExportPlotPreviewer previewer,
                            SavePlotAsImageContext context, 
                            final ExportPlotOptions options,
@@ -46,7 +43,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       setText("Save Plot as Image");
      
       globalDisplay_ = globalDisplay;
-      server_ = server;
+      saveOperation_ = saveOperation;
       progressIndicator_ = addProgressIndicator();
       
       ThemedButton saveButton = new ThemedButton("Save", 
@@ -68,7 +65,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       addCancelButton();
       
       // file type and target path
-      saveAsTarget_ = new SavePlotAsTargetEditor(options.getFormat(), 
+      saveAsTarget_ = new SavePlotAsImageTargetEditor(options.getFormat(), 
                                                  context);
       
       // view after size
@@ -120,45 +117,24 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
          return;
       }
       
-      // create handler
-      SavePlotAsHandler handler = new SavePlotAsHandler(
-            globalDisplay_, 
+      ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      int width = sizeEditor.getImageWidth();
+      int height = sizeEditor.getImageHeight();
+      saveOperation_.attemptSave(
             progressIndicator_, 
-            new SavePlotAsHandler.ServerOperations()
-            {
-               @Override
-               public void savePlot(
-                     FileSystemItem targetPath, 
-                     boolean overwrite,
-                     ServerRequestCallback<Bool> requestCallback)
-               {
-                  ExportPlotSizeEditor sizeEditor = getSizeEditor();
-                  server_.savePlotAs(targetPath, 
-                                     format, 
-                                     sizeEditor.getImageWidth(), 
-                                     sizeEditor.getImageHeight(), 
-                                     overwrite,
-                                     requestCallback);
-               }
-
-               @Override
-               public String getFileUrl(FileSystemItem path)
-               {
-                  return server_.getFileUrl(path);
-               }
-            });
-      
-      // invoke handler
-      handler.attemptSave(targetPath, 
-                          overwrite, 
-                          viewAfterSaveCheckBox_.getValue(), 
-                          onCompleted);                   
+            targetPath, 
+            format, 
+            width, 
+            height, 
+            overwrite, 
+            viewAfterSaveCheckBox_.getValue(), 
+            onCompleted);    
    }
   
    private final GlobalDisplay globalDisplay_;
    private ProgressIndicator progressIndicator_;
-   private final PlotsServerOperations server_;
-   private SavePlotAsTargetEditor saveAsTarget_;
+   private final SavePlotAsImageOperation saveOperation_;
+   private SavePlotAsImageTargetEditor saveAsTarget_;
    private CheckBox viewAfterSaveCheckBox_;
    
 }

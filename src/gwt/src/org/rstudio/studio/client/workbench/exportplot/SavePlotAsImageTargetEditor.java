@@ -1,5 +1,5 @@
 /*
- * SavePlotAsTargetEditor.java
+ * SavePlotAsImageTargetEditor.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -26,7 +26,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageFormat;
-//import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -38,9 +37,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class SavePlotAsTargetEditor extends Composite implements CanFocus
+public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
 {
-   public SavePlotAsTargetEditor(String defaultFormat,
+   public SavePlotAsImageTargetEditor(String defaultFormat,
                                  SavePlotAsImageContext context)
    {
       context_ = context;
