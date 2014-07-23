@@ -1621,7 +1621,16 @@ shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
    return rCmd;
 }
 
-
+core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
+                                   const core::FilePath& toDir)
+{
+   using namespace string_utils;
+   r::exec::RFunction fileCopy("file.copy");
+   fileCopy.addParam("from", utf8ToSystem(fromDir.absolutePath()));
+   fileCopy.addParam("to", utf8ToSystem(toDir.absolutePath()));
+   fileCopy.addParam("recursive", true);
+   return fileCopy.call();
+}
 
 } // namespace module_context         
 } // namespace session

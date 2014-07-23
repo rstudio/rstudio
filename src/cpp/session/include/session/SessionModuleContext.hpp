@@ -659,11 +659,19 @@ public:
 
    std::string url() const;
 
+   const std::string& sessionTempPath() const { return sessionTempPath_; }
+
+   core::Error copy(const core::FilePath& sourceDir,
+                    const core::FilePath& destinationDir) const;
+
 private:
    std::string sessionTempPath_;
 };
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
+
+core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
+                                   const core::FilePath& toDir);
 
 } // namespace module_context
 } // namespace session
