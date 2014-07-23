@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
@@ -43,27 +43,27 @@ public class ExportPlotSizeEditor extends Composite
 {  
    public interface Observer
    {
-      void onPlotResized(boolean withMouse);
+      void onResized(boolean withMouse);
    }
    
    public ExportPlotSizeEditor(int initialWidth, 
                                int initialHeight,
                                boolean keepRatio,
-                               PlotsServerOperations server,
+                               ExportPlotPreviewer previewer,
                                Observer observer)
    {
-      this(initialWidth, initialHeight, keepRatio, null, server, observer);
+      this(initialWidth, initialHeight, keepRatio, null, previewer, observer);
    }
    
    public ExportPlotSizeEditor(int initialWidth, 
                                int initialHeight,
                                boolean keepRatio,
                                Widget extraWidget,
-                               PlotsServerOperations server,
+                               ExportPlotPreviewer previewer,
                                final Observer observer)
    {
       // alias objects and resources
-      server_ = server;
+      previewer_ = previewer;
       ExportPlotResources resources = ExportPlotResources.INSTANCE;
            
       // main widget
@@ -187,11 +187,9 @@ public class ExportPlotSizeEditor extends Composite
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {
-            setPreviewPanelSize(getImageWidth(), getImageHeight());
-           
-            updateImage();
-            
-            observer.onPlotResized(false);
+            setPreviewPanelSize(getImageWidth(), getImageHeight());         
+            previewer_.updatePreview(getImageWidth(), getImageHeight());
+            observer.onResized(false);
          }
       });
       updateButton.setStylePrimaryName(
@@ -201,17 +199,12 @@ public class ExportPlotSizeEditor extends Composite
       // add top panel
       verticalPanel.add(topPanel);
 
-      // image frame
-      imageFrame_ = new ImageFrame();
-      imageFrame_.setUrl("about:blank");
-      imageFrame_.setSize("100%", "100%");
-      imageFrame_.setMarginHeight(0);
-      imageFrame_.setMarginWidth(0);
-      imageFrame_.setStylePrimaryName(resources.styles().imagePreview());
-
+      // previewer
+      Widget previewWidget = previewer_.getWidget();
+     
       // Stops mouse events from being routed to the iframe, which would
       // interfere with resizing
-      final GlassPanel glassPanel = new GlassPanel(imageFrame_);
+      final GlassPanel glassPanel = new GlassPanel(previewWidget);
       glassPanel.getChildContainerElement().getStyle().setOverflow(
                                                             Overflow.VISIBLE);
       glassPanel.setSize("100%", "100%");
@@ -275,8 +268,8 @@ public class ExportPlotSizeEditor extends Composite
          public void onResizingCompleted()
          {
             glassPanel.setGlass(false);
-            updateImage();
-            observer.onPlotResized(true);
+            previewer_.updatePreview(getImageWidth(), getImageHeight());
+            observer.onResized(true);
          } 
          
          private double widthAspectRatio_ = 1.0;
@@ -317,7 +310,7 @@ public class ExportPlotSizeEditor extends Composite
  
    public void onSizerShown()
    {  
-      updateImage();
+      previewer_.updatePreview(getImageWidth(), getImageHeight());
       
       if (initialFocusWidget_ != null)
          FocusHelper.setFocusDeferred(initialFocusWidget_);
@@ -355,11 +348,11 @@ public class ExportPlotSizeEditor extends Composite
       return keepRatioCheckBox_.getValue();
    }
    
-   public ImageFrame getImageFrame()
+   public Rectangle getImageClientRect()
    {
-      return imageFrame_;
+      return previewer_.getPreviewClientRect();
    }
-      
+   
    private void setWidthTextBox(int width)
    {
       settingDimenensionInProgress_ = true;
@@ -437,34 +430,21 @@ public class ExportPlotSizeEditor extends Composite
    }
   
    
-   
-   private void updateImage()
-   {
-      imageFrame_.setImageUrl(server_.getPlotExportUrl("png", 
-                                                       getImageWidth(),
-                                                       getImageHeight(),
-                                                       false));
-   }
-   
    private void configureHorizontalOptionsPanel(HorizontalPanel panel)
    {
       panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
    }
    
-   
-   
    private static final int IMAGE_INSET = 6;
    
-   private final ImageFrame imageFrame_;
+   private final ExportPlotPreviewer previewer_;
    private final TextBox widthTextBox_;
    private final TextBox heightTextBox_;
    private final CheckBox keepRatioCheckBox_;
    
    private final Focusable initialFocusWidget_;
-   
-   private final PlotsServerOperations server_;
-   
+     
    private int lastWidth_;
    private int lastHeight_ ;
   

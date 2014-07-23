@@ -12,40 +12,36 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.exportplot.impl;
+package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.dom.ElementEx;
-import org.rstudio.core.client.dom.IFrameElementEx;
-import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.widget.ImageFrame;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotDialog;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 
 public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
 {
 
    public CopyPlotToClipboardDesktopDialog(
-                           PlotsServerOperations server,
+                           ExportPlotPreviewer previewer,
+                           ExportPlotClipboard clipboard,
                            final ExportPlotOptions options,
                            final OperationWithInput<ExportPlotOptions> onClose)
    {
-      super(server, options);
+      super(options, previewer);
      
+      clipboard_ = clipboard;
+      
       setText("Copy Plot to Clipboard");
       
       ThemedButton copyButton = new ThemedButton("Copy Plot", 
@@ -80,39 +76,33 @@ public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
    
    protected void copyAsBitmap(final Operation onCompleted)
    {
-      ImageFrame imageFrame = getSizeEditor().getImageFrame();
-      final WindowEx win = imageFrame.getElement().<IFrameElementEx>cast()
-            .getContentWindow();
-
-      Document doc = win.getDocument();
-      NodeList<Element> images = doc.getElementsByTagName("img");
-      if (images.getLength() > 0)
+      ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      
+      if (BrowseCap.isCocoaDesktop()) 
       {
-         ElementEx img = images.getItem(0).cast();
-
-         if (BrowseCap.isCocoaDesktop()) {
-            ExportPlotSizeEditor sizeEditor = getSizeEditor();
-            server_.copyPlotToCocoaPasteboard(
-                  sizeEditor.getImageWidth(),
-                  sizeEditor.getImageHeight(),
-                  new SimpleRequestCallback<Void>() 
+         clipboard_.copyPlotToCocoaPasteboard(
+               sizeEditor.getImageWidth(),
+               sizeEditor.getImageHeight(),
+               new Command() 
+               {
+                  @Override
+                  public void execute()
                   {
-                     @Override
-                     public void onResponseReceived(Void response)
-                     {
-                        onCompleted.execute();
-                     }
-                  });
-         }
-         else
-         {
-            Desktop.getFrame().copyImageToClipboard(img.getClientLeft(),
-                                                    img.getClientTop(),
-                                                    img.getClientWidth(),
-                                                    img.getClientHeight());
-         }
+                     onCompleted.execute();
+                  }
+               });
+      }
+      else
+      {
+         Rectangle imgRect = sizeEditor.getImageClientRect();
+         Desktop.getFrame().copyImageToClipboard(imgRect.getLeft(),
+                                                 imgRect.getTop(),
+                                                 imgRect.getWidth(),
+                                                 imgRect.getHeight());
       }
       
       onCompleted.execute();
    }
+   
+   protected final ExportPlotClipboard clipboard_;
 }

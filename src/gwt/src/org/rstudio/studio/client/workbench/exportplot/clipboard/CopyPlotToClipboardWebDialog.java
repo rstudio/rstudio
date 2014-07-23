@@ -12,14 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.exportplot.impl;
+package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotDialog;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -29,13 +29,12 @@ import com.google.gwt.user.client.ui.Label;
 
 public class CopyPlotToClipboardWebDialog extends ExportPlotDialog
 {
-
    public CopyPlotToClipboardWebDialog(
-                            PlotsServerOperations server,
                             final ExportPlotOptions options,
+                            ExportPlotPreviewer previewer,
                             final OperationWithInput<ExportPlotOptions> onClose)
    {
-      super(server, options);
+      super(options, previewer);
      
       setText("Copy Plot to Clipboard");
       

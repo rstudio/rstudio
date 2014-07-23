@@ -48,10 +48,9 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.exportplot.ExportPlot;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
-import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -64,6 +63,8 @@ import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandle
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
 
@@ -284,7 +285,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       indicator.onProgress("Preparing to export plot...");
 
       // get the default directory
-      FileSystemItem defaultDir = ExportPlot.getDefaultSaveDirectory(
+      FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
             workbenchContext_.getCurrentWorkingDir());
 
       // get context
@@ -323,7 +324,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       indicator.onProgress("Preparing to export plot...");
 
       // get the default directory
-      final FileSystemItem defaultDir = ExportPlot.getDefaultSaveDirectory(
+      final FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
             workbenchContext_.getCurrentWorkingDir());
 
       // get context

@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.exportplot.model;
+package org.rstudio.studio.client.workbench.views.plots.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 

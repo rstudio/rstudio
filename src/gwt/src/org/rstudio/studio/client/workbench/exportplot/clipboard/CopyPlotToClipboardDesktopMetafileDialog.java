@@ -12,19 +12,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.exportplot.impl;
+package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
 
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 
@@ -32,11 +31,12 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
 {
 
    public CopyPlotToClipboardDesktopMetafileDialog(
-                                 PlotsServerOperations server,
+                                 ExportPlotPreviewer previewer,
+                                 ExportPlotClipboard clipboard,
                                  ExportPlotOptions options,
                                  OperationWithInput<ExportPlotOptions> onClose)
    {
-      super(server, options, onClose);
+      super(previewer, clipboard, options, onClose);
      
       
       ExportPlotResources.Styles styles = ExportPlotResources.INSTANCE.styles();
@@ -96,13 +96,13 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
    private void copyAsMetafile(final Operation onCompleted)
    {
       ExportPlotSizeEditor sizeEditor = getSizeEditor();
-      server_.copyPlotToClipboardMetafile(
+      clipboard_.copyPlotToClipboardMetafile(
             sizeEditor.getImageWidth(),
             sizeEditor.getImageHeight(),
-            new SimpleRequestCallback<Void>() 
+            new Command() 
             {
                @Override
-               public void onResponseReceived(Void response)
+               public void execute()
                {
                   onCompleted.execute();
                }
@@ -110,6 +110,5 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
    }
    
    private RadioButton copyAsBitmapRadioButton_;
-   private RadioButton copyAsMetafileRadioButton_;
-  
+   private RadioButton copyAsMetafileRadioButton_;  
 }
