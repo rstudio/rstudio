@@ -23,6 +23,7 @@
 package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.impl.DoNotInline;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -681,6 +682,9 @@ public final class String implements Comparable<String>, CharSequence,
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
   }-*/;
 
+  // DO NOT INLINE so that "aaa".equals("bbb") reaches the static evaluator in
+  // {@link DeadCodeElimination}.
+  @DoNotInline
   @Override
   public boolean equals(Object other) {
     return (other instanceof String) && __equals(this, other);
