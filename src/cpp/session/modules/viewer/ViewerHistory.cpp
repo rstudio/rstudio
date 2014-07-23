@@ -170,9 +170,8 @@ void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
 
    // copy the files
    FilePath tempDir = module_context::tempDir();
-   for (std::size_t i = 0; i<entries_.size(); i++)
+   BOOST_FOREACH(const ViewerHistoryEntry& entry, entries_)
    {
-      ViewerHistoryEntry entry = entries_.at(i);
       Error error = entry.copy(tempDir, serializationPath);
       if (error)
          LOG_ERROR(error);
