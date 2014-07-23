@@ -237,37 +237,17 @@ namespace module_context {
 
 std::string ViewerHistoryEntry::url() const
 {
-   if (session::options().programMode() == kSessionProgramModeDesktop)
-   {
-      boost::format fmt("http://localhost:%1%/session/%2%");
-      return boost::str(fmt % rLocalHelpPort() % sessionTempPath_);
-   }
-   else
-   {
-      boost::format fmt("session/%1%");
-      return boost::str(fmt % sessionTempPath_);
-   }
+   return module_context::sessionTempDirUrl(sessionTempPath_);
 }
-
 
 core::Error ViewerHistoryEntry::copy(
              const core::FilePath& sourceDir,
              const core::FilePath& destinationDir) const
 {
-   // if this is a standalone file in the root of the temp dir then
-   // just copy the file
+   // copy enclosing directory to the destinationDir
    FilePath entryPath = sourceDir.childPath(sessionTempPath_);
-   if (entryPath.parent().isEquivalentTo(sourceDir))
-   {
-      return entryPath.copy(destinationDir.childPath(entryPath.filename()));
-   }
-
-   // otherwise copy the entire directory
-   else
-   {
-      FilePath parentDir = entryPath.parent();
-      return module_context::recursiveCopyDirectory(parentDir, destinationDir);
-   }
+   FilePath parentDir = entryPath.parent();
+   return module_context::recursiveCopyDirectory(parentDir, destinationDir);
 }
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry)

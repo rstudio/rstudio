@@ -673,6 +673,8 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
                                    const core::FilePath& toDir);
 
+std::string sessionTempDirUrl(const std::string& sessionTempPath);
+
 } // namespace module_context
 } // namespace session
 

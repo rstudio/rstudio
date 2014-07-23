@@ -1632,5 +1632,20 @@ core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
    return fileCopy.call();
 }
 
+std::string sessionTempDirUrl(const std::string& sessionTempPath)
+{
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      boost::format fmt("http://localhost:%1%/session/%2%");
+      return boost::str(fmt % rLocalHelpPort() % sessionTempPath);
+   }
+   else
+   {
+      boost::format fmt("session/%1%");
+      return boost::str(fmt % sessionTempPath);
+   }
+}
+
+
 } // namespace module_context         
 } // namespace session

@@ -116,6 +116,25 @@ Error viewerClearCurrent(const json::JsonRpcRequest& request,
    return Success();
 }
 
+bool isHTMLWidgetPath(const FilePath& filePath)
+{
+   // stem must be "index"
+   if (filePath.stem() != "index")
+      return false;
+
+   // parent dir must start with "viewhtml"
+   FilePath parentDir = filePath.parent();
+   if (!boost::algorithm::starts_with(parentDir.filename(), "viewhtml"))
+      return false;
+
+   // parent of parent must be session temp dir
+   if (parentDir.parent() != module_context::tempDir())
+      return false;
+
+   // it is a widget!
+   return true;
+}
+
 
 SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
 {
@@ -132,7 +151,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
       if (!boost::algorithm::starts_with(url, "http"))
       {
          // get the path to the tempdir and the file
-         FilePath tempDir = r::session::utils::tempDir();
+         FilePath tempDir = module_context::tempDir();
          FilePath filePath = module_context::resolveAliasedPath(url);
 
          // if it's in the temp dir and we're running R >= 2.14 then
@@ -143,11 +162,21 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
             // calculate the relative path
             std::string path = filePath.relativePath(tempDir);
 
-            // add it to our history
-            viewerHistory().add(module_context::ViewerHistoryEntry(path));
+            // add to history and treat as a widget if appropriate
+            if (isHTMLWidgetPath(filePath))
+            {
+               // add it to our history
+               viewerHistory().add(module_context::ViewerHistoryEntry(path));
 
-            // view it
-            viewerNavigate(viewerHistory().current().url(), height, true);
+               // view it
+               viewerNavigate(viewerHistory().current().url(), height, true);
+            }
+            else
+            {
+               viewerNavigate(module_context::sessionTempDirUrl(path),
+                              height,
+                              false);
+            }
          }
          else
          {
