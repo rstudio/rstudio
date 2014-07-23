@@ -1269,6 +1269,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="viewerClear"
         buttonLabel=""
         desc="Clear viewer"/>  
+   <cmd id="viewerSaveAsImage"
+        menuLabel = "Save as Image..."
+        desc="Save as an image file"/>
+   <cmd id="viewerCopyToClipboard"
+        menuLabel = "Copy to Clipboard..."
+        desc="Copy to the system clipboard"/>    
         
    <cmd id="raiseException"
         menuLabel="Raise Exception"/>

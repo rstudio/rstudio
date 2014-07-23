@@ -54,6 +54,7 @@ public class ViewerPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void navigate(String url);
+      void setExportEnabled(boolean exportEnabled);
       void previewRmd(RmdPreviewParams params);
       String getUrl();
       String getTitle();
@@ -198,6 +199,19 @@ public class ViewerPresenter extends BasePresenter
             windowSize.height,
             options);
    }
+   
+   @Handler
+   public void onViewerSaveAsImage()
+   {
+      globalDisplay_.showErrorMessage("Foo", "onViewerSaveAsImage");
+   }
+   
+   @Handler
+   public void onViewerCopyToClipboard()
+   {
+      globalDisplay_.showErrorMessage("Bar", "onViewerCopyToClipboard");
+   }
+   
    
    @Handler
    public void onViewerSaveAllAndRefresh()
@@ -347,6 +361,12 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerForward().setVisible(isHTMLWidget);
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
+      commands_.viewerSaveAsImage().setEnabled(enable);
+      commands_.viewerSaveAsImage().setVisible(isHTMLWidget);
+      commands_.viewerCopyToClipboard().setEnabled(enable);
+      commands_.viewerCopyToClipboard().setVisible(isHTMLWidget);
+      
+      display_.setExportEnabled(commands_.viewerSaveAsImage().isEnabled());
    }
    
    private native void initializeEvents() /*-{  

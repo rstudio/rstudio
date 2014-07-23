@@ -19,6 +19,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -50,6 +51,18 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.viewerZoom().createToolbarButton());
       
+      // export commands
+      exportButtonSeparator_ = toolbar.addLeftSeparator();
+      ToolbarPopupMenu exportMenu = new ToolbarPopupMenu();
+      exportMenu.addItem(commands_.viewerSaveAsImage().createMenuItem(false));
+      exportMenu.addItem(commands_.viewerCopyToClipboard().createMenuItem(false));
+      exportButton_ = new ToolbarButton(
+            "Export", commands_.savePlotAsImage().getImageResource(),
+            exportMenu);
+      toolbar.addLeftWidget(exportButton_);  
+      exportButton_.setVisible(false);
+      exportButtonSeparator_.setVisible(false);
+      
       // add publish button 
       publishButtonSeparator_ = toolbar.addLeftSeparator();
       publishButton_ = commands_.publishHTML().createToolbarButton(false);
@@ -73,7 +86,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       frame_ = new RStudioFrame() ;
       frame_.setSize("100%", "100%");
-      navigate(ABOUT_BLANK);
+      navigate(ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
    }
    
@@ -96,6 +109,13 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          publishButton_.setText(params.getResult().getRpubsPublished() ? 
                "Republish" : "Publish");
       rmdPreviewParams_ = params;
+   }
+   
+   @Override
+   public void setExportEnabled(boolean exportEnabled)
+   {
+      exportButton_.setVisible(exportEnabled);
+      exportButtonSeparator_.setVisible(exportEnabled);
    }
    
    @Override
@@ -188,6 +208,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    
    private ToolbarButton publishButton_;
    private Widget publishButtonSeparator_;
+   
+   private ToolbarButton exportButton_;
+   private Widget exportButtonSeparator_;
 
    public static final String ABOUT_BLANK = "about:blank";
 }
