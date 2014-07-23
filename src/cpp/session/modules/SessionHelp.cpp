@@ -823,9 +823,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    pResponse->setCacheWithRevalidationHeaders();
    if (tempFilePath.mimeContentType() == "text/html")
    {
-      pResponse->setCacheableFile(tempFilePath,
-                                  request,
-                                  HelpContentsFilter(request));
+      pResponse->setCacheableFile(tempFilePath, request);
    }
    else
    {
