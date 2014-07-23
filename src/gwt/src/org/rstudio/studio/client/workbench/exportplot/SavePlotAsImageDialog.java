@@ -25,7 +25,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
-import org.rstudio.studio.client.workbench.views.plots.ui.export.PlotsPanePreviewer;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -37,11 +36,12 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    public SavePlotAsImageDialog(
                            GlobalDisplay globalDisplay,
                            PlotsServerOperations server,
+                           ExportPlotPreviewer previewer,
                            SavePlotAsImageContext context, 
                            final ExportPlotOptions options,
                            final OperationWithInput<ExportPlotOptions> onClose)
    {
-      super(options, new PlotsPanePreviewer(server));
+      super(options, previewer);
       
       setText("Save Plot as Image");
      

@@ -35,6 +35,7 @@ public class ExportPlot
    {
       new SavePlotAsImageDialog(globalDisplay,
                                 server, 
+                                new PlotsPanePreviewer(server),
                                 context, 
                                 options, 
                                 onClose).showModal();
