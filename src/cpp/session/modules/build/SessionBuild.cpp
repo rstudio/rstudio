@@ -589,6 +589,7 @@ private:
 
       else if (type == kTestPackage)
       {
+
          if (module_context::isPackageInstalled("devtools") && userSettings().useDevtools())
             devtoolsTestPackage(packagePath, pkgOptions, cb);
          else
@@ -868,11 +869,17 @@ private:
       cmd << "--vanilla";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
-      rSourceCommands.push_back(
-               "setwd('" + testsPath.absolutePath() + "')");
-      rSourceCommands.push_back(
-               "invisible(lapply(list.files(pattern = '\\.[rR]$'), source))");
-      cmd << boost::algorithm::join(rSourceCommands, "; ");
+
+      boost::format fmt(
+         "setwd('%1%'); "
+         "invisible(lapply(list.files(pattern = '\\.[rR]$'), function(x) { "
+         "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x))) "
+         "}))"
+      );
+
+      cmd << boost::str(fmt %
+                        testsPath.absolutePath() %
+                        rScriptPath.absolutePath());
 
       pkgOptions.workingDir = testsPath;
       enqueCommandString("Sourcing R files in 'tests' directory");
