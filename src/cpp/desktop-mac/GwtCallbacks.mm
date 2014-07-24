@@ -480,6 +480,26 @@ NSString* resolveAliasedPath(NSString* path)
    [[[MainFrameController instance] webView] copy: self];
 }
 
+- (void) copyPageRegionToClipboard: (int) left top: (int) top
+                             width: (int) width height: (int) height
+{
+   
+}
+
+
+- (Boolean) exportPageRegionToFile: (NSString*) targetPath
+                            format: (NSString*) format
+                              left: (int) left
+                               top: (int) top
+                             width: (int) width
+                            height: (int) height
+                         overwrite: (Boolean) overwrite
+{
+   
+   return true;
+}
+
+
 - (Boolean) supportsClipboardMetafile
 {
    return false;
@@ -888,6 +908,10 @@ enum RS_NSActivityOptions : uint64_t
       return @"prepareForSatelliteWindow";
    else if (sel == @selector(copyImageToClipboard:top:width:height:))
       return @"copyImageToClipboard";
+   else if (sel == @selector(copyPageRegionToClipboard:top:width:height:))
+      return @"copyPageRegionToClipboard";
+   else if (sel == @selector(exportPageRegionToFile:format:left:top:width:height:overwrite:))
+      return @"exportPageRegionToFile";
    else if (sel == @selector(showMessageBox:caption:message:buttons:defaultButton:cancelButton:))
       return @"showMessageBox";
    else if (sel == @selector(promptForText:caption:defaultValue:usePasswordMask:rememberPasswordPrompt:rememberByDefault:numbersOnly:selectionStart:selectionLength:))
