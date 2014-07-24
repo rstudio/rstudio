@@ -107,15 +107,15 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
     @Override
     protected void optimizeJava() throws InterruptedException {
-      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+      if (shouldOptimize()) {
         optimizeJavaToFixedPoint();
+        RemoveEmptySuperCalls.exec(jprogram);
       }
-      RemoveEmptySuperCalls.exec(jprogram);
     }
 
     @Override
     protected void optimizeJs(Set<JsNode> inlinableJsFunctions) throws InterruptedException {
-      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+      if (shouldOptimize()) {
         optimizeJsLoop(inlinableJsFunctions);
         JsDuplicateCaseFolder.exec(jsProgram);
       }
@@ -125,7 +125,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     protected void postNormalizationOptimizeJava() {
       Event event = SpeedTracerLogger.start(CompilerEventType.JAVA_POST_NORMALIZER_OPTIMIZERS);
       try {
-        if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+        if (shouldOptimize()) {
           RemoveSpecializations.exec(jprogram);
           Pruner.exec(jprogram, false);
         }
@@ -137,10 +137,14 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
     @Override
     protected Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config) {
-      Map<JsName, JsLiteral> internedTextByVariableName =
-          JsLiteralInterner.exec(jprogram, jsProgram, (byte) (JsLiteralInterner.INTERN_ALL
-              & (byte) (jprogram.typeOracle.isInteropEnabled()
-              ? ~JsLiteralInterner.INTERN_STRINGS : ~0)));
+      Map<JsName, JsLiteral> internedTextByVariableName = null;
+      if (shouldOptimize()) {
+        // Only perform the interning optimization when optimizations are enabled.
+        internedTextByVariableName =
+            JsLiteralInterner.exec(jprogram, jsProgram, (byte) (JsLiteralInterner.INTERN_ALL
+                & (byte) (jprogram.typeOracle.isInteropEnabled()
+                ? ~JsLiteralInterner.INTERN_STRINGS : ~0)));
+      }
       JsVerboseNamer.exec(jsProgram, config);
       return internedTextByVariableName;
     }
@@ -278,5 +282,9 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
       PrecompilationMetricsArtifact precompilationMetrics) throws UnableToCompleteException {
     return new MonolithicPrecompiler(rpo, entryPointTypeNames).precompile(additionalRootTypes,
         singlePermutation, precompilationMetrics);
+  }
+
+  private boolean shouldOptimize() {
+    return options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
   }
 }

@@ -864,6 +864,9 @@ public abstract class JavaToJavaScriptCompiler {
 
         // (1) Initialize local state
         createJProgram();
+        // Synchronize JTypeOracle with compile optimization behavior.
+        jprogram.typeOracle.setOptimize(
+            options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
         jprogram.typeOracle.setJsInteropMode(options.getJsInteropMode());
 
         jsProgram = new JsProgram();

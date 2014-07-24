@@ -38,7 +38,11 @@ import java.util.Set;
 
 /**
  * Oracle that can answer questions regarding the types in a program.
+ * <p>
+ * Since its entire responsibility is to be an index of type related information it should not
+ * directly perform any optimizations.
  */
+// TODO(stalcup): move the clinit() optimization out into a separate pass.
 public class JTypeOracle implements Serializable {
 
   /**
@@ -218,6 +222,10 @@ public class JTypeOracle implements Serializable {
 
   public void setJsInteropMode(JsInteropMode jsInteropMode) {
     this.jsInteropMode = jsInteropMode;
+  }
+
+  public void setOptimize(boolean optimize) {
+    this.optimize = optimize;
   }
 
   /**
@@ -468,6 +476,7 @@ public class JTypeOracle implements Serializable {
       new IdentityHashMap<JClassType, Map<String, JMethod>>();
 
   private final boolean hasWholeWorldKnowledge;
+  private boolean optimize = true;
 
   private ImmediateTypeRelations immediateTypeRelations;
   private ArrayTypeCreator arrayTypeCreator;
@@ -1021,10 +1030,12 @@ public class JTypeOracle implements Serializable {
     Set<JDeclaredType> computed = new IdentityHashSet<JDeclaredType>();
 
     if (hasWholeWorldKnowledge) {
-      // Optimizations that only make sense in whole world compiles:
-      //   (1) minimize clinit()s.
-      for (JDeclaredType type : declaredTypes) {
-        computeClinitTarget(type, computed);
+      if (optimize) {
+        // Optimizations that only make sense in whole world compiles:
+        //   (1) minimize clinit()s.
+        for (JDeclaredType type : declaredTypes) {
+          computeClinitTarget(type, computed);
+        }
       }
 
       //   (2) make JSOs singleImpl when all the Java implementors are gone.

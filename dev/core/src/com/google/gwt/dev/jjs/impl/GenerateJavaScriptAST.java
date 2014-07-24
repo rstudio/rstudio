@@ -726,19 +726,6 @@ public class GenerateJavaScriptAST {
 
     private JMethod currentMethod = null;
 
-    /**
-     * The JavaScript functions corresponding to the entry methods of the
-     * program ({@link JProgram#getEntryMethods()}).
-     */
-    private JsFunction[] entryFunctions;
-
-    /**
-     * A reverse index for the entry methods of the program (
-     * {@link JProgram#getEntryMethods()}). Each entry method is mapped to its
-     * integer index.
-     */
-    private Map<JMethod, Integer> entryMethodToIndex;
-
     private final JsName globalTemp = topScope.declareName("_");
 
     private final JsName prototype = objectScope.declareName("prototype");
@@ -1251,10 +1238,6 @@ public class GenerateJavaScriptAST {
       }
 
       push(jsFunc);
-      Integer entryIndex = entryMethodToIndex.get(x);
-      if (entryIndex != null) {
-        entryFunctions[entryIndex] = jsFunc;
-      }
       currentMethod = null;
       pendingLocals = null;
     }
@@ -1483,7 +1466,7 @@ public class GenerateJavaScriptAST {
 
     private JsName createTmpLocal() {
       SourceInfo sourceInfo = currentMethod.getSourceInfo();
-      JsFunction func = methodBodyMap.get(currentMethod.getBody());
+      JsFunction func = getJsFunctionFor(currentMethod);
       JsScope funcScope = func.getScope();
       JsName tmpName;
       String tmpIdent = LOCAL_TEMP_PREFIX + tmpNumber;
@@ -1866,16 +1849,6 @@ public class GenerateJavaScriptAST {
     }
 
     private Set<JDeclaredType> generatePreamble(JProgram program, List<JsStatement> globalStmts) {
-      /*
-       * Arrange for entryFunctions to be filled in as functions are visited.
-       * See their Javadoc comments for more details.
-       */
-      List<JMethod> entryMethods = program.getEntryMethods();
-      entryFunctions = new JsFunction[entryMethods.size()];
-      entryMethodToIndex = Maps.newIdentityHashMap();
-      for (int i = 0; i < entryMethods.size(); i++) {
-        entryMethodToIndex.put(entryMethods.get(i), i);
-      }
       // Reserve the "_" identifier.
       JsVars vars = new JsVars(jsProgram.getSourceInfo());
       vars.add(new JsVar(jsProgram.getSourceInfo(), globalTemp));
@@ -1969,7 +1942,7 @@ public class GenerateJavaScriptAST {
 
       // Generate entry methods. Needs to be after class literal insertion since class literal will
       // be referenced by runtime rebind and property provider bootstrapping.
-      setupGwtOnLoad(entryFunctions, globalStmts);
+      setupGwtOnLoad(globalStmts);
 
       embedBindingProperties();
 
@@ -2282,7 +2255,7 @@ public class GenerateJavaScriptAST {
      * Sets up gwtOnLoad bootstrapping code. Unusually, the created code is executed as part of
      * source loading and runs in the global scope (not inside of any function scope).
      */
-    private void setupGwtOnLoad(JsFunction[] entryFuncs, List<JsStatement> globalStmts) {
+    private void setupGwtOnLoad(List<JsStatement> globalStmts) {
       /**
        * <pre>
        * {MODULE_RuntimeRebindRegistrator}.register();
@@ -2318,18 +2291,15 @@ public class GenerateJavaScriptAST {
           indexedFunctions.get("ModuleUtils.gwtOnLoad").getName().makeRef(sourceInfo)));
       globalStmts.add(new JsVars(sourceInfo, varGwtOnLoad));
 
-
       // ModuleUtils.addInitFunctions(init1, init2,...)
-      List<JsExpression> arguments = Lists.transform(Arrays.asList(entryFuncs),
-              new Function<JsFunction, JsExpression>() {
-                @Override
-                public JsExpression apply(JsFunction jsFunction) {
-                  return jsFunction.getName().makeRef(sourceInfo);
-                }
-              });
+      List<JsExpression> arguments = Lists.newArrayList();
+      for (JMethod entryPointMethod : program.getEntryMethods()) {
+        JsFunction entryFunction = getJsFunctionFor(entryPointMethod);
+        arguments.add(entryFunction.getName().makeRef(sourceInfo));
+      }
 
-        JsStatement createGwtOnLoadFunctionCall = constructInvocation(
-          "ModuleUtils.addInitFunctions", arguments).makeStmt();
+      JsStatement createGwtOnLoadFunctionCall =
+          constructInvocation("ModuleUtils.addInitFunctions", arguments).makeStmt();
 
       globalStmts.add(createGwtOnLoadFunctionCall);
     }
@@ -2594,7 +2564,7 @@ public class GenerateJavaScriptAST {
            * Inline JsFunction rather than reference, e.g. _.vtableName =
            * function functionName() { ... }
            */
-          JsExpression rhs = methodBodyMap.get(method.getBody());
+          JsExpression rhs = getJsFunctionFor(method);
           JsName polyJsName = polymorphicNames.get(method);
           generateVTableAssignment(globalStmts, method, polyJsName, rhs);
           if (!method.isNoExport()
@@ -2734,7 +2704,6 @@ public class GenerateJavaScriptAST {
 
     private String exportMember(JDeclaredType x, List<JsStatement> globalStmts, String lastProvidedNamespace,
         JsExpression exportRhs, String exportName) {
-      exportName = fixupExportName(x, exportName);
       Pair<String, String> exportNamespacePair = getExportNamespace(exportName);
       lastProvidedNamespace = exportProvidedNamespace(x, globalStmts, lastProvidedNamespace, exportNamespacePair);
       createAndAddExportAssignment(x, globalStmts, exportRhs, exportNamespacePair);
@@ -2769,11 +2738,6 @@ public class GenerateJavaScriptAST {
         ref = qualifier;
       }
       return toReturn;
-    }
-
-    private String fixupExportName(JDeclaredType x, String exportName) {
-
-      return exportName;
     }
 
     private String exportProvidedNamespace(JDeclaredType x, List<JsStatement> globalStmts,
@@ -3568,5 +3532,9 @@ public class GenerateJavaScriptAST {
         names, typeForStatMap, vtableInitForMethodMap);
 
     return Pair.create(jjsMap, generator.functionsForJsInlining);
+  }
+
+  private JsFunction getJsFunctionFor(JMethod jMethod) {
+    return methodBodyMap.get(jMethod.getBody());
   }
 }
