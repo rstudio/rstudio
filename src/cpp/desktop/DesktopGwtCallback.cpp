@@ -467,6 +467,18 @@ void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
    pOwner_->triggerPageAction(QWebPage::CopyImageToClipboard);
 }
 
+void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int height)
+{
+   QPixmap pixmap = QPixmap::grabWidget(pMainWindow_->webView(),
+                                        left,
+                                        top,
+                                        width,
+                                        height);
+
+   QApplication::clipboard()->setPixmap(pixmap);
+}
+
+
 bool GwtCallback::supportsClipboardMetafile()
 {
 #ifdef Q_OS_WIN32

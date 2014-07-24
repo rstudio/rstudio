@@ -92,6 +92,9 @@ public slots:
    // Image coordinates are relative to the window contents
    void copyImageToClipboard(int left, int top, int width, int height);
 
+   // coordinates are relative to entire containing web page
+   void copyPageRegionToClipboard(int left, int top, int width, int height);
+
    bool supportsClipboardMetafile();
 
    int showMessageBox(int type,

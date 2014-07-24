@@ -48,10 +48,15 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int width, int height);
+   
+   // interface for plot export where coordinates are specified relative to
+   // the iframe where the image is located within
    void copyImageToClipboard(int clientLeft,
                              int clientTop,
                              int clientWidth,
                              int clientHeight);
+   
+   void copyPageRegionToClipboard(int left, int top, int width, int height);
    
    boolean supportsClipboardMetafile();
 

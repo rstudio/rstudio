@@ -222,7 +222,7 @@ public class ExportPlotSizeEditor extends Composite
                      glassPanel).getStyle().setOverflow(Overflow.VISIBLE);
       
       // resize gripper
-      ResizeGripper gripper = new ResizeGripper(new ResizeGripper.Observer() 
+      gripper_ = new ResizeGripper(new ResizeGripper.Observer() 
       {
          @Override
          public void onResizingStarted()
@@ -277,13 +277,13 @@ public class ExportPlotSizeEditor extends Composite
       });
       
       // layout gripper
-      previewPanel_.add(gripper);
-      previewPanel_.setWidgetRightWidth(gripper, 
+      previewPanel_.add(gripper_);
+      previewPanel_.setWidgetRightWidth(gripper_, 
                                       0, Unit.PX, 
-                                      gripper.getImageWidth(), Unit.PX);
-      previewPanel_.setWidgetBottomHeight(gripper, 
+                                      gripper_.getImageWidth(), Unit.PX);
+      previewPanel_.setWidgetBottomHeight(gripper_, 
                                         0, Unit.PX, 
-                                        gripper.getImageHeight(), Unit.PX);
+                                        gripper_.getImageHeight(), Unit.PX);
      
       // constrain dimensions
       initialWidth = constrainWidth(initialWidth);
@@ -351,6 +351,11 @@ public class ExportPlotSizeEditor extends Composite
    public IFrameElementEx getPreviewIFrame()
    {
       return previewer_.getPreviewIFrame();
+   }
+   
+   public void setGripperVisible(boolean visible)
+   {
+      gripper_.setVisible(visible);
    }
    
    private void setWidthTextBox(int width)
@@ -439,6 +444,7 @@ public class ExportPlotSizeEditor extends Composite
    private static final int IMAGE_INSET = 6;
    
    private final ExportPlotPreviewer previewer_;
+   private final ResizeGripper gripper_;
    private final TextBox widthTextBox_;
    private final TextBox heightTextBox_;
    private final CheckBox keepRatioCheckBox_;
