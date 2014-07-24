@@ -675,6 +675,14 @@ core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
 
 std::string sessionTempDirUrl(const std::string& sessionTempPath);
 
+core::Error uniqueSaveStem(const core::FilePath& directoryPath,
+                           const std::string& base,
+                           std::string* pStem);
+
+core::json::Object plotExportFormat(const std::string& name,
+                                    const std::string& extension);
+
+
 } // namespace module_context
 } // namespace session
 

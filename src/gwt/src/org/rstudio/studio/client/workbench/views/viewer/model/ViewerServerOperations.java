@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.viewer.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 
 public interface ViewerServerOperations
 {
@@ -25,4 +26,8 @@ public interface ViewerServerOperations
    void viewerForward(ServerRequestCallback<Void> requestCallback);
    void viewerCurrent(ServerRequestCallback<Void> requestCallback);
    void viewerClearCurrent(ServerRequestCallback<Void> requestCallback);
+   
+   void getViewerExportContext(
+         String directory,
+         ServerRequestCallback<SavePlotAsImageContext> requestCallback);
 }

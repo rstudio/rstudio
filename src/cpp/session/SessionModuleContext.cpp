@@ -1646,6 +1646,57 @@ std::string sessionTempDirUrl(const std::string& sessionTempPath)
    }
 }
 
+namespace {
+
+bool hasStem(const FilePath& filePath, const std::string& stem)
+{
+   return filePath.stem() == stem;
+}
+
+} // anonymous namespace
+
+Error uniqueSaveStem(const FilePath& directoryPath,
+                     const std::string& base,
+                     std::string* pStem)
+{
+   // determine unique file name
+   std::vector<FilePath> children;
+   Error error = directoryPath.children(&children);
+   if (error)
+      return error;
+
+   // search for unique stem
+   int i = 0;
+   *pStem = base;
+   while(true)
+   {
+      // seek stem
+      std::vector<FilePath>::const_iterator it = std::find_if(
+                                                children.begin(),
+                                                children.end(),
+                                                boost::bind(hasStem, _1, *pStem));
+      // break if not found
+      if (it == children.end())
+         break;
+
+      // update stem and search again
+      boost::format fmt(base + "%1%");
+      *pStem = boost::str(fmt % boost::io::group(std::setfill('0'),
+                                                 std::setw(2),
+                                                 ++i));
+   }
+
+   return Success();
+}
+
+json::Object plotExportFormat(const std::string& name,
+                              const std::string& extension)
+{
+   json::Object formatJson;
+   formatJson["name"] = name;
+   formatJson["extension"] = extension;
+   return formatJson;
+}
 
 } // namespace module_context         
 } // namespace session

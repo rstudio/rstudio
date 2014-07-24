@@ -199,6 +199,11 @@ public class UIPrefsAccessor extends Prefs
                     SavePlotAsPdfOptions.createDefault());
    }
    
+   public PrefValue<ExportPlotOptions> exportViewerOptions()
+   {
+      return object("export_viewer_options", ExportPlotOptions.createDefault());
+   }
+   
    public PrefValue<CompileNotebookPrefs> compileNotebookOptions()
    {
       return object("compile_notebook_options",

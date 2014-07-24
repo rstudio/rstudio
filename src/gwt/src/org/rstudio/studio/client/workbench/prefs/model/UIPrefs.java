@@ -187,6 +187,16 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
                          newUiPrefs.savePlotAsPdfOptions().getGlobalValue());
          }
          
+         // export viewer options
+         if (!ExportPlotOptions.areEqual(
+               newUiPrefs.exportViewerOptions().getGlobalValue(),
+               exportViewerOptions().getGlobalValue()))
+         {
+            exportViewerOptions().setGlobalValue(
+                          newUiPrefs.exportViewerOptions().getGlobalValue());
+         }
+         
+         
          // compile notebook options
          if (!CompileNotebookPrefs.areEqual(
                newUiPrefs.compileNotebookOptions().getGlobalValue(),

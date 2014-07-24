@@ -18,64 +18,30 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.workbench.exportplot.ExportPlotDialog;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 
-public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
+public class CopyPlotToClipboardDesktopDialog 
+      extends CopyPlotToClipboardDesktopDialogBase
 {
 
    public CopyPlotToClipboardDesktopDialog(
                            ExportPlotPreviewer previewer,
                            ExportPlotClipboard clipboard,
-                           final ExportPlotOptions options,
-                           final OperationWithInput<ExportPlotOptions> onClose)
+                           ExportPlotOptions options,
+                           OperationWithInput<ExportPlotOptions> onClose)
    {
-      super(options, previewer);
+      super(options, previewer, onClose);
      
       clipboard_ = clipboard;
-      
-      setText("Copy Plot to Clipboard");
-      
-      ThemedButton copyButton = new ThemedButton("Copy Plot", 
-            new ClickHandler() {
-         public void onClick(ClickEvent event) 
-         {
-            // do the copy
-            performCopy(new Operation() {
-
-               @Override
-               public void execute()
-               {
-                  // save options
-                  onClose.execute(getCurrentOptions(options));
-                  
-                  // close dialog
-                  closeDialog();  
-               }        
-            });
-         }
-      });
-      
-      addOkButton(copyButton);
-      addCancelButton();
-   }
-   
-   
-   protected void performCopy(Operation onCompleted)
-   {
-      copyAsBitmap(onCompleted);
    }
    
    protected void copyAsBitmap(final Operation onCompleted)
-   {
+   {  
       ExportPlotSizeEditor sizeEditor = getSizeEditor();
       
       if (BrowseCap.isCocoaDesktop()) 

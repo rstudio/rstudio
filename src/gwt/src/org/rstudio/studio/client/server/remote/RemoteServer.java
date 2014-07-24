@@ -2633,6 +2633,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "viewer_clear_current", requestCallback);
    }
    
+   @Override
+   public void getViewerExportContext(
+            String directory,
+            ServerRequestCallback<SavePlotAsImageContext> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  "get_viewer_export_context", 
+                  directory, 
+                  requestCallback);
+   }
+   
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
    {
