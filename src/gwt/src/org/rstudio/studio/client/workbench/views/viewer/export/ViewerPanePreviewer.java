@@ -15,10 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.viewer.export;
 
-import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.IFrameElementEx;
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
@@ -47,14 +45,10 @@ public class ViewerPanePreviewer implements ExportPlotPreviewer
       return frame_;
    }
 
-   @SuppressWarnings("unused")
    @Override
-   public Rectangle getPreviewClientRect()
+   public IFrameElementEx getPreviewIFrame()
    {
-      WindowEx win = frame_.getElement().<IFrameElementEx>cast()
-            .getContentWindow();
-      
-      return new Rectangle(0,0,0,0);  
+      return frame_.getElement().<IFrameElementEx>cast();
    }
    
    @Override

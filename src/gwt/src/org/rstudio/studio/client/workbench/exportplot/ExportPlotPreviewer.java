@@ -15,13 +15,13 @@
 
 package org.rstudio.studio.client.workbench.exportplot;
 
-import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.dom.IFrameElementEx;
 
 import com.google.gwt.user.client.ui.Widget;
 
 public interface ExportPlotPreviewer
 {
    Widget getWidget();
-   Rectangle getPreviewClientRect();
+   IFrameElementEx getPreviewIFrame();
    void updatePreview(int width, int height);
 }

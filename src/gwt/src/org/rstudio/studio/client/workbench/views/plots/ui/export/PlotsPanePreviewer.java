@@ -53,6 +53,12 @@ public class PlotsPanePreviewer implements ExportPlotPreviewer
    }
 
    @Override
+   public IFrameElementEx getPreviewIFrame()
+   {
+      return imageFrame_.getElement().<IFrameElementEx>cast();
+   }
+   
+
    public Rectangle getPreviewClientRect()
    {
       WindowEx win = imageFrame_.getElement().<IFrameElementEx>cast()

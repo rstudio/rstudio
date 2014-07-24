@@ -15,7 +15,8 @@
 package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.dom.ElementEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
@@ -23,6 +24,9 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.Command;
 
 public class CopyPlotToClipboardDesktopDialog 
@@ -60,11 +64,17 @@ public class CopyPlotToClipboardDesktopDialog
       }
       else
       {
-         Rectangle imgRect = sizeEditor.getImageClientRect();
-         Desktop.getFrame().copyImageToClipboard(imgRect.getLeft(),
-                                                 imgRect.getTop(),
-                                                 imgRect.getWidth(),
-                                                 imgRect.getHeight());
+         WindowEx win = sizeEditor.getPreviewIFrame().getContentWindow();
+         Document doc = win.getDocument();
+         NodeList<Element> images = doc.getElementsByTagName("img");
+         if (images.getLength() > 0)
+         {
+            ElementEx img = images.getItem(0).cast();
+            Desktop.getFrame().copyImageToClipboard(img.getClientLeft(),
+                                                    img.getClientTop(),
+                                                    img.getClientWidth(),
+                                                    img.getClientHeight());
+         }
       }
       
       onCompleted.execute();

@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
-import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.widget.*;
 
 import com.google.gwt.dom.client.Style.Overflow;
@@ -348,9 +348,9 @@ public class ExportPlotSizeEditor extends Composite
       return keepRatioCheckBox_.getValue();
    }
    
-   public Rectangle getImageClientRect()
+   public IFrameElementEx getPreviewIFrame()
    {
-      return previewer_.getPreviewClientRect();
+      return previewer_.getPreviewIFrame();
    }
    
    private void setWidthTextBox(int width)
