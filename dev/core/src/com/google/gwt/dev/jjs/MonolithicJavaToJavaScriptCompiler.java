@@ -94,9 +94,12 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         LongCastNormalizer.exec(jprogram);
         LongEmulationNormalizer.exec(jprogram);
         TypeCoercionNormalizer.exec(jprogram);
-        ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+        // If trivial casts are pruned then one can use smaller runtime castmaps.
+        ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled(),
+            !shouldOptimize()  /* recordTrivialCasts */);
         ComputeInstantiatedJsoInterfaces.exec(jprogram);
-        ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled());
+        ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled(),
+            shouldOptimize() /* pruneTrivialCasts */);
         ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
         EqualityNormalizer.exec(jprogram);
         return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram);

@@ -41,6 +41,8 @@ import java.util.Map;
  * Replace cast and instanceof operations with calls to the Cast class. Depends
  * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer},
  * {@link Devirtualizer}, and {@link LongCastNormalizer} having already run.
+ * <p>
+ * May or may not prune trivial casts depending on configuration.
  */
 public class ImplementCastsAndTypeChecks {
   /**
@@ -60,7 +62,7 @@ public class ImplementCastsAndTypeChecks {
         return;
       }
       SourceInfo info = x.getSourceInfo();
-      if (toType instanceof JNullType) {
+      if (pruneTrivialCasts && toType instanceof JNullType) {
         /**
          * A null type cast is used as a placeholder value to indicate that the
          * user tried a cast that couldn't possibly work. Typically this means
@@ -84,7 +86,7 @@ public class ImplementCastsAndTypeChecks {
         JExpression curExpr = expr;
         JReferenceType refType = ((JReferenceType) toType).getUnderlyingType();
         JReferenceType argType = (JReferenceType) expr.getType();
-        if (program.typeOracle.canTriviallyCast(argType, refType)) {
+        if (pruneTrivialCasts && program.typeOracle.canTriviallyCast(argType, refType)) {
           // just remove the cast
           ctx.replaceMe(curExpr);
           return;
@@ -183,10 +185,11 @@ public class ImplementCastsAndTypeChecks {
       JReferenceType toType = x.getTestType();
       // Only tests on run-time types are supported
       assert (toType == toType.getUnderlyingType());
-      if (program.typeOracle.canTriviallyCast(argType, toType)
+      boolean isTrivialCast = program.typeOracle.canTriviallyCast(argType, toType)
           // don't depend on type-tightener having run
-          || (program.typeOracle.willCrossCastLikeJso(argType) && program.typeOracle
-          .willCrossCastLikeJso(toType))) {
+          || (program.typeOracle.willCrossCastLikeJso(argType)
+              && program.typeOracle.willCrossCastLikeJso(toType));
+      if (pruneTrivialCasts && isTrivialCast) {
         // trivially true if non-null; replace with a null test
         JNullLiteral nullLit = program.getLiteralNull();
         JBinaryOperation eq =
@@ -209,8 +212,8 @@ public class ImplementCastsAndTypeChecks {
     TypeCategory typeCategory = TypeCategory.typeCategoryForType(type, program);
 
     assert EnumSet.of(TypeCategory.TYPE_JSO, TypeCategory.TYPE_JAVA_OBJECT_OR_JSO,
-        TypeCategory.TYPE_JAVA_LANG_STRING, TypeCategory.TYPE_JAVA_OBJECT,
-        TypeCategory.TYPE_JS_INTERFACE).contains(typeCategory);
+        TypeCategory.TYPE_JAVA_LANG_OBJECT, TypeCategory.TYPE_JAVA_LANG_STRING,
+        TypeCategory.TYPE_JAVA_OBJECT, TypeCategory.TYPE_JS_INTERFACE).contains(typeCategory);
 
     return typeCategory;
   }
@@ -247,11 +250,17 @@ public class ImplementCastsAndTypeChecks {
     return call;
   }
 
+  public static void exec(JProgram program, boolean disableCastChecking,
+      boolean pruneTrivialCasts) {
+    new ImplementCastsAndTypeChecks(program, disableCastChecking, pruneTrivialCasts).execImpl();
+  }
+
   public static void exec(JProgram program, boolean disableCastChecking) {
-    new ImplementCastsAndTypeChecks(program, disableCastChecking).execImpl();
+    new ImplementCastsAndTypeChecks(program, disableCastChecking, true).execImpl();
   }
 
   private final boolean disableCastChecking;
+  private final boolean pruneTrivialCasts;
   private final JProgram program;
 
   private Map<TypeCategory, JMethod> instanceOfMethodsByTargetTypeCategory =
@@ -260,13 +269,17 @@ public class ImplementCastsAndTypeChecks {
   private Map<TypeCategory, JMethod> dynamicCastMethodsByTargetTypeCategory =
       Maps.newEnumMap(TypeCategory.class);
 
-  private ImplementCastsAndTypeChecks(JProgram program, boolean disableCastChecking) {
+  private ImplementCastsAndTypeChecks(JProgram program, boolean disableCastChecking,
+      boolean pruneTrivialCasts) {
     this.program = program;
     this.disableCastChecking = disableCastChecking;
+    this.pruneTrivialCasts = pruneTrivialCasts;
 
     // Populate the necessary instanceOf methods.
     this.instanceOfMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JAVA_OBJECT, program.getIndexedMethod("Cast.instanceOf"));
+    this.instanceOfMethodsByTargetTypeCategory.put(
+        TypeCategory.TYPE_JAVA_LANG_OBJECT, program.getIndexedMethod("Cast.instanceOfOrJso"));
     this.instanceOfMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JAVA_OBJECT_OR_JSO, program.getIndexedMethod("Cast.instanceOfOrJso"));
     this.instanceOfMethodsByTargetTypeCategory.put(
@@ -279,6 +292,8 @@ public class ImplementCastsAndTypeChecks {
     // Populate the necessary dynamicCast methods.
     this.dynamicCastMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JAVA_OBJECT, program.getIndexedMethod("Cast.dynamicCast"));
+    this.dynamicCastMethodsByTargetTypeCategory.put(
+        TypeCategory.TYPE_JAVA_LANG_OBJECT, program.getIndexedMethod("Cast.dynamicCastAllowJso"));
     this.dynamicCastMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JAVA_OBJECT_OR_JSO, program.getIndexedMethod("Cast.dynamicCastAllowJso"));
     this.dynamicCastMethodsByTargetTypeCategory.put(

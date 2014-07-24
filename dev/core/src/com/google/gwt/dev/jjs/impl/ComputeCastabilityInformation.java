@@ -49,6 +49,8 @@ import java.util.TreeSet;
  * Builds minimal cast maps to cover cast and instanceof operations. Depends
  * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer},
  * {@link Devirtualizer}, and {@link LongCastNormalizer} having already run.
+ * <p>
+ * May or may not include trivial casts depending on configuration.
  */
 public class ComputeCastabilityInformation {
   private class AssignTypeCastabilityVisitor extends JVisitor {
@@ -223,9 +225,9 @@ public class ComputeCastabilityInformation {
         for (JReferenceType castSourceType : castSourceTypes) {
           if (canTriviallyCastJsoSemantics(type, castSourceType) ||
               typeOracle.isJavaScriptObject(castTargetType)) {
-            if (castTargetType != program.getTypeJavaLangObject() &&
-                castTargetType != program.getJavaScriptObject()) {
-              // ignore java.lang.Object.
+            boolean isTrivialCast = castTargetType == program.getTypeJavaLangObject()
+                || castTargetType == program.getJavaScriptObject();
+            if (recordTrivialCasts || !isTrivialCast) {
               castableTypes.add(castTargetType);
             }
             break;
@@ -256,12 +258,13 @@ public class ComputeCastabilityInformation {
       assert rhs.getType() instanceof JReferenceType;
 
       JReferenceType rhsType = ((JReferenceType) rhs.getType()).getUnderlyingType();
-      if (typeOracle.canTriviallyCast(rhsType, (JReferenceType) targetType)) {
+      if (!recordTrivialCasts
+          && typeOracle.canTriviallyCast(rhsType, (JReferenceType) targetType)) {
         // don't record a type for trivial casts that won't generate code
         return;
       }
 
-      if (typeOracle.isJavaScriptObject(targetType)) {
+      if (!recordTrivialCasts && typeOracle.isJavaScriptObject(targetType)) {
         // If the target type is a JavaScriptObject, don't record an id.
         return;
       }
@@ -276,20 +279,29 @@ public class ComputeCastabilityInformation {
     }
   }
 
+  public static void exec(JProgram program, boolean disableCastChecking,
+      boolean recordTrivialCasts) {
+    new ComputeCastabilityInformation(program, disableCastChecking, recordTrivialCasts).execImpl();
+  }
+
   public static void exec(JProgram program, boolean disableCastChecking) {
-    new ComputeCastabilityInformation(program, disableCastChecking).execImpl();
+    new ComputeCastabilityInformation(program, disableCastChecking, false).execImpl();
   }
 
   private final boolean disableCastChecking;
+
+  private final boolean recordTrivialCasts;
 
   private final JProgram program;
 
   private final JTypeOracle typeOracle;
 
-  private ComputeCastabilityInformation(JProgram program, boolean disableCastChecking) {
+  private ComputeCastabilityInformation(JProgram program, boolean disableCastChecking,
+      boolean recordTrivialCasts) {
     this.program = program;
     this.typeOracle = program.typeOracle;
     this.disableCastChecking = disableCastChecking;
+    this.recordTrivialCasts = recordTrivialCasts;
   }
 
   private void execImpl() {
