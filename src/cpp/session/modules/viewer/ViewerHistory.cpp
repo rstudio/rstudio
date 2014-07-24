@@ -76,7 +76,8 @@ void ViewerHistory::clearCurrent()
 
 bool ViewerHistory::hasNext() const
 {
-   return currentIndex_ != -1 && currentIndex_ < (entries_.size() - 1);
+   int size = safe_convert::numberTo<int>(entries_.size() - 1, 0);
+   return currentIndex_ != -1 && currentIndex_ < size;
 }
 
 module_context::ViewerHistoryEntry ViewerHistory::goForward()
