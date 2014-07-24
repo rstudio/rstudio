@@ -149,14 +149,14 @@ oop.inherits(Mode, TextMode);
 
     this.checkOutdent = function(state, line, input) {
         if (this.inRLanguageMode(state))
-            return this.$r_outdent.checkOutdent(line,input);
+            return this.$r_outdent.checkOutdent(state, line, input);
         else
             return this.$outdent.checkOutdent(line, input);
     };
 
     this.autoOutdent = function(state, doc, row) {
         if (this.inRLanguageMode(state))
-            return this.$r_outdent.autoOutdent(state, doc, row);
+            return this.$r_outdent.autoOutdent(state, doc, row, this.codeModel);
         else
             return this.$outdent.autoOutdent(doc, row);
     };
