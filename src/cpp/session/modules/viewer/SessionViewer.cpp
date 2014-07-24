@@ -26,6 +26,7 @@
 #include <r/RUtil.hpp>
 #include <r/ROptions.hpp>
 
+#include <r/session/RGraphics.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -130,10 +131,11 @@ Error getViewerExportContext(const json::JsonRpcRequest& request,
 
    // get supported formats
    using namespace module_context;
+   using namespace r::session::graphics;
    json::Array formats;
-   formats.push_back(plotExportFormat("PNG", "png"));
-   formats.push_back(plotExportFormat("JPEG", "jpg"));
-   formats.push_back(plotExportFormat("TIFF", "tif"));
+   formats.push_back(plotExportFormat("PNG", kPngFormat));
+   formats.push_back(plotExportFormat("JPEG", kJpegFormat));
+   formats.push_back(plotExportFormat("BMP", kBmpFormat));
    contextJson["formats"] = formats;
 
    // get directory path -- if it doesn't exist revert to the current

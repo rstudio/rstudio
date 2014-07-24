@@ -33,7 +33,7 @@ public class SaveViewerPlotAsImageDesktopDialog extends SavePlotAsImageDialog
                      OperationWithInput<ExportPlotOptions> onClose)
    {
       super(globalDisplay, 
-            new ViewerPaneSaveAsImageOperation(globalDisplay), 
+            new ViewerPaneSaveAsImageDesktopOperation(globalDisplay), 
             new ViewerPanePreviewer(viewerUrl), 
             context, 
             options, 

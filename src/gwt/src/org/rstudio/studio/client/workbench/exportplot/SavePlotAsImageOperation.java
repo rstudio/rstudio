@@ -24,8 +24,7 @@ public interface SavePlotAsImageOperation
    void attemptSave(ProgressIndicator progressIndicator,
                     FileSystemItem targetPath,
                     String format,
-                    int width,
-                    int height,
+                    ExportPlotSizeEditor sizeEditor,
                     boolean overwrite,
                     boolean viewAfterSave,
                     Operation onCompleted);

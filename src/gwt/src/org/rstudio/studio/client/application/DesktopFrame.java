@@ -58,6 +58,14 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void copyPageRegionToClipboard(int left, int top, int width, int height);
    
+   boolean exportPageRegionToFile(String targetPath, 
+                                  String format, 
+                                  int left, 
+                                  int top, 
+                                  int width, 
+                                  int height,
+                                  boolean overwrite);
+   
    boolean supportsClipboardMetafile();
 
    int showMessageBox(int type,

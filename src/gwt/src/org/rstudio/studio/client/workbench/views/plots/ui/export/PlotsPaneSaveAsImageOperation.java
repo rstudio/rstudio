@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.SavePlotAsImageOperation;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
@@ -36,9 +37,8 @@ public class PlotsPaneSaveAsImageOperation implements SavePlotAsImageOperation
    @Override
    public void attemptSave(ProgressIndicator progressIndicator, 
                            FileSystemItem targetPath,
-                           final String format, 
-                           final int width,
-                           final int height,
+                           final String format,
+                           final ExportPlotSizeEditor sizeEditor,
                            boolean overwrite, 
                            boolean viewAfterSave,
                            Operation onCompleted)
@@ -57,8 +57,8 @@ public class PlotsPaneSaveAsImageOperation implements SavePlotAsImageOperation
                {
                   server_.savePlotAs(targetPath, 
                                      format, 
-                                     width, 
-                                     height, 
+                                     sizeEditor.getImageWidth(), 
+                                     sizeEditor.getImageHeight(), 
                                      overwrite,
                                      requestCallback);
                }

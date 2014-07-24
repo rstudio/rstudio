@@ -66,7 +66,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       
       // file type and target path
       saveAsTarget_ = new SavePlotAsImageTargetEditor(options.getFormat(), 
-                                                 context);
+                                                      context);
       
       // view after size
       viewAfterSaveCheckBox_ = new CheckBox("View plot after saving");
@@ -117,15 +117,11 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
          return;
       }
       
-      ExportPlotSizeEditor sizeEditor = getSizeEditor();
-      int width = sizeEditor.getImageWidth();
-      int height = sizeEditor.getImageHeight();
       saveOperation_.attemptSave(
             progressIndicator_, 
             targetPath, 
             format, 
-            width, 
-            height, 
+            getSizeEditor(), 
             overwrite, 
             viewAfterSaveCheckBox_.getValue(), 
             onCompleted);    
