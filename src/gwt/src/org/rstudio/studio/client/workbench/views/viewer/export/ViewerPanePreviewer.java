@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.viewer.export;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -28,7 +29,7 @@ public class ViewerPanePreviewer implements ExportPlotPreviewer
 {
    public ViewerPanePreviewer(String url)
    {
-      url_ = url;
+      url_ = URIUtils.addQueryParam(url, "viewer_export", "1");
    }
    
    @Override

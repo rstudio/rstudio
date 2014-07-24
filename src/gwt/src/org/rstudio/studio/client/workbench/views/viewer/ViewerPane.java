@@ -16,6 +16,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -168,27 +169,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
           !unmodifiedUrl_.equals(ABOUT_BLANK) &&
           !useRawURL)
       {
-         // first split into base and anchor
-         String base = new String(unmodifiedUrl_);
-         String anchor = new String();
-         int anchorPos = base.indexOf('#');
-         if (anchorPos != -1)
-         {
-            anchor = base.substring(anchorPos);
-            base = base.substring(0, anchorPos);
-         }
-         
-         // add the query param
-         if (!base.contains("?"))
-            base = base + "?";
-         else
-            base = base + "&";
-         base = base + "viewer_pane=1";
-        
-         // add the anchor back on
-         String viewerUrl = base + anchor;
-         
-         // set the url
+         String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_, 
+                                                   "viewer_pane", 
+                                                   "1");
          frame_.setUrl(viewerUrl);
       }
       else
