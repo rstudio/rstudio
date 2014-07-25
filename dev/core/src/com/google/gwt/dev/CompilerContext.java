@@ -46,6 +46,7 @@ public class CompilerContext {
 
     private ResourceOracle buildResourceOracle;
     private boolean compileMonolithic = true;
+    private MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
     private CompilationErrorsIndex globalCompilationErrorsIndex;
     private CompilationErrorsIndex libraryCompilationErrorsIndex;
     private LibraryGroup libraryGroup = new ImmutableLibraryGroup();
@@ -63,6 +64,7 @@ public class CompilerContext {
 
       CompilerContext compilerContext = new CompilerContext();
       compilerContext.buildResourceOracle = buildResourceOracle;
+      compilerContext.minimalRebuildCache = minimalRebuildCache;
       compilerContext.libraryWriter = libraryWriter;
       compilerContext.libraryGroup = libraryGroup;
       compilerContext.module = module;
@@ -107,6 +109,12 @@ public class CompilerContext {
 
     public Builder options(PrecompileTaskOptions options) {
       this.options = options;
+      return this;
+    }
+
+    public Builder minimalRebuildCache(MinimalRebuildCache minimalRebuildCache) {
+      assert minimalRebuildCache != null;
+      this.minimalRebuildCache = minimalRebuildCache;
       return this;
     }
 
@@ -169,6 +177,8 @@ public class CompilerContext {
    * they should be grouped together instead of floating free here.
    */
   private boolean compileMonolithic = true;
+
+  private MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
   private LibraryGroup libraryGroup = new ImmutableLibraryGroup();
   private LibraryWriter libraryWriter = new NullLibraryWriter();
   private CompilationErrorsIndex localCompilationErrorsIndex = new CompilationErrorsIndexImpl();
@@ -186,6 +196,10 @@ public class CompilerContext {
 
   public ResourceOracle getBuildResourceOracle() {
     return buildResourceOracle;
+  }
+
+  public MinimalRebuildCache getMinimalRebuildCache() {
+    return minimalRebuildCache;
   }
 
   /**

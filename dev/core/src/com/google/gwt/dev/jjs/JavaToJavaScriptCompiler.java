@@ -827,7 +827,7 @@ public abstract class JavaToJavaScriptCompiler {
 
     protected abstract void checkEntryPoints(String[] additionalRootTypes);
 
-    protected abstract void createJProgram();
+    protected abstract void createJProgram(CompilerContext compilerContext);
 
     /**
      * Takes as input a CompilationState and transforms that into a unified by not yet resolved Java
@@ -863,7 +863,7 @@ public abstract class JavaToJavaScriptCompiler {
          */
 
         // (1) Initialize local state
-        createJProgram();
+        createJProgram(compilerContext);
         // Synchronize JTypeOracle with compile optimization behavior.
         jprogram.typeOracle.setOptimize(
             options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT);

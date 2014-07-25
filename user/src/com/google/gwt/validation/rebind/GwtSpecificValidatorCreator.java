@@ -27,7 +27,12 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.shared.impl.StringCase;
-import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
+import com.google.gwt.dev.jjs.ast.JCharLiteral;
+import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
+import com.google.gwt.dev.jjs.ast.JFloatLiteral;
+import com.google.gwt.dev.jjs.ast.JIntLiteral;
+import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Functions;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
@@ -138,7 +143,6 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
    */
   public static String asLiteral(Object value) throws IllegalArgumentException {
     Class<?> clazz = value.getClass();
-    JProgram jProgram = new JProgram();
 
     if (clazz.isArray()) {
       StringBuilder sb = new StringBuilder();
@@ -160,27 +164,27 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     }
 
     if (value instanceof Boolean) {
-      return jProgram.getLiteralBoolean(((Boolean) value).booleanValue())
+      return JBooleanLiteral.get(((Boolean) value).booleanValue())
           .toSource();
     } else if (value instanceof Byte) {
-      return jProgram.getLiteralInt(((Byte) value).byteValue()).toSource();
+      return JIntLiteral.get(((Byte) value).byteValue()).toSource();
     } else if (value instanceof Character) {
-      return jProgram.getLiteralChar(((Character) value).charValue())
+      return JCharLiteral.get(((Character) value).charValue())
           .toSource();
     } else if (value instanceof Class<?>) {
       return ((Class<?>) ((Class<?>) value)).getCanonicalName() + ".class";
     } else if (value instanceof Double) {
-      return jProgram.getLiteralDouble(((Double) value).doubleValue())
+      return JDoubleLiteral.get(((Double) value).doubleValue())
           .toSource();
     } else if (value instanceof Enum) {
       return value.getClass().getCanonicalName() + "."
           + ((Enum<?>) value).name();
     } else if (value instanceof Float) {
-      return jProgram.getLiteralFloat(((Float) value).floatValue()).toSource();
+      return JFloatLiteral.get(((Float) value).floatValue()).toSource();
     } else if (value instanceof Integer) {
-      return jProgram.getLiteralInt(((Integer) value).intValue()).toSource();
+      return JIntLiteral.get(((Integer) value).intValue()).toSource();
     } else if (value instanceof Long) {
-      return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
+      return JLongLiteral.get(((Long) value).intValue()).toSource();
     } else if (value instanceof String) {
       return '"' + Generator.escape((String) value) + '"';
     } else {

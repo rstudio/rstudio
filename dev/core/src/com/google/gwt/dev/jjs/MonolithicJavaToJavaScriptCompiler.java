@@ -261,8 +261,8 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     }
 
     @Override
-    protected void createJProgram() {
-      jprogram = new JProgram();
+    protected void createJProgram(CompilerContext compilerContext) {
+      jprogram = new JProgram(compilerContext.getMinimalRebuildCache());
     }
   }
 

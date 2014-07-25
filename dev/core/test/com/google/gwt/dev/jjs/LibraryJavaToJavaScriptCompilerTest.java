@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.CompilerOptionsImpl;
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.Condition;
@@ -298,7 +299,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
   public void testBuildLocalRuntimeRebindRules() throws UnableToCompleteException {
     // Sets up environment.
     Set<String> allRootTypes = Sets.newHashSet();
-    compiler.jprogram = new JProgram();
+    compiler.jprogram = new JProgram(new MinimalRebuildCache());
     Map<String, String> runtimeRebindRuleSourcesByShortName =
         RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;
     Rules rules = new Rules();
@@ -372,7 +373,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     ConfigurationProperty emulateStackProperty =
         properties.createConfiguration("emulateStack", false);
     emulateStackProperty.setValue("TRUE");
-    compiler.jprogram = new JProgram();
+    compiler.jprogram = new JProgram(new MinimalRebuildCache());
 
     // Builds property provider classes and a property provider registrator to register them.
     precompiler.buildPropertyProviderRegistrator(allRootTypes,

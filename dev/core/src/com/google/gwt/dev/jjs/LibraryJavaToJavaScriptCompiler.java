@@ -165,8 +165,8 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
     }
 
     @Override
-    protected void createJProgram() {
-      jprogram = new JProgram(false);
+    protected void createJProgram(CompilerContext compilerContext) {
+      jprogram = new JProgram(compilerContext.getMinimalRebuildCache(), false);
     }
 
     @VisibleForTesting

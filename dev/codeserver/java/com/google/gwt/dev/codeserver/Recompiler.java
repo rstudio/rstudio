@@ -25,6 +25,7 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.CompilerOptions;
 import com.google.gwt.dev.IncrementalBuilder;
 import com.google.gwt.dev.IncrementalBuilder.BuildResultStatus;
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
@@ -56,6 +57,7 @@ class Recompiler {
   private final TreeLogger logger;
   private String serverPrefix;
   private int compilesDone = 0;
+  private MinimalRebuildCache minimalRebuildCache;
 
   // after renaming
   private AtomicReference<String> moduleName = new AtomicReference<String>(null);
@@ -77,10 +79,22 @@ class Recompiler {
     compilerContext = compilerContextBuilder.build();
   }
 
-  synchronized CompileDir compile(Map<String, String> bindingProperties,
-      AtomicReference<Progress> progress)
+  CompileDir recompile(Map<String, String> bindingProperties, AtomicReference<Progress> progress)
       throws UnableToCompleteException {
+    if (options.shouldCompilePerFile()) {
+      return compile(bindingProperties, progress, minimalRebuildCache);
+    }
+    return compile(bindingProperties, progress, new MinimalRebuildCache());
+  }
 
+  synchronized CompileDir compile(Map<String, String> bindingProperties,
+      AtomicReference<Progress> progress) throws UnableToCompleteException {
+    return compile(bindingProperties, progress, new MinimalRebuildCache());
+  }
+
+  private synchronized CompileDir compile(Map<String, String> bindingProperties,
+      AtomicReference<Progress> progress, MinimalRebuildCache minimalRebuildCache)
+      throws UnableToCompleteException {
     if (compilesDone == 0) {
       System.setProperty("java.awt.headless", "true");
       if (System.getProperty("gwt.speedtracerlog") == null) {
@@ -112,7 +126,8 @@ class Recompiler {
 
         success = compileIncremental(compileLogger, compileDir);
       } else {
-        success = compileMonolithic(compileLogger, bindingProperties, compileDir, progress);
+        success = compileMonolithic(compileLogger, bindingProperties, compileDir, progress,
+            minimalRebuildCache);
       }
     } finally {
       try {
@@ -127,6 +142,9 @@ class Recompiler {
       compileLogger.log(TreeLogger.Type.ERROR, "Compiler returned " + success);
       throw new UnableToCompleteException();
     }
+
+    // keep the minimal rebuild cache for the next compile
+    this.minimalRebuildCache = minimalRebuildCache;
 
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO,
@@ -208,7 +226,8 @@ class Recompiler {
   }
 
   private boolean compileMonolithic(TreeLogger compileLogger, Map<String, String> bindingProperties,
-      CompileDir compileDir, AtomicReference<Progress> progress) throws UnableToCompleteException {
+      CompileDir compileDir, AtomicReference<Progress> progress, MinimalRebuildCache rebuildCache)
+      throws UnableToCompleteException {
 
     progress.set(new Progress.Compiling(moduleName.get(), compilesDone, 0, 2, "Loading modules"));
 
@@ -226,7 +245,7 @@ class Recompiler {
     CompilerOptions runOptions = new CompilerOptionsImpl(compileDir, newModuleName, options);
     compilerContext = compilerContextBuilder.options(runOptions).build();
 
-    boolean success = new Compiler(runOptions).run(compileLogger, module);
+    boolean success = new Compiler(runOptions, rebuildCache).run(compileLogger, module);
     if (success) {
       publishedCompileDir = compileDir;
     }

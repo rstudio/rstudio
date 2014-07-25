@@ -47,7 +47,8 @@ public class StrictModeTest extends TestCase {
   private CompilerContext compilerContext = new CompilerContext();
 
   public StrictModeTest() {
-    compilerContext = compilerContextBuilder.build();
+    compilerContext = compilerContextBuilder.minimalRebuildCache(new MinimalRebuildCache())
+        .build();
   }
 
   /**

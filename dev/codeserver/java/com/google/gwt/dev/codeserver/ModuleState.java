@@ -78,7 +78,7 @@ class ModuleState {
    */
   boolean recompile(Map<String, String> bindingProperties, AtomicReference<Progress> progress) {
     try {
-      current.set(recompiler.compile(bindingProperties, progress));
+      current.set(recompiler.recompile(bindingProperties, progress));
       return true;
     } catch (UnableToCompleteException e) {
       logger.log(TreeLogger.Type.WARN, "continuing to serve previous version");

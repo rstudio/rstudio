@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -377,14 +378,14 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     pinnedMethods.add(method);
   }
 
-  public JProgram() {
+  public JProgram(MinimalRebuildCache minimalRebuildCache) {
     super(SourceOrigin.UNKNOWN);
-    typeOracle = new JTypeOracle(this, true);
+    typeOracle = new JTypeOracle(this, minimalRebuildCache, true);
   }
 
-  public JProgram(boolean hasWholeWorldKnowledge) {
+  public JProgram(MinimalRebuildCache minimalRebuildCache, boolean hasWholeWorldKnowledge) {
     super(SourceOrigin.UNKNOWN);
-    typeOracle = new JTypeOracle(this, hasWholeWorldKnowledge);
+    typeOracle = new JTypeOracle(this, minimalRebuildCache, hasWholeWorldKnowledge);
   }
 
   public void addEntryMethod(JMethod entryPoint) {

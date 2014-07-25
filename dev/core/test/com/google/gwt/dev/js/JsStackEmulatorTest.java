@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.PrecompileTaskOptionsImpl;
 import com.google.gwt.dev.cfg.BindingProperty;
@@ -227,7 +228,8 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     options.setOutput(JsOutputOption.PRETTY);
     options.setRunAsyncEnabled(false);
-    CompilerContext context = new CompilerContext.Builder().options(options).build();
+    CompilerContext context = new CompilerContext.Builder().options(options)
+        .minimalRebuildCache(new MinimalRebuildCache()).build();
 
     ConfigProps config = new ConfigProps(Arrays.asList(recordFileNamesProp,
         recordLineNumbersProp));

@@ -123,9 +123,14 @@ public class Compiler {
   private final CompilerOptionsImpl options;
 
   public Compiler(CompilerOptions compilerOptions) {
+    this(compilerOptions, new MinimalRebuildCache());
+  }
+
+  public Compiler(CompilerOptions compilerOptions, MinimalRebuildCache minimalRebuildCache) {
     this.options = new CompilerOptionsImpl(compilerOptions);
     this.compilerContextBuilder = new CompilerContext.Builder();
-    this.compilerContext = compilerContextBuilder.options(options).build();
+    this.compilerContext = compilerContextBuilder.options(options)
+        .minimalRebuildCache(minimalRebuildCache).build();
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
