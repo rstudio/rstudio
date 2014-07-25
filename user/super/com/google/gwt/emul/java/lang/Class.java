@@ -219,36 +219,41 @@ public final class Class<T> implements Type {
    * Initiliazes {@code clazz} names from metadata.
    * <p>
    * Only called if metadata is NOT disabled.
+   * <p>
+   * Written in JSNI to minimize dependencies (on (String)+).
    */
-  private static void initializeNames(Class<?> clazz, String packageName,
-      String className) {
-    clazz.typeName = packageName + className;
-    clazz.simpleName = className;
-  }
+  private static native void initializeNames(Class<?> clazz, String packageName,
+      String className) /*-{
+    clazz.@java.lang.Class::typeName = packageName + className;
+    clazz.@java.lang.Class::simpleName = className;
+  }-*/;
 
   /**
    * Initiliazes {@code clazz} names from typeIds.
    * <p>
    * Only called if metadata IS disabled.
+   * <p>
+   * Written in JSNI to minimize dependencies (on toString() and (String)+).
    */
-  static void synthesizeClassNamesFromTypeId(Class<?> clazz, JavaScriptObject typeId) {
-    /*
-     * The initial "" + in the below code is to prevent clazz.getAnonymousId from
-     * being autoboxed. The class literal creation code is run very early
-     * during application start up, before class Integer has been initialized.
-     */
-    clazz.typeName = "Class$"
-        + (isInstantiable(typeId) ? "S" + typeId : "" + clazz.sequentialId);
-    clazz.simpleName = clazz.typeName;
-  }
+  static native void synthesizeClassNamesFromTypeId(Class<?> clazz, JavaScriptObject typeId) /*-{
+     // The initial "" + in the below code is to prevent clazz.getAnonymousId from
+     // being autoboxed. The class literal creation code is run very early
+     // during application start up, before class Integer has been initialized.
+
+    clazz.@java.lang.Class::typeName = "Class$" +
+        (!!typeId ? "S" + typeId : "" + clazz.@java.lang.Class::sequentialId);
+    clazz.@java.lang.Class::simpleName = clazz.@java.lang.Class::typeName;
+  }-*/;
 
   /**
    * Sets the class object for primitives.
+   * <p>
+   * Written in JSNI to minimize dependencies (on (String)+).
    */
-  static void synthesizePrimitiveNamesFromTypeId(Class<?> clazz, String primitiveTypeId) {
-    clazz.typeName = "Class$" + primitiveTypeId;
-    clazz.simpleName = clazz.typeName;
-  }
+  static native void synthesizePrimitiveNamesFromTypeId(Class<?> clazz, String primitiveTypeId) /*-{
+    clazz.@java.lang.Class::typeName = "Class$" + primitiveTypeId;
+    clazz.@java.lang.Class::simpleName = clazz.@java.lang.Class::typeName;
+  }-*/;
 
   JavaScriptObject enumValueOfFunc;
 

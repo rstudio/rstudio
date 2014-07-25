@@ -168,6 +168,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
@@ -1680,8 +1681,8 @@ public class GenerateJavaScriptAST {
       }
 
       jsProgram.getGlobalBlock().getStatements().add(
-        constructInvocation(sourceInfo, "ModuleUtils.setGwtProperty",
-            new JsStringLiteral(sourceInfo, "permProps"), permProps).makeStmt());
+          constructInvocation(sourceInfo, "ModuleUtils.setGwtProperty",
+              new JsStringLiteral(sourceInfo, "permProps"), permProps).makeStmt());
     }
 
     @Override
@@ -1857,7 +1858,8 @@ public class GenerateJavaScriptAST {
       // Generate immortal types in the preamble.
       generateImmortalTypes(vars);
 
-      Set<JDeclaredType> alreadyProcessed = Sets.<JDeclaredType>newLinkedHashSet(program.immortalCodeGenTypes);
+      Set<JDeclaredType> alreadyProcessed =
+          Sets.<JDeclaredType>newLinkedHashSet(program.immortalCodeGenTypes);
       alreadyProcessed.add(program.getTypeClassLiteralHolder());
 
       List<JDeclaredType> classLiteralSupportClasses =
@@ -1882,8 +1884,11 @@ public class GenerateJavaScriptAST {
       }
       // Include in the preamble all classes that are reachable for Class.createForClass and
       // Class.createForEnum that are not JSOs nor interfaces.
-      SortedSet<JDeclaredType> reachableClasses = computeReachableTypes(
-          "Class.createForClass", "Class.createForEnum", "Class.createForInterface");
+      SortedSet<JDeclaredType> reachableClasses =
+          computeReachableTypes(program.getTypeClassLiteralHolder().getClinitMethod());
+
+      assert !modularCompile || checkCoreModulePreambleComplete(program,
+          program.getTypeClassLiteralHolder().getClinitMethod());
 
       Set<JDeclaredType> orderedPreambleClasses = Sets.newLinkedHashSet();
       for (JDeclaredType type : reachableClasses) {
@@ -1900,14 +1905,37 @@ public class GenerateJavaScriptAST {
     }
 
     /**
-     * Computes the set of types whose methods or fields are reachable from any of the indexed
-     * method names {@code indexedMethodNames}.
+     * Check that in modular compiles the preamble is complete.
+     * <p>
+     * In modular compiles the preamble has to include code for creating all 4 types of class
+     * literals.
      */
-    private SortedSet<JDeclaredType> computeReachableTypes(String... indexedMethodNames) {
-      ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
-      for (String classLiteralMethodName : indexedMethodNames) {
-        cfa.traverseFrom(program.getIndexedMethod(classLiteralMethodName));
+    private boolean checkCoreModulePreambleComplete(JProgram program,
+        JMethod classLiteralInitMethod) {
+      final Set<JMethod> calledMethods = Sets.newHashSet();
+      new JVisitor() {
+        @Override
+        public void endVisit(JMethodCall x, Context ctx) {
+          calledMethods.add(x.getTarget());
+        }
+      }.accept(classLiteralInitMethod);
+
+      for (String createForMethodName : ImmutableList.of(
+          "Class.createForClass", "Class.createForPrimitive", "Class.createForInterface",
+          "Class.createForEnum")) {
+        if (!calledMethods.contains(program.getIndexedMethod(createForMethodName))) {
+          return false;
+        }
       }
+      return true;
+    }
+
+    /**
+     * Computes the set of types whose methods or fields are reachable from {@code method}.
+     */
+    private SortedSet<JDeclaredType> computeReachableTypes(JMethod method) {
+      ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
+      cfa.traverseFrom(method);
 
       // Get the list of enclosing classes that were not excluded.
       SortedSet<JDeclaredType> reachableTypes = ImmutableSortedSet.copyOf(HasName.BY_NAME_COMPARATOR,
@@ -3279,6 +3307,8 @@ public class GenerateJavaScriptAST {
   // TODO(rluble) move optimization to a Java AST optimization pass.
   private final boolean hasWholeWorldKnowledge;
 
+  private final boolean modularCompile;
+
   /**
    * All of the fields in String and Array need special handling for interop.
    */
@@ -3326,6 +3356,7 @@ public class GenerateJavaScriptAST {
     interfaceScope = new JsNormalScope(objectScope, "Interfaces");
     this.output = compilerContext.getOptions().getOutput();
     this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic();
+    this.modularCompile = !compilerContext.shouldCompileMonolithic();
     this.symbolTable = symbolTable;
     this.typeIdsByType = typeIdsByType;
     this.props = props;
