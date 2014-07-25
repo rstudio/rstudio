@@ -71,12 +71,14 @@ CGImageRef capturePageRegion(NSRect regionRect)
    CGFloat menuBarHeight = [mainMenu menuBarHeight];
    
    // establish the region to capture (flip windowOrigin.y coordinate system)
-   regionRect.origin.x += windowOrigin.x;
-   regionRect.origin.y += (-windowOrigin.y + menuBarHeight + titleBarHeight);
+   NSRect captureRect = regionRect;
+   captureRect.origin.x += windowOrigin.x;
+   captureRect.origin.y += (std::abs(windowOrigin.y) + menuBarHeight + titleBarHeight);
+   
    
    // capture the screen region
    CGWindowID windowID = [window windowNumber];
-   CGImageRef imageRef = CGWindowListCreateImage(NSRectToCGRect(regionRect),
+   CGImageRef imageRef = CGWindowListCreateImage(NSRectToCGRect(captureRect),
                                                  kCGWindowListOptionIncludingWindow,
                                                  windowID,
                                                  kCGWindowImageDefault);
