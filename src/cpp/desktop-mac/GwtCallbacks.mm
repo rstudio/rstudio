@@ -50,6 +50,11 @@ NSString* resolveAliasedPath(NSString* path)
    return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
 }
    
+void printPoint(const std::string& named, CGPoint point)
+{
+   std::cerr << named  << " x: " << point.x << ", y: " << point.y << std::endl;
+}
+   
 CGImageRef capturePageRegion(NSRect regionRect)
 {
    // get the main window and it's origin
