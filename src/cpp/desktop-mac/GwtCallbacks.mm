@@ -51,30 +51,35 @@ NSString* resolveAliasedPath(NSString* path)
    return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
 }
    
-   
 
 CGImageRef imageRefForPageRegion(NSRect regionRect)
 {
-   NSView* aView = [[MainFrameController instance] webView];
+   // get the main web view
+   NSView* view = [[MainFrameController instance] webView];
    
-   NSRect originRect = [aView convertRect:[aView bounds] toView:[[aView window] contentView]];
+   // offset to determine the location of the view within it's window
+   NSRect originRect = [view convertRect:[view bounds] toView:[[view window] contentView]];
    
-   NSRect rect = originRect;
-   rect.origin.y = 0;
-   rect.origin.x += [aView window].frame.origin.x;
-   rect.origin.y += [[aView window] screen].frame.size.height - [aView window].frame.origin.y - [aView window].frame.size.height;
-   rect.origin.y += [aView window].frame.size.height - originRect.origin.y - originRect.size.height;
+   // determine the capture rect in screen coordinates (start with the full view)
+   NSRect captureRect = originRect;
+   captureRect.origin.x += [view window].frame.origin.x;
+   captureRect.origin.y = [[view window] screen].frame.size.height -
+                          [view window].frame.origin.y -
+                          originRect.origin.y -
+                          originRect.size.height;
    
-   rect.origin.x += regionRect.origin.x;
-   rect.origin.y += regionRect.origin.y;
-   rect.size = regionRect.size;
+   // offset for the passed region rect (subset of the view we are capturing)
+   captureRect.origin.x += regionRect.origin.x;
+   captureRect.origin.y += regionRect.origin.y;
+   captureRect.size = regionRect.size;
    
-   CGImageRef cgimg = CGWindowListCreateImage(rect,
+   // perform the capture
+   CGImageRef cgimg = CGWindowListCreateImage(captureRect,
                                               kCGWindowListOptionIncludingWindow,
-                                              (CGWindowID)[[aView window] windowNumber],
+                                              (CGWindowID)[[view window] windowNumber],
                                               kCGWindowImageDefault);
    
-   
+   // return the image
    return cgimg;
 }
 
