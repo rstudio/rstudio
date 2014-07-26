@@ -51,43 +51,39 @@ NSString* resolveAliasedPath(NSString* path)
    return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
 }
    
-void printPoint(const std::string& named, CGPoint point)
-{
-   std::cerr << named  << " x: " << point.x << ", y: " << point.y << std::endl;
-}
    
-CGImageRef capturePageRegion(NSRect regionRect)
-{
-   // get the main window and it's origin
-   NSWindow* window = [[MainFrameController instance] window];
-   NSPoint windowOrigin = [window frame].origin;
-   
-   // compute the size of the title bar
-   NSSize windowSize = [window frame].size;
-   NSSize contentViewSize = [[window contentView] frame].size;
-   CGFloat titleBarHeight = windowSize.height - contentViewSize.height;
-   
-   // compute the size of the menubar (if visible)
-   NSMenu* mainMenu = [[NSApplication sharedApplication] mainMenu];
-   CGFloat menuBarHeight = [mainMenu menuBarHeight];
-   
-   // establish the region to capture (flip windowOrigin.y coordinate system)
-   NSRect captureRect = regionRect;
-   captureRect.origin.x += windowOrigin.x;
-   captureRect.origin.y += (std::abs(windowOrigin.y) + menuBarHeight + titleBarHeight);
-   
-   
-   // capture the screen region
-   CGWindowID windowID = [window windowNumber];
-   CGImageRef imageRef = CGWindowListCreateImage(NSRectToCGRect(captureRect),
-                                                 kCGWindowListOptionIncludingWindow,
-                                                 windowID,
-                                                 kCGWindowImageDefault);
 
-   // return it
-   return imageRef;
+CGImageRef imageRefForPageRegion(NSRect regionRect)
+{
+   NSView* aView = [[MainFrameController instance] webView];
+   
+   NSRect originRect = [aView convertRect:[aView bounds] toView:[[aView window] contentView]];
+   
+   NSRect rect = originRect;
+   rect.origin.y = 0;
+   rect.origin.x += [aView window].frame.origin.x;
+   rect.origin.y += [[aView window] screen].frame.size.height - [aView window].frame.origin.y - [aView window].frame.size.height;
+   rect.origin.y += [aView window].frame.size.height - originRect.origin.y - originRect.size.height;
+   
+   rect.origin.x += regionRect.origin.x;
+   rect.origin.y += regionRect.origin.y;
+   rect.size = regionRect.size;
+   
+   CGImageRef cgimg = CGWindowListCreateImage(rect,
+                                              kCGWindowListOptionIncludingWindow,
+                                              (CGWindowID)[[aView window] windowNumber],
+                                              kCGWindowImageDefault);
+   
+   
+   return cgimg;
 }
 
+   
+NSImage* nsImageForPageRegion(NSRect regionRect)
+{
+   return [[NSImage alloc] initWithCGImage: imageRefForPageRegion(regionRect)
+                                      size: regionRect.size];
+}
    
 void CGImageWriteToFile(CGImageRef image, NSString *path, CFStringRef type) {
    CFURLRef url = (CFURLRef)[NSURL fileURLWithPath:path];
@@ -575,7 +571,7 @@ OSStatus copyCGImageRefToClipboard(CGImageRef imageRef)
 {
    // get an image ref for the specified region
    NSRect regionRect = NSMakeRect(left, top, width, height);
-   CGImageRef imageRef = capturePageRegion(regionRect);
+   CGImageRef imageRef = imageRefForPageRegion(regionRect);
    CFAutoRelease imageAutoRelease(imageRef);
    
    // copy to pasteboard
@@ -593,7 +589,7 @@ OSStatus copyCGImageRefToClipboard(CGImageRef imageRef)
 {
    // get an image ref for the specified region
    NSRect regionRect = NSMakeRect(left, top, width, height);
-   CGImageRef imageRef = capturePageRegion(regionRect);
+   CGImageRef imageRef = imageRefForPageRegion(regionRect);
    CFAutoRelease imageAutoRelease(imageRef);
    
    
