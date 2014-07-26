@@ -51,8 +51,16 @@ NSString* resolveAliasedPath(NSString* path)
    return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
 }
    
+class CFAutoRelease : boost::noncopyable
+{
+public:
+   explicit CFAutoRelease(CFTypeRef ref) : ref_(ref) {}
+   ~CFAutoRelease() { CFRelease(ref_); }
+private:
+   CFTypeRef ref_;
+};
 
-CGImageRef imageRefForPageRegion(NSRect regionRect)
+NSImage* nsImageForPageRegion(NSRect regionRect)
 {
    // get the main web view
    NSView* view = [[MainFrameController instance] webView];
@@ -74,72 +82,16 @@ CGImageRef imageRefForPageRegion(NSRect regionRect)
    captureRect.size = regionRect.size;
    
    // perform the capture
-   CGImageRef cgimg = CGWindowListCreateImage(captureRect,
-                                              kCGWindowListOptionIncludingWindow,
-                                              (CGWindowID)[[view window] windowNumber],
-                                              kCGWindowImageDefault);
+   CGImageRef imageRef = CGWindowListCreateImage(captureRect,
+                                                 kCGWindowListOptionIncludingWindow,
+                                                 (CGWindowID)[[view window] windowNumber],
+                                                 kCGWindowImageDefault);
+   CFAutoRelease imageAutoRelease(imageRef);
    
-   // return the image
-   return cgimg;
+   // return as nsimage
+   return [[NSImage alloc] initWithCGImage: imageRef size: NSZeroSize];
 }
 
-   
-NSImage* nsImageForPageRegion(NSRect regionRect)
-{
-   return [[NSImage alloc] initWithCGImage: imageRefForPageRegion(regionRect)
-                                      size: regionRect.size];
-}
-   
-void CGImageWriteToFile(CGImageRef image, NSString *path, CFStringRef type) {
-   CFURLRef url = (CFURLRef)[NSURL fileURLWithPath:path];
-   CGImageDestinationRef destination = CGImageDestinationCreateWithURL(url, type, 1, NULL);
-   CGImageDestinationAddImage(destination, image, nil);
-      
-   if (!CGImageDestinationFinalize(destination)) {
-      NSLog(@"Failed to write image to %@", path);
-   }
-      
-   CFRelease(destination);
-}
-   
-class CFAutoRelease : boost::noncopyable
-{
-public:
-   explicit CFAutoRelease(CFTypeRef ref) : ref_(ref) {}
-   ~CFAutoRelease() { CFRelease(ref_); }
-private:
-   CFTypeRef ref_;
-};
-   
-OSStatus copyCGImageRefToClipboard(CGImageRef imageRef)
-{
-   // get clipboard ref
-   OSStatus err = noErr;
-   PasteboardRef clipbaordRef;
-   err = PasteboardCreate(kPasteboardClipboard, &clipbaordRef);
-   if (err)
-      return err;
-   CFAutoRelease clipboardAutoRelease(clipbaordRef);
-   
-   // clear the clipboard
-   err = PasteboardClear(clipbaordRef);
-   if (err)
-      return err;
-   
-   // allocate data and image destination refs
-   CFMutableDataRef dataRef = CFDataCreateMutable(kCFAllocatorDefault, 0);
-   CFAutoRelease dataAutoRelease(dataRef);
-   CGImageDestinationRef destRef = CGImageDestinationCreateWithData(dataRef, kUTTypePNG, 1, NULL);
-   CFAutoRelease destAutoRelease(destRef);
-   
-   // add the image
-   CGImageDestinationAddImage(destRef, imageRef, NULL);
-   CGImageDestinationFinalize(destRef);
-   
-   // put it on the clipboard
-   return PasteboardPutItemFlavor(clipbaordRef, (PasteboardItemID)1, kUTTypePNG, dataRef, 0);
-}
-   
 } // anonymous namespace
 
 @implementation GwtCallbacks
@@ -574,13 +526,18 @@ OSStatus copyCGImageRefToClipboard(CGImageRef imageRef)
 - (void) copyPageRegionToClipboard: (int) left top: (int) top
                              width: (int) width height: (int) height
 {
-   // get an image ref for the specified region
+   // get an image for the specified region
    NSRect regionRect = NSMakeRect(left, top, width, height);
-   CGImageRef imageRef = imageRefForPageRegion(regionRect);
-   CFAutoRelease imageAutoRelease(imageRef);
+   NSImage* image = nsImageForPageRegion(regionRect);
    
-   // copy to pasteboard
-   copyCGImageRefToClipboard(imageRef);
+   // copy it to the pasteboard
+   NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+   [pboard clearContents];
+   NSArray *copiedObjects = [NSArray arrayWithObject:image];
+   [pboard writeObjects: copiedObjects];
+   
+   // release the image
+   [image release];
 }
 
 
@@ -592,10 +549,9 @@ OSStatus copyCGImageRefToClipboard(CGImageRef imageRef)
                             height: (int) height
                          overwrite: (Boolean) overwrite
 {
-   // get an image ref for the specified region
-   NSRect regionRect = NSMakeRect(left, top, width, height);
-   CGImageRef imageRef = imageRefForPageRegion(regionRect);
-   CFAutoRelease imageAutoRelease(imageRef);
+   // get an image for the specified region
+   //NSRect regionRect = NSMakeRect(left, top, width, height);
+   //NSImage* image = nsImageForPageRegion(regionRect);
    
    
    
