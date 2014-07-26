@@ -60,38 +60,6 @@ private:
    CFTypeRef ref_;
 };
 
-NSImage* nsImageForPageRegion(NSRect regionRect)
-{
-   // get the main web view
-   NSView* view = [[MainFrameController instance] webView];
-   
-   // offset to determine the location of the view within it's window
-   NSRect originRect = [view convertRect:[view bounds] toView:[[view window] contentView]];
-   
-   // determine the capture rect in screen coordinates (start with the full view)
-   NSRect captureRect = originRect;
-   captureRect.origin.x += [view window].frame.origin.x;
-   captureRect.origin.y = [[view window] screen].frame.size.height -
-                          [view window].frame.origin.y -
-                          originRect.origin.y -
-                          originRect.size.height;
-   
-   // offset for the passed region rect (subset of the view we are capturing)
-   captureRect.origin.x += regionRect.origin.x;
-   captureRect.origin.y += regionRect.origin.y;
-   captureRect.size = regionRect.size;
-   
-   // perform the capture
-   CGImageRef imageRef = CGWindowListCreateImage(captureRect,
-                                                 kCGWindowListOptionIncludingWindow,
-                                                 (CGWindowID)[[view window] windowNumber],
-                                                 kCGWindowImageDefault);
-   CFAutoRelease imageAutoRelease(imageRef);
-   
-   // return as nsimage
-   return [[NSImage alloc] initWithCGImage: imageRef size: NSZeroSize];
-}
-
 } // anonymous namespace
 
 @implementation GwtCallbacks
@@ -523,12 +491,85 @@ NSImage* nsImageForPageRegion(NSRect regionRect)
    [[[MainFrameController instance] webView] copy: self];
 }
 
+
+
+- (NSImage*) nsImageForPageRegion: (NSRect) regionRect
+{
+   // get the main web view
+   NSView* view = [[MainFrameController instance] webView];
+   
+   // offset to determine the location of the view within it's window
+   NSRect originRect = [view convertRect:[view bounds] toView:[[view window] contentView]];
+   
+   // determine the capture rect in screen coordinates (start with the full view)
+   NSRect captureRect = originRect;
+   captureRect.origin.x += [view window].frame.origin.x;
+   captureRect.origin.y = [[view window] screen].frame.size.height -
+                           [view window].frame.origin.y -
+                           originRect.origin.y -
+                           originRect.size.height;
+   
+   // offset for the passed region rect (subset of the view we are capturing)
+   captureRect.origin.x += regionRect.origin.x;
+   captureRect.origin.y += regionRect.origin.y;
+   captureRect.size = regionRect.size;
+   
+   // perform the capture
+   CGImageRef imageRef = CGWindowListCreateImage(captureRect,
+                                                 kCGWindowListOptionIncludingWindow,
+                                                 (CGWindowID)[[view window] windowNumber],
+                                                 kCGWindowImageDefault);
+   CFAutoRelease imageAutoRelease(imageRef);
+   
+   // create an NSImage
+   NSImage* image = [[NSImage alloc] initWithCGImage: imageRef size: NSZeroSize];
+   
+   // downsample if this is a retina display
+   if ([self isRetina])
+   {
+      // allocate the imageRep
+      NSSize size = regionRect.size;
+      NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc]
+                                    initWithBitmapDataPlanes:NULL
+                                    pixelsWide: size.width
+                                    pixelsHigh: size.height
+                                    bitsPerSample: 8
+                                    samplesPerPixel: 4
+                                    hasAlpha: YES
+                                    isPlanar: NO
+                                    colorSpaceName: NSCalibratedRGBColorSpace
+                                    bytesPerRow: 0
+                                    bitsPerPixel: 0];
+      [imageRep setSize: size];
+      
+      // draw the original into the imageRep
+      [NSGraphicsContext saveGraphicsState];
+      [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:imageRep]];
+      [image drawInRect: NSMakeRect(0, 0, size.width, size.height)
+               fromRect: NSZeroRect
+              operation: NSCompositeCopy
+               fraction: 1.0];
+      [NSGraphicsContext restoreGraphicsState];
+      
+      // release the original image, create a new one with the imageRep, then release the imageRep
+      [image release];
+      image = [[NSImage alloc] initWithSize:[imageRep size]];
+      [image addRepresentation: imageRep];
+      [imageRep release];
+   }
+
+   // return the image
+   return image;
+}
+
+
+
 - (void) copyPageRegionToClipboard: (int) left top: (int) top
                              width: (int) width height: (int) height
 {
    // get an image for the specified region
    NSRect regionRect = NSMakeRect(left, top, width, height);
-   NSImage* image = nsImageForPageRegion(regionRect);
+   NSImage* image = [self nsImageForPageRegion: regionRect];
    
    // copy it to the pasteboard
    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
