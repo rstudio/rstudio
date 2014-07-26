@@ -23,6 +23,7 @@ import com.google.gwt.emultest.java.util.ComparatorTest;
 import com.google.gwt.emultest.java.util.DateTest;
 import com.google.gwt.emultest.java.util.EnumMapTest;
 import com.google.gwt.emultest.java.util.EnumSetTest;
+import com.google.gwt.emultest.java.util.HashMapSmokeTest;
 import com.google.gwt.emultest.java.util.HashMapTest;
 import com.google.gwt.emultest.java.util.HashSetTest;
 import com.google.gwt.emultest.java.util.IdentityHashMapTest;
@@ -54,6 +55,7 @@ public class CollectionsSuite {
     suite.addTestSuite(DateTest.class);
     suite.addTestSuite(EnumMapTest.class);
     suite.addTestSuite(EnumSetTest.class);
+    suite.addTestSuite(HashMapSmokeTest.class);
     suite.addTestSuite(HashMapTest.class);
     suite.addTestSuite(HashSetTest.class);
     suite.addTestSuite(IdentityHashMapTest.class);
