@@ -583,7 +583,6 @@ private:
 }
 
 
-// TODO: check file write error
 // TODO: hide gripper reliably
 
 - (Boolean) exportPageRegionToFile: (NSString*) targetPath
@@ -632,10 +631,9 @@ private:
    NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
    if (![data writeToFile: targetPath atomically: NO])
    {
-      
-      // TODO: check/present/log error
-      
-      return false;
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("target-file", [targetPath UTF8String]);
+      LOG_ERROR(error);
    }
    
    // release the image
