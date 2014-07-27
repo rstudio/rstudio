@@ -582,6 +582,10 @@ private:
 }
 
 
+// TODO: check file write error
+// TODO: add properties for higher image quality
+// TODO: hide gripper reliably
+
 - (Boolean) exportPageRegionToFile: (NSString*) targetPath
                             format: (NSString*) format
                               left: (int) left
@@ -590,14 +594,50 @@ private:
                             height: (int) height
                          overwrite: (Boolean) overwrite
 {
+   // resolve path and check for overwrite
+   targetPath = resolveAliasedPath(targetPath);
+   if (FilePath([targetPath UTF8String]).exists() && !overwrite)
+      return false;
+   
    // get an image for the specified region
-   //NSRect regionRect = NSMakeRect(left, top, width, height);
-   //NSImage* image = nsImageForPageRegion(regionRect);
+   NSRect regionRect = NSMakeRect(left, top, width, height);
+   NSImage* image = [self nsImageForPageRegion: regionRect];
    
+   // determine format and properties for writing file
+   NSBitmapImageFileType imageFileType = nil;
+   NSDictionary* properties = nil;
+   if ([format isEqualToString: @"PNG"])
+   {
+      imageFileType = NSPNGFileType;
+   }
+   else if ([format isEqualToString: @"JPEG"])
+   {
+      imageFileType = NSJPEGFileType;
+   }
+   else if ([format isEqualToString: @"BMP"])
+   {
+      imageFileType = NSBMPFileType;
+   }
+   else if ([format isEqualToString: @"TIFF"])
+   {
+      imageFileType = NSTIFFFileType;
+   }
    
+   // write to file
+   NSBitmapImageRep *imageRep = [[image representations] objectAtIndex: 0];
+   NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
+   if (![data writeToFile: targetPath atomically: NO])
+   {
+      
+      // TODO: check/present/log error
+      
+      return false;
+   }
    
+   // release the image
+   [image release];
   
-   
+   // success
    return true;
 }
 

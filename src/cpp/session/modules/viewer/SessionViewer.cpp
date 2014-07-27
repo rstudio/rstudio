@@ -135,6 +135,9 @@ Error getViewerExportContext(const json::JsonRpcRequest& request,
    json::Array formats;
    formats.push_back(plotExportFormat("PNG", kPngFormat));
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
+#ifdef __APPLE__
+   formats.push_back(plotExportFormat("TIFF", kTiffFormat));
+#endif
    formats.push_back(plotExportFormat("BMP", kBmpFormat));
    contextJson["formats"] = formats;
 
