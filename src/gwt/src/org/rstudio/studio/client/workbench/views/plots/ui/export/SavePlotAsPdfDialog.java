@@ -31,6 +31,8 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
@@ -197,7 +199,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                     indicator.onCompleted();
                     
                     // update default
-                    ExportPlot.setDefaultSaveDirectory(input);
+                    ExportPlotUtils.setDefaultSaveDirectory(input);
                     
                     // set display
                     setDirectory(input);  
@@ -264,7 +266,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    
    private FileSystemItem getTargetPath()
    { 
-      return ExportPlot.composeTargetPath(".pdf", fileNameTextBox_, directory_);  
+      return ExportPlotUtils.composeTargetPath(".pdf", fileNameTextBox_, directory_);  
    }
    
    private void setDirectory(FileSystemItem directory)
@@ -273,7 +275,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       directory_ = directory;
         
       // set label
-      String dirLabel = ExportPlot.shortDirectoryName(directory, 250);
+      String dirLabel = ExportPlotUtils.shortDirectoryName(directory, 250);
       directoryLabel_.setText(dirLabel);
       
       // set tooltip

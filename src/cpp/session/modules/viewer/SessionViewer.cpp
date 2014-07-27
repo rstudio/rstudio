@@ -26,6 +26,7 @@
 #include <r/RUtil.hpp>
 #include <r/ROptions.hpp>
 
+#include <r/session/RGraphics.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -113,6 +114,51 @@ Error viewerClearCurrent(const json::JsonRpcRequest& request,
 {
    viewerHistory().clearCurrent();
    viewerNavigateToCurrent();
+   return Success();
+}
+
+Error getViewerExportContext(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   // get directory arg
+   std::string directory;
+   Error error = json::readParam(request.params, 0, &directory);
+   if (error)
+      return error;
+
+   // context
+   json::Object contextJson;
+
+   // get supported formats
+   using namespace module_context;
+   using namespace r::session::graphics;
+   json::Array formats;
+   formats.push_back(plotExportFormat("PNG", kPngFormat));
+   formats.push_back(plotExportFormat("JPEG", kJpegFormat));
+#ifdef __APPLE__
+   formats.push_back(plotExportFormat("TIFF", kTiffFormat));
+#endif
+   formats.push_back(plotExportFormat("BMP", kBmpFormat));
+   contextJson["formats"] = formats;
+
+   // get directory path -- if it doesn't exist revert to the current
+   // working directory
+   FilePath directoryPath = module_context::resolveAliasedPath(directory);
+   if (!directoryPath.exists())
+      directoryPath = module_context::safeCurrentPath();
+
+   // reflect directory back to caller
+   contextJson["directory"] = module_context::createFileSystemItem(directoryPath);
+
+   // get unique stem
+   std::string stem;
+   error = module_context::uniqueSaveStem(directoryPath, "Rplot", &stem);
+   if (error)
+      return error;
+   contextJson["uniqueFileStem"] = stem;
+
+   pResponse->setResult(contextJson);
+
    return Success();
 }
 
@@ -265,7 +311,8 @@ Error initialize()
       (bind(registerRpcMethod, "viewer_current", viewerCurrent))
       (bind(registerRpcMethod, "viewer_clear_current", viewerClearCurrent))
       (bind(registerRpcMethod, "viewer_forward", viewerForward))
-      (bind(registerRpcMethod, "viewer_back", viewerBack));
+      (bind(registerRpcMethod, "viewer_back", viewerBack))
+      (bind(registerRpcMethod, "get_viewer_export_context", getViewerExportContext));
    return initBlock.execute();
 }
 

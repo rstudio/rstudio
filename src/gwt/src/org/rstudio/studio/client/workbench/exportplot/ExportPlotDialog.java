@@ -12,12 +12,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.ui.export;
+package org.rstudio.studio.client.workbench.exportplot;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ModalDialogBase;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -25,11 +24,11 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ExportPlotDialog extends ModalDialogBase 
 {
-   public ExportPlotDialog(PlotsServerOperations server,
-                           ExportPlotOptions options)
+   public ExportPlotDialog(ExportPlotOptions options,
+                           ExportPlotPreviewer previewer)
    { 
-      server_ = server;
       options_ = options;
+      previewer_ = previewer;
    }
   
    @Override
@@ -43,18 +42,20 @@ public class ExportPlotDialog extends ModalDialogBase
       
       int width = Math.min(options_.getWidth(), maxSize.width);
       int height = Math.min(options_.getHeight(), maxSize.height);
-      
+       
       sizeEditor_ = new ExportPlotSizeEditor(
                                  width, 
                                  height,
                                  options_.getKeepRatio(),
                                  createTopLeftWidget(),
-                                 server_,
-                                 new ExportPlotSizeEditor.Observer() {
-                                    public void onPlotResized(boolean withMouse)
+                                 previewer_,
+                                 new ExportPlotSizeEditor.Observer()
+                                 {     
+                                    @Override
+                                    public void onResized(boolean withMouse)
                                     {
                                        if (!withMouse)
-                                          center();       
+                                          center();   
                                     }
                                  }); 
       mainPanel.add(sizeEditor_);
@@ -67,7 +68,6 @@ public class ExportPlotDialog extends ModalDialogBase
       
    }
    
- 
    protected Widget createTopLeftWidget()
    {
       return null;
@@ -101,17 +101,8 @@ public class ExportPlotDialog extends ModalDialogBase
       super.onDialogShown();
       sizeEditor_.onSizerShown();
    }
-   
-  
-   protected final PlotsServerOperations server_;
-  
-   
+      
    private final ExportPlotOptions options_;
-   
+   private final ExportPlotPreviewer previewer_;
    private ExportPlotSizeEditor sizeEditor_;
-   
-
-
- 
-  
 }

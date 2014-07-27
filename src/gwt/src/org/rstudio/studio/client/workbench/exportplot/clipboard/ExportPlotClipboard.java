@@ -1,5 +1,5 @@
 /*
- * SavePlotAsImageFormat.java
+ * PlotsPaneClipboard.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,21 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
 
-public class SavePlotAsImageFormat extends JavaScriptObject
-{  
-   protected SavePlotAsImageFormat()
-   {
-   }
-   
-   public final native String getName() /*-{
-      return this.name;
-   }-*/;
-   
-   public final native String getExtension() /*-{
-      return this.extension;
-   }-*/;
+package org.rstudio.studio.client.workbench.exportplot.clipboard;
+
+import com.google.gwt.user.client.Command;
+
+public interface ExportPlotClipboard
+{
+   void copyPlotToClipboardMetafile(int width, int height, Command onCompleted);
+   void copyPlotToCocoaPasteboard(int width, int height, Command onCompleted);
 }

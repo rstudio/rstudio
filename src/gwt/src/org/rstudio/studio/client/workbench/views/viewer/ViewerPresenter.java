@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.viewer;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.AppCommand;
@@ -23,24 +24,34 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
+import org.rstudio.studio.client.workbench.views.viewer.export.CopyViewerPlotToClipboardDesktopDialog;
+import org.rstudio.studio.client.workbench.views.viewer.export.SaveViewerPlotAsImageDesktopDialog;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
 public class ViewerPresenter extends BasePresenter 
@@ -54,6 +65,7 @@ public class ViewerPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void navigate(String url);
+      void setExportEnabled(boolean exportEnabled);
       void previewRmd(RmdPreviewParams params);
       String getUrl();
       String getTitle();
@@ -66,19 +78,23 @@ public class ViewerPresenter extends BasePresenter
    public ViewerPresenter(Display display, 
                           EventBus eventBus,
                           GlobalDisplay globalDisplay,
+                          WorkbenchContext workbenchContext,
                           Commands commands,
                           Binder binder,
                           ViewerServerOperations server,
                           SourceShim sourceShim,
-                          RPubsPresenter rpubsPresenter)
+                          RPubsPresenter rpubsPresenter,
+                          Provider<UIPrefs> pUIPrefs)
    {
       super(display);
       display_ = display;
+      workbenchContext_ = workbenchContext;
       commands_ = commands;
       server_ = server;
       events_ = eventBus;
       globalDisplay_ = globalDisplay;
       sourceShim_ = sourceShim;
+      pUIPrefs_ = pUIPrefs;
       rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);
@@ -198,6 +214,61 @@ public class ViewerPresenter extends BasePresenter
             windowSize.height,
             options);
    }
+   
+   @Handler
+   public void onViewerSaveAsImage()
+   {
+      display_.bringToFront();
+      
+      final ProgressIndicator indicator = 
+         globalDisplay_.getProgressIndicator("Error");
+      indicator.onProgress("Preparing to export plot...");
+
+      // get the default directory
+      FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
+            workbenchContext_.getCurrentWorkingDir());
+
+      // get context
+      server_.getViewerExportContext(
+         defaultDir.getPath(),
+         new SimpleRequestCallback<SavePlotAsImageContext>() {
+
+            @Override
+            public void onResponseReceived(SavePlotAsImageContext context)
+            {
+               indicator.onCompleted();
+
+               new SaveViewerPlotAsImageDesktopDialog(
+                   globalDisplay_,
+                   display_.getUrl(),
+                   context,
+                   ExportPlotOptions.adaptToSize(
+                         pUIPrefs_.get().exportViewerOptions().getValue(),
+                         display_.getViewerFrameSize()),
+                   saveExportOptionsOperation_
+               ).showModal();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }           
+         });
+   }
+   
+   @Handler
+   public void onViewerCopyToClipboard()
+   {
+      new CopyViewerPlotToClipboardDesktopDialog(
+         display_.getUrl(), 
+         ExportPlotOptions.adaptToSize(
+               pUIPrefs_.get().exportViewerOptions().getValue(),
+               display_.getViewerFrameSize()),
+         saveExportOptionsOperation_
+      ).showModal();;    
+   }
+   
    
    @Handler
    public void onViewerSaveAllAndRefresh()
@@ -347,7 +418,31 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerForward().setVisible(isHTMLWidget);
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
+      
+      boolean canExport = Desktop.isDesktop();     
+      commands_.viewerSaveAsImage().setEnabled(enable && canExport);
+      commands_.viewerSaveAsImage().setVisible(isHTMLWidget && canExport);
+      commands_.viewerCopyToClipboard().setEnabled(enable && canExport);
+      commands_.viewerCopyToClipboard().setVisible(isHTMLWidget && canExport);
+      display_.setExportEnabled(commands_.viewerSaveAsImage().isEnabled());
    }
+   
+   private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
+         new OperationWithInput<ExportPlotOptions>() 
+         {
+            public void execute(ExportPlotOptions options)
+            {
+               UIPrefs uiPrefs = pUIPrefs_.get();
+               if (!ExportPlotOptions.areEqual(
+                               options,
+                               uiPrefs.exportViewerOptions().getValue()))
+               {
+                  uiPrefs.exportViewerOptions().setGlobalValue(options);
+                  uiPrefs.writeUIPrefs();
+               }
+            }
+         };
+   
    
    private native void initializeEvents() /*-{  
       var thiz = this;   
@@ -380,8 +475,10 @@ public class ViewerPresenter extends BasePresenter
    private final Display display_ ;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
+   private final WorkbenchContext workbenchContext_;
    private final ViewerServerOperations server_;
    private final EventBus events_;
+   private final Provider<UIPrefs> pUIPrefs_;
    private final SourceShim sourceShim_; 
    
    private ShinyApplicationParams runningShinyAppParams_;

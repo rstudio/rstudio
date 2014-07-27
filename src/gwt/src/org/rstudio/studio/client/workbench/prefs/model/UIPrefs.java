@@ -24,10 +24,10 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
 @Singleton
@@ -186,6 +186,16 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
             savePlotAsPdfOptions().setGlobalValue(
                          newUiPrefs.savePlotAsPdfOptions().getGlobalValue());
          }
+         
+         // export viewer options
+         if (!ExportPlotOptions.areEqual(
+               newUiPrefs.exportViewerOptions().getGlobalValue(),
+               exportViewerOptions().getGlobalValue()))
+         {
+            exportViewerOptions().setGlobalValue(
+                          newUiPrefs.exportViewerOptions().getGlobalValue());
+         }
+         
          
          // compile notebook options
          if (!CompileNotebookPrefs.areEqual(

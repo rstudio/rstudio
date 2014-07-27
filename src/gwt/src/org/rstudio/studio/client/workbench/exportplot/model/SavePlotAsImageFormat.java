@@ -1,5 +1,5 @@
 /*
- * SavePlotAsImageContext.java
+ * SavePlotAsImageFormat.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,28 +12,21 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.model;
-
-import org.rstudio.core.client.files.FileSystemItem;
+package org.rstudio.studio.client.workbench.exportplot.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class SavePlotAsImageContext extends JavaScriptObject
-{
-   protected SavePlotAsImageContext()
+public class SavePlotAsImageFormat extends JavaScriptObject
+{  
+   protected SavePlotAsImageFormat()
    {
    }
    
-   public final native JsArray<SavePlotAsImageFormat> getFormats() /*-{
-      return this.formats;
+   public final native String getName() /*-{
+      return this.name;
    }-*/;
    
-   public final native FileSystemItem getDirectory() /*-{
-      return this.directory;
-   }-*/;
-   
-   public final native String getUniqueFileStem() /*-{
-      return this.uniqueFileStem;
+   public final native String getExtension() /*-{
+      return this.extension;
    }-*/;
 }

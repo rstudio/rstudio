@@ -99,6 +99,7 @@ import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -121,7 +122,6 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
@@ -2631,6 +2631,17 @@ public class RemoteServer implements Server
    public void viewerClearCurrent(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, "viewer_clear_current", requestCallback);
+   }
+   
+   @Override
+   public void getViewerExportContext(
+            String directory,
+            ServerRequestCallback<SavePlotAsImageContext> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  "get_viewer_export_context", 
+                  directory, 
+                  requestCallback);
    }
    
    public void previewHTML(HTMLPreviewParams params,

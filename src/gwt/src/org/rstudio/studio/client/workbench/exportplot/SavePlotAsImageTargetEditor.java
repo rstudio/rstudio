@@ -1,5 +1,5 @@
 /*
- * SavePlotAsTargetEditor.java
+ * SavePlotAsImageTargetEditor.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.ui.export;
+package org.rstudio.studio.client.workbench.exportplot;
 
 import java.util.HashMap;
 
@@ -24,8 +24,8 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageFormat;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageFormat;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -37,9 +37,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class SavePlotAsTargetEditor extends Composite implements CanFocus
+public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
 {
-   public SavePlotAsTargetEditor(String defaultFormat,
+   public SavePlotAsImageTargetEditor(String defaultFormat,
                                  SavePlotAsImageContext context)
    {
       context_ = context;
@@ -90,7 +90,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
                     indicator.onCompleted();
                     
                     // update default
-                    ExportPlot.setDefaultSaveDirectory(input);
+                    ExportPlotUtils.setDefaultSaveDirectory(input);
                     
                     // set display
                     setDirectory(input);  
@@ -133,7 +133,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
       String ext = "." + imageFormatListBox_.getValue(
                                        imageFormatListBox_.getSelectedIndex());
       
-      return ExportPlot.composeTargetPath(ext, fileNameTextBox_, directory_);  
+      return ExportPlotUtils.composeTargetPath(ext, fileNameTextBox_, directory_);  
    }
    
    public FileSystemItem getTargetDirectory()
@@ -148,7 +148,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
       directory_ = directory;
         
       // set label
-      String dirLabel = ExportPlot.shortDirectoryName(directory, 250);
+      String dirLabel = ExportPlotUtils.shortDirectoryName(directory, 250);
       directoryLabel_.setText(dirLabel);
       
       // set tooltip

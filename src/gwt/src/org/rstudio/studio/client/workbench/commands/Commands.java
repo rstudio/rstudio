@@ -296,6 +296,8 @@ public abstract class
    public abstract AppCommand viewerSaveAllAndRefresh();
    public abstract AppCommand viewerStop();
    public abstract AppCommand viewerClear();
+   public abstract AppCommand viewerSaveAsImage();
+   public abstract AppCommand viewerCopyToClipboard();
 
    // Application
    public abstract AppCommand quitSession();

@@ -1,4 +1,5 @@
 
+#include <iostream>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -10,6 +11,7 @@
 #import "Options.hpp"
 
 #import <Foundation/NSString.h>
+#import <AppKit/NSBitmapImageRep.h>
 
 #include "SessionLauncher.hpp"
 #include "Utils.hpp"
@@ -50,6 +52,15 @@ NSString* resolveAliasedPath(NSString* path)
    return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
 }
    
+class CFAutoRelease : boost::noncopyable
+{
+public:
+   explicit CFAutoRelease(CFTypeRef ref) : ref_(ref) {}
+   ~CFAutoRelease() { CFRelease(ref_); }
+private:
+   CFTypeRef ref_;
+};
+
 } // anonymous namespace
 
 @implementation GwtCallbacks
@@ -472,6 +483,7 @@ NSString* resolveAliasedPath(NSString* path)
                                           height: height];
 }
 
+
 - (void) copyImageToClipboard: (int) left top: (int) top
                         width: (int) width height: (int) height
 {
@@ -479,6 +491,156 @@ NSString* resolveAliasedPath(NSString* path)
    // webpage having selected the desired image first.
    [[[MainFrameController instance] webView] copy: self];
 }
+
+
+
+- (NSImage*) nsImageForPageRegion: (NSRect) regionRect
+{
+   // get the main web view
+   NSView* view = [[MainFrameController instance] webView];
+   
+   // offset to determine the location of the view within it's window
+   NSRect originRect = [view convertRect:[view bounds] toView:[[view window] contentView]];
+   
+   // determine the capture rect in screen coordinates (start with the full view)
+   NSRect captureRect = originRect;
+   captureRect.origin.x += [view window].frame.origin.x;
+   captureRect.origin.y = [[view window] screen].frame.size.height -
+                           [view window].frame.origin.y -
+                           originRect.origin.y -
+                           originRect.size.height;
+   
+   // offset for the passed region rect (subset of the view we are capturing)
+   captureRect.origin.x += regionRect.origin.x;
+   captureRect.origin.y += regionRect.origin.y;
+   captureRect.size = regionRect.size;
+   
+   // perform the capture
+   CGImageRef imageRef = CGWindowListCreateImage(captureRect,
+                                                 kCGWindowListOptionIncludingWindow,
+                                                 (CGWindowID)[[view window] windowNumber],
+                                                 kCGWindowImageDefault);
+   CFAutoRelease imageAutoRelease(imageRef);
+   
+   // create an NSImage
+   NSImage* image = [[NSImage alloc] initWithCGImage: imageRef size: NSZeroSize];
+   
+   // downsample if this is a retina display
+   if ([self isRetina])
+   {
+      // allocate the imageRep
+      NSSize size = regionRect.size;
+      NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc]
+                                    initWithBitmapDataPlanes:NULL
+                                    pixelsWide: size.width
+                                    pixelsHigh: size.height
+                                    bitsPerSample: 8
+                                    samplesPerPixel: 4
+                                    hasAlpha: YES
+                                    isPlanar: NO
+                                    colorSpaceName: NSCalibratedRGBColorSpace
+                                    bytesPerRow: 0
+                                    bitsPerPixel: 0];
+      [imageRep setSize: size];
+      
+      // draw the original into the imageRep
+      [NSGraphicsContext saveGraphicsState];
+      [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:imageRep]];
+      [image drawInRect: NSMakeRect(0, 0, size.width, size.height)
+               fromRect: NSZeroRect
+              operation: NSCompositeCopy
+               fraction: 1.0];
+      [NSGraphicsContext restoreGraphicsState];
+      
+      // release the original image, create a new one with the imageRep, then release the imageRep
+      [image release];
+      image = [[NSImage alloc] initWithSize:[imageRep size]];
+      [image addRepresentation: imageRep];
+      [imageRep release];
+   }
+
+   // return the image
+   return image;
+}
+
+
+
+- (void) copyPageRegionToClipboard: (int) left top: (int) top
+                             width: (int) width height: (int) height
+{
+   // get an image for the specified region
+   NSRect regionRect = NSMakeRect(left, top, width, height);
+   NSImage* image = [self nsImageForPageRegion: regionRect];
+   
+   // copy it to the pasteboard
+   NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+   [pboard clearContents];
+   NSArray *copiedObjects = [NSArray arrayWithObject:image];
+   [pboard writeObjects: copiedObjects];
+   
+   // release the image
+   [image release];
+}
+
+
+- (Boolean) exportPageRegionToFile: (NSString*) targetPath
+                            format: (NSString*) format
+                              left: (int) left
+                               top: (int) top
+                             width: (int) width
+                            height: (int) height
+                         overwrite: (Boolean) overwrite
+{
+   // resolve path and check for overwrite
+   targetPath = resolveAliasedPath(targetPath);
+   if (FilePath([targetPath UTF8String]).exists() && !overwrite)
+      return false;
+   
+   // get an image for the specified region
+   NSRect regionRect = NSMakeRect(left, top, width, height);
+   NSImage* image = [self nsImageForPageRegion: regionRect];
+   
+   // determine format and properties for writing file
+   NSBitmapImageFileType imageFileType = nil;
+   NSDictionary* properties = nil;
+   if ([format isEqualToString: @"PNG"])
+   {
+      imageFileType = NSPNGFileType;
+   }
+   else if ([format isEqualToString: @"JPEG"])
+   {
+      imageFileType = NSJPEGFileType;
+      [properties setValue: [NSNumber numberWithDouble: 1.0]
+                    forKey: NSImageCompressionFactor];
+   }
+   else if ([format isEqualToString: @"BMP"])
+   {
+      imageFileType = NSBMPFileType;
+   }
+   else if ([format isEqualToString: @"TIFF"])
+   {
+      imageFileType = NSTIFFFileType;
+      [properties setValue: [NSNumber numberWithInteger: NSTIFFCompressionNone]
+                    forKey: NSImageCompressionMethod];
+   }
+   
+   // write to file
+   NSBitmapImageRep *imageRep = [[image representations] objectAtIndex: 0];
+   NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
+   if (![data writeToFile: targetPath atomically: NO])
+   {
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("target-file", [targetPath UTF8String]);
+      LOG_ERROR(error);
+   }
+   
+   // release the image
+   [image release];
+  
+   // success
+   return true;
+}
+
 
 - (Boolean) supportsClipboardMetafile
 {
@@ -888,6 +1050,10 @@ enum RS_NSActivityOptions : uint64_t
       return @"prepareForSatelliteWindow";
    else if (sel == @selector(copyImageToClipboard:top:width:height:))
       return @"copyImageToClipboard";
+   else if (sel == @selector(copyPageRegionToClipboard:top:width:height:))
+      return @"copyPageRegionToClipboard";
+   else if (sel == @selector(exportPageRegionToFile:format:left:top:width:height:overwrite:))
+      return @"exportPageRegionToFile";
    else if (sel == @selector(showMessageBox:caption:message:buttons:defaultButton:cancelButton:))
       return @"showMessageBox";
    else if (sel == @selector(promptForText:caption:defaultValue:usePasswordMask:rememberPasswordPrompt:rememberByDefault:numbersOnly:selectionStart:selectionLength:))

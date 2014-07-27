@@ -467,6 +467,45 @@ void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
    pOwner_->triggerPageAction(QWebPage::CopyImageToClipboard);
 }
 
+void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int height)
+{
+   QPixmap pixmap = QPixmap::grabWidget(pMainWindow_->webView(),
+                                        left,
+                                        top,
+                                        width,
+                                        height);
+
+   QApplication::clipboard()->setPixmap(pixmap);
+}
+
+bool GwtCallback::exportPageRegionToFile(QString targetPath,
+                                         QString format,
+                                         int left,
+                                         int top,
+                                         int width,
+                                         int height,
+                                         bool overwrite)
+{
+   // resolve target path and check for existence
+   targetPath = resolveAliasedPath(targetPath);
+   if (QFile::exists(targetPath) && !overwrite)
+      return false;
+
+   // get the pixmap
+   QPixmap pixmap = QPixmap::grabWidget(pMainWindow_->webView(),
+                                        left,
+                                        top,
+                                        width,
+                                        height);
+
+   // save the file
+   pixmap.save(targetPath, format.toUtf8().constData(), 100);
+
+   // return success
+   return true;
+}
+
+
 bool GwtCallback::supportsClipboardMetafile()
 {
 #ifdef Q_OS_WIN32

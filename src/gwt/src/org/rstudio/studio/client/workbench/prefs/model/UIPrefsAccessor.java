@@ -22,8 +22,8 @@ import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -197,6 +197,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return object("save_plot_as_pdf_options",
                     SavePlotAsPdfOptions.createDefault());
+   }
+   
+   public PrefValue<ExportPlotOptions> exportViewerOptions()
+   {
+      return object("export_viewer_options", ExportPlotOptions.createDefault());
    }
    
    public PrefValue<CompileNotebookPrefs> compileNotebookOptions()

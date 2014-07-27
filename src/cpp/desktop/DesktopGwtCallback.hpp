@@ -92,6 +92,16 @@ public slots:
    // Image coordinates are relative to the window contents
    void copyImageToClipboard(int left, int top, int width, int height);
 
+   // coordinates are relative to entire containing web page
+   void copyPageRegionToClipboard(int left, int top, int width, int height);
+   bool exportPageRegionToFile(QString targetPath,
+                               QString format,
+                               int left,
+                               int top,
+                               int width,
+                               int height,
+                               bool overwrite);
+
    bool supportsClipboardMetafile();
 
    int showMessageBox(int type,
