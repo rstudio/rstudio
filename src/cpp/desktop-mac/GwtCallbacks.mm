@@ -583,8 +583,6 @@ private:
 }
 
 
-// TODO: hide gripper reliably
-
 - (Boolean) exportPageRegionToFile: (NSString*) targetPath
                             format: (NSString*) format
                               left: (int) left

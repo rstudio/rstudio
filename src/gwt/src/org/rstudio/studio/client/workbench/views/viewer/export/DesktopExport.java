@@ -15,31 +15,45 @@ package org.rstudio.studio.client.workbench.views.viewer.export;
 
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.ElementEx;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+
 public class DesktopExport
 {
-   public static void export(ExportPlotSizeEditor sizeEditor,
-                             OperationWithInput<Rectangle> exporter)
+   public static void export(final ExportPlotSizeEditor sizeEditor,
+                             final OperationWithInput<Rectangle> exporter,
+                             final Operation onCompleted)
    {
       // hide gripper
       sizeEditor.setGripperVisible(false);
       
       // get the preview iframe rect
       ElementEx iframe = sizeEditor.getPreviewIFrame().<ElementEx>cast();
-      Rectangle viewerRect = new Rectangle(iframe.getClientLeft(),
-                                           iframe.getClientTop(),
-                                           iframe.getClientWidth(),
-                                           iframe.getClientHeight());
+      final Rectangle viewerRect = new Rectangle(
+             iframe.getClientLeft(),
+             iframe.getClientTop(),
+             iframe.getClientWidth(),
+             iframe.getClientHeight()).inflate(-1);
                                     
-      // inflate by -1 to eliminate surrounding border
-      viewerRect = viewerRect.inflate(-1);
    
       // perform the export
-      exporter.execute(viewerRect);
-      
-      // show gripper
-      sizeEditor.setGripperVisible(true);
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+         @Override
+         public void execute()
+         {
+            exporter.execute(viewerRect);
+            
+            // show gripper
+            sizeEditor.setGripperVisible(true);
+            
+            // call onCompleted
+            if (onCompleted != null)
+               onCompleted.execute();
+         }
+      });
    }
 }

@@ -49,10 +49,9 @@ public class CopyViewerPlotToClipboardDesktopDialog
                      viewerRect.getHeight());
             }
          
-         }
+         },
+         onCompleted
       );
-      
-      onCompleted.execute();
    }
    
 }

@@ -62,9 +62,6 @@ public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOpe
                   {
                      if (viewAfterSave)
                         Desktop.getFrame().showFile(targetPath.getPath());
-                     
-                     if (onCompleted != null)
-                        onCompleted.execute();
                   }
                   else if (!overwrite)
                   {
@@ -89,8 +86,8 @@ public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOpe
                         true);
                   }
                }
-            
-            }
+            },
+            onCompleted
          );  
    }
    
