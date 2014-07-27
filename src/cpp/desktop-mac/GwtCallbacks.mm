@@ -11,6 +11,7 @@
 #import "Options.hpp"
 
 #import <Foundation/NSString.h>
+#import <AppKit/NSBitmapImageRep.h>
 
 #include "SessionLauncher.hpp"
 #include "Utils.hpp"
@@ -583,7 +584,6 @@ private:
 
 
 // TODO: check file write error
-// TODO: add properties for higher image quality
 // TODO: hide gripper reliably
 
 - (Boolean) exportPageRegionToFile: (NSString*) targetPath
@@ -613,6 +613,8 @@ private:
    else if ([format isEqualToString: @"JPEG"])
    {
       imageFileType = NSJPEGFileType;
+      [properties setValue: [NSNumber numberWithDouble: 1.0]
+                    forKey: NSImageCompressionFactor];
    }
    else if ([format isEqualToString: @"BMP"])
    {
@@ -621,6 +623,8 @@ private:
    else if ([format isEqualToString: @"TIFF"])
    {
       imageFileType = NSTIFFFileType;
+      [properties setValue: [NSNumber numberWithInteger: NSTIFFCompressionNone]
+                    forKey: NSImageCompressionMethod];
    }
    
    // write to file
