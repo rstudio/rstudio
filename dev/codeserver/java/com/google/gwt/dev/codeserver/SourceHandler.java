@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,6 +49,29 @@ class SourceHandler {
    */
   static final String SOURCEMAP_PATH = "/sourcemaps/";
 
+  /**
+   * The suffix of a source map location json file.
+   */
+  static final String SOURCEMAP_SUFFIX = "_sourceMap0.json";
+
+  /**
+   * Matches a valid source map json file request.
+   *
+   * Used to extract the strong name of the permutation:
+   *   StrongName_sourceMap0.json
+   */
+  private static final Pattern SOURCEMAP_FILENAME_PATTERN = Pattern.compile(
+      "^([\\dA-F]{32})" + SOURCEMAP_SUFFIX + "$");
+
+  /**
+   * Matches a valid source map request.
+   *
+   * Used to extract the module name:
+   *   /sourcemaps/ModuleName/.....
+   */
+  private static final Pattern SOURCEMAP_MODULE_PATTERN = Pattern.compile(
+      "^" + SOURCEMAP_PATH + "([^/]+)/");
+
   static final String SOURCEROOT_TEMPLATE_VARIABLE = "$sourceroot_goes_here$";
 
   private Modules modules;
@@ -58,7 +83,7 @@ class SourceHandler {
     this.logger = logger;
   }
 
-  boolean isSourceMapRequest(String target) {
+  static boolean isSourceMapRequest(String target) {
     return getModuleNameFromRequest(target) != null;
   }
 
@@ -70,51 +95,45 @@ class SourceHandler {
     }
 
     String rootDir = SOURCEMAP_PATH + moduleName + "/";
-    if (!target.startsWith(rootDir)) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      logger.log(TreeLogger.WARN, "returned not found for request: " + target);
-      return;
-    }
-
     String rest = target.substring(rootDir.length());
 
     if (rest.isEmpty()) {
       sendDirectoryListPage(moduleName, response);
-
     } else if (rest.endsWith("/")) {
       sendFileListPage(moduleName, rest, response);
-
-    } else if (rest.equals("gwtSourceMap.json")) {
-      sendSourceMap(moduleName, request, response);
-
     } else if (rest.endsWith(".java")) {
       sendSourceFile(moduleName, rest, request.getQueryString(), response);
-
     } else {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      logger.log(TreeLogger.WARN, "returned not found for request: " + target);
+      String strongName = getStrongNameFromSourcemapFilename(rest);
+      if (strongName != null) {
+        sendSourceMap(moduleName, strongName, request, response);
+      } else {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        logger.log(TreeLogger.WARN, "returned not found for request: " + target);
+      }
     }
   }
 
-  private String getModuleNameFromRequest(String target) {
-      if (target.startsWith(SOURCEMAP_PATH)) {
-        int prefixLen = SOURCEMAP_PATH.length();
-        // find next slash (if any) after prefix
-        int endSlash = target.indexOf("/", prefixLen + 1);
-        // case 1: /sourcemaps/modulename
-        // case 2: /sourcemaps/modulename/path
-        return target.substring(prefixLen, endSlash == -1 ? target.length() : endSlash);
-      }
-      return null;
+  static String getModuleNameFromRequest(String target) {
+    Matcher matcher = SOURCEMAP_MODULE_PATTERN.matcher(target);
+    return matcher.find() ? matcher.group(1) : null;
   }
 
-  private void sendSourceMap(String moduleName, HttpServletRequest request,
+  static String getStrongNameFromSourcemapFilename(String target) {
+    Matcher matcher = SOURCEMAP_FILENAME_PATTERN.matcher(target);
+    return matcher.matches() ? matcher.group(1) : null;
+  }
+
+  private void sendSourceMap(String moduleName, String strongName, HttpServletRequest request,
       HttpServletResponse response) throws IOException {
 
     long startTime = System.currentTimeMillis();
 
     ModuleState moduleState = modules.get(moduleName);
-    File sourceMap = moduleState.findSourceMap();
+
+    String sourceMapPath = moduleState.findSymbolMapDir().getAbsolutePath();
+
+    File sourceMap = new File(sourceMapPath + "/" + strongName + SOURCEMAP_SUFFIX);
 
     // Stream the file, substituting the sourceroot variable with the filename.
     // (This is more efficient than parsing the file as JSON.)

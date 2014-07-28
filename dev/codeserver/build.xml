@@ -14,6 +14,19 @@
     </gwt.javac>
   </target>
 
+  <target name="compile.tests" description="Compile java source">
+    <mkdir dir="${javac.junit.out}" />
+    <javac destdir="${javac.junit.out}">
+      <src path="java" />
+      <src path="test" />
+      <classpath>
+        <pathelement location="${javac.out}"/>
+        <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
+      </classpath>
+    </javac>
+  </target>
+
   <target name="build" depends="compile" description="builds gwt-codeserver.jar">
     <gwt.jar>
       <fileset dir="${javac.out}"/>
@@ -31,6 +44,21 @@
         <attribute name="Main-Class" value="com.google.gwt.dev.codeserver.CodeServer" />
       </manifest>
     </gwt.jar>
+  </target>
+
+  <target name="test" depends="build, compile.tests" description="Run tests">
+    <mkdir dir="${junit.out}/codeserver" />
+    <fileset id="tests" dir="${javac.junit.out}"
+        includes="**/*Test.class" />
+    <gwt.junit test.name="test"
+        test.args=""
+        test.jvmargs="-ea"
+        test.out="${junit.out}/codeserver"
+        test.cases="tests">
+      <extraclasspaths>
+        <pathelement location="${gwt.dev.jar}" />
+      </extraclasspaths>
+    </gwt.junit>
   </target>
 
   <!-- no-op for now -->

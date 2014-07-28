@@ -297,7 +297,8 @@ public class WebServer {
     }
 
     if (target.endsWith(".cache.js")) {
-      response.setHeader("X-SourceMap", sourceMapLocationForModule(moduleName));
+      String strongName = target.replaceFirst("^.*/(.+).cache.js$", "$1");
+      response.setHeader("X-SourceMap", sourceMapLocationForModule(moduleName, strongName));
     }
     response.setHeader("Access-Control-Allow-Origin", "*");
     String mimeType = guessMimeType(target);
@@ -495,9 +496,13 @@ public class WebServer {
     return result;
   }
 
-  public static String sourceMapLocationForModule(String moduleName) {
-     return SourceHandler.SOURCEMAP_PATH + moduleName +
-         "/gwtSourceMap.json";
+  static String sourceMapLocationForModule(String moduleName) {
+    return sourceMapLocationForModule(moduleName, "__HASH__");
+  }
+
+  private static String sourceMapLocationForModule(String moduleName, String strongName) {
+    return SourceHandler.SOURCEMAP_PATH + moduleName + "/" + strongName
+        + SourceHandler.SOURCEMAP_SUFFIX;
   }
 
   private static void setHandled(HttpServletRequest request) {
