@@ -33,7 +33,6 @@ import com.google.gwt.core.client.impl.StackTraceDevTest;
 import com.google.gwt.core.client.impl.StackTraceEmulTest;
 import com.google.gwt.core.client.impl.StackTraceNativeTest;
 import com.google.gwt.core.client.impl.StackTraceStripTest;
-import com.google.gwt.core.client.prefetch.RunAsyncCodeTest;
 import com.google.gwt.core.shared.SerializableThrowableTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -56,7 +55,6 @@ public class CoreSuite {
     suite.addTestSuite(JsArrayTest.class);
     suite.addTestSuite(JsArrayMixedTest.class);
     suite.addTestSuite(JsonUtilsTest.class);
-    suite.addTestSuite(RunAsyncCodeTest.class);
     suite.addTestSuite(SchedulerImplTest.class);
     suite.addTestSuite(SchedulerTest.class);
     suite.addTestSuite(ScriptInjectorTest.class);
