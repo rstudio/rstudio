@@ -19,7 +19,6 @@ project(DESKTOP_MAC)
 find_library(APPKIT_LIBRARY NAMES AppKit)
 find_library(OPENGL_LIBRARY NAMES OpenGL)
 find_library(WEBKIT_LIBRARY NAMES WebKit)
-find_library(IMAGEIO_LIBRARY NAMES ImageIO)
 
 # include files
 file(GLOB_RECURSE DESKTOP_MAC_HEADER_FILES "*.h*")
@@ -84,8 +83,7 @@ target_link_libraries(RStudio
    rstudio-core
    ${APPKIT_LIBRARY}
    ${OPENGL_LIBRARY}
-   ${WEBKIT_LIBRARY}
-   ${IMAGEIO_LIBRARY})
+   ${WEBKIT_LIBRARY})
 
 # install target (OSX install goes into the bundle)
 set_target_properties(RStudio PROPERTIES
