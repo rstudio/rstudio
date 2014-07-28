@@ -44,16 +44,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      toolbar_ = new Toolbar();
       
       // add html widget buttons
-      toolbar.addLeftWidget(commands_.viewerBack().createToolbarButton());
-      toolbar.addLeftWidget(commands_.viewerForward().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.viewerZoom().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.viewerForward().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerZoom().createToolbarButton());
       
       // export commands
-      exportButtonSeparator_ = toolbar.addLeftSeparator();
+      exportButtonSeparator_ = toolbar_.addLeftSeparator();
       ToolbarPopupMenu exportMenu = new ToolbarPopupMenu();
       exportMenu.addItem(commands_.viewerSaveAsImage().createMenuItem(false));
       exportMenu.addItem(commands_.viewerCopyToClipboard().createMenuItem(false));
@@ -63,26 +63,26 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportButton_ = new ToolbarButton(
             "Export", commands_.savePlotAsImage().getImageResource(),
             exportMenu);
-      toolbar.addLeftWidget(exportButton_);  
+      toolbar_.addLeftWidget(exportButton_);  
       exportButton_.setVisible(false);
       exportButtonSeparator_.setVisible(false);
       
       // add publish button 
-      publishButtonSeparator_ = toolbar.addLeftSeparator();
+      publishButtonSeparator_ = toolbar_.addLeftSeparator();
       publishButton_ = commands_.publishHTML().createToolbarButton(false);
-      toolbar.addLeftWidget(publishButton_);
+      toolbar_.addLeftWidget(publishButton_);
       publishButtonSeparator_.setVisible(false);
       publishButton_.setVisible(false);
      
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.viewerClear().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerClear().createToolbarButton());
       
-      toolbar.addRightWidget(commands_.viewerStop().createToolbarButton());
-      toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.viewerPopout().createToolbarButton());
-      toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.viewerRefresh().createToolbarButton());
-      return toolbar;
+      toolbar_.addRightWidget(commands_.viewerStop().createToolbarButton());
+      toolbar_.addRightSeparator();
+      toolbar_.addRightWidget(commands_.viewerPopout().createToolbarButton());
+      toolbar_.addRightSeparator();
+      toolbar_.addRightWidget(commands_.viewerRefresh().createToolbarButton());
+      return toolbar_;
    }
    
    @Override 
@@ -113,6 +113,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          publishButton_.setText(params.getResult().getRpubsPublished() ? 
                "Republish" : "Publish");
       rmdPreviewParams_ = params;
+      toolbar_.invalidateSeparators();
    }
    
    @Override
@@ -120,6 +121,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       exportButton_.setVisible(exportEnabled);
       exportButtonSeparator_.setVisible(exportEnabled);
+      toolbar_.invalidateSeparators();
    }
    
    @Override
@@ -191,6 +193,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
+   
+   private Toolbar toolbar_;
    
    private ToolbarButton publishButton_;
    private Widget publishButtonSeparator_;
