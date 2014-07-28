@@ -104,6 +104,11 @@ public class JavaResourceBase {
           "  public Throwable getException() { return null; }",
           "}");
 
+  public static final MockJavaResource CLONEABLE =
+      createMockJavaResource("java.lang.Cloneable",
+          "package java.lang;",
+          "public interface Cloneable {}");
+
   public static final MockJavaResource COLLECTION =
       createMockJavaResource("java.util.Collection",
           "package java.util;",
@@ -358,12 +363,13 @@ public class JavaResourceBase {
           "}");
 
   public static MockJavaResource[] getStandardResources() {
-    return new MockJavaResource[]{
+    return new MockJavaResource[] {
         AUTOCLOSEABLE, ANNOTATION, ARRAY_LIST, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
-        CLASS_NOT_FOUND_EXCEPTION, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT,
-        INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER,
-        OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE,
-        JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSPROPERTY};
+        CLASS_NOT_FOUND_EXCEPTION, CLONEABLE, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION,
+        ERROR, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP,
+        NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING,
+        STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT,
+        JSPROPERTY};
   }
 
   /**

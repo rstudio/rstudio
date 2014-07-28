@@ -813,10 +813,19 @@ public class JTypeOracle implements Serializable {
     if (type instanceof JArrayType) {
       JArrayType arrayType = (JArrayType) type;
       Set<JReferenceType> superHierarchyTypes = Sets.newHashSet();
-      JReferenceType javaLangObjectType = referenceTypesByName.get(standardTypes.javaLangObject);
-      // Make sure that the type is really available
-      assert javaLangObjectType != null;
-      superHierarchyTypes.add(javaLangObjectType);
+
+      // All arrays to cast to Object, Serializable and Cloneable.
+      JReferenceType javaLangObjectType =
+          ensureTypeExistsAndAppend(standardTypes.javaLangObject, superHierarchyTypes);
+      ensureTypeExistsAndAppend(standardTypes.javaIoSerializable, superHierarchyTypes);
+      ensureTypeExistsAndAppend(standardTypes.javaLangCloneable, superHierarchyTypes);
+
+      // Foo[][][] can cast to Object[][].
+      for (int lowerDimension = 1; lowerDimension < arrayType.getDims(); lowerDimension++) {
+        superHierarchyTypes.add(
+            arrayTypeCreator.getOrCreateArrayType(javaLangObjectType, lowerDimension));
+      }
+
       if (arrayType.getLeafType() instanceof JPrimitiveType) {
         superHierarchyTypes.add(arrayType);
       } else {
@@ -842,6 +851,13 @@ public class JTypeOracle implements Serializable {
       superHierarchyTypes.addAll(getTypes(implementsMap, type.getName()));
     }
     superHierarchyTypes.add(type);
+
+    // Even though the AST representation of interfaces do not claim to inherit from Object, they
+    // can cast to Object.
+    JReferenceType javaLangObjectType = referenceTypesByName.get(standardTypes.javaLangObject);
+    // Make sure that the type is really available
+    assert javaLangObjectType != null;
+    superHierarchyTypes.add(javaLangObjectType);
 
     return superHierarchyTypes;
   }
@@ -909,7 +925,7 @@ public class JTypeOracle implements Serializable {
     return isJavaScriptObject(referenceType.getName());
   }
 
-  // Note: This method does not account for null types and only relies on static 
+  // Note: This method does not account for null types and only relies on static
   // class inheritance and does not account for any changes due to optimizations.
   // Therefore this method should be kept private since callers need to be aware
   // of this semantic difference.
@@ -1459,6 +1475,13 @@ public class JTypeOracle implements Serializable {
         }
       }
     }
+  }
+
+  private JReferenceType ensureTypeExistsAndAppend(String typeName, Set<JReferenceType> typeSet) {
+    JReferenceType type = referenceTypesByName.get(typeName);
+    assert type != null;
+    typeSet.add(type);
+    return type;
   }
 
   /**

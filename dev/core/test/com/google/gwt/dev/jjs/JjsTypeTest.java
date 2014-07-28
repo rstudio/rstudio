@@ -226,12 +226,12 @@ public class JjsTypeTest extends TestCase {
     assertSuperHierarchy(classObject, classObject);
     assertSuperHierarchy(classString, classString, classObject);
     assertSuperHierarchy(classJso, classJso, classObject);
-    assertSuperHierarchy(intfSerializable, intfSerializable);
-    assertSuperHierarchy(intfCloneable, intfCloneable);
-    assertSuperHierarchy(intfIBase, intfIBase);
-    assertSuperHierarchy(intfI, intfI, intfIBase);
-    assertSuperHierarchy(intfJ, intfJ);
-    assertSuperHierarchy(intfK, intfK);
+    assertSuperHierarchy(intfSerializable, intfSerializable, classObject);
+    assertSuperHierarchy(intfCloneable, intfCloneable, classObject);
+    assertSuperHierarchy(intfIBase, intfIBase, classObject);
+    assertSuperHierarchy(intfI, intfI, intfIBase, classObject);
+    assertSuperHierarchy(intfJ, intfJ, classObject);
+    assertSuperHierarchy(intfK, intfK, classObject);
     assertSuperHierarchy(classBase, classBase, classObject);
     assertSuperHierarchy(classA, classA, classObject, classBase);
     assertSuperHierarchy(classB, classB, classObject, classBase, intfIBase, intfI);
@@ -239,24 +239,25 @@ public class JjsTypeTest extends TestCase {
     assertSuperHierarchy(classBSub, classBSub, classObject, classBase, classB, intfIBase, intfI);
     assertSuperHierarchy(classJso1, classJso1, classObject, classJso, intfJ);
     assertSuperHierarchy(classJso2, classJso2, classObject, classJso, intfK);
-    assertSuperHierarchy(intfIterable, intfIterable);
-    assertSuperHierarchy(intfCollection, intfCollection, intfIterable);
-    assertSuperHierarchy(intfList, intfList, intfIterable, intfCollection);
+    assertSuperHierarchy(intfIterable, intfIterable, classObject);
+    assertSuperHierarchy(intfCollection, intfCollection, intfIterable, classObject);
+    assertSuperHierarchy(intfList, intfList, intfIterable, intfCollection, classObject);
     assertSuperHierarchy(classArrayList, classArrayList, intfList, classObject, intfIterable,
         intfCollection);
     assertSuperHierarchy(arrayOfB, arrayOfB, arrayOfBase, arrayOfObject, arrayOfIntfI,
-        arrayOfIntfIBase, classObject);
+        arrayOfIntfIBase, classObject, arrayOfObject, intfCloneable, intfSerializable);
     assertSuperHierarchy(arrayOfArrayOfB, arrayOfArrayOfB, arrayOfArrayOfBase, arrayOfArrayOfObject,
-        arrayOfArrayOfIntfI, arrayOfArrayOfIntfIBase, classObject);
-    assertSuperHierarchy(arrayOfInt, arrayOfInt, classObject);
+        arrayOfArrayOfIntfI, arrayOfArrayOfIntfIBase, classObject, arrayOfObject, intfCloneable,
+        intfSerializable);
+    assertSuperHierarchy(arrayOfInt, arrayOfInt, classObject, intfCloneable, intfSerializable);
 
     intfCollection = createInterface("java.util.Collection");
     program.typeOracle.updateImmediateTypeRelations(
         Sets.<JDeclaredType> newHashSet(classArrayList, intfList, intfCollection, classObject),
         Sets.<JDeclaredType> newHashSet(intfIterable));
 
-    assertSuperHierarchy(intfCollection, intfCollection);
-    assertSuperHierarchy(intfList, intfList, intfCollection);
+    assertSuperHierarchy(intfCollection, intfCollection, classObject);
+    assertSuperHierarchy(intfList, intfList, intfCollection, classObject);
     assertSuperHierarchy(classArrayList, classArrayList, intfList, classObject,
         intfCollection);
 
