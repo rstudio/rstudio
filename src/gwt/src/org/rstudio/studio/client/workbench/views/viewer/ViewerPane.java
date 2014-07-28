@@ -57,6 +57,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       ToolbarPopupMenu exportMenu = new ToolbarPopupMenu();
       exportMenu.addItem(commands_.viewerSaveAsImage().createMenuItem(false));
       exportMenu.addItem(commands_.viewerCopyToClipboard().createMenuItem(false));
+      exportMenu.addSeparator();
+      exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
+     
       exportButton_ = new ToolbarButton(
             "Export", commands_.savePlotAsImage().getImageResource(),
             exportMenu);

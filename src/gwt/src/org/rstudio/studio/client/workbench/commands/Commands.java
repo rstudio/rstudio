@@ -297,6 +297,7 @@ public abstract class
    public abstract AppCommand viewerStop();
    public abstract AppCommand viewerClear();
    public abstract AppCommand viewerSaveAsImage();
+   public abstract AppCommand viewerSaveAsWebPage();
    public abstract AppCommand viewerCopyToClipboard();
 
    // Application

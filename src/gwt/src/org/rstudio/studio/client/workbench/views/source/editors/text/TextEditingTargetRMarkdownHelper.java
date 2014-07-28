@@ -38,7 +38,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Options;
@@ -134,18 +133,9 @@ public class TextEditingTargetRMarkdownHelper
           final boolean isShinyDoc,
           final CommandWithArg<RMarkdownContext> onReady)
    {
-      dependencyManager_.withDependencies(
+      dependencyManager_.withRMarkdown(
          
-         "R Markdown",
-         
-         userAction, 
-         
-         new Dependency[] {
-           Dependency.cranPackage("knitr", "1.6"),
-           Dependency.cranPackage("yaml", "2.1.5"),
-           Dependency.cranPackage("htmltools", "0.2.4"),
-           Dependency.embeddedPackage("rmarkdown")
-         }, 
+         userAction,  
          
          new Command() {
             

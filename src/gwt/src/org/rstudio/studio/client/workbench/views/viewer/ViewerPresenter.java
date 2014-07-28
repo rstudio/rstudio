@@ -25,11 +25,14 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
@@ -44,6 +47,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -79,6 +83,9 @@ public class ViewerPresenter extends BasePresenter
                           EventBus eventBus,
                           GlobalDisplay globalDisplay,
                           WorkbenchContext workbenchContext,
+                          DependencyManager dependencyManager,
+                          FileDialogs fileDialogs,
+                          RemoteFileSystemContext fileSystemContext,
                           Commands commands,
                           Binder binder,
                           ViewerServerOperations server,
@@ -89,6 +96,9 @@ public class ViewerPresenter extends BasePresenter
       super(display);
       display_ = display;
       workbenchContext_ = workbenchContext;
+      dependencyManager_ = dependencyManager;
+      fileDialogs_ = fileDialogs;
+      fileSystemContext_ = fileSystemContext;
       commands_ = commands;
       server_ = server;
       events_ = eventBus;
@@ -258,6 +268,55 @@ public class ViewerPresenter extends BasePresenter
    }
    
    @Handler
+   public void onViewerSaveAsWebPage()
+   {
+      display_.bringToFront();
+
+      if (saveAsWebPageDefaultPath_ == null)
+         saveAsWebPageDefaultPath_ = workbenchContext_.getCurrentWorkingDir();
+
+      dependencyManager_.withRMarkdown("Saving standalone web pages", 
+                                       new Command() {
+         @Override
+         public void execute()
+         {
+            fileDialogs_.saveFile(
+                  "Save As Web Page", 
+                  fileSystemContext_, 
+                  saveAsWebPageDefaultPath_, 
+                  ".html",
+                  false, 
+                  new ProgressOperationWithInput<FileSystemItem>(){
+
+                     @Override
+                     public void execute(final FileSystemItem targetFile,
+                           ProgressIndicator indicator)
+                     {
+                        if (targetFile == null)
+                        {
+                           indicator.onCompleted();
+                           return;
+                        }
+
+                        indicator.onProgress("Saving as web page...");
+
+                        server_.viewerSaveAsWebPage(
+                              targetFile.getPath(), 
+                              new VoidServerRequestCallback(indicator) {
+                                 @Override
+                                 public void onSuccess()
+                                 {
+                                    saveAsWebPageDefaultPath_ = 
+                                          targetFile.getParentPath();
+                                 }
+                              });
+                     }
+                  }); 
+        }  
+      });
+   }   
+      
+   @Handler
    public void onViewerCopyToClipboard()
    {
       new CopyViewerPlotToClipboardDesktopDialog(
@@ -422,6 +481,8 @@ public class ViewerPresenter extends BasePresenter
       boolean canExport = Desktop.isDesktop();     
       commands_.viewerSaveAsImage().setEnabled(enable && canExport);
       commands_.viewerSaveAsImage().setVisible(isHTMLWidget && canExport);
+      commands_.viewerSaveAsWebPage().setEnabled(enable && canExport);
+      commands_.viewerSaveAsWebPage().setVisible(isHTMLWidget && canExport);
       commands_.viewerCopyToClipboard().setEnabled(enable && canExport);
       commands_.viewerCopyToClipboard().setVisible(isHTMLWidget && canExport);
       display_.setExportEnabled(commands_.viewerSaveAsImage().isEnabled());
@@ -478,8 +539,13 @@ public class ViewerPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final ViewerServerOperations server_;
    private final EventBus events_;
+   private final DependencyManager dependencyManager_;
+   private final FileDialogs fileDialogs_;
+   private final RemoteFileSystemContext fileSystemContext_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final SourceShim sourceShim_; 
+   
+   private FileSystemItem saveAsWebPageDefaultPath_ = null;
    
    private ShinyApplicationParams runningShinyAppParams_;
    private RmdPreviewParams rmdPreviewParams_;

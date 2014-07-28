@@ -89,6 +89,20 @@ public class DependencyManager implements InstallShinyEvent.Handler
                        command);
    }
    
+   public void withRMarkdown(String userAction, final Command command)
+   {
+     withDependencies(   
+        "R Markdown",
+        userAction, 
+        new Dependency[] {
+          Dependency.cranPackage("knitr", "1.6"),
+          Dependency.cranPackage("yaml", "2.1.5"),
+          Dependency.cranPackage("htmltools", "0.2.4"),
+          Dependency.embeddedPackage("rmarkdown")
+        }, 
+        command
+     );
+   }
  
    public void withShiny(final String userAction, final Command command)
    {

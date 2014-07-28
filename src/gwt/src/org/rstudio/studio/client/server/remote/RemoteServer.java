@@ -2644,6 +2644,16 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   @Override
+   public void viewerSaveAsWebPage(String targetPath,
+                                   ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+            "viewer_save_as_web_page", 
+            targetPath, 
+            requestCallback);
+   }
+   
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
    {

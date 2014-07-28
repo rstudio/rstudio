@@ -30,4 +30,7 @@ public interface ViewerServerOperations
    void getViewerExportContext(
          String directory,
          ServerRequestCallback<SavePlotAsImageContext> requestCallback);
+   
+   void viewerSaveAsWebPage(String targetPath,
+                            ServerRequestCallback<Void> requestCallback);
 }

@@ -162,10 +162,47 @@ Error getViewerExportContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error viewerSaveAsWebPage(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // get target path
+   std::string targetPath;
+   Error error = json::readParams(request.params, &targetPath);
+   if (error)
+      return error;
+   FilePath targetFilePath = module_context::resolveAliasedPath(targetPath);
+
+   // determine source path
+   module_context::ViewerHistoryEntry viewerEntry = viewerHistory().current();
+   if (viewerEntry.empty())
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         ERROR_LOCATION);
+   }
+   FilePath tempPath = module_context::tempDir();
+   FilePath sourceFilePath = tempPath.complete(viewerEntry.sessionTempPath());
+
+   // perform the base64 encode using pandoc
+   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
+   func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
+   func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
+   error = func.call();
+   if (error)
+      return error;
+
+   // show the file
+   module_context::showFile(targetFilePath);
+
+   // return success
+   return Success();
+}
+
+
+
 bool isHTMLWidgetPath(const FilePath& filePath)
 {
-   // stem must be "index"
-   if (filePath.stem() != "index")
+   // filename must be "index.html"
+   if (filePath.filename() != "index.html")
       return false;
 
    // parent dir must start with "viewhtml"
@@ -312,7 +349,8 @@ Error initialize()
       (bind(registerRpcMethod, "viewer_clear_current", viewerClearCurrent))
       (bind(registerRpcMethod, "viewer_forward", viewerForward))
       (bind(registerRpcMethod, "viewer_back", viewerBack))
-      (bind(registerRpcMethod, "get_viewer_export_context", getViewerExportContext));
+      (bind(registerRpcMethod, "get_viewer_export_context", getViewerExportContext))
+      (bind(registerRpcMethod, "viewer_save_as_web_page", viewerSaveAsWebPage));
    return initBlock.execute();
 }
 
