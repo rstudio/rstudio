@@ -207,18 +207,32 @@ private:
                         "auto_reload = FALSE, ";
          extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
 
+         std::string extraDependencies("htmltools::htmlDependency("
+                     "name = 'rstudio-iframe', "
+                     "version = '0.1', "
+                     "src = '" +
+                         session::options().rResourcesPath().absolutePath() +
+                     "', "
+                     "script = 'rsiframe.js')");
+
+         std::string outputOptions("extra_dependencies = list(" + 
+               extraDependencies + ")");
+
+#ifndef __APPLE__
+         // on Qt platforms, use local MathJax: it contains a patch that allows
+         // math to render immediately (otherwise it fails to load due to 
+         // timeouts waiting for font variants to load)
+         if (session::options().programMode() == kSessionProgramModeDesktop) 
+         {
+            outputOptions += ", mathjax = 'local'";
+         }
+#endif
+
          // inject the RStudio IFrame helper script (for syncing scroll position
          // and anchor information cross-domain), and wrap the other render
          // options discovered so far in the render_args parameter
          renderOptions = "render_args = list(" + renderOptions + ", "
-               "output_options = list(extra_dependencies = "
-                  "list(htmltools::htmlDependency("
-                        "name = 'rstudio-iframe', "
-                        "version = '0.1', "
-                        "src = '" +
-                            session::options().rResourcesPath().absolutePath() +
-                        "', "
-                        "script = 'rsiframe.js'))))";
+               "output_options = list(" + outputOptions + "))";
       }
 
       // render command
