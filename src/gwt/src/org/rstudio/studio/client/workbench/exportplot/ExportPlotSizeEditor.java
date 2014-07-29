@@ -382,6 +382,11 @@ public class ExportPlotSizeEditor extends Composite
          keepRatioCheckBox_.setValue(false);
          return MIN_SIZE;
       }
+      else if (previewer_.getLimitToScreen() && (width > getMaxSize().width))
+      {
+         keepRatioCheckBox_.setValue(false);
+         return getMaxSize().width;
+      }
       else
       {
          return width;
@@ -395,6 +400,11 @@ public class ExportPlotSizeEditor extends Composite
          keepRatioCheckBox_.setValue(false);
          return MIN_SIZE;
       }
+      else if (previewer_.getLimitToScreen() && (height > getMaxSize().height))
+      {
+         keepRatioCheckBox_.setValue(false);
+         return getMaxSize().height;
+      }
       else
       {
          return height;
@@ -403,8 +413,7 @@ public class ExportPlotSizeEditor extends Composite
    
    private void setPreviewPanelSize(int width, int height)
    {
-      Size maxSize = new Size(Window.getClientWidth() - 100,
-                              Window.getClientHeight() - 200);
+      Size maxSize = getMaxSize();
       
       if (width <= maxSize.width && height <= maxSize.height)
       {
@@ -416,6 +425,12 @@ public class ExportPlotSizeEditor extends Composite
       {
          previewPanel_.setVisible(false);
       }
+   }
+   
+   private Size getMaxSize()
+   {
+      return new Size(Window.getClientWidth() - 100,
+                      Window.getClientHeight() - 200);
    }
    
    private Label createImageOptionLabel(String text)

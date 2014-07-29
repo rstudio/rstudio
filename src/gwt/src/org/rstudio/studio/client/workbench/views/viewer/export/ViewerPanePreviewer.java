@@ -31,6 +31,12 @@ public class ViewerPanePreviewer implements ExportPlotPreviewer
    }
    
    @Override
+   public boolean getLimitToScreen()
+   {
+      return true;
+   }
+   
+   @Override
    public Widget getWidget()
    {
       if (frame_ == null)

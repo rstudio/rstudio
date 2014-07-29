@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public interface ExportPlotPreviewer
 {
+   boolean getLimitToScreen();
    Widget getWidget();
    IFrameElementEx getPreviewIFrame();
    void updatePreview(int width, int height);
