@@ -137,8 +137,9 @@ Error getViewerExportContext(const json::JsonRpcRequest& request,
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
 #ifdef __APPLE__
    formats.push_back(plotExportFormat("TIFF", kTiffFormat));
-#endif
+#else
    formats.push_back(plotExportFormat("BMP", kBmpFormat));
+#endif
    contextJson["formats"] = formats;
 
    // get directory path -- if it doesn't exist revert to the current
