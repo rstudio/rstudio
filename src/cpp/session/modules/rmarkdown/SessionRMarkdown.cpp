@@ -890,6 +890,10 @@ void handleRmdOutputRequest(const http::Request& request,
       // own resource handler
       MathjaxFilter mathjaxFilter;
       pResponse->setFile(outputFilePath, request, mathjaxFilter);
+
+      // set the content-type to ensure UTF-8 (all pandoc output
+      // is UTF-8 encoded)
+      pResponse->setContentType("text/html; charset=utf-8");
    }
    else if (boost::algorithm::starts_with(path, kMathjaxSegment))
    {
