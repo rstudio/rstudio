@@ -33,13 +33,20 @@ public class PlotsPanePreviewer implements ExportPlotPreviewer
 {
    public PlotsPanePreviewer(PlotsServerOperations server)
    {
+      this(server, false);
+   }
+   
+   public PlotsPanePreviewer(PlotsServerOperations server,
+                             boolean limitToScreen)
+   {
       server_ = server;
+      limitToScreen_ = limitToScreen;
    }
    
    @Override
    public boolean getLimitToScreen()
    {
-      return false;
+      return limitToScreen_;
    }
    
    @Override
@@ -99,4 +106,5 @@ public class PlotsPanePreviewer implements ExportPlotPreviewer
    private ImageFrame imageFrame_ = null;
    
    protected final PlotsServerOperations server_;
+   private final boolean limitToScreen_;
 }

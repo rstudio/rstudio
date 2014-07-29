@@ -21,6 +21,7 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.Command;
 
 public class DesktopExport
 {
@@ -28,32 +29,39 @@ public class DesktopExport
                              final OperationWithInput<Rectangle> exporter,
                              final Operation onCompleted)
    {
-      // hide gripper
-      sizeEditor.setGripperVisible(false);
-      
-      // get the preview iframe rect
-      ElementEx iframe = sizeEditor.getPreviewIFrame().<ElementEx>cast();
-      final Rectangle viewerRect = new Rectangle(
-             iframe.getClientLeft(),
-             iframe.getClientTop(),
-             iframe.getClientWidth(),
-             iframe.getClientHeight()).inflate(-1);
-                                    
-   
-      // perform the export
-      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      sizeEditor.prepareForExport(new Command() {
+
          @Override
          public void execute()
          {
-            exporter.execute(viewerRect);
+            // hide gripper
+            sizeEditor.setGripperVisible(false);
             
-            // show gripper
-            sizeEditor.setGripperVisible(true);
+            // get the preview iframe rect
+            ElementEx iframe = sizeEditor.getPreviewIFrame().<ElementEx>cast();
+            final Rectangle viewerRect = new Rectangle(
+                   iframe.getClientLeft(),
+                   iframe.getClientTop(),
+                   iframe.getClientWidth(),
+                   iframe.getClientHeight()).inflate(-1);
             
-            // call onCompleted
-            if (onCompleted != null)
-               onCompleted.execute();
-         }
+            // perform the export
+            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+               @Override
+               public void execute()
+               {
+                  exporter.execute(viewerRect);
+                  
+                  // show gripper
+                  sizeEditor.setGripperVisible(true);
+                  
+                  // call onCompleted
+                  if (onCompleted != null)
+                     onCompleted.execute();
+               }
+            });
+         }   
       });
+     
    }
 }

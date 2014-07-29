@@ -24,6 +24,8 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -64,6 +66,7 @@ public class ExportPlotSizeEditor extends Composite
    {
       // alias objects and resources
       previewer_ = previewer;
+      observer_ = observer;
       ExportPlotResources resources = ExportPlotResources.INSTANCE;
            
       // main widget
@@ -187,9 +190,7 @@ public class ExportPlotSizeEditor extends Composite
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {
-            setPreviewPanelSize(getImageWidth(), getImageHeight());         
-            previewer_.updatePreview(getImageWidth(), getImageHeight());
-            observer.onResized(false);
+            updatePreview();
          }
       });
       updateButton.setStylePrimaryName(
@@ -348,6 +349,25 @@ public class ExportPlotSizeEditor extends Composite
       return keepRatioCheckBox_.getValue();
    }
    
+   public void prepareForExport(final Command onReady)
+   {
+      if (getPreviewRequiresUpdate())
+      {
+         updatePreview();
+         new Timer() {
+            @Override
+            public void run()
+            {
+               onReady.execute();
+            } 
+         }.schedule(1000);;
+      }
+      else
+      {
+         onReady.execute();
+      }
+   }
+   
    public IFrameElementEx getPreviewIFrame()
    {
       return previewer_.getPreviewIFrame();
@@ -356,6 +376,20 @@ public class ExportPlotSizeEditor extends Composite
    public void setGripperVisible(boolean visible)
    {
       gripper_.setVisible(visible);
+   }
+   
+   private void updatePreview()
+   {
+      setPreviewPanelSize(getImageWidth(), getImageHeight());         
+      previewer_.updatePreview(getImageWidth(), getImageHeight());
+      observer_.onResized(false);
+   }
+   
+   private boolean getPreviewRequiresUpdate()
+   {
+      IFrameElementEx iframe = previewer_.getPreviewIFrame();
+      return (getImageWidth() != iframe.getClientWidth() ||
+              getImageHeight() != iframe.getClientHeight());
    }
    
    private void setWidthTextBox(int width)
@@ -457,6 +491,8 @@ public class ExportPlotSizeEditor extends Composite
    }
    
    private static final int IMAGE_INSET = 6;
+   
+   private final Observer observer_;
    
    private final ExportPlotPreviewer previewer_;
    private final ResizeGripper gripper_;

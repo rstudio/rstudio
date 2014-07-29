@@ -20,6 +20,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopFrame;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
@@ -46,38 +47,47 @@ public class CopyPlotToClipboardDesktopDialog
    
    protected void copyAsBitmap(final Operation onCompleted)
    {  
-      ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      final ExportPlotSizeEditor sizeEditor = getSizeEditor();
       
-      if (BrowseCap.isCocoaDesktop()) 
-      {
-         clipboard_.copyPlotToCocoaPasteboard(
-               sizeEditor.getImageWidth(),
-               sizeEditor.getImageHeight(),
-               new Command() 
-               {
-                  @Override
-                  public void execute()
-                  {
-                     onCompleted.execute();
-                  }
-               });
-      }
-      else
-      {
-         WindowEx win = sizeEditor.getPreviewIFrame().getContentWindow();
-         Document doc = win.getDocument();
-         NodeList<Element> images = doc.getElementsByTagName("img");
-         if (images.getLength() > 0)
+      sizeEditor.prepareForExport(new Command() {
+
+         @Override
+         public void execute()
          {
-            ElementEx img = images.getItem(0).cast();
-            Desktop.getFrame().copyImageToClipboard(img.getClientLeft(),
-                                                    img.getClientTop(),
-                                                    img.getClientWidth(),
-                                                    img.getClientHeight());
+            if (BrowseCap.isCocoaDesktop()) 
+            {
+               clipboard_.copyPlotToCocoaPasteboard(
+                     sizeEditor.getImageWidth(),
+                     sizeEditor.getImageHeight(),
+                     new Command() 
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           onCompleted.execute();
+                        }
+                     });
+            }
+            else
+            {
+               WindowEx win = sizeEditor.getPreviewIFrame().getContentWindow();
+               Document doc = win.getDocument();
+               NodeList<Element> images = doc.getElementsByTagName("img");
+               if (images.getLength() > 0)
+               {
+                  ElementEx img = images.getItem(0).cast();
+                  DesktopFrame frame = Desktop.getFrame();
+                  frame.copyImageToClipboard(img.getClientLeft(),
+                                             img.getClientTop(),
+                                             img.getClientWidth(),
+                                             img.getClientHeight());
+               }
+               
+               onCompleted.execute();
+            }
          }
-      }
-      
-      onCompleted.execute();
+         
+      });
    }
    
    protected final ExportPlotClipboard clipboard_;

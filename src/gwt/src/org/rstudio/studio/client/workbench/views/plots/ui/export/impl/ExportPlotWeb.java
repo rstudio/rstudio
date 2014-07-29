@@ -30,7 +30,7 @@ public class ExportPlotWeb extends ExportPlot
                               OperationWithInput<ExportPlotOptions> onClose)
    {
       new CopyPlotToClipboardWebDialog(
-         options, new PlotsPanePreviewer(server), onClose).showModal();
+         options, new PlotsPanePreviewer(server, true), onClose).showModal();
    }
 
 }

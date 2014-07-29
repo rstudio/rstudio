@@ -36,7 +36,7 @@ public class ExportPlotDesktop extends ExportPlot
       if (Desktop.getFrame().supportsClipboardMetafile())
       {
          new CopyPlotToClipboardDesktopMetafileDialog(
-                        new PlotsPanePreviewer(server),
+                        new PlotsPanePreviewer(server, true),
                         new PlotsPaneClipboard(server),
                         options, 
                         onClose).showModal();
@@ -44,7 +44,7 @@ public class ExportPlotDesktop extends ExportPlot
       else
       {
          new CopyPlotToClipboardDesktopDialog(
-                        new PlotsPanePreviewer(server),
+                        new PlotsPanePreviewer(server, true),
                         new PlotsPaneClipboard(server),
                         options, 
                         onClose).showModal();
