@@ -603,21 +603,17 @@ private:
    // determine format and properties for writing file
    NSBitmapImageFileType imageFileType = nil;
    NSDictionary* properties = nil;
-   if ([format isEqualToString: @"PNG"])
+   if ([format isEqualToString: @"png"])
    {
       imageFileType = NSPNGFileType;
    }
-   else if ([format isEqualToString: @"JPEG"])
+   else if ([format isEqualToString: @"jpeg"])
    {
       imageFileType = NSJPEGFileType;
       [properties setValue: [NSNumber numberWithDouble: 1.0]
                     forKey: NSImageCompressionFactor];
    }
-   else if ([format isEqualToString: @"BMP"])
-   {
-      imageFileType = NSBMPFileType;
-   }
-   else if ([format isEqualToString: @"TIFF"])
+   else if ([format isEqualToString: @"tiff"])
    {
       imageFileType = NSTIFFFileType;
       [properties setValue: [NSNumber numberWithInteger: NSTIFFCompressionNone]
