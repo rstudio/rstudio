@@ -328,6 +328,12 @@ public class ViewerPresenter extends BasePresenter
       ).showModal();;    
    }
    
+   @Handler
+   public void onViewerPublishToRPubs()
+   {
+      
+   }
+   
    
    @Handler
    public void onViewerSaveAllAndRefresh()
@@ -485,6 +491,10 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerCopyToClipboard().setVisible(isHTMLWidget && canSnapshot);
       commands_.viewerSaveAsWebPage().setEnabled(enable);
       commands_.viewerSaveAsWebPage().setVisible(isHTMLWidget);
+      
+      // not yet implemented
+      commands_.viewerPublishToRPubs().setEnabled(false);
+      commands_.viewerPublishToRPubs().setVisible(false);
       
       display_.setExportEnabled(isHTMLWidget);
    }

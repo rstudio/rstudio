@@ -613,6 +613,7 @@ public class Application implements ApplicationEventHandlers
       {
          commands_.publishHTML().remove();
          commands_.presentationPublishToRpubs().remove();
+         commands_.viewerPublishToRPubs().remove();
       }
       
       // hide the agreement menu item if we don't have one
