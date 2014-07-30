@@ -167,13 +167,9 @@ public class RPubsUploadDialog extends ModalDialogBase
          previewButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event)
-            {
-               String title = validateAndGetGeneratorTitle();
-               if (title == null)
-                  return;
-               
+            { 
                htmlGenerator_.generateRPubsHtml(
-                  title, 
+                  titleTextBox_.getText().trim(), 
                   commentTextArea_.getText().trim(),
                   new CommandWithArg<String>() {
                      @Override
