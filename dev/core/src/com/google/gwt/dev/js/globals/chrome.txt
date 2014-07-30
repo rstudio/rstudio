@@ -1,5 +1,6 @@
 AnalyserNode
 ApplicationCache
+ApplicationCacheErrorEvent
 Array
 ArrayBuffer
 Attr
@@ -226,6 +227,7 @@ Option
 OscillatorNode
 OverflowEvent
 PageTransitionEvent
+Path2D
 Performance
 PerformanceEntry
 PerformanceMark
@@ -431,6 +433,7 @@ Uint8ClampedArray
 VTTCue
 ValidityState
 WaveShaperNode
+WeakSet
 WebGLActiveInfo
 WebGLBuffer
 WebGLContextEvent
