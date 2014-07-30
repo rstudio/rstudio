@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -63,7 +64,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addItem(commands_.viewerPublishToRPubs().createMenuItem(false));
       
       exportButton_ = new ToolbarButton(
-            "Export", commands_.savePlotAsImage().getImageResource(),
+            "Export", StandardIcons.INSTANCE.export_menu(),
             exportMenu);
       toolbar_.addLeftWidget(exportButton_);  
       exportButton_.setVisible(false);

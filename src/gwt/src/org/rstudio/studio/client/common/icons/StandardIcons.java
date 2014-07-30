@@ -36,4 +36,5 @@ public interface StandardIcons extends ClientBundle
    ImageResource svn();
    ImageResource viewer_window();
    ImageResource run();
+   ImageResource export_menu();
 }
