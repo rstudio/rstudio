@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.rpubs.ui;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -58,13 +60,33 @@ public class RPubsUploadDialog extends ModalDialogBase
                             String htmlFile, 
                             boolean isPublished)
    {
+      this(contextId, title, htmlFile, null, isPublished);
+   }
+   
+   public RPubsUploadDialog(String contextId,
+                            String title, 
+                            RPubsHtmlGenerator htmlGenerator, 
+                            boolean isPublished)
+   {
+      this(contextId, title, null, htmlGenerator, isPublished);
+   }
+   
+   private RPubsUploadDialog(String contextId,
+                             String title, 
+                             String htmlFile, 
+                             RPubsHtmlGenerator htmlGenerator,
+                             boolean isPublished)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
       setText("Publish to RPubs");
       title_ = title;
       htmlFile_ = htmlFile;
+      htmlGenerator_ = htmlGenerator;
       isPublished_ = isPublished;
       contextId_ = contextId;
    }
+
+   
    
    @Inject
    void initialize(GlobalDisplay globalDisplay,
@@ -217,7 +239,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    
    
    private void performUpload(final WindowEx progressWindow,
-                              boolean modify)
+                              final boolean modify)
    {
       // record progress window
       uploadProgressWindow_ = progressWindow;
@@ -266,37 +288,68 @@ public class RPubsUploadDialog extends ModalDialogBase
          }
       }));
       
-      // initiate the upload
-      server_.rpubsUpload(
-            contextId_,
-            title_, 
-            htmlFile_,
-            modify,
-            new ServerRequestCallback<Boolean>() {
+      // synthesize html generator if necessary
+      RPubsHtmlGenerator htmlGenerator = htmlGenerator_;
+      if (htmlGenerator == null)
+      {
+         htmlGenerator = new RPubsHtmlGenerator() {
 
-               @Override
-               public void onResponseReceived(Boolean response)
-               {
-                  if (!response.booleanValue())
+            @Override
+            public void generateRPubsHtml(String title, 
+                                          String author, 
+                                          String date, 
+                                          String comment,
+                                          CommandWithArg<String> onCompleted)
+            {
+               onCompleted.execute(htmlFile_);
+            }
+         };
+      }
+      
+      // generate html and initiate the upload
+      htmlGenerator.generateRPubsHtml(
+        title_, "", "", "", new CommandWithArg<String>() {
+
+         @Override
+         public void execute(String htmlFile)
+         {
+            // initiate the upload
+            server_.rpubsUpload(
+               contextId_,
+               title_, 
+               htmlFile,
+               modify,
+               new ServerRequestCallback<Boolean>() {
+
+                  @Override
+                  public void onResponseReceived(Boolean response)
+                  {
+                     if (!response.booleanValue())
+                     {
+                        closeDialog();
+                        globalDisplay_.showErrorMessage(
+                               "Error",
+                               "Unable to continue " +
+                               "(another publish is currently running)");
+                     }
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
                   {
                      closeDialog();
-                     globalDisplay_.showErrorMessage(
-                            "Error",
-                            "Unable to continue " +
-                            "(another publish is currently running)");
+                     globalDisplay_.showErrorMessage("Error",
+                                                     error.getUserMessage());
                   }
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  closeDialog();
-                  globalDisplay_.showErrorMessage("Error",
-                                                  error.getUserMessage());
-               }
-      });
+              });
+            
+         }
+           
+        });
+      
+      
    }
-  
+   
    private void showProgressPanel()
    {
       // disable continue button
@@ -348,6 +401,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    private final String title_;
    private final String htmlFile_;
    private final String contextId_;
+   private final RPubsHtmlGenerator htmlGenerator_;
    
    private boolean uploadInProgress_ = false;
    private WindowEx uploadProgressWindow_ = null;
