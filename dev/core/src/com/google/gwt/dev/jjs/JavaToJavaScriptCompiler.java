@@ -140,6 +140,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
@@ -446,6 +447,8 @@ public abstract class JavaToJavaScriptCompiler {
         String[] jsFragments, SizeBreakdown[] sizeBreakdowns,
         List<JsSourceMap> sourceInfoMaps, PermutationResult permutationResult)
         throws IOException, UnableToCompleteException {
+
+      assert internedLiteralByVariableName != null;
 
       Event event = SpeedTracerLogger.start(CompilerEventType.PERMUTATION_ARTIFACTS);
 
@@ -781,7 +784,8 @@ public abstract class JavaToJavaScriptCompiler {
         default:
           throw new InternalCompilerException("Unknown output mode");
       }
-      return internedLiteralByVariableName;
+      return internedLiteralByVariableName == null ?
+          ImmutableMap.<JsName, JsLiteral>of() : internedLiteralByVariableName;
     }
 
     private Map<JsName, JsLiteral> runObfuscateNamer(PermProps props) {
