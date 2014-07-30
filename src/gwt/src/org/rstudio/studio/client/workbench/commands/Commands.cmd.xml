@@ -1105,13 +1105,13 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Previous Plot"
         desc="Previous plot"/>
    <cmd id="savePlotAsImage"
-        menuLabel="Save Plot as _Image..."
+        menuLabel="Save as _Image..."
         desc="Save the current plot as an image file"/> 
     <cmd id="savePlotAsPdf"
-        menuLabel="Save Plot as P_DF..."
+        menuLabel="Save as P_DF..."
         desc="Save the current plot as a PDF file"/>
    <cmd id="copyPlotToClipboard"
-        menuLabel="Cop_y Plot to Clipboard..."
+        menuLabel="Cop_y to Clipboard..."
         desc="Copy the current plot to the clipboard"/>    
    <cmd id ="zoomPlot" 
         menuLabel="_Zoom Plot..."
