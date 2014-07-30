@@ -296,8 +296,6 @@ public class RPubsUploadDialog extends ModalDialogBase
 
             @Override
             public void generateRPubsHtml(String title, 
-                                          String author, 
-                                          String date, 
                                           String comment,
                                           CommandWithArg<String> onCompleted)
             {
@@ -308,7 +306,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       
       // generate html and initiate the upload
       htmlGenerator.generateRPubsHtml(
-        title_, "", "", "", new CommandWithArg<String>() {
+        title_, "", new CommandWithArg<String>() {
 
          @Override
          public void execute(String htmlFile)

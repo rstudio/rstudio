@@ -19,9 +19,7 @@ import org.rstudio.core.client.CommandWithArg;
 
 public interface RPubsHtmlGenerator
 {
-   void generateRPubsHtml(String title, 
-                          String author, 
-                          String date, 
+   void generateRPubsHtml(String title,
                           String comment,
                           CommandWithArg<String> onCompleted);
 }

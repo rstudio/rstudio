@@ -33,4 +33,8 @@ public interface ViewerServerOperations
    
    void viewerSaveAsWebPage(String targetPath,
                             ServerRequestCallback<Void> requestCallback);
+   
+   void viewerCreateRPubsHtml(String title, 
+                              String comment,
+                              ServerRequestCallback<String> requestCallback);
 }

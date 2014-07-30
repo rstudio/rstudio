@@ -163,6 +163,32 @@ Error getViewerExportContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+
+Error currentViewerSourcePath(FilePath* pSourcePath)
+{
+   // determine source path
+   module_context::ViewerHistoryEntry viewerEntry = viewerHistory().current();
+   if (viewerEntry.empty())
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         ERROR_LOCATION);
+   }
+
+   FilePath tempPath = module_context::tempDir();
+   *pSourcePath = tempPath.complete(viewerEntry.sessionTempPath());
+   return Success();
+}
+
+Error createSelfContainedHtml(const FilePath& sourceFilePath,
+                              const FilePath& targetFilePath)
+{
+   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
+   func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
+   func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
+   return func.call();
+}
+
 Error viewerSaveAsWebPage(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -174,20 +200,13 @@ Error viewerSaveAsWebPage(const json::JsonRpcRequest& request,
    FilePath targetFilePath = module_context::resolveAliasedPath(targetPath);
 
    // determine source path
-   module_context::ViewerHistoryEntry viewerEntry = viewerHistory().current();
-   if (viewerEntry.empty())
-   {
-      return systemError(boost::system::errc::invalid_argument,
-                         ERROR_LOCATION);
-   }
-   FilePath tempPath = module_context::tempDir();
-   FilePath sourceFilePath = tempPath.complete(viewerEntry.sessionTempPath());
+   FilePath sourceFilePath;
+   error = currentViewerSourcePath(&sourceFilePath);
+   if (error)
+      return error;
 
    // perform the base64 encode using pandoc
-   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
-   func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
-   func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
-   error = func.call();
+   error = createSelfContainedHtml(sourceFilePath, targetFilePath);
    if (error)
       return error;
 
@@ -199,6 +218,35 @@ Error viewerSaveAsWebPage(const json::JsonRpcRequest& request,
 }
 
 
+Error viewerCreateRPubsHtml(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string title, comment;
+   Error error = json::readParams(request.params, &title, &comment);
+   if (error)
+      return error;
+
+   // determine source path
+   FilePath sourceFilePath;
+   error = currentViewerSourcePath(&sourceFilePath);
+   if (error)
+      return error;
+
+   // tempfile for target path
+   FilePath targetFilePath = module_context::tempFile("viewer-rpubs-", "html");
+
+   // perform the base64 encode using pandoc
+   error = createSelfContainedHtml(sourceFilePath, targetFilePath);
+   if (error)
+      return error;
+
+   // return target path
+   pResponse->setResult(module_context::createAliasedPath(targetFilePath));
+
+   // return success
+   return Success();
+}
 
 bool isHTMLWidgetPath(const FilePath& filePath)
 {
@@ -351,7 +399,8 @@ Error initialize()
       (bind(registerRpcMethod, "viewer_forward", viewerForward))
       (bind(registerRpcMethod, "viewer_back", viewerBack))
       (bind(registerRpcMethod, "get_viewer_export_context", getViewerExportContext))
-      (bind(registerRpcMethod, "viewer_save_as_web_page", viewerSaveAsWebPage));
+      (bind(registerRpcMethod, "viewer_save_as_web_page", viewerSaveAsWebPage))
+      (bind(registerRpcMethod, "viewer_create_rpubs_html", viewerCreateRPubsHtml));
    return initBlock.execute();
 }
 

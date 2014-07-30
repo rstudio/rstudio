@@ -2654,6 +2654,18 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   @Override
+   public void viewerCreateRPubsHtml(
+            String title, 
+            String comment,
+            ServerRequestCallback<String> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(title));
+      params.set(1, new JSONString(comment));
+      sendRequest(RPC_SCOPE, "viewer_create_rpubs_html", params, callback);
+   }
+   
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
    {
