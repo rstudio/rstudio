@@ -42,7 +42,22 @@ typedef struct SEXPREC *SEXP;
 #else
 
 #define R_INTERFACE_PTRS 1
+
+// workaround for missing extern from 'int R_running_as_main_program'
+#include <Rversion.h>
+#if R_SVN_REVISION >= 66120
+
+// turn 'int R_running_as_main_program' into function declaration
+#define R_running_as_main_program R_RUNNING_AS_MAIN_PROGRAM_WORKAROUND();
 #include <Rinterface.h>
+#undef R_running_as_main_program
+extern int R_running_as_main_program;
+
+#else
+
+#include <Rinterface.h>
+
+#endif
 
 #endif
 
