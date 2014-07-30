@@ -407,7 +407,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       
       // generate html and initiate the upload
       htmlGenerator.generateRPubsHtml(
-        title, commentTextArea_.getText().trim(), new CommandWithArg<String>() {
+        title, getCommentText(), new CommandWithArg<String>() {
 
          @Override
          public void execute(String htmlFile)
@@ -447,6 +447,14 @@ public class RPubsUploadDialog extends ModalDialogBase
         });
       
       
+   }
+   
+   private String getCommentText()
+   {
+      if (commentTextArea_ != null)
+         return commentTextArea_.getText().trim();
+      else
+         return "";
    }
    
    private void showProgressPanel()
