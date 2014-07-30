@@ -24,6 +24,9 @@ import com.google.gwt.user.client.Timer;
 
 import junit.framework.TestCase;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * The translatable implementation of {@link GWTTestCase}.
  */
@@ -70,6 +73,8 @@ public abstract class GWTTestCase extends TestCase {
       reportUncaughtException(e);
     }
   }
+
+  private final Logger logger = Logger.getLogger("GWTTestCase");
 
   /**
    * Tracks whether the main test body has run (for asynchronous mode).
@@ -141,6 +146,7 @@ public abstract class GWTTestCase extends TestCase {
 
   @Override
   public void runBare() throws Throwable {
+    logger.log(Level.FINE, this + " -> Running");
     setUp();
     runTest();
     // No tearDown call here; we do it from reportResults.
@@ -157,6 +163,7 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   protected final void delayTestFinish(int timeoutMillis) {
+    logger.log(Level.FINE, this + " -> Delay test finish: " + timeoutMillis);
     if (timer != null) {
       // Cancel the pending timer
       timer.cancel();
@@ -246,12 +253,15 @@ public abstract class GWTTestCase extends TestCase {
       // ignore any exceptions thrown from tearDown
     }
 
-    JUnitResult myResult = new JUnitResult();
+    JUnitResult result = new JUnitResult();
     if (ex != null) {
-      myResult.setException(ex);
+      result.setException(ex);
     }
 
-    GWTRunner.get().reportResultsAndGetNextMethod(myResult);
+    String resultMsg = result.isAnyException() ? "FAILURE" : "SUCCESS";
+    logger.log(Level.FINE, this + " -> Result: " + resultMsg, result.getException());
+
+    GWTRunner.get().reportResultsAndGetNextMethod(result);
   }
 
   /**
@@ -287,6 +297,11 @@ public abstract class GWTTestCase extends TestCase {
     } catch (Throwable e) {
       return true;
     }
+  }
+
+  @Override
+  public String toString() {
+    return getName() + "(" + testClass + ")";
   }
 
   private static void setAllUncaughtExceptionHandlers(UncaughtExceptionHandler handler) {

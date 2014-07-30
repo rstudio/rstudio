@@ -147,7 +147,6 @@ public class DocumentTest extends GWTTestCase {
     Document doc = Document.get();
 
     DivElement div = doc.createDivElement();
-    doc.getBody().removeAllChildren();
     doc.getBody().appendChild(div);
 
     div.setInnerHTML("<span><button id='foo'>foo</button><span><button>bar</button></span></span>");
@@ -178,7 +177,9 @@ public class DocumentTest extends GWTTestCase {
   @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testScrollLeft() {
     Document doc = Document.get();
-    doc.getBody().setInnerHTML("<div style='width: 5000px; height: 5000px'></div>");
+    DivElement element = doc.createDivElement();
+    element.setInnerHTML("<div style='width: 5000px; height: 5000px'></div>");
+    doc.getBody().appendChild(element);
 
     doc.setScrollLeft(15);
     assertEquals(15, doc.getScrollLeft());
@@ -187,7 +188,9 @@ public class DocumentTest extends GWTTestCase {
   @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testScrollTop() {
     Document doc = Document.get();
-    doc.getBody().setInnerHTML("<div style='width: 5000px; height: 5000px'></div>");
+    DivElement element = doc.createDivElement();
+    element.setInnerHTML("<div style='width: 5000px; height: 5000px'></div>");
+    doc.getBody().appendChild(element);
 
     doc.setScrollTop(15);
     assertEquals(15, doc.getScrollTop());

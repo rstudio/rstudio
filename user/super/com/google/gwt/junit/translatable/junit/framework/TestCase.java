@@ -48,11 +48,6 @@ public class TestCase extends Assert implements Test {
     this.name = name;
   }
 
-  @Override
-  public String toString() {
-    return getName() + "(" + this.getClass().getName() + ")";
-  }
-
   /**
    * Do not override this method, the generated class will override it for you.
    */

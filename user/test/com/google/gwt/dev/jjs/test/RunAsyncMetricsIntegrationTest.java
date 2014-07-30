@@ -18,6 +18,8 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -81,6 +83,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
         = $stats;
       $stats = function(evt) {
         self.@com.google.gwt.dev.jjs.test.RunAsyncMetricsIntegrationTest.LightweightMetricsObserver::recordEvent(Lcom/google/gwt/dev/jjs/test/RunAsyncMetricsIntegrationTest$LightweightMetricsEvent;)(evt);
+        return false;
       }
     }-*/;
 
@@ -119,11 +122,8 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
     lwmObserver.uninstall();
   }
 
+  @DoNotRunWith(Platform.Devel)
   public void testMetricsSignalled() {
-    if (!GWT.isScript()) {
-      // There are no runAsync lightweight metrics in Development Mode
-      return;
-    }
     delayTestFinish(TIMEOUT);
     GWT.runAsync(new RunAsyncCallback() {
       @Override
