@@ -478,14 +478,15 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
       
-      boolean canExport = Desktop.isDesktop();     
-      commands_.viewerSaveAsImage().setEnabled(enable && canExport);
-      commands_.viewerSaveAsImage().setVisible(isHTMLWidget && canExport);
-      commands_.viewerSaveAsWebPage().setEnabled(enable && canExport);
-      commands_.viewerSaveAsWebPage().setVisible(isHTMLWidget && canExport);
-      commands_.viewerCopyToClipboard().setEnabled(enable && canExport);
-      commands_.viewerCopyToClipboard().setVisible(isHTMLWidget && canExport);
-      display_.setExportEnabled(commands_.viewerSaveAsImage().isEnabled());
+      boolean canSnapshot = Desktop.isDesktop();     
+      commands_.viewerSaveAsImage().setEnabled(enable && canSnapshot);
+      commands_.viewerSaveAsImage().setVisible(isHTMLWidget && canSnapshot);
+      commands_.viewerCopyToClipboard().setEnabled(enable && canSnapshot);
+      commands_.viewerCopyToClipboard().setVisible(isHTMLWidget && canSnapshot);
+      commands_.viewerSaveAsWebPage().setEnabled(enable);
+      commands_.viewerSaveAsWebPage().setVisible(isHTMLWidget);
+      
+      display_.setExportEnabled(isHTMLWidget);
    }
    
    private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
