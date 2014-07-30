@@ -29,6 +29,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
@@ -388,6 +389,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                                     uiPrefs_.get().exportPlotOptions().getValue(),
                                     getPlotSize()),
                               saveExportOptionsOperation_);    
+   }
+   
+   void onPublishPlotToRPubs()
+   {
+      
    }
    
    private double pixelsToInches(int pixels)

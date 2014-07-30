@@ -616,6 +616,9 @@ public class Application implements ApplicationEventHandlers
          commands_.viewerPublishToRPubs().remove();
       }
       
+      // rpubs not yet implemented for plots
+      commands_.publishPlotToRPubs().remove();
+      
       // hide the agreement menu item if we don't have one
       if (!session_.getSessionInfo().hasAgreement())
          commands_.rstudioAgreement().setVisible(false);

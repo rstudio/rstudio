@@ -221,6 +221,8 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="copyPlotToClipboard"/>
          <separator/>
+         <cmd refid="publishPlotToRPubs"/>
+         <separator/>
          <cmd refid="removePlot"/>
          <separator/>
          <cmd refid="clearPlots"/>
@@ -1112,7 +1114,10 @@ well as menu structures (for main menu and popup menus).
         desc="Save the current plot as a PDF file"/>
    <cmd id="copyPlotToClipboard"
         menuLabel="Cop_y to Clipboard..."
-        desc="Copy the current plot to the clipboard"/>    
+        desc="Copy the current plot to the clipboard"/>   
+   <cmd id="publishPlotToRPubs"
+        menuLabel="Publish to RPubs..."
+        desc="Publish the current plot to RPubs"/> 
    <cmd id ="zoomPlot" 
         menuLabel="_Zoom Plot..."
         buttonLabel="Zoom"
