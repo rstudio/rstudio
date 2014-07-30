@@ -205,7 +205,7 @@ public class WebServer {
 
       JsonObject config = modules.getConfig();
       config.put("status", ok ? "ok" : "failed");
-      sendJsonpPage(config, request, response);
+      sendJsonResult(config, request, response);
       return;
     }
 
@@ -236,7 +236,7 @@ public class WebServer {
 
     if (target.equals("/progress")) {
       setHandled(request);
-      sendJsonpPage(modules.getProgress(), request, response);
+      sendJsonResult(modules.getProgress(), request, response);
       return;
     }
 
@@ -401,24 +401,32 @@ public class WebServer {
     response.sendError(HttpServletResponse.SC_NOT_FOUND);
   }
 
-  private void sendJsonpPage(JsonObject json, HttpServletRequest request,
+  private void sendJsonResult(JsonObject json, HttpServletRequest request,
       HttpServletResponse response) throws IOException {
 
     response.setStatus(HttpServletResponse.SC_OK);
     response.setHeader("Cache-control", "no-cache");
-    response.setContentType("application/javascript");
     PrintWriter out = response.getWriter();
 
     String callbackExpression = request.getParameter("_callback");
-    if (callbackExpression == null || !SAFE_CALLBACK.matcher(callbackExpression).matches()) {
-      logger.log(TreeLogger.ERROR, "invalid callback: " + callbackExpression);
-      out.print("/* invalid callback parameter */");
-      return;
+    if (callbackExpression == null) {
+      // AJAX
+      response.setContentType("application/json");
+      json.write(out);
+    } else {
+      // JSONP
+      response.setContentType("application/javascript");
+      if (SAFE_CALLBACK.matcher(callbackExpression).matches()) {
+        out.print(callbackExpression + "(");
+        json.write(out);
+        out.println(");");
+      } else {
+        logger.log(TreeLogger.ERROR, "invalid callback: " + callbackExpression);
+        // Notice that we cannot execute the callback
+        out.print("alert('invalid callback parameter');\n");
+        json.write(out);
+      }
     }
-
-    out.print(callbackExpression + "(");
-    json.write(out);
-    out.println(");");
   }
 
   /**

@@ -169,7 +169,7 @@ public class SuperDevListener implements CodeServerListener {
       // returning no wrapped json response.
       String recompileUrl =
           "http://" + options.getConnectAddress() + ":" + codeServerPort + "/recompile/"
-              + module.getName() + "?_calback=bar&user.agent=safari";
+              + module.getName() + "?user.agent=safari";
 
       System.out.println("To compile the module '" + module.getName()
           + "' , visit:\n " + recompileUrl);
