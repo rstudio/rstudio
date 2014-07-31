@@ -273,30 +273,48 @@ Error copyPlotToCocoaPasteboard(const json::JsonRpcRequest& request,
 Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
-   /*
    // get params
    std::string title, comment;
    Error error = json::readParams(request.params, &title, &comment);
    if (error)
       return error;
 
-   // determine source path
-   FilePath sourceFilePath;
-   error = currentViewerSourcePath(&sourceFilePath);
+   // create a temp directory to work in
+   FilePath tempPath = module_context::tempFile("plots-rpubs", "dir");
+   error = tempPath.ensureDirectory();
    if (error)
       return error;
 
-   // tempfile for target path
-   FilePath targetFilePath = module_context::tempFile("viewer-rpubs-", "html");
+   // form various other paths
+   FilePath sourceFilePath = tempPath.childPath("source.html");
+   FilePath targetFilePath = tempPath.childPath("target.html");
+   FilePath plotPath = tempPath.childPath("plot.png");
+
+   // save plot
+   using namespace r::session::graphics;
+   Display& display = r::session::graphics::display();
+   error = display.savePlotAsImage(plotPath, "png", 650, 500);
+   if (error)
+   {
+       LOG_ERROR(error);
+       return error;
+   }
+
+   // generate source file
+   boost::format fmt("<img src=\"%1%\"/>\n");
+   std::string html = boost::str(fmt % plotPath.filename());
+   error = core::writeStringToFile(sourceFilePath, html);
+   if (error)
+      return error;
 
    // perform the base64 encode using pandoc
-   error = createSelfContainedHtml(sourceFilePath, targetFilePath);
+   error = module_context::createSelfContainedHtml(sourceFilePath,
+                                                   targetFilePath);
    if (error)
       return error;
 
    // return target path
    pResponse->setResult(module_context::createAliasedPath(targetFilePath));
-   */
 
    // return success
    return Success();

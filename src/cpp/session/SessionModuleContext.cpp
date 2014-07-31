@@ -1698,5 +1698,14 @@ json::Object plotExportFormat(const std::string& name,
    return formatJson;
 }
 
+Error createSelfContainedHtml(const FilePath& sourceFilePath,
+                              const FilePath& targetFilePath)
+{
+   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
+   func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
+   func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
+   return func.call();
+}
+
 } // namespace module_context         
 } // namespace session

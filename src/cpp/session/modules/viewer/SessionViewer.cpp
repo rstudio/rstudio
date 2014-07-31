@@ -180,15 +180,6 @@ Error currentViewerSourcePath(FilePath* pSourcePath)
    return Success();
 }
 
-Error createSelfContainedHtml(const FilePath& sourceFilePath,
-                              const FilePath& targetFilePath)
-{
-   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
-   func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
-   func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
-   return func.call();
-}
-
 Error viewerSaveAsWebPage(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -206,7 +197,8 @@ Error viewerSaveAsWebPage(const json::JsonRpcRequest& request,
       return error;
 
    // perform the base64 encode using pandoc
-   error = createSelfContainedHtml(sourceFilePath, targetFilePath);
+   error = module_context::createSelfContainedHtml(sourceFilePath,
+                                                   targetFilePath);
    if (error)
       return error;
 
@@ -237,7 +229,8 @@ Error viewerCreateRPubsHtml(const json::JsonRpcRequest& request,
    FilePath targetFilePath = module_context::tempFile("viewer-rpubs-", "html");
 
    // perform the base64 encode using pandoc
-   error = createSelfContainedHtml(sourceFilePath, targetFilePath);
+   error = module_context::createSelfContainedHtml(sourceFilePath,
+                                                   targetFilePath);
    if (error)
       return error;
 
