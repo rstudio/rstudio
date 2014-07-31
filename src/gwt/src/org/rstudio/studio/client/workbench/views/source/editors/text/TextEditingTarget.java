@@ -439,23 +439,27 @@ public class TextEditingTarget implements
                event.stopPropagation();
                
                int currentRow = docDisplay_.getCursorPosition().getRow();
+               int currentCol = docDisplay_.getCursorPosition().getColumn();
                String currentLine = docDisplay_.getLine(currentRow);
                
-               // move cursor to end of line
-               docDisplay_.setCursorPosition(
-                     Position.create(currentRow, currentLine.length()));
+               boolean atEndOfLine = currentCol == currentLine.length();
                
-               // insert a space if there isn't a space behind the cursor
-               if (!currentLine.endsWith(" "))
+               if (currentLine.length() > 0 && atEndOfLine)
                {
-                  docDisplay_.insertCode(" %>%\n", false);
+                  if (currentLine.length() > 0 && currentLine.endsWith(" "))
+                  {
+                     docDisplay_.insertCode("%>%\n", false);
+                  }
+                  else
+                  {
+                     docDisplay_.insertCode(" %>%\n", false);
+                  }
+                  docDisplay_.reindent(docDisplay_.getSelectionRange());
                }
                else
                {
-                  docDisplay_.insertCode("%>%\n", false);
+                  docDisplay_.insertCode(" %>% ", false);
                }
-               
-               docDisplay_.reindent(docDisplay_.getSelectionRange());
                
             }
  
