@@ -65,7 +65,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
       toolbar.addLeftWidget(popoutButton);
 
       deployButtonSeparator_ = toolbar.addLeftSeparator();
-      deployButton_ = new ToolbarButton("Deploy", 
+      deployButton_ = new ToolbarButton("Publish", 
             commands.shinyAppsDeploy().getImageResource(), 
             new ClickHandler()
       {

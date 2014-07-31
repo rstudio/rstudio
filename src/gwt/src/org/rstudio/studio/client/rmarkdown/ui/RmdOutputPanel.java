@@ -131,7 +131,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       // ShinyApps
       boolean showDeploy = enableDeploy && params.isShinyDocument();
       deployButton_.setVisible(showDeploy);
-      deployButton_.setText("Deploy");
+      deployButton_.setText("Publish");
       deployButtonSeparator_.setVisible(showDeploy);
       
       // find text box
@@ -186,7 +186,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       toolbar.addLeftWidget(publishButton_);
 
       deployButtonSeparator_ = toolbar.addLeftSeparator();
-      deployButton_ = new ToolbarButton("Deploy", 
+      deployButton_ = new ToolbarButton("Publish", 
             commands.shinyAppsDeploy().getImageResource(), 
             new ClickHandler()
       {

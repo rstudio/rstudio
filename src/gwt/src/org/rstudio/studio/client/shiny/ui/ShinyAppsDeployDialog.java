@@ -60,9 +60,9 @@ public class ShinyAppsDeployDialog
                                 
    {
       super(server, display, new ShinyAppsDeploy());
-      setText("Deploy to ShinyApps");
+      setText("Publish to ShinyApps");
       setWidth("350px");
-      deployButton_ = new ThemedButton("Deploy");
+      deployButton_ = new ThemedButton("Publish");
       addCancelButton();
       addOkButton(deployButton_);
       sourceDir_ = sourceDir;
