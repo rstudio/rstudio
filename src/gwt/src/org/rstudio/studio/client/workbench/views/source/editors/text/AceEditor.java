@@ -1085,6 +1085,12 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void reindent(Range range)
+   {
+      getSession().reindent(range);
+   }
+   
+   @Override
    public void toggleCommentLines()
    {
       widget_.getEditor().toggleCommentLines();

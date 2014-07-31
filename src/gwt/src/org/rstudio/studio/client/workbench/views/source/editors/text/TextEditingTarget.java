@@ -431,6 +431,38 @@ public class TextEditingTarget implements
                event.stopPropagation();
                commands_.interruptR().execute();
             }
+            
+            else if (mod == (KeyboardShortcut.ALT + KeyboardShortcut.SHIFT)
+                  && ne.getKeyCode() == 190) // period
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               
+               int currentRow = docDisplay_.getCursorPosition().getRow();
+               int currentCol = docDisplay_.getCursorPosition().getColumn();
+               String currentLine = docDisplay_.getLine(currentRow);
+               
+               boolean atEndOfLine = currentCol == currentLine.length();
+               
+               if (currentLine.length() > 0 && atEndOfLine)
+               {
+                  if (currentLine.length() > 0 && currentLine.endsWith(" "))
+                  {
+                     docDisplay_.insertCode("%>%\n", false);
+                  }
+                  else
+                  {
+                     docDisplay_.insertCode(" %>%\n", false);
+                  }
+                  docDisplay_.reindent(docDisplay_.getSelectionRange());
+               }
+               else
+               {
+                  docDisplay_.insertCode(" %>% ", false);
+               }
+               
+            }
+ 
          }
       });
       
