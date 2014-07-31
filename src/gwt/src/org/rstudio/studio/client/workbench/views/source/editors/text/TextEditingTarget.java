@@ -438,7 +438,7 @@ public class TextEditingTarget implements
                event.preventDefault();
                event.stopPropagation();
                
-               int currentRow = docDisplay_.getCurrentLineNum();
+               int currentRow = docDisplay_.getCursorPosition().getRow();
                String currentLine = docDisplay_.getLine(currentRow);
                
                // move cursor to end of line
