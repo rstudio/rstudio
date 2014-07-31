@@ -407,6 +407,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Ctrl+Y" title="Insert Yanked Text" />
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Alt+-" title="Insert Assignment Operator"/>
+         <shortcut value="Shift+Alt+." title="Insert Pipe Operator" />
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
