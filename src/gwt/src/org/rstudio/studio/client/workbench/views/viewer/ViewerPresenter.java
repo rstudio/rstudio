@@ -139,7 +139,8 @@ public class ViewerPresenter extends BasePresenter
       {
          manageCommands(true, event);
          
-         display_.bringToFront();
+         if (event.getBringToFront())
+            display_.bringToFront();
       
          int ensureHeight = event.getHeight();
          if (ensureHeight > 0)

@@ -45,6 +45,10 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       public native final boolean hasPrevious() /*-{
          return this.has_previous;
       }-*/;
+      
+      public native final boolean bringToFront() /*-{
+         return this.bring_to_front;
+      }-*/;
    }
    
    public interface Handler extends EventHandler
@@ -80,6 +84,11 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    public boolean getHasPrevious()
    {
       return data_.hasPrevious();
+   }
+   
+   public boolean getBringToFront()
+   {
+      return data_.bringToFront();
    }
    
    @Override

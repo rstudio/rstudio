@@ -47,7 +47,8 @@ bool s_isHTMLWidget = false;
 
 void viewerNavigate(const std::string& url,
                     int height,
-                    bool isHTMLWidget)
+                    bool isHTMLWidget,
+                    bool bringToFront)
 {
    // record the url (for reloads)
    s_currentUrl = module_context::mapUrlPorts(url);
@@ -60,20 +61,23 @@ void viewerNavigate(const std::string& url,
    dataJson["html_widget"] = isHTMLWidget;
    dataJson["has_next"] = isHTMLWidget && viewerHistory().hasNext();
    dataJson["has_previous"] = isHTMLWidget && viewerHistory().hasPrevious();
+   dataJson["bring_to_front"] = bringToFront;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
 }
 
-void viewerNavigate(const std::string& url, bool isHTMLWidget)
+void viewerNavigate(const std::string& url,
+                    bool isHTMLWidget,
+                    bool bringToFront = true)
 {
-   return viewerNavigate(url, 0, isHTMLWidget);
+   return viewerNavigate(url, 0, isHTMLWidget, bringToFront);
 }
 
-void viewerNavigateToCurrent()
+void viewerNavigateToCurrent(bool bringToFront = true)
 {
    module_context::ViewerHistoryEntry current = viewerHistory().current();
    if (!current.empty())
-      viewerNavigate(current.url(), true);
+      viewerNavigate(current.url(), true, bringToFront);
 }
 
 Error viewerStopped(const json::JsonRpcRequest& request,
@@ -351,13 +355,13 @@ void onResume(const Settings&)
 {
    viewerHistory().restoreFrom(historySerializationPath());
 
-   viewerNavigateToCurrent();
+   viewerNavigateToCurrent(false);
 }
 
 void onClientInit()
 {
    if (!s_currentUrl.empty())
-      viewerNavigate(s_currentUrl, s_isHTMLWidget);
+      viewerNavigate(s_currentUrl, s_isHTMLWidget, false);
 }
 
 } // anonymous namespace
