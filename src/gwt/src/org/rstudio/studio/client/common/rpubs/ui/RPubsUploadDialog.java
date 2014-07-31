@@ -264,14 +264,29 @@ public class RPubsUploadDialog extends ModalDialogBase
       super.onUnload();
    }
    
-   private String validateAndGetGeneratorTitle()
+   private String getTitleText()
    {
-      String title = titleTextBox_.getText().trim();
-      if (title.length() > 0)
-      {
-         return title;
-      }
+      if (titleTextBox_ != null)
+         return titleTextBox_.getText().trim();
       else
+         return title_;
+   }
+   
+   private String getCommentText()
+   {
+      if (commentTextArea_ != null)
+         return commentTextArea_.getText().trim();
+      else
+         return "";
+   }
+  
+   private void performUpload(final boolean modify)
+   {
+      // determine the title
+      final String title = getTitleText();
+      
+      // validate we have a title
+      if (StringUtil.isNullOrEmpty(title))
       {
          globalDisplay_.showErrorMessage(
                "Title Required", 
@@ -284,25 +299,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                      FocusHelper.setFocusDeferred(titleTextBox_);
                   }   
                });
-         
-         return null;
-      }
-   }
-  
-   private void performUpload(final boolean modify)
-   {
-      // determine the title (if we are using a generator then the
-      // title is required)
-      String title;
-      if (htmlGenerator_ != null)
-      {
-         title = validateAndGetGeneratorTitle();
-         if (title == null)
-            return;
-      }
-      else
-      {
-         title = title_;
+         return;
       }
       
       // set state
@@ -443,14 +440,6 @@ public class RPubsUploadDialog extends ModalDialogBase
         });
       
       
-   }
-   
-   private String getCommentText()
-   {
-      if (commentTextArea_ != null)
-         return commentTextArea_.getText().trim();
-      else
-         return "";
    }
    
    private void showProgressPanel()
