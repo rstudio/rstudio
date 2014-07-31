@@ -21,7 +21,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.FixedTextArea;
-import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -163,8 +162,8 @@ public class RPubsUploadDialog extends ModalDialogBase
          commentLabel.setVisible(false);
          commentTextArea_.setVisible(false);
          
-         ThemedButton previewButton = new ThemedButton("Preview");
-         previewButton.addClickHandler(new ClickHandler() {
+         previewButton_ = new ThemedButton("Preview");
+         previewButton_.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event)
             { 
@@ -180,7 +179,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                   });       
             }
          });
-         addLeftButton(previewButton);
+         addLeftButton(previewButton_);
       }
       
       HTML warningLabel =  new HTML(
@@ -427,6 +426,8 @@ public class RPubsUploadDialog extends ModalDialogBase
       continueButton_.setVisible(false);
       updateButton_.setVisible(false);
       createButton_.setVisible(false);
+      if (previewButton_ != null)
+         previewButton_.setVisible(false);
       enableOkButton(false);
       
       // add progress
@@ -475,6 +476,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    private ThemedButton continueButton_;
    private ThemedButton updateButton_;
    private ThemedButton createButton_;
+   private ThemedButton previewButton_;
 
    private final String title_;
    private final String htmlFile_;
