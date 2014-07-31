@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
@@ -40,6 +41,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
+import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -392,7 +395,30 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    
    void onPublishPlotToRPubs()
    {
-      
+      RPubsUploadDialog dlg = new RPubsUploadDialog(
+            "Plots",
+            "",
+            new RPubsHtmlGenerator() {
+
+               @Override
+               public void generateRPubsHtml(
+                     String title, 
+                     String comment,
+                     final CommandWithArg<String> onCompleted)
+               {
+                  server_.plotsCreateRPubsHtml(
+                        title, comment, new SimpleRequestCallback<String>() {
+
+                     @Override
+                     public void onResponseReceived(String rpubsHtmlFile)
+                     {
+                        onCompleted.execute(rpubsHtmlFile);
+                     }
+                  });
+               }
+            },
+            false);
+      dlg.showModal();
    }
    
    private double pixelsToInches(int pixels)

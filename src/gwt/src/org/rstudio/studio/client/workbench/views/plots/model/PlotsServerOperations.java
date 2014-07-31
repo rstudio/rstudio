@@ -83,4 +83,8 @@ public interface PlotsServerOperations
    void copyPlotToCocoaPasteboard(int width, 
                                   int height,
                                   ServerRequestCallback<Void> requestCallback);
+   
+   void plotsCreateRPubsHtml(String title, 
+                             String comment,
+                             ServerRequestCallback<String> requestCallback);
 }

@@ -336,7 +336,7 @@ public class ViewerPresenter extends BasePresenter
    {
       RPubsUploadDialog dlg = new RPubsUploadDialog(
             "Viewer",
-            "RPubs", // title for now
+            "",
             new RPubsHtmlGenerator() {
 
                @Override

@@ -270,6 +270,42 @@ Error copyPlotToCocoaPasteboard(const json::JsonRpcRequest& request,
 }
 
 
+Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   /*
+   // get params
+   std::string title, comment;
+   Error error = json::readParams(request.params, &title, &comment);
+   if (error)
+      return error;
+
+   // determine source path
+   FilePath sourceFilePath;
+   error = currentViewerSourcePath(&sourceFilePath);
+   if (error)
+      return error;
+
+   // tempfile for target path
+   FilePath targetFilePath = module_context::tempFile("viewer-rpubs-", "html");
+
+   // perform the base64 encode using pandoc
+   error = createSelfContainedHtml(sourceFilePath, targetFilePath);
+   if (error)
+      return error;
+
+   // return target path
+   pResponse->setResult(module_context::createAliasedPath(targetFilePath));
+   */
+
+   // return success
+   return Success();
+}
+
+
+
+
+
 Error uniqueSavePlotStem(const FilePath& directoryPath, std::string* pStem)
 {
    return module_context::uniqueSaveStem(directoryPath, "Rplot", pStem);
@@ -792,6 +828,7 @@ Error initialize()
       (bind(registerRpcMethod, "save_plot_as_pdf", savePlotAsPdf))
       (bind(registerRpcMethod, "copy_plot_to_clipboard_metafile", copyPlotToClipboardMetafile))
       (bind(registerRpcMethod, "copy_plot_to_cocoa_pasteboard", copyPlotToCocoaPasteboard))
+      (bind(registerRpcMethod, "plots_create_rpubs_html", plotsCreateRPubsHtml))
       (bind(registerRpcMethod, "get_unique_save_plot_stem", getUniqueSavePlotStem))
       (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
