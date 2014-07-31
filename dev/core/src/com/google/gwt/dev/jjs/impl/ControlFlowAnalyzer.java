@@ -716,6 +716,7 @@ public class ControlFlowAnalyzer {
            * We may be able to tighten this to check for @JsExport as well,
            * since if there is no @JsExport, the only way for JS code to get a
            * reference to the interface is by it being constructed in Java
+           * and passed via JSNI into JS, and in that mechanism, the
            * rescue would happen automatically.
            */
         JDeclaredType dtype = (JDeclaredType) type;
