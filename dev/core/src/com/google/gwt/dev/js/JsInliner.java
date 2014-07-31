@@ -1547,7 +1547,7 @@ public class JsInliner {
    * increases compile time by 5% and decreases code size by 0.4%.
    */
   public static final int MAX_INLINE_FN_SIZE = Integer.parseInt(System.getProperty(
-      "gwt.jsinlinerMaxFnSize", "10"));
+      "gwt.jsinlinerMaxFnSize", "23"));
 
   /**
    * When attempting to inline an invocation, this constant determines the
@@ -1557,7 +1557,7 @@ public class JsInliner {
    * code to be inlined, but at a cost of larger JS output.
    */
   private static final double MAX_COMPLEXITY_INCREASE = Double.parseDouble(System.getProperty(
-      "gwt.jsinlinerRatio", "1.1"));
+      "gwt.jsinlinerRatio", "1.2"));
 
   /**
    * Static entry point used by JavaToJavaScriptCompiler.
