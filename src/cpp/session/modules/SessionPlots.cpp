@@ -275,7 +275,12 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
 {
    // get params
    std::string title, comment;
-   Error error = json::readParams(request.params, &title, &comment);
+   int width, height;
+   Error error = json::readParams(request.params,
+                                  &title,
+                                  &comment,
+                                  &width,
+                                  &height);
    if (error)
       return error;
 
@@ -293,7 +298,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    // save plot
    using namespace r::session::graphics;
    Display& display = r::session::graphics::display();
-   error = display.savePlotAsImage(plotPath, "png", 650, 500);
+   error = display.savePlotAsImage(plotPath, "png", width, height);
    if (error)
    {
        LOG_ERROR(error);

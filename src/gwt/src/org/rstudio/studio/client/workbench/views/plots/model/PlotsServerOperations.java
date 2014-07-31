@@ -86,5 +86,7 @@ public interface PlotsServerOperations
    
    void plotsCreateRPubsHtml(String title, 
                              String comment,
+                             int width,
+                             int height,
                              ServerRequestCallback<String> requestCallback);
 }

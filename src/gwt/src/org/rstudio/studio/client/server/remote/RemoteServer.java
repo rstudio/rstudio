@@ -2670,11 +2670,15 @@ public class RemoteServer implements Server
    public void plotsCreateRPubsHtml(
             String title, 
             String comment,
+            int width,
+            int height,
             ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(title));
       params.set(1, new JSONString(comment));
+      params.set(2,  new JSONNumber(width));
+      params.set(3,  new JSONNumber(height));
       sendRequest(RPC_SCOPE, "plots_create_rpubs_html", params, callback);
    }
    

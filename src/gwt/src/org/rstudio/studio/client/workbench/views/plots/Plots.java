@@ -404,6 +404,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
           @Override
           public void execute()
           {
+             // determine the size (re-use the zoom window logic for this)
+             final Size size = ZoomUtils.getZoomedSize(view_.getPlotFrameSize(), 
+                                                       new Size(400, 350), 
+                                                       new Size(800, 700));
+             
+             // show the dialog
              RPubsUploadDialog dlg = new RPubsUploadDialog(
                 "Plots",
                 "",
@@ -416,13 +422,17 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                          final CommandWithArg<String> onCompleted)
                    {
                       server_.plotsCreateRPubsHtml(
-                         title, comment, new SimpleRequestCallback<String>() {
+                         title, 
+                         comment, 
+                         size.width,
+                         size.height,
+                         new SimpleRequestCallback<String>() {
 
-                         @Override
-                         public void onResponseReceived(String rpubsHtmlFile)
-                         {
-                            onCompleted.execute(rpubsHtmlFile);
-                         }
+                            @Override
+                            public void onResponseReceived(String rpubsHtmlFile)
+                            {
+                               onCompleted.execute(rpubsHtmlFile);
+                            }
                       });
                    }
                 },

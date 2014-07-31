@@ -62,6 +62,23 @@ public class ZoomUtils
       return new Size(width, height);
    }
    
+   public static Size getZoomedSize(Size size, Size minSize, Size maxSize)                              
+   {
+      float widthRatio = maxSize.width / ((float)size.width);
+      float heightRatio = maxSize.height / ((float)size.height);
+      float ratio = Math.min(widthRatio, heightRatio);
+
+      // constrain width
+      int width = Math.max(minSize.width, (int) (ratio * size.width));
+      width = Math.min(maxSize.width, width);
+      
+      // constrain height
+      int height = Math.max(minSize.height, (int) (ratio * size.height));
+      height = Math.min(maxSize.height, height);
+      
+      return new Size(width, height);
+   }
+   
    public static void openZoomWindow(String name, String url, Size size, 
                                      final OperationWithInput<WindowEx> onOpened)
    {
