@@ -611,31 +611,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSourceDoc()
    {
-      // if the command was executed from a shortcut then take the
-      // current file type into account
-      if (commands_.newSourceDoc().getExecutedFromShortcut() &&
-          (activeEditor_ != null) && (activeEditor_.getTextFileType() != null))
-      {
-         TextFileType fileType = activeEditor_.getTextFileType();
-         if (fileType.isCpp())
-            onNewCppDoc();
-         else if (fileType.isRnw())
-            onNewSweaveDoc();
-         else if (fileType.isRmd())
-            onNewRMarkdownDoc();
-         else if (fileType.isRpres())
-            onNewRPresentationDoc();
-         else if (fileType.isRd())
-            onNewRDocumentationDoc();
-         else if (fileType.isRhtml())
-            onNewRHTMLDoc();
-         else
-            newDoc(fileType, null);
-      }
-      else
-      {
-         newDoc(FileTypeRegistry.R, null);
-      }
+      newDoc(FileTypeRegistry.R, null);
    }
    
    @Handler
