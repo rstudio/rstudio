@@ -334,30 +334,37 @@ public class ViewerPresenter extends BasePresenter
    @Handler
    public void onViewerPublishToRPubs()
    {
-      RPubsUploadDialog dlg = new RPubsUploadDialog(
-            "Viewer",
-            "",
-            new RPubsHtmlGenerator() {
+      dependencyManager_.withRMarkdown("Publishing to RPubs", 
+        new Command() {
+         @Override
+         public void execute()
+         {
+            RPubsUploadDialog dlg = new RPubsUploadDialog(
+               "Viewer",
+               "",
+               new RPubsHtmlGenerator() {
 
-               @Override
-               public void generateRPubsHtml(
-                     String title, 
-                     String comment,
-                     final CommandWithArg<String> onCompleted)
-               {
-                  server_.viewerCreateRPubsHtml(
-                        title, comment, new SimpleRequestCallback<String>() {
+                  @Override
+                  public void generateRPubsHtml(
+                        String title, 
+                        String comment,
+                        final CommandWithArg<String> onCompleted)
+                  {
+                     server_.viewerCreateRPubsHtml(
+                           title, comment, new SimpleRequestCallback<String>(){
 
-                     @Override
-                     public void onResponseReceived(String rpubsHtmlFile)
-                     {
-                        onCompleted.execute(rpubsHtmlFile);
-                     }
-                  });
-               }
-            },
-            false);
-      dlg.showModal();
+                        @Override
+                        public void onResponseReceived(String rpubsHtmlFile)
+                        {
+                           onCompleted.execute(rpubsHtmlFile);
+                        }
+                     });
+                  }
+               },
+               false);
+            dlg.showModal();  
+         }
+      });
    }
    
    
