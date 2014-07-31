@@ -144,7 +144,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       // if we have a generator then show title and comment UI
       if (htmlGenerator_ != null)
       {
-         Label titleLabel = new Label("Title:");
+         Label titleLabel = new Label("Title (optional):");
          titleLabel.addStyleName(styles.fieldLabel());
          verticalPanel.add(titleLabel);
          titleTextBox_ = new TextBox();
@@ -282,39 +282,18 @@ public class RPubsUploadDialog extends ModalDialogBase
   
    private void performUpload(final boolean modify)
    {
-      // determine the title
-      final String title = getTitleText();
-      
-      // validate we have a title
-      if (StringUtil.isNullOrEmpty(title))
-      {
-         globalDisplay_.showErrorMessage(
-               "Title Required", 
-               "You must provide a title for your document " + 
-               "in order to publish to RPubs.",
-               new Operation() {
-                  @Override
-                  public void execute()
-                  {
-                     FocusHelper.setFocusDeferred(titleTextBox_);
-                  }   
-               });
-         return;
-      }
-      
       // set state
       uploadInProgress_ = true;
     
       // do upload
       if (Desktop.isDesktop())
       {
-         performUpload(title, null, modify);
+         performUpload(null, modify);
       }
       else
       {
          // randomize the name so firefox doesn't prevent us from reactivating
          // the window programatically 
-         final String fTitle = title;
          globalDisplay_.openProgressWindow(
                "_rpubs_upload" + (int)(Math.random() * 10000), 
                PROGRESS_MESSAGE, 
@@ -323,7 +302,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                   @Override
                   public void execute(WindowEx window)
                   {
-                     performUpload(fTitle, window, modify);
+                     performUpload(window, modify);
                   }
                });
       }
@@ -331,8 +310,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    }
    
    
-   private void performUpload(final String title,
-                              final WindowEx progressWindow,
+   private void performUpload(final WindowEx progressWindow,
                               final boolean modify)
    {  
       // record progress window
@@ -399,8 +377,9 @@ public class RPubsUploadDialog extends ModalDialogBase
       }
       
       // generate html and initiate the upload
+      final String title = getTitleText();
       htmlGenerator.generateRPubsHtml(
-        title, getCommentText(), new CommandWithArg<String>() {
+          title, getCommentText(), new CommandWithArg<String>() {
 
          @Override
          public void execute(String htmlFile)

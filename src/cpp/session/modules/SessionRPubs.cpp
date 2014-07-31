@@ -385,6 +385,10 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
    }
    else
    {
+      // provide a default title if necessary
+      if (title.empty())
+         title = "Untitled";
+
       FilePath filePath = module_context::resolveAliasedPath(htmlFile);
       s_pCurrentUploads[contextId] = RPubsUpload::create(contextId,
                                                          title,
