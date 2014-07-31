@@ -531,6 +531,15 @@ public class Shell implements ConsoleInputHandler,
                      break;
                }
             }
+            else if (mod == (KeyboardShortcut.ALT + KeyboardShortcut.SHIFT))
+            {
+               if (keyCode == 190)
+               {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  input_.replaceSelection(" %>% ", true);
+               }
+            }
          }
       }
 
