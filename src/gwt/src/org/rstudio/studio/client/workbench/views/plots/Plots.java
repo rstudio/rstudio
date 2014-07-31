@@ -407,7 +407,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
              // determine the size (re-use the zoom window logic for this)
              final Size size = ZoomUtils.getZoomedSize(view_.getPlotFrameSize(), 
                                                        new Size(400, 350), 
-                                                       new Size(800, 700));
+                                                       new Size(750, 600));
              
              // show the dialog
              RPubsUploadDialog dlg = new RPubsUploadDialog(

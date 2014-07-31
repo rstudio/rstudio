@@ -306,8 +306,22 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    }
 
    // generate source file
-   boost::format fmt("<img src=\"%1%\"/>\n");
-   std::string html = boost::str(fmt % plotPath.filename());
+   boost::format fmt(
+       "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \n"
+            "\"http://www.w3.org/TR/html4/strict.dtd\">\n"
+       "<html lang=\"en\">\n"
+       "<head>\n"
+       "  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n"
+       "  <title>%1%</title>\n"
+       "</head>\n"
+       "<body style=\"padding-left: 90px; padding-right: 90px;"
+                     "background-color: white;"
+                     "font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">\n"
+       "  <h3 style=\"margin-bottom: 5px;\">%1%</h3>\n"
+       "  <img src=\"%2%\"/>\n"
+       "</body>\n"
+       "</html>\n");
+   std::string html = boost::str(fmt % title % plotPath.filename());
    error = core::writeStringToFile(sourceFilePath, html);
    if (error)
       return error;
