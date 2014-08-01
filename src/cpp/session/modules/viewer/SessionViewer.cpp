@@ -66,18 +66,11 @@ void viewerNavigate(const std::string& url,
    module_context::enqueClientEvent(event);
 }
 
-void viewerNavigate(const std::string& url,
-                    bool isHTMLWidget,
-                    bool bringToFront = true)
-{
-   return viewerNavigate(url, 0, isHTMLWidget, bringToFront);
-}
-
 void viewerNavigateToCurrent(bool bringToFront = true)
 {
    module_context::ViewerHistoryEntry current = viewerHistory().current();
    if (!current.empty())
-      viewerNavigate(current.url(), true, bringToFront);
+      viewerNavigate(current.url(), 0, true, bringToFront);
 }
 
 Error viewerStopped(const json::JsonRpcRequest& request,
@@ -94,7 +87,7 @@ Error viewerBack(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    if (viewerHistory().hasPrevious())
-      viewerNavigate(viewerHistory().goBack().url(), true);
+      viewerNavigate(viewerHistory().goBack().url(), 0, true, true);
    return Success();
 }
 
@@ -102,7 +95,7 @@ Error viewerForward(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
    if (viewerHistory().hasNext())
-      viewerNavigate(viewerHistory().goForward().url(), true);
+      viewerNavigate(viewerHistory().goForward().url(), 0, true, true);
    return Success();
 }
 
@@ -298,13 +291,17 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
                viewerHistory().add(module_context::ViewerHistoryEntry(path));
 
                // view it
-               viewerNavigate(viewerHistory().current().url(), height, true);
+               viewerNavigate(viewerHistory().current().url(),
+                              height,
+                              true,
+                              true);
             }
             else
             {
                viewerNavigate(module_context::sessionTempDirUrl(path),
                               height,
-                              false);
+                              false,
+                              true);
             }
          }
          else
@@ -327,7 +324,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          }
 
          // navigate the viewer
-         viewerNavigate(url, height, false);
+         viewerNavigate(url, height, false, true);
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -361,7 +358,7 @@ void onResume(const Settings&)
 void onClientInit()
 {
    if (!s_currentUrl.empty())
-      viewerNavigate(s_currentUrl, s_isHTMLWidget, false);
+      viewerNavigate(s_currentUrl, 0, s_isHTMLWidget, false);
 }
 
 } // anonymous namespace
