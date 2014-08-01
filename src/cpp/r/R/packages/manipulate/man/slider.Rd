@@ -16,7 +16,7 @@ slider(min, max, initial = min,
   \item{max}{
     Maximum value for slider.
 }
-  \item{value}{
+  \item{initial}{
     Initial value for slider. Defaults to \code{min} if not specified.
 }
   \item{label}{
