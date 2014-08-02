@@ -314,14 +314,15 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
        "  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n"
        "  <title>%1%</title>\n"
        "</head>\n"
-       "<body style=\"padding-left: 90px; padding-right: 90px;"
-                     "background-color: white;"
+       "<body style=\"background-color: white;"
                      "font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">\n"
-       "  <h3 style=\"margin-bottom: 5px;\">%1%</h3>\n"
-       "  <img src=\"%2%\"/>\n"
+       "  <div style=\"width: %2%px; margin-left: auto; margin-right: auto;\">\n"
+       "    <h3 style=\"margin-bottom: 5px;\">%1%</h3>\n"
+       "    <img src=\"%3%\"/>\n"
+       "  </div>\n"
        "</body>\n"
        "</html>\n");
-   std::string html = boost::str(fmt % title % plotPath.filename());
+   std::string html = boost::str(fmt % title % width % plotPath.filename());
    error = core::writeStringToFile(sourceFilePath, html);
    if (error)
       return error;
