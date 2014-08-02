@@ -24,6 +24,7 @@ import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.IdentitySets;
 import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -50,18 +51,26 @@ public class JTypeOracle implements Serializable {
    * All authorative information about the current program.
    */
   public static class ImmediateTypeRelations implements Serializable {
+
     /**
      * A mapping from a class name to its immediate super class' name.
      */
     private Map<String, String> superClassesByClass = new HashMap<String, String>();
+
     /**
      * A mapping from an interface name to its super interface's name.
      */
     private Map<String, Set<String>> superIntfsByIntf = new HashMap<String, Set<String>>();
+
     /**
      * A mapping from a class name to its directly implemented interfaces' names.
      */
     private Map<String, Set<String>> implementedIntfsByClass = new HashMap<String, Set<String>>();
+
+    @VisibleForTesting
+    public Map<String, String> getSuperClassesByClass() {
+      return superClassesByClass;
+    }
   }
 
   /**
@@ -450,6 +459,12 @@ public class JTypeOracle implements Serializable {
   private final Map<String, Set<String>> subClassMap = new HashMap<String, Set<String>>();
 
   /**
+   * A map of all interfaces to the set of interfaces that extend them, directly or indirectly.
+   */
+  private final Map<String, Set<String>> subInterfacesByInterface =
+      new HashMap<String, Set<String>>();
+
+  /**
    * A map of all classes to the set of classes they extend, directly or
    * indirectly.
    */
@@ -807,6 +822,10 @@ public class JTypeOracle implements Serializable {
     return (JClassType) referenceTypesByName.get(className);
   }
 
+  public String getSuperTypeName(String className) {
+    return immediateTypeRelations.superClassesByClass.get(className);
+  }
+
   public Set<JReferenceType> getSuperHierarchyTypes(JReferenceType type) {
 
     // For arrays we build up their type hierarchy on the fly
@@ -814,7 +833,7 @@ public class JTypeOracle implements Serializable {
       JArrayType arrayType = (JArrayType) type;
       Set<JReferenceType> superHierarchyTypes = Sets.newHashSet();
 
-      // All arrays to cast to Object, Serializable and Cloneable.
+      // All arrays cast to Object, Serializable and Cloneable.
       JReferenceType javaLangObjectType =
           ensureTypeExistsAndAppend(standardTypes.javaLangObject, superHierarchyTypes);
       ensureTypeExistsAndAppend(standardTypes.javaIoSerializable, superHierarchyTypes);
@@ -1047,6 +1066,19 @@ public class JTypeOracle implements Serializable {
     return get(subClassMap, type.getName()).contains(possibleSubType.getName());
   }
 
+  public Set<String> getSubTypeNames(String typeName) {
+    Set<String> subTypeNames = Sets.newHashSet();
+    Set<String> subClasses = subClassMap.get(typeName);
+    if (subClasses != null) {
+      subTypeNames.addAll(subClasses);
+    }
+    Set<String> subInterfaces = subInterfacesByInterface.get(typeName);
+    if (subInterfaces != null) {
+      subTypeNames.addAll(subInterfaces);
+    }
+    return subClassMap.get(typeName);
+  }
+
   /**
    * Returns true if possibleSuperClass is a superclass of type, directly or indirectly.
    */
@@ -1166,6 +1198,7 @@ public class JTypeOracle implements Serializable {
     computeSuperClassMap();
     computeSuperInterfaceMap();
     computeSubClassMap();
+    computeSubInterfaceMap();
     computeImplements();
     computeIsImplemented();
     computeCouldImplement();
@@ -1281,6 +1314,29 @@ public class JTypeOracle implements Serializable {
           }
         }
       }
+    }
+  }
+
+  private void computeSubInterfaceMap() {
+    subInterfacesByInterface.clear();
+
+    // Calculate reverse mapping Parent -> Set<Child>
+    Set<String> interfaces = Sets.newHashSet();
+    Map<String, Set<String>> immediateChildInterfaces = new HashMap<String, Set<String>>();
+    for (Entry<String, Set<String>> entry : immediateTypeRelations.superIntfsByIntf.entrySet()) {
+      String child = entry.getKey();
+      interfaces.add(child);
+      Set<String> parents = entry.getValue();
+      interfaces.addAll(parents);
+      for (String parent : parents) {
+        add(immediateChildInterfaces, parent, child);
+      }
+    }
+
+    for (String parent : interfaces) {
+      Set<String> allSubInterfaces = new HashSet<String>();
+      computeTransitiveSubClasses(immediateChildInterfaces, allSubInterfaces, parent);
+      subInterfacesByInterface.put(parent, allSubInterfaces);
     }
   }
 

@@ -29,6 +29,14 @@ public class StatementRangesBuilder {
   private LinkedList<Integer> builderEndPositions = Lists.newLinkedList();
   private LinkedList<Integer> builderStartPositions = Lists.newLinkedList();
 
+  public void addEndPosition(Integer endPosition) {
+    builderEndPositions.add(endPosition);
+  }
+
+  public void addStartPosition(Integer startPosition) {
+    builderStartPositions.add(startPosition);
+  }
+
   public void append(StatementRanges newStatementRanges) {
     if (newStatementRanges.numStatements() == 0) {
       return;

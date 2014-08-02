@@ -26,6 +26,12 @@ public class NamedRange {
     this.name = name;
   }
 
+  public NamedRange(String name, int startPosition, int endPosition) {
+    this.name = name;
+    this.startPosition = startPosition;
+    this.endPosition = endPosition;
+  }
+
   public int getEndPosition() {
     return endPosition;
   }

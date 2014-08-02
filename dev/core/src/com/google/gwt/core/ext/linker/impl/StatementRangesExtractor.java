@@ -37,8 +37,7 @@ public class StatementRangesExtractor {
   public StatementRanges extract(int rangeStartPosition, int rangeEndPosition) {
     assert statementRangeIndex
         < statementRanges.numStatements() : "Ranges can't be extracted past the end.";
-    assert rangeStartPosition
-        == lastRangeEndPosition : "Extracted statement ranges must be sequential.";
+    skipTo(rangeStartPosition);
 
     lastRangeEndPosition = rangeEndPosition;
 
@@ -63,5 +62,23 @@ public class StatementRangesExtractor {
     } while (++statementRangeIndex < statementRanges.numStatements());
 
     return new StandardStatementRanges(statementStartPositions, statementEndPositions);
+  }
+
+  private void skipTo(int rangeEndPosition) {
+    assert statementRangeIndex <= statementRanges.numStatements() : "You can't skip past the end.";
+    assert lastRangeEndPosition <= rangeEndPosition : "You can only skip forward.";
+
+    do {
+      int statementStartPosition = statementRanges.start(statementRangeIndex);
+      if (statementStartPosition >= rangeEndPosition) {
+        break;
+      }
+
+      int statementEndPosition = statementRanges.end(statementRangeIndex);
+      if (statementEndPosition > rangeEndPosition) {
+        break;
+      }
+
+    } while (++statementRangeIndex < statementRanges.numStatements());
   }
 }

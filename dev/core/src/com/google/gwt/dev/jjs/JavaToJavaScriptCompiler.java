@@ -34,6 +34,8 @@ import com.google.gwt.core.ext.soyc.impl.SplitPointRecorder;
 import com.google.gwt.core.ext.soyc.impl.StoryRecorder;
 import com.google.gwt.core.linker.SoycReportLinker;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.MinimalRebuildCache;
+import com.google.gwt.dev.MinimalRebuildCache.PermutationRebuildCache;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.ConfigProps;
@@ -75,6 +77,7 @@ import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
 import com.google.gwt.dev.jjs.impl.JsNoopTransformer;
+import com.google.gwt.dev.jjs.impl.JsTypeLinker;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallSpecializer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
@@ -86,6 +89,7 @@ import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
 import com.google.gwt.dev.jjs.impl.TypeRefDepsChecker;
+import com.google.gwt.dev.jjs.impl.TypeReferencesRecorder;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
@@ -269,6 +273,15 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): this stage shouldn't exist, move into optimize.
         postNormalizationOptimizeJava();
+
+        // Now that the AST has stopped mutating gather some data.
+        if (options.shouldCompilePerFile()) {
+          // Per file compilation needs the type reference graph to construct the set of reachable
+          // types when linking.
+          PermutationRebuildCache permutationRebuildCache =
+              getMinimalRebuildCache().getPermutationRebuildCache(permutation.getId());
+          TypeReferencesRecorder.exec(jprogram, permutationRebuildCache);
+        }
         jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
 
         javaEvent.end();
@@ -299,7 +312,6 @@ public abstract class JavaToJavaScriptCompiler {
         EvalFunctionsAtTopScope.exec(jsProgram, jjsmap);
 
         // (7) Optimize the JS AST.
-
         final Set<JsNode> inlinableJsFunctions = jjsMapAndInlineableFunctions.getRight();
         optimizeJs(inlinableJsFunctions);
 
@@ -493,6 +505,18 @@ public abstract class JavaToJavaScriptCompiler {
 
         JsAbstractTextTransformer transformer =
             new JsNoopTransformer(code, statementRanges, infoMap);
+
+        /**
+         * Cut generated JS up on class boundaries and re-link the source (possibly making use of
+         * source from previous compiles, thus making it possible to perform partial recompiles).
+         */
+        if (options.shouldCompilePerFile()) {
+          transformer = new JsTypeLinker(logger, transformer, v.getClassRanges(),
+              v.getProgramClassRange(),
+              getMinimalRebuildCache().getPermutationRebuildCache(permutation.getId()),
+              jprogram.typeOracle);
+          transformer.exec();
+        }
 
         /**
          * Reorder function decls to improve compression ratios. Also restructures the top level
@@ -1397,5 +1421,9 @@ public abstract class JavaToJavaScriptCompiler {
         System.out.println(stats.prettyPrint());
       }
     }
+  }
+
+  private MinimalRebuildCache getMinimalRebuildCache() {
+    return compilerContext.getMinimalRebuildCache();
   }
 }
