@@ -590,6 +590,7 @@ filegroup(
         ["test/**/*Suite.java"],
         exclude = [
             "test/**/*CompilerSuite.java",
+            "test/**/RunAsyncSuite.java",
             "test/**/*JreSuite.java",
         ],
     ),
