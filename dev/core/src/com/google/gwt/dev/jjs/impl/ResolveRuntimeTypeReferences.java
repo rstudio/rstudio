@@ -15,7 +15,9 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JCastMap;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLiteral;
@@ -26,6 +28,7 @@ import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -65,10 +68,13 @@ public abstract class ResolveRuntimeTypeReferences {
    */
   public static class IntoIntLiterals extends ResolveRuntimeTypeReferences {
 
-    private void assignId(JType type) {
+    @Override
+    protected void assignIdImpl(JType type) {
+      assert !(type instanceof JArrayType);
       if (typeIdLiteralsByType.containsKey(type)) {
         return;
       }
+
       int id = intTypeIdGenerator.getOrCreateTypeId(type.getName());
       assert (id != 0 || type == program.getJavaScriptObject());
       assert (id != 1 || type == program.getTypeJavaLangObject());
@@ -78,7 +84,7 @@ public abstract class ResolveRuntimeTypeReferences {
     }
 
     public static Map<JType, JLiteral> exec(JProgram program) {
-      return new ResolveRuntimeTypeReferences.IntoIntLiterals(program,
+      return new IntoIntLiterals(program,
           new IntTypeIdGenerator()).execImpl();
     }
 
@@ -109,7 +115,9 @@ public abstract class ResolveRuntimeTypeReferences {
    */
   public static class IntoStringLiterals extends ResolveRuntimeTypeReferences {
 
-    private void assignId(JType type) {
+    @Override
+    protected void assignIdImpl(JType type) {
+      assert !(type instanceof JArrayType);
       JStringLiteral stringLiteral = program.getStringLiteral(type.getSourceInfo(), type.getName());
       typeIdLiteralsByType.put(type, stringLiteral);
     }
@@ -173,6 +181,34 @@ public abstract class ResolveRuntimeTypeReferences {
 
   protected abstract void assignTypes(Multiset<JReferenceType> typesWithReferenceCounts);
 
+  protected abstract void assignIdImpl(JType type);
+
+  private String getTypeIdAsString(JType type) {
+    assert typeIdLiteralsByType.containsKey(type);
+    JLiteral idLiteral = typeIdLiteralsByType.get(type);
+    if (idLiteral instanceof JStringLiteral) {
+      return ((JStringLiteral) idLiteral).getValue();
+    } else {
+      return idLiteral.toString();
+    }
+  }
+
+  protected void assignId(JType type) {
+    if (type instanceof JArrayType) {
+      // NOTE: Creating an array type id is sometimes done at runtime, see {@link Array}; hence
+      // these two functions should be consistent.
+      JArrayType arrayType = ((JArrayType) type);
+      JType leafType = arrayType.getLeafType();
+      assignId(leafType);
+
+      typeIdLiteralsByType.put(type,
+          program.getStringLiteral(SourceOrigin.UNKNOWN,
+              getTypeIdAsString(leafType) + Strings.repeat("[]", arrayType.getDims())));
+      return;
+    }
+    assignIdImpl(type);
+  }
+
   protected Map<JType, JLiteral> execImpl() {
     RuntimeTypeCollectorVisitor runtimeTypeCollector = new RuntimeTypeCollectorVisitor();
     // Collects runtime type references visible from types in the program that are part of the
@@ -184,6 +220,7 @@ public abstract class ResolveRuntimeTypeReferences {
     // Collects runtime type references in the ClassLiteralHolder even if the ClassLiteralHolder
     // isn't part of the current compile.
     runtimeTypeCollector.accept(program.getIndexedType("ClassLiteralHolder"));
+    runtimeTypeCollector.accept(program.getBaseArrayCastMap());
     // TODO(stalcup): each module should have it's own ClassLiteralHolder or some agreed upon
     // location that is default accessible to all.
 
@@ -192,6 +229,7 @@ public abstract class ResolveRuntimeTypeReferences {
     ReplaceRuntimeTypeReferencesVisitor replaceTypeIdsVisitor = new ReplaceRuntimeTypeReferencesVisitor();
     replaceTypeIdsVisitor.accept(program);
     replaceTypeIdsVisitor.accept(program.getIndexedType("ClassLiteralHolder"));
+    replaceTypeIdsVisitor.accept(program.getBaseArrayCastMap());
     // TODO(rluble): Improve the code so that things are not scattered all over; here cast maps
     // that appear as parameters to soon to be generated
     // {@link JavaClassHierarchySetup::defineClass()} are NOT traversed when traversing the program.

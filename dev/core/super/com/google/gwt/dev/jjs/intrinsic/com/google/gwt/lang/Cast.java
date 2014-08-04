@@ -37,6 +37,20 @@ final class Cast {
    */
   private static JavaScriptObject stringCastMap;
 
+  /**
+   * The base array castmap.
+   * <p>
+   * Array castmaps are constructed in runtime using two pieces:
+   * <ul>
+   * <li>the base array castmap; which consist of the references to Object, Serializable and
+   * Cloneable. All array types of dimension n can be cast to an array of dimension < n of one of
+   * the types in the base array castmap </li>
+   * <li>the 1-dimensional array castmap for the specific leaftype; an array of dimension n of the
+   * leaf type can be cast to an array of dimension n of one of the leaftypes of the array
+   * type form the correponding 1-dimensional array castmap.</li>
+   * </ul>
+   */static JavaScriptObject baseArrayCastMap;
+
   static native boolean canCast(Object src, JavaScriptObject dstId) /*-{
     return @com.google.gwt.lang.Cast::isJavaString(*)(src) &&
         !!@com.google.gwt.lang.Cast::stringCastMap[dstId] ||

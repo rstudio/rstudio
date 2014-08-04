@@ -14,14 +14,17 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JCastMap;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds exhaustive cast maps for class types defined in and array types used in this library.
@@ -64,6 +67,11 @@ public class ComputeExhaustiveCastabilityInformation {
     }
 
     // Saves the constructed cast maps.
-    program.initTypeInfo(castMaps);
-  }
+    program.initTypeInfo(castMaps,
+        new JCastMap(SourceOrigin.UNKNOWN, program.getTypeJavaLangObject(),
+            (Set) ImmutableSortedSet.orderedBy(HasName.BY_NAME_COMPARATOR)
+                .add(program.getTypeJavaLangObject())
+                .add(program.getTypeJavaLangCloneable())
+                .add(program.getTypeJavaIoSerializable())
+                .build()));  }
 }

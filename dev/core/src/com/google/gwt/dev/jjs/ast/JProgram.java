@@ -288,7 +288,9 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   private final Map<JType, JArrayType> arrayTypes = Maps.newHashMap();
 
-  private Map<JReferenceType, JCastMap> castMaps;
+  private Map<JReferenceType, JCastMap> castMapsByType;
+
+  private JCastMap baseArrayCastMap;
 
   private BiMap<JType, JField> classLiteralFieldsByType;
 
@@ -698,16 +700,33 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   public Map<JReferenceType, JCastMap> getCastMap() {
-    return Collections.unmodifiableMap(castMaps);
+    return Collections.unmodifiableMap(castMapsByType);
+  }
+
+  /**
+   * Returns the base array castmap.
+   * <p>
+   * Array castmaps are constructed in runtime using two pieces:
+   * <ul>
+   * <li>the base array castmap; which consist of the references to Object, Serializable and
+   * Cloneable. All array types of dimension n can be cast to an array of dimension < n of one of
+   * the types in the base array castmap </li>
+   * <li>the 1-dimensional array castmap for the specific leaftype; an array of dimension n of the
+   * leaf type can be cast to an array of dimension n of one of the leaftypes of the array
+   * type form the correponding 1-dimensional array castmap.</li>
+   * </ul>
+   */
+  public JCastMap getBaseArrayCastMap() {
+    return baseArrayCastMap;
   }
 
   public JCastMap getCastMap(JReferenceType referenceType) {
     // ensure jsonCastableTypeMaps has been initialized
-    // it might not have been if the ImplementCastsAndTypeChecks has not been run
-    if (castMaps == null) {
-      initTypeInfo(null);
+    // it might not have been if the ComputeCastabilityInformation has not been run
+    if (castMapsByType == null) {
+      initTypeInfo(null, null);
     }
-    return castMaps.get(referenceType);
+    return castMapsByType.get(referenceType);
   }
 
   public JField getClassLiteralField(JType type) {
@@ -935,12 +954,20 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return typeClass;
   }
 
+  public JInterfaceType getTypeJavaLangCloneable() {
+    return typeJavaLangCloneable;
+  }
+
   public JClassType getTypeJavaLangEnum() {
     return typeJavaLangEnum;
   }
 
   public JClassType getTypeJavaLangObject() {
     return typeJavaLangObject;
+  }
+
+  public JInterfaceType getTypeJavaIoSerializable() {
+    return typeJavaIoSerializable;
   }
 
   public JClassType getTypeJavaLangString() {
@@ -991,11 +1018,13 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return JPrimitiveType.VOID;
   }
 
-  public void initTypeInfo(Map<JReferenceType, JCastMap> castMapForType) {
-    castMaps = castMapForType;
-    if (castMaps == null) {
-      castMaps = Maps.newIdentityHashMap();
+  public void initTypeInfo(Map<JReferenceType, JCastMap> castMapsByType,
+      JCastMap baseArrayCastMap) {
+    this.castMapsByType = castMapsByType;
+    if (this.castMapsByType == null) {
+      this.castMapsByType = Maps.newIdentityHashMap();
     }
+    this.baseArrayCastMap = baseArrayCastMap;
   }
 
   public boolean isJavaLangString(JType type) {
