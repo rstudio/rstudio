@@ -178,10 +178,10 @@ public class JsStaticEval {
         shortCircuitOr(arg1, arg2, ctx);
       } else if (op == JsBinaryOperator.COMMA) {
         trySimplifyComma(arg1, arg2, ctx);
-      } else if (op == JsBinaryOperator.EQ) {
-        trySimplifyEq(x, arg1, arg2, ctx);
-      } else if (op == JsBinaryOperator.NEQ) {
-        trySimplifyNe(x, arg1, arg2, ctx);
+      } else if (op == JsBinaryOperator.EQ || op == JsBinaryOperator.REF_EQ) {
+        trySimplifyEqAndRefEq(x, arg1, arg2, ctx);
+      } else if (op == JsBinaryOperator.NEQ || op == JsBinaryOperator.REF_NEQ) {
+        trySimplifyNeAndRefNe(x, arg1, arg2, ctx);
       } else if (op == JsBinaryOperator.ADD) {
         trySimplifyAdd(x, arg1, arg2, ctx);
       } else  {
@@ -596,7 +596,7 @@ public class JsStaticEval {
       return original;
     }
 
-    private JsExpression simplifyEq(JsExpression original, JsExpression arg1,
+    private JsExpression simplifyEqAndRefEq(JsExpression original, JsExpression arg1,
         JsExpression arg2) {
       assert (original != null);
 
@@ -612,28 +612,27 @@ public class JsStaticEval {
           return JsBooleanLiteral.get(((JsNumberLiteral) arg1).getValue()
            == ((JsNumberLiteral) arg2).getValue());
       }
+
+      if (arg1 instanceof JsStringLiteral && arg2 instanceof JsStringLiteral) {
+        return JsBooleanLiteral.get(
+            ((JsStringLiteral) arg1).getValue().equals(((JsStringLiteral) arg2).getValue()));
+      }
       // no simplification made
       return original;
     }
 
-    private JsExpression simplifyNe(JsExpression original, JsExpression arg1,
+    private JsExpression simplifyNeAndRefNe(JsExpression original, JsExpression arg1,
         JsExpression arg2) {
       assert (original != null);
 
-      if (arg1 instanceof JsNullLiteral) {
-        return simplifyNullNe(original, arg2);
+      JsExpression simplifiedEq = simplifyEqAndRefEq(original, arg1, arg2);
+      if (simplifiedEq == original) {
+        return original;
       }
 
-      if (arg2 instanceof JsNullLiteral) {
-        return simplifyNullNe(original, arg1);
-      }
+      assert simplifiedEq instanceof JsBooleanLiteral;
 
-      if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
-        return JsBooleanLiteral.get(((JsNumberLiteral) arg1).getValue()
-            != ((JsNumberLiteral) arg2).getValue());
-      }
-      // no simplification made
-      return original;
+      return JsBooleanLiteral.get(!((JsBooleanLiteral) simplifiedEq).getValue());
     }
 
     /**
@@ -646,23 +645,6 @@ public class JsStaticEval {
         // "undefined" is not a JsValueLiteral, so the only way
         // the result can be true is if exp is itself a JsNullLiteral
         boolean result = exp instanceof JsNullLiteral;
-        return JsBooleanLiteral.get(result);
-      }
-
-      // no simplification made
-      return original;
-    }
-
-    /**
-     * Simplify exp != null.
-     */
-    private JsExpression simplifyNullNe(JsExpression original, JsExpression exp) {
-      assert (original != null);
-
-      if (exp instanceof JsValueLiteral) {
-        // "undefined" is not a JsValueLiteral, so the only way
-        // the result can be false is if exp is itself a JsNullLiteral
-        boolean result = !(exp instanceof JsNullLiteral);
         return JsBooleanLiteral.get(result);
       }
 
@@ -800,17 +782,17 @@ public class JsStaticEval {
       }
     }
 
-    private void trySimplifyEq(JsExpression original, JsExpression arg1,
+    private void trySimplifyEqAndRefEq(JsExpression original, JsExpression arg1,
         JsExpression arg2, JsContext ctx) {
-      JsExpression updated = simplifyEq(original, arg1, arg2);
+      JsExpression updated = simplifyEqAndRefEq(original, arg1, arg2);
       if (updated != original) {
         ctx.replaceMe(updated);
       }
     }
 
-    private void trySimplifyNe(JsExpression original, JsExpression arg1,
+    private void trySimplifyNeAndRefNe(JsExpression original, JsExpression arg1,
         JsExpression arg2, JsContext ctx) {
-      JsExpression updated = simplifyNe(original, arg1, arg2);
+      JsExpression updated = simplifyNeAndRefNe(original, arg1, arg2);
       if (updated != original) {
         ctx.replaceMe(updated);
       }

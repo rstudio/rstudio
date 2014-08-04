@@ -765,12 +765,19 @@ public class DeadCodeElimination {
     /**
      * Evaluate <code>lhs == rhs</code>.
      *
-     * @param lhs Any literal other than null.
-     * @param rhs Any literal other than null.
+     * @param lhs Any literal.
+     * @param rhs Any literal.
      * @return Whether <code>lhs == rhs</code> will evaluate to
-     *         <code>true</code> at run time.
+     *         <code>true</code> at run time; string literal comparisons use .equals() semantics.
      */
     private boolean evalEq(JValueLiteral lhs, JValueLiteral rhs) {
+      if (isTypeNull(lhs)) {
+        return isTypeNull(rhs);
+      }
+      if (isTypeString(lhs)) {
+        return isTypeString(rhs) &&
+            ((JStringLiteral) lhs).getValue().equals(((JStringLiteral) rhs).getValue());
+      }
       if (isTypeBoolean(lhs)) {
         return toBoolean(lhs) == toBoolean(rhs);
       }
@@ -841,13 +848,6 @@ public class DeadCodeElimination {
      */
     private boolean evalOpOnLiterals(JBinaryOperator op, JValueLiteral lhs, JValueLiteral rhs,
         Context ctx) {
-      if (isTypeString(lhs) || isTypeString(rhs) || isTypeNull(lhs) || isTypeNull(rhs)) {
-        // String simplifications are handled elsewhere.
-        // Null can only be used with String append, and with
-        // comparison with EQ and NEQ, and those simplifications
-        // are also handled elsewhere.
-        return false;
-      }
       switch (op) {
         case EQ: {
           ctx.replaceMe(program.getLiteralBoolean(evalEq(lhs, rhs)));
@@ -864,7 +864,7 @@ public class DeadCodeElimination {
         case MUL:
         case DIV:
         case MOD: {
-          if (isTypeDouble(lhs) || isTypeFloat(lhs) || isTypeDouble(rhs) || isTypeFloat(rhs)) {
+          if (isTypeFloatOrDouble(lhs) || isTypeFloatOrDouble(rhs)) {
             // do the op on doubles and cast back
             double left = toDouble(lhs);
             double right = toDouble(rhs);
@@ -895,7 +895,7 @@ public class DeadCodeElimination {
               ctx.replaceMe(program.getLiteralFloat((float) res));
             }
             return true;
-          } else {
+          } else if (isTypeIntegral(lhs) && isTypeIntegral(rhs)) {
             // do the op on longs and cast to the correct
             // result type at the end
             long left = toLong(lhs);
@@ -937,13 +937,13 @@ public class DeadCodeElimination {
             }
             return true;
           }
+          return false;
         }
-
         case LT:
         case LTE:
         case GT:
         case GTE: {
-          if (isTypeDouble(lhs) || isTypeDouble(rhs) || isTypeFloat(lhs) || isTypeFloat(rhs)) {
+          if (isTypeFloatOrDouble(lhs) ||  isTypeFloatOrDouble(lhs)) {
             // operate on doubles
             double left = toDouble(lhs);
             double right = toDouble(rhs);
@@ -967,7 +967,7 @@ public class DeadCodeElimination {
             }
             ctx.replaceMe(program.getLiteralBoolean(res));
             return true;
-          } else {
+          } else if (isTypeIntegral(lhs) && isTypeIntegral(rhs)) {
             // operate on longs
             long left = toLong(lhs);
             long right = toLong(rhs);
@@ -992,15 +992,15 @@ public class DeadCodeElimination {
             ctx.replaceMe(program.getLiteralBoolean(res));
             return true;
           }
+          return false;
         }
-
         case BIT_AND:
         case BIT_OR:
         case BIT_XOR:
           if (isTypeBoolean(lhs)) {
             // TODO: maybe eval non-short-circuit boolean operators.
             return false;
-          } else {
+          } else if (isTypeIntegral(lhs) && isTypeIntegral(rhs)) {
             // operate on longs and then cast down
             long left = toLong(lhs);
             long right = toLong(rhs);
@@ -1029,7 +1029,7 @@ public class DeadCodeElimination {
             }
             return true;
           }
-
+          return false;
         case SHL:
         case SHR:
         case SHRU: {
@@ -1057,7 +1057,7 @@ public class DeadCodeElimination {
 
             ctx.replaceMe(program.getLiteralLong(res));
             return true;
-          } else {
+          } else if (isTypeIntegral(lhs) && isTypeIntegral(rhs)) {
             int left = toInt(lhs);
             int right = toInt(rhs);
             int res;
@@ -1082,8 +1082,8 @@ public class DeadCodeElimination {
             ctx.replaceMe(program.getLiteralInt(res));
             return true;
           }
+          return false;
         }
-
         default:
           return false;
       }

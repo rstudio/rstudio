@@ -180,6 +180,47 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
         .into("A.f1 = 1; new A();");
   }
 
+  public void testStringOptimizations() throws Exception {
+    runMethodInliner = true;
+    addSnippetClassDecl(
+        "static class A  { ",
+        "  final static String s1 = \"a\";",
+        "  final static String s2 = \"a\";",
+        "  final static String s3 = \"b\";",
+        "  final static String s4 = null;",
+        "}");
+
+    // TODO(rluble): This test is not 100% meaninful as the JDT performs some optimizations for us.
+    optimizeExpressions(false, "boolean", "\"a\".equals(\"a\")")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "\"a\" == \"a\"")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "\"a\" != \"b\"")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "A.s1.equals(A.s1)")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "A.s1 == A.s1")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "A.s1 == \"a\"")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "\"a\" != null")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "\"a\".equals(A.s2)")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "!\"a\".equals(A.s3)")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "\"a\" == A.s2")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "\"a\" != A.s3")
+        .into("return true;");
+    optimizeExpressions(false, "boolean", "A.s1.equals(A.s2)")
+        .into("return true;");
+    // Next two are not directly optimizable because of inserted clinits.
+    // optimizeExpressions(false, "boolean", "\"a\" != A.s4")
+    //     .into("return true;");
+    // optimizeExpressions(false, "boolean", "A.s4 == null")
+    //    .into("return true;");
+  }
 
   public void testDoOptimization() throws Exception {
     optimize("void", "do {} while (b);").intoString(
