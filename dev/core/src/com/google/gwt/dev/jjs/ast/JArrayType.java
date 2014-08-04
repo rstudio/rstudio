@@ -32,11 +32,6 @@ public class JArrayType extends JReferenceType {
     this.elementType = elementType;
   }
 
-  @Override
-  public String getClassLiteralFactoryMethod() {
-    return "Class.createForArray";
-  }
-
   public int getDims() {
     if (dims == 0) {
       dims = 1;

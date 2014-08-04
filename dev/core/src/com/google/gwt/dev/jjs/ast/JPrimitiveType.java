@@ -86,11 +86,6 @@ public class JPrimitiveType extends JType {
   }
 
   @Override
-  public String getClassLiteralFactoryMethod() {
-    return "Class.createForPrimitive";
-  }
-
-  @Override
   public final JLiteral getDefaultValue() {
     return defaultValue;
   }

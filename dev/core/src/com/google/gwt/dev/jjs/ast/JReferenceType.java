@@ -60,11 +60,6 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     return nonNullType;
   }
 
-  public String getShortName() {
-    int dotpos = name.lastIndexOf('.');
-    return name.substring(dotpos + 1);
-  }
-
   /**
    * If this type is a non-null type, returns the underlying (original) type.
    */

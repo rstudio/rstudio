@@ -234,29 +234,10 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   public static String getFullName(JMethod method) {
-    return method.getEnclosingType().getName() + "." + getJsniSig(method);
+    return method.getEnclosingType().getName() + "." + method.getJsniSignature(false, true);
   }
 
-  public static String getJsniSig(JMethod method) {
-    return getJsniSig(method, true);
-  }
-
-  public static String getJsniSig(JMethod method, boolean addReturnType) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(method.getName());
-    sb.append("(");
-    for (int i = 0; i < method.getOriginalParamTypes().size(); ++i) {
-      JType type = method.getOriginalParamTypes().get(i);
-      sb.append(type.getJsniSignatureName());
-    }
-    sb.append(")");
-    if (addReturnType) {
-      sb.append(method.getOriginalReturnType().getJsniSignatureName());
-    }
-    return sb.toString();
-  }
-
-  public static boolean isClinit(JMethod method) {
+    public static boolean isClinit(JMethod method) {
     JDeclaredType enclosingType = method.getEnclosingType();
     if ((enclosingType != null) && (method == enclosingType.getClinitMethod())) {
       assert (method.getName().equals("$clinit"));
@@ -682,27 +663,16 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    * Note: This version can only be called after {@link ImplementClassLiteralsAsFields} has been
    * run.
    */
-  public JExpression createArrayClassLiteralExpression(SourceInfo sourceInfo, JType leafType,
-      int dimensions) {
-    JField leafTypeClassLiteralField = getClassLiteralField(leafType);
+  public JExpression createArrayClassLiteralExpression(SourceInfo sourceInfo,
+      JClassLiteral leafTypeClassLiteral, int dimensions) {
+    JField leafTypeClassLiteralField = leafTypeClassLiteral.getField();
     assert leafTypeClassLiteralField != null : "Array leaf type must have a class literal field; "
         + "either ImplementClassLiteralsAsField has not run yet or or there is an error computing"
         + "live class literals.";
-    return createArrayClassLiteralExpression(sourceInfo, leafTypeClassLiteralField,
-        leafType, dimensions);
-  }
 
-  /**
-   * Returns an expression that evaluates to an array class literal at runtime.
-   */
-  public JExpression createArrayClassLiteralExpression(SourceInfo sourceInfo, JField field,
-      JType leafType, int dimensions) {
-    JClassLiteral leafTypeClassLiteral = new JClassLiteral(sourceInfo, leafType);
-    leafTypeClassLiteral.setField(field);
-    return new JMethodCall(sourceInfo,null,
-        getIndexedMethod("Array.getClassLiteralForArray"),
-        new JFieldRef(sourceInfo, null, field, field.getEnclosingType()),
-        getLiteralInt(dimensions));
+    return new JMethodCall(sourceInfo, null, getIndexedMethod("Array.getClassLiteralForArray"),
+        new JFieldRef(sourceInfo, null,  leafTypeClassLiteralField,
+            leafTypeClassLiteralField.getEnclosingType()), getLiteralInt(dimensions));
   }
 
   public Map<JReferenceType, JCastMap> getCastMap() {

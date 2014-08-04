@@ -63,11 +63,6 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   }
 
   @Override
-  public String getClassLiteralFactoryMethod() {
-    return "Class.createForClass";
-  }
-
-  @Override
   public final JClassType getSuperClass() {
     return superClass;
   }
@@ -77,6 +72,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
     return isAbstract;
   }
 
+  @Override
   public JEnumType isEnumOrSubclass() {
     if (getSuperClass() != null) {
       return getSuperClass().isEnumOrSubclass();

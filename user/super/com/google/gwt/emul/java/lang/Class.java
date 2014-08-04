@@ -16,6 +16,7 @@
 package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.impl.DoNotInline;
 
 import java.lang.reflect.Type;
 
@@ -44,7 +45,6 @@ public final class Class<T> implements Type {
    * NOTE: this method is accessed through JSNI (Violator pattern) to avoid changing the public API.
    */
   private static native <T> Class<T> getClassLiteralForArray(Class<?> leafClass, int dimensions) /*-{
-
     var arrayLiterals =
         leafClass.@java.lang.Class::arrayLiterals = leafClass.@java.lang.Class::arrayLiterals || [];
     return arrayLiterals[dimensions] || (arrayLiterals[dimensions] =
@@ -83,9 +83,9 @@ public final class Class<T> implements Type {
    *
    * @skip
    */
+  @DoNotInline
   static <T> Class<T> createForClass(String packageName, String className,
       JavaScriptObject typeId, Class<? super T> superclass) {
-    // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     if (clazz.isClassMetadataEnabled()) {
       initializeNames(clazz, packageName, className);
@@ -102,10 +102,10 @@ public final class Class<T> implements Type {
    *
    * @skip
    */
+  @DoNotInline
   static <T> Class<T> createForEnum(String packageName, String className,
       JavaScriptObject typeId, Class<? super T> superclass,
       JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) {
-    // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     if (clazz.isClassMetadataEnabled()) {
       initializeNames(clazz, packageName, className);
@@ -125,8 +125,8 @@ public final class Class<T> implements Type {
    *
    * @skip
    */
+  @DoNotInline
   static <T> Class<T> createForInterface(String packageName, String className) {
-    // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     if (clazz.isClassMetadataEnabled()) {
       initializeNames(clazz, packageName, className);
@@ -142,9 +142,8 @@ public final class Class<T> implements Type {
    *
    * @skip
    */
-  static Class<?> createForPrimitive(String packageName, String className,
-      String primitiveTypeId) {
-    // Initialize here to avoid method inliner
+  @DoNotInline
+  static Class<?> createForPrimitive(String className, String primitiveTypeId) {
     Class<?> clazz = new Class<Object>();
     if (clazz.isClassMetadataEnabled()) {
       clazz.typeName = className;

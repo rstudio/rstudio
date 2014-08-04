@@ -179,7 +179,7 @@ public class ArrayNormalizer {
       SourceInfo sourceInfo = x.getSourceInfo();
       JMethodCall call = new JMethodCall(sourceInfo, null, initValues, arrayType);
       JExpression classLitExpression = program.createArrayClassLiteralExpression(x.getSourceInfo(),
-          arrayType.getLeafType(), arrayType.getDims());
+          x.getLeafTypeClassLiteral(), arrayType.getDims());
       JExpression castableTypeMap = getOrCreateCastMap(sourceInfo, arrayType);
       JRuntimeTypeReference elementTypeIds = getElementRuntimeTypeReference(sourceInfo, arrayType);
       JsonArray initList = new JsonArray(sourceInfo, program.getJavaScriptObject());

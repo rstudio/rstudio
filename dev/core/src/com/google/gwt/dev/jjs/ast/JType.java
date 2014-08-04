@@ -39,6 +39,10 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
 
   protected final String name;
 
+  private String shortName = null;
+
+  private String packageName = null;
+
   /**
    * Base type for AST type definitions.
    *
@@ -50,13 +54,34 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
     this.name = StringInterner.get().intern(name);
   }
 
-  public abstract String getClassLiteralFactoryMethod();
-
   public abstract JLiteral getDefaultValue();
 
   public abstract String getJavahSignatureName();
 
   public abstract String getJsniSignatureName();
+
+  public String getShortName() {
+    if (shortName == null) {
+      shortName = name.substring(name.lastIndexOf('.') + 1);
+    }
+    return shortName;
+  }
+
+  public String getPackageName() {
+    if (packageName == null) {
+      int dotpos = name.lastIndexOf('.');
+      packageName = StringInterner.get().intern(name.substring(0, dotpos < 0 ? 0 : dotpos));
+    }
+    return packageName;
+  }
+
+  /**
+   * Returns the (closest) enum supertype if the type is a subclass of an enum; it returns
+   * {@code this} if {@code this} is a {@link }JEnumType} and {@code null} otherwise.
+   */
+  public JEnumType isEnumOrSubclass() {
+    return null;
+  }
 
   /**
    * Binary name of the type.

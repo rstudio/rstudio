@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 
 import java.io.Serializable;
@@ -95,18 +94,6 @@ public abstract class CorrelationFactory implements Serializable {
       }
     }
 
-    public static String getMethodIdent(JMethod method) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(method.getEnclosingType().getName()).append("::");
-      sb.append(method.getName()).append("(");
-      for (JType type : method.getOriginalParamTypes()) {
-        sb.append(type.getJsniSignatureName());
-      }
-      sb.append(")");
-      sb.append(method.getOriginalReturnType().getJsniSignatureName());
-      return sb.toString();
-    }
-
     /**
      * This cuts down on the total number of Correlation objects allocated.
      */
@@ -142,7 +129,7 @@ public abstract class CorrelationFactory implements Serializable {
       Correlation toReturn = canonicalMap.get(method);
       if (toReturn == null) {
 
-        toReturn = new Correlation(Axis.METHOD, getMethodIdent(method), method);
+        toReturn = new Correlation(Axis.METHOD, method.getJsniSignature(true, true), method);
         canonicalMap.put(method, toReturn);
       }
       return toReturn;

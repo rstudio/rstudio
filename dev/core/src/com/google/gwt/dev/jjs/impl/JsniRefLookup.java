@@ -207,7 +207,7 @@ public class JsniRefLookup {
         if (!addConstructorsAndPrivates && method.isPrivate()) {
           continue;
         }
-        String fullSig = JProgram.getJsniSig(method, false);
+        String fullSig = method.getJsniSignature(false, false);
         String wildcardSig = method.getName() + "(" + JsniRef.WILDCARD_PARAM_LIST + ")";
         addMember(matchesBySig, method, fullSig, fullSig);
         addMember(matchesBySig, method, wildcardSig, fullSig);

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 
@@ -28,11 +27,6 @@ public class JNullType extends JReferenceType {
 
   private JNullType(SourceInfo sourceInfo) {
     super(sourceInfo, "null");
-  }
-
-  @Override
-  public String getClassLiteralFactoryMethod() {
-    throw new InternalCompilerException("Cannot get class literal for null type");
   }
 
   @Override

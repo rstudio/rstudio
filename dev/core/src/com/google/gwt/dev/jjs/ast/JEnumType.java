@@ -54,11 +54,6 @@ public class JEnumType extends JClassType {
     super.addField(field);
   }
 
-  @Override
-  public String getClassLiteralFactoryMethod() {
-    return "Class.createForEnum";
-  }
-
   /**
    * Returns the list of enum fields in this enum.
    */

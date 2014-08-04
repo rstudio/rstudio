@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.SizeBreakdown;
 import com.google.gwt.dev.js.ast.JsLiteral;
@@ -207,18 +206,7 @@ public class SizeMapRecorder {
       JavaToJavaScriptMap jjsmap, Map<JsName, JsLiteral> internedLiteralByVariableName) {
     JMethod method = jjsmap.nameToMethod(name);
     if (method != null) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(method.getEnclosingType().getName());
-      sb.append("::");
-      sb.append(method.getName());
-      sb.append("(");
-      for (JType type : method.getOriginalParamTypes()) {
-        sb.append(type.getJsniSignatureName());
-      }
-      sb.append(")");
-      sb.append(method.getOriginalReturnType().getJsniSignatureName());
-      String desc = sb.toString();
-      return new TypedProgramReference("method", desc);
+      return new TypedProgramReference("method", method.getJsniSignature(true, true));
     }
 
     JField field = jjsmap.nameToField(name);

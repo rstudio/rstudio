@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.Correlation.Literal;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -40,7 +39,6 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
-import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
@@ -50,14 +48,15 @@ import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,6 +79,126 @@ import java.util.Set;
  * <p>
  */
 public class ImplementClassLiteralsAsFields {
+  private static Map<Class<? extends JType>, ClassLiteralFactoryMethod>
+      literalFactoryMethodByTypeClass  = new ImmutableMap.Builder()
+          .put(JEnumType.class, ClassLiteralFactoryMethod.CREATE_FOR_ENUM)
+          .put(JClassType.class, ClassLiteralFactoryMethod.CREATE_FOR_CLASS)
+          .put(JInterfaceType.class, ClassLiteralFactoryMethod.CREATE_FOR_INTERFACE)
+          .put(JPrimitiveType.class, ClassLiteralFactoryMethod.CREATE_FOR_PRIMITIVE)
+          .build();
+
+  /**
+   * Class used to construct invocations to class literal factory methods.
+   */
+  public enum ClassLiteralFactoryMethod {
+    CREATE_FOR_ENUM() {
+      @Override
+      JMethodCall createCall(SourceInfo info, JProgram program, JType type,
+          JLiteral superclassLiteral) {
+        JEnumType enumType = type.isEnumOrSubclass();
+        assert enumType != null;
+
+        // createForEnum(packageName, typeName, runtimeTypeReference, Enum.class,  type.values(),
+        // type.valueOf(java/lang/String));
+        JMethodCall call = createBaseCall(info, program, type, "Class.createForEnum");
+
+        call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
+            (JReferenceType) type));
+        call.addArg(superclassLiteral);
+
+        maybeAddStandardMethodAsArg(info, program, type, "values()", call);
+        maybeAddStandardMethodAsArg(info, program, type, "valueOf(Ljava/lang/String;)", call);
+        return call;
+      }
+
+      private void maybeAddStandardMethodAsArg(SourceInfo info, JProgram program, JType type,
+          String methodSignature, JMethodCall call) {
+        JEnumType enumType = type.isEnumOrSubclass();
+        JMethod standardMethod = null;
+
+        if (enumType == type) {
+          for (JMethod method : enumType.getMethods()) {
+            if (method.isStatic() && method.getSignature().startsWith(methodSignature)) {
+              standardMethod = method;
+              break;
+            }
+          }
+        }
+        assert enumType != type || standardMethod != null
+            : "Could not find enum " + methodSignature + " method";
+        if (standardMethod == null) {
+          call.addArg(JNullLiteral.INSTANCE);
+        } else {
+          call.addArg(new JsniMethodRef(info, standardMethod.getJsniSignature(true, false),
+              standardMethod, program.getJavaScriptObject()));
+        }
+      }
+    },
+    CREATE_FOR_CLASS() {
+      @Override
+      JMethodCall createCall(SourceInfo info, JProgram program, JType type,
+          JLiteral superclassLiteral) {
+
+        // Class.createForClass(packageName, typeName, runtimeTypeReference, superclassliteral)
+        JMethodCall call = createBaseCall(info, program, type, "Class.createForClass");
+
+        call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
+            (JReferenceType) type));
+        call.addArg(superclassLiteral);
+        return call;
+      }
+    },
+    CREATE_FOR_PRIMITIVE() {
+      @Override
+      JMethodCall createCall(SourceInfo info, JProgram program, JType type,
+          JLiteral superclassLiteral) {
+
+        // Class.createForPrimitive(typeName, typeSignature)
+        JMethodCall call =
+            new JMethodCall(info, null, program.getIndexedMethod("Class.createForPrimitive"));
+        call.addArg(program.getStringLiteral(info, type.getShortName()));
+        call.addArg(program.getStringLiteral(info, " " + type.getJavahSignatureName()));
+        return call;
+      }
+    },
+    CREATE_FOR_INTERFACE() {
+      @Override
+      JMethodCall createCall(SourceInfo info, JProgram program, JType type,
+          JLiteral superclassLiteral) {
+
+        // Class.createForClass(packageName, typeName, runtimeTypeReference, superclassliteral)
+        JMethodCall call = createBaseCall(info, program, type, "Class.createForInterface");
+
+        call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
+            (JReferenceType) type));
+        call.addArg(superclassLiteral);
+        return call;
+      }
+    };
+
+    abstract JMethodCall createCall(SourceInfo info, JProgram program, JType type,
+        JLiteral superclassLiteral);
+
+    static JMethodCall createBaseCall(SourceInfo info, JProgram program, JType type,
+        String indexedMethodName) {
+
+      JMethodCall call = new JMethodCall(info, null, program.getIndexedMethod(indexedMethodName),
+          program.getStringLiteral(info, StringInterner.get().intern(type.getPackageName() + ".")),
+          program.getStringLiteral(info, maybeMangleJSOTypeName(program, type)));
+
+      return call;
+    }
+
+    static String maybeMangleJSOTypeName(JProgram program, JType type) {
+      assert !(type instanceof JArrayType);
+
+      // Mangle the class name to match hosted mode.
+      if (program.typeOracle.isJavaScriptObject(type)) {
+        return type.getShortName() + '$';
+      }
+      return type.getShortName();
+    }
+  }
 
   private class NormalizeVisitor extends JModVisitor {
     @Override
@@ -89,11 +208,12 @@ public class ImplementClassLiteralsAsFields {
         // Replace array class literals by an expression to obtain the class literal from the
         // leaf type of the array.
         JArrayType arrayType = (JArrayType) type;
-        JType leafType = arrayType.getLeafType();
-        JField field = resolveClassLiteralField(leafType);
+        JClassLiteral leafTypeClassLiteral =
+            new JClassLiteral(x.getSourceInfo(), arrayType.getLeafType());
+        resolveClassLiteral(leafTypeClassLiteral);
 
         JExpression arrayClassLiteralExpression = program.createArrayClassLiteralExpression(
-            x.getSourceInfo(), field, leafType, arrayType.getDims());
+            x.getSourceInfo(), leafTypeClassLiteral, arrayType.getDims());
         ctx.replaceMe(arrayClassLiteralExpression);
       } else {
         // Just resolve the class literal.
@@ -118,7 +238,7 @@ public class ImplementClassLiteralsAsFields {
       final JMethod getClassLiteralForArrayMethod =
           program.getIndexedMethod("Array.getClassLiteralForArray");
       final String getClassLiteralForArrayMethodIdent =
-          "@" + createIdent(getClassLiteralForArrayMethod);
+          "@" + getClassLiteralForArrayMethod.getJsniSignature(true, false);
 
       boolean areThereArrayClassLiterals = false;
       for (JsniClassLiteral jsniClassLiteral : jsniMethodBody.getClassRefs()) {
@@ -213,30 +333,7 @@ public class ImplementClassLiteralsAsFields {
     normalizerEvent.end();
   }
 
-  private static String createIdent(JMethod method) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(method.getEnclosingType().getName());
-    sb.append("::");
-    sb.append(method.getName());
-    sb.append('(');
-    for (JType type : method.getOriginalParamTypes()) {
-      sb.append(type.getJsniSignatureName());
-    }
-    sb.append(')');
-    return sb.toString();
-  }
-
-  private static String getClassName(String fullName) {
-    int pos = fullName.lastIndexOf(".");
-    return fullName.substring(pos + 1);
-  }
-
-  private static String getPackageName(String fullName) {
-    int pos = fullName.lastIndexOf(".");
-    return fullName.substring(0, pos + 1);
-  }
-
-  private final Map<JType, JField> classLiteralFields = new IdentityHashMap<JType, JField>();
+  private final Map<JType, JField> classLiteralFields = Maps.newIdentityHashMap();
   private final JMethodBody classLiteralHolderClinitBody;
   private final JProgram program;
   private final JClassType typeClassLiteralHolder;
@@ -244,9 +341,54 @@ public class ImplementClassLiteralsAsFields {
   private ImplementClassLiteralsAsFields(JProgram program) {
     this.program = program;
     this.typeClassLiteralHolder = program.getTypeClassLiteralHolder();
-    this.classLiteralHolderClinitBody =
-        (JMethodBody) typeClassLiteralHolder.getClinitMethod().getBody();
+    this.classLiteralHolderClinitBody = (JMethodBody) typeClassLiteralHolder.getClinitMethod().getBody();
     assert program.getDeclaredTypes().contains(typeClassLiteralHolder);
+  }
+
+  private JLiteral getSuperclassClassLiteral(SourceInfo info, JType type) {
+    if (!(type instanceof JClassType) ||  ((JClassType) type).getSuperClass() == null) {
+      return JNullLiteral.INSTANCE;
+    }
+    JClassType classType = (JClassType) type;
+    if (program.isJsTypePrototype(classType)) {
+        /*
+         * When a Java type extends a JS prototype stub, we make the superclass literal
+         * equal to the Js interface.
+         */
+      JDeclaredType jsInterface = program.typeOracle.getNearestJsType(type, true);
+      assert jsInterface != null;
+      return createDependentClassLiteral(info, jsInterface);
+    }
+
+    return createDependentClassLiteral(info, classType.getSuperClass());
+  }
+
+  private JClassLiteral createDependentClassLiteral(SourceInfo info, JType type) {
+    JClassLiteral classLiteral = new JClassLiteral(info.makeChild(), type);
+    classLiteral.setField(resolveClassLiteralField(classLiteral.getRefType()));
+    return classLiteral;
+  }
+
+  private void execImpl() {
+    NormalizeVisitor visitor = new NormalizeVisitor();
+    visitor.accept(program);
+    if (!program.typeOracle.hasWholeWorldKnowledge()) {
+      // TODO(rluble): This is kind of hacky. It would be more general purpose to create a class
+      // literal implementation for every class and let unused ones be pruned by optimization.
+      // Instead we're prematurely optimizing. We should be doing this traversal unconditionally.
+      for (JType type : program.getDeclaredTypes()) {
+        resolveClassLiteralField(type);
+      }
+    }
+    program.recordClassLiteralFields(classLiteralFields);
+  }
+
+  private JType normalizeJsoType(JType type) {
+    assert !(type instanceof JArrayType);
+    if (program.typeOracle.isJavaScriptObject(type)) {
+      return program.getJavaScriptObject();
+    }
+    return type;
   }
 
   /**
@@ -257,7 +399,8 @@ public class ImplementClassLiteralsAsFields {
    *
    * <pre>
    * Class.createForClass("java.lang.", "Object", /JRuntimeTypeReference/"java.lang.Object", null)
-   * Class.createForClass("java.lang.", "Exception", /JRuntimeTypeReference/"java.lang.Exception", Throwable.class)
+   * Class.createForClass("java.lang.", "Exception", /JRuntimeTypeReference/"java.lang.Exception",
+   *   Throwable.class)
    * </pre>
    *
    * Interface:
@@ -277,156 +420,29 @@ public class ImplementClassLiteralsAsFields {
    * Enum:
    *
    * <pre>
-   * Class.createForEnum("com.example.", "MyEnum", /JRuntimeTypeReference/"com.example.MyEnum", Enum.class,
-   *     public static MyEnum[] values(), public static MyEnum valueOf(String name))
+   * Class.createForEnum("com.example.", "MyEnum", /JRuntimeTypeReference/"com.example.MyEnum",
+   *     Enum.class, public static MyEnum[] values(), public static MyEnum valueOf(String name))
    * </pre>
    *
    * Enum subclass:
    *
    * <pre>
-   * Class.createForEnum("com.example.", "MyEnum$1", /JRuntimeTypeReference/"com.example.MyEnum$1", MyEnum.class,
-   *     null, null))
+   * Class.createForEnum("com.example.", "MyEnum$1", /JRuntimeTypeReference/"com.example.MyEnum$1",
+   *   MyEnum.class, null, null))
    * </pre>
    */
-  private JMethodCall computeClassObjectAllocation(SourceInfo info, JType type) {
-    assert !(type instanceof JArrayType);
-
-    String typeName = getTypeName(type);
-
-    JMethod method = program.getIndexedMethod(type.getClassLiteralFactoryMethod());
-
-    /*
-     * Use the classForEnum() constructor even for enum subtypes to aid in
-     * pruning supertype data.
-     */
-    boolean isEnumOrSubclass = false;
-    if (type instanceof JClassType) {
-      JEnumType maybeEnum = ((JClassType) type).isEnumOrSubclass();
-      if (maybeEnum != null) {
-        isEnumOrSubclass = true;
-        method = program.getIndexedMethod(maybeEnum.getClassLiteralFactoryMethod());
-      }
+  private JMethodCall createLiteralCall(SourceInfo info, JProgram program, JType type) {
+    if (type instanceof JReferenceType) {
+      type = ((JReferenceType) type).getUnderlyingType();
     }
 
-    assert method != null;
-
-    JMethodCall call = new JMethodCall(info, null, method);
-    JStringLiteral packageName = program.getStringLiteral(info, getPackageName(typeName));
-    JStringLiteral className = program.getStringLiteral(info, getClassName(typeName));
-    call.addArgs(packageName, className);
-
-    if (type instanceof JClassType) {
-      // Add a runtime type reference.
-      call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
-          (JReferenceType) type));
-    } else if (type instanceof JPrimitiveType) {
-      // And give primitive types an illegal, though meaningful, value
-      call.addArg(program.getStringLiteral(info, " " + type.getJavahSignatureName()));
+    Class<? extends JType>  typeClass = type.getClass();
+    if (type.isEnumOrSubclass() != null) {
+      typeClass = JEnumType.class;
     }
 
-    if (type instanceof JClassType) {
-      /*
-       * For non-array classes and enums, determine the class literal of the
-       * supertype, if there is one. Arrays are excluded because they always
-       * have Object as their superclass.
-       */
-      JClassType classType = (JClassType) type;
-
-      JLiteral superclassLiteral;
-      if (classType.getSuperClass() != null) {
-        if (program.isJsTypePrototype(classType)) {
-          /*
-           * When a Java type extends a JS prototype stub, we make the superclass literal
-           * equal to the Js interface.
-           */
-          JDeclaredType jsInterface = program.typeOracle.getNearestJsType(classType, true);
-          assert jsInterface != null;
-          superclassLiteral = createDependentClassLiteral(info, jsInterface);
-        } else {
-          superclassLiteral = createDependentClassLiteral(info, classType.getSuperClass());
-        }
-      } else {
-        superclassLiteral = JNullLiteral.INSTANCE;
-      }
-
-      call.addArg(superclassLiteral);
-
-      if (classType instanceof JEnumType) {
-        JEnumType enumType = (JEnumType) classType;
-        JMethod valuesMethod = null;
-        JMethod valueOfMethod = null;
-        for (JMethod methodIt : enumType.getMethods()) {
-          if (methodIt.isStatic()) {
-            if (methodIt.getSignature().startsWith("values()")) {
-              valuesMethod = methodIt;
-            } else if (methodIt.getSignature().startsWith("valueOf(Ljava/lang/String;)")) {
-              valueOfMethod = methodIt;
-            }
-          }
-        }
-        if (valuesMethod == null) {
-          throw new InternalCompilerException("Could not find enum values() method");
-        }
-        if (valueOfMethod == null) {
-          throw new InternalCompilerException("Could not find enum valueOf() method");
-        }
-        call.addArg(new JsniMethodRef(info, createIdent(valuesMethod), valuesMethod, program
-            .getJavaScriptObject()));
-        call.addArg(new JsniMethodRef(info, createIdent(valueOfMethod), valueOfMethod, program
-            .getJavaScriptObject()));
-      } else if (isEnumOrSubclass) {
-        // A subclass of an enum class
-        call.addArg(JNullLiteral.INSTANCE);
-        call.addArg(JNullLiteral.INSTANCE);
-      }
-    } else {
-      assert (type instanceof JInterfaceType || type instanceof JPrimitiveType ||
-          type instanceof JArrayType);
-    }
-    assert call.getArgs().size() == method.getParams().size() : "Argument / param mismatch "
-        + call.toString() + " versus " + method.toString();
-    return call;
-  }
-
-  private JClassLiteral createDependentClassLiteral(SourceInfo info, JType type) {
-    JClassLiteral classLiteral = new JClassLiteral(info.makeChild(), type);
-    JField field = resolveClassLiteralField(classLiteral.getRefType());
-    classLiteral.setField(field);
-    return classLiteral;
-  }
-
-  private void execImpl() {
-    NormalizeVisitor visitor = new NormalizeVisitor();
-    visitor.accept(program);
-    // TODO(rluble): This is kind of hacky. It would be more general purpose to create a class
-    // literal implementation for every class and let unused ones be pruned by optimization.
-    // Instead we're prematurely optimizing.
-    if (!program.typeOracle.hasWholeWorldKnowledge()) {
-      for (JType type : program.getDeclaredTypes()) {
-        resolveClassLiteralField(type);
-      }
-    }
-    program.recordClassLiteralFields(classLiteralFields);
-  }
-
-  private String getTypeName(JType type) {
-    String typeName;
-    assert !(type instanceof JArrayType);
-
-    typeName = type.getName();
-    // Mangle the class name to match hosted mode.
-    if (program.typeOracle.isJavaScriptObject(type)) {
-      typeName += '$';
-    }
-    return typeName;
-  }
-
-  private JType normalizeJsoType(JType type) {
-    assert !(type instanceof JArrayType);
-    if (program.typeOracle.isJavaScriptObject(type)) {
-      return program.getJavaScriptObject();
-    }
-    return type;
+    return literalFactoryMethodByTypeClass.get(typeClass).createCall(info, program, type,
+        getSuperclassClassLiteral(info, type));
   }
 
   /**
@@ -446,7 +462,10 @@ public class ImplementClassLiteralsAsFields {
       // Create the allocation expression FIRST since this may be recursive on
       // super type (this forces the super type classLit to be created first).
       SourceInfo info = type.getSourceInfo().makeChild();
-      JMethodCall alloc = computeClassObjectAllocation(info, type);
+      assert !(type instanceof JArrayType);
+
+      JMethodCall classLiteralCreationExpression = createLiteralCall(info, program, type);
+
       // Create a field in the class literal holder to hold the object.
       field =
           new JField(info, program.getClassLiteralName(type), typeClassLiteralHolder, program
@@ -456,7 +475,8 @@ public class ImplementClassLiteralsAsFields {
 
       // Initialize the field.
       JFieldRef fieldRef = new JFieldRef(info, null, field, typeClassLiteralHolder);
-      JDeclarationStatement decl = new JDeclarationStatement(info, fieldRef, alloc);
+      JDeclarationStatement decl =
+          new JDeclarationStatement(info, fieldRef, classLiteralCreationExpression);
       classLiteralHolderClinitBody.getBlock().addStmt(decl);
       classLiteralFields.put(type, field);
     }

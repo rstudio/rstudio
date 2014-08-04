@@ -123,7 +123,7 @@ public class JavaAstConstructor {
           "      JavaScriptObject enumValueOfFunc) { return new Class<T>(); }",
           "  static <T> Class<T> createForInterface(String packageName, String className) {",
           "    return new Class<T>(); }",
-          "  static <T> Class<T> createForPrimitive(String packageName, String className,",
+          "  static <T> Class<T> createForPrimitive(String className,",
           "      String jni) { return new Class<T>(); }",
           "  static boolean isClassMetadataEnabled() { return true; }",
           "  public boolean desiredAssertionStatus() { return true; }",
@@ -133,7 +133,7 @@ public class JavaAstConstructor {
     }
   };
 
-  public static final MockJavaResource CLASSLITERALHOLDER = new MockJavaResource(
+  public static final MockJavaResource CLASS_LITERAL_HOLDER = new MockJavaResource(
       "com.google.gwt.lang.ClassLiteralHolder") {
     @Override
     public CharSequence getContent() {
@@ -376,7 +376,7 @@ public class JavaAstConstructor {
     // Replace the basic Class and Enum with a compiler-specific one.
     result.remove(JavaResourceBase.CLASS);
     result.remove(JavaResourceBase.ENUM);
-    Collections.addAll(result, ASYNCFRAGMENTLOADER, ARRAY, CAST, CLASS, CLASSLITERALHOLDER,
+    Collections.addAll(result, ASYNCFRAGMENTLOADER, ARRAY, CAST, CLASS, CLASS_LITERAL_HOLDER,
         COLLAPSED_PROPERTY_HOLDER, ENUM, EXCEPTIONS, GWT, GWT_SHARED, IMPL,
         JAVA_CLASS_HIERARCHY_SETUP_UTIL, LONGLIB, MODULE_UTILS, RUNASYNCCALLBACK, RUNASYNCCODE,
         UTIL);

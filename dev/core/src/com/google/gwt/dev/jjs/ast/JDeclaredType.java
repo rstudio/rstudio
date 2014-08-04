@@ -273,12 +273,6 @@ public abstract class JDeclaredType extends JReferenceType {
     return methods;
   }
 
-  @Override
-  public String getShortName() {
-    int dotpos = name.lastIndexOf('.');
-    return name.substring(dotpos + 1);
-  }
-
   public boolean isJsType() {
     return jsInteropType != JsInteropType.NONE;
   }

@@ -35,11 +35,6 @@ public class JNonNullType extends JReferenceType {
   }
 
   @Override
-  public String getClassLiteralFactoryMethod() {
-    return ref.getClassLiteralFactoryMethod();
-  }
-
-  @Override
   public String getJavahSignatureName() {
     return ref.getJavahSignatureName();
   }
@@ -47,6 +42,11 @@ public class JNonNullType extends JReferenceType {
   @Override
   public String getJsniSignatureName() {
     return ref.getJsniSignatureName();
+  }
+
+  @Override
+  public JEnumType isEnumOrSubclass() {
+    return ref.isEnumOrSubclass();
   }
 
   @Override

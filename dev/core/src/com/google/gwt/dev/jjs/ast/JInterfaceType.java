@@ -54,11 +54,6 @@ public class JInterfaceType extends JDeclaredType {
   }
 
   @Override
-  public String getClassLiteralFactoryMethod() {
-    return "Class.createForInterface";
-  }
-
-  @Override
   public JClassType getSuperClass() {
     return null;
   }

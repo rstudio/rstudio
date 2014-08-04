@@ -399,6 +399,24 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     return signature;
   }
 
+  public String getJsniSignature(boolean includeEnclosingClass, boolean includeReturnType) {
+    StringBuilder sb = new StringBuilder();
+    if (includeEnclosingClass) {
+      sb.append(getEnclosingType().getName());
+      sb.append("::");
+    }
+    sb.append(getName());
+    sb.append('(');
+    for (JType type : getOriginalParamTypes()) {
+      sb.append(type.getJsniSignatureName());
+    }
+    sb.append(')');
+    if (includeReturnType) {
+      sb.append(originalReturnType.getJsniSignatureName());
+    }
+    return sb.toString();
+  }
+
   private static void getParamSignature(StringBuilder sb,
       List<JType> params, JType returnType, boolean isCtor) {
     sb.append('(');
@@ -527,21 +545,19 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
     // Determine if we should trace this method.
     if (enclosingType != null) {
-      String jsniSig = JProgram.getJsniSig(this);
-      Set<String> set = JProgram.traceMethods.get(enclosingType.getName());
-      if (set != null
-          && (set.contains(name) || set.contains(jsniSig) || set.contains(TRACE_METHOD_WILDCARD))) {
-        trace = true;
-      }
-      // Try the short name.
-      if (!trace && enclosingType != null) {
-        set = JProgram.traceMethods.get(enclosingType.getShortName());
-        if (set != null
-            && (set.contains(name) || set.contains(jsniSig) || set.contains(TRACE_METHOD_WILDCARD))) {
-          trace = true;
-        }
-      }
+      String jsniSignature = getJsniSignature(false, true);
+      trace = shouldTraceMethod(enclosingType.getShortName(), jsniSignature) ||
+          shouldTraceMethod(enclosingType.getName(), jsniSignature);
     }
+  }
+
+  private boolean shouldTraceMethod(String className, String jsniSignature) {
+    Set<String> set = JProgram.traceMethods.get(className);
+    if (set == null) {
+      return false;
+    }
+
+    return set.contains(name) || set.contains(jsniSignature) || set.contains(TRACE_METHOD_WILDCARD);
   }
 
   public void setSynthetic() {

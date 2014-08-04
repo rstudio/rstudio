@@ -226,9 +226,7 @@ public class ReplaceRunAsyncs {
     String name;
     StringBuilder sb = new StringBuilder();
     sb.append('@');
-    sb.append(method.getEnclosingType().getName());
-    sb.append("::");
-    sb.append(JProgram.getJsniSig(method, false));
+    sb.append(method.getJsniSignature(true, false));
     name = sb.toString();
     return name;
   }
