@@ -69,8 +69,6 @@ public class JavaAstConstructor {
           "  static void initValues(Class arrayClass, JavaScriptObject castableTypeMap,",
           "      int elementTypeId, int elementTypeCategory, Object array) { }",
           "  static <T> Class<T> getClassLiteralForArray() { return null; }",
-          "  static String addDimensions(String baseMap, int dimensions) { return null; }",
-          "  static String createArrayCastMap(String baseMap, int dimensions) { return null; }",
           "}"
       );
     }
@@ -84,7 +82,6 @@ public class JavaAstConstructor {
           "import com.google.gwt.core.client.JavaScriptObject;",
           "public final class Cast {",
           "  private static JavaScriptObject stringCastMap;",
-          "  static JavaScriptObject baseArrayCastMap;",
           "  public static native String charToString(char x) /*-{ }-*/;",
           "  public static Object dynamicCast(Object src, int dstId) { return src;}",
           "  public static Object dynamicCastAllowJso(Object src, int dstId) { return src;}",
@@ -131,7 +128,6 @@ public class JavaAstConstructor {
           "  static boolean isClassMetadataEnabled() { return true; }",
           "  public boolean desiredAssertionStatus() { return true; }",
           "  public String getName() { return null; }",
-          "  public String getSimpleName() { return null; }",
           "}"
       );
     }

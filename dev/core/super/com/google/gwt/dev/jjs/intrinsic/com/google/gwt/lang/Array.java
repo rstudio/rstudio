@@ -47,54 +47,11 @@ public final class Array {
    */
   public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
     Object result = arraySlice(array, fromIndex, toIndex);
-    initValuesImpl(array.getClass(), Util.getCastableTypeMap(array), Array.getElementTypeId(array),
+    initValues(array.getClass(), Util.getCastableTypeMap(array), Array.getElementTypeId(array),
         Array.getElementTypeCategory(array), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
-
-  /**
-   * Returns the type id for an array given a {@baseTypeId}.
-   * <p>
-   * If {@code baseTypeId} is a scalar type, the resulting type id corresponds to an array
-   * of {@code dimensions} dimension of {@baseTypeId}.
-   * <p>
-   * If {@code baseTypeId} is an array type of n dimensions, the resulting type id corresponds to an
-   * array of the same leaf type as {@code baseTypeId} with n + {@code dimensions} dimensions.
-   * <p>
-   * NOTE: this runtime method performs the same computation as the (compile time) method
-   * {@link ResolveRuntimeTypeReferences.assignId}; both need to be in agreement.
-   */
-  static native String addDimensions(String baseTypeId, int dimensions) /*-{
-    var result = baseTypeId;
-    for (var i = 0; i < dimensions; i++) {
-      result += "[]";
-    }
-    return result;
-  }-*/;
-
-  /**
-   * Returns the full cast map for an array given an 1-dimensional cast map for the corresponding
-   * leaf type and the desired {@code dimensions}.
-   */
-  static native JavaScriptObject createArrayCastMap(JavaScriptObject oneDimensionalCastMap,
-      int dimensions) /*-{
-    var castMap = {};
-    for (var i = 0; i < dimensions; i++) {
-      // Include casts to every type in the base array castmap at all dimensions from 0 to n-1
-      for (var key in @com.google.gwt.lang.Cast::baseArrayCastMap) {
-        castMap[@com.google.gwt.lang.Array::addDimensions(*)(key, i)] = 1;
-      }
-    }
-
-    for (var key in oneDimensionalCastMap) {
-      // Add to the castmap arrays of dimension n for each leaf type in the 1-dimensional castmap.
-      // This is accomplished by adding n-1 dimensions to each type in the 1-dimensional castmap.
-      castMap[@com.google.gwt.lang.Array::addDimensions(*)(key, dimensions - 1)] = 1;
-    }
-
-    return castMap;
-  }-*/;
 
   /**
    * Creates a new array of the exact same type and length as a given array.
@@ -113,7 +70,7 @@ public final class Array {
     // might have performace penalty. Maybe rename to createUninitializedFrom(), to make
     // the meaning clearer.
     Object result = initializeArrayElementsWithDefaults(TYPE_JAVA_OBJECT, length);
-    initValuesImpl(array.getClass(), Util.getCastableTypeMap(array), Array.getElementTypeId(array),
+    initValues(array.getClass(), Util.getCastableTypeMap(array), Array.getElementTypeId(array),
         Array.getElementTypeCategory(array), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
@@ -124,8 +81,8 @@ public final class Array {
    * array, [a, b, c].
    *
    * @param leafClassLiteral the class literal for the leaf class
-   * @param oneDimensionalCastMap a partial castmap corresonding to one dimensional array of the
-   *         leaf type.
+   * @param castableTypeMap the map of types to which this array can be casted,
+   *          in the form of a JSON map object
    * @param elementTypeId the typeId of array elements
    * @param elementTypeCategory whether the element type is java.lang.Object
    *        ({@link TYPE_JAVA_LANG_OBJECT}), is guaranteed to be a java object
@@ -137,11 +94,11 @@ public final class Array {
    * @param dimensions the number of dimensions of the array
    * @return the new array
    */
-  public static Object initDim(Class<?> leafClassLiteral, JavaScriptObject oneDimensionalCastMap,
+  public static Object initDim(Class<?> leafClassLiteral, JavaScriptObject castableTypeMap,
       JavaScriptObject elementTypeId, int length, int elementTypeCategory, int dimensions) {
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    initValues(leafClassLiteral, oneDimensionalCastMap, elementTypeId, elementTypeCategory,
-        result, dimensions);
+    initValues(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
+        elementTypeId, elementTypeCategory, result);
     return result;
   }
 
@@ -150,7 +107,7 @@ public final class Array {
    * array, [a, b, c].
    *
    * @param leafClassLiteral the class literal for the leaf class
-   * @param oneDimensionalCastMap the JSON castableTypeMap of each dimension,
+   * @param castableTypeMapExprs the JSON castableTypeMap of each dimension,
    *          from highest to lowest
    * @param elementTypeIds the elementTypeId of each dimension, from highest to lowest
    * @param leafElementTypeCategory whether the element type is java.lang.Object
@@ -162,9 +119,9 @@ public final class Array {
    * @param dimExprs the length of each dimension, from highest to lower
    * @return the new array
    */
-  public static Object initDims(Class<?> leafClassLiteral, JavaScriptObject oneDimensionalCastMap,
+  public static Object initDims(Class<?> leafClassLiteral, JavaScriptObject[] castableTypeMapExprs,
       JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs, int count) {
-    return initDims(leafClassLiteral, oneDimensionalCastMap, elementTypeIds, leafElementTypeCategory,
+    return initDims(leafClassLiteral, castableTypeMapExprs, elementTypeIds, leafElementTypeCategory,
         dimExprs, 0, count);
   }
 
@@ -172,8 +129,8 @@ public final class Array {
    * Creates an array like "new T[][]{a,b,c,d}" by passing in a native JSON
    * array, [a, b, c, d].
    *
-   * @param leafTypeClass the class of the array
-   * @param oneDimensionalCastMap the map of types to which this array can be casted,
+   * @param arrayClass the class of the array
+   * @param castableTypeMap the map of types to which this array can be casted,
    *          in the form of a JSON map object
    * @param elementTypeId the typeId of array elements
    * @param elementTypeCategory whether the element type is java.lang.Object
@@ -183,17 +140,9 @@ public final class Array {
    *        or some primitive type {@link TYPE_PRIMITIVE_BOOLEAN}, {@link TYPE_PRIMITIVE_LONG} or
    *        {@link TYPE_PRIMITIVE_NUMBER}.
    * @param array the JSON array that will be transformed into a GWT array
-   * @param dimensions the dimensions of the array
    * @return values; having wrapped it for GWT
    */
-  public static Object initValues(Class<?> leafTypeClass, JavaScriptObject oneDimensionalCastMap,
-      JavaScriptObject elementTypeId, int elementTypeCategory, Object array, int dimensions) {
-    return initValuesImpl(getClassLiteralForArray(leafTypeClass, dimensions),
-        createArrayCastMap(oneDimensionalCastMap, dimensions), elementTypeId,
-        elementTypeCategory, array);
-  }
-
-  private static Object initValuesImpl(Class<?> arrayClass, JavaScriptObject castableTypeMap,
+  public static Object initValues(Class<?> arrayClass, JavaScriptObject castableTypeMap,
       JavaScriptObject elementTypeId, int elementTypeCategory, Object array) {
     setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
@@ -358,7 +307,7 @@ public final class Array {
     return array;
   }-*/;
 
-  private static Object initDims(Class<?> leafClassLiteral, JavaScriptObject oneDimensionalCastMap,
+  private static Object initDims(Class<?> leafClassLiteral, JavaScriptObject[] castableTypeMapExprs,
       JavaScriptObject[] elementTypeIds, int leafElementTypeCategory, int[] dimExprs,
       int index, int count) {
     int length = dimExprs[index];
@@ -367,14 +316,14 @@ public final class Array {
     int elementTypeCategory = isLastDim ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
     Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
-    initValues(leafClassLiteral, oneDimensionalCastMap, elementTypeIds[index], elementTypeCategory,
-        result, count - index);
+    initValues(getClassLiteralForArray(leafClassLiteral, count - index),
+        castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);
 
     if (!isLastDim) {
       // Recurse to next dimension.
       ++index;
       for (int i = 0; i < length; ++i) {
-        set(result, i, initDims(leafClassLiteral, oneDimensionalCastMap,
+        set(result, i, initDims(leafClassLiteral, castableTypeMapExprs,
             elementTypeIds, leafElementTypeCategory, dimExprs, index, count));
       }
     }

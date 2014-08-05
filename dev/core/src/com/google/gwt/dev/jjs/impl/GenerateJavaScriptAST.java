@@ -2215,7 +2215,8 @@ public class GenerateJavaScriptAST {
       return toStringRef;
     }
 
-    private JsExpression generateCastableTypeMap(JCastMap castMap) {
+    private JsExpression generateCastableTypeMap(JClassType x) {
+      JCastMap castMap = program.getCastMap(x);
       if (castMap != null) {
         JField castableTypeMapField = program.getIndexedField("Object.castableTypeMap");
         JsName castableTypeMapName = names.get(castableTypeMapField);
@@ -2267,9 +2268,6 @@ public class GenerateJavaScriptAST {
 
         // Set up the artificial castmap for string.
         setupStringCastMap(program.getTypeJavaLangString(), globalStmts);
-
-        // Set up the artificial base array castmap.
-        setupBaseArrayCastMap(globalStmts);
 
         //  Perform necessary polyfills.
         globalStmts.add(constructInvocation(x.getSourceInfo(),
@@ -2501,7 +2499,7 @@ public class GenerateJavaScriptAST {
         jsProtoFieldRef.setQualifier(jsProtoClassRef);
         defineClassArguments.add(jsProtoClassRef);
       }
-      JsExpression castMap = generateCastableTypeMap(program.getCastMap(x));
+      JsExpression castMap = generateCastableTypeMap(x);
       defineClassArguments.add(castMap);
 
       // Chain assign the same prototype to every live constructor.
@@ -2532,25 +2530,12 @@ public class GenerateJavaScriptAST {
       JsName castableTypeMapName = names.get(castableTypeMapField);
       JsNameRef ctmRef = castableTypeMapName.makeRef(x.getSourceInfo());
 
-      JsExpression castMapLit = generateCastableTypeMap(program.getCastMap(x));
-      JsExprStmt ctmAsgStmt = createAssignment(ctmRef, castMapLit).makeStmt();
-
+      JsExpression castMapLit = generateCastableTypeMap(x);
+      JsExpression ctmAsg = createAssignment(ctmRef,
+          castMapLit);
+      JsExprStmt ctmAsgStmt = ctmAsg.makeStmt();
       globalStmts.add(ctmAsgStmt);
       typeForStatMap.put(ctmAsgStmt, x);
-    }
-
-    /*
-     * Sets up the baseArrayCastMap.
-     */
-    private void setupBaseArrayCastMap(List<JsStatement> globalStmts) {
-      //  Array.baseArrayĆastMap = /* baseArrayCastMap */ { ..:1, ..:1}
-      JField castableTypeMapField = program.getIndexedField("Cast.baseArrayCastMap");
-      JsName castableTypeMapName = names.get(castableTypeMapField);
-      JsNameRef ctmRef = castableTypeMapName.makeRef(SourceOrigin.UNKNOWN);
-      JsExpression castMap = generateCastableTypeMap(program.getBaseArrayCastMap());
-
-      JsExprStmt ctmAsgStmt = createAssignment(ctmRef, castMap).makeStmt();
-      globalStmts.add(ctmAsgStmt);
     }
 
     private void generateToStringAlias(JClassType x, List<JsStatement> globalStmts) {

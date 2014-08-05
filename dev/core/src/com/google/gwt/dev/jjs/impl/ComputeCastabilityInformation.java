@@ -32,11 +32,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
-import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -103,14 +99,7 @@ public class ComputeCastabilityInformation {
       }
 
       // pass our info to JProgram
-
-      program.initTypeInfo(castableTypesMap,
-          new JCastMap(SourceOrigin.UNKNOWN, program.getTypeJavaLangObject(),
-              (Set) ImmutableSortedSet.orderedBy(HasName.BY_NAME_COMPARATOR)
-                  .addAll(Iterables.filter(ImmutableList.of(
-                      program.getTypeJavaLangObject(),
-                      program.getTypeJavaLangCloneable(),
-                      program.getTypeJavaIoSerializable()), Predicates.notNull())).build()));
+      program.initTypeInfo(castableTypesMap);
     }
 
     /*
@@ -283,22 +272,10 @@ public class ComputeCastabilityInformation {
       recordCastInternal((JReferenceType) targetType, rhsType);
     }
 
-    private void recordCastInternal(JReferenceType lhsType, JReferenceType rhsType) {
-      lhsType = lhsType.getUnderlyingType();
+    private void recordCastInternal(JReferenceType toType, JReferenceType rhsType) {
+      toType = toType.getUnderlyingType();
       rhsType = rhsType.getUnderlyingType();
-      castSourceTypesPerCastTargetType.put(lhsType, rhsType);
-      if (!(lhsType instanceof JArrayType && rhsType instanceof JArrayType)) {
-        return;
-      }
-      // If there is a cast from Foo[X] to Bar[X], ensure that a cast from Foo[1] to Bar[1] is
-      // recorded so that a one dimensional castmap is sure to exist when Array.initDim() calls are
-      // synthesized.
-      JArrayType lhsArrayType = (JArrayType) lhsType;
-      JArrayType rhsArrayType = (JArrayType) rhsType;
-      if (lhsArrayType.getDims() > 1 && lhsArrayType.getDims() == rhsArrayType.getDims()) {
-        recordCastInternal(program.getOrCreateArrayType(lhsArrayType.getLeafType(), 1),
-            program.getOrCreateArrayType(rhsArrayType.getLeafType(), 1));
-      }
+      castSourceTypesPerCastTargetType.put(toType, rhsType);
     }
   }
 
