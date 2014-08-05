@@ -206,10 +206,26 @@ static PendingSatelliteWindow pendingWindow_;
    // record viewer url
    if(url != viewerUrl_)
    {
-      [url retain];
       [viewerUrl_ release];
-      viewerUrl_ = url;
-   }   
+      
+      // record about:blank literally
+      if ([url isEqual: @"about:blank"]) {
+         viewerUrl_ = [url retain];
+         return;
+      }
+      
+      // extract the authority (domain and port) from the URL; we'll agree to
+      // serve requests for the viewer pane that match this prefix.
+      // e.g. for http://foo:8402/bar/baz.html, extract http://foo:8402/
+      NSURL* viewerUrl = [NSURL URLWithString: url];
+      NSString* port = @"";
+      if ([viewerUrl port] != nil) {
+         port = [NSString stringWithFormat: @":%@", [viewerUrl port]];
+      }
+      NSString* prefix = [NSString stringWithFormat: @"%@://%@%@/",
+                          [viewerUrl scheme], [viewerUrl host], port];
+      viewerUrl_ = [prefix retain];
+   }
 }
 
 - (void) windowDidLoad
