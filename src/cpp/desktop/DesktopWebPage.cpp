@@ -309,4 +309,20 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
    }
 }
 
+void WebPage::setViewerUrl(const QString& viewerUrl)
+{
+   // record about:blank literally
+   if (viewerUrl == QString::fromAscii("about:blank"))
+   {
+      viewerUrl_ = viewerUrl;
+      return;
+   }
+
+   // extract the authority (domain and port) from the URL; we'll agree to
+   // serve requests for the viewer pane that match this prefix. 
+   QUrl url(viewerUrl);
+   viewerUrl_ = url.scheme() + QString::fromAscii("://") + 
+                url.authority() + QString::fromAscii("/");
+}
+
 }
