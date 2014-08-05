@@ -242,7 +242,7 @@ public class RCompletionManager implements CompletionManager
          });
    }
    
-   
+   @Override
    public boolean previewKeyDown(NativeEvent event)
    {
       /**

@@ -41,6 +41,8 @@ import org.rstudio.studio.client.application.events.UnauthorizedEvent;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
+import org.rstudio.studio.client.clang.model.ClangCompletions;
+import org.rstudio.studio.client.clang.model.ClangServerOperations;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -3527,7 +3529,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public  void getPackratPrerequisites(
+   public void getPackratPrerequisites(
          ServerRequestCallback<PackratPrerequisites> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_PACKRAT_PREREQUISITES, requestCallback);
@@ -3588,6 +3590,23 @@ public class RemoteServer implements Server
                   GET_PENDING_ACTIONS,
                   params,
                   requestCallback);
+   }
+   
+   @Override
+   public void getClangCompletions(
+         String input,
+         int row,  
+         int column,
+         ServerRequestCallback<ClangCompletions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(input));
+      params.set(1, new JSONNumber(row));
+      params.set(2, new JSONNumber(column));
+      sendRequest(RPC_SCOPE,
+            GET_CLANG_COMPLETIONS,
+            params,
+            requestCallback);
    }
    
    private String clientId_;
@@ -3893,4 +3912,6 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
+   
+   private static final String GET_CLANG_COMPLETIONS = "get_clang_completions";
 }

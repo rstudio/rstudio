@@ -48,6 +48,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.clang.model.ClangServerOperations;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -418,7 +419,9 @@ public class AceEditor implements DocDisplay,
                completionManager = new CppCompletionManager(this,
                                                             this,
                                                             new Filter(),
-                                                            completionManager);
+                                                            completionManager,
+                                                            this,
+                                                            (ClangServerOperations) server_);
             }
          }
          else

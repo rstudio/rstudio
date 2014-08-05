@@ -27,4 +27,5 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    void getHelpAtCursor(
          String line, int cursorPos,
          ServerRequestCallback<org.rstudio.studio.client.server.Void> callback);
+   
 }

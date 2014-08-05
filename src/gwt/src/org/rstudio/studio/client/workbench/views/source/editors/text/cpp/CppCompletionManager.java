@@ -22,33 +22,44 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.clang.model.ClangCompletions;
+import org.rstudio.studio.client.clang.model.ClangServerOperations;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
-
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+import com.google.inject.Inject;
 
 public class CppCompletionManager implements CompletionManager
 {
    public CppCompletionManager(InputEditorDisplay input,
                                NavigableSourceEditor navigableSourceEditor,
                                InitCompletionFilter initFilter,
-                               CompletionManager rCompletionManager)
+                               CompletionManager rCompletionManager,
+                               DocDisplay docDisplay,
+                               ClangServerOperations server)
    {
       input_ = input;
       navigableSourceEditor_ = navigableSourceEditor;
       initFilter_ = initFilter;
       rCompletionManager_ = rCompletionManager;
+      docDisplay_ = docDisplay;
+      server_ = server;
    }
 
    // return false to indicate key not handled
@@ -58,11 +69,10 @@ public class CppCompletionManager implements CompletionManager
       if (isCursorInRMode())
          return rCompletionManager_.previewKeyDown(event);
       
-      /*
       if (popup_ == null)
-      { 
-         if (false) // check for user completion key combo 
-                    // (we don't have any right now)
+      {
+         if ((event.getCtrlKey() && event.getKeyCode() == KeyCodes.KEY_SPACE) ||
+               (event.getKeyCode() == KeyCodes.KEY_TAB))
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
@@ -123,7 +133,6 @@ public class CppCompletionManager implements CompletionManager
          close();
          return false;
       }
-      */
       
       return false;
    }
@@ -135,7 +144,6 @@ public class CppCompletionManager implements CompletionManager
       if (isCursorInRMode())
          return rCompletionManager_.previewKeyPress(c);
       
-      /*
       if (popup_ != null)
       {
          // right now additional suggestions will be for attributes names
@@ -190,7 +198,6 @@ public class CppCompletionManager implements CompletionManager
             }
          }
       }
-      */
       
       return false ;
    }
@@ -210,7 +217,7 @@ public class CppCompletionManager implements CompletionManager
    private boolean isAttributeCompletionValidHere(char c)
    {     
       // TODO: we can't just append the character since it could
-      // be anywhere withinh the line -- need to insert it into 
+      // be anywhere within the line -- need to insert it into 
       // the right spot
       String line = input_.getText() + c;
       if (line.matches("\\s*//\\s+\\[\\[.*"))
@@ -280,27 +287,33 @@ public class CppCompletionManager implements CompletionManager
    {
       completionRequestInvalidation_.invalidate();
       final Token token = completionRequestInvalidation_.getInvalidationToken();
+      
+      String text = docDisplay_.getCode();
+      Position pos = input_.getCursorPosition();
 
       String value = input_.getText();
       Debug.logToConsole(value);
       
-      getCompletions(value,
-            new SimpleRequestCallback<JsArrayString>()
+      getCompletions(text,
+            pos.getRow(),
+            pos.getColumn(),
+            new SimpleRequestCallback<ClangCompletions>()
             {
                @Override
-               public void onResponseReceived(JsArrayString resp)
+               public void onResponseReceived(ClangCompletions resp)
                {
                   if (token.isInvalid())
                      return;
-
-                  if (resp.length() == 0)
+                  
+                  JsArrayString completions = resp.getClangCompletions();
+                  if (completions.length() == 0)
                   {
                      popup_ = new CompletionListPopupPanel(new String[0]);
                      popup_.setText("(No matching commands)");
                   }
                   else
                   {
-                     String[] entries = JsUtil.toStringArray(resp);
+                     String[] entries = JsUtil.toStringArray(completions);
                      popup_ = new CompletionListPopupPanel(entries);
                   }
 
@@ -344,9 +357,13 @@ public class CppCompletionManager implements CompletionManager
    
    
    private void getCompletions(
-         String line, 
-         ServerRequestCallback<JsArrayString> requestCallback) 
+         String input,
+         int row,
+         int column,
+         ServerRequestCallback<ClangCompletions> requestCallback) 
    {
+      Debug.logToConsole("Trying to get c++ completions");
+      server_.getClangCompletions(input, row, column, requestCallback);
    }
 
    private boolean isCursorInRMode()
@@ -367,6 +384,8 @@ public class CppCompletionManager implements CompletionManager
    private final InitCompletionFilter initFilter_ ;
    private final CompletionManager rCompletionManager_;
    private final Invalidation completionRequestInvalidation_ = new Invalidation();
+   private final DocDisplay docDisplay_;
+   private final ClangServerOperations server_;
    
   
 

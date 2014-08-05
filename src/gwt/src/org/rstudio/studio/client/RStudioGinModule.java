@@ -27,6 +27,7 @@ import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.ui.ApplicationWindow;
+import org.rstudio.studio.client.clang.model.ClangServerOperations;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -335,6 +336,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
+      bind(ClangServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
