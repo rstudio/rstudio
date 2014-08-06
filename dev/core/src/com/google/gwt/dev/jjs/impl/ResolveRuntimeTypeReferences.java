@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JCastMap;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLiteral;
@@ -33,6 +34,8 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 import com.google.gwt.thirdparty.guava.common.collect.Multisets;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -42,9 +45,16 @@ import java.util.Map.Entry;
 public abstract class ResolveRuntimeTypeReferences {
 
   /**
+   * Identifies a way of sorting types when generating ids.
+   */
+  public enum TypeOrder {
+    ALPHABETICAL, FREQUENCY
+  }
+
+  /**
    * Sequentially creates int type ids for types.
    */
-  private static class IntTypeIdGenerator {
+  public static class IntTypeIdGenerator {
 
     private final Map<String, Integer> typeIdByTypeName = Maps.newHashMap();
     private int nextAvailableId =  0;
@@ -77,15 +87,25 @@ public abstract class ResolveRuntimeTypeReferences {
       typeIdLiteralsByType.put(type, JIntLiteral.get(id));
     }
 
+    public static Map<JType, JLiteral> exec(JProgram program, TypeOrder typeOrder,
+        IntTypeIdGenerator intTypeIdGenerator) {
+      return new ResolveRuntimeTypeReferences.IntoIntLiterals(program, typeOrder,
+          intTypeIdGenerator).execImpl();
+    }
+
     public static Map<JType, JLiteral> exec(JProgram program) {
       return new ResolveRuntimeTypeReferences.IntoIntLiterals(program,
-          new IntTypeIdGenerator()).execImpl();
+          TypeOrder.FREQUENCY, new IntTypeIdGenerator()).execImpl();
     }
 
     private IntTypeIdGenerator intTypeIdGenerator;
 
-    private IntoIntLiterals(JProgram program, IntTypeIdGenerator intTypeIdGenerator) {
+    private TypeOrder typeOrder;
+
+    private IntoIntLiterals(JProgram program, TypeOrder typeOrder,
+        IntTypeIdGenerator intTypeIdGenerator) {
       super(program);
+      this.typeOrder = typeOrder;
       this.intTypeIdGenerator = intTypeIdGenerator;
     }
 
@@ -96,10 +116,19 @@ public abstract class ResolveRuntimeTypeReferences {
       assignId(program.getTypeJavaLangObject());
       assignId(program.getTypeJavaLangString());
 
-      ImmutableMultiset<JReferenceType> typesOrderedByFrequency =
-          Multisets.copyHighestCountFirst(typesWithReferenceCounts);
-      for (JType type : typesOrderedByFrequency.elementSet()) {
-        assignId(type);
+      if (typeOrder == TypeOrder.FREQUENCY) {
+        ImmutableMultiset<JReferenceType> typesOrderedByFrequency =
+            Multisets.copyHighestCountFirst(typesWithReferenceCounts);
+        for (JType type : typesOrderedByFrequency.elementSet()) {
+          assignId(type);
+        }
+      } else {
+        List<JType> typesOrderedAlphabetically =
+            Lists.<JType> newArrayList(typesWithReferenceCounts.elementSet());
+        Collections.sort(typesOrderedAlphabetically, HasName.BY_NAME_COMPARATOR);
+        for (JType type : typesOrderedAlphabetically) {
+          assignId(type);
+        }
       }
     }
   }

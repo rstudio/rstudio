@@ -25,6 +25,7 @@ import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.PermutationResult;
+import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.Memory;
@@ -158,11 +159,16 @@ public class Compiler {
         // Disable options that disrupt contiguous output JS source per class.
         options.setClusterSimilarFunctions(false);
         options.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
+        // TODO(stalcup): make obfuscated and pretty namers that are consistent across compiles.
         options.setOutput(JsOutputOption.DETAILED);
         options.setRunAsyncEnabled(false);
 
         // Disable options not yet supported with a persistent JTypeOracle.
         options.setJsInteropMode(JsInteropMode.NONE);
+
+        // Disable options that disrupt reference consistency across multiple compiles.
+        // TODO(stalcup): preserve Namespace state in MinimalRebuildCache across compiles.
+        options.setNamespace(JsNamespaceOption.NONE);
       }
 
       File persistentUnitCacheDir = null;

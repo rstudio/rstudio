@@ -290,8 +290,8 @@ public abstract class JavaToJavaScriptCompiler {
 
         // (5) Construct the Js AST
         Pair<? extends JavaToJavaScriptMap, Set<JsNode>> jjsMapAndInlineableFunctions =
-            GenerateJavaScriptAST.exec(jprogram, jsProgram, compilerContext,
-                typeIdLiteralsByType,  symbolTable, props);
+            GenerateJavaScriptAST.exec(logger, jprogram, jsProgram,
+                compilerContext,  typeIdLiteralsByType, symbolTable, props);
         JavaToJavaScriptMap jjsmap = jjsMapAndInlineableFunctions.getLeft();
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
@@ -1008,7 +1008,8 @@ public abstract class JavaToJavaScriptCompiler {
       // Free up memory.
       rpo.clear();
       jprogram.typeOracle.computeBeforeAST(StandardTypes.createFrom(jprogram),
-          jprogram.getDeclaredTypes());
+          jprogram.getDeclaredTypes(), jprogram.getModuleDeclaredTypes(),
+          getMinimalRebuildCache().computeDeletedTypeNames());
       return compilationState;
     }
 

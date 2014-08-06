@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
+import com.google.gwt.dev.jjs.impl.ComputeExhaustiveCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.ComputeInstantiatedJsoInterfaces;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.Devirtualizer;
@@ -46,6 +47,7 @@ import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.RemoveSpecializations;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
@@ -94,15 +96,28 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         LongCastNormalizer.exec(jprogram);
         LongEmulationNormalizer.exec(jprogram);
         TypeCoercionNormalizer.exec(jprogram);
-        // If trivial casts are pruned then one can use smaller runtime castmaps.
-        ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled(),
-            !shouldOptimize()  /* recordTrivialCasts */);
+
+        if (options.shouldCompilePerFile()) {
+          // Per file compilation reuses type JS even as references (like casts) in other files
+          // change, which means all legal casts need to be allowed now before they are actually
+          // used later.
+          ComputeExhaustiveCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+        } else {
+          // If trivial casts are pruned then one can use smaller runtime castmaps.
+          ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled(),
+              !shouldOptimize() /* recordTrivialCasts */);
+        }
+
         ComputeInstantiatedJsoInterfaces.exec(jprogram);
         ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled(),
             shouldOptimize() /* pruneTrivialCasts */);
         ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
         EqualityNormalizer.exec(jprogram);
-        return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram);
+
+        TypeOrder typeIdOrder =
+            options.shouldCompilePerFile() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
+        return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram, typeIdOrder,
+            compilerContext.getMinimalRebuildCache().getIntTypeIdGenerator());
       } finally {
         event.end();
       }

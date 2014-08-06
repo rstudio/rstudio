@@ -100,8 +100,8 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     PermProps props = new PermProps(Arrays.asList(
         new BindingProps(orderedProps, orderedPropValues, config)
     ));
-    return GenerateJavaScriptAST.exec(jProgram, jsProgram, compilerContext, typeIdsByType,
-        symbolTable, props);
+    return GenerateJavaScriptAST.exec(logger, jProgram, jsProgram, compilerContext,
+        typeIdsByType, symbolTable, props);
   }
 
   abstract protected void optimizeJava();

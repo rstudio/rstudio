@@ -82,7 +82,7 @@ public class AstConstructor {
 
     // Compute all super type/sub type info
     jprogram.typeOracle.computeBeforeAST(StandardTypes.createFrom(jprogram),
-        jprogram.getDeclaredTypes());
+        jprogram.getDeclaredTypes(), jprogram.getModuleDeclaredTypes());
 
     // (3) Perform Java AST normalizations.
     FixAssignmentsToUnboxOrCast.exec(jprogram);

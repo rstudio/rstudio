@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.javac.Dependencies.Ref;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -26,6 +27,7 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
@@ -85,11 +87,18 @@ public class CompilationStateTest extends CompilationStateTestBase {
   }
 
   public void testAddGeneratedCompilationUnit() {
-    validateCompilationState();
+    MinimalRebuildCache minimalRebuildCache = compilerContext.getMinimalRebuildCache();
 
-    // Add a unit and ensure it shows up.
+    // Compile and ensure that not-yet-generated class Foo is not seen.
+    validateCompilationState();
+    assertEquals(minimalRebuildCache.getAllCompilationUnitNames(),
+        getNamesOf(oracle.getResources()));
+    assertFalse(minimalRebuildCache.getModifiedCompilationUnitNames().contains("test.Foo"));
+
+    // Add a generated unit and ensure it shows up as a new modified unit.
     addGeneratedUnits(JavaResourceBase.FOO);
     validateCompilationState(Shared.getTypeName(JavaResourceBase.FOO));
+    assertTrue(minimalRebuildCache.getModifiedCompilationUnitNames().contains("test.Foo"));
 
     rebuildCompilationState();
     validateCompilationState();
@@ -435,17 +444,20 @@ public class CompilationStateTest extends CompilationStateTestBase {
     assertEquals(oracle.getResources().size() + initialSet.length,
         units1.size());
     assertUnitsChecked(units1.values());
+    assertTrue(compilerContext.getMinimalRebuildCache().getModifiedCompilationUnitNames()
+        .containsAll(getNamesOf(Arrays.asList(initialSet))));
 
     // Add 'updatedSet' generatedUnits on the second cycle.
     rebuildCompilationState();
-    assertEquals(oracle.getResources().size(),
-        state.getCompilationUnits().size());
+    assertEquals(oracle.getResources().size(), state.getCompilationUnits().size());
     addGeneratedUnits(updatedSet);
     Map<String, CompilationUnit> units2 =
         new HashMap<String, CompilationUnit>(state.getCompilationUnitMap());
-    assertEquals(oracle.getResources().size() + updatedSet.length,
-        units2.size());
+    assertEquals(oracle.getResources().size() + updatedSet.length, units2.size());
     assertUnitsChecked(units2.values());
+    // Can't make assertions about modified compilation unit names here because the
+    // CompilationUnitInvalidator and staleness checking in the MinimalRebuildCache have different
+    // semantics.
 
     // Validate that only 'reusedTypes' are reused.
     for (MockJavaResource resource : updatedSet) {
@@ -473,6 +485,14 @@ public class CompilationStateTest extends CompilationStateTestBase {
       String typeName = resource.getTypeName();
       assertSame(units2.get(typeName), units3.get(typeName));
     }
+  }
+
+  private Set<String> getNamesOf(Iterable<? extends Resource> initialSet) {
+    Set<String> compilationUnitTypeNames = new HashSet<String>();
+    for (Resource mockResource : initialSet) {
+      compilationUnitTypeNames.add(Shared.getTypeName(mockResource));
+    }
+    return compilationUnitTypeNames;
   }
 
   private void validateSerializedTestUnit(MockJavaResource resource,

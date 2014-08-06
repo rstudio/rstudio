@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.javac.typemodel.LibraryTypeOracle;
@@ -538,6 +539,8 @@ public class CompilationStateBuilder {
     Map<CompilationUnitBuilder, CompilationUnit> cachedUnits = Maps.newIdentityHashMap();
 
     CompileMoreLater compileMoreLater = new CompileMoreLater(compilerContext, compilerDelegate);
+    Set<String> modifiedCompilationUnitNames = Sets.newHashSet();
+    Set<String> allCompilationUnitNames = Sets.newHashSet();
 
     // For each incoming Java source file...
     for (Resource resource : resources) {
@@ -546,6 +549,13 @@ public class CompilationStateBuilder {
 
       CompilationUnit cachedUnit = unitCache.find(resource.getPathPrefix() + resource.getPath());
 
+      String compilationUnitName = Shared.getTypeName(resource);
+      allCompilationUnitNames.add(compilationUnitName);
+      // Keep track of the names of units that are new or are known to have changed.
+      if (cachedUnit == null || cachedUnit.getLastModified() != resource.getLastModified()) {
+        // For the root type in a compilation unit the source and binary name are the same.
+        modifiedCompilationUnitNames.add(compilationUnitName);
+      }
       // Try to rescue cached units from previous sessions where a jar has been
       // recompiled.
       if (cachedUnit != null && cachedUnit.getLastModified() != resource.getLastModified()) {
@@ -567,6 +577,9 @@ public class CompilationStateBuilder {
       }
       builders.add(builder);
     }
+    MinimalRebuildCache minimalRebuildCache = compilerContext.getMinimalRebuildCache();
+    minimalRebuildCache.setModifiedCompilationUnitNames(logger, modifiedCompilationUnitNames);
+    minimalRebuildCache.setAllCompilationUnitNames(logger, allCompilationUnitNames);
     int cachedSourceCount = cachedUnits.size();
     int sourceCount = resources.size();
     if (logger.isLoggable(TreeLogger.TRACE)) {
@@ -618,6 +631,7 @@ public class CompilationStateBuilder {
 
     // Units we don't want to rebuild unless we have to.
     Map<CompilationUnitBuilder, CompilationUnit> cachedUnits = Maps.newIdentityHashMap();
+    Set<String> modifiedCompilationUnitNames = Sets.newHashSet();
 
     // For each incoming generated Java source file...
     for (GeneratedUnit generatedUnit : generatedUnits) {
@@ -626,7 +640,11 @@ public class CompilationStateBuilder {
 
       // Look for units previously compiled
       CompilationUnit cachedUnit = unitCache.find(builder.getContentId());
-      if (cachedUnit != null) {
+      // Keep track of the names of units that are new or are known to have changed.
+      if (cachedUnit == null) {
+        // For the root type in a compilation unit the source and binary name are the same.
+        modifiedCompilationUnitNames.add(generatedUnit.getTypeName());
+      } else if (cachedUnit != null) {
         // Recompile generated units with errors so source can be dumped.
         if (!cachedUnit.isError()) {
           cachedUnits.put(builder, cachedUnit);
@@ -636,6 +654,8 @@ public class CompilationStateBuilder {
       }
       builders.add(builder);
     }
+    compilerContext.getMinimalRebuildCache().addModifiedCompilationUnitNames(logger,
+        modifiedCompilationUnitNames);
     compilationState.incrementGeneratedSourceCount(builders.size() + cachedUnits.size());
     compilationState.incrementCachedGeneratedSourceCount(cachedUnits.size());
     return compileMoreLater.compile(logger, compilerContext, builders,

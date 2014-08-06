@@ -388,4 +388,21 @@ public class JavaResourceBase {
       }
     };
   }
+
+  /**
+   * Creates a new MockResource.
+   */
+  public static MockResource createMockResource(String resourceName,
+      final String... lines) {
+    return new MockResource(resourceName) {
+      @Override
+      public CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        for (String line : lines) {
+          code.append(line + "\n");
+        }
+        return code;
+      }
+    };
+  }
 }

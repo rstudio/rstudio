@@ -88,7 +88,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   public static final Set<String> CODEGEN_TYPES_SET = Sets.newLinkedHashSet(Arrays.asList(
       "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
       "com.google.gwt.lang.RuntimePropertyRegistry", "com.google.gwt.lang.Exceptions",
-      "com.google.gwt.lang.LongLib", "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util"));
+      "com.google.gwt.lang.LongLib", "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util",
+      "java.lang.Object"));
 
   /*
    * Types which are not referenced by any Java code, but are required to exist
@@ -108,6 +109,13 @@ public class JProgram extends JNode implements ArrayTypeCreator {
       "com.google.gwt.lang.ModuleUtils"));
 
   public static final String JAVASCRIPTOBJECT = "com.google.gwt.core.client.JavaScriptObject";
+
+  public static final String CLASS_LITERAL_HOLDER = "com.google.gwt.lang.ClassLiteralHolder";
+
+  /**
+   * Types whose entire implementation is synthesized at compile time.
+   */
+  public static final Set<String> SYNTHETIC_TYPE_NAMES = Sets.newHashSet(CLASS_LITERAL_HOLDER);
 
   static final Map<String, Set<String>> traceMethods = Maps.newHashMap();
 
@@ -438,7 +446,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
         typeClass = (JClassType) type;
       } else if (name.equals(JAVASCRIPTOBJECT)) {
         typeSpecialJavaScriptObject = (JClassType) type;
-      } else if (name.equals("com.google.gwt.lang.ClassLiteralHolder")) {
+      } else if (name.equals(CLASS_LITERAL_HOLDER)) {
         typeSpecialClassLiteralHolder = (JClassType) type;
       } else if (name.equals("java.lang.Cloneable")) {
         typeJavaLangCloneable = (JInterfaceType) type;
@@ -1149,8 +1157,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
         "java.lang.AssertionError", "java.lang.Boolean", "java.lang.Byte", "java.lang.Character",
         "java.lang.Short", "java.lang.Integer", "java.lang.Long", "java.lang.Float",
         "java.lang.Double", "java.lang.Throwable", "com.google.gwt.core.client.GWT",
-        JProgram.JAVASCRIPTOBJECT, "com.google.gwt.lang.RuntimeRebinder",
-        "com.google.gwt.lang.ClassLiteralHolder", "com.google.gwt.core.client.RunAsyncCallback",
+        JAVASCRIPTOBJECT, "com.google.gwt.lang.RuntimeRebinder",
+        CLASS_LITERAL_HOLDER, "com.google.gwt.core.client.RunAsyncCallback",
         "com.google.gwt.core.client.impl.AsyncFragmentLoader",
         "com.google.gwt.core.client.impl.Impl",
         "com.google.gwt.core.client.prefetch.RunAsyncCode"));

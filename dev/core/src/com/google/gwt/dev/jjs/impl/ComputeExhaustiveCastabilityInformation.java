@@ -43,7 +43,7 @@ public class ComputeExhaustiveCastabilityInformation {
 
   private void createCompleteCastMap(JReferenceType sourceType) {
     castMaps.put(sourceType, new JCastMap(SourceOrigin.UNKNOWN, program.getTypeJavaLangObject(),
-        program.typeOracle.getSuperHierarchyTypes(sourceType)));
+        program.typeOracle.getCastableDestinationTypes(sourceType)));
   }
 
   private void execImpl() {

@@ -37,6 +37,7 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
+import com.google.gwt.dev.util.arg.ArgHandlerCompilePerFile;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
@@ -540,6 +541,7 @@ public class JUnitShell extends DevMode {
         }
       });
 
+      registerHandler(new ArgHandlerCompilePerFile(options));
       registerHandler(new ArgHandlerJsInteropMode(options));
     }
 

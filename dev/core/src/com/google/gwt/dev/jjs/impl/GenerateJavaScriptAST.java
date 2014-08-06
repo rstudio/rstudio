@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.HasSourceInfo;
@@ -162,6 +163,7 @@ import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -554,14 +556,14 @@ public class GenerateJavaScriptAST {
             // Also add the mapping from the top of the package private overriding chain, so
             // so that it can be referred when generating the vtable of a subclass that
             // increases the visibility of this method.
-            polymorphicNames.put(program.typeOracle.getTopMostDefinition(x), polyName);
+            polymorphicNames.put(typeOracle.getTopMostDefinition(x), polyName);
 
           } else if (specialObfuscatedMethodSigs.containsKey(x.getSignature())) {
             polyName = interfaceScope.declareName(mangleNameSpecialObfuscate(x));
             polyName.setObfuscatable(false);
             // if a JsType and we can set set the interface method to non-obfuscatable
-          } else if (!x.isNoExport() && program.typeOracle.isJsTypeMethod(x) &&
-              !program.typeOracle.needsJsInteropBridgeMethod(x)) {
+          } else if (!x.isNoExport() && typeOracle.isJsTypeMethod(x) &&
+              !typeOracle.needsJsInteropBridgeMethod(x)) {
               polyName = interfaceScope.declareName(name, name);
               polyName.setObfuscatable(false);
           } else {
@@ -895,7 +897,7 @@ public class GenerateJavaScriptAST {
         }
       }
 
-      if (typeOracle.isInstantiatedType(x) && !program.typeOracle.isJavaScriptObject(x) &&
+      if (typeOracle.isInstantiatedType(x) && !typeOracle.isJavaScriptObject(x) &&
           x !=  program.getTypeJavaLangString()) {
         generateClassSetup(x, globalStmts);
       }
@@ -918,8 +920,8 @@ public class GenerateJavaScriptAST {
         globalStmts.add(vars);
       }
 
-      if (program.typeOracle.isInteropEnabled() &&
-          typeOracle.isInstantiatedType(x) && !program.typeOracle.isJavaScriptObject(x) &&
+      if (typeOracle.isInteropEnabled() &&
+          typeOracle.isInstantiatedType(x) && !typeOracle.isJavaScriptObject(x) &&
         x !=  program.getTypeJavaLangString()) {
         // done after class setup because exports may rely on static vars
         generateExports(x, exportStmts);
@@ -1161,7 +1163,7 @@ public class GenerateJavaScriptAST {
         globalStmts.add(vars);
       }
 
-      if (program.typeOracle.isInteropEnabled()) {
+      if (typeOracle.isInteropEnabled()) {
         generateExports(x, exportStmts);
       }
     }
@@ -1390,9 +1392,8 @@ public class GenerateJavaScriptAST {
           JType type = target.getType();
 
           boolean isFluent = type instanceof JReferenceType
-              && type != program.getTypeJavaLangObject() &&
-              program.typeOracle.canTriviallyCast(x.getTarget().getEnclosingType(),
-                  ((JReferenceType) type).getUnderlyingType());
+              && type != program.getTypeJavaLangObject() && typeOracle.canTriviallyCast(
+                  x.getTarget().getEnclosingType(), ((JReferenceType) type).getUnderlyingType());
           JsExpression qualExpr = pop();
 
           if (getter != null) {
@@ -1407,7 +1408,7 @@ public class GenerateJavaScriptAST {
         } else {
           // insert trampoline (_ = instance, trampoline(_, _.jsBridgeMethRef,
           // _.javaMethRef)).bind(_)(args)
-          if (program.typeOracle.needsJsInteropBridgeMethod(method)) {
+          if (typeOracle.needsJsInteropBridgeMethod(method)) {
             maybeDispatchViaTrampolineToBridgeMethod(x, method, jsInvocation,
                 unnecessaryQualifier, result, polyName);
 
@@ -1523,7 +1524,7 @@ public class GenerateJavaScriptAST {
       String jsPrototype = null;
       // find JsType of Prototype method being invoked.
       for (JInterfaceType intf : method.getEnclosingType().getImplements()) {
-        JDeclaredType jsIntf = program.typeOracle.getNearestJsType(intf, true);
+        JDeclaredType jsIntf = typeOracle.getNearestJsType(intf, true);
         assert jsIntf instanceof JInterfaceType;
 
         if (jsIntf != null) {
@@ -1535,7 +1536,7 @@ public class GenerateJavaScriptAST {
 
       // in JsType case, super.foo() call requires SuperCtor.prototype.foo.call(this, args)
       // the method target should be on a class that ends with $Prototype and implements a JsType
-      if (!(method instanceof JConstructor) && program.typeOracle.isJsTypeMethod(method)) {
+      if (!(method instanceof JConstructor) && typeOracle.isJsTypeMethod(method)) {
         JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
         methodRef = new JsNameRef(methodRef.getSourceInfo(), method.getName());
         // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
@@ -1821,6 +1822,16 @@ public class GenerateJavaScriptAST {
 
       Set<JDeclaredType> preambleTypes = generatePreamble(x, globalStmts);
 
+      // Record the names of preamble types so that it's possible to invalidate caches when the
+      // preamble types are known to have become stale.
+      if (!minimalRebuildCache.hasPreambleTypeNames()) {
+        Set<String> preambleTypeNames =  Sets.newHashSet();
+        for (JDeclaredType preambleType : preambleTypes) {
+          preambleTypeNames.add(preambleType.getName());
+        }
+        minimalRebuildCache.setPreambleTypeNames(logger, preambleTypeNames);
+      }
+
       // Sort normal types according to superclass relationship.
       Set<JDeclaredType> topologicallySortedBodyTypes = Sets.newLinkedHashSet();
       for (JDeclaredType type : x.getModuleDeclaredTypes()) {
@@ -1890,11 +1901,13 @@ public class GenerateJavaScriptAST {
       assert !modularCompile || checkCoreModulePreambleComplete(program,
           program.getTypeClassLiteralHolder().getClinitMethod());
 
+      // TODO(stalcup): modify CFA to not artificially add all JSOs.
       Set<JDeclaredType> orderedPreambleClasses = Sets.newLinkedHashSet();
       for (JDeclaredType type : reachableClasses) {
-        if (!alreadyProcessedTypes.contains(type)) {
-          insertInTopologicalOrder(type, orderedPreambleClasses);
+        if (typeOracle.isJavaScriptObject(type) || alreadyProcessedTypes.contains(type)) {
+          continue;
         }
+        insertInTopologicalOrder(type, orderedPreambleClasses);
       }
 
       // TODO(rluble): The set of preamble types might be overly large, in particular will include
@@ -2596,7 +2609,7 @@ public class GenerateJavaScriptAST {
           JsName polyJsName = polymorphicNames.get(method);
           generateVTableAssignment(globalStmts, method, polyJsName, rhs);
           if (!method.isNoExport()
-              && program.typeOracle.needsJsInteropBridgeMethod(method)) {
+              && typeOracle.needsJsInteropBridgeMethod(method)) {
             JsName exportedName = polyJsName.getEnclosing().declareName(
                 method.getName(), method.getName());
             // _.exportedName = makeBridgeMethod(_.polyName)
@@ -2658,7 +2671,7 @@ public class GenerateJavaScriptAST {
       for (JMethod m : x.getMethods()) {
         if (m instanceof JConstructor) {
           if (!((JConstructor) m).isDefaultConstructor()
-              && program.typeOracle.isExportedMethod(m)) {
+              && typeOracle.isExportedMethod(m)) {
             ctor = (JConstructor) m;
             break;
           }
@@ -2671,7 +2684,7 @@ public class GenerateJavaScriptAST {
         }
         // static functions or constructors may be exported
         if (m == ctor && !m.isPrivate() ||
-            (m.isStatic()) && program.typeOracle.isExportedMethod(m)) {
+            (m.isStatic()) && typeOracle.isExportedMethod(m)) {
 
           createdClinit = maybeHoistClinit(exportStmts, createdClinit, maybeCreateClinitCall(m));
           JsExpression exportRhs = createJsInteropBridgeMethod(m,
@@ -2820,7 +2833,7 @@ public class GenerateJavaScriptAST {
      * Returns the package private JsName for {@code method}.
      */
     private JsName getPackagePrivateName(JMethod method) {
-      return polymorphicNames.get(program.typeOracle.getTopMostDefinition(method));
+      return polymorphicNames.get(typeOracle.getTopMostDefinition(method));
     }
 
     private void handleClinit(JsFunction clinitFunc, JsFunction superClinit) {
@@ -2840,8 +2853,8 @@ public class GenerateJavaScriptAST {
     private boolean isMethodPotentiallyCalledAcrossClasses(JMethod method) {
       assert !hasWholeWorldKnowledge || crossClassTargets != null;
       return crossClassTargets == null || crossClassTargets.contains(method) ||
-          program.typeOracle.isExportedMethod(method) ||
-          program.typeOracle.isJsTypeMethod(method);
+          typeOracle.isExportedMethod(method) ||
+          typeOracle.isJsTypeMethod(method);
     }
 
     /**
@@ -2885,7 +2898,7 @@ public class GenerateJavaScriptAST {
       }
       JDeclaredType enclosingType = x.getEnclosingType();
       if (x.canBePolymorphic() || (program.isStaticImpl(x) &&
-          !program.typeOracle.isJavaScriptObject(enclosingType))) {
+          !typeOracle.isJavaScriptObject(enclosingType))) {
         return null;
       }
       if (enclosingType == null || !enclosingType.hasClinit()) {
@@ -3137,7 +3150,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      if (program.typeOracle.isExportedMethod(x) && x instanceof JConstructor) {
+      if (typeOracle.isExportedMethod(x) && x instanceof JConstructor) {
         // exported ctors always considered live
         liveCtors.add((JConstructor) x);
         // could be called from JS, so clinit must be called from body
@@ -3220,21 +3233,22 @@ public class GenerateJavaScriptAST {
    * Java AST and constructs a JavaScript AST while collecting other useful information that
    * is used in subsequent passes.
    *
+   * @param logger            a TreeLogger
    * @param program           a Java AST
    * @param jsProgram         an (empty) JavaScript AST
    * @param symbolTable       an (empty) symbol table that will be populated here
+   *
    * @return A pair containing a JavaToJavaScriptMap and a Set of JsFunctions that need to be
    *         considered for inlining.
    */
-  public static Pair<JavaToJavaScriptMap, Set<JsNode>> exec(JProgram program,
+  public static Pair<JavaToJavaScriptMap, Set<JsNode>> exec(TreeLogger logger, JProgram program,
       JsProgram jsProgram, CompilerContext compilerContext, Map<JType, JLiteral> typeIdsByType,
       Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
 
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATE_JS_AST);
     try {
-      GenerateJavaScriptAST generateJavaScriptAST =
-          new GenerateJavaScriptAST(program, jsProgram, compilerContext, typeIdsByType,
-              symbolTable, props);
+      GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(logger, program,
+          jsProgram, compilerContext, typeIdsByType, symbolTable, props);
       return generateJavaScriptAST.execImpl();
     } finally {
       event.end();
@@ -3307,6 +3321,10 @@ public class GenerateJavaScriptAST {
   // TODO(rluble) move optimization to a Java AST optimization pass.
   private final boolean hasWholeWorldKnowledge;
 
+  private final boolean optimize;
+
+  private final TreeLogger logger;
+
   private final boolean modularCompile;
 
   /**
@@ -3343,19 +3361,26 @@ public class GenerateJavaScriptAST {
 
   private final Map<JType, JLiteral> typeIdsByType;
 
+  private final MinimalRebuildCache minimalRebuildCache;
+
   private final PermProps props;
 
-  private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
+  private GenerateJavaScriptAST(TreeLogger logger, JProgram program, JsProgram jsProgram,
       CompilerContext compilerContext, Map<JType, JLiteral> typeIdsByType,
       Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
+    this.logger = logger;
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
     topScope = jsProgram.getScope();
     objectScope = jsProgram.getObjectScope();
     interfaceScope = new JsNormalScope(objectScope, "Interfaces");
+    this.minimalRebuildCache = compilerContext.getMinimalRebuildCache();
     this.output = compilerContext.getOptions().getOutput();
-    this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic();
+    this.optimize =
+        compilerContext.getOptions().getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
+    this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic()
+        && !compilerContext.getOptions().shouldCompilePerFile();
     this.modularCompile = !compilerContext.shouldCompileMonolithic();
     this.symbolTable = symbolTable;
     this.typeIdsByType = typeIdsByType;
@@ -3442,7 +3467,7 @@ public class GenerateJavaScriptAST {
      * class name of where the method is first defined to the mangled name.
      */
     sb.append("package_private$");
-    JMethod topDefinition = program.typeOracle.getTopMostDefinition(x);
+    JMethod topDefinition = typeOracle.getTopMostDefinition(x);
     sb.append(getNameString(topDefinition.getEnclosingType()));
     sb.append("$");
     sb.append(getNameString(x));
@@ -3534,9 +3559,18 @@ public class GenerateJavaScriptAST {
     }
   }
 
+  private void assumeAllClassesCanObserveUninitializedSubclassFields(JProgram program) {
+    canObserveSubclassFields.addAll(program.getModuleDeclaredTypes());
+  }
+
   private Pair<JavaToJavaScriptMap, Set<JsNode>> execImpl() {
     new FixNameClashesVisitor().accept(program);
-    new CanObserveSubclassUninitializedFieldsVisitor().accept(program);
+    if (optimize) {
+      new CanObserveSubclassUninitializedFieldsVisitor().accept(program);
+    } else {
+      // Assume the worst case.
+      assumeAllClassesCanObserveUninitializedSubclassFields(program);
+    }
     new FindNameOfTargets().accept(program);
     new SortVisitor().accept(program);
     if (hasWholeWorldKnowledge) {

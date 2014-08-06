@@ -15,6 +15,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.MinimalRebuildCache.PermutationRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -147,6 +148,11 @@ public class TypeReferencesRecorder extends JVisitor {
   }
 
   private void maybeRecordTypeRef(JType referencedType) {
+    if (referencedType instanceof JArrayType) {
+      JArrayType toArrayType = (JArrayType) referencedType;
+      maybeRecordTypeRef(toArrayType.getLeafType());
+    }
+
     if (!(referencedType instanceof JDeclaredType)) {
       return;
     }

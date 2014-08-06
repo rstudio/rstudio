@@ -266,8 +266,8 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
 
     JsProgram jsProgram = new JsProgram();
     JavaToJavaScriptMap jjsmap = GenerateJavaScriptAST.exec(
-        jProgram, jsProgram, context, typeIdsByType, symbolTable,
-        props).getLeft();
+        logger, jProgram, jsProgram, context, typeIdsByType,
+        symbolTable, props).getLeft();
 
     // Finally, run the pass we care about.
     JsStackEmulator.exec(jProgram, jsProgram, props, jjsmap);
