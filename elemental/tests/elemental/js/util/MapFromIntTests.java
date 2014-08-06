@@ -15,9 +15,9 @@
  */
 package elemental.js.util;
 
-import static elemental.js.util.TestUtils.assertSamelitude;
-
 import com.google.gwt.junit.client.GWTTestCase;
+
+import static elemental.js.util.TestUtils.assertSamelitude;
 
 import elemental.util.Collections;
 import elemental.util.MapFromIntTo;
@@ -38,7 +38,7 @@ public class MapFromIntTests extends GWTTestCase {
    */
   public void testMapsFromInts() {
     // This is our test subject.
-    final MapFromIntTo<TestItem> map = Collections.mapFromIntTo(TestItem.class);
+    final MapFromIntTo<TestItem> map = Collections.mapFromIntTo();
 
     // These are his keys.
     final int[] keys = new int[] {1, 2, 3};

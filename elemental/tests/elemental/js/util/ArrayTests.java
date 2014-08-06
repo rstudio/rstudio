@@ -70,7 +70,7 @@ public class ArrayTests extends GWTTestCase {
 
   @SuppressWarnings("unchecked")
   private static <T> ArrayOf<T> arrayFrom(T... items) {
-    final ArrayOf<T> array = (ArrayOf<T>) Collections.arrayOf(Object.class);
+    final ArrayOf<T> array = (ArrayOf<T>) Collections.arrayOf();
     for (int i = 0, n = items.length; i < n; ++i) {
       array.push(items[i]);
     }
@@ -87,7 +87,7 @@ public class ArrayTests extends GWTTestCase {
    */
   public void testArrays() {
     // This is our test subject.
-    final ArrayOf<TestItem> array = Collections.arrayOf(TestItem.class);
+    final ArrayOf<TestItem> array = Collections.arrayOf();
 
     // These are items to put in him.
     final TestItem[] items = new TestItem[] {new TestItem(0), new TestItem(1), new TestItem(2)};
@@ -380,7 +380,7 @@ public class ArrayTests extends GWTTestCase {
    * Tests {@link ArrayOf#insert(int, Object)}.
    */
   public void testInsertingIntoArrays() {
-    final ArrayOf<TestItem> array = Collections.arrayOf(TestItem.class);
+    final ArrayOf<TestItem> array = Collections.arrayOf();
 
     final TestItem a = new TestItem(0);
     array.insert(0, a);
@@ -482,7 +482,7 @@ public class ArrayTests extends GWTTestCase {
     final TestItem[] items =
         new TestItem[] {new TestItem(0), new TestItem(1), new TestItem(2), new TestItem(3)};
 
-    final ArrayOf<TestItem> array = Collections.arrayOf(TestItem.class);
+    final ArrayOf<TestItem> array = Collections.arrayOf();
     array.push(items[2]);
     array.push(items[1]);
     array.push(items[3]);

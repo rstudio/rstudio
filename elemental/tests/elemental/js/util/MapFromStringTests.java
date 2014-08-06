@@ -43,7 +43,7 @@ public class MapFromStringTests extends GWTTestCase {
    */
   public void testMapsFromString() {
     // This is our test subject.
-    final MapFromStringTo<TestItem> map =  Collections.mapFromStringTo(TestItem.class);
+    final MapFromStringTo<TestItem> map =  Collections.mapFromStringTo();
 
     // These are his keys.
     final String[] keys = new String[] {"key-1", "key-2", "key-3"};

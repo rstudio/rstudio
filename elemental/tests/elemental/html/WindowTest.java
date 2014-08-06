@@ -15,13 +15,14 @@
  */
 package elemental.html;
 
-import static elemental.client.Browser.getDocument;
-import static elemental.client.Browser.getWindow;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import static elemental.client.Browser.getDocument;
+import static elemental.client.Browser.getWindow;
+
+import elemental.dom.TimeoutHandler;
 import elemental.events.Event;
 import elemental.events.EventListener;
 
@@ -56,7 +57,7 @@ public class WindowTest extends GWTTestCase {
    */
   public void testGetSelection() {
     final Window window = getWindow();
-    final DOMSelection selection = window.getSelection();
+    final Selection selection = window.getSelection();
     assertNotNull(selection);
   }
 
@@ -65,7 +66,7 @@ public class WindowTest extends GWTTestCase {
    */
   public void testOpener() {
     final Window window = getWindow();
-    final Window proxy = window.open("about:blank");
+    final Window proxy = window.open("about:blank", "_blank");
     assertNotNull(proxy.getOpener());
     proxy.clearOpener();
     assertNull(proxy.getOpener());
@@ -77,10 +78,10 @@ public class WindowTest extends GWTTestCase {
    */
   public void testTimeout() {
     delayTestFinish(1000);
-    getWindow().setTimeout(new Window.TimerCallback() {
+    getWindow().setTimeout(new TimeoutHandler() {
       @Override
-      public void fire() {
-        finishTest();        
+      public void onTimeoutHandler() {
+        finishTest();
       }
     }, 500);
   }
@@ -90,10 +91,10 @@ public class WindowTest extends GWTTestCase {
    */
   public void testInterval() {
     final int[] handle = new int[1];
-    Window.TimerCallback listener = new Window.TimerCallback() {
+    TimeoutHandler listener = new TimeoutHandler() {
       int count;
       @Override
-      public void fire() {
+      public void onTimeoutHandler() {
         // Make sure we see at least two events.
         ++count;
         if (count >= 2) {
@@ -124,17 +125,17 @@ public class WindowTest extends GWTTestCase {
     });
 
     // Set a timeout and an interval, both of which will throw a RuntimException.
-    getWindow().setTimeout(new Window.TimerCallback() {
+    getWindow().setTimeout(new TimeoutHandler() {
       @Override
-      public void fire() {
+      public void onTimeoutHandler() {
         throw new RuntimeException("w00t!");
       }
     }, 1);
 
     final int[] intervalHandle = new int[1];
-    intervalHandle[0] = getWindow().setInterval(new Window.TimerCallback() {
+    intervalHandle[0] = getWindow().setInterval(new TimeoutHandler() {
       @Override
-      public void fire() {
+      public void onTimeoutHandler() {
         // We only want this to happen once, so clear the interval timer on the
         // first fire.
         getWindow().clearInterval(intervalHandle[0]);
@@ -147,9 +148,9 @@ public class WindowTest extends GWTTestCase {
     // no way around it if we want to test the "real" timer implementation as
     // opposed to a mock implementation.
     delayTestFinish(5000);
-    getWindow().setTimeout(new Window.TimerCallback() {
+    getWindow().setTimeout(new TimeoutHandler() {
       @Override
-      public void fire() {
+      public void onTimeoutHandler() {
         // Assert that exceptions got caught.
         assertNotNull(ex[0]);
         assertNotNull(ex[1]);

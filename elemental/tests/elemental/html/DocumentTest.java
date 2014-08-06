@@ -20,6 +20,8 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import static elemental.client.Browser.getWindow;
 
+import elemental.dom.Document;
+
 /**
  * Tests {@link Document}.
  */
@@ -33,7 +35,7 @@ public class DocumentTest extends GWTTestCase {
    * Tests {@link Document#write}.
    */
   public void testWrite() {
-    final Window window = getWindow().open();
+    final Window window = getWindow().open("about:blank", "_blank");
     final Document document = window.getDocument();
     document.write("<body>drink and drink and drink AND FIGHT</body>");
     assertTrue(document.getBody().getTextContent().indexOf("drink and drink and drink AND FIGHT") != -1);

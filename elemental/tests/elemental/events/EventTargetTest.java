@@ -20,9 +20,9 @@ import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import elemental.client.Browser;
+import elemental.dom.Document;
+import elemental.dom.Element;
 import elemental.html.ButtonElement;
-import elemental.html.Document;
-import elemental.html.Element;
 import elemental.html.TestUtils;
 
 /**
@@ -59,9 +59,9 @@ public class EventTargetTest extends GWTTestCase {
     // Ensure that addEventListener works.
     body.addEventListener("click", a, false);
     // Ensure that setOnClick also works.
-    body.setOnClick(b);
+    body.setOnclick(b);
     
-    assertEquals(b, body.getOnClick());
+    assertEquals(b, body.getOnclick());
 
     TestUtils.click(body);
     
@@ -91,8 +91,8 @@ public class EventTargetTest extends GWTTestCase {
     assertFalse(listener.didFire());
     
     // Ensure that onclick = null works.
-    body.setOnClick(listener);
-    body.setOnClick(null);
+    body.setOnclick(listener);
+    body.setOnclick(null);
     TestUtils.click(body);    
     assertFalse(listener.didFire());    
   }

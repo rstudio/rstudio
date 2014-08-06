@@ -17,6 +17,7 @@ package elemental.html;
 
 import static elemental.client.Browser.getDocument;
 
+import elemental.dom.Document;
 import elemental.events.EventTarget;
 import elemental.events.MouseEvent;
 
@@ -30,7 +31,7 @@ public class TestUtils {
    */
   public static void click(EventTarget target) {
     MouseEvent evt = (MouseEvent) getDocument().createEvent(
-        Document.Event.MOUSE);
+        Document.Events.MOUSE);
     evt.initMouseEvent("click", true, true, null, 0, 0, 0, 0, 0, false, false,
         false, false, MouseEvent.Button.PRIMARY, null);
     target.dispatchEvent(evt);

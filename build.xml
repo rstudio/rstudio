@@ -156,7 +156,7 @@
   </target>
 
   <target name="test" depends="buildonly,apicheck,checkstyle"
-          description="[action] Runs all the GWT tests, including checkstyle and apicheck">
+          description="[action] Runs all the GWT tests, including checkstyle, apicheck and elemental">
     <call-subproject subproject="buildtools" subtarget="test"/>
     <call-subproject subproject="dev" subtarget="test"/>
     <call-subproject subproject="user" subtarget="test"/>
@@ -164,6 +164,7 @@
     <call-subproject subproject="requestfactory" subtarget="test"/>
     <call-subproject subproject="servlet" subtarget="test"/>
     <call-subproject subproject="tools" subtarget="test"/>
+    <call-subproject subproject="elemental" subtarget="test"/>
   </target>
 
   <target name="testrf" depends="buildonly"

@@ -15,13 +15,15 @@
  */
 package elemental.html;
 
-import static elemental.client.Browser.getDocument;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import static elemental.client.Browser.getDocument;
+
 import elemental.client.Browser;
+import elemental.dom.Document;
+import elemental.dom.Element;
 import elemental.events.Event;
 import elemental.events.EventListener;
 
@@ -52,21 +54,21 @@ public class ElementTest extends GWTTestCase {
     TestUtils.click(btn);
     assertTrue(clicked[0]);
   }
-  
+
   /**
    * Tests {@link Element#hasClassName(String)}.
    */
   public void testHasClassName() {
     final Element e = btn;
     e.setClassName("jimmy crack corn");
-    assertTrue(e.hasClassName("jimmy"));
-    assertTrue(e.hasClassName("crack"));
-    assertTrue(e.hasClassName("corn"));
-    assertFalse(e.hasClassName("jim"));
-    assertFalse(e.hasClassName("popcorn"));   
+    assertTrue(e.getClassList().contains("jimmy"));
+    assertTrue(e.getClassList().contains("crack"));
+    assertTrue(e.getClassList().contains("corn"));
+    assertFalse(e.getClassList().contains("jim"));
+    assertFalse(e.getClassList().contains("popcorn"));
 
     e.setClassName("turtles");
-    assertTrue(e.hasClassName("turtles"));
+    assertTrue(e.getClassList().contains("turtles"));
   }
 
   /**
@@ -80,11 +82,11 @@ public class ElementTest extends GWTTestCase {
         clicked[0] = true;
       }
     };
-    btn.setOnClick(listener);
+    btn.setOnclick(listener);
 
     TestUtils.click(btn);
     assertTrue(clicked[0]);
-    assertEquals(listener, btn.getOnClick());
+    assertEquals(listener, btn.getOnclick());
   }
 
   /**
@@ -97,7 +99,7 @@ public class ElementTest extends GWTTestCase {
     ButtonElement btn = doc.createButtonElement();
     doc.getBody().appendChild(btn);
 
-    btn.setOnClick(new EventListener() {
+    btn.setOnclick(new EventListener() {
       @Override
       public void handleEvent(Event evt) {
         throw new RuntimeException("w00t!");
