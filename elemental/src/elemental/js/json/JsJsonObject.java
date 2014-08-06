@@ -76,7 +76,7 @@ final public class JsJsonObject extends JsJsonValue
   public native JsArrayString keys0() /*-{
     var keys = [];
     for(var key in this) {
-      if (this.hasOwnProperty(key) && key != '$H') {
+      if (Object.prototype.hasOwnProperty.call(this, key) && key != '$H') {
         keys.push(key);
       }
     }
