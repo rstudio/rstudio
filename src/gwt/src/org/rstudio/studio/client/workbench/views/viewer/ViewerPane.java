@@ -79,6 +79,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
      
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerClear().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerClearAll().createToolbarButton());
       
       toolbar_.addRightWidget(commands_.viewerStop().createToolbarButton());
       toolbar_.addRightSeparator();

@@ -26,6 +26,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -125,6 +126,7 @@ public class ViewerPresenter extends BasePresenter
          {
             commands_.viewerStop().setVisible(command.isEnabled());
             commands_.viewerClear().setVisible(!command.isEnabled());
+            commands_.viewerClearAll().setVisible(!command.isEnabled());
          }
       });
       
@@ -390,6 +392,29 @@ public class ViewerPresenter extends BasePresenter
       stop(false);
    }
    
+   @Handler 
+   public void onViewerClearAll()
+   {
+      // confirm
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+            
+         "Clear Viewer",
+         
+         "Are you sure you want to clear all of the items in the history?",
+  
+         new ProgressOperation() {
+            public void execute(final ProgressIndicator indicator)
+            {
+               indicator.onProgress("Clearing viewer...");
+               stop(false, true, indicator);
+            }
+         },
+      
+         true
+      
+       );
+   }
+   
    @Handler
    public void onViewerStop()
    {
@@ -457,6 +482,13 @@ public class ViewerPresenter extends BasePresenter
    }
    
    private void stop(boolean interruptR)
+   {
+      stop(interruptR, false, null);
+   }
+   
+   private void stop(boolean interruptR, 
+                     boolean clearAll, 
+                     ProgressIndicator indicator)
    {      
       // check whether this was a static widget (determine what we do
       // visa-vi widget history clearing/restoration)
@@ -481,8 +513,10 @@ public class ViewerPresenter extends BasePresenter
       events_.fireEvent(new ViewerClearedEvent());
       
       // if this was a static widget then clear the current widget
-      if (wasStaticWidget)
-         server_.viewerClearCurrent(new VoidServerRequestCallback()); 
+      if (clearAll)
+         server_.viewerClearAll(new VoidServerRequestCallback(indicator));
+      else if (wasStaticWidget)
+         server_.viewerClearCurrent(new VoidServerRequestCallback(indicator)); 
       
       // otherwise restore the last static widget
       else
@@ -510,6 +544,7 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerPopout().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
+      commands_.viewerClearAll().setEnabled(enable);
       
       commands_.viewerBack().setEnabled(hasPrevious);
       commands_.viewerBack().setVisible(isHTMLWidget);

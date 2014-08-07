@@ -2634,6 +2634,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void viewerClearAll(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "viewer_clear_all", requestCallback);
+   }
+   
+   @Override
    public void getViewerExportContext(
             String directory,
             ServerRequestCallback<SavePlotAsImageContext> requestCallback)

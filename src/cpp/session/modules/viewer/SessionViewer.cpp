@@ -114,6 +114,13 @@ Error viewerClearCurrent(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error viewerClearAll(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   viewerHistory().clear();
+   return Success();
+}
+
 Error getViewerExportContext(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
@@ -384,6 +391,7 @@ Error initialize()
       (bind(registerRpcMethod, "viewer_stopped", viewerStopped))
       (bind(registerRpcMethod, "viewer_current", viewerCurrent))
       (bind(registerRpcMethod, "viewer_clear_current", viewerClearCurrent))
+      (bind(registerRpcMethod, "viewer_clear_all", viewerClearAll))
       (bind(registerRpcMethod, "viewer_forward", viewerForward))
       (bind(registerRpcMethod, "viewer_back", viewerBack))
       (bind(registerRpcMethod, "get_viewer_export_context", getViewerExportContext))

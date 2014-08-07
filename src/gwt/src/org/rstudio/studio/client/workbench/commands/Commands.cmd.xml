@@ -1274,7 +1274,10 @@ well as menu structures (for main menu and popup menus).
         desc="Stop application"/>  
    <cmd id="viewerClear"
         buttonLabel=""
-        desc="Clear viewer"/>  
+        desc="Remove current viewer item"/>  
+   <cmd id="viewerClearAll"
+        buttonLabel="Clear All"
+        desc="Clear all viewer items"/> 
    <cmd id="viewerSaveAsImage"
         menuLabel = "Save as Image..."
         desc="Save as an image file"/>

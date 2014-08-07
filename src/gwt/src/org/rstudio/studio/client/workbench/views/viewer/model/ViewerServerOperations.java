@@ -26,6 +26,7 @@ public interface ViewerServerOperations
    void viewerForward(ServerRequestCallback<Void> requestCallback);
    void viewerCurrent(ServerRequestCallback<Void> requestCallback);
    void viewerClearCurrent(ServerRequestCallback<Void> requestCallback);
+   void viewerClearAll(ServerRequestCallback<Void> requestCallback);
    
    void getViewerExportContext(
          String directory,
