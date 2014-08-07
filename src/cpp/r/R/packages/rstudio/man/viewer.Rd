@@ -13,7 +13,7 @@ rstudio::viewer(url, height = NULL)
 \arguments{
   \item{url}{Application URL. This can be either a localhost URL or a path to a file within the R session temporary directory (i.e. a path returned by \code{\link[base:tempfile]{tempfile}}).
   }
-  \item{height}{Desired height. Specifies a desired height for the Viewer pane (the default is \code{NULL} which makes no change to the height of the pane). See details below for a discussion of constraints imposed on the height.
+  \item{height}{Desired height. Specifies a desired height for the Viewer pane (the default is \code{NULL} which makes no change to the height of the pane). This value can be numeric or the string \code{"maximize"} in which case the Viewer will expand to fill all vertical space. See details below for a discussion of constraints imposed on the height.
   }
 }
 
@@ -22,7 +22,9 @@ RStudio also sets the global \code{viewer} option to the \code{rstudio::viewer} 
 
 Applications are displayed within the Viewer pane. The application URL must either be served from localhost or be a path to a file within the R session temporary directory. If the URL doesn't conform to these requirements it is displayed within a standard browser window.
 
-The \code{height} parameter specifies a desired height, however it's possible the Viewer pane will end up smaller if the request can't be fulfilled (RStudio ensures that the pane paired with the Viewer maintains a minimum height). A height of 400 pixels or lower is likely to succeed in a large proportion of configurations. A very large height (e.g. 2000 pixels) will allocate the maximum allowable space for the Viewer.
+The \code{height} parameter specifies a desired height, however it's possible the Viewer pane will end up smaller if the request can't be fulfilled (RStudio ensures that the pane paired with the Viewer maintains a minimum height). A height of 400 pixels or lower is likely to succeed in a large proportion of configurations. 
+
+A very large height (e.g. 2000 pixels) will allocate the maximum allowable space for the Viewer (while still preserving some view of the pane above or below it). The value \code{"maximize"} will force the Viewer to full height. Note that this value should only be specified in cases where maximum vertical space is essential, as it will result in one of the user's other panes being hidden.
 
 }
 
@@ -65,7 +67,9 @@ else
    utils::browseURL("http://localhost:8100")
 
 # generate a temporary html file and display it
-htmlFile <- tempfile(fileext=".html")
+dir <- tempfile()
+dir.create(dir)
+htmlFile <- file.path(dir, "index.html")
 # (code to write some content to the file)
 rstudio::viewer(htmlFile)
 }

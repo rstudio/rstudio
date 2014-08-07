@@ -144,8 +144,11 @@ public class ViewerPresenter extends BasePresenter
          if (event.getBringToFront())
             display_.bringToFront();
       
+         // respect height request
          int ensureHeight = event.getHeight();
-         if (ensureHeight > 0)
+         if (ensureHeight < 0)
+            display_.maximize();
+         else if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
          
          navigate(event.getURL());
