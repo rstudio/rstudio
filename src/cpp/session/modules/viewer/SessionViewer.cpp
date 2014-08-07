@@ -240,16 +240,10 @@ Error viewerCreateRPubsHtml(const json::JsonRpcRequest& request,
 
 bool isHTMLWidgetPath(const FilePath& filePath)
 {
-   // filename must be "index.html"
-   if (filePath.filename() != "index.html")
-      return false;
-
-   // parent dir must start with "viewhtml"
-   FilePath parentDir = filePath.parent();
-   if (!boost::algorithm::starts_with(parentDir.filename(), "viewhtml"))
-      return false;
-
    // parent of parent must be session temp dir
+   // (this is required because of the way we copy/restore
+   // widget directories during suspend/resume)
+   FilePath parentDir = filePath.parent();
    if (parentDir.parent() != module_context::tempDir())
       return false;
 
