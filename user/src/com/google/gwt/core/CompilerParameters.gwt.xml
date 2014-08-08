@@ -126,6 +126,6 @@
     regardless of how many permutations are generated.
   -->
   <define-configuration-property name="js.embedded.properties" is-multi-valued="true"/>
-  <set-configuration-property name="js.embedded.properties" value="locale"/>
-  <set-configuration-property name="js.embedded.properties" value="user.agent"/>
+  <extend-configuration-property name="js.embedded.properties" value="locale"/>
+  <extend-configuration-property name="js.embedded.properties" value="user.agent"/>
 </module>
