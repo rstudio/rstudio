@@ -26,7 +26,7 @@ import com.google.gwt.dev.js.ast.JsScope;
  */
 public class JsVerboseNamer extends JsNamer {
 
-  public static void exec(JsProgram program, ConfigProps config) {
+  public static void exec(JsProgram program, ConfigProps config) throws IllegalNameException {
     new JsVerboseNamer(program, config).execImpl();
   }
 

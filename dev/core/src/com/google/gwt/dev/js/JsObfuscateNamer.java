@@ -36,11 +36,12 @@ public class JsObfuscateNamer extends JsNamer implements FreshNameGenerator {
       'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '$', '_', '0', '1',
       '2', '3', '4', '5', '6', '7', '8', '9'};
 
-  public static FreshNameGenerator exec(JsProgram program) {
+  public static FreshNameGenerator exec(JsProgram program) throws IllegalNameException {
     return exec(program, null);
   }
 
-  public static FreshNameGenerator exec(JsProgram program, ConfigProps config) {
+  public static FreshNameGenerator exec(JsProgram program, ConfigProps config)
+      throws IllegalNameException {
     JsObfuscateNamer namer = new JsObfuscateNamer(program, config);
     namer.execImpl();
     return namer;

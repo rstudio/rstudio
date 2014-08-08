@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.ImmediateTypeRelations;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeIdGenerator;
+import com.google.gwt.dev.js.JsPersistentPrettyNamer.PersistentPrettyNamerState;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
@@ -139,6 +140,8 @@ public class MinimalRebuildCache implements Serializable {
   private final Multimap<String, String> nestedTypeNamesByUnitTypeName = HashMultimap.create();
   private final Map<Integer, PermutationRebuildCache> permutationRebuildCacheById =
       Maps.newHashMap();
+  private final PersistentPrettyNamerState persistentPrettyNamerState =
+      new PersistentPrettyNamerState();
   private final Set<String> preambleTypeNames = Sets.newHashSet();
   private final Set<String> rootTypeNames = Sets.newHashSet();
 
@@ -260,6 +263,10 @@ public class MinimalRebuildCache implements Serializable {
       return permutationRebuildCache;
     }
     return permutationRebuildCacheById.get(permutationId);
+  }
+
+  public PersistentPrettyNamerState getPersistentPrettyNamerState() {
+    return persistentPrettyNamerState;
   }
 
   public Set<String> getPreambleTypeNames() {

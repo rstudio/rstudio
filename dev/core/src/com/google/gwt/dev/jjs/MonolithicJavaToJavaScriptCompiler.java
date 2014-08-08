@@ -54,6 +54,7 @@ import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
 import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsLiteralInterner;
+import com.google.gwt.dev.js.JsNamer.IllegalNameException;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsLiteral;
 import com.google.gwt.dev.js.ast.JsName;
@@ -154,7 +155,8 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     }
 
     @Override
-    protected Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config) {
+    protected Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config)
+        throws IllegalNameException {
       Map<JsName, JsLiteral> internedTextByVariableName = null;
       if (shouldOptimize()) {
         // Only perform the interning optimization when optimizations are enabled.

@@ -29,7 +29,7 @@ import java.util.Set;
  */
 public class JsPrettyNamer extends JsNamer {
 
-  public static void exec(JsProgram program, ConfigProps config) {
+  public static void exec(JsProgram program, ConfigProps config) throws IllegalNameException {
     new JsPrettyNamer(program, config).execImpl();
   }
 

@@ -37,6 +37,16 @@ import java.util.Set;
  */
 public abstract class JsNamer {
 
+  /**
+   * Indicates the presence of a naming problem that prevents further compilation.
+   */
+  public static class IllegalNameException extends Exception {
+
+    public IllegalNameException(String message) {
+      super(message);
+    }
+  }
+
   private static Set<JsName> collectReferencedNames(JsProgram program) {
     final Set<JsName> referenced = new HashSet<JsName>();
     new JsVisitor() {
@@ -96,7 +106,7 @@ public abstract class JsNamer {
     reserved = new ReservedNames(config);
   }
 
-  protected final void execImpl() {
+  protected final void execImpl() throws IllegalNameException {
     reset();
     visit(program.getScope());
     reset();
@@ -105,5 +115,5 @@ public abstract class JsNamer {
 
   protected abstract void reset();
 
-  protected abstract void visit(JsScope scope);
+  protected abstract void visit(JsScope scope) throws IllegalNameException;
 }

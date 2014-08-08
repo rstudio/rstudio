@@ -55,6 +55,7 @@ import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
 import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
 import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
+import com.google.gwt.dev.js.JsNamer.IllegalNameException;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsLiteral;
 import com.google.gwt.dev.js.ast.JsName;
@@ -124,7 +125,8 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
     }
 
     @Override
-    protected Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config) {
+    protected Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config)
+        throws IllegalNameException {
       JsVerboseNamer.exec(jsProgram, config);
       return null;
     }

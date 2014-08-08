@@ -159,9 +159,12 @@ public class Compiler {
         // Disable options that disrupt contiguous output JS source per class.
         options.setClusterSimilarFunctions(false);
         options.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
-        // TODO(stalcup): make obfuscated and pretty namers that are consistent across compiles.
-        options.setOutput(JsOutputOption.DETAILED);
         options.setRunAsyncEnabled(false);
+
+        // Only Pretty and Detailed namers are currently supported in per-file compiles.
+        if (options.getOutput() == JsOutputOption.OBFUSCATED) {
+          options.setOutput(JsOutputOption.PRETTY);
+        }
 
         // Disable options not yet supported with a persistent JTypeOracle.
         options.setJsInteropMode(JsInteropMode.NONE);

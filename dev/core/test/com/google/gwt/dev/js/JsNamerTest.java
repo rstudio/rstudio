@@ -18,6 +18,8 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.js.JsNamer.IllegalNameException;
+import com.google.gwt.dev.js.JsPersistentPrettyNamer.PersistentPrettyNamerState;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -46,6 +48,7 @@ import java.util.Map;
 public class JsNamerTest extends TestCase {
 
   private BlacklistProps props;
+  private PersistentPrettyNamerState persistentPrettyNamerState;
 
   @Override
   protected void setUp() throws Exception {
@@ -53,6 +56,7 @@ public class JsNamerTest extends TestCase {
     props = new BlacklistProps();
     props.blacklist = Arrays.asList("foo, bar", "baz");
     props.blacklistSuffixes = Arrays.asList("logger");
+    persistentPrettyNamerState = new PersistentPrettyNamerState();
   }
 
   public void testBannedIdent() throws Exception {
@@ -126,10 +130,29 @@ public class JsNamerTest extends TestCase {
     statements.add(new JsInvocation(sourceInfo, new JsNameRef(sourceInfo, name)).makeStmt());
 
     // Verify that the illegal "-" character is translated.
-    assertEquals(
-        "function package_info(){}\npackage_info();", rename(jsProgram, JsOutputOption.PRETTY));
-    assertEquals(
-        "function package_info(){}\npackage_info();", rename(jsProgram, JsOutputOption.DETAILED));
+    assertEquals("function package_info(){}\npackage_info();",
+        rename(jsProgram, JsOutputOption.PRETTY, false));
+    assertEquals("function package_info(){}\npackage_info();",
+        rename(jsProgram, JsOutputOption.DETAILED, false));
+  }
+
+  public void testRejectsReservedSuffix() throws Exception {
+    // Regular renaming runs fine.
+    assertEquals("function foo_0_g$(){return 42}\n",
+        rename(parseJs("function foo() { return 42; }"), JsOutputOption.PRETTY, true));
+
+    // Renaming with the reserved suffix is rejected.
+    try {
+      String functionName = "foo" + JsPersistentPrettyNamer.RESERVED_IDENT_SUFFIX;
+      JsProgram jsProgram = parseJs(
+          "function " + functionName + "() { return 42; }");
+      jsProgram.getScope().findExistingName(functionName).setObfuscatable(false);
+      rename(jsProgram, JsOutputOption.PRETTY, true);
+      fail("Naming an unobfuscatable identifier containing the reserved suffix should have "
+          + "thrown an exception in JsPersistentPrettyNamer.");
+    } catch (IllegalNameException e) {
+      // Expected path.
+    }
   }
 
   private JsProgram parseJs(String js) throws IOException, JsParserException {
@@ -140,21 +163,27 @@ public class JsNamerTest extends TestCase {
     return program;
   }
 
-  private String rename(JsProgram program) {
-    return rename(program, JsOutputOption.PRETTY);
+  private String rename(JsProgram program) throws IllegalNameException {
+    return rename(program, JsOutputOption.PRETTY, false);
   }
 
-  private String rename(JsProgram program, JsOutputOption outputOption) {
+  private String rename(JsProgram program, JsOutputOption outputOption, boolean persistent)
+      throws IllegalNameException {
     JsSymbolResolver.exec(program);
+    ConfigProps config = props.makeConfig();
     switch (outputOption) {
       case PRETTY:
-        JsPrettyNamer.exec(program, props.makeConfig());
+        if (persistent) {
+          JsPersistentPrettyNamer.exec(program, config, persistentPrettyNamerState);
+        } else {
+          JsPrettyNamer.exec(program, config);
+        }
         break;
       case OBFUSCATED:
-        JsObfuscateNamer.exec(program, props.makeConfig());
+        JsObfuscateNamer.exec(program, config);
         break;
       case DETAILED:
-        JsVerboseNamer.exec(program, props.makeConfig());
+        JsVerboseNamer.exec(program, config);
         break;
     }
     TextOutput text = new DefaultTextOutput(true);

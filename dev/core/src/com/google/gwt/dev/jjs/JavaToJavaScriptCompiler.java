@@ -106,10 +106,12 @@ import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsLiteralInterner;
+import com.google.gwt.dev.js.JsNamer.IllegalNameException;
 import com.google.gwt.dev.js.JsNamespaceChooser;
 import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
+import com.google.gwt.dev.js.JsPersistentPrettyNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsReportGenerationVisitor;
 import com.google.gwt.dev.js.JsStackEmulator;
@@ -370,7 +372,8 @@ public abstract class JavaToJavaScriptCompiler {
 
     protected abstract void postNormalizationOptimizeJava();
 
-    protected abstract Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config);
+    protected abstract Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config)
+        throws IllegalNameException;
 
     protected abstract Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> splitJsIntoFragments(
         PermProps props, int permutationId, JavaToJavaScriptMap jjsmap);
@@ -793,26 +796,32 @@ public abstract class JavaToJavaScriptCompiler {
       }
     }
 
-    private Map<JsName, JsLiteral> renameJsSymbols(PermProps props) {
+    private Map<JsName, JsLiteral> renameJsSymbols(PermProps props)
+        throws UnableToCompleteException {
       Map<JsName, JsLiteral> internedLiteralByVariableName;
-      switch (options.getOutput()) {
-        case OBFUSCATED:
-          internedLiteralByVariableName = runObfuscateNamer(props);
-          break;
-        case PRETTY:
-          internedLiteralByVariableName = runPrettyNamer(props.getConfigProps());
-          break;
-        case DETAILED:
-          internedLiteralByVariableName = runDetailedNamer(props.getConfigProps());
-          break;
-        default:
-          throw new InternalCompilerException("Unknown output mode");
+      try {
+        switch (options.getOutput()) {
+          case OBFUSCATED:
+            internedLiteralByVariableName = runObfuscateNamer(props);
+            break;
+          case PRETTY:
+            internedLiteralByVariableName = runPrettyNamer(props.getConfigProps());
+            break;
+          case DETAILED:
+            internedLiteralByVariableName = runDetailedNamer(props.getConfigProps());
+            break;
+          default:
+            throw new InternalCompilerException("Unknown output mode");
+        }
+      } catch (IllegalNameException e) {
+        logger.log(TreeLogger.ERROR, e.getMessage(), e);
+        throw new UnableToCompleteException();
       }
       return internedLiteralByVariableName == null ?
           ImmutableMap.<JsName, JsLiteral>of() : internedLiteralByVariableName;
     }
 
-    private Map<JsName, JsLiteral> runObfuscateNamer(PermProps props) {
+    private Map<JsName, JsLiteral> runObfuscateNamer(PermProps props) throws IllegalNameException {
       Map<JsName, JsLiteral> internedLiteralByVariableName =
           JsLiteralInterner.exec(jprogram, jsProgram, (byte) (JsLiteralInterner.INTERN_ALL
               & (byte) (jprogram.typeOracle.isInteropEnabled()
@@ -826,7 +835,13 @@ public abstract class JavaToJavaScriptCompiler {
       return internedLiteralByVariableName;
     }
 
-    private Map<JsName, JsLiteral> runPrettyNamer(ConfigProps config) {
+    private Map<JsName, JsLiteral> runPrettyNamer(ConfigProps config) throws IllegalNameException {
+      if (compilerContext.getOptions().shouldCompilePerFile()) {
+        JsPersistentPrettyNamer.exec(jsProgram, config,
+            compilerContext.getMinimalRebuildCache().getPersistentPrettyNamerState());
+        return null;
+      }
+
       // We don't intern strings in pretty mode to improve readability
       Map<JsName, JsLiteral> internedLiteralByVariableName = JsLiteralInterner.exec(
           jprogram, jsProgram,

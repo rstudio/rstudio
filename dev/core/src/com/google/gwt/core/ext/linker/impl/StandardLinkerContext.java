@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.JsLiteralInterner;
+import com.google.gwt.dev.js.JsNamer.IllegalNameException;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
@@ -445,29 +446,34 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     JsSymbolResolver.exec(jsProgram);
     JsUnusedFunctionRemover.exec(jsProgram);
 
-    switch (jjsOptions.getOutput()) {
-      case OBFUSCATED:
-        /*
-         * We can't apply the regular JsLiteralInterner to the JsProgram that
-         * we've just created. In the normal case, the JsLiteralInterner adds an
-         * additional statement to the program's global JsBlock, however we
-         * don't know exactly what the form and structure of our JsProgram are,
-         * so we'll limit the scope of the modifications to each top-level
-         * function within the program.
-         */
-        TopFunctionStringInterner.exec(jsProgram);
-        JsObfuscateNamer.exec(jsProgram, null);
-        break;
-      case PRETTY:
-        // We don't intern strings in pretty mode to improve readability
-        JsPrettyNamer.exec(jsProgram, null);
-        break;
-      case DETAILED:
-        TopFunctionStringInterner.exec(jsProgram);
-        JsVerboseNamer.exec(jsProgram, null);
-        break;
-      default:
-        throw new InternalCompilerException("Unknown output mode");
+    try {
+      switch (jjsOptions.getOutput()) {
+        case OBFUSCATED:
+          /*
+           * We can't apply the regular JsLiteralInterner to the JsProgram that
+           * we've just created. In the normal case, the JsLiteralInterner adds an
+           * additional statement to the program's global JsBlock, however we
+           * don't know exactly what the form and structure of our JsProgram are,
+           * so we'll limit the scope of the modifications to each top-level
+           * function within the program.
+           */
+          TopFunctionStringInterner.exec(jsProgram);
+          JsObfuscateNamer.exec(jsProgram, null);
+          break;
+        case PRETTY:
+          // We don't intern strings in pretty mode to improve readability
+          JsPrettyNamer.exec(jsProgram, null);
+          break;
+        case DETAILED:
+          TopFunctionStringInterner.exec(jsProgram);
+          JsVerboseNamer.exec(jsProgram, null);
+          break;
+        default:
+          throw new InternalCompilerException("Unknown output mode");
+      }
+    } catch (IllegalNameException e) {
+      logger.log(TreeLogger.ERROR, e.getMessage(), e);
+      throw new UnableToCompleteException();
     }
 
     DefaultTextOutput out = new DefaultTextOutput(

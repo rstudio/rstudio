@@ -238,49 +238,75 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   public void testPerFileRecompile_noop() throws UnableToCompleteException, IOException,
       InterruptedException {
-    MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
-    File relinkApplicationDir = Files.createTempDir();
-
-    String originalJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists
-        .newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource),
-        relinkMinimalRebuildCache);
-
-    // Compile again with absolutely no file changes and reusing the minimalRebuildCache.
-    String relinkedJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(), relinkMinimalRebuildCache);
-
-    assertTrue(originalJs.equals(relinkedJs));
+    checkPerFileRecompile_noop(JsOutputOption.PRETTY);
+    checkPerFileRecompile_noop(JsOutputOption.DETAILED);
   }
 
   public void testPerFileRecompile_dateStampChange() throws UnableToCompleteException, IOException,
       InterruptedException {
+    checkPerFileRecompile_dateStampChange(JsOutputOption.PRETTY);
+    checkPerFileRecompile_dateStampChange(JsOutputOption.DETAILED);
+  }
+
+  public void testPerFileRecompile_functionSignatureChange() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Not testing recompile equality for function signature change with Pretty output since the
+    // Pretty namer's behavior is order dependent, and while still correct, will come out different
+    // in a recompile with changes versus a from scratch compile with changes.
+    checkPerFileRecompile_functionSignatureChange(JsOutputOption.DETAILED);
+  }
+
+  public void testPerFileRecompile_typeHierarchyChange() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    checkPerFileRecompile_typeHierarchyChange(JsOutputOption.PRETTY);
+    checkPerFileRecompile_typeHierarchyChange(JsOutputOption.DETAILED);
+  }
+
+  private void checkPerFileRecompile_noop(JsOutputOption output) throws UnableToCompleteException,
+      IOException, InterruptedException {
     MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
     File relinkApplicationDir = Files.createTempDir();
 
     String originalJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists
         .newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource),
-        relinkMinimalRebuildCache);
+        relinkMinimalRebuildCache, output);
 
-    // Compile again with the same source but a new date stamp on SimpleModel and reusing the
-    // minimalRebuildCache.
+    // Compile again with absolutely no file changes and reusing the minimalRebuildCache.
     String relinkedJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(simpleModelResource), relinkMinimalRebuildCache);
+        Lists.<MockResource> newArrayList(), relinkMinimalRebuildCache, output);
 
     assertTrue(originalJs.equals(relinkedJs));
   }
 
-  public void testPerFileRecompile_functionSignatureChange() throws UnableToCompleteException,
-      IOException, InterruptedException {
-    checkRecompiledModifiedApp("com.foo.SimpleModule",
-        Lists.newArrayList(simpleModuleResource, simpleModelEntryPointResource),
-        simpleModelResource, modifiedFunctionSignatureSimpleModelResource);
+  private void checkPerFileRecompile_dateStampChange(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
+    File relinkApplicationDir = Files.createTempDir();
+
+    String originalJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists
+        .newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource),
+        relinkMinimalRebuildCache, output);
+
+    // Compile again with the same source but a new date stamp on SimpleModel and reusing the
+    // minimalRebuildCache.
+    String relinkedJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
+        Lists.<MockResource> newArrayList(simpleModelResource), relinkMinimalRebuildCache, output);
+
+    assertTrue(originalJs.equals(relinkedJs));
   }
 
-  public void testPerFileRecompile_typeHierarchyChange() throws UnableToCompleteException,
-      IOException, InterruptedException {
+  private void checkPerFileRecompile_functionSignatureChange(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    checkRecompiledModifiedApp("com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, simpleModelEntryPointResource),
+        simpleModelResource, modifiedFunctionSignatureSimpleModelResource, output);
+  }
+
+  private void checkPerFileRecompile_typeHierarchyChange(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
     checkRecompiledModifiedApp("com.foo.SimpleModule", Lists.newArrayList(simpleModuleResource,
         modifiedSuperEntryPointResource, modelAResource, modelBResource, modelDResource),
-        modelCResource, modifiedSuperModelCResource);
+        modelCResource, modifiedSuperModelCResource, output);
   }
 
   private void assertDeterministicBuild(CompilerOptions options)
@@ -323,8 +349,8 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   private void checkRecompiledModifiedApp(String moduleName, List<MockResource> sharedResources,
-      MockJavaResource originalResource, MockJavaResource modifiedResource) throws IOException,
-      UnableToCompleteException, InterruptedException {
+      MockJavaResource originalResource, MockJavaResource modifiedResource, JsOutputOption output)
+      throws IOException, UnableToCompleteException, InterruptedException {
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
     originalResources.add(originalResource);
 
@@ -334,16 +360,16 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Compile the app with original files, modify a file and do a per-file recompile.
     MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
     File relinkApplicationDir = Files.createTempDir();
-    String originalAppFromScratchJs =
-        compileToJs(relinkApplicationDir, moduleName, originalResources, relinkMinimalRebuildCache);
+    String originalAppFromScratchJs = compileToJs(relinkApplicationDir, moduleName,
+        originalResources, relinkMinimalRebuildCache, output);
     String modifiedAppRelinkedJs = compileToJs(relinkApplicationDir, moduleName,
-        Lists.<MockResource> newArrayList(modifiedResource), relinkMinimalRebuildCache);
+        Lists.<MockResource> newArrayList(modifiedResource), relinkMinimalRebuildCache, output);
 
     // Compile the app from scratch with the modified file.
     MinimalRebuildCache fromScratchMinimalRebuildCache = new MinimalRebuildCache();
     File fromScratchApplicationDir = Files.createTempDir();
     String modifiedAppFromScratchJs = compileToJs(fromScratchApplicationDir, moduleName,
-        modifiedResources, fromScratchMinimalRebuildCache);
+        modifiedResources, fromScratchMinimalRebuildCache, output);
 
     // A resource was changed between the original compile and the relink compile. If the compile is
     // correct then the output JS will have changed.
@@ -356,7 +382,8 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   private String compileToJs(File applicationDir, String moduleName,
-      List<MockResource> applicationResources, MinimalRebuildCache minimalRebuildCache)
+      List<MockResource> applicationResources, MinimalRebuildCache minimalRebuildCache,
+      JsOutputOption output)
       throws IOException, UnableToCompleteException, InterruptedException {
     // Make sure we're using a MemoryUnitCache.
     System.setProperty(GWT_PERSISTENTUNITCACHE, "false");
@@ -384,6 +411,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     compilerOptions.setCompilePerFile(true);
     compilerOptions.setWarDir(applicationDir);
     compilerOptions.setModuleNames(ImmutableList.of(moduleName));
+    compilerOptions.setOutput(output);
 
     CompilerContext compilerContext = new CompilerContext.Builder().options(compilerOptions)
         .minimalRebuildCache(minimalRebuildCache).build();
