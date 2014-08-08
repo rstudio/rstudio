@@ -659,7 +659,7 @@ public class JsStackEmulator {
       // (Doing it after evaluating .bar causes lots of tests to fail.)
 
       SourceInfo locationToRecord = x.getSourceInfo();
-      if (sameAsLastLocation(locationToRecord)) {
+      if (sameAsLastLocation(locationToRecord) || !inSameFile(locationToRecord)) {
         return;
       }
 
@@ -844,7 +844,7 @@ public class JsStackEmulator {
      */
     private <T extends JsExpression & HasArguments> void recordAfterLastArg(T x) {
       SourceInfo locationToRecord = x.getSourceInfo();
-      if (sameAsLastLocation(locationToRecord)) {
+      if (sameAsLastLocation(locationToRecord) || !inSameFile(locationToRecord)) {
         return; // no change
       }
       List<JsExpression> args = x.getArguments();
