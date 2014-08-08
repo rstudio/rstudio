@@ -33,6 +33,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
+import com.gargoylesoftware.htmlunit.util.WebClientUtils;
 
 import net.sourceforge.htmlunit.corejs.javascript.ScriptableObject;
 
@@ -160,6 +161,9 @@ public class RunStyleHtmlUnit extends RunStyle {
         JavaScriptEngine hostedEngine = new HostedJavaScriptEngine(webClient,
             treeLogger);
         webClient.setJavaScriptEngine(hostedEngine);
+      }
+      if (System.getProperty("gwt.htmlunit.debug") != null) {
+        WebClientUtils.attachVisualDebugger(webClient);
       }
     }
   }
