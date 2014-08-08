@@ -56,6 +56,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean strictSourceResources = false;
   private boolean strictPublicResources = false;
   private JsInteropMode jsInteropMode = JsInteropMode.NONE;
+  private boolean useDetailedTypeIds = false;
 
   public JJSOptionsImpl() {
   }
@@ -93,6 +94,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setSourceLevel(other.getSourceLevel());
     setNamespace(other.getNamespace());
     setJsInteropMode(other.getJsInteropMode());
+    setUseDetailedTypeIds(other.useDetailedTypeIds());
   }
 
   @Override
@@ -347,6 +349,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
+  public void setUseDetailedTypeIds(boolean enabled) {
+    useDetailedTypeIds = enabled;
+  }
+
+  @Override
   public boolean shouldAddRuntimeChecks() {
     return addRuntimeChecks;
   }
@@ -381,11 +388,18 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     return removeDuplicateFunctions;
   }
 
-  @Override public JsInteropMode getJsInteropMode() {
+  @Override
+  public JsInteropMode getJsInteropMode() {
     return jsInteropMode;
   }
 
-  @Override public void setJsInteropMode(JsInteropMode mode) {
+  @Override
+  public void setJsInteropMode(JsInteropMode mode) {
     jsInteropMode = mode;
+  }
+
+  @Override
+  public boolean useDetailedTypeIds() {
+    return useDetailedTypeIds;
   }
 }

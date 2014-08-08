@@ -51,7 +51,14 @@ public class JjsTypeTest extends TestCase {
   private JArrayType arrayOfB;
   private JArrayType arrayOfBase;
   private JArrayType arrayOfBSub;
+  private JArrayType arrayOfJso1;
+  private JArrayType arrayOfJso2;
+  private JArrayType arrayOfIntfJ;
+  private JArrayType arrayOfIntfK;
+  private JArrayType arrayOfJso;
   private JArrayType arrayOfC;
+  private JArrayType arrayOfIntfSerializable;
+  private JArrayType arrayOfIntfClonable;
   private JReferenceType arrayOfInt;
   private JArrayType arrayOfIntfI;
   private JArrayType arrayOfIntfIBase;
@@ -226,24 +233,31 @@ public class JjsTypeTest extends TestCase {
     }
   }
 
-  public void testGetSuperHierarchy() {
+  public void testCastableDestinationTypes() {
     assertCastableDestinationTypes(classObject, classObject);
     assertCastableDestinationTypes(classString, classString, classObject);
-    assertCastableDestinationTypes(classJso, classJso, classJso1, classJso2, classObject);
+    assertCastableDestinationTypes(classJso, classJso, classObject);
     assertCastableDestinationTypes(intfSerializable, intfSerializable, classObject);
     assertCastableDestinationTypes(intfCloneable, intfCloneable, classObject);
     assertCastableDestinationTypes(intfIBase, intfIBase, classObject);
     assertCastableDestinationTypes(intfI, intfI, intfIBase, classObject);
-    assertCastableDestinationTypes(intfJ, intfJ, classJso, classJso1, classJso2, classObject);
-    assertCastableDestinationTypes(intfK, intfK, classJso, classJso1, classJso2, classObject);
+    assertCastableDestinationTypes(intfJ, intfJ, classJso, classObject);
+    assertCastableDestinationTypes(intfK, intfK, classJso, classObject);
     assertCastableDestinationTypes(classBase, classBase, classObject);
     assertCastableDestinationTypes(classA, classA, classObject, classBase);
     assertCastableDestinationTypes(classB, classB, classObject, classBase, intfIBase, intfI);
     assertCastableDestinationTypes(classC, classC, classObject, intfIBase, intfI);
     assertCastableDestinationTypes(classBSub, classBSub, classObject, classBase, classB, intfIBase,
         intfI);
-    assertCastableDestinationTypes(classJso1, classJso1, classJso2, classObject, classJso, intfJ);
-    assertCastableDestinationTypes(classJso2, classJso2, classJso1, classObject, classJso, intfK);
+    assertCastableDestinationTypes(classJso1, classObject, classJso, intfJ);
+    assertCastableDestinationTypes(classJso2, classObject, classJso, intfK);
+    assertCastableDestinationTypes(arrayOfJso, classObject, intfCloneable, intfSerializable,
+        arrayOfJso, arrayOfObject);
+    assertCastableDestinationTypes(arrayOfJso1, classObject, intfCloneable, intfSerializable,
+        arrayOfJso, arrayOfObject, arrayOfIntfJ);
+    assertCastableDestinationTypes(arrayOfJso2, classObject, intfCloneable, intfSerializable,
+        arrayOfJso, arrayOfObject, arrayOfIntfK);
+
     assertCastableDestinationTypes(intfIterable, intfIterable, classObject);
     assertCastableDestinationTypes(intfCollection, intfCollection, intfIterable, classObject);
     assertCastableDestinationTypes(intfList, intfList, intfIterable, intfCollection, classObject);
@@ -254,7 +268,8 @@ public class JjsTypeTest extends TestCase {
         arrayOfIntfIBase, classObject, arrayOfObject, intfCloneable, intfSerializable);
     assertCastableDestinationTypes(arrayOfArrayOfB, arrayOfArrayOfB, arrayOfArrayOfBase,
         arrayOfArrayOfObject, arrayOfArrayOfIntfI, arrayOfArrayOfIntfIBase, classObject,
-        arrayOfObject, intfCloneable, intfSerializable);
+        arrayOfObject, intfCloneable, arrayOfIntfClonable, intfSerializable,
+        arrayOfIntfSerializable);
     assertCastableDestinationTypes(arrayOfInt, arrayOfInt, classObject, intfCloneable,
         intfSerializable);
 
@@ -522,6 +537,13 @@ public class JjsTypeTest extends TestCase {
     arrayOfIntfI = program.getTypeArray(intfI);
     arrayOfC = program.getTypeArray(classC);
     arrayOfInt = program.getTypeArray(program.getTypePrimitiveInt());
+    arrayOfJso = program.getTypeArray(classJso);
+    arrayOfJso1 = program.getTypeArray(classJso1);
+    arrayOfJso2 = program.getTypeArray(classJso2);
+    arrayOfIntfJ = program.getTypeArray(intfJ);
+    arrayOfIntfK = program.getTypeArray(intfK);
+    arrayOfIntfClonable = program.getTypeArray(intfCloneable);
+    arrayOfIntfSerializable = program.getTypeArray(intfSerializable);
 
     // 2 dimensional
     arrayOfArrayOfBase = program.getOrCreateArrayType(classBase, 2);

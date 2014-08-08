@@ -401,6 +401,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
+  public void setUseDetailedTypeIds(boolean detailed) {
+    jjsOptions.setUseDetailedTypeIds(detailed);
+  }
+
+  @Override
   public void setValidateOnly(boolean validateOnly) {
     this.validateOnly = validateOnly;
   }
@@ -455,6 +460,10 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
     return saveSource;
   }
 
+  @Override
+  public boolean useDetailedTypeIds() {
+    return jjsOptions.useDetailedTypeIds();
+  }
   @Override
   public boolean warnOverlappingSource() {
     return warnOverlappingSource;

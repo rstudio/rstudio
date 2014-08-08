@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
@@ -25,7 +26,6 @@ import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -86,6 +86,14 @@ public class ImplementCastsAndTypeChecks {
         JExpression curExpr = expr;
         JReferenceType refType = ((JReferenceType) toType).getUnderlyingType();
         JReferenceType argType = (JReferenceType) expr.getType();
+
+        if (program.typeOracle.isArrayOfJso(refType)) {
+          // Arrays of any subclass of JavaScriptObject are considered arrays of JavaScriptObject
+          // for casting and instanceof purposes.
+          refType =  program.getOrCreateArrayType(program.getJavaScriptObject(),
+              ((JArrayType) refType).getDims());
+        }
+
         if (pruneTrivialCasts && program.typeOracle.canTriviallyCast(argType, refType)) {
           // just remove the cast
           ctx.replaceMe(curExpr);
@@ -185,16 +193,23 @@ public class ImplementCastsAndTypeChecks {
       JReferenceType toType = x.getTestType();
       // Only tests on run-time types are supported
       assert (toType == toType.getUnderlyingType());
+
+      if (program.typeOracle.isArrayOfJso(toType)) {
+        // Arrays of any subclass of JavaScriptObject are considered arrays of JavaScriptObject
+        // for casting and instanceof purposes.
+        toType =  program.getOrCreateArrayType(program.getJavaScriptObject(),
+            ((JArrayType) toType).getDims());
+      }
+
       boolean isTrivialCast = program.typeOracle.canTriviallyCast(argType, toType)
           // don't depend on type-tightener having run
           || (program.typeOracle.willCrossCastLikeJso(argType)
               && program.typeOracle.willCrossCastLikeJso(toType));
       if (pruneTrivialCasts && isTrivialCast) {
         // trivially true if non-null; replace with a null test
-        JNullLiteral nullLit = program.getLiteralNull();
         JBinaryOperation eq =
             new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
-                JBinaryOperator.NEQ, x.getExpr(), nullLit);
+                JBinaryOperator.NEQ, x.getExpr(), program.getLiteralNull());
         ctx.replaceMe(eq);
       } else {
         // Replace the instance of check by a call to the appropriate instanceof method in class

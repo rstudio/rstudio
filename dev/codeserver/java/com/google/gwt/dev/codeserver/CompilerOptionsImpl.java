@@ -95,6 +95,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  public JsInteropMode getJsInteropMode() {
+    return JsInteropMode.NONE;
+  }
+
+  @Override
   public List<String> getLibraryPaths() {
     return ImmutableList.of();
   }
@@ -155,6 +160,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public SourceLevel getSourceLevel() {
     return sourceLevel;
+  }
+
+  @Override
+  public String getSourceMapFilePrefix() {
+    return SourceHandler.SOURCEROOT_TEMPLATE_VARIABLE;
   }
 
   @Override
@@ -295,8 +305,8 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public String getSourceMapFilePrefix() {
-    return SourceHandler.SOURCEROOT_TEMPLATE_VARIABLE;
+  public boolean useDetailedTypeIds() {
+    return false;
   }
 
   @Override
@@ -307,10 +317,5 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean warnMissingDeps() {
     return false;
-  }
-
-  @Override
-  public JsInteropMode getJsInteropMode() {
-    return JsInteropMode.NONE;
   }
 }

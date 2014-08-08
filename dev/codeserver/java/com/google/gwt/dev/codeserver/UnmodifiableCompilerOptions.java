@@ -271,6 +271,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setUseDetailedTypeIds(boolean enabled) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final void setValidateOnly(boolean validateOnly) {
     throw new UnsupportedOperationException();
   }

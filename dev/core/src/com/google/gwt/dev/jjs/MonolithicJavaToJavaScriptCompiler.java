@@ -115,10 +115,14 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
         EqualityNormalizer.exec(jprogram);
 
-        TypeOrder typeIdOrder =
-            options.shouldCompilePerFile() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
-        return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram, typeIdOrder,
-            compilerContext.getMinimalRebuildCache().getIntTypeIdGenerator());
+        if (options.useDetailedTypeIds()) {
+          return ResolveRuntimeTypeReferences.IntoStringLiterals.exec(jprogram);
+        } else {
+          TypeOrder typeIdOrder =
+              options.shouldCompilePerFile() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
+          return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram, typeIdOrder,
+              compilerContext.getMinimalRebuildCache().getIntTypeIdGenerator());
+        }
       } finally {
         event.end();
       }

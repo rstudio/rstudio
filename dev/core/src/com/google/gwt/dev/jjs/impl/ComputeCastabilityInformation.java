@@ -211,7 +211,6 @@ public class ComputeCastabilityInformation {
        * because we're sorting the results.
        */
       for (JReferenceType castTargetType : castSourceTypesPerCastTargetType.keySet()) {
-
         if (!canTriviallyCastJsoSemantics(type, castTargetType)) {
           continue;
         }
@@ -275,6 +274,13 @@ public class ComputeCastabilityInformation {
     private void recordCastInternal(JReferenceType toType, JReferenceType rhsType) {
       toType = toType.getUnderlyingType();
       rhsType = rhsType.getUnderlyingType();
+      if (program.typeOracle.isArrayOfJso(toType)) {
+        // Arrays of JSO will be always treated as arrays of JavaScriptObject for
+        // casting purposes.
+        toType =  program.getOrCreateArrayType(program.getJavaScriptObject(),
+            ((JArrayType) toType).getDims());
+      }
+
       castSourceTypesPerCastTargetType.put(toType, rhsType);
     }
   }

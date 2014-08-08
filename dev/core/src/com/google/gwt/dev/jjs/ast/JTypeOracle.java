@@ -859,15 +859,17 @@ public class JTypeOracle implements Serializable {
       List<JReferenceType> castableDestinationTypes = Lists.newArrayList();
 
       // All arrays cast to Object, Serializable and Cloneable.
-      JReferenceType javaLangObjectType =
-          ensureTypeExistsAndAppend(standardTypes.javaLangObject, castableDestinationTypes);
-      ensureTypeExistsAndAppend(standardTypes.javaIoSerializable, castableDestinationTypes);
-      ensureTypeExistsAndAppend(standardTypes.javaLangCloneable, castableDestinationTypes);
+      ImmutableList<JReferenceType> arrayBaseTypes = ImmutableList.of(
+          ensureTypeExistsAndAppend(standardTypes.javaLangObject, castableDestinationTypes),
+          ensureTypeExistsAndAppend(standardTypes.javaIoSerializable, castableDestinationTypes),
+          ensureTypeExistsAndAppend(standardTypes.javaLangCloneable, castableDestinationTypes));
 
-      // Foo[][][] can cast to Object[][].
+      // Foo[][][] can cast to <ArrayBaseType>[][].
       for (int lowerDimension = 1; lowerDimension < arrayType.getDims(); lowerDimension++) {
-        castableDestinationTypes.add(
-            arrayTypeCreator.getOrCreateArrayType(javaLangObjectType, lowerDimension));
+        for (JReferenceType arrayBaseType : arrayBaseTypes) {
+          castableDestinationTypes.add(
+              arrayTypeCreator.getOrCreateArrayType(arrayBaseType, lowerDimension));
+        }
       }
 
       if (arrayType.getLeafType() instanceof JPrimitiveType) {
@@ -897,9 +899,13 @@ public class JTypeOracle implements Serializable {
     }
     if (willCrossCastLikeJso(type)) {
       ensureTypeExistsAndAppend(JProgram.JAVASCRIPTOBJECT, castableDestinationTypes);
-      castableDestinationTypes.addAll(getTypes(subClassMap, JProgram.JAVASCRIPTOBJECT));
     }
-    castableDestinationTypes.add(type);
+    // Do not add itself if it is a JavaScriptObject subclass, add JavaScriptObject.
+    if (isJavaScriptObject(type)) {
+      ensureTypeExistsAndAppend(JProgram.JAVASCRIPTOBJECT, castableDestinationTypes);
+    } else {
+      castableDestinationTypes.add(type);
+    }
 
     // Even though the AST representation of interfaces do not claim to inherit from Object, they
     // can cast to Object.
@@ -910,6 +916,19 @@ public class JTypeOracle implements Serializable {
 
     Collections.sort(castableDestinationTypes, HasName.BY_NAME_COMPARATOR);
     return Sets.newLinkedHashSet(castableDestinationTypes);
+  }
+
+  public boolean isArrayOfJso(JType type) {
+    if (!(type instanceof JReferenceType)) {
+      return false;
+    }
+
+    JReferenceType referenceType = ((JReferenceType) type).getUnderlyingType();
+    if (!(referenceType instanceof JArrayType)) {
+      return false;
+    }
+
+    return isJavaScriptObject(((JArrayType) referenceType).getLeafType());
   }
 
   public boolean isDualJsoInterface(JReferenceType maybeDualImpl) {
