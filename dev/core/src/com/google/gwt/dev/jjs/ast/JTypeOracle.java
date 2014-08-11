@@ -918,19 +918,6 @@ public class JTypeOracle implements Serializable {
     return Sets.newLinkedHashSet(castableDestinationTypes);
   }
 
-  public boolean isArrayOfJso(JType type) {
-    if (!(type instanceof JReferenceType)) {
-      return false;
-    }
-
-    JReferenceType referenceType = ((JReferenceType) type).getUnderlyingType();
-    if (!(referenceType instanceof JArrayType)) {
-      return false;
-    }
-
-    return isJavaScriptObject(((JArrayType) referenceType).getLeafType());
-  }
-
   public boolean isDualJsoInterface(JReferenceType maybeDualImpl) {
     return dualImpls.contains(maybeDualImpl.getUnderlyingType().getName());
   }

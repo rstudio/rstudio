@@ -274,11 +274,11 @@ public class ComputeCastabilityInformation {
     private void recordCastInternal(JReferenceType toType, JReferenceType rhsType) {
       toType = toType.getUnderlyingType();
       rhsType = rhsType.getUnderlyingType();
-      if (program.typeOracle.isArrayOfJso(toType)) {
-        // Arrays of JSO will be always treated as arrays of JavaScriptObject for
-        // casting purposes.
-        toType =  program.getOrCreateArrayType(program.getJavaScriptObject(),
-            ((JArrayType) toType).getDims());
+
+      if (toType instanceof JArrayType) {
+        // Arrays of any subclass of JavaScriptObject are considered arrays of JavaScriptObject
+        // for casting and instanceof purposes.
+        toType =  (JReferenceType) program.normalizeJsoType(toType);
       }
 
       castSourceTypesPerCastTargetType.put(toType, rhsType);

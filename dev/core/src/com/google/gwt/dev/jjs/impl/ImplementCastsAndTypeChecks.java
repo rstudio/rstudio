@@ -87,11 +87,10 @@ public class ImplementCastsAndTypeChecks {
         JReferenceType refType = ((JReferenceType) toType).getUnderlyingType();
         JReferenceType argType = (JReferenceType) expr.getType();
 
-        if (program.typeOracle.isArrayOfJso(refType)) {
+        if (refType instanceof JArrayType) {
           // Arrays of any subclass of JavaScriptObject are considered arrays of JavaScriptObject
           // for casting and instanceof purposes.
-          refType =  program.getOrCreateArrayType(program.getJavaScriptObject(),
-              ((JArrayType) refType).getDims());
+          refType =  (JReferenceType) program.normalizeJsoType(refType);
         }
 
         if (pruneTrivialCasts && program.typeOracle.canTriviallyCast(argType, refType)) {
@@ -194,11 +193,10 @@ public class ImplementCastsAndTypeChecks {
       // Only tests on run-time types are supported
       assert (toType == toType.getUnderlyingType());
 
-      if (program.typeOracle.isArrayOfJso(toType)) {
+      if (toType instanceof JArrayType) {
         // Arrays of any subclass of JavaScriptObject are considered arrays of JavaScriptObject
         // for casting and instanceof purposes.
-        toType =  program.getOrCreateArrayType(program.getJavaScriptObject(),
-            ((JArrayType) toType).getDims());
+        toType =  (JReferenceType) program.normalizeJsoType(toType);
       }
 
       boolean isTrivialCast = program.typeOracle.canTriviallyCast(argType, toType)

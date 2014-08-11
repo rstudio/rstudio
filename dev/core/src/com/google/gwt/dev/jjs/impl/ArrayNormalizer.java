@@ -115,8 +115,10 @@ public class ArrayNormalizer {
       } else {
         elementType = ((JReferenceType) elementType).getUnderlyingType();
       }
+
+      elementType = program.normalizeJsoType(elementType);
       return new JRuntimeTypeReference(sourceInfo, program.getTypeJavaLangObject(),
-          (JReferenceType)  elementType);
+          (JReferenceType) elementType);
     }
 
     private JExpression getOrCreateCastMap(SourceInfo sourceInfo, JArrayType arrayType) {

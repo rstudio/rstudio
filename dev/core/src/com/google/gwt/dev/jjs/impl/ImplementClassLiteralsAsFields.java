@@ -383,14 +383,6 @@ public class ImplementClassLiteralsAsFields {
     program.recordClassLiteralFields(classLiteralFields);
   }
 
-  private JType normalizeJsoType(JType type) {
-    assert !(type instanceof JArrayType);
-    if (program.typeOracle.isJavaScriptObject(type)) {
-      return program.getJavaScriptObject();
-    }
-    return type;
-  }
-
   /**
    * Create an expression that will evaluate, at run time, to the class literal.
    * Causes recursive literal create (super type, array element type). Examples:
@@ -456,7 +448,7 @@ public class ImplementClassLiteralsAsFields {
    * </pre>
    */
   private JField resolveClassLiteralField(JType type) {
-    type = normalizeJsoType(type);
+    type = program.normalizeJsoType(type);
     JField field = classLiteralFields.get(type);
     if (field == null) {
       // Create the allocation expression FIRST since this may be recursive on
