@@ -1010,13 +1010,8 @@ PackratContext packratContext()
 {
    PackratContext context;
 
-   // NOTE: when we switch to auto-installing packrat we need to update
-   // this check to look for R >= whatever packrat requires (we don't
-   // need to look for R >= 3.0 as we do for rmarkdown/shiny because
-   // build tools will be installed prior to attempting to auto-install
-   // the embedded version of packrat
-
-   context.available = isRequiredPackratInstalled();
+   // packrat is available in R >= 3.0
+   context.available = r::session::utils::isR3();
 
    context.applicable = context.available &&
                         projects::projectContext().hasProject();
