@@ -38,6 +38,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.transitiveclosure.TransitiveClosureSolver;
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
@@ -53,6 +54,8 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -698,6 +701,40 @@ public class ModuleDef implements DepsInfoProvider {
   @Override
   public String getGwtXmlFilePath(String moduleName) {
     return gwtXmlPathByModuleName.get(moduleName);
+  }
+
+  /**
+   * Calculates a hash of the filenames of all the input files for the GWT compiler.
+   *
+   * <p> This is needed because the list of files could change without affecting the timestamp.
+   * For example, consider a glob that matches fewer files than before because a file was
+   * deleted.
+   */
+  public int getInputFilenameHash() {
+    List<String> filenames = new ArrayList<String>();
+
+    filenames.addAll(gwtXmlPathByModuleName.values());
+
+    for (Resource resource : getResourcesNewerThan(Integer.MIN_VALUE)) {
+      filenames.add(resource.getLocation());
+    }
+
+    // Take the first four bytes of the SHA-1 hash.
+
+    Collections.sort(filenames);
+
+    MessageDigest digest;
+    try {
+      digest = MessageDigest.getInstance("SHA-1");
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("SHA-1 unavailable", e);
+    }
+    for (String filename : filenames) {
+      digest.update(filename.getBytes(Charsets.UTF_8));
+    }
+    byte[] bytes = digest.digest();
+
+    return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
   }
 
   public Class<? extends Linker> getLinker(String name) {

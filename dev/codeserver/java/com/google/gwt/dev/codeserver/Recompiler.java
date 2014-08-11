@@ -17,6 +17,7 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.linker.CrossSiteIframeLinker;
 import com.google.gwt.core.linker.IFrameLinker;
@@ -39,11 +40,13 @@ import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -63,6 +66,9 @@ class Recompiler {
   private AtomicReference<String> moduleName = new AtomicReference<String>(null);
 
   private final AtomicReference<CompileDir> lastBuild = new AtomicReference<CompileDir>();
+
+  private InputSummary lastBuildInput;
+
   private CompileDir publishedCompileDir;
   private final AtomicReference<ResourceLoader> resourceLoader =
       new AtomicReference<ResourceLoader>();
@@ -139,7 +145,7 @@ class Recompiler {
     }
 
     if (!success) {
-      compileLogger.log(TreeLogger.Type.ERROR, "Compiler returned " + success);
+      compileLogger.log(TreeLogger.Type.ERROR, "Compiler returned false");
       throw new UnableToCompleteException();
     }
 
@@ -239,6 +245,13 @@ class Recompiler {
     String newModuleName = module.getName();
     moduleName.set(newModuleName);
 
+    // Check if we can skip the compile altogether.
+    InputSummary input = new InputSummary(bindingProperties, module);
+    if (input.equals(lastBuildInput)) {
+      compileLogger.log(Type.INFO, "skipped compile because no input files have changed");
+      return true;
+    }
+
     progress.set(new Progress.Compiling(newModuleName, compilesDone, 1, 2, "Compiling"));
     // TODO: use speed tracer to get more compiler events?
 
@@ -248,6 +261,10 @@ class Recompiler {
     boolean success = new Compiler(runOptions, rebuildCache).run(compileLogger, module);
     if (success) {
       publishedCompileDir = compileDir;
+      lastBuildInput = input;
+    } else {
+      // always recompile after an error
+      lastBuildInput = null;
     }
     lastBuild.set(compileDir); // makes compile log available over HTTP
 
@@ -442,5 +459,41 @@ class Recompiler {
   private CompileDir makeCompileDir(int compileId)
       throws UnableToCompleteException {
     return CompileDir.create(appSpace.getCompileDir(compileId), logger);
+  }
+
+  /**
+   * Summarizes the inputs to a GWT compile. (Immutable.)
+   * Two summaries should be equal if the compiler's inputs are equal (with high probability).
+   */
+  private static class InputSummary {
+    private final ImmutableMap<String, String> bindingProperties;
+    private final long moduleLastModified;
+    private final long resourcesLastModified;
+    private final long filenameHash;
+
+    InputSummary(Map<String, String> bindingProperties, ModuleDef module) {
+      this.bindingProperties = ImmutableMap.copyOf(bindingProperties);
+      this.moduleLastModified = module.lastModified();
+      this.resourcesLastModified = module.getResourceLastModified();
+      this.filenameHash = module.getInputFilenameHash();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof InputSummary) {
+        InputSummary other = (InputSummary) obj;
+        return bindingProperties.equals(other.bindingProperties) &&
+            moduleLastModified == other.moduleLastModified &&
+            resourcesLastModified == other.resourcesLastModified &&
+            filenameHash == other.filenameHash;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(bindingProperties, moduleLastModified, resourcesLastModified,
+          filenameHash);
+    }
   }
 }
