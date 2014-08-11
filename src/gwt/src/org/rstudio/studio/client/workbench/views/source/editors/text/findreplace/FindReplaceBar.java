@@ -22,6 +22,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -147,7 +148,19 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       {
          public void onKeyDown(KeyDownEvent event)
          {
-            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+            int keyCode = event.getNativeKeyCode();
+            
+            if (keyCode == KeyCodes.KEY_ENTER &&
+                  mod == KeyboardShortcut.SHIFT)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               btnFindPrev_.click();
+               focusFindField(false);
+            }
+            
+            else if (keyCode == KeyCodes.KEY_ENTER)
             {
                event.preventDefault();
                event.stopPropagation();
