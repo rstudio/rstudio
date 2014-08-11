@@ -175,6 +175,72 @@ public class CompilerTest extends ArgProcessorTestBase {
           "package com.foo;",
           "public class ModelD extends ModelC {}");
 
+  private MockJavaResource modifiedJsoIntfDispatchEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    Caller.call(this);",
+          "  }",
+          "",
+          "  public void runTest(FooInterface fooInterface) {",
+          "    fooInterface.run();",
+          "  }",
+          "}");
+
+  private MockJavaResource callerResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Caller",
+          "package com.foo;",
+          "public class Caller {",
+          "  public static void call(TestEntryPoint testEntryPoint) {",
+          "    testEntryPoint.runTest(Foo.createFoo());",
+          "  }",
+          "}");
+
+  private MockJavaResource fooInterfaceResource =
+      JavaResourceBase.createMockJavaResource("com.foo.FooInterface",
+          "package com.foo;",
+          "public interface FooInterface {",
+          "  void run();",
+          "}");
+
+  private MockJavaResource jsoFooResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Foo",
+          "package com.foo;",
+          "import com.google.gwt.core.client.JavaScriptObject;",
+          "public final class Foo extends JavaScriptObject implements FooInterface {",
+          "  public static native Foo createFoo() /*-{",
+          "    return {};",
+          "  }-*/;",
+          "",
+          "  protected Foo() {}",
+          "",
+          "  @Override",
+          "  public void run() {}",
+          "}");
+
+  private MockJavaResource nonJsoFooResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Foo",
+          "package com.foo;",
+          "public class Foo implements FooInterface {",
+          "  public static Foo createFoo() {",
+          "    return new Foo();",
+          "  }",
+          "",
+          "  @Override",
+          "  public void run() {}",
+          "}");
+
+  private MockJavaResource regularFooImplemetorResource =
+      JavaResourceBase.createMockJavaResource("com.foo.FooImplementor",
+          "package com.foo;",
+          "public class FooImplementor implements FooInterface {",
+          "  @Override",
+          "  public void run() {}",
+          "}");
+
   public CompilerTest() {
     argProcessor = new Compiler.ArgProcessor(options);
   }
@@ -302,17 +368,17 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   public void testPerFileRecompile_functionSignatureChange() throws UnableToCompleteException,
       IOException, InterruptedException {
-    // Not testing recompile equality for function signature change with Pretty output since the
-    // Pretty namer's behavior is order dependent, and while still correct, will come out different
-    // in a recompile with changes versus a from scratch compile with changes.
+    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
+    // dependent, and while still correct, will come out different in a recompile with this change
+    // versus a from scratch compile with this change.
     checkPerFileRecompile_functionSignatureChange(JsOutputOption.DETAILED);
   }
 
   public void testPerFileRecompile_regularClassMadeIntoJsoClass() throws UnableToCompleteException,
       IOException, InterruptedException {
-    // Not testing recompile equality for function signature change with Pretty output since the
-    // Pretty namer's behavior is order dependent, and while still correct, will come out different
-    // in a recompile with changes versus a from scratch compile with changes.
+    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
+    // dependent, and while still correct, will come out different in a recompile with this change
+    // versus a from scratch compile with this change.
     checkPerFileRecompile_regularClassMadeIntoJsoClass(JsOutputOption.DETAILED);
   }
 
@@ -320,6 +386,22 @@ public class CompilerTest extends ArgProcessorTestBase {
       IOException, InterruptedException {
     checkPerFileRecompile_typeHierarchyChange(JsOutputOption.PRETTY);
     checkPerFileRecompile_typeHierarchyChange(JsOutputOption.DETAILED);
+  }
+
+  public void testPerFileRecompile_singleJsoIntfDispatchChange() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
+    // dependent, and while still correct, will come out different in a recompile with this change
+    // versus a from scratch compile with this change.
+    checkPerFileRecompile_singleJsoIntfDispatchChange(JsOutputOption.DETAILED);
+  }
+
+  public void testPerFileRecompile_dualJsoIntfDispatchChange() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
+    // dependent, and while still correct, will come out different in a recompile with this change
+    // versus a from scratch compile with this change.
+    checkPerFileRecompile_dualJsoIntfDispatchChange(JsOutputOption.DETAILED);
   }
 
   private void checkPerFileRecompile_noop(JsOutputOption output) throws UnableToCompleteException,
@@ -380,6 +462,27 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp("com.foo.SimpleModule", Lists.newArrayList(simpleModuleResource,
         modifiedSuperEntryPointResource, modelAResource, modelBResource, modelDResource),
         modelCResource, modifiedSuperModelCResource, output);
+  }
+
+  private void checkPerFileRecompile_singleJsoIntfDispatchChange(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
+        simpleModuleResource, modifiedJsoIntfDispatchEntryPointResource, callerResource,
+        fooInterfaceResource), nonJsoFooResource, jsoFooResource, output);
+  }
+
+  private void checkPerFileRecompile_dualJsoIntfDispatchChange(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
+        simpleModuleResource, modifiedJsoIntfDispatchEntryPointResource, callerResource,
+        fooInterfaceResource, regularFooImplemetorResource), nonJsoFooResource, jsoFooResource,
+        output);
   }
 
   private void assertDeterministicBuild(CompilerOptions options)

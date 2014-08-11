@@ -29,6 +29,7 @@ import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -291,6 +292,11 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    */
   private JClassType javaLangObject;
 
+  /**
+   * Cached singleton type representing <code>com.google.gwt.core.client.JavaScriptObject</code>.
+   */
+  private JClassType javaScriptObject;
+
   private final JavaSourceParser javaSourceParser = new JavaSourceParser();
 
   /**
@@ -298,6 +304,11 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    */
   private final Map<JClassType, JClassType> jsoSingleImpls =
       new IdentityHashMap<JClassType, JClassType>();
+
+  /**
+   * Collects DualJsoImpl interfaces.
+   */
+  private final Set<JClassType> jsoDualImpls = Sets.newHashSet();
 
   /**
    * Cached map of all packages thus far encountered.
@@ -411,6 +422,18 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
       assert javaLangObject != null;
     }
     return javaLangObject;
+  }
+
+  /**
+   * Gets a reference to the type object representing
+   * <code>com.google.gwt.core.client.JavaScriptObject</code>.
+   */
+  public JClassType getJavaScriptObject() {
+    if (javaScriptObject == null) {
+      javaScriptObject = findType(JSO_CLASS);
+      assert javaScriptObject != null;
+    }
+    return javaScriptObject;
   }
 
   /**
@@ -578,6 +601,14 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   }
 
   /**
+   * Returns an unmodifiable, live view of all interface types that are
+   * implemented by both a JSO subtype and at least one Object subtype.
+   */
+  public Set<? extends com.google.gwt.core.ext.typeinfo.JClassType> getDualJsoImplInterfaces() {
+    return Collections.unmodifiableSet(jsoDualImpls);
+  }
+
+  /**
    * Finds a type given its fully qualified name. For nested classes, use its
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
@@ -707,6 +738,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   void finish() {
     computeHierarchyRelationships();
     computeSingleJsoImplData();
+    computeDualJsoImplData();
     recentTypes.clear();
   }
 
@@ -759,6 +791,23 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     // about its subtype.
     for (JClassType recentType : recentTypes) {
       recentType.notifySuperTypes();
+    }
+  }
+
+  private void computeDualJsoImplData() {
+    JClassType jsoType = findType(JSO_CLASS);
+    if (jsoType == null) {
+      return;
+    }
+
+    Set<JClassType> jsoInterfaces = jsoSingleImpls.keySet();
+    nextInterface : for (JClassType jsoInterface : jsoInterfaces) {
+      for (JClassType subtype : jsoInterface.getSubtypes()) {
+        if (!jsoType.isAssignableFrom(subtype)) {
+          jsoDualImpls.add(jsoInterface);
+          break nextInterface;
+        }
+      }
     }
   }
 
