@@ -51,8 +51,7 @@ public final class Byte extends Number implements Comparable<Byte> {
   }
 
   public static byte parseByte(String s) throws NumberFormatException {
-    final int baseTen = 10;
-    return parseByte(s, baseTen);
+    return parseByte(s, 10);
   }
 
   public static byte parseByte(String s, int radix)

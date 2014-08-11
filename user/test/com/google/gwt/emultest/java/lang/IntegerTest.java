@@ -258,14 +258,52 @@ public class IntegerTest extends GWTTestCase {
         Integer.valueOf(Integer.MAX_VALUE).intValue());
   }
 
+  public void testToBinaryString() {
+    assertEquals("1111111111111111111111111111111", Integer.toBinaryString(Integer.MAX_VALUE));
+    assertEquals("10000000000000000000000000000000", Integer.toBinaryString(Integer.MIN_VALUE));
+  }
+
   public void testToHexString() {
     assertEquals("12345", Integer.toHexString(0x12345));
     assertEquals("fff12345", Integer.toHexString(0xFFF12345));
+    assertEquals("7fffffff", Integer.toHexString(Integer.MAX_VALUE));
+    assertEquals("80000000", Integer.toHexString(Integer.MIN_VALUE));
+    assertEquals("ffffffff", Integer.toHexString(-1));
+
+    String[] hexDigits = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+        "a", "b", "c", "d", "e", "f" };
+    for (int i = 0; i < hexDigits.length; i++) {
+      assertEquals(hexDigits[i], Integer.toHexString(i));
+    }
+  }
+
+  public void testToOctalString() {
+    assertEquals("17777777777", Integer.toOctalString(Integer.MAX_VALUE));
+    assertEquals("20000000000", Integer.toOctalString(Integer.MIN_VALUE));
   }
 
   public void testToString() {
     assertEquals("12345", new Integer(12345).toString());
     assertEquals("-12345", new Integer("-12345").toString());
+
+    assertEquals("-80765", Integer.toString(-80765));
+    assertEquals("2147483647", Integer.toString(Integer.MAX_VALUE));
+    assertEquals("-2147483647", Integer.toString(-Integer.MAX_VALUE));
+    assertEquals("-2147483648", Integer.toString(Integer.MIN_VALUE));
+    assertEquals("0", Integer.toString(0));
+
+    assertEquals("17777777777", Integer.toString(2147483647, 8));
+    assertEquals("7fffffff", Integer.toString(2147483647, 16));
+    assertEquals("1111111111111111111111111111111", Integer.toString(2147483647, 2));
+    assertEquals("2147483647", Integer.toString(2147483647, 10));
+    assertEquals("-17777777777", Integer.toString(-2147483647, 8));
+    assertEquals("-7fffffff", Integer.toString(-2147483647, 16));
+    assertEquals("-1111111111111111111111111111111", Integer.toString(-2147483647, 2));
+    assertEquals("-2147483647", Integer.toString(-2147483647, 10));
+    assertEquals("-20000000000", Integer.toString(-2147483648, 8));
+    assertEquals("-80000000", Integer.toString(-2147483648, 16));
+    assertEquals("-10000000000000000000000000000000", Integer.toString(-2147483648, 2));
+    assertEquals("-2147483648", Integer.toString(-2147483648, 10));
   }
 
   public void testValueOf() {
