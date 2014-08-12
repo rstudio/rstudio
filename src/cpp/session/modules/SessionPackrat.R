@@ -44,6 +44,7 @@
 })
 
 .rs.addFunction("listPackagesPackrat", function(dir) {
+
    # retrieve the raw list of packages
    libraryList <- .rs.listInstalledPackages()
 
@@ -59,7 +60,16 @@
    # largely a convenience for the client since a lot of behavior is driven
    # from this value). do this before resolving symlinks since some packages
    # may be symlinked out of the Packrat private library to a global cache.
-   projectPath <- file.path(normalizePath(dir), "packrat", "lib", "")
+
+   # NOTE: On Windows with R >= 3.1.0, 'file.path' strips the terminating
+   # filepath delimiter. In addition, normalizePath uses '\' for slashes,
+   # while 'file.path' uses '/'. Since we are comparing paths as strings,
+   # we need to ensure that we use the same path delimiter here. So we use
+   # 'paste' explicitly so that we can ensure the correct delimiter.
+   # note that .Platform$file.sep is still '/' even on Windows.
+   sep <- if (tolower(.Platform$OS.type) == "windows") "\\" else "/"
+
+   projectPath <- paste(normalizePath(dir), "packrat", "lib", "", sep = sep)
    libraryPaths <- normalizePath(as.character(libraryList[,"library"]))
    libraryList["in.packrat.library"] <- 
       substr(libraryPaths, 1, nchar(projectPath)) == projectPath
@@ -67,9 +77,24 @@
    # resolve symlinks (use normalizePath rather than Sys.readlink since we want
    # to resolve symlinks anywhere in the heirarchy)
    resolvedLinks <- normalizePath(by(libraryList, 1:nrow(libraryList),
-         function(pkg) { 
-                system.file(package = pkg$name, lib.loc = pkg$library) 
-         }))
+                                     function(pkg) {
+                                        system.file(package = pkg$name, lib.loc = pkg$library)
+                                     }))
+
+   # for any packages in lib-R, these might be junction points on Windows;
+   # hard-code the path back to the system library. unfortunately R provides
+   # no mechanism for asking whether the file at a path is a junction point,
+   # nor does normalizePath follow junction points. for robustness, we should
+   # explicitly check whether these files are junction points
+   if (tolower(.Platform$OS.type) == "windows") {
+      .Library <- packrat:::.packrat_mutables$get(".Library")
+      if (!is.null(.Library)) {
+         idx <- grep("\\lib-R\\", resolvedLinks, fixed = TRUE)
+         resolvedLinks[idx] <-
+            normalizePath(file.path(.Library, basename(resolvedLinks[idx])))
+      }
+   }
+
    libraryList[,"source.library"] <- 
       .rs.createAliasedPath(libraryList[,"library"])
    libraryList[,"library"] <- 
