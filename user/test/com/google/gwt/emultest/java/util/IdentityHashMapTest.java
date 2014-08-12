@@ -746,12 +746,6 @@ public class IdentityHashMapTest extends TestMap {
     return new IdentityHashMap();
   }
 
-  @Override
-  protected boolean useNullValue() {
-    // The JRE IdentityHashMap always thinks it has a null value.
-    return false;
-  }
-
   private Iterator iterateThrough(final IdentityHashMap expected) {
     Iterator iter = expected.entrySet().iterator();
     for (int i = 0; i < expected.size(); i++) {

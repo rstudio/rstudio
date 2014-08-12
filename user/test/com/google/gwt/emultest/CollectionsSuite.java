@@ -15,7 +15,6 @@
  */
 package com.google.gwt.emultest;
 
-import com.google.gwt.emultest.java.util.ApacheMapTest;
 import com.google.gwt.emultest.java.util.ArrayListTest;
 import com.google.gwt.emultest.java.util.ArraysTest;
 import com.google.gwt.emultest.java.util.CollectionsTest;
@@ -47,7 +46,6 @@ public class CollectionsSuite {
     GWTTestSuite suite = new GWTTestSuite("Tests for emulation of Java Collections");
 
     // $JUnit-BEGIN$
-    suite.addTestSuite(ApacheMapTest.class);
     suite.addTestSuite(ArrayListTest.class);
     suite.addTestSuite(ArraysTest.class);
     suite.addTestSuite(CollectionsTest.class);
