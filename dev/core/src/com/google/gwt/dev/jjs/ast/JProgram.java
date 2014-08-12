@@ -693,10 +693,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
         typeOracle.isJavaScriptObject(type) ? getJavaScriptObject() : type);
   }
 
-  public String getClassLiteralName(JType type) {
-    return type.getJavahSignatureName() + "_classLit";
-  }
-
   public List<JDeclaredType> getDeclaredTypes() {
     return allTypes;
   }

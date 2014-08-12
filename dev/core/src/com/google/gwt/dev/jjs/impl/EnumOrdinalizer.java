@@ -43,19 +43,21 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
+import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Ordering;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.collect.TreeMultimap;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -109,35 +111,33 @@ public class EnumOrdinalizer {
    * the results can be tested after running with a given input.
    */
   public static class Tracker {
-    private final Set<String> allEnumsOrdinalized;
-    private final Set<String> allEnumsVisited;
-    private final Map<String, List<SourceInfo>> enumInfoMap;
-    private final List<Set<String>> enumsOrdinalizedPerPass;
-    private final List<Set<String>> enumsVisitedPerPass;
+    private static final Comparator<SourceInfo> SOURCE_INFO_COMPARATOR =
+        new Comparator<SourceInfo>() {
+          @Override
+          public int compare(SourceInfo s1, SourceInfo s2) {
+            int fileNameComp = s1.getFileName().compareTo(s2.getFileName());
+            return fileNameComp != 0 ? fileNameComp :
+                Integer.compare(s1.getStartLine(), s2.getStartLine());
+          }
+        };
+
+    private final Set<String> allEnumsOrdinalized = Sets.newTreeSet();
+    private final Set<String> allEnumsVisited = Sets.newTreeSet();
+    private final Multimap<String, SourceInfo> enumInfoMap =
+        TreeMultimap.create(Ordering.natural(), SOURCE_INFO_COMPARATOR);
+    private final List<Set<String>> enumsOrdinalizedPerPass = Lists.newArrayList();
+    private final List<Set<String>> enumsVisitedPerPass = Lists.newArrayList();
     private int runCount = -1;
 
     // use TreeSets, for nice sorted iteration for output
     public Tracker() {
-      allEnumsVisited = new TreeSet<String>();
-      allEnumsOrdinalized = new TreeSet<String>();
-      enumsVisitedPerPass = new ArrayList<Set<String>>();
-      enumsOrdinalizedPerPass = new ArrayList<Set<String>>();
-      enumInfoMap = new HashMap<String, List<SourceInfo>>();
-
       // add entry for initial pass
       enumsVisitedPerPass.add(new TreeSet<String>());
       enumsOrdinalizedPerPass.add(new TreeSet<String>());
     }
 
     public void addEnumNotOrdinalizedInfo(String enumName, SourceInfo info) {
-      List<SourceInfo> infos = enumInfoMap.get(enumName);
-      if (infos == null) {
-        infos = new ArrayList<SourceInfo>();
-        enumInfoMap.put(enumName, infos);
-      }
-      if (!infos.contains(info)) {
-        infos.add(info);
-      }
+      enumInfoMap.put(enumName, info);
     }
 
     public void addOrdinalized(String ordinalized) {
@@ -151,10 +151,10 @@ public class EnumOrdinalizer {
     }
 
     public String getInfoString(SourceInfo info) {
-      if (info != null) {
-        return info.getFileName() + ": Line " + info.getStartLine();
+      if (info == null) {
+        return null;
       }
-      return null;
+      return info.getFileName() + ": Line " + info.getStartLine();
     }
 
     public int getNumOrdinalized() {
@@ -180,40 +180,23 @@ public class EnumOrdinalizer {
     }
 
     public void logEnumsNotOrdinalized(TreeLogger logger, TreeLogger.Type logType) {
-      if (logger != null) {
-        boolean initialMessageLogged = false;
-        for (String enumVisited : allEnumsVisited) {
-          if (!isOrdinalized(enumVisited)) {
-            if (!initialMessageLogged) {
-              logger = logger.branch(logType, "Enums Not Ordinalized:");
-              initialMessageLogged = true;
-            }
-            TreeLogger subLogger = logger.branch(logType, enumVisited);
-            List<SourceInfo> infos = enumInfoMap.get(enumVisited);
-            if (infos == null) {
-              continue;
-            }
+      if (logger == null) {
+        return;
+      }
 
-            Collections.sort(infos, new Comparator<SourceInfo>() {
-              @Override
-              public int compare(SourceInfo s1, SourceInfo s2) {
-                int fileNameComp = s1.getFileName().compareTo(s2.getFileName());
-                if (fileNameComp != 0) {
-                  return fileNameComp;
-                }
-                if (s1.getStartLine() < s2.getStartLine()) {
-                  return -1;
-                } else if (s1.getStartLine() > s2.getStartLine()) {
-                  return 1;
-                }
-                return 0;
-              }
-            });
+      boolean initialMessageLogged = false;
+      for (String enumVisited : allEnumsVisited) {
+        if (isOrdinalized(enumVisited)) {
+          continue;
+        }
+        if (!initialMessageLogged) {
+          logger = logger.branch(logType, "Enums Not Ordinalized:");
+          initialMessageLogged = true;
+        }
+        TreeLogger subLogger = logger.branch(logType, enumVisited);
 
-            for (SourceInfo info : infos) {
-              subLogger.branch(logType, getInfoString(info));
-            }
-          }
+        for (SourceInfo info : enumInfoMap.get(enumVisited)) {
+          subLogger.branch(logType, getInfoString(info));
         }
       }
     }
@@ -228,39 +211,40 @@ public class EnumOrdinalizer {
     }
 
     public void logEnumsOrdinalizedPerPass(TreeLogger logger, TreeLogger.Type logType) {
-      if (logger != null) {
-        if (allEnumsOrdinalized.size() == 0) {
-          return;
-        }
-        int pass = 0;
-        for (Set<String> enumsOrdinalized : enumsOrdinalizedPerPass) {
-          pass++;
-          if (enumsOrdinalized.size() > 0) {
-            TreeLogger subLogger =
-                logger.branch(logType, "Pass " + pass + ": " + enumsOrdinalized.size()
-                    + " ordinalized");
-            for (String enumOrdinalized : enumsOrdinalized) {
-              subLogger.branch(logType, enumOrdinalized);
-            }
+      if (logger == null) {
+        return;
+      }
+      if (allEnumsOrdinalized.size() == 0) {
+        return;
+      }
+      int pass = 0;
+      for (Set<String> enumsOrdinalized : enumsOrdinalizedPerPass) {
+        pass++;
+        if (enumsOrdinalized.size() > 0) {
+          TreeLogger subLogger = logger.branch(logType, "Pass " + pass + ": " +
+              enumsOrdinalized.size() + " ordinalized");
+          for (String enumOrdinalized : enumsOrdinalized) {
+            subLogger.branch(logType, enumOrdinalized);
           }
         }
       }
     }
 
     public void logEnumsVisitedPerPass(TreeLogger logger, TreeLogger.Type logType) {
-      if (logger != null) {
-        if (allEnumsVisited.size() == 0) {
-          return;
-        }
-        int pass = 0;
-        for (Set<String> enumsVisited : enumsVisitedPerPass) {
-          pass++;
-          if (enumsVisited.size() > 0) {
-            TreeLogger subLogger =
-                logger.branch(logType, "Pass " + pass + ": " + enumsVisited.size() + " visited");
-            for (String enumVisited : enumsVisited) {
-              subLogger.branch(logType, enumVisited);
-            }
+      if (logger == null) {
+        return;
+      }
+      if (allEnumsVisited.size() == 0) {
+        return;
+      }
+      int pass = 0;
+      for (Set<String> enumsVisited : enumsVisitedPerPass) {
+        pass++;
+        if (enumsVisited.size() > 0) {
+          TreeLogger subLogger =
+              logger.branch(logType, "Pass " + pass + ": " + enumsVisited.size() + " visited");
+          for (String enumVisited : enumsVisited) {
+            subLogger.branch(logType, enumVisited);
           }
         }
       }
@@ -280,14 +264,14 @@ public class EnumOrdinalizer {
     }
 
     public TreeLogger logResultsSummary(TreeLogger logger, TreeLogger.Type logType) {
-      if (logger != null) {
-        logger = logger.branch(logType, "EnumOrdinalizer Results:");
-        logger.branch(logType, (runCount + 1) + " ordinalization passes completed");
-        logger.branch(logType, allEnumsOrdinalized.size() + " of " + allEnumsVisited.size()
-            + " ordinalized");
-        return logger;
+      if (logger == null) {
+        return null;
       }
-      return null;
+      logger = logger.branch(logType, "EnumOrdinalizer Results:");
+      logger.branch(logType, (runCount + 1) + " ordinalization passes completed");
+      logger.branch(logType, allEnumsOrdinalized.size() + " of " + allEnumsVisited.size()
+          + " ordinalized");
+      return logger;
     }
 
     public void maybeDumpAST(JProgram program, int stage) {
@@ -353,25 +337,8 @@ public class EnumOrdinalizer {
    * ordinalizable.
    */
   private class CannotBeOrdinalAnalyzer extends ImplicitUpcastAnalyzer {
-
-    private final Map<String, SourceInfo> jsniClassLiteralsInfo = new HashMap<String, SourceInfo>();
-
     public CannotBeOrdinalAnalyzer(JProgram program) {
       super(program);
-    }
-
-    /*
-     * After program is visited, post-process remaining tasks from accumulated
-     * data.
-     */
-    public void afterVisitor() {
-      // black-list any Jsni enum ClassLiteralsVisited
-      for (String classLiteralName : jsniClassLiteralsInfo.keySet()) {
-        JEnumType enumFromLiteral = enumsVisited.get(classLiteralName);
-        if (enumFromLiteral != null) {
-          addToBlackList(enumFromLiteral, jsniClassLiteralsInfo.get(classLiteralName));
-        }
-      }
     }
 
     @Override
@@ -392,23 +359,22 @@ public class EnumOrdinalizer {
        * ClassLiteralHolder class, or within the getClass method of an enum
        * class (see comments above).
        */
-      JEnumType type = getEnumType(x.getRefType());
-      if (type != null) {
-        blackListIfEnum(type, x.getSourceInfo());
-      }
+      blackListIfEnum(x.getRefType(), x.getSourceInfo());
     }
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
       // keep track of all enum classes visited
       JEnumType maybeEnum = x.isEnumOrSubclass();
-      if (maybeEnum != null) {
-        enumsVisited.put(program.getClassLiteralName(maybeEnum), maybeEnum);
+      if (maybeEnum == null) {
+        return;
+      }
 
-        // don't need to re-ordinalize a previously ordinalized enum
-        if (maybeEnum.isOrdinalized()) {
-          addToBlackList(maybeEnum, x.getSourceInfo());
-        }
+      enumsVisited.add(maybeEnum);
+
+      // don't need to re-ordinalize a previously ordinalized enum
+      if (maybeEnum.isOrdinalized()) {
+        addToBlackList(maybeEnum, x.getSourceInfo());
       }
     }
 
@@ -475,6 +441,20 @@ public class EnumOrdinalizer {
     }
 
     @Override
+    public void endVisit(JsniClassLiteral x, Context ctx) {
+      /*
+       * Check for references to an enum's class literal. We need to black-list
+       * classes in this case, since there could be a call to
+       * Enum.valueOf(someEnum.class,"name"), etc.
+       *
+       * Note: we won't get here for class literals that occur in the
+       * ClassLiteralHolder class, or within the getClass method of an enum
+       * class (see comments above).
+       */
+      blackListIfEnum(x.getRefType(), x.getSourceInfo());
+    }
+
+    @Override
     public void endVisit(JsniFieldRef x, Context ctx) {
       /*
        * Can't do the same thing as for JFieldRef, all JsniFieldRefs are cast to
@@ -490,21 +470,6 @@ public class EnumOrdinalizer {
         blackListIfEnumExpression(x.getInstance());
       } else {
         blackListIfEnum(x.getField().getEnclosingType(), x.getSourceInfo());
-      }
-
-      /*
-       * need to also check JsniFieldRef's for a possible reference to a class
-       * literal, since we don't get a visit to JClassLiteral when it occurs
-       * within Jsni (shouldn't it?).
-       */
-      if (x.getField().getEnclosingType() == classLiteralHolderType) {
-        // see if it has an initializer with a method call to "createForEnum"
-        JExpression initializer = x.getField().getInitializer();
-        if (initializer instanceof JMethodCall) {
-          if (((JMethodCall) initializer).getTarget() == classCreateForEnumMethod) {
-            jsniClassLiteralsInfo.put(x.getField().getName(), x.getSourceInfo());
-          }
-        }
       }
     }
 
@@ -562,7 +527,7 @@ public class EnumOrdinalizer {
        * to consider. Make sure this is not a user overloaded version (i.e.
        * check that it has no params).
        */
-      if (getEnumType(x.getEnclosingType()) != null && x.getName().equals("getClass")
+      if (x.getEnclosingType().isEnumOrSubclass() != null && x.getName().equals("getClass")
           && (x.getOriginalParamTypes() == null || x.getOriginalParamTypes().size() == 0)) {
         return false;
       }
@@ -613,15 +578,15 @@ public class EnumOrdinalizer {
     }
 
     private void blackListIfEnum(JType maybeEnum, SourceInfo info) {
-      JEnumType actualEnum = getEnumType(maybeEnum);
+      JEnumType actualEnum = maybeEnum.isEnumOrSubclass();
       if (actualEnum != null) {
         addToBlackList(actualEnum, info);
       }
     }
 
     private void blackListIfEnumCast(JType maybeEnum, JType destType, SourceInfo info) {
-      JEnumType actualEnum = getEnumType(maybeEnum);
-      JEnumType actualDestType = getEnumType(destType);
+      JEnumType actualEnum = maybeEnum.isEnumOrSubclass();
+      JEnumType actualDestType = destType.isEnumOrSubclass();
       if (actualEnum != null) {
         if (actualDestType != actualEnum) {
           addToBlackList(actualEnum, info);
@@ -803,15 +768,10 @@ public class EnumOrdinalizer {
      */
     @Override
     public void endVisit(JFieldRef x, Context ctx) {
-      super.endVisit(x, ctx);
-      if (x.getField() == enumOrdinalField) {
-        if (x.getInstance() != null) {
-          JType type = x.getInstance().getType();
-          if (type == JPrimitiveType.INT) {
-            ctx.replaceMe(x.getInstance());
-          }
-        }
+      if (x.getField() != enumOrdinalField) {
+        return;
       }
+      replaceWithOrdinal(x.getInstance(), ctx);
     }
 
     /**
@@ -821,15 +781,10 @@ public class EnumOrdinalizer {
      */
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      super.endVisit(x, ctx);
-      if (x.getTarget() == enumOrdinalMethod) {
-        if (x.getInstance() != null) {
-          JType type = x.getInstance().getType();
-          if (type == JPrimitiveType.INT) {
-            ctx.replaceMe(x.getInstance());
-          }
-        }
+      if (x.getTarget() != enumOrdinalMethod) {
+        return;
       }
+      replaceWithOrdinal(x.getInstance(), ctx);
     }
 
     @Override
@@ -839,6 +794,14 @@ public class EnumOrdinalizer {
         return false;
       }
       return true;
+    }
+
+    private void replaceWithOrdinal(JExpression x, Context ctx) {
+      assert (x != null);
+      JType type = x.getType();
+      if (type == JPrimitiveType.INT) {
+        ctx.replaceMe(x);
+      }
     }
   }
 
@@ -879,25 +842,23 @@ public class EnumOrdinalizer {
     }
   }
 
-  private final JMethod classCreateForEnumMethod;
   private final JType classLiteralHolderType;
   private final JMethod enumCreateValueOfMapMethod;
   private final JField enumOrdinalField;
   private final JMethod enumOrdinalMethod;
   private final JMethod enumSuperConstructor;
-  private final Map<String, JEnumType> enumsVisited = new HashMap<String, JEnumType>();
+  private final Set<JEnumType> enumsVisited = Sets.newHashSet();
   private final JType javaScriptObjectType;
   private final JType nullType;
-  private final Set<JEnumType> ordinalizationBlackList = new HashSet<JEnumType>();
+  private final Set<JEnumType> ordinalizationBlackList = Sets.newHashSet();
   private final JProgram program;
 
   public EnumOrdinalizer(JProgram program) {
     this.program = program;
-    this.classLiteralHolderType = program.getIndexedType("ClassLiteralHolder");
+    this.classLiteralHolderType = program.getTypeClassLiteralHolder();
     this.nullType = program.getTypeNull();
     this.javaScriptObjectType = program.getJavaScriptObject();
     this.enumOrdinalField = program.getIndexedField("Enum.ordinal");
-    this.classCreateForEnumMethod = program.getIndexedMethod("Class.createForEnum");
     this.enumCreateValueOfMapMethod = program.getIndexedMethod("Enum.createValueOfMap");
     this.enumOrdinalMethod = program.getIndexedMethod("Enum.ordinal");
     this.enumSuperConstructor = program.getIndexedMethod("Enum.Enum");
@@ -914,13 +875,12 @@ public class EnumOrdinalizer {
     // Create black list of enum refs which can't be converted to an ordinal ref
     CannotBeOrdinalAnalyzer ordinalAnalyzer = new CannotBeOrdinalAnalyzer(program);
     ordinalAnalyzer.accept(program);
-    ordinalAnalyzer.afterVisitor();
 
     // Bail if we don't need to do any ordinalization
     if (enumsVisited.size() == ordinalizationBlackList.size()) {
       // Update tracker stats
       if (tracker != null) {
-        for (JEnumType type : enumsVisited.values()) {
+        for (JEnumType type : enumsVisited) {
           tracker.addVisited(type.getName());
         }
       }
@@ -947,7 +907,7 @@ public class EnumOrdinalizer {
     }
 
     // Update enums ordinalized, and tracker stats
-    for (JEnumType type : enumsVisited.values()) {
+    for (JEnumType type : enumsVisited) {
       if (tracker != null) {
         tracker.addVisited(type.getName());
       }
@@ -961,19 +921,11 @@ public class EnumOrdinalizer {
     return stats;
   }
 
-  private JEnumType getEnumType(JType type) {
-    type = getPossiblyUnderlyingType(type);
-    if (type instanceof JClassType) {
-      return ((JClassType) type).isEnumOrSubclass();
-    }
-    return null;
-  }
-
   private JEnumType getEnumTypeFromArrayLeafType(JType type) {
     type = getPossiblyUnderlyingType(type);
     if (type instanceof JArrayType) {
       type = ((JArrayType) type).getLeafType();
-      return getEnumType(type);
+      return type.isEnumOrSubclass();
     }
     return null;
   }
