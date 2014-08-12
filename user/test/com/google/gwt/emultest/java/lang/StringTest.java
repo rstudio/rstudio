@@ -637,34 +637,6 @@ public class StringTest extends GWTTestCase {
     assertEquals("cd", haystack.substring(2, 4));
     assertEquals("bc", "abcdef".substring(1, 3));
     assertEquals("bcdef", "abcdef".substring(1));
-
-    try {
-      "string".substring(-1);
-      fail();
-    } catch (StringIndexOutOfBoundsException expected) {
-      // beginIndex < 0
-    }
-
-    try {
-      "string".substring(100);
-      fail();
-    } catch (StringIndexOutOfBoundsException expected) {
-      // beginIndex > string length
-    }
-
-    try {
-      "string".substring(1, 100);
-      fail();
-    } catch (StringIndexOutOfBoundsException expected) {
-      // endIndex > string length
-    }
-
-    try {
-      "string".substring(3, 1);
-      fail();
-    } catch (StringIndexOutOfBoundsException expected) {
-      // beginIndex > endIndex
-    }
   }
 
   public void testToCharArray() {
