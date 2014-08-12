@@ -18,7 +18,9 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Map;
@@ -34,6 +36,8 @@ public class JsPersistentPrettyNamer extends JsNamer {
    * Encapsulates the complete state of this namer so that state can be persisted and reused.
    */
   public static class PersistentPrettyNamerState {
+
+    private Multiset<String> shortIdentCollisionCounts = HashMultiset.create();
 
     private Map<String, String> prettyIdentByOriginalIdent = Maps.newHashMap();
 
@@ -104,9 +108,10 @@ public class JsPersistentPrettyNamer extends JsNamer {
   }
 
   private String makePrettyName(String shortIdent) {
-    int collisionCount = 0;
     while (true) {
-      String prettyIdent = shortIdent + "_" + collisionCount++ + RESERVED_IDENT_SUFFIX;
+      String prettyIdent = shortIdent + "_" + state.shortIdentCollisionCounts.count(shortIdent)
+          + RESERVED_IDENT_SUFFIX;
+      state.shortIdentCollisionCounts.add(shortIdent);
       if (reserved.isAvailable(prettyIdent) && !state.usedPrettyIdents.contains(prettyIdent)) {
         return prettyIdent;
       }

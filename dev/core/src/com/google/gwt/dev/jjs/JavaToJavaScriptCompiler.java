@@ -433,6 +433,21 @@ public abstract class JavaToJavaScriptCompiler {
       }
     }
 
+    /**
+     * Adds generated artifacts from previous compiles when doing per-file compiles.
+     * <p>
+     * All generators are run on first compile but only some very small subset are rerun on
+     * recompiles. Care must be taken to ensure that all generated artifacts (such as png/html/css
+     * files) are still registered for output even when no generators are run in the current
+     * compile.
+     */
+    private void maybeAddGeneratedArtifacts(PermutationResult permutationResult) {
+      if (options.shouldCompilePerFile()) {
+        permutationResult.addArtifacts(
+            compilerContext.getMinimalRebuildCache().getGeneratedArtifacts());
+      }
+    }
+
     private void addSoycArtifacts(UnifiedAst unifiedAst, int permutationId,
         JavaToJavaScriptMap jjsmap,
         Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder,
@@ -475,6 +490,7 @@ public abstract class JavaToJavaScriptCompiler {
           permutationResult, compilationMetrics);
       addSourceMapArtifacts(permutationId, jjsmap, dependenciesAndRecorder, isSourceMapsEnabled,
           sizeBreakdowns, sourceInfoMaps, permutationResult);
+      maybeAddGeneratedArtifacts(permutationResult);
 
       event.end();
     }

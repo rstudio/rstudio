@@ -14,6 +14,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
@@ -135,6 +136,7 @@ public class MinimalRebuildCache implements Serializable {
       HashMultimap.create();
   private final Set<String> deletedCompilationUnitNames = Sets.newHashSet();
   private final Set<String> dualJsoImplInterfaceNames = Sets.newHashSet();
+  private final ArtifactSet generatedArtifacts = new ArtifactSet();
   private final ImmediateTypeRelations immediateTypeRelations = new ImmediateTypeRelations();
   private final IntTypeIdGenerator intTypeIdGenerator = new IntTypeIdGenerator();
   private final Set<String> jsoStatusChangedTypeNames = Sets.newHashSet();
@@ -148,6 +150,14 @@ public class MinimalRebuildCache implements Serializable {
   private final Set<String> preambleTypeNames = Sets.newHashSet();
   private final Set<String> rootTypeNames = Sets.newHashSet();
   private final Set<String> singleJsoImplInterfaceNames = Sets.newHashSet();
+
+  /**
+   * Accumulates generated artifacts so that they can be output on recompiles even if no generators
+   * are run.
+   */
+  public void addGeneratedArtifacts(ArtifactSet generatedArtifacts) {
+    this.generatedArtifacts.addAll(generatedArtifacts);
+  }
 
   public void addModifiedCompilationUnitNames(TreeLogger logger,
       Set<String> modifiedCompilationUnitNames) {
@@ -245,6 +255,10 @@ public class MinimalRebuildCache implements Serializable {
   @VisibleForTesting
   public Set<String> getAllCompilationUnitNames() {
     return allCompilationUnitNames;
+  }
+
+  public ArtifactSet getGeneratedArtifacts() {
+    return generatedArtifacts;
   }
 
   public ImmediateTypeRelations getImmediateTypeRelations() {

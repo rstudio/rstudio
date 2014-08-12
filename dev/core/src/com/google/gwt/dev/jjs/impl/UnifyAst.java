@@ -461,6 +461,11 @@ public class UnifyAst {
       List<String> answers;
       try {
         answers = Lists.create(rpo.getAllPossibleRebindAnswers(logger, reqType));
+        if (compilePerFile) {
+          // Accumulate generated artifacts so that they can be output on recompiles even if no
+          // generators are run.
+          minimalRebuildCache.addGeneratedArtifacts(rpo.getGeneratorContext().getArtifacts());
+        }
         rpo.getGeneratorContext().finish(logger);
       } catch (UnableToCompleteException e) {
         error(gwtCreateCall, "Failed to resolve '" + reqType + "' via deferred binding");

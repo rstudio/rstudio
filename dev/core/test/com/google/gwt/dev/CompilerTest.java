@@ -134,6 +134,28 @@ public class CompilerTest extends ArgProcessorTestBase {
           "<entry-point class='com.foo.TestEntryPoint'/>",
           "</module>");
 
+  private MockResource generatorModuleResource =
+      JavaResourceBase.createMockResource("com/foo/SimpleModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.TestEntryPoint'/>",
+          "<generate-with class='com.google.gwt.dev.FooResourceGenerator'>",
+          "  <when-type-is class='java.lang.Object' />",
+          "</generate-with>",
+          "</module>");
+
+  private MockJavaResource generatorEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "import com.google.gwt.core.client.GWT;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    GWT.create(Object.class);",
+          "  }",
+          "}");
+
   private MockJavaResource modifiedSuperEntryPointResource =
       JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
           "package com.foo;",
@@ -404,6 +426,47 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkPerFileRecompile_dualJsoIntfDispatchChange(JsOutputOption.DETAILED);
   }
 
+  public void testPerFileRecompile_carriesOverGeneratorArtifacts() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Foo Generator hasn't run yet.
+    assertEquals(0, FooResourceGenerator.runCount);
+
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    List<MockResource> sharedResources = Lists.newArrayList(generatorModuleResource,
+        generatorEntryPointResource, fooInterfaceResource);
+    JsOutputOption output = JsOutputOption.PRETTY;
+
+    List<MockResource> originalResources = Lists.newArrayList(sharedResources);
+    originalResources.add(nonJsoFooResource);
+
+    List<MockResource> modifiedResources = Lists.newArrayList(sharedResources);
+    modifiedResources.add(nonJsoFooResource);
+
+    // Compile the app with original files, modify a file and do a per-file recompile.
+    MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
+    File relinkApplicationDir = Files.createTempDir();
+    compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule", originalResources,
+        relinkMinimalRebuildCache, output);
+
+    // Foo Generator has now been run once.
+    assertEquals(1, FooResourceGenerator.runCount);
+    // The bar.txt artifact was output.
+    File barFile = new File(relinkApplicationDir.getPath() + File.separator + "com.foo.SimpleModule"
+        + File.separator + "bar.txt");
+    assertTrue(barFile.exists());
+
+    // Recompile with just 1 file change, which should not trigger any Generator runs.
+    compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
+        Lists.<MockResource> newArrayList(nonJsoFooResource), relinkMinimalRebuildCache, output);
+
+    // Foo Generator was not run again.
+    assertEquals(1, FooResourceGenerator.runCount);
+    // But the bar.txt artifact was still output.
+    barFile = new File(relinkApplicationDir.getPath() + File.separator + "com.foo.SimpleModule"
+        + File.separator + "bar.txt");
+    assertTrue(barFile.exists());
+  }
+
   private void checkPerFileRecompile_noop(JsOutputOption output) throws UnableToCompleteException,
       IOException, InterruptedException {
     MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
@@ -437,7 +500,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertTrue(originalJs.equals(relinkedJs));
   }
 
-  public void checkPerFileRecompile_regularClassMadeIntoJsoClass(JsOutputOption output)
+  private void checkPerFileRecompile_regularClassMadeIntoJsoClass(JsOutputOption output)
       throws UnableToCompleteException,
       IOException, InterruptedException {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
@@ -449,7 +512,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         jsoTwo_before, jsoTwo_after, output);
   }
 
-  public void checkPerFileRecompile_functionSignatureChange(JsOutputOption output)
+  private void checkPerFileRecompile_functionSignatureChange(JsOutputOption output)
       throws UnableToCompleteException,
       IOException, InterruptedException {
     checkRecompiledModifiedApp("com.foo.SimpleModule",

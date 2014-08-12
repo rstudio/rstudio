@@ -800,12 +800,15 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
       return;
     }
 
-    Set<JClassType> jsoInterfaces = jsoSingleImpls.keySet();
-    nextInterface : for (JClassType jsoInterface : jsoInterfaces) {
+    // Examine all single JSO interfaces.
+    for (JClassType jsoInterface : jsoSingleImpls.keySet()) {
+      // Look at all implementors of the interface.
       for (JClassType subtype : jsoInterface.getSubtypes()) {
+        // If one of them is not a JSO.
         if (!jsoType.isAssignableFrom(subtype)) {
+          // Log the interface as a dual jso impl and stop looking at subtypes of this interface.
           jsoDualImpls.add(jsoInterface);
-          break nextInterface;
+          break;
         }
       }
     }
