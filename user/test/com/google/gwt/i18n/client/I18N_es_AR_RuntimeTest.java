@@ -30,6 +30,16 @@ import java.util.Set;
  */
 public class I18N_es_AR_RuntimeTest extends GWTTestCase {
 
+  static {
+    if (GWT.isClient()) {
+      setLocale();
+    }
+  }
+
+  private static native void setLocale() /*-{
+    $wnd['__gwt_Locale'] = 'es_AR';
+  }-*/;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_es_AR_runtime";

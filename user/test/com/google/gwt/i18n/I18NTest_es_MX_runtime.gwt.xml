@@ -22,5 +22,4 @@
 	<set-property name = "locale" value = "es_419"/>
 	<extend-configuration-property name="runtime.locales" value="es_AR"/>
 	<extend-configuration-property name="runtime.locales" value="es_MX"/>
-	<public path="public_es_MX"/>
 </module>
