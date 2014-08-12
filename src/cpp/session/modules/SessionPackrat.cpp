@@ -1016,7 +1016,8 @@ PackratContext packratContext()
    context.applicable = context.available &&
                         projects::projectContext().hasProject();
 
-   if (context.applicable)
+   // if it's applicable and installed then check packrat status
+   if (context.applicable && isRequiredPackratInstalled())
    {
       FilePath projectDir = projects::projectContext().directory();
       std::string projectPath =
