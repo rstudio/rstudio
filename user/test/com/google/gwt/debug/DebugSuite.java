@@ -1,36 +1,36 @@
 /*
- * Copyright 2008 Google Inc.
- * 
+ * Copyright 2014 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.debug.client;
+package com.google.gwt.debug;
 
-import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.debug.client.DebugInfoDisabledTest;
+import com.google.gwt.debug.client.DebugInfoTest;
+import com.google.gwt.junit.tools.GWTTestSuite;
+
+import junit.framework.Test;
 
 /**
- * Test Case for {@link DebugInfo} when <code>gwt.enableDebugId</code> is enabled.
+ * Tests of the debug package.
  */
-public class DebugInfoTest extends GWTTestCase {
+public class DebugSuite {
+  public static Test suite() {
+    GWTTestSuite suite = new GWTTestSuite("Test suite for com.google.gwt.debug");
 
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.debug.Debug";
-  }
+    suite.addTestSuite(DebugInfoTest.class);
+    suite.addTestSuite(DebugInfoDisabledTest.class);
 
-  /**
-   * Test that the {@link DebugInfo#isDebugIdEnabled()} method works correctly.
-   */
-  public void testIsDebugIdEnabled() {
-    assertTrue(DebugInfo.isDebugIdEnabled());
+    return suite;
   }
 }

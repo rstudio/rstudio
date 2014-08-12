@@ -20,11 +20,11 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * Test Case for {@link DebugInfo} when <code>gwt.enableDebugId</code> is disabled.
  */
-public class DebugInfoTestDisabled extends GWTTestCase {
+public class DebugInfoDisabledTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.user.DebugTestDisabled";
+    return "com.google.gwt.debug.DebugTestDisabled";
   }
 
   /**
