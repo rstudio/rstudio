@@ -65,6 +65,7 @@ void ammendResults(const std::string& formatName,
 {
    // provide slide navigation for ioslides and beamer
    if (formatName != "ioslides_presentation" &&
+       formatName != "slidy_presentation" &&
        formatName != "beamer_presentation")
    {
       return;
@@ -195,6 +196,7 @@ void ammendResults(const std::string& formatName,
                      itemAsJson);
       json::Object jsonSlideNavigation;
       jsonSlideNavigation["total_slides"] = totalSlides;
+      jsonSlideNavigation["anchor_parens"] = formatName == "slidy_presentation";
       jsonSlideNavigation["items"] = jsonSlideNavigationItems;
       resultJson["slide_navigation"] = jsonSlideNavigation;
    }

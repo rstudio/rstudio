@@ -398,7 +398,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public void navigate(int index)
    {
       getFrame().getIFrame().focus();
-      String hash = "" + (index + 1);
+      String hash = getSlideAnchor(index + 1);
 
       if (isShiny_)
          shinyFrame_.setHash(hash);
@@ -475,6 +475,11 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          String anchor = getAnchor();
          if (anchor.length() == 0)
             anchor = "1";
+         
+         // remove parens if necessary
+         anchor = anchor.replaceAll("[()]","");
+         
+         // return index
          return Integer.parseInt(anchor) - 1;
       }
       catch(NumberFormatException e)
@@ -488,6 +493,14 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       return isShiny_ ?
             shinyUrl_ :
             server_.getApplicationURL(outputParms_.getOutputUrl());
+   }
+   
+   private String getSlideAnchor(int index)
+   {
+      if (slideNavigation_.getUseAnchorParens())
+         return "(" + index + ")"; 
+      else
+         return "" + index;
    }
    
    private SlideNavigationToolbarMenu slideNavigationMenu_;

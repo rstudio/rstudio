@@ -28,6 +28,9 @@ public class SlideNavigation extends JavaScriptObject
       return this.total_slides;
    }-*/;
    
+   public final native boolean getUseAnchorParens() /*-{
+      return this.anchor_parens || false;
+   }-*/;
       
    public final native JsArray<SlideNavigationItem> getItems() /*-{
       return this.items;
