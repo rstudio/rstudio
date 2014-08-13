@@ -41,10 +41,10 @@ import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -168,7 +168,7 @@ class Recompiler {
     CompileDir compileDir = makeCompileDir(++compilesDone);
     TreeLogger compileLogger = makeCompileLogger(compileDir);
 
-    ModuleDef module = loadModule(compileLogger, new HashMap<String, String>());
+    ModuleDef module = loadModule(compileLogger);
     String newModuleName = module.getName();  // includes any rename.
     moduleName.set(newModuleName);
 
@@ -239,7 +239,9 @@ class Recompiler {
 
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, originalModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).build();
-    ModuleDef module = loadModule(compileLogger, bindingProperties);
+
+    ModuleDef module = loadModule(compileLogger);
+    bindingProperties = restrictPermutations(logger, module, bindingProperties);
 
     // Propagates module rename.
     String newModuleName = module.getName();
@@ -299,8 +301,10 @@ class Recompiler {
     }
   }
 
-  private ModuleDef loadModule(TreeLogger logger, Map<String, String> bindingProperties)
-      throws UnableToCompleteException {
+  /**
+   * Loads the module and configures it for SuperDevMode. (Does not restrict permutations.)
+   */
+  private ModuleDef loadModule(TreeLogger logger) throws UnableToCompleteException {
 
     // make sure we get the latest version of any modified jar
     ZipFileClassPathEntry.clearCache();
@@ -366,23 +370,40 @@ class Recompiler {
     maybeOverrideConfig(moduleDef, "propertiesJs",
         "com/google/gwt/core/ext/linker/impl/properties.js");
 
-    for (Map.Entry<String, String> entry : bindingProperties.entrySet()) {
-      String propName = entry.getKey();
-      String propValue = entry.getValue();
-      maybeSetBinding(logger, moduleDef, propName, propValue);
-    }
-
     overrideBinding(moduleDef, "compiler.useSourceMaps", "true");
     overrideBinding(moduleDef, "superdevmode", "on");
     return moduleDef;
   }
 
   /**
+   * Restricts the compiled permutations by applying the given binding properties, if possible.
+   * In some cases, a different binding may be chosen instead.
+   * @return a map of the actual properties used.
+   */
+  private Map<String, String> restrictPermutations(TreeLogger logger, ModuleDef moduleDef,
+      Map<String, String> bindingProperties) {
+
+    Map<String, String> chosenProps = Maps.newHashMap();
+
+    for (Map.Entry<String, String> entry : bindingProperties.entrySet()) {
+      String propName = entry.getKey();
+      String propValue = entry.getValue();
+      String actual = maybeSetBinding(logger, moduleDef, propName, propValue);
+      if (actual != null) {
+        chosenProps.put(propName, actual);
+      }
+    }
+
+    return chosenProps;
+  }
+
+  /**
    * Attempts to set a binding property to the given value.
    * If the value is not allowed, see if we can find a value that will work.
    * There is a special case for "locale".
+   * @return the value actually set, or null if unable to set the property
    */
-  private static void maybeSetBinding(TreeLogger logger, ModuleDef module, String propName,
+  private static String maybeSetBinding(TreeLogger logger, ModuleDef module, String propName,
       String newValue) {
 
     logger = logger.branch(TreeLogger.Type.INFO, "binding: " + propName + "=" + newValue);
@@ -390,7 +411,7 @@ class Recompiler {
     BindingProperty binding = module.getProperties().findBindingProp(propName);
     if (binding == null) {
       logger.log(TreeLogger.Type.WARN, "undefined property: '" + propName + "'");
-      return;
+      return null;
     }
 
     if (!binding.isAllowedValue(newValue)) {
@@ -413,13 +434,14 @@ class Recompiler {
         // There is more than one. Continue and possibly compile multiple permutations.
         logger.log(TreeLogger.Type.INFO, "continuing without " + propName +
             ". Sourcemaps may not work.");
-        return;
+        return null;
       }
 
       logger.log(TreeLogger.Type.INFO, "recovered with " + propName + "=" + newValue);
     }
 
     binding.setAllowedValues(binding.getRootCondition(), newValue);
+    return newValue;
   }
 
   private static String chooseDefault(BindingProperty property, String... candidates) {

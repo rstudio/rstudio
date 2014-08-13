@@ -60,7 +60,6 @@ class ModuleState {
       Map<String, String> defaultProps = new HashMap<String, String>();
       defaultProps.put("user.agent", "safari");
       defaultProps.put("locale", "en");
-      defaultProps.put("compiler.useSourceMaps", "true");
       compileDir = recompiler.compile(defaultProps, new AtomicReference<Progress>());
     }
     current.set(compileDir);
