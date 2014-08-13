@@ -66,7 +66,10 @@ public class SuperDevListener implements CodeServerListener {
         throw new RuntimeException(e);
       }
     }
+
     codeServerPort = port;
+    // Let RemoteServiceServlet know the location of RPC serialization policies (issue #8850)
+    System.setProperty("gwt.codeserver.port", String.valueOf(codeServerPort));
 
     args.add("-noprecompile");
     args.add("-port");
