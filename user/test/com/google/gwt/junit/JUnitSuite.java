@@ -23,6 +23,8 @@ import com.google.gwt.junit.client.GWTTestCaseStackTraceTest;
 import com.google.gwt.junit.client.GWTTestCaseTest;
 import com.google.gwt.junit.client.GWTTestCaseUncaughtExceptionHandlerTest;
 import com.google.gwt.junit.client.PropertyDefiningGWTTest;
+import com.google.gwt.junit.client2.GWTTestCaseCompileErrorTest;
+import com.google.gwt.junit.client2.GWTTestCaseWrongModuleTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -40,6 +42,8 @@ public class JUnitSuite {
     suite.addTest(new TestSuiteWithOrder(GWTTestCaseSetupTearDownTest.class));
     suite.addTest(new TestSuiteWithOrder(GWTTestCaseInheritanceTest.class));
     suite.addTest(new TestSuiteWithOrder(GWTTestCaseAsyncTest.class));
+    suite.addTestSuite(GWTTestCaseCompileErrorTest.class);
+    suite.addTestSuite(GWTTestCaseWrongModuleTest.class);
 
     suite.addTestSuite(DevModeOnCompiledScriptTest.class);
 
