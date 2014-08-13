@@ -60,7 +60,9 @@
        outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
        formatFunction <- eval(parse(text = outputFormat$name), 
                               envir = asNamespace("rmarkdown"))
-       if (identical(formatFunction()$pandoc$to, "html"))
+       if (identical(tolower(tools::file_ext(
+            rmarkdown:::pandoc_output_file("shiny", formatFunction()$pandoc))), 
+            "html"))
           "rmarkdown::run"
        else 
           # this situation is nonsensical (runtime: shiny only makse sense for
