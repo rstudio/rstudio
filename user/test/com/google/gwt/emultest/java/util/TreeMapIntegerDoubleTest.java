@@ -84,4 +84,9 @@ public class TreeMapIntegerDoubleTest extends TreeMapTest<Integer, Double> {
   protected Object[] getNewSampleValues() {
     return getValues2();
   }
+
+  @Override
+  public void testSpecialKeysValues() {
+    // Disabled as this test is only applicable for Maps with String keys.
+  }
 }

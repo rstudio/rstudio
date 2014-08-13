@@ -16,16 +16,9 @@
 <module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
 
-  <!-- Provides fallback version of StringMap for legacy browsers -->
-  <replace-with class="java.util.InternalJsStringMap.InternalJsStringMapLegacy">
-    <when-type-is class="java.util.InternalJsStringMap"/>
-    <when-property-is name="user.agent" value="ie8"/>
-  </replace-with>
-
-  <!-- Provides fallback version of javascript HashCodeMap for legacy browsers -->
-  <replace-with class="java.util.InternalJsHashCodeMap.InternalJsHashCodeMapLegacy">
-    <when-type-is class="java.util.InternalJsHashCodeMap"/>
-    <when-property-is name="user.agent" value="ie8"/>
+  <!-- Replace JS map factory to support older browsers -->
+  <replace-with class="java.util.InternalJsMapFactory.BackwardCompatibleJsMapFactory">
+    <when-type-is class="java.util.InternalJsMapFactory"/>
   </replace-with>
 
   <!-- Disable source maps for non-Chrome browsers -->

@@ -33,6 +33,9 @@ import java.util.Map.Entry;
  */
 class InternalJsStringMap<K, V> {
 
+  /**
+   * String map implementation for browsers that doesn't support Object.create (IE8, FF3.6).
+   */
   static class InternalJsStringMapLegacy<K, V> extends InternalJsStringMap<K, V> {
     @Override
     native JavaScriptObject createMap() /*-{
@@ -40,7 +43,21 @@ class InternalJsStringMap<K, V> {
     }-*/;
 
     @Override
-    String normalize(String key) {
+    public V get(String key) {
+      return super.get(normalize(key));
+    }
+
+    @Override
+    public V put(String key, V value) {
+      return super.put(normalize(key), value);
+    }
+
+    @Override
+    public V remove(String key) {
+      return super.remove(normalize(key));
+    }
+
+    private String normalize(String key) {
       return ':' + key;
     }
 
@@ -87,6 +104,31 @@ class InternalJsStringMap<K, V> {
     }
   }
 
+  /**
+   * String map implementation for browsers that has __proto__ bug in Object.keys. (i.e. FireFox).
+   */
+  static class InternalJsStringMapWithObjectsKeysBug<K, V> extends InternalJsStringMap<K, V> {
+    private static final String PROTO = "__proto__";
+
+    @Override
+    public boolean containsValue(Object value) {
+      V protoValue = get(PROTO);
+      if (!isUndefined(protoValue) && equalsBridge(value, protoValue)) {
+        return true;
+      }
+      return super.containsValue(value);
+    }
+
+    @Override
+    protected String[] keys() {
+      String[] keys = super.keys();
+      if (contains(PROTO)) {
+        keys[keys.length] = PROTO; // safe in webmode
+      }
+      return keys;
+    }
+  }
+
   private final JavaScriptObject backingMap = createMap();
   private int size;
   AbstractHashMap<K,V> host;
@@ -94,10 +136,6 @@ class InternalJsStringMap<K, V> {
   native JavaScriptObject createMap() /*-{
     return Object.create(null);
   }-*/;
-
-  String normalize(String key) {
-    return key;
-  }
 
   public final int size() {
     return size;
@@ -107,13 +145,11 @@ class InternalJsStringMap<K, V> {
     return !isUndefined(get(key));
   }
 
-  public final V get(String key) {
-    return at(normalize(key));
+  public V get(String key) {
+    return at(key);
   }
 
-  public final V put(String key, V value) {
-    key = normalize(key);
-
+  public V put(String key, V value) {
     V oldValue = at(key);
     if (isUndefined(oldValue)) {
       size++;
@@ -124,9 +160,7 @@ class InternalJsStringMap<K, V> {
     return oldValue;
   }
 
-  public final V remove(String key) {
-    key = normalize(key);
-
+  public V remove(String key) {
     V value = at(key);
     if (!isUndefined(value)) {
       delete(key);
@@ -184,7 +218,7 @@ class InternalJsStringMap<K, V> {
     };
   }
 
-  private native String[] keys() /*-{
+  protected native String[] keys() /*-{
     return Object.keys(this.@InternalJsStringMap::backingMap);
   }-*/;
 

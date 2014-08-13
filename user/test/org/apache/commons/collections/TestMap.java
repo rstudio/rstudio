@@ -15,6 +15,7 @@
  */
 package org.apache.commons.collections;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -309,6 +310,54 @@ public abstract class TestMap extends TestObject{
     public Object makeObject() {
         return makeEmptyMap();
     }
+
+    public void testSpecialKeysValues() {
+      String[] keys = {"toString", "constructor", "__proto__", "", "null"};
+      Object[] values = {new Object(), new Object(), new Object(), new Object(), null};
+
+      Map map = makeEmptyMap();
+
+      assertMap(map, keys, values);
+
+      Object[] undefineds = new Object[values.length];
+      Arrays.fill(undefineds, getUndefined());
+      assertMap(map, keys, undefineds);
+    }
+
+    private void assertMap(Map map, String[] keys, Object[] values) {
+      assertEmptyMap(map, keys, values);
+
+      // Fill the map with special keys/values.
+      for (int i = 0; i < keys.length; i++) {
+        map.put(keys[i], values[i]);
+      }
+
+      // Assert the map with filled in keys/values
+      for (int i = 0; i < keys.length; i++) {
+        assertTrue(keys[i], map.containsKey(keys[i]));
+        assertTrue(keys[i], map.containsValue(values[i]));
+        assertSame(keys[i], values[i], map.get(keys[i]));
+      }
+      assertEquals(map.toString(), keys.length, map.size());
+
+      // Remove the keys and assert the results
+      for (int i = 0; i < keys.length; i++) {
+        assertSame(keys[i], values[i], map.remove(keys[i]));
+      }
+      assertEmptyMap(map, keys, values);
+    }
+
+    private static void assertEmptyMap(Map map, final String[] keys, final Object[] values) {
+      for (int i = 0; i < keys.length; i++) {
+        assertFalse(keys[i], map.containsKey(keys[i]));
+        assertFalse(keys[i], map.containsValue(values[i]));
+        assertNull(keys[i], map.get(keys[i]));
+      }
+    }
+
+    private static native Object getUndefined() /*-{
+      return undefined;
+    }-*/;
 
     /**
      *  Test to ensure the test setup is working properly.  This method checks
