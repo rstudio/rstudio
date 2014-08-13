@@ -204,6 +204,16 @@ public class RmdTemplateData
             format_notes: "HTML presentation viewable with any browser (you can also print ioslides to PDF with Chrome)."
             },
             {
+            format_name: "slidy_presentation",
+            format_ui_name: "HTML (Slidy)",
+            format_extension: "html",
+            format_options: [ "fig_width", "fig_height", "fig_caption", 
+                              "fig_retina", "incremental",
+                              "highlight", "css",
+                              "self_contained", "smart", "keep_md" ],
+            format_notes: "HTML presentation viewable with any browser (you can also print Slidy to PDF with Chrome)."
+            },
+            {
             format_name: "beamer_presentation",
             format_ui_name: "PDF (Beamer)",
             format_extension: "pdf",
@@ -401,6 +411,13 @@ public class RmdTemplateData
             option_type: "boolean", 
             option_category: "Advanced",
             option_default: "false",
+            },
+            {
+            option_name: "css",
+            option_ui_name: "Apply CSS file", 
+            option_type: "file", 
+            option_nullable: true,
+            option_default: "null"
             },
          ]
          }
