@@ -52,7 +52,9 @@ import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.OutputFileSet;
+import com.google.gwt.util.tools.Utility;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -515,11 +517,11 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
           partialPath = partialPath.substring(1);
         }
       }
+      OutputStream artifactStream = null;
       try {
-        OutputStream artifactStream = out.openForWrite(partialPath,
-            artifact.getLastModified());
+        artifactStream = new BufferedOutputStream(out.openForWrite(partialPath,
+            artifact.getLastModified()));
         artifact.writeTo(artifactLogger, artifactStream);
-        artifactStream.close();
       } catch (IOException e) {
         artifactLogger.log(TreeLogger.ERROR,
             "Fatal error emitting artifact: " + artifact.getPartialPath(), e);
@@ -527,6 +529,8 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         if (visibility != Visibility.Private) {
           throw new UnableToCompleteException();
         }
+      } finally {
+        Utility.close(artifactStream);
       }
     }
   }

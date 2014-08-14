@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -228,13 +229,15 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
    */
   public void writeTo(TreeLogger logger, OutputStream out)
       throws UnableToCompleteException {
+    InputStream in = null;
     try {
-      InputStream in = getContents(logger);
+      in = new BufferedInputStream(getContents(logger));
       Util.copyNoClose(in, out);
-      Utility.close(in);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to copy artifact: " + getPartialPath(), e);
       throw new UnableToCompleteException();
+    } finally {
+      Utility.close(in);
     }
   }
 
