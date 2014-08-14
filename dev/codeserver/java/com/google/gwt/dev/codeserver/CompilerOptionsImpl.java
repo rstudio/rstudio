@@ -42,6 +42,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final SourceLevel sourceLevel;
   private final boolean strictPublicResources;
   private final boolean strictSourceResources;
+  private final JsInteropMode jsInteropMode;
 
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
@@ -52,6 +53,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.strictSourceResources = options.enforceStrictResources();
     this.strictPublicResources = options.enforceStrictResources();
     this.logLevel = options.getLogLevel();
+    this.jsInteropMode = options.getJsInteropMode();
   }
 
   @Override
@@ -96,7 +98,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public JsInteropMode getJsInteropMode() {
-    return JsInteropMode.NONE;
+    return jsInteropMode;
   }
 
   @Override
