@@ -314,21 +314,25 @@ public class JsToStringGenerationVisitor extends JsVisitor {
             == null : "Class start and end boundaries must be matched and not nested.";
         currentClassRange = new NamedRange(x.getName());
         currentClassRange.setStartPosition(p.getPosition());
+        currentClassRange.setStartLineNumber(p.getLine());
         break;
       case CLASS_END:
         assert currentClassRange
             != null : "Class start and end boundaries must be matched and not nested.";
         currentClassRange.setEndPosition(p.getPosition());
+        currentClassRange.setEndLineNumber(p.getLine());
         classRanges.add(currentClassRange);
         currentClassRange = null;
         break;
       case PROGRAM_START:
         programClassRange = new NamedRange("Program");
         programClassRange.setStartPosition(p.getPosition());
+        programClassRange.setStartLineNumber(p.getLine());
         break;
       case PROGRAM_END:
         assert programClassRange != null : "Program start and end boundaries must be matched.";
         programClassRange.setEndPosition(p.getPosition());
+        programClassRange.setEndLineNumber(p.getLine());
         break;
       default:
         assert false : x.getType() + " position type is not recognized.";

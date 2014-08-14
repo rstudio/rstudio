@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -201,7 +202,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
 
 
       // iterate over expression ranges and shift
-      Map<Range, SourceInfo> updatedInfoMap = new HashMap<Range, SourceInfo>();
+      LinkedHashMap<Range, SourceInfo> updatedInfoMap = new LinkedHashMap<Range, SourceInfo>();
       Range entireProgram =
         new Range(0, oldStatementRanges[oldStatementRanges.length - 1].getEnd());
       for (int i = 0, j = 0; j < oldExpressionRanges.length; j++) {
@@ -227,7 +228,8 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
         updatedInfoMap.put(newExpressionRange, sourceInfoMap.get(oldExpressionRange));
       }
 
-      sourceInfoMap = new JsSourceMap(updatedInfoMap);
+      sourceInfoMap =
+          new JsSourceMap(updatedInfoMap, sourceInfoMap.getBytes(), sourceInfoMap.getLines());
     }
   }
 

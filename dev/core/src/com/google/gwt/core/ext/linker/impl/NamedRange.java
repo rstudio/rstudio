@@ -14,22 +14,31 @@
 package com.google.gwt.core.ext.linker.impl;
 
 /**
- * A starting and ending byte range with associated name.
+ * A starting and ending byte range/line number with associated name.
  */
 public class NamedRange {
 
+  private int endLineNumber;
   private int endPosition;
   private final String name;
+  private int startLineNumber;
   private int startPosition;
 
   public NamedRange(String name) {
     this.name = name;
   }
 
-  public NamedRange(String name, int startPosition, int endPosition) {
+  public NamedRange(String name, int startPosition, int endPosition, int startLineNumber,
+      int endLineNumber) {
     this.name = name;
     this.startPosition = startPosition;
     this.endPosition = endPosition;
+    this.startLineNumber = startLineNumber;
+    this.endLineNumber = endLineNumber;
+  }
+
+  public int getEndLineNumber() {
+    return endLineNumber;
   }
 
   public int getEndPosition() {
@@ -40,12 +49,24 @@ public class NamedRange {
     return name;
   }
 
+  public int getStartLineNumber() {
+    return startLineNumber;
+  }
+
   public int getStartPosition() {
     return startPosition;
   }
 
+  public void setEndLineNumber(int endLineNumber) {
+    this.endLineNumber = endLineNumber;
+  }
+
   public void setEndPosition(int endPosition) {
     this.endPosition = endPosition;
+  }
+
+  public void setStartLineNumber(int startLineNumber) {
+    this.startLineNumber = startLineNumber;
   }
 
   public void setStartPosition(int startPosition) {

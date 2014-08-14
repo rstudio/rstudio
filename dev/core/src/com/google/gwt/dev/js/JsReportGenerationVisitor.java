@@ -31,9 +31,8 @@ import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A variation on the standard source generation visitor that records the
@@ -41,7 +40,8 @@ import java.util.Map;
  */
 public class JsReportGenerationVisitor extends
     JsSourceGenerationVisitorWithSizeBreakdown {
-  private final Map<Range, SourceInfo> sourceInfoMap = new HashMap<Range, SourceInfo>();
+  private final LinkedHashMap<Range, SourceInfo> sourceInfoMap =
+      new LinkedHashMap<Range, SourceInfo>();
   private final TextOutput out;
   private final boolean needSourcemapNames;
 
@@ -156,6 +156,6 @@ public class JsReportGenerationVisitor extends
 
   @Override
   public JsSourceMap getSourceInfoMap() {
-    return new JsSourceMap(sourceInfoMap);
+    return new JsSourceMap(sourceInfoMap, out.getPosition(), out.getLine());
   }
 }

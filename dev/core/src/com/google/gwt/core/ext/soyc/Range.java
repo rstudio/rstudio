@@ -57,11 +57,11 @@ public final class Range {
   };
 
   final int end;
-  final int endLine;
   final int endColumn;
+  final int endLine;
   final int start;
-  final int startLine;
   final int startColumn;
+  final int startLine;
 
   /**
    * Constructor.
@@ -95,17 +95,38 @@ public final class Range {
   }
 
   /**
-   * Returns a copy with the end moved.
-   */
-  public Range withNewEnd(int newEnd, int newEndLine, int newEndColumn) {
-    return new Range(start, newEnd, startLine, startColumn, newEndLine, newEndColumn);
-  }
-
-  /**
    * Return <code>true</code> if the given Range lies wholly within the Range.
    */
   public boolean contains(Range o) {
     return start <= o.start && o.end <= end;
+  }
+
+  /**
+   * Creates a Range copy whose start position and line number have been rebased relative to some
+   * base position.
+   * <p>
+   * For example a range that starts at byte 5342 when normalized against a base start of 5000 will
+   * now start at byte 342.
+   */
+  public Range createNormalizedCopy(int baseStart, int baseStartLine) {
+    if (start < 0) {
+      return new Range(baseStartLine, baseStartLine, baseStartLine, baseStartLine, baseStart,
+          baseStartLine);
+    }
+
+    return createOffsetCopy(-baseStart, -baseStartLine);
+  }
+
+  /**
+   * Creates a Range copy whose start position and line number have been moved by some known offset
+   * size.
+   * <p>
+   * For example a range that starts at byte 342 when moved by an offset of 5000 will now start at
+   * byte 5342.
+   */
+  public Range createOffsetCopy(int positionOffset, int lineOffset) {
+    return new Range(start + positionOffset, end + positionOffset, startLine + lineOffset,
+        startColumn, endLine + lineOffset, endColumn);
   }
 
   @Override
@@ -156,5 +177,12 @@ public final class Range {
   @Override
   public String toString() {
     return "[" + start + " - " + end + ")";
+  }
+
+  /**
+   * Returns a copy with the end moved.
+   */
+  public Range withNewEnd(int newEnd, int newEndLine, int newEndColumn) {
+    return new Range(start, newEnd, startLine, startColumn, newEndLine, newEndColumn);
   }
 }

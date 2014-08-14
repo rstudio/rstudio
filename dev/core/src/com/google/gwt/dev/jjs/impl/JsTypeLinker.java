@@ -15,10 +15,13 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.core.ext.linker.impl.JsSourceMapBuilder;
+import com.google.gwt.core.ext.linker.impl.JsSourceMapExtractor;
 import com.google.gwt.core.ext.linker.impl.NamedRange;
 import com.google.gwt.core.ext.linker.impl.StatementRangesBuilder;
 import com.google.gwt.core.ext.linker.impl.StatementRangesExtractor;
 import com.google.gwt.dev.MinimalRebuildCache.PermutationRebuildCache;
+import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -31,8 +34,8 @@ import java.util.Set;
  * Transforms program JS source by performing a per-type link.
  * <p>
  * Provided JS and Ranges are used to grab new JS type chunks. A RebuildCache is used to cache per
- * type JS and statement ranges (possibly across compiles) and calculate the set of reachable types.
- * JTypeOracle is used to order linked output.
+ * type JS, statement ranges and sourcemaps (possibly across compiles) and calculate the set of
+ * reachable types. JTypeOracle is used to order linked output.
  */
 public class JsTypeLinker extends JsAbstractTextTransformer {
 
@@ -44,7 +47,9 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
   private final Set<String> linkedTypeNames = Sets.newHashSet();
   private TreeLogger logger;
   private final PermutationRebuildCache permutationRebuildCache;
+  private final JsSourceMapExtractor jsSourceMapExtractor;
   private final StatementRangesBuilder statementRangesBuilder = new StatementRangesBuilder();
+  private final JsSourceMapBuilder jsSourceMapBuilder = new JsSourceMapBuilder();
   private final StatementRangesExtractor statementRangesExtractor;
   private final JTypeOracle typeOracle;
   private final List<NamedRange> typeRanges;
@@ -55,9 +60,12 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
     super(textTransformer);
     this.logger = logger;
     this.statementRangesExtractor = new StatementRangesExtractor(statementRanges);
+    this.jsSourceMapExtractor = sourceInfoMap.createExtractor();
     this.typeRanges = typeRanges;
-    this.headerRange = new NamedRange(HEADER_NAME, 0, programTypeRange.getStartPosition());
-    this.footerRange = new NamedRange(FOOTER_NAME, programTypeRange.getEndPosition(), js.length());
+    this.headerRange = new NamedRange(HEADER_NAME, 0, programTypeRange.getStartPosition(), 0,
+        programTypeRange.getStartLineNumber());
+    this.footerRange = new NamedRange(FOOTER_NAME, programTypeRange.getEndPosition(), js.length(),
+        programTypeRange.getEndLineNumber(), sourceInfoMap.getLines());
     this.permutationRebuildCache = permutationRebuildCache;
     this.typeOracle = typeOracle;
   }
@@ -71,7 +79,7 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
 
   @Override
   protected void updateSourceInfoMap() {
-    // TODO(stalcup): update sourcemaps to match relinking.
+    // Already updated in exec();
   }
 
   private List<String> computeReachableTypes() {
@@ -87,6 +95,9 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
         js.substring(typeRange.getStartPosition(), typeRange.getEndPosition()));
     permutationRebuildCache.setStatementRangesForType(typeName,
         statementRangesExtractor.extract(typeRange.getStartPosition(), typeRange.getEndPosition()));
+    permutationRebuildCache.setSourceMapForType(typeName, jsSourceMapExtractor.extract(
+        typeRange.getStartPosition(), typeRange.getEndPosition(), typeRange.getStartLineNumber(),
+        typeRange.getEndLineNumber()));
   }
 
   private void linkAll(List<String> reachableTypeNames) {
@@ -109,9 +120,14 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
     linkOne(FOOTER_NAME);
 
     logger.log(TreeLogger.INFO, "prelink JS size = " + js.length());
+    logger.log(TreeLogger.INFO, "prelink sourcemap = " + sourceInfoMap.getBytes() + " bytes and "
+        + sourceInfoMap.getLines() + " lines");
     js = jsBuilder.toString();
     statementRanges = statementRangesBuilder.build();
+    sourceInfoMap = jsSourceMapBuilder.build();
     logger.log(TreeLogger.INFO, "postlink JS size = " + js.length());
+    logger.log(TreeLogger.INFO, "postlink sourcemap = " + sourceInfoMap.getBytes() + " bytes and "
+        + sourceInfoMap.getLines() + " lines");
   }
 
   private void linkOne(String typeName) {
@@ -133,9 +149,10 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
 
     logger.log(TreeLogger.SPAM, "linking type " + typeName + " (" + typeJs.length() + " bytes)");
     StatementRanges typeStatementRanges = permutationRebuildCache.getStatementRanges(typeName);
+    JsSourceMap typeSourceMap = permutationRebuildCache.getSourceMap(typeName);
 
     jsBuilder.append(typeJs);
     statementRangesBuilder.append(typeStatementRanges);
-    // TODO(stalcup): build a sourcemap one type at a time.
+    jsSourceMapBuilder.append(typeSourceMap);
   }
 }

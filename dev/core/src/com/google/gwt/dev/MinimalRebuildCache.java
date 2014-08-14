@@ -18,6 +18,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.ImmediateTypeRelations;
@@ -54,6 +55,7 @@ public class MinimalRebuildCache implements Serializable {
     // GWT.create() rewrites and JSO Devirtualization.
     private final Map<String, String> jsByTypeName = Maps.newHashMap();
     private final Multimap<String, String> referencedTypeNamesByTypeName = HashMultimap.create();
+    private final Map<String, JsSourceMap> sourceMapsByTypeName = Maps.newHashMap();
     private final Map<String, StatementRanges> statementRangesByTypeName = Maps.newHashMap();
     private final Multimap<String, String> typeNamesByReferencingTypeName = HashMultimap.create();
 
@@ -101,6 +103,10 @@ public class MinimalRebuildCache implements Serializable {
       return statementRangesByTypeName.get(typeName);
     }
 
+    public JsSourceMap getSourceMap(String typeName) {
+      return sourceMapsByTypeName.get(typeName);
+    }
+
     public void removeReferencesFrom(String fromTypeName) {
       Collection<String> toTypeNames = referencedTypeNamesByTypeName.get(fromTypeName);
       for (String toTypeName : toTypeNames) {
@@ -112,6 +118,10 @@ public class MinimalRebuildCache implements Serializable {
     public void setJsForType(TreeLogger logger, String typeName, String typeJs) {
       logger.log(TreeLogger.SPAM, "caching JS for type " + typeName);
       jsByTypeName.put(typeName, typeJs);
+    }
+
+    public void setSourceMapForType(String typeName, JsSourceMap sourceMap) {
+      sourceMapsByTypeName.put(typeName, sourceMap);
     }
 
     public void setStatementRangesForType(String typeName, StatementRanges statementRanges) {
