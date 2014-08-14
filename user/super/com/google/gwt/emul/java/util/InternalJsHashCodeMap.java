@@ -218,7 +218,7 @@ class InternalJsHashCodeMap<K, V> {
   }
 
   private native String[] keys() /*-{
-    return Object.keys(this.@InternalJsHashCodeMap::backingMap);
+    return Object.getOwnPropertyNames(this.@InternalJsHashCodeMap::backingMap);
   }-*/;
 
   private native Entry<K, V>[] getChain(String hashCode) /*-{

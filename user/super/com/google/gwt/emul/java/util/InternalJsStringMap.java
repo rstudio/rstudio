@@ -105,9 +105,10 @@ class InternalJsStringMap<K, V> {
   }
 
   /**
-   * String map implementation for browsers that has __proto__ bug in Object.keys. (i.e. FireFox).
+   * String map implementation for browsers that includes __proto__ while iterating keys (i.e.
+   * FireFox). See the Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=837630.
    */
-  static class InternalJsStringMapWithObjectsKeysBug<K, V> extends InternalJsStringMap<K, V> {
+  static class InternalJsStringMapWithKeysWorkaround<K, V> extends InternalJsStringMap<K, V> {
     private static final String PROTO = "__proto__";
 
     @Override
@@ -219,7 +220,7 @@ class InternalJsStringMap<K, V> {
   }
 
   protected native String[] keys() /*-{
-    return Object.keys(this.@InternalJsStringMap::backingMap);
+    return Object.getOwnPropertyNames(this.@InternalJsStringMap::backingMap);
   }-*/;
 
   protected final Entry<K, V> newMapEntry(final String key) {

@@ -17,7 +17,7 @@ package java.util;
 
 import java.util.InternalJsHashCodeMap.InternalJsHashCodeMapLegacy;
 import java.util.InternalJsStringMap.InternalJsStringMapLegacy;
-import java.util.InternalJsStringMap.InternalJsStringMapWithObjectsKeysBug;
+import java.util.InternalJsStringMap.InternalJsStringMapWithKeysWorkaround;
 
 /**
  * A factory to create internal JS map instances for modern browsers.
@@ -48,12 +48,12 @@ class InternalJsMapFactory {
   }
 
   /**
-   * A {@code InternalJsMapFactory} that returns JS map instances that works around Object.keys bug.
+   * A {@code InternalJsMapFactory} that returns JS map instances that works around keys bug.
    */
-  static class ObjectKeysWorkaroundInternalJsMapFactory extends InternalJsMapFactory {
+  static class KeysWorkaroundJsMapFactory extends InternalJsMapFactory {
     @Override
     public <K, V> InternalJsStringMap<K, V> createJsStringMap() {
-      return new InternalJsStringMapWithObjectsKeysBug<K, V>();
+      return new InternalJsStringMapWithKeysWorkaround<K, V>();
     }
   }
 
@@ -66,21 +66,21 @@ class InternalJsMapFactory {
 
     private static InternalJsMapFactory createFactory() {
       if (isModern() && canHandleProto()) {
-        return needsObjectKeysWorkaround() ? new ObjectKeysWorkaroundInternalJsMapFactory()
+        return needsKeysWorkaround() ? new KeysWorkaroundJsMapFactory()
             : new InternalJsMapFactory();
       }
       return new LegacyInternalJsMapFactory();
     }
 
     private static native boolean isModern() /*-{
-      return Object.create && Object.keys;
+      return Object.create && Object.getOwnPropertyNames;
     }-*/;
 
     // See the Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=837630
-    private static native boolean needsObjectKeysWorkaround() /*-{
+    private static native boolean needsKeysWorkaround() /*-{
       var map = Object.create(null);
       map["__proto__"] = 42;
-      return Object.keys(map).length == 0;
+      return Object.getOwnPropertyNames(map).length == 0;
     }-*/;
 
     // Some older browsers doesn't properly handle __proto__ at all (Safari 5, Android).
@@ -92,7 +92,7 @@ class InternalJsMapFactory {
         return false;
       }
 
-      var keys = Object.keys(map);
+      var keys = Object.getOwnPropertyNames(map);
       if (keys.length != 0) {
         return false;
       }
