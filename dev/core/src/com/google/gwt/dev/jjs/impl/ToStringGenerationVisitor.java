@@ -653,8 +653,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       printName(target);
     } else if (x.isStaticDispatchOnly()) {
       // super() or this() call.
-      JReferenceType thisType = (JReferenceType) x.getInstance().getType();
-      thisType = thisType.getUnderlyingType();
+      JReferenceType thisType = (JReferenceType) x.getInstance().getType().getUnderlyingType();
       if (thisType == target.getEnclosingType()) {
         print(CHARS_THIS);
       } else {

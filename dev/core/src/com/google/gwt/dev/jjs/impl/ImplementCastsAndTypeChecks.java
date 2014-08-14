@@ -84,7 +84,7 @@ public class ImplementCastsAndTypeChecks {
 
       if (toType instanceof JReferenceType) {
         JExpression curExpr = expr;
-        JReferenceType refType = ((JReferenceType) toType).getUnderlyingType();
+        JReferenceType refType = (JReferenceType) toType.getUnderlyingType();
         JReferenceType argType = (JReferenceType) expr.getType();
 
         if (refType instanceof JArrayType) {

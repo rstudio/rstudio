@@ -67,6 +67,13 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
     return shortName;
   }
 
+  /**
+   * If this type is a non-null type, returns the underlying (original) type.
+   */
+  public JType getUnderlyingType() {
+    return this;
+  }
+
   public String getPackageName() {
     if (packageName == null) {
       int dotpos = name.lastIndexOf('.');

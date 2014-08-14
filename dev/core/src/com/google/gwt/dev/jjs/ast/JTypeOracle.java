@@ -523,9 +523,7 @@ public class JTypeOracle implements Serializable {
    * prototype.
    */
   public boolean canBeJavaScriptObject(JType type) {
-    if (type instanceof JNonNullType) {
-      type = ((JNonNullType) type).getUnderlyingType();
-    }
+    type = type.getUnderlyingType();
     return isJavaScriptObject(type) || isSingleJsoImpl(type);
   }
 
@@ -813,9 +811,7 @@ public class JTypeOracle implements Serializable {
       return null;
     }
 
-    if (type instanceof JNonNullType) {
-      type = ((JNonNullType) type).getUnderlyingType();
-    }
+    type = type.getUnderlyingType();
 
     if (!(type instanceof JDeclaredType)) {
       return null;
@@ -918,7 +914,7 @@ public class JTypeOracle implements Serializable {
     return Sets.newLinkedHashSet(castableDestinationTypes);
   }
 
-  public boolean isDualJsoInterface(JReferenceType maybeDualImpl) {
+  public boolean isDualJsoInterface(JType maybeDualImpl) {
     return dualImpls.contains(maybeDualImpl.getUnderlyingType().getName());
   }
 
@@ -969,16 +965,14 @@ public class JTypeOracle implements Serializable {
       return false;
     }
 
-    JReferenceType referenceType = (JReferenceType) type;
-    // compare the underlying type
-    referenceType = referenceType.getUnderlyingType();
+    type = type.getUnderlyingType();
 
     // TODO(dankurka): Null should not be recognized as a possible JSO.
     // Take a look on how to refactor this inside of the compiler
-    if (referenceType instanceof JNullType) {
+    if (type instanceof JNullType) {
       return true;
     }
-    return isJavaScriptObject(referenceType.getName());
+    return isJavaScriptObject(type.getName());
   }
 
   // Note: This method does not account for null types and only relies on static

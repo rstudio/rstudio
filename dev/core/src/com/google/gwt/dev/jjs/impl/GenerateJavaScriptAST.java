@@ -1393,7 +1393,7 @@ public class GenerateJavaScriptAST {
 
           boolean isFluent = type instanceof JReferenceType
               && type != program.getTypeJavaLangObject() && typeOracle.canTriviallyCast(
-                  x.getTarget().getEnclosingType(), ((JReferenceType) type).getUnderlyingType());
+                  x.getTarget().getEnclosingType(), type.getUnderlyingType());
           JsExpression qualExpr = pop();
 
           if (getter != null) {

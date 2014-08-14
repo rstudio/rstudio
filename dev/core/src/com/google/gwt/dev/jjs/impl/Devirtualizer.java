@@ -107,7 +107,7 @@ public class Devirtualizer {
       if (!mightNeedDevirtualization(method)) {
         return;
       }
-      JType instanceType = ((JReferenceType) x.getInstance().getType()).getUnderlyingType();
+      JType instanceType = x.getInstance().getType().getUnderlyingType();
 
       if (instanceType instanceof JInterfaceType && ((JInterfaceType) instanceType).isJsType()) {
         return;

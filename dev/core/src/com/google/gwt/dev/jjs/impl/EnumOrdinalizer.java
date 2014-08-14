@@ -39,7 +39,6 @@ import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
@@ -697,7 +696,7 @@ public class EnumOrdinalizer {
     }
 
     private boolean canBeOrdinal(JType type) {
-      JType uType = getPossiblyUnderlyingType(type);
+      JType uType = type.getUnderlyingType();
       return uType instanceof JEnumType && !ordinalizationBlackList.contains(uType);
     }
 
@@ -707,7 +706,7 @@ public class EnumOrdinalizer {
       }
 
       boolean nonNull = type instanceof JNonNullType;
-      JType uType = nonNull ? ((JNonNullType) type).getUnderlyingType() : type;
+      JType uType = type.getUnderlyingType();
       if (uType instanceof JArrayType) {
         JArrayType aType = (JArrayType) uType;
         JType leafType = aType.getLeafType();
@@ -922,18 +921,11 @@ public class EnumOrdinalizer {
   }
 
   private JEnumType getEnumTypeFromArrayLeafType(JType type) {
-    type = getPossiblyUnderlyingType(type);
+    type = type.getUnderlyingType();
     if (type instanceof JArrayType) {
       type = ((JArrayType) type).getLeafType();
       return type.isEnumOrSubclass();
     }
     return null;
-  }
-
-  private JType getPossiblyUnderlyingType(JType type) {
-    if (type instanceof JReferenceType) {
-      return ((JReferenceType) type).getUnderlyingType();
-    }
-    return type;
   }
 }

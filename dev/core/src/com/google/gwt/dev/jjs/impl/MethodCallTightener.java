@@ -22,8 +22,8 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -61,8 +61,7 @@ public class MethodCallTightener {
         return;
       }
 
-      JReferenceType instanceType =
-          ((JReferenceType) x.getInstance().getType()).getUnderlyingType();
+      JType instanceType = x.getInstance().getType().getUnderlyingType();
       if (!(instanceType instanceof JClassType)) {
         // Cannot tighten.
         return;

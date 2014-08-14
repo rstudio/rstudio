@@ -45,19 +45,19 @@ public  enum TypeCategory {
     }
 
     assert type instanceof JReferenceType;
-    JReferenceType underlyingType = ((JReferenceType) type).getUnderlyingType();
-    if (underlyingType == program.getTypeJavaLangObject()) {
+    type = type.getUnderlyingType();
+    if (type == program.getTypeJavaLangObject()) {
       return TypeCategory.TYPE_JAVA_LANG_OBJECT;
-    } else if (underlyingType == program.getTypeJavaLangString()) {
+    } else if (type == program.getTypeJavaLangString()) {
       return TypeCategory.TYPE_JAVA_LANG_STRING;
-    } else if (program.typeOracle.willCrossCastLikeJso(underlyingType)) {
+    } else if (program.typeOracle.willCrossCastLikeJso(type)) {
       return TypeCategory.TYPE_JSO;
-    } else if (program.typeOracle.isDualJsoInterface(underlyingType) ||
-        program.typeOracle.hasLiveImplementors(underlyingType) &&
-        program.typeOracle.isOrExtendsJsType(underlyingType, false) &&
-        !program.typeOracle.isOrExtendsJsType(underlyingType, true)) {
+    } else if (program.typeOracle.isDualJsoInterface(type) ||
+        program.typeOracle.hasLiveImplementors(type) &&
+        program.typeOracle.isOrExtendsJsType(type, false) &&
+        !program.typeOracle.isOrExtendsJsType(type, true)) {
       return TypeCategory.TYPE_JAVA_OBJECT_OR_JSO;
-    } else if (program.typeOracle.isOrExtendsJsType(underlyingType, true)) {
+    } else if (program.typeOracle.isOrExtendsJsType(type, true)) {
       return TypeCategory.TYPE_JS_INTERFACE;
     }
     return TypeCategory.TYPE_JAVA_OBJECT;

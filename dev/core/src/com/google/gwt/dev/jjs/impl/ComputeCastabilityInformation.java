@@ -252,11 +252,11 @@ public class ComputeCastabilityInformation {
       if (!(targetType instanceof JReferenceType)) {
         return;
       }
-      targetType = ((JReferenceType) targetType).getUnderlyingType();
+      targetType = targetType.getUnderlyingType();
 
       assert rhs.getType() instanceof JReferenceType;
 
-      JReferenceType rhsType = ((JReferenceType) rhs.getType()).getUnderlyingType();
+      JReferenceType rhsType = (JReferenceType) rhs.getType().getUnderlyingType();
       if (!recordTrivialCasts
           && typeOracle.canTriviallyCast(rhsType, (JReferenceType) targetType)) {
         // don't record a type for trivial casts that won't generate code

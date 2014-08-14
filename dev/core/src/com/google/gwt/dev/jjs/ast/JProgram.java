@@ -1006,9 +1006,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    * cggcc.JavaScriptObject respectively; otherwise returns {@code type}.
    */
   public JType normalizeJsoType(JType type) {
-    if (type instanceof JReferenceType) {
-      type = ((JReferenceType) type).getUnderlyingType();
-    }
+    type = type.getUnderlyingType();
 
     if (type instanceof JArrayType) {
       return getOrCreateArrayType(normalizeJsoType(((JArrayType) type).getLeafType()),

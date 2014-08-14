@@ -113,7 +113,7 @@ public class ArrayNormalizer {
          */
         elementType = program.getJavaScriptObject();
       } else {
-        elementType = ((JReferenceType) elementType).getUnderlyingType();
+        elementType = elementType.getUnderlyingType();
       }
 
       elementType = program.normalizeJsoType(elementType);

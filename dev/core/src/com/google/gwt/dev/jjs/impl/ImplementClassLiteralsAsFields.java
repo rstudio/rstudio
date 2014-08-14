@@ -424,9 +424,7 @@ public class ImplementClassLiteralsAsFields {
    * </pre>
    */
   private JMethodCall createLiteralCall(SourceInfo info, JProgram program, JType type) {
-    if (type instanceof JReferenceType) {
-      type = ((JReferenceType) type).getUnderlyingType();
-    }
+    type = type.getUnderlyingType();
 
     Class<? extends JType>  typeClass = type.getClass();
     if (type.isEnumOrSubclass() != null) {

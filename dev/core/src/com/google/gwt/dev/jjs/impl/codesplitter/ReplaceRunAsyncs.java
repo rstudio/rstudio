@@ -105,8 +105,7 @@ public class ReplaceRunAsyncs {
         runAsyncCall.addArg(new JNumericEntry(info, "RunAsyncFragmentIndex", splitPoint));
         runAsyncCall.addArg(asyncCallback);
 
-        JReferenceType callbackType = (JReferenceType) asyncCallback.getType();
-        callbackType = callbackType.getUnderlyingType();
+        JReferenceType callbackType = (JReferenceType) asyncCallback.getType().getUnderlyingType();
         JMethod callbackMethod;
         if (callbackType instanceof JClassType) {
           callbackMethod =

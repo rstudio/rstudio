@@ -36,7 +36,7 @@ public class JArrayRef extends JExpression {
     if (type instanceof JNullType) {
       return null;
     }
-    return (JArrayType) ((JReferenceType) type).getUnderlyingType();
+    return (JArrayType) type.getUnderlyingType();
   }
 
   public JExpression getIndexExpr() {

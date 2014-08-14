@@ -419,9 +419,7 @@ public class DeadCodeElimination {
       JDeclaredType targetType = target.getEnclosingType();
       if (targetType == program.getTypeJavaLangString() ||
           (x.getInstance() != null &&
-              x.getInstance().getType() instanceof JReferenceType &&
-              ((JReferenceType) x.getInstance().getType()).getUnderlyingType()
-                  == program.getTypeJavaLangString())) {
+           x.getInstance().getType().getUnderlyingType() == program.getTypeJavaLangString())) {
         tryOptimizeStringCall(x, ctx, target);
       } else if (JProgram.isClinit(target)) {
         // Eliminate the call if the target is now empty.

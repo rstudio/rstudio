@@ -29,7 +29,6 @@ import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -182,10 +181,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
   @Override
   public void endVisit(JThrowStatement x, Context ctx) {
     // all things thrown are upcast to a Throwable
-    JType type = x.getExpr().getType();
-    if (type instanceof JReferenceType) {
-      type = ((JReferenceType) type).getUnderlyingType();
-    }
+    JType type = x.getExpr().getType().getUnderlyingType();
     processIfTypesNotEqual(type, throwableType, x.getSourceInfo());
   }
 

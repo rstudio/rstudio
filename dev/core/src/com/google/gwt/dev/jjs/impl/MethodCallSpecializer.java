@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -57,19 +56,15 @@ public class MethodCallSpecializer {
       List<JType> params = specialization.getParams();
       if (params.size() == x.getArgs().size()) {
         for (int i = 0; i < params.size(); i++) {
-          JType argType = x.getArgs().get(i).getType();
-          if (argType instanceof JNonNullType) {
-            argType = ((JNonNullType) argType).getUnderlyingType();
-          }
+          JType argType = x.getArgs().get(i).getType().getUnderlyingType();
+
           if (argType instanceof JNullType) {
             return;
           }
           // see if the args passed to the function can be cast to the
           // specialization pattern
-          JType qType = params.get(i);
-          if (qType instanceof JNonNullType) {
-            qType = ((JNonNullType) qType).getUnderlyingType();
-          }
+          JType qType = params.get(i).getUnderlyingType();
+
           if (!program.typeOracle.canTriviallyCast(argType, qType)) {
             // params don't match
             return;

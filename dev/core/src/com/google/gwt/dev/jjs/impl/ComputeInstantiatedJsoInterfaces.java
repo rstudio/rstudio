@@ -39,10 +39,10 @@ public class ComputeInstantiatedJsoInterfaces {
       JType toType = x.getCastType();
 
       if (toType instanceof JReferenceType && !(toType instanceof JNullType)) {
-        JReferenceType refType = ((JReferenceType) toType).getUnderlyingType();
-        if (program.typeOracle.willCrossCastLikeJso(refType) ||
+        toType = toType.getUnderlyingType();
+        if (program.typeOracle.willCrossCastLikeJso(toType) ||
             program.typeOracle.isOrExtendsJsType(toType, true)) {
-          instantiateJsoInterface(refType);
+          instantiateJsoInterface((JReferenceType) toType);
         }
       }
     }
