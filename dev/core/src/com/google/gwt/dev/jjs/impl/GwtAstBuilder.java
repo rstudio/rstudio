@@ -2189,7 +2189,7 @@ public class GwtAstBuilder {
     }
 
     private JField createEnumValuesField(JEnumType type) {
-      // $VALUES = new E[]{A,B,B};
+      // $VALUES = new E[]{A,B,C};
       JArrayType enumArrayType = new JArrayType(type);
       JField valuesField = new JField(type.getSourceInfo(), JEnumType.VALUES_ARRAY_NAME, type,
           enumArrayType, true, Disposition.FINAL);

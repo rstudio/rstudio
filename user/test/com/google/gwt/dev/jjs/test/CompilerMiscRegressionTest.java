@@ -218,6 +218,27 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
         SomeParentParentParent.callSomeParentParentParentM(new SomeSubSubClassInAnotherPackage()));
   }
 
+  enum MyEnum {
+    A,
+    B,
+    C;
+
+    public final static MyEnum[] VALUES = values();
+
+    public int getPriority() {
+      return VALUES.length - ordinal();
+    }
+  }
+
+  /**
+   * Tests that enum ordinalizer does not incorrectly optimize {@code MyEnum}.
+   * <p>
+   * Test for issue 8846:.
+   */
+  public void testMyEnum() {
+    assertEquals(2, MyEnum.B.getPriority());
+  }
+
   private static void assertEqualContents(float[] expected, float[] actual) {
 
     assertEquals("Array length mismatch", expected.length, actual.length);

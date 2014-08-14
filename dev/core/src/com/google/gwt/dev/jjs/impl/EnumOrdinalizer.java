@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNonNullType;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -387,22 +388,6 @@ public class EnumOrdinalizer {
       if (x.getInstance() != null) {
         // check any instance field reference other than ordinal
         blackListIfEnumExpression(x.getInstance());
-      } else if (x.getField().isStatic()) {
-        /*
-         * Black list if the $VALUES static field is referenced, unless it's
-         * within the auto-generated clinit or values method, within the enum
-         * class itself.
-         *
-         * TODO (jbrosenberg): Investigate further whether referencing the
-         * $VALUES array (as well as the values() method) should not block
-         * ordinalization. Instead, convert $VALUES to an array of int.
-         */
-        if (x.getField().getName().equals(JEnumType.VALUES_ARRAY_NAME)
-            && ((this.currentMethod.getEnclosingType() != x.getField().getEnclosingType()) ||
-                (!this.currentMethod.getName().equals("values") &&
-                 !this.currentMethod.getName().equals("$clinit")))) {
-          blackListIfEnum(x.getField().getEnclosingType(), x.getSourceInfo());
-        }
       }
     }
 
@@ -429,9 +414,14 @@ public class EnumOrdinalizer {
       } else if (x.getTarget().isStatic()) {
         // black-list static method calls on an enum class only for valueOf()
         // and values()
-        String methodName = x.getTarget().getName();
-        if (methodName.equals("valueOf") || methodName.equals("values")) {
-          blackListIfEnum(x.getTarget().getEnclosingType(), x.getSourceInfo());
+        JMethod target = x.getTarget();
+        maybeBlackListDueToStaticCall(x.getSourceInfo(), target);
+      }
+
+      if (x.getTarget().isNative()) {
+        // Black list enum types declared in parameters of native functions.
+        for (JParameter parameter :x.getTarget().getParams()) {
+          blackListIfEnum(parameter.getType(), x.getSourceInfo());
         }
       }
 
@@ -478,14 +468,11 @@ public class EnumOrdinalizer {
       if (x.getInstance() != null) {
         blackListIfEnumExpression(x.getInstance());
       } else if (x.getTarget().isStatic()) {
-        /*
-         * need to exempt static methodCalls for an enum class if it occurs
-         * within the enum class itself (such as in $clinit() or values())
-         */
-        if (this.currentMethod.getEnclosingType() != x.getTarget().getEnclosingType()) {
-          blackListIfEnum(x.getTarget().getEnclosingType(), x.getSourceInfo());
-        }
+        maybeBlackListDueToStaticCall(x.getSourceInfo(), x.getTarget());
       }
+
+      // Black list enums returned to JSNI.
+      blackListIfEnum(x.getTarget().getType(), x.getSourceInfo());
 
       // defer to ImplicitUpcastAnalyzer to check method call args & params
       super.endVisit(x, ctx);
@@ -608,7 +595,18 @@ public class EnumOrdinalizer {
         blackListIfEnum(instance.getType(), instance.getSourceInfo());
       }
     }
+
+    /**
+     * Blacklist the enum if there is a call to either MyEnum.valueOf() or MyEnum.values().
+     */
+    private void maybeBlackListDueToStaticCall(SourceInfo info, JMethod target) {
+      if (target.getEnclosingType().isEnumOrSubclass() != null &&
+          (target.getName().equals("valueOf") || target.getName().equals("values"))) {
+        blackListIfEnum(target.getEnclosingType(), info);
+      }
+    }
   }
+
   /**
    * A visitor which replaces enum types with an integer.
    *
@@ -730,20 +728,20 @@ public class EnumOrdinalizer {
       int removeIndex = 0;
       // Make a copy to avoid concurrent modification.
       for (JStatement stmt : new ArrayList<JStatement>(block.getStatements())) {
-        if (stmt instanceof JDeclarationStatement) {
-          JVariableRef ref = ((JDeclarationStatement) stmt).getVariableRef();
-          if (ref instanceof JFieldRef) {
-            JFieldRef enumRef = (JFieldRef) ref;
-            // See if LHS is a field ref to the class being initialized.
-            JField field = enumRef.getField();
-            if (field.isStatic() && field.getEnclosingType() == enclosingType) {
-              if (field instanceof JEnumField ||
-                  field.getName().equals(JEnumType.VALUES_ARRAY_NAME)) {
-                block.removeStmt(removeIndex--);
-                field.setInitializer(null);
-              }
-            }
-          }
+        if (!(stmt instanceof JDeclarationStatement)) {
+          continue;
+        }
+        JVariableRef ref = ((JDeclarationStatement) stmt).getVariableRef();
+        if (!(ref instanceof JFieldRef)) {
+          continue;
+        }
+
+        // See if LHS is a field ref to the class being initialized.
+        JField field = ((JFieldRef) ref).getField();
+        if (field.isStatic() && field.getEnclosingType() == enclosingType &&
+            field instanceof JEnumField) {
+          block.removeStmt(removeIndex--);
+          field.setInitializer(null);
         }
         ++removeIndex;
       }
