@@ -110,6 +110,7 @@ public class SchedulerImpl extends Scheduler {
 
   /**
    * The delay between flushing the task queues.
+   * Due to browser implementations the actual delay may be longer.
    */
   private static final int FLUSHER_DELAY = 1;
 
@@ -121,8 +122,10 @@ public class SchedulerImpl extends Scheduler {
   /**
    * The amount of time that we're willing to spend executing
    * IncrementalCommands.
+   * 16ms allows control to be returned to the browser 60 times a second
+   * making it possible to keep the frame rate at 60fps.
    */
-  private static final double TIME_SLICE = 100;
+  private static final double TIME_SLICE = 16;
 
   /**
    * Extract boilerplate code.
