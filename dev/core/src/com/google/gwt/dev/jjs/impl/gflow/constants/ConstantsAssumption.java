@@ -267,7 +267,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     if (this == TOP || isEmpty()) {
       return "T";
     }
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     result.append("{");
     List<JVariable> variables = new ArrayList<JVariable>(values.keySet());

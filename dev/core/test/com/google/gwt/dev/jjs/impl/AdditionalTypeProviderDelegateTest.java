@@ -88,7 +88,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
      sourceOracle.addOrReplace(new MockJavaResource("test.A") {
        @Override
        public CharSequence getContent() {
-         StringBuffer code = new StringBuffer();
+         StringBuilder code = new StringBuilder();
          code.append("package test;\n");
          code.append("class A {\n");
          code.append("  void myFunc() {\n");
@@ -104,7 +104,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
      sourceOracle.addOrReplace(new MockJavaResource("test.B") {
        @Override
        public CharSequence getContent() {
-         StringBuffer code = new StringBuffer();
+         StringBuilder code = new StringBuilder();
          code.append("package test;\n");
          code.append("import myPackage.InsertedClass;");
          code.append("class B {\n");
@@ -123,7 +123,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
      sourceOracle.addOrReplace(new MockJavaResource("test.B1") {
        @Override
        public CharSequence getContent() {
-         StringBuffer code = new StringBuffer();
+         StringBuilder code = new StringBuilder();
          code.append("package test;\n");
          code.append("class B1 {\n");
          code.append("  int func() {\n");
@@ -168,7 +168,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.C") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("import myPackage.UnknownClass;");
         code.append("class C {\n");
@@ -193,7 +193,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.D") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("class D {\n");
         code.append("  int func() {\n");

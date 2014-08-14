@@ -120,7 +120,7 @@ public class ExpressionAnalyzerTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("public class Foo {\n");
         code.append("  static final boolean value = trueMethod();");
@@ -136,7 +136,7 @@ public class ExpressionAnalyzerTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
         code.append("public class Foo {\n");

@@ -57,8 +57,8 @@ public class StandardCompilationResult extends CompilationResult {
       Iterator<String> i0 = arg0.values().iterator();
       Iterator<String> i1 = arg1.values().iterator();
 
-      StringBuffer sb0 = new StringBuffer();
-      StringBuffer sb1 = new StringBuffer();
+      StringBuilder sb0 = new StringBuilder();
+      StringBuilder sb1 = new StringBuilder();
 
       while (i0.hasNext()) {
         assert i1.hasNext();
@@ -120,7 +120,7 @@ public class StandardCompilationResult extends CompilationResult {
     }
 
     // Otherwise stick all the different strong names together
-    StringBuffer strongNames = new StringBuffer();
+    StringBuilder strongNames = new StringBuilder();
     strongNames.append(applicationPermutationResult.getJsStrongName());
     for (PermutationResult libraryPermutationResult : libraryPermutationResults) {
       strongNames.append(libraryPermutationResult.getJsStrongName());
@@ -163,7 +163,7 @@ public class StandardCompilationResult extends CompilationResult {
     // Otherwise if there are multiple libraries.
     assert applicationFragmentCount == 1 : "Libraries can only have one fragment.";
 
-    StringBuffer jsBuffer = new StringBuffer();
+    StringBuilder jsBuffer = new StringBuilder();
 
     // Concatenate the libraries and application JavaScript.
     for (PermutationResult libraryPermutationResult : libraryPermutationResults) {

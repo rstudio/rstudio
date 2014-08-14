@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 /**
  * Executable class provides help to users who run the jar by indicating the
@@ -31,21 +32,9 @@ public class GWTMain {
       System.err.println(About.getGwtVersion());
     }
     System.err.println("Available main classes:");
-    System.err.println(addSpaces(DevMode.class.getName(),
-        "runs the development shell"));
-    System.err.println(addSpaces(Compiler.class.getName(),
-        "compiles a GWT module"));
+    System.err.println(Strings.padEnd(DevMode.class.getName(), 40, ' ') +
+        "runs the development shell");
+    System.err.println(Strings.padEnd(Compiler.class.getName(), 40, ' ') +
+        "compiles a GWT module");
   }
-
-  private static String addSpaces(String first, String second) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(' ');
-    sb.append(first);
-    for (int i = sb.length(); i < 40; ++i) {
-      sb.append(' ');
-    }
-    sb.append(second);
-    return sb.toString();
-  }
-
 }

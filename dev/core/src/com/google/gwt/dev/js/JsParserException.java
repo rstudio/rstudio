@@ -59,7 +59,7 @@ public class JsParserException extends Exception {
     if (sourceDetail == null) {
       return msg;
     }
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append(sourceDetail.getFileName());
     sb.append('(');
     sb.append(sourceDetail.getLine());

@@ -249,7 +249,7 @@ public abstract class JJSTestBase extends TestCase {
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         for (String snippetImport : snippetImports) {
           code.append("import " + snippetImport + ";\n");

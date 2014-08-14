@@ -170,7 +170,7 @@ public class InnerClassTest extends GWTTestCase {
     }
   }
 
-  private StringBuffer testAppend = new StringBuffer();
+  private StringBuilder testAppend = new StringBuilder();
 
   @Override
   public String getModuleName() {
@@ -213,19 +213,19 @@ public class InnerClassTest extends GWTTestCase {
   }
 
   public void testInnerClassLoop() {
-    final StringBuffer b = new StringBuffer();
-    abstract class AppendToStringBuffer {
+    final StringBuilder b = new StringBuilder();
+    abstract class AppendToStringBuilder {
       int num;
 
-      public AppendToStringBuffer(int i) {
+      public AppendToStringBuilder(int i) {
         this.num = i;
       }
 
       public abstract void act();
     }
-    List<AppendToStringBuffer> results = new ArrayList<AppendToStringBuffer>();
+    List<AppendToStringBuilder> results = new ArrayList<AppendToStringBuilder>();
     for (int i = 0; i < 10; i++) {
-      AppendToStringBuffer ap = new AppendToStringBuffer(i) {
+      AppendToStringBuilder ap = new AppendToStringBuilder(i) {
         @Override
         public void act() {
           b.append(num);
@@ -234,7 +234,7 @@ public class InnerClassTest extends GWTTestCase {
       };
       results.add(ap);
     }
-    for (AppendToStringBuffer theAp : results) {
+    for (AppendToStringBuilder theAp : results) {
       theAp.act();
     }
     assertEquals("0123456789", b.toString());

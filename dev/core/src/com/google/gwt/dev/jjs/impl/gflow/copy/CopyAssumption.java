@@ -177,7 +177,7 @@ public class CopyAssumption implements Assumption<CopyAssumption> {
       return "T";
     }
 
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     result.append("{");
     List<JVariable> variables = new ArrayList<JVariable>(

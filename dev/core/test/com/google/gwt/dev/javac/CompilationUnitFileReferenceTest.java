@@ -34,7 +34,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
       new MockJavaResource("test.OuterSubclass") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("package test;\n");
           code.append("public class OuterSubclass extends Outer {\n");
           code.append("  public String value() { return \"OuterSubclass\"; }\n");
@@ -50,7 +50,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
       new MockJavaResource("NoPackage") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("public class NoPackage extends test.Top {\n");
           code.append("  public String value() { return \"NoPackage\"; }\n");
           code.append("}\n");
@@ -62,7 +62,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
       new MockJavaResource("NoPackage2") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("public class NoPackage2 extends NoPackage {\n");
           code.append("  public String value() { return \"NoPackage2\"; }\n");
           code.append("}\n");
@@ -74,7 +74,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
       new MockJavaResource("test.Outer") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("package test;\n");
           code.append("public class Outer {\n");
           code.append("  public String value() { return \"Outer\"; }\n");
@@ -93,7 +93,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
       new MockJavaResource("test.StaticInnerSubclass") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("package test;\n");
           code.append("public class StaticInnerSubclass extends Outer.StaticInner {\n");
           code.append("  public String value() { return \"StaticInnerSubclass\"; }\n");
@@ -105,7 +105,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
   public static final MockJavaResource TOP = new MockJavaResource("test.Top") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package test;\n");
       code.append("public class Top {\n");
       code.append("  public String value() { return \"Top\"; }\n");
@@ -121,7 +121,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
       new MockJavaResource("test.Top3") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("package test;\n");
           code.append("public class Top3 extends Top2 {\n");
           code.append("  public String value() { return \"Top3\"; }\n");

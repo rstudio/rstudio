@@ -38,7 +38,7 @@ public class JsniMethodCollectorTest extends CompilationStateTestBase {
   public static final boolean JSNI_PARSES_SOURCE_POSITION = false;
 
   public void testErrorPosition() {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("class Foo {\n");
     code.append("  native void m(Object o) /*-{\n");
     code.append("    o.@Foo::m(Ljava/lang/String);\n");
@@ -60,7 +60,7 @@ public class JsniMethodCollectorTest extends CompilationStateTestBase {
   }
 
   public void testMalformedJsniRefPosition() {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("class Foo {\n");
     code.append("  native void m() /*-{\n");
     code.append("    @Bar;\n");
@@ -78,7 +78,7 @@ public class JsniMethodCollectorTest extends CompilationStateTestBase {
   }
 
   public void testMalformedJsniRefPositionWithExtraLines() {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("class Foo {\n");
     code.append("  native\nvoid\nm()\n\n\n/*-{\n\n");
     code.append("    @Bar;\n");
@@ -96,7 +96,7 @@ public class JsniMethodCollectorTest extends CompilationStateTestBase {
   }
 
   public void testSourcePosition() {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("class Foo {\n");
     code.append("  native void m(Object o) /*-{\n");
     code.append("    o.@Foo::m(Ljava/lang/Object);\n");

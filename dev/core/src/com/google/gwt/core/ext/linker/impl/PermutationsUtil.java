@@ -80,7 +80,7 @@ public class PermutationsUtil {
    * @return the modified selectionScript buffer
    * @throws UnableToCompleteException
    */
-  public StringBuffer addPermutationsJs(StringBuffer selectionScript,
+  public StringBuilder addPermutationsJs(StringBuilder selectionScript,
       TreeLogger logger, LinkerContext context)
       throws UnableToCompleteException {
     int startPos;
@@ -90,7 +90,7 @@ public class PermutationsUtil {
     // Possibly add permutations
     startPos = selectionScript.indexOf("// __PERMUTATIONS_END__");
     if (startPos != -1) {
-      StringBuffer text = new StringBuffer();
+      StringBuilder text = new StringBuilder();
       if (propMapsByPermutation.size() == 0) {
         // Hosted mode link.
         text.append("alert(\"GWT module '" + context.getModuleName()

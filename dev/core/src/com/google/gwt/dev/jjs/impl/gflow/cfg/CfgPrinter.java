@@ -32,7 +32,7 @@ public class CfgPrinter {
   }
 
   public String print() {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     List<CfgNode<?>> nodes = graph.getNodes();
 
     // Determine nodes which have edges incoming not from previous node.
@@ -100,7 +100,7 @@ public class CfgPrinter {
   /**
    * Template method to append arbitrary edge information.
    */
-  protected void appendEdgeInfo(@SuppressWarnings("unused") StringBuffer result,
+  protected void appendEdgeInfo(@SuppressWarnings("unused") StringBuilder result,
       @SuppressWarnings("unused") CfgEdge edge) {
     // Overridden by ancestors.
   }

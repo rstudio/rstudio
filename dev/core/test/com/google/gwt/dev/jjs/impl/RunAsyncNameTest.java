@@ -32,7 +32,7 @@ public class RunAsyncNameTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.CallRunAsync") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");
         code.append("public class CallRunAsync {\n");

@@ -39,7 +39,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint3") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");
         code.append("public class SplitPoint3 {\n");
@@ -64,7 +64,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint4") {
         @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");
         code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -105,7 +105,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint1") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");
         code.append("public class SplitPoint1 {\n");
@@ -121,7 +121,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint2") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");
         code.append("public class SplitPoint2 {\n");

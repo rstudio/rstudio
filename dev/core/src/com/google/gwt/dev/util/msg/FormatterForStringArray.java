@@ -22,7 +22,7 @@ public final class FormatterForStringArray extends Formatter {
 
   @Override
   public String format(Object toFormat) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     String[] ss = (String[]) toFormat;
     for (int i = 0, n = ss.length; i < n; ++i) {
       if (i > 0) {

@@ -35,7 +35,7 @@ public class JEnumTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource("test.Simple") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("public enum Simple {\n");
         code.append("  FOO, BAR, BAZ;\n");

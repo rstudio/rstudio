@@ -97,7 +97,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   public void testSimple() throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -139,7 +139,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
 
 
   public void testPredefinedAsyncGrouping() throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -204,7 +204,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     initialSequenceProp.addValue("@test.EntryPoint::createInitialCallBack1()");
     initialSequenceProp.addValue("@test.EntryPoint::createInitialCallBack2()");
 
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -264,7 +264,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   public void testOnSuccessCallCast() throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -294,7 +294,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   public void testMergeLeftOvers() throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -337,7 +337,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   public void testDontMergeLeftOvers() throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -368,7 +368,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   public void testNoMergeMoreThanTwo() throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -396,7 +396,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   public void testDoubleMerge() throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
@@ -488,7 +488,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   private static String createRunAsync(String cast, String body) {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("GWT.runAsync(" + cast + "new " + "RunAsyncCallback() {\n");
     code.append("  public void onFailure(Throwable reason) {}\n");
     code.append("  public void onSuccess() {\n");
@@ -499,7 +499,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   private static String createNamedRunAsyncCallback(String className, String body) {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("private static class " + className + " implements RunAsyncCallback {\n");
     code.append("  public void onFailure(Throwable reason) {}\n");
     code.append("  public void onSuccess() {\n");

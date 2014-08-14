@@ -50,7 +50,7 @@ public class GenerateJavaScriptAstTest extends FullCompileTestBase {
   }
 
   public void testInlineJSNIMethod() throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("import com.google.gwt.core.client.GWT;\n");
     code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");

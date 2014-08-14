@@ -2819,7 +2819,7 @@ public class GenerateJavaScriptAST {
      */
     private Pair<String, String> getExportNamespace(String exportName) {
       String[] parts = exportName.split("\\.");
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       for (int i = 0; i < parts.length - 1; i++) {
         if (i != 0) {
           sb.append('.');

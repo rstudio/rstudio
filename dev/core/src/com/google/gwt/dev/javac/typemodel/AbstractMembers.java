@@ -235,7 +235,7 @@ abstract class AbstractMembers {
   }
 
   private String computeInternalSignature(JMethod method) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.setLength(0);
     sb.append(method.getName());
     JParameter[] params = method.getParameters();

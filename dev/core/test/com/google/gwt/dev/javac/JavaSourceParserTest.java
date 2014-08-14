@@ -33,7 +33,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
   private static final MockJavaResource BAR = new MockJavaResource("test.Bar") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package test;\n");
       code.append("public class Bar {\n");
       code.append("  public String value(String a, int val) { return \"Bar\"; }\n");
@@ -47,7 +47,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
   private static final MockJavaResource BAZ = new MockJavaResource("test.Baz") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package test;\n");
       code.append("public class Baz {\n");
       code.append("  public static class Baz1 {\n");
@@ -66,7 +66,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
   private static final MockJavaResource FOO = new MockJavaResource("test.Foo") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package test;\n");
       code.append("public class Foo {\n");
       code.append("  public String value(String a, int val) { return \"Foo\"; }\n");
@@ -79,7 +79,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
       "test.FooInt") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package test;\n");
       code.append("public interface FooInt {\n");
       code.append("  String value(String a, int val);\n");

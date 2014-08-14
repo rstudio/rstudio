@@ -170,7 +170,7 @@ public class DefaultFilters {
        */
       antPatternString = antPatternString + "**";
     }
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     int length = antPatternString.length();
     for (int i = 0; i < length; i++) {
       char c = antPatternString.charAt(i);
@@ -267,7 +267,7 @@ public class DefaultFilters {
   }
 
   private static Pattern getPatternFromStrings(String... patterns) {
-    StringBuffer entirePattern = new StringBuffer("^");
+    StringBuilder entirePattern = new StringBuilder("^");
     int length = patterns.length;
     int count = 0;
     for (String pattern : patterns) {

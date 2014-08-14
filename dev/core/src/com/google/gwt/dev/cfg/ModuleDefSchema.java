@@ -1337,7 +1337,7 @@ public class ModuleDefSchema extends Schema {
 
   private static class ScriptSchema extends Schema {
 
-    private StringBuffer script;
+    private StringBuilder script;
 
     private int startLineNumber = -1;
 
@@ -1347,7 +1347,7 @@ public class ModuleDefSchema extends Schema {
     @SuppressWarnings("unused") // called reflectively
     public void __text(String text) {
       if (script == null) {
-        script = new StringBuffer();
+        script = new StringBuilder();
         startLineNumber = getLineNumber();
       }
       script.append(text);

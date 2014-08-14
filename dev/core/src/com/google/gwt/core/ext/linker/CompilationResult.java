@@ -92,7 +92,7 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
 
   @Override
   public String toString() {
-    StringBuffer b = new StringBuffer();
+    StringBuilder b = new StringBuilder();
     b.append("{");
     for (SortedMap<SelectionProperty, String> map : getPropertyMap()) {
       b.append(" {");

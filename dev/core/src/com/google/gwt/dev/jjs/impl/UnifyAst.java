@@ -1097,7 +1097,7 @@ public class UnifyAst {
         logger
             .branch(TreeLogger.ERROR, "Errors in '" + x.getSourceInfo().getFileName() + "'", null);
     // Append 'Line #: msg' to the error message.
-    StringBuffer msgBuf = new StringBuffer();
+    StringBuilder msgBuf = new StringBuilder();
     int line = x.getSourceInfo().getStartLine();
     if (line > 0) {
       msgBuf.append("Line ");

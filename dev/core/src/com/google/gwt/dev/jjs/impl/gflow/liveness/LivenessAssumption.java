@@ -125,7 +125,7 @@ public class LivenessAssumption implements Assumption<LivenessAssumption> {
   }
 
   public String toDebugString() {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     result.append("{");
     List<JVariable> vars = new ArrayList<JVariable>(liveVariables);

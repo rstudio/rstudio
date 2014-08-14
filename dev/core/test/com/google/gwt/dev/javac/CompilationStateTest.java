@@ -53,7 +53,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
       new MockJavaResource("test.Foo") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("package test;\n");
           code.append("public class Foo {\n");
           code.append("  public String value() { return \"Foo\"; }\n");
@@ -67,7 +67,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
       new MockJavaResource("test.Foo") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("package test;\n");
           code.append("public class Foo {\n");
           code.append("  public String value() { return \"Foo2\"; }\n");
@@ -260,7 +260,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
     MockJavaResource resource = new MockJavaResource("test.MethodArgsTest") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("public abstract class MethodArgsTest {\n");
         code.append("  public abstract void anAbstractMethod(String aArg1);\n");
@@ -311,7 +311,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
     MockJavaResource resource = new MockJavaResource("test.SerializationTest") {
       @Override
       public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
+        StringBuilder code = new StringBuilder();
         code.append("package test;\n");
         code.append("public abstract class SerializationTest {\n");
         code.append("  public static native boolean getTrue() /*-{ return true; }-*/;\n");

@@ -216,7 +216,7 @@ public class JParameterizedType extends JMaybeParameterizedType implements
 
   @Override
   public String getParameterizedQualifiedSourceName() {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
 
     if (getEnclosingType() != null) {
       sb.append(getEnclosingType().getParameterizedQualifiedSourceName());

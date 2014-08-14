@@ -30,7 +30,7 @@ public class ResourceInjectionUtil {
   /**
    * Installs stylesheets and scripts.
    */
-  public static StringBuffer injectResources(StringBuffer selectionScript,
+  public static StringBuilder injectResources(StringBuilder selectionScript,
       ArtifactSet artifacts) {
     // Add external dependencies
     int startPos = selectionScript.indexOf("// __MODULE_STYLES_END__");
@@ -62,7 +62,7 @@ public class ResourceInjectionUtil {
    * installOneStylesheet(URL);
    * </pre>
    */
-  public static StringBuffer injectStylesheets(StringBuffer selectionScript,
+  public static StringBuilder injectStylesheets(StringBuilder selectionScript,
       ArtifactSet artifacts) {
     int startPos = selectionScript.indexOf("// __MODULE_STYLES__");
     if (startPos != -1) {

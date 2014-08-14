@@ -190,7 +190,7 @@ public class CodeSplitters {
       return;
     }
 
-    StringBuffer message = new StringBuffer();
+    StringBuilder message = new StringBuilder();
     message.append("Initial load sequence of split points: ");
     if (initialLoadSequence.isEmpty()) {
       message.append("(none)");

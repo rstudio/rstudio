@@ -44,7 +44,7 @@ public class JsToStringGenerationVisitorTest extends FullCompileTestBase {
 
   public void testClassRangeMarking() throws UnableToCompleteException {
     // Prepares the EntryPoint class to compile.
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("package test;\n");
     code.append("public class EntryPoint {\n");
     code.append("  public interface SomeInterface {}\n");

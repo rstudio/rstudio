@@ -190,7 +190,7 @@ public class ServerGwtBridgeTest extends TestCase {
 
       @Override
       public synchronized String format(LogRecord record) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         String msg = formatMessage(record);
         buf.append(record.getLevel().getName()).append(": ").append(msg).append(lineSeparator);
         if (record.getThrown() != null) {

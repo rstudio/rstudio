@@ -43,7 +43,7 @@ public class AssumptionsPrinter<A extends Assumption<A>> extends CfgPrinter {
   }
 
   @Override
-  protected void appendEdgeInfo(StringBuffer result, CfgEdge edge) {
+  protected void appendEdgeInfo(StringBuilder result, CfgEdge edge) {
     A a;
     if (assumptions != null) {
       a = assumptions.get(edge);

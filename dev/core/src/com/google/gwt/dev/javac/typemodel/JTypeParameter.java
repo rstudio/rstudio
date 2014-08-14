@@ -191,7 +191,7 @@ public class JTypeParameter extends JDelegatingClassType implements
   }
 
   private String toString(boolean simpleName) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append(typeName);
     sb.append(" extends ");
     for (int i = 0; i < bounds.length; ++i) {

@@ -72,7 +72,7 @@ public class DevirtualizerTest extends OptimizerTestBase {
     // Constructs an expectation about the resulting devirtualized method calls of a(). The salient
     // point in the results below is that the JSO method used for val1 and val1 has a different name
     // the method used for val2 and val3.
-    StringBuffer expected = new StringBuffer();
+    StringBuilder expected = new StringBuilder();
     expected.append("int result = ");
     expected.append("EntryPoint$Jso1.a__I__devirtual$(EntryPoint.val1) + ");
     expected.append("EntryPoint$Jso1.a__I__devirtual$(EntryPoint.val2) + ");
@@ -118,7 +118,7 @@ public class DevirtualizerTest extends OptimizerTestBase {
     // Constructs an expectation about the resulting devirtualized method calls for
     // Comparable.compareTo() and CharSequence.length(). Note that calls to CharSequence.length and
     // String.length are devirtualized separately.
-    StringBuffer expected = new StringBuffer();
+    StringBuilder expected = new StringBuilder();
     expected.append("int result = ");
     expected.append(String.format(
         // Methods in Comparable and CharSequence end up in String even if used by a JSO.

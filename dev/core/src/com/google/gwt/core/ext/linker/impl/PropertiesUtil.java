@@ -32,7 +32,7 @@ import java.util.SortedSet;
 public class PropertiesUtil {
   public static String addKnownPropertiesJs(TreeLogger logger,
       CompilationResult result) {
-    StringBuffer propertiesJs = new StringBuffer();
+    StringBuilder propertiesJs = new StringBuilder();
 
     // Multiple values for a property can result in one permutation. For
     // example, this permutation may be valid for safari and chrome.  However,
@@ -52,7 +52,7 @@ public class PropertiesUtil {
     return propertiesJs.toString();
   }
 
-  public static StringBuffer addPropertiesJs(StringBuffer selectionScript,
+  public static StringBuilder addPropertiesJs(StringBuilder selectionScript,
       TreeLogger logger, LinkerContext context)
       throws UnableToCompleteException {
     int startPos;
@@ -73,7 +73,7 @@ public class PropertiesUtil {
   private static String generatePropertyProvider(TreeLogger logger,
       SelectionProperty prop, SortedSet<ConfigurationProperty> configProps)
       throws UnableToCompleteException {
-    StringBuffer toReturn = new StringBuffer();
+    StringBuilder toReturn = new StringBuilder();
 
     if (prop.tryGetValue() == null && !prop.isDerived()) {
       toReturn.append("providers['" + prop.getName() + "'] = function()");

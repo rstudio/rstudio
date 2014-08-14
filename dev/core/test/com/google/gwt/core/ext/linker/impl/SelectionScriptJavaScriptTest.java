@@ -45,7 +45,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * assumes that the metaProps variable is already in scope.
    */
   private static String loadComputeScriptBase() throws IOException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("var base = \"\", $doc=document;\n");
     code.append("__gwt_getMetaProperty = function(name) { "
                  + "var value = metaProps[name];"
@@ -60,7 +60,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * variables it needs to run, and a call to the function.
    */
   private static String loadProcessMetas() throws IOException {
-    StringBuffer code = new StringBuffer();
+    StringBuilder code = new StringBuilder();
     code.append("var metaProps = { }, propertyErrorFunc, onLoadErrorFunc;\n");
     code.append(Utility.getFileFromClassPath(SelectionScriptLinker.PROCESS_METAS_JS));
     code.append("processMetas();\n");
@@ -71,11 +71,11 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test a meta tag specifying a base for this module
    */
   public void testModuleSpecificMetas1() throws IOException {
-    StringBuffer metas = new StringBuffer();
+    StringBuilder metas = new StringBuilder();
     metas.append("<meta name=\"" + TEST_MODULE_NAME
         + "::gwt:property\" content=\"baseUrl=http://new/base\">\n");
 
-    StringBuffer testCode = new StringBuffer();
+    StringBuilder testCode = new StringBuilder();
     testCode.append(loadProcessMetas());
     testCode.append("alert('baseUrl='+metaProps['baseUrl']);\n");
 
@@ -89,10 +89,10 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test a meta tag specifying a base for a different module.
    */
   public void testModuleSpecificMetas2() throws IOException {
-    StringBuffer metas = new StringBuffer();
+    StringBuilder metas = new StringBuilder();
     metas.append("<meta name=\"some.other.module::gwt:property\" content=\"baseUrl=http://new/base\">\n");
 
-    StringBuffer testCode = new StringBuffer();
+    StringBuilder testCode = new StringBuilder();
     testCode.append(loadProcessMetas());
     testCode.append("alert('baseUrl='+metaProps['baseUrl']);\n");
 
@@ -107,13 +107,13 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    */
   public void testProcessMetas() throws FailingHttpStatusCodeException,
       MalformedURLException, IOException {
-    StringBuffer metas = new StringBuffer();
+    StringBuilder metas = new StringBuilder();
     metas.append("<meta name=\"gwt:property\" content=\"baseUrl=http://new/base\">\n");
     metas.append("<meta name=\"gwt:property\" content=\"novalue\">\n");
     metas.append("<meta name=\"gwt:onPropertyErrorFn\" content=\"function() { alert('custom prop error called');}\"}>\n");
     metas.append("<meta name=\"gwt:onLoadErrorFn\" content=\"function() { alert('custom onLoad error called');}\">\n");
 
-    StringBuffer testCode = new StringBuffer();
+    StringBuilder testCode = new StringBuilder();
     testCode.append(loadProcessMetas());
     testCode.append("alert('baseUrl='+metaProps['baseUrl']);\n");
     testCode.append("alert('novalue='+metaProps['novalue']);\n");
@@ -136,7 +136,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test the default href
    */
   public void testDefault() throws IOException {
-    StringBuffer testCode = new StringBuffer();
+    StringBuilder testCode = new StringBuilder();
     testCode.append("var metaProps = { };\n");
     testCode.append("function isBodyLoaded() { return true; }\n");
     testCode.append(loadComputeScriptBase());
@@ -152,7 +152,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test the script base with no meta properties.
    */
   public void testScriptBase() throws IOException {
-    StringBuffer testCode = new StringBuffer();
+    StringBuilder testCode = new StringBuilder();
     testCode.append("var metaProps = { };\n");
     testCode.append("function isBodyLoaded() { return false; }\n");
     testCode.append(loadComputeScriptBase());
@@ -168,7 +168,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test getting the base URL from a meta property with an absolute URL
    */
   public void testScriptBaseFromMetas() throws IOException {
-    StringBuffer testCode = new StringBuffer();
+    StringBuilder testCode = new StringBuilder();
     testCode.append("var metaProps = { baseUrl : \"http://static.test/fromMetaTag/\" };\n");
     testCode.append(loadComputeScriptBase());
     testCode.append("alert('base='+base);\n");
@@ -183,7 +183,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test getting the base URL from a meta property with a relative URL
    */
   public void testRelativeScriptBaseFromMetas() throws IOException {
-    StringBuffer testCode = new StringBuffer();
+    StringBuilder testCode = new StringBuilder();
     testCode.append("var metaProps = { baseUrl : \"fromMeta/tag/\" };\n");
     testCode.append(loadComputeScriptBase());
     testCode.append("alert('base='+base);\n");
@@ -198,7 +198,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test the script base logic for an inlined selection script.
    */
   public void testScriptBaseForInlined() throws IOException {
-    StringBuffer hostPage = new StringBuffer();
+    StringBuilder hostPage = new StringBuilder();
     hostPage.append("<html><head>\n");
     hostPage.append("<script lang=\"javascript\"><!--\n");
     hostPage.append("var metaProps = { }\n");
@@ -216,7 +216,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test getting a the base URL from the HTML base tag
    */
   public void testScriptBaseFromBaseTag() throws IOException {
-    StringBuffer hostPage = new StringBuffer();
+    StringBuilder hostPage = new StringBuilder();
     hostPage.append("<html><head>\n");
     hostPage.append("<base href=\"http://static.test/fromBaseTag/\">\n");
     hostPage.append("<script lang=\"javascript\"><!--\n");
@@ -235,7 +235,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
    * Test the script base logic for an inlined selection script.
    */
   public void testNocacheJsTag() throws IOException {
-    StringBuffer hostPage = new StringBuffer();
+    StringBuilder hostPage = new StringBuilder();
     hostPage.append("<html><head>\n");
     hostPage.append("<script lang='javascript' type='application/javascript' ");
     hostPage.append("src='from/nocache/__MODULE_NAME__.nocache.js'></script>\n");
@@ -280,7 +280,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   }
 
   private String makeHostPage(CharSequence metas) {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append("<html><head>\n");
     buf.append(metas);
     buf.append("<script src=\"/foo/test.Module.nocache.js\">\n");

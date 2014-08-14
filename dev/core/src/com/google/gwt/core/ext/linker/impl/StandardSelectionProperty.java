@@ -100,7 +100,7 @@ public class StandardSelectionProperty implements SelectionProperty {
 
   @Override
   public String toString() {
-    StringBuffer b = new StringBuffer();
+    StringBuilder b = new StringBuilder();
     b.append(getName()).append(" : [");
     for (String value : getPossibleValues()) {
       b.append(" ").append(value);

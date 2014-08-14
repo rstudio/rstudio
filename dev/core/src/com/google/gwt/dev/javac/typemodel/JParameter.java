@@ -113,7 +113,7 @@ public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
 
   @Override
   public String toString() {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append(type.getParameterizedQualifiedSourceName());
     sb.append(" ");
     sb.append(getName());

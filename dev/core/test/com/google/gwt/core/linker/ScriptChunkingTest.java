@@ -125,7 +125,7 @@ public class ScriptChunkingTest extends TestCase {
   private static class ScriptWithRangesBuilder {
 
     private final ArrayList<Integer> ends = new ArrayList<Integer>();
-    private final StringBuffer script = new StringBuffer();
+    private final StringBuilder script = new StringBuilder();
     private final ArrayList<Integer> starts = new ArrayList<Integer>();
 
     public void addNonStatement(String string) {

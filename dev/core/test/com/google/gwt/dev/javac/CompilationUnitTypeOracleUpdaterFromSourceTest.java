@@ -32,7 +32,7 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
 
     @Override
     public String getSource() {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append("package test;\n");
       sb.append("class NoSyntaxErrors { }\n");
       sb.append("public class HasSyntaxErrors { a syntax error }\n");
@@ -49,7 +49,7 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
 
     @Override
     public String getSource() {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append("package " + getPackageName() + ";\n");
       sb.append("public class Invalid extends NoSuchClass { }\n");
       sb.append("class Valid extends Object { }\n");
@@ -66,7 +66,7 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
 
     @Override
     public String getSource() {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append("package test;\n");
       sb.append("public class RefsInfectedCompilationUnit extends Valid { }\n");
       return sb.toString();
@@ -84,19 +84,19 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
    */
   public void testRefreshWithErrors() throws TypeOracleException {
     // Add Object
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append("package java.lang;");
     sb.append("public class Object { }");
     addResource("java.lang.Object", sb);
 
     // Add UnmodifiedClass that will never change.
-    sb = new StringBuffer();
+    sb = new StringBuilder();
     sb.append("package test.refresh.with.errors;");
     sb.append("public class UnmodifiedClass { }");
     addResource("test.refresh.with.errors.UnmodifiedClass", sb);
 
     // Add GoodClass that references a class that will go bad.
-    sb = new StringBuffer();
+    sb = new StringBuilder();
     sb.append("package test.refresh.with.errors;\n");
     sb.append("public class GoodClass {\n");
     sb.append("  ClassThatWillGoBad ctwgb;\n");
@@ -133,7 +133,7 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
 
     // Add AnotherGoodClass that references a
     // class that was not recompiled.
-    sb = new StringBuffer();
+    sb = new StringBuilder();
     sb.append("package test.refresh.with.errors;\n");
     sb.append("public class AnotherGoodClass {\n");
     sb.append("  UnmodifiedClass uc; // This will cause the runaway pruning.\n");
@@ -142,7 +142,7 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
 
     // Add BadClass that has errors and originally
     // forced issue 2238.
-    sb = new StringBuffer();
+    sb = new StringBuilder();
     sb.append("package test.refresh.with.errors;\n");
     sb.append("public class BadClass {\n");
     sb.append("  This will trigger a syntax error.\n");

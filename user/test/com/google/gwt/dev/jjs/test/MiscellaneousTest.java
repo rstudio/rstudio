@@ -339,7 +339,7 @@ public class MiscellaneousTest extends GWTTestCase {
     assertTrue(b.compareTo("Z") < 0);
     assertTrue(b instanceof String);
 
-    CharSequence c = FALSE ? new StringBuffer() : "Hello, World!";
+    CharSequence c = FALSE ? new StringBuilder() : "Hello, World!";
     assertEquals('e', c.charAt(1));
     assertEquals(13, c.length());
     assertEquals("ello", c.subSequence(1, 5));
