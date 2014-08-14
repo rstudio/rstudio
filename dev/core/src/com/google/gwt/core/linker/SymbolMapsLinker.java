@@ -280,9 +280,10 @@ public class SymbolMapsLinker extends AbstractLinker {
           }
         }
 
+        permMap.put(result.getPermutationId(), result.getStrongName());
+
         if (makeSymbolMaps) {
           PrintWriter pw = new PrintWriter(out);
-          permMap.put(result.getPermutationId(), result.getStrongName());
           doWriteSymbolMap(logger, result, pw);
           pw.close();
 
