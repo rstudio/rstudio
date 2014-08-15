@@ -22,6 +22,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -531,13 +533,19 @@ public class Shell implements ConsoleInputHandler,
                      break;
                }
             }
-            else if (mod == (KeyboardShortcut.ALT + KeyboardShortcut.SHIFT))
+            else if (
+                  BrowseCap.hasMetaKey() && 
+                  (mod == (KeyboardShortcut.META + KeyboardShortcut.SHIFT)) ||
+                  !BrowseCap.hasMetaKey() && 
+                  (mod == (KeyboardShortcut.CTRL + KeyboardShortcut.SHIFT)))
             {
-               if (keyCode == 190)
+               switch (keyCode)
                {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  input_.replaceSelection(" %>% ", true);
+                  case KeyCodes.KEY_M:
+                     event.preventDefault();
+                     event.stopPropagation();
+                     input_.replaceSelection(" %>% ", true);
+                     break;
                }
             }
          }

@@ -386,6 +386,7 @@ public class TextEditingTarget implements
          {
             NativeEvent ne = event.getNativeEvent();
             int mod = KeyboardShortcut.getModifierValue(ne);
+            
             if ((mod == KeyboardShortcut.META || (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey()))
                 && ne.getKeyCode() == 'F')
             {
@@ -431,9 +432,11 @@ public class TextEditingTarget implements
                event.stopPropagation();
                commands_.interruptR().execute();
             }
-            
-            else if (mod == (KeyboardShortcut.ALT + KeyboardShortcut.SHIFT)
-                  && ne.getKeyCode() == 190) // period
+            else if (ne.getKeyCode() == KeyCodes.KEY_M &&
+                  (BrowseCap.hasMetaKey() &&
+                   mod == (KeyboardShortcut.META + KeyboardShortcut.SHIFT)) ||
+                  (!BrowseCap.hasMetaKey() &&
+                   mod == (KeyboardShortcut.CTRL + KeyboardShortcut.SHIFT)))
             {
                event.preventDefault();
                event.stopPropagation();
