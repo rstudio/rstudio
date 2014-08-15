@@ -52,7 +52,7 @@ public class PropertiesUtil {
     return propertiesJs.toString();
   }
 
-  public static StringBuilder addPropertiesJs(StringBuilder selectionScript,
+  public static StringBuffer addPropertiesJs(StringBuffer selectionScript,
       TreeLogger logger, LinkerContext context)
       throws UnableToCompleteException {
     int startPos;

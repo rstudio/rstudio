@@ -66,7 +66,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String fillSelectionScriptTemplate(StringBuilder ss, TreeLogger logger,
+  protected String fillSelectionScriptTemplate(StringBuffer ss, TreeLogger logger,
       LinkerContext context, ArtifactSet artifacts, CompilationResult result)
       throws UnableToCompleteException {
 
@@ -539,7 +539,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     return def;
   }
 
-  protected void includeJs(StringBuilder selectionScript, TreeLogger logger, String jsSource,
+  protected void includeJs(StringBuffer selectionScript, TreeLogger logger, String jsSource,
       String templateVar) throws UnableToCompleteException {
     String js;
     if (jsSource.endsWith(".js")) {
@@ -572,8 +572,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     }
 
     long lastModified = System.currentTimeMillis();
-    StringBuilder buffer =
-        readFileToStringBuilder("com/google/gwt/core/ext/linker/impl/" + filename, logger);
+    StringBuffer buffer =
+        readFileToStringBuffer("com/google/gwt/core/ext/linker/impl/" + filename, logger);
 
     String outputFilename = filename;
     if (result != null) {

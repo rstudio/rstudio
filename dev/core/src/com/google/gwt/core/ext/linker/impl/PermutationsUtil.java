@@ -80,7 +80,7 @@ public class PermutationsUtil {
    * @return the modified selectionScript buffer
    * @throws UnableToCompleteException
    */
-  public StringBuilder addPermutationsJs(StringBuilder selectionScript,
+  public StringBuffer addPermutationsJs(StringBuffer selectionScript,
       TreeLogger logger, LinkerContext context)
       throws UnableToCompleteException {
     int startPos;
