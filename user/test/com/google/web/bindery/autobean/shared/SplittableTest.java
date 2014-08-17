@@ -279,6 +279,23 @@ public class SplittableTest extends GWTTestCase {
     assertEquals(data.getPayload(), normalize(data).getPayload());
   }
 
+  public void testSplittableListRemove() {
+    Splittable data = StringQuoter.split("[\"a\",\"b\",\"c\",\"d\"]");
+    SplittableList<String> list =
+        new SplittableList<String>(data, AutoBeanCodexImpl.valueCoder(String.class), testState);
+    assertEquals(list.size(), 4);
+    boolean removed = list.remove("b");
+    assertTrue(removed);
+    assertEquals(list.size(), 3);
+    assertTrue(list.equals(Arrays.asList("a", "c", "d")));
+    assertEquals("a", list.get(0));
+    assertTrue(list.contains("a"));
+    assertEquals("c", list.get(1));
+    assertTrue(list.contains("c"));
+    assertEquals("d", list.get(2));
+    assertTrue(list.contains("d"));
+  }
+
   public void testSplittableMapStringString() {
     Splittable data = StringQuoter.split("{\"foo\":\"bar\",\"baz\":\"quux\",\"isNull\":null}");
     assertTrue("isNull should be null", data.isNull("isNull"));

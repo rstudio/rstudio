@@ -94,8 +94,16 @@ public class SplittableList<E> extends AbstractList<E> implements HasSplittable 
     int newSize = data.size() - 1;
     for (int i = index; i < newSize; i++) {
       data.get(i + 1).assign(data, i);
-      data.setReified(String.valueOf(i), data.getReified(String.valueOf(i + 1)));
+      // reified value for index 'i'  may needs to be updated
+      if (data.isReified(String.valueOf(i + 1))) {
+        data.setReified(String.valueOf(i), data.getReified(String.valueOf(i + 1)));
+      } else if (data.isReified(String.valueOf(i))) {
+        // Remove outdated value. Will be regenerated if needed.
+        data.removeReified(String.valueOf(i));
+      }
     }
+    // clean-up last entry as one element has been removed
+    data.removeReified(String.valueOf(newSize));
     data.setSize(newSize);
     return toReturn;
   }
