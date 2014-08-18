@@ -45,64 +45,52 @@ public enum RoundingMode {
    * and negative values towards negative infinity. <br>
    * Rule: {@code x.round().abs() >= x.abs()}
    */
-  UP(BigDecimal.ROUND_UP),
+  UP,
 
   /**
    * Rounding mode where the values are rounded towards zero. <br>
    * Rule: {@code x.round().abs() <= x.abs()}
    */
-  DOWN(BigDecimal.ROUND_DOWN),
+  DOWN,
 
   /**
    * Rounding mode to round towards positive infinity. For positive values this
    * rounding mode behaves as {@link #UP}, for negative values as {@link #DOWN}. <br>
    * Rule: {@code x.round() >= x}
    */
-  CEILING(BigDecimal.ROUND_CEILING),
+  CEILING,
 
   /**
    * Rounding mode to round towards negative infinity. For positive values this
    * rounding mode behaves as {@link #DOWN}, for negative values as {@link #UP}. <br>
    * Rule: {@code x.round() <= x}
    */
-  FLOOR(BigDecimal.ROUND_FLOOR),
+  FLOOR,
 
   /**
    * Rounding mode where values are rounded towards the nearest neighbor. Ties
    * are broken by rounding up.
    */
-  HALF_UP(BigDecimal.ROUND_HALF_UP),
+  HALF_UP,
 
   /**
    * Rounding mode where values are rounded towards the nearest neighbor. Ties
    * are broken by rounding down.
    */
-  HALF_DOWN(BigDecimal.ROUND_HALF_DOWN),
+  HALF_DOWN,
 
   /**
    * Rounding mode where values are rounded towards the nearest neighbor. Ties
    * are broken by rounding to the even neighbor.
    */
-  HALF_EVEN(BigDecimal.ROUND_HALF_EVEN),
+  HALF_EVEN,
 
   /**
    * Rounding mode where the rounding operations throws an ArithmeticException
    * for the case that rounding is necessary, i.e. for the case that the value
    * cannot be represented exactly.
    */
-  UNNECESSARY(BigDecimal.ROUND_UNNECESSARY);
-  
-  /**
-   * Some constant char arrays for optimized comparisons
-   */
-  private static final char[] chCEILING = {'C','E','I','L','I','N','G'};
-  private static final char[] chDOWN = {'D','O','W','N'};
-  private static final char[] chFLOOR = {'F','L','O','O','R'};
-  private static final char[] chHALF_DOWN = {'H','A','L','F','_','D','O','W','N'};
-  private static final char[] chHALF_EVEN = {'H','A','L','F','_','E','V','E','N'};
-  private static final char[] chHALF_UP = {'H','A','L','F','_','U','P'};
-  private static final char[] chUNNECESSARY = {'U','N','N','E','C','E','S','S','A','R','Y'};
-  private static final char[] chUP = {'U','P'};
+  UNNECESSARY;
   
   /**
    * Converts rounding mode constants from class {@code BigDecimal} into {@code
@@ -131,84 +119,7 @@ public enum RoundingMode {
         return UP;
       default:
         // math.00=Invalid rounding mode
-        throw new IllegalArgumentException("Invalid rounding mode"); //$NON-NLS-1$
+        throw new IllegalArgumentException("Invalid rounding mode");
     }
-  }
-  
-  /**
-   * Bypasses calls to the implicit valueOf(String) method, which will break
-   * if enum name obfuscation is enabled.  This should be package visible only.
-   * 
-   * @param mode rounding mode string as defined in class {@code BigDecimal}
-   * @return corresponding rounding mode object
-   */
-  static RoundingMode valueOfExplicit(String mode) {
-    /*
-     * Note this is optimized to avoid multiple String compares, 
-     * using specific knowledge of the set of allowed enum constants.
-     */
-    
-    if (mode == null) {
-      throw new NullPointerException();
-    } 
-    
-    char[] modeChars = mode.toCharArray();
-    int len = modeChars.length;
-    if (len < chUP.length || len > chUNNECESSARY.length) {
-      throw new IllegalArgumentException();
-    }
-    
-    char[] targetChars = null;
-    RoundingMode target = null;
-    if (modeChars[0] == 'C') {
-      target = RoundingMode.CEILING;
-      targetChars = chCEILING;
-    } else if (modeChars[0] == 'D') {
-      target = RoundingMode.DOWN;
-      targetChars = chDOWN;
-    } else if (modeChars[0] == 'F') {
-      target = RoundingMode.FLOOR;
-      targetChars = chFLOOR;
-    } else if (modeChars[0] == 'H') {
-      if (len > 6) {
-        if (modeChars[5] == 'D') {
-          target = RoundingMode.HALF_DOWN;
-          targetChars = chHALF_DOWN;
-        } else if (modeChars[5] == 'E') {
-          target = RoundingMode.HALF_EVEN;
-          targetChars = chHALF_EVEN;
-        } else if (modeChars[5] == 'U') {
-          target = RoundingMode.HALF_UP;
-          targetChars = chHALF_UP;
-        }
-      }
-    } else if (modeChars[0] == 'U') {
-      if (modeChars[1] == 'P') {
-        target = RoundingMode.UP;
-        targetChars = chUP;
-      } else if (modeChars[1] == 'N') {
-        target = RoundingMode.UNNECESSARY;
-        targetChars = chUNNECESSARY;
-      }
-    }
-    
-    if (target != null && len == targetChars.length) {
-      int i;
-      for (i = 1; i < len && modeChars[i] == targetChars[i]; i++) {
-      }
-      if (i == len) {
-        return target;
-      }
-    }
-    
-    throw new IllegalArgumentException();
-  }
-  
-  /**
-   * Set the old constant.
-   * @param rm unused
-   */
-  RoundingMode(int rm) {
-    // Note that we do not need the old-style rounding mode, so we ignore it.
   }
 }

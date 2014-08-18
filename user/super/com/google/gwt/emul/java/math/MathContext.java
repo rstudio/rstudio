@@ -151,11 +151,8 @@ public final class MathContext implements Serializable {
 
     try {
       this.precision = Integer.parseInt(extractedValues[1]);
-      /*
-       * don't use implicit calls to RoundingMode.valueOf here, since it will break
-       * if enum name obfuscation is enabled.
-       */
-      this.roundingMode = RoundingMode.valueOfExplicit(extractedValues[2]);
+      // Can use RoundingMode.valueOf here because it is blacklisted in enum obfuscation.
+      this.roundingMode = RoundingMode.valueOf(extractedValues[2]);
     } catch (RuntimeException re) {
       // Ensure that we only throw IllegalArgumentException for any illegal value.
       throw new IllegalArgumentException("bad string format");
