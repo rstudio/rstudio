@@ -432,11 +432,11 @@ public class TextEditingTarget implements
                event.stopPropagation();
                commands_.interruptR().execute();
             }
-            else if (ne.getKeyCode() == KeyCodes.KEY_M &&
+            else if (ne.getKeyCode() == KeyCodes.KEY_M && (
                   (BrowseCap.hasMetaKey() &&
                    mod == (KeyboardShortcut.META + KeyboardShortcut.SHIFT)) ||
                   (!BrowseCap.hasMetaKey() &&
-                   mod == (KeyboardShortcut.CTRL + KeyboardShortcut.SHIFT)))
+                   mod == (KeyboardShortcut.CTRL + KeyboardShortcut.SHIFT))))
             {
                event.preventDefault();
                event.stopPropagation();
