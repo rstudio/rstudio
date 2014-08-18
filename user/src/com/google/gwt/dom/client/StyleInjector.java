@@ -34,7 +34,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
  * methods that return {@link StyleElement} are not guaranteed to work as
  * expected on Internet Explorer. Because they are still useful to developers on
  * other browsers they are not deprecated, but <strong>IE developers should
- * avoid the methods with {@link StyleElement} return values</strong>.
+ * avoid the methods with {@link StyleElement} return values</strong> (at least
+ * up until, and excluding, IE10).
  */
 public class StyleInjector {
 
@@ -95,7 +96,7 @@ public class StyleInjector {
     /**
      * The maximum number of style tags that can be handled by IE.
      */
-    private static final int MAX_STYLE_SHEETS = 30;
+    private static final int MAX_STYLE_SHEETS = 31;
     
     /**
      * A cache of the lengths of the current style sheets.  A value of 0
@@ -135,10 +136,15 @@ public class StyleInjector {
          * or script makes changes to the style sheets that we are unaware of,
          * the worst that will happen is that we will choose a style sheet to
          * append to that is not actually of minimum size.
+         *
+         * We also play safe by counting only the MAX_STYLE_SHEETS first style
+         * sheets, just in case the limits are raised somehow (e.g. if this
+         * implementation is used in IE10 which removes --or significantly
+         * raises-- the limits.)
          */
         int shortestLen = Integer.MAX_VALUE;
         int shortestIdx = -1;
-        for (int i = 0; i < numStyles; i++) {
+        for (int i = 0; i < MAX_STYLE_SHEETS; i++) {
           int len = styleSheetLengths[i];
           if (len == 0) {
             // Cache the length
