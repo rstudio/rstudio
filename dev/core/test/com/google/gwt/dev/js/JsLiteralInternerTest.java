@@ -82,11 +82,10 @@ public class JsLiteralInternerTest extends TestCase {
         String.format("var $intern_0=%1$s;var x=$intern_0,y=$intern_0+%2$s,z=%3$s;", AS_STRING,
             BS_STRING, CS_STRING));
 
-    // Regexes
+    // Regexes are not internalizable.
     checkTranslation(
         String.format("var x = %1$s, y = %1$s + %2$s, z = %3$s;", AS_REGEX, BS_REGEX, CS_REGEX),
-        String.format("var $intern_0=%1$s;var x=$intern_0,y=$intern_0+%2$s,z=%3$s;", AS_REGEX,
-            BS_REGEX, CS_REGEX));
+        String.format("var x=%1$s,y=%1$s+%2$s,z=%3$s;", AS_REGEX, BS_REGEX, CS_REGEX));
 
     // Arrays
     checkTranslation(

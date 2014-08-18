@@ -81,7 +81,9 @@ public final class JsRegExp extends JsValueLiteral {
 
   @Override
   public boolean isInternable() {
-    return true;
+    // JavaScript regexes are stateful, methods like RegExp.test(...) keep track of
+    // the current match status in the regexp.
+    return false;
   }
 
   public void setFlags(String suffix) {
