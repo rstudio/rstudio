@@ -52,7 +52,8 @@ public class MinimalRebuildCacheTest extends TestCase {
 
     // Record that Bar references Foo and Baz subclasses Foo.
     permutationRebuildCache.addTypeReference("Bar", "Foo");
-    minimalRebuildCache.getImmediateTypeRelations().getSuperClassesByClass().put("Baz", "Foo");
+    minimalRebuildCache.getImmediateTypeRelations()
+        .getImmediateSuperclassesByClass().put("Baz", "Foo");
 
     // In the next compile Foo is modified.
     minimalRebuildCache.setModifiedCompilationUnitNames(TreeLogger.NULL, Sets.newHashSet("Foo"));

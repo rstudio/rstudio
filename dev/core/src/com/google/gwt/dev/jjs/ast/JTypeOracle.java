@@ -18,23 +18,23 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.util.arg.JsInteropMode;
-import com.google.gwt.dev.util.collect.HashMap;
-import com.google.gwt.dev.util.collect.HashSet;
-import com.google.gwt.dev.util.collect.IdentityHashMap;
-import com.google.gwt.dev.util.collect.IdentityHashSet;
-import com.google.gwt.dev.util.collect.IdentitySets;
-import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Multimaps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,6 +49,13 @@ import java.util.Set;
 // TODO(stalcup): move the clinit() optimization out into a separate pass.
 public class JTypeOracle implements Serializable {
 
+  public static final Function<JType,String> TYPE_TO_NAME = new Function<JType, String>() {
+    @Override
+    public String apply(JType type) {
+      return type.getName();
+    }
+  };
+
   /**
    * All authorative information about the current program.
    */
@@ -57,26 +64,27 @@ public class JTypeOracle implements Serializable {
     /**
      * A mapping from a class name to its immediate super class' name.
      */
-    private Map<String, String> superClassesByClass = new HashMap<String, String>();
+    private Map<String, String> immediateSuperclassesByClass = Maps.newHashMap();
 
     /**
      * A mapping from an interface name to its super interface's name.
      */
-    private Map<String, Set<String>> superIntfsByIntf = new HashMap<String, Set<String>>();
+    private Multimap<String, String> immediateSuperInterfacesByInterface = HashMultimap.create();
 
     /**
-     * A mapping from a class name to its directly implemented interfaces' names.
+     * A mapping from a class name to its directly implemented interfaces' names..
      */
-    private Map<String, Set<String>> implementedIntfsByClass = new HashMap<String, Set<String>>();
+    private Multimap<String, String> immediateImplementedInterfacesByClass =
+        HashMultimap.create();
 
     @VisibleForTesting
-    public Map<String, String> getSuperClassesByClass() {
-      return superClassesByClass;
+    public Map<String, String> getImmediateSuperclassesByClass() {
+      return immediateSuperclassesByClass;
     }
 
     public boolean isEmpty() {
-      return superClassesByClass.isEmpty() && superIntfsByIntf.isEmpty()
-          && implementedIntfsByClass.isEmpty();
+      return immediateSuperclassesByClass.isEmpty() && immediateSuperInterfacesByInterface.isEmpty()
+          && immediateImplementedInterfacesByClass.isEmpty();
     }
   }
 
@@ -107,17 +115,17 @@ public class JTypeOracle implements Serializable {
     private String nullType;
   }
 
-  private LinkedHashSet<JMethod> exportedMethods = new LinkedHashSet<JMethod>();
-  private LinkedHashSet<JField> exportedFields = new LinkedHashSet<JField>();
+  private Set<JMethod> exportedMethods = Sets.newLinkedHashSet();
+  private Set<JField> exportedFields = Sets.newLinkedHashSet();
 
-  private Set<JReferenceType> instantiatedJsoTypesViaCast = new HashSet<JReferenceType>();
+  private Set<JReferenceType> instantiatedJsoTypesViaCast = Sets.newHashSet();
   private JsInteropMode jsInteropMode;
 
-  public LinkedHashSet<JMethod> getExportedMethods() {
+  public Set<JMethod> getExportedMethods() {
     return exportedMethods;
   }
 
-  public LinkedHashSet<JField> getExportedFields() {
+  public Set<JField> getExportedFields() {
     return exportedFields;
   }
 
@@ -258,7 +266,7 @@ public class JTypeOracle implements Serializable {
    */
   private static final class CheckClinitVisitor extends JVisitor {
 
-    private final Set<JDeclaredType> clinitTargets = new IdentityHashSet<JDeclaredType>();
+    private final Set<JDeclaredType> clinitTargets = Sets.newIdentityHashSet();
 
     /**
      * Tracks whether any live code is run in this clinit. This is only reliable
@@ -401,33 +409,37 @@ public class JTypeOracle implements Serializable {
   /**
    * A set of all classes in the current program.
    */
-  private Set<String> allClasses = new HashSet<String>();
+  private Set<String> allClasses = Sets.newHashSet();
 
   /**
    * A map of all interfaces to the set of classes that could theoretically
-   * implement them.
+   * implement them. {@code classesByPotentialInterface} is the relational inverse of
+   * {@code potentialInterfaceByClass}.
    */
-  private final Map<String, Set<String>> couldBeImplementedMap =
-      new HashMap<String, Set<String>>();
+  private final Multimap<String, String> classesByPotentialInterface = HashMultimap.create();
 
   /**
    * A map of all classes to the set of interfaces that they could theoretically
    * implement.
+   * <p>
+   * C hasPotentialInterface I iff Exists C'. C' = C or C' subclassOf C and C implements I.
    */
-  private final Map<String, Set<String>> couldImplementMap =
-      new HashMap<String, Set<String>>();
+  private final Multimap<String, String> potentialInterfaceByClass = HashMultimap.create();
 
   /**
    * The set of all interfaces that are initially implemented by both a Java and
    * Overlay type.
    */
-  private final Set<String> dualImpls = new HashSet<String>();
+  private final Set<String> dualImplInterfaces = Sets.newHashSet();
 
   /**
-   * A map of all classes to the set of interfaces they directly implement,
+   * A map of all classes to the set of interfaces they implement,
    * possibly through inheritance.
+   * <p>
+   * C implements I iff Exists, C', I'. (C' = C or C' isSubclassOf C) and (I = I' or
+   * I' isSuperInterfaceOf I) and C' immediateImplements I'.
    */
-  private final Map<String, Set<String>> implementsMap = new HashMap<String, Set<String>>();
+  private final Multimap<String, String> implementedInterfacesByClass = HashMultimap.create();
 
   /**
    * The types in the program that are instantiable. All types in this set
@@ -438,50 +450,65 @@ public class JTypeOracle implements Serializable {
 
   /**
    * A map of all interfaces to the set of classes that directly implement them,
-   * possibly through inheritance.
+   * possibly through inheritance. {@code classesByImplementingInterface} is the relational
+   * inverse of {@code implementedInterfacesByClass}.
    */
-  private final Map<String, Set<String>> isImplementedMap =
-      new HashMap<String, Set<String>>();
+  private final Multimap<String, String> classesByImplementingInterface = HashMultimap.create();
 
   /**
    * A map of all interfaces that are implemented by overlay types to the
    * overlay type that initially implements it.
    */
-  private final Map<String, String> jsoSingleImpls = new HashMap<String, String>();
+  private final Map<String, String> jsoByInterface = Maps.newHashMap();
 
   /**
    * A set of all JsTypes.
    */
-  private final Set<JInterfaceType> jsInterfaces = new IdentityHashSet<JInterfaceType>();
+  private final Set<JInterfaceType> jsInterfaces = Sets.newIdentityHashSet();
 
   /**
    * A mapping from the type name to the actual type instance.
    */
-  private Map<String, JReferenceType> referenceTypesByName = new HashMap<String, JReferenceType>();
+  private Map<String, JReferenceType> referenceTypesByName = Maps.newHashMap();
 
   /**
    * A map of all classes to the set of classes that extend them, directly or
-   * indirectly.
+   * indirectly. {@code subclassesByClass} is the inverse of
+   * {@code superclassesByClass}.
+   * <p>
+   * NOTE: {@code subclassesByClass} is NOT reflexive.
    */
-  private final Map<String, Set<String>> subClassMap = new HashMap<String, Set<String>>();
+  private final Multimap<String, String> subclassesByClass = HashMultimap.create();
 
   /**
-   * A map of all interfaces to the set of interfaces that extend them, directly or indirectly.
+   * A map of all interfaces to the set of interfaces that extend them, directly or indirectly
+   * {@code subInterfacesByInterface} is the inverse of {@code superInterfacesByInterface}.
+   * <p>
+   * NOTE: {@code subInterfacesByInterface} is NOT reflexive.
    */
-  private final Map<String, Set<String>> subInterfacesByInterface =
-      new HashMap<String, Set<String>>();
+  private final Multimap<String, String> subInterfacesByInterface = HashMultimap.create();
 
   /**
    * A map of all classes to the set of classes they extend, directly or
-   * indirectly.
+   * indirectly. (not reflexive)
+   * <p>
+   * {@code superclassesByClass} is the transitive closure of
+   * {@code immediateSuperclassesByClass}.
+   * <p>
+   * NOTE: {@code superclassesByClass} is NOT reflexive.
    */
-  private final Map<String, Set<String>> superClassMap = new HashMap<String, Set<String>>();
+  private final Multimap<String, String> superclassesByClass = HashMultimap.create();
 
   /**
    * A map of all interfaces to the set of interfaces they extend, directly or
    * indirectly.
+   * <p>
+   * {@code superInterfacesByInterface} is the transitive closure of
+   * {@code immediateSuperInterfacesByInterface}.
+   * <p>
+   * NOTE: {@code superInterfacesByInterface} is NOT reflexive.
    */
-  private final Map<String, Set<String>> superInterfaceMap = new HashMap<String, Set<String>>();
+  private final Multimap<String, String> superInterfacesByInterface = HashMultimap.create();
   /**
    * A map of all methods with virtual overrides, onto the collection of
    * overridden methods. Each key method's collections is a map of the set of
@@ -489,14 +516,14 @@ public class JTypeOracle implements Serializable {
    * methods the key method virtually implements. For a definition of a virtual
    * override, see {@link #getAllVirtualOverrides(JMethod)}.
    */
-  private final Map<JMethod, Map<JClassType, Set<JMethod>>> virtualUpRefMap =
-      new IdentityHashMap<JMethod, Map<JClassType, Set<JMethod>>>();
+  private final Map<JMethod, Multimap<JClassType, JMethod>> virtualUpRefMap =
+      Maps.newIdentityHashMap();
 
   /**
    * An index of all polymorphic methods for each class.
    */
   private final Map<JClassType, Map<String, JMethod>> methodsBySignatureForType =
-      new IdentityHashMap<JClassType, Map<String, JMethod>>();
+      Maps.newIdentityHashMap();
 
   private final boolean hasWholeWorldKnowledge;
   private boolean optimize = true;
@@ -549,8 +576,8 @@ public class JTypeOracle implements Serializable {
     if (!hasWholeWorldKnowledge) {
       return true;
     }
-    if (type instanceof JInterfaceType && isImplementedMap.get(type.getName()) != null) {
-      for (JReferenceType impl : getTypes(isImplementedMap, type.getName())) {
+    if (type instanceof JInterfaceType) {
+      for (JReferenceType impl : getTypes(classesByImplementingInterface, type.getName())) {
         if (isInstantiatedType((JClassType) impl)) {
           return true;
         }
@@ -628,13 +655,13 @@ public class JTypeOracle implements Serializable {
       if (qType instanceof JClassType) {
         return isSubClass(cType, (JClassType) qType);
       } else if (qType instanceof JInterfaceType) {
-        return get(couldImplementMap, cType.getName()).contains(qType.getName());
+        return potentialInterfaceByClass.get(cType.getName()).contains(qType.getName());
       }
     } else if (type instanceof JInterfaceType) {
 
       JInterfaceType iType = (JInterfaceType) type;
       if (qType instanceof JClassType) {
-        return get(couldBeImplementedMap, iType.getName()).contains(qType.getName());
+        return classesByPotentialInterface.get(iType.getName()).contains(qType.getName());
       }
     } else if (type instanceof JNullType) {
     }
@@ -666,9 +693,11 @@ public class JTypeOracle implements Serializable {
         int dims = aType.getDims();
         int qDims = qaType.getDims();
 
-        // int[][] -> Object[] or null[] trivially true
+        // int[][] -> Object[], Serializable[], Clonable[] or null[] trivially true
         if (dims > qDims
             && (qLeafType.getName().equals(standardTypes.javaLangObject)
+                || qLeafType.getName().equals(standardTypes.javaIoSerializable)
+                || qLeafType.getName().equals(standardTypes.javaLangCloneable)
                 || qLeafType instanceof JNullType)) {
           return true;
         }
@@ -837,7 +866,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public JClassType getSingleJsoImpl(JReferenceType maybeSingleJsoIntf) {
-    String className = jsoSingleImpls.get(maybeSingleJsoIntf.getName());
+    String className = jsoByInterface.get(maybeSingleJsoIntf.getName());
     if (className == null) {
       return null;
     }
@@ -845,7 +874,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public String getSuperTypeName(String className) {
-    return immediateTypeRelations.superClassesByClass.get(className);
+    return immediateTypeRelations.immediateSuperclassesByClass.get(className);
   }
 
   public Set<JReferenceType> getCastableDestinationTypes(JReferenceType type) {
@@ -884,14 +913,14 @@ public class JTypeOracle implements Serializable {
     }
 
     List<JReferenceType> castableDestinationTypes = Lists.newArrayList();
-    if (superClassMap.containsKey(type.getName())) {
-      castableDestinationTypes.addAll(getTypes(superClassMap, type.getName()));
+    if (superclassesByClass.containsKey(type.getName())) {
+      castableDestinationTypes.addAll(getTypes(superclassesByClass, type.getName()));
     }
-    if (superInterfaceMap.containsKey(type.getName())) {
-      castableDestinationTypes.addAll(getTypes(superInterfaceMap, type.getName()));
+    if (superInterfacesByInterface.containsKey(type.getName())) {
+      castableDestinationTypes.addAll(getTypes(superInterfacesByInterface, type.getName()));
     }
-    if (implementsMap.containsKey(type.getName())) {
-      castableDestinationTypes.addAll(getTypes(implementsMap, type.getName()));
+    if (implementedInterfacesByClass.containsKey(type.getName())) {
+      castableDestinationTypes.addAll(getTypes(implementedInterfacesByClass, type.getName()));
     }
     if (willCrossCastLikeJso(type)) {
       ensureTypeExistsAndAppend(JProgram.JAVASCRIPTOBJECT, castableDestinationTypes);
@@ -915,7 +944,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean isDualJsoInterface(JType maybeDualImpl) {
-    return dualImpls.contains(maybeDualImpl.getUnderlyingType().getName());
+    return dualImplInterfaces.contains(maybeDualImpl.getUnderlyingType().getName());
   }
 
   /**
@@ -1094,20 +1123,13 @@ public class JTypeOracle implements Serializable {
    * Returns true if possibleSubType is a subclass of type, directly or indirectly.
    */
   public boolean isSubClass(JClassType type, JClassType possibleSubType) {
-    return get(subClassMap, type.getName()).contains(possibleSubType.getName());
+    return subclassesByClass.get(type.getName()).contains(possibleSubType.getName());
   }
 
   public Set<String> getSubTypeNames(String typeName) {
-    Set<String> subTypeNames = Sets.newHashSet();
-    Set<String> subClasses = subClassMap.get(typeName);
-    if (subClasses != null) {
-      subTypeNames.addAll(subClasses);
-    }
-    Set<String> subInterfaces = subInterfacesByInterface.get(typeName);
-    if (subInterfaces != null) {
-      subTypeNames.addAll(subInterfaces);
-    }
-    return subClassMap.get(typeName);
+    Set<String> subTypeNames = Sets.newHashSet(subclassesByClass.get(typeName));
+    subTypeNames.addAll(subInterfacesByInterface.get(typeName));
+    return subTypeNames;
   }
 
   /**
@@ -1122,7 +1144,7 @@ public class JTypeOracle implements Serializable {
    * associated JProgram.
    */
   public void recomputeAfterOptimizations(Collection<JDeclaredType> declaredTypes) {
-    Set<JDeclaredType> computed = new IdentityHashSet<JDeclaredType>();
+    Set<JDeclaredType> computed = Sets.newIdentityHashSet();
 
     if (hasWholeWorldKnowledge) {
       if (optimize) {
@@ -1135,10 +1157,9 @@ public class JTypeOracle implements Serializable {
 
       //   (2) make JSOs singleImpl when all the Java implementors are gone.
       nextDual:
-      for (Iterator<String> it = dualImpls.iterator(); it.hasNext(); ) {
+      for (Iterator<String> it = dualImplInterfaces.iterator(); it.hasNext(); ) {
         String dualIntf = it.next();
-        Set<String> implementors = get(isImplementedMap, dualIntf);
-        for (String implementorName : implementors) {
+        for (String implementorName : classesByImplementingInterface.get(dualIntf)) {
           JClassType implementor = (JClassType) referenceTypesByName.get(implementorName);
           if (isInstantiatedType(implementor) && !isJavaScriptObject(implementor)) {
             // This dual is still implemented by a Java class.
@@ -1149,16 +1170,16 @@ public class JTypeOracle implements Serializable {
         it.remove();
       }
 
-      //   (3) prune JSOs from jsoSingleImpls and dualImpls when JSO isn't live hence the
+      //   (3) prune JSOs from jsoByInterface and dualImplInterfaces when JSO isn't live hence the
       //       interface is no longer considered to be implemented by a JSO.
-      Iterator<Entry<String, String>> jit = jsoSingleImpls.entrySet().iterator();
+      Iterator<Entry<String, String>> jit = jsoByInterface.entrySet().iterator();
       while (jit.hasNext()) {
         Entry<String, String> jsoSingleImplEntry = jit.next();
         JClassType clazz = (JClassType) referenceTypesByName.get(jsoSingleImplEntry.getValue());
         if (isInstantiatedType(clazz)) {
           continue;
         }
-        dualImpls.remove(jsoSingleImplEntry.getKey());
+        dualImplInterfaces.remove(jsoSingleImplEntry.getKey());
         jit.remove();
       }
     }
@@ -1169,16 +1190,21 @@ public class JTypeOracle implements Serializable {
     methodsBySignatureForType.keySet().retainAll(instantiatedTypes);
   }
 
-  private <K, V> void add(Map<K, Set<V>> map, K key, V value) {
-    getOrCreate(map, key).add(value);
-  }
+  private void deleteImmediateTypeRelations(final Collection<String> typeNames) {
+    Predicate<Entry<String, String>> inToDeleteSet =
+        new Predicate<Entry<String, String>>() {
+          @Override
+          public boolean apply(Entry<String, String> typeTypeEntry) {
+            return typeNames.contains(typeTypeEntry.getKey()) ||
+                typeNames.contains(typeTypeEntry.getValue());
+          }
+        };
 
-  private void deleteImmediateTypeRelations(Collection<String> typeNames) {
-    for (String typeName : typeNames) {
-      immediateTypeRelations.superClassesByClass.remove(typeName);
-      immediateTypeRelations.implementedIntfsByClass.remove(typeName);
-      immediateTypeRelations.superIntfsByIntf.remove(typeName);
-    }
+    Maps.filterEntries(immediateTypeRelations.immediateSuperclassesByClass, inToDeleteSet).clear();
+    Multimaps.filterEntries(immediateTypeRelations.immediateImplementedInterfacesByClass,
+        inToDeleteSet).clear();
+    Multimaps.filterEntries(immediateTypeRelations.immediateSuperInterfacesByInterface,
+        inToDeleteSet).clear();
   }
 
   private void recordImmediateTypeRelations(Iterable<JDeclaredType> types) {
@@ -1188,226 +1214,129 @@ public class JTypeOracle implements Serializable {
         // Record immediate super class
         JClassType superClass = jClassType.getSuperClass();
         if (superClass != null) {
-          immediateTypeRelations.superClassesByClass.put(jClassType.getName(),
+          immediateTypeRelations.immediateSuperclassesByClass.put(jClassType.getName(),
               superClass.getName());
         }
 
-        List<JInterfaceType> list = jClassType.getImplements();
         // Record immediately implemented interfaces.
-        if (!list.isEmpty()) {
-          Set<String> hashSet = new HashSet<String>();
-          for (JInterfaceType jInterfaceType : list) {
-            hashSet.add(jInterfaceType.getName());
-          }
-          immediateTypeRelations.implementedIntfsByClass.put(type.getName(), hashSet);
-        }
+        immediateTypeRelations.immediateImplementedInterfacesByClass
+            .putAll(type.getName(), Iterables.transform(jClassType.getImplements(), TYPE_TO_NAME));
       } else if (type instanceof JInterfaceType) {
 
         JInterfaceType currentIntf = (JInterfaceType) type;
-        List<JInterfaceType> intfImplements = currentIntf.getImplements();
-
         // Record immediate super interfaces.
-        if (!intfImplements.isEmpty()) {
-          Set<String> hashSet = new HashSet<String>();
-          for (JInterfaceType jInterfaceType : intfImplements) {
-            hashSet.add(jInterfaceType.getName());
-          }
-          immediateTypeRelations.superIntfsByIntf.put(type.getName(), hashSet);
-        }
+        immediateTypeRelations.immediateSuperInterfacesByInterface
+            .putAll(type.getName(), Iterables.transform(currentIntf.getImplements(), TYPE_TO_NAME));
       }
     }
   }
 
   private void computeExtendedTypeRelations() {
     computeAllClasses();
-    computeSuperClassMap();
-    computeSuperInterfaceMap();
-    computeSubClassMap();
-    computeSubInterfaceMap();
-    computeImplements();
-    computeIsImplemented();
-    computeCouldImplement();
-    computeCouldBeImplement();
+    computeClassMaps();
+    computeInterfaceMaps();
+    computeImplementsMaps();
+    computeCouldImplementMaps();
     computeSingleJSO();
     computeDualJSO();
   }
 
   private void computeAllClasses() {
     allClasses.clear();
-    for (Entry<String, String> entry : immediateTypeRelations.superClassesByClass.entrySet()) {
-      allClasses.add(entry.getKey());
-      allClasses.add(entry.getValue());
-    }
+    allClasses.addAll(immediateTypeRelations.immediateSuperclassesByClass.values());
+    allClasses.addAll(immediateTypeRelations.immediateSuperclassesByClass.keySet());
   }
 
-  private void computeCouldBeImplement() {
-    couldBeImplementedMap.clear();
+  private void computeCouldImplementMaps() {
+    potentialInterfaceByClass.clear();
 
-    for (Entry<String, Set<String>> entry : couldImplementMap.entrySet()) {
-      for (String intf : entry.getValue()) {
-        add(couldBeImplementedMap, intf, entry.getKey());
-      }
-    }
-  }
+    // Compute the reflexive subclass closure.
+    Multimap<String, String> reflexiveSubtypes = HashMultimap.create();
+    reflexiveSubtypes.putAll(subclassesByClass);
+    reflexiveClosure(reflexiveSubtypes, allClasses);
 
-  private void computeCouldImplement() {
-    couldImplementMap.clear();
+    potentialInterfaceByClass.putAll(compose(reflexiveSubtypes, implementedInterfacesByClass));
 
-    for (String currentClass : allClasses) {
-      Set<String> couldImplementSet = new HashSet<String>();
-      // All of my direct implements are trivially true
-      couldImplementSet.addAll(get(implementsMap, currentClass));
-
-      for (String subClass : get(subClassMap, currentClass)) {
-        for (String intf : get(immediateTypeRelations.implementedIntfsByClass, subClass)) {
-          couldImplementSet.add(intf);
-          couldImplementSet.addAll(get(superInterfaceMap, intf));
-        }
-      }
-      if (!couldImplementSet.isEmpty()) {
-        couldImplementMap.put(currentClass, couldImplementSet);
-      }
-    }
+    classesByPotentialInterface.clear();
+    Multimaps.invertFrom(potentialInterfaceByClass, classesByPotentialInterface);
   }
 
   private void computeDualJSO() {
-    dualImpls.clear();
+    dualImplInterfaces.clear();
     // Create dual mappings for any jso interface with a Java implementor.
-    for (String jsoIntfName : jsoSingleImpls.keySet()) {
-      Set<String> implementors = get(isImplementedMap, jsoIntfName);
-      for (String implementor : implementors) {
+    for (String jsoIntfName : jsoByInterface.keySet()) {
+      for (String implementor : classesByImplementingInterface.get(jsoIntfName)) {
         if (!hasWholeWorldKnowledge || !isJavaScriptObject(implementor)) {
           // Assume always dualImpl for separate compilation. Due to the nature of separate
           // compilation, the compiler can not know if a specific interface is implemented in a
           // different module unless it is a monolithic whole world compile.
           // TODO(rluble): Jso devirtualization should be an normalization pass before optimization
           // JTypeOracle should be mostly unaware of JSOs.
-          dualImpls.add(jsoIntfName);
+          dualImplInterfaces.add(jsoIntfName);
           break;
         }
       }
     }
   }
 
-  private void computeImplements() {
-    implementsMap.clear();
+  private void computeImplementsMaps() {
+    implementedInterfacesByClass.clear();
+      // Construct the immediate supertype relation.
+    Multimap<String, String> superTypesByType = HashMultimap.create();
+    superTypesByType.putAll(immediateTypeRelations.immediateImplementedInterfacesByClass);
+    superTypesByType.putAll(Multimaps.forMap(immediateTypeRelations.immediateSuperclassesByClass));
+    superTypesByType.putAll(immediateTypeRelations.immediateSuperInterfacesByInterface);
 
-    for (String currentClass : allClasses) {
-      Set<String> allImplementedInterfaces = new HashSet<String>();
-      Set<String> localInterfaces = new HashSet<String>();
+    Multimap<String, String> superTypesByTypeClosure = HashMultimap.create();
+    transitiveClosure(superTypesByType, superTypesByTypeClosure);
 
-      // Get interfaces implemented by the current class
-      localInterfaces.addAll(get(immediateTypeRelations.implementedIntfsByClass, currentClass));
+    // Remove interfaces from keys and classes from values.
+    implementedInterfacesByClass.putAll(Multimaps.filterEntries(superTypesByTypeClosure,
+        new Predicate<Entry<String, String>>() {
+          @Override
+          public boolean apply(Entry<String, String> typeTypeEntry) {
+            // Only keep classes as keys and interfaces as values.
+            return allClasses.contains(typeTypeEntry.getKey()) &&
+                !allClasses.contains(typeTypeEntry.getValue());
+          }
+        }));
 
-      // Get all interfaces implemented by any super class
-      for (String superClass : get(superClassMap, currentClass)) {
-        localInterfaces.addAll(get(immediateTypeRelations.implementedIntfsByClass, superClass));
-      }
-
-      // Get super interfaces of all implemented interfaces
-      for (String interf : localInterfaces) {
-        allImplementedInterfaces.addAll(get(superInterfaceMap, interf));
-      }
-
-      allImplementedInterfaces.addAll(localInterfaces);
-
-      if (!allImplementedInterfaces.isEmpty()) {
-        implementsMap.put(currentClass, allImplementedInterfaces);
-      }
-    }
-  }
-
-  private void computeIsImplemented() {
-    isImplementedMap.clear();
-
-    for (Entry<String, Set<String>> entry : implementsMap.entrySet()) {
-      for (String intf : entry.getValue()) {
-        add(isImplementedMap, intf, entry.getKey());
-      }
-    }
+    classesByImplementingInterface.clear();
+    Multimaps.invertFrom(implementedInterfacesByClass, classesByImplementingInterface);
   }
 
   private void computeSingleJSO() {
-    jsoSingleImpls.clear();
+    jsoByInterface.clear();
 
-    for (String jsoSubType : get(subClassMap, JProgram.JAVASCRIPTOBJECT)) {
-      for (String intf : get(immediateTypeRelations.implementedIntfsByClass, jsoSubType)) {
-        jsoSingleImpls.put(intf, jsoSubType);
-        for (String superIntf : get(superInterfaceMap, intf)) {
-          if (!jsoSingleImpls.containsKey(superIntf)) {
-            jsoSingleImpls.put(superIntf, jsoSubType);
+    for (String jsoSubType : subclassesByClass.get(JProgram.JAVASCRIPTOBJECT)) {
+      for (String intf :
+          immediateTypeRelations.immediateImplementedInterfacesByClass.get(jsoSubType)) {
+        jsoByInterface.put(intf, jsoSubType);
+        for (String superIntf : superInterfacesByInterface.get(intf)) {
+          if (!jsoByInterface.containsKey(superIntf)) {
+            jsoByInterface.put(superIntf, jsoSubType);
           }
         }
       }
     }
   }
 
-  private void computeSubInterfaceMap() {
+  private void computeClassMaps() {
+    superclassesByClass.clear();
+    transitiveClosure(Multimaps.forMap(immediateTypeRelations.immediateSuperclassesByClass),
+        superclassesByClass);
+
+    subclassesByClass.clear();
+    Multimaps.invertFrom(superclassesByClass, subclassesByClass);
+  }
+
+  private void computeInterfaceMaps() {
+    superInterfacesByInterface.clear();
+    transitiveClosure(immediateTypeRelations.immediateSuperInterfacesByInterface,
+        superInterfacesByInterface);
+
     subInterfacesByInterface.clear();
-
-    // Calculate reverse mapping Parent -> Set<Child>
-    Set<String> interfaces = Sets.newHashSet();
-    Map<String, Set<String>> immediateChildInterfaces = new HashMap<String, Set<String>>();
-    for (Entry<String, Set<String>> entry : immediateTypeRelations.superIntfsByIntf.entrySet()) {
-      String child = entry.getKey();
-      interfaces.add(child);
-      Set<String> parents = entry.getValue();
-      interfaces.addAll(parents);
-      for (String parent : parents) {
-        add(immediateChildInterfaces, parent, child);
-      }
-    }
-
-    for (String parent : interfaces) {
-      Set<String> allSubInterfaces = new HashSet<String>();
-      computeTransitiveSubClasses(immediateChildInterfaces, allSubInterfaces, parent);
-      subInterfacesByInterface.put(parent, allSubInterfaces);
-    }
-  }
-
-  private void computeSubClassMap() {
-    subClassMap.clear();
-
-    // Calculate reverse mapping Parent -> Set<Child>
-    Map<String, Set<String>> immediateChildClasses = new HashMap<String, Set<String>>();
-    for (Entry<String, String> entry : immediateTypeRelations.superClassesByClass.entrySet()) {
-      String child = entry.getKey();
-      String parent = entry.getValue();
-      add(immediateChildClasses, parent, child);
-    }
-
-    for (String parent : allClasses) {
-      Set<String> allSubClasses = new HashSet<String>();
-      computeTransitiveSubClasses(immediateChildClasses, allSubClasses, parent);
-      subClassMap.put(parent, allSubClasses);
-    }
-  }
-
-  private void computeSuperClassMap() {
-    superClassMap.clear();
-    Set<String> allExtendingClasses = immediateTypeRelations.superClassesByClass.keySet();
-
-    for (String typeName : allExtendingClasses) {
-      Set<String> allSuperTypesSet = new HashSet<String>();
-      String superClass = immediateTypeRelations.superClassesByClass.get(typeName);
-      while (superClass != null) {
-        allSuperTypesSet.add(superClass);
-        superClass = immediateTypeRelations.superClassesByClass.get(superClass);
-      }
-      superClassMap.put(typeName, allSuperTypesSet);
-    }
-  }
-
-  private void computeSuperInterfaceMap() {
-    superInterfaceMap.clear();
-    Set<String> allInterfaces = immediateTypeRelations.superIntfsByIntf.keySet();
-    for (String interfaceName : allInterfaces) {
-      Set<String> allParentInterfaces = new HashSet<String>();
-      computeSuperIntf(interfaceName, allParentInterfaces);
-      if (!allParentInterfaces.isEmpty()) {
-        superInterfaceMap.put(interfaceName, IdentitySets.normalize(allParentInterfaces));
-      }
-    }
+    Multimaps.invertFrom(superInterfacesByInterface, subInterfacesByInterface);
   }
 
   private void computeClinitTarget(JDeclaredType type, Set<JDeclaredType> computed) {
@@ -1432,7 +1361,7 @@ public class JTypeOracle implements Serializable {
     } else {
       // I still have a real clinit, actually compute.
       JDeclaredType target =
-          computeClinitTargetRecursive(type, computed, new IdentityHashSet<JDeclaredType>());
+          computeClinitTargetRecursive(type, computed, Sets.<JDeclaredType>newIdentityHashSet());
       type.setClinitTarget(target);
     }
     computed.add(type);
@@ -1512,7 +1441,7 @@ public class JTypeOracle implements Serializable {
      */
     for (JInterfaceType intf : type.getImplements()) {
       computeVirtualUpRefs(type, intf);
-      for (JReferenceType superIntf : getTypes(superInterfaceMap, intf.getName())) {
+      for (JReferenceType superIntf : getTypes(superInterfacesByInterface, intf.getName())) {
         computeVirtualUpRefs(type, (JInterfaceType) superIntf);
       }
     }
@@ -1546,9 +1475,9 @@ public class JTypeOracle implements Serializable {
             // + "." + superMethod.getName() + " to " + intf.getName() + "."
             // + intfMethod.getName() + " via " + type.getName());
 
-            Map<JClassType, Set<JMethod>> classToMethodMap =
-                getOrCreateMap(virtualUpRefMap, superMethod);
-            add(classToMethodMap, type, intfMethod);
+            Multimap<JClassType, JMethod> classToMethodsMultimap =
+                getOrCreateMultimap(virtualUpRefMap, superMethod);
+            classToMethodsMultimap.put(type, intfMethod);
 
             // do not search additional super types
             continue outer;
@@ -1570,59 +1499,41 @@ public class JTypeOracle implements Serializable {
    * directly or indirectly.
    */
   private boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
-    return get(superInterfaceMap, type.getName()).contains(qType.getName());
-  }
-
-  private <K, V> Set<V> get(Map<K, Set<V>> map, K key) {
-    Set<V> set = map.get(key);
-    if (set == null) {
-      return Collections.emptySet();
-    }
-    return set;
+    return superInterfacesByInterface.get(type.getName()).contains(qType.getName());
   }
 
   private void getAllVirtualOverriddenMethods(JMethod method, Set<JMethod> results) {
-    Map<JClassType, Set<JMethod>> overrideMap = virtualUpRefMap.get(method);
+    Multimap<JClassType, JMethod> overrideMap = virtualUpRefMap.get(method);
     if (overrideMap != null) {
-      for (Map.Entry<JClassType, Set<JMethod>> entry : overrideMap.entrySet()) {
+      for (Map.Entry<JClassType, JMethod> entry : overrideMap.entries()) {
         JClassType classType = entry.getKey();
         if (isInstantiatedType(classType)) {
-          results.addAll(entry.getValue());
+          results.add(entry.getValue());
         }
       }
     }
   }
 
-  private Set<JReferenceType> getTypes(Map<String, Set<String>> typeNamesByTypeName,
+  private Set<JReferenceType> getTypes(Multimap<String, String> typeNamesByTypeName,
       String typeName) {
-    Set<String> typeNames = get(typeNamesByTypeName, typeName);
-    IdentityHashSet<JReferenceType> types = new IdentityHashSet<JReferenceType>();
-
-    for (String localTypeName : typeNames) {
-      JReferenceType referenceType = referenceTypesByName.get(localTypeName);
-      assert referenceType != null;
-      types.add(referenceType);
-    }
-
-    return types;
+    return Sets.newHashSet(Iterables.transform(typeNamesByTypeName.get(typeName),
+        new Function<String, JReferenceType>() {
+          @Override
+          public JReferenceType apply(String typeName) {
+            JReferenceType referenceType = referenceTypesByName.get(typeName);
+            assert referenceType != null;
+            return referenceType;
+          }
+        }));
   }
 
-  private <K, V> Set<V> getOrCreate(Map<K, Set<V>> map, K key) {
-    Set<V> set = map.get(key);
-    if (set == null) {
-      set = new HashSet<V>();
-      map.put(key, set);
+  private <K, K2, V> Multimap<K2, V> getOrCreateMultimap(Map<K, Multimap<K2, V>> map, K key) {
+    Multimap<K2, V> multimap = map.get(key);
+    if (multimap == null) {
+      multimap = HashMultimap.create();
+      map.put(key, multimap);
     }
-    return set;
-  }
-
-  private <K, K2, V> Map<K2, V> getOrCreateMap(Map<K, Map<K2, V>> map, K key) {
-    Map<K2, V> map2 = map.get(key);
-    if (map2 == null) {
-      map2 = new HashMap<K2, V>();
-      map.put(key, map2);
-    }
-    return map2;
+    return multimap;
   }
 
   private Map<String, JMethod> getOrCreateMethodsBySignatureForType(JClassType type) {
@@ -1630,54 +1541,85 @@ public class JTypeOracle implements Serializable {
     if (methodsBySignature == null) {
       JClassType superClass = type.getSuperClass();
       if (superClass == null) {
-        methodsBySignature = new HashMap<String, JMethod>();
+        methodsBySignature = Maps.newHashMap();
       } else {
         Map<String, JMethod> superMethodsBySignature =
             getOrCreateMethodsBySignatureForType(type.getSuperClass());
-        methodsBySignature = new HashMap<String, JMethod>(superMethodsBySignature);
+        methodsBySignature = Maps.newHashMap(superMethodsBySignature);
       }
       for (JMethod method : type.getMethods()) {
         if (method.canBePolymorphic()) {
           methodsBySignature.put(method.getSignature(), method);
         }
       }
-      methodsBySignature = Maps.normalize(methodsBySignature);
       methodsBySignatureForType.put(type, methodsBySignature);
     }
     return methodsBySignature;
   }
 
   /**
-   * Compute all transitive subclasses for a given class.
+   * Computes the reflexive closure of a relation.
    */
-  private void computeTransitiveSubClasses(Map<String, Set<String>> subClassesByClass,
-      Set<String> transitiveSubClasses, String currentClass) {
-
-    Set<String> childClasses = subClassesByClass.get(currentClass);
-    if (childClasses == null) {
-      return;
-    }
-
-    transitiveSubClasses.addAll(childClasses);
-
-    for (String child : childClasses) {
-      computeTransitiveSubClasses(subClassesByClass, transitiveSubClasses, child);
+  private void reflexiveClosure(Multimap<String, String> relation, Iterable<String> domain) {
+    for (String classType : domain) {
+      relation.put(classType, classType);
     }
   }
 
   /**
-   * Compute all super interfaces for a given interface.
+   * Computes the transitive closure of a relation.
    */
-  private void computeSuperIntf(String currentIntf, Set<String> allSuperIntf) {
-    Set<String> superInterfaces = immediateTypeRelations.superIntfsByIntf.get(currentIntf);
-    if (superInterfaces == null) {
-      return;
+  private void transitiveClosure(Multimap<String, String> relation,
+      Multimap<String, String> transitiveClosure) {
+    assert transitiveClosure.isEmpty();
+
+    Set<String> domain = Sets.newHashSet(relation.keySet());
+    domain.addAll(relation.values());
+    for (String element : domain) {
+      expandTransitiveClosureForElement(relation, element, transitiveClosure);
+    }
+  }
+
+  /**
+   * Expands {@code transitiveClosure} to contain the transitive closure of {@code relation}
+   * restricted to an element.
+   */
+  private Collection<String> expandTransitiveClosureForElement(Multimap<String, String> relation,
+      String element, Multimap<String, String> transitiveClosure) {
+    // This algorithm computes the transitive closure of an relation via
+    // dynamic programming.
+
+    Collection<String> preComputedExpansion = transitiveClosure.get(element);
+
+    if (!preComputedExpansion.isEmpty()) {
+      // already computed.
+      return preComputedExpansion;
     }
 
-    for (String superInterfaceName : superInterfaces) {
-      allSuperIntf.add(superInterfaceName);
-      computeSuperIntf(superInterfaceName, allSuperIntf);
+    Set<String> transitiveExpansion = Sets.newHashSet();
+    Collection<String> immediateSuccessors = relation.get(element);
+    transitiveExpansion.addAll(immediateSuccessors);
+
+    for (String child : immediateSuccessors) {
+      transitiveExpansion.addAll(expandTransitiveClosureForElement(relation, child,
+          transitiveClosure));
     }
+    transitiveClosure.putAll(element, transitiveExpansion);
+    return transitiveExpansion;
+  }
+
+  /**
+   * Given two binary relations {@code f} and {@code f} represented as multimap computes the
+   * relational composition, i.e. (a,c) is in f o g iif (a,b) is in f and (b, c) is in g.
+   */
+  private <A, B, C> Multimap<A, C> compose(Multimap<A, B> f, Multimap<B, C> g) {
+    Multimap<A, C> composition = HashMultimap.create();
+    for (A a : f.keySet()) {
+      for (B b : f.get(a)) {
+        composition.putAll(a, g.get(b));
+      }
+    }
+    return composition;
   }
 
   /**
@@ -1685,10 +1627,10 @@ public class JTypeOracle implements Serializable {
    * directly or indirectly.
    */
   private boolean implementsInterface(JClassType type, JInterfaceType qType) {
-    return get(implementsMap, type.getName()).contains(qType.getName());
+    return implementedInterfacesByClass.get(type.getName()).contains(qType.getName());
   }
 
   private boolean isSuperClass(String type, String qType) {
-    return get(superClassMap, type).contains(qType);
+    return superclassesByClass.get(type).contains(qType);
   }
 }

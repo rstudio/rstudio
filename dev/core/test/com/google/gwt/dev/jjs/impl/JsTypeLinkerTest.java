@@ -79,7 +79,7 @@ public class JsTypeLinkerTest extends TestCase {
 
     // Create type inheritance.
     Map<String, String> superClassesByClass =
-        minimalRebuildCache.getImmediateTypeRelations().getSuperClassesByClass();
+        minimalRebuildCache.getImmediateTypeRelations().getImmediateSuperclassesByClass();
     superClassesByClass.put("java.lang.Class", "java.lang.Object");
     superClassesByClass.put("com.some.app.SomeAModel", "java.lang.Object");
     superClassesByClass.put("com.some.app.SomeBModel", "java.lang.Object");
