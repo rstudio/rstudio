@@ -657,9 +657,11 @@ public final class String implements Comparable<String>, CharSequence,
     return equals(sb.toString());
   }
 
-  public native boolean endsWith(String suffix) /*-{
-    return this.indexOf(suffix, this.length - suffix.length) !== -1;
-  }-*/;
+  public boolean endsWith(String suffix) {
+    // If IE8 supported negative start index, we could have just used "-suffixlength".
+    int suffixlength = suffix.length();
+    return __substr(this, length() - suffixlength, suffixlength).equals(suffix);
+  }
 
   // DO NOT INLINE so that "aaa".equals("bbb") reaches the static evaluator in
   // {@link DeadCodeElimination}.
@@ -712,7 +714,7 @@ public final class String implements Comparable<String>, CharSequence,
    * which is initialized in each class prototype to point to the class literal. String is
    * implemented as a plain JavaScript string hence lacking said field.<p>
    *
-   * The devirtualizer {@link JsoDevirtualizer} will insert a trampoline that uses this
+   * The devirtualizer {@code JsoDevirtualizer} will insert a trampoline that uses this
    * implementation.
    */
   @Override
@@ -932,24 +934,24 @@ public final class String implements Comparable<String>, CharSequence,
   }-*/;
 
   public boolean startsWith(String prefix) {
-    return indexOf(prefix) == 0;
+    return startsWith(prefix, 0);
   }
 
   public boolean startsWith(String prefix, int toffset) {
-    return toffset >= 0 && indexOf(prefix, toffset) == toffset;
+    return toffset >= 0 && __substr(this, toffset, prefix.length()).equals(prefix);
   }
 
   public CharSequence subSequence(int beginIndex, int endIndex) {
     return this.substring(beginIndex, endIndex);
   }
 
-  public native String substring(int beginIndex) /*-{
-    return this.substr(beginIndex, this.length - beginIndex);
-  }-*/;
+  public String substring(int beginIndex) {
+    return __substr(this, beginIndex, this.length() - beginIndex);
+  }
 
-  public native String substring(int beginIndex, int endIndex) /*-{
-    return this.substr(beginIndex, endIndex - beginIndex);
-  }-*/;
+  public String substring(int beginIndex, int endIndex) {
+    return __substr(this, beginIndex, endIndex - beginIndex);
+  }
 
   public char[] toCharArray() {
     int n = this.length();
