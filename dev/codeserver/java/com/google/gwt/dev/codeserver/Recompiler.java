@@ -309,12 +309,12 @@ class Recompiler {
     // make sure we get the latest version of any modified jar
     ZipFileClassPathEntry.clearCache();
     ResourceOracleImpl.clearCache();
+    ModuleDefLoader.clearModuleCache();
 
     ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
     resources = ResourceLoaders.forPathAndFallback(options.getSourcePath(), resources);
     this.resourceLoader.set(resources);
 
-    // ModuleDefLoader.loadFromResources() checks for modified .gwt.xml files.
     ModuleDef moduleDef = ModuleDefLoader.loadFromResources(
         logger, compilerContext, originalModuleName, resources, true);
     compilerContext = compilerContextBuilder.module(moduleDef).build();
