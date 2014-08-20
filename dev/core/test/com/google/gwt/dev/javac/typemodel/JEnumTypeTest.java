@@ -150,7 +150,7 @@ public class JEnumTypeTest extends TestCase {
     JClassType aClass = (JClassType) constants[0].getType().isClass();
     {
       JMethod[] methods = aClass.getInheritableMethods();
-      assertEquals(11, methods.length);
+      assertEquals(10, methods.length);
       boolean found = false;
       for (JMethod method : methods) {
         if ("name".equals(method.getName())) {

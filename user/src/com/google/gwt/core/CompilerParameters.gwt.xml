@@ -48,6 +48,15 @@
       is-multi-valued='false' />
    <set-configuration-property name="compiler.enum.obfuscate.names"
       value="false" />
+
+  <!--
+    A list of fully qualified Enum class names to exclude from 
+    Enum.name() obfuscate.
+  -->
+   <define-configuration-property name="compiler.enum.obfuscate.names.blacklist"
+      is-multi-valued='true' />
+   <set-configuration-property name="compiler.enum.obfuscate.names.blacklist"
+      value="true" />
     
   <!-- From here down, the properties are unsupported and are only available for test cases -->
 

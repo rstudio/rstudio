@@ -18,15 +18,19 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
+import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReturnStatement;
-import com.google.gwt.dev.jjs.ast.JThisRef;
+import com.google.gwt.dev.jjs.ast.JVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +38,7 @@ import java.util.List;
  */
 public class EnumNameObfuscator {
 
-  private static class EnumNameCallChecker extends JModVisitor {
+  private static class EnumNameCallChecker extends JVisitor {
 
     private final JDeclaredType classType;
     private final JMethod enumNameMethod;
@@ -42,10 +46,13 @@ public class EnumNameObfuscator {
     private final JDeclaredType enumType;
     private final JMethod enumValueOfMethod;
     private final TreeLogger logger;
+    private final List<String> blacklistedEnums;
     private final JDeclaredType stringType;
 
-    public EnumNameCallChecker(JProgram jprogram, TreeLogger logger) {
+    public EnumNameCallChecker(JProgram jprogram, TreeLogger logger,
+        List<String> blacklistedEnums) {
       this.logger = logger;
+      this.blacklistedEnums = blacklistedEnums;
       this.enumNameMethod = jprogram.getIndexedMethod("Enum.name");
       this.enumToStringMethod = jprogram.getIndexedMethod("Enum.toString");
       this.classType = jprogram.getIndexedType("Class");
@@ -85,7 +92,9 @@ public class EnumNameObfuscator {
 
       if (type instanceof JClassType) {
         JClassType cType = (JClassType) type;
-
+        if (typeInBlacklist(blacklistedEnums, cType)) {
+          return;
+        }
         if (target == enumNameMethod || target == enumToStringMethod || target == enumValueOfMethod) {
           warn(x);
         } else if (cType.isEnumOrSubclass() != null) {
@@ -128,42 +137,61 @@ public class EnumNameObfuscator {
 
   private static class EnumNameReplacer extends JModVisitor {
 
-    private final JMethod enumObfuscatedName;
-    private final JClassType enumType;
     private final JProgram jprogram;
+    private List<String> blacklistedEnums;
     private final TreeLogger logger;
 
-    public EnumNameReplacer(JProgram jprogram, TreeLogger logger) {
+    public EnumNameReplacer(JProgram jprogram, TreeLogger logger,
+        List<String> blacklistedEnums) {
       this.logger = logger;
       this.jprogram = jprogram;
-      this.enumType = (JClassType) jprogram.getIndexedType("Enum");
-      this.enumObfuscatedName = jprogram.getIndexedMethod("Enum.obfuscatedName");
-    }
-
-    @Override
-    public void endVisit(JReturnStatement x, Context ctx) {
-      info(x);
-      JReturnStatement toReturn =
-          new JReturnStatement(x.getSourceInfo(), new JMethodCall(x.getSourceInfo(), new JThisRef(x
-              .getSourceInfo(), enumType), enumObfuscatedName));
-      ctx.replaceMe(toReturn);
+      this.blacklistedEnums = blacklistedEnums;
     }
 
     public void exec() {
-      accept(jprogram.getIndexedMethod("Enum.name"));
+      accept(jprogram);
     }
 
-    private void info(JReturnStatement x) {
-      if (logger.isLoggable(TreeLogger.INFO)) {
-        logger.log(TreeLogger.INFO, "Replacing Enum.name method :  "
+    @Override public boolean visit(JClassType x, Context ctx) {
+      if (x.isEnumOrSubclass() == null || typeInBlacklist(blacklistedEnums, x)) {
+        return false;
+      }
+      trace(x);
+      return true;
+    }
+
+    @Override public void endVisit(JNewInstance x, Context ctx) {
+      JConstructor target = x.getTarget();
+      JClassType enclosingType = target.getEnclosingType();
+      if (enclosingType.isEnumOrSubclass() != null) {
+        if (!typeInBlacklist(blacklistedEnums, enclosingType)) {
+          JNewInstance newEnum = new JNewInstance(x);
+          // replace first argument with null
+          List<JExpression> args = new ArrayList<JExpression>(x.getArgs());
+          args.set(0, JNullLiteral.INSTANCE);
+          newEnum.addArgs(args);
+          ctx.replaceMe(newEnum);
+        }
+      }
+    }
+
+    private void trace(JClassType x) {
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE,
+            "Obfuscating enum " + x
             + x.getSourceInfo().getFileName() + ":"
             + x.getSourceInfo().getStartLine());
       }
     }
   }
 
-  public static void exec(JProgram jprogram, TreeLogger logger) {
-    new EnumNameCallChecker(jprogram, logger).accept(jprogram);
-    new EnumNameReplacer(jprogram, logger).exec();
+  private static boolean typeInBlacklist(List<String> blacklistedEnums, JClassType cType) {
+    return blacklistedEnums.contains(cType.getName().replace('$', '.'));
+  }
+
+  public static void exec(JProgram jprogram, TreeLogger logger,
+      List<String> blacklistedEnums) {
+    new EnumNameCallChecker(jprogram, logger, blacklistedEnums).accept(jprogram);
+    new EnumNameReplacer(jprogram, logger, blacklistedEnums).exec();
   }
 }

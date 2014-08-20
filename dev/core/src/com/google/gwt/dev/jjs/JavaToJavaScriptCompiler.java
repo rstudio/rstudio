@@ -1088,7 +1088,9 @@ public abstract class JavaToJavaScriptCompiler {
       if (module != null) {
         ConfigProps config = new ConfigProps(module);
         if (config.getBoolean(ENUM_NAME_OBFUSCATION_PROPERTY, false)) {
-          EnumNameObfuscator.exec(jprogram, logger);
+          EnumNameObfuscator.exec(jprogram, logger,
+              config.getCommaSeparatedStrings(
+                  ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY));
         }
       }
     }
@@ -1342,6 +1344,8 @@ public abstract class JavaToJavaScriptCompiler {
   private static final float EFFICIENT_CHANGE_RATE = 0.01f;
 
   private static final String ENUM_NAME_OBFUSCATION_PROPERTY = "compiler.enum.obfuscate.names";
+
+  private static final String ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY = "compiler.enum.obfuscate.names.blacklist";
 
   /**
    * Continuing to apply optimizations till the rate of change reaches this value causes the AST to

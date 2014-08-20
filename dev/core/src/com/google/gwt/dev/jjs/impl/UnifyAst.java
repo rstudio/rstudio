@@ -829,9 +829,6 @@ public class UnifyAst {
     mapApi(program.getTypeJavaLangString());
     flowInto(methodMap.get("java.lang.String.valueOf(C)Ljava/lang/String;"));
 
-    // EnumNameObfuscator
-    flowInto(program.getIndexedMethod("Enum.obfuscatedName"));
-
     // FixAssignmentsToUnboxOrCast
     AutoboxUtils autoboxUtils = new AutoboxUtils(program);
     for (JMethod method : autoboxUtils.getBoxMethods()) {

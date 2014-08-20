@@ -112,11 +112,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
   }
 
   public final String name() {
-    return name;
-  }
-
-  public final String obfuscatedName() {
-    return "" + ordinal;
+    return name != null ? name : "" + ordinal;
   }
 
   public final int ordinal() {
