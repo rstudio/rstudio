@@ -39,6 +39,7 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     addSnippetClassDecl("static volatile Object o;");
 
     runMethodInliner = false;
+    runSpecializer = false;
   }
 
   public void testConditionalOptimizations() throws Exception {
@@ -222,6 +223,11 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     //    .into("return true;");
   }
 
+  public void testStringOptimizations_withSpecializer() throws Exception {
+    runSpecializer = true;
+    testStringOptimizations();
+  }
+
   public void testDoOptimization() throws Exception {
     optimize("void", "do {} while (b);").intoString(
         "do;",
@@ -332,12 +338,19 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
   }
 
   private boolean runMethodInliner;
+  private boolean runSpecializer;
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
 
     if (runMethodInliner) {
       MethodInliner.exec(program);
+    }
+    if (runSpecializer) {
+      Finalizer.exec(program); // required so that method is marked final
+      MakeCallsStatic.exec(program, false); // required so that method is static
+      TypeTightener.exec(program); // required so that the parameter types are tightened
+      MethodCallSpecializer.exec(program);
     }
 
     OptimizerStats result = DeadCodeElimination.exec(program, method);

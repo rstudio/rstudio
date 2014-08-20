@@ -108,8 +108,8 @@ public class ReplaceRunAsyncs {
         JReferenceType callbackType = (JReferenceType) asyncCallback.getType().getUnderlyingType();
         JMethod callbackMethod;
         if (callbackType instanceof JClassType) {
-          callbackMethod =
-              program.typeOracle.getMethodBySignature((JClassType) callbackType, "onSuccess()V");
+          callbackMethod = program.typeOracle.getInstanceMethodBySignature(
+              (JClassType) callbackType, "onSuccess()V");
         } else {
           callbackMethod = program.getIndexedMethod("RunAsyncCallback.onSuccess");
         }

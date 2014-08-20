@@ -24,6 +24,7 @@ import com.google.gwt.dev.cfg.ConditionNone;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
@@ -71,7 +72,11 @@ public class GenerateJavaScriptAstTest extends FullCompileTestBase {
       String... functionNames) {
     Set<String> remainingFunctions = Sets.newHashSet(functionNames);
     for (JsFunction function : Iterables.filter(functionsForJsInlining, JsFunction.class)) {
-      remainingFunctions.remove(function.getName().getShortIdent());
+      JsName name = function.getName();
+      if (name == null) {
+        continue;
+      }
+      remainingFunctions.remove(name.getShortIdent());
     }
     assertTrue("{" + (Joiner.on(",").join(remainingFunctions)) + "} marked for consideration in "
         + "JsInliner", remainingFunctions.isEmpty());
@@ -81,8 +86,12 @@ public class GenerateJavaScriptAstTest extends FullCompileTestBase {
       String... functionNames) {
     Set<String> remainingFunctions = Sets.newHashSet(functionNames);
     for (JsFunction function : Iterables.filter(functionsForJsInlining, JsFunction.class)) {
-      assertFalse(function.getName().getShortIdent() + " should not be considered for JsInliner",
-        remainingFunctions.contains(function.getName().getShortIdent()));
+      JsName name = function.getName();
+      if (name == null) {
+        continue;
+      }
+      assertFalse(name.getShortIdent() + " should not be considered for JsInliner",
+          remainingFunctions.contains(name.getShortIdent()));
     }
   }
 

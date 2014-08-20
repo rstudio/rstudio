@@ -73,10 +73,8 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     return jsProperty;
   }
 
-  public void setSpecialization(List<JType> paramTypes, JType returnsType,
-      String targetMethod) {
-    this.specialization = new Specialization(paramTypes, returnsType,
-        targetMethod);
+  public void setSpecialization(List<JType> paramTypes, JType returnsType, String targetMethod) {
+    this.specialization = new Specialization(paramTypes, returnsType, targetMethod);
   }
 
   public Specialization getSpecialization() {
@@ -88,7 +86,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   }
 
   public String getQualifiedExportName() {
-    if ("".equals(exportName)) {
+    if (exportName.isEmpty()) {
       String qualifiedExportName = getEnclosingType().getQualifiedExportName();
       return this instanceof JConstructor ? qualifiedExportName :
           qualifiedExportName + "." + getLeafName();
@@ -119,8 +117,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     private String target;
     private JMethod targetMethod;
 
-    public Specialization(List<JType> params,
-        JType returns, String target) {
+    public Specialization(List<JType> params, JType returns, String target) {
       this.params = params;
       this.returns = returns;
       this.target = target;
@@ -142,27 +139,20 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
       return targetMethod;
     }
 
-    public String getParameterSignature(JType origReturnValue) {
-      String paramSig = null;
-      if (paramSig == null) {
-        StringBuilder sb = new StringBuilder();
-        getParamSignature(sb, params,
-            returns != null ? returns : origReturnValue, false);
-        paramSig = sb.toString();
-      }
-      return paramSig;
-    }
-
-    public void resolve(List<JType> resolvedParams, JType resolvedReturn,
-        JMethod targetMethod) {
+    public void resolve(List<JType> resolvedParams, JType resolvedReturn, JMethod targetMethod) {
       this.params = resolvedParams;
       this.returns = resolvedReturn;
       this.targetMethod = targetMethod;
     }
 
     public String getTargetSignature(JMethod instanceMethod) {
-      return getTarget() + getParameterSignature(instanceMethod
-          .getOriginalReturnType());
+      return getTarget() + getParameterSignature(instanceMethod.getOriginalReturnType());
+    }
+
+    private String getParameterSignature(JType origReturnValue) {
+      StringBuilder sb = new StringBuilder();
+      getParamSignature(sb, params, returns != null ? returns : origReturnValue, false);
+      return sb.toString();
     }
   }
 
@@ -392,8 +382,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     if (signature == null) {
       StringBuilder sb = new StringBuilder();
       sb.append(getName());
-      getParamSignature(sb, getOriginalParamTypes(), getOriginalReturnType(),
-          isConstructor());
+      getParamSignature(sb, getOriginalParamTypes(), getOriginalReturnType(), isConstructor());
       signature = sb.toString();
     }
     return signature;

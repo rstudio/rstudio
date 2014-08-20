@@ -43,8 +43,7 @@ public @interface SpecializeMethod {
   Class<?> returns() default ANY.class;
 
   /**
-   * The name of the method to target. It must have a signature matching
-   * the actual argument types passed to JMethodCall.
+   * The name of the method to target. It must have a signature matching to the {@link #params()}.
    */
   String target();
 }

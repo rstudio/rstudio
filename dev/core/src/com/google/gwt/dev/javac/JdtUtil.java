@@ -215,20 +215,24 @@ public final class JdtUtil {
   }
 
   public static TypeBinding[] getAnnotationParameterTypeBindingArray(
-      AnnotationBinding a, String paramName) {
-    if (a != null) {
-      for (ElementValuePair maybeValue : a.getElementValuePairs()) {
-        Object value = maybeValue.getValue();
-        if (value instanceof Object[] &&
-            paramName.equals(String.valueOf(maybeValue.getName()))) {
-          Object[] values = (Object[]) value;
-          TypeBinding b[] = new TypeBinding[values.length];
-          for (int i = 0; i < values.length; i++) {
-            b[i] = (TypeBinding) values[i];
-          }
-          return b;
-        }
+      AnnotationBinding annotationBinding, String paramName) {
+    if (annotationBinding == null) {
+      return null;
+    }
+
+    for (ElementValuePair maybeValue : annotationBinding.getElementValuePairs()) {
+      Object value = maybeValue.getValue();
+      if (!paramName.equals(String.valueOf(maybeValue.getName()))) {
+        continue;
       }
+      if (value instanceof Object[]) {
+        Object[] values = (Object[]) value;
+        TypeBinding bindings[] = new TypeBinding[values.length];
+        System.arraycopy(values, 0, bindings, 0, values.length);
+        return bindings;
+      }
+      assert value instanceof TypeBinding;
+      return new TypeBinding[] {(TypeBinding) value};
     }
     return null;
   }

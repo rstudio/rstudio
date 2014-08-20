@@ -14,16 +14,11 @@
  * the License.
  */
 
-/**
- * Notes: For efficiency we handle String in a specialized way, in fact, a
- * java.lang.String is actually implemented as a native JavaScript String. Then
- * we just load up the prototype of the JavaScript String object with the
- * appropriate instance methods.
- */
 package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.DoNotInline;
+import com.google.gwt.core.client.impl.SpecializeMethod;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -386,11 +381,6 @@ public final class String implements Comparable<String>, CharSequence,
     return valueOf(sb);
   }
 
-  private static native boolean __equals(String me, Object other) /*-{
-    // Coerce me to a primitive string to force string comparison
-    return String(me) == other;
-  }-*/;
-
   // CHECKSTYLE_ON
 
   private static native int compareTo(String thisStr, String otherStr) /*-{
@@ -663,13 +653,23 @@ public final class String implements Comparable<String>, CharSequence,
     return __substr(this, length() - suffixlength, suffixlength).equals(suffix);
   }
 
-  // DO NOT INLINE so that "aaa".equals("bbb") reaches the static evaluator in
-  // {@link DeadCodeElimination}.
+  // Marked with @DoNotInline because if it is inlined too early, then we might miss the
+  // opportunity for specialization. That means we can end with an extra instanceOf check till very
+  // end which might prevent further optimizations.
+  @SpecializeMethod(params = String.class, target = "equals")
   @DoNotInline
   @Override
   public boolean equals(Object other) {
-    return (other instanceof String) && __equals(this, other);
+    return (other instanceof String) && equals((String) other);
   }
+
+  // This a non-standard overload for faster code path when the target type is string. Note that
+  // this method shouldn't be java inlined (and it'll not because it's native) otherwise it would
+  // break static eval.
+  private native boolean equals(String other) /*-{
+    // Coerce me to a primitive string to force string comparison
+    return String(this) == other;
+  }-*/;
 
   public native boolean equalsIgnoreCase(String other) /*-{
     if (other == null) {

@@ -73,9 +73,9 @@ public class MethodCallTightener {
         return;
       }
 
-      JMethod foundMethod =
-          program.typeOracle.getMethodBySignature((JClassType) instanceType, method.getSignature());
-      if (foundMethod == null) {
+      JMethod foundMethod = program.typeOracle.getInstanceMethodBySignature(
+          (JClassType) instanceType, method.getSignature());
+      if (foundMethod == null || !foundMethod.canBePolymorphic()) {
         // The declared instance type is abstract and doesn't have the method.
         return;
       }
@@ -83,8 +83,6 @@ public class MethodCallTightener {
         // The instance type doesn't override the method.
         return;
       }
-      assert foundMethod.canBePolymorphic();
-
       if (!foundMethod.getOverriddenMethods().contains(method)) {
         // The found method has the same signature as the target method of the call being tightened
         // but does NOT override it. this situation occurs for example when the target method is

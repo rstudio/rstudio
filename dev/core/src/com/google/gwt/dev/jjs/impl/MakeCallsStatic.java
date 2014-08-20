@@ -45,7 +45,6 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsThisRef;
-import com.google.gwt.dev.util.arg.OptionCheckedMode;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -421,9 +420,9 @@ public class MakeCallsStatic {
 
   private static final String NAME = MakeCallsStatic.class.getSimpleName();
 
-  public static OptimizerStats exec(OptionCheckedMode option, JProgram program) {
+  public static OptimizerStats exec(JProgram program, boolean addRuntimeChecks) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new MakeCallsStatic(option, program).execImpl();
+    OptimizerStats stats = new MakeCallsStatic(program, addRuntimeChecks).execImpl();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
@@ -435,9 +434,9 @@ public class MakeCallsStatic {
   private final JProgram program;
   private final StaticCallConverter converter;
 
-  private MakeCallsStatic(OptionCheckedMode option, JProgram program) {
+  private MakeCallsStatic(JProgram program, boolean addRuntimeChecks) {
     this.program = program;
-    this.converter = new StaticCallConverter(program, option.shouldAddRuntimeChecks());
+    this.converter = new StaticCallConverter(program, addRuntimeChecks);
   }
 
   private OptimizerStats execImpl() {

@@ -41,8 +41,7 @@ public class MethodCallSpecializer {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       // Don't do anything if the method binding isn't statically known
-      if (x.isVolatile() || x.canBePolymorphic() || x.getTarget().isAbstract()
-          || !x.getTarget().isFinal() || !x.getTarget().isStatic()) {
+      if (!x.getTarget().isStatic()) {
         return;
       }
 

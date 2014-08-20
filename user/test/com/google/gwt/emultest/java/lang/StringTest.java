@@ -264,9 +264,6 @@ public class StringTest extends GWTTestCase {
     assertFalse("c", haystack.endsWith(haystack + "j"));
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   */
   public void testEquals() {
     assertFalse("ABC".equals("abc"));
     assertFalse("abc".equals("ABC"));
@@ -276,6 +273,16 @@ public class StringTest extends GWTTestCase {
     assertFalse("AbC".equals("aBC"));
     assertTrue("".equals(""));
     assertFalse("".equals(null));
+
+    // Randomize the string to avoid static eval.
+    double r = Math.random();
+    assertTrue((r + "").equals(r + ""));
+    assertFalse((r + "ABC").equals(r + "abc"));
+    assertFalse((r + "abc").equals(r + "ABC"));
+    assertTrue((r + "abc").equals(r + "abc"));
+    assertTrue((r + "ABC").equals(r + "ABC"));
+    assertFalse((r + "AbC").equals(r + "aBC"));
+    assertFalse((r + "AbC").equals(r + "aBC"));
   }
 
   /*

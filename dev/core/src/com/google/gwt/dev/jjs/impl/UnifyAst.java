@@ -1202,9 +1202,9 @@ public class UnifyAst {
         Specialization specialization = method.getSpecialization();
         List<JType> resolvedParams = new ArrayList<JType>();
         if (specialization.getParams() == null) {
-          logger.log(Type.WARN, "Forgot to specify params= attribute on "
-              + "method " + method.getSignature());
-          method.removeSpecialization();
+          logger.log(Type.ERROR, "Missing 'params' attribute at @SpecializeMethod for method "
+              + method.getSignature());
+          errorsFound = true;
         } else {
           for (JType param : specialization.getParams()) {
             resolvedParams.add(translate(param));
@@ -1215,25 +1215,15 @@ public class UnifyAst {
           resolvedReturn = translate(specialization.getReturns());
         }
 
-        JMethod targetMethod = program.typeOracle
-            .getMethodBySignature((JClassType) method.getEnclosingType()
-                , specialization.getTargetSignature(method));
+        JMethod targetMethod = program.typeOracle.getInstanceMethodBySignature(
+            (JClassType) method.getEnclosingType(), specialization.getTargetSignature(method));
         if (targetMethod != null) {
           flowInto(targetMethod);
-          specialization.resolve(resolvedParams, resolvedReturn,
-              targetMethod);
+          specialization.resolve(resolvedParams, resolvedReturn, targetMethod);
         } else {
-          if (specialization.getTarget() == null ||
-              "".equals(specialization.getTarget())) {
-            logger.log(Type.WARN, "Unable to locate @SpecializeMethod target, "
-                + " forgot to specify target= attribute on method " +
-                method.getSignature());
-          } else {
-            logger.log(Type.WARN, "Unable to locate @SpecializeMethod target "
-                + specialization.getTargetSignature(method) + " for method " +
-                method.getSignature());
-          }
-          method.removeSpecialization();
+          errorsFound = true;
+          logger.log(Type.ERROR, "Unable to locate @SpecializeMethod target "
+              + specialization.getTargetSignature(method) + " for method " + method.getSignature());
         }
       }
       // Queue up visit / resolve on the body.

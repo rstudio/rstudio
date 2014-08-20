@@ -3361,34 +3361,32 @@ public class GwtAstBuilder {
     }
   }
 
-  private void maybeAddMethodSpecialization(AbstractMethodDeclaration x,
-      JMethod method) {
-    AnnotationBinding specializeAnnotation = JdtUtil
-        .getAnnotation(x.binding, SpecializeMethod.class.getName());
-    if (specializeAnnotation != null) {
-      TypeBinding[] params = JdtUtil
-          .getAnnotationParameterTypeBindingArray(
-              specializeAnnotation, "params");
-      TypeBinding returns = JdtUtil.getAnnotationParameterTypeBinding(
-          specializeAnnotation, "returns");
-      String targetMethod = JdtUtil.getAnnotationParameterString(
-          specializeAnnotation, "target");
-      List<JType> paramTypes = null;
-      if (params != null) {
-        paramTypes = new ArrayList<JType>();
-        for (TypeBinding pType : params) {
-          paramTypes.add(typeMap.get(pType));
-        }
-      }
-
-      JType returnsType = null;
-      if (returns != null) {
-        returnsType = typeMap.get(returns);
-      }
-
-      method.setSpecialization(paramTypes, returnsType,
-          targetMethod);
+  private void maybeAddMethodSpecialization(AbstractMethodDeclaration x, JMethod method) {
+    AnnotationBinding specializeAnnotation =
+        JdtUtil.getAnnotation(x.binding, SpecializeMethod.class.getName());
+    if (specializeAnnotation == null) {
+      return;
     }
+
+    TypeBinding[] params =
+        JdtUtil.getAnnotationParameterTypeBindingArray(specializeAnnotation, "params");
+    assert params != null : "params is a mandatory field";
+    List<JType> paramTypes = new ArrayList<JType>();
+    for (TypeBinding pType : params) {
+      paramTypes.add(typeMap.get(pType));
+    }
+
+    TypeBinding returns =
+        JdtUtil.getAnnotationParameterTypeBinding(specializeAnnotation, "returns");
+    JType returnsType = null;
+    if (returns != null) {
+      returnsType = typeMap.get(returns);
+    }
+
+    String targetMethod = JdtUtil.getAnnotationParameterString(specializeAnnotation, "target");
+    assert targetMethod != null : "target is a mandatory parameter";
+
+    method.setSpecialization(paramTypes, returnsType, targetMethod);
   }
 
   private void createParameter(SourceInfo info, LocalVariableBinding binding, JMethod method) {

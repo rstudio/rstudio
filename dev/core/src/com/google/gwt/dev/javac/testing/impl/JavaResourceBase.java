@@ -291,6 +291,7 @@ public class JavaResourceBase {
       createMockJavaResource("java.lang.String",
           "package java.lang;",
           "import java.io.Serializable;",
+          "import com.google.gwt.core.client.impl.SpecializeMethod;",
           "public final class String implements Comparable<String>, CharSequence, Serializable {",
           "  public String() { }",
           "  public String(char c) { }",
@@ -300,7 +301,11 @@ public class JavaResourceBase {
           "  public static String _String(String s) { return s; }",
           "  public char charAt(int index) { return 'a'; }",
           "  public int compareTo(String other) { return -1; }",
-          "  public boolean equals(Object obj) { return false; }",
+          "  @SpecializeMethod(params = String.class, target = \"equals\")",
+          "  public boolean equals(Object other) {",
+          "    return (other instanceof String) && equals((String) other);",
+          "  }",
+          "  private native boolean equals(String obj) /*-{ return false; }-*/;",
           "  public boolean equalsIgnoreCase(String str) { return false; }",
           "  public int length() { return 0; }",
           "  public static String valueOf(int i) { return \"\" + i; }",
@@ -335,13 +340,22 @@ public class JavaResourceBase {
           "  public void addSuppressed(Throwable ex) { }",
           "}");
 
+  public static final MockJavaResource SPECIALIZE_METHOD =
+      createMockJavaResource("com.google.gwt.core.client.impl.SpecializeMethod",
+          "package com.google.gwt.core.client.impl;",
+          "public @interface SpecializeMethod {\n",
+          "  Class<?>[] params();\n" +
+          "  String target();\n",
+          "}"
+      );
+
   // TODO: move JS* annotations to intrinsic mock resource base
   public static final MockJavaResource JSTYPE =
       createMockJavaResource("com.google.gwt.core.client.js.JsType",
           "package com.google.gwt.core.client.js;",
           "public @interface JsType {\n",
           "  String prototype() default \"\";\n" +
-              "  boolean isNative() default false;\n",
+          "  boolean isNative() default false;\n",
           "}"
       );
   public static final MockJavaResource JSTYPEPROTOTYPE =
@@ -368,8 +382,8 @@ public class JavaResourceBase {
         CLASS_NOT_FOUND_EXCEPTION, CLONEABLE, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION,
         ERROR, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LIST, LONG, MAP,
         NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT, RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING,
-        STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT,
-        JSPROPERTY};
+        STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE,
+        JSEXPORT, JSPROPERTY};
   }
 
   /**

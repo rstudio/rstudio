@@ -855,8 +855,8 @@ public class JTypeOracle implements Serializable {
     return null;
   }
 
-  public JMethod getMethodBySignature(JClassType type, String signature) {
-    return getOrCreateMethodsBySignatureForType(type).get(signature);
+  public JMethod getInstanceMethodBySignature(JClassType type, String signature) {
+    return getOrCreateInstanceMethodsBySignatureForType(type).get(signature);
   }
 
   public JClassType getSingleJsoImpl(JReferenceType maybeSingleJsoIntf) {
@@ -1515,22 +1515,29 @@ public class JTypeOracle implements Serializable {
     return multimap;
   }
 
-  private Map<String, JMethod> getOrCreateMethodsBySignatureForType(JClassType type) {
+  private Map<String, JMethod> getOrCreateInstanceMethodsBySignatureForType(JClassType type) {
     Map<String, JMethod> methodsBySignature = methodsBySignatureForType.get(type);
     if (methodsBySignature == null) {
+      methodsBySignature = Maps.newHashMap();
       JClassType superClass = type.getSuperClass();
-      if (superClass == null) {
-        methodsBySignature = Maps.newHashMap();
-      } else {
-        Map<String, JMethod> superMethodsBySignature =
-            getOrCreateMethodsBySignatureForType(type.getSuperClass());
-        methodsBySignature = Maps.newHashMap(superMethodsBySignature);
-      }
-      for (JMethod method : type.getMethods()) {
+      Map<String, JMethod> parentMethods = superClass == null
+          ? Collections.<String, JMethod>emptyMap()
+          : getOrCreateInstanceMethodsBySignatureForType(type.getSuperClass());
+
+      // Add inherited methods.
+      for (JMethod method : parentMethods.values()) {
         if (method.canBePolymorphic()) {
           methodsBySignature.put(method.getSignature(), method);
         }
       }
+
+      // Add all of our own non-static methods.
+      for (JMethod method : type.getMethods()) {
+        if (!method.isStatic()) {
+          methodsBySignature.put(method.getSignature(), method);
+        }
+      }
+
       methodsBySignatureForType.put(type, methodsBySignature);
     }
     return methodsBySignature;
