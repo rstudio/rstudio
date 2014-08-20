@@ -189,7 +189,7 @@ public class Compiler {
             return false;
           }
         } else {
-          long compileStart = System.currentTimeMillis();
+          long beforeCompileMs = System.currentTimeMillis();
           TreeLogger branch = logger.branch(TreeLogger.INFO,
               "Compiling module " + moduleName);
 
@@ -216,7 +216,12 @@ public class Compiler {
           JJSOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
 
           precompilation = null; // No longer needed, so save the memory
+          long afterCompileMs = System.currentTimeMillis();
+          double compileSeconds = (afterCompileMs - beforeCompileMs) / 1000d;
+          branch.log(TreeLogger.INFO,
+              String.format("Compilation succeeded -- %.3fs", compileSeconds));
 
+          long beforeLinkMs = System.currentTimeMillis();
           Event linkEvent = SpeedTracerLogger.start(CompilerEventType.LINK);
           File absPath = new File(options.getWarDir(), module.getName());
           absPath = absPath.getAbsoluteFile();
@@ -231,14 +236,10 @@ public class Compiler {
           Link.link(logger.branch(TreeLogger.TRACE, logMessage), module,
               module.getPublicResourceOracle(), generatedArtifacts, allPerms, resultFiles,
               Sets.<PermutationResult>newHashSet(), precompileOptions, options);
-
           linkEvent.end();
-          long compileDone = System.currentTimeMillis();
-          long delta = compileDone - compileStart;
-          if (branch.isLoggable(TreeLogger.INFO)) {
-            branch.log(TreeLogger.INFO, "Compilation succeeded -- "
-                + String.format("%.3f", delta / 1000d) + "s");
-          }
+          long afterLinkMs = System.currentTimeMillis();
+          double linkSeconds = (afterLinkMs - beforeLinkMs) / 1000d;
+          branch.log(TreeLogger.INFO, String.format("Linking succeeded -- %.3fs", linkSeconds));
         }
       }
 
