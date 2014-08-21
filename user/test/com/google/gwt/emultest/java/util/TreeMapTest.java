@@ -15,13 +15,12 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import static java.util.AbstractMap.SimpleEntry;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 
 import org.apache.commons.collections.TestMap;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1895,6 +1894,11 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   protected boolean isNaturalOrder() {
     return comparator == null;
+  }
+
+  @Override
+  protected boolean isFailFastExpected() {
+    return false;
   }
 
   @SuppressWarnings("unchecked")

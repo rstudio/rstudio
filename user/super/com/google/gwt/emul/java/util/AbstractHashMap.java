@@ -15,6 +15,10 @@
  */
 package java.util;
 
+import static java.util.ConcurrentModificationDetector.checkStructuralChange;
+import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;
+import static java.util.ConcurrentModificationDetector.structureChanged;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.impl.SpecializeMethod;
 
@@ -77,6 +81,10 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     private Iterator<Entry<K, V>> current = stringMapEntries;
     private Iterator<Entry<K, V>> last;
 
+    public EntrySetIterator() {
+      recordLastKnownStructure(AbstractHashMap.this, this);
+    }
+
     @Override
     public boolean hasNext() {
       if (current.hasNext()) {
@@ -91,6 +99,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
     @Override
     public Entry<K, V> next() {
+      checkStructuralChange(AbstractHashMap.this, this);
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
@@ -103,8 +112,10 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
       if (last == null) {
         throw new IllegalStateException();
       }
+      checkStructuralChange(AbstractHashMap.this, this);
       last.remove();
       last = null;
+      recordLastKnownStructure(AbstractHashMap.this, this);
     }
   }
 
@@ -117,6 +128,8 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * A map of Strings onto values.
    */
   private transient InternalJsStringMap<K, V> stringMap;
+
+  private int size;
 
   public AbstractHashMap() {
     reset();
@@ -152,6 +165,8 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     hashCodeMap.host = this;
     stringMap = factory.createJsStringMap();
     stringMap.host = this;
+    size = 0;
+    structureChanged(this);
   }
 
   @SpecializeMethod(params = {String.class}, target = "hasStringValue")
@@ -190,7 +205,17 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public int size() {
-    return hashCodeMap.size() + stringMap.size();
+    return size;
+  }
+
+  void elementRemoved() {
+    size--;
+    structureChanged(this);
+  }
+
+  void elementAdded() {
+    size++;
+    structureChanged(this);
   }
 
   /**

@@ -131,16 +131,11 @@ class InternalJsStringMap<K, V> {
   }
 
   private final JavaScriptObject backingMap = createMap();
-  private int size;
   AbstractHashMap<K,V> host;
 
   native JavaScriptObject createMap() /*-{
     return Object.create(null);
   }-*/;
-
-  public final int size() {
-    return size;
-  }
 
   public final boolean contains(String key) {
     return !isUndefined(get(key));
@@ -153,7 +148,7 @@ class InternalJsStringMap<K, V> {
   public V put(String key, V value) {
     V oldValue = at(key);
     if (isUndefined(oldValue)) {
-      size++;
+      host.elementAdded();
     }
 
     set(key, toNullIfUndefined(value));
@@ -165,7 +160,7 @@ class InternalJsStringMap<K, V> {
     V value = at(key);
     if (!isUndefined(value)) {
       delete(key);
-      size--;
+      host.elementRemoved();
     }
 
     return value;

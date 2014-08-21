@@ -99,16 +99,11 @@ class InternalJsHashCodeMap<K, V> {
   }
 
   private final JavaScriptObject backingMap = createMap();
-  private int size;
   AbstractHashMap<K, V> host;
 
   native JavaScriptObject createMap() /*-{
     return Object.create(null);
   }-*/;
-
-  public int size() {
-    return size;
-  }
 
   public V put(K key, V value) {
     Entry<K, V>[] chain = ensureChain(hash(key));
@@ -119,7 +114,7 @@ class InternalJsHashCodeMap<K, V> {
       }
     }
     chain[chain.length] = new SimpleEntry<K, V>(key, value);
-    size++;
+    host.elementAdded();
     return null;
   }
 
@@ -136,7 +131,7 @@ class InternalJsHashCodeMap<K, V> {
           // splice out the entry we're removing
           splice(chain, i);
         }
-        size--;
+        host.elementRemoved();
         return entry.getValue();
       }
     }

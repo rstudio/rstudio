@@ -17,6 +17,7 @@ package org.apache.commons.collections;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -174,6 +175,14 @@ public abstract class TestMap extends TestObject{
      *  default implementation returns <code>true</code>.
      **/
     protected boolean isAddRemoveModifiable() {
+        return true;
+    }
+
+    /**
+     *  Override if your map allows concurrent modifications.  The default
+     *  implementation returns <code>true</code>.
+     **/
+    protected boolean isFailFastExpected() {
         return true;
     }
 
@@ -744,6 +753,83 @@ public abstract class TestMap extends TestObject{
       verify();
     }
 
+    public void testFailFastEntrySet() {
+        if (!isAddRemoveModifiable()) {
+            return;
+        }
+        if (!isFailFastExpected()) {
+            return;
+        }
+        resetFull();
+        Iterator<Map.Entry> it = map.entrySet().iterator();
+        final Map.Entry val = it.next();
+        map.remove(val.getKey());
+        try {
+            it.next();
+            fail();
+        } catch (ConcurrentModificationException expected) {}
+
+        resetFull();
+        it = map.entrySet().iterator();
+        it.next();
+        map.clear();
+        try {
+            it.next();
+            fail();
+        } catch (ConcurrentModificationException expected) {}
+    }
+
+    public void testFailFastKeySet() {
+        if (!isAddRemoveModifiable()) {
+            return;
+        }
+        if (!isFailFastExpected()) {
+            return;
+        }
+        resetFull();
+        Iterator it = map.keySet().iterator();
+        final Object val = it.next();
+        map.remove(val);
+        try {
+            it.next();
+            fail();
+        } catch (ConcurrentModificationException expected) {}
+
+        resetFull();
+        it = map.keySet().iterator();
+        it.next();
+        map.clear();
+        try {
+            it.next();
+            fail();
+        } catch (ConcurrentModificationException expected) {}
+    }
+
+    public void testFailFastValues() {
+        if (!isAddRemoveModifiable()) {
+            return;
+        }
+        if (!isFailFastExpected()) {
+            return;
+        }
+        resetFull();
+        Iterator it = map.values().iterator();
+        it.next();
+        map.remove(map.keySet().iterator().next());
+        try {
+            it.next();
+            fail();
+        } catch (ConcurrentModificationException expected) {}
+
+        resetFull();
+        it = map.values().iterator();
+        it.next();
+        map.clear();
+        try {
+            it.next();
+            fail();
+        } catch (ConcurrentModificationException expected) {}
+    }
 
     /**
      *  Utility methods to create an array of Map.Entry objects

@@ -15,6 +15,9 @@
  */
 package java.util;
 
+import static java.util.ConcurrentModificationDetector.checkStructuralChange;
+import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;
+
 /**
  * Hash table implementation of the Map interface with predictable iteration
  * order. <a
@@ -90,6 +93,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
 
       public EntryIterator() {
         next = head.next;
+        recordLastKnownStructure(map, this);
       }
 
       public boolean hasNext() {
@@ -100,6 +104,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
         if (next == head) {
           throw new NoSuchElementException();
         }
+        checkStructuralChange(map, this);
         last = next;
         next = next.next;
         return last;
@@ -109,8 +114,10 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
         if (last == null) {
           throw new IllegalStateException("No current entry");
         }
+        checkStructuralChange(map, this);
         last.remove();
         map.remove(last.getKey());
+        recordLastKnownStructure(map, this);
         last = null;
       }
     }
