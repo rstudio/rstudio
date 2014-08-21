@@ -24,6 +24,7 @@ import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSetMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -412,19 +413,12 @@ public class JTypeOracle implements Serializable {
   private Set<String> allClasses = Sets.newHashSet();
 
   /**
-   * A map of all interfaces to the set of classes that could theoretically
-   * implement them. {@code classesByPotentialInterface} is the relational inverse of
-   * {@code potentialInterfaceByClass}.
-   */
-  private final Multimap<String, String> classesByPotentialInterface = HashMultimap.create();
-
-  /**
    * A map of all classes to the set of interfaces that they could theoretically
    * implement.
    * <p>
    * C hasPotentialInterface I iff Exists C'. C' = C or C' subclassOf C and C implements I.
    */
-  private final Multimap<String, String> potentialInterfaceByClass = HashMultimap.create();
+  private Multimap<String, String> potentialInterfaceByClass;
 
   /**
    * The set of all interfaces that are initially implemented by both a Java and
@@ -439,7 +433,7 @@ public class JTypeOracle implements Serializable {
    * C implements I iff Exists, C', I'. (C' = C or C' isSubclassOf C) and (I = I' or
    * I' isSuperInterfaceOf I) and C' immediateImplements I'.
    */
-  private final Multimap<String, String> implementedInterfacesByClass = HashMultimap.create();
+  private Multimap<String, String> implementedInterfacesByClass;
 
   /**
    * The types in the program that are instantiable. All types in this set
@@ -453,7 +447,7 @@ public class JTypeOracle implements Serializable {
    * possibly through inheritance. {@code classesByImplementingInterface} is the relational
    * inverse of {@code implementedInterfacesByClass}.
    */
-  private final Multimap<String, String> classesByImplementingInterface = HashMultimap.create();
+  private Multimap<String, String> classesByImplementingInterface;
 
   /**
    * A map of all interfaces that are implemented by overlay types to the
@@ -478,7 +472,7 @@ public class JTypeOracle implements Serializable {
    * <p>
    * NOTE: {@code subclassesByClass} is NOT reflexive.
    */
-  private final Multimap<String, String> subclassesByClass = HashMultimap.create();
+  private Multimap<String, String> subclassesByClass;
 
   /**
    * A map of all interfaces to the set of interfaces that extend them, directly or indirectly
@@ -486,7 +480,7 @@ public class JTypeOracle implements Serializable {
    * <p>
    * NOTE: {@code subInterfacesByInterface} is NOT reflexive.
    */
-  private final Multimap<String, String> subInterfacesByInterface = HashMultimap.create();
+  private Multimap<String, String> subInterfacesByInterface;
 
   /**
    * A map of all classes to the set of classes they extend, directly or
@@ -497,7 +491,7 @@ public class JTypeOracle implements Serializable {
    * <p>
    * NOTE: {@code superclassesByClass} is NOT reflexive.
    */
-  private final Multimap<String, String> superclassesByClass = HashMultimap.create();
+  private Multimap<String, String> superclassesByClass;
 
   /**
    * A map of all interfaces to the set of interfaces they extend, directly or
@@ -508,7 +502,7 @@ public class JTypeOracle implements Serializable {
    * <p>
    * NOTE: {@code superInterfacesByInterface} is NOT reflexive.
    */
-  private final Multimap<String, String> superInterfacesByInterface = HashMultimap.create();
+  private Multimap<String, String> superInterfacesByInterface;
   /**
    * A map of all methods with virtual overrides, onto the collection of
    * overridden methods. Each key method's collections is a map of the set of
@@ -661,7 +655,7 @@ public class JTypeOracle implements Serializable {
 
       JInterfaceType iType = (JInterfaceType) type;
       if (qType instanceof JClassType) {
-        return classesByPotentialInterface.containsEntry(iType.getName(), qType.getName());
+        return potentialInterfaceByClass.containsEntry(qType.getName(), iType.getName());
       }
     } else if (type instanceof JNullType) {
     }
@@ -1238,7 +1232,7 @@ public class JTypeOracle implements Serializable {
     computeClassMaps();
     computeInterfaceMaps();
     computeImplementsMaps();
-    computeCouldImplementMaps();
+    computePotentialImplementMap();
     computeSingleJSO();
     computeDualJSO();
   }
@@ -1249,18 +1243,14 @@ public class JTypeOracle implements Serializable {
     allClasses.addAll(immediateTypeRelations.immediateSuperclassesByClass.keySet());
   }
 
-  private void computeCouldImplementMaps() {
-    potentialInterfaceByClass.clear();
-
+  private void computePotentialImplementMap() {
     // Compute the reflexive subclass closure.
     Multimap<String, String> reflexiveSubtypes = HashMultimap.create();
     reflexiveSubtypes.putAll(subclassesByClass);
     reflexiveClosure(reflexiveSubtypes, allClasses);
 
-    potentialInterfaceByClass.putAll(compose(reflexiveSubtypes, implementedInterfacesByClass));
-
-    classesByPotentialInterface.clear();
-    Multimaps.invertFrom(potentialInterfaceByClass, classesByPotentialInterface);
+    potentialInterfaceByClass =
+        ImmutableSetMultimap.copyOf(compose(reflexiveSubtypes, implementedInterfacesByClass));
   }
 
   private void computeDualJSO() {
@@ -1282,29 +1272,28 @@ public class JTypeOracle implements Serializable {
   }
 
   private void computeImplementsMaps() {
-    implementedInterfacesByClass.clear();
-      // Construct the immediate supertype relation.
+    // Construct the immediate supertype relation.
     Multimap<String, String> superTypesByType = HashMultimap.create();
     superTypesByType.putAll(immediateTypeRelations.immediateImplementedInterfacesByClass);
     superTypesByType.putAll(Multimaps.forMap(immediateTypeRelations.immediateSuperclassesByClass));
     superTypesByType.putAll(immediateTypeRelations.immediateSuperInterfacesByInterface);
 
-    Multimap<String, String> superTypesByTypeClosure = HashMultimap.create();
-    transitiveClosure(superTypesByType, superTypesByTypeClosure);
+    Multimap<String, String> superTypesByTypeClosure = transitiveClosure(superTypesByType);
 
     // Remove interfaces from keys and classes from values.
-    implementedInterfacesByClass.putAll(Multimaps.filterEntries(superTypesByTypeClosure,
-        new Predicate<Entry<String, String>>() {
-          @Override
-          public boolean apply(Entry<String, String> typeTypeEntry) {
-            // Only keep classes as keys and interfaces as values.
-            return allClasses.contains(typeTypeEntry.getKey()) &&
-                !allClasses.contains(typeTypeEntry.getValue());
-          }
-        }));
+    implementedInterfacesByClass = ImmutableSetMultimap.copyOf(
+        Multimaps.filterEntries(superTypesByTypeClosure,
+            new Predicate<Entry<String, String>>() {
+              @Override
+              public boolean apply(Entry<String, String> typeTypeEntry) {
+                // Only keep classes as keys and interfaces as values.
+                return allClasses.contains(typeTypeEntry.getKey()) &&
+                    !allClasses.contains(typeTypeEntry.getValue());
+              }
+            }));
 
-    classesByImplementingInterface.clear();
-    Multimaps.invertFrom(implementedInterfacesByClass, classesByImplementingInterface);
+    classesByImplementingInterface =
+        ImmutableSetMultimap.copyOf(inverse(implementedInterfacesByClass));
   }
 
   private void computeSingleJSO() {
@@ -1324,21 +1313,15 @@ public class JTypeOracle implements Serializable {
   }
 
   private void computeClassMaps() {
-    superclassesByClass.clear();
-    transitiveClosure(Multimaps.forMap(immediateTypeRelations.immediateSuperclassesByClass),
-        superclassesByClass);
-
-    subclassesByClass.clear();
-    Multimaps.invertFrom(superclassesByClass, subclassesByClass);
+    superclassesByClass = ImmutableSetMultimap.copyOf(
+        transitiveClosure(Multimaps.forMap(immediateTypeRelations.immediateSuperclassesByClass)));
+    subclassesByClass = ImmutableSetMultimap.copyOf(inverse(superclassesByClass));
   }
 
   private void computeInterfaceMaps() {
-    superInterfacesByInterface.clear();
-    transitiveClosure(immediateTypeRelations.immediateSuperInterfacesByInterface,
-        superInterfacesByInterface);
-
-    subInterfacesByInterface.clear();
-    Multimaps.invertFrom(superInterfacesByInterface, subInterfacesByInterface);
+    superInterfacesByInterface = ImmutableSetMultimap.copyOf(
+        transitiveClosure(immediateTypeRelations.immediateSuperInterfacesByInterface));
+    subInterfacesByInterface  = ImmutableSetMultimap.copyOf(inverse(superInterfacesByInterface));
   }
 
   private void computeClinitTarget(JDeclaredType type, Set<JDeclaredType> computed) {
@@ -1565,15 +1548,14 @@ public class JTypeOracle implements Serializable {
   /**
    * Computes the transitive closure of a relation.
    */
-  private void transitiveClosure(Multimap<String, String> relation,
-      Multimap<String, String> transitiveClosure) {
-    assert transitiveClosure.isEmpty();
-
+  private Multimap<String, String> transitiveClosure(Multimap<String, String> relation) {
+    Multimap<String, String> transitiveClosure = HashMultimap.create();
     Set<String> domain = Sets.newHashSet(relation.keySet());
     domain.addAll(relation.values());
     for (String element : domain) {
       expandTransitiveClosureForElement(relation, element, transitiveClosure);
     }
+    return transitiveClosure;
   }
 
   /**
@@ -1605,7 +1587,7 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Given two binary relations {@code f} and {@code g} represented as multimap computes the
+   * Given two binary relations {@code f} and {@code g} represented as multimaps computes the
    * relational composition, i.e. (a,c) is in (f.g) iif (a,b) is in f and (b,c) is in g.
    */
   private <A, B, C> Multimap<A, C> compose(Multimap<A, B> f, Multimap<B, C> g) {
@@ -1619,6 +1601,16 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
+   * Given a binary relation {@code relation} represented as a multimap computes the relational
+   * inverse; i.e. (a,b) is in inverse(relation) iff (b,a) is in relation.
+   */
+  private <K, V> Multimap<V, K> inverse(Multimap<K, V> relation) {
+    Multimap<V, K> inverse = HashMultimap.create();
+    Multimaps.invertFrom(relation, inverse);
+    return inverse;
+  }
+
+  /**
    * Returns true if type implements the interface represented by qType, either
    * directly or indirectly.
    */
@@ -1627,6 +1619,6 @@ public class JTypeOracle implements Serializable {
   }
 
   private boolean isSuperClass(String type, String qType) {
-    return superclassesByClass.containsEntry(type, qType);
+    return subclassesByClass.containsEntry(qType, type);
   }
 }
