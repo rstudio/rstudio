@@ -60,7 +60,7 @@ class Recompiler {
   private final TreeLogger logger;
   private String serverPrefix;
   private int compilesDone = 0;
-  private MinimalRebuildCache minimalRebuildCache;
+  private MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
 
   // after renaming
   private AtomicReference<String> moduleName = new AtomicReference<String>(null);
