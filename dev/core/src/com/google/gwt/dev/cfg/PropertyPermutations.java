@@ -129,7 +129,7 @@ public class PropertyPermutations implements Iterable<String[]> {
 
     assert winner != null;
 
-    String[] options = prop.getAllowedValues(winner);
+    String[] options = prop.getGeneratedValues(winner);
     for (int i = 0; i < options.length; i++) {
       String knownValue = options[i];
 

@@ -59,7 +59,7 @@ public class BindingProps implements Serializable {
     for (int i = 0; i < len; i++) {
       BindingProperty prop = orderedProps[i];
       String value = orderedPropValues[i];
-      if (!prop.isAllowedValue(value)) {
+      if (!prop.isGeneratedValue(value)) {
         throw new IllegalArgumentException("Property " + prop.getName()
             + " cannot have value " + value);
       }

@@ -55,10 +55,10 @@ public class PropertyTest extends TestCase {
       BindingProperty restricted = (BindingProperty) p.find("restricted");
       assertNotNull(restricted);
       assertEquals(3,
-          restricted.getAllowedValues(restricted.getRootCondition()).length);
+          restricted.getGeneratedValues(restricted.getRootCondition()).length);
       assertEquals(
           Arrays.asList("a", "b", "c"),
-          Arrays.asList(restricted.getAllowedValues(restricted.getRootCondition())));
+          Arrays.asList(restricted.getGeneratedValues(restricted.getRootCondition())));
       assertTrue(restricted.isDefinedValue("d"));
       assertFalse(restricted.isAllowedValue("d"));
     }
@@ -68,9 +68,9 @@ public class PropertyTest extends TestCase {
       assertNotNull(restricted1s);
       assertTrue(restricted1s.isAllowedValue("a"));
       assertEquals(1,
-          restricted1s.getAllowedValues(restricted1s.getRootCondition()).length);
+          restricted1s.getGeneratedValues(restricted1s.getRootCondition()).length);
       assertEquals("a",
-          restricted1s.getAllowedValues(restricted1s.getRootCondition())[0]);
+          restricted1s.getGeneratedValues(restricted1s.getRootCondition())[0]);
     }
 
     {
@@ -86,11 +86,11 @@ public class PropertyTest extends TestCase {
       Iterator<Condition> it = conditional.getConditionalValues().keySet().iterator();
 
       assertEquals(Arrays.asList("a", "b", "c"),
-          Arrays.asList(conditional.getAllowedValues(it.next())));
+          Arrays.asList(conditional.getGeneratedValues(it.next())));
       assertEquals(Arrays.asList("a", "b"),
-          Arrays.asList(conditional.getAllowedValues(it.next())));
+          Arrays.asList(conditional.getGeneratedValues(it.next())));
       assertEquals(Arrays.asList("c"),
-          Arrays.asList(conditional.getAllowedValues(it.next())));
+          Arrays.asList(conditional.getGeneratedValues(it.next())));
     }
 
     {

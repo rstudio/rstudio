@@ -139,7 +139,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     }
 
     Condition winner = computeActiveCondition(logger, prop);
-    String[] values = prop.getAllowedValues(winner);
+    String[] values = prop.getGeneratedValues(winner);
     if (values.length == 1) {
       return values[0];
     }

@@ -67,7 +67,7 @@ public class PropertyDefiningStrategy implements Strategy {
         if (!binding.isDefinedValue(property.value())) {
           binding.addTargetLibraryDefinedValue(binding.getRootCondition(), property.value());
         }
-        binding.setAllowedValues(
+        binding.setValues(
             binding.getRootCondition(), property.value());
       }
     }

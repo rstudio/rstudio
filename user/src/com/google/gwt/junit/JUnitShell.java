@@ -1076,8 +1076,7 @@ public class JUnitShell extends DevMode {
       Property userAgent = props.find("user.agent");
       if (userAgent instanceof BindingProperty) {
         BindingProperty bindingProperty = (BindingProperty) userAgent;
-        bindingProperty.setAllowedValues(bindingProperty.getRootCondition(),
-            userAgents.toArray(new String[0]));
+        bindingProperty.setRootGeneratedValues(userAgents.toArray(new String[0]));
       }
     }
     boolean success = false;
