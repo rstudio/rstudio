@@ -875,10 +875,8 @@ public abstract class JavaToJavaScriptCompiler {
 
     protected RebindPermutationOracle rpo;
     protected String[] entryPointTypeNames;
-    public static final String JS_EXPORT_ANN =
-        "com.google.gwt.core.client.js.JsExport";
-    public static final String JS_TYPE_ANN =
-        "com.google.gwt.core.client.js.JsType";
+    private static final String JS_EXPORT_ANN = "com.google.gwt.core.client.js.JsExport";
+    private static final String JS_TYPE_ANN = "com.google.gwt.core.client.js.JsType";
 
     public Precompiler(RebindPermutationOracle rpo, String[] entryPointTypeNames) {
       this.rpo = rpo;
@@ -1143,21 +1141,25 @@ public abstract class JavaToJavaScriptCompiler {
         for (com.google.gwt.dev.javac.typemodel.JClassType type :
             typeOracle.getTypes()) {
           for (Annotation ann : type.getAnnotations()) {
+            // If the type immediately exports symbols to JS.
             if (ann.annotationType().getName().equals(JS_EXPORT_ANN)) {
               allRootTypes.add(type.getQualifiedSourceName());
               continue nextType;
             }
           }
           if (isJsType(type)) {
+            // If the type or any transitive interface is a JS type.
             allRootTypes.add(type.getQualifiedSourceName());
-            continue nextType;
           }
         }
       }
     }
 
-    private boolean isJsType(
-        com.google.gwt.dev.javac.typemodel.JClassType type) {
+    /**
+     * Returns true if the type, or any super-interface has a JsType
+     * annotation.
+     */
+    private boolean isJsType(com.google.gwt.dev.javac.typemodel.JClassType type) {
       for (Annotation ann : type.getAnnotations()) {
         if (ann.annotationType().getName().equals(JS_TYPE_ANN)) {
           return true;
