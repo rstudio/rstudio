@@ -18,22 +18,14 @@ package com.google.gwt.emultest.java.lang;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * TODO: document me.
+ * Unit tests for the Javascript emulation of the Long/long autoboxed
+ * fundamental type.
  */
 public class LongTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
-  }
-
-  public void testBinaryString() {
-    assertEquals("10001111101101101111011110001100100000000",
-        Long.toBinaryString(1234500000000L));
-    assertEquals("0", Long.toBinaryString(0L));
-    assertEquals(
-        "1111111111111111111111101110000010010010000100001110011100000000",
-        Long.toBinaryString(-1234500000000L));
   }
 
   public void testBitCount() {
@@ -253,8 +245,48 @@ public class LongTest extends GWTTestCase {
     assertEquals(Long.MAX_VALUE, Long.valueOf(Long.MAX_VALUE).longValue());
   }
 
+  public void testToBinaryString() {
+    assertEquals("0", Long.toBinaryString(0L));
+    assertEquals("10001111101101101111011110001100100000000", Long.toBinaryString(1234500000000L));
+    assertEquals("1111111111111111111111101110000010010010000100001110011100000000",
+        Long.toBinaryString(-1234500000000L));
+  }
+
   public void testToHexString() {
+    assertEquals("a", Long.toHexString(0xAL));
+    assertEquals("12345", Long.toHexString(0x12345L));
     assertEquals("1234500000000", Long.toHexString(0x1234500000000L));
     assertEquals("fff1234500000000", Long.toHexString(0xFFF1234500000000L));
+  }
+
+  public void testToOctalString() {
+    assertEquals("7", Long.toOctalString(7L));
+    assertEquals("77777777777", Long.toOctalString(077777777777L));
+    assertEquals("1000000000000000000000", Long.toOctalString(Long.MIN_VALUE));
+    assertEquals("777777777777777777777", Long.toOctalString(Long.MAX_VALUE));
+  }
+
+  public void testToString() {
+    assertEquals("89000000005", new Long(89000000005L).toString());
+    assertEquals("-9223372036854775808", new Long(Long.MIN_VALUE).toString());
+    assertEquals("9223372036854775807", new Long(Long.MAX_VALUE).toString());
+
+    assertEquals("-80765", Long.toString(-80765L));
+    assertEquals("80765", Long.toString(80765L));
+    assertEquals("-2147483648", Long.toString((long) Integer.MIN_VALUE));
+    assertEquals("2147483647", Long.toString((long) Integer.MAX_VALUE));
+    assertEquals("-89000000005", Long.toString(-89000000005L));
+    assertEquals("89000000005", Long.toString(89000000005L));
+    assertEquals("-9223372036854775808", Long.toString(Long.MIN_VALUE));
+    assertEquals("9223372036854775807", Long.toString(Long.MAX_VALUE));
+
+    assertEquals("100000000", Long.toString(100000000L, 10));
+    assertEquals("77777777777", Long.toString(8589934591L, 8));
+    assertEquals("fffffffff", Long.toString(68719476735L, 16));
+    assertEquals("1111111111111111111111111111111111111111111", Long.toString(8796093022207L, 2));
+    assertEquals("-9223372036854775808", Long.toString(0x8000000000000000L, 10));
+    assertEquals("9223372036854775807", Long.toString(0x7fffffffffffffffL, 10));
+    assertEquals("-8000000000000000", Long.toString(0x8000000000000000L, 16));
+    assertEquals("7fffffffffffffff", Long.toString(0x7fffffffffffffffL, 16));
   }
 }

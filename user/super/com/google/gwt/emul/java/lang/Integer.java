@@ -233,7 +233,7 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static Integer valueOf(String s) throws NumberFormatException {
-    return Integer.valueOf(Integer.parseInt(s));
+    return valueOf(s, 10);
   }
 
   public static Integer valueOf(String s, int radix)

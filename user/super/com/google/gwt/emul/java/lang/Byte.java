@@ -73,7 +73,7 @@ public final class Byte extends Number implements Comparable<Byte> {
   }
 
   public static Byte valueOf(String s) throws NumberFormatException {
-    return Byte.valueOf(Byte.parseByte(s));
+    return valueOf(s, 10);
   }
 
   public static Byte valueOf(String s, int radix) throws NumberFormatException {

@@ -26,6 +26,14 @@ public class NumberFormatException extends IllegalArgumentException {
     return new NumberFormatException("For input string: \"" + s + "\"");
   }
 
+  static NumberFormatException forNullInputString() {
+    return new NumberFormatException("null");
+  }
+
+  static NumberFormatException forRadix(int radix) {
+    return new NumberFormatException("radix " + radix + " out of range");
+  }
+
   public NumberFormatException() {
   }
 

@@ -78,7 +78,7 @@ public final class Short extends Number implements Comparable<Short> {
   }
 
   public static Short valueOf(String s) throws NumberFormatException {
-    return Short.valueOf(Short.parseShort(s));
+    return valueOf(s, 10);
   }
 
   public static Short valueOf(String s, int radix) throws NumberFormatException {
