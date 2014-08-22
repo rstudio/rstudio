@@ -68,7 +68,7 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static Integer decode(String s) throws NumberFormatException {
-    return Integer.valueOf((int) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
+    return Integer.valueOf(__decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
 
   /**

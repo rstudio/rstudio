@@ -142,7 +142,7 @@ public abstract class Number implements Serializable {
    * based on the parsing rules defined in the Javadocs for Integer.decode() and
    * invoke __parseAndValidateInt.
    */
-  protected static long __decodeAndValidateInt(String s, int lowerBound,
+  protected static int __decodeAndValidateInt(String s, int lowerBound,
       int upperBound) throws NumberFormatException {
     __Decode decode = __decodeNumberString(s);
     return __parseAndValidateInt(decode.payload, decode.radix, lowerBound,
