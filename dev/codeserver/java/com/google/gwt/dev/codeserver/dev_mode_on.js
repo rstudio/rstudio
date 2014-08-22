@@ -268,6 +268,20 @@
       return div;
     }
 
+    function makeFooter() {
+      var warnings = window.__gwt_codeserver_config.warnings;
+      var div = $doc.createElement("div");
+      if (warnings.length > 0) {
+        div.style.marginTop = "10px";
+      }
+      div.appendChild(makeCodeServerLink());
+      for (var i = 0; i < warnings.length; i++) {
+        var warning = makeTextElt('div', '10pt', warnings[i]);
+        div.appendChild(warning);
+      }
+      return div;
+    }
+
     var active_modules = window.__gwt_activeModules;
 
     var moduleTable = $doc.createElement('table');
@@ -288,7 +302,7 @@
       dialog.appendChild(makeTextElt('span', '16pt',
           'Can\'t find any GWT Modules on this page.'));
     }
-    dialog.appendChild(makeCodeServerLink());
+    dialog.appendChild(makeFooter());
 
     // Grey out everything under the dialog.
     var overlay = makeOverlay();

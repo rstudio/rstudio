@@ -131,7 +131,7 @@ public class CodeServer {
     File workDir = ensureWorkDir(options);
     System.out.println("workDir: " + workDir);
 
-    Modules modules = new Modules();
+    Modules modules = new Modules(options);
     for (String moduleName : options.getModuleNames()) {
       AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
 

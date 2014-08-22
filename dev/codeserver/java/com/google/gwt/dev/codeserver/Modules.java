@@ -19,8 +19,8 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,10 +31,14 @@ import java.util.concurrent.atomic.AtomicReference;
  * modules on the front page.
  */
 class Modules implements Iterable<String> {
-  private final Map<String, ModuleState> moduleStateMap =
-      new HashMap<String, ModuleState>();
+  private final Options options;
+  private final Map<String, ModuleState> moduleStateMap = Maps.newHashMap();
 
   private AtomicReference<Progress> progress = new AtomicReference<Progress>(Progress.IDLE);
+
+  public Modules(Options options) {
+    this.options = options;
+  }
 
   /**
    * Adds a {@link ModuleState} to the map.
@@ -67,7 +71,8 @@ class Modules implements Iterable<String> {
   }
 
   /**
-   * Returns a configuration object containing the names of all the modules.
+   * Returns a configuration object containing the names of all the modules
+   * and warnings to display to the user.
    */
   JsonObject getConfig() {
     JsonObject config = JsonObject.create();
@@ -76,6 +81,7 @@ class Modules implements Iterable<String> {
       moduleNames.add(module);
     }
     config.put("moduleNames", moduleNames);
+    config.put("warnings", options.getWarningsAsJson());
     return config;
   }
 
