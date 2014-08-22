@@ -282,6 +282,7 @@
   </target>
 
   <target name="test" depends="build, compile.tests"
+          unless="test.dev.disable"
           description="Run unit tests for this project.">
     <fileset id="tests.dev.core" dir="${javac.junit.out}"
              includes="${gwt.junit.testcase.dev.core.includes}"

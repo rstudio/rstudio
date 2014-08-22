@@ -142,7 +142,8 @@
   <!-- Precompile some GWT modules to speed up end-user builds   -->
   <!-- TODO(zundel): Find a way to precompile  all modules       -->
   <!--               without tedious manual specification        -->
-  <target name="precompile.modules" depends="compile">
+  <target name="precompile.modules" depends="compile"
+          unless="precompile.disable">
     <outofdate>
       <sourcefiles>
         <fileset dir="${gwt.root}/user/src">
@@ -442,7 +443,8 @@
 
   <target name="test.coverage.htmlunit"
           depends="compile, compile.tests"
-          description="Run tests for coverage support">
+          description="Run tests for coverage support"
+          unless="test.coverage.htmlunit.disable">
     <fileset id="test.coverage.htmlunit.tests" dir="${javac.junit.out}"
              includes="com/google/gwt/dev/js/client/CoverageTest.class"
              excludes=""/>
@@ -464,7 +466,7 @@
     <property name="compile.complete" value="true"/>
     <property name="compile.tests.complete" value="true"/>
 
-    <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
+    <property.ensure name="dev.built" location="${gwt.dev.jar}"
                      message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory."/>
     <limit failonerror="true" hours="${test.timeout}">
       <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
@@ -492,7 +494,7 @@
     <property name="compile.complete" value="true"/>
     <property name="compile.tests.complete" value="true"/>
 
-    <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
+    <property.ensure name="dev.built" location="${gwt.dev.jar}"
                      message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory."/>
     <limit failonerror="true" hours="${test.timeout}">
       <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
@@ -630,7 +632,7 @@
     <property name="compile.complete" value="true"/>
     <property name="compile.tests.complete" value="true"/>
 
-    <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
+    <property.ensure name="dev.built" location="${gwt.dev.jar}"
                      message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory."/>
     <limit failonerror="true" hours="${test.timeout}">
 
