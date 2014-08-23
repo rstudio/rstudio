@@ -82,6 +82,10 @@ public class WebServer {
   private static final Pattern SAFE_CALLBACK =
       Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*\\.)*[a-zA-Z_][a-zA-Z0-9_]*");
 
+  static final Pattern STRONG_NAME = Pattern.compile("[\\dA-F]{32}");
+
+  private static final Pattern CACHE_JS_FILE = Pattern.compile("/(" + STRONG_NAME + ").cache.js$");
+
   private static final MimeTypes MIME_TYPES = new MimeTypes();
 
   private final SourceHandler handler;
@@ -296,9 +300,12 @@ public class WebServer {
       response.setHeader("Content-Encoding", "gzip");
     }
 
-    if (target.endsWith(".cache.js")) {
-      String strongName = target.replaceFirst("^.*/(.+).cache.js$", "$1");
-      response.setHeader("X-SourceMap", sourceMapLocationForModule(moduleName, strongName));
+    Matcher match = CACHE_JS_FILE.matcher(target);
+    if (match.matches()) {
+      String strongName = match.group(1);
+      String template = SourceHandler.sourceMapLocationTemplate(moduleName);
+      String sourceMapUrl = template.replace("__HASH__", strongName);
+      response.setHeader("X-SourceMap", sourceMapUrl);
     }
     response.setHeader("Access-Control-Allow-Origin", "*");
     String mimeType = guessMimeType(target);
@@ -502,15 +509,6 @@ public class WebServer {
       }
     }
     return result;
-  }
-
-  static String sourceMapLocationForModule(String moduleName) {
-    return sourceMapLocationForModule(moduleName, "__HASH__");
-  }
-
-  private static String sourceMapLocationForModule(String moduleName, String strongName) {
-    return SourceHandler.SOURCEMAP_PATH + moduleName + "/" + strongName
-        + SourceHandler.SOURCEMAP_SUFFIX;
   }
 
   private static void setHandled(HttpServletRequest request) {

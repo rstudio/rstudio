@@ -38,9 +38,9 @@ import javax.servlet.http.HttpServletResponse;
  * >Source Map Spec</a>, such as Chrome.)
  *
  * <p>The debugger will first fetch the source map from
- * /sourcemaps/\{module name\}/gwtSourceMap.json. This file contains the names of Java
+ * /sourcemaps/[module name]/[strong name]_sourcemap.json. This file contains the names of Java
  * source files to download. Each source file will have a path like
- * "/sourcemaps/\{module name\}/src/{filename}".</p>
+ * "/sourcemaps/[module name]/src/[filename]".</p>
  */
 class SourceHandler {
 
@@ -50,9 +50,9 @@ class SourceHandler {
   static final String SOURCEMAP_PATH = "/sourcemaps/";
 
   /**
-   * The suffix of a source map location json file.
+   * The suffix that Super Dev Mode uses in source map URL's.
    */
-  static final String SOURCEMAP_SUFFIX = "_sourceMap0.json";
+  private static final String SOURCEMAP_URL_SUFFIX = "_sourcemap.json";
 
   /**
    * Matches a valid source map json file request.
@@ -61,7 +61,7 @@ class SourceHandler {
    *   StrongName_sourceMap0.json
    */
   private static final Pattern SOURCEMAP_FILENAME_PATTERN = Pattern.compile(
-      "^([\\dA-F]{32})" + SOURCEMAP_SUFFIX + "$");
+      "^(" + WebServer.STRONG_NAME + ")" + Pattern.quote(SOURCEMAP_URL_SUFFIX) + "$");
 
   /**
    * Matches a valid source map request.
@@ -87,6 +87,14 @@ class SourceHandler {
     return getModuleNameFromRequest(target) != null;
   }
 
+  /**
+   * The template for the sourcemap location to give the compiler.
+   * It contains one template variable, __HASH__ for the strong name.
+   */
+  static String sourceMapLocationTemplate(String moduleName) {
+    return SOURCEMAP_PATH + moduleName + "/__HASH__" + SOURCEMAP_URL_SUFFIX;
+  }
+
   void handle(String target, HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     String moduleName = getModuleNameFromRequest(target);
@@ -99,6 +107,12 @@ class SourceHandler {
 
     if (rest.isEmpty()) {
       sendDirectoryListPage(moduleName, response);
+    } else if (rest.equals("gwtSourceMap.json")) {
+      // This URL is no longer used by debuggers (we use the strong name) but is used for testing.
+      // It's useful not to need the strong name to download the sourcemap.
+      // (But this only works when there is one permutation.)
+      ModuleState moduleState = modules.get(moduleName);
+      sendSourceMap(moduleName, moduleState.findSourceMapForOnePermutation(), request, response);
     } else if (rest.endsWith("/")) {
       sendFileListPage(moduleName, rest, response);
     } else if (rest.endsWith(".java")) {
@@ -106,7 +120,9 @@ class SourceHandler {
     } else {
       String strongName = getStrongNameFromSourcemapFilename(rest);
       if (strongName != null) {
-        sendSourceMap(moduleName, strongName, request, response);
+        ModuleState moduleState = modules.get(moduleName);
+        File sourceMap = moduleState.findSourceMap(strongName).getAbsoluteFile();
+        sendSourceMap(moduleName, sourceMap, request, response);
       } else {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         logger.log(TreeLogger.WARN, "returned not found for request: " + target);
@@ -124,16 +140,10 @@ class SourceHandler {
     return matcher.matches() ? matcher.group(1) : null;
   }
 
-  private void sendSourceMap(String moduleName, String strongName, HttpServletRequest request,
+  private void sendSourceMap(String moduleName, File sourceMap, HttpServletRequest request,
       HttpServletResponse response) throws IOException {
 
     long startTime = System.currentTimeMillis();
-
-    ModuleState moduleState = modules.get(moduleName);
-
-    String sourceMapPath = moduleState.findSymbolMapDir().getAbsolutePath();
-
-    File sourceMap = new File(sourceMapPath + "/" + strongName + SOURCEMAP_SUFFIX);
 
     // Stream the file, substituting the sourceroot variable with the filename.
     // (This is more efficient than parsing the file as JSON.)
@@ -269,6 +279,6 @@ class SourceHandler {
 
   private SourceMap loadSourceMap(String moduleName) {
     ModuleState moduleState = modules.get(moduleName);
-    return SourceMap.load(moduleState.findSourceMap());
+    return SourceMap.load(moduleState.findSourceMapForOnePermutation());
   }
 }

@@ -1,8 +1,5 @@
 package com.google.gwt.dev.codeserver;
 
-import static com.google.gwt.dev.codeserver.SourceHandler.SOURCEMAP_PATH;
-import static com.google.gwt.dev.codeserver.SourceHandler.SOURCEMAP_SUFFIX;
-
 import com.google.gwt.dev.util.Util;
 
 import static org.junit.Assert.assertEquals;
@@ -17,7 +14,6 @@ import org.junit.Test;
  */
 public class SourceHandlerTest {
 
-  private static final String VALID_MODULE_NAME = "myModule";
   private static final String VALID_STRONG_NAME = Util.computeStrongName("foo-bar".getBytes());
 
   /**
@@ -25,17 +21,14 @@ public class SourceHandlerTest {
    */
   @Test
   public void testIsSourceMapRequest() {
-    assertTrue(SourceHandler.isSourceMapRequest(SOURCEMAP_PATH + VALID_MODULE_NAME + "/"));
-    assertTrue(SourceHandler.isSourceMapRequest(SOURCEMAP_PATH + VALID_MODULE_NAME + "/whatever"));
-    assertTrue(SourceHandler.isSourceMapRequest(SOURCEMAP_PATH + VALID_MODULE_NAME + "/folder/"));
-    assertTrue(SourceHandler.isSourceMapRequest(
-        SOURCEMAP_PATH + VALID_MODULE_NAME + "/folder/file.ext"));
-    assertTrue(SourceHandler.isSourceMapRequest(
-        SOURCEMAP_PATH + VALID_MODULE_NAME + "/" + VALID_STRONG_NAME + SOURCEMAP_SUFFIX));
+    checkSourceMapRequest("/sourcemaps/myModule/");
+    checkSourceMapRequest("/sourcemaps/myModule/whatever");
+    checkSourceMapRequest("/sourcemaps/myModule/folder/");
+    checkSourceMapRequest("/sourcemaps/myModule/folder/file.ext");
+    checkSourceMapRequest("/sourcemaps/myModule/" + VALID_STRONG_NAME + "_sourcemap.json");
 
-    assertFalse(SourceHandler.isSourceMapRequest(SOURCEMAP_PATH + VALID_MODULE_NAME));
-    assertFalse(SourceHandler.isSourceMapRequest(
-        "whatever" + SOURCEMAP_PATH + VALID_MODULE_NAME + "/"));
+    checkNotSourceMapRequest("/sourcemaps/myModule");
+    checkNotSourceMapRequest("whatever/sourcemaps/myModule/");
   }
 
   /**
@@ -43,21 +36,36 @@ public class SourceHandlerTest {
    */
   @Test
   public void testGetModuleNameFromRequest() {
-    assertEquals(VALID_MODULE_NAME, SourceHandler.getModuleNameFromRequest(
-        SOURCEMAP_PATH + VALID_MODULE_NAME + "/"));
-    assertEquals(VALID_MODULE_NAME, SourceHandler.getModuleNameFromRequest(
-        SOURCEMAP_PATH + VALID_MODULE_NAME + "/" + VALID_STRONG_NAME + SOURCEMAP_SUFFIX));
+    assertEquals("myModule", SourceHandler.getModuleNameFromRequest(
+        "/sourcemaps/myModule/"));
+    assertEquals("myModule", SourceHandler.getModuleNameFromRequest(
+        "/sourcemaps/myModule/1234_sourcemap.json"));
   }
 
   /**
    * Test {@link SourceHandler#getStrongNameFromSourcemapFilename(String)}
    */
   @Test
-  public void testGwtStrongNameFromSourcemapFilename() {
+  public void testGetStrongNameFromSourcemapFilename() {
     assertEquals(VALID_STRONG_NAME, SourceHandler
-        .getStrongNameFromSourcemapFilename(VALID_STRONG_NAME + SOURCEMAP_SUFFIX));
-    assertNull(SourceHandler.getStrongNameFromSourcemapFilename("invalid_hash" + SOURCEMAP_SUFFIX));
-    assertNull(SourceHandler.getStrongNameFromSourcemapFilename(
-        "whatever/" + VALID_STRONG_NAME + SOURCEMAP_SUFFIX));
+        .getStrongNameFromSourcemapFilename(VALID_STRONG_NAME + "_sourcemap.json"));
+    checkNoStrongName("invalid_hash_sourcemap.json");
+    checkNoStrongName("whatever/" + VALID_STRONG_NAME + "_sourcemap.json");
+    checkNoStrongName(VALID_STRONG_NAME + "_sourcemap/json");
+  }
+
+  private void checkSourceMapRequest(String validUrl) {
+    assertTrue("should be a valid sourcemap URL but isn't: " + validUrl,
+      SourceHandler.isSourceMapRequest(validUrl));
+  }
+
+  private void checkNotSourceMapRequest(String validUrl) {
+    assertFalse("should not be a valid sourcemap URL but is: " + validUrl,
+      SourceHandler.isSourceMapRequest(validUrl));
+  }
+
+  private void checkNoStrongName(String rest) {
+    assertNull("shouldn't have returned a strong name for: " + rest,
+      SourceHandler.getStrongNameFromSourcemapFilename(rest));
   }
 }

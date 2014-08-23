@@ -38,6 +38,12 @@ import java.util.concurrent.atomic.AtomicReference;
  * to recompile it and where the compiler output is.
  */
 class ModuleState {
+
+  /**
+   * The suffix that the GWT compiler uses when writing a sourcemap file.
+   */
+  private static final String SOURCEMAP_FILE_SUFFIX = "_sourceMap0.json";
+
   private final AtomicReference<CompileDir> current = new AtomicReference<CompileDir>();
   private final Recompiler recompiler;
   private final TreeLogger logger;
@@ -93,16 +99,18 @@ class ModuleState {
   }
 
   /**
-   * Returns the source map file from the most recent recompile.
+   * Returns the source map file from the most recent recompile,
+   * assuming there is one permutation.
+   *
    * @throws RuntimeException if unable
    */
-  File findSourceMap() {
+  File findSourceMapForOnePermutation() {
     File dir = findSymbolMapDir();
 
     File[] sourceMapFiles = dir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        return name.matches(".*" + SourceHandler.SOURCEMAP_SUFFIX);
+        return name.endsWith(SOURCEMAP_FILE_SUFFIX);
       }
     });
 
@@ -122,10 +130,24 @@ class ModuleState {
   }
 
   /**
+   * Returns the source map file given a strong name.
+   *
+   * @throws RuntimeException if unable
+   */
+  public File findSourceMap(String strongName) {
+    File dir = findSymbolMapDir();
+    File file = new File(dir, strongName + SOURCEMAP_FILE_SUFFIX);
+    if (!file.isFile()) {
+      throw new RuntimeException("Sourcemap file doesn't exist for " + strongName);
+    }
+    return file;
+  }
+
+  /**
    * Returns the symbols map folder for this modulename.
    * @throws RuntimeException if unable
    */
-  File findSymbolMapDir() {
+  private File findSymbolMapDir() {
     String moduleName = recompiler.getModuleName();
     File symbolMapsDir = current.get().findSymbolMapDir(moduleName);
     if (symbolMapsDir == null) {

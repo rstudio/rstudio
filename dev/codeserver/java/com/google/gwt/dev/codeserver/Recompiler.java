@@ -360,7 +360,7 @@ class Recompiler {
     // Fix bug with SDM and Chrome 24+ where //@ sourceURL directives cause X-SourceMap header to be ignored
     // Frustratingly, Chrome won't canonicalize a relative URL
     overrideConfig(moduleDef, "includeSourceMapUrl", "http://" + serverPrefix +
-        WebServer.sourceMapLocationForModule(moduleDef.getName()));
+        SourceHandler.sourceMapLocationTemplate(moduleDef.getName()));
 
     // If present, set some config properties back to defaults.
     // (Needed for Google's server-side linker.)

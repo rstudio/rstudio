@@ -37,7 +37,7 @@ class ReverseSourceMap {
    */
   static ReverseSourceMap load(TreeLogger logger, ModuleState moduleState) {
     SourceMapConsumerV3 consumer = new SourceMapConsumerV3();
-    String unparsed = Util.readFileAsString(moduleState.findSourceMap());
+    String unparsed = Util.readFileAsString(moduleState.findSourceMapForOnePermutation());
     try {
       consumer.parse(unparsed);
       return new ReverseSourceMap(consumer);
