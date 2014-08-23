@@ -13,13 +13,41 @@
 #
 #
 
+# a vectorized function that takes any number of paths and aliases the home
+# directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
+# paths outside the home directory untouched
+.rs.addFunction("createAliasedPath", function(path)
+{
+   homeDir <- path.expand("~/")
+   homePathIdx <- substr(path, 1, nchar(homeDir)) == homeDir
+   homePaths <- path[homePathIdx]
+   path[homePathIdx] <-
+          paste("~", substr(homePaths, nchar(homeDir), nchar(homePaths)), sep="")
+   path
+})
+
+# Some R commands called during packaging-related operations (such as untar)
+# delegate to the system tar binary specified in TAR. On OS X, R may set TAR to
+# /usr/bin/gnutar, which exists prior to Mavericks (10.9) but not in later
+# rleases of the OS. In the special case wherein the TAR environment variable
+# on OS X is set to a non-existant gnutar and there exists a tar at
+# /usr/bin/tar, tell R to use that binary instead.
+if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
+    identical(Sys.getenv("TAR"), "/usr/bin/gnutar") && 
+    !file.exists("/usr/bin/gnutar") &&
+    file.exists("/usr/bin/tar"))
+{
+   Sys.setenv(TAR = "/usr/bin/tar")
+}
+
 .rs.addFunction( "updatePackageEvents", function()
 {
    reportPackageStatus <- function(status)
       function(pkgname, ...)
       {
          packageStatus = list(name=pkgname,
-                              path=.rs.pathPackage(pkgname, quiet=TRUE),
+                              path=.rs.createAliasedPath(
+                                     .rs.pathPackage(pkgname, quiet=TRUE)),
                               loaded=status)
          .rs.enqueClientEvent("package_status_changed", packageStatus)
       }
@@ -71,9 +99,18 @@
    .rs.registerReplaceHook("install.packages", "utils", function(original,
                                                                 pkgs,
                                                                 lib,
+                                                                repos = getOption("repos"),
                                                                 ...) 
    {
-      if (.rs.loadedPackageUpdates(pkgs)) {
+      if (!.Call("rs_canInstallPackages"))
+      {
+        stop("Package installation is disabled in this version of RStudio",
+             call. = FALSE)
+      }
+      
+      packratMode <- !is.na(Sys.getenv("R_PACKRAT_MODE", unset = NA))
+      
+      if (!is.null(repos) && !packratMode && .rs.loadedPackageUpdates(pkgs)) {
 
          # attempt to determine the install command
          if (length(sys.calls()) > 7) {
@@ -96,12 +133,12 @@
       # do housekeeping after we execute the original
       on.exit({
          .rs.updatePackageEvents()
-         .rs.enqueClientEvent("installed_packages_changed")
+         .Call("rs_packageLibraryMutated")
          .rs.restorePreviousPath()
       })
 
       # call original
-      original(pkgs, lib, ...)
+      original(pkgs, lib, repos, ...)
    })
    
    # whenever a package is removed notify the client (leave attach/detach
@@ -113,7 +150,7 @@
                                                                ...) 
    {
       # do housekeeping after we execute the original
-      on.exit(.rs.enqueClientEvent("installed_packages_changed"))
+      on.exit(.Call("rs_packageLibraryMutated"))
                          
       # call original
       original(pkgs, lib, ...) 
@@ -162,12 +199,27 @@
   .libPaths()[1]
 })
 
+.rs.addFunction("isPackageLoaded", function(packageName, libName)
+{
+   if (packageName %in% .packages())
+   {
+      # get the raw path to the package 
+      packagePath <- .rs.pathPackage(packageName, quiet=TRUE)
+
+      # alias (for comparison against libName, which comes from the client and
+      # is alised)
+      packagePath <- .rs.createAliasedPath(packagePath)
+
+      # compare with the library given by the client
+      .rs.scalar(identical(packagePath, paste(libName, packageName, sep="/")))
+   }
+   else 
+      .rs.scalar(FALSE)
+})
+
 .rs.addJsonRpcHandler( "is_package_loaded", function(packageName, libName)
 {
-   .rs.scalar( (packageName %in% .packages()) &&
-               identical(.rs.pathPackage(packageName, quiet=TRUE),
-                         paste(libName, packageName, sep="/"))
-             )
+   .rs.isPackageLoaded(packageName, libName)
 })
 
 .rs.addFunction("forceUnloadPackage", function(name)
@@ -209,6 +261,12 @@
   .libPaths(c(userdir, .libPaths()))
 })
 
+.rs.addFunction("ensureWriteableUserLibrary", function()
+{
+   if (!.rs.defaultLibPathIsWriteable())
+      .rs.initDefaultUserLibrary()
+})
+
 .rs.addFunction( "initializeRStudioPackages", function(libDir,
                                                        pkgSrcDir,
                                                        rsVersion,
@@ -217,8 +275,7 @@
   if (getRversion() >= "3.0.0") {
     
     # make sure the default library is writeable
-    if (!.rs.defaultLibPathIsWriteable()) 
-      .rs.initDefaultUserLibrary()
+    .rs.ensureWriteableUserLibrary()
 
     # function to update a package if necessary
     updateIfNecessary <- function(pkgName) {
@@ -245,7 +302,7 @@
   
 })
 
-.rs.addJsonRpcHandler( "list_packages", function()
+.rs.addFunction("listInstalledPackages", function()
 {
    # calculate unique libpaths
    uniqueLibPaths <- .rs.uniqueLibraryPaths()
@@ -263,7 +320,8 @@
                          "html", 
                          "00Index.html")
    loaded.pkgs <- .rs.pathPackage()
-   pkgs.loaded <- !is.na(match(paste(pkgs.library,pkgs.name, sep="/"),
+   pkgs.loaded <- !is.na(match(normalizePath(
+                                  paste(pkgs.library,pkgs.name, sep="/")),
                                loaded.pkgs))
    
 
@@ -275,6 +333,9 @@
                                               pkgs.library[[i]],
                                               instPkgs)
    }
+   
+   # alias library paths for the client
+   pkgs.library <- .rs.createAliasedPath(pkgs.library)
 
    # return data frame sorted by name
    packages = data.frame(name=pkgs.name,
@@ -420,6 +481,54 @@
       return(.rs.packagesLoaded(deps))
    }
 })
+
+.rs.addFunction("loadedPackagesAndDependencies", function(pkgs) {
+  
+  # if the default set of namespaces in rstudio are loaded
+  # then skip the check
+  defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
+                         "methods", "stats", "tools", "utils")
+  if (identical(defaultNamespaces, loadedNamespaces()) && length(.dynLibs()) == 4)
+    return(character())
+  
+  packagesLoaded <- function(pkgList) {
+    
+    # first check loaded namespaces
+    loaded <- pkgList[pkgList %in% loadedNamespaces()]
+    
+    # now check if there are libraries still loaded in spite of the
+    # namespace being unloaded 
+    libs <- .dynLibs()
+    libnames <- vapply(libs, "[[", character(1), "name")
+    loaded <- c(loaded, pkgList[pkgList %in% libnames])
+    loaded
+  }
+  
+  # package loaded
+  loaded <- packagesLoaded(pkgs)
+  
+  # dependencies loaded
+  avail <- available.packages()
+  deps <- suppressMessages(suppressWarnings(
+    utils:::getDependencies(pkgs, available=avail)))
+  loaded <- c(loaded, packagesLoaded(deps))
+  
+  # return unique list
+  unique(loaded)  
+})
+
+.rs.addFunction("forceUnloadForPackageInstall", function(pkgs) {
+  
+  # figure out which packages are loaded and/or have dependencies loaded
+  pkgs <- .rs.loadedPackagesAndDependencies(pkgs)
+  
+  # force unload them
+  sapply(pkgs, .rs.forceUnloadPackage)
+  
+  # return packages unloaded
+  pkgs
+})
+
 
 .rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
 {

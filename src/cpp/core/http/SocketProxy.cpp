@@ -18,6 +18,10 @@
 #include <winsock2.h>
 #endif
 
+#ifndef _WIN32
+#include <core/http/BoostAsioSsl.hpp>
+#endif
+
 #include <core/http/SocketProxy.hpp>
 
 #include <iostream>
@@ -61,43 +65,55 @@ void SocketProxy::readServer()
 void SocketProxy::handleClientRead(const boost::system::error_code& e,
                                    std::size_t bytesTransferred)
 {
-   if (!e)
+   // client and server reads can happen simultaneously on two threads; a race
+   // condition during close can lead to the socket not getting properly
+   // shut down. use a simple mutex to prevent the threads from simultaneously
+   // writing to the socket state.
+   LOCK_MUTEX(socketMutex_)
    {
-      std::vector<boost::asio::const_buffer> buffers;
-      buffers.push_back(boost::asio::buffer(clientBuffer_.data(),
-                                            bytesTransferred));
-      ptrServer_->asyncWrite(buffers,
-                             boost::bind(
-                                &SocketProxy::handleServerWrite,
-                                SocketProxy::shared_from_this(),
-                                boost::asio::placeholders::error,
-                                boost::asio::placeholders::bytes_transferred));
+      if (!e)
+      {
+         std::vector<boost::asio::const_buffer> buffers;
+         buffers.push_back(boost::asio::buffer(clientBuffer_.data(),
+                                               bytesTransferred));
+         ptrServer_->asyncWrite(buffers,
+                                boost::bind(
+                                   &SocketProxy::handleServerWrite,
+                                   SocketProxy::shared_from_this(),
+                                   boost::asio::placeholders::error,
+                                   boost::asio::placeholders::bytes_transferred));
+      }
+      else
+      {
+         handleError(e, ERROR_LOCATION);
+      }
    }
-   else
-   {
-      handleError(e, ERROR_LOCATION);
-   }
+   END_LOCK_MUTEX
 }
 
 void SocketProxy::handleServerRead(const boost::system::error_code& e,
                                    std::size_t bytesTransferred)
 {
-   if (!e)
+   LOCK_MUTEX(socketMutex_)
    {
-      std::vector<boost::asio::const_buffer> buffers;
-      buffers.push_back(boost::asio::buffer(serverBuffer_.data(),
-                                            bytesTransferred));
-      ptrClient_->asyncWrite(buffers,
-                             boost::bind(
-                                &SocketProxy::handleClientWrite,
-                                SocketProxy::shared_from_this(),
-                                boost::asio::placeholders::error,
-                                boost::asio::placeholders::bytes_transferred));
+      if (!e)
+      {
+         std::vector<boost::asio::const_buffer> buffers;
+         buffers.push_back(boost::asio::buffer(serverBuffer_.data(),
+                                               bytesTransferred));
+         ptrClient_->asyncWrite(buffers,
+                                boost::bind(
+                                   &SocketProxy::handleClientWrite,
+                                   SocketProxy::shared_from_this(),
+                                   boost::asio::placeholders::error,
+                                   boost::asio::placeholders::bytes_transferred));
+      }
+      else
+      {
+         handleError(e, ERROR_LOCATION);
+      }
    }
-   else
-   {
-      handleError(e, ERROR_LOCATION);
-   }
+   END_LOCK_MUTEX
 }
 
 void SocketProxy::handleClientWrite(const boost::system::error_code& e,
@@ -126,13 +142,33 @@ void SocketProxy::handleServerWrite(const boost::system::error_code& e,
    }
 }
 
+namespace {
+
+#ifndef _WIN32
+bool isSslShutdownError(const core::Error& error)
+{
+   return error.code().category() == boost::asio::error::get_ssl_category() &&
+          error.code().value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
+}
+#else
+bool isSslShutdownError(const core::Error& error)
+{
+   return false;
+}
+#endif
+} // anonymous namespace
+
 void SocketProxy::handleError(const boost::system::error_code& e,
                               const core::ErrorLocation& location)
 {
    // log the error if it wasn't connection terminated
    Error error(e, location);
-   if (!http::isConnectionTerminatedError(error))
+   if (!http::isConnectionTerminatedError(error) &&
+       (error.code() != boost::asio::error::operation_aborted) &&
+       !isSslShutdownError(error))
+   {
       LOG_ERROR(error);
+   }
 
    close();
 }

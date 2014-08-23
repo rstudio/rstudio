@@ -141,12 +141,12 @@ public abstract class HelpStrategy
       {
          String selectedItem = qname.name ;
          
-         if (selectedItem.endsWith("="))
+         if (selectedItem.endsWith(" = "))
          {
             assert StringUtil.isNullOrEmpty(qname.pkgName)
                               : "Completion parameter had a package name!? " +
                                 qname.pkgName + "::" + qname.name;
-            selectedItem = selectedItem.substring(0, selectedItem.length() - 1) ;
+            selectedItem = selectedItem.substring(0, selectedItem.length() - 3) ;
             
             parameter_ = selectedItem ;
             if (helpInfo_ != null)

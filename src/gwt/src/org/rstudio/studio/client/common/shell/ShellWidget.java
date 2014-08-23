@@ -21,15 +21,16 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -57,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
@@ -66,12 +68,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
-
+      
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
       output_ = new PreWidget();
       output_.setStylePrimaryName(styles_.output());
       output_.addClickHandler(secondaryInputHandler);
+      ElementIds.assignElementId(output_.getElement(), 
+                                 ElementIds.CONSOLE_OUTPUT);
+      output_.addPasteHandler(secondaryInputHandler);
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
@@ -90,6 +95,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       input_.setPadding(0);
       input_.autoHeight();
       final Widget inputWidget = input_.asWidget();
+      ElementIds.assignElementId(inputWidget.getElement(),
+                                 ElementIds.CONSOLE_INPUT);
       input_.addClickHandler(secondaryInputHandler) ;
       inputWidget.addStyleName(styles_.input());
       input_.addCursorChangedHandler(new CursorChangedHandler()
@@ -214,6 +221,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
             }
          });
       }
+
+      ElementIds.assignElementId(this.getElement(), ElementIds.SHELL_WIDGET);
    }
 
    protected void doOnLoad()
@@ -531,7 +540,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
     * is clicked.
     */
    private class SelectInputClickHandler implements ClickHandler,
-                                                    KeyDownHandler
+                                                    KeyDownHandler,
+                                                    PasteEvent.Handler
    {
       public void onClick(ClickEvent event)
       {
@@ -584,7 +594,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
          input_.setFocus(true);
          delegateEvent(input_.asWidget(), event);
       }
-
+      
+      public void onPaste(PasteEvent event)
+      {
+         // When pasting, focus the input so it'll receive the pasted text
+         input_.setFocus(true);
+      }
+      
       public void setInput(AceEditor input)
       {
          input_ = input;
@@ -631,7 +647,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       trailingOutput_ = null;
       trailingOutputConsole_ = null;
    }
-
+   
    public InputEditorDisplay getInputEditorDisplay()
    {
       return input_ ;

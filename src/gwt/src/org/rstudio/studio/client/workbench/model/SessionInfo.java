@@ -14,17 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.common.debugging.model.DebugState;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
@@ -32,6 +27,10 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentCo
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class SessionInfo extends JavaScriptObject
 {
@@ -187,6 +186,10 @@ public class SessionInfo extends JavaScriptObject
    public native final String getDefaultSSHKeyDir() /*-{
       return this.default_ssh_key_dir;
    }-*/;
+   
+   public native final boolean isGithubRepository() /*-{
+      return this.is_github_repo;
+   }-*/;
 
    // TODO: The check for null was for migration in the presence of 
    // sessions that couldn't suspend (3/21/2011). Remove this check
@@ -229,12 +232,7 @@ public class SessionInfo extends JavaScriptObject
    public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
       return this.console_processes;
    }-*/;
-   
-   public final native boolean isInternalPdfPreviewEnabled() /*-{
-      return this.internal_pdf_preview_enabled;
-   }-*/;
-   
-   
+    
    public final native String getSumatraPdfExePath() /*-{
       return this.sumatra_pdf_exe_path;
    }-*/;
@@ -258,6 +256,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean getHasPackageSrcDir() /*-{
       return this.has_pkg_src;
+   }-*/;
+   
+   public final native boolean getHasPackageVignetteDir() /*-{
+      return this.has_pkg_vig;
    }-*/;
    
    public final String getPresentationName()
@@ -329,10 +331,6 @@ public class SessionInfo extends JavaScriptObject
       return this.disable_packages;
    }-*/;
    
-   public final native DebugState getDebugState() /*-{
-      return this.debug_state;
-   }-*/;
-   
    public final native boolean getHaveSrcrefAttribute() /*-{
       return this.have_srcref_attribute;
    }-*/;
@@ -347,5 +345,17 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean getShowIdentity() /*-{
       return this.show_identity;
+   }-*/;
+
+   public final native boolean getHaveAdvancedStepCommands() /*-{
+      return this.have_advanced_step_commands;
+   }-*/;
+   
+   public final native boolean getShinyappsInstalled() /*-{
+      return this.shinyapps_installed;
+   }-*/;
+   
+   public final native boolean getRMarkdownPackageAvailable() /*-{
+      return this.rmarkdown_available;
    }-*/;
 }

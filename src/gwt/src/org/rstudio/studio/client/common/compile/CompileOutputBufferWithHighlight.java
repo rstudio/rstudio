@@ -16,14 +16,13 @@
 
 package org.rstudio.studio.client.common.compile;
 
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.user.client.ui.Composite;
 
 public class CompileOutputBufferWithHighlight extends Composite 
@@ -37,7 +36,7 @@ public class CompileOutputBufferWithHighlight extends Composite
       output_.setStylePrimaryName(styles_.output());
       output_.addStyleName("ace_text-layer");
       output_.addStyleName("ace_line");
-      output_.setWidth("100%");
+      output_.addStyleName(styles_.paddedOutput());
       FontSizer.applyNormalFontSize(output_);
     
       scrollPanel_ = new BottomScrollPanel();
@@ -77,15 +76,14 @@ public class CompileOutputBufferWithHighlight extends Composite
    @Override
    public void clear()
    {
+      console_.clear();
       output_.setText("");
    }
    
    private void write(String output, String className)
    {
-      SpanElement span = Document.get().createSpanElement();
-      span.setClassName(className);
-      span.setInnerText(output);
-      output_.getElement().appendChild(span);
+      console_.submit(output, className);
+      output_.getElement().setInnerSafeHtml(console_.toSafeHtml());
 
       scrollPanel_.onContentSizeChanged();
    }
@@ -97,6 +95,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    }
  
    PreWidget output_;
+   VirtualConsole console_ = new VirtualConsole();
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;
 }

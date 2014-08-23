@@ -33,7 +33,6 @@
 <style type='text/css'> 
   .shortcuts td, .shortcuts th {
     padding-left: 1.6em;
-    text-indent: -1.6em;
     padding-bottom: 0.5em; }
 </style> 
 <table class='shortcuts'>
@@ -75,8 +74,8 @@
   </tr>
   <tr>
     <td>Change working directory</td>
-    <td>Ctrl+Shift+K</td>
-    <td>Ctrl+Shift+K</td>
+    <td>Ctrl+Shift+H</td>
+    <td>Ctrl+Shift+H</td>
   </tr>
   <tr><td><br/></td></tr>
   <tr><td colspan="3"><h3>Source</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
@@ -94,6 +93,11 @@
     <td>New document (except on Chrome/Windows)</td>
     <td>Ctrl+Shift+N</td>
     <td>Command+Shift+N</td>
+  </tr>
+  <tr>
+    <td>New document (Chrome only)</td>
+    <td>Ctrl+Alt+Shift+N</td>
+    <td>Command+Shift+Alt+N</td>
   </tr>
   <tr>
     <td>Open document</td>
@@ -126,9 +130,14 @@
     <td>Command+Shift+Y</td>
   </tr>
   <tr>
-    <td>Knit to HTML (Knitr)</td>
-    <td>Ctrl+Shift+H</td>
-    <td>Command+Shift+H</td>
+    <td>Knit Document (knitr)</td>
+    <td>Ctrl+Shift+K</td>
+    <td>Command+Shift+K</td>
+  </tr>
+  <tr>
+    <td>Compile Notebook</td>
+    <td>Ctrl+Shift+K</td>
+    <td>Command+Shift+K</td>
   </tr>
   <tr>
     <td>Compile PDF (TeX and Sweave)</td>
@@ -177,16 +186,21 @@
   </tr>
   <tr>
     <td>Run the current code section</td>
-    <td>Ctrl+Alt+S</td>
-    <td>Command+Option+S</td>
+    <td>Ctrl+Alt+T</td>
+    <td>Command+Option+T</td>
   </tr>
   <tr>
-    <td>Run the current Sweave chunk</td>
+    <td>Run previous Sweave/Rmd code</td>
+    <td>Ctrl+Alt+P</td>
+    <td>Command+Option+P</td>
+  </tr>
+  <tr>
+    <td>Run the current Sweave/Rmd chunk</td>
     <td>Ctrl+Alt+C</td>
     <td>Command+Option+C</td>
   </tr>
   <tr>
-    <td>Run the next Sweave chunk</td>
+    <td>Run the next Sweave/Rmd chunk</td>
     <td>Ctrl+Alt+N</td>
     <td>Command+Option+N</td>
   </tr>
@@ -272,8 +286,13 @@
   </tr>
   <tr>
     <td>Extract function from selection</td>
-    <td>Ctrl+Shift+U</td>
-    <td>Command+Shift+U</td>
+    <td>Ctrl+Alt+X</td>
+    <td>Command+Option+X</td>
+  </tr>
+  <tr>
+    <td>Extract variable from selection</td>
+    <td>Ctrl+Alt+V</td>
+    <td>Command+Option+V</td>
   </tr>
   <tr>
      <td>Reindent lines</td>
@@ -324,6 +343,11 @@
     <td>Find Previous</td>
     <td>Win: Shift+F3, Linux: Ctrl+Shift+G</td>
     <td>Command+Shift+G</td>
+  </tr>
+  <tr>
+    <td>Use Selection for Find</td>
+    <td>Ctrl+F3</td>
+    <td>Command+E</td>
   </tr>
   <tr>
     <td>Replace and Find</td>
@@ -468,6 +492,11 @@
     <td>Option+-</td>
   </tr>
   <tr>
+    <td>Insert pipe operator</td>
+    <td>Ctrl+Shift+M</td>
+    <td>Cmd+Shift+M</td>
+  </tr>
+  <tr>
     <td>Show help for function at cursor</td>
     <td>F1</td>
     <td>F1</td>
@@ -575,9 +604,24 @@
     <td>Cmd+Shift+L</td>
   </tr>
   <tr>
+    <td>Test Package (Desktop)</td>
+    <td>Ctrl+Shift+T</td>
+    <td>Cmd+Shift+T</td>
+  </tr>
+  <tr>
+    <td>Test Package (Web)</td>
+    <td>Ctrl+Alt+F7</td>
+    <td>Cmd+Alt+F7</td>
+  </tr>
+  <tr>
     <td>Check Package</td>
     <td>Ctrl+Shift+E</td>
     <td>Cmd+Shift+E</td>
+  </tr>
+  <tr>
+    <td>Document Package</td>
+    <td>Ctrl+Shift+D</td>
+    <td>Cmd+Shift+D</td>
   </tr>
   <tr><td><br/></td></tr>
 
@@ -619,13 +663,13 @@
   <tr><td colspan="3"><h3>Git/SVN</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Diff active source document</td>
-    <td>Ctrl+Shift+D</td>
-    <td>Command+Shift+D</td>
+    <td>Ctrl+Alt+D</td>
+    <td>Ctrl+Option+D</td>
   </tr>
   <tr>
     <td>Commit changes</td>
-    <td>Ctrl+Shift+M</td>
-    <td>Command+Shift+M</td>
+    <td>Ctrl+Alt+M</td>
+    <td>Ctrl+Option+M</td>
   </tr>
   <tr>
     <td>Scroll diff view</td>

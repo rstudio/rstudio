@@ -11,12 +11,16 @@ set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
 set BOOST_FILE=boost-1.50-win.zip
 set MINGW_FILE=mingw64-2010-10-03.zip
 set GIN_FILE=gin-1.5.zip
-set GWT_FILE=gwt-2.5.1.zip
+set GWT_FILE=gwt-2.6.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys_ssh.zip
-set SUMATRA_PDF_FILE=SumatraPDF-2.1.1.zip
+set SUMATRA_PDF_FILE=SumatraPDF-2.4.zip
+
+set PANDOC_VERSION=1.12.3
+set PANDOC_NAME=pandoc-%PANDOC_VERSION%
+set PANDOC_FILE=%PANDOC_NAME%.zip
 
 if not exist boost-1.50-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
@@ -56,11 +60,11 @@ if not exist msys_ssh (
   del "%MSYS_SSH_FILE%"
 )
 
-if not exist sumatra\2.1.1 (
+if not exist sumatra\2.4 (
   wget %WGET_ARGS% "%BASEURL%%SUMATRA_PDF_FILE%"
-  mkdir sumatra\2.1.1
+  mkdir sumatra\2.4
   echo Unzipping %SUMATRA_PDF_FILE%
-  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\2.1.1
+  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\2.4
   del "%SUMATRA_PDF_FILE%"
 )
 
@@ -77,18 +81,19 @@ if not exist gin\1.5 (
   del "%GIN_FILE%"
 )
 
-if not exist gwt\2.5.1 (
+if not exist gwt\2.6.0 (
   wget %WGET_ARGS% "%BASEURL%%GWT_FILE%"
   echo Unzipping %GWT_FILE%
   unzip %UNZIP_ARGS% "%GWT_FILE%"
   mkdir gwt
-  move gwt-2.5.1 gwt\2.5.1
+  move gwt-2.6.0 gwt\2.6.0
   del "%GWT_FILE%"
 )
 
 if not exist %JUNIT_FILE% (
   wget %WGET_ARGS% "%BASEURL%%JUNIT_FILE%"
 )
+
 
 popd
 
@@ -114,4 +119,22 @@ if not exist "mathjax" (
      del "%MATHJAX%"
   )
 )
+
+if not exist pandoc\%PANDOC_VERSION% (
+  wget %WGET_ARGS% "%BASEURL%%PANDOC_FILE%"
+  echo Unzipping %PANDOC_FILE%
+  unzip %UNZIP_ARGS% "%PANDOC_FILE%"
+  mkdir pandoc\%PANDOC_VERSION%
+  copy "%PANDOC_NAME%\windows\pandoc*" "pandoc\%PANDOC_VERSION%""
+  del %PANDOC_FILE%
+  rmdir /s /q %PANDOC_NAME%
+)
+
+
+install-packages.cmd
+
+popd
+
+
+
 

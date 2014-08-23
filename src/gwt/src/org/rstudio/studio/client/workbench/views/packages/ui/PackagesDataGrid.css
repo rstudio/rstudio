@@ -1,0 +1,20 @@
+.dataGridFirstColumn
+{
+	text-align: center;
+}
+
+.dataGridLastColumn
+{
+	padding-top: 3px;
+	padding-left: 3px;
+}
+
+.packageOutOfSyncRow
+{
+   background-color: #fff9e2;	
+}
+
+.packageNotApplicableColumn
+{
+	color: #b0b0b0;
+}

@@ -14,36 +14,37 @@
  */
 package org.rstudio.core.client.files;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.resources.client.ImageResource;
+import java.util.Date;
+import java.util.HashMap;
+
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 
-import java.util.Date;
-import java.util.HashMap;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.resources.client.ImageResource;
 
 // NOTE: this class is represented as a native JavaScriptObject for
 // straightforward RPC handling
 
-public class FileSystemItem extends JavaScriptObject 
+public class FileSystemItem extends JavaScriptObject
 {
    protected FileSystemItem()
    {
    }
-   
+
    public static FileSystemItem createDir(String path)
    {
       return create(path, true, -1, 0);
    }
-   
+
    public static FileSystemItem createFile(String path)
    {
       return create(path, false, -1, 0);
    }
-      
-   private static final native FileSystemItem create(String path, 
+
+   private static final native FileSystemItem create(String path,
                                                      boolean dir,
                                                      double length,
                                                      double lastModified) /*-{
@@ -59,7 +60,7 @@ public class FileSystemItem extends JavaScriptObject
       fileEntry.lastModified = lastModified;
       return fileEntry ;
    }-*/;
-      
+
    public final native String getPath() /*-{
       return this.path;
    }-*/;
@@ -72,12 +73,12 @@ public class FileSystemItem extends JavaScriptObject
    {
       return getNameFromPath(getRawPath());
    }
-   
+
    public final String getExtension()
    {
       return getExtensionFromPath(getName());
    }
-   
+
    public final String getStem()
    {
       String name = getName();
@@ -100,16 +101,16 @@ public class FileSystemItem extends JavaScriptObject
    }-*/;
 
    public final int getLength()
-   { 
+   {
       return getLengthNative();
    }
 
-   public final Date getLastModified() 
-   { 
+   public final Date getLastModified()
+   {
       Double lastModified = new Double(getLastModifiedNative());
       return new Date(lastModified.longValue());
    }
-   
+
    public final FileSystemItem getParentPath()
    {
       String parentPath;
@@ -125,7 +126,7 @@ public class FileSystemItem extends JavaScriptObject
          return FileSystemItem.createDir(parentPath);
       }
    }
-   
+
    public final String getParentPathString()
    {
       FileSystemItem parentPath = getParentPath();
@@ -134,7 +135,7 @@ public class FileSystemItem extends JavaScriptObject
       else
          return "";
    }
- 
+
    public final String completePath(String name)
    {
       String path = getPath();
@@ -142,15 +143,15 @@ public class FileSystemItem extends JavaScriptObject
          return name ;
       else
          return path + "/" + name;
-   } 
-   
+   }
+
    public final boolean isWithinHome()
    {
       String path = getPath();
-      return path.startsWith(HOME_PREFIX) && 
+      return path.startsWith(HOME_PREFIX) &&
              path.length() > HOME_PREFIX.length();
    }
-   
+
    public final String homeRelativePath()
    {
       if (isWithinHome())
@@ -162,13 +163,13 @@ public class FileSystemItem extends JavaScriptObject
          return null;
       }
    }
-   
+
    public final String getPathRelativeTo(FileSystemItem other)
    {
       String otherPath = other.getPath();
       if (!otherPath.endsWith("/"))
          otherPath = otherPath + "/";
-      
+
       if (getPath().startsWith(otherPath) &&
           (getPath().length() > otherPath.length()))
       {
@@ -179,7 +180,7 @@ public class FileSystemItem extends JavaScriptObject
          return null;
       }
    }
-   
+
    public final boolean isPublicFolder()
    {
       return isDirectory() && PUBLIC.equals(homeRelativePath());
@@ -209,7 +210,7 @@ public class FileSystemItem extends JavaScriptObject
       {
          return RES.iconPdf();
       }
-      else if (lowerExt.equals(".jpg") || lowerExt.equals(".jpeg") || 
+      else if (lowerExt.equals(".jpg") || lowerExt.equals(".jpeg") ||
                lowerExt.equals(".gif") || lowerExt.equals(".bmp")  ||
                lowerExt.equals(".tiff")   || lowerExt.equals(".tif") ||
                lowerExt.equals(".png"))
@@ -221,12 +222,12 @@ public class FileSystemItem extends JavaScriptObject
          return RES.iconText();
       }
    }
-   
+
    public final String mimeType()
    {
       return mimeType("text/plain");
    }
-   
+
    public final String mimeType(String defaultType)
    {
       String ext = getExtension().toLowerCase();
@@ -242,9 +243,9 @@ public class FileSystemItem extends JavaScriptObject
       else
       {
          return defaultType;
-      }    
+      }
    }
-   
+
    public final static boolean areEqual(FileSystemItem a, FileSystemItem b)
    {
       if (a == null && b == null)
@@ -253,15 +254,15 @@ public class FileSystemItem extends JavaScriptObject
          return false;
       else if (a != null && b == null)
          return false;
-      else 
+      else
          return a.equalTo(b);
    }
-   
+
    public final boolean equalTo(FileSystemItem other)
    {
       if (other==null)
          return false;
-      
+
       return compareTo(other) == 0;
    }
 
@@ -282,12 +283,12 @@ public class FileSystemItem extends JavaScriptObject
    {
       return createDir(HOME_PATH);
    }
-   
+
    public final static String getNameFromPath(String path)
    {
       if (path.equals(""))
          return "";
-      
+
       if (path.equals("/"))
          return "/";
 
@@ -296,7 +297,7 @@ public class FileSystemItem extends JavaScriptObject
 
       return path.substring(Math.max(0, path.lastIndexOf('/') + 1));
    }
-   
+
    private final native int getLengthNative() /*-{
       return this.length;
    }-*/;
@@ -313,10 +314,14 @@ public class FileSystemItem extends JavaScriptObject
       return this.svn_status;
    }-*/;
 
+   public final native boolean exists() /*-{
+      return this.exists;
+   }-*/;
+
    // NOTE: should be synced with mime type database in FilePath.cpp
-   private final static HashMap<String,String> MIME_TYPES = 
+   private final static HashMap<String,String> MIME_TYPES =
                                              new HashMap<String,String>();
-   static 
+   static
    {
       MIME_TYPES.put( "htm",   "text/html" );
       MIME_TYPES.put( "html",  "text/html" );
@@ -331,15 +336,18 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "svg",   "image/svg+xml" );
       MIME_TYPES.put( "swf",   "application/x-shockwave-flash" );
       MIME_TYPES.put( "ttf",   "application/x-font-ttf" );
-      
+
       // markdown types
       MIME_TYPES.put( "md",       "text/x-markdown" );
       MIME_TYPES.put( "mdtxt",    "text/x-markdown" );
       MIME_TYPES.put( "markdown", "text/x-markdown" );
-      
+
       // programming languages
       MIME_TYPES.put( "f",         "text/x-fortran" );
- 
+      MIME_TYPES.put( "py",        "text/x-python" );
+      MIME_TYPES.put( "sh",        "text/x-shell" );
+      MIME_TYPES.put( "sql",       "text/x-sql" );
+
       // other types we are likely to serve
       MIME_TYPES.put( "xml",   "text/xml" );
       MIME_TYPES.put( "csv",   "text/csv" );
@@ -349,9 +357,9 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "bz2",   "application/x-bzip2");
       MIME_TYPES.put( "gz",    "application/x-gzip");
       MIME_TYPES.put( "tar",   "application/x-tar");
-       
+
       // yet more types...
-      
+
       MIME_TYPES.put( "shtml", "text/html" );
       MIME_TYPES.put( "tsv",   "text/tab-separated-values" );
       MIME_TYPES.put( "tab",   "text/tab-separated-values" );
@@ -360,6 +368,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "mml",   "text/mathml" );
       MIME_TYPES.put( "log",   "text/plain");
       MIME_TYPES.put( "out",   "text/plain");
+      MIME_TYPES.put( "csl",   "text/x-csl");
       MIME_TYPES.put( "r",     "text/x-r-source");
       MIME_TYPES.put( "rd",    "text/x-r-doc");
       MIME_TYPES.put( "rnw",   "text/x-r-sweave");
@@ -371,17 +380,18 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "pot",   "text/plain");
       MIME_TYPES.put( "gitignore",   "text/plain");
       MIME_TYPES.put( "rbuildignore","text/plain");
-     
+      MIME_TYPES.put( "rprofile", "text/x-r-source");
+
       MIME_TYPES.put( "tif",   "image/tiff" );
       MIME_TYPES.put( "tiff",  "image/tiff" );
       MIME_TYPES.put( "bmp",   "image/bmp"  );
       MIME_TYPES.put( "ps",    "application/postscript" );
       MIME_TYPES.put( "eps",   "application/postscript" );
       MIME_TYPES.put( "dvi",   "application/x-dvi" );
-         
+
       MIME_TYPES.put( "atom",  "application/atom+xml" );
       MIME_TYPES.put( "rss",   "application/rss+xml" );
-      
+
       MIME_TYPES.put( "doc",   "application/msword" );
       MIME_TYPES.put( "docx",  "application/vnd.openxmlformats-officedocument.wordprocessingml.document" );
       MIME_TYPES.put( "odt",   "application/vnd.oasis.opendocument.text" );
@@ -392,20 +402,20 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "ppt",   "application/vnd.ms-powerpoint" );
       MIME_TYPES.put( "pps",   "application/vnd.ms-powerpoint" );
       MIME_TYPES.put( "pptx",  "application/vnd.openxmlformats-officedocument.presentationml.presentation" );
-    
+
       MIME_TYPES.put( "sit",   "application/x-stuffit" );
       MIME_TYPES.put( "sxw",   "application/vnd.sun.xml.writer" );
-      
+
       MIME_TYPES.put( "iso",   "application/octet-stream" );
       MIME_TYPES.put( "dmg",   "application/octet-stream" );
       MIME_TYPES.put( "exe",   "application/octet-stream" );
       MIME_TYPES.put( "dll",   "application/octet-stream" );
       MIME_TYPES.put( "deb",   "application/octet-stream" );
       MIME_TYPES.put( "xpi",   "application/x-xpinstall" );
-      
+
       MIME_TYPES.put( "mp2",   "audio/mpeg" );
       MIME_TYPES.put( "mp3",   "audio/mpeg" );
-      
+
       MIME_TYPES.put( "mpg",   "video/mpeg" );
       MIME_TYPES.put( "mpeg",  "video/mpeg" );
       MIME_TYPES.put( "flv",   "video/x-flv" );
@@ -413,7 +423,7 @@ public class FileSystemItem extends JavaScriptObject
 
    private static final Pattern EXT_PATTERN = Pattern.create("\\.[^.]+$");
    private static final FileIconResources RES = FileIconResources.INSTANCE;
-   
+
    public static final String HOME_PATH = "~";
    public static final String HOME_PREFIX = HOME_PATH + "/";
    private static final String PUBLIC = "Public";

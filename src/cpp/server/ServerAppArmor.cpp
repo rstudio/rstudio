@@ -56,8 +56,7 @@ Error enforceRestricted()
    void* pLibAA = ::dlopen("libapparmor.so.1", RTLD_NOW);
    if (pLibAA == NULL)
    {
-      Error error = systemError(boost::system::errc::no_such_file_or_directory,
-                                ERROR_LOCATION);
+      Error error = pathNotFoundError(ERROR_LOCATION);
       addLastDLErrorMessage(&error);
       return error;
    }

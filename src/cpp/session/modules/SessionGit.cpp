@@ -53,8 +53,8 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionConsoleProcess.hpp>
 
-#include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
 
 #include "SessionVCS.hpp"
@@ -66,7 +66,7 @@
 
 using namespace core;
 using namespace core::shell_utils;
-using session::modules::console_process::ConsoleProcess;
+using session::console_process::ConsoleProcess;
 using namespace session::modules::vcs_utils;
 using session::modules::source_control::FileWithStatus;
 using session::modules::source_control::VCSStatus;
@@ -299,7 +299,7 @@ protected:
                                  boost::shared_ptr<ConsoleProcess>* ppCP,
                                  const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
    {
-      using namespace session::modules::console_process;
+      using namespace session::console_process;
 
       core::system::ProcessOptions options = procOptions();
 #ifdef _WIN32
@@ -1581,7 +1581,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
       error = systemError(boost::system::errc::file_too_large,
                           ERROR_LOCATION);
       pResponse->setError(error,
-                          json::Value(static_cast<uint64_t>(output.size())));
+                          json::Value(static_cast<boost::uint64_t>(output.size())));
    }
    else
    {
@@ -1685,6 +1685,139 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
    core::system::ProcessResult result;
    result.exitStatus = EXIT_SUCCESS;
    pResponse->setResult(processResultToJson(result));
+   return Success();
+}
+
+
+std::string getUpstream(const std::string& branch = std::string())
+{
+   // determine the query (no explicit branch means current branch)
+   std::string query = "@{upstream}";
+   if (!branch.empty())
+      query = branch + query;
+
+   // get the upstream
+   std::string upstream;
+   core::system::ProcessResult result;
+   Error error = gitExec(ShellArgs() <<
+                           "rev-parse" << "--abbrev-ref" << query,
+                         s_git_.root(),
+                         &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   else if (result.exitStatus == EXIT_SUCCESS)
+   {
+      upstream = boost::algorithm::trim_copy(result.stdOut);
+   }
+
+   return upstream;
+}
+
+std::string githubUrl(const std::string& view,
+                      const FilePath& filePath = FilePath())
+{
+   if (!isGitEnabled())
+      return std::string();
+
+   // get the upstream for the current branch
+   std::string upstream = getUpstream();
+
+   // if there is none then get the upstream for master
+   if (upstream.empty())
+      upstream = getUpstream("master");
+
+   // if there still isn't one then fall back to origin/master
+   if (upstream.empty())
+      upstream = "origin/master";
+
+   // parse out the upstream name and branch
+   std::string::size_type pos = upstream.find_first_of('/');
+   if (pos == std::string::npos)
+   {
+      LOG_ERROR_MESSAGE("No / in upstream name: " + upstream);
+      return std::string();
+   }
+   std::string upstreamName = upstream.substr(0, pos);
+   std::string upstreamBranch = upstream.substr(pos + 1);
+
+   // now get the remote url
+   core::system::ProcessResult result;
+   Error error = gitExec(ShellArgs() <<
+                   "config" << "--get" << ("remote." + upstreamName + ".url"),
+                   s_git_.root(),
+                   &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   else if (result.exitStatus != 0)
+   {
+      if (!result.stdErr.empty())
+         LOG_ERROR_MESSAGE(result.stdErr);
+      return std::string();
+   }
+
+   // get the url
+   std::string remoteUrl = boost::algorithm::trim_copy(result.stdOut);
+
+   // check for github
+
+   // check for ssh url
+   std::string repo;
+   const std::string kSSHPrefix = "git@github.com:";
+   if (boost::algorithm::starts_with(remoteUrl, kSSHPrefix))
+      repo = remoteUrl.substr(kSSHPrefix.length());
+
+   // check for https url
+   const std::string kHTTPSPrefix = "https://github.com/";
+   if (boost::algorithm::starts_with(remoteUrl, kHTTPSPrefix))
+      repo = remoteUrl.substr(kHTTPSPrefix.length());
+
+   // bail if we didn't get a repo
+   if (repo.empty())
+      return std::string();
+
+   // if the repo starts with / then remove it
+   if (repo[0] == '/')
+      repo = repo.substr(1);
+
+   // strip the .git off the end and form the github url from repo and branch
+   boost::algorithm::replace_last(repo, ".git", "");
+   std::string url = "https://github.com/" +
+                     repo + "/" + view + "/" +
+                     upstreamBranch;
+
+   if (!filePath.empty())
+   {
+      std::string relative = filePath.relativePath(s_git_.root());
+      if (relative.empty())
+         return std::string();
+
+      url = url + "/" + relative;
+   }
+
+   return url;
+}
+
+
+Error vcsGithubRemoteUrl(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   // get the params
+   std::string view, path;
+   Error error = json::readParams(request.params, &view, &path);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   // return the github url
+   pResponse->setResult(githubUrl(view, filePath));
    return Success();
 }
 
@@ -1808,7 +1941,7 @@ Error vcsShow(const json::JsonRpcRequest& request,
       error = systemError(boost::system::errc::file_too_large,
                           ERROR_LOCATION);
       pResponse->setError(error,
-                          json::Value(static_cast<uint64_t>(output.size())));
+                          json::Value(static_cast<boost::uint64_t>(output.size())));
    }
    else
    {
@@ -2571,6 +2704,7 @@ bool isGitDirectory(const core::FilePath& workingDir)
    return !detectGitDir(workingDir).empty();
 }
 
+
 std::string remoteOriginUrl(const FilePath& workingDir)
 {
    // default to none
@@ -2594,6 +2728,13 @@ std::string remoteOriginUrl(const FilePath& workingDir)
    // return any url we discovered
    return remoteOriginUrl;
 }
+
+
+bool isGithubRepository()
+{
+   return !githubUrl("blob").empty();
+}
+
 
 core::Error initializeGit(const core::FilePath& workingDir)
 {
@@ -2703,7 +2844,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))
       (bind(registerRpcMethod, "git_init_repo", vcsInitRepo))
       (bind(registerRpcMethod, "git_get_ignores", vcsGetIgnores))
-      (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores));
+      (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores))
+      (bind(registerRpcMethod, "git_github_remote_url", vcsGithubRemoteUrl));
    error = initBlock.execute();
    if (error)
       return error;

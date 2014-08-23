@@ -53,6 +53,11 @@ public class AppMenuItem extends MenuItem
       setHTML(cmd_.getMenuHTML(mainMenu_));
       setTitle(cmd_.getDesc());
    }
+   
+   public boolean cmdVisible()
+   {
+      return cmd_.isVisible();
+   }
 
    public static String escapeMnemonics(String label)
    {

@@ -178,17 +178,18 @@ std::string escape(std::string specialChars,
 std::string htmlEscape(const std::string& str, bool isAttributeValue)
 {
    std::string escapes = isAttributeValue ?
-                         "<>&'\"\r\n" :
-                         "<>&" ;
+                         "<>&'\"/\r\n" :
+                         "<>&'\"/" ;
 
    std::map<char, std::string> subs;
    subs['<'] = "&lt;";
    subs['>'] = "&gt;";
    subs['&'] = "&amp;";
+   subs['\''] = "&#x27;";
+   subs['"'] = "&quot;";
+   subs['/'] = "&#x2F;";
    if (isAttributeValue)
    {
-      subs['\''] = "&#39;";
-      subs['"'] = "&quot;";
       subs['\r'] = "&#13;";
       subs['\n'] = "&#10;";
    }
@@ -344,6 +345,17 @@ void trimLeadingLines(int maxLines, std::string* pLines)
          }
       }
    }
+}
+
+void stripQuotes(std::string* pStr)
+{
+   if (pStr->length() > 0 && (pStr->at(0) == '\'' || pStr->at(0) == '"'))
+      *pStr = pStr->substr(1);
+
+   int len = pStr->length();
+
+   if (len > 0 && (pStr->at(len-1) == '\'' || pStr->at(len-1) == '"'))
+      *pStr = pStr->substr(0, len -1);
 }
 
 } // namespace string_utils

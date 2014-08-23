@@ -15,9 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console.shell.impl;
 
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
-import org.rstudio.core.client.dom.ElementEx;
+import com.google.gwt.dom.client.Element;
 
 public class PlainTextEditorImpl
 {
@@ -34,10 +32,10 @@ public class PlainTextEditorImpl
     * This method takes one or the other approach, and returns the actual
     * contentEditable element.
     */
-   public ElementEx setupTextContainer(Element element)
+   public Element setupTextContainer(Element element)
    {
-      DOM.setElementPropertyBoolean(element, "contentEditable", true) ;
-      return (ElementEx) element;
+      element.setPropertyBoolean("contentEditable", true);
+      return element;
    }
 
    public void relayFocusEvents(HasHandlers handlers)

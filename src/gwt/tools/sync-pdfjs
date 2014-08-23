@@ -3,34 +3,49 @@
 set -e
 
 if [ ! -d "./pdfjs" ]; then
-    git clone git://github.com/rstudio/pdf.js.git pdfjs
-    cd pdfjs
-    git remote add upstream git://github.com/mozilla/pdf.js.git
-    cd ..
+    git clone git://github.com/mozilla/pdf.js.git pdfjs
 fi
 
 cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout c684dfc
+git checkout c132a99
 
-make
+node make generic singlefile
 cd ..
 
 minify () {
-  echo "Minifying $1.js => $1.min.js"
+  echo "Minifying $1.js (original preserved as $1.full.js)"
   CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
-  java -jar "compiler/compiler.jar" $CC_OPTS --js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.js --js_output_file ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.min.js
+  mv ../../cpp/session/resources/pdfjs/$1.js ../../cpp/session/resources/pdfjs/$1.full.js
+  java -jar "compiler/compiler.jar" $CC_OPTS --js ../../cpp/session/resources/pdfjs/$1.full.js --js_output_file ../../cpp/session/resources/pdfjs/$1.js
 }
 
-cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/web/compatibility.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/web/debugger.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-cp pdfjs/web/viewer.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.js
-cp pdfjs/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
+echo "Copying literal resources"
+cp pdfjs/build/generic/web/viewer.css ../../cpp/session/resources/pdfjs/web
+cp pdfjs/build/generic/web/viewer.html ../../cpp/session/resources/pdfjs/web
+cp pdfjs/build/generic/web/images/*.png ../../cpp/session/resources/pdfjs/web/images
+cp pdfjs/build/generic/web/images/*.svg ../../cpp/session/resources/pdfjs/web/images
+cp pdfjs/build/generic/web/locale/locale.properties ../../cpp/session/resources/pdfjs/web/locale
+cp pdfjs/build/generic/web/locale/en-US/viewer.properties ../../cpp/session/resources/pdfjs/web/locale/en-US
 
-minify pdf
-minify compatibility
-minify debugger
-minify viewer
+echo "Copying scripts"
+cp pdfjs/build/generic/build/pdf.js ../../cpp/session/resources/pdfjs/build
+cp pdfjs/build/generic/build/pdf.worker.js ../../cpp/session/resources/pdfjs/build
+cp pdfjs/build/generic/web/compatibility.js ../../cpp/session/resources/pdfjs/web
+cp pdfjs/build/generic/web/debugger.js ../../cpp/session/resources/pdfjs/web
+cp pdfjs/build/generic/web/viewer.js ../../cpp/session/resources/pdfjs/web
+cp pdfjs/build/generic/web/l10n.js ../../cpp/session/resources/pdfjs/web
+
+if [ "$1" != "debug" ]; then
+   echo "Minifying scripts"
+   minify build/pdf $1
+   minify build/pdf.worker $1
+   minify web/compatibility $1
+   minify web/debugger $1
+   minify web/viewer $1
+   minify web/l10n $1
+fi
+
+

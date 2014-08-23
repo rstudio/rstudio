@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -128,13 +127,11 @@ public class PathBreadcrumbWidget
 
    private void onWidthsChanged()
    {
-      DOM.setElementPropertyInt(
-            outer_.getElement(),
+      outer_.getElement().setPropertyInt(
             "scrollLeft",
-            DOM.getElementPropertyInt(outer_.getElement(), "scrollWidth"));
+            outer_.getElement().getPropertyInt("scrollWidth"));
 
-      int scrollPos = DOM.getElementPropertyInt(outer_.getElement(),
-                                                "scrollLeft");
+      int scrollPos = outer_.getElement().getPropertyInt("scrollLeft");
       if (scrollPos > 0)
       {
          fade_.getStyle().setDisplay(Style.Display.BLOCK);

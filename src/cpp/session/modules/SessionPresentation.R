@@ -13,10 +13,6 @@
 #
 #
 
-.rs.addFunction("hasKnitrVersion_1_2", function() {
-   .rs.isPackageInstalled("knitr") && .rs.getPackageVersion("knitr") >= "1.2"
-})
-
 .rs.addFunction( "showPresentation", function(file = ".") {
 
    if (!is.character(file))

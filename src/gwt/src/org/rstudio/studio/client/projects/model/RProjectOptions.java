@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import org.rstudio.studio.client.packrat.model.PackratContext;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class RProjectOptions extends JavaScriptObject
@@ -26,18 +28,21 @@ public class RProjectOptions extends JavaScriptObject
    {
       return create(RProjectConfig.createEmpty(), 
                     RProjectVcsOptions.createEmpty(),
-                    RProjectBuildOptions.createEmpty());
+                    RProjectBuildOptions.createEmpty(),
+                    RProjectPackratOptions.createEmpty());
    }
    
    public native static final RProjectOptions create(
                                     RProjectConfig config,
                                     RProjectVcsOptions vcsOptions,
-                                    RProjectBuildOptions buildOptions) /*-{
+                                    RProjectBuildOptions buildOptions,
+                                    RProjectPackratOptions packratOptions) /*-{
       var options = new Object();
       options.config = config;
       options.vcs_options = vcsOptions;
       options.vcs_options_default = new Object();
       options.build_options = buildOptions;
+      options.packrat_options = packratOptions;
       return options;
    }-*/;
    
@@ -52,6 +57,10 @@ public class RProjectOptions extends JavaScriptObject
    public native final RProjectBuildOptions getBuildOptions() /*-{
       return this.build_options;
    }-*/;
+   
+   public native final RProjectPackratOptions getPackratOptions() /*-{
+      return this.packrat_options;
+   }-*/;
 
    public native final RProjectVcsContext getVcsContext() /*-{
       return this.vcs_context;
@@ -60,4 +69,11 @@ public class RProjectOptions extends JavaScriptObject
    public native final RProjectBuildContext getBuildContext() /*-{
       return this.build_context;
    }-*/;
+   
+   public native final PackratContext getPackratContext() /*-{
+      return this.packrat_context;
+   }-*/;
+   
+   
+   
 }

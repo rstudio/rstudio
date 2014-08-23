@@ -44,7 +44,8 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 - (id) initWithURL: (NSURL*) url openFile: (NSString*) openFile
 {
    if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
-                                   name: nil])
+                                   name: nil
+                             clientName: nil])
    {
       // initialize the global instance
       instance_ = self;
@@ -113,19 +114,16 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    [self updateDockTileShowLabel];
    
    // see if there is a project dir to display in the titlebar
-   // if there are unsaved changes then resolve them before exiting
    NSString* projectDir = [self evaluateJavaScript:
                                 @"window.desktopHooks.getActiveProjectDir()"] ;
    if ([projectDir length] > 0)
    {
-      [[self window] setTitle: [projectDir stringByAppendingString:
-                                                            @" - RStudio"]];
-      
+      [self setWindowTitle: projectDir];
       [self updateDockTile: projectDir];
    }
    else
    {
-      [[self window] setTitle: @"RStudio"];
+      [self setWindowTitle: nil];
       [self updateDockTile: nil];
    }
    
@@ -137,6 +135,16 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
       
       firstWorkbenchInitialized_ = YES;
    }
+}
+
+- (void) setWindowTitle: (NSString*) title
+{
+   if (title == nil)
+      title = @"RStudio";
+   else
+      title = [title stringByAppendingString: @" - RStudio"];
+   
+   [[self window] setTitle: title];
 }
 
 
@@ -198,12 +206,6 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
 }
 
-
-- (id) evaluateJavaScript: (NSString*) js
-{
-   id win = [webView_ windowScriptObject];
-   return [win evaluateWebScript: js];
-}
 
 - (id) invokeCommand: (NSString*) command
 {

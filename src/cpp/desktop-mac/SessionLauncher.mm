@@ -28,6 +28,8 @@
 
 #include <core/system/Environment.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #import "SessionLauncher.hpp"
 
 #import "MainFrameController.h"

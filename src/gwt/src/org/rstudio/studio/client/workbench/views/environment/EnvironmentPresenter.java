@@ -65,6 +65,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialogResult;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
@@ -78,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 
 import java.util.ArrayList;
@@ -99,7 +101,7 @@ public class EnvironmentPresenter extends BasePresenter
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name, boolean local);
-      void setCallFrames(JsArray<CallFrame> frames);
+      void setCallFrames(JsArray<CallFrame> frames, boolean autoSize);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
       void setObjectDisplayType(int type);
@@ -234,7 +236,7 @@ public class EnvironmentPresenter extends BasePresenter
             {
                currentBrowsePosition_ = event.getRange();
                view_.setBrowserRange(currentBrowsePosition_);
-               openOrUpdateFileBrowsePoint(true);
+               openOrUpdateFileBrowsePoint(true, false);
             }
             requeryContextTimer_.cancel();
          }
@@ -525,14 +527,21 @@ public class EnvironmentPresenter extends BasePresenter
       initialized_ = true;
    }
    
-   public void setContextDepth(int contextDepth)
+   // Private methods ---------------------------------------------------------
+
+   // sets a new context depth; returns true if the the new context depth  
+   // transitions to debug mode
+   private boolean setContextDepth(int contextDepth)
    {
+      boolean enteringDebugMode = false;
+      
       // if entering debug state, activate this tab 
       if (contextDepth > 0 &&
           contextDepth_ == 0)
       {
          eventBus_.fireEvent(new ActivatePaneEvent("Environment"));
          debugCommander_.enterDebugMode(DebugMode.Function);
+         enteringDebugMode = true;
       }
       // if leaving debug mode, let everyone know
       else if (contextDepth == 0 &&
@@ -542,9 +551,9 @@ public class EnvironmentPresenter extends BasePresenter
       }
       contextDepth_ = contextDepth;
       view_.setContextDepth(contextDepth_);
+      
+      return enteringDebugMode;
    }
-
-   // Private methods ---------------------------------------------------------
 
    private void loadNewContextState(int contextDepth, 
          String environmentName,
@@ -553,17 +562,18 @@ public class EnvironmentPresenter extends BasePresenter
          boolean useBrowseSources,
          String functionCode)
    {
-      setContextDepth(contextDepth);
+      boolean enteringDebugMode = setContextDepth(contextDepth);
       environmentName_ = environmentName;
       view_.setEnvironmentName(environmentName_, isLocalEvironment);
       if (callFrames != null && 
           callFrames.length() > 0 &&
           contextDepth > 0)
       {
-         view_.setCallFrames(callFrames);
+         view_.setCallFrames(callFrames, enteringDebugMode);
          CallFrame browseFrame = callFrames.get(
                  contextDepth_ - 1);
-         String newBrowseFile = browseFrame.getFileName().trim();
+         String newBrowseFile = browseFrame.getAliasedFileName().trim();
+         boolean sourceChanged = false;
          
          // check to see if the file we're about to switch to contains unsaved
          // changes. if it does, use the source supplied by the server, even if
@@ -583,21 +593,25 @@ public class EnvironmentPresenter extends BasePresenter
                   useBrowseSources != useCurrentBrowseSource_) &&
              !(useBrowseSources && useCurrentBrowseSource_))
          {
-            openOrUpdateFileBrowsePoint(false);
+            openOrUpdateFileBrowsePoint(false, false);
          }
 
          useCurrentBrowseSource_ = useBrowseSources;
-         currentBrowseSource_ = functionCode;
+         if (!currentBrowseSource_.equals(functionCode))
+         {
+            currentBrowseSource_ = functionCode;
+            sourceChanged = true;
+         }
          
          // highlight the active line in the file now being debugged
          currentBrowseFile_ = newBrowseFile;
          currentBrowsePosition_ = browseFrame.getRange();
          currentFunctionLineNumber_ = browseFrame.getFunctionLineNumber();
-         openOrUpdateFileBrowsePoint(true);
+         openOrUpdateFileBrowsePoint(true, sourceChanged);
       }   
       else
       {
-         openOrUpdateFileBrowsePoint(false);
+         openOrUpdateFileBrowsePoint(false, false);
          useCurrentBrowseSource_ = false;
          currentBrowseSource_ = "";
          currentBrowseFile_ = "";
@@ -624,7 +638,8 @@ public class EnvironmentPresenter extends BasePresenter
       return false;
    }
    
-   private void openOrUpdateFileBrowsePoint(boolean debugging)
+   private void openOrUpdateFileBrowsePoint(boolean debugging, 
+                                            boolean sourceChanged)
    {
       String file = currentBrowseFile_;
       
@@ -641,14 +656,6 @@ public class EnvironmentPresenter extends BasePresenter
       if (currentBrowsePosition_ != null &&
           !useCurrentBrowseSource_)
       {
-         // If we're finished debugging this file and it has an active top-level
-         // debug session, let that session take over line highlighting instead
-         // of turning it off ourselves. 
-         if (!debugging &&
-             debugCommander_.hasTopLevelDebugSession(currentBrowseFile_))
-         {
-            return;
-         }
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
          eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
                                 (FilePosition) currentBrowsePosition_.cast(),
@@ -659,8 +666,8 @@ public class EnvironmentPresenter extends BasePresenter
                                          NavigationMethod.DebugFrame)
                                       :
                                       NavigationMethod.DebugEnd));
-
       }
+
       // otherwise, if we have a copy of the source from the server, load
       // the copy from the server into the code browser window
       else if (useCurrentBrowseSource_ &&
@@ -668,15 +675,36 @@ public class EnvironmentPresenter extends BasePresenter
       {
          if (debugging)
          {
-            eventBus_.fireEvent(new CodeBrowserNavigationEvent(
-                  SearchPathFunctionDefinition.create(
-                        environmentName_, 
-                        "source unavailable or out of sync", 
-                        currentBrowseSource_,
-                        true),
-                  currentBrowsePosition_.functionRelativePosition(
-                        currentFunctionLineNumber_),
-                  contextDepth_ == 1));
+            if (sourceChanged)
+            {
+               // create the function name for the code browser by removing the
+               // () indicator supplied by the server
+               String functionName = environmentName_;
+               int idx = functionName.indexOf('(');
+               if (idx > 0)
+               {
+                  functionName = functionName.substring(0, idx);
+               }
+               // if this is a different source file than we already have open,
+               // open it 
+               eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                     SearchPathFunctionDefinition.create(
+                           functionName, 
+                           "debugging", 
+                           currentBrowseSource_,
+                           true),
+                     currentBrowsePosition_.functionRelativePosition(
+                           currentFunctionLineNumber_),
+                     contextDepth_ == 1));
+            }
+            else if (currentBrowsePosition_.getLine() > 0)
+            {
+               // if this is the same one currently open, just move the 
+               // highlight
+               eventBus_.fireEvent(new CodeBrowserHighlightEvent(
+                     currentBrowsePosition_.functionRelativePosition(
+                           currentFunctionLineNumber_)));
+            }
          }
          else
          {
@@ -712,7 +740,7 @@ public class EnvironmentPresenter extends BasePresenter
             view_.setProgress(false);
             refreshingView_ = false;
             initialized_ = true;
-            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data, false));
          }
 
          @Override
@@ -736,16 +764,18 @@ public class EnvironmentPresenter extends BasePresenter
               input,
               varname,
               "Import Dataset",
-              new OperationWithInput<ImportFileSettings>()
+              new OperationWithInput<ImportFileSettingsDialogResult>()
               {
                  public void execute(
-                         ImportFileSettings input)
+                       ImportFileSettingsDialogResult result)
                  {
+                    ImportFileSettings input = result.getSettings();
                     String var = StringUtil.toRSymbolName(input.getVarname());
                     String code =
                             var +
                             " <- " +
-                            makeCommand(input) +
+                            makeCommand(input, 
+                                        result.getDefaultStringsAsFactors()) +
                             "\n  View(" + var + ")";
                     eventBus_.fireEvent(new SendToConsoleEvent(code, true));
                  }
@@ -754,21 +784,22 @@ public class EnvironmentPresenter extends BasePresenter
       dialog.showModal();
    }
 
-   private String makeCommand(ImportFileSettings input)
+   private String makeCommand(ImportFileSettings input,
+                              boolean defaultStringsAsFactors)
    {
       HashMap<String, ImportFileSettings> commandDefaults_ =
               new HashMap<String, ImportFileSettings>();
 
       commandDefaults_.put("read.table", new ImportFileSettings(
-              null, null, false, "", ".", "\"'"));
+              null, null, false, "", ".", "\"'", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.csv", new ImportFileSettings(
-              null, null, true, ",", ".", "\""));
+              null, null, true, ",", ".", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.delim", new ImportFileSettings(
-              null, null, true, "\t", ".", "\""));
+              null, null, true, "\t", ".", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.csv2", new ImportFileSettings(
-              null, null, true, ";", ",", "\""));
+              null, null, true, ";", ",", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.delim2", new ImportFileSettings(
-              null, null, true, "\t", ",", "\""));
+              null, null, true, "\t", ",", "\"", "NA", defaultStringsAsFactors));
 
       String command = "read.table";
       ImportFileSettings settings = commandDefaults_.get("read.table");
@@ -789,13 +820,18 @@ public class EnvironmentPresenter extends BasePresenter
       code.append("(");
       code.append(StringUtil.textToRLiteral(input.getFile().getPath()));
       if (input.isHeader() != settings.isHeader())
-         code.append(", header=" + (input.isHeader() ? "T" : "F"));
+         code.append(", header=" + (input.isHeader() ? "TRUE" : "FALSE"));
       if (!input.getSep().equals(settings.getSep()))
          code.append(", sep=" + StringUtil.textToRLiteral(input.getSep()));
       if (!input.getDec().equals(settings.getDec()))
          code.append(", dec=" + StringUtil.textToRLiteral(input.getDec()));
       if (!input.getQuote().equals(settings.getQuote()))
          code.append(", quote=" + StringUtil.textToRLiteral(input.getQuote()));
+      if (!input.getNAStrings().equals(settings.getNAStrings()))
+         code.append(", na.strings=" + StringUtil.textToRLiteral(input.getNAStrings()));
+      if (input.getStringsAsFactors() != settings.getStringsAsFactors())
+         code.append(", stringsAsFactors=" + (input.getStringsAsFactors() ? "TRUE" : "FALSE"));
+         
       code.append(")");
 
       return code.toString();

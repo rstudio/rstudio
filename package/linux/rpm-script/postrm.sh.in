@@ -3,13 +3,16 @@
 # errors shouldn't cause script to exit
 set +e 
 
-# remove softlink to admin script 
-rm -f /usr/sbin/rstudio-server
+# only remove things if this is an uninstall
+if [ "$1" = 0 ]
+then
+   # remove softlink to admin script
+   rm -f /usr/sbin/rstudio-server
 
-# remove temporary streams
-# remove temporary streams
-sudo rm -rf /tmp/rstudio-rsession
-sudo rm -rf /tmp/rstudio-rserver
+   # remove temporary streams
+   rm -rf /tmp/rstudio-rsession
+   rm -rf /tmp/rstudio-rserver
+fi
 
 # clear error termination state
 set -e

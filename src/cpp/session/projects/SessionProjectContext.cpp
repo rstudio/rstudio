@@ -22,6 +22,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/FileMonitor.hpp>
 
@@ -157,6 +158,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    r_util::RProjectConfig config;
    error = r_util::readProjectFile(projectFile,
                                    defaultConfig(),
+                                   buildDefaults(),
                                    &config,
                                    &providedDefaults,
                                    pUserErrMsg);
@@ -176,7 +178,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    // with the defaults
    if (providedDefaults)
    {
-      error = r_util::writeProjectFile(projectFile, config);
+      error = r_util::writeProjectFile(projectFile, buildDefaults(), config);
       if (error)
          LOG_ERROR(error);
    }
@@ -294,8 +296,6 @@ Error ProjectContext::initialize()
 
 
 namespace {
-const char * const kLastProjectPath = "last-project-path";
-
 
 // NOTE: the HttpConnectionListener relies on this path as well as the
 // kNextSessionProject constant in order to write the next session project
@@ -304,42 +304,17 @@ const char * const kLastProjectPath = "last-project-path";
 // that are single threaded by convention
 FilePath settingsPath()
 {
-   FilePath settingsPath = session::options().userScratchPath().complete(
-                                                        kProjectsSettings);
-   Error error = settingsPath.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
-
-   return settingsPath;
+   return r_util::projectsSettingsPath(session::options().userScratchPath());
 }
 
 std::string readSetting(const char * const settingName)
 {
-   FilePath readPath = settingsPath().complete(settingName);
-   if (readPath.exists())
-   {
-      std::string value;
-      Error error = core::readStringFromFile(readPath, &value);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return std::string();
-      }
-      boost::algorithm::trim(value);
-      return value;
-   }
-   else
-   {
-      return std::string();
-   }
+   return r_util::readProjectsSetting(settingsPath(), settingName);
 }
 
 void writeSetting(const char * const settingName, const std::string& value)
 {
-   FilePath writePath = settingsPath().complete(settingName);
-   Error error = core::writeStringToFile(writePath, value);
-   if (error)
-      LOG_ERROR(error);
+   r_util::writeProjectsSetting(settingsPath(), settingName, value);
 }
 
 } // anonymous namespace
@@ -559,6 +534,8 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs["use_spaces_for_tab"] = config_.useSpacesForTab;
    uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
+   uiPrefs["auto_append_newline"] = config_.autoAppendNewline;
+   uiPrefs["strip_trailing_whitespace"] = config_.stripTrailingWhitespace;
    uiPrefs["default_encoding"] = defaultEncoding();
    uiPrefs["default_sweave_engine"] = config_.defaultSweaveEngine;
    uiPrefs["default_latex_program"] = config_.defaultLatexProgram;
@@ -579,12 +556,23 @@ json::Array ProjectContext::openDocs() const
    return openDocsJson;
 }
 
+r_util::RProjectBuildDefaults ProjectContext::buildDefaults()
+{
+   r_util::RProjectBuildDefaults buildDefaults;
+   buildDefaults.useDevtools = userSettings().useDevtools();
+   return buildDefaults;
+}
+
 r_util::RProjectConfig ProjectContext::defaultConfig()
 {
    // setup defaults for project file
    r_util::RProjectConfig defaultConfig;
+   defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
    defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
    defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
+   defaultConfig.autoAppendNewline = userSettings().autoAppendNewline();
+   defaultConfig.stripTrailingWhitespace =
+                              userSettings().stripTrailingWhitespace();
    if (!userSettings().defaultEncoding().empty())
       defaultConfig.encoding = userSettings().defaultEncoding();
    else
@@ -594,6 +582,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.rootDocument = std::string();
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
+   defaultConfig.packageUseDevtools = userSettings().useDevtools();
    return defaultConfig;
 }
 
@@ -601,7 +590,6 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
 namespace {
 
 const char * const kVcsOverride = "activeVcsOverride";
-const char * const kSshKeyPathOverride = "sshKeyPathOverride";
 
 } // anonymous namespace
 

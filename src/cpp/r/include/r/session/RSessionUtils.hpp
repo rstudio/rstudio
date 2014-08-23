@@ -30,6 +30,8 @@ namespace utils {
 // check for R 3.0
 bool isR3();
 
+bool isPackratModeOn();
+
 bool isDefaultPrompt(const std::string& prompt);
 
 // user home path

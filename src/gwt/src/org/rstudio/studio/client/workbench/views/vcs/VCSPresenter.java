@@ -26,11 +26,13 @@ import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitHubEvent;
 
 public class VCSPresenter implements IsWidget, 
                                      ShowVcsHistoryEvent.Handler,
                                      ShowVcsDiffEvent.Handler,
-                                     VcsRevertFileEvent.Handler
+                                     VcsRevertFileEvent.Handler,
+                                     VcsViewOnGitHubEvent.Handler
 {
    @Inject
    public VCSPresenter(Session session,
@@ -124,6 +126,12 @@ public class VCSPresenter implements IsWidget,
    public void onVcsRevertFile(VcsRevertFileEvent event)
    {
       presenter_.revertFile(event.getFile());
+   }
+   
+   @Override
+   public void onVcsViewOnGitHub(VcsViewOnGitHubEvent event)
+   {
+      presenter_.viewOnGitHub(event.getViewRequest());
    }
    
    private final Session session_;

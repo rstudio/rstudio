@@ -63,12 +63,13 @@ bool prepareEnvironment(Options& options)
       rLdScriptPath = supportingFilePath.complete("session/r-ldpath");
 
    // attempt to detect R environment
-   std::string rScriptPath, errMsg;
+   std::string rScriptPath, rVersion, errMsg;
    r_util::EnvironmentVars rEnvVars;
    bool success = r_util::detectREnvironment(rWhichRPath,
                                              rLdScriptPath,
                                              std::string(),
                                              &rScriptPath,
+                                             &rVersion,
                                              &rEnvVars,
                                              &errMsg);
    if (!success)

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JsArrayString;
+
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
@@ -43,7 +44,6 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 HTMLPreviewServerOperations,
                                                 BuildServerOperations,
                                                 PresentationServerOperations
- 
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and
@@ -182,4 +182,8 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    void isReadOnlyFile(String path, 
                        ServerRequestCallback<Boolean> requestCallback);
+   
+   void getScriptRunCommand(String interpreter,
+                            String path,
+                            ServerRequestCallback<String> requestCallback);
 }

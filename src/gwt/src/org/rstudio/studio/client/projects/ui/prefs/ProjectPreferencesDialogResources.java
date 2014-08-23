@@ -29,6 +29,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String enableCodeIndexing();
       String useSpacesForTab();
       String numberOfTabs();
+      String editingOption();
       String encodingChooser();
       String vcsSelectExtraSpaced();
       String vcsOriginLabel();
@@ -37,12 +38,14 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String buildToolsAdditionalArguments();
       String buildToolsRoxygenize();
       String buildToolsCheckBox();
+      String buildToolsDevtools();
    }
   
    @Source("ProjectPreferencesDialog.css")
    Styles styles();
   
    ImageResource iconBuild();
+   ImageResource iconPackrat();
    
    static ProjectPreferencesDialogResources INSTANCE = (ProjectPreferencesDialogResources)GWT.create(ProjectPreferencesDialogResources.class);
 }

@@ -21,16 +21,16 @@ import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
-import org.rstudio.core.client.dom.NativeScreen;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
@@ -42,7 +42,10 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
+import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
+import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -50,6 +53,9 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -60,8 +66,6 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
@@ -102,6 +106,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                 Provider<UIPrefs> uiPrefs,
                 Commands commands,
                 EventBus events,
+                DependencyManager dependencyManager,
                 final PlotsServerOperations server,
                 Session session)
    {
@@ -112,6 +117,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       uiPrefs_ = uiPrefs;
       server_ = server;
       session_ = session;
+      dependencyManager_ = dependencyManager;
       exportPlot_ = GWT.create(ExportPlot.class);
       zoomWindow_ = null;
       zoomWindowDefaultSize_ = null;
@@ -286,7 +292,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       indicator.onProgress("Preparing to export plot...");
 
       // get the default directory
-      FileSystemItem defaultDir = ExportPlot.getDefaultSaveDirectory(
+      FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
             workbenchContext_.getCurrentWorkingDir());
 
       // get context
@@ -325,7 +331,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       indicator.onProgress("Preparing to export plot...");
 
       // get the default directory
-      final FileSystemItem defaultDir = ExportPlot.getDefaultSaveDirectory(
+      final FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
             workbenchContext_.getCurrentWorkingDir());
 
       // get context
@@ -391,6 +397,51 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                               saveExportOptionsOperation_);    
    }
    
+   void onPublishPlotToRPubs()
+   {
+      dependencyManager_.withRMarkdown("Publishing to RPubs", 
+         new Command() {
+          @Override
+          public void execute()
+          {
+             // determine the size (re-use the zoom window logic for this)
+             final Size size = ZoomUtils.getZoomedSize(view_.getPlotFrameSize(), 
+                                                       new Size(400, 350), 
+                                                       new Size(750, 600));
+             
+             // show the dialog
+             RPubsUploadDialog dlg = new RPubsUploadDialog(
+                "Plots",
+                "",
+                new RPubsHtmlGenerator() {
+
+                   @Override
+                   public void generateRPubsHtml(
+                         String title, 
+                         String comment,
+                         final CommandWithArg<String> onCompleted)
+                   {
+                      server_.plotsCreateRPubsHtml(
+                         title, 
+                         comment, 
+                         size.width,
+                         size.height,
+                         new SimpleRequestCallback<String>() {
+
+                            @Override
+                            public void onResponseReceived(String rpubsHtmlFile)
+                            {
+                               onCompleted.execute(rpubsHtmlFile);
+                            }
+                      });
+                   }
+                },
+                false);
+             dlg.showModal();
+          }
+      });
+   }
+   
    private double pixelsToInches(int pixels)
    {
       return (double)pixels / 96.0;
@@ -415,40 +466,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    
    void onZoomPlot()
    {
-      int width, height;
-      if (zoomWindowDefaultSize_ != null)
-      {
-         // trim based on available screen size
-         NativeScreen screen = NativeScreen.get();
-         width = Math.min(screen.getAvailWidth(), 
-                          zoomWindowDefaultSize_.width);
-         height = Math.min(screen.getAvailHeight(), 
-                           zoomWindowDefaultSize_.height); 
-      }
-      else
-      {
-         final int PADDING = 20;
-   
-         Size currentPlotSize = view_.getPlotFrameSize();
-   
-         // calculate ideal heigh and width. try to be as large as possible
-         // within the bounds of the current client size
-         Size bounds = new Size(Window.getClientWidth() - PADDING,
-                                Window.getClientHeight() - PADDING);
-   
-         float widthRatio = bounds.width / ((float)currentPlotSize.width);
-         float heightRatio = bounds.height / ((float)currentPlotSize.height);
-         float ratio = Math.min(widthRatio, heightRatio);
-   
-         // constrain initial width to between 300 and 1,200 pixels
-         width = Math.max(300, (int) (ratio * currentPlotSize.width));
-         width = Math.min(1200, width);
-         
-         // constrain initial height to between 300 and 900 pixels
-         height = Math.max(300, (int) (ratio * currentPlotSize.height));
-         height = Math.min(900, height);
-      }
-      
+      Size windowSize = ZoomUtils.getZoomWindowSize(
+                              view_.getPlotFrameSize(), zoomWindowDefaultSize_);
       
       // determine whether we should scale (see comment in ImageFrame.onLoad
       // for why we wouldn't want to scale)
@@ -458,27 +477,23 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       
       // compose url string
       String url = server_.getGraphicsUrl("plot_zoom?" +
-                                          "width=" + width + "&" +
-                                          "height=" + height + "&" +
+                                          "width=" + windowSize.width + "&" +
+                                          "height=" + windowSize.height + "&" +
                                           "scale=" + scale);
 
-
-      // open and activate window
-      NewWindowOptions options = new NewWindowOptions();
-      options.setName("_rstudio_zoom");
-      options.setFocus(true);
-      options.setCallback(new OperationWithInput<WindowEx>() {
-         @Override
-         public void execute(WindowEx input)
-         {
-            zoomWindow_ = input;
+      // open the window
+      ZoomUtils.openZoomWindow(
+         "_rstudio_zoom", 
+         url, 
+         windowSize, 
+         new OperationWithInput<WindowEx>() {
+            @Override
+            public void execute(WindowEx input)
+            {
+               zoomWindow_ = input;
+            }
          }
-      });
-      globalDisplay_.openMinimalWindow(url,
-                                       false,
-                                       width,
-                                       height,
-                                       options);
+      );
    }
 
    void onRefreshPlot()
@@ -632,6 +647,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final GlobalDisplay globalDisplay_;
    private final PlotsServerOperations server_;
    private final WorkbenchContext workbenchContext_;
+   private final DependencyManager dependencyManager_;
    private final Session session_;
    private final Provider<UIPrefs> uiPrefs_;
    private final Locator locator_;

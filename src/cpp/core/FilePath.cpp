@@ -135,7 +135,7 @@ struct FilePath::Impl
    }
    path_t path ;
 };
-  
+
 FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
 {
    try
@@ -167,7 +167,7 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
 
    return safePath;
 }
-   
+
 Error FilePath::makeCurrent(const std::string& path)
 {
    return FilePath(path).makeCurrentPath();
@@ -268,12 +268,12 @@ Error FilePath::tempFilePath(FilePath* pFilePath)
    // keep compiler happy
    return pathNotFoundError(ERROR_LOCATION);
 }
- 
+
 FilePath::FilePath()
    : pImpl_(new Impl())
 {
 }
-   
+
 FilePath::FilePath(const std::string& absolutePath)
    : pImpl_(new Impl(fromString(std::string(absolutePath.c_str())))) // thwart ref-count
 {
@@ -298,11 +298,11 @@ bool FilePath::empty() const
 
 bool FilePath::exists() const
 {
-    try 
+    try
     {
        return !empty() && boost::filesystem::exists(pImpl_->path) ;
     }
-    catch(const boost::filesystem::filesystem_error& e) 
+    catch(const boost::filesystem::filesystem_error& e)
     {
        logError(pImpl_->path, e, ERROR_LOCATION) ;
        return false ;
@@ -324,14 +324,14 @@ bool FilePath::isSymlink() const
 
 uintmax_t FilePath::size() const
 {
-   try 
+   try
    {
       if (!exists())
          return 0;
       else
          return boost::filesystem::file_size(pImpl_->path) ;
    }
-   catch(const boost::filesystem::filesystem_error& e) 
+   catch(const boost::filesystem::filesystem_error& e)
    {
 #ifdef _WIN32
       if (e.code().value() == ERROR_NOT_SUPPORTED)
@@ -347,7 +347,7 @@ std::string FilePath::filename() const
    return BOOST_FS_STRING(pImpl_->path.filename()) ;
 }
 
-std::string FilePath::stem() const 
+std::string FilePath::stem() const
 {
    return BOOST_FS_STRING(pImpl_->path.stem());
 }
@@ -356,7 +356,7 @@ std::string FilePath::extension() const
 {
    return BOOST_FS_STRING(pImpl_->path.extension()) ;
 }
-   
+
 std::string FilePath::extensionLowerCase() const
 {
    return string_utils::toLower(extension());
@@ -371,7 +371,7 @@ bool FilePath::hasExtensionLowerCase(const std::string& ext) const
 {
    return extensionLowerCase() == ext;
 }
-   
+
 namespace {
 
 struct MimeType
@@ -398,7 +398,7 @@ MimeType s_mimeTypes[] =
    { "swf",   "application/x-shockwave-flash" },
    { "ttf",   "application/x-font-ttf" },
    { "woff",  "application/font-woff" },
-   
+
    // markdown types
    { "md",       "text/x-markdown" },
    { "mdtxt",    "text/x-markdown" },
@@ -406,6 +406,9 @@ MimeType s_mimeTypes[] =
 
    // programming language types
    { "f",        "text/x-fortran" },
+   { "py",       "text/x-python" },
+   { "sh",       "text/x-shell" },
+   { "sql",      "text/x-sql" },
 
    // other types we are likely to serve
    { "xml",   "text/xml" },
@@ -418,7 +421,7 @@ MimeType s_mimeTypes[] =
    { "tar",   "application/x-tar" },
 
    // yet more types...
-   
+
    { "shtml", "text/html" },
    { "tsv",   "text/tab-separated-values" },
    { "tab",   "text/tab-separated-values" },
@@ -427,6 +430,7 @@ MimeType s_mimeTypes[] =
    { "mml",   "text/mathml" },
    { "log",   "text/plain" },
    { "out",   "text/plain" },
+   { "csl",   "text/x-csl" },
    { "R",     "text/x-r-source"},
    { "Rd",    "text/x-r-doc"},
    { "Rnw",   "text/x-r-sweave"},
@@ -438,17 +442,18 @@ MimeType s_mimeTypes[] =
    { "pot",   "text/plain"},
    { "gitignore", "text/plain"},
    { "Rbuildignore", "text/plain"},
-  
+   { "Rprofile", "text/x-r-source"},
+
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
    { "bmp",   "image/bmp"  },
    { "ps",    "application/postscript" },
    { "eps",   "application/postscript" },
    { "dvi"    "application/x-dvi" },
-      
+
    { "atom",  "application/atom+xml" },
    { "rss",   "application/rss+xml" },
-   
+
    { "doc",   "application/msword" },
    { "docx",  "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
    { "odt",   "application/vnd.oasis.opendocument.text" },
@@ -459,10 +464,10 @@ MimeType s_mimeTypes[] =
    { "ppt",   "application/vnd.ms-powerpoint" },
    { "pps",   "application/vnd.ms-powerpoint" },
    { "pptx",  "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
- 
+
    { "sit",   "application/x-stuffit" },
    { "sxw",   "application/vnd.sun.xml.writer" },
-   
+
    { "iso",   "application/octet-stream" },
    { "dmg",   "application/octet-stream" },
    { "exe",   "application/octet-stream" },
@@ -470,9 +475,9 @@ MimeType s_mimeTypes[] =
    { "deb",   "application/octet-stream" },
    { "otf",   "application/octet-stream" },
    { "xpi",   "application/x-xpinstall" },
-   
+
    { "mp2",   "audio/mpeg" },
-   
+
    { "mpg",   "video/mpeg" },
    { "mpeg",  "video/mpeg" },
    { "flv",   "video/x-flv" },
@@ -486,11 +491,11 @@ MimeType s_mimeTypes[] =
    { "oga",   "audio/ogg" },
    { "ogg",   "audio/ogg" },
 
-   { NULL, NULL } 
+   { NULL, NULL }
 };
-   
+
 }
-   
+
 std::string FilePath::mimeContentType(const std::string& defaultType) const
 {
    std::string ext = extensionLowerCase();
@@ -502,7 +507,7 @@ std::string FilePath::mimeContentType(const std::string& defaultType) const
          if (boost::algorithm::iequals(mimeType->extension,ext))
             return mimeType->contentType;
       }
-      
+
       // none found
       return defaultType;
    }
@@ -519,17 +524,17 @@ bool FilePath::hasTextMimeType() const
    return boost::algorithm::starts_with(mimeType, "text/") ||
           boost::algorithm::ends_with(mimeType, "+xml");
 }
-   
+
 std::time_t FilePath::lastWriteTime() const
 {
-   try 
+   try
    {
       if (!exists())
          return 0;
       else
          return boost::filesystem::last_write_time(pImpl_->path) ;
    }
-   catch(const boost::filesystem::filesystem_error& e) 
+   catch(const boost::filesystem::filesystem_error& e)
    {
       logError(pImpl_->path, e, ERROR_LOCATION) ;
       return 0;
@@ -544,7 +549,7 @@ std::string FilePath::relativePath(const FilePath& parentPath) const
    path_t::iterator thisEnd = pImpl_->path.end() ;
    path_t::iterator parentBegin = parentPath.pImpl_->path.begin();
    path_t::iterator parentEnd = parentPath.pImpl_->path.end() ;
-   
+
    // if the child is fully prefixed by the parent
    path_t::iterator it = std::search(thisBegin, thisEnd, parentBegin, parentEnd);
    if ( it == thisBegin )
@@ -552,7 +557,7 @@ std::string FilePath::relativePath(const FilePath& parentPath) const
       // search for mismatch location
       std::pair<path_t::iterator,path_t::iterator> mmPair =
                               std::mismatch(thisBegin, thisEnd, parentBegin);
-      
+
       // build relative path from mismatch on
       path_t relativePath ;
       path_t::iterator mmit = mmPair.first ;
@@ -568,12 +573,12 @@ std::string FilePath::relativePath(const FilePath& parentPath) const
       return std::string() ;
    }
 }
-   
+
 bool FilePath::isWithin(const FilePath& scopePath) const
 {
    if (*this == scopePath)
       return true ;
-   
+
    std::string relativePath = this->relativePath(scopePath);
    return !relativePath.empty();
 }
@@ -618,11 +623,11 @@ Error FilePath::remove() const
    catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       return error ;
    }
 }
-   
+
 Error FilePath::removeIfExists() const
 {
    if (exists())
@@ -630,7 +635,7 @@ Error FilePath::removeIfExists() const
    else
       return Success();
 }
- 
+
 Error FilePath::move(const FilePath& targetPath) const
 {
    try
@@ -641,12 +646,12 @@ Error FilePath::move(const FilePath& targetPath) const
    catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       error.addProperty("target-path", targetPath.absolutePath()) ;
       return error ;
    }
 }
-   
+
 
 Error FilePath::copy(const FilePath& targetPath) const
 {
@@ -658,37 +663,68 @@ Error FilePath::copy(const FilePath& targetPath) const
    catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       error.addProperty("target-path", targetPath.absolutePath()) ;
       return error ;
-   }   
+   }
 }
 
 
-   
-bool FilePath::isHidden() const 
+
+bool FilePath::isHidden() const
 {
    return system::isHiddenFile(*this) ;
 }
-   
-   
-bool FilePath::isDirectory() const 
+
+bool FilePath::isJunction() const
 {
-   try 
+#ifndef _WIN32
+   return false;
+#else
+   if (!exists())
+      return false;
+
+   const wchar_t* path = pImpl_->path.c_str();
+   DWORD fa = GetFileAttributesW(path);
+   if (fa == INVALID_FILE_ATTRIBUTES)
+   {
+      return false;
+   }
+   if (fa & FILE_ATTRIBUTE_REPARSE_POINT &&
+       fa & FILE_ATTRIBUTE_DIRECTORY)
+   {
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+#endif
+}
+
+bool FilePath::isDirectory() const
+{
+   try
    {
       if (!exists())
          return false;
       else
-         return boost::filesystem::is_directory(pImpl_->path) ;
+      {
+         return boost::filesystem::is_directory(pImpl_->path)
+      #ifdef _WIN32
+               || isJunction()
+      #endif
+               ;
+      }
    }
-   catch(const boost::filesystem::filesystem_error& e) 
+   catch(const boost::filesystem::filesystem_error& e)
    {
       logError(pImpl_->path, e, ERROR_LOCATION) ;
       return false;
    }
 }
 
-   
+
 Error FilePath::ensureDirectory() const
 {
    if ( !exists() )
@@ -713,18 +749,18 @@ Error FilePath::createDirectory(const std::string& name) const
    catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       error.addProperty("target-dir", name) ;
       return error ;
    }
 }
-   
+
 Error FilePath::resetDirectory() const
 {
    Error error = removeIfExists();
    if (error)
       return error;
-   
+
    return ensureDirectory();
 }
 
@@ -734,7 +770,7 @@ FilePath FilePath::complete(const std::string& path) const
    // in-theory boost::filesystem::complete can throw but the conditions
    // are very obscure and are in any case a programming error. therefore,
    // we log silently if there is an error so that clients don't have to
-   // deal with any error states (if there an error then a copy of 
+   // deal with any error states (if there an error then a copy of
    // this path is returned)
    try
    {
@@ -745,13 +781,13 @@ FilePath FilePath::complete(const std::string& path) const
    catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       error.addProperty("path", path) ;
       LOG_ERROR(error) ;
-      return *this ; 
+      return *this ;
    }
 }
-   
+
 FilePath FilePath::parent() const
 {
    try
@@ -763,16 +799,16 @@ FilePath FilePath::parent() const
    catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       LOG_ERROR(error);
-      return *this ; 
+      return *this ;
    }
 }
-   
+
 // note: this differs from complete in the following ways:
 //    - the passed path can be an empty string (returns self)
 //    - the passed path must be relative
-FilePath FilePath::childPath(const std::string& path) const 
+FilePath FilePath::childPath(const std::string& path) const
 {
    try
    {
@@ -792,19 +828,19 @@ FilePath FilePath::childPath(const std::string& path) const
                               boost::system::errc::no_such_file_or_directory,
                               boost::system::get_system_category()));
          }
-         
+
          return complete(path);
       }
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       error.addProperty("path", path) ;
       LOG_ERROR(error);
-      return *this ; 
+      return *this ;
    }
-   
+
 }
 
 namespace {
@@ -825,7 +861,7 @@ Error FilePath::children(std::vector<FilePath>* pFilePaths) const
    if (!exists())
       return notFoundError(*this, ERROR_LOCATION);
 
-   try 
+   try
    {
       dir_iterator end ;
       for (dir_iterator itr(pImpl_->path); itr != end; ++itr)
@@ -837,15 +873,15 @@ Error FilePath::children(std::vector<FilePath>* pFilePaths) const
       }
       return Success() ;
    }
-   catch(const boost::filesystem::filesystem_error& e) 
+   catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       return error ;
    }
 }
-   
- 
+
+
 Error FilePath::childrenRecursive(
                         RecursiveIterationFunction iterationFunction) const
 {
@@ -855,26 +891,31 @@ Error FilePath::childrenRecursive(
    try
    {
       recursive_dir_iterator end ;
-      
+
       for (recursive_dir_iterator itr(pImpl_->path); itr != end; ++itr)
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         iterationFunction(itr.level(),FilePath(BOOST_FS_PATH2STR(itr->path())));
+         if (!iterationFunction(itr.level(),
+                                FilePath(BOOST_FS_PATH2STR(itr->path()))))
+         {
+            // end the iteration if requested
+            break;
+         }
       }
-      
+
       return Success() ;
    }
-   catch(const boost::filesystem::filesystem_error& e) 
+   catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;   
+      addErrorProperties(pImpl_->path, &error) ;
       return error ;
    }
 }
 
 
-Error FilePath::makeCurrentPath(bool autoCreate) const 
+Error FilePath::makeCurrentPath(bool autoCreate) const
 {
    if (autoCreate)
    {
@@ -882,13 +923,13 @@ Error FilePath::makeCurrentPath(bool autoCreate) const
       if (autoCreateError)
          return autoCreateError ;
    }
-   
-   try 
+
+   try
    {
       boost::filesystem::current_path(pImpl_->path) ;
       return Success() ;
    }
-   catch(const boost::filesystem::filesystem_error& e) 
+   catch(const boost::filesystem::filesystem_error& e)
    {
       Error error(e.code(), ERROR_LOCATION) ;
       addErrorProperties(pImpl_->path, &error) ;
@@ -1026,8 +1067,7 @@ bool FilePath::isEquivalentTo(const FilePath& filePath) const
    return false;
 }
 
-
-bool FilePath::operator== (const FilePath& filePath) const 
+bool FilePath::operator== (const FilePath& filePath) const
 {
    return pImpl_->path == filePath.pImpl_->path ;
 }
@@ -1036,8 +1076,8 @@ bool FilePath::operator!= (const FilePath& filePath) const
 {
    return pImpl_->path != filePath.pImpl_->path ;
 }
-   
-bool FilePath::operator < (const FilePath& other) const 
+
+bool FilePath::operator < (const FilePath& other) const
 {
    return pImpl_->path < other.pImpl_->path ;
 }
@@ -1112,13 +1152,13 @@ bool RecursiveDirectoryIterator::finished() const
 }
 
 
-namespace { 
+namespace {
 void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
               const core::ErrorLocation& errorLocation)
 {
    Error error(e.code(), errorLocation) ;
-   addErrorProperties(path, &error) ;   
+   addErrorProperties(path, &error) ;
    core::log::logError(error, errorLocation) ;
 }
 
@@ -1129,4 +1169,3 @@ void addErrorProperties(path_t path, Error* pError)
 }
 
 } // namespace core
-

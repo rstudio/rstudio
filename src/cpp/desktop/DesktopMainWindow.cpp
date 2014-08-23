@@ -80,6 +80,8 @@ MainWindow::MainWindow(QUrl url) :
            this, SLOT(invokeCommand(QString)));
    connect(&menuCallback_, SIGNAL(manageCommand(QString,QAction*)),
            this, SLOT(manageCommand(QString,QAction*)));
+   connect(&menuCallback_, SIGNAL(manageCommandVisibility(QString,QAction*)),
+           this, SLOT(manageCommandVisibility(QString,QAction*)));
 
    connect(&menuCallback_, SIGNAL(zoomIn()), this, SLOT(zoomIn()));
    connect(&menuCallback_, SIGNAL(zoomOut()), this, SLOT(zoomOut()));
@@ -202,8 +204,8 @@ void MainWindow::quit()
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
    double zoomLevel = options().zoomLevel();
-   if (zoomLevel != webView()->zoomFactor())
-      webView()->setZoomFactor(zoomLevel);
+   if (zoomLevel != webView()->dpiAwareZoomFactor())
+      webView()->setDpiAwareZoomFactor(zoomLevel);
 
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromAscii("desktop"),
@@ -259,6 +261,15 @@ void MainWindow::manageCommand(QString cmdId, QAction* action)
       action->setChecked(pMainFrame->evaluateJavaScript(
          QString::fromAscii("window.desktopHooks.isCommandChecked('") + cmdId + QString::fromAscii("')")).toBool());
    }
+}
+
+// a faster version of the above that just checks and sets the command's
+// visibility state (to trigger visibility of menus containing the command)
+void MainWindow::manageCommandVisibility(QString cmdId, QAction* action)
+{
+   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+   action->setVisible(pMainFrame->evaluateJavaScript(
+         QString::fromAscii("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromAscii("')")).toBool());
 }
 
 void MainWindow::evaluateJavaScript(QString jsCode)

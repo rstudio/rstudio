@@ -14,22 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandUtil;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
@@ -39,47 +39,34 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.WorkbenchView;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.BusyPresenter;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
+import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
+import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 
 
-public class CompilePdfOutputPresenter extends BasePresenter
+public class CompilePdfOutputPresenter extends BusyPresenter
    implements CompilePdfEvent.Handler,
               CompilePdfStartedEvent.Handler,
               CompilePdfOutputEvent.Handler, 
               CompilePdfErrorsEvent.Handler,
               CompilePdfCompletedEvent.Handler
 {
-   public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
-   {
-      void ensureVisible(boolean activate);
-      void compileStarted(String text);
-      void showOutput(String output);
-      void showErrors(JsArray<CompileError> errors);
-      void clearAll();
-      void compileCompleted();
-      HasClickHandlers stopButton();
-      HasClickHandlers showLogButton();
-      HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
-      boolean isEffectivelyVisible();
-      void scrollToBottom();
-   }
-
    @Inject
-   public CompilePdfOutputPresenter(Display view,
+   public CompilePdfOutputPresenter(CompileOutputPaneFactory outputFactory, 
                                     GlobalDisplay globalDisplay,
                                     CompilePdfServerOperations server,
                                     FileTypeRegistry fileTypeRegistry,
-                                    Commands commands)
+                                    EventBus events)
    {
-      super(view);
-      view_ = view;
+      super(outputFactory.create("Compile PDF", 
+                                 "View the LaTeX compilation log"));
+      view_ = (CompileOutputPaneDisplay) getView();
       globalDisplay_ = globalDisplay;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
-      commands_ = commands;
+      events_ = events;
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -125,7 +112,8 @@ public class CompilePdfOutputPresenter extends BasePresenter
       
       compileStarted(compilePdfState.getTargetFile());
       
-      view_.showOutput(compilePdfState.getOutput());
+      view_.showOutput(CompileOutput.create(CompileOutput.kNormal,
+                                            compilePdfState.getOutput()));
       
       if (compilePdfState.getErrors().length() > 0)
          view_.showErrors(compilePdfState.getErrors());    
@@ -173,9 +161,8 @@ public class CompilePdfOutputPresenter extends BasePresenter
       // tab was already visible
       switchToConsoleOnSuccessfulCompile_ = !view_.isEffectivelyVisible();
       
-      // activate the compile pdf tab if we aren't using the internal previewer
-      boolean activate = !event.useInternalPreview();
-      view_.ensureVisible(activate);
+      // activate the compile pdf tab 
+      view_.ensureVisible(true);
       
       // run the compile
       compilePdf(event.getTargetFile(),
@@ -206,11 +193,12 @@ public class CompilePdfOutputPresenter extends BasePresenter
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
       view_.compileCompleted();
+      setIsBusy(false);
       
       if (event.getResult().getSucceeded() && 
           switchToConsoleOnSuccessfulCompile_)
       {
-         commands_.activateConsole().execute();
+         events_.fireEvent(new ConsoleActivateEvent(false)); 
       }
       else if (!event.getResult().getSucceeded())
       {
@@ -255,6 +243,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
                @Override
                protected void onSuccess(Boolean started)
                {
+                  setIsBusy(started);
                }
          });
    }
@@ -289,6 +278,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
             {
                if (onTerminated != null)
                   onTerminated.execute(); 
+               setIsBusy(false);
             }
             else
             {
@@ -301,10 +291,11 @@ public class CompilePdfOutputPresenter extends BasePresenter
    }
    
    private FileSystemItem targetFile_ = null;
-   private final Display view_;
+   private final CompileOutputPaneDisplay view_;
    private final GlobalDisplay globalDisplay_;
    private final CompilePdfServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
-   private final Commands commands_;
+   private final EventBus events_;
+   
    private boolean switchToConsoleOnSuccessfulCompile_;
 }

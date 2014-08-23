@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -56,9 +58,6 @@ public class GitPane extends WorkbenchPane implements Display
       moreMenu.addItem(commands_.vcsRevert().createMenuItem(false));
       moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
       moreMenu.addSeparator();
-      moreMenu.addItem(commands_.vcsPull().createMenuItem(false));
-      moreMenu.addItem(commands_.vcsPush().createMenuItem(false));
-      moreMenu.addSeparator();
       moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
 
       Toolbar toolbar = new Toolbar();
@@ -66,9 +65,13 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.vcsShowHistory().createToolbarButton());
+      toolbar.addLeftWidget(pullButton_ = commands_.vcsPull().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(new ToolbarButton(
+      toolbar.addLeftWidget(pushButton_ = commands_.vcsPush().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(historyButton_ = commands_.vcsShowHistory().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(moreButton_ = new ToolbarButton(
             "More",
             StandardIcons.INSTANCE.more_actions(),
             moreMenu));
@@ -85,7 +88,44 @@ public class GitPane extends WorkbenchPane implements Display
                   commands_.vcsRefresh().execute();
                }
             }));
+      
       return toolbar;
+   }
+   
+   @Override
+   public void onSelected()
+   {    
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+         @Override
+         public void execute()
+         {
+            manageToolbarSizes(); 
+         }
+      });
+   }
+   
+   @Override
+   public void onResize() 
+   {
+      super.onResize();
+      
+      manageToolbarSizes();
+     
+   }
+
+   private void manageToolbarSizes()
+   {
+      // sometimes width is passed in as 0 (not sure why)
+      int width = getOffsetWidth();
+      if (width == 0)
+         return;
+      
+      pullButton_.setText(width > 500 ? "Pull" : "");
+      pushButton_.setText(width > 500 ? "Push" : "");
+      historyButton_.setText(width > 580 ? "History" : "");
+      moreButton_.setText(width > 580 ? "More" : "");
+      
    }
 
    @Override
@@ -157,6 +197,11 @@ public class GitPane extends WorkbenchPane implements Display
       });
    }
 
+   private ToolbarButton historyButton_;
+   private ToolbarButton moreButton_;
+   private ToolbarButton pullButton_;
+   private ToolbarButton pushButton_;
+   
    private final Commands commands_;
    private final CheckoutBranchToolbarButton branchToolbarButton_;
    private GitChangelistTable table_;

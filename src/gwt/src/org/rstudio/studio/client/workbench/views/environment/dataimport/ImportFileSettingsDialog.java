@@ -40,7 +40,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 
-public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
+public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDialogResult>
 {
    interface Resources extends ClientBundle
    {
@@ -51,6 +51,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
    interface Styles extends CssResource
    {
       String varname();
+      String nastrings();
       String input();
       String output();
       String inputLabel();
@@ -62,12 +63,13 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
 
    interface MyBinder extends UiBinder<Widget, ImportFileSettingsDialog> {}
 
+   
    public ImportFileSettingsDialog(
          EnvironmentServerOperations server,
          FileSystemItem dataFile,
          String varname,
          String caption,
-         OperationWithInput<ImportFileSettings> operation,
+         OperationWithInput<ImportFileSettingsDialogResult> operation,
          GlobalDisplay globalDisplay)
    {
       super(caption, operation);
@@ -117,7 +119,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
 
       separator_.setSelectedIndex(-1);
       quote_.setSelectedIndex(-1);
-
+      naStrings_.setText("NA");
       loadData();
    }
 
@@ -217,6 +219,9 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
                   selectByValue(separator_, response.getSeparator());
                   selectByValue(decimal_, response.getDecimal());
                   selectByValue(quote_, response.getQuote());
+                  
+                  defaultStringsAsFactors_ = response.getDefaultStringsAsFactors();
+                  stringsAsFactors_.setValue(defaultStringsAsFactors_);
                }
 
                @Override
@@ -295,19 +300,23 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
    }
 
    @Override
-   protected ImportFileSettings collectInput()
+   protected ImportFileSettingsDialogResult collectInput()
    {
-      return new ImportFileSettings(
+      return new ImportFileSettingsDialogResult(
+         new ImportFileSettings(
             dataFile_,
             varname_.getText().trim(),
             headingYes_.getValue(),
             separator_.getValue(separator_.getSelectedIndex()),
             decimal_.getValue(decimal_.getSelectedIndex()),
-            quote_.getValue(quote_.getSelectedIndex()));
+            quote_.getValue(quote_.getSelectedIndex()),
+            naStrings_.getText().trim(),
+            stringsAsFactors_.getValue()),
+         defaultStringsAsFactors_);
    }
 
    @Override
-   protected boolean validate(ImportFileSettings input)
+   protected boolean validate(ImportFileSettingsDialogResult input)
    {
       if (varname_.getText().trim().length() == 0)
       {
@@ -350,10 +359,15 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
    RadioButton headingNo_;
    @UiField
    TextBox varname_;
+   @UiField
+   TextBox naStrings_;
+   @UiField
+   CheckBox stringsAsFactors_;
 
    private final Widget widget_;
    private final EnvironmentServerOperations server_;
    private final FileSystemItem dataFile_;
+   private boolean defaultStringsAsFactors_ = true;
    private final GlobalDisplay globalDisplay_;
    private ProgressIndicator progress_;
    private final Invalidation updateRequest_ = new Invalidation();

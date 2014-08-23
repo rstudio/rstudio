@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -66,6 +68,12 @@ public class ProfilerEditingTarget implements EditingTarget
    {
    }
 
+   @Override
+   public String getExtendedFileType()
+   {
+      return null;
+   }   
+
    public HasValue<String> getName()
    {
       return new Value<String>("Profiler");
@@ -90,6 +98,13 @@ public class ProfilerEditingTarget implements EditingTarget
    {
       return FileIconResources.INSTANCE.iconProfiler();
    }
+   
+   @Override
+   public TextFileType getTextFileType()
+   {
+      return null;
+   }
+
 
    public String getTabTooltip()
    {
@@ -224,6 +239,11 @@ public class ProfilerEditingTarget implements EditingTarget
       return dirtyState().getValue();
    }
    
+   @Override
+   public void forceSaveCommandActive()
+   {
+   }
+   
    public void save(Command onCompleted)
    {
       onCompleted.execute();
@@ -313,5 +333,5 @@ public class ProfilerEditingTarget implements EditingTarget
    private final Value<Boolean> neverDirtyState_ = new Value<Boolean>(false);
 
    private final EventBus events_;
-   private final Commands commands_;   
+   private final Commands commands_;
 }

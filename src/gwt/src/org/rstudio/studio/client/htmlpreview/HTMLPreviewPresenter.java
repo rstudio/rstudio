@@ -65,7 +65,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    public interface Binder extends CommandBinder<Commands, HTMLPreviewPresenter>
    {}
 
-   
    public interface Display extends IsWidget
    {
       void showProgress(String caption);

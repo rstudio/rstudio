@@ -16,6 +16,8 @@
 #ifndef SERVER_PAM_AUTH_HPP
 #define SERVER_PAM_AUTH_HPP
 
+#include <string>
+
 namespace core {
    class Error;
 }
@@ -23,6 +25,8 @@ namespace core {
 namespace server {
 namespace pam_auth {
    
+bool pamLogin(const std::string& username, const std::string& password);
+
 core::Error initialize();
 
 } // namespace pam_auth

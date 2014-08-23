@@ -15,8 +15,10 @@
 
 #include <core/r_util/REnvironment.hpp>
 
+#include <iostream>
 #include <algorithm>
 
+#include <boost/regex.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -87,6 +89,7 @@ FilePath systemDefaultRScript(std::string* pErrMsg)
    rScriptPaths.push_back("/usr/bin/R");
    rScriptPaths.push_back("/usr/local/bin/R");
    rScriptPaths.push_back("/opt/local/bin/R");
+   rScriptPaths.push_back("/Library/Frameworks/R.framework/Resources/bin/R");
    return scanForRScript(rScriptPaths, pErrMsg);
 }
 
@@ -174,6 +177,10 @@ bool detectRLocationsUsingFramework(FilePath* pHomePath,
 std::string extraLibraryPaths(const FilePath& ldPathsScript,
                               const std::string& rHome)
 {
+   // no-op if no script is passed
+   if (ldPathsScript.empty())
+      return std::string();
+
    // verify that script exists
    if (!ldPathsScript.exists())
    {
@@ -557,6 +564,7 @@ bool detectREnvironment(const FilePath& whichRScript,
                         const FilePath& ldPathsScript,
                         const std::string& ldLibraryPath,
                         std::string* pRScriptPath,
+                        std::string* pVersion,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg)
 {
@@ -651,6 +659,60 @@ bool detectREnvironment(const FilePath& whichRScript,
                                                 scriptVars["R_DOC_DIR"])));
 
    // determine library path (existing + r lib dir + r extra lib dirs)
+   std::string libraryPath = rLibraryPath(rHomePath,
+                                          rLibPath,
+                                          ldPathsScript,
+                                          ldLibraryPath);
+   pVars->push_back(std::make_pair(kLibraryPathEnvVariable, libraryPath));
+
+   // set R_ARCH on the mac if we are running against CRAN R
+#ifdef __APPLE__
+   // if it starts with the standard prefix and an etc/x86_64 directory
+   // exists then we set the R_ARCH
+   if (boost::algorithm::starts_with(rHomePath.absolutePath(),
+                                     "/Library/Frameworks/R.framework/") &&
+       FilePath("/Library/Frameworks/R.framework/Resources/etc/x86_64")
+                                                                   .exists())
+   {
+      pVars->push_back(std::make_pair("R_ARCH","/x86_64"));
+   }
+#endif
+
+   Error error = rVersion(rHomePath, FilePath(*pRScriptPath), pVersion);
+   if (error)
+      LOG_ERROR(error);
+
+   return validateREnvironment(*pVars, rLibPath, pErrMsg);
+}
+
+
+void setREnvironmentVars(const EnvironmentVars& vars)
+{
+   for (EnvironmentVars::const_iterator it = vars.begin();
+        it != vars.end();
+        ++it)
+   {
+      core::system::setenv(it->first, it->second);
+   }
+}
+
+void setREnvironmentVars(const EnvironmentVars& vars,
+                         core::system::Options* pEnv)
+{
+   for (EnvironmentVars::const_iterator it = vars.begin();
+        it != vars.end();
+        ++it)
+   {
+      core::system::setenv(pEnv, it->first, it->second);
+   }
+}
+
+std::string rLibraryPath(const FilePath& rHomePath,
+                         const FilePath& rLibPath,
+                         const FilePath& ldPathsScript,
+                         const std::string& ldLibraryPath)
+{
+   // determine library path (existing + r lib dir + r extra lib dirs)
    std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
 #ifdef __APPLE__
    // if this isn't set explicitly then initalize it with the default
@@ -672,33 +734,47 @@ bool detectREnvironment(const FilePath& whichRScript,
                                               rHomePath.absolutePath());
    if (!extraPaths.empty())
       libraryPath.append(":" + extraPaths);
-   pVars->push_back(std::make_pair(kLibraryPathEnvVariable, libraryPath));
-
-   // set R_ARCH on the mac if we are running against CRAN R
-#ifdef __APPLE__
-   // if it starts with the standard prefix and an etc/x86_64 directory
-   // exists then we set the R_ARCH
-   if (boost::algorithm::starts_with(rHomePath.absolutePath(),
-                                     "/Library/Frameworks/R.framework/") &&
-       FilePath("/Library/Frameworks/R.framework/Resources/etc/x86_64")
-                                                                   .exists())
-   {
-      pVars->push_back(std::make_pair("R_ARCH","/x86_64"));
-   }
-#endif
-
-
-   return validateREnvironment(*pVars, rLibPath, pErrMsg);
+   return libraryPath;
 }
 
-
-void setREnvironmentVars(const EnvironmentVars& vars)
+Error rVersion(const FilePath& rHomePath,
+               const FilePath& rScriptPath,
+               std::string* pVersion)
 {
-   for (EnvironmentVars::const_iterator it = vars.begin();
-        it != vars.end();
-        ++it)
+   // determine the R version
+   core::system::ProcessOptions options;
+   core::system::Options env;
+   core::system::environment(&env);
+   core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
+   options.environment = env;
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(rScriptPath.absolutePath() +
+                                          " --slave --vanilla --version",
+                                          options,
+                                          &result);
+   if (error)
    {
-      core::system::setenv(it->first, it->second);
+      error.addProperty("r-script", rScriptPath);
+      return error;
+   }
+   else
+   {
+      std::string versionInfo = boost::algorithm::trim_copy(result.stdOut);
+      boost::regex re("^[^\\d]+([\\d\\.]+)");
+      boost::smatch match;
+      if (boost::regex_search(versionInfo, match, re))
+      {
+         *pVersion = match[1];
+         return Success();
+      }
+      else
+      {
+         Error error = systemError(boost::system::errc::protocol_error,
+                                   "Unable to parse version from R",
+                                   ERROR_LOCATION);
+         error.addProperty("version-info", versionInfo);
+         return error;
+      }
    }
 }
 

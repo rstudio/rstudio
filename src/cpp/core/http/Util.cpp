@@ -138,18 +138,19 @@ void parseMultipartForm(const std::string& contentType,
    {
       boundary = contentType.substr(prefixLoc+boundaryPrefix.size(),
                                     std::string::npos);
+      boundary = "--" + boundary;
       boost::algorithm::trim(boundary);
    }
    
    // extract the fields
    size_t beginBoundaryLoc = body.find(boundary);
-   size_t endBoundaryLoc = body.find(boundary, 
-                                    beginBoundaryLoc+boundary.size());
+   size_t endBoundaryLoc = body.find("\r\n" + boundary,
+                                     beginBoundaryLoc+boundary.size());
    while (endBoundaryLoc != std::string::npos)
    {
       // extract the part into a string stream
       size_t beginPart = beginBoundaryLoc + boundary.size();
-      size_t partLength = (endBoundaryLoc - 1) - beginPart - 1;
+      size_t partLength = endBoundaryLoc - beginPart;
       std::istringstream partStream(body.substr(beginPart, partLength)); 
       partStream.unsetf(std::ios::skipws);
     
@@ -203,7 +204,8 @@ void parseMultipartForm(const std::string& contentType,
                 
       // next boundary
       beginBoundaryLoc = endBoundaryLoc;
-      endBoundaryLoc = body.find(boundary, beginBoundaryLoc+boundary.size());
+      endBoundaryLoc = body.find("\r\n" + boundary,
+                                 beginBoundaryLoc+boundary.size());
    }
 }   
    
@@ -234,7 +236,7 @@ std::string urlEncode(const std::string& in, bool queryStringSpaces)
          std::ostringstream ostr ;
          ostr << "%" ;
          ostr << std::setw(2) << std::setfill('0') << std::hex << std::uppercase
-              << (int)(uint8_t)ch ;
+              << (int)(boost::uint8_t)ch ;
          std::string charAsHex = ostr.str();
          encodedURL += charAsHex;
       }

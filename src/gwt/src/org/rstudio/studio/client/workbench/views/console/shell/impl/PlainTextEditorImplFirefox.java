@@ -21,10 +21,8 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.ElementEx;
 
 public class PlainTextEditorImplFirefox extends PlainTextEditorImpl
 {
@@ -32,18 +30,19 @@ public class PlainTextEditorImplFirefox extends PlainTextEditorImpl
     * @see org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl#setupTextContainer(Element)
     */
    @Override
-   public ElementEx setupTextContainer(Element element)
+   public Element setupTextContainer(Element element)
    {
-      ElementEx zwspSpan = (ElementEx) DOM.createSpan() ;
+        
+      Element zwspSpan = Document.get().createSpanElement() ;
       zwspSpan.setInnerText("\u200B") ;
       
-      ElementEx textContainer = (ElementEx) DOM.createDiv() ;
+      Element textContainer = Document.get().createDivElement();
       textContainer.getStyle().setDisplay(Display.INLINE);
       
       element.appendChild(zwspSpan) ;
       element.appendChild(textContainer) ;
       
-      DOM.setElementPropertyBoolean(textContainer, "contentEditable", true) ;
+      textContainer.setPropertyBoolean("contentEditable", true) ;
 
       textContainer_ = textContainer;
       return textContainer_;
@@ -116,5 +115,5 @@ public class PlainTextEditorImplFirefox extends PlainTextEditorImpl
       }
    }
 
-   private ElementEx textContainer_;
+   private Element textContainer_;
 }

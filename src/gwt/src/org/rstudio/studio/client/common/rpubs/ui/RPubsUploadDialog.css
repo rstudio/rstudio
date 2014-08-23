@@ -2,7 +2,6 @@
 
 .mainWidget {
    width: 400px;
-   height: 180px;
 }
 
 .headerPanel {
@@ -14,6 +13,24 @@
 	font-weight: bold;
 	font-size: 16px;
    display: none;
+}
+
+.warningLabel {
+	margin-top: 15px;
+	margin-bottom: 15px;
+}
+
+.fieldLabel {
+	margin-bottom: 2px;
+}
+
+.titleTextBox {
+	width: 99%;
+	margin-bottom: 10px;
+}
+
+.commentTextArea {
+	width: 99%;
 }
 
 .descLabel {

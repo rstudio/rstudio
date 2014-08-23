@@ -15,35 +15,79 @@ package org.rstudio.studio.client.workbench.views.viewer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
    @Inject
-   public ViewerPane(Commands commands, GlobalDisplay globalDisplay)
+   public ViewerPane(Commands commands, GlobalDisplay globalDisplay, EventBus events)
    {
       super("Viewer");
       commands_ = commands;
       globalDisplay_ = globalDisplay;
+      events_ = events;
       ensureWidget();
    }
    
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
-      toolbar.addLeftWidget(commands_.viewerPopout().createToolbarButton());
+      toolbar_ = new Toolbar();
       
-      toolbar.addRightWidget(commands_.viewerClear().createToolbarButton());
-      toolbar.addRightWidget(commands_.viewerStop().createToolbarButton());
-      toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.viewerRefresh().createToolbarButton());
-      return toolbar;
+      // add html widget buttons
+      toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.viewerForward().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerZoom().createToolbarButton());
+      
+      // export commands
+      exportButtonSeparator_ = toolbar_.addLeftSeparator();
+      ToolbarPopupMenu exportMenu = new ToolbarPopupMenu();
+      exportMenu.addItem(commands_.viewerSaveAsImage().createMenuItem(false));
+      exportMenu.addItem(commands_.viewerCopyToClipboard().createMenuItem(false));
+      exportMenu.addSeparator();
+      exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
+      exportMenu.addSeparator();
+      exportMenu.addItem(commands_.viewerPublishToRPubs().createMenuItem(false));
+      
+      exportButton_ = new ToolbarButton(
+            "Export", StandardIcons.INSTANCE.export_menu(),
+            exportMenu);
+      toolbar_.addLeftWidget(exportButton_);  
+      exportButton_.setVisible(false);
+      exportButtonSeparator_.setVisible(false);
+      
+      // add publish button 
+      publishButtonSeparator_ = toolbar_.addLeftSeparator();
+      publishButton_ = commands_.publishHTML().createToolbarButton(false);
+      toolbar_.addLeftWidget(publishButton_);
+      publishButtonSeparator_.setVisible(false);
+      publishButton_.setVisible(false);
+     
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerClear().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerClearAll().createToolbarButton());
+      
+      toolbar_.addRightWidget(commands_.viewerStop().createToolbarButton());
+      toolbar_.addRightSeparator();
+      toolbar_.addRightWidget(commands_.viewerPopout().createToolbarButton());
+      toolbar_.addRightSeparator();
+      toolbar_.addRightWidget(commands_.viewerRefresh().createToolbarButton());
+      return toolbar_;
    }
    
    @Override 
@@ -51,48 +95,39 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       frame_ = new RStudioFrame() ;
       frame_.setSize("100%", "100%");
-      navigate(ABOUT_BLANK);
+      navigate(ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
    }
    
    @Override
    public void navigate(String url)
    {
-      // save the unmodified URL for pop-out
-      unmodifiedUrl_ = url;
-      
-      // append the viewer_pane query parameter
-      if ((unmodifiedUrl_ != null) && !unmodifiedUrl_.equals(ABOUT_BLANK))
-      {
-         // first split into base and anchor
-         String base = new String(unmodifiedUrl_);
-         String anchor = new String();
-         int anchorPos = base.indexOf('#');
-         if (anchorPos != -1)
-         {
-            anchor = base.substring(anchorPos);
-            base = base.substring(0, anchorPos);
-         }
-         
-         // add the query param
-         if (!base.contains("?"))
-            base = base + "?";
-         else
-            base = base + "&";
-         base = base + "viewer_pane=1";
-        
-         // add the anchor back on
-         String viewerUrl = base + anchor;
-         
-         // set the url
-         frame_.setUrl(viewerUrl);
-      }
-      else
-      {
-         frame_.setUrl(unmodifiedUrl_);
-      }
+      navigate(url, false);
+      publishButton_.setVisible(false);
+      publishButtonSeparator_.setVisible(false);
+      rmdPreviewParams_ = null;
+   }
+
+   @Override
+   public void previewRmd(RmdPreviewParams params)
+   {
+      navigate(params.getOutputUrl(), true);
+      publishButton_.setVisible(!params.isShinyDocument());
+      publishButtonSeparator_.setVisible(!params.isShinyDocument());
+      if (!params.isShinyDocument())
+         publishButton_.setText(params.getResult().getRpubsPublished() ? 
+               "Republish" : "Publish");
+      rmdPreviewParams_ = params;
+      toolbar_.invalidateSeparators();
    }
    
+   @Override
+   public void setExportEnabled(boolean exportEnabled)
+   {
+      exportButton_.setVisible(exportEnabled);
+      exportButtonSeparator_.setVisible(exportEnabled);
+      toolbar_.invalidateSeparators();
+   }
    
    @Override
    public String getUrl()
@@ -101,10 +136,23 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    }
    
    @Override
+   public String getTitle()
+   {
+      return frame_.getTitle();
+   }
+   
+   @Override
    public void popout()
    {
-      if (unmodifiedUrl_ != null)
+      if (rmdPreviewParams_ != null && 
+          !rmdPreviewParams_.isShinyDocument())
+      {
+         globalDisplay_.showHtmlFile(rmdPreviewParams_.getOutputFile());
+      }
+      else if (unmodifiedUrl_ != null)
+      {
          globalDisplay_.openWindow(unmodifiedUrl_);
+      }
    }
 
    @Override
@@ -115,9 +163,49 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          frame_.setUrl(url);
    }
    
+   @Override
+   public Size getViewerFrameSize()
+   {
+      return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
+   }
+   
+   private void navigate(String url, boolean useRawURL)
+   {
+      // save the unmodified URL for pop-out
+      unmodifiedUrl_ = url;
+      
+      // append the viewer_pane query parameter
+      if ((unmodifiedUrl_ != null) && 
+          !unmodifiedUrl_.equals(ABOUT_BLANK) &&
+          !useRawURL)
+      {
+         String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_, 
+                                                   "viewer_pane", 
+                                                   "1");
+         frame_.setUrl(viewerUrl);
+      }
+      else
+      {
+         frame_.setUrl(unmodifiedUrl_);
+      }
+      
+      events_.fireEvent(new ViewerNavigatedEvent(url, frame_));
+   }
+
    private RStudioFrame frame_;
    private String unmodifiedUrl_;
+   private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
-   private static final String ABOUT_BLANK = "about:blank";
+   private final EventBus events_;
+   
+   private Toolbar toolbar_;
+   
+   private ToolbarButton publishButton_;
+   private Widget publishButtonSeparator_;
+   
+   private ToolbarButton exportButton_;
+   private Widget exportButtonSeparator_;
+
+   public static final String ABOUT_BLANK = "about:blank";
 }

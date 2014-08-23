@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.dom;
 
+import org.rstudio.core.client.BrowseCap;
+
 import com.google.gwt.dom.client.IFrameElement;
 
 public class IFrameElementEx extends IFrameElement
@@ -25,4 +27,12 @@ public class IFrameElementEx extends IFrameElement
    public final native WindowEx getContentWindow() /*-{
       return this.contentWindow ;
    }-*/;
+   
+   public final void setFocus()
+   {
+      if (BrowseCap.INSTANCE.isInternetExplorer())
+         getContentWindow().focus();
+      else
+         focus();
+   }
 }

@@ -44,7 +44,13 @@ public class HelpButton extends Composite
       return helpButton;
    }
    
-   public HelpButton(final String rstudioLinkName)
+   public HelpButton(String rstudioLinkName)
+   {
+      this(rstudioLinkName, true);
+   }
+   
+   public HelpButton(final String rstudioLinkName, 
+                     final boolean includeVersionInfo)
    {
       Image helpImage = new Image(ThemeResources.INSTANCE.help());
       helpImage.getElement().getStyle().setCursor(Cursor.POINTER);
@@ -55,7 +61,7 @@ public class HelpButton extends Composite
          {
             GlobalDisplay globalDisplay = 
                                  RStudioGinjector.INSTANCE.getGlobalDisplay();
-            globalDisplay.openRStudioLink(rstudioLinkName);
+            globalDisplay.openRStudioLink(rstudioLinkName, includeVersionInfo);
          }
       });
       

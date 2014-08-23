@@ -42,8 +42,6 @@
 using namespace core ;
 
 namespace session {
-namespace modules { 
-namespace rpubs {
 
 namespace {
 
@@ -76,6 +74,15 @@ std::string pathIdentifier(const FilePath& filePath)
    // urlencode so we can use it as a key
    return http::util::urlEncode(path);
 }
+
+
+} // anonymous namespace
+
+
+namespace modules { 
+namespace rpubs {
+
+namespace {
 
 void saveUploadId(const FilePath& filePath, const std::string& uploadId)
 {
@@ -126,7 +133,7 @@ private:
       isRunning_ = true;
 
       // see if we already know of an upload id for this file
-      std::string id = allowUpdate ? previousUploadId(htmlFile_) : std::string();
+      std::string id = allowUpdate ? previousRpubsUploadId(htmlFile_) : std::string();
 
       // R binary
       FilePath rProgramPath;
@@ -353,7 +360,8 @@ Error rpubsIsPublished(const json::JsonRpcRequest& request,
 
     FilePath filePath = module_context::resolveAliasedPath(htmlFile);
 
-    pResponse->setResult(!previousUploadId(filePath).empty());
+    pResponse->setResult(
+          !module_context::previousRpubsUploadId(filePath).empty());
 
     return Success();
 }
@@ -377,6 +385,10 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
    }
    else
    {
+      // provide a default title if necessary
+      if (title.empty())
+         title = "Untitled";
+
       FilePath filePath = module_context::resolveAliasedPath(htmlFile);
       s_pCurrentUploads[contextId] = RPubsUpload::create(contextId,
                                                          title,
@@ -405,13 +417,6 @@ Error terminateRpubsUpload(const json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
-std::string previousUploadId(const FilePath& filePath)
-{
-   Settings settings;
-   getUploadIdSettings(&settings);
-   return settings.get(pathIdentifier(filePath));
-}
-
 Error initialize()
 {
    using boost::bind;
@@ -428,5 +433,17 @@ Error initialize()
    
 } // namespace rpubs
 } // namespace modules
+
+namespace module_context {
+
+std::string previousRpubsUploadId(const FilePath& filePath)
+{
+   Settings settings;
+   getUploadIdSettings(&settings);
+   return settings.get(pathIdentifier(filePath));
+}
+
+} // namespace module_context
+
 } // namesapce session
 

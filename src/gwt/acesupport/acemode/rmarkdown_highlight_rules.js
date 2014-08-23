@@ -33,7 +33,7 @@ var RMarkdownHighlightRules = function() {
     this.$rules = new MarkdownHighlightRules().getRules();
     this.$rules["start"].unshift({
         token: "support.function.codebegin",
-        regex: "^`{3,}\\s*\\{r(?:.*)\\}\\s*$",
+        regex: "^(?:[ ]{4})?`{3,}\\s*\\{r(?:.*)\\}\\s*$",
         next: "r-start"
     });
 
@@ -41,13 +41,13 @@ var RMarkdownHighlightRules = function() {
     this.addRules(rRules, "r-");
     this.$rules["r-start"].unshift({
         token: "support.function.codeend",
-        regex: "^`{3,}\\s*$",
+        regex: "^(?:[ ]{4})?`{3,}\\s*$",
         next: "start"
     });
 
     this.$rules["start"].unshift({
         token: "support.function.codebegin",
-        regex: "^`{3,}\\s*\\{r(?:.*)engine\\='Rcpp'(?:.*)\\}\\s*$",
+        regex: "^(?:[ ]{4})?`{3,}\\s*\\{r(?:.*)engine\\='Rcpp'(?:.*)\\}\\s*$",
         next: "r-cpp-start"
     });
 
@@ -55,7 +55,7 @@ var RMarkdownHighlightRules = function() {
     this.addRules(cppRules, "r-cpp-");
     this.$rules["r-cpp-start"].unshift({
         token: "support.function.codeend",
-        regex: "^`{3,}\\s*$",
+        regex: "^(?:[ ]{4})?`{3,}\\s*$",
         next: "start"
     });
 };

@@ -14,9 +14,14 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.ArrayList;
+
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PreWidget extends Widget implements HasKeyDownHandlers,
@@ -37,7 +42,23 @@ public class PreWidget extends Widget implements HasKeyDownHandlers,
    {
       return addDomHandler(handler, KeyDownEvent.getType());
    }
-
+   
+   public HandlerRegistration addPasteHandler(final PasteEvent.Handler handler)
+   {
+      // GWT doesn't understand paste events via BrowserEvents.Paste, so we need
+      // to manually sink and register for the paste event.
+      sinkEvents(Event.ONPASTE);
+      pasteHandlers_.add(handler);
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            pasteHandlers_.remove(handler);
+         }
+      };
+   }
+   
    public void setText(String text)
    {
       getElement().setInnerText(text);
@@ -47,4 +68,24 @@ public class PreWidget extends Widget implements HasKeyDownHandlers,
    {
       getElement().setInnerText(getElement().getInnerText() + text);
    }
+   
+   @Override
+   public void onBrowserEvent(Event event)
+   {
+      super.onBrowserEvent(event);
+      if (event.getTypeInt() == Event.ONPASTE)
+      {
+         for (PasteEvent.Handler handler: pasteHandlers_)
+         {
+            handler.onPaste(new PasteEvent(getClipboardText(event)));
+         }
+      }
+   }
+   
+   private final native String getClipboardText(Event event) /*-{
+      return event.clipboardData.getData('text/plain');
+   }-*/;
+   
+   private ArrayList<PasteEvent.Handler> pasteHandlers_ = 
+         new ArrayList<PasteEvent.Handler>();
 }

@@ -42,6 +42,7 @@ public interface ConsoleResources extends ClientBundle
       String promptFullHelp();
       String error();
       String selected();
+      String paddedOutput();
    }
    
    public static final String KEYWORD_CLASS_NAME = " ace_keyword";

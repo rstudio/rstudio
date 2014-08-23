@@ -170,7 +170,7 @@ function submitRealForm() {
 <p>Error: #errorMessage#</p>
 </div>
 
-<form action="javascript:void" method="POST" onsubmit="submitRealForm();return false">
+<form method="POST" #!formAction#>
 <table id="border" align="center">
   <tr>
     <td>
@@ -192,9 +192,10 @@ function submitRealForm() {
                 size='45'/><br />
       </p>
       <p>
-         <input type="checkbox" name="staySignedIn" id="staySignedIn"/>
+         <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
          <label for="staySignedIn">Stay signed in</label>
       </p>
+       <input type="hidden" name="appUri" value="#appUri#"/>
       <div id="buttonpanel"><button class="fancy" type="submit"><table cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td class="left"></td>

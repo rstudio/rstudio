@@ -75,6 +75,9 @@ public:
    void addProperty(const std::string& name, const FilePath& value); 
    void addProperty(const std::string& name, int value);
    
+   void setExpected();
+   bool expected() const;
+
    const boost::system::error_code& code() const;
 
    std::string summary() const;

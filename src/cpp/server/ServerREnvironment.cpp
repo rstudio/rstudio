@@ -43,18 +43,10 @@ bool initialize(std::string* pErrMsg)
    if (!whichROverride.empty())
       rWhichRPath = FilePath(whichROverride);
 
-   // determine rLdPaths script location
-   FilePath rLdScriptPath(server::options().rldpathPath());
-   std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
-
    // attempt to detect R environment
-   std::string rScriptPath;
-   return r_util::detectREnvironment(rWhichRPath,
-                                     rLdScriptPath,
-                                     ldLibraryPath,
-                                     &rScriptPath,
-                                     &s_rEnvironmentVars,
-                                     pErrMsg);
+   return detectREnvironment(rWhichRPath,
+                             &s_rEnvironmentVars,
+                             pErrMsg);
 }
 
 std::vector<std::pair<std::string,std::string> > variables()
@@ -72,6 +64,24 @@ std::vector<std::pair<std::string,std::string> > variables()
 
    // mutex related error
    return r_util::EnvironmentVars();
+}
+
+bool detectREnvironment(const core::FilePath& rScriptPath,
+                        core::r_util::EnvironmentVars* pVars,
+                        std::string* pErrMsg)
+{
+   // determine rLdPaths script location
+   FilePath rLdScriptPath(server::options().rldpathPath());
+   std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
+
+   std::string rScriptPathOut, rVersion;
+   return r_util::detectREnvironment(rScriptPath,
+                                     rLdScriptPath,
+                                     ldLibraryPath,
+                                     &rScriptPathOut,
+                                     &rVersion,
+                                     pVars,
+                                     pErrMsg);
 }
 
 } // namespace r_environment

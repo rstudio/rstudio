@@ -991,7 +991,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    *
    * @param item the item with or without a submenu
    */
-  void updateSubmenuIcon(MenuItem item) {
+  protected void updateSubmenuIcon(MenuItem item) {
     // The submenu icon only applies to vertical menus
     if (!vertical) {
       return;
@@ -1007,7 +1007,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     Element tr = DOM.getChild(container, idx);
     int tdCount = DOM.getChildCount(tr);
     MenuBar submenu = item.getSubMenu();
-    if (submenu == null) {
+    if (submenu == null || !item.isVisible()) {
       // Remove the submenu indicator
       if (tdCount == 2) {
         DOM.removeChild(tr, DOM.getChild(tr, 1));
@@ -1092,7 +1092,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     this.vertical = vertical;
 
-    Element outer = FocusPanel.impl.createFocusable();
+    com.google.gwt.dom.client.Element outer = FocusPanel.impl.createFocusable();
     DOM.appendChild(outer, table);
     setElement(outer);
 

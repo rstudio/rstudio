@@ -231,52 +231,122 @@ Error copyPlotToClipboardMetafile(const json::JsonRpcRequest& request,
 #endif
 }
 
-
-
-bool hasStem(const FilePath& filePath, const std::string& stem)
+Error copyPlotToCocoaPasteboard(const json::JsonRpcRequest& request,
+                                json::JsonRpcResponse* pResponse)
 {
-   return filePath.stem() == stem;
-}
-
-json::Object plotExportFormat(const std::string& name,
-                              const std::string& extension)
-{
-   json::Object formatJson;
-   formatJson["name"] = name;
-   formatJson["extension"] = extension;
-   return formatJson;
-}
-
-Error uniqueSavePlotStem(const FilePath& directoryPath, std::string* pStem)
-{
-   // determine unique file name
-   std::vector<FilePath> children;
-   Error error = directoryPath.children(&children);
+   // get args
+   int width, height;
+   Error error = json::readParams(request.params, &width, &height);
    if (error)
       return error;
 
-   // search for unique stem
-   int i = 0;
-   *pStem = "Rplot";
-   while(true)
-   {
-      // seek stem
-      std::vector<FilePath>::const_iterator it = std::find_if(
-                                                children.begin(),
-                                                children.end(),
-                                                boost::bind(hasStem, _1, *pStem));
-      // break if not found
-      if (it == children.end())
-         break;
+#if __APPLE__
 
-      // update stem and search again
-      boost::format fmt("Rplot%1%");
-      *pStem = boost::str(fmt % boost::io::group(std::setfill('0'),
-                                                 std::setw(2),
-                                                 ++i));
-   }
+   // create temp file to write to
+   FilePath targetFile = module_context::tempFile("clipboard", "png");
+
+   // save as png
+   using namespace r::session::graphics;
+   Display& display = r::session::graphics::display();
+   error = display.savePlotAsImage(targetFile, "png", width, height);
+   if (error)
+      return error;
+
+   // copy to pasteboard
+   error = module_context::copyImageToCocoaPasteboard(targetFile);
+   if (error)
+      return error;
+
+   // remove temp file
+   error = targetFile.remove();
+   if (error)
+      LOG_ERROR(error);
 
    return Success();
+
+#else
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+#endif
+}
+
+
+Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string title, comment;
+   int width, height;
+   Error error = json::readParams(request.params,
+                                  &title,
+                                  &comment,
+                                  &width,
+                                  &height);
+   if (error)
+      return error;
+
+   // create a temp directory to work in
+   FilePath tempPath = module_context::tempFile("plots-rpubs", "dir");
+   error = tempPath.ensureDirectory();
+   if (error)
+      return error;
+
+   // form various other paths
+   FilePath sourceFilePath = tempPath.childPath("source.html");
+   FilePath targetFilePath = tempPath.childPath("target.html");
+   FilePath plotPath = tempPath.childPath("plot.png");
+
+   // save plot
+   using namespace r::session::graphics;
+   Display& display = r::session::graphics::display();
+   error = display.savePlotAsImage(plotPath, "png", width, height);
+   if (error)
+   {
+       LOG_ERROR(error);
+       return error;
+   }
+
+   // generate source file
+   boost::format fmt(
+       "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \n"
+            "\"http://www.w3.org/TR/html4/strict.dtd\">\n"
+       "<html lang=\"en\">\n"
+       "<head>\n"
+       "  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n"
+       "  <title>%1%</title>\n"
+       "</head>\n"
+       "<body style=\"background-color: white;"
+                     "font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">\n"
+       "  <div style=\"width: %2%px; margin-left: auto; margin-right: auto;\">\n"
+       "    <h3 style=\"margin-bottom: 5px;\">%1%</h3>\n"
+       "    <img src=\"%3%\"/>\n"
+       "  </div>\n"
+       "</body>\n"
+       "</html>\n");
+   std::string html = boost::str(fmt % title % width % plotPath.filename());
+   error = core::writeStringToFile(sourceFilePath, html);
+   if (error)
+      return error;
+
+   // perform the base64 encode using pandoc
+   error = module_context::createSelfContainedHtml(sourceFilePath,
+                                                   targetFilePath);
+   if (error)
+      return error;
+
+   // return target path
+   pResponse->setResult(module_context::createAliasedPath(targetFilePath));
+
+   // return success
+   return Success();
+}
+
+
+
+
+
+Error uniqueSavePlotStem(const FilePath& directoryPath, std::string* pStem)
+{
+   return module_context::uniqueSaveStem(directoryPath, "Rplot", pStem);
 }
 
 Error getUniqueSavePlotStem(const json::JsonRpcRequest& request,
@@ -322,7 +392,8 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
    json::Object contextJson;
 
    // get supported formats
-    using namespace r::session::graphics;
+   using namespace module_context;
+   using namespace r::session::graphics;
    json::Array formats;
    formats.push_back(plotExportFormat("PNG", kPngFormat));
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
@@ -400,7 +471,8 @@ void setImageFileResponse(const FilePath& imageFilePath,
    Error error = pResponse->setBody(imageFilePath);
    if (error)
    {
-      LOG_ERROR(error);
+      if (!core::isPathNotFoundError(error))
+         LOG_ERROR(error);
       pResponse->setError(http::status::InternalServerError,
                           error.code().message());
    }
@@ -575,7 +647,7 @@ void handleGraphicsRequest(const http::Request& request,
    {
       std::string errmsg = "invalid graphics uri: " + uri;
       LOG_ERROR_MESSAGE(errmsg);
-      pResponse->setError(http::status::NotFound, errmsg);
+      pResponse->setNotFoundError(request.uri());
       return ;
    }
    std::string filename = uri.substr(lastSlashPos+1);
@@ -609,8 +681,7 @@ void handleGraphicsRequest(const http::Request& request,
       else
       {
          // not found error
-         pResponse->setError(http::status::NotFound, 
-                             request.uri() + " not found");
+         pResponse->setNotFoundError(request.uri());
       }
    }
 }
@@ -794,6 +865,8 @@ Error initialize()
       (bind(registerRpcMethod, "save_plot_as", savePlotAs))
       (bind(registerRpcMethod, "save_plot_as_pdf", savePlotAsPdf))
       (bind(registerRpcMethod, "copy_plot_to_clipboard_metafile", copyPlotToClipboardMetafile))
+      (bind(registerRpcMethod, "copy_plot_to_cocoa_pasteboard", copyPlotToCocoaPasteboard))
+      (bind(registerRpcMethod, "plots_create_rpubs_html", plotsCreateRPubsHtml))
       (bind(registerRpcMethod, "get_unique_save_plot_stem", getUniqueSavePlotStem))
       (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))

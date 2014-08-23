@@ -16,8 +16,26 @@ package org.rstudio.studio.client.workbench.views.viewer.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 
 public interface ViewerServerOperations
 {
    void viewerStopped(ServerRequestCallback<Void> requestCallback);
+   
+   void viewerBack(ServerRequestCallback<Void> requestCallback);
+   void viewerForward(ServerRequestCallback<Void> requestCallback);
+   void viewerCurrent(ServerRequestCallback<Void> requestCallback);
+   void viewerClearCurrent(ServerRequestCallback<Void> requestCallback);
+   void viewerClearAll(ServerRequestCallback<Void> requestCallback);
+   
+   void getViewerExportContext(
+         String directory,
+         ServerRequestCallback<SavePlotAsImageContext> requestCallback);
+   
+   void viewerSaveAsWebPage(String targetPath,
+                            ServerRequestCallback<Void> requestCallback);
+   
+   void viewerCreateRPubsHtml(String title, 
+                              String comment,
+                              ServerRequestCallback<String> requestCallback);
 }

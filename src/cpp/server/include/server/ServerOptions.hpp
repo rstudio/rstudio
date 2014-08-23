@@ -130,6 +130,11 @@ public:
       return authValidateUsers_;
    }
 
+   bool authEncryptPassword()
+   {
+      return authEncryptPassword_;
+   }
+
    std::string authRequiredUserGroup()
    {
       return std::string(authRequiredUserGroup_.c_str());
@@ -229,6 +234,7 @@ private:
    bool wwwProxyLocalhost_;
    bool authNone_;
    bool authValidateUsers_;
+   bool authEncryptPassword_;
    std::string authRequiredUserGroup_;
    std::string authPamHelperPath_;
    std::string rsessionWhichR_;

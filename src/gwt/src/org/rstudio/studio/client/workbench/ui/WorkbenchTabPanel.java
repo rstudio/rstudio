@@ -24,10 +24,12 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
+
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.theme.WindowFrame;
+import org.rstudio.core.client.widget.model.ProvidesBusy;
 
 import java.util.ArrayList;
 
@@ -154,7 +156,8 @@ class WorkbenchTabPanel
                }
             });
          }
-      });
+      }, 
+      tab instanceof ProvidesBusy ? (ProvidesBusy) tab : null);
       
       tab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {

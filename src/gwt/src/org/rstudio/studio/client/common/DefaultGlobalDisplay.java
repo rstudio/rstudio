@@ -282,11 +282,18 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                       height,
                                       showLocation);
    }
-   
+
    @Override
    public void openSatelliteWindow(String name, int width, int height)
    {
-      windowOpener_.openSatelliteWindow(this, name, width, height);
+      openSatelliteWindow(name, width, height, null);
+   }
+   
+   @Override
+   public void openSatelliteWindow(String name, int width, int height, 
+         NewWindowOptions options)
+   {
+      windowOpener_.openSatelliteWindow(this, name, width, height, options);
    }
    
 
@@ -341,6 +348,15 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    {
       if (Desktop.isDesktop())
          Desktop.getFrame().showFile(path);
+      else
+         openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
+   }
+   
+   @Override
+   public void showWordDoc(String path)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().showWordDoc(path);
       else
          openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
    }

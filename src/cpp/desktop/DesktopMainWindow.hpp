@@ -52,6 +52,7 @@ public slots:
    void zoomIn();
    void zoomOut();
    void manageCommand(QString cmdId, QAction* pAction);
+   void manageCommandVisibility(QString cmdId, QAction* pAction);
    void openFileInRStudio(QString path);
    void onPdfViewerClosed(QString pdfPath);
    void onPdfViewerSyncSource(QString srcFile, int line, int column);

@@ -6,6 +6,7 @@
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/REnvironment.hpp>
 
 #import <AppKit/AppKit.h>
@@ -130,13 +131,13 @@ void initializeWorkingDirectory(const std::string& filename)
    
    // set the working dir if we have one
    if (!workingDir.empty())
-      core::system::setenv("RS_INITIAL_WD", workingDir);
+      core::system::setenv(kRStudioInitialWorkingDir, workingDir);
 }
 
 // PORT: from DesktopMain.cpp
 void setInitialProject(const FilePath& projectFile, std::string* pFilename)
 {
-   core::system::setenv("RS_INITIAL_PROJECT", projectFile.absolutePath());
+   core::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
    pFilename->clear();
 }
 
@@ -169,7 +170,7 @@ void initializeStartupEnvironment(std::string* pFilename)
       }
       else if (ext == ".rdata" || ext == ".rda")
       {
-         core::system::setenv("RS_INITIAL_ENV", filePath.absolutePath());
+         core::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
          pFilename->clear();
       }
       
@@ -192,12 +193,13 @@ bool prepareEnvironment(Options& options)
       rLdScriptPath = supportingFilePath.complete("session/r-ldpath");
    
    // attempt to detect R environment
-   std::string rScriptPath, errMsg;
+   std::string rScriptPath, rVersion, errMsg;
    r_util::EnvironmentVars rEnvVars;
    bool success = r_util::detectREnvironment(rWhichRPath,
                                              rLdScriptPath,
                                              std::string(),
                                              &rScriptPath,
+                                             &rVersion,
                                              &rEnvVars,
                                              &errMsg);
    if (!success)

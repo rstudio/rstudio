@@ -1,0 +1,29 @@
+.actionButton {
+   display: block;
+   padding: 0;
+   margin: 0;
+   border: none;
+   background: transparent;
+   outline: none;
+}
+
+@sprite .buttonLeft {
+   gwt-image: 'actionButtonLeft';
+   min-width: value('actionButtonLeft.getWidth', 'px');
+   width: value('actionButtonLeft.getWidth', 'px');
+}
+@sprite .buttonCenter {
+   gwt-image: 'actionButtonTile';
+
+}
+@sprite .buttonRight {
+   gwt-image: 'actionButtonRight';
+   min-width: value('actionButtonRight.getWidth', 'px');
+   width: value('actionButtonRight.getWidth', 'px');
+}
+
+.buttonContent {
+   font-size: 9px;
+   color: black;
+   white-space: nowrap;
+}

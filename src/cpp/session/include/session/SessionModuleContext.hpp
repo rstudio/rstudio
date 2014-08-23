@@ -24,6 +24,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -56,6 +57,15 @@ namespace session {
 
 namespace session {   
 namespace module_context {
+
+enum PackageCompatStatus
+{
+   COMPAT_OK      = 0,
+   COMPAT_MISSING = 1,
+   COMPAT_TOO_OLD = 2,
+   COMPAT_TOO_NEW = 3,
+   COMPAT_UNKNOWN = 4
+};
     
 // paths 
 core::FilePath userHomePath();
@@ -77,8 +87,12 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
 core::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);
 
+core::FilePath tempDir();
+
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
+
+bool isPdfLatexInstalled();
 
 // is the file a text file
 bool isTextFile(const core::FilePath& targetPath);
@@ -93,6 +107,23 @@ std::string rLocalHelpPort();
 
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
+
+// check if a package is installed with a specific version
+bool isPackageVersionInstalled(const std::string& packageName,
+                               const std::string& version);
+
+// check if a package is installed with a specific version and RStudio protocol
+// version (used to allow packages to disable compatibility with older RStudio
+// releases)
+PackageCompatStatus getPackageCompatStatus(
+      const std::string& packageName,
+      const std::string& packageVersion,
+      int protocolVersion);
+
+core::Error installPackage(const std::string& pkgPath,
+                           const std::string& libPath = std::string());
+
+core::Error installEmbeddedPackage(const std::string& name);
 
 // find the package name for a source file
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath);
@@ -253,6 +284,7 @@ struct Events : boost::noncopyable
    boost::signal<void(bool)>                 onShutdown;
    boost::signal<void ()>                    onQuit;
    boost::signal<void (const std::string&)>  onPackageLoaded;
+   boost::signal<void ()>                    onPackageLibraryMutated;
 
    // signal for detecting extended type of documents
    boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),
@@ -367,6 +399,11 @@ std::string resourceFileAsString(const std::string& fileName);
 
 bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath);
 
+std::string mapUrlPorts(const std::string& url);
+
+std::string pathRelativeTo(const core::FilePath& sourcePath,
+                           const core::FilePath& targetPath);
+
 void activatePane(const std::string& pane);
 
 int saveWorkspaceAction();
@@ -374,11 +411,13 @@ void syncRSaveAction();
 
 std::string libPathsString();
 bool canBuildCpp();
+bool installRBuildTools(const std::string& action);
 bool haveRcppAttributes();
 
 #ifdef __APPLE__
 bool isOSXMavericks();
 bool hasOSXMavericksDeveloperTools();
+core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath);
 #else
 inline bool isOSXMavericks()
 {
@@ -387,6 +426,10 @@ inline bool isOSXMavericks()
 inline bool hasOSXMavericksDeveloperTools()
 {
    return false;
+}
+inline core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath)
+{
+   return core::systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
 #endif
 
@@ -431,6 +474,217 @@ private:
 void addSuspendHandler(const SuspendHandler& handler);
 
 bool rSessionResumed();
+
+const int kCompileOutputCommand = 0;
+const int kCompileOutputNormal = 1;
+const int kCompileOutputError = 2;
+
+struct CompileOutput
+{
+   CompileOutput(int type, const std::string& output)
+      : type(type), output(output)
+   {
+   }
+
+   int type;
+   std::string output;
+};
+
+core::json::Object compileOutputAsJson(const CompileOutput& compileOutput);
+
+
+std::string previousRpubsUploadId(const core::FilePath& filePath);
+
+std::string CRANReposURL();
+
+struct UserPrompt
+{
+   enum Type { Info = 0, Warning = 1, Error = 2, Question = 3 };
+   enum Response { ResponseYes = 0, ResponseNo = 1, ResponseCancel = 2 };
+
+   UserPrompt(int type,
+              const std::string& caption,
+              const std::string& message,
+              bool includeCancel = false)
+   {
+      commonInit(type, caption, message, "", "", includeCancel, true);
+   }
+
+   UserPrompt(int type,
+              const std::string& caption,
+              const std::string& message,
+              bool includeCancel,
+              bool yesIsDefault)
+   {
+      commonInit(type, caption, message, "", "", includeCancel, yesIsDefault);
+   }
+
+   UserPrompt(int type,
+              const std::string& caption,
+              const std::string& message,
+              const std::string& yesLabel,
+              const std::string& noLabel,
+              bool includeCancel,
+              bool yesIsDefault)
+   {
+      commonInit(type,
+                 caption,
+                 message,
+                 yesLabel,
+                 noLabel,
+                 includeCancel,
+                 yesIsDefault);
+   }
+
+   int type ;
+   std::string caption;
+   std::string message;
+   std::string yesLabel;
+   std::string noLabel;
+   bool includeCancel;
+   bool yesIsDefault;
+
+private:
+   void commonInit(int type,
+                   const std::string& caption,
+                   const std::string& message,
+                   const std::string& yesLabel,
+                   const std::string& noLabel,
+                   bool includeCancel,
+                   bool yesIsDefault)
+   {
+      this->type = type;
+      this->caption = caption;
+      this->message = message;
+      this->yesLabel = yesLabel;
+      this->noLabel = noLabel;
+      this->includeCancel = includeCancel;
+      this->yesIsDefault = yesIsDefault;
+   }
+};
+
+UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt);
+
+struct PackratContext
+{
+   PackratContext() :
+      available(false),
+      applicable(false),
+      packified(false),
+      modeOn(false)
+   {
+   }
+
+   bool available;
+   bool applicable;
+   bool packified;
+   bool modeOn;
+};
+
+bool isRequiredPackratInstalled();
+
+PackratContext packratContext();
+core::json::Object packratContextAsJson();
+
+core::json::Object packratOptionsAsJson();
+
+// R command invocation -- has two representations, one to be submitted
+// (shellCmd_) and one to show the user (cmdString_)
+class RCommand
+{
+public:
+   explicit RCommand(const core::FilePath& rBinDir)
+      : shellCmd_(buildRCmd(rBinDir))
+   {
+#ifdef _WIN32
+      cmdString_ = "Rcmd.exe";
+#else
+      cmdString_ = "R CMD";
+#endif
+
+      // set escape mode to files-only. this is so that when we
+      // add the group of extra arguments from the user that we
+      // don't put quotes around it.
+      shellCmd_ << core::shell_utils::EscapeFilesOnly;
+   }
+
+   RCommand& operator<<(const std::string& arg)
+   {
+      if (!arg.empty())
+      {
+         cmdString_ += " " + arg;
+         shellCmd_ << arg;
+      }
+      return *this;
+   }
+
+   RCommand& operator<<(const core::FilePath& arg)
+   {
+      cmdString_ += " " + arg.absolutePath();
+      shellCmd_ << arg;
+      return *this;
+   }
+
+
+   const std::string& commandString() const
+   {
+      return cmdString_;
+   }
+
+   const core::shell_utils::ShellCommand& shellCommand() const
+   {
+      return shellCmd_;
+   }
+
+private:
+   static core::shell_utils::ShellCommand buildRCmd(
+                                 const core::FilePath& rBinDir);
+
+private:
+   std::string cmdString_;
+   core::shell_utils::ShellCommand shellCmd_;
+};
+
+
+class ViewerHistoryEntry
+{
+public:
+   ViewerHistoryEntry() {}
+   explicit ViewerHistoryEntry(const std::string& sessionTempPath)
+      : sessionTempPath_(sessionTempPath)
+   {
+   }
+
+   bool empty() const { return sessionTempPath_.empty(); }
+
+   std::string url() const;
+
+   const std::string& sessionTempPath() const { return sessionTempPath_; }
+
+   core::Error copy(const core::FilePath& sourceDir,
+                    const core::FilePath& destinationDir) const;
+
+private:
+   std::string sessionTempPath_;
+};
+
+void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
+
+core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
+                                   const core::FilePath& toDir);
+
+std::string sessionTempDirUrl(const std::string& sessionTempPath);
+
+core::Error uniqueSaveStem(const core::FilePath& directoryPath,
+                           const std::string& base,
+                           std::string* pStem);
+
+core::json::Object plotExportFormat(const std::string& name,
+                                    const std::string& extension);
+
+
+core::Error createSelfContainedHtml(const core::FilePath& sourceFilePath,
+                                    const core::FilePath& targetFilePath);
 
 } // namespace module_context
 } // namespace session

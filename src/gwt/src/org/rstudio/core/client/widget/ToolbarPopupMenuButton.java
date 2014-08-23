@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import org.rstudio.studio.client.common.icons.StandardIcons;
 
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -28,9 +29,16 @@ public class ToolbarPopupMenuButton extends ToolbarButton
 {
    public ToolbarPopupMenuButton()
    {
+      this(true, true);
+   }
+
+   public ToolbarPopupMenuButton(boolean showText, boolean rightAlignMenu)
+   {
       super("",
             StandardIcons.INSTANCE.empty_command(),
-            new ToolbarPopupMenu());
+            new ToolbarPopupMenu(),
+            rightAlignMenu);
+      showText_ = showText;
    }
 
    @Override
@@ -40,30 +48,57 @@ public class ToolbarPopupMenuButton extends ToolbarButton
       return addHandler(handler, ValueChangeEvent.getType());
    }
 
+   public void addMenuItem(String text, final String value)
+   {
+      addMenuItem(new MenuItem(text, (ScheduledCommand) null), value);
+   }
+
    public void addMenuItem(final String value)
    {
-      ToolbarPopupMenu menu = getMenu();
+      addMenuItem(value, value);
+   }
 
-      menu.addItem(new MenuItem(value, new Command()
+   public void addMenuItem(final MenuItem item, final String value)
+   {
+      final ScheduledCommand cmd = item.getScheduledCommand();
+      item.setScheduledCommand(new Command()
       {
          @Override
          public void execute()
          {
             setText(value);
+            if (cmd != null)
+               cmd.execute();
          }
-      }));
+      });
+      getMenu().addItem(item);
+   }
+   
+   public void clearMenu()
+   {
+      getMenu().clearItems();
    }
    
    @Override
    public void setText(String text)
    {
-      boolean changed = !getText().equals(text);
-      
-      super.setText(text);
-      
-      if (changed)
-         ValueChangeEvent.fire(ToolbarPopupMenuButton.this, text);
-         
+      setText(text, true);
    }
-
+   
+   public void setText(String text, boolean fireEvent)
+   {
+      boolean changed = !text_.equals(text);
+      
+      text_ = text;
+      if (showText_)
+      {
+         super.setText(text);
+      }
+      
+      if (changed && fireEvent)
+         ValueChangeEvent.fire(ToolbarPopupMenuButton.this, text);
+   }
+   
+   private String text_;
+   private boolean showText_;
 }

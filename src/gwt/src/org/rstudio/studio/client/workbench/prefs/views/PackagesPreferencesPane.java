@@ -119,6 +119,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       nudgeRight(developmentLabel);
       add(developmentLabel);
       
+      useDevtools_ = new CheckBox("Use devtools package functions if available");
+      lessSpaced(useDevtools_);
+      add(useDevtools_);
+      
       add(checkboxPref("Save all files prior to building packages", uiPrefs.saveAllBeforeBuild()));
       add(checkboxPref("Automatically navigate editor to build errors", uiPrefs.navigateToBuildError()));
       
@@ -146,6 +150,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       cleanupAfterCheckSuccess_.setEnabled(false);
       viewDirAfterCheckFailure_.setEnabled(false); 
       hideObjectFiles_.setEnabled(false);
+      useDevtools_.setEnabled(false);
    }
 
 
@@ -202,6 +207,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       hideObjectFiles_.setEnabled(true);
       hideObjectFiles_.setValue(packagesPrefs.getHideObjectFiles());
+      
+      useDevtools_.setEnabled(true);
+      useDevtools_.setValue(packagesPrefs.getUseDevtools());
    }
 
    @Override
@@ -216,7 +224,8 @@ public class PackagesPreferencesPane extends PreferencesPane
                                               null,
                                               cleanupAfterCheckSuccess_.getValue(),
                                               viewDirAfterCheckFailure_.getValue(),
-                                              hideObjectFiles_.getValue());
+                                              hideObjectFiles_.getValue(),
+                                              useDevtools_.getValue());
       rPrefs.setPackagesPrefs(packagesPrefs);
       
       return reload || reloadRequired_;
@@ -232,5 +241,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    private CheckBox cleanupAfterCheckSuccess_;
    private CheckBox viewDirAfterCheckFailure_;
    private CheckBox hideObjectFiles_;
+   private CheckBox useDevtools_;
    private boolean reloadRequired_ = false;
 }

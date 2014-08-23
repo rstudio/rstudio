@@ -37,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -96,6 +97,7 @@ public class HelpPane extends WorkbenchPane
       frame_ = new RStudioFrame() ;
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame") ;
+      ElementIds.assignElementId(frame_.getElement(), ElementIds.HELP_FRAME);
 
       return new AutoGlassPanel(frame_);
    }

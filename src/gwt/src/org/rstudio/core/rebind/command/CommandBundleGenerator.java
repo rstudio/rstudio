@@ -314,6 +314,7 @@ class CommandBundleGeneratorHelper
       String name = method.getName();
       writer.println(name + "_ = new AppCommand();");
 
+      setProperty(writer, name, props.get(name), "id");
       setProperty(writer, name, props.get(name), "desc");
       setProperty(writer, name, props.get(name), "label");
       setProperty(writer, name, props.get(name), "buttonLabel");

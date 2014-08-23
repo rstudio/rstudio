@@ -24,8 +24,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -52,10 +52,10 @@ public class FileTypeCommands
    {
       session_ = session;
           
-      eventBus.addHandler(InstalledPackagesChangedEvent.TYPE,
-                          new InstalledPackagesChangedHandler() {
+      eventBus.addHandler(PackageStateChangedEvent.TYPE,
+                          new PackageStateChangedHandler() {
          @Override
-         public void onInstalledPackagesChanged(InstalledPackagesChangedEvent e)
+         public void onPackageStateChanged(PackageStateChangedEvent e)
          {
             server.getHTMLCapabilities(
                   new ServerRequestCallback<HTMLCapabilities>() {
@@ -79,19 +79,25 @@ public class FileTypeCommands
    {
       ArrayList<TextFileType> types = new ArrayList<TextFileType>();
       types.add(FileTypeRegistry.R);
-      types.add(FileTypeRegistry.SWEAVE);
       types.add(FileTypeRegistry.RMARKDOWN);
+      types.add(FileTypeRegistry.SWEAVE);
       types.add(FileTypeRegistry.RHTML);
       types.add(FileTypeRegistry.RPRESENTATION);
       types.add(FileTypeRegistry.RD);
       types.add(FileTypeRegistry.TEXT);
-      types.add(FileTypeRegistry.DCF);
       types.add(FileTypeRegistry.TEX);
       types.add(FileTypeRegistry.MARKDOWN);
+      types.add(FileTypeRegistry.XML);
+      types.add(FileTypeRegistry.YAML);
+      types.add(FileTypeRegistry.DCF);
+      types.add(FileTypeRegistry.SH);
       types.add(FileTypeRegistry.HTML);
       types.add(FileTypeRegistry.CSS);
       types.add(FileTypeRegistry.JS);
       types.add(FileTypeRegistry.CPP);
+      types.add(FileTypeRegistry.PYTHON);
+      types.add(FileTypeRegistry.SQL);
+
       
       return (TextFileType[])types.toArray(new TextFileType[0]);
    }

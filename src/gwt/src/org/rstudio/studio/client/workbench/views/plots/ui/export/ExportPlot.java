@@ -14,17 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.exportplot.SavePlotAsImageDialog;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
-import com.google.gwt.user.client.ui.TextBox;
 
 public class ExportPlot
 {
@@ -35,7 +34,9 @@ public class ExportPlot
                                OperationWithInput<ExportPlotOptions> onClose)
    {
       new SavePlotAsImageDialog(globalDisplay,
-                                server, 
+                                new PlotsPaneSaveAsImageOperation(globalDisplay,
+                                                                  server), 
+                                new PlotsPanePreviewer(server),
                                 context, 
                                 options, 
                                 onClose).showModal();
@@ -65,56 +66,4 @@ public class ExportPlot
                            OperationWithInput<ExportPlotOptions> onClose)
    {  
    }
-   
-   
-   // utility for calculating display of directory
-   public static String shortDirectoryName(FileSystemItem directory,
-                                           int maxWidth)
-   {
-      return StringUtil.shortPathName(directory, "gwt-Label", maxWidth);
-   }
-   
-   public static FileSystemItem composeTargetPath(String ext,
-                                                  TextBox fileNameTextBox,
-                                                  FileSystemItem directory)
-   {
-      // get the filename
-      String filename = fileNameTextBox.getText().trim();
-      if (filename.length() == 0)
-         return null;
-      
-      // compute the target path
-      FileSystemItem targetPath = FileSystemItem.createFile(
-                                          directory.completePath(filename));
-      
-      // if the extension isn't already correct then append it
-      if (!targetPath.getExtension().equalsIgnoreCase(ext))
-         targetPath = FileSystemItem.createFile(targetPath.getPath() + ext);
-      
-      // return the path
-      return targetPath;
-   }
-   
-   
-   // track which directory to suggest as the default for various 
-   // working directories
-   
-   
-   public static FileSystemItem getDefaultSaveDirectory(
-                                                   FileSystemItem defaultDir)
-   {
-      if (defaultSaveDirectory_ == null)
-         defaultSaveDirectory_ = defaultDir;
-      
-      return defaultSaveDirectory_;
-   }
-   
-   public static void setDefaultSaveDirectory(
-                                          FileSystemItem defaultSaveDirectory)
-   {
-      defaultSaveDirectory_ = defaultSaveDirectory;
-   }
-   
-   // remember last save directory
-   static private FileSystemItem defaultSaveDirectory_ = null;
 }

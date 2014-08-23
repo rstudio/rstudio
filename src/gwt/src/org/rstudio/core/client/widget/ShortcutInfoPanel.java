@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.command.ShortcutManager;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -97,6 +98,11 @@ public class ShortcutInfoPanel extends Composite
             onShowFullDocs.execute();
          }
       });
+   }
+   
+   public Element getRootElement()
+   {
+      return focusPanel.getElement();
    }
    
    @UiField HTMLPanel shortcutPanel;

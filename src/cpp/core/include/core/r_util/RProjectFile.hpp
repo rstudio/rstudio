@@ -19,6 +19,8 @@
 #include <string>
 #include <iosfwd>
 
+#include <core/r_util/RVersionInfo.hpp>
+
 namespace core {
 
 class Error;
@@ -41,16 +43,28 @@ extern const char * const kBuildTypeCustom;
 
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 
+struct RProjectBuildDefaults
+{
+   RProjectBuildDefaults()
+      : useDevtools(true)
+   {
+   }
+   bool useDevtools;
+};
+
 struct RProjectConfig
 {
    RProjectConfig()
       : version(1.0),
+        rVersion(kRVersionDefault),
         saveWorkspace(DefaultValue),
         restoreWorkspace(DefaultValue),
         alwaysSaveHistory(DefaultValue),
         enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
+        autoAppendNewline(false),
+        stripTrailingWhitespace(false),
         encoding(),
         defaultSweaveEngine(),
         defaultLatexProgram(),
@@ -62,6 +76,7 @@ struct RProjectConfig
         packageBuildBinaryArgs(),
         packageCheckArgs(),
         packageRoxygenize(),
+        packageUseDevtools(false),
         makefilePath(),
         customScriptPath(),
         tutorialPath()
@@ -69,12 +84,15 @@ struct RProjectConfig
    }
 
    double version;
+   RVersionInfo rVersion;
    int saveWorkspace;
    int restoreWorkspace;
    int alwaysSaveHistory;
    bool enableCodeIndexing;
    bool useSpacesForTab;
    int numSpacesForTab;
+   bool autoAppendNewline;
+   bool stripTrailingWhitespace;
    std::string encoding;
    std::string defaultSweaveEngine;
    std::string defaultLatexProgram;
@@ -86,6 +104,7 @@ struct RProjectConfig
    std::string packageBuildBinaryArgs;
    std::string packageCheckArgs;
    std::string packageRoxygenize;
+   bool packageUseDevtools;
    std::string makefilePath;
    std::string customScriptPath;
    std::string tutorialPath;
@@ -93,12 +112,18 @@ struct RProjectConfig
 
 
 Error readProjectFile(const FilePath& projectFilePath,
+                      RProjectConfig* pConfig,
+                      std::string* pUserErrMsg);
+
+Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
+                      const RProjectBuildDefaults& buildDefaults,
                       RProjectConfig* pConfig,
                       bool* pProvidedDefaults,
                       std::string* pUserErrMsg);
 
 Error writeProjectFile(const FilePath& projectFilePath,
+                       const RProjectBuildDefaults& buildDefaults,
                        const RProjectConfig& config);
 
 FilePath projectFromDirectory(const FilePath& directoryPath);

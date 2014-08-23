@@ -37,6 +37,10 @@ public class CallFrame extends JavaScriptObject
        return this.file_name;
    }-*/;
 
+   public final native String getAliasedFileName() /*-{
+       return this.aliased_file_name;
+   }-*/;
+
    public final native int getLineNumber() /*-{
        return this.line_number;
    }-*/;
@@ -53,8 +57,8 @@ public class CallFrame extends JavaScriptObject
        return this.end_character_number;
    }-*/;
 
-   public final native String getArgumentList() /*-{
-       return this.argument_list;
+   public final native String getCallSummary() /*-{
+       return this.call_summary;
    }-*/;
    
    public final native int getFunctionLineNumber() /*-{
@@ -68,6 +72,23 @@ public class CallFrame extends JavaScriptObject
    public final native String getShinyFunctionLabel() /*-{
        return this.shiny_function_label;
    }-*/;
+   
+   public final native boolean hasRealSrcref() /*-{
+       return this.real_sourceref;
+   }-*/;
+   
+   public final native boolean isErrorHandler() /*-{
+       return this.is_error_handler;
+   }-*/;
+   
+   public final native boolean isHidden() /*-{
+       return this.is_hidden;
+   }-*/;
+   
+   public final boolean isSourceEquiv() 
+   {
+      return getFunctionName() == "eval" && hasRealSrcref();
+   }
 
    public final DebugFilePosition getRange() 
    {
@@ -80,14 +101,15 @@ public class CallFrame extends JavaScriptObject
    
    public final boolean isNavigable()
    {
-      return getLineNumber() > 0;
+      return hasRealSrcref();
    }
    
    public final static boolean isNavigableFilename(String fileName)
    {
       if (fileName.length() > 0 &&
           !fileName.equalsIgnoreCase("NULL") &&
-          !fileName.equalsIgnoreCase("<tmp>"))
+          !fileName.equalsIgnoreCase("<tmp>") &&
+          !fileName.equalsIgnoreCase("<text>"))
       {
          return true;
       }

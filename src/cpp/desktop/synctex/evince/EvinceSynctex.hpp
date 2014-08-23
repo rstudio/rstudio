@@ -16,10 +16,12 @@
 #ifndef DESKTOP_SYNCTEX_EVINCESYNCTEX_HPP
 #define DESKTOP_SYNCTEX_EVINCESYNCTEX_HPP
 
+#undef QT_NO_CAST_FROM_ASCII
 #include <QObject>
 #include <QMap>
 #include <QPoint>
 #include <QDBusPendingCallWatcher>
+#define QT_NO_CAST_FROM_ASCII
 
 #include <DesktopSynctex.hpp>
 
@@ -63,6 +65,11 @@ private:
       {
       }
 
+      SyncRequest(QString pdfFile)
+         : pdfFile(pdfFile), page(-1)
+      {
+      }
+
       SyncRequest(QString pdfFile, int page)
          : pdfFile(pdfFile), page(page)
       {
@@ -72,6 +79,9 @@ private:
          : pdfFile(pdfFile), page(-1), srcFile(srcFile), srcLoc(srcLoc)
       {
       }
+
+      bool hasSourceLoc() const { return !srcFile.isEmpty(); }
+      bool hasPage() const { return page != -1; }
 
       QString pdfFile;
       int page;

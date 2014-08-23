@@ -30,12 +30,14 @@ public class TextBoxWithCue extends TextBox
    public TextBoxWithCue(String cueText)
    {
       cueText_ = cueText;
+      getElement().setAttribute("spellcheck", "false");
    }
 
    public TextBoxWithCue(String cueText, Element element)
    {
       super(element);
       cueText_ = cueText;
+      element.setAttribute("spellcheck", "false");
    }
 
    public String getCueText()

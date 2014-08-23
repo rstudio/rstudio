@@ -19,15 +19,15 @@ import java.util.List;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 
-public interface PackagesServerOperations
+public interface PackagesServerOperations extends PackratServerOperations
 {
-   // list installed packages
-   void listPackages(
-         ServerRequestCallback<JsArray<PackageInfo>> requestCallback);
+   void getPackageState(
+         ServerRequestCallback<PackageState> requestCallback);
    
    void availablePackages(
          String repository,

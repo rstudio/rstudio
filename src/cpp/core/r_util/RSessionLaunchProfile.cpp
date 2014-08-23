@@ -17,6 +17,10 @@
 
 #include <boost/foreach.hpp>
 
+#include <core/SafeConvert.hpp>
+
+#include <core/system/PosixSched.hpp>
+
 #include <core/json/JsonRpc.hpp>
 
 namespace core {
@@ -47,6 +51,28 @@ core::system::Options optionsFromJson(const json::Object& optionsJson)
    return options;
 }
 
+Error cpuAffinityFromJson(const json::Array& affinityJson,
+                          core::system::CpuAffinity* pAffinity)
+{
+   pAffinity->clear();
+
+   BOOST_FOREACH(const json::Value& val, affinityJson)
+   {
+      if (!json::isType<bool>(val))
+         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+
+      pAffinity->push_back(val.get_bool());
+   }
+
+   return Success();
+}
+
+json::Value toJson(RLimitType limit)
+{
+   boost::uint64_t value = safe_convert::numberTo<boost::uint64_t>(limit, 0);
+   return json::Value(value);
+}
+
 } // anonymous namespace
 
 
@@ -54,11 +80,21 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
 {
    json::Object profileJson;
    profileJson["username"] = profile.username;
+   profileJson["password"] = profile.password;
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
    configJson["args"] = optionsAsJson(profile.config.args);
    configJson["environment"] = optionsAsJson(profile.config.environment);
+   configJson["stdInput"] = profile.config.stdInput;
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
+   configJson["priority"] = profile.config.limits.priority;
+   configJson["memoryLimitBytes"] = toJson(profile.config.limits.memoryLimitBytes);
+   configJson["stackLimitBytes"] = toJson(profile.config.limits.stackLimitBytes);
+   configJson["userProcessesLimit"] = toJson(profile.config.limits.userProcessesLimit);
+   configJson["cpuLimit"] = toJson(profile.config.limits.cpuLimit);
+   configJson["niceLimit"] = toJson(profile.config.limits.niceLimit);
+   configJson["filesLimit"] = toJson(profile.config.limits.filesLimit);
+   configJson["cpuAffinity"] = json::toJsonArray(profile.config.limits.cpuAffinity);
    profileJson["config"] = configJson;
    return profileJson;
 }
@@ -72,6 +108,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    json::Object configJson;
    Error error = json::readObject(jsonProfile,
                                   "username", &profile.username,
+                                  "password", &profile.password,
                                   "executablePath", &profile.executablePath,
                                   "config", &configJson);
    if (error)
@@ -80,25 +117,58 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
 
    // read config object
    json::Object argsJson, envJson;
+   std::string stdInput;
    int stdStreamBehavior = 0;
+   int priority = 0;
+   double memoryLimitBytes, stackLimitBytes, userProcessesLimit,
+          cpuLimit, niceLimit, filesLimit;
    error = json::readObject(configJson,
                            "args", &argsJson,
                            "environment", &envJson,
-                           "stdStreamBehavior", &stdStreamBehavior);
+                           "stdInput", &stdInput,
+                           "stdStreamBehavior", &stdStreamBehavior,
+                           "priority", &priority,
+                           "memoryLimitBytes", &memoryLimitBytes,
+                           "stackLimitBytes", &stackLimitBytes,
+                           "userProcessesLimit", &userProcessesLimit,
+                           "cpuLimit", &cpuLimit,
+                           "niceLimit", &niceLimit,
+                           "filesLimit", &filesLimit);
    if (error)
       LOG_ERROR(error);
+
+   // read and convert cpu affinity
+   core::system::CpuAffinity cpuAffinity;
+   json::Array cpuAffinityJson;
+   error = json::readObject(configJson,
+                            "cpuAffinity", &cpuAffinityJson);
+   if (error)
+      LOG_ERROR(error);
+   error = cpuAffinityFromJson(cpuAffinityJson, &cpuAffinity);
+   if (error)
+   {
+      cpuAffinity.clear();
+      LOG_ERROR(error);
+   }
 
    // populate config
    profile.config.args = optionsFromJson(argsJson);
    profile.config.environment = optionsFromJson(envJson);
+   profile.config.stdInput = stdInput;
    profile.config.stdStreamBehavior =
             static_cast<core::system::StdStreamBehavior>(stdStreamBehavior);
+   profile.config.limits.priority = priority;
+   profile.config.limits.memoryLimitBytes = memoryLimitBytes;
+   profile.config.limits.stackLimitBytes = stackLimitBytes;
+   profile.config.limits.userProcessesLimit = userProcessesLimit;
+   profile.config.limits.cpuLimit = cpuLimit;
+   profile.config.limits.niceLimit = niceLimit;
+   profile.config.limits.filesLimit = filesLimit;
+   profile.config.limits.cpuAffinity = cpuAffinity;
 
    // return profile
    return profile;
 }
-
-
 
 } // namespace r_util
 } // namespace core 

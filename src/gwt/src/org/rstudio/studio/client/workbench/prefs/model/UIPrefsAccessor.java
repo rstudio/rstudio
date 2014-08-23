@@ -19,8 +19,11 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
+import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.shiny.model.ShinyViewerType;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -98,6 +101,16 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> insertMatching()
    {
       return bool("insert_matching", true);
+   }
+   
+   public PrefValue<Boolean> autoAppendNewline()
+   {
+      return bool("auto_append_newline", false);
+   }
+   
+   public PrefValue<Boolean> stripTrailingWhitespace()
+   {
+      return bool("strip_trailing_whitespace", false);
    }
    
    public PrefValue<Boolean> reindentOnPaste()
@@ -186,15 +199,31 @@ public class UIPrefsAccessor extends Prefs
                     SavePlotAsPdfOptions.createDefault());
    }
    
+   public PrefValue<ExportPlotOptions> exportViewerOptions()
+   {
+      return object("export_viewer_options", ExportPlotOptions.createDefault());
+   }
+   
    public PrefValue<CompileNotebookPrefs> compileNotebookOptions()
    {
       return object("compile_notebook_options",
                     CompileNotebookPrefs.createDefault());
    }
    
+   public PrefValue<CompileNotebookv2Prefs> compileNotebookv2Options()
+   {
+      return object("compile_notebookv2_options",
+                    CompileNotebookv2Prefs.createDefault());
+   }
+   
    public PrefValue<Boolean> newProjGitInit()
    {
       return bool("new_proj_git_init", false);
+   }
+   
+   public PrefValue<Boolean> newProjUsePackrat()
+   {
+      return bool("new_proj_use_packrat", false);
    }
    
    public PrefValue<String> defaultSweaveEngine()
@@ -222,6 +251,13 @@ public class UIPrefsAccessor extends Prefs
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";
    public static final String PDF_PREVIEW_SYSTEM = "system";
    
+   public static boolean internalPdfPreviewSupported()
+   {
+      // PDF.js doesn't play nicely with Qt and is therefore only supported
+      // on Cocoa desktop or in server mode
+      return BrowseCap.isCocoaDesktop() || !Desktop.isDesktop();
+   }
+
    public PrefValue<String> pdfPreview()
    {
       return string("pdf_previewer", getDefaultPdfPreview());
@@ -234,12 +270,12 @@ public class UIPrefsAccessor extends Prefs
       // get the underlying value
       String pdfPreview = pdfPreview().getValue();
       
-      // the internal viewer has stability issues on the mac 
-      // so re-route to system viewer
-      if (BrowseCap.isMacintoshDesktop())
+      // if this system doesn't support the internal previewer, silently map
+      // that option to the system previewer
+      if (!internalPdfPreviewSupported() && 
+          pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
       {
-         if (pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
-            pdfPreview = PDF_PREVIEW_SYSTEM;
+         pdfPreview = PDF_PREVIEW_SYSTEM;
       }
       
       // return the (potentially) adjusted value
@@ -317,6 +353,26 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_internal_functions", false);
    }
    
+   public PrefValue<Integer> shinyViewerType()
+   {
+      return integer("shiny_viewer_type", ShinyViewerType.SHINY_VIEWER_WINDOW);
+   }
+
+   public PrefValue<String> documentAuthor()
+   {
+      return string("document_author", "");
+   }
+   
+   public PrefValue<String> rmdPreferredTemplatePath()
+   {
+      return string("rmd_preferred_template_path", "");
+   }
+   
+   public PrefValue<Integer> rmdViewerType()
+   {
+      return integer("rmd_viewer_type", RmdOutput.RMD_VIEWER_TYPE_WINDOW);
+   }
+
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

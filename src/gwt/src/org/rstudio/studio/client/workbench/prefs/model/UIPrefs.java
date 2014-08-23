@@ -22,11 +22,12 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
+import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
 @Singleton
@@ -118,6 +119,12 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // insert matching
          insertMatching().setGlobalValue(
                                  newUiPrefs.insertMatching().getGlobalValue());
+         
+         autoAppendNewline().setGlobalValue(
+                                 newUiPrefs.autoAppendNewline().getGlobalValue());
+         
+         stripTrailingWhitespace().setGlobalValue(
+                       newUiPrefs.stripTrailingWhitespace().getGlobalValue());
       
          // soft wrap R files
          softWrapRFiles().setGlobalValue(
@@ -180,6 +187,16 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
                          newUiPrefs.savePlotAsPdfOptions().getGlobalValue());
          }
          
+         // export viewer options
+         if (!ExportPlotOptions.areEqual(
+               newUiPrefs.exportViewerOptions().getGlobalValue(),
+               exportViewerOptions().getGlobalValue()))
+         {
+            exportViewerOptions().setGlobalValue(
+                          newUiPrefs.exportViewerOptions().getGlobalValue());
+         }
+         
+         
          // compile notebook options
          if (!CompileNotebookPrefs.areEqual(
                newUiPrefs.compileNotebookOptions().getGlobalValue(),
@@ -187,6 +204,13 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          {
             compileNotebookOptions().setGlobalValue(
                         newUiPrefs.compileNotebookOptions().getGlobalValue());
+         }
+         if (!CompileNotebookv2Prefs.areEqual(
+               newUiPrefs.compileNotebookv2Options().getGlobalValue(),
+               compileNotebookv2Options().getGlobalValue()))
+         {
+            compileNotebookv2Options().setGlobalValue(
+                        newUiPrefs.compileNotebookv2Options().getGlobalValue());
          }
          
          // default sweave engine
@@ -261,6 +285,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // auto expand error tracebacks
          autoExpandErrorTracebacks().setGlobalValue(
                     newUiPrefs.autoExpandErrorTracebacks().getGlobalValue());
+         
+         // preferred R Markdown template
+         rmdPreferredTemplatePath().setGlobalValue(
+               newUiPrefs.rmdPreferredTemplatePath().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
@@ -276,6 +304,14 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // num spaces for tab
          numSpacesForTab().setProjectValue(
                newUiPrefs.numSpacesForTab().getValue());
+         
+         // auto-append newline
+         autoAppendNewline().setProjectValue(
+               newUiPrefs.autoAppendNewline().getValue());
+         
+         // strip trailing whitespace
+         stripTrailingWhitespace().setProjectValue(
+               newUiPrefs.stripTrailingWhitespace().getValue());
    
          // default encoding
          defaultEncoding().setProjectValue(

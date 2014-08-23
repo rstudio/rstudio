@@ -102,24 +102,27 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
-#include "modules/SessionConsoleProcess.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
+#include "modules/SessionDependencies.hpp"
 #include "modules/SessionDirty.hpp"
 #include "modules/SessionWorkbench.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
+#include "modules/SessionPackrat.hpp"
 #include "modules/SessionProfiler.hpp"
 #include "modules/SessionRPubs.hpp"
+#include "modules/SessionRHooks.hpp"
+#include "modules/SessionShinyApps.hpp"
+#include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
-#include "modules/SessionViewer.hpp"
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
@@ -128,10 +131,14 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
+#include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/shiny/SessionShiny.hpp"
+#include "modules/viewer/SessionViewer.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
+
+#include <session/SessionConsoleProcess.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include "projects/SessionProjectsInternal.hpp"
@@ -145,6 +152,13 @@ extern "C" const char *locale2charset(const char *);
 using namespace core; 
 using namespace session;
 using namespace session::client_events;
+
+// forward-declare overlay methods
+namespace session {
+namespace overlay {
+Error initialize();
+} // namespace overlay
+} // namespace session
 
 namespace {
 
@@ -188,6 +202,7 @@ const char * const kConsoleInput = "console_input" ;
 const char * const kEditCompleted = "edit_completed";
 const char * const kChooseFileCompleted = "choose_file_completed";
 const char * const kLocatorCompleted = "locator_completed";
+const char * const kUserPromptCompleted = "user_prompt_completed";
 const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
 const char * const kQuitSession = "quit_session" ;   
 const char * const kSuspendSession = "suspend_session";
@@ -238,6 +253,10 @@ double installedVersion()
 {
    // never return a version in desktop mode
    if (session::options().programMode() == kSessionProgramModeDesktop)
+      return 0;
+
+   // never return a version in standalone mode
+   if (session::options().standalone())
       return 0;
 
    // read installation time (as string) from file (return 0 if not found)
@@ -479,6 +498,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["rstudio_version"] = std::string(RSTUDIO_VERSION);
 
    sessionInfo["ui_prefs"] = userSettings().uiPrefs();
+
+   sessionInfo["have_advanced_step_commands"] =
+                        modules::breakpoints::haveAdvancedStepCommands();
    
    // initial working directory
    std::string initialWorkingDir = module_context::createAliasedPath(
@@ -511,17 +533,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
    sessionInfo["default_ssh_key_dir"] =module_context::createAliasedPath(
                               modules::source_control::defaultSshKeyDir());
+   sessionInfo["is_github_repo"] = modules::git::isGithubRepository();
 
    // contents of all lists
    sessionInfo["lists"] = modules::lists::allListsAsJson();
 
    sessionInfo["console_processes"] =
-         session::modules::console_process::processesAsJson();
-
-   // is internal preview supported by the client browser
-   std::string userAgent = ptrConnection->request().userAgent();
-   sessionInfo["internal_pdf_preview_enabled"] =
-               modules::authoring::isPdfViewerSupported(userAgent);
+         session::console_process::processesAsJson();
 
    // send sumatra pdf exe path if we are on windows
 #ifdef _WIN32
@@ -542,11 +560,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                                                 buildTargetDir);
          sessionInfo["has_pkg_src"] = (type == r_util::kBuildTypePackage) &&
                                       buildTargetDir.childPath("src").exists();
+         sessionInfo["has_pkg_vig"] =
+               (type == r_util::kBuildTypePackage) &&
+               buildTargetDir.childPath("vignettes").exists();
       }
       else
       {
          sessionInfo["build_target_dir"] = json::Value();
          sessionInfo["has_pkg_src"] = false;
+         sessionInfo["has_pkg_vig"] = false;
       }
 
    }
@@ -555,6 +577,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
       sessionInfo["build_target_dir"] = json::Value();
       sessionInfo["has_pkg_src"] = false;
+      sessionInfo["has_pkg_vig"] = false;
    }
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
@@ -594,13 +617,19 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
-   sessionInfo["debug_state"] = modules::breakpoints::debugStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
 
    // send whether we should show the user identity
    sessionInfo["show_identity"] =
            (options.programMode() == kSessionProgramModeServer) &&
            options.showUserIdentity();
+
+   // light up shinyapps-related UI features if shinyapps is installed
+   bool shinyAppsInstalled = 
+      module_context::isPackageVersionInstalled("shinyapps", "0.3.54");
+   sessionInfo["shinyapps_installed"] = shinyAppsInstalled;
+   sessionInfo["rmarkdown_available"] =
+         modules::rmarkdown::rmarkdownPackageAvailable();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -842,6 +871,20 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          // quit_session: exit process
          if (jsonRpcRequest.method == kQuitSession)
          {
+#ifdef _WIN32
+            // if we are on windows then we can't quit while the browser
+            // context is active
+            if (r::session::browserContextActive())
+            {
+               module_context::consoleWriteError(
+                        "Error: unable to quit when browser is active\n");
+               json::JsonRpcResponse response;
+               response.setResult(false);
+               ptrConnection->sendJsonRpcResponse(response);
+               return;
+            }
+#endif
+
             // see whether we should save the workspace
             bool saveWorkspace = true;
             std::string switchToProject;
@@ -858,9 +901,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                                                   switchToProject);
             }
 
+            // exit status
+            int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
+
             // acknowledge request & quit session
-            ptrConnection->sendJsonRpcResponse();
-            r::session::quit(saveWorkspace); // does not return
+            json::JsonRpcResponse response;
+            response.setResult(true);
+            ptrConnection->sendJsonRpcResponse(response);
+            r::session::quit(saveWorkspace, status); // does not return
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {
@@ -911,7 +959,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    else
    {
       http::Response response;
-      response.setError(http::status::NotFound, request.uri() + " not found");
+      response.setNotFoundError(request.uri());
       ptrConnection->sendResponse(response);
    }
 }
@@ -1495,6 +1543,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    s_waitForMethodNames.push_back(kLocatorCompleted);
    s_waitForMethodNames.push_back(kEditCompleted);
    s_waitForMethodNames.push_back(kChooseFileCompleted);
+   s_waitForMethodNames.push_back(kUserPromptCompleted);
    s_waitForMethodNames.push_back(kHandleUnsavedChangesCompleted);
 
    // execute core initialization functions
@@ -1534,6 +1583,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // addins
       (addins::initialize)
 
+      // console processes
+       (console_process::initialize)
+
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
@@ -1542,13 +1594,13 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::ask_pass::initialize)
       (modules::agreement::initialize)
       (modules::console::initialize)
-      (modules::console_process::initialize)
 #ifdef RSTUDIO_SERVER
       (modules::crypto::initialize)
 #endif
       (modules::files::initialize)
       (modules::find::initialize)
       (modules::environment::initialize)
+      (modules::dependencies::initialize)
       (modules::dirty::initialize)
       (modules::workbench::initialize)
       (modules::data::initialize)
@@ -1558,6 +1610,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::packages::initialize)
       (modules::profiler::initialize)
       (modules::viewer::initialize)
+      (modules::rmarkdown::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
       (modules::source::initialize)
@@ -1572,6 +1625,10 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::errors::initialize)
       (modules::updates::initialize)
       (modules::about::initialize)
+      (modules::shiny_viewer::initialize)
+      (modules::shiny_apps::initialize)
+      (modules::packrat::initialize)
+      (modules::rhooks::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -1623,12 +1680,16 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    }
 
    // add gwt handlers if we are running desktop mode
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   if ((session::options().programMode() == kSessionProgramModeDesktop) ||
+       session::options().standalone())
+   {
       registerGwtHandlers();
+   }
 
-   // enque abend warning event if necessary.
+   // enque abend warning event if necessary (but not in standalone
+   // mode since those processes are often aborted unceremoniously)
    using namespace session::client_events;
-   if (session::persistentState().hadAbend())
+   if (session::persistentState().hadAbend() && !options().standalone())
    {
       LOG_ERROR_MESSAGE("session hadabend");
 
@@ -1667,6 +1728,9 @@ void rDeferredInit(bool newSession)
 {
    module_context::events().onDeferredInit(newSession);
 
+   // allow any packages listening to complete initialization
+   modules::rhooks::invokeHook(kSessionInitHook, newSession);
+   
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted);
    module_context::enqueClientEvent(event);
@@ -2112,8 +2176,9 @@ void rSuicide(const std::string& message)
    using namespace monitor;
    logExitEvent(Event(kSessionScope, kSessionSuicideEvent));
 
-   // log the error
-   LOG_ERROR_MESSAGE("R SUICIDE: " + message);
+   // log the error if it was unexpected
+   if (!message.empty())
+      LOG_ERROR_MESSAGE("R SUICIDE: " + message);
    
    // enque suicide event so the client knows
    ClientEvent suicideEvent(kSuicide, message);
@@ -2195,7 +2260,11 @@ void rSerialization(int action, const FilePath& targetPath)
    
 void ensureRProfile()
 {
+   // check if we need to create the proifle (bail if we don't)
    Options& options = session::options();
+   if (!options.createProfile())
+      return;
+
    FilePath rProfilePath = options.userHomePath().complete(".Rprofile");
    if (!rProfilePath.exists() && !userSettings().autoCreatedProfile())
    {
@@ -2516,6 +2585,58 @@ Error registerRpcMethod(const std::string& name,
    return Success();
 }
 
+UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
+{
+   // enque user prompt event
+   json::Object obj;
+   obj["type"] = static_cast<int>(userPrompt.type);
+   obj["caption"] = userPrompt.caption;
+   obj["message"] = userPrompt.message;
+   obj["yesLabel"] = userPrompt.yesLabel;
+   obj["noLabel"] = userPrompt.noLabel;
+   obj["yesIsDefault"] = userPrompt.yesIsDefault;
+   obj["includeCancel"] = userPrompt.includeCancel;
+   ClientEvent userPromptEvent(client_events::kUserPrompt, obj);
+   session::clientEventQueue().add(userPromptEvent);
+
+   // wait for user_prompt_completed
+   json::JsonRpcRequest request ;
+   waitForMethod(kUserPromptCompleted,
+                 userPromptEvent,
+                 disallowSuspend,
+                 &request);
+
+   // read the response param
+   int response;
+   Error error = json::readParam(request.params, 0, &response);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return UserPrompt::ResponseCancel;
+   }
+
+   // return response (don't cast so that we can make sure the integer
+   // returned matches one of enumerated type values and warn otherwise)
+   switch (response)
+   {
+      case UserPrompt::ResponseYes:
+         return UserPrompt::ResponseYes;
+
+      case UserPrompt::ResponseNo:
+         return UserPrompt::ResponseNo;
+
+      case UserPrompt::ResponseCancel:
+         return UserPrompt::ResponseCancel;
+
+      default:
+         LOG_WARNING_MESSAGE("Unexpected user prompt response: " +
+                             boost::lexical_cast<std::string>(response));
+
+         return UserPrompt::ResponseCancel;
+   };
+}
+
+
 bool rSessionResumed()
 {
    return s_rSessionResumed;
@@ -2581,10 +2702,12 @@ WaitForMethodFunction registerWaitForMethod(const std::string& methodName)
 
 namespace {
 
-int sessionExitFailure(const core::Error& cause,
+int sessionExitFailure(const core::Error& error,
                        const core::ErrorLocation& location)
 {
-   core::log::logError(cause, location);
+   if (!error.expected())
+      core::log::logError(error, location);
+
    return EXIT_FAILURE;
 }
 
@@ -2695,13 +2818,19 @@ int main (int argc, char * const argv[])
       if (status.exit())
          return status.exitCode() ;
 
+      // reflect stderr logging
+      core::system::setLogToStderr(options.logStderr());
+
       // initialize monitor
       monitor::initializeMonitorClient(kMonitorSocketPath,
                                        options.monitorSharedSecret());
 
-      // register monitor log writer
-      core::system::addLogWriter(monitor::client().createLogWriter(
+      // register monitor log writer (but not in standalone mode)
+      if (!options.standalone())
+      {
+         core::system::addLogWriter(monitor::client().createLogWriter(
                                                 options.programIdentity()));
+      }
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
@@ -2723,6 +2852,11 @@ int main (int argc, char * const argv[])
          }
       }
 
+      // initialize overlay
+      error = session::overlay::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
       // set version
       s_version = installedVersion();
 
@@ -2738,6 +2872,12 @@ int main (int argc, char * const argv[])
       {
          // do the same for port number, for rpostback in rdesktop configs
          core::system::setenv(kRSessionPortNumber, options.wwwPort());
+      }
+
+      // set the standalone port if we are running in standalone mode
+      if (options.standalone())
+      {
+         core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
       }
            
       // ensure we aren't being started as a low (priviliged) account
@@ -2856,10 +2996,11 @@ int main (int argc, char * const argv[])
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
-      // CRAN repos: user setting first then global server option
-      rOptions.rCRANRepos = userSettings().cranMirror().url;
-      if (rOptions.rCRANRepos.empty())
+      // CRAN repos: global server option trumps user setting
+      if (!options.rCRANRepos().empty())
          rOptions.rCRANRepos = options.rCRANRepos();
+      else
+         rOptions.rCRANRepos = userSettings().cranMirror().url;
       rOptions.useInternet2 = userSettings().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();

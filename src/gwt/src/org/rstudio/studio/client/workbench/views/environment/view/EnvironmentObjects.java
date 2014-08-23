@@ -15,6 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -24,18 +28,19 @@ import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFramePanel.CallFramePanelHost;
-
-import java.util.*;
 
 public class EnvironmentObjects extends ResizeComposite
    implements CallFramePanelHost,
@@ -102,7 +107,7 @@ public class EnvironmentObjects extends ResizeComposite
    public void addObject(RObject obj)
    {
       int idx = indexOfExistingObject(obj.getName());
-      RObjectEntry newEntry = entryFromRObject(obj);
+      final RObjectEntry newEntry = entryFromRObject(obj);
       boolean added = false;
 
       // if the object is already in the environment, just update the value
@@ -112,8 +117,21 @@ public class EnvironmentObjects extends ResizeComposite
 
          if (oldEntry.rObject.getType().equals(obj.getType()))
          {
-            // type did not change; update in-place and preserve expansion flag
-            newEntry.expanded = oldEntry.expanded;
+            // type hasn't changed
+            if (oldEntry.expanded && 
+                newEntry.contentsAreDeferred)
+            {
+               // we're replacing an object that has server-deferred contents--
+               // refill it immediately. (another approach would be to push the
+               // set of currently expanded objects to the server so these
+               // objects would show up on the client already expanded)
+               fillEntryContents(newEntry, idx, false);
+            }
+            else
+            {
+               // contents aren't deferred, just use the expanded state directly
+               newEntry.expanded = oldEntry.expanded;
+            }
             objectDataProvider_.getList().set(idx, newEntry);
             added = true;
          }
@@ -183,9 +201,13 @@ public class EnvironmentObjects extends ResizeComposite
       return objectDisplay_.getSelectedObjects();
    }
 
-   public void setCallFrames(JsArray<CallFrame> frameList)
+   public void setCallFrames(JsArray<CallFrame> frameList, boolean autoSize)
    {
       callFramePanel_.setCallFrames(frameList, contextDepth_);
+      
+      // if not auto-sizing we're done
+      if (!autoSize)
+         return;
 
       // if the parent panel has layout information, auto-size the call frame
       // panel (let GWT go first so the call frame panel visibility has 
@@ -252,7 +274,7 @@ public class EnvironmentObjects extends ResizeComposite
          if (visible != entry.visible || visible)
          {
             entry.visible = visible;
-            objectDisplay_.redrawRow(i);
+            redrawRowSafely(i);
          }
       }
 
@@ -286,7 +308,7 @@ public class EnvironmentObjects extends ResizeComposite
          return;
       }
 
-      int type = deferredObjectDisplayType_;
+      final int type = deferredObjectDisplayType_;
       
       // if we already have an active display of this type, do nothing
       if (type == objectDisplayType_ && 
@@ -301,18 +323,51 @@ public class EnvironmentObjects extends ResizeComposite
          objectDataProvider_.removeDataDisplay(objectDisplay_);
          splitPanel.remove(objectDisplay_);
       }
-      // create the new object display and wire it to the data source
-      if (type == OBJECT_LIST_VIEW)
+      
+      try
       {
-         objectDisplay_ = new EnvironmentObjectList(
-                                 this, observer_, environmentName_);
-         objectSort_.setSortType(RObjectEntrySort.SORT_AUTO);
+         // create the new object display and wire it to the data source
+         if (type == OBJECT_LIST_VIEW)
+         {
+            objectDisplay_ = new EnvironmentObjectList(
+                                    this, observer_, environmentName_);
+            objectSort_.setSortType(RObjectEntrySort.SORT_AUTO);
+         }
+         else if (type == OBJECT_GRID_VIEW)
+         {
+            objectDisplay_ = new EnvironmentObjectGrid(
+                                    this, observer_, environmentName_);
+            objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
+         }
       }
-      else if (type == OBJECT_GRID_VIEW)
+      catch (Throwable e)
       {
-         objectDisplay_ = new EnvironmentObjectGrid(
-                                 this, observer_, environmentName_);
-         objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
+         // For reasons that are unclear, GWT sometimes barfs when trying to
+         // create the virtual scrollbars in the DataGrid that drives the
+         // environment list (it computes, and then tries to apply, a negative
+         // height). This appears to only happen during superdevmode boot,
+         // so try again (up to 5 times) if we're in superdevmode.
+
+         if (SuperDevMode.isActive())
+         {
+            if (gridRenderRetryCount_ >= 5)
+            {
+               Debug.log("WARNING: Failed to render environment pane data grid");
+            }
+            gridRenderRetryCount_++;
+            Debug.log("WARNING: Retrying environment data grid render (" + 
+                      gridRenderRetryCount_ + ")");
+            Timer t = new Timer() {
+               @Override
+               public void run()
+               {
+                  setObjectDisplay(type);
+               }
+            };
+            t.schedule(5);
+         }
+
+         return;
       }
 
       objectDisplayType_ = type;
@@ -431,9 +486,22 @@ public class EnvironmentObjects extends ResizeComposite
    }
 
    @Override
-   public void fillObjectContents(RObject object, Operation onCompleted)
+   public void fillEntryContents(final RObjectEntry entry, 
+                                 final int idx, 
+                                 boolean drawProgress)
    {
-      observer_.fillObjectContents(object, onCompleted);
+      entry.expanded = false;
+      entry.isExpanding = true;
+      if (drawProgress)
+         redrawRowSafely(idx);
+      observer_.fillObjectContents(entry.rObject, new Operation() {
+         public void execute()
+         {
+            entry.expanded = true;
+            entry.isExpanding = false;
+            redrawRowSafely(idx);
+         }
+      });
    }
 
    // Private methods: object management --------------------------------------
@@ -527,7 +595,7 @@ public class EnvironmentObjects extends ResizeComposite
          if (leader != entry.isCategoryLeader
              && redrawUpdatedRows)
          {
-            objectDisplay_.redrawRow(i);
+            redrawRowSafely(i);
          }
       }
    }
@@ -568,7 +636,8 @@ public class EnvironmentObjects extends ResizeComposite
          splitPanel.setWidgetSize(
                callFramePanel_, desiredCallFramePanelSize);
          callFramePanel_.onResize();
-         objectDisplay_.onResize();
+         if (objectDisplay_ != null)
+            objectDisplay_.onResize();
       }
       
       pendingCallFramePanelSize_ = false;
@@ -599,7 +668,7 @@ public class EnvironmentObjects extends ResizeComposite
                          deferredExpandedObjects_.get(idxExpanded))
                      {
                         objects.get(idxObj).expanded = true;
-                        objectDisplay_.redrawRow(idxObj);
+                        redrawRowSafely(idxObj);
                      }
                   }
                }
@@ -624,6 +693,15 @@ public class EnvironmentObjects extends ResizeComposite
    private RObjectEntry entryFromRObject(RObject obj)
    {
       return new RObjectEntry(obj, matchesFilter(obj));
+   }
+   
+   // for very large environments, the number of objects may exceed the number
+   // of physical rows; avoid redrawing rows outside the bounds of the
+   // container's physical limit
+   private void redrawRowSafely(int idx)
+   {
+      if (idx < MAX_ENVIRONMENT_OBJECTS)
+         objectDisplay_.redrawRow(idx);
    }
    
    private final static String EMPTY_ENVIRONMENT_MESSAGE =
@@ -654,4 +732,7 @@ public class EnvironmentObjects extends ResizeComposite
    private JsArrayString deferredExpandedObjects_;
    private boolean pendingCallFramePanelSize_ = false;
    private Integer deferredObjectDisplayType_ = new Integer(OBJECT_LIST_VIEW);
+   private int gridRenderRetryCount_ = 0;
+   
+   public final static int MAX_ENVIRONMENT_OBJECTS = 1024;
 }

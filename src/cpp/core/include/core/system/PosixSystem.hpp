@@ -18,6 +18,8 @@
 
 #include <core/system/System.hpp>
 
+#include <core/system/PosixSched.hpp>
+
 // typedefs (in case we need indirection on these for porting)
 #include <sys/resource.h>
 typedef pid_t PidType;
@@ -54,7 +56,11 @@ enum ResourceLimit
    MemoryLimit,
    FilesLimit,
    UserProcessesLimit,
-   StackLimit
+   StackLimit,
+   CoreLimit,
+   MemlockLimit,
+   CpuLimit,
+   NiceLimit
 };
 
 bool resourceIsUnlimited(RLimitType limitValue);
@@ -69,6 +75,44 @@ core::Error setResourceLimit(ResourceLimit resourceLimit,
                              RLimitType soft,
                              RLimitType hard);
 
+
+struct SysInfo
+{
+   SysInfo() : cores(0), load1(0), load5(0), load15(0) {}
+   unsigned cores;
+   double load1;
+   double load5;
+   double load15;
+};
+
+core::Error systemInformation(SysInfo* pSysInfo);
+
+core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
+
+struct ProcessInfo
+{
+   ProcessInfo() : pid(0) {}
+   PidType pid;
+   std::string username;
+};
+
+core::Error processInfo(const std::string& process,
+                        std::vector<ProcessInfo>* pInfo);
+
+std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
+
+struct IpAddress
+{
+   std::string name;
+   std::string addr;
+};
+
+core::Error ipAddresses(std::vector<IpAddress>* pAddresses);
+
+// core dump restriction
+core::Error restrictCoreDumps();
+void printCoreDumpable(const std::string& context);
+
 // launching child processes
 
 enum StdStreamBehavior
@@ -78,22 +122,40 @@ enum StdStreamBehavior
    StdStreamInherit = 2
 };
 
-struct ProcessConfig
+struct ProcessLimits
 {
-   ProcessConfig()
-      : stdStreamBehavior(StdStreamInherit),
-        memoryLimitBytes(0),
-        stackLimitBytes(0),
-        userProcessesLimit(0)
+   ProcessLimits()
+     : priority(0),
+       memoryLimitBytes(0),
+       stackLimitBytes(0),
+       userProcessesLimit(0),
+       cpuLimit(0),
+       niceLimit(0),
+       filesLimit(0)
    {
    }
 
-   core::system::Options args;
-   core::system::Options environment;
-   StdStreamBehavior stdStreamBehavior;
+   CpuAffinity cpuAffinity;
+   int priority;
    RLimitType memoryLimitBytes;
    RLimitType stackLimitBytes;
    RLimitType userProcessesLimit;
+   RLimitType cpuLimit;
+   RLimitType niceLimit;
+   RLimitType filesLimit;
+};
+
+struct ProcessConfig
+{
+   ProcessConfig()
+      : stdStreamBehavior(StdStreamInherit)
+   {
+   }
+   core::system::Options args;
+   core::system::Options environment;
+   std::string stdInput;
+   StdStreamBehavior stdStreamBehavior;
+   ProcessLimits limits;
 };
 
 core::Error waitForProcessExit(PidType processId);

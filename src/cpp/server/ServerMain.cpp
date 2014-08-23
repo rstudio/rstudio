@@ -47,6 +47,9 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
+#include <server/ServerSessionProxy.hpp>
+#include <server/ServerSessionManager.hpp>
+#include <server/ServerProcessSupervisor.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
@@ -56,9 +59,7 @@
 #include "ServerMeta.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
-#include "ServerSessionProxy.hpp"
 #include "ServerREnvironment.hpp"
-#include "ServerSessionManager.hpp"
 
 using namespace core ;
 using namespace server;
@@ -139,6 +140,8 @@ Error httpServerInit()
 
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
+   s_pHttpServer->setScheduledCommandInterval(
+                                    boost::posix_time::milliseconds(500));
 
    // initialize
    return server::httpServerInit(s_pHttpServer.get());
@@ -163,6 +166,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/view_pdf", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/agreement", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/presentation", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/pdf_js", secureAsyncHttpHandler(proxyContentRequest));
 
    // content handlers which might be accessed outside the context of the
    // workbench get secure + authentication when required
@@ -172,6 +176,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/session", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/docs", secureAsyncHttpHandler(secureAsyncFileHandler(), true));
    uri_handlers::add("/html_preview", secureAsyncHttpHandler(proxyContentRequest, true));
+   uri_handlers::add("/rmd_output", secureAsyncHttpHandler(proxyContentRequest, true));
 
    // proxy localhost if requested
    if (server::options().wwwProxyLocalhost())
@@ -422,6 +427,12 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      // initialize the process supervisor (needs to happen post http server
+      // init for access to the scheduled command list)
+      error = process_supervisor::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
       // initialize monitor (needs to happen post http server init for access
       // to the server's io service)
       monitor::initializeMonitorClient(kMonitorSocketPath,
@@ -468,7 +479,10 @@ int main(int argc, char * const argv[])
       if (options.serverAppArmorEnabled())
       {
          error = app_armor::enforceRestricted();
-         if (error)
+
+         // log error unless it's path not found (which indicates that
+         // libapparmor isn't installed on this system)
+         if (error && !isPathNotFoundError(error))
             LOG_ERROR(error);
       }
 

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -27,13 +28,13 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -78,8 +79,27 @@ public class AceEditorWidget extends Composite
       {
          public void execute(AceDocumentChangeEventNative changeEvent)
          {
-            ValueChangeEvent.fire(AceEditorWidget.this, null);            
-            updateBreakpoints(changeEvent);
+            // Case 3815: It appears to be possible for change events to be
+            // fired recursively, which exhausts the stack. This shouldn't 
+            // happen, but since it has in at least one setting, guard against
+            // recursion here.
+            if (inOnChangeHandler_)
+            {
+               Debug.log("Warning: ignoring recursive ACE change event");
+               return;
+            }
+            inOnChangeHandler_ = true;
+            try
+            {
+               ValueChangeEvent.fire(AceEditorWidget.this, null);            
+               updateBreakpoints(changeEvent);
+            }
+            catch (Exception ex)
+            {
+               Debug.log("Exception occurred during ACE change event: " + 
+                         ex.getMessage());
+            }
+            inOnChangeHandler_ = false;
          }
 
       });
@@ -618,5 +638,6 @@ public class AceEditorWidget extends Composite
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private boolean initToEmptyString_ = true;
+   private boolean inOnChangeHandler_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
 }

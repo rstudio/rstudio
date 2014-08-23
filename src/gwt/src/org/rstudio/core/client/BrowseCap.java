@@ -60,9 +60,19 @@ public class BrowseCap
    
    public boolean hasWindowFind()
    {
-      return true;
+      return !isInternetExplorer();
    }
-
+   
+   public boolean isInternetExplorer()
+   {
+      return isUserAgent("trident");
+   }
+    
+   public boolean isInternetExplorer10()
+   {
+      return false;
+   }
+   
    public static boolean hasMetaKey()
    {
       return isMacintosh();

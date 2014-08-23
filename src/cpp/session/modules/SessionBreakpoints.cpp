@@ -126,6 +126,10 @@ private:
 // rs_registerShinyFunction for an explanation of how this memory is managed)
 std::vector<boost::shared_ptr<ShinyFunction> > s_shinyFunctions;
 
+// Breakpoint data known by the server (subset of fields known by the client)
+#define TYPE_FUNCTION 0
+#define TYPE_TOPLEVEL 1
+
 class Breakpoint : boost::noncopyable
 {
 public:
@@ -144,7 +148,7 @@ public:
 // A list of the breakpoints we know about. Note that this is a slave list;
 // the client maintains the master copy and is responsible for synchronizing
 // with this list. This list is maintained so we can inject breakpoints
-// synchronously when Shiny creates an anonymous function object.
+// synchronously.
 std::vector<boost::shared_ptr<Breakpoint> > s_breakpoints;
 
 // Returns the Shiny function that contains the given line, if any.
@@ -182,7 +186,8 @@ std::vector<int> getShinyBreakpointLines(const ShinyFunction& sf)
    std::vector<int> lines;
    BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
    {
-      if (sf.contains(pbp->path, pbp->lineNumber))
+      if (sf.contains(pbp->path, pbp->lineNumber) &&
+          pbp->type == TYPE_TOPLEVEL)
          lines.push_back(pbp->lineNumber);
    }
    return lines;
@@ -292,7 +297,7 @@ bool setBreakpoint(const std::string& functionName,
 Error setBreakpoints(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string functionName, fileName, packageName;
+   std::string functionName, fileName, packageName, projPackageName;
    json::Array steps;
    bool set = false;
    Error error = json::readParams(request.params,
@@ -303,25 +308,29 @@ Error setBreakpoints(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // Always search the global namespace (and attached namespaces)
+   // first. Manipulating the source references for the copy in a searchable
+   // namespace has (inexplicable) side effects in package namespaces, but the
+   // reverse is not true (see case 3795).
+   set |= setBreakpoint(functionName, fileName, "", steps);
+
    // If we're in package development mode, try to set a breakpoint in the
-   // package's namespace first.
+   // package's namespace.
    const projects::ProjectContext& projectContext = projects::projectContext();
    if (projectContext.config().buildType == r_util::kBuildTypePackage)
    {
+      projPackageName = projectContext.packageInfo().name();
       set |= setBreakpoint(
-               functionName, fileName,
-               projectContext.packageInfo().name(), steps);
+               functionName, fileName, projPackageName, steps);
    }
 
    // If a package name was specified, try to set a breakpoint in that package's
-   // namespace, too.
-   if (packageName.length() > 0)
+   // namespace, too (unless we did already).
+   if (packageName.length() > 0 &&
+       packageName != projPackageName)
    {
       set |= setBreakpoint(functionName, fileName, packageName, steps);
    }
-
-   // Always search the global namespace.
-   set |= setBreakpoint(functionName, fileName, "", steps);
 
    // Couldn't find a function to set a breakpoint on--maybe a bad parameter?
    if (!set)
@@ -434,19 +443,71 @@ void rs_registerShinyFunction(SEXP params)
    }
 }
 
-// Initializes the set of breakpoints the server knows about by populating it
-// from client state (any of these may become a Shiny breakpoint at app boot);
-// registers the callback from Shiny into RStudio to register a running function
+// Executes the contents of the given file under the debugger
+SEXP rs_debugSourceFile(SEXP filename, SEXP encoding)
+{
+   // Get the file that was sourced
+   std::string path;
+   Error error = r::sexp::extract(filename, &path);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   // Find all the lines in the file that have breakpoints
+   std::vector<int> lines;
+   BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
+   {
+      if (module_context::resolveAliasedPath(pbp->path) == filePath)
+      {
+         lines.push_back(pbp->lineNumber);
+      }
+   }
+
+   // Execute the contents with breakpoints. Don't log errors here, since it's
+   // acceptable for errors to be raised from the code in the file, and don't
+   // disable the user's error handlers.
+   Protect protect;
+   SEXP lineSEXP = lines.size() > 0 ?
+                        r::sexp::create(lines, &protect) :
+                        R_NilValue;
+   error = r::exec::RFunction(".rs.executeDebugSource", filename, encoding,
+                              lineSEXP)
+                             .callUnsafe();
+
+   // Let the client know we're done; this is the client's cue to re-inject
+   // breakpoints.
+   json::Object result;
+   result["path"] = path;
+   result["succeeded"] = error ? false : true;
+   ClientEvent debugSourceCompleted(client_events::kDebugSourceCompleted,
+                                    result);
+   module_context::enqueClientEvent(debugSourceCompleted);
+
+   return R_NilValue;
+}
+
 Error initBreakpoints()
 {
+   // Register rs_debugSourceFile; called from the console (as debugSource)
+   R_CallMethodDef debugSource;
+   debugSource.name = "rs_debugSourceFile";
+   debugSource.fun = (DL_FUNC)rs_debugSourceFile;
+   debugSource.numArgs = 2;
+   r::routines::addCallMethod(debugSource);
+
    // Register rs_registerShinyFunction; called from registerShinyDebugHook
    R_CallMethodDef registerShiny;
-   registerShiny.name = "rs_registerShinyFunction" ;
+   registerShiny.name = "rs_registerShinyFunction";
    registerShiny.fun = (DL_FUNC)rs_registerShinyFunction;
    registerShiny.numArgs = 1;
    r::routines::addCallMethod(registerShiny);
 
-   // Load breakpoints from client state
+   // Initializes the set of breakpoints the server knows about by populating
+   // it from client state. This set is used for synchronous breakpoint 
+   // injection when a Shiny function is registered or debugSource is run.
    json::Value breakpointStateValue =
       r::session::clientState().getProjectPersistent("debug-breakpoints",
                                                      "debugBreakpointsState");
@@ -468,11 +529,8 @@ Error initBreakpoints()
    return Success();
 }
 
-
-// Called by the client whenever a top-level breakpoint is set or cleared;
-// updates breakpoints on the corresponding Shiny functions, if any.
-Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse*)
+Error updateBreakpoints(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse*)
 {
    json::Array breakpointArr;
    bool set = false, arm = false;
@@ -497,7 +555,7 @@ Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
 
       // Is this breakpoint associated with a running Shiny function? If it is,
       // and the caller wants the changes armed immediately, reflect them
-      if (arm) {
+      if (arm && breakpoint->type == TYPE_TOPLEVEL) {
          boost::shared_ptr<ShinyFunction> psf =
                findShinyFunction(breakpoint->path, breakpoint->lineNumber);
          if (psf)
@@ -515,33 +573,14 @@ Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
    return Success();
 }
 
-} // anonymous namespace
-
-
-json::Value debugStateAsJson()
+Error removeAllBreakpoints(const json::JsonRpcRequest&,
+                           json::JsonRpcResponse*)
 {
-   json::Object state;
-
-   // look for the debug state environment created by debugSource; if
-   // it exists, emit the pieces the client cares about.
-   SEXP debugState = r::sexp::findVar(".rs.topDebugState");
-   if (TYPEOF(debugState) == ENVSXP)
-   {
-      state["top_level_debug"] = true;
-      state["debug_step"] =
-          r::sexp::asInteger(r::sexp::findVar("currentDebugStep", debugState));
-      state["debug_file"] =
-          r::sexp::asString(r::sexp::findVar("currentDebugFile", debugState));
-      SEXP srcref = r::sexp::findVar("currentDebugSrcref", debugState);
-      environment::sourceRefToJson(srcref, &state);
-   }
-   else
-   {
-      state["top_level_debug"] = json::Value(false);
-   }
-
-   return state;
+   s_breakpoints.clear();
+   return Success();
 }
+
+} // anonymous namespace
 
 bool haveSrcrefAttribute()
 {
@@ -553,6 +592,16 @@ bool haveSrcrefAttribute()
    return haveSrcref;
 }
 
+bool haveAdvancedStepCommands()
+{
+   bool haveCommands = false;
+   Error error = r::exec::RFunction(".rs.haveAdvancedSteppingCommands")
+                                                      .call(&haveCommands);
+   if (error)
+       LOG_ERROR(error);
+   return haveCommands;
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -562,7 +611,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_function_state", getFunctionState))
       (bind(registerRpcMethod, "set_function_breakpoints", setBreakpoints))
-      (bind(registerRpcMethod, "update_shiny_breakpoints", updateShinyBreakpoints))
+      (bind(registerRpcMethod, "remove_all_breakpoints", removeAllBreakpoints))
+      (bind(registerRpcMethod, "update_breakpoints", updateBreakpoints))
       (bind(sourceModuleRFile, "SessionBreakpoints.R"))
       (bind(initBreakpoints));
 

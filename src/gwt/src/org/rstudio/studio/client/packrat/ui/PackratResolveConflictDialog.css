@@ -1,0 +1,23 @@
+
+.conflictLabel {
+	margin-bottom: 10px;
+}
+
+
+.choicesGrid {
+	margin-top: 15px;
+	margin-bottom: 20px;
+}
+
+.choiceButton {
+	margin-left: 4px;
+}
+
+.resolutionLabel {
+	font-weight: bold;
+}
+
+.conflictsTable {
+  border: 1px solid #BBB;  
+  background-color: white;
+}

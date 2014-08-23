@@ -1,0 +1,41 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
+
+   <ui:style>
+      .outer {
+         width: 100%;
+         background-color: #FFF9DB;
+         border-bottom: 1px solid #bcc1c5;
+      }
+      .icon {
+         margin-top: 6px;
+         margin-left: 7px;
+      }
+      .actions {
+         font-size: 11px;
+         margin-top: 7px;
+         color: #555;
+      }
+      .chevron {
+         cursor: pointer;
+         margin-top: 6px;
+         margin-right: 7px;
+   }
+   </ui:style>
+
+   <g:FlowPanel>
+   <g:DockLayoutPanel ui:field="container_" styleName="{style.outer}">
+      <g:west size="32">
+         <g:Image ui:field="icon_" styleName="{style.icon}"/>
+      </g:west>
+      <g:center>
+         <g:VerticalPanel ui:field="actions_" styleName="{style.actions}"/>
+      </g:center>
+      <g:east size="20">
+         <g:SimplePanel ui:field="chevron_"  styleName="{style.chevron}"/>
+      </g:east>
+   </g:DockLayoutPanel>
+   </g:FlowPanel>
+</ui:UiBinder>

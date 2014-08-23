@@ -197,6 +197,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
          panel.add(captionWidget);
          
          textBox_ = new TextBox();
+         textBox_.getElement().setAttribute("spellcheck", "false");
          panel.add(textBox_);
    
          initWidget(panel);

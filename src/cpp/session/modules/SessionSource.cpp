@@ -872,6 +872,66 @@ Error isReadOnlyFile(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getScriptRunCommand(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // params
+   std::string interpreter, path;
+   Error error = json::readParams(request.params, &interpreter, &path);
+   if (error)
+      return error ;
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   // use as minimal a path as possible
+   FilePath currentPath = module_context::safeCurrentPath();
+   if (filePath.isWithin(currentPath))
+   {
+      path = filePath.relativePath(currentPath);
+      if (interpreter.empty())
+      {
+#ifndef _WINDOWS
+         if (path.find_first_of('/') == std::string::npos)
+            path = "./" + path;
+      }
+#endif
+   }
+   else
+   {
+      path = filePath.absolutePath();
+   }
+
+   // quote if necessary
+   if (path.find_first_of(' ') != std::string::npos)
+      path = "\\\"" + path + "\\\"";
+
+   // if there's no interpreter then we may need to do a chmod
+#ifndef _WINDOWS
+   if (interpreter.empty())
+   {
+      error = r::exec::RFunction(
+                 "system",
+                  "chmod +x " +
+                  string_utils::utf8ToSystem(path)).call();
+      if (error)
+         return error;
+   }
+#endif
+
+   // now build and return the command
+   std::string command;
+   if (interpreter.empty())
+      command = path;
+   else
+      command = interpreter + " " + path;
+   command = "system(\"" + command + "\")";
+
+   pResponse->setResult(command);
+
+   return Success();
+}
+
+
+
 void enqueFileEditEvent(const std::string& file)
 {
    // ignore if no file passed
@@ -1053,6 +1113,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_source_template", getSourceTemplate))
       (bind(registerRpcMethod, "create_rd_shell", createRdShell))
       (bind(registerRpcMethod, "is_read_only_file", isReadOnlyFile))
+      (bind(registerRpcMethod, "get_script_run_command", getScriptRunCommand))
       (bind(sourceModuleRFile, "SessionSource.R"));
    Error error = initBlock.execute();
    if (error)

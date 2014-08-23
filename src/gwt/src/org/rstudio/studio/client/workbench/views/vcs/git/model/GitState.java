@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git.model;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
@@ -74,7 +75,12 @@ public class GitState extends VcsState
       return file.getName().equalsIgnoreCase(".gitignore");
    }
 
-   public void refresh(final boolean showError)
+   public void refresh(boolean showError)
+   {
+      refresh(showError, null);
+   }
+   
+   public void refresh(final boolean showError, final Command onCompleted)
    {
       server_.gitAllStatus(new ServerRequestCallback<AllStatus>()
       {
@@ -85,6 +91,8 @@ public class GitState extends VcsState
             branches_ = response.getBranches();
             remoteBranchInfo_ = response.getRemoteBranchInfo();
             handlers_.fireEvent(new VcsRefreshEvent(Reason.VcsOperation));
+            if (onCompleted != null)
+               onCompleted.execute();
          }
 
          @Override

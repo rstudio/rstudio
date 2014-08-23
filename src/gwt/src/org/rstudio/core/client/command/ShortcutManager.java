@@ -183,7 +183,7 @@ public class ShortcutManager implements NativePreviewHandler,
          e.preventDefault();
 
          if (enabled)
-            command.execute();
+            command.executeFromShortcut();
       }
 
       return command != null;

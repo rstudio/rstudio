@@ -114,6 +114,19 @@ void Error::addProperty(const std::string& name, int value)
    addProperty(name, safe_convert::numberToString(value));
 }
 
+#define kErrorExpected      "expected"
+#define kErrorExpectedValue "yes"
+
+void Error::setExpected()
+{
+   addProperty(kErrorExpected, kErrorExpectedValue);
+}
+
+bool Error::expected() const
+{
+   return getProperty(kErrorExpected) == kErrorExpectedValue;
+}
+
    
 const std::vector<std::pair<std::string,std::string> >& 
       Error::properties() const

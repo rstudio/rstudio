@@ -33,8 +33,6 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include "../SessionRPubs.hpp"
-
 #include "PresentationLog.hpp"
 #include "PresentationState.hpp"
 #include "SlideRequestHandler.hpp"
@@ -434,8 +432,9 @@ Error createPresentationRpubsSource(const json::JsonRpcRequest& request,
    ErrorResponse errorResponse;
    if (savePresentationAsRpubsSource(filePath, &errorResponse))
    {
+      using namespace module_context;
       json::Object resultJson;
-      resultJson["published"] = !rpubs::previousUploadId(filePath).empty();
+      resultJson["published"] = !previousRpubsUploadId(filePath).empty();
       resultJson["source_file_path"] = module_context::createAliasedPath(
                                                                      filePath);
       pResponse->setResult(resultJson);

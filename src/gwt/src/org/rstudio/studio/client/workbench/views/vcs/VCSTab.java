@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitHubEvent;
 
 public class VCSTab extends DelayLoadWorkbenchTab<VCSPresenter>
                             
@@ -35,7 +36,8 @@ public class VCSTab extends DelayLoadWorkbenchTab<VCSPresenter>
    public abstract static class VCSShim extends DelayLoadTabShim<VCSPresenter, VCSTab>
                                         implements ShowVcsHistoryEvent.Handler,
                                                    ShowVcsDiffEvent.Handler,
-                                                   VcsRevertFileEvent.Handler
+                                                   VcsRevertFileEvent.Handler,
+                                                   VcsViewOnGitHubEvent.Handler
    {
       @Handler
       public abstract void onVcsCommit();
@@ -64,6 +66,7 @@ public class VCSTab extends DelayLoadWorkbenchTab<VCSPresenter>
       eventBus.addHandler(ShowVcsHistoryEvent.TYPE, shim);
       eventBus.addHandler(ShowVcsDiffEvent.TYPE, shim);
       eventBus.addHandler(VcsRevertFileEvent.TYPE, shim);
+      eventBus.addHandler(VcsViewOnGitHubEvent.TYPE, shim);
    }
 
    @Override

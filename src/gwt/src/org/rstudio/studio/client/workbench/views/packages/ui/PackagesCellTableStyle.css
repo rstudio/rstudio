@@ -1,4 +1,5 @@
 @def selectionBorderWidth 2px;
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
 .cellTableCell input[type=checkbox] {
    margin-top: 0;
@@ -20,3 +21,13 @@
 .cellTableOddRowCell {
   border: selectionBorderWidth solid #eef4fb;;
 }
+
+.libraryHeader h1
+{
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-left: 5px;
+	font-size: 12px;
+	color: #3c474d;
+}
+

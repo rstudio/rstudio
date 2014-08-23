@@ -123,8 +123,6 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
       int type = -1 ;
       if (name == "package_status_changed")
          type = session::client_events::kPackageStatusChanged;
-      else if (name == "installed_packages_changed")
-         type = session::client_events::kInstalledPackagesChanged;
       else if (name == "unhandled_error")
          type = session::client_events::kUnhandledError;
       
@@ -239,6 +237,38 @@ SEXP rs_packageUnloaded(SEXP pkgnameSEXP)
             client_events::kPackageUnloaded,
             json::Value(pkgname));
    enqueClientEvent(packageUnloadedEvent);
+   return R_NilValue;
+}
+
+SEXP rs_userPrompt(SEXP typeSEXP,
+                   SEXP captionSEXP,
+                   SEXP messageSEXP,
+                   SEXP yesLabelSEXP,
+                   SEXP noLabelSEXP,
+                   SEXP includeCancelSEXP,
+                   SEXP yesIsDefaultSEXP)
+{
+   UserPrompt prompt(r::sexp::asInteger(typeSEXP),
+                     r::sexp::safeAsString(captionSEXP),
+                     r::sexp::safeAsString(messageSEXP),
+                     r::sexp::safeAsString(yesLabelSEXP),
+                     r::sexp::safeAsString(noLabelSEXP),
+                     r::sexp::asLogical(includeCancelSEXP),
+                     r::sexp::asLogical(yesIsDefaultSEXP));
+
+   UserPrompt::Response response = showUserPrompt(prompt);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(response, &rProtect);
+}
+
+SEXP rs_restartR(SEXP afterRestartSEXP)
+{
+   std::string afterRestart = r::sexp::safeAsString(afterRestartSEXP);
+   json::Object dataJson;
+   dataJson["after_restart"] = afterRestart;
+   ClientEvent event(client_events::kSuspendAndRestart, dataJson);
+   module_context::enqueClientEvent(event);
    return R_NilValue;
 }
 
@@ -454,6 +484,20 @@ Error initialize()
    methodDef12.numArgs = 1;
    r::routines::addCallMethod(methodDef12);
 
+   // register rs_userPrompt
+   R_CallMethodDef methodDef13;
+   methodDef13.name = "rs_userPrompt" ;
+   methodDef13.fun = (DL_FUNC) rs_userPrompt;
+   methodDef13.numArgs = 7;
+   r::routines::addCallMethod(methodDef13);
+
+   // register rs_restartR
+   R_CallMethodDef methodDef14;
+   methodDef14.name = "rs_restartR" ;
+   methodDef14.fun = (DL_FUNC) rs_restartR;
+   methodDef14.numArgs = 1;
+   r::routines::addCallMethod(methodDef14);
+
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
 
@@ -607,9 +651,16 @@ void schedulePeriodicWork(const boost::posix_time::time_duration& period,
 
 namespace {
 
-bool performDelayedWork(const boost::function<void()> &execute)
+bool performDelayedWork(const boost::function<void()> &execute,
+                        boost::shared_ptr<bool> pExecuted)
 {
+   if (*pExecuted)
+      return false;
+
+   *pExecuted = true;
+
    execute();
+
    return false;
 }
 
@@ -619,8 +670,10 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                          const boost::function<void()> &execute,
                          bool idleOnly)
 {
+   boost::shared_ptr<bool> pExecuted(new bool(false));
+
    schedulePeriodicWork(period,
-                        boost::bind(performDelayedWork, execute),
+                        boost::bind(performDelayedWork, execute, pExecuted),
                         idleOnly,
                         false);
 }
@@ -740,6 +793,11 @@ FilePath tempFile(const std::string& prefix, const std::string& extension)
    return r::session::utils::tempFile(prefix, extension);
 }
 
+FilePath tempDir()
+{
+   return r::session::utils::tempDir();
+}
+
 FilePath findProgram(const std::string& name)
 {
    std::string which;
@@ -755,6 +813,11 @@ FilePath findProgram(const std::string& name)
    }
 }
 
+bool isPdfLatexInstalled()
+{
+   return !module_context::findProgram("pdflatex").empty();
+}
+
 namespace {
 
 bool hasTextMimeType(const FilePath& filePath)
@@ -764,7 +827,8 @@ bool hasTextMimeType(const FilePath& filePath)
       return false;
 
    return boost::algorithm::starts_with(mimeType, "text/") ||
-          boost::algorithm::ends_with(mimeType, "+xml");
+          boost::algorithm::ends_with(mimeType, "+xml") ||
+          boost::algorithm::ends_with(mimeType, "/xml");
 }
 
 bool hasBinaryMimeType(const FilePath& filePath)
@@ -819,6 +883,7 @@ bool isTextFile(const FilePath& targetPath)
    // check value
    return boost::algorithm::starts_with(fileType, "text/") ||
           boost::algorithm::ends_with(fileType, "+xml") ||
+          boost::algorithm::ends_with(fileType, "/xml") ||
           boost::algorithm::ends_with(fileType, "x-empty") ||
           boost::algorithm::equals(fileType, "application/postscript");
 #else
@@ -902,6 +967,104 @@ bool isPackageInstalled(const std::string& packageName)
    return !error ? installed : false;
 }
 
+bool isPackageVersionInstalled(const std::string& packageName,
+                               const std::string& version)
+{
+   r::session::utils::SuppressOutputInScope suppressOutput;
+
+   bool installed;
+   r::exec::RFunction func(".rs.isPackageVersionInstalled",
+                           packageName, version);
+   Error error = func.call(&installed);
+   return !error ? installed : false;
+}
+
+PackageCompatStatus getPackageCompatStatus(
+      const std::string& packageName,
+      const std::string& packageVersion,
+      int protocolVersion)
+{
+   r::session::utils::SuppressOutputInScope suppressOutput;
+   int compatStatus = COMPAT_UNKNOWN;
+   r::exec::RFunction func(".rs.getPackageCompatStatus",
+                           packageName, packageVersion, protocolVersion);
+   Error error = func.call(&compatStatus);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return COMPAT_UNKNOWN;
+   }
+   return static_cast<PackageCompatStatus>(compatStatus);
+}
+
+Error installPackage(const std::string& pkgPath, const std::string& libPath)
+{
+   // get R bin directory
+   FilePath rBinDir;
+   Error error = module_context::rBinDir(&rBinDir);
+   if (error)
+      return error;
+
+   // setup options and command
+   core::system::ProcessOptions options;
+#ifdef _WIN32
+   shell_utils::ShellCommand installCommand(rBinDir.childPath("R.exe"));
+#else
+   shell_utils::ShellCommand installCommand(rBinDir.childPath("R"));
+#endif
+
+   installCommand << core::shell_utils::EscapeFilesOnly;
+
+   // for packrat projects we execute the profile and set the working
+   // directory to the project directory; for other contexts we just
+   // propagate the R_LIBS
+   if (module_context::packratContext().modeOn)
+   {
+      options.workingDir = projects::projectContext().directory();
+   }
+   else
+   {
+      installCommand << "--vanilla";
+      core::system::Options env;
+      core::system::environment(&env);
+      std::string libPaths = libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&env, "R_LIBS", libPathsString());
+      options.environment = env;
+   }
+
+   installCommand << "CMD" << "INSTALL";
+
+   // if there is a lib path then provide it
+   if (!libPath.empty())
+   {
+      installCommand << "-l";
+      installCommand << "\"" + libPath + "\"";
+   }
+
+   // add pakage path
+   installCommand << "\"" + pkgPath + "\"";
+   core::system::ProcessResult result;
+
+   // run the command
+   error = core::system::runCommand(installCommand,
+                                    options,
+                                    &result);
+
+   if (error)
+      return error;
+
+   if ((result.exitStatus != EXIT_SUCCESS) && !result.stdErr.empty())
+   {
+      return systemError(boost::system::errc::state_not_recoverable,
+                         "Error installing package: " + result.stdErr,
+                         ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
 {
    // check whether we are in a package
@@ -941,7 +1104,7 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
    // length requires cast
    try
    {
-      entry["length"] = boost::numeric_cast<uint64_t>(fileInfo.size());
+      entry["length"] = boost::numeric_cast<boost::uint64_t>(fileInfo.size());
    }
    catch (const boost::bad_numeric_cast& e)
    {
@@ -949,6 +1112,8 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
                         e.what());
       entry["length"] = 0;
    }
+   
+   entry["exists"] = FilePath(fileInfo.absolutePath()).exists();
 
    entry["lastModified"] = date_time::millisecondsSinceEpoch(
                                                    fileInfo.lastWriteTime());
@@ -1302,6 +1467,41 @@ bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
    }
 }
 
+// given a url, return a portmap path if applicable (i.e. we're in server
+// mode and the path needs port mapping), and the unmodified url otherwise
+std::string mapUrlPorts(const std::string& url)
+{
+   // if we are in server mode then we need to do port mapping
+   if (session::options().programMode() != kSessionProgramModeServer)
+      return url;
+
+   // see if we can form a portmap path for this url
+   std::string path;
+   if (portmapPathForLocalhostUrl(url, &path))
+      return path;
+
+   return url;
+}
+
+// given a pair of paths, return the second in the context of the first
+std::string pathRelativeTo(const FilePath& sourcePath,
+                           const FilePath& targetPath)
+{
+   std::string relative;
+   if (targetPath == sourcePath)
+   {
+      relative = ".";
+   }
+   else if (targetPath.isWithin(sourcePath))
+   {
+      relative = targetPath.relativePath(sourcePath);
+   }
+   else
+   {
+      relative = createAliasedPath(targetPath);
+   }
+   return relative;
+}
 
 void activatePane(const std::string& pane)
 {
@@ -1391,6 +1591,120 @@ core::Error executeAsync(const json::JsonRpcFunction& function,
                                        handle));
    pResponse->setAsyncHandle(handle);
    return Success();
+}
+
+core::json::Object compileOutputAsJson(const CompileOutput& compileOutput)
+{
+   json::Object compileOutputJson;
+   compileOutputJson["type"] = compileOutput.type;
+   compileOutputJson["output"] = compileOutput.output;
+   return compileOutputJson;
+}
+
+std::string CRANReposURL()
+{
+   std::string url;
+   r::exec::evaluateString("getOption('repos')[['CRAN']]", &url);
+   if (url.empty())
+      url = userSettings().cranMirror().url;
+   return url;
+}
+
+shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
+{
+#if defined(_WIN32)
+   shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
+#else
+   shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
+   rCmd << "CMD";
+#endif
+   return rCmd;
+}
+
+core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
+                                   const core::FilePath& toDir)
+{
+   using namespace string_utils;
+   r::exec::RFunction fileCopy("file.copy");
+   fileCopy.addParam("from", utf8ToSystem(fromDir.absolutePath()));
+   fileCopy.addParam("to", utf8ToSystem(toDir.absolutePath()));
+   fileCopy.addParam("recursive", true);
+   return fileCopy.call();
+}
+
+std::string sessionTempDirUrl(const std::string& sessionTempPath)
+{
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      boost::format fmt("http://localhost:%1%/session/%2%");
+      return boost::str(fmt % rLocalHelpPort() % sessionTempPath);
+   }
+   else
+   {
+      boost::format fmt("session/%1%");
+      return boost::str(fmt % sessionTempPath);
+   }
+}
+
+namespace {
+
+bool hasStem(const FilePath& filePath, const std::string& stem)
+{
+   return filePath.stem() == stem;
+}
+
+} // anonymous namespace
+
+Error uniqueSaveStem(const FilePath& directoryPath,
+                     const std::string& base,
+                     std::string* pStem)
+{
+   // determine unique file name
+   std::vector<FilePath> children;
+   Error error = directoryPath.children(&children);
+   if (error)
+      return error;
+
+   // search for unique stem
+   int i = 0;
+   *pStem = base;
+   while(true)
+   {
+      // seek stem
+      std::vector<FilePath>::const_iterator it = std::find_if(
+                                                children.begin(),
+                                                children.end(),
+                                                boost::bind(hasStem, _1, *pStem));
+      // break if not found
+      if (it == children.end())
+         break;
+
+      // update stem and search again
+      boost::format fmt(base + "%1%");
+      *pStem = boost::str(fmt % boost::io::group(std::setfill('0'),
+                                                 std::setw(2),
+                                                 ++i));
+   }
+
+   return Success();
+}
+
+json::Object plotExportFormat(const std::string& name,
+                              const std::string& extension)
+{
+   json::Object formatJson;
+   formatJson["name"] = name;
+   formatJson["extension"] = extension;
+   return formatJson;
+}
+
+Error createSelfContainedHtml(const FilePath& sourceFilePath,
+                              const FilePath& targetFilePath)
+{
+   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
+   func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
+   func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
+   return func.call();
 }
 
 } // namespace module_context         

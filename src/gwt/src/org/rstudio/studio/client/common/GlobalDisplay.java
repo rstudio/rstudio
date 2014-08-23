@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.common;
 
 import com.google.gwt.user.client.Command;
+
 import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.*;
 
@@ -56,7 +58,18 @@ public abstract class GlobalDisplay extends MessageDisplay
       {
          this.callback = callback;
       }
+      
+      public void setPosition(Point pos)
+      {
+         position = pos;
+      }
+      
+      public Point getPosition()
+      {
+         return position;
+      }
 
+      private Point position = null;
       private String name = "_blank";
       private boolean focus = true;
       private OperationWithInput<WindowEx> callback;
@@ -84,9 +97,14 @@ public abstract class GlobalDisplay extends MessageDisplay
    
    public abstract void openSatelliteWindow(String name, int width, int height);
 
+   public abstract void openSatelliteWindow(String name, int width, int height,
+                                   NewWindowOptions options);
+
    public abstract void openEmailComposeWindow(String to, String subject);
    
    public abstract void showHtmlFile(String path);
+   
+   public abstract void showWordDoc(String path);
    
    public void openRStudioLink(String linkName)
    {

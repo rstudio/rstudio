@@ -29,15 +29,15 @@ public class PackageInfo extends JavaScriptObject
    }-*/;
    
    public final native String getLibrary() /*-{
-      return this.library;
+      return this.library == null ? "" : this.library;
    }-*/;
 
    public final native String getVersion() /*-{
-      return this.version;
+      return this.version == null ? "" : this.version;
    }-*/;
    
    public final native String getDesc() /*-{
-      return this.desc;
+      return this.desc == null ? "" : this.desc;
    }-*/;
    
    public final native String getUrl() /*-{
@@ -48,6 +48,64 @@ public class PackageInfo extends JavaScriptObject
       return this.loaded;
    }-*/;
    
+   public final native boolean isFirstInLibrary() /*-{
+      return (typeof this.first_in_library === "undefined") ? 
+         false : this.first_in_library;
+   }-*/;
+   
+   public final native boolean setFirstInLibrary(boolean isFirst) /*-{
+      this.first_in_library = isFirst;
+   }-*/;
+   
+   public final native String getPackratStringField(String name) /*-{
+      if (typeof this[name] === "undefined" || this[name] === null)
+         return "";
+      else
+         return this[name];
+   }-*/;
+   
+   public final native boolean getPackratBoolField(String name) /*-{
+      if (typeof this[name] === "undefined" || this[name] === null)
+         return false;
+      else
+         return this[name];
+   }-*/;
+   
+   public final String getPackratVersion() 
+   {
+      return getPackratStringField("packrat.version");
+   }
+   
+   public final String getPackratSource() 
+   {
+      return getPackratStringField("packrat.source");
+   }
+   
+   public final boolean getCurrentlyUsed() 
+   {
+      return getPackratBoolField("currently.used");
+   }
+
+   public final boolean getInPackratLibary()
+   {
+      return getPackratBoolField("in.packrat.library");
+   }
+   
+   public final boolean getOutOfSync()
+   {
+      return getPackratBoolField("out.of.sync");
+   }
+   
+   public final String getSourceLibrary()
+   {
+      String sourceLibrary = getPackratStringField("source.library");
+      return sourceLibrary.length() == 0 ? getLibrary() : sourceLibrary;
+   }
+   
+   public final native void setOutOfSync(boolean outOfSync) /*-{
+      this["out.of.sync"] = outOfSync;
+   }-*/;
+
    public final PackageInfo asLoaded()
    {
       return asLoadedState(true);
@@ -60,11 +118,8 @@ public class PackageInfo extends JavaScriptObject
    
    private final native PackageInfo asLoadedState(boolean loaded) /*-{
       var packageInfo = new Object();
-      packageInfo.name = this.name;
-      packageInfo.library = this.library;
-      packageInfo.version = this.version;
-      packageInfo.desc = this.desc;
-      packageInfo.url = this.url;
+      for (var key in this)
+         packageInfo[key] = this[key];
       packageInfo.loaded = loaded;
       return packageInfo;
    }-*/;

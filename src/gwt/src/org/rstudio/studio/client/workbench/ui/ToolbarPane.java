@@ -81,7 +81,18 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
    {
       Widget child = getWidget();
       if (child != null && child instanceof RequiresResize)
+      {
+         // there are DOM states where the child onResize throws 
+         // an exception (related to windows splitter animation)
+         // so we muffle exceptions here
+         try
+         {
             ((RequiresResize) child).onResize();
+         }
+         catch(Exception ex)
+         {
+         }
+      }
    }
 
    protected abstract Widget createMainWidget();

@@ -10,15 +10,15 @@ library(shiny)
 shinyUI(pageWithSidebar(
   
   # Application title
-  headerPanel("New Application"),
+  headerPanel("Old Faithful Geyser Data"),
   
-  # Sidebar with a slider input for number of observations
+  # Sidebar with a slider input for number of bins
   sidebarPanel(
-    sliderInput("obs", 
-                "Number of observations:", 
-                min = 1, 
-                max = 1000, 
-                value = 500)
+    sliderInput("bins",
+                "Number of bins:",
+                min = 1,
+                max = 50,
+                value = 30)
   ),
   
   # Show a plot of the generated distribution

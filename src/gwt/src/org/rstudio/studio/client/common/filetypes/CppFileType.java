@@ -27,7 +27,7 @@ public class CppFileType extends TextFileType
    CppFileType(String id, String ext, ImageResource icon, boolean isCpp)
    {
       super(id, "C/C++", EditorLanguage.LANG_CPP, ext, icon,
-            false, false, false, false, false, false, 
+            false, false, isCpp, false, false, false, 
             false, false, false, false, false, false);
       
       isCpp_ = isCpp;

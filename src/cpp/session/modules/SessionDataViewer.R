@@ -55,3 +55,16 @@
                    }), 
                    title))
 })
+
+.rs.addFunction("initializeDataViewer", function(server) {
+    if (server) {
+        .rs.registerReplaceHook("edit", "utils", function(original, name, ...) {
+            if (is.data.frame(name) || is.matrix(name))
+                stop("Editing of data frames and matrixes is not supported in RStudio.", call. = FALSE)
+            else
+                original(name, ...)
+        })
+    }
+})
+
+

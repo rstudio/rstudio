@@ -21,8 +21,10 @@ import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
@@ -92,6 +94,18 @@ public class GitHistoryStrategy implements HistoryStrategy
                         ServerRequestCallback<String> requestCallback)
    {
       server_.gitShowFile(revision, filename, requestCallback);
+   }
+   
+   @Override
+   public void saveFileAs(String revision, 
+                          String source, 
+                          String destination,
+                          ProgressIndicator indicator)
+   {
+      server_.gitExportFile(revision, 
+                            source, 
+                            destination,
+                            new VoidServerRequestCallback(indicator));
    }
 
    @Override

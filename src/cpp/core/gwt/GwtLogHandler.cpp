@@ -36,7 +36,7 @@ namespace gwt {
 namespace {
 
 // symbol maps
-SymbolMaps s_symbolMaps;
+SymbolMaps* s_pSymbolMaps = NULL;
 
 // client exception
 struct ClientException
@@ -135,8 +135,8 @@ void handleLogExceptionRequest(const std::string& username,
    }
 
    // resymbolize the stack
-   std::vector<StackElement> stack = s_symbolMaps.resymbolize(ex.stack,
-                                                              ex.strongName);
+   std::vector<StackElement> stack = s_pSymbolMaps->resymbolize(ex.stack,
+                                                                ex.strongName);
 
    // build the log message
    bool printFrame = false;
@@ -242,7 +242,10 @@ void handleLogMessageRequest(const std::string& username,
 
 void initializeSymbolMaps(const core::FilePath& symbolMapsPath)
 {
-   Error error = s_symbolMaps.initialize(symbolMapsPath);
+   // allocate this on the heap so that order of C++ static destruction
+   // issues don't cause a crash during shutdown
+   s_pSymbolMaps = new SymbolMaps();
+   Error error = s_pSymbolMaps->initialize(symbolMapsPath);
    if (error)
       LOG_ERROR(error);
 }

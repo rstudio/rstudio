@@ -223,9 +223,9 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
-   public void setCallFrames(JsArray<CallFrame> frameList)
+   public void setCallFrames(JsArray<CallFrame> frameList, boolean autoSize)
    {
-      objects_.setCallFrames(frameList);
+      objects_.setCallFrames(frameList, autoSize);
    }
 
    @Override
@@ -479,7 +479,7 @@ public class EnvironmentPane extends WorkbenchPane
                      {
                         loadEnvironmentFrame(frame);
                      }
-                  }));
+                  }, 2));
       }
    }
    
@@ -538,7 +538,7 @@ public class EnvironmentPane extends WorkbenchPane
                {
                   setObjectDisplayType(type);
                }
-            });
+            }, 2);
    }
    
    // An extension of the toolbar popup menu that gets environment names from

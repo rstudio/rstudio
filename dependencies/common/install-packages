@@ -1,0 +1,71 @@
+#!/bin/bash
+
+#
+# install-packages
+#
+# Copyright (C) 2009-12 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+# install dir
+INSTALL_DIR=`pwd`
+
+install()
+{
+PACKAGE=$1
+PACKAGE_DIR=$PACKAGE
+PACKAGE_VERSION=$2
+
+# git clone if necessary
+if [ ! -d "$PACKAGE_DIR" ]
+then
+  git clone https://github.com/rstudio/$PACKAGE.git
+fi
+
+# clean and checkout target branch
+cd $PACKAGE_DIR
+git checkout .
+git clean -df .
+git pull
+git checkout $PACKAGE_VERSION
+
+# append GitHub fields to DESCRIPTION
+PACKAGE_SHA1=`git rev-parse $PACKAGE_VERSION`
+cat <<EOF >> DESCRIPTION
+GithubRepo: $PACKAGE
+GithubUsername: rstudio
+GithubRef: $PACKAGE_VERSION
+GithubSHA1: $PACKAGE_SHA1
+Origin: RStudioIDE
+EOF
+
+# create source package (remove previous first)
+cd ..
+PACKAGE_ARCHIVE_PATTERN="$PACKAGE*.tar.gz"
+rm -f $PACKAGE_ARCHIVE_PATTERN
+R CMD build $PACKAGE
+
+# modify filename to include SHA1
+PACKAGE_ARCHIVE=`ls $PACKAGE_ARCHIVE_PATTERN`
+PACKAGE_ARCHIVE_STEM=${PACKAGE_ARCHIVE%.tar.gz}
+PACKAGE_ARCHIVE_SHA1=${PACKAGE_ARCHIVE_STEM}_${PACKAGE_SHA1}.tar.gz
+mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
+
+}
+
+install rmarkdown master
+install packrat master
+
+
+# back to install-dir
+cd $INSTALL_DIR

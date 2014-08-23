@@ -52,4 +52,8 @@ public class DataPreviewResult extends JavaScriptObject
    public final native String getQuote() /*-{
       return this.quote[0];
    }-*/;
+   
+   public final native boolean getDefaultStringsAsFactors() /*-{
+      return this.defaultStringsAsFactors[0];
+   }-*/;
 }

@@ -310,7 +310,7 @@
 }
 
 .reveal .slides section .mediaOnly {
-   position: fixed;
+   position: absolute;
    width: 100%;
    top: 2.5em;
    bottom: 0;

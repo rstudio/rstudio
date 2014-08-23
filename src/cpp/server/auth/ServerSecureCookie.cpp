@@ -236,7 +236,11 @@ Error initialize()
    // determine path to use for secure cookie key file
    FilePath secureCookieKeyPath;
    if (core::system::effectiveUserIsRoot())
-      secureCookieKeyPath = FilePath("/var/lib/rstudio-server/secure-cookie-key");
+   {
+      secureCookieKeyPath = FilePath("/etc/rstudio/secure-cookie-key");
+      if (!secureCookieKeyPath.exists())
+         secureCookieKeyPath = FilePath("/var/lib/rstudio-server/secure-cookie-key");
+   }
    else
       secureCookieKeyPath = FilePath("/tmp/rstudio-server/secure-cookie-key");
 

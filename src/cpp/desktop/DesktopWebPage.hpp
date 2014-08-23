@@ -57,13 +57,14 @@ public:
    explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = NULL);
 
    void setBaseUrl(const QUrl& baseUrl);
-   void setViewerUrl(const QString& viewerUrl) { viewerUrl_ = viewerUrl; }
+   void setViewerUrl(const QString& viewerUrl);
 
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
 
 public slots:
    bool shouldInterruptJavaScript();
+   void closeRequested();
 
 protected:
    QWebPage* createWindow(QWebPage::WebWindowType type);

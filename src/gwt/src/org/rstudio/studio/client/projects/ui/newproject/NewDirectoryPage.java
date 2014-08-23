@@ -26,6 +26,7 @@ import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -35,6 +36,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class NewDirectoryPage extends NewProjectWizardPage
 {
+
    public NewDirectoryPage()
    {
       this("Empty Project", 
@@ -89,17 +91,56 @@ public class NewDirectoryPage extends NewProjectWizardPage
       addWidget(newProjectParent_);
       
       // if git is available then add git init
+      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
-      chkGitInit_ = new CheckBox("Create a git repository for this project");
+      
+      HorizontalPanel optionsPanel = null;
+      if (getOptionsSideBySide())
+         optionsPanel = new HorizontalPanel();
+      
+      chkGitInit_ = new CheckBox("Create a git repository");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
-         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
          chkGitInit_.setValue(uiPrefs.newProjGitInit().getValue());
-         
-         addWidget(chkGitInit_);
+         chkGitInit_.getElement().getStyle().setMarginRight(7, Unit.PX);
+         if (optionsPanel != null)
+         {
+            optionsPanel.add(chkGitInit_);
+         }
+         else
+         {
+            addSpacer();
+            addWidget(chkGitInit_);
+         }
       }
+      
+      // Initialize project with packrat
+      chkPackratInit_ = new CheckBox("Use packrat with this project");
+      chkPackratInit_.setValue(uiPrefs.newProjUsePackrat().getValue());
+      
+      if (optionsPanel != null)
+      {
+         optionsPanel.add(chkPackratInit_);
+      }
+      else
+      {
+         addSpacer();
+         addWidget(chkPackratInit_);
+      }
+      
+      
+      if (optionsPanel != null)
+      {
+         addSpacer();
+         addWidget(optionsPanel);
+      }
+   }
+   
+   protected boolean getOptionsSideBySide()
+   {
+      return false;
    }
    
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
@@ -126,6 +167,12 @@ public class NewDirectoryPage extends NewProjectWizardPage
       super.initialize(input);
           
       newProjectParent_.setText(input.getDefaultNewProjectLocation().getPath());
+      
+      if (!input.getContext().isPackratAvailable())
+      {
+         chkPackratInit_.setValue(false);
+         chkPackratInit_.setVisible(false);
+      }
    }
 
 
@@ -163,10 +210,10 @@ public class NewDirectoryPage extends NewProjectWizardPage
          
          return new NewProjectResult(projFile, 
                                      chkGitInit_.getValue(), 
-                                     newDefaultLocation, 
+                                     chkPackratInit_.getValue(), 
+                                     newDefaultLocation,
                                      null,
-                                     getNewPackageOptions(),
-                                     getNewShinyAppOptions());
+                                     getNewPackageOptions(), getNewShinyAppOptions());
       }
       else
       {
@@ -184,6 +231,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
    protected Label dirNameLabel_;
    protected TextBox txtProjectName_;
    private CheckBox chkGitInit_;
+   private CheckBox chkPackratInit_;
    
    private DirectoryChooserTextBox newProjectParent_;
 

@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import com.google.gwt.cell.client.ClickableTextCell;
@@ -224,22 +223,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
           !object.isExpanding && 
           object.rObject.getContentsDeferred())
       {
-         // Prevent reentry
-         object.isExpanding = true;
-         redrawRow(index);
-         
-         // If the contents are deferred, we'll need to go to the server to
-         // get them. 
-         host_.fillObjectContents(object.rObject, new Operation()
-         {
-            @Override
-            public void execute()
-            {
-               object.expanded = true;
-               object.isExpanding = false;
-               redrawRow(index);
-            }
-         });
+         host_.fillEntryContents(object, index, true);
       }
       else if (!object.rObject.getContentsDeferred())
       {

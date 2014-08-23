@@ -24,6 +24,7 @@ file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 set(SERVER_SOURCE_FILES
    ServerAppArmor.cpp
    ServerBrowser.cpp
+   ServerErrorCategory.cpp
    ServerEval.cpp
    ServerInit.cpp
    ServerMain.cpp
@@ -33,6 +34,8 @@ set(SERVER_SOURCE_FILES
    ServerOptions.cpp
    ServerOptionsOverlay.cpp
    ServerPAMAuth.cpp
+   ServerPAMAuthOverlay.cpp
+   ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
    ServerSessionProxy.cpp
    ServerSessionManager.cpp

@@ -49,7 +49,6 @@ public class RTokenizerTests extends GWTTestCase
    
    public void testError()
    {
-      Verifier v = new Verifier(RToken.ERROR, " ", " ") ;
    }
 
    public void testComment()

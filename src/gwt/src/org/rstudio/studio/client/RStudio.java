@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -35,6 +36,7 @@ import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.SlideLabel;
@@ -57,10 +59,15 @@ import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.impl.BrowserFence;
-import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
+import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
+import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
+import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
+import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
+import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
@@ -71,7 +78,7 @@ import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
-import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
+import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCenter;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -116,6 +123,7 @@ public class RStudio implements EntryPoint
       div.getStyle().setMarginTop(200, Style.Unit.PX);
       div.getStyle().setProperty("textAlign", "center");
       div.getStyle().setZIndex(1000);
+      ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
       Document.get().getBody().appendChild(div);
 
       return new Command()
@@ -159,16 +167,22 @@ public class RStudio implements EntryPoint
                            RootLayoutPanel.get(),
                            dismissProgressAnimation);
                   }
-                  else if (PDFViewerApplication.NAME.equals(view))
-                  {
-                     RStudioGinjector.INSTANCE.getPDFViewerApplication().go(
-                           RootLayoutPanel.get(), 
-                           dismissProgressAnimation);
-                  }
                   else if (HTMLPreviewApplication.NAME.equals(view))
                   {
                      RStudioGinjector.INSTANCE.getHTMLPreviewApplication().go(
                            RootLayoutPanel.get(),
+                           dismissProgressAnimation);
+                  }
+                  else if (ShinyApplicationSatellite.NAME.equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
+                           RootLayoutPanel.get(),
+                           dismissProgressAnimation);
+                  }
+                  else if (RmdOutputSatellite.NAME.equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getRmdOutputSatellite().go(
+                           RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }
                   else
@@ -233,6 +247,11 @@ public class RStudio implements EntryPoint
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
       AboutDialogContents.ensureStylesInjected();
+      CompileNotebookv2OptionsDialog.ensureStylesInjected();
+      ActionCenter.ensureStylesInjected();
+      PackratResolveConflictDialog.ensureStylesInjected();
+      PackratActionDialog.ensureStylesInjected();
+      LocalRepositoriesWidget.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

@@ -12,6 +12,12 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+.rs.addFunction("valueFromStr", function(val)
+{
+   capture.output(try({ str(val) }, silent = TRUE));
+})
+
 .rs.addFunction("valueAsString", function(val)
 {
    tryCatch(
@@ -44,7 +50,7 @@
                 return (paste(substr(val, 1, 1024), " ..."))
          }
          else if (length(val) > 1)
-            return (capture.output(str(val)))
+            return (.rs.valueFromStr(val))
          else
             return ("NO_VALUE")
       }
@@ -71,7 +77,7 @@
       # only return the first 100 lines of detail (generally columns)--any more
       # won't be very presentable in the environment pane. the first line
       # generally contains descriptive text, so don't return that.
-      output <- capture.output(str(val))
+      output <- .rs.valueFromStr(val)
       return (output[min(length(output), 2):min(length(output),100)])
    },
    error = function(e) { })
@@ -131,25 +137,145 @@
 
 .rs.addFunction("sourceCodeFromFunction", function(fun)
 {
-    return(paste(capture.output(attr(fun, "srcref")), collapse="\n"))
+   if (is.null(attr(fun, "srcref")))
+   {
+      # The function does not have source refs, so deparse it to get a 
+      # formatted representation. 
+      paste(deparse(fun), collapse="\n")
+   }
+   else
+   {
+      # The function has source refs; use them to get exactly the code that
+      # was used to create the function.
+      paste(capture.output(attr(fun, "srcref")), collapse="\n")
+   }
 })
 
-.rs.addFunction("functionNameFromCall", function(call)
+# Given a function and some content inside that function, returns a vector
+# in the standard R source reference format that represents the location of
+# the content in the deparsed representation of the function.
+.rs.addFunction("simulateSourceRefs", function(var)
 {
-    return(as.character(substitute(call)))
+  # Read arguments from attached attributes to the input (these can't be passed
+  # naked from RStudio)
+  fun <-  attr(var, "_rs_callfun")
+  call <- attr(var, "_rs_callobj")
+  calltext <- attr(var, "_rs_calltext")
+  linepref <- attr(var, "_rs_lastline")
+
+  # To proceed, we need the function to look in, and either the raw call
+  # object (which we will deparse later) or the text to look for.
+  if (is.null(fun) || 
+      (is.null(call) && is.null(calltext)) )
+     return(c(0L, 0L, 0L, 0L, 0L, 0L))
+
+  lines <- deparse(fun)
+
+  # Remember the indentation level on each line (added by deparse), and remove
+  # it along with any other leading or trailing whitespace. 
+  indents <- nchar(sub("\\S.*", "", lines))
+  slines <- sub("\\s+$", "", sub("^\\s+", "", lines))
+
+  # Compute the character position of the start of each line, and collapse the
+  # lines to a character vector of length 1. 
+  nchars <- 0
+  offsets <- integer(length(slines))
+  for (i in 1:length(slines)) {
+    nchars <- nchars + nchar(slines[i]) + 1
+    offsets[i] <- nchars
+  }
+  singleline <- paste(slines, collapse=" ")
+  
+  if (is.null(calltext))
+  {
+     # No call text specified; deparse into a list of lines
+     calltext <- deparse(call)
+  }
+  else
+  {
+     # Call text specified as a single character vector; split into a list
+     # of lines
+     calltext <- unlist(strsplit(calltext, "\n", fixed = TRUE))
+  }
+
+  calltext <- sub("\\s+$", "", sub("^\\s+", "", calltext))
+  calltext <- paste(calltext, collapse=" ")
+
+  # NULL is output by R when it doesn't have an expression to output; don't
+  # try to match it to code
+  if (identical(calltext, "NULL")) 
+     return(c(0L, 0L, 0L, 0L, 0L, 0L))
+
+  pos <- gregexpr(calltext, singleline, fixed = TRUE)[[1]]
+  if (length(pos) > 1) 
+  {
+     # There is more than one instance of the call text in the function; try 
+     # to pick the first match past the preferred line.
+     best <- which(pos > offsets[linepref])
+     if (length(best) == 0)
+     {
+        # No match past the preferred line, just pick the match closest
+        best <- which.min(abs(linepref - pos))
+     }
+     else
+        best <- best[1]
+     endpos <- pos[best] + attr(pos, "match.length")[best]
+     pos <- pos[best]
+  }
+  else
+  {
+     endpos <- pos + attr(pos, "match.length")
+  }
+
+
+  # Return an empty source ref if we couldn't find a match
+  if (length(pos) == 0 || pos < 0)
+     return(c(0L, 0L, 0L, 0L, 0L, 0L))
+
+  # Compute the starting and ending lines
+  firstline <- which(offsets >= pos, arr.ind = TRUE)[1] 
+  lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]  
+  if (is.na(lastline))
+     lastline <- length(offsets)
+
+  # Compute the starting and ending character positions within the line, 
+  # taking into account the indents we removed earlier. 
+  firstchar <- pos - (if (firstline == 1) 0 else offsets[firstline - 1])
+  firstchar <- firstchar + indents[firstline]
+
+  # If the match is a block ({ ... }) and contains more than a few lines, 
+  # match the first line instead of the whole block; having the entire contents
+  # of the code browser highlighted is not useful. 
+  if (substr(calltext, 1, 1) == "{" &&
+      substr(calltext, nchar(calltext), nchar(calltext)) == "}" &&
+      lastline - firstline > 5)
+  {
+     lastline <- firstline
+     lastchar <- offsets[firstline] - pos
+  }
+  else
+  {
+     lastchar <- endpos - (if (lastline == 1) 0 else offsets[lastline - 1])
+     lastchar <- lastchar + indents[lastline]
+  }
+
+  result <- as.integer(c(firstline, firstchar, lastline, 
+                         lastchar, firstchar, lastchar))
+  return(result)
 })
 
-.rs.addFunction("argumentListSummary", function(args)
+.rs.addFunction("functionNameFromCall", function(val)
 {
-    return(paste(lapply(args, function(arg) {
-        if (is.language(arg))
-            capture.output(print(arg))
-        else if (is.environment(arg) || 
-                 is.function(arg))
-            deparse(substitute(arg))
-        else
-            as.character(arg)
-        }), collapse = ", "))
+   call <- attr(val, "_rs_call")
+   if (is.function(call[[1]]))
+      "[Anonymous function]"
+   else
+      as.character(substitute(call))
+})
+
+.rs.addFunction("callSummary", function(val)
+{
+   deparse(attr(val, "_rs_call"))
 })
 
 .rs.addFunction("valueDescription", function(obj)
@@ -193,7 +319,7 @@
               || is.factor(obj)
               || is.raw(obj))
       {
-         return(capture.output(str(obj)))
+         return(.rs.valueFromStr(obj))
       }
       else
          return("")

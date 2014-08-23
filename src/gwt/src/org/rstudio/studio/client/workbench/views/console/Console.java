@@ -26,6 +26,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -90,12 +91,29 @@ public class Console
             view.setDebugMode(event.debugging());
          }
       });
+      
+      events.addHandler(ConsoleActivateEvent.TYPE, 
+                        new ConsoleActivateEvent.Handler()
+      {
+         @Override
+         public void onConsoleActivate(ConsoleActivateEvent event)
+         {
+            activateConsole(event.getFocusWindow());
+         }
+      });
    }
 
    @Handler
    void onActivateConsole()
    {
-      WindowEx.get().focus();
+      activateConsole(true);
+   }
+   
+   private void activateConsole(boolean focusWindow)
+   {
+      if (focusWindow)
+         WindowEx.get().focus();
+      
       view_.bringToFront();
       view_.focus();
       view_.ensureCursorVisible();

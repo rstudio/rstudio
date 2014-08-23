@@ -86,15 +86,21 @@ public class ShortcutViewer implements NativePreviewHandler
              event.getNativeEvent().getButton() == NativeEvent.BUTTON_RIGHT)
             return;
 
-         // Let the user click on the full doc link without dismissing the
-         // popover
+         // Don't dismiss the dialog if the click is targeted for a child
+         // of the shortcut info panel's root element
          EventTarget et = event.getNativeEvent().getEventTarget();
-         if (Element.is(et)) {
+         if (Element.is(et) && event.getTypeInt() == Event.ONMOUSEDOWN) 
+         {
             Element e = Element.as(et);
-            if (e.getTagName().equalsIgnoreCase("a"))
-               return;
+            while (e != null)
+            {
+               if (e == shortcutInfo_.getRootElement())
+                  return;
+               e = e.getParentElement();
+            }
          }
 
+         // This is a keystroke or a click outside the panel; dismiss the panel
          if (shortcutInfo_ != null)
             RootLayoutPanel.get().remove(shortcutInfo_);
          shortcutInfo_ = null;

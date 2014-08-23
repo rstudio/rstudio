@@ -16,10 +16,20 @@
 #ifndef SESSION_HTML_PREVIEW_HPP
 #define SESSION_HTML_PREVIEW_HPP
 
+#define kQtMathJaxConfigScript "<script type=\"text/x-mathjax-config\">" \
+   "MathJax.Hub.Config({" \
+   "  \"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] } " \
+   " });" \
+   "</script>"
+
 #include <core/json/Json.hpp>
 
 namespace core {
    class Error;
+   class FilePath;
+   namespace http {
+      class Response;
+   }
 }
  
 namespace session {
@@ -27,6 +37,8 @@ namespace modules {
 namespace html_preview {
 
 core::json::Object capabilitiesAsJson();
+void addFileSpecificHeaders(const core::FilePath& filePath,
+                            core::http::Response* pResponse);
 
 core::Error initialize();
                        

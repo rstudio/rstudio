@@ -50,6 +50,7 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
    settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
    setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
    defaultSaveDir_ = QDir::home();
+   connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
@@ -78,8 +79,12 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
       // capture pending window params then clear them (one time only)
       QString name = pendingSatelliteWindow_.name;
       MainWindow* pMainWindow = pendingSatelliteWindow_.pMainWindow;
-      int width = pendingSatelliteWindow_.width;
-      int height = pendingSatelliteWindow_.height;
+
+      // get width and height, and adjust for high DPI
+      double dpiZoomScaling = getDpiZoomScaling();
+      int width = pendingSatelliteWindow_.width * dpiZoomScaling;
+      int height = pendingSatelliteWindow_.height * dpiZoomScaling;
+
       pendingSatelliteWindow_ = PendingSatelliteWindow();
 
       // check for an existing window of this name
@@ -136,6 +141,12 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    }
 }
 
+void WebPage::closeRequested()
+{
+   // invoked when close is requested via script (i.e. window.close()); honor
+   // this request by closing the window in which the view is hosted
+   view()->window()->close();
+}
 
 bool WebPage::shouldInterruptJavaScript()
 {
@@ -197,7 +208,7 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       {
          handleBase64Download(pWebFrame, url);
       }
-      else
+      else if (navType == QWebPage::NavigationTypeLinkClicked)
       {
          desktop::openUrl(url);
       }
@@ -296,6 +307,22 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
       // persist the defaultSaveDir
       defaultSaveDir_ = QFileInfo(file).dir();
    }
+}
+
+void WebPage::setViewerUrl(const QString& viewerUrl)
+{
+   // record about:blank literally
+   if (viewerUrl == QString::fromAscii("about:blank"))
+   {
+      viewerUrl_ = viewerUrl;
+      return;
+   }
+
+   // extract the authority (domain and port) from the URL; we'll agree to
+   // serve requests for the viewer pane that match this prefix. 
+   QUrl url(viewerUrl);
+   viewerUrl_ = url.scheme() + QString::fromAscii("://") + 
+                url.authority() + QString::fromAscii("/");
 }
 
 }

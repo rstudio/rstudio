@@ -65,6 +65,7 @@ const char * const kGlobalEnvironment = "global_environment";
 // settings
 const char * const kWorkingDirectory = "working_directory";
 const char * const kDevModeOn = "dev_mode_on";
+const char * const kPackratModeOn = "packrat_mode_on";
 const char * const kRProfileOnRestore = "r_profile_on_restore";
 
 
@@ -262,7 +263,7 @@ void saveWorkingContext(const FilePath& statePath,
       *pSaved = false;
    }
 }
-   
+
 } // anonymous namespace
  
    
@@ -277,8 +278,12 @@ bool save(const FilePath& statePath,
    bool saved = true;
    initSaveContext(statePath, &settings, &saved);
    
-   // set r profile on restore
-   settings.set(kRProfileOnRestore, !excludePackages);
+   // check and save packrat mode status
+   bool packratModeOn = r::session::utils::isPackratModeOn();
+   settings.set(kPackratModeOn, packratModeOn);
+
+   // set r profile on restore (always run the .Rprofile in packrat mode)
+   settings.set(kRProfileOnRestore, !excludePackages || packratModeOn);
 
    // save environment variables
    Error error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
@@ -376,6 +381,9 @@ bool saveMinimal(const core::FilePath& statePath,
    // set r profile on restore
    settings.set(kRProfileOnRestore, true);
 
+   // save packrat mode
+   settings.set(kPackratModeOn, r::session::utils::isPackratModeOn());
+
    // handle dev mode
    saveDevMode(&settings);
 
@@ -404,17 +412,33 @@ bool saveMinimal(const core::FilePath& statePath,
    return saved;
 }
 
-bool rProfileOnRestore(const core::FilePath& statePath)
+namespace {
+
+bool getBoolSetting(const core::FilePath& statePath,
+                    const std::string& name,
+                    bool defaultValue)
 {
    Settings settings ;
    Error error = settings.initialize(statePath.complete(kSettingsFile));
    if (error)
    {
       LOG_ERROR(error);
-      return true;
+      return defaultValue;
    }
 
-   return settings.getBool(kRProfileOnRestore, true);
+   return settings.getBool(name, defaultValue);
+}
+
+} // anonymous namespace
+
+bool rProfileOnRestore(const core::FilePath& statePath)
+{
+   return getBoolSetting(statePath, kRProfileOnRestore, true);
+}
+
+bool packratModeEnabled(const core::FilePath& statePath)
+{
+   return getBoolSetting(statePath, kPackratModeOn, false);
 }
 
 Error deferredRestore(const FilePath& statePath, bool serverMode)
@@ -475,11 +499,15 @@ bool restore(const FilePath& statePath,
       if (error)
          reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
    }
-   
-   // restore libpaths
-   error = restoreLibPaths(statePath.complete(kLibPathsFile));
-   if (error)
-      reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
+
+   // restore libpaths -- but only if packrat mode is off
+   bool packratModeOn = settings.getBool(kPackratModeOn, false);
+   if (!packratModeOn)
+   {
+      error = restoreLibPaths(statePath.complete(kLibPathsFile));
+      if (error)
+         reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
+   }
 
    // restore devmode
    if (settings.getBool(kDevModeOn, false))

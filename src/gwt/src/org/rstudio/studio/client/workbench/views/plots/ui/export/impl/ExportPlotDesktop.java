@@ -16,9 +16,13 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export.impl;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.exportplot.clipboard.CopyPlotToClipboardDesktopDialog;
+import org.rstudio.studio.client.workbench.exportplot.clipboard.CopyPlotToClipboardDesktopMetafileDialog;
+import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.PlotsPaneClipboard;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.PlotsPanePreviewer;
 
 public class ExportPlotDesktop extends ExportPlot
 {
@@ -31,15 +35,19 @@ public class ExportPlotDesktop extends ExportPlot
    {   
       if (Desktop.getFrame().supportsClipboardMetafile())
       {
-         new CopyPlotToClipboardDesktopMetafileDialog(server, 
-                                                      options, 
-                                                      onClose).showModal();
+         new CopyPlotToClipboardDesktopMetafileDialog(
+                        new PlotsPanePreviewer(server, true),
+                        new PlotsPaneClipboard(server),
+                        options, 
+                        onClose).showModal();
       }
       else
       {
-         new CopyPlotToClipboardDesktopDialog(server, 
-                                              options, 
-                                              onClose).showModal();
+         new CopyPlotToClipboardDesktopDialog(
+                        new PlotsPanePreviewer(server, true),
+                        new PlotsPaneClipboard(server),
+                        options, 
+                        onClose).showModal();
       }
    }
 

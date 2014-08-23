@@ -56,6 +56,9 @@ enum LogLevel
 
 // portable realPath
 Error realPath(const FilePath& filePath, FilePath* pRealPath);
+bool realPathsEqual(const FilePath& a, const FilePath& b);
+
+void addToSystemPath(const FilePath& path, bool prepend = false);
 
 #ifndef _WIN32
 Error closeAllFileDescriptors();
@@ -64,8 +67,6 @@ void closeStdFileDescriptors();
 void attachStdFileDescriptorsToDevNull();
 void setStandardStreamsToDevNull();
 Error realPath(const std::string& path, FilePath* pRealPath);
-void addToSystemPath(const FilePath& path, bool prepend = false);
-
 
 // Handles EINTR retrying. Only for use with functions that return -1 on
 // error and set errno.

@@ -42,6 +42,7 @@ public:
    bool isStillInstalled() const { return installPath_.exists(); }
 
    const std::string& name() const { return name_; }
+   std::string url(const std::string& repos) const;
    const std::string& versionPredicate() const { return versionPredicate_; }
    const FilePath& installPath() const { return installPath_; }
    const std::vector<FilePath>& pathEntries() const { return pathEntries_; }

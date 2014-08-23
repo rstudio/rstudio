@@ -1,0 +1,55 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+
+/* Styles here are applied to every DataGrid involved in the Packrat/Packages
+   workflow, including the Packages pane itself and the actions/conflict 
+   resolution dialogs. */
+   
+.dataGridHeader
+{
+	font-family: proportionalFont;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   font-family: proportionalFont;
+   border-bottom: 1px solid #d6dadc;
+   border-right: 1px solid #d6dadc;
+   border-top: 1px solid white;
+   border-left: 1px solid white;
+   padding: 1px 6px;
+   color: #3c474d;
+   background-color: #eeeff1;
+   font-weight: normal;
+   text-align: left;
+   border-collapse: separate;
+   font-size: 11px;
+   text-shadow: none;
+}
+
+.dataGridCell
+{
+    padding: 1px 6px;
+	vertical-align: top;
+	color: #606060;
+}
+
+.dataGridOddRow
+{
+	background-color: white; 
+}
+
+.dataGridEvenRow
+{
+	background-color: white; 
+}
+
+.dataGridEvenRowCell
+{
+	border: none;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.dataGridOddRowCell
+{
+	border: none;
+	border-bottom: 1px solid #e0e0e0;
+}

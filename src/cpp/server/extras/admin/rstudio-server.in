@@ -27,6 +27,7 @@ case "$1" in
 
     stop)
         daemonCmd "stop"
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
         ;;
 
     restart)
@@ -76,6 +77,7 @@ case "$1" in
         mkdir -p /var/lib/rstudio-server
         touch /var/lib/rstudio-server/offline
         daemonCmd "restart"
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
         ;;
 
     online)

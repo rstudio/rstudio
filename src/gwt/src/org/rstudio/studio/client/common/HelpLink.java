@@ -1,7 +1,7 @@
 /*
  * HelpLink.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,11 +27,25 @@ import com.google.gwt.user.client.ui.Image;
 
 public class HelpLink extends Composite
 {
-   public HelpLink(String caption, final String rstudioLink)
+   // for use in UiBinder
+   public HelpLink()
    {
+      this("", "", true);
+   }
+   
+   public HelpLink(String caption, String rstudioLink)
+   {
+      this(caption, rstudioLink, true);
+   }
+
+   public HelpLink(String caption, 
+                   String rstudioLink, 
+                   final boolean withVersionInfo)
+   {
+      rstudioLink_ = rstudioLink;
+
       HorizontalPanel helpPanel = new HorizontalPanel();
     
-
       Image helpImage = new Image(ThemeResources.INSTANCE.help());
       helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
       helpPanel.add(helpImage);
@@ -40,7 +54,8 @@ public class HelpLink extends Composite
          public void onClick(ClickEvent event)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
-                                                         rstudioLink);
+                                                         rstudioLink_,
+                                                         withVersionInfo);
          }  
       });
       helpPanel.add(helpLink_);
@@ -53,5 +68,11 @@ public class HelpLink extends Composite
       helpLink_.setText(caption);
    }
    
+   public void setLink(String link)
+   {
+      rstudioLink_ = link;
+   }
+   
    private HyperlinkLabel helpLink_;
+   private String rstudioLink_;
 }

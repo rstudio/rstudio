@@ -40,6 +40,14 @@ public class RProjectConfig extends JavaScriptObject
    public native final double getVersion() /*-{
       return this.version;
    }-*/;
+   
+   public native final RProjectRVersion getRVersion() /*-{
+      return this.r_version;
+   }-*/;
+   
+   public native final void setRVersion(RProjectRVersion rVersion) /*-{
+      this.r_version = rVersion;
+   }-*/;
 
    public native final int getRestoreWorkspace() /*-{
       return this.restore_workspace;
@@ -89,6 +97,22 @@ public class RProjectConfig extends JavaScriptObject
       this.num_spaces_for_tab = numSpacesForTab;
    }-*/;  
    
+   public native final boolean getAutoAppendNewline() /*-{
+      return this.auto_append_newline;
+   }-*/;  
+
+   public native final void setAutoAppendNewline(boolean autoAppendNewline) /*-{
+      this.auto_append_newline = autoAppendNewline;
+   }-*/; 
+   
+   public native final boolean getStripTrailingWhitespace() /*-{
+      return this.strip_trailing_whitespace;
+   }-*/;  
+
+   public native final void setStripTrailingWhitespace(boolean stripTrailingWhitespace) /*-{
+      this.strip_trailing_whitespace = stripTrailingWhitespace;
+   }-*/; 
+   
    public native final String getEncoding() /*-{
       return this.default_encoding;
    }-*/;
@@ -132,6 +156,14 @@ public class RProjectConfig extends JavaScriptObject
 
    public native final void setBuildType(String buildType) /*-{
       this.build_type = buildType;
+   }-*/;
+   
+   public native final boolean getPackageUseDevtools() /*-{
+      return this.package_use_devtools;
+   }-*/;
+   
+   public native final void setPackageUseDevtools(boolean useDevtools) /*-{
+      this.package_use_devtools = useDevtools;
    }-*/;
    
    public native final String getPackagePath() /*-{

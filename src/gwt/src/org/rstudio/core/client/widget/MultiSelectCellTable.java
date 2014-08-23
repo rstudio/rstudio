@@ -99,7 +99,11 @@ public class MultiSelectCellTable<T> extends CellTable<T>
          @Override
          public void onClick(ClickEvent event)
          {
-            DomUtils.focus(getElement(), false);
+            // Note: this formerly used DomUtils.focus, but the implementation
+            // of DomUtils used on IE11 focuses the window afterwards, which 
+            // blurs the element. Since we don't need to drive selection, we
+            // now just use native focus here.
+            getElement().focus();
          }
       }, ClickEvent.getType());
 

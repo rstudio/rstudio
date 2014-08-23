@@ -34,7 +34,21 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
          return this.height;
       }-*/;
       
+      public native final boolean isHTMLWidget() /*-{
+         return this.html_widget;
+      }-*/;
       
+      public native final boolean hasNext() /*-{
+         return this.has_next;
+      }-*/;
+      
+      public native final boolean hasPrevious() /*-{
+         return this.has_previous;
+      }-*/;
+      
+      public native final boolean bringToFront() /*-{
+         return this.bring_to_front;
+      }-*/;
    }
    
    public interface Handler extends EventHandler
@@ -55,6 +69,26 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    public int getHeight()
    {
       return data_.getHeight();
+   }
+   
+   public boolean isHTMLWidget()
+   {
+      return data_.isHTMLWidget();
+   }
+   
+   public boolean getHasNext()
+   {
+      return data_.hasNext();
+   }
+   
+   public boolean getHasPrevious()
+   {
+      return data_.hasPrevious();
+   }
+   
+   public boolean getBringToFront()
+   {
+      return data_.bringToFront();
    }
    
    @Override

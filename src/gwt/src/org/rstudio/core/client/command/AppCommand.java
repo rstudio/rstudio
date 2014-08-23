@@ -33,22 +33,27 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
    private class CommandToolbarButton extends ToolbarButton implements
          EnabledChangedHandler, VisibleChangedHandler
-   {
+   { 
       public CommandToolbarButton(String buttonLabel,
-            ImageResourceProvider imageResourceProvider, AppCommand command)
+            ImageResourceProvider imageResourceProvider, AppCommand command,
+            boolean synced)
       {
          super(buttonLabel, imageResourceProvider, command);
          command_ = command;
+         synced_ = synced;
       }
 
       @Override
       protected void onAttach()
       {
-         setEnabled(command_.isEnabled());
-         setVisible(command_.isVisible());
-         handlerReg_ = command_.addEnabledChangedHandler(this);
-         handlerReg2_ = command_.addVisibleChangedHandler(this);
-
+         if (synced_)
+         {
+            setEnabled(command_.isEnabled());
+            setVisible(command_.isVisible());
+            handlerReg_ = command_.addEnabledChangedHandler(this);
+            handlerReg2_ = command_.addVisibleChangedHandler(this);
+         }
+         
          parentToolbar_ = getParentToolbar();
 
          super.onAttach();
@@ -59,8 +64,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       {
          super.onDetach();
 
-         handlerReg_.removeHandler();
-         handlerReg2_.removeHandler();
+         if (synced_)
+         {
+            handlerReg_.removeHandler();
+            handlerReg2_.removeHandler();
+         }
       }
 
       public void onEnabledChanged(AppCommand command)
@@ -78,6 +86,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
 
       private final AppCommand command_;
+      private boolean synced_ = true;
       private HandlerRegistration handlerReg_;
       private HandlerRegistration handlerReg2_;
       private Toolbar parentToolbar_;
@@ -87,7 +96,19 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
    }
 
+   void executeFromShortcut()
+   {
+      executedFromShortcut_ = true;
+      doExecute();
+   }
+   
    public void execute()
+   {
+      executedFromShortcut_ = false;
+      doExecute();
+   }
+   
+   private void doExecute()
    {
       assert enabled_ : "AppCommand executed when it was not enabled";
       if (!enabled_)
@@ -190,8 +211,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       String result = (desc + " " + shortcut).trim();
       return result.length() == 0 ? null : result;
    }
+   
+   public String getId()
+   {
+      return id_;
+   }
 
    // Called by CommandBundleGenerator
+   public void setId(String id)
+   {
+      id_ = id;
+   }
+
    public void setDesc(String desc)
    {
       desc_ = desc;
@@ -282,8 +313,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public ToolbarButton createToolbarButton()
    {
+      return createToolbarButton(true);
+   }
+   
+   public ToolbarButton createToolbarButton(boolean synced)
+   {
       CommandToolbarButton button = new CommandToolbarButton(getButtonLabel(),
-                                                             this, this);
+                                                             this, 
+                                                             this, 
+                                                             synced);
       if (getTooltip() != null)
          button.setTitle(getTooltip());
       return button;
@@ -302,15 +340,27 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return formatMenuLabel(
             getImageResource(), label, shortcut);
    }
-   
+
    public static String formatMenuLabel(ImageResource icon, 
                                          String label,
                                          String shortcut)
    {
+      return formatMenuLabel(icon, label, shortcut, null);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+                                         String label,
+                                         String shortcut, 
+                                         Integer iconOffsetY)
+   {
       StringBuilder text = new StringBuilder();
+      int topOffset = -10;
+      if (iconOffsetY != null)
+         topOffset += iconOffsetY;
       text.append("<table border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
 
-      text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: -10px; margin-bottom: -10px\">");
+      text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: " +
+                  topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
       {
          text.append(AbstractImagePrototype.create(icon).getHTML());
@@ -344,6 +394,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return shortcut_ != null ? shortcut_.toString(true) : null;
    }
 
+   public boolean getExecutedFromShortcut()
+   {
+      return executedFromShortcut_;
+   }
+   
    public static void disableNoHandlerAssertions()
    {
       enableNoHandlerAssertions_ = false;
@@ -357,12 +412,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean checked_ = false;
    private final HandlerManager handlers_ = new HandlerManager(this);
 
-   private String label_;
-   private String buttonLabel_;
-   private String menuLabel_;
+   private String label_ = null;
+   private String buttonLabel_ = null;
+   private String menuLabel_ = null;
    private String desc_;
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
+   private String id_;
+   
+   private boolean executedFromShortcut_ = false;
  
    private static boolean enableNoHandlerAssertions_ = true;
 }

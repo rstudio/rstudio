@@ -26,6 +26,7 @@ set (CORE_SOURCE_FILES
    Assert.cpp
    Base64.cpp
    BoostErrors.cpp
+   BrowserUtils.cpp
    ConfigUtils.cpp
    DateTime.cpp
    Error.cpp 
@@ -44,6 +45,7 @@ set (CORE_SOURCE_FILES
    PerformanceTimer.cpp
    ProgramOptions.cpp
    RegexUtils.cpp
+   RecursionGuard.cpp
    SafeConvert.cpp
    Settings.cpp
    StderrLogWriter.cpp
@@ -82,6 +84,7 @@ set (CORE_SOURCE_FILES
    markdown/sundown/stack.c
    r_util/RPackageInfo.cpp
    r_util/RProjectFile.cpp
+   r_util/RSessionContext.cpp
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
@@ -176,6 +179,7 @@ if (UNIX)
       PosixStringUtils.cpp
       r_util/REnvironmentPosix.cpp
       r_util/RSessionLaunchProfile.cpp
+      r_util/RVersionsPosix.cpp
       SyslogLogWriter.cpp
       system/PosixChildProcessTracker.cpp
       system/PosixEnvironment.cpp
@@ -183,6 +187,7 @@ if (UNIX)
       system/PosixLibraryLoader.cpp
       system/PosixParentProcessMonitor.cpp
       system/PosixOutputCapture.cpp
+      system/PosixSched.cpp
       system/PosixShellUtils.cpp
       system/PosixSystem.cpp
       system/PosixUser.cpp

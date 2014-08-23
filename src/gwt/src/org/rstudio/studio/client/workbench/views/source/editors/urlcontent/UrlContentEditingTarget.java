@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -84,6 +85,12 @@ public class UrlContentEditingTarget implements EditingTarget
    {
    }
 
+   @Override
+   public String getExtendedFileType()
+   {
+      return null;
+   }
+
    public HasValue<String> getName()
    {
       String title = getContentTitle();
@@ -109,6 +116,13 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       return FileIconResources.INSTANCE.iconText();
    }
+   
+   @Override
+   public TextFileType getTextFileType()
+   {
+      return null;
+   }
+
 
    public String getTabTooltip()
    {
@@ -290,6 +304,11 @@ public class UrlContentEditingTarget implements EditingTarget
    public boolean isSaveCommandActive()
    {
       return dirtyState().getValue();
+   }
+   
+   @Override
+   public void forceSaveCommandActive()
+   {
    }
    
    public void save(Command onCompleted)

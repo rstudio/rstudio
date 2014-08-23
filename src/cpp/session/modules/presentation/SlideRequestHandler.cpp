@@ -234,11 +234,7 @@ std::string embeddedWebFonts()
 
 bool hasKnitrVersion_1_2()
 {
-   bool hasVersion = false;
-   Error error = r::exec::RFunction(".rs.hasKnitrVersion_1_2").call(&hasVersion);
-   if (error)
-      LOG_ERROR(error);
-   return hasVersion;
+   return module_context::isPackageVersionInstalled("knitr", "1.2");
 }
 
 std::string extractKnitrError(const std::string& stdError)
@@ -315,16 +311,16 @@ bool performKnit(const FilePath& rmdPath,
 
    // args
    std::vector<std::string> args;
-   args.push_back("--silent");
+   args.push_back("--slave");
    args.push_back("--no-save");
    args.push_back("--no-restore");
    args.push_back("-e");
    boost::format fmt("library(knitr); "
-                     "opts_knit$set(stop_on_error = 2L); "
                      "opts_chunk$set(cache.path='%1%-cache/', "
                                     "fig.path='%1%-figure/', "
                                     "tidy=FALSE, "
                                     "warning=FALSE, "
+                                    "error=FALSE, "
                                     "message=FALSE, "
                                     "comment=NA); "
                      "render_markdown(); "
@@ -1085,6 +1081,7 @@ void handlePresentationFileRequest(const http::Request& request,
    FilePath resPath = options().rResourcesPath().complete("presentation");
    FilePath filePath = resPath.complete(dir + "/" + path);
    pResponse->setCacheWithRevalidationHeaders();
+   pResponse->setContentType(filePath.mimeContentType());
    pResponse->setCacheableBody(filePath, request);
 }
 
@@ -1107,7 +1104,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    // return not found if presentation isn't active
    if (!presentation::state::isActive())
    {
-      pResponse->setError(http::status::NotFound, request.uri() + " not found");
+      pResponse->setNotFoundError(request.uri());
       return;
    }
 
@@ -1187,7 +1184,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       FilePath filePath = module_context::resolveAliasedPath(file);
       if (!filePath.exists())
       {
-         pResponse->setError(http::status::NotFound, request.uri());
+         pResponse->setNotFoundError(request.uri());
          return;
       }
 
@@ -1217,9 +1214,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       // make sure the directory exists
       if (!s_presentationHelpDir.exists())
       {
-         pResponse->setError(http::status::NotFound,
-                             "Directory not found: " +
-                             s_presentationHelpDir.absolutePath());
+         pResponse->setNotFoundError(s_presentationHelpDir.absolutePath());
          return;
       }
 

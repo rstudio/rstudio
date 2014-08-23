@@ -56,6 +56,7 @@ public abstract class
    public abstract AppCommand executeLastCode();
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertSection();
+   public abstract AppCommand executePreviousChunks();
    public abstract AppCommand executeCurrentChunk();
    public abstract AppCommand executeNextChunk();
    public abstract AppCommand goToHelp();
@@ -66,7 +67,7 @@ public abstract class
    public abstract AppCommand markdownHelp();
    public abstract AppCommand usingRMarkdownHelp();
    public abstract AppCommand authoringRPresentationsHelp();
-   public abstract AppCommand knitToHTML();
+   public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();
    public abstract AppCommand compilePDF();
@@ -81,6 +82,7 @@ public abstract class
    public abstract AppCommand findReplace();
    public abstract AppCommand findNext();
    public abstract AppCommand findPrevious();
+   public abstract AppCommand findFromSelection();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
    public abstract AppCommand fold();
@@ -89,11 +91,13 @@ public abstract class
    public abstract AppCommand unfoldAll();
    public abstract AppCommand jumpToMatching();
    public abstract AppCommand extractFunction();
+   public abstract AppCommand extractLocalVariable();
    public abstract AppCommand commentUncomment();
    public abstract AppCommand reindent();
    public abstract AppCommand reflowComment();
    public abstract AppCommand setWorkingDirToActiveDoc();
    public abstract AppCommand codeCompletion();
+   public abstract AppCommand editRmdFormatOptions();
  
    // Projects
    public abstract AppCommand newProject();
@@ -140,6 +144,8 @@ public abstract class
    public abstract AppCommand vcsDiff();
    public abstract AppCommand vcsCommit();
    public abstract AppCommand vcsRevert();
+   public abstract AppCommand vcsViewOnGitHub();
+   public abstract AppCommand vcsBlameOnGitHub();
    public abstract AppCommand vcsShowHistory();
    public abstract AppCommand vcsRefresh();
    public abstract AppCommand vcsRefreshNoError();
@@ -224,6 +230,7 @@ public abstract class
    public abstract AppCommand savePlotAsImage();
    public abstract AppCommand savePlotAsPdf();
    public abstract AppCommand copyPlotToClipboard();
+   public abstract AppCommand publishPlotToRPubs();
    public abstract AppCommand zoomPlot();
    public abstract AppCommand removePlot();
    public abstract AppCommand clearPlots();
@@ -236,6 +243,13 @@ public abstract class
    public abstract AppCommand updatePackages();
    public abstract AppCommand refreshPackages();
    public abstract AppCommand activatePackages();
+   
+   // // packrat
+   public abstract AppCommand packratBootstrap();
+   public abstract AppCommand packratOptions();
+   public abstract AppCommand packratBundle();
+   public abstract AppCommand packratHelp();
+   public abstract AppCommand packratClean();
 
    // Version control
    public abstract AppCommand versionControlHelp();
@@ -276,9 +290,18 @@ public abstract class
    
    // Viewer
    public abstract AppCommand viewerPopout();
+   public abstract AppCommand viewerBack(); 
+   public abstract AppCommand viewerForward();
+   public abstract AppCommand viewerZoom();
    public abstract AppCommand viewerRefresh();
+   public abstract AppCommand viewerSaveAllAndRefresh();
    public abstract AppCommand viewerStop();
    public abstract AppCommand viewerClear();
+   public abstract AppCommand viewerClearAll();
+   public abstract AppCommand viewerSaveAsImage();
+   public abstract AppCommand viewerSaveAsWebPage();
+   public abstract AppCommand viewerCopyToClipboard();
+   public abstract AppCommand viewerPublishToRPubs();
 
    // Application
    public abstract AppCommand quitSession();
@@ -299,6 +322,7 @@ public abstract class
    public abstract AppCommand buildBinaryPackage();
    public abstract AppCommand roxygenizePackage();
    public abstract AppCommand checkPackage();
+   public abstract AppCommand testPackage();
    public abstract AppCommand stopBuild();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
@@ -328,13 +352,25 @@ public abstract class
    public abstract AppCommand debugContinue();
    public abstract AppCommand debugStop();
    public abstract AppCommand debugStep();
+   public abstract AppCommand debugStepInto();
+   public abstract AppCommand debugFinish();
    public abstract AppCommand debugHelp();   
    public abstract AppCommand errorsMessage();
    public abstract AppCommand errorsTraceback();
    public abstract AppCommand errorsBreak();
    
+   // Shiny IDE features
+   public abstract AppCommand reloadShinyApp();
+   public abstract AppCommand shinyRunInPane();
+   public abstract AppCommand shinyRunInViewer();
+   public abstract AppCommand shinyRunInBrowser();
+   
+   // ShinyApps connectivity
+   public abstract AppCommand shinyAppsDeploy();
+   public abstract AppCommand shinyAppsManageAccounts();
+   public abstract AppCommand shinyAppsTerminate();
+
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();
-   
 }

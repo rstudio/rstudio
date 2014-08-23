@@ -17,6 +17,8 @@ package org.rstudio.studio.client.common.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Window;
+
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
@@ -53,14 +55,16 @@ public class WebWindowOpener implements WindowOpener
    public void openSatelliteWindow(GlobalDisplay globalDisplay,
                                    String viewName,
                                    int width,
-                                   int height)
+                                   int height, 
+                                   NewWindowOptions options)
    {
       // build url
       UrlBuilder urlBuilder = Window.Location.createUrlBuilder();
       urlBuilder.setParameter("view", viewName);
       
       // setup options
-      NewWindowOptions options = new NewWindowOptions();
+      if (options == null)
+         options = new NewWindowOptions();
       options.setName(SatelliteUtils.getSatelliteWindowName(viewName));
       options.setFocus(true);
       
@@ -104,6 +108,13 @@ public class WebWindowOpener implements WindowOpener
                         "menubar=0,toolbar=0,location=" + loc + "," +
                         "status=0,scrollbars=1,resizable=1,directories=0";
 
+      // open window at specific position if specified
+      Point pos = options.getPosition();
+      if (pos != null)
+      {
+         features += ",left=" + pos.x + ",top=" + pos.y;
+      }
+         
       openWindowInternal(globalDisplay, url, options, features, width, height);
    }
 

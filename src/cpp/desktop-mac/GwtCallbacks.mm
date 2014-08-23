@@ -1,4 +1,5 @@
 
+#include <iostream>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -10,11 +11,14 @@
 #import "Options.hpp"
 
 #import <Foundation/NSString.h>
+#import <AppKit/NSBitmapImageRep.h>
 
 #include "SessionLauncher.hpp"
 #include "Utils.hpp"
 
 #import "MainFrameController.h"
+
+#define kMinimalSuffix @"_minimal"
 
 using namespace core;
 using namespace desktop;
@@ -48,6 +52,15 @@ NSString* resolveAliasedPath(NSString* path)
    return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
 }
    
+class CFAutoRelease : boost::noncopyable
+{
+public:
+   explicit CFAutoRelease(CFTypeRef ref) : ref_(ref) {}
+   ~CFAutoRelease() { CFRelease(ref_); }
+private:
+   CFTypeRef ref_;
+};
+
 } // anonymous namespace
 
 @implementation GwtCallbacks
@@ -312,6 +325,94 @@ NSString* resolveAliasedPath(NSString* path)
    }
 }
 
+- (void) showWordDoc: (NSString*) path
+{
+   if (path == nil || [path length] == 0)
+      return;
+   
+   bool opened = false;
+   
+   // create the structure describing the doc to open
+   path = resolveAliasedPath(path);
+   
+   // figure out what application is associated with this path
+   NSURL* appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL: [NSURL fileURLWithPath: path]];
+   if (appURL != nil)
+   {
+      NSString* app = [appURL absoluteString];
+      NSArray* splat = [app componentsSeparatedByString: @"/"];
+      
+      // URLs should be stored in the format, e.g.
+      // file://<path>/<app>/
+      // and so we want the second last component
+      NSString* appName = [splat objectAtIndex: [splat count] - 2];
+      
+      // infer whether the application is Word
+      BOOL defaultAppIsWord = [appName rangeOfString: @"Word.app"].location != NSNotFound;
+      
+      if (defaultAppIsWord)
+      {
+         // looks like Word is installed. try to reopen this Word document if it's
+         // already open, while preserving its scroll position; if it isn't already
+         // open, open it.
+         NSString *openDocScript = [NSString stringWithFormat:
+            @"tell application \"Microsoft Word\"\n"
+            "  activate\n"
+            "  set reopened to false\n"
+            "  repeat with i from 1 to (count of documents)\n"
+            "     set docPath to path of document i\n"
+            "     if POSIX path of docPath is equal to \"%@\" then\n"
+            "        set w to active window of document i\n"
+            "        set h to horizontal percent scrolled of w\n"
+            "        set v to vertical percent scrolled of w\n"
+            "        close document i\n"
+            "        set d to open file name docPath with read only\n"
+            "        set reopened to true\n"
+            "        set w to active window of d\n"
+            "        set horizontal percent scrolled of w to h\n"
+            "        set vertical percent scrolled of w to v\n"
+            "        exit repeat\n"
+            "     end if\n"
+            "  end repeat\n"
+            "  if not reopened then open file name POSIX file \"%@\" with read only\n"
+            "end tell\n" , path, path];
+         
+         NSAppleScript *openDoc =
+         [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
+         
+         if ([openDoc executeAndReturnError: nil] != nil)
+         {
+            opened = true;
+         }
+      }
+   }
+   
+   if (!opened)
+   {
+      // the AppleScript failed (or Word wasn't found), so try an alternate
+      // method of opening the document.
+      CFURLRef urls[1];
+      urls[0] = (CFURLRef)[NSURL fileURLWithPath: path];
+      CFArrayRef docArr =
+      CFArrayCreate(kCFAllocatorDefault, (const void**)&urls, 1,
+                    &kCFTypeArrayCallBacks);
+      
+      // ask the OS to open the doc for us in an appropriate viewer
+      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+      if (status != noErr)
+      {
+         // if we failed to open in the viewer role, just invoke the default
+         // opener
+         [self showFile: path];
+      }
+   }
+}
+
+- (void) showPDF: (NSString*) path pdfPage: (int) pdfPage
+{
+   [self showFile: path];
+}
+
 - (Boolean) isRetina
 {
    NSWindow* mainWindow = [[MainFrameController instance] window];
@@ -330,10 +431,10 @@ NSString* resolveAliasedPath(NSString* path)
                      width: (int) width height: (int) height
 {
    // adjust name to scope within minimal windows
-   name = [name stringByAppendingString: @"_minimal"];
+   NSString* windowName = [name stringByAppendingString: kMinimalSuffix];
    
    // check for an existing window with this name
-   WebViewController* controller = [WebViewController windowNamed: name];
+   WebViewController* controller = [WebViewController windowNamed: windowName];
    
    // create a new window if necessary
    if (!controller)
@@ -341,7 +442,11 @@ NSString* resolveAliasedPath(NSString* path)
       // self-freeing so don't auto-release
       controller = [[WebViewController alloc] initWithURLRequest:
                   [NSURLRequest requestWithURL: [NSURL URLWithString: url]]
-                                              name: name];
+                                          name: windowName
+                                    clientName: name];
+      
+      if ([windowName isEqualToString: @"_rstudio_viewer_zoom_minimal"])
+         [[controller window] setTitle: @"Viewer Zoom"];
    }
    
    // reset window size (adjust for title bar height)
@@ -361,7 +466,13 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) activateSatelliteWindow: (NSString*) name
 {
-   [WebViewController activateSatelliteWindow: name];
+   [WebViewController activateNamedWindow: name];
+}
+
+- (void) activateMinimalWindow: (NSString*) name
+{
+   name = [name stringByAppendingString: kMinimalSuffix];
+   [WebViewController activateNamedWindow: name];
 }
 
 - (void) prepareForSatelliteWindow: (NSString*) name
@@ -372,6 +483,7 @@ NSString* resolveAliasedPath(NSString* path)
                                           height: height];
 }
 
+
 - (void) copyImageToClipboard: (int) left top: (int) top
                         width: (int) width height: (int) height
 {
@@ -379,6 +491,152 @@ NSString* resolveAliasedPath(NSString* path)
    // webpage having selected the desired image first.
    [[[MainFrameController instance] webView] copy: self];
 }
+
+
+
+- (NSImage*) nsImageForPageRegion: (NSRect) regionRect
+{
+   // get the main web view
+   NSView* view = [[MainFrameController instance] webView];
+   
+   // offset to determine the location of the view within it's window
+   NSRect originRect = [view convertRect:[view bounds] toView:[[view window] contentView]];
+   
+   // determine the capture rect in screen coordinates (start with the full view)
+   NSRect captureRect = originRect;
+   captureRect.origin.x += [view window].frame.origin.x;
+   captureRect.origin.y = [[view window] screen].frame.size.height -
+                           [view window].frame.origin.y -
+                           originRect.origin.y -
+                           originRect.size.height;
+   
+   // offset for the passed region rect (subset of the view we are capturing)
+   captureRect.origin.x += regionRect.origin.x;
+   captureRect.origin.y += regionRect.origin.y;
+   captureRect.size = regionRect.size;
+   
+   // perform the capture
+   CGImageRef imageRef = CGWindowListCreateImage(captureRect,
+                                                 kCGWindowListOptionIncludingWindow,
+                                                 (CGWindowID)[[view window] windowNumber],
+                                                 kCGWindowImageDefault);
+   CFAutoRelease imageAutoRelease(imageRef);
+   
+   // create an NSImage
+   NSImage* image = [[NSImage alloc] initWithCGImage: imageRef size: NSZeroSize];
+   
+   // downsample if this is a retina display
+   if ([self isRetina])
+   {
+      // allocate the imageRep
+      NSSize size = regionRect.size;
+      NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc]
+                                    initWithBitmapDataPlanes:NULL
+                                    pixelsWide: size.width
+                                    pixelsHigh: size.height
+                                    bitsPerSample: 8
+                                    samplesPerPixel: 4
+                                    hasAlpha: YES
+                                    isPlanar: NO
+                                    colorSpaceName: NSCalibratedRGBColorSpace
+                                    bytesPerRow: 0
+                                    bitsPerPixel: 0];
+      [imageRep setSize: size];
+      
+      // draw the original into the imageRep
+      [NSGraphicsContext saveGraphicsState];
+      [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:imageRep]];
+      [image drawInRect: NSMakeRect(0, 0, size.width, size.height)
+               fromRect: NSZeroRect
+              operation: NSCompositeCopy
+               fraction: 1.0];
+      [NSGraphicsContext restoreGraphicsState];
+      
+      // release the original image, create a new one with the imageRep, then release the imageRep
+      [image release];
+      image = [[NSImage alloc] initWithSize:[imageRep size]];
+      [image addRepresentation: imageRep];
+      [imageRep release];
+   }
+
+   // return the image
+   return image;
+}
+
+
+
+- (void) copyPageRegionToClipboard: (int) left top: (int) top
+                             width: (int) width height: (int) height
+{
+   // get an image for the specified region
+   NSRect regionRect = NSMakeRect(left, top, width, height);
+   NSImage* image = [self nsImageForPageRegion: regionRect];
+   
+   // copy it to the pasteboard
+   NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+   [pboard clearContents];
+   NSArray *copiedObjects = [NSArray arrayWithObject:image];
+   [pboard writeObjects: copiedObjects];
+   
+   // release the image
+   [image release];
+}
+
+
+- (Boolean) exportPageRegionToFile: (NSString*) targetPath
+                            format: (NSString*) format
+                              left: (int) left
+                               top: (int) top
+                             width: (int) width
+                            height: (int) height
+                         overwrite: (Boolean) overwrite
+{
+   // resolve path and check for overwrite
+   targetPath = resolveAliasedPath(targetPath);
+   if (FilePath([targetPath UTF8String]).exists() && !overwrite)
+      return false;
+   
+   // get an image for the specified region
+   NSRect regionRect = NSMakeRect(left, top, width, height);
+   NSImage* image = [self nsImageForPageRegion: regionRect];
+   
+   // determine format and properties for writing file
+   NSBitmapImageFileType imageFileType = nil;
+   NSDictionary* properties = nil;
+   if ([format isEqualToString: @"png"])
+   {
+      imageFileType = NSPNGFileType;
+   }
+   else if ([format isEqualToString: @"jpeg"])
+   {
+      imageFileType = NSJPEGFileType;
+      [properties setValue: [NSNumber numberWithDouble: 1.0]
+                    forKey: NSImageCompressionFactor];
+   }
+   else if ([format isEqualToString: @"tiff"])
+   {
+      imageFileType = NSTIFFFileType;
+      [properties setValue: [NSNumber numberWithInteger: NSTIFFCompressionNone]
+                    forKey: NSImageCompressionMethod];
+   }
+   
+   // write to file
+   NSBitmapImageRep *imageRep = [[image representations] objectAtIndex: 0];
+   NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
+   if (![data writeToFile: targetPath atomically: NO])
+   {
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("target-file", [targetPath UTF8String]);
+      LOG_ERROR(error);
+   }
+   
+   // release the image
+   [image release];
+  
+   // success
+   return true;
+}
+
 
 - (Boolean) supportsClipboardMetafile
 {
@@ -607,6 +865,15 @@ NSString* resolveAliasedPath(NSString* path)
    [[MainFrameController instance] setViewerURL: url];
 }
 
+- (void) reloadViewerZoomWindow: (NSString*) url
+{
+   WebViewController* controller =
+      [WebViewController windowNamed: @"_rstudio_viewer_zoom_minimal"];
+   if (controller) {
+      [[[controller webView] mainFrame] loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:url]]];
+   }
+}
+
 - (NSString*) getScrollingCompensationType
 {
    return @"None";
@@ -663,6 +930,11 @@ enum RS_NSActivityOptions : uint64_t
    }
 }
 
+- (void) setWindowTitle: (NSString*) title
+{
+   [[MainFrameController instance] setWindowTitle: title];
+}
+ 
 - (NSString*) filterText: (NSString*) text
 {
    // Normalize NFD Unicode text. I couldn't reproduce the behavior that made this
@@ -689,6 +961,7 @@ enum RS_NSActivityOptions : uint64_t
 {
    return false;
 }
+
 
 // No desktop synctex on the Mac
 
@@ -759,14 +1032,24 @@ enum RS_NSActivityOptions : uint64_t
       return @"showFolder";
    else if (sel == @selector(showFile:))
       return @"showFile";
+   else if (sel == @selector(showWordDoc:))
+      return @"showWordDoc";
+   else if (sel == @selector(showPDF:pdfPage:))
+      return @"showPDF";
    else if (sel == @selector(openMinimalWindow:url:width:height:))
       return @"openMinimalWindow";
+   else if (sel == @selector(activateMinimalWindow:))
+      return @"activateMinimalWindow";
    else if (sel == @selector(activateSatelliteWindow:))
       return @"activateSatelliteWindow";
    else if (sel == @selector(prepareForSatelliteWindow:width:height:))
       return @"prepareForSatelliteWindow";
    else if (sel == @selector(copyImageToClipboard:top:width:height:))
       return @"copyImageToClipboard";
+   else if (sel == @selector(copyPageRegionToClipboard:top:width:height:))
+      return @"copyPageRegionToClipboard";
+   else if (sel == @selector(exportPageRegionToFile:format:left:top:width:height:overwrite:))
+      return @"exportPageRegionToFile";
    else if (sel == @selector(showMessageBox:caption:message:buttons:defaultButton:cancelButton:))
       return @"showMessageBox";
    else if (sel == @selector(promptForText:caption:defaultValue:usePasswordMask:rememberPasswordPrompt:rememberByDefault:numbersOnly:selectionStart:selectionLength:))
@@ -795,6 +1078,10 @@ enum RS_NSActivityOptions : uint64_t
       return @"filterText";
    else if (sel == @selector(setBusy:))
       return @"setBusy";
+   else if (sel == @selector(setWindowTitle:))
+      return @"setWindowTitle";
+   else if (sel == @selector(reloadViewerZoomWindow:))
+      return @"reloadViewerZoomWindow";
   
    return nil;
 }

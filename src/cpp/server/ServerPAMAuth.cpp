@@ -36,11 +36,15 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
-
-#include "ServerSessionProxy.hpp"
+#include <server/ServerSessionProxy.hpp>
 
 namespace server {
 namespace pam_auth {
+
+bool canSetSignInCookies();
+void onUserAuthenticated(const std::string& username,
+                         const std::string& password);
+void onUserUnauthenticated(const std::string& username);
 
 namespace {
 
@@ -61,44 +65,6 @@ void assumeRootPriv()
     }
 }
 
-bool pamLogin(const std::string& username, const std::string& password)
-{
-   // get path to pam helper
-   FilePath pamHelperPath(server::options().authPamHelperPath());
-   if (!pamHelperPath.exists())
-   {
-      LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
-                        pamHelperPath.absolutePath());
-      return false;
-   }
-
-   // form args
-   std::vector<std::string> args;
-   args.push_back(username);
-
-   // options (assume priv after fork)
-   core::system::ProcessOptions options;
-   options.onAfterFork = assumeRootPriv;
-
-   // run pam helper
-   core::system::ProcessResult result;
-   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
-                                          args,
-                                          password,
-                                          options,
-                                          &result);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-
-   // check for success
-   return result.exitStatus == 0;
-}
-
-
-
 const char * const kUserId = "user-id";
 
 // It's important that URIs be in the root directory, so the cookie
@@ -111,6 +77,8 @@ const char * const kAppUri = "appUri";
 const char * const kErrorParam = "error";
 const char * const kErrorDisplay = "errorDisplay";
 const char * const kErrorMessage = "errorMessage";
+
+const char * const kFormAction = "formAction";
 
 
 std::string applicationURL(const http::Request& request,
@@ -204,6 +172,11 @@ void signIn(const http::Request& request,
    std::string error = request.queryParamValue(kErrorParam);
    variables[kErrorMessage] = error;
    variables[kErrorDisplay] = error.empty() ? "none" : "block";
+   if (server::options().authEncryptPassword())
+      variables[kFormAction] = "action=\"javascript:void\" "
+                               "onsubmit=\"submitRealForm();return false\"";
+   else
+      variables[kFormAction] = "action=\"" + variables["action"] + "\"";
 
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
@@ -258,41 +231,57 @@ void doSignIn(const http::Request& request,
    if (appUri.empty())
       appUri = "/";
 
-   std::string encryptedValue = request.formFieldValue("v");
-   bool persist = request.formFieldValue("persist") == "1";
-   std::string plainText;
-   Error error = core::system::crypto::rsaPrivateDecrypt(encryptedValue,
-                                                         &plainText);
-   if (error)
-   {
-      LOG_ERROR(error);
-      pResponse->setMovedTemporarily(
-            request,
-            applicationSignInURL(request,
-                                 appUri,
-                                 "Temporary server error,"
-                                 " please try again"));
-      return;
-   }
 
-   size_t splitAt = plainText.find('\n');
-   if (splitAt == std::string::npos)
-   {
-      LOG_ERROR_MESSAGE("Didn't find newline in plaintext");
-      pResponse->setMovedTemporarily(
-            request,
-            applicationSignInURL(request,
-                                 appUri,
-                                 "Temporary server error,"
-                                 " please try again"));
-      return;
-   }
 
-   std::string username = plainText.substr(0, splitAt);
-   std::string password = plainText.substr(splitAt + 1, plainText.size());
+   bool persist = false;
+   std::string username, password;
+
+   if (server::options().authEncryptPassword())
+   {
+      std::string encryptedValue = request.formFieldValue("v");
+      std::string plainText;
+      Error error = core::system::crypto::rsaPrivateDecrypt(encryptedValue,
+                                                            &plainText);
+      if (error)
+      {
+         LOG_ERROR(error);
+         pResponse->setMovedTemporarily(
+               request,
+               applicationSignInURL(request,
+                                    appUri,
+                                    "Temporary server error,"
+                                    " please try again"));
+         return;
+      }
+
+      size_t splitAt = plainText.find('\n');
+      if (splitAt == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("Didn't find newline in plaintext");
+         pResponse->setMovedTemporarily(
+               request,
+               applicationSignInURL(request,
+                                    appUri,
+                                    "Temporary server error,"
+                                    " please try again"));
+         return;
+      }
+
+      persist = request.formFieldValue("persist") == "1";
+      username = plainText.substr(0, splitAt);
+      password = plainText.substr(splitAt + 1, plainText.size());
+   }
+   else
+   {
+      persist = request.formFieldValue("staySignedIn") == "1";
+      username = request.formFieldValue("username");
+      password = request.formFieldValue("password");
+   }
 
    // tranform to local username
    username = auth::handler::userIdentifierToLocalUsername(username);
+
+   onUserUnauthenticated(username);
 
    if ( pamLogin(username, password) && server::auth::validateUser(username))
    {
@@ -308,6 +297,8 @@ void doSignIn(const http::Request& request,
                               kAuthLoginEvent,
                               "",
                               username));
+
+      onUserAuthenticated(username, password);
    }
    else
    {
@@ -333,6 +324,8 @@ void signOut(const http::Request& request,
                               kAuthLogoutEvent,
                               "",
                               username));
+
+      onUserUnauthenticated(username);
    }
 
    auth::secure_cookie::remove(request, kUserId, "", pResponse);
@@ -340,6 +333,43 @@ void signOut(const http::Request& request,
 }
 
 } // anonymous namespace
+
+
+bool pamLogin(const std::string& username, const std::string& password)
+{
+   // get path to pam helper
+   FilePath pamHelperPath(server::options().authPamHelperPath());
+   if (!pamHelperPath.exists())
+   {
+      LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
+                        pamHelperPath.absolutePath());
+      return false;
+   }
+
+   // form args
+   std::vector<std::string> args;
+   args.push_back(username);
+
+   // options (assume priv after fork)
+   core::system::ProcessOptions options;
+   options.onAfterFork = assumeRootPriv;
+
+   // run pam helper
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
+                                          args,
+                                          password,
+                                          options,
+                                          &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // check for success
+   return result.exitStatus == 0;
+}
 
 
 Error initialize()
@@ -353,7 +383,8 @@ Error initialize()
    pamHandler.refreshCredentialsThenContinue = refreshCredentialsThenContinue;
    pamHandler.signIn = signIn;
    pamHandler.signOut = signOut;
-   pamHandler.setSignInCookies = setSignInCookies;
+   if (canSetSignInCookies())
+      pamHandler.setSignInCookies = setSignInCookies;
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers

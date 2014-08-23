@@ -1,0 +1,32 @@
+
+.selectedItem
+{
+	background-color: #D6E5F2;
+}
+
+.anyItem
+{
+	width: 100%;
+	cursor: pointer;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+.outerPanel
+{
+	margin: 0px;
+	padding: 0px;
+}
+
+.listPanel
+{
+	background-color: #ffffff;
+	border: 1px solid gray;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	overflow: auto;
+}

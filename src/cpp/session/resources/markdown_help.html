@@ -57,7 +57,7 @@ h4 {
 
 <h3>Markdown Quick Reference</h3>
 
-<p>Markdown is an easy-to-write plain text format for creating web content. See <a href="http://www.rstudio.org/links/using_markdown" target="_blank">Using Markdown with RStudio</a> to learn more.</p>
+R Markdown is an easy-to-write plain text format for creating dynamic documents and reports. See <a href="http://rmarkdown.rstudio.com">Using R Markdown</a> to learn more.
 
 <div id="md_examples">
 <h4>Emphasis</h4>
@@ -68,31 +68,27 @@ _italic_   __bold__
 </code></pre>
 
 <h4>Headers</h4>
-<pre><code>Header 1
-=========================
+<pre><code># Header 1
 
-Header 2
--------------------------
+## Header 2
 
 ### Header 3
-
-#### Header 4
 </code></pre>
 
 <h4>Lists</h4>
 <h5>Unordered List</h5>
 <pre><code>* Item 1
 * Item 2
-  * Item 2a
-  * Item 2b
+    + Item 2a
+    + Item 2b
 </code></pre>
 
 <h5>Ordered List</h5>
 <pre><code>1. Item 1
 2. Item 2
 3. Item 3
-   * Item 3a
-   * Item 3b
+    + Item 3a
+    + Item 3b
 </code></pre>
 
 <h4>Manual Line Breaks</h4>
@@ -147,22 +143,13 @@ compute the sum of two numbers.
 </code></pre>
 
 <h4>LaTeX Equations</h4>
-<p>See also: <a href="http://www.rstudio.org/links/mathjax_help" target="_blank">Using Equations with Markdown</a></p>
 
 <h5>Inline Equation</h5>
 <pre><code>$<i>equation</i>$
-
-$latex <i>equation</i>$
-
-\( <i>equation</i> \)
 </code></pre>
 
 <h5>Display Equation</h5>
 <pre><code>$$ <i>equation</i> $$
-
-$$latex <i>equation</i> $$
-
-\[ <i>equation</i> \]
 </code></pre>
 
 <h4>Horizontal Rule / Page Break</h4>
@@ -197,7 +184,7 @@ At the bottom of the document:
 </code></pre>
 
 <h4>Miscellaneous</h4>
-<pre><code>superscript^2
+<pre><code>superscript^2^
 
 ~~strikethrough~~
 </code></pre>
@@ -214,23 +201,11 @@ Straight quotes ( &#34; and &#39; ) into &#8220;curly&#8221; quotes
 </li>
 
 <li>
-Backtick quotes (<code>``like this''</code>) into &#8220;curly&#8221; quotes
-</li>
-
-<li>
 Dashes (&#8220;<code>--</code>&#8221; and &#8220;<code>---</code>&#8221;) into en- and em-dash entities
 </li>
 
 <li>
-Three consecutive dots (&#8220;<code>...</code>&#8221;) into an ellipsis entity
-</li>
-
-<li>
-Fractions <code>1/4</code>, <code>1/2</code>, and <code>3/4</code> into &frac14;, &frac12;, and &frac34;.
-</li>
-
-<li>
-Symbols <code>(c)</code>, <code>(tm)</code>, and <code>(r)</code> into &copy;, &trade;, and &reg;
+  Three consecutive dots (“...”) into an ellipsis entity
 </li>
 
 </ul>

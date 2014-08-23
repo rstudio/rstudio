@@ -47,6 +47,7 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -58,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCod
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
@@ -73,12 +75,14 @@ public class CodeBrowserEditingTarget implements EditingTarget
 {
    public static final String PATH = "code_browser://";
    
-   public interface Display extends TextDisplay                                                      
+   public interface Display extends TextDisplay,
+                                    WarningBarDisplay
    {
       void showFunction(SearchPathFunctionDefinition functionDef);
       void showFind(boolean defaultForward);
       void findNext();
       void findPrevious();
+      void findFromSelection();
       void scrollToLeft();
    }
 
@@ -121,6 +125,14 @@ public class CodeBrowserEditingTarget implements EditingTarget
                event.preventDefault();
                event.stopPropagation();
                commands_.findReplace().execute();
+            }
+            else if (BrowseCap.hasMetaKey() && 
+                     (mod == KeyboardShortcut.META) &&
+                     (ne.getKeyCode() == 'E'))
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               commands_.findFromSelection().execute();
             }
          }
       });
@@ -194,6 +206,10 @@ public class CodeBrowserEditingTarget implements EditingTarget
       currentFunction_ = functionDef;
       view_.showFunction(functionDef);
       view_.scrollToLeft();
+
+      // we only show the warning bar (for debug line matching) once per 
+      // function; don't keep showing it if the user dismisses
+      shownWarningBar_ = false;
       
       // update document properties if necessary
       final CodeBrowserContents contents = 
@@ -273,6 +289,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_.findPrevious();
    }
    
+   @Handler
+   void onFindFromSelection()
+   {
+      view_.findFromSelection();
+   }
+   
    @Override
    public Position search(String regex)
    {
@@ -307,6 +329,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public void adaptToExtendedFileType(String extendedType)
    {
    }
+
+   @Override
+   public String getExtendedFileType()
+   {
+      return null;
+   }  
 
    @Override
    public HasValue<String> getName()
@@ -353,6 +381,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return "R Source Viewer";
    }
+   
+   @Override
+   public TextFileType getTextFileType()
+   {
+      return null;
+   }
 
    @Override
    public HashSet<AppCommand> getSupportedCommands()
@@ -362,6 +396,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.findReplace());
       commands.add(commands_.findNext());
       commands.add(commands_.findPrevious());
+      commands.add(commands_.findFromSelection());
       commands.add(commands_.goToHelp());
       commands.add(commands_.goToFunctionDefinition());
       commands.add(commands_.executeCode());
@@ -526,6 +561,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void forceSaveCommandActive()
+   {
+   }
+   
+   @Override
    public void save(Command onCompleted)
    {
       onCompleted.execute();
@@ -606,6 +646,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
          boolean executing)
    {
       docDisplay_.highlightDebugLocation(startPos, endPos, executing); 
+      if (!shownWarningBar_)
+      {
+         view_.showWarningBar("Debug location is approximate because the " + 
+                              "source is not available.");
+         shownWarningBar_ = true;
+      }
    }
 
    @Override
@@ -668,11 +714,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private final FontSizeManager fontSizeManager_;
    private Display view_;
    private HandlerRegistration commandReg_;
+   private boolean shownWarningBar_ = false;
    
    private DocDisplay docDisplay_;
    private EditingTargetCodeExecution codeExecution_;
    
    private SearchPathFunctionDefinition currentFunction_ = null;
 
-   private static final MyBinder binder_ = GWT.create(MyBinder.class);  
+   private static final MyBinder binder_ = GWT.create(MyBinder.class);
 }

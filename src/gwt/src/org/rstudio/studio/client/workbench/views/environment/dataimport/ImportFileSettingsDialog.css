@@ -33,6 +33,9 @@
 .list {
    width: 150px;
 }
+.nastrings {
+   width: 75px;
+}
 .varname {
    width: 100%;
    margin-bottom: 1.5em;

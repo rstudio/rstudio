@@ -20,6 +20,7 @@
 #include <iostream>
 #include <vector>
 
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <signal.h>
@@ -31,11 +32,22 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <uuid/uuid.h>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
+#endif
+
+#ifndef __APPLE__
+#include <sys/prctl.h>
+#include <sys/sysinfo.h>
+#include <linux/kernel.h>
+#include <dirent.h>
 #endif
 
 #include <boost/thread.hpp>
@@ -55,10 +67,13 @@
 #include <core/StderrLogWriter.hpp>
 #include <core/StringUtils.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/Process.hpp>
+#include <core/system/ShellUtils.hpp>
 
 #include "config.h"
 
@@ -152,16 +167,6 @@ Error realPath(const std::string& path, FilePath* pRealPath)
    return Success();
 }
 
-void addToSystemPath(const FilePath& path, bool prepend)
-{
-   std::string systemPath = system::getenv("PATH");
-   if (prepend)
-      systemPath = path.absolutePath() + ":" + systemPath;
-   else
-      systemPath = systemPath + ":" + path.absolutePath();
-   system::setenv("PATH", systemPath);
-}
-
 
 namespace {
 
@@ -201,6 +206,12 @@ void initializeLog(const std::string& programIdentity,
       delete s_pLogWriter;
 
    s_pLogWriter = new FileLogWriter(programIdentity, logLevel, logDir);
+}
+
+void setLogToStderr(bool logToStderr)
+{
+   if (s_pLogWriter)
+      s_pLogWriter->setLogToStderr(logToStderr);
 }
 
 void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter)
@@ -757,6 +768,20 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
       case StackLimit:
          *pLimit = RLIMIT_STACK;
          break;
+      case CoreLimit:
+         *pLimit = RLIMIT_CORE;
+         break;
+      case MemlockLimit:
+         *pLimit = RLIMIT_MEMLOCK;
+         break;
+      case CpuLimit:
+         *pLimit = RLIMIT_CPU;
+         break;
+#ifndef __APPLE__
+      case NiceLimit:
+         *pLimit = RLIMIT_NICE;
+         break;
+#endif
       default:
          *pLimit = -1;
          break;
@@ -821,53 +846,351 @@ Error setResourceLimit(ResourceLimit resourceLimit,
       return Success();
 }
 
+Error systemInformation(SysInfo* pSysInfo)
+{
+   pSysInfo->cores = boost::thread::hardware_concurrency();
+
+#ifndef __APPLE__
+   struct sysinfo info;
+   if (::sysinfo(&info) == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   pSysInfo->load1 = info.loads[0] / (float)(1 << SI_LOAD_SHIFT);
+   pSysInfo->load5 = info.loads[1] / (float)(1 << SI_LOAD_SHIFT);
+   pSysInfo->load15 = info.loads[2] / (float)(1 << SI_LOAD_SHIFT);
+#else
+   double loads[3];
+   if (::getloadavg(loads, 3) == -1)
+      return systemError(errno, ERROR_LOCATION);
+   pSysInfo->load1 = loads[0];
+   pSysInfo->load5 = loads[1];
+   pSysInfo->load15 = loads[2];
+#endif
+   return Success();
+}
+
+namespace  {
+
+void toPids(const std::vector<std::string>& lines, std::vector<PidType>* pPids)
+{
+   BOOST_FOREACH(const std::string& line, lines)
+   {
+      PidType pid = safe_convert::stringTo<PidType>(line, -1);
+      if (pid != -1)
+         pPids->push_back(pid);
+   }
+}
+
+} // anonymous namespace
+
+#ifndef __APPLE__
+core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
+{
+   // use pidof to capture pids
+   std::string cmd = "pidof " + process;
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(cmd,
+                                          core::system::ProcessOptions(),
+                                          &result);
+   if (error)
+      return error;
+
+   // parse into pids
+   std::vector<std::string> pids;
+   boost::algorithm::split(pids,
+                           result.stdOut,
+                           boost::algorithm::is_space());
+
+   toPids(pids, pPids);
+   return Success();
+}
+
+Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
+{
+   // clear the existing process info
+   pInfo->clear();
+
+   // declear directory iterator
+   DIR *pDir = NULL;
+
+   try
+   {
+      // open the /proc directory
+      pDir = ::opendir("/proc");
+      if (pDir == NULL)
+         return systemError(errno, ERROR_LOCATION);
+
+      struct dirent *pDirent;
+      while ( (pDirent = ::readdir(pDir)) )
+      {
+         // confirm this is a process directory
+         PidType pid = safe_convert::stringTo<PidType>(pDirent->d_name, -1);
+         if (pid == -1)
+            continue;
+
+         // confirm the cmdline file exists for this pid
+         boost::format fmt("/proc/%1%/cmdline");
+         FilePath cmdlineFile = FilePath(boost::str(fmt % pDirent->d_name));
+         if (!cmdlineFile.exists())
+            continue;
+
+         // read the cmdline
+         std::string cmdline;
+         Error error = core::readStringFromFile(cmdlineFile, &cmdline);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+         boost::algorithm::trim(cmdline);
+
+         // confirm we have a command line
+         if (cmdline.empty())
+            continue;
+
+         // just keep first part of the command line (the rest represent the
+         // program arguments)
+         size_t pos = cmdline.find('\0');
+         if (pos != std::string::npos)
+            cmdline = cmdline.substr(0, pos);
+
+         // check if this is the process we are filtering on
+         if (FilePath(cmdline).filename() == process)
+         {
+            // stat the file to determine it's owner
+            struct stat st;
+            if (::stat(cmdlineFile.absolutePath().c_str(), &st) == -1)
+            {
+               Error error = systemError(errno, ERROR_LOCATION);
+               error.addProperty("path", cmdlineFile);
+               LOG_ERROR(error);
+               continue;
+            }
+
+            // get the username
+            core::system::user::User user;
+            Error error = core::system::user::userFromId(st.st_uid, &user);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            // add a process info
+            ProcessInfo pi;
+            pi.pid = pid;
+            pi.username = user.username;
+            pInfo->push_back(pi);
+         }
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   if (pDir != NULL)
+      ::closedir(pDir);
+
+   return Success();
+}
+
+#else
+core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
+{
+   // use ps to capture pids
+   std::string cmd = "ps acx | awk \"{if (\\$5==\\\"" +
+                      process + "\\\") print \\$1}\"";
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(cmd,
+                                          core::system::ProcessOptions(),
+                                          &result);
+   if (error)
+      return error;
+
+   // parse into pids
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines,
+                           result.stdOut,
+                           boost::algorithm::is_any_of("\n"));
+   toPids(lines, pPids);
+   return Success();
+}
+
+Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
+{
+   std::vector<PidType> pids;
+   Error error = pidof(process, &pids);
+   if (error)
+      return error;
+
+   pInfo->clear();
+   BOOST_FOREACH(PidType pid, pids)
+   {
+      ProcessInfo pi;
+      pi.pid = pid;
+      pInfo->push_back(pi);
+   }
+
+   return Success();
+}
+#endif
+
+std::ostream& operator<<(std::ostream& os, const ProcessInfo& info)
+{
+   os << info.pid << " - " << info.username;
+   return os;
+}
+
+Error ipAddresses(std::vector<IpAddress>* pAddresses)
+{
+   // get addrs
+   struct ifaddrs* pAddrs;
+   if (::getifaddrs(&pAddrs) == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   // iterate through the linked list
+   for (struct ifaddrs* pAddr = pAddrs; pAddr != NULL; pAddr = pAddr->ifa_next)
+   {
+      if (pAddr->ifa_addr == NULL)
+         continue;
+
+      if (pAddr->ifa_addr->sa_family != AF_INET)
+         continue;
+
+      char host[NI_MAXHOST];
+      if (::getnameinfo(pAddr->ifa_addr,
+                        sizeof(struct sockaddr_in),
+                        host, NI_MAXHOST,
+                        NULL, 0, NI_NUMERICHOST) != 0)
+      {
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         continue;
+      }
+
+      struct IpAddress addr;
+      addr.name = pAddr->ifa_name;
+      addr.addr = host;
+      pAddresses->push_back(addr);
+   }
+
+   // free them and return success
+   ::freeifaddrs(pAddrs);
+   return Success();
+}
+
+
+Error restrictCoreDumps()
+{
+   // set allowed size of core dumps to 0 bytes
+   Error error = setResourceLimit(core::system::CoreLimit, 0);
+   if (error)
+      return error;
+
+   // no ptrace core dumps permitted
+#ifndef __APPLE__
+   int res = ::prctl(PR_SET_DUMPABLE, 0);
+   if (res == -1)
+      return systemError(errno, ERROR_LOCATION);
+#endif
+
+   return Success();
+}
+
+void printCoreDumpable(const std::string& context)
+{
+   std::ostringstream ostr;
+
+   ostr << "Core Dumpable (" << context << ")" << std::endl;
+
+   // ulimit
+   RLimitType rLimitSoft, rLimitHard;
+   Error error = getResourceLimit(core::system::CoreLimit,
+                                  &rLimitSoft, &rLimitHard);
+   if (error)
+      LOG_ERROR(error);
+
+   ostr << "  soft limit: " << rLimitSoft << std::endl;
+   ostr << "  hard limit: " << rLimitHard << std::endl;
+
+   // ptrace
+#ifndef __APPLE__
+   int dumpable = ::prctl(PR_GET_DUMPABLE, NULL, NULL, NULL, NULL);
+   if (dumpable == -1)
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+   ostr << "  pr_get_dumpable: " << dumpable << std::endl;
+#endif
+
+   std::cerr << ostr.str();
+}
+
 
 namespace {
 
-Error setProcessLimits(RLimitType memoryLimitBytes,
-                       RLimitType stackLimitBytes,
-                       RLimitType userProcessesLimit)
+void setProcessLimits(ProcessLimits limits)
 {
-   // set memory limit
-   Error memoryError;
-   if (memoryLimitBytes != 0)
-      memoryError = setResourceLimit(MemoryLimit, memoryLimitBytes);
+   // memory limit
+   if (limits.memoryLimitBytes != 0)
+   {
+      Error error = setResourceLimit(MemoryLimit, limits.memoryLimitBytes);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-   Error stackError;
-   if (stackLimitBytes != 0)
-      stackError = setResourceLimit(StackLimit, stackLimitBytes);
+   // stack limit
+   if (limits.stackLimitBytes != 0)
+   {
+      Error error = setResourceLimit(StackLimit, limits.stackLimitBytes);
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // user processes limit
-   Error processesError;
-   if (userProcessesLimit != 0)
-      processesError = setResourceLimit(UserProcessesLimit, userProcessesLimit);
-
-   // if both had errors then log one and return the other
-   if (memoryError)
+   if (limits.userProcessesLimit != 0)
    {
-      if (stackError)
-         LOG_ERROR(stackError);
+      Error error = setResourceLimit(UserProcessesLimit,
+                                     limits.userProcessesLimit);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-      if (processesError)
-         LOG_ERROR(processesError);
+   // cpu limit
+   if (limits.cpuLimit != 0)
+   {
+      Error error = setResourceLimit(CpuLimit, limits.cpuLimit);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-      return memoryError;
-   }
-   else if (stackError)
+   // nice limit
+   if (limits.niceLimit != 0)
    {
-      if (processesError)
-         LOG_ERROR(processesError);
+      Error error = setResourceLimit(NiceLimit, limits.niceLimit);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-      return stackError;
-   }
-   else if (processesError)
+   // files limit
+   if (limits.filesLimit != 0)
    {
-      return processesError;
+      Error error = setResourceLimit(FilesLimit, limits.filesLimit);
+      if (error)
+         LOG_ERROR(error);
    }
-   else
+
+   // priority
+   if (limits.priority != 0)
    {
-      return Success();
+      if (::setpriority(PRIO_PROCESS, 0, limits.priority) == -1)
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
+
+   // cpu affinity
+#ifndef __APPLE__
+   if (!isCpuAffinityEmpty(limits.cpuAffinity))
+   {
+      Error error = setCpuAffinity(limits.cpuAffinity);
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
 }
 
 void copyEnvironmentVar(const std::string& name,
@@ -972,11 +1295,7 @@ Error launchChildProcess(std::string path,
          }
 
          // set limits
-         error = setProcessLimits(config.memoryLimitBytes,
-                                  config.stackLimitBytes,
-                                  config.userProcessesLimit);
-         if (error)
-            LOG_ERROR(error);
+         setProcessLimits(config.limits);
 
          // switch user
          error = permanentlyDropPriv(runAsUser);
@@ -1050,6 +1369,9 @@ Error launchChildProcess(std::string path,
          core::system::setenv(&env, it->first, it->second);
       }
 
+      // NOTE: this implemenentation ignores the config.stdInput field (that
+      // was put in for another consumer)
+
       // format as ProcessArgs expects
       boost::format fmt("%1%=%2%");
       std::vector<std::string> envVars;
@@ -1073,7 +1395,8 @@ Error launchChildProcess(std::string path,
            ++it)
       {
          argVector.push_back(it->first);
-         argVector.push_back(it->second);
+         if (!it->second.empty())
+            argVector.push_back(it->second);
       }
 
       // allocate ProcessArgs on heap so memory stays around after we exec

@@ -104,7 +104,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
    @Override
    public void onCompilePdfOutput(CompilePdfOutputEvent event)
    {
-      output_.append(event.getOutput());
+      output_.append(event.getOutput().getOutput());
    }
    
    @Override

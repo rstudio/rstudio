@@ -90,3 +90,96 @@
   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
 })
 
+.rs.addFunction("isPackageVersionInstalled", function(name, version) {  
+  .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
+})
+
+.rs.addFunction("getPackageCompatStatus", 
+  function(name, packageVersion, protocolVersion) 
+  {  
+     if (!.rs.isPackageInstalled(name))
+       return(1L)  # COMPAT_MISSING
+     else if (!.rs.getPackageVersion(name) >= packageVersion) 
+       return(2L)  # COMPAT_TOO_OLD
+     else if (!.rs.getPackageRStudioProtocol(name) >= protocolVersion) 
+       return(3L)  # COMPAT_TOO_NEW
+     return (0L)   # COMPAT_OK
+  }
+)
+
+.rs.addFunction("getPackageRStudioProtocol", function(name) {
+   if (exists(".RStudio_protocol_version", envir = asNamespace(name),
+              mode = "integer")) 
+      get(".RStudio_protocol_version", envir = asNamespace(name))
+   else 
+      0
+})
+
+.rs.addFunction("rstudioIDEPackageRequiresUpdate", function(name, sha1) {
+   
+  if (.rs.isPackageInstalled(name))
+  {
+     f <- utils::packageDescription(name, fields=c("Repository", "GithubSHA1"))
+     identical(f$Origin, "RStudioIDE") && !identical(f$GithubSHA1, sha1)
+  }
+  else
+  {
+     TRUE
+  }
+})
+
+.rs.addFunction("updateRStudioIDEPackage", function(name, archive)
+{
+  pkgDir <- find.package(name)
+  .rs.forceUnloadPackage(name)
+  .Call("rs_installPackage",  archive, dirname(pkgDir))
+})
+
+
+.rs.addFunction("userPrompt", function(type,
+                                       caption,
+                                       message,
+                                       yesLabel = NULL,
+                                       noLabel = NULL,
+                                       includeCancel = FALSE,
+                                       yesIsDefault = TRUE) {
+
+   if (identical(type, "info"))
+      type <- 1
+   else if (identical(type, "warning"))
+      type <- 2
+   else if (identical(type, "error"))
+      type <- 3
+   else if (identical(type, "question"))
+      type <- 4
+   else
+      stop("Invalid type specified")
+
+   result <- .Call("rs_userPrompt",
+         type,
+         caption,
+         message,
+         yesLabel,
+         noLabel,
+         includeCancel,
+         yesIsDefault)
+
+   if (result == 0)
+      "yes"
+   else if (result == 1)
+      "no"
+   else if (result == 2)
+      "cancel"
+   else
+      stop("Invalid result")
+})
+
+.rs.addFunction("restartR", function(afterRestartCommand = "") {
+   afterRestartCommand <- paste(as.character(afterRestartCommand),
+                                collapse = "\n")
+   .Call("rs_restartR", afterRestartCommand)
+})
+
+
+
+

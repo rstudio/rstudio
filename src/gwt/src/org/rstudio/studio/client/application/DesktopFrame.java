@@ -41,13 +41,30 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
    void showFile(String path);
+   void showWordDoc(String path);
+   void showPDF(String path, int pdfPage);
+   void prepareShowWordDoc();
    void openMinimalWindow(String name, String url, int width, int height);
+   void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int width, int height);
+   
+   // interface for plot export where coordinates are specified relative to
+   // the iframe where the image is located within
    void copyImageToClipboard(int clientLeft,
                              int clientTop,
                              int clientWidth,
                              int clientHeight);
+   
+   void copyPageRegionToClipboard(int left, int top, int width, int height);
+   
+   boolean exportPageRegionToFile(String targetPath, 
+                                  String format, 
+                                  int left, 
+                                  int top, 
+                                  int width, 
+                                  int height,
+                                  boolean overwrite);
    
    boolean supportsClipboardMetafile();
 
@@ -122,10 +139,15 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void reloadZoomWindow();
    
    void setViewerUrl(String url);
+   void reloadViewerZoomWindow(String url);
    
    boolean isOSXMavericks();
 
    String getScrollingCompensationType();
    
    void setBusy(boolean busy);
+   
+   void setWindowTitle(String title);
+   
+   void installRtools(String version, String installerPath);
 }

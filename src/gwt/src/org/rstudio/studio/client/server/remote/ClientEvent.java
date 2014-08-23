@@ -37,7 +37,7 @@ class ClientEvent extends JavaScriptObject
    public static final String PlotsStateChanged = "plots_state_changed";
    public static final String ViewData = "view_data";
    public static final String PackageStatusChanged = "package_status_changed";
-   public static final String InstalledPackagesChanged = "installed_packages_changed";
+   public static final String PackageStateChanged = "package_state_changed";
    public static final String Locator = "locator";
    public static final String ConsoleResetHistory = "console_reset_history";
    public static final String SessionSerialization = "session_serialization";
@@ -97,7 +97,22 @@ class ClientEvent extends JavaScriptObject
    public static final String ViewerNavigate = "viewer_navigate";
    public static final String UpdateCheck = "update_check";
    public static final String SourceExtendedTypeDetected = "source_extended_type_detected";
-
+   public static final String ShinyViewer = "shiny_viewer";
+   public static final String DebugSourceCompleted = "debug_source_completed";
+   public static final String RmdRenderStarted = "rmd_render_started";
+   public static final String RmdRenderOutput = "rmd_render_output";
+   public static final String RmdRenderCompleted = "rmd_render_completed";
+   public static final String RmdTemplateDiscovered = "rmd_template_discovered";
+   public static final String RmdTemplateDiscoveryCompleted = "rmd_template_discovery_completed";
+   public static final String RmdShinyDocStarted = "rmd_shiny_doc_started";
+   public static final String ShinyAppsDeploymentOutput = "shiny_apps_deployment_output";
+   public static final String ShinyAppsDeploymentCompleted = "shiny_apps_deployment_completed";
+   public static final String UserPrompt = "user_prompt";
+   public static final String InstallRtools = "install_r_tools";
+   public static final String InstallShiny = "install_shiny";
+   public static final String SuspendAndRestart = "suspend_and_restart";
+   public static final String PackratRestoreNeeded = "packrat_restore_needed";
+   
    protected ClientEvent()
    {
    }

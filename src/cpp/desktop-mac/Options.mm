@@ -25,6 +25,8 @@
 
 #import "Options.hpp"
 
+#define kScreenFontSubstitutionKey @"NSFontDefaultScreenFontSubstitutionEnabled"
+
 using namespace core;
 
 namespace desktop {
@@ -46,8 +48,18 @@ Options::Options()
                              @"0", @"view.maczoomlevel",
                              [NSArray array], @"updates.ignored",
                              nil];
-                             
+   
    [prefs registerDefaults:defs];
+
+   // If no default has been established for the screen font substitution,
+   // enable it. This allows characters in monospaced fonts to be coerced to
+   // integer widths, which corrects some problems with ACE cursor positioning
+   // when CJK characters are present.
+   NSData* fontSub = [prefs dataForKey: kScreenFontSubstitutionKey];
+   if (fontSub == nil)
+   {
+      [prefs setBool:YES forKey: kScreenFontSubstitutionKey];
+   }
 }
    
 void Options::initFromCommandLine(NSArray* arguments)

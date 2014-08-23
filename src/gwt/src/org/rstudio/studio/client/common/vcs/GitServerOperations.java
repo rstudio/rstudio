@@ -138,4 +138,8 @@ public interface GitServerOperations extends VCSServerOperations
    void gitSetIgnores(String path,
                       String ignores,
                       ServerRequestCallback<ProcessResult> requestCallback);
+   
+   void gitGithubRemoteUrl(String view, 
+                           String path,
+                           ServerRequestCallback<String> callback);
 }

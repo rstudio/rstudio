@@ -111,6 +111,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       });
       manageFilePattern();
 
+      txtSearchPattern_.getElement().setAttribute("spellcheck", "false");
+      
       txtSearchPattern_.addKeyUpHandler(new KeyUpHandler()
       {
          @Override

@@ -12,6 +12,8 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   capability setgid,
   capability setuid,
   capability sys_resource,
+  capability sys_nice,
+  capability sys_ptrace,
   capability kill,
   capability chown,
   capability fowner,
@@ -34,8 +36,13 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      capability setgid,
      capability setuid,
      capability sys_resource,
+     capability sys_nice,
+     capability sys_ptrace,
      capability kill,
     
+     @{PROC} r,
+     @{PROC}/*/cmdline r,
+
      owner @{HOME}/** rw,
      owner /tmp/** rw,
      /tmp/rstudio-rsession/** rw,

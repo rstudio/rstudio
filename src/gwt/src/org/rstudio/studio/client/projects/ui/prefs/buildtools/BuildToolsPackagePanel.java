@@ -65,6 +65,11 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
          
       });
       
+      chkUseDevtools_ = checkBox(
+            "Use devtools package functions if available");
+      chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
+      add(chkUseDevtools_);
+      
       roxygenizePanel_ = new VerticalPanel();
       roxygenizePanel_.addStyleName(RES.styles().buildToolsRoxygenize());
       HorizontalPanel rocletPanel = new HorizontalPanel();
@@ -130,6 +135,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    protected void provideDefaults()
    {
       installAdditionalArguments_.setText("--no-multiarch --with-keep.source");
+      chkUseDevtools_.setValue(true);
    }
 
    @Override
@@ -151,6 +157,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       boolean showRoxygenize = config.hasPackageRoxygenize() ||
                                options.getBuildContext().isRoxygen2Installed();
       roxygenizePanel_.setVisible(showRoxygenize);
+      chkUseDevtools_.setValue(config.getPackageUseDevtools());
       chkUseRoxygen_.setValue(config.hasPackageRoxygenize());
       chkUseRoxygen_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
@@ -174,6 +181,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    void save(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
+      config.setPackageUseDevtools(chkUseDevtools_.getValue());
       config.setPackagePath(pathSelector_.getText());
       config.setPackageInstallArgs(installAdditionalArguments_.getText());
       config.setPackageBuildArgs(buildAdditionalArguments_.getText());
@@ -198,6 +206,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    
    private VerticalPanel roxygenizePanel_;
    private CheckBox chkUseRoxygen_;
+   private CheckBox chkUseDevtools_;
    private ThemedButton btnConfigureRoxygen_;
    
    private WorkbenchContext workbenchContext_;

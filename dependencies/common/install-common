@@ -21,6 +21,8 @@ set -e
 ./install-dictionaries
 ./install-mathjax
 ./install-boost
+./install-pandoc
+./install-packages
 
 if [ -e install-overlay ]
 then

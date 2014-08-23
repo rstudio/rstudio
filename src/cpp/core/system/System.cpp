@@ -17,10 +17,52 @@
 
 #include <core/Hash.hpp>
 #include <core/Log.hpp>
+#include <core/FilePath.hpp>
+
+#include <core/system/Environment.hpp>
 
 namespace core {
 namespace system {
      
+#ifdef _WIN32
+#define kPathSeparator ";"
+#else
+#define kPathSeparator ":"
+#endif
+
+
+bool realPathsEqual(const FilePath& a, const FilePath& b)
+{
+   FilePath aReal, bReal;
+
+   Error error = realPath(a, &aReal);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   error = realPath(b, &bReal);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   return aReal == bReal;
+}
+
+void addToSystemPath(const FilePath& path, bool prepend)
+{
+   std::string systemPath = system::getenv("PATH");
+   if (prepend)
+      systemPath = path.absolutePath() + kPathSeparator + systemPath;
+   else
+      systemPath = systemPath + kPathSeparator + path.absolutePath();
+   system::setenv("PATH", systemPath);
+}
+
+
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
    core::log::logError(error, loggedFromLocation);

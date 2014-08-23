@@ -41,6 +41,10 @@
    # create the traceback for the client
    stack <- lapply(calls[1:(length(calls) - 2)], function(call)
    {
+      # don't show debugger-hidden functions
+      if (isTRUE(attr(call[[1]], "hideFromDebugger")))
+         return(NULL)
+
       # we want to ignore the first user code entry after a call to source(),
       # since that call happens at the top level
       isSourceCall <- FALSE
@@ -65,10 +69,24 @@
       }
       else
          srcref <- rep(0L, 8)
-      c (list(func = .rs.scalar(paste(deparse(call), collapse="\n")),
+     
+      # don't display more than 4 lines of a long expression
+      lines <- deparse(call)
+      if (length(lines) > 4) 
+      {
+         lines <- lines[1:4]
+         lines[4] <- paste(lines[4], "...")
+      }
+
+      c (list(func = .rs.scalar(paste(lines, collapse="\n")),
               file = .rs.scalar(srcfile)),
          .rs.lineDataList(srcref))
    })
+
+   # remove hidden entries from the stack
+   stack <- stack[!sapply(stack, is.null)]
+
+   # if we found user code (or weren't looking for it), tell the client
    if (foundUserCode || !userOnly)
    {
       event <- list(
@@ -126,26 +144,44 @@
            envir = sys.frame(frame))
    }
 },
-hideFromDebugger = TRUE)
+attrs = list(hideFromDebugger = TRUE))
+
+.rs.addFunction("recordAnyTraceback", function()
+{
+   .rs.recordTraceback(FALSE)
+},
+attrs = list(hideFromDebugger = TRUE,
+             errorHandlerType = 1L))
+
+.rs.addFunction("recordUserTraceback", function()
+{
+   .rs.recordTraceback(TRUE)
+},
+attrs = list(hideFromDebugger = TRUE,
+             errorHandlerType = 1L))
 
 .rs.addFunction("breakOnAnyError", function()
 {
    .rs.breakOnError(FALSE)
 },
-hideFromDebugger = TRUE)
+attrs = list(hideFromDebugger = TRUE, 
+             errorHandlerType = 2L))
 
 .rs.addFunction("breakOnUserError", function()
 {
    .rs.breakOnError(TRUE)
 },
-hideFromDebugger = TRUE)
+attrs = list(hideFromDebugger = TRUE,
+             errorHandlerType = 2L))
 
 .rs.addFunction("setErrorManagementType", function(type, userOnly)
 {
    if (type == 0)
       options(error = NULL)
-   else if (type == 1)
-      options(error = function() { .rs.recordTraceback(userOnly) })
+   else if (type == 1 && userOnly)
+      options(error = .rs.recordUserTraceback) 
+   else if (type == 1 && !userOnly)
+      options(error = .rs.recordAnyTraceback)
    else if (type == 2 && userOnly)
       options(error = .rs.breakOnUserError)
    else if (type == 2 && !userOnly)

@@ -14,7 +14,7 @@
  */
 package org.rstudio.core.client.dom;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 public class ElementEx extends Element
 {

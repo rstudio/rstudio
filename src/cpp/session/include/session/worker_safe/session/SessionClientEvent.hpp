@@ -45,7 +45,7 @@ extern const int kWorkingDirChanged;
 extern const int kPlotsStateChanged;
 extern const int kViewData;
 extern const int kPackageStatusChanged;
-extern const int kInstalledPackagesChanged;
+extern const int kPackageStateChanged;
 extern const int kLocator;
 extern const int kConsoleResetHistory;
 extern const int kSessionSerialization;
@@ -105,6 +105,20 @@ extern const int kUnhandledError;
 extern const int kErrorHandlerChanged;
 extern const int kViewerNavigate;
 extern const int kSourceExtendedTypeDetected;
+extern const int kShinyViewer;
+extern const int kDebugSourceCompleted;
+extern const int kRmdRenderStarted;
+extern const int kRmdRenderOutput;
+extern const int kRmdRenderCompleted;
+extern const int kRmdTemplateDiscovered;
+extern const int kRmdTemplateDiscoveryCompleted;
+extern const int kRmdShinyDocStarted;
+extern const int kRmdShinyAppsDeploymentOutput;
+extern const int kRmdShinyAppsDeploymentCompleted;
+extern const int kUserPrompt;
+extern const int kInstallRtools;
+extern const int kInstallShiny;
+extern const int kSuspendAndRestart;
 }
    
 class ClientEvent

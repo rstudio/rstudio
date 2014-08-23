@@ -18,6 +18,8 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
+
 import com.google.gwt.json.client.JSONObject;
 
 
@@ -77,4 +79,14 @@ public interface PlotsServerOperations
                                  int width, 
                                  int height,
                                  ServerRequestCallback<Void> requestCallback);
+   
+   void copyPlotToCocoaPasteboard(int width, 
+                                  int height,
+                                  ServerRequestCallback<Void> requestCallback);
+   
+   void plotsCreateRPubsHtml(String title, 
+                             String comment,
+                             int width,
+                             int height,
+                             ServerRequestCallback<String> requestCallback);
 }

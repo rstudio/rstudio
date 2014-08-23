@@ -47,7 +47,7 @@ const int kWorkingDirChanged = 18;
 const int kPlotsStateChanged = 19;
 const int kViewData = 20;
 const int kPackageStatusChanged = 21;
-const int kInstalledPackagesChanged = 22;
+const int kPackageStateChanged = 22;
 const int kLocator = 23;
 const int kConsoleResetHistory = 25;
 const int kSessionSerialization = 26;
@@ -71,7 +71,6 @@ const int kConsoleProcessCreated = 46;
 const int kUiPrefsChanged = 47;
 const int kHandleUnsavedChanges = 48;
 const int kConsoleProcessPrompt = 49;
-const int kShowConsoleProcessDialog = 50;
 const int kHTMLPreviewStartedEvent = 51;
 const int kHTMLPreviewOutputEvent = 52;
 const int kHTMLPreviewCompletedEvent = 53;
@@ -107,6 +106,20 @@ const int kUnhandledError = 82;
 const int kErrorHandlerChanged = 83;
 const int kViewerNavigate = 84;
 const int kSourceExtendedTypeDetected = 85;
+const int kShinyViewer = 86;
+const int kDebugSourceCompleted = 87;
+const int kRmdRenderStarted = 88;
+const int kRmdRenderOutput = 89;
+const int kRmdRenderCompleted = 90;
+const int kRmdTemplateDiscovered = 91;
+const int kRmdTemplateDiscoveryCompleted = 92;
+const int kRmdShinyDocStarted = 93;
+const int kRmdShinyAppsDeploymentOutput = 94;
+const int kRmdShinyAppsDeploymentCompleted = 95;
+const int kUserPrompt = 96;
+const int kInstallRtools = 97;
+const int kInstallShiny = 98;
+const int kSuspendAndRestart = 99;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -162,8 +175,8 @@ std::string ClientEvent::typeName() const
          return "view_data";
       case client_events::kPackageStatusChanged: 
          return "package_status_changed";
-      case client_events::kInstalledPackagesChanged: 
-         return "installed_packages_changed";
+      case client_events::kPackageStateChanged: 
+         return "package_state_changed";
       case client_events::kLocator:
          return "locator";
       case client_events::kConsoleResetHistory:
@@ -280,6 +293,34 @@ std::string ClientEvent::typeName() const
          return "viewer_navigate";
       case client_events::kSourceExtendedTypeDetected:
          return "source_extended_type_detected";
+      case client_events::kShinyViewer:
+         return "shiny_viewer";
+      case client_events::kDebugSourceCompleted:
+         return "debug_source_completed";
+      case client_events::kRmdRenderStarted:
+         return "rmd_render_started";
+      case client_events::kRmdRenderOutput:
+         return "rmd_render_output";
+      case client_events::kRmdRenderCompleted:
+         return "rmd_render_completed";
+      case client_events::kRmdTemplateDiscovered:
+         return "rmd_template_discovered";
+      case client_events::kRmdTemplateDiscoveryCompleted:
+         return "rmd_template_discovery_completed";
+      case client_events::kRmdShinyDocStarted:
+         return "rmd_shiny_doc_started";
+      case client_events::kRmdShinyAppsDeploymentOutput:
+         return "shiny_apps_deployment_output";
+      case client_events::kRmdShinyAppsDeploymentCompleted:
+         return "shiny_apps_deployment_completed";
+      case client_events::kUserPrompt:
+         return "user_prompt";
+      case client_events::kInstallRtools:
+         return "install_r_tools";
+      case client_events::kInstallShiny:
+         return "install_shiny";
+      case client_events::kSuspendAndRestart:
+         return "suspend_and_restart";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

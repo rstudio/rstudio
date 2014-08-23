@@ -194,6 +194,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId());
    }
    
+   public boolean isRhtml()
+   {
+      return FileTypeRegistry.RHTML.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isRpres()
    {
       return FileTypeRegistry.RPRESENTATION.getTypeId().equals(getTypeId());
@@ -212,14 +217,34 @@ public class TextFileType extends EditableFileType
              FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
    }
    
+   public boolean isPlainMarkdown()
+   {
+      return FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isC()
    {
       return EditorLanguage.LANG_CPP.equals(getEditorLanguage());
    }
    
+   public boolean isPython()
+   {
+      return EditorLanguage.LANG_PYTHON.equals(getEditorLanguage());
+   }
+   
    public boolean isCpp()
    {
       return false;
+   }
+   
+   public boolean isScript()
+   {
+      return false;
+   }
+   
+   public String getScriptInterpreter()
+   {
+      return null;
    }
 
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
@@ -233,6 +258,8 @@ public class TextFileType extends EditableFileType
       results.add(commands.vcsFileLog());
       results.add(commands.vcsFileDiff());
       results.add(commands.vcsFileRevert());
+      results.add(commands.vcsViewOnGitHub());
+      results.add(commands.vcsBlameOnGitHub());
       results.add(commands.goToLine());
       if (canExecuteCode())
       {
@@ -240,6 +267,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeCodeWithoutFocus());
          results.add(commands.executeLastCode());
          results.add(commands.extractFunction());
+         results.add(commands.extractLocalVariable());
          results.add(commands.commentUncomment());
          results.add(commands.reindent());
          results.add(commands.reflowComment());
@@ -259,8 +287,12 @@ public class TextFileType extends EditableFileType
       }
       if (canKnitToHTML())
       {
-         results.add(commands.knitToHTML());
          results.add(commands.usingRMarkdownHelp());
+         results.add(commands.editRmdFormatOptions());
+      }
+      if (canKnitToHTML() || canCompileNotebook())
+      {
+         results.add(commands.knitDocument());
       }
       if (canPreviewHTML())
       {
@@ -278,6 +310,7 @@ public class TextFileType extends EditableFileType
       if (canExecuteChunks())
       {
          results.add(commands.insertChunk());
+         results.add(commands.executePreviousChunks());
          results.add(commands.executeCurrentChunk());
          results.add(commands.executeNextChunk());
       }
@@ -288,6 +321,7 @@ public class TextFileType extends EditableFileType
       results.add(commands.findReplace());
       results.add(commands.findNext());
       results.add(commands.findPrevious());
+      results.add(commands.findFromSelection());
       results.add(commands.replaceAndFind());
       results.add(commands.setWorkingDirToActiveDoc());
       results.add(commands.debugDumpContents());

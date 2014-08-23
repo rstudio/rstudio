@@ -84,8 +84,9 @@ public abstract class LinkColumn<T> extends Column<T, String>
                   Element.as(evTarget).getClassName().startsWith(
                                      RESOURCES.styles().link()))
               {  
-                 onClicked.execute(
-                             dataProvider.getList().get(context.getIndex()));
+                 int idx = context.getIndex();
+                 if (idx >= 0 && idx < dataProvider.getList().size())
+                    onClicked.execute(dataProvider.getList().get(idx));
               }
            }
          }            

@@ -43,12 +43,12 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionConsoleProcess.hpp>
 
 #include "SessionVCS.hpp"
 #include "SessionGit.hpp"
 #include "SessionSVN.hpp"
 
-#include "SessionConsoleProcess.hpp"
 #include "SessionSpelling.hpp"
 
 #include <R_ext/RStartup.h>
@@ -219,7 +219,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set packages prefs
    bool useInternet2, cleanupAfterCheckSuccess, viewDirAfterCheckFailure;
-   bool hideObjectFiles;
+   bool hideObjectFiles, useDevtools;
    json::Object cranMirrorJson;
    error = json::readObject(packagesPrefs,
                             "cran_mirror", &cranMirrorJson,
@@ -229,11 +229,13 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 */
                             "cleanup_after_check_success", &cleanupAfterCheckSuccess,
                             "viewdir_after_check_failure", &viewDirAfterCheckFailure,
-                            "hide_object_files", &hideObjectFiles);
+                            "hide_object_files", &hideObjectFiles,
+                            "use_devtools", &useDevtools);
 
    if (error)
        return error;
    userSettings().beginUpdate();
+   userSettings().setUseDevtools(useDevtools);
    userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
    userSettings().setUseInternet2(useInternet2);
    userSettings().setCleanupAfterRCmdCheck(cleanupAfterCheckSuccess);
@@ -368,6 +370,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    // get packages prefs
    json::Object packagesPrefs;
+   packagesPrefs["use_devtools"] = userSettings().useDevtools();
    packagesPrefs["cran_mirror"] = toCRANMirrorJson(
                                       userSettings().cranMirror());
    packagesPrefs["use_internet2"] = userSettings().useInternet2();
@@ -657,7 +660,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
 {
 #ifndef _WIN32
    using namespace session::module_context;
-   using namespace session::modules::console_process;
+   using namespace session::console_process;
 
    // configure environment for shell
    core::system::Options shellEnv;
@@ -744,7 +747,7 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    FilePath filePath(request.queryParamValue("path"));
    if (!filePath.exists())
    {
-      pResponse->setError(http::status::NotFound, "File not found");
+      pResponse->setNotFoundError(request.uri());
       return;
    }
 

@@ -39,12 +39,13 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionConsoleProcess.hpp>
 
 #include <r/RExec.hpp>
 
 #include "SessionVCS.hpp"
 #include "vcs/SessionVCSUtils.hpp"
-#include "SessionConsoleProcess.hpp"
+
 #include "SessionAskPass.hpp"
 #include "SessionWorkbench.hpp"
 #include "SessionGit.hpp"
@@ -52,7 +53,7 @@
 using namespace core;
 using namespace core::shell_utils;
 using namespace session::modules::vcs_utils;
-using namespace session::modules::console_process;
+using namespace session::console_process;
 
 namespace session {
 namespace modules {
@@ -253,12 +254,13 @@ core::Error createConsoleProc(const ShellArgs& args,
       options.stdOutFile = outputFile;
 
    // create the process
+   using namespace session::console_process;
    *ppCP = ConsoleProcess::create(command,
                                   options,
                                   caption,
                                   dialog,
-                                  console_process::InteractionPossible,
-                                  console_process::kDefaultMaxOutputLines);
+                                  InteractionPossible,
+                                  kDefaultMaxOutputLines);
 
    if (enqueueRefreshOnExit)
       (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
@@ -1057,7 +1059,7 @@ Error svnDiffFile(const json::JsonRpcRequest& request,
       error = systemError(boost::system::errc::file_too_large,
                           ERROR_LOCATION);
       pResponse->setError(error,
-                          json::Value(static_cast<uint64_t>(stdOut.size())));
+                          json::Value(static_cast<boost::uint64_t>(stdOut.size())));
    }
    else
    {
@@ -1482,7 +1484,7 @@ void svnShowEnd(bool noSizeWarning,
    {
       response.setError(
             systemError(boost::system::errc::file_too_large, ERROR_LOCATION),
-            json::Value(static_cast<uint64_t>(result.stdOut.size())));
+            json::Value(static_cast<boost::uint64_t>(result.stdOut.size())));
    }
    else
    {

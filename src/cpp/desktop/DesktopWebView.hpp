@@ -37,6 +37,8 @@ public:
 
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
+   void setDpiAwareZoomFactor(qreal factor);
+   qreal dpiAwareZoomFactor();
 
    WebPage* webPage() const { return pWebPage_; }
 
@@ -49,6 +51,7 @@ protected:
    QString promptForFilename(const QNetworkRequest& request,
                              QNetworkReply* pReply);
    void keyPressEvent(QKeyEvent* pEv);
+   void closeEvent(QCloseEvent* pEv);
 
 protected slots:
    void downloadRequested(const QNetworkRequest&);
@@ -57,7 +60,9 @@ protected slots:
 
 private:
    QUrl baseUrl_;
+   QWebInspector* pWebInspector_;
    WebPage* pWebPage_;
+   double dpiZoomScaling_;
 };
 
 } // namespace desktop

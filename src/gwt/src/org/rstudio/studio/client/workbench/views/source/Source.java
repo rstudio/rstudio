@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
@@ -61,6 +62,11 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -70,6 +76,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -85,12 +92,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
@@ -117,6 +126,7 @@ public class Source implements InsertSourceHandler,
                              ShowDataHandler,
                              CodeBrowserNavigationHandler,
                              CodeBrowserFinishedHandler,
+                             CodeBrowserHighlightEvent.Handler,
                              SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler
 {
@@ -190,6 +200,7 @@ public class Source implements InsertSourceHandler,
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
+      rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       events_ = events;
       session_ = session;
       synctex_ = synctex;
@@ -223,6 +234,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeLastCode());
       dynamicCommands_.add(commands.insertChunk());
       dynamicCommands_.add(commands.insertSection());
+      dynamicCommands_.add(commands.executePreviousChunks());
       dynamicCommands_.add(commands.executeCurrentChunk());
       dynamicCommands_.add(commands.executeNextChunk());
       dynamicCommands_.add(commands.sourceActiveDocument());
@@ -230,7 +242,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.markdownHelp());
       dynamicCommands_.add(commands.usingRMarkdownHelp());
       dynamicCommands_.add(commands.authoringRPresentationsHelp());
-      dynamicCommands_.add(commands.knitToHTML());
+      dynamicCommands_.add(commands.knitDocument());
       dynamicCommands_.add(commands.previewHTML());
       dynamicCommands_.add(commands.compilePDF());
       dynamicCommands_.add(commands.compileNotebook());
@@ -239,8 +251,10 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.findReplace());
       dynamicCommands_.add(commands.findNext());
       dynamicCommands_.add(commands.findPrevious());
+      dynamicCommands_.add(commands.findFromSelection());
       dynamicCommands_.add(commands.replaceAndFind());
       dynamicCommands_.add(commands.extractFunction());
+      dynamicCommands_.add(commands.extractLocalVariable());
       dynamicCommands_.add(commands.commentUncomment());
       dynamicCommands_.add(commands.reindent());
       dynamicCommands_.add(commands.reflowComment());
@@ -256,6 +270,9 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.codeCompletion());
       dynamicCommands_.add(commands.rcppHelp());
       dynamicCommands_.add(commands.debugBreakpoint());
+      dynamicCommands_.add(commands.vcsViewOnGitHub());
+      dynamicCommands_.add(commands.vcsBlameOnGitHub());
+      dynamicCommands_.add(commands.editRmdFormatOptions());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -302,6 +319,8 @@ public class Source implements InsertSourceHandler,
       events.addHandler(CodeBrowserNavigationEvent.TYPE, this);
       
       events.addHandler(CodeBrowserFinishedEvent.TYPE, this);
+
+      events.addHandler(CodeBrowserHighlightEvent.TYPE, this);
 
       events.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
       {
@@ -693,10 +712,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRMarkdownDoc()
    {
-      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
-                               "", 
-                               "r_markdown.Rmd",
-                               Position.create(3, 0));
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      boolean useRMarkdownV2 = sessionInfo.getRMarkdownPackageAvailable();
+      
+      if (useRMarkdownV2)
+         newRMarkdownV2Doc();
+      else
+         newRMarkdownV1Doc();
    }
    
    @Handler
@@ -816,6 +838,124 @@ public class Source implements InsertSourceHandler,
       });
    }
    
+   private void newRMarkdownV1Doc()
+   {
+      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+            "", 
+            "r_markdown.Rmd",
+            Position.create(3, 0));
+   }
+   
+   private void newRMarkdownV2Doc()
+   {
+      rmarkdown_.withRMarkdownPackage(
+         "Creating R Markdown documents",
+         false,
+         new CommandWithArg<RMarkdownContext>(){
+
+            @Override
+            public void execute(RMarkdownContext context)
+            {
+               new NewRMarkdownDialog(
+                  context,
+                  workbenchContext_,
+                  uiPrefs_.documentAuthor().getGlobalValue(),
+                  new OperationWithInput<NewRMarkdownDialog.Result>()
+                  {
+                     @Override
+                     public void execute(final NewRMarkdownDialog.Result result)
+                     {
+                        if (result.isNewDocument())
+                        {
+                           NewRMarkdownDialog.RmdNewDocument doc = 
+                                 result.getNewDocument();
+                           String author = doc.getAuthor();
+                           if (author.length() > 0)
+                           {
+                              uiPrefs_.documentAuthor().setGlobalValue(author);
+                              uiPrefs_.writeUIPrefs();
+                           }
+                           newRMarkdownV2Doc(doc);
+                        }
+                        else
+                        {
+                           newDocFromRmdTemplate(result);
+                        }
+                     }
+                  }
+               ).showModal();
+            }
+         }
+      );
+   }
+   
+   private void newDocFromRmdTemplate(final NewRMarkdownDialog.Result result)
+   {
+      final RmdChosenTemplate template = result.getFromTemplate();
+      if (template.createDir())
+      {
+         rmarkdown_.createDraftFromTemplate(template);
+         return;
+      }
+
+      rmarkdown_.getTemplateContent(template, 
+         new OperationWithInput<String>() {
+            @Override
+            public void execute(final String content)
+            {
+               if (content.length() == 0)
+                  globalDisplay_.showErrorMessage("Template Content Missing", 
+                        "The template at " + template.getTemplatePath() + 
+                        " is missing.");
+               newDoc(FileTypeRegistry.RMARKDOWN, content, null);
+            }
+      });
+   }
+   
+   private void newRMarkdownV2Doc(
+         final NewRMarkdownDialog.RmdNewDocument doc)
+   {
+      rmarkdown_.frontMatterToYAML((RmdFrontMatter)doc.getJSOResult().cast(), 
+            null,
+            new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(final String yaml)
+         {
+            String template = "";
+            // select a template appropriate to the document type we're creating
+            if (doc.getTemplate().equals(RmdTemplateData.PRESENTATION_TEMPLATE))
+               template = "r_markdown_v2_presentation.Rmd";
+            else if (doc.isShiny())
+            {
+               if (doc.getFormat().endsWith(
+                     RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
+                  template = "r_markdown_presentation_shiny.Rmd";
+               else
+                  template = "r_markdown_shiny.Rmd";
+            }
+            else
+               template = "r_markdown_v2.Rmd";
+            newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+                  "", 
+                  template,
+                  Position.create(1, 0),
+                  null,
+                  new TransformerCommand<String>()
+                  {
+                     @Override
+                     public String transform(String input)
+                     {
+                        return RmdFrontMatter.FRONTMATTER_SEPARATOR + 
+                               yaml + 
+                               RmdFrontMatter.FRONTMATTER_SEPARATOR + "\n" + 
+                               input;
+                     }
+                  });
+         }
+      });
+   }
+   
    private void newSourceDocWithTemplate(final TextFileType fileType, 
                                          String name,
                                          String template)
@@ -838,6 +978,17 @@ public class Source implements InsertSourceHandler,
                        final Position cursorPosition,
                        final CommandWithArg<EditingTarget> onSuccess)
    {
+      newSourceDocWithTemplate(fileType, name, template, cursorPosition, onSuccess, null);
+   }
+
+   private void newSourceDocWithTemplate(
+                       final TextFileType fileType, 
+                       String name,
+                       String template,
+                       final Position cursorPosition,
+                       final CommandWithArg<EditingTarget> onSuccess,
+                       final TransformerCommand<String> contentTransformer)
+   {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
             globalDisplay_, 500, "Creating new document...").getIndicator();
 
@@ -848,6 +999,9 @@ public class Source implements InsertSourceHandler,
          public void onResponseReceived(String templateContents)
          {
             indicator.onCompleted();
+
+            if (contentTransformer != null)
+               templateContents = contentTransformer.transform(templateContents);
 
             newDoc(fileType, 
                   templateContents, 
@@ -880,7 +1034,7 @@ public class Source implements InsertSourceHandler,
    }
    
    private void newDoc(EditableFileType fileType,
-                       String contents,
+                       final String contents,
                        final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
@@ -895,6 +1049,13 @@ public class Source implements InsertSourceHandler,
                public void onResponseReceived(SourceDocument newDoc)
                {
                   EditingTarget target = addTab(newDoc);
+                  
+                  if (contents != null)
+                  {
+                     target.forceSaveCommandActive();
+                     manageSaveCommands();
+                  }
+                  
                   if (resultCallback != null)
                      resultCallback.onSuccess(target);
                }
@@ -1369,55 +1530,43 @@ public class Source implements InsertSourceHandler,
             navMethod == NavigationMethod.DebugStep ||
             navMethod == NavigationMethod.DebugFrame || 
             navMethod == NavigationMethod.DebugEnd;
-      if (isDebugNavigation)
-      {
-         setPendingDebugSelection();
-      }
-
-      final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
+      
+      final CommandWithArg<EditingTarget> editingTargetAction = 
+            new CommandWithArg<EditingTarget>() 
       {
          @Override
-         public void execute(FileSystemItem file)
+         public void execute(EditingTarget target)
          {
-            openFile(file,
-                     fileType,
-                     new CommandWithArg<EditingTarget>() {
-
-               @Override
-               public void execute(EditingTarget target)
+            if (position != null)
+            {
+               SourcePosition endPosition = null;
+               if (isDebugNavigation)
                {
-                  if (position != null)
-                  {
-                     SourcePosition endPosition = null;
-                     if (isDebugNavigation)
-                     {
-                        DebugFilePosition filePos = 
-                              (DebugFilePosition) position.cast();
-                        endPosition = SourcePosition.create(
-                              filePos.getEndLine() - 1,
-                              filePos.getEndColumn() + 1);
-                        
-                        if (Desktop.isDesktop())
-                           Desktop.getFrame().bringMainFrameToFront();
-                     }
-                     navigate(target, 
-                              SourcePosition.create(position.getLine() - 1,
-                                                    position.getColumn() - 1),
-                              endPosition);
-                  }
-                  else if (pattern != null)
-                  {
-                     Position pos = target.search(pattern);
-                     if (pos != null)
-                     {
-                        navigate(target, 
-                                 SourcePosition.create(pos.getRow(), 0),
-                                 null);
-                     }
-                  }
+                  DebugFilePosition filePos = 
+                        (DebugFilePosition) position.cast();
+                  endPosition = SourcePosition.create(
+                        filePos.getEndLine() - 1,
+                        filePos.getEndColumn() + 1);
+                  
+                  if (Desktop.isDesktop() && 
+                      navMethod != NavigationMethod.DebugEnd)
+                      Desktop.getFrame().bringMainFrameToFront();
                }
-
-            });
+               navigate(target, 
+                        SourcePosition.create(position.getLine() - 1,
+                                              position.getColumn() - 1),
+                        endPosition);
+            }
+            else if (pattern != null)
+            {
+               Position pos = target.search(pattern);
+               if (pos != null)
+               {
+                  navigate(target, 
+                           SourcePosition.create(pos.getRow(), 0),
+                           null);
+               }
+            }
          }
          
          private void navigate(final EditingTarget target,
@@ -1465,6 +1614,51 @@ public class Source implements InsertSourceHandler,
             });
          }
       };
+
+      final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
+      {
+         @Override
+         public void execute(FileSystemItem file)
+         {
+            openFile(file,
+                     fileType,
+                     editingTargetAction);
+                     
+         }
+      };
+
+      // If this is a debug navigation, we only want to treat this as a full
+      // file open if the file isn't already open; otherwise, we can just
+      // highlight in place.
+      if (isDebugNavigation)
+      {
+         setPendingDebugSelection();
+         
+         for (int i = 0; i < editors_.size(); i++)
+         {
+            EditingTarget target = editors_.get(i);
+            String path = target.getPath();
+            if (path != null && path.equalsIgnoreCase(file.getPath()))
+            {
+               // the file's open; just update its highlighting 
+               if (navMethod == NavigationMethod.DebugEnd)
+               {
+                  target.endDebugHighlighting();
+               }
+               else
+               {
+                  view_.selectTab(i);
+                  editingTargetAction.execute(target);
+               }
+               return;
+            }
+         }
+         
+         // If we're here, the target file wasn't open in an editor. Don't
+         // open a file just to turn off debug highlighting in the file!
+         if (navMethod == NavigationMethod.DebugEnd)
+            return;
+      }
 
       // Warning: event.getFile() can be null (e.g. new Sweave document)
       if (file != null && file.getLength() < 0)
@@ -1970,6 +2164,12 @@ public class Source implements InsertSourceHandler,
       // manage source navigation
       manageSourceNavigationCommands();
       
+      // manage ShinyApps commands
+      manageShinyAppsCommands();
+      
+      // manage R Markdown commands
+      manageRMarkdownCommands();
+
       activeCommands_ = newCommands;
 
       assert verifyNoUnsupportedCommands(newCommands)
@@ -1999,10 +2199,13 @@ public class Source implements InsertSourceHandler,
    
    private void manageVcsCommands()
    {
-      // manage vcs log
-      boolean vcsCommandsEnabled = session_.getSessionInfo().isVcsEnabled() &&
-                                   activeEditor_ != null &&
-                                   activeEditor_.getPath() != null ;
+      // manage availablity of vcs commands
+      boolean vcsCommandsEnabled = 
+            session_.getSessionInfo().isVcsEnabled() &&
+            (activeEditor_ != null) &&
+            (activeEditor_.getPath() != null) &&
+            activeEditor_.getPath().startsWith(
+                  session_.getSessionInfo().getActiveProjectDir().getPath());
       
       commands_.vcsFileLog().setVisible(vcsCommandsEnabled);
       commands_.vcsFileLog().setEnabled(vcsCommandsEnabled);
@@ -2010,7 +2213,7 @@ public class Source implements InsertSourceHandler,
       commands_.vcsFileDiff().setEnabled(vcsCommandsEnabled);
       commands_.vcsFileRevert().setVisible(vcsCommandsEnabled);
       commands_.vcsFileRevert().setEnabled(vcsCommandsEnabled);
-      
+          
       if (vcsCommandsEnabled)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
@@ -2018,6 +2221,50 @@ public class Source implements InsertSourceHandler,
          commands_.vcsFileLog().setMenuLabel("_Log of \"" + name +"\"");
          commands_.vcsFileRevert().setMenuLabel("_Revert \"" + name + "\"...");
       }
+      
+      boolean isGithubRepo = session_.getSessionInfo().isGithubRepository();
+      if (vcsCommandsEnabled && isGithubRepo)
+      {
+         String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
+         
+         commands_.vcsViewOnGitHub().setVisible(true);
+         commands_.vcsViewOnGitHub().setEnabled(true);
+         commands_.vcsViewOnGitHub().setMenuLabel(
+                                  "_View \"" + name + "\" on GitHub");
+         
+         commands_.vcsBlameOnGitHub().setVisible(true);
+         commands_.vcsBlameOnGitHub().setEnabled(true);
+         commands_.vcsBlameOnGitHub().setMenuLabel(
+                                  "_Blame \"" + name + "\" on GitHub");
+      }
+      else
+      {
+         commands_.vcsViewOnGitHub().setVisible(false);
+         commands_.vcsViewOnGitHub().setEnabled(false);
+         commands_.vcsBlameOnGitHub().setVisible(false);
+         commands_.vcsBlameOnGitHub().setEnabled(false);
+      }
+   }
+   
+   private void manageShinyAppsCommands()
+   {
+      boolean shinyCommandsAvailable = 
+            session_.getSessionInfo().getShinyappsInstalled() &&
+            (activeEditor_ != null) &&
+            (activeEditor_.getPath() != null) &&
+            ((activeEditor_.getExtendedFileType() == "shiny"));
+      commands_.shinyAppsDeploy().setVisible(shinyCommandsAvailable);
+      commands_.shinyAppsTerminate().setVisible(shinyCommandsAvailable);
+   }
+   
+   private void manageRMarkdownCommands()
+   {
+      boolean rmdCommandsAvailable = 
+            session_.getSessionInfo().getRMarkdownPackageAvailable() &&
+            (activeEditor_ != null) &&
+            activeEditor_.getExtendedFileType() == "rmarkdown";
+      commands_.editRmdFormatOptions().setVisible(rmdCommandsAvailable);
+      commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);
    }
    
    private void manageSaveCommands()
@@ -2179,13 +2426,8 @@ public class Source implements InsertSourceHandler,
             target.showFunction(event.getFunction());
             if (event.getDebugPosition() != null)
             {
-               target.highlightDebugLocation(SourcePosition.create(
-                        event.getDebugPosition().getLine(), 
-                        event.getDebugPosition().getColumn() - 1),
-                     SourcePosition.create(
-                        event.getDebugPosition().getEndLine(),
-                        event.getDebugPosition().getEndColumn() + 1),
-                     event.getExecuting());
+               highlightDebugBrowserPosition(target, event.getDebugPosition(), 
+                                             event.getExecuting());
             }
          }
       });
@@ -2202,6 +2444,37 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+
+   @Override
+   public void onCodeBrowserHighlight(final CodeBrowserHighlightEvent event)
+   {
+      // no need to highlight if we don't have a code browser tab to highlight
+      if (indexOfCodeBrowserTab() < 0)
+         return;
+      
+      setPendingDebugSelection();
+      activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+         @Override
+         public void onSuccess(CodeBrowserEditingTarget target)
+         {
+            highlightDebugBrowserPosition(target, event.getDebugPosition(), true);
+         }
+      });
+   }
+   
+   private void highlightDebugBrowserPosition(CodeBrowserEditingTarget target,
+                                              DebugFilePosition pos,
+                                              boolean executing)
+   {
+      target.highlightDebugLocation(SourcePosition.create(
+               pos.getLine(), 
+               pos.getColumn() - 1),
+            SourcePosition.create(
+               pos.getEndLine(),
+               pos.getEndColumn() + 1),
+            executing);
+   }
+
    // returns the index of the tab currently containing the code browser, or
    // -1 if the code browser tab isn't currently open;
    private int indexOfCodeBrowserTab()
@@ -2363,6 +2636,7 @@ public class Source implements InsertSourceHandler,
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
+   private final TextEditingTargetRMarkdownHelper rmarkdown_;
    private final EventBus events_;
    private final Session session_;
    private final Synctex synctex_;

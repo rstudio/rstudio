@@ -40,9 +40,6 @@ var MarkdownHighlightRules = function() {
         }, { // code span `
             token : ["support.function", "support.function", "support.function"],
             regex : "(`+)([^\\r]*?[^`])(\\1)"
-        }, { // code block
-            token : "support.function",
-            regex : "^[ ]{4}.+"
         }, { // h1 with equals
             token: "markup.heading.1",
             regex: "^\\={3,}\\s*$",
@@ -100,14 +97,10 @@ var MarkdownHighlightRules = function() {
         }, { // $ escape
             token : "text",
             regex : "\\\\\\$"
-        }, { // MathJax $$(?:latex)?
+        }, { // MathJax $$
             token : "markup.list",
-            regex : "\\${2}(?:latex(?:\\s|$))?",
+            regex : "\\${2}",
             next  : "mathjaxdisplay"
-        }, { // MathJax $latex
-            token : "markup.list",
-            regex : "\\$latex\\s",
-            next  : "mathjaxinline"
         }, { // MathJax $...$ (org-mode style)
             token : ["markup.list","support.function","markup.list"],
             regex : "(\\$)" + "((?!\\s)[^$]*[^$\\s])" + "(\\$)" + "(?![\\w\\d`])"
@@ -117,14 +110,30 @@ var MarkdownHighlightRules = function() {
         }, { // emphasis * _
             token : ["constant.language.boolean", "constant.language.boolean", "constant.language.boolean"],
             regex : "([*]|[_](?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
-        }, { // 
-            token : ["text", "url", "text"],
+        }, { // simple links <url>
+            token : ["text", "keyword", "text"],
             regex : "(<)("+
                       "(?:https?|ftp|dict):[^'\">\\s]+"+
                       "|"+
                       "(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+"+
                     ")(>)"
         }, {
+            // embedded latex command
+            token : "keyword",
+            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
+        }, {
+            // embedded latex arg
+            token : ["paren.keyword.operator", "text", "paren.keyword.operator"],
+            regex : "(\\{)([^\\}]*)(\\})"
+        } , {
+            // pandoc citation with brackets
+            token : "markup.list",
+            regex : "\\[-?\\@[\\w\\d-]+\\]"
+        } , {
+             // pandoc citation
+            token : "markup.list",
+            regex : "-?\\@[\\w\\d-]+"
+        } , {
             token : "text",
             regex : "[^\\*_%$`\\[#<>\\\\]+"
         } , {

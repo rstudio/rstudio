@@ -79,7 +79,10 @@ public:
       return std::string(programMode_.c_str()); 
    }
 
-
+   bool logStderr() const
+   {
+      return logStderr_;
+   }
    
    // agreement
    core::FilePath agreementFilePath() const
@@ -112,6 +115,11 @@ public:
       return std::string(wwwPort_.c_str());
    }
 
+   std::string wwwAddress() const
+   {
+      return std::string(wwwAddress_.c_str());
+   }
+
    std::string sharedSecret() const
    {
       return std::string(secret_.c_str());
@@ -126,9 +134,13 @@ public:
 
    int disconnectedTimeoutMinutes() { return disconnectedTimeoutMinutes_; }
 
+   bool createProfile() const { return createProfile_; }
+
    bool createPublicFolder() const { return createPublicFolder_; }
 
    bool rProfileOnResumeDefault() const { return rProfileOnResumeDefault_; }
+
+   int saveActionDefault() const { return saveActionDefault_; }
 
    unsigned int minimumUserId() const { return 100; }
    
@@ -151,6 +163,12 @@ public:
    {
       return core::FilePath(sessionPackagesPath_.c_str());
    }
+
+   core::FilePath sessionPackageArchivesPath() const
+   {
+      return core::FilePath(sessionPackageArchivesPath_.c_str());
+   }
+
    
    std::string rLibsUser() const
    {
@@ -233,44 +251,49 @@ public:
       return core::FilePath(mathjaxPath_.c_str());
    }
 
+   core::FilePath pandocPath() const
+   {
+      return core::FilePath(pandocPath_.c_str());
+   }
+
    bool allowFileDownloads() const
    {
-      return allowFileDownloads_;
+      return allowOverlay() || allowFileDownloads_;
    }
 
    bool allowShell() const
    {
-      return allowShell_;
+      return allowOverlay() || allowShell_;
    }
 
    bool allowPackageInstallation() const
    {
-      return allowPackageInstallation_;
+      return allowOverlay() || allowPackageInstallation_;
    }
 
    bool allowVcs() const
    {
-      return allowVcs_;
+      return allowOverlay() || allowVcs_;
    }
 
    bool allowCRANReposEdit() const
    {
-      return allowCRANReposEdit_;
+      return allowOverlay() || allowCRANReposEdit_;
    }
 
    bool allowVcsExecutableEdit() const
    {
-      return allowVcsExecutableEdit_;
+      return allowOverlay() || allowVcsExecutableEdit_;
    }
 
    bool allowRemovePublicFolder() const
    {
-      return allowRemovePublicFolder_;
+      return allowOverlay() || allowRemovePublicFolder_;
    }
 
    bool allowRpubsPublish() const
    {
-      return allowRpubsPublish_;
+      return allowOverlay() || allowRpubsPublish_;
    }
 
    // user info
@@ -350,6 +373,11 @@ public:
       return monitorSharedSecret_.c_str();
    }
 
+   bool standalone() const
+   {
+      return standalone_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -362,11 +390,12 @@ private:
                     std::string* pPath);
    void resolvePostbackPath(const core::FilePath& resourcePath,
                             std::string* pPath);
-
+   void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void addOverlayOptions(boost::program_options::options_description* pOpt);
    bool validateOverlayOptions(std::string* pErrMsg);
    void resolveOverlayOptions();
+   bool allowOverlay() const;
 
 private:
    // verify
@@ -376,6 +405,9 @@ private:
    // program
    std::string programIdentity_;
    std::string programMode_;
+
+   // log
+   bool logStderr_;
 
    // agreement
    std::string agreementFilePath_;
@@ -387,20 +419,25 @@ private:
    std::string wwwLocalPath_;
    std::string wwwSymbolMapsPath_;
    std::string wwwPort_;
+   std::string wwwAddress_;
 
    // session
    std::string secret_;
    std::string preflightScript_;
    int timeoutMinutes_;
    int disconnectedTimeoutMinutes_;
+   bool createProfile_;
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
+   int saveActionDefault_;
+   bool standalone_;
 
    // r
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;
    std::string sessionPackagesPath_;
+   std::string sessionPackageArchivesPath_;
    std::string rLibsUser_;
    std::string rCRANRepos_;
    bool autoReloadSource_ ;
@@ -424,6 +461,7 @@ private:
    std::string sumatraPath_;
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
+   std::string pandocPath_;
 
    bool allowFileDownloads_;
    bool allowShell_;

@@ -29,7 +29,8 @@ public class PackagesPrefs extends JavaScriptObject
                                   BioconductorMirror bioconductorMirror,
                                   boolean cleanupAfterCheckSuccess,
                                   boolean viewDirAfterCheckFailure,
-                                  boolean hideObjectFiles) /*-{
+                                  boolean hideObjectFiles,
+                                  boolean useDevtools) /*-{
       var prefs = new Object();
       prefs.cran_mirror = cranMirror;
       prefs.use_internet2 = useInternet2;
@@ -37,6 +38,7 @@ public class PackagesPrefs extends JavaScriptObject
       prefs.cleanup_after_check_success = cleanupAfterCheckSuccess;
       prefs.viewdir_after_check_failure = viewDirAfterCheckFailure;
       prefs.hide_object_files = hideObjectFiles;
+      prefs.use_devtools = useDevtools;
       return prefs ;
    }-*/;
 
@@ -62,5 +64,9 @@ public class PackagesPrefs extends JavaScriptObject
    
    public native final BioconductorMirror getBioconductorMirror() /*-{
       return this.bioconductor_mirror;
+   }-*/;
+   
+   public native final boolean getUseDevtools() /*-{
+      return this.use_devtools;
    }-*/;
 }

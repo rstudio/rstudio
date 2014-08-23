@@ -173,7 +173,12 @@ void enqueOutputEvent(const std::string& output)
 {
    s_compilePdfState.addOutput(output);
 
-   ClientEvent event(client_events::kCompilePdfOutputEvent, output);
+   using namespace module_context;
+   CompileOutput compileOutput(kCompileOutputNormal, output);
+
+   ClientEvent event(client_events::kCompilePdfOutputEvent,
+                     compileOutputAsJson(compileOutput));
+
    module_context::enqueClientEvent(event);
 }
 

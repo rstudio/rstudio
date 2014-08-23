@@ -77,6 +77,7 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopGwtCallbackOwner.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopWordViewer.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 )
 
@@ -126,6 +127,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopSecondaryWindow.cpp
   DesktopSessionLauncher.cpp
   DesktopSlotBinders.cpp
+  DesktopSubMenu.cpp
   DesktopSynctex.cpp
   DesktopNetworkAccessManager.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
@@ -138,6 +140,7 @@ if(WIN32)
     DesktopWin32ApplicationLaunch.cpp
     DesktopRVersion.cpp
     DesktopWin32DetectRHome.cpp
+    DesktopWordViewer.cpp
     synctex/sumatra/SumatraSynctex.cpp
   )
   list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES

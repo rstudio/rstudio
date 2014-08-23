@@ -1116,8 +1116,11 @@ body.ubuntu_mono .searchBox {
 }
 
 .presentationNavigatorLabel {
-  max-width: 200px;
   white-space: nowrap;  
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.notResizable {
+	resize: none;
 }

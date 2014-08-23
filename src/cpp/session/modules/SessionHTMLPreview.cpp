@@ -34,6 +34,7 @@
 #include <core/HtmlUtils.hpp>
 #include <core/http/Util.hpp>
 #include <core/PerformanceTimer.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
@@ -48,8 +49,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
-
-#include "SessionRPubs.hpp"
+#include <session/SessionAsyncRProcess.hpp>
 
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
@@ -62,8 +62,7 @@ namespace html_preview {
 
 namespace {
 
-class HTMLPreview : boost::noncopyable,
-                    public boost::enable_shared_from_this<HTMLPreview>
+class HTMLPreview : public async_r::AsyncRProcess
 {
 public:
    static boost::shared_ptr<HTMLPreview> create(const FilePath& targetFile,
@@ -83,9 +82,7 @@ private:
         isMarkdown_(false),
         isInternalMarkdown_(false),
         isNotebook_(false),
-        requiresKnit_(false),
-        isRunning_(false),
-        terminationRequested_(false)
+        requiresKnit_(false)
    {
    }
 
@@ -122,10 +119,6 @@ public:
    // COPYING: prohibited
 
 public:
-
-   bool isRunning() const  { return isRunning_; }
-
-   void terminate() { terminationRequested_ = true; }
 
    bool isMarkdown() { return isMarkdown_; }
 
@@ -176,9 +169,6 @@ private:
 
    void performKnit(const std::string& encoding)
    {
-      // set running flag
-      isRunning_ = true;
-
       // predict the name of the output file -- if we can't do this then
       // we instrument our call to knitr to return it in a temp file
       FilePath outputFileTempFile;
@@ -199,11 +189,7 @@ private:
       }
 
       // args
-      std::vector<std::string> args;
-      args.push_back("--silent");
-      args.push_back("--no-save");
-      args.push_back("--no-restore");
-      args.push_back("-e");
+      std::string cmd;
       if (!knitrOutputFile_.empty())
       {
          boost::format fmt;
@@ -211,8 +197,7 @@ private:
          fmt = boost::format("require(knitr); "
                               "knit('%2%', encoding='%1%');");
 
-         std::string cmd = boost::str(fmt % encoding % targetFile_.filename());
-         args.push_back(cmd);
+         cmd = boost::str(fmt % encoding % targetFile_.filename());
       }
       else
       {
@@ -222,35 +207,15 @@ private:
          fmt = boost::format("require(knitr); "
                              "knit('%2%', encoding='%1%'); "
                              "cat(o, file='%3%');");
-         std::string cmd = boost::str(fmt % encoding
-                                          % targetFile_.filename()
-                                          % tempFilePath);
-         args.push_back(cmd);
+         cmd = boost::str(fmt % encoding % targetFile_.filename() % 
+                          tempFilePath);
       }
 
-      // options
-      core::system::ProcessOptions options;
-      options.terminateChildren = true;
-      options.redirectStdErrToStdOut = true;
-      options.workingDir = targetFile_.parent();
+      outputPathTempFile_ = outputFileTempFile;
+      encoding_ = encoding;
 
-      // callbacks
-      core::system::ProcessCallbacks cb;
-      cb.onContinue = boost::bind(&HTMLPreview::onKnitContinue,
-                                  HTMLPreview::shared_from_this());
-      cb.onStdout = boost::bind(&HTMLPreview::onKnitOutput,
-                                HTMLPreview::shared_from_this(), _2);
-      cb.onStderr = boost::bind(&HTMLPreview::onKnitOutput,
-                                HTMLPreview::shared_from_this(), _2);
-      cb.onExit =  boost::bind(&HTMLPreview::onKnitCompleted,
-                                HTMLPreview::shared_from_this(),
-                                _1, outputFileTempFile, encoding);
-
-      // execute knitr
-      module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
-                                                     args,
-                                                     options,
-                                                     cb);
+      async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent(),
+                                    async_r::R_PROCESS_REDIRECTSTDERR);
    }
 
    bool targetIsRMarkdown()
@@ -259,14 +224,19 @@ private:
       return ext == ".rmd" || ext == ".rmarkdown";
    }
 
-   bool onKnitContinue()
-   {
-      return !terminationRequested_;
-   }
-
-   void onKnitOutput(const std::string& output)
+   void onStdout (const std::string& output)
    {
       enqueHTMLPreviewOutput(output);
+   }
+
+   void onStderr (const std::string& output)
+   {
+      enqueHTMLPreviewOutput(output);
+   }
+
+   void onCompleted(int exitStatus)
+   {
+      onKnitCompleted(exitStatus, outputPathTempFile_, encoding_);
    }
 
    void onKnitCompleted(int exitStatus,
@@ -408,14 +378,14 @@ private:
 
    void terminateWithError(const std::string& message)
    {
-      isRunning_ = false;
+      markCompleted();
       enqueHTMLPreviewOutput(message);
       enqueHTMLPreviewFailed();
    }
 
    void terminateWithSuccess(const FilePath& outputFile)
    {
-      isRunning_ = false;
+      markCompleted();
       outputFile_ = outputFile;
 
       enqueHTMLPreviewSucceeded(kHTMLPreview "/",
@@ -453,6 +423,7 @@ private:
                                          bool enableSaveAs,
                                          bool enableRefresh)
    {
+      using namespace module_context;
       json::Object resultJson;
       resultJson["succeeded"] = true;
       resultJson["source_file"] = module_context::createAliasedPath(sourceFile);
@@ -460,7 +431,7 @@ private:
       resultJson["preview_url"] = previewUrl;
       resultJson["enable_saveas"] = enableSaveAs;
       resultJson["enable_refresh"] = enableRefresh;
-      resultJson["previously_published"] = !rpubs::previousUploadId(htmlFile).empty();
+      resultJson["previously_published"] = !previousRpubsUploadId(htmlFile).empty();
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
    }
@@ -472,15 +443,15 @@ private:
 
 private:
    FilePath targetFile_;
+   FilePath outputPathTempFile_;
    bool isMarkdown_;
    bool isInternalMarkdown_;
    bool isNotebook_;
    bool requiresKnit_;
+   std::string encoding_;
 
    FilePath knitrOutputFile_;
    FilePath outputFile_;
-   bool isRunning_;
-   bool terminationRequested_;
 };
 
 std::string deriveNotebookPath(const std::string& path)
@@ -673,7 +644,7 @@ Error createNotebook(const json::JsonRpcRequest& request,
 
       std::string contents;
       contents.append(prefix);
-      contents.append("`r opts_chunk$set(tidy=FALSE, comment=NA, "
+      contents.append("`r knitr::opts_chunk$set(tidy=FALSE, comment=NA, "
                       "fig.path='" +std::string(FIGURE_DIR) + "/')`");
       contents.append("\n");
       contents.append("```{r}\n");
@@ -799,12 +770,7 @@ void modifyOutputForPreview(std::string* pOutput)
       boost::algorithm::replace_first(
                *pOutput,
                target,
-               target + "\n"
-               "<script type=\"text/x-mathjax-config\">"
-                  "MathJax.Hub.Config({"
-                  "  \"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] } "
-                  " });"
-               "</script>");
+               target + "\n" kQtMathJaxConfigScript);
 #endif
    }
 
@@ -938,7 +904,7 @@ void handlePreviewRequest(const http::Request& request,
    // if there isn't a current preview this is an error
    if (!s_pCurrentPreview_)
    {
-      pResponse->setError(http::status::NotFound, "No preview available");
+      pResponse->setNotFoundError(request.uri());
       return;
    }
 
@@ -982,13 +948,28 @@ void handlePreviewRequest(const http::Request& request,
    else
    {
       FilePath filePath = s_pCurrentPreview_->targetDirectory().childPath(path);
+      addFileSpecificHeaders(filePath, pResponse);
       pResponse->setFile(filePath, request);
    }
 }
 
-
    
 } // anonymous namespace
+   
+
+void addFileSpecificHeaders(const FilePath& filePath, http::Response* pResponse)
+{
+   std::string videoExts(".mov|.mp4|.m4v|.3gp|.avi");
+   std::string ext = filePath.extensionLowerCase();
+   if (ext.length() == 4 &&
+       videoExts.find(ext) != std::string::npos &&
+       session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      // mp4 and QuickTime files served in IFrames cause problems on
+      // some desktop configurations (see case 3828)
+      pResponse->addHeader("X-Frame-Options", "deny");
+   }
+}
 
 core::json::Object capabilitiesAsJson()
 {

@@ -37,6 +37,11 @@ public class NewPackagePage extends NewDirectoryPage
             NewProjectResources.INSTANCE.packageIcon(),
             NewProjectResources.INSTANCE.packageIconLarge());
    }
+   
+   protected boolean getOptionsSideBySide()
+   {
+      return true;
+   }
     
    @Override 
    protected void onAddTopPanelWidgets(HorizontalPanel panel)

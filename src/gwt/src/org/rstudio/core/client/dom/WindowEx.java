@@ -26,6 +26,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
+
 import org.rstudio.core.client.Point;
 
 public class WindowEx extends JavaScriptObject
@@ -113,7 +114,13 @@ public class WindowEx extends JavaScriptObject
    }-*/;
    
    public final native boolean isClosed() /*-{
-      return this.closed;
+      // On the desktop, it is possible in some circumstances for satellite
+      // window objects to become decoupled from their physical windows when
+      // closed--they are still marked open but are effectively zombies. To work
+      // around this we have the desktop frame manually label the window object
+      // as closed with rstudioSatelliteClosed so that we can appropriately
+      // treat it as closed.
+      return this.closed || this.rstudioSatelliteClosed;
    }-*/;
 
    public final native void resizeTo(int width, int height) /*-{
@@ -122,6 +129,39 @@ public class WindowEx extends JavaScriptObject
 
    public final native Document getDocument() /*-{
       return this.document;
+   }-*/;
+   
+   public final native int getLeft() /*-{
+      return this.screenX;
+   }-*/;
+
+   public final native int getTop() /*-{
+      return this.screenY;
+   }-*/;
+   
+   public final native int getOuterHeight() /*-{
+      return this.outerHeight;
+   }-*/;
+
+   public final native int getOuterWidth() /*-{
+      return this.outerWidth;
+   }-*/;
+   
+   public final native void scrollTo(int x, int y) /*-{
+      this.scrollTo(x, y);
+   }-*/;
+
+   public final native int getScrollLeft() /*-{
+      return this.scrollX;
+   }-*/;
+
+   public final native int getScrollTop() /*-{
+      return this.scrollY;
+   }-*/;
+   
+   public final native void postMessage(JavaScriptObject data, 
+                                        String origin) /*-{
+      this.postMessage(data, origin);
    }-*/;
 
    public static HandlerRegistration addFocusHandler(FocusHandler handler)
@@ -157,7 +197,7 @@ public class WindowEx extends JavaScriptObject
          }
       });
    }
-
+   
    static {
       registerNativeListeners();
    }

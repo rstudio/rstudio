@@ -35,10 +35,11 @@ import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
-import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
-import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
+import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
@@ -59,12 +60,12 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 @Singleton
 public class Projects implements OpenProjectFileHandler,
@@ -80,7 +81,8 @@ public class Projects implements OpenProjectFileHandler,
                    FileDialogs fileDialogs,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
-                   ProjectsServerOperations server,
+                   ProjectsServerOperations projServer,
+                   PackratServerOperations packratServer,
                    GitServerOperations gitServer,
                    EventBus eventBus,
                    Binder binder,
@@ -91,7 +93,8 @@ public class Projects implements OpenProjectFileHandler,
       globalDisplay_ = globalDisplay;
       pMRUList_ = pMRUList;
       applicationQuit_ = applicationQuit;
-      server_ = server;
+      projServer_ = projServer;
+      packratServer_ = packratServer;
       gitServer_ = gitServer;
       fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
@@ -171,7 +174,7 @@ public class Projects implements OpenProjectFileHandler,
            @Override
            public void onReadyToQuit(final boolean saveChanges)
            {
-              server_.getNewProjectContext(
+              projServer_.getNewProjectContext(
                 new SimpleRequestCallback<NewProjectContext>() {
                    @Override
                    public void onResponseReceived(NewProjectContext context)
@@ -255,9 +258,16 @@ public class Projects implements OpenProjectFileHandler,
                                           newProject.getCreateGitRepo());
                }
                
+               if (newProject.getUsePackrat() !=
+                   uiPrefs.newProjUsePackrat().getValue())
+               {
+                  uiPrefs.newProjUsePackrat().setGlobalValue(
+                                          newProject.getUsePackrat());
+               }
+               
                // call the server -- in all cases continue on with
                // creating the project (swallow errors updating the pref)
-               server_.setUiPrefs(
+               projServer_.setUiPrefs(
                      session_.getSessionInfo().getUiPrefs(),
                      new VoidServerRequestCallback(indicator) {
                         @Override
@@ -343,7 +353,7 @@ public class Projects implements OpenProjectFileHandler,
          {
             indicator.onProgress("Creating project...");
 
-            server_.createProject(
+            projServer_.createProject(
                   newProject.getProjectFile(),
                   newProject.getNewPackageOptions(),
                   newProject.getNewShinyAppOptions(),
@@ -352,13 +362,6 @@ public class Projects implements OpenProjectFileHandler,
                      @Override
                      public void onSuccess()
                      {
-                        if (!newProject.getOpenInNewWindow())
-                        {
-                           applicationQuit_.performQuit(
-                                             saveChanges,
-                                             newProject.getProjectFile());
-                        }
-
                         continuation.execute();
                      }
                   });
@@ -398,6 +401,34 @@ public class Projects implements OpenProjectFileHandler,
          }, false);
       }
       
+      // Generate a new packrat project
+      if (newProject.getUsePackrat()) {
+         createProjectCmds.addCommand(new SerializedCommand() 
+         {
+            
+            @Override
+            public void onExecute(final Command continuation) {
+               
+               indicator.onProgress("Initializing packrat project...");
+               
+               String projDir = FileSystemItem.createFile(
+                  newProject.getProjectFile()
+               ).getParentPathString();
+               
+               packratServer_.packratBootstrap(
+                  projDir, 
+                  false,
+                  new VoidServerRequestCallback(indicator) {
+                     @Override
+                     public void onSuccess()
+                     {
+                        continuation.execute();
+                     }
+                  });
+            }
+         }, false);
+      }
+      
       if (newProject.getOpenInNewWindow())
       {
          createProjectCmds.addCommand(new SerializedCommand() {
@@ -410,7 +441,7 @@ public class Projects implements OpenProjectFileHandler,
                continuation.execute();
                
             }
-         });
+         }, false);
       }
 
       // If we get here, dismiss the progress indicator
@@ -420,6 +451,14 @@ public class Projects implements OpenProjectFileHandler,
          public void onExecute(Command continuation)
          {
             indicator.onCompleted();
+            
+            if (!newProject.getOpenInNewWindow())
+            {
+               applicationQuit_.performQuit(
+                                 saveChanges,
+                                 newProject.getProjectFile());
+            }
+            
             continuation.execute();
          }
       }, false);
@@ -551,13 +590,25 @@ public class Projects implements OpenProjectFileHandler,
       }
    }
    
+   @Handler
+   public void onPackratBootstrap()
+   {
+      showProjectOptions(ProjectPreferencesDialog.PACKRAT);
+   }
+   
+   @Handler
+   public void onPackratOptions()
+   {
+      showProjectOptions(ProjectPreferencesDialog.PACKRAT);
+   }
+   
    private void showProjectOptions(final int initialPane)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
                                                       "Error Reading Options");
       indicator.onProgress("Reading options...");
 
-      server_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
+      projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
 
          @Override
          public void onResponseReceived(RProjectOptions options)
@@ -648,7 +699,8 @@ public class Projects implements OpenProjectFileHandler,
    
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
-   private final ProjectsServerOperations server_;
+   private final ProjectsServerOperations projServer_;
+   private final PackratServerOperations packratServer_;
    private final GitServerOperations gitServer_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;

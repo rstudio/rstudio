@@ -113,6 +113,7 @@ NSString* charToStr(unichar c) {
    // turn off "autoenable" so we can manage command states explicitly
    NSMenu* menu = [[[NSMenu alloc] initWithTitle: menuName] autorelease];
    [[self currentTargetMenu] setSubmenu: menu forItem: menuItem];
+   [menu setDelegate: self];
    
    // update the menu stack
    [menuStack_ addObject: menu];
@@ -204,6 +205,7 @@ NSString* charToStr(unichar c) {
 }
 
 - (BOOL) validateMenuItem: (NSMenuItem *) item {
+   // no need to further validate items that aren't associated with a command
    if ([item tag] == 0) {
       return YES;
    }
@@ -413,6 +415,44 @@ NSString* charToStr(unichar c) {
 
 - (void) showPrefs: (id) sender {
    [[MainFrameController instance] invokeCommand: @"showOptions"];
+}
+
+- (void) menuNeedsUpdate: (NSMenu *) menu
+{
+   for (NSMenuItem* item in [menu itemArray])
+   {
+      if ([item hasSubmenu])
+      {
+         // check to see if we need to hide the submenu because all the
+         // commands in the submenu are hidden
+         bool hide = true;
+         NSMenu* submenu = [item submenu];
+         for (NSMenuItem* i in [submenu itemArray])
+         {
+            if ([i tag] != 0)
+            {
+               // it's a command, check visibility state
+               NSString* command = [commands_ objectAtIndex: [i tag]];
+               NSString* visibleJs =
+                  [NSString stringWithFormat:
+                   @"window.desktopHooks.isCommandVisible(\"%@\");", command];
+               id result = [[MainFrameController instance] evaluateJavaScript: visibleJs];
+               if ([result boolValue])
+               {
+                  hide = false;
+                  break;
+               }
+            }
+            else if (![i isSeparatorItem])
+            {
+               // not a command or a separator, so avoid hiding it
+               hide = false;
+               break;
+            }
+         }
+         [item setHidden: hide];
+      }
+   }
 }
 
 + (NSString *) webScriptNameForSelector: (SEL) sel

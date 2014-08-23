@@ -121,6 +121,7 @@ json::Object SlideNavigationList::asJson() const
 {
    json::Object slideNavigationJson;
    slideNavigationJson["total_slides"] = index_;
+   slideNavigationJson["anchor_parens"] = false;
    slideNavigationJson["items"] = slides_;
    return slideNavigationJson;
 }

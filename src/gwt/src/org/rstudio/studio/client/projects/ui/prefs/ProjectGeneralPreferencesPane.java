@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.projects.model.RProjectRVersion;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Grid;
@@ -74,6 +75,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       saveWorkspace_.setSelectedValue(config.getSaveWorkspace());
       alwaysSaveHistory_.setSelectedValue(config.getAlwaysSaveHistory());
       tutorialPath_ = config.getTutorialPath();
+      rVersion_ = config.getRVersion();
    }
 
    @Override
@@ -84,6 +86,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       config.setSaveWorkspace(saveWorkspace_.getSelectedValue());
       config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedValue());
       config.setTutorialPath(tutorialPath_);
+      config.setRVersion(rVersion_);
       return false;
    }
    
@@ -124,4 +127,6 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault alwaysSaveHistory_;
    
    private String tutorialPath_;
+   
+   private RProjectRVersion rVersion_;
 }

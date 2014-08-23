@@ -96,9 +96,12 @@ public class CallFramePanel extends ResizeComposite
                public void onValueChange(ValueChangeEvent<Boolean> event)
                {
                   panelHost_.setShowInternalFunctions(event.getValue());
-                  for (CallFrameItem item: callFrameItems_)
+                  // Ignore the function on the top of the stack; we always
+                  // want to show it since it's the execution point
+                  for (int i = 1; i < callFrameItems_.size(); i++) 
                   {
-                     if (!item.isNavigable())
+                     CallFrameItem item = callFrameItems_.get(i);
+                     if (!item.isNavigable() && !item.isHidden())
                      {
                         item.setVisible(event.getValue());
                      }
@@ -128,23 +131,33 @@ public class CallFramePanel extends ResizeComposite
       // If it is, the traceback window may appear empty, so show everything
       // to give the user some context.
       boolean allInternal = true;
+      int idxSourceEquiv = Integer.MAX_VALUE;
+
       for (int idx = 0; idx < frameList.length(); idx++)
       {
-         if (frameList.get(idx).isNavigable()) {
+         CallFrame frame = frameList.get(idx);
+         if (frame.isNavigable()) {
             allInternal = false;
-            break;
          }
+         if (frame.isSourceEquiv())
+            idxSourceEquiv = idx;
       }
       
       for (int idx = frameList.length() - 1; idx >= 0; idx--)
       {
          CallFrame frame = frameList.get(idx);
+         // Always show the first frame, since that's where execution is 
+         // actually halted. From the remaining frames, show them if they are
+         // "navigable" (user) frames, or if the user has elected to show all
+         // frames.
          CallFrameItem item = new CallFrameItem(
                frame, 
                observer_, 
-               !panelHost_.getShowInternalFunctions() && 
-                  !frame.isNavigable() &&
-                  !allInternal);
+               frame.isHidden() ||
+                  (!panelHost_.getShowInternalFunctions() && 
+                     ((!frame.isNavigable()) || idx > idxSourceEquiv) &&
+                     !allInternal &&
+                     idx > 0));
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();
@@ -158,7 +171,6 @@ public class CallFramePanel extends ResizeComposite
       {
          callFramePanel.add(item);
       }
-      
    }
 
    public void updateLineNumber(int newLineNumber)

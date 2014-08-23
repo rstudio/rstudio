@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 public class Renderer extends JavaScriptObject
 {

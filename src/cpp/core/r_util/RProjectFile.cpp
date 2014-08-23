@@ -20,6 +20,7 @@
 #include <ostream>
 
 #include <boost/format.hpp>
+#include <boost/regex.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -28,6 +29,7 @@
 #include <core/text/DcfParser.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
+#include <core/r_util/RVersionInfo.hpp>
 
 namespace core {
 namespace r_util {
@@ -149,24 +151,27 @@ bool interpretIntValue(const std::string& value, int* pValue)
 }
 
 void setBuildPackageDefaults(const std::string& packagePath,
+                             const RProjectBuildDefaults& buildDefaults,
                              RProjectConfig* pConfig)
 {
    pConfig->buildType = kBuildTypePackage;
+   pConfig->packageUseDevtools = buildDefaults.useDevtools;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
 
 std::string detectBuildType(const FilePath& projectFilePath,
+                            const RProjectBuildDefaults& buildDefaults,
                             RProjectConfig* pConfig)
 {
    FilePath projectDir = projectFilePath.parent();
    if (r_util::isPackageDirectory(projectDir))
    {
-      setBuildPackageDefaults("", pConfig);
+      setBuildPackageDefaults("", buildDefaults ,pConfig);
    }
    else if (projectDir.childPath("pkg/DESCRIPTION").exists())
    {
-      setBuildPackageDefaults("pkg", pConfig);
+      setBuildPackageDefaults("pkg", buildDefaults, pConfig);
    }
    else if (projectDir.childPath("Makefile").exists())
    {
@@ -182,10 +187,51 @@ std::string detectBuildType(const FilePath& projectFilePath,
    return pConfig->buildType;
 }
 
-std::string detectBuildType(const FilePath& projectFilePath)
+std::string detectBuildType(const FilePath& projectFilePath,
+                            const RProjectBuildDefaults& buildDefaults)
 {
    RProjectConfig config;
-   return detectBuildType(projectFilePath, &config);
+   return detectBuildType(projectFilePath, buildDefaults, &config);
+}
+
+std::string rVersionAsString(const RVersionInfo& rVersion)
+{
+   std::string ver = rVersion.number;
+   if (!rVersion.arch.empty())
+      ver += ("/" + rVersion.arch);
+   return ver;
+}
+
+RVersionInfo rVersionFromString(const std::string& str)
+{
+   std::size_t pos = str.find('/');
+   if (pos == std::string::npos)
+      return RVersionInfo(str);
+   else
+      return RVersionInfo(str.substr(0, pos), str.substr(pos+1));
+}
+
+bool interpretRVersionValue(const std::string& value,
+                            RVersionInfo* pRVersion)
+{
+   RVersionInfo version = rVersionFromString(value);
+
+   if (version.number != kRVersionDefault &&
+       !boost::regex_match(version.number, boost::regex("[\\d\\.]+")))
+   {
+      return false;
+   }
+   else if (version.arch != "" &&
+            version.arch != kRVersionArch32 &&
+            version.arch != kRVersionArch64)
+   {
+      return false;
+   }
+   else
+   {
+      *pRVersion = version;
+      return true;
+   }
 }
 
 } // anonymous namespace
@@ -212,9 +258,22 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
    return stream ;
 }
 
+Error readProjectFile(const FilePath& projectFilePath,
+                      RProjectConfig* pConfig,
+                      std::string* pUserErrMsg)
+{
+   bool providedDefaults;
+   return readProjectFile(projectFilePath,
+                          RProjectConfig(),
+                          RProjectBuildDefaults(),
+                          pConfig,
+                          &providedDefaults,
+                          pUserErrMsg);
+}
 
 Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
+                      const RProjectBuildDefaults& buildDefaults,
                       RProjectConfig* pConfig,
                       bool* pProvidedDefaults,
                       std::string* pUserErrMsg)
@@ -259,6 +318,18 @@ Error readProjectFile(const FilePath& projectFilePath,
                      "version of RStudio";
        return systemError(boost::system::errc::protocol_error,
                           ERROR_LOCATION);
+   }
+
+   // extract R version
+   it = dcfFields.find("RVersion");
+   if (it != dcfFields.end())
+   {
+      if (!interpretRVersionValue(it->second, &(pConfig->rVersion)))
+         return requiredFieldError("RVersion", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->rVersion = defaultConfig.rVersion;
    }
 
    // extract restore workspace
@@ -337,6 +408,31 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->numSpacesForTab = defaultConfig.numSpacesForTab;
       *pProvidedDefaults = true;
+   }
+
+   // extract auto append newline
+   it = dcfFields.find("AutoAppendNewline");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->autoAppendNewline)))
+         return requiredFieldError("AutoAppendNewline", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->autoAppendNewline = false;
+   }
+
+
+   // extract strip trailing whitespace
+   it = dcfFields.find("StripTrailingWhitespace");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->stripTrailingWhitespace)))
+         return requiredFieldError("StripTrailingWhitespace", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->stripTrailingWhitespace = false;
    }
 
    // extract encoding
@@ -464,6 +560,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packageRoxygenize = "";
    }
 
+   // extract package use devtools
+   it = dcfFields.find("PackageUseDevtools");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->packageUseDevtools)))
+         return requiredFieldError("PackageUseDevtools", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->packageUseDevtools = false;
+   }
+
    // extract makefile path
    it = dcfFields.find("MakefilePath");
    if (it != dcfFields.end())
@@ -490,7 +598,9 @@ Error readProjectFile(const FilePath& projectFilePath,
    if (pConfig->buildType.empty())
    {
       // try to detect the build type
-      pConfig->buildType = detectBuildType(projectFilePath, pConfig);
+      pConfig->buildType = detectBuildType(projectFilePath,
+                                           buildDefaults,
+                                           pConfig);
 
       // set *pProvidedDefaults only if we successfully auto-detected
       // (this will prevent us from writing None into the project file,
@@ -516,26 +626,34 @@ Error readProjectFile(const FilePath& projectFilePath,
 
 
 Error writeProjectFile(const FilePath& projectFilePath,
+                       const RProjectBuildDefaults& buildDefaults,
                        const RProjectConfig& config)
 {  
+   // build version field if necessary
+   std::string rVersion;
+   if (!config.rVersion.isDefault())
+      rVersion = "RVersion: " + rVersionAsString(config.rVersion) + "\n\n";
+
    // generate project file contents
    boost::format fmt(
       "Version: %1%\n"
       "\n"
-      "RestoreWorkspace: %2%\n"
-      "SaveWorkspace: %3%\n"
-      "AlwaysSaveHistory: %4%\n"
+      "%2%"
+      "RestoreWorkspace: %3%\n"
+      "SaveWorkspace: %4%\n"
+      "AlwaysSaveHistory: %5%\n"
       "\n"
-      "EnableCodeIndexing: %5%\n"
-      "UseSpacesForTab: %6%\n"
-      "NumSpacesForTab: %7%\n"
-      "Encoding: %8%\n"
+      "EnableCodeIndexing: %6%\n"
+      "UseSpacesForTab: %7%\n"
+      "NumSpacesForTab: %8%\n"
+      "Encoding: %9%\n"
       "\n"
-      "RnwWeave: %9%\n"
-      "LaTeX: %10%\n");
+      "RnwWeave: %10%\n"
+      "LaTeX: %11%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
+        rVersion %
         yesNoAskValueToString(config.restoreWorkspace) %
         yesNoAskValueToString(config.saveWorkspace) %
         yesNoAskValueToString(config.alwaysSaveHistory) %
@@ -554,6 +672,22 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(rootDoc);
    }
 
+   // additional editor settings
+   if (config.autoAppendNewline || config.stripTrailingWhitespace)
+   {
+      contents.append("\n");
+
+      if (config.autoAppendNewline)
+      {
+         contents.append("AutoAppendNewline: Yes\n");
+      }
+
+      if (config.stripTrailingWhitespace)
+      {
+         contents.append("StripTrailingWhitespace: Yes\n");
+      }
+   }
+
    // add build-specific settings if necessary
    if (!config.buildType.empty())
    {
@@ -562,7 +696,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       // has a chance to work in the future if the user turns this project
       // into a package or adds a Makefile)
       if (config.buildType != kBuildTypeNone ||
-          detectBuildType(projectFilePath) != kBuildTypeNone)
+          detectBuildType(projectFilePath, buildDefaults) != kBuildTypeNone)
       {
          // build type
          boost::format buildFmt("\nBuildType: %1%\n");
@@ -571,6 +705,11 @@ Error writeProjectFile(const FilePath& projectFilePath,
          // extra fields
          if (config.buildType == kBuildTypePackage)
          {
+            if (config.packageUseDevtools)
+            {
+               build.append("PackageUseDevtools: Yes\n");
+            }
+
             if (!config.packagePath.empty())
             {
                boost::format pkgFmt("PackagePath: %1%\n");

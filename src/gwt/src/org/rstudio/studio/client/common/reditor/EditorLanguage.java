@@ -55,6 +55,16 @@ public class EditorLanguage
          "ace/mode/javascript", true);
    public static final EditorLanguage LANG_CPP = new EditorLanguage(
          "mode/c_cpp", true);
+   public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
+         "mode/python", true);
+   public static final EditorLanguage LANG_SQL = new EditorLanguage(
+         "mode/sql", true);
+   public static final EditorLanguage LANG_SH = new EditorLanguage(
+         "mode/sh", true);
+   public static final EditorLanguage LANG_YAML = new EditorLanguage(
+         "mode/yaml", true);
+   public static final EditorLanguage LANG_XML = new EditorLanguage(
+         "mode/xml", true);
 
    /**
     *

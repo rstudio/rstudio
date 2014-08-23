@@ -12,6 +12,8 @@
 #import "SecondaryWindowController.h"
 #import "Utils.hpp"
 #import "WebViewWithKeyEquiv.h"
+#import "FileDownloader.h"
+#import "MainFrameController.h"
 
 struct PendingSatelliteWindow
 {
@@ -50,13 +52,6 @@ static PendingSatelliteWindow pendingWindow_;
    pendingWindow_ = PendingSatelliteWindow();
 }
 
-+ (void) activateSatelliteWindow: (NSString*) name
-{
-   WebViewController* controller = [namedWindows_ objectForKey: name];
-   if (controller)
-      [[controller window] makeKeyAndOrderFront: self];
-}
-
 + (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width
                             height: (int) height
@@ -68,6 +63,14 @@ static PendingSatelliteWindow pendingWindow_;
 {
    return [namedWindows_ objectForKey: name];
 }
+
++ (void) activateNamedWindow: (NSString*) name
+{
+   WebViewController* controller = [self windowNamed: name];
+   if (controller)
+      [[controller window] makeKeyAndOrderFront: self];
+}
+
 
 - (WebView*) webView
 {
@@ -91,6 +94,7 @@ static PendingSatelliteWindow pendingWindow_;
 
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name
+              clientName: (NSString*) clientName
 {
    // record base url
    baseUrl_ = [[request URL] retain];
@@ -140,6 +144,14 @@ static PendingSatelliteWindow pendingWindow_;
          // track it (for reactivation)
          name_ = [name copy];
          [namedWindows_ setValue: self forKey: name_];
+      }
+      
+      if (clientName)
+      {
+         // keep track of the name requested by the client (used to report the
+         // name of the created window back to the client; see
+         // handler for didClearWindowObject)
+         clientName_ = [clientName copy];
       }
       
       // set fullscreen mode (defualt to non-primary)
@@ -194,10 +206,26 @@ static PendingSatelliteWindow pendingWindow_;
    // record viewer url
    if(url != viewerUrl_)
    {
-      [url retain];
       [viewerUrl_ release];
-      viewerUrl_ = url;
-   }   
+      
+      // record about:blank literally
+      if ([url isEqual: @"about:blank"]) {
+         viewerUrl_ = [url retain];
+         return;
+      }
+      
+      // extract the authority (domain and port) from the URL; we'll agree to
+      // serve requests for the viewer pane that match this prefix.
+      // e.g. for http://foo:8402/bar/baz.html, extract http://foo:8402/
+      NSURL* viewerUrl = [NSURL URLWithString: url];
+      NSString* port = @"";
+      if ([viewerUrl port] != nil) {
+         port = [NSString stringWithFormat: @":%@", [viewerUrl port]];
+      }
+      NSString* prefix = [NSString stringWithFormat: @"%@://%@%@/",
+                          [viewerUrl scheme], [viewerUrl host], port];
+      viewerUrl_ = [prefix retain];
+   }
 }
 
 - (void) windowDidLoad
@@ -269,6 +297,15 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    if (name_)
       [namedWindows_ removeObjectForKey: name_];
    
+   // if we have a client-supplied name, let the client know the window is gone
+   if (clientName_)
+   {
+      NSString* windowName = clientName_;
+      NSArray* args = [NSArray arrayWithObjects: windowName, nil];
+      [[[[MainFrameController instance] webView] windowScriptObject]
+       callWebScriptMethod: @"unregisterDesktopChildWindow" withArguments: args];
+   }
+
    // unsubscribe observers
    [[self window] setDelegate: nil];
    [webView_ setUIDelegate: nil];
@@ -305,6 +342,7 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
 -(void) decidePolicyFor: (WebView *) webView
       actionInformation: (NSDictionary *) actionInformation
                 request: (NSURLRequest *) request
+                 iframe: (BOOL) iframe
        decisionListener: (id <WebPolicyDecisionListener>) listener
 {
    // get the url for comparison to the base url
@@ -320,6 +358,14 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    if (![self isSupportedScheme: scheme])
    {
       [[NSWorkspace sharedWorkspace] openURL: url];
+      [listener ignore];
+      return;
+   }
+   
+   // open PDFs externally
+   if ([[url pathExtension] isEqual: @"pdf"])
+   {
+      desktop::downloadAndShowFile([self rsessionRequest: request]);
       [listener ignore];
       return;
    }
@@ -350,9 +396,9 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
                          forElement: [actionInformation
                                       objectForKey:WebActionElementKey]];
       }
-      else
+      // show external links in a new window
+      else if (navType == WebNavigationTypeLinkClicked)
       {
-         // open externally
          desktop::utils::browseURL(url);
       }
       
@@ -369,19 +415,52 @@ decidePolicyForNewWindowAction: (NSDictionary *) actionInformation
    [self decidePolicyFor: webView
        actionInformation: actionInformation
                  request: request
+                  iframe: FALSE
         decisionListener: listener];
 }
 
-- (void)                webView:(WebView *) webView
+- (void)                webView: (WebView *) webView
 decidePolicyForNavigationAction: (NSDictionary *) actionInformation
                         request: (NSURLRequest *) request
                           frame: (WebFrame *) frame
-               decisionListener:(id < WebPolicyDecisionListener >)listener
+               decisionListener: (id < WebPolicyDecisionListener >)listener
 {
    [self decidePolicyFor: webView
        actionInformation: actionInformation
                  request: request
+                  iframe: frame != [webView_ mainFrame]
         decisionListener: listener];
+}
+
+- (void)        webView: (WebView *) webView
+decidePolicyForMIMEType: (NSDictionary *) actionInformation
+                request: (NSURLRequest *) request
+                  frame: (WebFrame *) frame
+       decisionListener: (id < WebPolicyDecisionListener >)listener
+{
+   
+   // get the response; if it isn't a NSHTTPURLResponse, ignore it (we need
+   // access to the headers below)
+   NSHTTPURLResponse* response = (NSHTTPURLResponse*)
+                                 [[frame provisionalDataSource] response];
+   if (![response isKindOfClass: [NSHTTPURLResponse class]])
+      return;
+
+   // get the Content-Disposition header to see if this file is intended to be
+   // downloaded
+   NSDictionary* headers = [response allHeaderFields];
+   NSString* disposition =
+      (NSString*)[headers objectForKey:@"Content-Disposition"];
+   NSString* filename = [response suggestedFilename];
+   if ([[disposition lowercaseString] hasPrefix: @"attachment"])
+   {
+      NSSavePanel* attSavePanel = [NSSavePanel savePanel];
+      if ([self runSavePanelForFilename: attSavePanel filename: filename])
+      {
+         desktop::downloadAndSaveFile(request,
+                                      [[attSavePanel URL] path]);
+      }
+   }
 }
 
 - (NSWindow*) uiWindow
@@ -416,7 +495,8 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
          // self-freeing so don't auto-release
          SatelliteController* satelliteController =
          [[SatelliteController alloc] initWithURLRequest: request
-                                                    name: name];
+                                                    name: name
+                                              clientName: name];
          
          // return it
          return [satelliteController webView];
@@ -427,7 +507,8 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
       // self-freeing so don't auto-release
       SecondaryWindowController * controller =
          [[SecondaryWindowController alloc] initWithURLRequest: request
-                                                  name: nil];
+                                                          name: nil
+                                                    clientName: nil];
       return [controller webView];
    }
 }
@@ -438,10 +519,16 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
                   redirectResponse:(NSURLResponse *) redirectResponse
                   fromDataSource:(WebDataSource *) dataSource
 {
+   return [self rsessionRequest: request];
+}
+
+- (NSURLRequest*) rsessionRequest: (NSURLRequest*) request
+{
    NSMutableURLRequest *mutableRequest = [[request mutableCopy] autorelease];
    std::string secret = desktop::options().sharedSecret();
    [mutableRequest setValue: [NSString stringWithUTF8String: secret.c_str()]
                    forHTTPHeaderField:@"X-Shared-Secret"];
+   [mutableRequest setTimeoutInterval: 300];
    return mutableRequest;
 }
 
@@ -540,16 +627,74 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    }
 
    NSSavePanel* dlSavePanel = [NSSavePanel savePanel];
-   [dlSavePanel setNameFieldStringValue: filename];
+   if ([self runSavePanelForFilename: dlSavePanel filename: filename])
+   {
+      [data writeToURL: [dlSavePanel URL] atomically: FALSE];
+   }
+}
 
-   [dlSavePanel beginSheetModalForWindow: [self window] completionHandler: nil];
-   long int result = [dlSavePanel runModal];
-   [NSApp endSheet: dlSavePanel];
+- (id) evaluateJavaScript: (NSString*) js
+{
+   id win = [webView_ windowScriptObject];
+   return [win evaluateWebScript: js];
+}
+
+- (bool) runSavePanelForFilename: (NSSavePanel*) panel
+                        filename: (NSString*) filename
+{
+   [panel setNameFieldStringValue: filename];
+   [panel beginSheetModalForWindow: [self window] completionHandler: nil];
+   long int result = [panel runModal];
+   [NSApp endSheet: panel];
    
-   if (result != NSFileHandlingPanelOKButton)
-      return;
+   return result == NSFileHandlingPanelOKButton;
+}
+
+- (void) webView: (WebView *) sender
+      didClearWindowObject: (WebScriptObject *) windowObject
+                  forFrame: (WebFrame *) frame
+{
+   // on the desktop, the main frame needs to be notified when a child window
+   // is opened in order to communicate with the child window's window object.
+   // extract the window object from the child...
+   id windowObj = [windowObject evaluateWebScript: @"window;"];
+   NSString* windowName = clientName_;
    
-   [data writeToURL: [dlSavePanel URL] atomically: FALSE];
+   // ... and inject it in the main frame.
+   NSArray* args = [NSArray arrayWithObjects: windowName, windowObj, nil];
+   [[[[MainFrameController instance] webView] windowScriptObject]
+    callWebScriptMethod: @"registerDesktopChildWindow" withArguments: args];
+}
+
+- (void)webView: (WebView *) sender
+  runOpenPanelForFileButtonWithResultListener:
+                 (id<WebOpenPanelResultListener>) resultListener
+{
+   // WebView doesn't natively launch a file browser for HTML file inputs,
+   // so launch one as a modal sheet here and pass the result back to the
+   // listener
+   NSOpenPanel* panel = [NSOpenPanel openPanel];
+   
+   [panel setCanChooseFiles: true];
+   [panel setCanChooseDirectories: false];
+   [panel beginSheetModalForWindow: [self uiWindow]
+                 completionHandler: nil];
+   long int result = [panel runModal];
+   @try
+   {
+      if (result == NSOKButton)
+      {
+         [resultListener chooseFilename: [[panel URL] relativePath]];
+      }
+   }
+   @catch (NSException* e)
+   {
+      throw e;
+   }
+   @finally
+   {
+      [NSApp endSheet: panel];
+   }
 }
 
 @end

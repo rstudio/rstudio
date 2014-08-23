@@ -24,6 +24,11 @@ public interface BuildServerOperations
    void getCppCapabilities(
                      ServerRequestCallback<CppCapabilities> requestCallback);
    
+   // prompted install of build tools
+   void installBuildTools(
+                     String action, 
+                     ServerRequestCallback<Boolean> callback);
+   
    // returns true to indicate that the build has started, returns false
    // to indicate that the build could not be started because another
    // build is currently in progress

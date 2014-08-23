@@ -271,6 +271,27 @@ void clearExternalPtr(SEXP extptr)
    R_ClearExternalPtr(extptr);
 }
 
+core::Error getNamedListSEXP(SEXP listSEXP,
+                             const std::string& name,
+                             SEXP* pValueSEXP)
+{
+   int valueIndex = indexOfElementNamed(listSEXP, name);
+
+   if (valueIndex != -1)
+   {
+      // get the appropriate value
+      *pValueSEXP = VECTOR_ELT(listSEXP, valueIndex);
+      return core::Success();
+   }
+   else
+   {
+      // otherwise an error
+      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
+      error.addProperty("element", name);
+      return error;
+   }
+}
+
 Error extract(SEXP valueSEXP, int* pInt)
 {
    if (TYPEOF(valueSEXP) != INTSXP)

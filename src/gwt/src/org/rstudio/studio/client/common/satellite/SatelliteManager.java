@@ -22,15 +22,22 @@ import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.ScreenUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
+import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Window;
@@ -43,9 +50,11 @@ public class SatelliteManager implements CloseHandler<Window>
    @Inject
    public SatelliteManager(
          Session session,
+         EventBus events,
          Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler)
    {
       session_ = session;
+      events_ = events;
       pUncaughtExceptionHandler_ = pUncaughtExceptionHandler;
    }
    
@@ -65,10 +74,20 @@ public class SatelliteManager implements CloseHandler<Window>
                              JavaScriptObject params,
                              Size preferredSize)
    {
+      openSatellite(name, params, preferredSize, true, null);
+   }
+
+   // open a satellite window (re-activate existing if possible)
+   private void openSatellite(String name,
+                             JavaScriptObject params,
+                             Size preferredSize, 
+                             boolean adjustSize, 
+                             Point position)
+   {
       // satellites can't launch other satellites -- this is because the 
       // delegating/forwarding of remote server calls and events doesn't
       // cascade correctly -- it wouldn't be totally out of the question
-      // to make htis work but we'd rather not have this complexity
+      // to make this work but we'd rather not have this complexity
       // if we don't need to.
       if (isCurrentWindowSatellite())
       {
@@ -99,6 +118,12 @@ public class SatelliteManager implements CloseHandler<Window>
                      callNotifyReactivated(window, params);
                      return;
                   }
+                  else
+                  {
+                     // for Chrome, let the window know it's about to be 
+                     // closed and reopened
+                     callNotifyPendingReactivate(window);
+                  }
                }
                // desktop mode: activate and return
                else
@@ -125,15 +150,68 @@ public class SatelliteManager implements CloseHandler<Window>
       if (params != null)
          satelliteParams_.put(name, params);
  
+      // set size and position, if desired
+      Size windowSize = adjustSize ? 
+            ScreenUtils.getAdjustedWindowSize(preferredSize) : 
+            preferredSize;
+      NewWindowOptions options = new NewWindowOptions();
+      if (position != null)
+         options.setPosition(position);
+
       // open the satellite - it will call us back on registerAsSatellite
       // at which time we'll call setSessionInfo, setParams, etc.
-      Size windowSize = ScreenUtils.getAdjustedWindowSize(preferredSize);
       RStudioGinjector.INSTANCE.getGlobalDisplay().openSatelliteWindow(
                                               name,
                                               windowSize.width,
-                                              windowSize.height);
+                                              windowSize.height, 
+                                              options);
    }
    
+   // Forcefully reopen a satellite window. This refreshes the window and
+   // pushes it to the front in Chrome. It should be used as a last resort;
+   // if responding to a UI event, use openSatellite instead, since Chrome
+   // permits window.open to reactivate windows in that context. 
+   public void forceReopenSatellite(final String name, 
+                                    final JavaScriptObject params)
+   {
+      Size preferredSize = null;
+      Point preferredPos = null;
+      for (ActiveSatellite satellite : satellites_)
+      {
+         if (satellite.getName().equals(name) && 
+             !satellite.getWindow().isClosed())
+         {
+            // save the window's geometry so we can restore it after the window 
+            // is destroyed
+            final WindowEx win = satellite.getWindow();
+            Document doc = win.getDocument();
+            preferredSize = new Size(doc.getClientWidth(), doc.getClientHeight());
+            preferredPos = new Point(win.getLeft(), win.getTop());
+            callNotifyPendingReactivate(win);
+
+            // close the window
+            try 
+            { 
+               win.close();
+            }
+            catch(Throwable e)
+            {
+            }
+            break;
+         }
+      }   
+      
+      // didn't find an open window to reopen
+      if (preferredSize == null)
+         return;
+      
+      // open a new window with the same geometry as the one we just destroyed,
+      // but with the newly supplied set of parameters
+      final Size windowSize = preferredSize;
+      final Point windowPos = preferredPos;
+      openSatellite(name, params, windowSize, false, windowPos);
+   }
+
    public boolean satelliteWindowExists(String name)
    {
       return getSatelliteWindowObject(name) != null;
@@ -185,6 +263,26 @@ public class SatelliteManager implements CloseHandler<Window>
       } 
       satellites_.clear();
       pendingEventsBySatelliteName_.clear();
+   }
+   
+   // close one satellite window 
+   public void closeSatelliteWindow(String name)
+   {
+      for (ActiveSatellite satellite : satellites_)
+      {
+         if (satellite.getName().equals(name) && 
+             !satellite.getWindow().isClosed())
+         {
+            try 
+            { 
+               satellite.getWindow().close();
+            }
+            catch(Throwable e)
+            {
+            }
+            break;
+         }
+      }   
    }
    
    // dispatch an event to all satellites
@@ -240,6 +338,15 @@ public class SatelliteManager implements CloseHandler<Window>
       }
    }
    
+   // dispatch a command to all satellites. 
+   public void dispatchCommand(AppCommand command)
+   {
+      for (ActiveSatellite satellite: satellites_)
+      {
+         callDispatchCommand(satellite.getWindow(), command.getId());
+      }
+   }
+
    // close all satellites when we are closed
    @Override
    public void onClose(CloseEvent<Window> event)
@@ -247,6 +354,11 @@ public class SatelliteManager implements CloseHandler<Window>
       closeAllSatellites();
    }
    
+   // call notifyPendingReactivate on a satellite
+   public native static void callNotifyPendingReactivate(JavaScriptObject satellite) /*-{
+      satellite.notifyPendingReactivate();
+   }-*/;
+
    // called by satellites to connect themselves with the main window
    private void registerAsSatellite(final String name, JavaScriptObject wnd)
    {
@@ -266,6 +378,21 @@ public class SatelliteManager implements CloseHandler<Window>
       JavaScriptObject params = satelliteParams_.get(name);
       if (params != null)
          callSetParams(satelliteWnd, params);
+   }
+   
+   // called to register child windows (not necessarily full-fledged 
+   // satellites). only used in desktop mode, since in server mode we have the
+   // child window object as a return value from window.open.
+   private void registerDesktopChildWindow (String name, JavaScriptObject window)
+   {
+      events_.fireEvent(new WindowOpenedEvent(name, (WindowEx) window.cast()));
+   }
+   
+   private void unregisterDesktopChildWindow (String name)
+   {
+      if (SatelliteUtils.windowNameIsSatellite(name))
+         name = SatelliteUtils.getWindowNameFromSatelliteName(name);
+      events_.fireEvent(new WindowClosedEvent(name));
    }
 
    private void flushPendingEvents(String name)
@@ -297,7 +424,7 @@ public class SatelliteManager implements CloseHandler<Window>
       }
    }
    
-   // export the global function requried for satellites to register
+   // export the global function required for satellites to register
    private native void exportSatelliteRegistrationCallback() /*-{
       var manager = this;     
       $wnd.registerAsRStudioSatellite = $entry(
@@ -308,6 +435,16 @@ public class SatelliteManager implements CloseHandler<Window>
       $wnd.flushPendingEvents = $entry(
          function(name) {
             manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::flushPendingEvents(Ljava/lang/String;)(name);
+         }
+      );
+      $wnd.registerDesktopChildWindow = $entry(
+         function(name, wnd) {
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerDesktopChildWindow(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(name, wnd);
+         }
+      );
+      $wnd.unregisterDesktopChildWindow = $entry(
+         function(name, wnd) {
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::unregisterDesktopChildWindow(Ljava/lang/String;)(name);
          }
       );
    }-*/;
@@ -336,8 +473,14 @@ public class SatelliteManager implements CloseHandler<Window>
       satellite.dispatchEventToRStudioSatellite(clientEvent);
    }-*/;
    
+   // dispatch command to a satellite
+   private native void callDispatchCommand(JavaScriptObject satellite,
+                                           String commandId) /*-{
+      satellite.dispatchCommandToRStudioSatellite(commandId);
+   }-*/;
+   
    // check whether the current window is a satellite (note this method
-   // is also implemeted in the Satellite class -- we don't want this class
+   // is also implemented in the Satellite class -- we don't want this class
    // to depend on Satellite so we duplicate the definition)
    private native boolean isCurrentWindowSatellite() /*-{
       return !!$wnd.isRStudioSatellite;
@@ -361,6 +504,7 @@ public class SatelliteManager implements CloseHandler<Window>
    //}-*/;
    
    private final Session session_;
+   private final EventBus events_;
    private final Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler_;
    private final ArrayList<ActiveSatellite> satellites_ = 
                                           new ArrayList<ActiveSatellite>();

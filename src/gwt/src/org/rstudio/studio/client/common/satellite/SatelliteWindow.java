@@ -81,7 +81,6 @@ public abstract class SatelliteWindow extends Composite
       
       // allow subclasses to initialize
       onInitialize(mainPanel_, params);
-      
    }
 
    @Override

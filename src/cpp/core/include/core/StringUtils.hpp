@@ -172,6 +172,8 @@ inline bool stringNotEmpty(const std::string& str)
 
 void trimLeadingLines(int maxLines, std::string* pLines);
 
+void stripQuotes(std::string* pStr);
+
 } // namespace string_utils
 } // namespace core 
 

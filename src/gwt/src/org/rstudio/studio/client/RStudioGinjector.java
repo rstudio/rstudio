@@ -19,6 +19,7 @@ import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
 import org.rstudio.core.client.widget.CaptionWithHelp;
+import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
@@ -39,10 +40,16 @@ import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
-import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
+import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
+import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
+import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
+import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
+import org.rstudio.studio.client.shiny.ShinyApplication;
+import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
+import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -54,7 +61,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCod
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPreviewHtmlHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 
@@ -73,7 +80,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RnwWeaveSelectWidget selectWidget);
    void injectMembers(CompilePdfProgressDialog compilePdfProgressDialog);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
-   void injectMembers(TextEditingTargetPreviewHtmlHelper previewHtmlHelper);
    void injectMembers(SpellChecker spellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
    void injectMembers(FileExport fileExport);
@@ -85,21 +91,29 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ProjectPopupMenu projectPopupMenu);
    void injectMembers(ClearAllDialog clearAllDialog);
    void injectMembers(TextEditingTargetPresentationHelper presHelper);
+   void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
+   void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
    Application getApplication() ;
    VCSApplication getVCSApplication();
-   PDFViewerApplication getPDFViewerApplication();
    HTMLPreviewApplication getHTMLPreviewApplication();
-   EventBus getEventBus() ;
+   ShinyApplicationSatellite getShinyApplicationSatellite();
+   ShinyApplication getShinyApplication();
+   ShinyViewerTypePopupMenu getShinyViewerTypePopupMenu();
+   RmdOutputSatellite getRmdOutputSatellite();
+   RmdOutputFramePane getRmdOutputFramePane();
+   RmdOutputFrameSatellite getRmdOutputFrameSatellite();
+   EventBus getEventBus();
    GlobalDisplay getGlobalDisplay();
    RemoteFileSystemContext getRemoteFileSystemContext();
    FileDialogs getFileDialogs();
    FileTypeRegistry getFileTypeRegistry();
    RnwWeaveRegistry getRnwWeaveRegistry();
    LatexProgramRegistry getLatexProgramRegistry();
+   RmdTemplateDiscovery getRmdTemplateDiscovery();
    Commands getCommands();
    UIPrefs getUIPrefs();
    Session getSession();

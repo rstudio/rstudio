@@ -13,7 +13,7 @@
  *
  */
 
-#include "ServerSessionProxy.hpp"
+#include <server/ServerSessionProxy.hpp>
 
 #include <vector>
 #include <sstream>
@@ -54,8 +54,10 @@
 #include <server/auth/ServerAuthHandler.hpp>
 
 #include <server/ServerOptions.hpp>
+#include <server/ServerErrorCategory.hpp>
+#include <server/ServerSessionManager.hpp>
 
-#include "ServerSessionManager.hpp"
+#include <server/ServerConstants.hpp>
 
 using namespace core ;
 
@@ -64,16 +66,20 @@ namespace session_proxy {
    
 namespace {
 
-void launchSessionRecovery(const std::string& username)
+Error launchSessionRecovery(const http::Request& request,
+                            const std::string& username)
 {
+   // if this request is marked as requiring an existing
+   // session then return session unavilable error
+   if (requiresSession(request))
+      return Error(server::errc::SessionUnavailableError, ERROR_LOCATION);
+
    // recreate streams dir if necessary
    Error error = session::local_streams::ensureStreamsDir();
    if (error)
       LOG_ERROR(error);
 
-   error = sessionManager().launchSession(username);
-   if (error)
-      LOG_ERROR(error);
+   return sessionManager().launchSession(username);
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
@@ -81,10 +87,22 @@ http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(10);
-   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery, username);
+   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
+                                               _1, username);
    return retryProfile;
 }
 
+ProxyFilter s_proxyFilter;
+
+bool applyProxyFilter(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   if (s_proxyFilter)
+      return s_proxyFilter(username, ptrConnection);
+   else
+      return false;
+}
 
 void handleProxyResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
@@ -125,6 +143,40 @@ private:
    }
 };
 
+
+void rewriteLocalhostAddressHeader(const std::string& headerName,
+                                   const http::Request& originalRequest,
+                                   const std::string& port,
+                                   http::Response* pResponse)
+{
+   // get the address and the proxied address
+   std::string address = pResponse->headerValue(headerName);
+   std::string proxiedAddress = "http://localhost:" + port;
+   std::string portPath = "/p/" + port;
+
+   // relative address, just prepend port
+   if (boost::algorithm::starts_with(address, "/"))
+   {
+      address = portPath + address;
+   }
+   // proxied address, substitute base url
+   else if (boost::algorithm::starts_with(address, proxiedAddress))
+   {
+      // find the base url from the original request
+      std::string originalUri = originalRequest.absoluteUri();
+      std::string::size_type pos = originalUri.find(portPath);
+      if (pos != std::string::npos) // precaution, should always be true
+      {
+          // substitute the base url for the proxied address
+         std::string baseUrl = originalUri.substr(0, pos + portPath.length());
+         address = baseUrl + address.substr(proxiedAddress.length());
+      }
+   }
+
+   // replace the header (no-op if both of the above tests fail)
+   pResponse->replaceHeader(headerName, address);
+}
+
 void handleLocalhostResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<LocalhostAsyncClient> ptrLocalhost,
@@ -150,13 +202,35 @@ void handleLocalhostResponse(
    else
    {   
       // re-write location headers if necessary
-      std::string location = response.headerValue("Location");
-      if (!location.empty())
+      const char * const kLocation = "Location";
+      const char * const kRefresh = "Refresh";
+      std::string location = response.headerValue(kLocation);
+      std::string refresh = response.headerValue(kRefresh);
+      if (!location.empty() || !refresh.empty())
       {
-         location = "/p/" + port + location;
+         // make a copy of the response to rewrite the headers into
          http::Response redirectResponse;
          redirectResponse.assign(response);
-         redirectResponse.setHeader(http::Header("Location", location));
+
+         // handle Location
+         if (!location.empty())
+         {
+            rewriteLocalhostAddressHeader(kLocation,
+                                          ptrConnection->request(),
+                                          port,
+                                          &redirectResponse);
+         }
+
+         // handle Refresh
+         if (!refresh.empty())
+         {
+            rewriteLocalhostAddressHeader(kRefresh,
+                                          ptrConnection->request(),
+                                          port,
+                                          &redirectResponse);
+         }
+
+         // write the copy
          ptrConnection->writeResponse(redirectResponse);
       }
       else
@@ -166,6 +240,23 @@ void handleLocalhostResponse(
    }
 }
 
+void handleLocalhostError(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const Error& error)
+{
+   // if this request required a session then return a standard 503
+   if (http::isConnectionUnavailableError(error) &&
+       requiresSession(ptrConnection->request()))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::ServiceUnavailable);
+      ptrConnection->writeResponse();
+   }
+   else
+   {
+      ptrConnection->writeError(error);
+   }
+}
 
 void logIfNotConnectionTerminated(const Error& error,
                                   const http::Request& request)
@@ -186,6 +277,23 @@ void handleContentError(
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(username);
 
+   // check for authentication error
+   if (server::isAuthenticationError(error))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::Unauthorized);
+      ptrConnection->writeResponse();
+      return;
+   }
+
+   if (server::isSessionUnavailableError(error))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::ServiceUnavailable);
+      ptrConnection->writeResponse();
+      return;
+   }
+
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
 
@@ -193,9 +301,9 @@ void handleContentError(
    // require authentication, otherwise just return service unavailable
    if (http::isConnectionUnavailableError(error))
    {
-      // write service unavailable
+      // write bad gateway
       http::Response& response = ptrConnection->response();
-      response.setStatusCode(http::status::ServiceUnavailable);
+      response.setStatusCode(http::status::BadGateway);
 
       ptrConnection->writeResponse();
    }
@@ -213,6 +321,23 @@ void handleRpcError(
 {
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(username);
+
+   // check for authentication error
+   if (server::isAuthenticationError(error))
+   {
+      json::setJsonRpcError(json::errc::Unauthorized,
+                            &(ptrConnection->response()));
+      ptrConnection->writeResponse();
+      return;
+   }
+
+   if (server::isSessionUnavailableError(error))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::ServiceUnavailable);
+      ptrConnection->writeResponse();
+      return;
+   }
 
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
@@ -243,8 +368,17 @@ void handleEventsError(
    // distinguish connection error as (expected) "Unavailable" error state
    if (http::isConnectionUnavailableError(error))
    {
-      json::setJsonRpcError(json::errc::Unavailable,
-                            &(ptrConnection->response())) ;
+      // if this request required a session then return a standard 503
+      if (requiresSession(ptrConnection->request()))
+      {
+         http::Response& response = ptrConnection->response();
+         response.setStatusCode(http::status::ServiceUnavailable);
+      }
+      else
+      {
+         json::setJsonRpcError(json::errc::Unavailable,
+                              &(ptrConnection->response()));
+      }
    }
    else
    {
@@ -263,13 +397,14 @@ void proxyRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::ErrorHandler& errorHandler,
-      const http::ConnectionRetryProfile& connectionRetryProfile =
-                                             http::ConnectionRetryProfile())
+      const http::ConnectionRetryProfile& connectionRetryProfile)
 {
-   // calculate stream path
-   FilePath streamPath = session::local_streams::streamPath(username);
+   // apply optional proxy filter
+   if (applyProxyFilter(username, ptrConnection))
+      return;
 
    // create async client
+   FilePath streamPath = session::local_streams::streamPath(username);
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
     new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath));
 
@@ -381,13 +516,18 @@ void proxyEventsRequest(
 
    proxyRequest(username,
                 ptrConnection,
-                boost::bind(handleEventsError, ptrConnection, _1));
+                boost::bind(handleEventsError, ptrConnection, _1),
+                http::ConnectionRetryProfile());
 }
 
 void proxyLocalhostRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
+   // apply optional proxy filter
+   if (applyProxyFilter(username, ptrConnection))
+      return;
+
    // make a copy of the request for forwarding
    http::Request request;
    request.assign(ptrConnection->request());
@@ -397,8 +537,7 @@ void proxyLocalhostRequest(
    boost::smatch match;
    if (!boost::regex_search(request.uri(), match, re))
    {
-      ptrConnection->response().setError(http::status::NotFound,
-                                         request.uri() + " not found");
+      ptrConnection->response().setNotFoundError(request.uri());
       return;
    }
    std::string port = match[1];
@@ -408,6 +547,9 @@ void proxyLocalhostRequest(
    std::string portPath = match[0];
    std::string uri = replace_first_copy(request.uri(), portPath, "/");
    request.setUri(uri);
+
+   // set the host
+   request.setHost("localhost:" + port);
 
    // remove headers to be a correctly behaving proxy
    request.removeHeader("Keep-Alive");
@@ -432,8 +574,17 @@ void proxyLocalhostRequest(
    // execute request
    pClient->execute(
          boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, _1),
-         boost::bind(&core::http::AsyncConnection::writeError,
-                     ptrConnection, _1));
+         boost::bind(handleLocalhostError, ptrConnection, _1));
+}
+
+bool requiresSession(const http::Request& request)
+{
+   return !request.headerValue(kRStudioSessionRequiredHeader).empty();
+}
+
+void setProxyFilter(ProxyFilter filter)
+{
+   s_proxyFilter = filter;
 }
 
 } // namespace session_proxy

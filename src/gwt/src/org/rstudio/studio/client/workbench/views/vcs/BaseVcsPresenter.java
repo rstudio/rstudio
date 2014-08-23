@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.vcs;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 public abstract class BaseVcsPresenter extends BasePresenter
 {
@@ -42,4 +43,7 @@ public abstract class BaseVcsPresenter extends BasePresenter
    public abstract void showDiff(FileSystemItem file);
    
    public abstract void revertFile(FileSystemItem file);
+   
+   public abstract void viewOnGitHub(GitHubViewRequest viewRequest);
+   
 }

@@ -18,6 +18,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -42,10 +43,12 @@ public class Satellite implements HasCloseHandlers<Satellite>
    @Inject
    public Satellite(Session session,
                     EventBus eventBus,
+                    Commands commands,
                     Provider<UIPrefs> pUIPrefs)
    {
       session_ = session;
       pUIPrefs_ = pUIPrefs;
+      commands_ = commands;
       eventDispatcher_ = new ClientEventDispatcher(eventBus);
    }
    
@@ -81,6 +84,11 @@ public class Satellite implements HasCloseHandlers<Satellite>
    {
       handlerManager_.fireEvent(event);
    }
+   
+   public boolean isReactivatePending()
+   {
+      return pendingReactivate_;
+   }
 
    public native final void flushPendingEvents(String name) /*-{
       $wnd.opener.flushPendingEvents(name);
@@ -112,6 +120,8 @@ public class Satellite implements HasCloseHandlers<Satellite>
       // export notifyReactivated callback
       $wnd.notifyRStudioSatelliteReactivated = $entry(
          function(params) {
+            if (params == null)
+               return;  
             satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyReactivated(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
          }
       ); 
@@ -119,6 +129,8 @@ public class Satellite implements HasCloseHandlers<Satellite>
           
       // export notifyClosing
       $wnd.notifyRStudioSatelliteClosing = $entry(function() {
+         // see remarks in WindowEx::isClosed
+         $wnd.rstudioSatelliteClosed = true;
          satellite.@org.rstudio.studio.client.common.satellite.Satellite::fireCloseEvent()();
       });
         
@@ -129,6 +141,18 @@ public class Satellite implements HasCloseHandlers<Satellite>
          }
       ); 
       
+      // export command notification callback
+      $wnd.dispatchCommandToRStudioSatellite = $entry(
+         function(commandId) {
+            satellite.@org.rstudio.studio.client.common.satellite.Satellite::dispatchCommand(Ljava/lang/String;)(commandId);
+         }
+      ); 
+      
+      // export request activation callback
+      $wnd.notifyPendingReactivate = $entry(function() {
+         satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingReactivate()();
+      });
+
       // register (this will call the setSessionInfo back)
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
    }-*/;
@@ -183,13 +207,13 @@ public class Satellite implements HasCloseHandlers<Satellite>
       params_ = params;
    }
    
-   
    // called by main window to notify us of reactivation with a new
    // set of params
    private void notifyReactivated(JavaScriptObject params)
    {
       if (onReactivated_ != null)
          onReactivated_.execute(params);
+      pendingReactivate_ = false;
    }
    
    private void fireCloseEvent()
@@ -203,11 +227,24 @@ public class Satellite implements HasCloseHandlers<Satellite>
       eventDispatcher_.enqueEventAsJso(clientEvent);
    }
    
+   // called by main window to deliver commands
+   private void dispatchCommand(String commandId)
+   {  
+      commands_.getCommandById(commandId).execute();
+   }
+   
+   // called by the main window to notify us that we're about to be reactivated
+   private void notifyPendingReactivate()
+   {
+      pendingReactivate_ = true;
+   }
    
    private final Session session_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final ClientEventDispatcher eventDispatcher_;
    private final HandlerManager handlerManager_ = new HandlerManager(this);
+   private final Commands commands_;
+   private boolean pendingReactivate_ = false;
    private JavaScriptObject params_ = null;
    private CommandWithArg<JavaScriptObject> onReactivated_ = null;
 }

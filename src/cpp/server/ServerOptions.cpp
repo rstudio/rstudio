@@ -207,6 +207,9 @@ ProgramStatus Options::read(int argc,
         value<bool>(&authValidateUsers_)->default_value(
                                  core::system::effectiveUserIsRoot()),
         "validate that authenticated users exist on the target system")
+      ("auth-encrypt-password",
+        value<bool>(&authEncryptPassword_)->default_value(true),
+        "encrypt password sent from login form")
       ("auth-required-user-group",
         value<std::string>(&authRequiredUserGroup_)->default_value(""),
         "limit to users belonging to the specified group")

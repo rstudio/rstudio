@@ -151,8 +151,14 @@ protected:
       // retry if necessary, otherwise just forward the error to
       // customary error handling scheme
 
-      if (!retryConnectionIfRequired(connectionError))
-         handleError(connectionError);
+      Error otherError;
+      if (!retryConnectionIfRequired(connectionError, &otherError))
+      {
+         if (otherError)
+            handleError(otherError);
+         else
+            handleError(connectionError);
+      }
    }
 
    // asynchronously write the request (called by subclasses after
@@ -199,7 +205,8 @@ private:
    virtual void connectAndWriteRequest() = 0;
 
 
-   bool retryConnectionIfRequired(const Error& connectionError)
+   bool retryConnectionIfRequired(const Error& connectionError,
+                                  Error* pOtherError)
    {
       // retry if this is a connection unavailable error and the
       // caller has provided a connection retry profile
@@ -215,7 +222,15 @@ private:
                   connectionRetryContext_.profile.maxWait;
 
             if (connectionRetryContext_.profile.recoveryFunction)
-               connectionRetryContext_.profile.recoveryFunction();
+            {
+               Error error = connectionRetryContext_.profile
+                                      .recoveryFunction(request_);
+               if (error)
+               {
+                  *pOtherError = error;
+                  return false;
+               }
+            }
          }
 
          // if we aren't alrady past the maximum wait time then

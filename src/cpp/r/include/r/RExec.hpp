@@ -173,11 +173,14 @@ public:
       params_.push_back(Param(name, paramSEXP));
    }
                         
-   core::Error call(SEXP evalNS = R_GlobalEnv);
+   core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
+   core::Error callUnsafe();
 
    core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
    core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
- 
+   core::Error call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
+                    sexp::Protect* pProtect);
+
    template <typename T>
    core::Error call(T* pValue)
    {
@@ -226,6 +229,8 @@ private:
 
 void warning(const std::string& warning);
    
+void message(const std::string& message);
+
 // special exception type used to raise R errors. allows for correct
 // exiting from c++ context (with destructors called, etc.) while still
 // propagating the error to a point where it will be re-raised to r

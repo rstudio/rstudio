@@ -18,11 +18,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
@@ -34,15 +36,20 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
@@ -51,14 +58,19 @@ import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class Workbench implements BusyHandler,
                                   ShowErrorMessageHandler,
+                                  UserPromptHandler,
                                   ShowWarningBarHandler,
                                   BrowseUrlHandler,
                                   QuotaStatusHandler,
                                   WorkbenchLoadedHandler,
-                                  WorkbenchMetricsChangedHandler
+                                  WorkbenchMetricsChangedHandler,
+                                  InstallRtoolsEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -75,11 +87,15 @@ public class Workbench implements BusyHandler,
                     FileDialogs fileDialogs,
                     FileTypeRegistry fileTypeRegistry,
                     ConsoleDispatcher consoleDispatcher,
+                    Provider<GitState> pGitState,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
                     PDFViewer pdfViewer,     // required to force gin to create
                     HTMLPreview htmlPreview, // required to force gin to create
-                    ProfilerPresenter prof)  // required to force gin to create
+                    ProfilerPresenter prof,  // required to force gin to create
+                    ShinyApplication sApp,   // required to force gin to create
+                    DependencyManager dm,    // required to force gin to create
+                    RmdOutput rmdOutput)     // required to force gin to create    
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -93,17 +109,20 @@ public class Workbench implements BusyHandler,
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
+      pGitState_ = pGitState;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
       // edit
       eventBus.addHandler(BusyEvent.TYPE, this);
       eventBus.addHandler(ShowErrorMessageEvent.TYPE, this);
+      eventBus.addHandler(UserPromptEvent.TYPE, this);
       eventBus.addHandler(ShowWarningBarEvent.TYPE, this);
       eventBus.addHandler(BrowseUrlEvent.TYPE, this);
       eventBus.addHandler(QuotaStatusEvent.TYPE, this);
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
+      eventBus.addHandler(InstallRtoolsEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -135,6 +154,28 @@ public class Workbench implements BusyHandler,
       
       // check for init messages
       checkForInitMessages();
+      
+      if (Desktop.isDesktop() && 
+          session_.getSessionInfo().getVcsName().equals(VCSConstants.GIT_ID))
+      {
+         pGitState_.get().addVcsRefreshHandler(new VcsRefreshHandler() {
+   
+            @Override
+            public void onVcsRefresh(VcsRefreshEvent event)
+            {
+               FileSystemItem projDir = workbenchContext_.getActiveProjectDir();
+               if (projDir != null)
+               {
+                  String title = projDir.getPath();
+                  String branch = pGitState_.get().getBranchInfo()
+                                                        .getActiveBranch();
+                  if (branch != null)
+                     title = title + " - " + branch;
+                  Desktop.getFrame().setWindowTitle(title);
+               }
+            }
+         });
+      }
       
    }
    
@@ -340,23 +381,77 @@ public class Workbench implements BusyHandler,
    
    private void checkForInitMessages()
    {
-      server_.getInitMessages(new ServerRequestCallback<String>() {
-         @Override
-         public void onResponseReceived(String message) 
-         {
-            if (message != null)
-               globalDisplay_.showWarningBar(false, message);
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            // ignore
-         }
-      });
+      // only check for init messages in server mode
+      if (!Desktop.isDesktop())
+      {
+         server_.getInitMessages(new ServerRequestCallback<String>() {
+            @Override
+            public void onResponseReceived(String message) 
+            {
+               if (message != null)
+                  globalDisplay_.showWarningBar(false, message);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               // ignore
+            }
+         });
+      }
    }
     
-
+   
+   public void onUserPrompt(UserPromptEvent event)
+   {
+      // is cancel supported?
+      UserPrompt userPrompt = event.getUserPrompt();
+                
+      // resolve labels
+      String yesLabel = userPrompt.getYesLabel();
+      if (StringUtil.isNullOrEmpty(yesLabel))
+         yesLabel = "Yes";
+      String noLabel = userPrompt.getNoLabel();
+      if (StringUtil.isNullOrEmpty(noLabel))
+         noLabel = "No";
+         
+      // show dialog
+      globalDisplay_.showYesNoMessage(
+                 userPrompt.getType(),
+                 userPrompt.getCaption(),
+                 userPrompt.getMessage(),
+                 userPrompt.getIncludeCancel(),
+                 userPromptResponse(UserPrompt.RESPONSE_YES),
+                 userPromptResponse(UserPrompt.RESPONSE_NO),
+                 userPrompt.getIncludeCancel() ?
+                       userPromptResponse(UserPrompt.RESPONSE_CANCEL) : null,
+                 yesLabel, 
+                 noLabel, 
+                 userPrompt.getYesIsDefault());
+   }
+   
+   private Operation userPromptResponse(final int response)
+   {
+      return new Operation() {
+         public void execute()
+         {
+            server_.userPromptCompleted(response, 
+                                        new SimpleRequestCallback<Void>());
+            
+         }
+      };
+   }
+   
+   @Override
+   public void onInstallRtools(final InstallRtoolsEvent event)
+   {
+      if (BrowseCap.isWindowsDesktop())
+      {
+         Desktop.getFrame().installRtools(event.getVersion(),
+                                          event.getInstallerPath());  
+      }
+   }
+  
    private final Server server_;
    private final EventBus eventBus_;
    private final Session session_;
@@ -369,6 +464,7 @@ public class Workbench implements BusyHandler,
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
+   private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false; 

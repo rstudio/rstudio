@@ -24,12 +24,18 @@
 #include "DesktopWebPage.hpp"
 #include "DesktopUtils.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <wingdi.h>
+#endif
 
 namespace desktop {
 
 WebView::WebView(QUrl baseUrl, QWidget *parent) :
     QWebView(parent),
-    baseUrl_(baseUrl)
+    baseUrl_(baseUrl),
+    pWebInspector_(NULL),
+    dpiZoomScaling_(getDpiZoomScaling())
 {
 #ifdef Q_WS_X11
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
@@ -37,6 +43,15 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
 #endif
    pWebPage_ = new WebPage(baseUrl, this);
    setPage(pWebPage_);
+
+   // QWebView can create its own QWebInspector instance, but it doesn't always
+   // destroy it correctly if the inspector is open when the associated browser
+   // window is closed (see case 3889), leading to a crash. To work around this,
+   // we create our own unbound web inspector, and clean it up manually when the
+   // WebView closes.
+   pWebInspector_ = new QWebInspector();
+   pWebInspector_->setVisible(false);
+   pWebInspector_->setPage(pWebPage_);
 
    page()->setForwardUnsupportedContent(true);
    if (desktop::options().webkitDevTools())
@@ -53,7 +68,6 @@ void WebView::setBaseUrl(const QUrl& baseUrl)
    baseUrl_ = baseUrl;
    pWebPage_->setBaseUrl(baseUrl_);
 }
-
 
 void WebView::activateSatelliteWindow(QString name)
 {
@@ -237,6 +251,33 @@ void WebView::openFile(QString fileName)
 #endif
 
    QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
+}
+
+// QWebView doesn't respect the system DPI and always renders as though
+// it were at 96dpi. To work around this, we take the user-specified zoom level
+// and scale it by a DPI-determined constant before applying it to the view.
+// See: https://bugreports.qt-project.org/browse/QTBUG-29571
+void WebView::setDpiAwareZoomFactor(qreal factor)
+{
+   setZoomFactor(factor * dpiZoomScaling_);
+}
+
+qreal WebView::dpiAwareZoomFactor()
+{
+   return zoomFactor() / dpiZoomScaling_;
+}
+
+void WebView::closeEvent(QCloseEvent*)
+{
+   // When the webview closes, preemptively destroy the associated web
+   // inspector, if we have one.
+   if (pWebInspector_ != NULL)
+   {
+      pWebInspector_->setVisible(false);
+      pWebInspector_->disconnect();
+      pWebInspector_->deleteLater();
+      pWebInspector_ = NULL;
+   }
 }
 
 } // namespace desktop

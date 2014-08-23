@@ -77,8 +77,11 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
       else if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
       {
          moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
-         moreMenu.addSeparator();
          moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
+         moreMenu.addSeparator();
+         moreMenu.addItem(commands_.testPackage().createMenuItem(false));
+         moreMenu.addSeparator();
+         moreMenu.addItem(commands_.checkPackage().createMenuItem(false));
          moreMenu.addSeparator();
          moreMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
          moreMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));

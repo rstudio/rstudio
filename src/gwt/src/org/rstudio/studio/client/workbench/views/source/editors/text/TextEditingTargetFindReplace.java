@@ -77,6 +77,20 @@ public class TextEditingTargetFindReplace
    
    public void showFindReplace(boolean defaultForward)
    {
+      ensureFindReplaceBar(defaultForward);
+      
+      String selection = container_.getEditor().getSelectionValue();
+      boolean multiLineSelection = selection.indexOf('\n') != -1;
+      
+      String searchText = null;
+      if ((selection.length() != 0) && !multiLineSelection)
+         searchText = selection;
+      
+      findReplace_.activate(searchText, defaultForward, multiLineSelection);
+   }
+
+   private void ensureFindReplaceBar(boolean defaultForward)
+   {
       if (findReplaceBar_ == null)
       {
          findReplaceBar_ = new FindReplaceBar(showReplace_, defaultForward);
@@ -96,15 +110,6 @@ public class TextEditingTargetFindReplace
 
          findReplaceButton_.setLeftImage(FindReplaceBar.getFindLatchedIcon());
       }
-      
-      String selection = container_.getEditor().getSelectionValue();
-      boolean multiLineSelection = selection.indexOf('\n') != -1;
-      
-      String searchText = null;
-      if ((selection.length() != 0) && !multiLineSelection)
-         searchText = selection;
-      
-      findReplace_.activate(searchText, defaultForward, multiLineSelection);
    }
    
    public boolean isShowing()
@@ -135,6 +140,18 @@ public class TextEditingTargetFindReplace
    {
       if (findReplace_ != null)
          findReplace_.findPrevious();
+   }
+   
+   public void findFromSelection()
+   {
+      String selection = container_.getEditor().getSelectionValue();
+      boolean multiLineSelection = selection.indexOf('\n') != -1;
+      if ((selection.length()) > 0 && !multiLineSelection)
+      {
+         ensureFindReplaceBar(true);
+         findReplace_.activate(selection, true, false);
+         findReplace_.findNext();
+      }
    }
    
    public void replaceAndFind()

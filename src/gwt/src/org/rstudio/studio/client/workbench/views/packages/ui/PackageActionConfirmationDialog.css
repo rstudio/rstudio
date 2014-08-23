@@ -1,0 +1,15 @@
+
+
+.mainWidget {
+   height: 300px;
+   border: 1px solid #BBB;  
+   background-color: white;
+}
+
+.explanatoryText, .mainWidget {
+   width: 450px;
+}
+
+.explanatoryText {
+	margin-bottom: 15px;
+}

@@ -16,21 +16,26 @@ package org.rstudio.core.client.theme;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.DoubleClickState;
+import org.rstudio.core.client.widget.model.ProvidesBusy;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
+import org.rstudio.studio.client.workbench.events.BusyHandler;
 
 public class ModuleTabLayoutPanel extends TabLayoutPanel
 {
-   public static class ModuleTab extends Composite
+   public static class ModuleTab extends Composite implements BusyHandler
    {
       public ModuleTab(String title, ThemeStyles styles, boolean canClose)
       {
@@ -84,8 +89,41 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          return closeButton_.addClickHandler(handler);
       }
 
+      @Override
+      public void onBusy(BusyEvent event)
+      {
+         setBusy(event.isBusy());
+      }
+      
+      private void setBusy(boolean isBusy)
+      {
+         if (isBusy)
+         {
+            if (busyImage_ == null)
+            {
+               busyImage_ = new Image(ThemeResources.INSTANCE.busyTab());
+               busyImage_.setHeight("9px");
+               busyImage_.setWidth("9px");
+               busyImage_.getElement().getStyle().setMarginLeft(4, Unit.PX);
+               busyImage_.getElement().getStyle().setMarginTop(6, Unit.PX);
+               HorizontalPanel center = (HorizontalPanel)closeButton_.getParent();
+               if (center != null)
+                  center.add(busyImage_);
+            }
+            closeButton_.setVisible(false);
+            busyImage_.setVisible(true);
+         }
+         else
+         {
+            if (busyImage_ != null)
+              busyImage_.setVisible(false);
+            closeButton_.setVisible(true);
+         }
+      }
+
       private HorizontalPanel layoutPanel_;
       private Image closeButton_;
+      private Image busyImage_;
    }
 
    public ModuleTabLayoutPanel(final WindowFrame owner)
@@ -137,8 +175,14 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       add(child, text, asHtml, null);
    }
 
-   public void add(final Widget child, String text, boolean asHtml,
+   public void add(Widget child, String text, boolean asHtml, 
                    ClickHandler closeHandler)
+   {
+      add(child, text, asHtml, closeHandler, null);
+   }
+
+   public void add(final Widget child, String text, boolean asHtml,
+                   ClickHandler closeHandler, ProvidesBusy providesBusy)
    {
       if (asHtml)
          throw new UnsupportedOperationException("HTML tab names not supported");
@@ -148,6 +192,9 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 
       if (closeHandler != null)
          tab.addCloseButtonClickHandler(closeHandler);
+      
+      if (providesBusy != null)
+         providesBusy.addBusyHandler(tab);
    }
 
    @Override

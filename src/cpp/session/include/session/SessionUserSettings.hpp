@@ -89,11 +89,14 @@ public:
    // readers for ui prefs
    bool useSpacesForTab() const;
    int numSpacesForTab() const;
+   bool autoAppendNewline() const;
+   bool stripTrailingWhitespace() const;
    std::string defaultEncoding() const;
    std::string defaultSweaveEngine() const;
    std::string defaultLatexProgram() const;
    bool alwaysEnableRnwCorcordance() const;
    bool handleErrorsInUserCodeOnly() const;
+   int shinyViewerType() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -161,6 +164,9 @@ public:
    int errorHandlerType() const;
    void setErrorHandlerType(int type);
 
+   bool useDevtools() const;
+   void setUseDevtools(bool useDevtools);
+
 private:
 
    void onSettingsFileChanged(
@@ -188,6 +194,8 @@ private:
    // cached prefs values
    mutable boost::scoped_ptr<bool> pUseSpacesForTab_;
    mutable boost::scoped_ptr<int> pNumSpacesForTab_;
+   mutable boost::scoped_ptr<bool> pAutoAppendNewline_;
+   mutable boost::scoped_ptr<bool> pStripTrailingWhitespace_;
    mutable boost::scoped_ptr<std::string> pDefaultEncoding_;
    mutable boost::scoped_ptr<std::string> pDefaultSweaveEngine_;
    mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;
@@ -195,6 +203,7 @@ private:
    mutable boost::scoped_ptr<std::string> pSpellingLanguage_;
    mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
+   mutable boost::scoped_ptr<int> pShinyViewerType_;
 };
    
 } // namespace session

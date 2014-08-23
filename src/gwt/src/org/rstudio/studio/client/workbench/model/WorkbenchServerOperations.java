@@ -20,12 +20,15 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperati
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.debugging.DebuggingServerOperations;
+import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -76,7 +79,10 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    DebuggingServerOperations,
                                                    MetaServerOperations,
                                                    ViewerServerOperations,
-                                                   ProfilerServerOperations
+                                                   ProfilerServerOperations,
+                                                   RMarkdownServerOperations,
+                                                   DependencyServerOperations,
+                                                   PackratServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();
