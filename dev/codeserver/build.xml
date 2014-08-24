@@ -14,7 +14,8 @@
     </gwt.javac>
   </target>
 
-  <target name="compile.tests" description="Compile java source">
+  <target name="compile.tests" depends="compile"
+          description="Compile tests java source">
     <mkdir dir="${javac.junit.out}" />
     <javac destdir="${javac.junit.out}">
       <src path="java" />
