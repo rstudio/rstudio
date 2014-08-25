@@ -25,11 +25,10 @@ import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Stack;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,20 +41,19 @@ public class JsDuplicateFunctionRemover {
 
   private class DuplicateFunctionBodyRecorder extends JsVisitor {
 
-    private final Set<JsName> dontReplace = new IdentityHashSet<JsName>();
+    private final Set<JsName> dontReplace = Sets.newIdentityHashSet();
 
-    private final Map<JsName, JsName> duplicateOriginalMap = new IdentityHashMap<JsName, JsName>();
+    private final Map<JsName, JsName> duplicateOriginalMap = Maps.newIdentityHashMap();
 
-    private final Map<JsFunction, JsFunction> duplicateMethodOriginalMap = new IdentityHashMap<JsFunction, JsFunction>();
-
+    private final Map<JsFunction, JsFunction> duplicateMethodOriginalMap = Maps.newLinkedHashMap();
 
     private final Stack<JsNameRef> invocationQualifiers = new Stack<JsNameRef>();
 
     // static / global methods
-    private final Map<String, JsName> uniqueBodies = new HashMap<String, JsName>();
+    private final Map<String, JsName> uniqueBodies = Maps.newHashMap();
 
     // vtable methods
-    private final Map<String, JsFunction> uniqueMethodBodies = new HashMap<String, JsFunction>();
+    private final Map<String, JsFunction> uniqueMethodBodies = Maps.newHashMap();
 
     public DuplicateFunctionBodyRecorder() {
       // Add sentinel to stop Stack.peek() from throwing exception.
@@ -245,7 +243,7 @@ public class JsDuplicateFunctionRemover {
 
       DuplicateFunctionBodyRecorder dfbr = new DuplicateFunctionBodyRecorder();
       dfbr.accept(fragment);
-      Map<JsFunction, JsName> newNamesByHoistedFunction = new HashMap<JsFunction, JsName>();
+      Map<JsFunction, JsName> newNamesByHoistedFunction = Maps.newHashMap();
       // Hoist all anonymous duplicate functions.
       Map<JsFunction, JsFunction> dupMethodMap = dfbr.getDuplicateMethodMap();
       for (JsFunction dupMethod : dupMethodMap.values()) {

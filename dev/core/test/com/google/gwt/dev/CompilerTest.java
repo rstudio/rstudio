@@ -45,6 +45,9 @@ import java.util.Set;
 public class CompilerTest extends ArgProcessorTestBase {
 
   public static final String GWT_PERSISTENTUNITCACHE = "gwt.persistentunitcache";
+  public static final String HELLO_MODULE = "com.google.gwt.sample.hello.Hello";
+  public static final String HELLO_MODULE_STACKMODE_STRIP =
+      "com.google.gwt.sample.hello.Hello_stackMode_strip";
   private final Compiler.ArgProcessor argProcessor;
   private final CompilerOptionsImpl options = new CompilerOptionsImpl();
 
@@ -391,16 +394,22 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7b3"));
   }
 
+  public void testDeterministicBuild_Draft_StackModeStrip() throws
+      UnableToCompleteException, IOException {
+    assertDeterministicBuild(HELLO_MODULE_STACKMODE_STRIP, 0);
+  }
+
+  public void testDeterministicBuild_Optimized_StackModeStrip() throws
+      UnableToCompleteException, IOException {
+    assertDeterministicBuild(HELLO_MODULE_STACKMODE_STRIP, 9);
+  }
+
   public void testDeterministicBuild_Draft() throws UnableToCompleteException, IOException {
-    final CompilerOptionsImpl options = new CompilerOptionsImpl();
-    options.setOptimizationLevel(0);
-    assertDeterministicBuild(options);
+    assertDeterministicBuild(HELLO_MODULE, 0);
   }
 
   public void testDeterministicBuild_Optimized() throws UnableToCompleteException, IOException {
-    final CompilerOptionsImpl options = new CompilerOptionsImpl();
-    options.setOptimizationLevel(9);
-    assertDeterministicBuild(options);
+    assertDeterministicBuild(HELLO_MODULE, 9);
   }
 
   // TODO(stalcup): add recompile tests for file deletion.
@@ -631,13 +640,17 @@ public class CompilerTest extends ArgProcessorTestBase {
         outputOption);
   }
 
-  private void assertDeterministicBuild(CompilerOptions options)
+  private void assertDeterministicBuild(String topLevelModule, int optimizationLevel)
       throws UnableToCompleteException, IOException {
+
+    final CompilerOptionsImpl options = new CompilerOptionsImpl();
+    options.setOptimizationLevel(optimizationLevel);
+
     File firstCompileWorkDir = Utility.makeTemporaryDirectory(null, "hellowork");
     File secondCompileWorkDir = Utility.makeTemporaryDirectory(null, "hellowork");
     String oldPersistentUnitCacheValue = System.setProperty(GWT_PERSISTENTUNITCACHE, "false");
     try {
-      options.addModuleName("com.google.gwt.sample.hello.Hello");
+      options.addModuleName(topLevelModule);
       options.setWarDir(new File(firstCompileWorkDir, "war"));
       options.setExtraDir(new File(firstCompileWorkDir, "extra"));
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
