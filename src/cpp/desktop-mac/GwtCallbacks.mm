@@ -141,6 +141,14 @@ private:
                          [filter rangeOfString: @"*."].location + 2];
       NSString* fromExt = [toExt substringToIndex:
                            [toExt rangeOfString: @")"].location];
+      
+      // If we have the extension equal to 'Rproj', then use the
+      // Uniform Type Identifier (UTI) associated with it
+      if ([[fromExt lowercaseString] isEqualTo: @"rproj"])
+      {
+         fromExt = @"dyn.ah62d4rv4ge81e6dwr7za";
+      }
+      
       [open setAllowedFileTypes: [NSArray arrayWithObject: fromExt]];
    }
    return [self runSheetFileDialog: open];
