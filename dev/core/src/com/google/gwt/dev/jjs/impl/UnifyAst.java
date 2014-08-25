@@ -457,7 +457,25 @@ public class UnifyAst {
     private JExpression createStaticRebindExpression(JMethodCall gwtCreateCall,
         JClassLiteral classLiteral) {
       JDeclaredType type = (JDeclaredType) classLiteral.getRefType();
-      String reqType = BinaryName.toSourceName(type.getName());
+      String reboundTypeName = type.getName();
+      // TODO(stalcup): below a MinimalRebuildCache pattern of "clear cache entries for a type" and
+      // "rebuild cache entries for that type" is followed. There is a danger that a compile error
+      // could occur between the two stages and leave the cache in an invalid state. Switch to a
+      // transactionally safe update pattern like always updating a copy and swapping out the
+      // original for the copy at the end of a successful compile.
+      if (compilePerFile) {
+        // If this is the first time we've rebound this type during this compile.
+        if (reboundTypeNames.add(reboundTypeName)) {
+          // The rebinding of this type will accumulate rebound type to input resource associations,
+          // but the accumulation should start from scratch, so clear any existing associations that
+          // might have been collected in previous compiles.
+          minimalRebuildCache.clearReboundTypeAssociations(reboundTypeName);
+        }
+        minimalRebuildCache.recordRebinderTypeForReboundType(reboundTypeName,
+            currentMethod.getEnclosingType().getName());
+        rpo.getGeneratorContext().setCurrentRebindBinaryTypeName(reboundTypeName);
+      }
+      String reqType = BinaryName.toSourceName(reboundTypeName);
       List<String> answers;
       try {
         answers = Lists.create(rpo.getAllPossibleRebindAnswers(logger, reqType));
@@ -641,6 +659,7 @@ public class UnifyAst {
   private final Map<String, JMethod> methodMap = new HashMap<String, JMethod>();
   private final JProgram program;
   private final RebindPermutationOracle rpo;
+  private final Set<String> reboundTypeNames = Sets.newHashSet();
 
   /**
    * The names of types whose per-file compilation cached Js and StatementRanges are known to no
@@ -1107,6 +1126,10 @@ public class UnifyAst {
   private void fullFlowIntoType(JDeclaredType type) {
     String typeName = type.getName();
     if (!fullFlowTypes.contains(typeName) && !typeName.endsWith("package-info")) {
+      // The traversal of this type will accumulate rebinder type to rebound type associations, but
+      // the accumulation should start from scratch, so clear any existing associations that might
+      // have been collected in previous compiles.
+      minimalRebuildCache.clearRebinderTypeAssociations(type.getName());
       fullFlowTypes.add(type.getName());
       instantiate(type);
       for (JField field : type.getFields()) {

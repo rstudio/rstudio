@@ -16,6 +16,7 @@
 package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.impl.ResourceLocatorImpl;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.resource.Resource;
@@ -464,9 +465,20 @@ public class ResourceOracleImpl implements ResourceOracle {
     return pathPrefixSet;
   }
 
+  @Deprecated
   @Override
   public Map<String, Resource> getResourceMap() {
     return exposedResourceMap;
+  }
+
+  @Override
+  public Resource getResource(String pathName) {
+    return getResourceMap().get(pathName);
+  }
+
+  @Override
+  public InputStream getResourceAsStream(String pathName) {
+    return ResourceLocatorImpl.toStreamOrNull(getResource(pathName));
   }
 
   @Override

@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.elementparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsStub;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
@@ -35,9 +36,10 @@ class MockUiBinderWriter extends UiBinderWriter {
 
   public MockUiBinderWriter(JClassType baseClass, String implClassName, String templatePath,
       TypeOracle oracle, MortalLogger logger, FieldManager fieldManager,
-      MessagesWriter messagesWriter, String binderUri) throws UnableToCompleteException {
+      MessagesWriter messagesWriter, String binderUri, ResourceOracle resourceOracle)
+      throws UnableToCompleteException {
     super(baseClass, implClassName, templatePath, oracle, logger, fieldManager, messagesWriter,
-        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, false, binderUri);
+        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, false, binderUri, resourceOracle);
   }
 
   @Override

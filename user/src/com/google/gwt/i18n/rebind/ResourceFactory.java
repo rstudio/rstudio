@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.StringKey;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
@@ -71,21 +72,9 @@ public abstract class ResourceFactory {
     loaders.add(new LocalizedPropertiesResource.Factory());
   }
 
-  /**
-   * 
-   * @param logger
-   * @param topClass
-   * @param bundleLocale
-   * @param isConstants
-   * @param resourceMap a map of available {@link Resource Resources} by partial
-   *          path; obtain this by calling
-   *          {@link com.google.gwt.core.ext.GeneratorContext#getResourcesOracle()}.{@link com.google.gwt.dev.resource.ResourceOracle#getResourceMap() getResourceMap()}
-   * @param genCtx
-   * @return resource list
-   */
   public static synchronized ResourceList getBundle(TreeLogger logger,
       JClassType topClass, GwtLocale bundleLocale, boolean isConstants,
-      Map<String, Resource> resourceMap, GeneratorContext genCtx) {
+      GeneratorContext genCtx) {
     List<GwtLocale> locales = bundleLocale.getCompleteSearchList();
     List<JClassType> classes = new ArrayList<JClassType>();
     Set<JClassType> seenClasses = new IdentityHashSet<JClassType>();
@@ -105,7 +94,7 @@ public abstract class ResourceFactory {
         resources = localizableCtx.getResourceList(key);
         if (resources == null) {
           resources = new ResourceList();
-          addFileResources(logger, clazz, locale, resourceMap, resources);
+          addFileResources(logger, clazz, locale, genCtx.getResourcesOracle(), resources);
           AnnotationsResource annotationsResource = annotations.get(key);
           if (annotationsResource != null) {
             resources.add(annotationsResource);
@@ -135,7 +124,7 @@ public abstract class ResourceFactory {
   }
 
   private static void addFileResources(TreeLogger logger, JClassType clazz, GwtLocale locale,
-      Map<String, Resource> resourceMap, ResourceList resources) {
+      ResourceOracle resourceOracle, ResourceList resources) {
     // TODO: handle classes in the default package?
     String targetPath = clazz.getPackage().getName() + '.'
         + getResourceName(clazz);
@@ -149,12 +138,12 @@ public abstract class ResourceFactory {
       ResourceFactory element = loaders.get(i);
       String ext = "." + element.getExt();
       String path = partialPath + ext;
-      Resource resource = resourceMap.get(path);
+      Resource resource = resourceOracle.getResource(path);
       if (resource == null && partialPath.contains("$")) {
         // Also look for A_B for inner classes, as $ in path names
         // can cause issues for some build tools.
         path = partialPath.replace('$', '_') + ext;
-        resource = resourceMap.get(path);
+        resource = resourceOracle.getResource(path);
       }
       if (resource != null) {
         InputStream resourceStream = null;

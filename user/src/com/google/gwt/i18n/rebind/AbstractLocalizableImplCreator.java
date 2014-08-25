@@ -183,7 +183,7 @@ abstract class AbstractLocalizableImplCreator extends
     ResourceList resourceList = null;
     try {
       resourceList = ResourceFactory.getBundle(logger, targetClass, locale,
-          assignableToConstants, context.getResourcesOracle().getResourceMap(), context);
+          assignableToConstants, context);
     } catch (MissingResourceException e) {
       throw error(logger,
           "Localization failed; there must be at least one resource accessible through"
@@ -220,8 +220,8 @@ abstract class AbstractLocalizableImplCreator extends
             targetClass, resourceList, context.getTypeOracle());
         c.emitClass(logger, generatedLocale);
       } else {
-        MessagesImplCreator messages = new MessagesImplCreator(logger, writer,
-            targetClass, resourceList, context.getTypeOracle());
+        MessagesImplCreator messages = new MessagesImplCreator(logger, writer, targetClass,
+            resourceList, context.getTypeOracle(), context.getResourcesOracle());
         messages.emitClass(logger, generatedLocale);
       }
       context.commit(logger, pw);
@@ -333,19 +333,8 @@ abstract class AbstractLocalizableImplCreator extends
    * Write translation source files to the old-style
    * {@link MessageCatalogFormat}.
    *
-   * @param logger
-   * @param context
-   * @param locale
-   * @param targetClass
-   * @param seenError
-   * @param resourceList
-   * @param className
-   * @param msgWriter
-   * @param genPath
    * @return true if an error occurred (already logged)
-   * @throws UnableToCompleteException
    */
-
   private static boolean generateToLegacyMsgCatFormat(TreeLogger logger,
       GeneratorContext context, GwtLocale locale, JClassType targetClass,
       boolean seenError, ResourceList resourceList, String className,

@@ -20,17 +20,18 @@ import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.impl.ResourceLocatorImpl;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.user.client.ui.ImageBundle;
 import com.google.gwt.user.client.ui.ImageBundle.Resource;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +67,8 @@ public class ImageBundleGenerator extends Generator {
    * Indirection around the act of looking up a resource that allows for unit
    * test mocking.
    */
-  /* private */interface ResourceLocator {
+  @VisibleForTesting
+  interface ResourceLocator {
     /**
      *
      * @param resName the resource name in a format that could be passed to
@@ -83,21 +85,26 @@ public class ImageBundleGenerator extends Generator {
       this.delegate = delegate;
     }
 
+    @Override
     @SuppressWarnings("deprecation")
     public Resource getAnnotation(Class<Resource> clazz) {
       return delegate.getAnnotation(clazz);
     }
 
+    @Override
     public String getName() {
       return delegate.getName();
     }
 
+    @Override
     public String getPackageName() {
       return delegate.getEnclosingType().getPackage().getName();
     }
   }
 
-  /* private */static final String MSG_NO_FILE_BASED_ON_METHOD_NAME = "No matching image resource was found; any of the following filenames would have matched had they been present:";
+  @VisibleForTesting
+  static final String MSG_NO_FILE_BASED_ON_METHOD_NAME = "No matching image resource was found; "
+      + "any of the following filenames would have matched had they been present:";
 
   private static final String ABSTRACTIMAGEPROTOTYPE_QNAME = "com.google.gwt.user.client.ui.AbstractImagePrototype";
 
@@ -109,29 +116,36 @@ public class ImageBundleGenerator extends Generator {
 
   private static final String IMAGEBUNDLE_QNAME = "com.google.gwt.user.client.ui.ImageBundle";
 
-  /* private */static String msgCannotFindImageFromMetaData(String imgResName) {
+  @VisibleForTesting
+  static String msgCannotFindImageFromMetaData(String imgResName) {
     return "Unable to find image resource '" + imgResName + "'";
   }
 
   private final ResourceLocator resLocator;
+
+  private GeneratorContext context;
+
+  private TreeLogger logger;
 
   /**
    * Default constructor for image bundle. Locates resources using this class's
    * own class loader.
    */
   public ImageBundleGenerator() {
-    this(new ResourceLocator() {
+    this.resLocator = new ResourceLocator() {
+      @Override
       public boolean isResourcePresent(String resName) {
-        URL url = getClass().getClassLoader().getResource(resName);
-        return url != null;
+        return ResourceLocatorImpl.tryFindResourceUrl(logger, context.getResourcesOracle(), resName)
+            != null;
       }
-    });
+    };
   }
 
   /**
    * Default access so that it can be accessed by unit tests.
    */
-  /* private */ImageBundleGenerator(ResourceLocator resourceLocator) {
+  @VisibleForTesting
+  ImageBundleGenerator(ResourceLocator resourceLocator) {
     assert (resourceLocator != null);
     this.resLocator = resourceLocator;
   }
@@ -139,6 +153,8 @@ public class ImageBundleGenerator extends Generator {
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
+    this.logger = logger;
+    this.context = context;
 
     TypeOracle typeOracle = context.getTypeOracle();
 
@@ -166,7 +182,8 @@ public class ImageBundleGenerator extends Generator {
    * @throws UnableToCompleteException thrown if a resource was specified but
    *           could not be found on the classpath
    */
-  /* private */String getImageResourceName(TreeLogger logger,
+  @VisibleForTesting
+  String getImageResourceName(TreeLogger logger,
       JMethodOracle method) throws UnableToCompleteException {
     String imgName = tryGetImageNameFromMetaData(logger, method);
     if (imgName != null) {

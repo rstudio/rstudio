@@ -91,6 +91,7 @@ public abstract class DelegatingGeneratorContext implements GeneratorContext {
   public boolean isProdMode() {
     return baseContext.isProdMode();
   }
+
   @Override
   public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName) {
     return baseContext.tryCreate(logger, packageName, simpleName);

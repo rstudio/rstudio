@@ -23,6 +23,7 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
@@ -275,10 +276,11 @@ public class UiBinderParserUiWithTest extends TestCase {
     item = (Element) doc.getDocumentElement().getElementsByTagName("with").item(0);
     elm = elemProvider.get(item);
     JClassType aClass = types.findType(baseClass);
-    writer =
-        new UiBinderWriter(aClass, "foo", "", types, logger, fieldManager, null,
-            DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, true, "");
-    parser = new UiBinderParser(writer, null, fieldManager, types, null, "", new UiBinderContext());
+    ResourceOracle resourceOracle = new MockResourceOracle();
+    writer = new UiBinderWriter(aClass, "foo", "", types, logger, fieldManager, null,
+        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, true, "", resourceOracle);
+    parser = new UiBinderParser(writer, null, fieldManager, types, null, "", new UiBinderContext(),
+        resourceOracle);
     designTime.rememberPathForElements(doc);
     UiBinderParser.Resource.WITH.create(parser, elm);
   }

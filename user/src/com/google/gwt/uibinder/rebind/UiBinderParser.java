@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.shared.impl.StringCase;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -109,10 +110,11 @@ public class UiBinderParser {
   private final JClassType dataResourceType;
   private final String binderUri;
   private final UiBinderContext uiBinderContext;
+  private final ResourceOracle resourceOracle;
 
   public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
-      FieldManager fieldManager, TypeOracle oracle,
-      ImplicitClientBundle bundleClass, String binderUri, UiBinderContext uiBinderContext) {
+      FieldManager fieldManager, TypeOracle oracle, ImplicitClientBundle bundleClass,
+      String binderUri, UiBinderContext uiBinderContext, ResourceOracle resourceOracle) {
     this.writer = writer;
     this.oracle = oracle;
     this.messagesWriter = messagesWriter;
@@ -123,6 +125,7 @@ public class UiBinderParser {
     this.imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
     this.dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
     this.binderUri = binderUri;
+    this.resourceOracle = resourceOracle;
   }
 
   /**
@@ -325,7 +328,7 @@ public class UiBinderParser {
       writer.die(elem, "Could not infer type for field %s.", resourceName);
     }
 
-    // process ui:attributes child for property setting 
+    // process ui:attributes child for property setting
     boolean attributesChildFound = false;
     // Use consumeChildElements(Interpreter) so no assertEmpty check is performed
     for (XMLElement child : elem.consumeChildElements(new SimpleInterpeter<Boolean>(true))) {
@@ -443,7 +446,7 @@ public class UiBinderParser {
     }
 
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
-        publicType, body, importTypes);
+        publicType, body, importTypes, resourceOracle);
 
     FieldWriter field = fieldManager.registerFieldForGeneratedCssResource(cssMethod);
     field.setInitializer(String.format("%s.%s()",

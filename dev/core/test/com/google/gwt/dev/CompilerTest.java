@@ -144,6 +144,14 @@ public class CompilerTest extends ArgProcessorTestBase {
           "</generate-with>",
           "</module>");
 
+  private MockResource classNameToGenerateResource =
+      JavaResourceBase.createMockResource("com/foo/generatedClassName.txt",
+          "FooReplacementOne");
+
+  private MockResource modifiedClassNameToGenerateResource =
+      JavaResourceBase.createMockResource("com/foo/generatedClassName.txt",
+          "FooReplacementTwo");
+
   private MockJavaResource generatorEntryPointResource =
       JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
           "package com.foo;",
@@ -426,6 +434,14 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkPerFileRecompile_dualJsoIntfDispatchChange(JsOutputOption.DETAILED);
   }
 
+  public void testPerFileRecompile_generatorInputResourceChange() throws IOException,
+      UnableToCompleteException, InterruptedException {
+    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
+    // dependent, and while still correct, will come out different in a recompile with this change
+    // versus a from scratch compile with this change.
+    checkPerFileRecompile_generatorInputResourceChange(JsOutputOption.DETAILED);
+  }
+
   public void testPerFileRecompile_carriesOverGeneratorArtifacts() throws UnableToCompleteException,
       IOException, InterruptedException {
     // Foo Generator hasn't run yet.
@@ -433,7 +449,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     List<MockResource> sharedResources = Lists.newArrayList(generatorModuleResource,
-        generatorEntryPointResource, fooInterfaceResource);
+        generatorEntryPointResource, fooInterfaceResource, classNameToGenerateResource);
     JsOutputOption output = JsOutputOption.PRETTY;
 
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
@@ -548,6 +564,17 @@ public class CompilerTest extends ArgProcessorTestBase {
         output);
   }
 
+  private void checkPerFileRecompile_generatorInputResourceChange(JsOutputOption outputOption)
+      throws IOException, UnableToCompleteException, InterruptedException {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
+        generatorModuleResource, generatorEntryPointResource, fooInterfaceResource,
+        nonJsoFooResource), classNameToGenerateResource, modifiedClassNameToGenerateResource,
+        outputOption);
+  }
+
   private void assertDeterministicBuild(CompilerOptions options)
       throws UnableToCompleteException, IOException {
     File firstCompileWorkDir = Utility.makeTemporaryDirectory(null, "hellowork");
@@ -588,16 +615,15 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   private void checkRecompiledModifiedApp(String moduleName, List<MockResource> sharedResources,
-      MockJavaResource originalResource, MockJavaResource modifiedResource, JsOutputOption output)
-      throws IOException,
-      UnableToCompleteException, InterruptedException {
+      MockResource originalResource, MockResource modifiedResource, JsOutputOption output)
+      throws IOException, UnableToCompleteException, InterruptedException {
     checkRecompiledModifiedApp(new CompilerOptionsImpl(), moduleName, sharedResources,
         originalResource, modifiedResource, output);
   }
 
   private void checkRecompiledModifiedApp(CompilerOptions compilerOptions, String moduleName,
-      List<MockResource> sharedResources, MockJavaResource originalResource,
-      MockJavaResource modifiedResource, JsOutputOption output) throws IOException,
+      List<MockResource> sharedResources, MockResource originalResource,
+      MockResource modifiedResource, JsOutputOption output) throws IOException,
       UnableToCompleteException, InterruptedException {
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
     originalResources.add(originalResource);

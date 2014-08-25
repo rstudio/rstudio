@@ -13,12 +13,14 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.impl.ResourceLocatorImpl;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -60,6 +62,17 @@ public class CombinedResourceOracle implements ResourceOracle {
     return pathNames;
   }
 
+  @Override
+  public Resource getResource(String pathName) {
+    return getResourceMap().get(pathName);
+  }
+
+  @Override
+  public InputStream getResourceAsStream(String pathName) {
+    return ResourceLocatorImpl.toStreamOrNull(getResource(pathName));
+  }
+
+  @Deprecated
   @Override
   public Map<String, Resource> getResourceMap() {
     if (buildResourcesByPath == null) {

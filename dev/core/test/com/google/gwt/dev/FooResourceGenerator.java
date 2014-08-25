@@ -18,13 +18,15 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 
 /**
- * A Generator that always creates a bar.txt resource.
+ * A Generator that creates a bar.txt resource and a class whose name depends on an input resource.
  */
 public class FooResourceGenerator extends Generator {
 
@@ -34,16 +36,35 @@ public class FooResourceGenerator extends Generator {
   public String generate(TreeLogger logger, GeneratorContext context, String typeName)
       throws UnableToCompleteException {
     runCount++;
+
+    // On first run generate a bar.txt resource that always has the same contents.
     OutputStream barStream = context.tryCreateResource(logger, "bar.txt");
     if (barStream != null) {
       try {
         barStream.write("here's some text.".getBytes(Charsets.UTF_8));
-        context.commitResource(logger, barStream).setVisibility(
-            Visibility.Public);
+        context.commitResource(logger, barStream).setVisibility(Visibility.Public);
       } catch (IOException e) {
         return null;
       }
     }
-    return null;
+
+    // On first run generate a class whose name depends on the contents of a read input resource.
+    String generatedClassName;
+    try {
+      generatedClassName = Util.readStreamAsString(context.getResourcesOracle().getResource(
+          "com/foo/generatedClassName.txt").openContents()).trim();
+
+      PrintWriter pw = context.tryCreate(logger, "com.foo", generatedClassName);
+      if (pw != null) {
+        pw.write("package com.foo;");
+        pw.write("public class " + generatedClassName + " {}");
+
+        pw.close();
+        context.commit(logger, pw);
+      }
+      return "com.foo." + generatedClassName;
+    } catch (IOException e) {
+      return "";
+    }
   }
 }

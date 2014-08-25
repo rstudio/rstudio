@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
+import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.test.UiJavaResources;
@@ -57,7 +58,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
 
     ImplicitCssResource css = new ImplicitCssResource("package", "ClassName",
         "fieldName", new String[] {}, cssResourceType, ".able-baker {}",
-        MortalLogger.NULL, Collections.<JClassType> emptySet());
+        MortalLogger.NULL, Collections.<JClassType> emptySet(), new MockResourceOracle());
 
     FieldWriterOfGeneratedCssResource f = new FieldWriterOfGeneratedCssResource(
         null, stringType, css, MortalLogger.NULL);
@@ -73,7 +74,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
 
     ImplicitCssResource css = new ImplicitCssResource("package", "ClassName",
         "fieldName", new String[] {}, cssResourceType, ".ableBaker {}",
-        MortalLogger.NULL, Collections.<JClassType> emptySet());
+        MortalLogger.NULL, Collections.<JClassType> emptySet(), new MockResourceOracle());
 
     FieldWriterOfGeneratedCssResource f = new FieldWriterOfGeneratedCssResource(
         null, stringType, css, MortalLogger.NULL);

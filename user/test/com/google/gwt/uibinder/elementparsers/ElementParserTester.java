@@ -111,7 +111,7 @@ class ElementParserTester {
         templatePath, baseType.getPackage().getName(), implName);
 
     writer = new MockUiBinderWriter(baseType, implName, templatePath, types,
-        logger, fieldManager, messages, BINDER_URI);
+        logger, fieldManager, messages, BINDER_URI, new MockResourceOracle());
     fieldManager.registerField(types.findType(parsedTypeName), FIELD_NAME);
     parsedType = types.findType(parsedTypeName);
   }

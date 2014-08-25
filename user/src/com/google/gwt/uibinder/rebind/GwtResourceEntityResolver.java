@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -51,7 +50,7 @@ class GwtResourceEntityResolver implements EntityResolver {
 
   private final ResourceOracle resourceOracle;
   private final TreeLogger logger;
-  
+
   public GwtResourceEntityResolver(TreeLogger logger, ResourceOracle resourceOracle,
       String pathBase) {
     this.logger = logger;
@@ -64,14 +63,13 @@ class GwtResourceEntityResolver implements EntityResolver {
     String matchingPrefix = findMatchingPrefix(systemId);
 
     Resource resource = null;
-    Map<String, Resource> map = resourceOracle.getResourceMap();
     if (matchingPrefix != null) {
-      resource = map.get(RESOURCES
-          + systemId.substring(matchingPrefix.length()));
+      resource =
+          resourceOracle.getResource(RESOURCES + systemId.substring(matchingPrefix.length()));
     }
 
     if (resource == null) {
-      resource = map.get(pathBase + systemId);
+      resource = resourceOracle.getResource(pathBase + systemId);
     }
 
     if (resource != null) {

@@ -25,6 +25,10 @@ import java.lang.annotation.RetentionPolicy;
  * <p>
  * If annotated by {@code @RunsLocal}, a generator can minimize its impact on compilation speed. See
  * {@link RunsLocal} for details.
+ * <p>
+ * Resource reading should be done through the ResourceOracle in the provided GeneratorContext (not
+ * via ClassLoader.getResource(), File, or URL) so that Generator Resource dependencies can be
+ * detected and used to facilitate fast incremental recompiles.
  */
 public abstract class Generator {
 

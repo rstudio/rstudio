@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -34,20 +35,21 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
 
   /**
    * Constructor for <code>MessagesImplCreator</code>.
-   * 
+   * @param logger logger to print errors
    * @param writer <code>Writer</code> to print to
    * @param localizableClass Class/Interface to conform to
    * @param resourceList resource bundle used to generate the class
    * @param oracle types
-   * @param logger logger to print errors
+   * @param resourceOracle in which to locate resources
+   *
    * @throws UnableToCompleteException
    */
-  public MessagesImplCreator(TreeLogger logger, SourceWriter writer,
-      JClassType localizableClass, ResourceList resourceList, TypeOracle oracle)
+  public MessagesImplCreator(TreeLogger logger, SourceWriter writer, JClassType localizableClass,
+      ResourceList resourceList, TypeOracle oracle, ResourceOracle resourceOracle)
       throws UnableToCompleteException {
     super(logger, writer, localizableClass, resourceList, false);
     try {
-      MessagesMethodCreator creator = new MessagesMethodCreator(this, writer);
+      MessagesMethodCreator creator = new MessagesMethodCreator(this, writer, resourceOracle);
       JClassType stringClass = oracle.getType(String.class.getName());
       register(stringClass, creator);
       JClassType safeHtmlClass = oracle.getType(SafeHtml.class.getName());
@@ -61,7 +63,7 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
   /**
    * Checks that the method has the right structure to implement
    * <code>Messages</code>.
-   * 
+   *
    * @param method
    * @throws UnableToCompleteException
    */
@@ -81,7 +83,7 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
   /**
    * Create the method body associated with the given method. Arguments are
    * arg0...argN.
-   * 
+   *
    * @param m method to emit
    * @throws UnableToCompleteException
    */

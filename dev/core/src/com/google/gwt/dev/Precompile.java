@@ -242,6 +242,11 @@ public class Precompile {
     try {
       ModuleDef module = compilerContext.getModule();
       PrecompileTaskOptions jjsOptions = compilerContext.getOptions();
+      if (jjsOptions.shouldCompilePerFile()) {
+        compilerContext.getMinimalRebuildCache().recordBuildResources(module);
+        // TODO(stalcup): record source resources here instead of in CompilationStateBuilder, for
+        // consistency.
+      }
       CompilationState compilationState = module.getCompilationState(logger, compilerContext);
       if (jjsOptions.isStrict() && compilationState.hasErrors()) {
         abortDueToStrictMode(logger);

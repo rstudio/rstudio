@@ -16,7 +16,9 @@
 package com.google.gwt.uibinder.rebind.model;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.impl.ResourceLocatorImpl;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.resources.css.ExtractClassNamesVisitor;
 import com.google.gwt.resources.css.GenerateCssAst;
 import com.google.gwt.resources.css.ast.CssStylesheet;
@@ -52,6 +54,7 @@ public class ImplicitCssResource {
   private final String body;
   private final MortalLogger logger;
   private final Set<JClassType> imports;
+  private final ResourceOracle resourceOracle;
 
   private File generatedFile;
   private Set<String> cssClassNames;
@@ -62,7 +65,7 @@ public class ImplicitCssResource {
    */
   public ImplicitCssResource(String packageName, String className, String name,
       String[] source, JClassType extendedInterface, String body,
-      MortalLogger logger, Set<JClassType> importTypes) {
+      MortalLogger logger, Set<JClassType> importTypes, ResourceOracle resourceOracle) {
     this.packageName = packageName;
     this.className = className;
     this.name = name;
@@ -70,6 +73,7 @@ public class ImplicitCssResource {
     this.body = body;
     this.logger = logger;
     this.imports = Collections.unmodifiableSet(importTypes);
+    this.resourceOracle = resourceOracle;
     sources = Arrays.asList(source);
   }
 
@@ -190,7 +194,6 @@ public class ImplicitCssResource {
      * this package
      */
 
-    ClassLoader classLoader = ImplicitCssResource.class.getClassLoader();
     String path = packageName.replace(".", "/");
 
     List<URL> urls = new ArrayList<URL>();
@@ -198,13 +201,14 @@ public class ImplicitCssResource {
     for (String s : sources) {
       String resourcePath = path + '/' + s;
       // Try to find the resource relative to the package.
-      URL found = classLoader.getResource(resourcePath);
+      URL found = ResourceLocatorImpl.tryFindResourceUrl(logger.getTreeLogger(), resourceOracle,
+          resourcePath);
       /*
        * If we didn't find the resource relative to the package, assume it
        * is absolute.
        */
       if (found == null) {
-        found = classLoader.getResource(s);
+        found = ResourceLocatorImpl.tryFindResourceUrl(logger.getTreeLogger(), resourceOracle, s);
       }
       if (found == null) {
         logger.die("Unable to find resource: " + resourcePath);

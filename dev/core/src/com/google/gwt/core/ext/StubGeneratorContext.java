@@ -29,7 +29,7 @@ import java.io.PrintWriter;
  * selectively override individual methods. Useful for mocking and/or selective
  * reuse of generator functionality.
  */
-public abstract class StubGeneratorContext implements GeneratorContext {
+public class StubGeneratorContext implements GeneratorContext {
 
   @Override
   public boolean checkRebindRuleAvailable(String sourceTypeName) {

@@ -16,6 +16,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jjs.JsSourceMap;
@@ -24,13 +25,16 @@ import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.ImmediateTypeRelations;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeIdGenerator;
 import com.google.gwt.dev.js.JsPersistentPrettyNamer.PersistentPrettyNamerState;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.collect.Sets.SetView;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -64,9 +68,10 @@ public class MinimalRebuildCache implements Serializable {
       typeNamesByReferencingTypeName.put(toTypeName, fromTypeName);
     }
 
-    public void clearJsAndStatements(String typeName) {
+    public void clearCachedTypeOutput(String typeName) {
       jsByTypeName.remove(typeName);
       statementRangesByTypeName.remove(typeName);
+      sourceMapsByTypeName.remove(typeName);
     }
 
     /**
@@ -99,12 +104,12 @@ public class MinimalRebuildCache implements Serializable {
       return jsByTypeName.get(typeName);
     }
 
-    public StatementRanges getStatementRanges(String typeName) {
-      return statementRangesByTypeName.get(typeName);
-    }
-
     public JsSourceMap getSourceMap(String typeName) {
       return sourceMapsByTypeName.get(typeName);
+    }
+
+    public StatementRanges getStatementRanges(String typeName) {
+      return statementRangesByTypeName.get(typeName);
     }
 
     public void removeReferencesFrom(String fromTypeName) {
@@ -151,13 +156,17 @@ public class MinimalRebuildCache implements Serializable {
   private final IntTypeIdGenerator intTypeIdGenerator = new IntTypeIdGenerator();
   private final Set<String> jsoStatusChangedTypeNames = Sets.newHashSet();
   private final Set<String> jsoTypeNames = Sets.newHashSet();
+  private final Map<String, Long> lastModifiedByResourcePath = Maps.newHashMap();
   private final Set<String> modifiedCompilationUnitNames = Sets.newHashSet();
+  private final Set<String> modifiedResourcePaths = Sets.newHashSet();
   private final Multimap<String, String> nestedTypeNamesByUnitTypeName = HashMultimap.create();
   private final Map<Integer, PermutationRebuildCache> permutationRebuildCacheById =
       Maps.newHashMap();
   private final PersistentPrettyNamerState persistentPrettyNamerState =
       new PersistentPrettyNamerState();
   private final Set<String> preambleTypeNames = Sets.newHashSet();
+  private final Multimap<String, String> rebinderTypeNamesByReboundTypeName = HashMultimap.create();
+  private final Multimap<String, String> reboundTypeNamesByInputResource = HashMultimap.create();
   private final Set<String> rootTypeNames = Sets.newHashSet();
   private final Set<String> singleJsoImplInterfaceNames = Sets.newHashSet();
 
@@ -176,6 +185,15 @@ public class MinimalRebuildCache implements Serializable {
     this.modifiedCompilationUnitNames.addAll(modifiedCompilationUnitNames);
   }
 
+  /**
+   * Record that a Generator that was ran as a result of a GWT.create(ReboundType.class) call read a
+   * particular resource.
+   */
+  public void associateReboundTypeWithInputResource(String reboundTypeName,
+      String inputResourcePath) {
+    reboundTypeNamesByInputResource.put(inputResourcePath, reboundTypeName);
+  }
+
   public void clearPerTypeJsCache() {
     rootTypeNames.clear();
     preambleTypeNames.clear();
@@ -184,8 +202,16 @@ public class MinimalRebuildCache implements Serializable {
     permutationRebuildCacheById.clear();
   }
 
+  public void clearRebinderTypeAssociations(String rebinderTypeName) {
+    rebinderTypeNamesByReboundTypeName.values().remove(rebinderTypeName);
+  }
+
+  public void clearReboundTypeAssociations(String reboundTypeName) {
+    reboundTypeNamesByInputResource.values().remove(reboundTypeName);
+  }
+
   /**
-   * Calculates the set of stale types and clears their cached Js and StatementRanges.
+   * Calculates the set of stale types and clears their cached Js, StatementRanges and SourceMaps.
    * <p>
    * The calculation of stale types starts with the list of known modified types and expands that
    * set using various patterns intended to find any types whose output JS would be affected by the
@@ -206,8 +232,8 @@ public class MinimalRebuildCache implements Serializable {
     Set<String> staleTypeNames = Sets.newHashSet();
     Set<String> modifiedTypeNames = computeModifiedTypeNames();
 
-    // Accumulate the names of stale types resulting from some known type modifications, using
-    // various patterns (sub types, referencing types, etc).
+    // Accumulate the names of stale types resulting from some known type or resource modifications,
+    // using various patterns (sub types, referencing types, etc).
     {
       staleTypeNames.addAll(modifiedTypeNames);
       appendSubTypes(staleTypeNames, modifiedTypeNames, typeOracle);
@@ -217,16 +243,21 @@ public class MinimalRebuildCache implements Serializable {
       ImmutableList<String> modifiedTypeAndSubTypeNames = ImmutableList.copyOf(staleTypeNames);
       appendReferencingTypes(staleTypeNames, modifiedTypeAndSubTypeNames);
       appendReferencingTypes(staleTypeNames, jsoStatusChangedTypeNames);
-      // TODO(stalcup): turn modifications of generator input resources into type staleness.
+      appendTypesThatRebindTypes(staleTypeNames, computeReboundTypesAffectedByModifiedResources());
+      // TODO(stalcup): turn modifications of generator input types into type staleness.
       staleTypeNames.removeAll(JProgram.SYNTHETIC_TYPE_NAMES);
     }
 
-    logger.log(TreeLogger.DEBUG, "known modified types = " + modifiedTypeNames);
-    logger.log(TreeLogger.DEBUG,
-        "clearing cached JS for resulting stale types = " + staleTypeNames);
+    // These log lines can be expensive.
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "known modified types = " + modifiedTypeNames);
+      logger.log(TreeLogger.DEBUG, "known modified resources = " + modifiedResourcePaths);
+      logger.log(TreeLogger.DEBUG,
+          "clearing cached output for resulting stale types = " + staleTypeNames);
+    }
 
     for (String staleTypeName : staleTypeNames) {
-      clearJsAndStatements(staleTypeName);
+      clearCachedTypeOutput(staleTypeName);
     }
 
     return staleTypeNames;
@@ -317,6 +348,45 @@ public class MinimalRebuildCache implements Serializable {
     return !preambleTypeNames.isEmpty();
   }
 
+  /**
+   * Records the resource paths and modification dates of build resources in the current compile and
+   * builds a list of known modified resource paths by comparing the resource paths and modification
+   * dates of build resources in the previous compile with those of the current compile.
+   */
+  public void recordBuildResources(ModuleDef module) {
+    // To start lastModifiedByResourcePath is data about the previous compile and by the end it
+    // contains data about the current compile.
+
+    Set<Resource> currentResources = module.getBuildResourceOracle().getResources();
+
+    // Start with a from-scratch idea of which resources are modified.
+    modifiedResourcePaths.clear();
+
+    Set<String> currentResourcePaths = Sets.newHashSet();
+    for (Resource currentResource : currentResources) {
+      currentResourcePaths.add(currentResource.getPath());
+      Long lastKnownModified = lastModifiedByResourcePath.put(currentResource.getPath(),
+          currentResource.getLastModified());
+      if (!Objects.equal(lastKnownModified, currentResource.getLastModified())) {
+        // Added or Modified resource.
+        modifiedResourcePaths.add(currentResource.getPath());
+      }
+    }
+
+    // Removed resources.
+    {
+      // Figure out which resources were removed.
+      SetView<String> removedResourcePaths =
+          Sets.difference(lastModifiedByResourcePath.keySet(), currentResourcePaths);
+      // Log them as "modified".
+      modifiedResourcePaths.addAll(removedResourcePaths);
+      // Remove any resource path to modified date entries for them.
+      for (String removedResourcePath : removedResourcePaths) {
+        lastModifiedByResourcePath.remove(removedResourcePath);
+      }
+    }
+  }
+
   @VisibleForTesting
   public void recordNestedTypeName(String compilationUnitTypeName, String nestedTypeName) {
     nestedTypeNamesByUnitTypeName.put(compilationUnitTypeName, nestedTypeName);
@@ -332,6 +402,13 @@ public class MinimalRebuildCache implements Serializable {
       String nestedTypeName = InternalName.toBinaryName(compiledClass.getInternalName());
       recordNestedTypeName(compilationUnitTypeName, nestedTypeName);
     }
+  }
+
+  /**
+   * Records that rebinder type Foo contains a GWT.create(ReboundTypeBar.class) call.
+   */
+  public void recordRebinderTypeForReboundType(String reboundTypeName, String rebinderType) {
+    rebinderTypeNamesByReboundTypeName.put(reboundTypeName, rebinderType);
   }
 
   public void setAllCompilationUnitNames(TreeLogger logger,
@@ -397,9 +474,32 @@ public class MinimalRebuildCache implements Serializable {
     }
   }
 
-  private void clearJsAndStatements(String staleTypeName) {
-    for (PermutationRebuildCache permutationRebuildCache : permutationRebuildCacheById.values()) {
-      permutationRebuildCache.clearJsAndStatements(staleTypeName);
+  /**
+   * Adds to staleTypeNames the set of names of types that contain GWT.create(ReboundType.class)
+   * calls that rebind the given set of type names.
+   */
+  private void appendTypesThatRebindTypes(Set<String> staleTypeNames,
+      Set<String> reboundTypeNames) {
+    for (String reboundTypeName : reboundTypeNames) {
+      staleTypeNames.addAll(rebinderTypeNamesByReboundTypeName.get(reboundTypeName));
     }
+  }
+
+  private void clearCachedTypeOutput(String staleTypeName) {
+    for (PermutationRebuildCache permutationRebuildCache : permutationRebuildCacheById.values()) {
+      permutationRebuildCache.clearCachedTypeOutput(staleTypeName);
+    }
+  }
+
+  /**
+   * Returns the set of names of types that when rebound trigger Generators that access resources
+   * which are known to have been modified.
+   */
+  private Set<String> computeReboundTypesAffectedByModifiedResources() {
+    Set<String> affectedRebindTypeNames = Sets.newHashSet();
+    for (String modifiedResourcePath : modifiedResourcePaths) {
+      affectedRebindTypeNames.addAll(reboundTypeNamesByInputResource.get(modifiedResourcePath));
+    }
+    return affectedRebindTypeNames;
   }
 }
