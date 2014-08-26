@@ -205,13 +205,13 @@ public class RuleGenerateWithTest extends TestCase {
     // Expects rebind rules were created that represent the discovery and accessing of user.agent
     // and flavor binding rules.
     String runtimeRebindRule0 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule0");
-    assertTrue(runtimeRebindRule0.contains("com.google.gwt.FooMozillaVanilla::new()"));
+    assertTrue(runtimeRebindRule0.contains("com.google.gwt.FooMozillaChocolate::new()"));
     assertTrue(runtimeRebindRule0.contains(
         "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
         + "(\"user.agent\") == \"mozilla\""));
     assertTrue(runtimeRebindRule0.contains(
         "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
-        + "(\"flavor\") == \"Vanilla\""));
+        + "(\"flavor\") == \"Chocolate\""));
 
     String runtimeRebindRule1 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule1");
     assertTrue(runtimeRebindRule1.contains("com.google.gwt.FooWebkit::new()"));
@@ -220,24 +220,24 @@ public class RuleGenerateWithTest extends TestCase {
         + "(\"user.agent\") == \"webkit\""));
     assertTrue(runtimeRebindRule1.contains(
         "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
-        + "(\"flavor\") == \"Vanilla\""));
+        + "(\"flavor\") == \"Chocolate\""));
 
     String runtimeRebindRule2 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule2");
-    assertTrue(runtimeRebindRule2.contains("com.google.gwt.FooWebkit::new()"));
+    assertTrue(runtimeRebindRule2.contains("com.google.gwt.FooMozillaVanilla::new()"));
     assertTrue(runtimeRebindRule2.contains(
-        "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
-        + "(\"user.agent\") == \"webkit\""));
-    assertTrue(runtimeRebindRule2.contains(
-        "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
-        + "(\"flavor\") == \"Chocolate\""));
-
-    String runtimeRebindRule3 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule3");
-    assertTrue(runtimeRebindRule3.contains("com.google.gwt.FooMozillaChocolate::new()"));
-    assertTrue(runtimeRebindRule3.contains(
         "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
         + "(\"user.agent\") == \"mozilla\""));
+    assertTrue(runtimeRebindRule2.contains(
+        "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
+        + "(\"flavor\") == \"Vanilla\""));
+
+    String runtimeRebindRule3 = runtimeRebindRuleSourcesByName.get("RuntimeRebindRule3");
+    assertTrue(runtimeRebindRule3.contains("com.google.gwt.FooWebkit::new()"));
     assertTrue(runtimeRebindRule3.contains(
         "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
-        + "(\"flavor\") == \"Chocolate\""));
+        + "(\"user.agent\") == \"webkit\""));
+    assertTrue(runtimeRebindRule3.contains(
+        "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)"
+        + "(\"flavor\") == \"Vanilla\""));
   }
 }

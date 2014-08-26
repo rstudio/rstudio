@@ -238,7 +238,7 @@ public class RuleGenerateWith extends Rule {
   private Map<Map<String, String>, String> computeResultTypeNamesByProperties(TreeLogger logger,
       Properties moduleProperties, StandardGeneratorContext context, String typeName)
       throws UnableToCompleteException {
-    Map<Map<String, String>, String> resultTypeNamesByProperties = Maps.newHashMap();
+    Map<Map<String, String>, String> resultTypeNamesByProperties = Maps.newLinkedHashMap();
     DynamicPropertyOracle dynamicPropertyOracle = new DynamicPropertyOracle(moduleProperties);
 
     // Maybe prime the pump.
