@@ -19,7 +19,6 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.json.JsonArray;
-import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
