@@ -290,6 +290,13 @@ public class CompilerTest extends ArgProcessorTestBase {
     argProcessor = new Compiler.ArgProcessor(options);
   }
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    FooResourceGenerator.runCount = 0;
+    BarReferencesFooGenerator.runCount = 0;
+  }
+
   public void testAllValidArgs() {
     assertProcessSuccess(argProcessor, new String[] {"-logLevel", "DEBUG", "-style",
         "PRETTY", "-ea", "-XdisableAggressiveOptimization", "-gen", "myGen",
