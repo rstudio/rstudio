@@ -825,6 +825,10 @@ public class StandardGeneratorContext implements GeneratorContext {
     } else {
       typeName = packageName + '.' + simpleTypeName;
     }
+
+    compilerContext.getMinimalRebuildCache().associateReboundTypeWithGeneratedType(
+        currentRebindBinaryTypeName, typeName);
+
     // Is type already known to the host?
     JClassType existingType = getTypeOracle().findType(packageName, simpleTypeName);
     if (existingType != null) {

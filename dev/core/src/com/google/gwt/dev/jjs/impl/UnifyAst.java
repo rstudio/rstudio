@@ -790,9 +790,10 @@ public class UnifyAst {
         JDeclaredType staleType =
             internalFindType(staleTypeName, binaryNameBasedTypeLocator, false);
         if (staleType == null) {
-          logger.log(TreeLogger.WARN, "Wanted to recompile stale type " + staleTypeName
-              + " but could not find the type instance. It is probably the output of a "
-              + "generator and not yet handled by per-file compilation.");
+          // The type is Generator output and so is not usually available in the list of types
+          // provided from initial JDT compilation. The staleness marking process has already
+          // handled this type by cascading the staleness marking onto the types that contain the
+          // GWT.create() calls that process that create this type.
           continue;
         }
         fullFlowIntoType(staleType);

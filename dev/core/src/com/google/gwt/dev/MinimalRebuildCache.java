@@ -166,6 +166,8 @@ public class MinimalRebuildCache implements Serializable {
       new PersistentPrettyNamerState();
   private final Set<String> preambleTypeNames = Sets.newHashSet();
   private final Multimap<String, String> rebinderTypeNamesByReboundTypeName = HashMultimap.create();
+  private final Multimap<String, String> reboundTypeNamesByGeneratedTypeName =
+      HashMultimap.create();
   private final Multimap<String, String> reboundTypeNamesByInputResource = HashMultimap.create();
   private final Set<String> rootTypeNames = Sets.newHashSet();
   private final Set<String> singleJsoImplInterfaceNames = Sets.newHashSet();
@@ -183,6 +185,11 @@ public class MinimalRebuildCache implements Serializable {
     logger.log(TreeLogger.DEBUG, "adding to cached list of known modified compilation units "
         + modifiedCompilationUnitNames);
     this.modifiedCompilationUnitNames.addAll(modifiedCompilationUnitNames);
+  }
+
+  public void associateReboundTypeWithGeneratedType(String reboundTypeName,
+      String generatedTypeName) {
+    reboundTypeNamesByGeneratedTypeName.put(generatedTypeName, reboundTypeName);
   }
 
   /**
@@ -208,6 +215,7 @@ public class MinimalRebuildCache implements Serializable {
 
   public void clearReboundTypeAssociations(String reboundTypeName) {
     reboundTypeNamesByInputResource.values().remove(reboundTypeName);
+    reboundTypeNamesByGeneratedTypeName.values().remove(reboundTypeName);
   }
 
   /**
@@ -243,8 +251,16 @@ public class MinimalRebuildCache implements Serializable {
       ImmutableList<String> modifiedTypeAndSubTypeNames = ImmutableList.copyOf(staleTypeNames);
       appendReferencingTypes(staleTypeNames, modifiedTypeAndSubTypeNames);
       appendReferencingTypes(staleTypeNames, jsoStatusChangedTypeNames);
-      appendTypesThatRebindTypes(staleTypeNames, computeReboundTypesAffectedByModifiedResources());
-      // TODO(stalcup): turn modifications of generator input types into type staleness.
+      staleTypeNames.addAll(
+          computeTypesThatRebindTypes(computeReboundTypesAffectedByModifiedResources()));
+      appendTypesToRegenerateStaleGeneratedTypes(staleTypeNames);
+
+      // Generator output is affected by types queried from the TypeOracle but changes in these
+      // types are not being directly supported at this time since some of them are already handled
+      // because they are referenced by the Generator output and since changes in subtype queries
+      // probably make GWTRPC output incompatible with a server anyway (and thus already forces a
+      // restart).
+
       staleTypeNames.removeAll(JProgram.SYNTHETIC_TYPE_NAMES);
     }
 
@@ -475,14 +491,32 @@ public class MinimalRebuildCache implements Serializable {
   }
 
   /**
-   * Adds to staleTypeNames the set of names of types that contain GWT.create(ReboundType.class)
-   * calls that rebind the given set of type names.
+   * If type Foo is a generated type and is stale this pass will append type Bar that triggers
+   * Generator Baz that regenerates type Foo.
+   * <p>
+   * This is necessary since just clearing the cache for type Foo would not be adequate to cause the
+   * recreation of its cached JS without also rerunning the Generator that creates type Foo.
    */
-  private void appendTypesThatRebindTypes(Set<String> staleTypeNames,
-      Set<String> reboundTypeNames) {
-    for (String reboundTypeName : reboundTypeNames) {
-      staleTypeNames.addAll(rebinderTypeNamesByReboundTypeName.get(reboundTypeName));
-    }
+  private void appendTypesToRegenerateStaleGeneratedTypes(Set<String> staleTypeNames) {
+    Set<String> generatedTypeNames = reboundTypeNamesByGeneratedTypeName.keySet();
+
+    // Filter the current stale types list for any types that are known to be generated.
+    Set<String> staleGeneratedTypeNames = Sets.intersection(staleTypeNames, generatedTypeNames);
+    do {
+      // Accumulate staleGeneratedTypes -> generators -> generatorTriggeringTypes.
+      Set<String> generatorTriggeringTypes = computeTypesThatRebindTypes(
+          computeReboundTypesThatGenerateTypes(staleGeneratedTypeNames));
+      // Mark these generator triggering types stale.
+      staleTypeNames.addAll(generatorTriggeringTypes);
+
+      // It's possible that a generator triggering type was itself also created by a Generator.
+      // Repeat the backwards trace process till none of the newly stale types are generated types.
+      staleGeneratedTypeNames = Sets.intersection(generatorTriggeringTypes, generatedTypeNames);
+
+      // Ensure that no generated type is processed more than once, otherwise poorly written
+      // Generators could trigger an infinite loop.
+      staleGeneratedTypeNames.removeAll(staleTypeNames);
+    } while (!staleGeneratedTypeNames.isEmpty());
   }
 
   private void clearCachedTypeOutput(String staleTypeName) {
@@ -501,5 +535,26 @@ public class MinimalRebuildCache implements Serializable {
       affectedRebindTypeNames.addAll(reboundTypeNamesByInputResource.get(modifiedResourcePath));
     }
     return affectedRebindTypeNames;
+  }
+
+  private Set<String> computeReboundTypesThatGenerateTypes(Set<String> staleGeneratedTypeNames) {
+    Set<String> reboundTypesThatGenerateTypes = Sets.newHashSet();
+    for (String staleGeneratedTypeName : staleGeneratedTypeNames) {
+      reboundTypesThatGenerateTypes.addAll(
+          reboundTypeNamesByGeneratedTypeName.get(staleGeneratedTypeName));
+    }
+    return reboundTypesThatGenerateTypes;
+  }
+
+  /**
+   * Returns the set of names of types that contain GWT.create(ReboundType.class) calls that rebind
+   * the given set of type names.
+   */
+  private Set<String> computeTypesThatRebindTypes(Set<String> reboundTypeNames) {
+    Set<String> typesThatRebindTypes = Sets.newHashSet();
+    for (String reboundTypeName : reboundTypeNames) {
+      typesThatRebindTypes.addAll(rebinderTypeNamesByReboundTypeName.get(reboundTypeName));
+    }
+    return typesThatRebindTypes;
   }
 }
