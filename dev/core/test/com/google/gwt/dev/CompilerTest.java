@@ -156,6 +156,22 @@ public class CompilerTest extends ArgProcessorTestBase {
           "</generate-with>",
           "</module>");
 
+  private MockResource cascadingGeneratorModuleResource =
+      JavaResourceBase.createMockResource("com/foo/SimpleModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.TestEntryPoint'/>",
+          "<generate-with class='com.google.gwt.dev.CauseStringRebindGenerator'>",
+          "  <when-type-is class='java.lang.Object' />",
+          "</generate-with>",
+          "<generate-with class='com.google.gwt.dev.CauseShortRebindGenerator'>",
+          "  <when-type-is class='java.lang.String' />",
+          "</generate-with>",
+          "<generate-with class='com.google.gwt.dev.FooResourceGenerator'>",
+          "  <when-type-is class='java.lang.Short' />",
+          "</generate-with>",
+          "</module>");
+
   private MockResource classNameToGenerateResource =
       JavaResourceBase.createMockResource("com/foo/generatedClassName.txt",
           "FooReplacementOne");
@@ -346,6 +362,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     super.setUp();
     FooResourceGenerator.runCount = 0;
     BarReferencesFooGenerator.runCount = 0;
+    CauseStringRebindGenerator.runCount = 0;
+    CauseShortRebindGenerator.runCount = 0;
   }
 
   public void testAllValidArgs() {
@@ -564,6 +582,53 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     // BarReferencesFoo Generator was run again.
     assertEquals(2, BarReferencesFooGenerator.runCount);
+  }
+
+  public void testPerFileRecompile_invalidatedGeneratorOutputRerunsCascadedGenerators()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Generators haven't run yet.
+    assertEquals(0, CauseStringRebindGenerator.runCount);
+    assertEquals(0, CauseShortRebindGenerator.runCount);
+    assertEquals(0, FooResourceGenerator.runCount);
+
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    List<MockResource> sharedResources = Lists.newArrayList(cascadingGeneratorModuleResource,
+        generatorEntryPointResource, classNameToGenerateResource);
+    JsOutputOption output = JsOutputOption.PRETTY;
+
+    List<MockResource> originalResources = Lists.newArrayList(sharedResources);
+
+    // Compile the app with original files, modify a file and do a per-file recompile.
+    MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
+    File relinkApplicationDir = Files.createTempDir();
+    compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule", originalResources,
+        relinkMinimalRebuildCache, output);
+
+    // Generators have now been run once.
+    assertEquals(1, CauseStringRebindGenerator.runCount);
+    assertEquals(1, CauseShortRebindGenerator.runCount);
+    assertEquals(1, FooResourceGenerator.runCount);
+
+    // Recompile with no changes, which should not trigger any Generator runs.
+    compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
+        Lists.<MockResource> newArrayList(), relinkMinimalRebuildCache, output);
+
+    // Since there were no changes Generators were not run again.
+    assertEquals(1, CauseStringRebindGenerator.runCount);
+    assertEquals(1, CauseShortRebindGenerator.runCount);
+    assertEquals(1, FooResourceGenerator.runCount);
+
+    // Recompile with a modified resource, which should invalidate the output of the
+    // FooResourceGenerator and cascade the invalidate the Generators that triggered
+    // FooResourceGenerator.
+    compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
+        Lists.<MockResource> newArrayList(classNameToGenerateResource), relinkMinimalRebuildCache,
+        output);
+
+    // Generators were run again.
+    assertEquals(2, CauseStringRebindGenerator.runCount);
+    assertEquals(2, CauseShortRebindGenerator.runCount);
+    assertEquals(2, FooResourceGenerator.runCount);
   }
 
   public void testPerFileRecompile_carriesOverGeneratorArtifacts() throws UnableToCompleteException,

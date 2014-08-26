@@ -502,21 +502,19 @@ public class MinimalRebuildCache implements Serializable {
 
     // Filter the current stale types list for any types that are known to be generated.
     Set<String> staleGeneratedTypeNames = Sets.intersection(staleTypeNames, generatedTypeNames);
+    boolean discoveredMoreStaleTypes;
     do {
       // Accumulate staleGeneratedTypes -> generators -> generatorTriggeringTypes.
       Set<String> generatorTriggeringTypes = computeTypesThatRebindTypes(
           computeReboundTypesThatGenerateTypes(staleGeneratedTypeNames));
-      // Mark these generator triggering types stale.
-      staleTypeNames.addAll(generatorTriggeringTypes);
+      // Mark these generator triggering types stale and keep track of whether any of them are newly
+      // discovered stale types.
+      discoveredMoreStaleTypes = staleTypeNames.addAll(generatorTriggeringTypes);
 
       // It's possible that a generator triggering type was itself also created by a Generator.
       // Repeat the backwards trace process till none of the newly stale types are generated types.
       staleGeneratedTypeNames = Sets.intersection(generatorTriggeringTypes, generatedTypeNames);
-
-      // Ensure that no generated type is processed more than once, otherwise poorly written
-      // Generators could trigger an infinite loop.
-      staleGeneratedTypeNames.removeAll(staleTypeNames);
-    } while (!staleGeneratedTypeNames.isEmpty());
+    } while (discoveredMoreStaleTypes);
   }
 
   private void clearCachedTypeOutput(String staleTypeName) {
