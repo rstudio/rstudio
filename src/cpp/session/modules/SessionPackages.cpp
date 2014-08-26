@@ -184,7 +184,7 @@ Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
 }
 
 
-Error getPackageStateJson(json::Object* pJson)
+Error getPackageStateJson(json::Object* pJson, bool useCachedPackratActions)
 {
    Error error = Success();
    module_context::PackratContext context = module_context::packratContext();
@@ -215,7 +215,7 @@ Error getPackageStateJson(json::Object* pJson)
       (*pJson)["package_list"] = packageListJson;
       (*pJson)["packrat_context"] = packrat::contextAsJson(context);
       if (context.modeOn)
-         packrat::annotatePendingActions(pJson);
+         packrat::annotatePendingActions(pJson, useCachedPackratActions);
    }
 
    return error;
@@ -319,7 +319,13 @@ Error getPackageState(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    json::Object result;
-   Error error = getPackageStateJson(&result);
+   // in Packrat mode a manual refresh will bypass any cached state and do work
+   // to get the current state (even if it's expensive)
+   bool manualCheck = false;
+   Error error = json::readParams(request.params, &manualCheck);
+   if (error)
+      return error;
+   error = getPackageStateJson(&result, !manualCheck);
    if (error) 
       LOG_ERROR(error);
    else
@@ -332,7 +338,7 @@ Error getPackageState(const json::JsonRpcRequest& request,
 void enquePackageStateChanged()
 {
    json::Object pkgState;
-   Error error = getPackageStateJson(&pkgState);
+   Error error = getPackageStateJson(&pkgState, true);
    if (error)
       LOG_ERROR(error);
    else

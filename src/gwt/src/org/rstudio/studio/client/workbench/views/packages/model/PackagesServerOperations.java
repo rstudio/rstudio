@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 public interface PackagesServerOperations extends PackratServerOperations
 {
    void getPackageState(
+         boolean manual,
          ServerRequestCallback<PackageState> requestCallback);
    
    void availablePackages(

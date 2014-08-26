@@ -34,7 +34,7 @@ core::Error initialize();
 core::json::Object contextAsJson();
 
 // annotate a JSON object with pending Packrat actions
-void annotatePendingActions(core::json::Object *pJson);
+void annotatePendingActions(core::json::Object *pJson, bool useCached);
 
 // return the given Packrat context
 core::json::Object contextAsJson(const module_context::PackratContext& context);
