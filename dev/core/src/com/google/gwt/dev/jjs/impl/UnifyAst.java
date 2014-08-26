@@ -1167,68 +1167,76 @@ public class UnifyAst {
     if (method == JMethod.NULL_METHOD) {
       return;
     }
-    if (!liveFieldsAndMethods.contains(method)) {
-      liveFieldsAndMethods.add(method);
-      JType originalReturnType = translate(method.getOriginalReturnType());
-      List<JType> originalParamTypes = new ArrayList<JType>(method.getOriginalParamTypes().size());
-      for (JType originalParamType : method.getOriginalParamTypes()) {
-        originalParamTypes.add(translate(originalParamType));
-      }
-      JType returnType = translate(method.getType());
-      List<JClassType> thrownExceptions =
-          new ArrayList<JClassType>(method.getThrownExceptions().size());
-      for (JClassType thrownException : method.getThrownExceptions()) {
-        thrownExceptions.add(translate(thrownException));
-      }
-      method.resolve(originalReturnType, originalParamTypes, returnType, thrownExceptions);
-      if (method.isStatic()) {
-        staticInitialize(method.getEnclosingType());
-      } else if (method.canBePolymorphic()) {
-        String signature = method.getSignature();
-        if (!virtualMethodsLive.contains(signature)) {
-          virtualMethodsLive.add(signature);
-          List<JMethod> pending = virtualMethodsPending.remove(signature);
-          if (pending != null) {
-            for (JMethod p : pending) {
-              assert instantiatedTypes.contains(p.getEnclosingType());
-              flowInto(p);
-            }
-          }
-        }
-      }
-
-      // TODO (cromwellian): Move to GwtAstBuilder eventually
-      if (method.getSpecialization() != null) {
-        Specialization specialization = method.getSpecialization();
-        List<JType> resolvedParams = new ArrayList<JType>();
-        if (specialization.getParams() == null) {
-          logger.log(Type.ERROR, "Missing 'params' attribute at @SpecializeMethod for method "
-              + method.getSignature());
-          errorsFound = true;
-        } else {
-          for (JType param : specialization.getParams()) {
-            resolvedParams.add(translate(param));
-          }
-        }
-        JType resolvedReturn = null;
-        if (specialization.getReturns() != null) {
-          resolvedReturn = translate(specialization.getReturns());
-        }
-
-        JMethod targetMethod = program.typeOracle.getInstanceMethodBySignature(
-            (JClassType) method.getEnclosingType(), specialization.getTargetSignature(method));
-        if (targetMethod != null) {
-          flowInto(targetMethod);
-          specialization.resolve(resolvedParams, resolvedReturn, targetMethod);
-        } else {
-          errorsFound = true;
-          logger.log(Type.ERROR, "Unable to locate @SpecializeMethod target "
-              + specialization.getTargetSignature(method) + " for method " + method.getSignature());
-        }
-      }
-      // Queue up visit / resolve on the body.
-      todo.add(method);
+    if (liveFieldsAndMethods.contains(method)) {
+      return;
     }
+
+    liveFieldsAndMethods.add(method);
+    JType originalReturnType = translate(method.getOriginalReturnType());
+    List<JType> originalParamTypes = new ArrayList<JType>(method.getOriginalParamTypes().size());
+    for (JType originalParamType : method.getOriginalParamTypes()) {
+      originalParamTypes.add(translate(originalParamType));
+    }
+    JType returnType = translate(method.getType());
+    List<JClassType> thrownExceptions =
+        new ArrayList<JClassType>(method.getThrownExceptions().size());
+    for (JClassType thrownException : method.getThrownExceptions()) {
+      thrownExceptions.add(translate(thrownException));
+    }
+    method.resolve(originalReturnType, originalParamTypes, returnType, thrownExceptions);
+    if (method.isStatic()) {
+      staticInitialize(method.getEnclosingType());
+    } else if (method.canBePolymorphic()) {
+      String signature = method.getSignature();
+      if (!virtualMethodsLive.contains(signature)) {
+        virtualMethodsLive.add(signature);
+        List<JMethod> pending = virtualMethodsPending.remove(signature);
+        if (pending != null) {
+          for (JMethod p : pending) {
+            assert instantiatedTypes.contains(p.getEnclosingType());
+            flowInto(p);
+          }
+        }
+      }
+    }
+    resolveSpecialization(method);
+
+    // Queue up visit / resolve on the body.
+    todo.add(method);
+  }
+
+  private void resolveSpecialization(JMethod method) {
+    // TODO (cromwellian): Move to GwtAstBuilder eventually
+    if (method.getSpecialization() == null) {
+      return;
+    }
+    Specialization specialization = method.getSpecialization();
+    List<JType> resolvedParams = new ArrayList<JType>();
+    if (specialization.getParams() == null) {
+      logger.log(Type.ERROR, "Missing 'params' attribute at @SpecializeMethod for method "
+          + method.getSignature());
+      errorsFound = true;
+      return;
+    }
+
+    for (JType param : specialization.getParams()) {
+      resolvedParams.add(translate(param));
+    }
+    JType resolvedReturn =
+        specialization.getReturns() == null ? null : translate(specialization.getReturns());
+
+    JMethod targetMethod = program.typeOracle.getInstanceMethodBySignature(
+        (JClassType) method.getEnclosingType(), specialization.getTargetSignature(method));
+
+    if (targetMethod == null) {
+      errorsFound = true;
+      logger.log(Type.ERROR, "Unable to locate @SpecializeMethod target "
+          + specialization.getTargetSignature(method) + " for method " + method.getSignature());
+      return;
+    }
+
+    flowInto(targetMethod);
+    specialization.resolve(resolvedParams, resolvedReturn, targetMethod);
   }
 
   private String getMethodTypeSignature(JMethod method) {
@@ -1338,8 +1346,9 @@ public class UnifyAst {
   }
 
   private void instantiate(JDeclaredType type) {
-    // Don't flow into all the parts of types defined outside this compile.
-    if (program.isReferenceOnly(type)) {
+    // Don't flow into all the parts of types defined outside this compile; except when the type is
+    // a Jso.
+    if (program.isReferenceOnly(type) && !isJso(type)) {
       return;
     }
     if (type.isExternal()) {
@@ -1361,6 +1370,11 @@ public class UnifyAst {
       // Flow into any reachable virtual methods.
       for (JMethod method : type.getMethods()) {
         if (method.canBePolymorphic()) {
+          if (isJsType) {
+            // Fake a call into the method to keep it around
+            flowInto(method);
+            continue;
+          }
           String signature = method.getSignature();
           if (virtualMethodsLive.contains(signature)) {
             assert !virtualMethodsPending.containsKey(signature);
@@ -1373,10 +1387,6 @@ public class UnifyAst {
               pending = Lists.add(pending, method);
             }
             virtualMethodsPending.put(signature, pending);
-            if (isJsType) {
-              // Fake a call into the method to keep it around
-              flowInto(method);
-            }
           }
         } else if (program.typeOracle.isExportedMethod(method) &&
             (method.isStatic() || method.isConstructor())) {
@@ -1393,7 +1403,7 @@ public class UnifyAst {
     }
   }
 
-  private boolean isJso(JClassType type) {
+  private boolean isJso(JDeclaredType type) {
     if (type == null) {
       return false;
     }

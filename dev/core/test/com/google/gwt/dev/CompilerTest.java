@@ -289,6 +289,55 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  public void run() {}",
           "}");
 
+  private MockJavaResource simpleFactory =
+      JavaResourceBase.createMockJavaResource("com.foo.SimpleFactory",
+          "package com.foo;",
+          "public class SimpleFactory {",
+          "  public static SimpleIntf getJso() {",
+          "    return getJsoImpl();",
+          "  };",
+          "  public static native SimpleJso getJsoImpl() /*-{",
+          "    return null;",
+          "  }-*/;",
+          "}");
+
+  private MockJavaResource simpleJso =
+      JavaResourceBase.createMockJavaResource("com.foo.SimpleJso",
+          "package com.foo;",
+          "import com.google.gwt.core.client.JavaScriptObject;",
+          "public class SimpleJso extends JavaScriptObject implements SimpleIntf {",
+          "  protected SimpleJso() {",
+          "  }",
+          "  public final void method() {",
+          "  }",
+          "}");
+
+  private MockJavaResource simpleIntf =
+      JavaResourceBase.createMockJavaResource("com.foo.SimpleIntf",
+          "package com.foo;",
+          "import com.google.gwt.core.client.JavaScriptObject;",
+          "public interface SimpleIntf {",
+          "  public void method();",
+          "}");
+
+  private MockJavaResource jsoTestEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    SimpleFactory.getJso().method();",
+          "  }",
+          "}");
+
+  private MockResource jsoTestModuleResource =
+      JavaResourceBase.createMockResource("com/foo/SimpleModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.TestEntryPoint'/>",
+          "</module>");
+
   public CompilerTest() {
     argProcessor = new Compiler.ArgProcessor(options);
   }
@@ -357,11 +406,11 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testForbiddenArgs() {
-    assertProcessFailure(argProcessor, "Unknown argument", new String[] {"-out", "www"});
+    assertProcessFailure(argProcessor, "Unknown argument", new String[]{"-out", "www"});
     assertProcessFailure(argProcessor, "Source level must be one of",
-        new String[] {"-sourceLevel", "ssss"});
+        new String[]{"-sourceLevel", "ssss"});
     assertProcessFailure(argProcessor, "Source level must be one of",
-        new String[] {"-sourceLevel", "1.5"});
+        new String[]{"-sourceLevel", "1.5"});
   }
 
   /**
@@ -446,6 +495,14 @@ public class CompilerTest extends ArgProcessorTestBase {
       IOException, InterruptedException {
     checkPerFileRecompile_typeHierarchyChange(JsOutputOption.PRETTY);
     checkPerFileRecompile_typeHierarchyChange(JsOutputOption.DETAILED);
+  }
+
+  public void testPerFileRecompile_devirtualizeUnchangedJso() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Tests that a JSO calls through interfaces are correctly devirtualized when compiling per file
+    // and the JSOs nor their single impl interfaces are not stale.
+    checkPerFileRecompile_devirtualizeUnchangedJso(JsOutputOption.PRETTY);
+    checkPerFileRecompile_devirtualizeUnchangedJso(JsOutputOption.DETAILED);
   }
 
   public void testPerFileRecompile_singleJsoIntfDispatchChange() throws UnableToCompleteException,
@@ -618,6 +675,16 @@ public class CompilerTest extends ArgProcessorTestBase {
         fooInterfaceResource), nonJsoFooResource, jsoFooResource, output);
   }
 
+  private void checkPerFileRecompile_devirtualizeUnchangedJso(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
+        jsoTestModuleResource, simpleFactory, simpleIntf, simpleJso), jsoTestEntryPointResource,
+        jsoTestEntryPointResource, output);
+  }
+
   private void checkPerFileRecompile_dualJsoIntfDispatchChange(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
@@ -653,8 +720,7 @@ public class CompilerTest extends ArgProcessorTestBase {
       options.addModuleName(topLevelModule);
       options.setWarDir(new File(firstCompileWorkDir, "war"));
       options.setExtraDir(new File(firstCompileWorkDir, "extra"));
-      PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-      logger.setMaxDetail(TreeLogger.ERROR);
+      TreeLogger logger = TreeLogger.NULL;
 
       // Run the compiler once here.
       new Compiler(options).run(logger);
@@ -715,9 +781,11 @@ public class CompilerTest extends ArgProcessorTestBase {
     String modifiedAppFromScratchJs = compileToJs(compilerOptions, fromScratchApplicationDir,
         moduleName, modifiedResources, fromScratchMinimalRebuildCache, output);
 
-    // A resource was changed between the original compile and the relink compile. If the compile is
-    // correct then the output JS will have changed.
-    assertFalse(originalAppFromScratchJs.equals(modifiedAppRelinkedJs));
+    // If a resource contents were changed between the original compile and the relink compile;
+    // check that the output JS has also changed. If all resources have the same content (their
+    // timestamps might have changed) then outputs should be the same.
+    assertEquals(modifiedResource == originalResource,
+        originalAppFromScratchJs.equals(modifiedAppRelinkedJs));
 
     // If per-file compiles properly avoids global-knowledge dependencies and correctly invalidates
     // referencing types when a type changes, then the relinked and from scratch JS will be
@@ -741,7 +809,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     System.setProperty(GWT_PERSISTENTUNITCACHE, "false");
     // Wait 1 second so that any new file modification times are actually different.
     Thread.sleep(1001);
-    TreeLogger logger = TreeLogger.NULL;
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();// TreeLogger.NULL;
+    logger.setMaxDetail(TreeLogger.INFO);
 
     // We might be reusing the same application dir but we want to make sure that the output dir is
     // clean to avoid confusion when returning the output JS.
