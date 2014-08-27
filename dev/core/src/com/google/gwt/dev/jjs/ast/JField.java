@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.util.StringInterner;
 
 import java.io.Serializable;
 
@@ -69,7 +70,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     }
 
     private Object readResolve() {
-      String name = signature.substring(0, signature.indexOf(':'));
+      String name = StringInterner.get().intern(signature.substring(0, signature.indexOf(':')));
       JField result =
           new JField(SourceOrigin.UNKNOWN, name, enclosingType, JNullType.INSTANCE, false,
               Disposition.NONE);

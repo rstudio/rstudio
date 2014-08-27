@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 
 import java.io.BufferedInputStream;
@@ -54,7 +55,7 @@ public class CompilationUnitArchive implements Serializable {
 
   public static CompilationUnitArchive createFromStream(InputStream stream) throws IOException,
       ClassNotFoundException {
-    ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(stream));
+    ObjectInputStream ois = new StringInterningObjectInputStream(new BufferedInputStream(stream));
     CompilationUnitArchive result = (CompilationUnitArchive) ois.readObject();
     ois.close();
     return result;

@@ -268,7 +268,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    */
   private JMethod(String signature, JDeclaredType enclosingType, boolean isStatic) {
     super(SourceOrigin.UNKNOWN);
-    this.name = signature.substring(0, signature.indexOf('('));
+    this.name = StringInterner.get().intern(signature.substring(0, signature.indexOf('(')));
     this.enclosingType = enclosingType;
     this.signature = signature;
     this.isAbstract = false;

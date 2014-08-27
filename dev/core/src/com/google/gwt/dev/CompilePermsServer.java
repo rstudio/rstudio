@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.PerfCounter;
 import com.google.gwt.dev.util.PersistenceBackedObject;
+import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -257,7 +258,7 @@ public class CompilePermsServer {
       logger.log(TreeLogger.DEBUG, "Socket opened");
 
       ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-      ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+      ObjectInputStream in = new StringInterningObjectInputStream(s.getInputStream());
 
       // Write my cookie
       out.writeUTF(options.getCookie());
@@ -265,7 +266,7 @@ public class CompilePermsServer {
 
       // Read the File that contains the serialized UnifiedAst
       File astFile = (File) in.readObject();
-      ObjectInputStream astIn = new ObjectInputStream(new FileInputStream(
+      ObjectInputStream astIn = new StringInterningObjectInputStream(new FileInputStream(
           astFile));
       UnifiedAst ast = (UnifiedAst) astIn.readObject();
       ast.prepare();

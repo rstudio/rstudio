@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
+import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -558,7 +559,7 @@ class PersistentUnitCache extends MemoryUnitCache {
              * It is possible for the next call to throw an exception, leaving
              * inputStream null and fis still live.
              */
-            inputStream = new ObjectInputStream(bis);
+            inputStream = new StringInterningObjectInputStream(bis);
             while (true) {
               CachedCompilationUnit unit = (CachedCompilationUnit) inputStream.readObject();
               if (unit == null) {

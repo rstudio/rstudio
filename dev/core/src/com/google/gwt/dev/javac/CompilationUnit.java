@@ -23,6 +23,7 @@ import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
 
@@ -376,7 +377,7 @@ public abstract class CompilationUnit implements Serializable {
   public List<JDeclaredType> getTypes() {
     try {
       byte[] bytes = getTypesSerialized();
-      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+      ObjectInputStream ois = new StringInterningObjectInputStream(new ByteArrayInputStream(bytes));
       return JProgram.deserializeTypes(ois);
     } catch (IOException e) {
       throw new RuntimeException("Unexpected IOException on in-memory stream", e);

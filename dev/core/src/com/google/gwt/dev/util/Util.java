@@ -719,7 +719,7 @@ public final class Util {
       throws ClassNotFoundException, IOException {
     ObjectInputStream objectInputStream = null;
     try {
-      objectInputStream = new ObjectInputStream(inputStream);
+      objectInputStream = new StringInterningObjectInputStream(inputStream);
       return type.cast(objectInputStream.readObject());
     } finally {
       Utility.close(objectInputStream);

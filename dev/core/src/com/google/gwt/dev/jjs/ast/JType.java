@@ -62,7 +62,7 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
 
   public String getShortName() {
     if (shortName == null) {
-      shortName = name.substring(name.lastIndexOf('.') + 1);
+      shortName = StringInterner.get().intern(name.substring(name.lastIndexOf('.') + 1));
     }
     return shortName;
   }

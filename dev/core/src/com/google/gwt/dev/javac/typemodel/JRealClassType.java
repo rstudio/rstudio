@@ -99,7 +99,7 @@ public class JRealClassType extends JClassType implements
       nestedSourceName = simpleName;
     } else {
       // Compute my "nested name".
-      nestedSourceName = enclosingSimpleName + "." + simpleName;
+      nestedSourceName = StringInterner.get().intern(enclosingSimpleName + "." + simpleName);
 
       // We will add ourselves to the enclosing class when it is set in
       // setEnclosingType().

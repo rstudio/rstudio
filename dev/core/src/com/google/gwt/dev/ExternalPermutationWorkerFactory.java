@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.PersistenceBackedObject;
+import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.shared.StringUtils;
 
@@ -116,7 +117,7 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
            */
           workerSocket = serverSocket.accept();
 
-          in = new ObjectInputStream(workerSocket.getInputStream());
+          in = new StringInterningObjectInputStream(workerSocket.getInputStream());
           out = new ObjectOutputStream(workerSocket.getOutputStream());
 
           // Verify we're talking to the right worker

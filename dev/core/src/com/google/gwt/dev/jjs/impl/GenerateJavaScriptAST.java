@@ -3455,7 +3455,7 @@ public class GenerateJavaScriptAST {
       s += type.getJavahSignatureName();
     }
     s += x.getOriginalReturnType().getJavahSignatureName();
-    return s;
+    return StringInterner.get().intern(s);
   }
 
   String mangleNameForPackagePrivatePoly(JMethod x) {
@@ -3472,7 +3472,7 @@ public class GenerateJavaScriptAST {
     sb.append("$");
     sb.append(getNameString(x));
     constructManglingSignature(x, sb);
-    return sb.toString();
+    return StringInterner.get().intern(sb.toString());
   }
 
   String mangleNameForPoly(JMethod x) {
@@ -3480,9 +3480,8 @@ public class GenerateJavaScriptAST {
     StringBuilder sb = new StringBuilder();
     sb.append(getNameString(x));
     constructManglingSignature(x, sb);
-    return sb.toString();
+    return StringInterner.get().intern(sb.toString());
   }
-
 
   String mangleNameForPrivatePoly(JMethod x) {
     assert x.isPrivate() && !x.isStatic();
@@ -3497,7 +3496,7 @@ public class GenerateJavaScriptAST {
     sb.append("$");
     sb.append(getNameString(x));
     constructManglingSignature(x, sb);
-    return sb.toString();
+    return StringInterner.get().intern(sb.toString());
   }
 
   private void constructManglingSignature(JMethod x, StringBuilder partialSignature) {

@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.CompilerIoException;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.impl.ZipFileResource;
+import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.base.Splitter;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
@@ -143,7 +144,7 @@ public class ZipLibrary implements Library {
       CompilationErrorsIndexImpl newCompilationErrorsIndex;
       try {
         ObjectInputStream objectInputStream =
-            new ObjectInputStream(compilationErrorsIndexInputStream);
+            new StringInterningObjectInputStream(compilationErrorsIndexInputStream);
         newCompilationErrorsIndex = (CompilationErrorsIndexImpl) objectInputStream.readObject();
         objectInputStream.close();
       } catch (IOException e) {
@@ -169,7 +170,8 @@ public class ZipLibrary implements Library {
 
       CompilationUnit compilationUnit;
       try {
-        ObjectInputStream objectInputStream = new ObjectInputStream(compilationUnitInputStream);
+        ObjectInputStream objectInputStream =
+            new StringInterningObjectInputStream(compilationUnitInputStream);
         compilationUnit = (CompilationUnit) objectInputStream.readObject();
         objectInputStream.close();
       } catch (IOException e) {

@@ -80,6 +80,7 @@ import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -1505,8 +1506,8 @@ public class UnifyAst {
   private JDeclaredType findPackageInfo(JDeclaredType type) {
     String pkg = type.getName();
     pkg = pkg.substring(0, pkg.lastIndexOf('.'));
-    JDeclaredType pkgInfo =
-        internalFindType(pkg + ".package-info", binaryNameBasedTypeLocator, false);
+    JDeclaredType pkgInfo = internalFindType(StringInterner.get().intern(pkg + ".package-info"),
+        binaryNameBasedTypeLocator, false);
     // package-info classes are loaded only for their package level annotations' possible effect on
     // JsInterop configuration. They are not intended to be included in output.
     if (pkgInfo != null) {
