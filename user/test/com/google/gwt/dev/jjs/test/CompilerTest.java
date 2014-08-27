@@ -566,6 +566,26 @@ public class CompilerTest extends GWTTestCase {
     }
   }
 
+  private int functionWithClashingParameters(int i0) {
+    int c = 0;
+    for (int i = 0; i < 5; i++) {
+      c++;
+    }
+    for (int i = 0; i < 6; i++) {
+      c++;
+    }
+    // Assumes that GenerateJavaScriptAST will rename one of the "i" variables to i0.
+    return i0;
+  }
+
+  /**
+   * Test for issue 8870.
+   *
+   */
+  public void testParameterVariableClash() {
+    assertEquals(1, functionWithClashingParameters(1));
+  }
+
   public void testDeadCode() {
     while (returnFalse()) {
       break;

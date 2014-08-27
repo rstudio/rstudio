@@ -90,6 +90,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
+import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
@@ -277,8 +278,8 @@ public class GenerateJavaScriptAST {
     }
 
     private Scope currentScope;
-    private Map<JLocal, Scope> scopesByLocal;
-    private Multimap<String, JLocal> localsByName;
+    private Map<JVariable, Scope> scopesByLocal;
+    private Multimap<String, JVariable> localsByName;
 
     @Override
     public boolean visit(JMethodBody x, Context ctx) {
@@ -301,7 +302,7 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JLocalRef x, Context ctx) {
+    public void endVisit(JVariableRef x, Context ctx) {
       // We use the a block scope as a proxy for a lifetime which is safe to do albeit non optimal.
       //
       // Keep track of the scope that encloses a variable lifetime. E.g. assume the following code.
@@ -318,7 +319,12 @@ public class GenerateJavaScriptAST {
       // }
       // Scope 1.1 is the innermost scope that encloses the lifetime of variable a and
       // scope 1 is the innermost scope that encloses the lifetime of variable b.
-      JLocal local = x.getLocal();
+      if (x instanceof JFieldRef) {
+        // Skip fields as they are always qualified in JavaScript and their name resolution logic
+        // is in {@link CreateNameAndScopesVisitor}.
+        return;
+      }
+      JVariable local = x.getTarget();
       Scope oldVariableScope = scopesByLocal.get(local);
       Scope newVariableScope =  Scope.getInnermostEnclosingScope(oldVariableScope, currentScope);
       newVariableScope.addUsedName(local.getName());
@@ -334,7 +340,7 @@ public class GenerateJavaScriptAST {
       // computed lifetimes are intersecting. By using the scope to model lifetimes two variables
       // clash if their computed scopes are nested.
       for (String name : localsByName.keySet()) {
-        Collection<JLocal> localSet = localsByName.get(name);
+        Collection<JVariable> localSet = localsByName.get(name);
         if (localSet.size() == 1) {
           continue;
         }
