@@ -56,6 +56,14 @@ public class HistoryTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  @Override
+  protected void gwtSetUp() throws Exception {
+    if (this.handlerRegistration != null) {
+      this.handlerRegistration.removeHandler();
+      this.handlerRegistration = null;
+    }
+  }
+
   // TODO(dankurka): Fix up HTML unit hash change handling
   @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testClickLink() {
@@ -126,7 +134,7 @@ public class HistoryTest extends GWTTestCase {
         if (historyToken.equals("foobar")) {
           History.newItem("");
         } else {
-          assertEquals(0, historyToken.length());
+          assertEquals("", historyToken);
           finishTest();
         }
       }
