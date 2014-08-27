@@ -172,6 +172,16 @@ public class CompilerTest extends ArgProcessorTestBase {
           "</generate-with>",
           "</module>");
 
+  private MockResource multipleClassGeneratorModuleResource =
+      JavaResourceBase.createMockResource("com/foo/SimpleModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.TestEntryPoint'/>",
+          "<generate-with class='com.google.gwt.dev.MultipleClassGenerator'>",
+          "  <when-type-is class='java.lang.Object' />",
+          "</generate-with>",
+          "</module>");
+
   private MockResource classNameToGenerateResource =
       JavaResourceBase.createMockResource("com/foo/generatedClassName.txt",
           "FooReplacementOne");
@@ -295,6 +305,11 @@ public class CompilerTest extends ArgProcessorTestBase {
       JavaResourceBase.createMockJavaResource("com.foo.Foo",
           "package com.foo;",
           "public class Foo {}");
+
+  private MockJavaResource bazResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Baz",
+          "package com.foo;",
+          "public class Baz {}");
 
   private MockJavaResource regularFooImplemetorResource =
       JavaResourceBase.createMockJavaResource("com.foo.FooImplementor",
@@ -522,6 +537,14 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkPerFileRecompile_devirtualizeUnchangedJso(JsOutputOption.DETAILED);
   }
 
+  public void testPerFileRecompile_multipleClassGenerator() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Tests that a Generated type that is not directly referenced from the rebound GWT.create()
+    // call is still marked stale, regenerated, retraversed and output as JS.
+    checkPerFileRecompile_multipleClassGenerator(JsOutputOption.PRETTY);
+    checkPerFileRecompile_multipleClassGenerator(JsOutputOption.DETAILED);
+  }
+
   public void testPerFileRecompile_singleJsoIntfDispatchChange() throws UnableToCompleteException,
       IOException, InterruptedException {
     // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
@@ -747,6 +770,16 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
         jsoTestModuleResource, simpleFactory, simpleIntf, simpleJso), jsoTestEntryPointResource,
         jsoTestEntryPointResource, output);
+  }
+
+  private void checkPerFileRecompile_multipleClassGenerator(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
+        multipleClassGeneratorModuleResource, generatorEntryPointResource), bazResource,
+        bazResource, output);
   }
 
   private void checkPerFileRecompile_dualJsoIntfDispatchChange(JsOutputOption output)
