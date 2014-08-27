@@ -100,7 +100,7 @@ public class ResourceLocatorImpl {
             + "' was located via ClassLoader. As a result changes in that resource will not be "
             + "reflected in per-file recompiles. It should be registered via  <source /> or "
             + "<resource /> entry in your .gwt.xml. In a future version of GWT, we will remove "
-            + "this fallback and you application will stop compiling");
+            + "this fallback and your application will stop compiling");
         if (classLoaderLoadCount == CLASS_LOADER_LOAD_REPORT_LIMIT) {
           logger.log(TreeLogger.WARN, "Suppressing further ClassLoader resource load warnings.");
         }
