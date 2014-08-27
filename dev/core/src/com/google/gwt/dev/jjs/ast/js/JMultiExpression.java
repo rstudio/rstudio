@@ -35,10 +35,11 @@ public class JMultiExpression extends JExpression {
   private List<JExpression> expressions = Lists.newArrayList();
 
   /**
-   * Construct an empty multi expression.
+   * Construct a multi expression containing {@code expressions} if any.
    */
-  public JMultiExpression(SourceInfo info) {
+  public JMultiExpression(SourceInfo info, JExpression... expressions) {
     super(info);
+    addExpressions(expressions);
   }
 
   /**

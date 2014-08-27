@@ -51,6 +51,7 @@ import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -469,38 +470,34 @@ public class TypeTightener {
         fromType = (JReferenceType) argType;
       }
 
-      boolean triviallyTrue = false;
-      boolean triviallyFalse = false;
+      AnalysisResult analysisResult = staticallyEvaluateInstanceOf(fromType, toType);
 
-      JTypeOracle typeOracle = program.typeOracle;
-      if (fromType == program.getTypeNull()) {
-        // null is never instanceof anything
-        triviallyFalse = true;
-      } else if (typeOracle.canTriviallyCast(fromType, toType)) {
-        triviallyTrue = true;
-      } else if (!typeOracle.isInstantiatedType(toType)) {
-        triviallyFalse = true;
-      } else if (!typeOracle.canTheoreticallyCast(fromType, toType)) {
-        triviallyFalse = true;
-      }
-
-      if (triviallyTrue) {
+      switch (analysisResult) {
+        case TRUE:
         // replace with a simple null test
-        JNullLiteral nullLit = program.getLiteralNull();
-        JBinaryOperation neq =
-            new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
-                JBinaryOperator.NEQ, x.getExpr(), nullLit);
-        ctx.replaceMe(neq);
-      } else if (triviallyFalse) {
+          JNullLiteral nullLit = program.getLiteralNull();
+          JBinaryOperation neq =
+              new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+                  JBinaryOperator.NEQ, x.getExpr(), nullLit);
+          ctx.replaceMe(neq);
+          break;
+        case FALSE:
         // replace with a false literal
-        ctx.replaceMe(program.getLiteralBoolean(false));
-      } else {
-        // If possible, try to use a narrower cast
-        JReferenceType concreteType = getSingleConcreteType(toType);
-        if (concreteType != null) {
-          JInstanceOf newOp = new JInstanceOf(x.getSourceInfo(), concreteType, x.getExpr());
-          ctx.replaceMe(newOp);
-        }
+          JExpression result = program.getLiteralBoolean(false);
+          if (x.getExpr().hasSideEffects()) {
+            result = new JMultiExpression(x.getSourceInfo(), x.getExpr(), result);
+          }
+          ctx.replaceMe(result);
+          break;
+        case UNKNOWN:
+        default:
+          // If possible, try to use a narrower cast
+          JReferenceType concreteType = getSingleConcreteType(toType);
+          if (concreteType != null) {
+            JInstanceOf newOp = new JInstanceOf(x.getSourceInfo(), concreteType, x.getExpr());
+            ctx.replaceMe(newOp);
+          }
+          break;
       }
     }
 
@@ -890,4 +887,27 @@ public class TypeTightener {
 
     return stats;
   }
+
+  private enum AnalysisResult { TRUE, FALSE, UNKNOWN };
+
+  /**
+   * Tries to statically evaluate the instanceof operation. Returning TRUE if it can be determined
+   * statically that it is true, FALSE if it can be determined that is FALSE and UNKNOWN if the
+   * result can not be determined statically.
+   */
+  private AnalysisResult staticallyEvaluateInstanceOf(JReferenceType fromType,
+      JReferenceType toType) {
+    if (fromType == program.getTypeNull()) {
+      // null is never instanceof anything
+      return AnalysisResult.FALSE;
+    } else if (program.typeOracle.canTriviallyCast(fromType, toType)) {
+      return AnalysisResult.TRUE;
+    } else if (!program.typeOracle.isInstantiatedType(toType)) {
+      return AnalysisResult.FALSE;
+    } else if (!program.typeOracle.canTheoreticallyCast(fromType, toType)) {
+      return AnalysisResult.FALSE;
+    }
+    return AnalysisResult.UNKNOWN;
+  }
+
 }
