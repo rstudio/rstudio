@@ -26,7 +26,6 @@ import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.SourceLevel;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -781,7 +780,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     String modifiedAppFromScratchJs = compileToJs(compilerOptions, fromScratchApplicationDir,
         moduleName, modifiedResources, fromScratchMinimalRebuildCache, output);
 
-    // If a resource contents were changed between the original compile and the relink compile;
+    // If a resource contents were changed between the original compile and the relink compile
     // check that the output JS has also changed. If all resources have the same content (their
     // timestamps might have changed) then outputs should be the same.
     assertEquals(modifiedResource == originalResource,
@@ -809,8 +808,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     System.setProperty(GWT_PERSISTENTUNITCACHE, "false");
     // Wait 1 second so that any new file modification times are actually different.
     Thread.sleep(1001);
-    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();// TreeLogger.NULL;
-    logger.setMaxDetail(TreeLogger.INFO);
+    TreeLogger logger = TreeLogger.NULL;
 
     // We might be reusing the same application dir but we want to make sure that the output dir is
     // clean to avoid confusion when returning the output JS.
