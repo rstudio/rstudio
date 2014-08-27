@@ -25,6 +25,8 @@ import java.io.ObjectInputStream;
 */
 public class StringInterningObjectInputStream extends ObjectInputStream {
 
+  public static final int MAX_INTERNED_STRING_SIZE = 2048;
+
   public StringInterningObjectInputStream(InputStream inputStream) throws IOException {
     super(inputStream);
     enableResolveObject(true);
@@ -33,7 +35,8 @@ public class StringInterningObjectInputStream extends ObjectInputStream {
   @Override
   protected Object resolveObject(Object obj) throws IOException {
     Object resolvedObject = super.resolveObject(obj);
-    if (resolvedObject instanceof String) {
+    if (resolvedObject instanceof String &&
+        ((String) resolvedObject).length() < MAX_INTERNED_STRING_SIZE) {
       return StringInterner.get().intern((String) resolvedObject);
     }
     return resolvedObject;
