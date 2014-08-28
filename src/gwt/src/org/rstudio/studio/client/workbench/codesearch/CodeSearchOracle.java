@@ -15,8 +15,10 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
@@ -31,6 +33,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 
+import com.google.gwt.user.client.rpc.core.java.util.Collections;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
@@ -42,6 +45,29 @@ public class CodeSearchOracle extends SuggestOracle
    {
       server_ = server;
       workbenchContext_ = workbenchContext;
+   }
+   
+   private double score(String suggestion, String query)
+   {
+      int query_n = query.length();
+      int suggestion_n = suggestion.length();
+      double result = 0;
+      for (int j = 0; j < query_n; j++)
+      {
+         // Weigh characters in the query that are matched earlier higher
+         double queryWeight = Math.pow((query_n - j) / query_n, 2);
+         
+         // Weigh earlier matches higher than later matches
+         int matchPos = suggestion.indexOf(query.charAt(j));
+         double numerator = suggestion_n - matchPos + 1;
+         double denominator = suggestion_n;
+         double suggestionScore = numerator / denominator;
+         
+         result += queryWeight * suggestionScore;
+      }
+      
+      // Debug.logToConsole("Score for suggestion '" + suggestion + "' against query '" + query + "': " + result);
+      return result;
    }
    
    
@@ -72,7 +98,7 @@ public class CodeSearchOracle extends SuggestOracle
              request.getQuery().startsWith(res.getQuery()))
          {
             Pattern pattern = null;
-            String queryLower = request.getQuery().toLowerCase();
+            final String queryLower = request.getQuery().toLowerCase();
             if (queryLower.indexOf('*') != -1)
                pattern = patternForTerm(queryLower);
             
@@ -96,8 +122,6 @@ public class CodeSearchOracle extends SuggestOracle
                }
             }
             
-            
-
             // process and cache suggestions. note that this adds an item to
             // the end of the resultCache_ (which we are currently iterating
             // over) no biggie because we are about to return from the loop
@@ -205,6 +229,36 @@ public class CodeSearchOracle extends SuggestOracle
               suggestions = processSuggestions(request_, 
                                                suggestions,
                                                response.getMoreAvailable());
+              
+              // sort the suggestions -- we want suggestions for which
+              // the query matches the start to come first
+              final String queryLower = request_.getQuery().toLowerCase();
+              java.util.Collections.sort(suggestions,
+                    new Comparator<CodeSearchSuggestion>() {
+                 
+                 @Override
+                 public int compare(CodeSearchSuggestion lhs,
+                       CodeSearchSuggestion rhs)
+                 {
+                    double lhsScore = score(
+                          lhs.getMatchedString().toLowerCase(),
+                          queryLower);
+                    
+                    double rhsScore = score(
+                          rhs.getMatchedString().toLowerCase(),
+                          queryLower);
+                    
+                    if (lhsScore == rhsScore)
+                    {
+                       return 0;
+                    }
+                    else
+                    {
+                       return lhsScore > rhsScore ? -1 : 1;
+                    }
+                 }
+                 
+              });
                
                // return suggestions
                if (!invalidationToken_.isInvalid())
