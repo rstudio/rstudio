@@ -65,7 +65,8 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onError(ServerError error)
                {
-                  callbacks_.onError(error.getUserMessage());
+                  if (callbacks_ != null)
+                     callbacks_.onError(error.getUserMessage());
                }
 
                @Override
@@ -76,7 +77,9 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                   
                   workingDir_ = newPath;
                   contents_ = fsi.toArray(new FileSystemItem[0]);
-                  callbacks_.onNavigated();
+                  
+                  if (callbacks_ != null)
+                     callbacks_.onNavigated();
                }
             });
    }
@@ -114,7 +117,8 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                   if (baseDir.equals(workingDir_))
                   {
                      progress.onCompleted();
-                     callbacks_.onDirectoryCreated(newFolder);
+                     if (callbacks_ != null)
+                        callbacks_.onDirectoryCreated(newFolder);
                   }
                }
             });

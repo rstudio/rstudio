@@ -44,7 +44,8 @@ public class FilePathToolbar extends Composite
       public void cd(String relativeOrAbsolutePath)
       {
          workingDir_ = combine(pwd(), relativeOrAbsolutePath);
-         callbacks_.onNavigated();
+         if (callbacks_ != null)
+            callbacks_.onNavigated();
       }
 
       public void refresh()
