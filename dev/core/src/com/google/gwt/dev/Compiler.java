@@ -22,7 +22,6 @@ import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.UnitCacheSingleton;
-import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.js.JsNamespaceOption;
@@ -213,7 +212,7 @@ public class Compiler {
           compilePermutationsEvent.end();
 
           ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
-          JJSOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
+          PrecompileTaskOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
 
           precompilation = null; // No longer needed, so save the memory
           long afterCompileMs = System.currentTimeMillis();

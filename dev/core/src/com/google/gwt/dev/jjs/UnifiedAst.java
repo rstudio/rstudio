@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.Permutation;
+import com.google.gwt.dev.PrecompileTaskOptions;
+import com.google.gwt.dev.PrecompileTaskOptionsImpl;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.DiskCache;
@@ -84,7 +86,7 @@ public class UnifiedAst implements Serializable {
   /**
    * The compilation options.
    */
-  private final JJSOptions options;
+  private final PrecompileTaskOptions options;
 
   /**
    * Metrics for the precompilation phase. Stored here so they can be written
@@ -102,9 +104,9 @@ public class UnifiedAst implements Serializable {
    */
   private transient long serializedAstToken;
 
-  public UnifiedAst(JJSOptions options, AST initialAst, boolean singlePermutation,
+  public UnifiedAst(PrecompileTaskOptions options, AST initialAst, boolean singlePermutation,
       Set<String> rebindRequests) {
-    this.options = new JJSOptionsImpl(options);
+    this.options = new PrecompileTaskOptionsImpl(options);
     this.initialAst = initialAst;
     this.rebindRequests = Collections.unmodifiableSortedSet(new TreeSet<String>(rebindRequests));
     this.serializedAstToken = singlePermutation ? -1 : diskCache.writeObject(initialAst);
@@ -173,8 +175,8 @@ public class UnifiedAst implements Serializable {
   /**
    * Returns the active set of JJS options associated with this compile.
    */
-  public JJSOptions getOptions() {
-    return new JJSOptionsImpl(options);
+  public PrecompileTaskOptions getOptions() {
+    return new PrecompileTaskOptionsImpl(options);
   }
 
   /**

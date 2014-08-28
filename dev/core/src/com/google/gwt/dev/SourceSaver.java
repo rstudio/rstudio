@@ -75,10 +75,6 @@ class SourceSaver {
       }
     }
 
-    if (genFiles.isEmpty()) {
-      return; // -saveSource probably wasn't enabled
-    }
-
     if (sourceMaps.isEmpty()) {
       logger.log(Type.WARN, "Not saving source because sourcemaps weren't generated. " +
           "Hint: set compiler.useSourceMaps.");

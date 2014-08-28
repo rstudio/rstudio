@@ -34,7 +34,6 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
-import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
 import com.google.gwt.dev.resource.ResourceOracle;
@@ -174,14 +173,16 @@ public class Link {
   public static void link(TreeLogger logger, ModuleDef module, ResourceOracle publicResourceOracle,
       ArtifactSet generatedArtifacts, Permutation[] permutations,
       List<PersistenceBackedObject<PermutationResult>> resultFiles,
-      Set<PermutationResult> libraries, JJSOptions precompileOptions, LinkOptions linkOptions)
+      Set<PermutationResult> libraries, PrecompileTaskOptions precompileOptions,
+      LinkOptions linkOptions)
       throws UnableToCompleteException, IOException {
     StandardLinkerContext linkerContext =
         new StandardLinkerContext(logger, module, publicResourceOracle, precompileOptions);
     ArtifactSet artifacts = doSimulatedShardingLink(
         logger, module, linkerContext, generatedArtifacts, permutations, resultFiles, libraries);
 
-    doProduceOutput(logger, artifacts, linkerContext, module, linkOptions);
+    doProduceOutput(logger, artifacts, linkerContext, module, precompileOptions.shouldSaveSource(),
+        linkOptions);
   }
 
   /**
@@ -390,7 +391,7 @@ public class Link {
    * Emit final output.
    */
   private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
-      StandardLinkerContext linkerContext, ModuleDef module,
+      StandardLinkerContext linkerContext, ModuleDef module, boolean saveSources,
       LinkOptions options) throws IOException, UnableToCompleteException {
 
     // == create output filesets ==
@@ -417,10 +418,12 @@ public class Link {
     linkerContext.produceOutput(logger, artifacts, Visibility.Private,
         extraFileSet);
 
-    // Assume that all source code is available in the compiler's classpath.
-    // (This will have to be adjusted to work with Super Dev Mode.)
-    ResourceLoader loader = ResourceLoaders.forClassLoader(Thread.currentThread());
-    SourceSaver.save(logger, artifacts, loader, options, destPrefix, extraFileSet);
+    if (saveSources) {
+      // Assume that all source code is available in the compiler's classpath.
+      // (This will have to be adjusted to work with Super Dev Mode.)
+      ResourceLoader loader = ResourceLoaders.forClassLoader(Thread.currentThread());
+      SourceSaver.save(logger, artifacts, loader, options, destPrefix, extraFileSet);
+    }
 
     outFileSet.close();
     extraFileSet.close();
@@ -719,7 +722,8 @@ public class Link {
           module));
       artifacts = linkerContext.invokeFinalLink(logger, artifacts);
 
-      doProduceOutput(logger, artifacts, linkerContext, module, options);
+      doProduceOutput(logger, artifacts, linkerContext, module,
+          precompileOptions.shouldSaveSource(), options);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Exception during final linking", e);
       throw new UnableToCompleteException();
