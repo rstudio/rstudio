@@ -233,34 +233,36 @@ public final class Array {
    */
   public static Object setCheck(Object array, int index, Object value) {
     if (value != null) {
-      int elementTypeCategory = Array.getElementTypeCategory(array);
-      JavaScriptObject elementTypeId = Array.getElementTypeId(array);
-      switch (elementTypeCategory) {
+      switch (Array.getElementTypeCategory(array)) {
         case TYPE_JAVA_LANG_STRING:
           if (!Cast.isJavaString(value)) {
             // value must be a string.
             throw new ArrayStoreException();
           }
           break;
-        case TYPE_JAVA_OBJECT:
+        case TYPE_JAVA_OBJECT: {
+          JavaScriptObject elementTypeId = Array.getElementTypeId(array);
           if (!Cast.canCast(value, elementTypeId)) {
           // value must be castable to elementType.
             throw new ArrayStoreException();
           }
           break;
+        }
         case TYPE_JSO:
           if (!Cast.isJavaScriptObject(value)) {
             // value must be a JavaScriptObject
             throw new ArrayStoreException();
           }
           break;
-        case TYPE_JAVA_OBJECT_OR_JSO:
+        case TYPE_JAVA_OBJECT_OR_JSO: {
+          JavaScriptObject elementTypeId = Array.getElementTypeId(array);
           if (!Cast.isJavaScriptObject(value)
             && !Cast.canCast(value, elementTypeId)) {
             // value must be a JavaScriptObject, or else castable to the elementType.
             throw new ArrayStoreException();
           }
           break;
+        }
       }
     }
     return set(array, index, value);
