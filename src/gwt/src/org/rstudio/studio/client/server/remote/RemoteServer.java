@@ -617,9 +617,12 @@ public class RemoteServer implements Server
 
 
    public void getPackageState(
+         boolean manual,
          ServerRequestCallback<PackageState> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GET_PACKAGE_STATE, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(manual));
+      sendRequest(RPC_SCOPE, GET_PACKAGE_STATE, params, requestCallback);
    }
    
    public void getPackageInstallContext(

@@ -42,7 +42,7 @@ using namespace core;
 #define PACKRAT_TRACE(x) \
    std::cerr << "(packrat) " << x << std::endl;
 #else
-#define PACKRAT_TRACE(x) 
+#define PACKRAT_TRACE(x)
 #endif
 
 #define kPackratFolder "packrat/"
@@ -157,7 +157,8 @@ static bool s_autoSnapshotRunning = false;
 
 void performAutoSnapshot(const std::string& targetHash, bool queue);
 void pendingSnapshot(PendingSnapshotAction action);
-bool getPendingActions(PackratActionType action, const std::string& libraryHash, 
+bool getPendingActions(PackratActionType action, bool useCached,
+                       const std::string& libraryHash,
                        const std::string& lockfileHash, json::Value* pActions);
 bool resolveStateAfterAction(PackratActionType action, 
                              PackratHashType hashType);
@@ -223,6 +224,9 @@ bool addDescContent(int level, const FilePath& path, std::string* pDescContent)
    if (path.filename() == "DESCRIPTION") 
    {
       Error error = readStringFromFile(path, &newDescContent);
+      // include the path of the file; on Windows the DESCRIPTION file moves
+      // inside the library post-installation
+      pDescContent->append(path.absolutePath());
       pDescContent->append(newDescContent);
    }
    return true;
@@ -473,7 +477,8 @@ void performAutoSnapshot(const std::string& newHash, bool queue)
 
 // indicates whether there are any actions that would be performed if the given
 // action were executed; if there are actions, they are returned in pActions.
-bool getPendingActions(PackratActionType action, const std::string& libraryHash, 
+bool getPendingActions(PackratActionType action, bool useCached,
+                       const std::string& libraryHash,
                        const std::string& lockfileHash, json::Value* pActions)
 {
    // checking for actions can be expensive--if this call is for the same 
@@ -484,7 +489,8 @@ bool getPendingActions(PackratActionType action, const std::string& libraryHash,
    static bool cachedResult[PACKRAT_ACTION_MAX]; 
    static json::Value cachedActions[PACKRAT_ACTION_MAX];
    if (libraryHash == cachedLibraryHash[action] &&
-       lockfileHash == cachedLockfileHash[action])
+       lockfileHash == cachedLockfileHash[action] &&
+       useCached)
    {
       PACKRAT_TRACE("using cached action list for action '" << 
                     packratActionName(action) << "' (" << libraryHash << ", " <<
@@ -732,14 +738,14 @@ bool resolveStateAfterAction(PackratActionType action,
 
    // mark the library resolved if there are no pending snapshot actions
    bool hasPendingSnapshotActions = 
-      getPendingActions(PACKRAT_ACTION_SNAPSHOT, newLibraryHash, 
+      getPendingActions(PACKRAT_ACTION_SNAPSHOT, true, newLibraryHash,
                         newLockfileHash, NULL);
    if (!hasPendingSnapshotActions)
       updateHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED, newLibraryHash);
 
    // mark the lockfile resolved if there are no pending restore actions   
    bool hasPendingRestoreActions = 
-      getPendingActions(PACKRAT_ACTION_RESTORE, newLibraryHash,
+      getPendingActions(PACKRAT_ACTION_RESTORE, true, newLibraryHash,
                         newLockfileHash, NULL);
    if (hasPendingRestoreActions)
    {
@@ -912,7 +918,7 @@ json::Object contextAsJson()
 
 // Annotates a JSON object with pending Packrat actions, with the side effect
 // of checking Packrat state and marking the current state as observed
-void annotatePendingActions(json::Object *pJson)
+void annotatePendingActions(json::Object *pJson, bool useCached)
 {
    json::Value restoreActions;
    json::Value snapshotActions;
@@ -940,10 +946,10 @@ void annotatePendingActions(json::Object *pJson)
    {
       // check for pending restore and snapshot actions
       bool hasPendingSnapshotActions = 
-         getPendingActions(PACKRAT_ACTION_SNAPSHOT, newLibraryHash, 
+         getPendingActions(PACKRAT_ACTION_SNAPSHOT, useCached, newLibraryHash,
                            newLockfileHash, &snapshotActions);
       bool hasPendingRestoreActions = 
-         getPendingActions(PACKRAT_ACTION_RESTORE, newLibraryHash,
+         getPendingActions(PACKRAT_ACTION_RESTORE, useCached, newLibraryHash,
                            newLockfileHash, &restoreActions);
       
       // if the state could be interpreted as either a pending restore or a
