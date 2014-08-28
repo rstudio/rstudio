@@ -42,7 +42,11 @@
 
   <!--
     Whether or not the compiler should alter Enum.name() to return
-    ordinal() as a way of obfuscating Enum field identifiers.
+    ordinal() as a way of obfuscating Enum field identifiers. 
+    A value of 'true' returns the ordinal. A value of 'closure'
+    passes the enum's name through Util.makeEnumName() deferring 
+    the obfuscation until a later Closure Compiler pass can replace
+    it.
   -->
    <define-configuration-property name="compiler.enum.obfuscate.names"
       is-multi-valued='false' />
@@ -56,7 +60,7 @@
    <define-configuration-property name="compiler.enum.obfuscate.names.blacklist"
       is-multi-valued='true' />
    <set-configuration-property name="compiler.enum.obfuscate.names.blacklist"
-      value="true" />
+      value="" />
     
   <!-- From here down, the properties are unsupported and are only available for test cases -->
 

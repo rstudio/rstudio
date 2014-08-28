@@ -16,6 +16,7 @@
 package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.impl.DoNotInline;
 
 /**
  * This class is used to access the private, GWT-specific
@@ -40,4 +41,9 @@ final class Util {
   static native void setCastableTypeMap(Object o, JavaScriptObject castableTypeMap) /*-{
     o.@java.lang.Object::castableTypeMap = castableTypeMap;
   }-*/;
+
+  @DoNotInline
+  public static String makeEnumName(String enumName) {
+    return enumName;
+  }
 }

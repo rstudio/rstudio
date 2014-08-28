@@ -138,14 +138,18 @@ public class EnumNameObfuscator {
   private static class EnumNameReplacer extends JModVisitor {
 
     private final JProgram jprogram;
+    private final JMethod makeEnumName;
     private List<String> blacklistedEnums;
+    private boolean closureMode;
     private final TreeLogger logger;
 
     public EnumNameReplacer(JProgram jprogram, TreeLogger logger,
-        List<String> blacklistedEnums) {
+        List<String> blacklistedEnums, boolean closureMode) {
       this.logger = logger;
       this.jprogram = jprogram;
       this.blacklistedEnums = blacklistedEnums;
+      this.closureMode = closureMode;
+      this.makeEnumName = jprogram.getIndexedMethod("Util.makeEnumName");
     }
 
     public void exec() {
@@ -168,7 +172,12 @@ public class EnumNameObfuscator {
           JNewInstance newEnum = new JNewInstance(x);
           // replace first argument with null
           List<JExpression> args = new ArrayList<JExpression>(x.getArgs());
-          args.set(0, JNullLiteral.INSTANCE);
+          if (closureMode) {
+            JMethodCall makeEnum = new JMethodCall(x.getSourceInfo(), null, makeEnumName, args.get(0));
+            args.set(0, makeEnum);
+          } else {
+            args.set(0, JNullLiteral.INSTANCE);
+          }
           newEnum.addArgs(args);
           ctx.replaceMe(newEnum);
         }
@@ -190,8 +199,8 @@ public class EnumNameObfuscator {
   }
 
   public static void exec(JProgram jprogram, TreeLogger logger,
-      List<String> blacklistedEnums) {
+      List<String> blacklistedEnums, boolean closureMode) {
     new EnumNameCallChecker(jprogram, logger, blacklistedEnums).accept(jprogram);
-    new EnumNameReplacer(jprogram, logger, blacklistedEnums).exec();
+    new EnumNameReplacer(jprogram, logger, blacklistedEnums, closureMode).exec();
   }
 }

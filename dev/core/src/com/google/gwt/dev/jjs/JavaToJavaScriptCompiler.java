@@ -1088,10 +1088,13 @@ public abstract class JavaToJavaScriptCompiler {
       // See if we should run the EnumNameObfuscator
       if (module != null) {
         ConfigProps config = new ConfigProps(module);
-        if (config.getBoolean(ENUM_NAME_OBFUSCATION_PROPERTY, false)) {
+        List<String> enumObfProps = config.getStrings(ENUM_NAME_OBFUSCATION_PROPERTY);
+        String enumObfProp = enumObfProps != null ? enumObfProps.get(0) : null;
+        if (!"false".equals(enumObfProp)) {
           EnumNameObfuscator.exec(jprogram, logger,
               config.getCommaSeparatedStrings(
-                  ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY));
+                  ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY),
+              "closure".equals(enumObfProp));
         }
       }
     }
