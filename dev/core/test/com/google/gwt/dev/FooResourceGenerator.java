@@ -48,20 +48,39 @@ public class FooResourceGenerator extends Generator {
       }
     }
 
-    // On first run generate a class whose name depends on the contents of a read input resource.
+    // On first run generate a class whose name depends on the contents of a read input resource and
+    // another class whose name is stable but whose content changes based on the read input
+    // resource.
     String generatedClassName;
     try {
       generatedClassName = Util.readStreamAsString(context.getResourcesOracle().getResource(
           "com/foo/generatedClassName.txt").openContents()).trim();
 
-      PrintWriter pw = context.tryCreate(logger, "com.foo", generatedClassName);
-      if (pw != null) {
-        pw.write("package com.foo;");
-        pw.write("public class " + generatedClassName + " {}");
+      // Custom class name with stable content.
+      PrintWriter customNameClassPw = context.tryCreate(logger, "com.foo", generatedClassName);
+      if (customNameClassPw != null) {
+        customNameClassPw.write("package com.foo;");
+        customNameClassPw.write("public class " + generatedClassName + " {");
+        customNameClassPw.write("  HasCustomContent hasCustomContent = new HasCustomContent();");
+        customNameClassPw.write("}");
 
-        pw.close();
-        context.commit(logger, pw);
+        customNameClassPw.close();
+        context.commit(logger, customNameClassPw);
       }
+
+      // Stable class name with custom content.
+      PrintWriter customContentClassPw = context.tryCreate(logger, "com.foo", "HasCustomContent");
+      if (customContentClassPw != null) {
+        String generatedFunctionName = generatedClassName;
+        customContentClassPw.write("package com.foo;");
+        customContentClassPw.write("public class HasCustomContent {");
+        customContentClassPw.write("  public void " + generatedFunctionName + "() {}");
+        customContentClassPw.write("}");
+
+        customContentClassPw.close();
+        context.commit(logger, customContentClassPw);
+      }
+
       return "com.foo." + generatedClassName;
     } catch (IOException e) {
       return "";
