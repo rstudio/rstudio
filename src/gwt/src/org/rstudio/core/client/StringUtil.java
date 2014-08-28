@@ -508,6 +508,35 @@ public class StringUtil
       return input.substring(0, 1).toUpperCase() + input.substring(1); 
    }
    
+   public static boolean isSubsequence(String self, String other)
+   {
+
+      final int self_n = self.length();
+      final int other_n = other.length();
+
+      if (other_n > self_n)
+         return false;
+
+      int self_idx = 0;
+      int other_idx = 0;
+
+      while (self_idx < self_n)
+      {
+         char selfChar = self.charAt(self_idx);
+         char otherChar = other.charAt(other_idx);
+         if (otherChar == selfChar)
+         {
+            ++other_idx;
+            if (other_idx == other_n)
+            {
+               return true;
+            }
+         }
+         ++self_idx;
+      }
+      return false;
+   }
+   
    private static final String[] LABELS = {
          "B",
          "KB",

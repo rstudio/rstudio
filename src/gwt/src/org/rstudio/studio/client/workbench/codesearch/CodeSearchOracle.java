@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
@@ -90,7 +91,7 @@ public class CodeSearchOracle extends SuggestOracle
                }
                else
                {
-                  if (name.startsWith(queryLower))
+                  if (StringUtil.isSubsequence(name, queryLower))
                      suggestions.add(sugg);
                }
             }
