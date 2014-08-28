@@ -265,6 +265,17 @@ public class PathPrefixSetTest extends TestCase {
     assertNull(pps.includesResource("a/b/c/Z.java"));
   }
 
+  public void testMalformedPrefix() {
+    try {
+      new PathPrefix("com/google/foo//", null);
+      // Can't use fail() because of the AssertionError catch.
+      throw new RuntimeException(
+          "PathPrefix construction should have failed because of the ending //");
+    } catch (AssertionError e) {
+      // expected
+    }
+  }
+
   public void testEmptyPrefixSet() {
     doTestEmptyPrefixSet(true);
     doTestEmptyPrefixSet(false);

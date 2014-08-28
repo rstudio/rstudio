@@ -250,7 +250,8 @@ public final class PathPrefix {
 
   private void assertValidPrefix(String prefix) {
     assert (prefix != null);
-    assert ("".equals(prefix) || (!prefix.startsWith("/") && prefix.endsWith("/"))) : "malformed prefix";
+    assert ("".equals(prefix) || (!prefix.startsWith("/") && prefix.endsWith("/")))
+        && !prefix.endsWith("//") : "malformed prefix";
   }
 
   private void createExcludeFilter() {

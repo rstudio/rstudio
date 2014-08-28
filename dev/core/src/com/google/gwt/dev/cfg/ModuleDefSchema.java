@@ -793,7 +793,7 @@ public class ModuleDefSchema extends Schema {
     }
 
     private void addResourcePackage(String relDir) {
-      moduleDef.addResourcePath(modulePackageAsPath + relDir + "/");
+      moduleDef.addResourcePath(normalizePathEntry(modulePackageAsPath + relDir));
     }
 
     private void addSourcePackage(String relDir, String includes,
