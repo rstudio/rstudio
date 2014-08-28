@@ -39,7 +39,7 @@ public class Debug
    }
    
    public static native void logObject(JavaScriptObject object) /*-{
-      if (typeof(console != "undefined"))
+      if (typeof(console) != "undefined")
       {
          console.log(object);
       }
