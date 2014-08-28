@@ -54,6 +54,14 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
     this.name = StringInterner.get().intern(name);
   }
 
+  /**
+   * Returns <code>true</code> if it's possible for this type to be
+   * <code>null</code>.
+   *
+   * @see JNonNullType
+   */
+  public abstract boolean canBeNull();
+
   public abstract JLiteral getDefaultValue();
 
   public abstract String getJavahSignatureName();

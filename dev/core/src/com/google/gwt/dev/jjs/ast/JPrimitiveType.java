@@ -75,6 +75,16 @@ public class JPrimitiveType extends JType {
   }
 
   /**
+   * Returns <code>true</code> if it's possible for this type to be
+   * <code>null</code>.
+   *
+   * @see JNonNullType
+   */
+  public boolean canBeNull() {
+    return false;
+  }
+
+  /**
    * Returns a literal which has been coerced to this type, or <code>null</code>
    * if no such coercion is possible.
    */

@@ -67,6 +67,9 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -155,21 +158,9 @@ public class DeadCodeElimination {
           simplifyXor(lhs, rhs, ctx);
           break;
         case EQ:
-          // simplify: null == null -> true
-          if (lhs.getType() == program.getTypeNull() && rhs.getType() == program.getTypeNull()
-              && !x.hasSideEffects()) {
-            ctx.replaceMe(program.getLiteralBoolean(true));
-            return;
-          }
           simplifyEq(lhs, rhs, ctx, false);
           break;
         case NEQ:
-          // simplify: null != null -> false
-          if (lhs.getType() == program.getTypeNull() && rhs.getType() == program.getTypeNull()
-              && !x.hasSideEffects()) {
-            ctx.replaceMe(program.getLiteralBoolean(false));
-            return;
-          }
           simplifyEq(lhs, rhs, ctx, true);
           break;
         case ADD:
@@ -1493,13 +1484,52 @@ public class DeadCodeElimination {
       return false;
     }
 
+    private AnalysisResult staticallyEvaluateEq(JExpression lhs, JExpression rhs) {
+      if (lhs.getType() == program.getTypeNull() && rhs.getType() == program.getTypeNull()) {
+        return AnalysisResult.TRUE;
+      }
+      if (lhs.getType() == program.getTypeNull() && !rhs.getType().canBeNull() ||
+          rhs.getType() == program.getTypeNull() && !lhs.getType().canBeNull()) {
+        return AnalysisResult.FALSE;
+      }
+      return AnalysisResult.UNKNOWN;
+    }
+
+    private JExpression simplifyNonSideEffects(JExpression result,
+        JExpression... evaluateIfSideEffects) {
+
+      List<JExpression> expressionsWithSideEffects = Lists.newArrayList(Iterables.filter(
+          Arrays.asList(evaluateIfSideEffects), new Predicate<JExpression>() {
+        @Override
+        public boolean apply(JExpression expression) {
+          return expression.hasSideEffects();
+        }
+      }));
+
+      if (expressionsWithSideEffects.isEmpty()) {
+        return result;
+      }
+
+      expressionsWithSideEffects.add(result);
+      return new JMultiExpression(expressionsWithSideEffects.get(0).getSourceInfo(),
+          expressionsWithSideEffects);
+    }
+
     /**
      * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true, then
      * it's actually static evaluation of <code>lhs != rhs</code>.
      */
-    private void simplifyEq(JExpression lhs, JExpression rhs, Context ctx, boolean negated) {
+    private void simplifyEq(JExpression lhs, JExpression rhs, Context ctx, boolean negate) {
+      // simplify: null == null -> true
+      AnalysisResult analysisResult = staticallyEvaluateEq(lhs, rhs);
+      if (analysisResult != AnalysisResult.UNKNOWN) {
+        ctx.replaceMe(simplifyNonSideEffects(
+            program.getLiteralBoolean(negate ^ (analysisResult == AnalysisResult.TRUE)), lhs, rhs));
+        return;
+      }
+
       if (isTypeBoolean(lhs) && isTypeBoolean(rhs)) {
-        simplifyBooleanEq(lhs, rhs, ctx, negated);
+        simplifyBooleanEq(lhs, rhs, ctx, negate);
         return;
       }
     }
@@ -1917,4 +1947,6 @@ public class DeadCodeElimination {
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
+
+  private enum AnalysisResult { TRUE, FALSE, UNKNOWN };
 }
