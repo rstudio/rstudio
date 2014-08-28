@@ -640,24 +640,7 @@ public class RCompletionManager implements CompletionManager
       
       // Make a token cursor and put it at the end of the line
       TokenCursor tokenCursor = codeModel.getTokenCursor();
-      
-      // Seeking to the next token can throw an exception if we're at the
-      // end of the document -- if we get an exception, just auto-complete
-      // on the starting line
-      try {
-         tokenCursor.seekToNearestToken(
-               Position.create(row, firstLine.length()),
-               row + 50);
-      } catch (Exception e) {
-         return new AutoCompletionContext(firstLine, false);
-      }
-      
-      boolean firstMove = tokenCursor.moveToPreviousToken();
-      
-      if (!firstMove)
-      {
-         return new AutoCompletionContext(firstLine, false);
-      }
+      tokenCursor.bwdToNearestToken(Position.create(row, firstLine.length()));
 
       // Walk tokens backwards until we have one more '(' than we do
       // ')' with an empty 'block' token stack -- but only if we didn't

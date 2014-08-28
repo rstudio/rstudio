@@ -48,6 +48,10 @@ public class TokenCursor extends JavaScriptObject
       return !! this.seekToNearestToken(position, maxRow);
    }-*/;
    
+   public native final boolean bwdToNearestToken(Position position) /*-{
+      return !! this.bwdToNearestToken(position);
+   }-*/;
+   
    public native final boolean moveBackwardOverMatchingParens() /*-{
       return !! this.moveBackwardOverMatchingParens();
    }-*/;
