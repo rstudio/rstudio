@@ -18,23 +18,19 @@ package com.google.gwt.core.ext.linker;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.util.DiskCache;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
  * Artifacts created by {@link AbstractLinker}.
  */
 public class SyntheticArtifact extends EmittedArtifact {
-  private static final DiskCache diskCache = DiskCache.INSTANCE;
 
   private final long lastModified;
-  private transient long token;
+  private final byte[] data;
 
   public SyntheticArtifact(Class<? extends Linker> linkerType,
       String partialPath, byte[] data) {
@@ -46,13 +42,12 @@ public class SyntheticArtifact extends EmittedArtifact {
     super(linkerType, partialPath);
     assert data != null;
     this.lastModified = lastModified;
-    this.token = diskCache.writeByteArray(data);
+    this.data = data;
   }
 
   @Override
-  public InputStream getContents(TreeLogger logger)
-      throws UnableToCompleteException {
-    return new ByteArrayInputStream(diskCache.readByteArray(token));
+  public InputStream getContents(TreeLogger logger) {
+    return new ByteArrayInputStream(data);
   }
 
   @Override
@@ -64,21 +59,10 @@ public class SyntheticArtifact extends EmittedArtifact {
   public void writeTo(TreeLogger logger, OutputStream out)
       throws UnableToCompleteException {
     try {
-      diskCache.transferToStream(token, out);
+      out.write(data);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to copy artifact: " + getPartialPath(), e);
       throw new UnableToCompleteException();
     }
-  }
-
-  private void readObject(ObjectInputStream stream) throws IOException,
-      ClassNotFoundException {
-    stream.defaultReadObject();
-    token = diskCache.transferFromStream(stream);
-  }
-
-  private void writeObject(ObjectOutputStream stream) throws IOException {
-    stream.defaultWriteObject();
-    diskCache.transferToStream(token, stream);
   }
 }

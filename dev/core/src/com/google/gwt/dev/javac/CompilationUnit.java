@@ -22,7 +22,6 @@ import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
@@ -221,8 +220,6 @@ public abstract class CompilationUnit implements Serializable {
       return o1.getResourcePath().compareTo(o2.getResourcePath());
     }
   };
-
-  protected static final DiskCache diskCache = DiskCache.INSTANCE;
 
   private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
 

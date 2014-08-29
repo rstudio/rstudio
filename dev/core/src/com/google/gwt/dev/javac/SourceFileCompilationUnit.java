@@ -48,7 +48,7 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
 
   @Override
   public CachedCompilationUnit asCachedCompilationUnit() {
-    return new CachedCompilationUnit(this, astToken);
+    return new CachedCompilationUnit(this, serializedAst);
   }
 
   @Override
