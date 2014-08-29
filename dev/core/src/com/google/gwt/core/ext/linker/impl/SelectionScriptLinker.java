@@ -29,8 +29,6 @@ import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SoftPermutation;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.linker.SymbolMapsLinker;
-import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -385,12 +383,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected byte[] generatePrimaryFragment(TreeLogger logger,
       LinkerContext context, CompilationResult result, String[] js,
       ArtifactSet artifacts) throws UnableToCompleteException {
-    TextOutput to = new DefaultTextOutput(context.isOutputCompact());
     String temp = splitPrimaryJavaScript(result.getStatementRanges()[0], js[0],
         charsPerChunk(context, logger), getScriptChunkSeparator(logger, context), context);
-    to.print(generatePrimaryFragmentString(
-        logger, context, result, temp, js.length, artifacts));
-    return Util.getBytes(to.toString());
+    String primaryFragmentString =
+        generatePrimaryFragmentString(logger, context, result, temp, js.length, artifacts);
+    return Util.getBytes(primaryFragmentString);
   }
 
   protected String generatePrimaryFragmentString(TreeLogger logger,
