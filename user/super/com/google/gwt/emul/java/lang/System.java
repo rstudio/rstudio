@@ -112,7 +112,7 @@ public final class System {
 
   public static int identityHashCode(Object o) {
     return (o == null) ? 0 : (!(o instanceof String)) ? Impl.getHashCode(o)
-        : String.HashCache.getHashCode((String) o);
+        : String.HashCache.getHashCode(String.unsafeCast(o));
   }
 
   public static native void setErr(PrintStream err) /*-{

@@ -660,7 +660,7 @@ public final class String implements Comparable<String>, CharSequence,
   @DoNotInline
   @Override
   public boolean equals(Object other) {
-    return (other instanceof String) && equals((String) other);
+    return (other instanceof String) && equals(unsafeCast(other));
   }
 
   // This a non-standard overload for faster code path when the target type is string. Note that
@@ -669,6 +669,11 @@ public final class String implements Comparable<String>, CharSequence,
   private native boolean equals(String other) /*-{
     // Coerce me to a primitive string to force string comparison
     return String(this) == other;
+  }-*/;
+
+  // TODO(goktug): replace unsafeCast with a real cast when the compiler can optimize it.
+  static native String unsafeCast(Object string) /*-{
+    return string;
   }-*/;
 
   public native boolean equalsIgnoreCase(String other) /*-{

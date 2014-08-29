@@ -172,7 +172,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   @SpecializeMethod(params = {String.class}, target = "hasStringValue")
   @Override
   public boolean containsKey(Object key) {
-    return key instanceof String ? hasStringValue((String) key) : hasHashValue(key);
+    return key instanceof String ? hasStringValue(unsafeCast(key)) : hasHashValue(key);
   }
 
   @Override
@@ -188,19 +188,19 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   @SpecializeMethod(params = {String.class}, target = "getStringValue")
   @Override
   public V get(Object key) {
-    return key instanceof String ? getStringValue((String) key) : getHashValue(key);
+    return key instanceof String ? getStringValue(unsafeCast(key)) : getHashValue(key);
   }
 
   @SpecializeMethod(params = {String.class, Object.class}, target = "putStringValue")
   @Override
   public V put(K key, V value) {
-    return key instanceof String ? putStringValue((String) key, value) : putHashValue(key, value);
+    return key instanceof String ? putStringValue(unsafeCast(key), value) : putHashValue(key, value);
   }
 
   @SpecializeMethod(params = {String.class}, target = "removeStringValue")
   @Override
   public V remove(Object key) {
-    return key instanceof String ? removeStringValue((String) key) : removeHashValue(key);
+    return key instanceof String ? removeStringValue(unsafeCast(key)) : removeHashValue(key);
   }
 
   @Override
@@ -301,4 +301,9 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   protected V removeStringValue(String key) {
     return key == null ? removeHashValue(null) : stringMap.remove(key);
   }
+
+  // TODO(goktug): replace unsafeCast with a real cast when the compiler can optimize it.
+  static native String unsafeCast(Object string) /*-{
+    return string;
+  }-*/;
 }
