@@ -77,6 +77,17 @@ public abstract class TckCompileTestCase extends TestCase {
     validGroups = new Class<?>[]{ };
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    // Free all references to compiler internal objects to avoid heap exhaustion because the test
+    // runner keeps all test instances alive.
+    cache = null;
+    failOnErrorLogger =  null;
+    context = null;
+    validGroups =  null;
+  }
+
   private void assertUnableToComplete(
       Class<? extends ValidationException> expectedException,
       String expectedMessage, Generator generator, final String typeName) {
