@@ -549,6 +549,23 @@ public class StringUtil
       return false;
    }
    
+   public static int[] subsequenceIndices(
+         String sequence, String query)
+   {
+      int query_n = query.length();
+      int sequence_n = sequence.length();
+      int[] result = new int[query.length()];
+      
+      int prevMatchIndex = 0;
+      for (int i = 0; i < query_n; i++)
+      {
+         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex);
+         prevMatchIndex = result[i];
+      }
+      return result;
+      
+   }
+   
    private static final String[] LABELS = {
          "B",
          "KB",

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
@@ -45,29 +46,39 @@ public class CodeSearchOracle extends SuggestOracle
       workbenchContext_ = workbenchContext;
    }
    
-   private double score(String suggestion, String query)
+   private int score(String suggestion, String query)
    {
       int query_n = query.length();
       int suggestion_n = suggestion.length();
-      double result = 0;
+      
+      int result = 0;
+      
+      // Get query matches in suggestion (ordered)
+      // Note: we have already guaranteed this to be a subsequence so
+      // this will succeed
+      int[] matches = StringUtil.subsequenceIndices(suggestion, query);
+      
+      // Loop over the matches and assign a score
       for (int j = 0; j < query_n; j++)
       {
-         // Weigh characters in the query that are matched earlier higher
-         double queryWeight = Math.pow((query_n - j) / query_n, 2);
+         int matchPos = matches[j];
          
-         // Weigh earlier matches higher than later matches
-         int matchPos = suggestion.indexOf(query.charAt(j));
-         double numerator = suggestion_n - matchPos + 1;
-         double denominator = suggestion_n;
-         double suggestionScore = numerator / denominator;
+         // Less penalty if character follows 'spacing' character
+         if (matchPos >= 1)
+         {
+            char prevChar = suggestion.charAt(matchPos - 1);
+            if (prevChar == '_' || prevChar == '-' || prevChar == '.')
+            {
+               matchPos = j + 2;
+            }
+         }
          
-         result += queryWeight * suggestionScore;
+         result += (1 << j) + matchPos;
       }
       
       // Debug.logToConsole("Score for suggestion '" + suggestion + "' against query '" + query + "': " + result);
       return result;
    }
-   
    
    @Override
    public void requestSuggestions(final Request request, 
@@ -238,11 +249,11 @@ public class CodeSearchOracle extends SuggestOracle
                  public int compare(CodeSearchSuggestion lhs,
                        CodeSearchSuggestion rhs)
                  {
-                    double lhsScore = score(
+                    int lhsScore = score(
                           lhs.getMatchedString().toLowerCase(),
                           queryLower);
                     
-                    double rhsScore = score(
+                    int rhsScore = score(
                           rhs.getMatchedString().toLowerCase(),
                           queryLower);
                     
@@ -252,7 +263,7 @@ public class CodeSearchOracle extends SuggestOracle
                     }
                     else
                     {
-                       return lhsScore > rhsScore ? -1 : 1;
+                       return lhsScore < rhsScore ? -1 : 1;
                     }
                  }
                  
