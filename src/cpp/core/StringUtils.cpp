@@ -19,6 +19,7 @@
 #include <ostream>
 
 #include <algorithm>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -34,7 +35,48 @@
 #endif
 
 namespace core {
-namespace string_utils {   
+namespace string_utils {
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   bool caseInsensitive)
+{
+   return caseInsensitive ?
+            isSubsequence(boost::algorithm::to_lower_copy(self),
+                          boost::algorithm::to_lower_copy(other)) :
+            isSubsequence(self, other)
+            ;
+}
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other)
+{
+   const int self_n = self.length();
+   const int other_n = other.length();
+
+   if (other_n > self_n)
+      return false;
+
+   int self_idx = 0;
+   int other_idx = 0;
+
+   while (self_idx < self_n)
+   {
+      char selfChar = self[self_idx];
+      char otherChar = other[other_idx];
+
+      if (otherChar == selfChar)
+      {
+         ++other_idx;
+         if (other_idx == other_n)
+         {
+            return true;
+         }
+      }
+      ++self_idx;
+   }
+   return false;
+}
 
 void convertLineEndings(std::string* pStr, LineEnding type)
 {

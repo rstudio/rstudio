@@ -133,6 +133,11 @@ public:
          return boost::algorithm::istarts_with(name_, term);
    }
 
+   bool nameIsSubsequence(const std::string& term, bool caseSensitive) const
+   {
+      return string_utils::isSubsequence(name_, term, !caseSensitive);
+   }
+
    bool nameContains(const std::string& term, bool caseSensitive) const
    {
       if (caseSensitive)
@@ -240,7 +245,7 @@ public:
             predicate = boost::bind(&RSourceItem::nameStartsWith,
                                        _1, term, caseSensitive);
          else
-            predicate = boost::bind(&RSourceItem::nameContains,
+            predicate = boost::bind(&RSourceItem::nameIsSubsequence,
                                        _1, term, caseSensitive);
       }
 

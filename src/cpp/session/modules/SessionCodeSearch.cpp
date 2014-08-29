@@ -230,48 +230,6 @@ public:
       }
    }
 
-   bool isSubsequence(std::string const& self,
-                      std::string const& other,
-                      bool caseInsensitive = true)
-   {
-      const int self_n = self.length();
-      const int other_n = other.length();
-
-      if (other_n > self_n)
-         return false;
-
-      int self_idx = 0;
-      int other_idx = 0;
-
-      while (self_idx < self_n)
-      {
-         char selfChar;
-         char otherChar;
-
-         if (caseInsensitive)
-         {
-            selfChar = tolower(self[self_idx]);
-            otherChar = tolower(other[other_idx]);
-         }
-         else
-         {
-            selfChar = self[self_idx];
-            otherChar = other[other_idx];
-         }
-
-         if (otherChar == selfChar)
-         {
-            ++other_idx;
-            if (other_idx == other_n)
-            {
-               return true;
-            }
-         }
-         ++self_idx;
-      }
-      return false;
-   }
-
    void searchFiles(const std::string& term,
                     std::size_t maxResults,
                     bool prefixOnly,
@@ -306,7 +264,7 @@ public:
             if (prefixOnly)
                matches = boost::algorithm::istarts_with(name, term);
             else
-               matches = isSubsequence(name, term, true);
+               matches = string_utils::isSubsequence(name, term, true);
          }
 
          // add the file if we found a match
@@ -702,7 +660,7 @@ void searchSourceDatabaseFiles(const std::string& term,
       }
       else
       {
-         matches = boost::algorithm::istarts_with(filename, term);
+         matches = string_utils::isSubsequence(filename, term);
       }
 
       // add the file if we found a match
@@ -822,7 +780,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    // search source (sort results by name)
    std::vector<r_util::RSourceItem> items;
    bool moreSourceItemsAvailable = false;
-   searchSource(term, maxResults, true, &items, &moreSourceItemsAvailable);
+   searchSource(term, maxResults, false, &items, &moreSourceItemsAvailable);
    std::sort(items.begin(), items.end(), compareItems);
 
    // see if we need to do src truncation
