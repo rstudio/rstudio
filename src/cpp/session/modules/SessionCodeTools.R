@@ -152,7 +152,7 @@
    tags <- c(
       "@aliases",
       "@author",
-      "@concepts",
+      "@concept",
       "@describeIn",
       "@description",
       "@details",
