@@ -63,13 +63,14 @@ public class CodeSearchOracle extends SuggestOracle
       {
          int matchPos = matches[j];
          
-         // Less penalty if character follows 'spacing' character
+         // Less penalty if character follows special delim
          if (matchPos >= 1)
          {
             char prevChar = suggestion.charAt(matchPos - 1);
-            if (prevChar == '_' || prevChar == '-' || prevChar == '.')
+            if (prevChar == '_' || prevChar == '-' || 
+                  (prevChar == '.' && (matchPos + 3 < suggestion_n)))
             {
-               matchPos = j + 2;
+               matchPos = j;
             }
          }
          
