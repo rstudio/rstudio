@@ -17,6 +17,7 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.json.JsonObject;
 
@@ -89,24 +90,26 @@ public class WebServer {
   private static final MimeTypes MIME_TYPES = new MimeTypes();
 
   private final SourceHandler handler;
-
   private final Modules modules;
+  private final JobRunner runner;
+  private final ProgressTable progressTable;
 
   private final String bindAddress;
   private final int port;
-  private final TreeLogger logger;
+
   private Server server;
 
-  WebServer(SourceHandler handler, Modules modules, String bindAddress, int port,
-      TreeLogger logger) {
+  WebServer(SourceHandler handler, Modules modules, JobRunner runner,
+      ProgressTable progressTable, String bindAddress, int port) {
     this.handler = handler;
     this.modules = modules;
+    this.runner = runner;
+    this.progressTable = progressTable;
     this.bindAddress = bindAddress;
     this.port = port;
-    this.logger = logger;
   }
 
-  public void start() throws UnableToCompleteException {
+  void start(final TreeLogger logger) throws UnableToCompleteException {
 
     SelectChannelConnector connector = new SelectChannelConnector();
     connector.setHost(bindAddress);
@@ -123,7 +126,7 @@ public class WebServer {
       @Override
       protected void doGet(HttpServletRequest request, HttpServletResponse response)
           throws ServletException, IOException {
-        handleRequest(request.getPathInfo(), request, response);
+        handleRequest(request.getPathInfo(), request, response, logger);
       }
     }), "/*");
     newHandler.addFilter(GzipFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
@@ -154,16 +157,19 @@ public class WebServer {
   }
 
   private void handleRequest(String target, HttpServletRequest request,
-      HttpServletResponse response)
+      HttpServletResponse response, TreeLogger logger)
       throws IOException {
 
     if (request.getMethod().equalsIgnoreCase("get")) {
-      doGet(target, request, response);
+      doGet(target, request, response, logger);
     }
   }
 
-  private void doGet(String target, HttpServletRequest request, HttpServletResponse response)
+  private void doGet(String target, HttpServletRequest request, HttpServletResponse response,
+      TreeLogger parentLogger)
       throws IOException {
+
+    TreeLogger logger = parentLogger.branch(Type.TRACE, "GET " + target);
 
     if (!target.endsWith(".cache.js")) {
       // Make sure IE9 doesn't cache any pages.
@@ -205,11 +211,13 @@ public class WebServer {
       // cause a spurious recompile, resulting in an unexpected permutation being loaded later.
       //
       // It would be unsafe to allow a configuration property to be changed.
-      boolean ok = modules.recompile(moduleState, getBindingProperties(request));
+      Job job = new Job(moduleState.getModuleName(), getBindingProperties(request), logger);
+      runner.submit(job);
+      boolean ok = job.waitForResult().isOk();
 
       JsonObject config = modules.getConfig();
       config.put("status", ok ? "ok" : "failed");
-      sendJsonResult(config, request, response);
+      sendJsonResult(config, request, response, logger);
       return;
     }
 
@@ -240,21 +248,31 @@ public class WebServer {
 
     if (target.equals("/progress")) {
       setHandled(request);
-      sendJsonResult(modules.getProgress(), request, response);
+      // TODO: return a list of progress objects here, one for each job.
+      Progress progress = progressTable.getProgressForCompilingJob();
+
+      JsonObject json;
+      if (progress == null) {
+        json = new JsonObject();
+        json.put("status", "idle");
+      } else {
+        json = progress.toJsonObject();
+      }
+      sendJsonResult(json, request, response, logger);
       return;
     }
 
     Matcher matcher = SAFE_MODULE_PATH.matcher(target);
     if (matcher.matches()) {
       setHandled(request);
-      sendModulePage(matcher.group(1), response);
+      sendModulePage(matcher.group(1), response, logger);
       return;
     }
 
     matcher = SAFE_DIRECTORY_PATH.matcher(target);
     if (matcher.matches() && handler.isSourceMapRequest(target)) {
       setHandled(request);
-      handler.handle(target, request, response);
+      handler.handle(target, request, response, logger);
       return;
     }
 
@@ -262,14 +280,14 @@ public class WebServer {
     if (matcher.matches()) {
       setHandled(request);
       if (handler.isSourceMapRequest(target)) {
-        handler.handle(target, request, response);
+        handler.handle(target, request, response, logger);
         return;
       }
       if (target.startsWith("/policies/")) {
-        sendPolicyFile(target, response);
+        sendPolicyFile(target, response, logger);
         return;
       }
-      sendOutputFile(target, request, response);
+      sendOutputFile(target, request, response, logger);
       return;
     }
 
@@ -277,7 +295,7 @@ public class WebServer {
   }
 
   private void sendOutputFile(String target, HttpServletRequest request,
-      HttpServletResponse response) throws IOException {
+      HttpServletResponse response, TreeLogger logger) throws IOException {
 
     int secondSlash = target.indexOf('/', 1);
     String moduleName = target.substring(1, secondSlash);
@@ -312,7 +330,8 @@ public class WebServer {
     PageUtil.sendFile(mimeType, file, response);
   }
 
-  private void sendModulePage(String moduleName, HttpServletResponse response) throws IOException {
+  private void sendModulePage(String moduleName, HttpServletResponse response, TreeLogger logger)
+      throws IOException {
     ModuleState module = modules.get(moduleName);
     if (module == null) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -383,7 +402,8 @@ public class WebServer {
     out.endTag("html").nl();
   }
 
-  private void sendPolicyFile(String target, HttpServletResponse response) throws IOException {
+  private void sendPolicyFile(String target, HttpServletResponse response, TreeLogger logger)
+      throws IOException {
     int secondSlash = target.indexOf('/', 1);
     if (secondSlash < 1) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -409,7 +429,7 @@ public class WebServer {
   }
 
   private void sendJsonResult(JsonObject json, HttpServletRequest request,
-      HttpServletResponse response) throws IOException {
+      HttpServletResponse response, TreeLogger logger) throws IOException {
 
     response.setStatus(HttpServletResponse.SC_OK);
     response.setHeader("Cache-control", "no-cache");

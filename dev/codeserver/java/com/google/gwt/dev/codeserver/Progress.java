@@ -18,43 +18,60 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.dev.json.JsonObject;
 
 /**
- * A snapshot of the compiler's current state, for progress dialogs.
+ * A snapshot of a {@link Job}'s current state, for progress dialogs.
  */
-abstract class Progress {
+class Progress {
 
   /**
-   * Returns the json representation of this progress snapshot.
+   * The id of the job being compiled. (Unique within the same CodeServer process.)
    */
-  abstract JsonObject toJsonObject();
+  final String jobId;
+
+  final String module;
+  final Status status;
+
+  Progress(Job job, Status status) {
+    this.jobId = job.getId();
+    this.module = job.getModuleName();
+    this.status = status;
+  }
 
   /**
-   * Returned when no compile is running.
+   * Returns true if the job's progress should be shown in the progress view.
+   * (For jobs that are GONE, their status is only available by request.)
    */
-  static final Progress IDLE = new Progress() {
+  public boolean isActive() {
+    return status == Status.WAITING || status == Status.COMPILING || status == Status.SERVING;
+  }
 
-    @Override
-    JsonObject toJsonObject() {
-      JsonObject out = new JsonObject();
-      out.put("status", "idle");
-      return out;
+  JsonObject toJsonObject() {
+    JsonObject out = new JsonObject();
+    out.put("jobId", jobId);
+    out.put("module", module);
+    out.put("status", status.jsonName);
+    return out;
+  }
+
+  /**
+   * Defines the lifecycle of a job.
+   */
+  static enum Status {
+    WAITING("waiting"),
+    COMPILING("compiling"),
+    SERVING("serving"), // Output is available to HTTP requests
+    GONE("gone"); // Output directory is no longer being served
+
+    final String jsonName;
+
+    Status(String jsonName) {
+      this.jsonName = jsonName;
     }
-  };
+  }
 
   /**
    * Returned when a compile is in progress.
    */
   static class Compiling extends Progress {
-
-    /**
-     * The module being compiled.
-     */
-    final String module;
-
-    /**
-     * Identifies the currently running compile.
-     * (It's unique within the same CodeServer process and module.)
-     */
-    final int compileId;
 
     /**
      * The number of steps finished, for showing progress.
@@ -71,9 +88,8 @@ abstract class Progress {
      */
     final String stepMessage;
 
-    Compiling(String module, int compileId, int finishedSteps, int totalSteps, String stepMessage) {
-      this.module = module;
-      this.compileId = compileId;
+    Compiling(Job job, int finishedSteps, int totalSteps, String stepMessage) {
+      super(job, Status.COMPILING);
       this.finishedSteps = finishedSteps;
       this.totalSteps = totalSteps;
       this.stepMessage = stepMessage;
@@ -82,9 +98,9 @@ abstract class Progress {
     @Override
     JsonObject toJsonObject() {
       JsonObject out = new JsonObject();
-      out.put("status", "compiling");
+      out.put("jobId", jobId);
       out.put("module", module);
-      out.put("compileId", compileId);
+      out.put("status", "compiling");
       out.put("finishedSteps", finishedSteps);
       out.put("totalSteps", totalSteps);
       out.put("stepMessage", stepMessage);

@@ -16,6 +16,8 @@
 
 package com.google.gwt.dev.codeserver;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.Utility;
@@ -71,7 +73,9 @@ public class CodeServer {
       for (int i = 0; i < retries; i++) {
         System.out.println("\n### Recompile " + (i + 1) + "\n");
         try {
-          modules.defaultCompileAll(options.getNoPrecompile());
+          // TODO: actually test recompiling here.
+          // (This is just running precompiles repeatedly.)
+          modules.defaultCompileAll(options.getNoPrecompile(), logger);
         } catch (Throwable t) {
           t.printStackTrace();
           System.out.println("FAIL");
@@ -108,16 +112,19 @@ public class CodeServer {
    * a lot of static variables.</p>
    */
   public static WebServer start(Options options) throws IOException, UnableToCompleteException {
-    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-    logger.setMaxDetail(options.getLogLevel());
+    PrintWriterTreeLogger topLogger = new PrintWriterTreeLogger();
+    topLogger.setMaxDetail(options.getLogLevel());
 
-    Modules modules = makeModules(options, logger);
+    TreeLogger startupLogger = topLogger.branch(Type.INFO, "Super Dev Mode starting up");
+    Modules modules = makeModules(options, startupLogger);
 
-    SourceHandler sourceHandler = new SourceHandler(modules, logger);
+    SourceHandler sourceHandler = new SourceHandler(modules);
+    ProgressTable progressTable = new ProgressTable();
+    JobRunner runner = new JobRunner(progressTable, modules);
 
     WebServer webServer = new WebServer(sourceHandler, modules,
-        options.getBindAddress(), options.getPort(), logger);
-    webServer.start();
+        runner, progressTable, options.getBindAddress(), options.getPort());
+    webServer.start(topLogger);
 
     return webServer;
   }
@@ -125,18 +132,18 @@ public class CodeServer {
   /**
    * Configures and compiles all the modules (unless {@link Options#getNoPrecompile} is false).
    */
-  private static Modules makeModules(Options options, PrintWriterTreeLogger logger)
+  private static Modules makeModules(Options options, TreeLogger logger)
       throws IOException, UnableToCompleteException {
 
     File workDir = ensureWorkDir(options);
-    System.out.println("workDir: " + workDir);
+    logger.log(Type.INFO, "workDir: " + workDir);
 
     Modules modules = new Modules(options);
     for (String moduleName : options.getModuleNames()) {
       AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
 
-      Recompiler recompiler = new Recompiler(appSpace, moduleName, options, logger);
-      modules.addModuleState(new ModuleState(recompiler, logger, options.getNoPrecompile()));
+      Recompiler recompiler = new Recompiler(appSpace, moduleName, options);
+      modules.addModuleState(new ModuleState(recompiler, options.getNoPrecompile(), logger));
     }
     return modules;
   }

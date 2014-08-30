@@ -18,6 +18,7 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.codeserver.Job.Result;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
 
@@ -29,8 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -44,51 +43,59 @@ class ModuleState {
    */
   private static final String SOURCEMAP_FILE_SUFFIX = "_sourceMap0.json";
 
-  private final AtomicReference<CompileDir> current = new AtomicReference<CompileDir>();
+  private final AtomicReference<Job.Result> published = new AtomicReference<Job.Result>();
   private final Recompiler recompiler;
-  private final TreeLogger logger;
 
-  ModuleState(Recompiler recompiler, TreeLogger logger, boolean noPrecompile)
+  ModuleState(Recompiler recompiler, boolean noPrecompile,
+      TreeLogger logger)
       throws UnableToCompleteException {
     this.recompiler = recompiler;
-    this.logger = logger;
-    defaultCompile(noPrecompile);
+    maybePrecompile(noPrecompile, logger);
   }
 
   /**
-   * Compiles the module with the default set of properties.
+   * Loads the module and maybe compiles it. Sets up the output directory.
+   * Throws an exception if unable. (In this case, Super Dev Mode fails to start.)
    */
-  void defaultCompile(boolean noPrecompile) throws UnableToCompleteException {
-    CompileDir compileDir;
+  void maybePrecompile(boolean noPrecompile, TreeLogger logger) throws UnableToCompleteException {
     if (noPrecompile) {
-      compileDir = recompiler.noCompile();
+      publish(recompiler.initWithoutPrecompile(logger));
     } else {
-      Map<String, String> defaultProps = new HashMap<String, String>();
-      defaultProps.put("user.agent", "safari");
-      defaultProps.put("locale", "en");
-      compileDir = recompiler.compile(defaultProps, new AtomicReference<Progress>());
+      publish(recompiler.precompile(logger));
     }
-    current.set(compileDir);
   }
 
   /**
-   * Recompiles the module with the given binding properties. If successful, this changes the
-   * location of the output directory. (The log file changes both on success and on failure.
-   *
-   * @param bindingProperties The properties used to compile. (Chooses the permutation.)
-   * @param progress a variable to update with current progress while the compile is running.
-   * @return true if the compile finished successfully.
-   *
-   * @see Modules#recompile for a thread-safe version.
+   * Compiles the module again, possibly changing the output directory.
+   * After returning, the result of the compile can be found via {@link Job#waitForResult}
    */
-  boolean recompile(Map<String, String> bindingProperties, AtomicReference<Progress> progress) {
-    try {
-      current.set(recompiler.recompile(bindingProperties, progress));
-      return true;
-    } catch (UnableToCompleteException e) {
-      logger.log(TreeLogger.Type.WARN, "continuing to serve previous version");
-      return false;
+  void recompile(Job job) {
+    if (!job.wasSubmitted() || job.isDone()) {
+      throw new IllegalStateException(
+          "tried to recompile using a job in the wrong state:"  + job.getId());
     }
+
+    Result result = recompiler.recompile(job);
+
+    if (result.isOk()) {
+      publish(result);
+    } else {
+      job.getLogger().log(TreeLogger.Type.WARN, "continuing to serve previous version");
+    }
+  }
+
+  /**
+   * Makes the result of a compile downloadable via HTTP.
+   */
+  private void publish(Result result) {
+    Result previous = published.getAndSet(result);
+    if (previous != null) {
+      previous.job.onGone();
+    }
+  }
+
+  private CompileDir getOutputDir() {
+    return published.get().outputDir;
   }
 
   /**
@@ -149,7 +156,7 @@ class ModuleState {
    */
   private File findSymbolMapDir() {
     String moduleName = recompiler.getModuleName();
-    File symbolMapsDir = current.get().findSymbolMapDir(moduleName);
+    File symbolMapsDir = getOutputDir().findSymbolMapDir(moduleName);
     if (symbolMapsDir == null) {
       throw new RuntimeException("Can't find symbol map directory for " + moduleName);
     }
@@ -192,23 +199,23 @@ class ModuleState {
    * @return The location of the file, which might not actually exist.
    */
   File getOutputFile(String urlPath) {
-    return new File(current.get().getWarDir(), urlPath);
+    return new File(getOutputDir().getWarDir(), urlPath);
   }
 
   /**
    * Returns the log file from the last time this module was recompiled. This changes
-   * after every call to {@link #recompile}.
+   * after each compile.
    */
   File getCompileLog() {
     return recompiler.getLastLog();
   }
 
   File getGenDir() {
-    return current.get().getGenDir();
+    return getOutputDir().getGenDir();
   }
 
   File getWarDir() {
-    return current.get().getWarDir();
+    return getOutputDir().getWarDir();
   }
 
   /**
@@ -217,7 +224,7 @@ class ModuleState {
    * @return The location of the file, which might not actually exist.
    */
   File getExtraFile(String path) {
-    File prefix = new File(current.get().getExtraDir(), getModuleName());
+    File prefix = new File(getOutputDir().getExtraDir(), getModuleName());
     return new File(prefix, path);
   }
 

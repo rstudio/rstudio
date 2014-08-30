@@ -76,11 +76,8 @@ class SourceHandler {
 
   private Modules modules;
 
-  private final TreeLogger logger;
-
-  SourceHandler(Modules modules, TreeLogger logger) {
+  SourceHandler(Modules modules) {
     this.modules = modules;
-    this.logger = logger;
   }
 
   static boolean isSourceMapRequest(String target) {
@@ -95,7 +92,8 @@ class SourceHandler {
     return SOURCEMAP_PATH + moduleName + "/__HASH__" + SOURCEMAP_URL_SUFFIX;
   }
 
-  void handle(String target, HttpServletRequest request, HttpServletResponse response)
+  void handle(String target, HttpServletRequest request, HttpServletResponse response,
+      TreeLogger logger)
       throws IOException {
     String moduleName = getModuleNameFromRequest(target);
     if (moduleName == null) {
@@ -106,23 +104,24 @@ class SourceHandler {
     String rest = target.substring(rootDir.length());
 
     if (rest.isEmpty()) {
-      sendDirectoryListPage(moduleName, response);
+      sendDirectoryListPage(moduleName, response, logger);
     } else if (rest.equals("gwtSourceMap.json")) {
       // This URL is no longer used by debuggers (we use the strong name) but is used for testing.
       // It's useful not to need the strong name to download the sourcemap.
       // (But this only works when there is one permutation.)
       ModuleState moduleState = modules.get(moduleName);
-      sendSourceMap(moduleName, moduleState.findSourceMapForOnePermutation(), request, response);
+      sendSourceMap(moduleName, moduleState.findSourceMapForOnePermutation(), request, response,
+          logger);
     } else if (rest.endsWith("/")) {
-      sendFileListPage(moduleName, rest, response);
+      sendFileListPage(moduleName, rest, response, logger);
     } else if (rest.endsWith(".java")) {
-      sendSourceFile(moduleName, rest, request.getQueryString(), response);
+      sendSourceFile(moduleName, rest, request.getQueryString(), response, logger);
     } else {
       String strongName = getStrongNameFromSourcemapFilename(rest);
       if (strongName != null) {
         ModuleState moduleState = modules.get(moduleName);
         File sourceMap = moduleState.findSourceMap(strongName).getAbsoluteFile();
-        sendSourceMap(moduleName, sourceMap, request, response);
+        sendSourceMap(moduleName, sourceMap, request, response, logger);
       } else {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         logger.log(TreeLogger.WARN, "returned not found for request: " + target);
@@ -141,7 +140,7 @@ class SourceHandler {
   }
 
   private void sendSourceMap(String moduleName, File sourceMap, HttpServletRequest request,
-      HttpServletResponse response) throws IOException {
+      HttpServletResponse response, TreeLogger logger) throws IOException {
 
     long startTime = System.currentTimeMillis();
 
@@ -161,12 +160,12 @@ class SourceHandler {
 
     long elapsedTime = System.currentTimeMillis() - startTime;
 
-    logger.log(TreeLogger.WARN, "sent source map for module '" + moduleName +
+    logger.log(TreeLogger.INFO, "sent source map for module '" + moduleName +
         "' in " + elapsedTime + " ms");
   }
 
-  private void sendDirectoryListPage(String moduleName, HttpServletResponse response)
-      throws IOException {
+  private void sendDirectoryListPage(String moduleName, HttpServletResponse response,
+      TreeLogger logger) throws IOException {
 
     SourceMap map = loadSourceMap(moduleName);
 
@@ -183,8 +182,8 @@ class SourceHandler {
     PageUtil.sendJsonAndHtml("config", config, "directorylist.html", response, logger);
   }
 
-  private void sendFileListPage(String moduleName, String rest, HttpServletResponse response)
-      throws IOException {
+  private void sendFileListPage(String moduleName, String rest, HttpServletResponse response,
+      TreeLogger logger) throws IOException {
 
     SourceMap map = loadSourceMap(moduleName);
 
@@ -207,8 +206,7 @@ class SourceHandler {
    * or as HTML if the query string is equal to "html".
    */
   private void sendSourceFile(String moduleName, String sourcePath, String query,
-      HttpServletResponse response)
-      throws IOException {
+      HttpServletResponse response, TreeLogger logger) throws IOException {
     ModuleState moduleState = modules.get(moduleName);
     InputStream pageBytes = moduleState.openSourceFile(sourcePath);
 
@@ -220,7 +218,7 @@ class SourceHandler {
 
     if (query != null && query.equals("html")) {
       BufferedReader reader = new BufferedReader(new InputStreamReader(pageBytes));
-      sendSourceFileAsHtml(moduleName, sourcePath, reader, response);
+      sendSourceFileAsHtml(moduleName, sourcePath, reader, response, logger);
     } else {
       PageUtil.sendStream("text/plain", pageBytes, response);
     }
@@ -232,7 +230,7 @@ class SourceHandler {
    * source map).
    */
   private void sendSourceFileAsHtml(String moduleName, String sourcePath, BufferedReader lines,
-      HttpServletResponse response) throws IOException {
+      HttpServletResponse response, TreeLogger logger) throws IOException {
 
     ReverseSourceMap sourceMap = ReverseSourceMap.load(logger, modules.get(moduleName));
 

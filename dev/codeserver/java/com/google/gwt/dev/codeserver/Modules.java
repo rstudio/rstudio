@@ -16,6 +16,7 @@
 
 package com.google.gwt.dev.codeserver;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
@@ -23,7 +24,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An in-memory directory of all the modules available on this code server. The {@link WebServer}
@@ -33,8 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 class Modules implements Iterable<String> {
   private final Options options;
   private final Map<String, ModuleState> moduleStateMap = Maps.newHashMap();
-
-  private AtomicReference<Progress> progress = new AtomicReference<Progress>(Progress.IDLE);
 
   public Modules(Options options) {
     this.options = options;
@@ -50,9 +48,12 @@ class Modules implements Iterable<String> {
 
   /**
    * Retrieves a {@link ModuleState} corresponding to a given module name.
-   * @param moduleName the module name to look up
+   * This should be the module name after renaming.
    */
   public ModuleState get(String moduleName) {
+    // TODO: maybe this lookup should also succeed if passed the module name before renaming?
+    // (I believe currently everything breaks if you change how a module is renamed, requiring
+    // a restart.)
     return moduleStateMap.get(moduleName);
   }
 
@@ -64,9 +65,9 @@ class Modules implements Iterable<String> {
     return moduleStateMap.keySet().iterator();
   }
 
-  void defaultCompileAll(boolean noPrecompile) throws UnableToCompleteException {
+  void defaultCompileAll(boolean noPrecompile, TreeLogger logger) throws UnableToCompleteException {
     for (ModuleState m: moduleStateMap.values()) {
-      m.defaultCompile(noPrecompile);
+      m.maybePrecompile(noPrecompile, logger);
     }
   }
 
@@ -83,25 +84,5 @@ class Modules implements Iterable<String> {
     config.put("moduleNames", moduleNames);
     config.put("warnings", options.getWarningsAsJson());
     return config;
-  }
-
-  /**
-   * Returns the recompiler's current state.
-   */
-  JsonObject getProgress() {
-    return progress.get().toJsonObject();
-  }
-
-  /**
-   * Compiles a module.
-   *
-   * <p>Updates progress and ensures that only one compile happens at a time.
-   */
-  synchronized boolean recompile(ModuleState module, Map<String, String> bindingProperties) {
-    try {
-      return module.recompile(bindingProperties, progress);
-    } finally {
-      progress.set(Progress.IDLE);
-    }
   }
 }
