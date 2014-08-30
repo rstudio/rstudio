@@ -78,6 +78,22 @@ bool isSubsequence(std::string const& self,
    return false;
 }
 
+std::vector<int> subsequenceIndices(std::string const& sequence,
+                                    std::string const& query)
+{
+   int query_n = query.length();
+   std::vector<int> result;
+   result.reserve(query.length());
+
+   int prevMatchIndex = 0;
+   for (int i = 0; i < query_n; i++)
+   {
+      result[i] = sequence.find(query[i], prevMatchIndex);
+      prevMatchIndex = result[i];
+   }
+   return result;
+}
+
 void convertLineEndings(std::string* pStr, LineEnding type)
 {
    std::string replacement;

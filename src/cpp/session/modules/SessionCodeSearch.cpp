@@ -74,9 +74,10 @@ boost::regex regexFromTerm(const std::string& term)
 }
 
 // return if we are past max results
+template <typename T>
 bool enforceMaxResults(std::size_t maxResults,
-                        json::Array* pNames,
-                        json::Array* pPaths,
+                        T* pNames,
+                        T* pPaths,
                         bool* pMoreAvailable)
 {
    if (pNames->size() > maxResults)
@@ -230,11 +231,12 @@ public:
       }
    }
 
+   template <typename T>
    void searchFiles(const std::string& term,
                     std::size_t maxResults,
                     bool prefixOnly,
-                    json::Array* pNames,
-                    json::Array* pPaths,
+                    T* pNames,
+                    T* pPaths,
                     bool* pMoreAvailable)
    {
       // default to no more available
@@ -622,10 +624,11 @@ void searchSource(const std::string& term,
    }
 }
 
+template <typename T>
 void searchSourceDatabaseFiles(const std::string& term,
                                std::size_t maxResults,
-                               json::Array* pNames,
-                               json::Array* pPaths,
+                               T* pNames,
+                               T* pPaths,
                                bool* pMoreAvailable)
 {
    // default to no more available
@@ -678,10 +681,11 @@ void searchSourceDatabaseFiles(const std::string& term,
    }
 }
 
+template <typename T>
 void searchFiles(const std::string& term,
                  std::size_t maxResults,
-                 json::Array* pNames,
-                 json::Array* pPaths,
+                 T* pNames,
+                 T* pPaths,
                  bool* pMoreAvailable)
 {
    // if we have a file monitor then search the project index
@@ -746,11 +750,95 @@ json::Array signaturesToJsonArray(
    return sigCol;
 }
 
-bool compareItems(const r_util::RSourceItem& i1, const r_util::RSourceItem& i2)
+int scoreMatch(std::string const& suggestion,
+               std::string const& query)
 {
-   return i1.name() < i2.name();
+   int query_n = query.length();
+   int suggestion_n = suggestion.length();
+
+   int result = 0;
+
+   // Get query matches in suggestion (ordered)
+   // Note: we have already guaranteed this to be a subsequence so
+   // this will succeed
+   std::vector<int> matches = string_utils::subsequenceIndices(
+            boost::algorithm::to_lower_copy(suggestion),
+            boost::algorithm::to_lower_copy(query));
+
+   // Loop over the matches and assign a score
+   for (int j = 0; j < query_n; j++)
+   {
+      int matchPos = matches[j];
+
+      // Less penalty if character follows special delim
+      if (matchPos >= 1)
+      {
+         char prevChar = suggestion[matchPos - 1];
+         if (prevChar == '_' || prevChar == '-' ||
+             (prevChar == '.' && (matchPos + 3 < suggestion_n)))
+         {
+            matchPos = j;
+         }
+      }
+
+      result += (1 << j) + matchPos;
+   }
+
+   return result;
 }
 
+struct ScorePairComparator
+{
+   inline bool operator()(const std::pair<int, int> lhs,
+                          const std::pair<int, int> rhs)
+   {
+      return lhs.second < rhs.second;
+   }
+};
+
+void filterScores(std::vector< std::pair<int, int> >* pScore1,
+                  std::vector< std::pair<int, int> >* pScore2,
+                  int maxAmount)
+{
+   int s1_n = pScore1->size();
+   int s2_n = pScore2->size();
+
+   int s1Count = 0;
+   int s2Count = 0;
+
+   for (int i = 0; i < maxAmount; ++i)
+   {
+      if (s1Count == s1_n)
+      {
+         if (s2Count < s2_n)
+         {
+            ++s2Count;
+         }
+         continue;
+      }
+      if (s2Count == s2_n)
+      {
+         if (s1Count < s1_n)
+         {
+            ++s1Count;
+         }
+         continue;
+      }
+
+      if ((*pScore1)[s1Count].second <= (*pScore2)[s2Count].second)
+      {
+         ++s1Count;
+      }
+      else
+      {
+         ++s2Count;
+      }
+   }
+
+   pScore1->resize(s1Count);
+   pScore2->resize(s2Count);
+
+}
 
 Error searchCode(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
@@ -768,44 +856,84 @@ Error searchCode(const json::JsonRpcRequest& request,
    json::Object result;
 
    // search files
-   json::Array names;
-   json::Array paths;
+   std::vector<std::string> names;
+   std::vector<std::string> paths;
    bool moreFilesAvailable = false;
-   searchFiles(term, maxResults, &names, &paths, &moreFilesAvailable);
-   json::Object files;
-   files["filename"] = names;
-   files["path"] = paths;
-   result["file_items"] = files;
 
-   // search source (sort results by name)
-   std::vector<r_util::RSourceItem> items;
+   // TODO: Refactor searchFiles, searchSource to no longer take maximum number
+   // of results (since we want to grab everything possible then filter before
+   // sending over the wire). Simiarly with the 'more*Available' bools
+   searchFiles(term, 1E2, &names, &paths, &moreFilesAvailable);
+
+   // search source
+   std::vector<r_util::RSourceItem> srcItems;
    bool moreSourceItemsAvailable = false;
-   searchSource(term, maxResults, false, &items, &moreSourceItemsAvailable);
-   std::sort(items.begin(), items.end(), compareItems);
+   searchSource(term, 1E2, false, &srcItems, &moreSourceItemsAvailable);
 
-   // see if we need to do src truncation
-   bool truncated = false;
-   if ( (names.size() + items.size()) > maxResults )
+   // typedef necessary for BOOST_FOREACH to work with pairs
+   typedef std::pair<int, int> PairIntInt;
+
+   // score matches -- returned as a pair, mapping index to score
+   std::vector<PairIntInt> fileScores;
+   for (int i = 0; i < paths.size(); ++i)
    {
-      // truncate source items
-      std::size_t srcItems = maxResults - names.size();
-      items.resize(srcItems);
-      truncated = true;
+      fileScores.push_back(std::make_pair(i, scoreMatch(names[i], term)));
    }
+
+   // sort by score (lower is better)
+   std::sort(fileScores.begin(), fileScores.end(), ScorePairComparator());
+
+   std::vector<PairIntInt> srcItemScores;
+   for (int i = 0; i < srcItems.size(); ++i)
+   {
+      srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term)));
+   }
+   std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
+
+   // filter so we keep only the top n results -- and proactively
+   // update whether there are other entries we didn't report back
+   int srcItemScoresSizeBefore = srcItemScores.size();
+   int fileScoresSizeBefore = fileScores.size();
+
+   filterScores(&fileScores, &srcItemScores, maxResults);
+
+   moreFilesAvailable = fileScoresSizeBefore > fileScores.size();
+   moreSourceItemsAvailable = srcItemScoresSizeBefore > srcItemScores.size();
+
+   // get filtered results
+   std::vector<std::string> namesFiltered;
+   std::vector<std::string> pathsFiltered;
+   BOOST_FOREACH(PairIntInt const& pair, fileScores)
+   {
+      namesFiltered.push_back(names[pair.first]);
+      pathsFiltered.push_back(paths[pair.first]);
+   }
+
+   std::vector<r_util::RSourceItem> srcItemsFiltered;
+   BOOST_FOREACH(PairIntInt const& pair, srcItemScores)
+   {
+      srcItemsFiltered.push_back(srcItems[pair.first]);
+   }
+
+   // fill result
+   json::Object files;
+   files["filename"] = json::toJsonArray(namesFiltered);
+   files["path"] = json::toJsonArray(pathsFiltered);
+   result["file_items"] = files;
 
    // return rpc array list (wire efficiency)
    json::Object src;
-   src["type"] = toJsonArray<int>(items, &r_util::RSourceItem::type);
-   src["name"] = toJsonArray<std::string>(items, &r_util::RSourceItem::name);
-   src["signature"] = signaturesToJsonArray(items);
-   src["context"] = toJsonArray<std::string>(items, &r_util::RSourceItem::context);
-   src["line"] = toJsonArray<int>(items, &r_util::RSourceItem::line);
-   src["column"] = toJsonArray<int>(items, &r_util::RSourceItem::column);
+   src["type"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::type);
+   src["name"] = toJsonArray<std::string>(srcItemsFiltered, &r_util::RSourceItem::name);
+   src["signature"] = signaturesToJsonArray(srcItemsFiltered);
+   src["context"] = toJsonArray<std::string>(srcItemsFiltered, &r_util::RSourceItem::context);
+   src["line"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::line);
+   src["column"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::column);
    result["source_items"] = src;
 
    // set more available bit
    result["more_available"] =
-         moreFilesAvailable || moreSourceItemsAvailable || truncated;
+         moreFilesAvailable || moreSourceItemsAvailable;
 
    pResponse->setResult(result);
 
