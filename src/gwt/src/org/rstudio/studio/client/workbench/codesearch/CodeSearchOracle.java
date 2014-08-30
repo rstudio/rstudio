@@ -74,7 +74,7 @@ public class CodeSearchOracle extends SuggestOracle
             }
          }
          
-         result += (1 << j) + matchPos;
+         result += matchPos;
       }
       
       // Debug.logToConsole("Score for suggestion '" + suggestion + "' against query '" + query + "': " + result);
