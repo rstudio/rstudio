@@ -37,7 +37,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
-import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -53,12 +52,13 @@ import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -196,8 +196,9 @@ public class TypeTightener {
    * nodes onto sets of JReferenceType directly, which meant I had to rerun this
    * visitor each time.
    */
-  public class RecordVisitor extends JVisitor {
+  private class RecordVisitor extends JVisitor {
     private JMethod currentMethod;
+    private Predicate<JField> canUninitializedValueBeObserved;
 
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
@@ -231,9 +232,11 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JField x, Context ctx) {
-      if (x.getLiteralInitializer() != null) {
-        // TODO: do I still need this?
-        addAssignment(x, x.getLiteralInitializer());
+      if (x.hasInitializer() && canUninitializedValueBeObserved.apply(x)) {
+        addAssignment(x, x.getType().getDefaultValue());
+      }
+      if (!x.hasInitializer()) {
+        addAssignment(x, x.getType().getDefaultValue());
       }
       currentMethod = null;
     }
@@ -328,6 +331,12 @@ public class TypeTightener {
         }
       }
       return true;
+    }
+
+    public void record(JProgram program) {
+      canUninitializedValueBeObserved = ComputePotentiallyObservableUninitializedValues
+          .analyze(program);
+      accept(program);
     }
 
     private void addAssignment(JVariable target, JExpression rhs) {
@@ -476,20 +485,22 @@ public class TypeTightener {
 
       switch (analysisResult) {
         case TRUE:
-        // replace with a simple null test
-          JNullLiteral nullLit = program.getLiteralNull();
-          JBinaryOperation neq =
-              new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
-                  JBinaryOperator.NEQ, x.getExpr(), nullLit);
-          ctx.replaceMe(neq);
+          if (x.getExpr().getType().canBeNull()) {
+          // replace with a simple null test
+            JBinaryOperation neq =
+                new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+                    JBinaryOperator.NEQ, x.getExpr(), program.getLiteralNull());
+            ctx.replaceMe(neq);
+          } else {
+            ctx.replaceMe(
+                JjsUtils.createOptimizedMultiExpression(x.getExpr(),
+                    program.getLiteralBoolean(true)));
+          }
           break;
         case FALSE:
         // replace with a false literal
-          JExpression result = program.getLiteralBoolean(false);
-          if (x.getExpr().hasSideEffects()) {
-            result = new JMultiExpression(x.getSourceInfo(), x.getExpr(), result);
-          }
-          ctx.replaceMe(result);
+          ctx.replaceMe(
+              JjsUtils.createOptimizedMultiExpression(x.getExpr(), program.getLiteralBoolean(false)));
           break;
         case UNKNOWN:
         default:
@@ -718,19 +729,7 @@ public class TypeTightener {
       }
 
       // tighten based on assignment
-      List<JReferenceType> typeList = new ArrayList<JReferenceType>();
-
-      /*
-       * For fields that are not compile time constants, add a null assignment, because the
-       * field might be accessed before initialized. Technically even a field
-       * with an initializer might be accessed before initialization, but
-       * presumably that is not the programmer's intent, so the compiler cheats
-       * and assumes the initial null will not be seen.
-       */
-      if (!cannotBeSeenUninitialized(x)) {
-        typeList.add(typeNull);
-      }
-
+      List<JReferenceType> typeList = Lists.newArrayList();
       Collection<JExpression> myAssignments = assignments.get(x);
       if (myAssignments != null) {
         for (JExpression expr : myAssignments) {
@@ -868,7 +867,7 @@ public class TypeTightener {
   private OptimizerStats execImpl() {
     OptimizerStats stats = new OptimizerStats(NAME);
     RecordVisitor recorder = new RecordVisitor();
-    recorder.accept(program);
+    recorder.record(program);
 
     /*
      * We must iterate multiple times because each way point we tighten creates

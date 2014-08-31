@@ -314,6 +314,7 @@ public class JavaResourceBase {
           "  public int hashCode() { return 0; }",
           "  public String replace(char c1, char c2) { return null; }",
           "  public boolean startsWith(String str) { return false; }",
+          "  public native String substring(int start, int len) /*-{ return \"\"; }-*/;",
           "  public String toLowerCase() { return null; }",
           "  public String toString() { return this; }",
           "  public static String valueOf(boolean b) { return null; }",

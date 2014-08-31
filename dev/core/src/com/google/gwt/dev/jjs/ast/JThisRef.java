@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
- * Java method this expression.
+ * Java method this (or super) expression.
  */
 public class JThisRef extends JExpression {
 

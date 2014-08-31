@@ -71,8 +71,6 @@ import com.google.gwt.dev.util.Ieee754_64_Arithmetic;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.base.Predicate;
-import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -149,11 +147,48 @@ public class DeadCodeElimination {
       JBinaryOperator op = x.getOp();
       JExpression lhs = x.getLhs();
       JExpression rhs = x.getRhs();
+
+      // If either parameter is a multiexpression, restructure if possible.
+      if (isNonEmptyMultiExpression(lhs)) {
+        // Push the operation inside the multiexpression. This exposes other optimization
+        // opportunities for latter passes e.g:
+        //
+        // (a(), b(), 1) + 2 ==> (a(), b(), 1 + 2) ==> (a(), b(), 3)
+        //
+        // There is no need to consider the symmetric case as it requires that all expression in the
+        // rhs (except the last one) to be side effect free, in which case they will end up being
+        // removed anyway.
+
+        List<JExpression> expressions = ((JMultiExpression) lhs).getExpressions();
+        JMultiExpression result = new JMultiExpression(lhs.getSourceInfo(),
+            expressions.subList(0, expressions.size() - 1));
+        result.addExpressions(new JBinaryOperation(x.getSourceInfo(), x.getType(), x.getOp(),
+            expressions.get(expressions.size() - 1), rhs));
+        ctx.replaceMe(result);
+        return;
+      }
+
+      if (isNonEmptyMultiExpression(rhs) && lhs instanceof JValueLiteral) {
+        // Push the operation inside the multiexpression if the lhs is a value literal.
+        // This exposes other optimization opportunities for latter passes e.g:
+        //
+        // 2 + (a(), b(), 1) ==> (a(), b(), 2 + 1) ==> (a(), b(), 3)
+        //
+        List<JExpression> expressions = ((JMultiExpression) rhs).getExpressions();
+        JMultiExpression result = new JMultiExpression(rhs.getSourceInfo(),
+            expressions.subList(0, expressions.size() - 1));
+        result.addExpressions(new JBinaryOperation(x.getSourceInfo(), x.getType(), x.getOp(),
+            lhs, expressions.get(expressions.size() - 1)));
+        ctx.replaceMe(result);
+        return;
+      }
+
       if ((lhs instanceof JValueLiteral) && (rhs instanceof JValueLiteral)) {
         if (evalOpOnLiterals(op, (JValueLiteral) lhs, (JValueLiteral) rhs, ctx)) {
           return;
         }
       }
+
       switch (op) {
         case AND:
           maybeReplaceMe(x, Simplifier.and(x), ctx);
@@ -198,6 +233,11 @@ public class DeadCodeElimination {
           }
           break;
       }
+    }
+
+    private boolean isNonEmptyMultiExpression(JExpression expression) {
+      return expression instanceof JMultiExpression &&
+          !((JMultiExpression) expression).getExpressions().isEmpty();
     }
 
     /**
@@ -386,7 +426,6 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JInstanceOf x, Context ctx) {
-
       if (ignoringExpressionOutput.contains(x)) {
         ctx.replaceMe(x.getExpr());
         ignoringExpressionOutput.remove(x);
@@ -514,7 +553,7 @@ public class DeadCodeElimination {
       super.endVisit(x, ctx);
       /*
        * If the result of a new operation is ignored, we can remove it, provided
-       * / it has no side effects.
+       * it has no side effects.
        */
       if (ignoringExpressionOutput.contains(x)) {
         if (!x.getTarget().isEmpty()) {
@@ -549,6 +588,17 @@ public class DeadCodeElimination {
       if (x.getOp().isModifying()) {
         lvalues.remove(x.getArg());
       }
+
+      if (isNonEmptyMultiExpression(x.getArg())) {
+        List<JExpression> expressions = ((JMultiExpression) x.getArg()).getExpressions();
+        JMultiExpression result = new JMultiExpression(x.getArg().getSourceInfo(),
+            expressions.subList(0, expressions.size() - 1));
+        result.addExpressions(new JPostfixOperation(x.getSourceInfo(), x.getOp(),
+            expressions.get(expressions.size() - 1)));
+        ctx.replaceMe(result);
+        return;
+      }
+
       if (ignoringExpressionOutput.contains(x)) {
         JPrefixOperation newOp = new JPrefixOperation(x.getSourceInfo(), x.getOp(), x.getArg());
         ctx.replaceMe(newOp);
@@ -563,11 +613,24 @@ public class DeadCodeElimination {
       if (x.getOp().isModifying()) {
         lvalues.remove(x.getArg());
       }
+
+      // If the argument is a multiexpression restructure it if possible.
+      if (isNonEmptyMultiExpression(x.getArg())) {
+        List<JExpression> expressions = ((JMultiExpression) x.getArg()).getExpressions();
+        JMultiExpression result = new JMultiExpression(x.getArg().getSourceInfo(),
+            expressions.subList(0, expressions.size() - 1));
+        result.addExpressions(new JPrefixOperation(x.getSourceInfo(), x.getOp(),
+            expressions.get(expressions.size() - 1)));
+        ctx.replaceMe(result);
+        return;
+      }
+
       if (x.getArg() instanceof JValueLiteral) {
         if (evalOpOnLiteral(x.getOp(), (JValueLiteral) x.getArg(), ctx)) {
           return;
         }
       }
+
       if (x.getOp() == JUnaryOperator.NOT) {
         maybeReplaceMe(x, Simplifier.not(x), ctx);
         return;
@@ -1522,26 +1585,6 @@ public class DeadCodeElimination {
       return AnalysisResult.UNKNOWN;
     }
 
-    private JExpression simplifyNonSideEffects(JExpression result,
-        JExpression... evaluateIfSideEffects) {
-
-      List<JExpression> expressionsWithSideEffects = Lists.newArrayList(Iterables.filter(
-          Arrays.asList(evaluateIfSideEffects), new Predicate<JExpression>() {
-        @Override
-        public boolean apply(JExpression expression) {
-          return expression.hasSideEffects();
-        }
-      }));
-
-      if (expressionsWithSideEffects.isEmpty()) {
-        return result;
-      }
-
-      expressionsWithSideEffects.add(result);
-      return new JMultiExpression(expressionsWithSideEffects.get(0).getSourceInfo(),
-          expressionsWithSideEffects);
-    }
-
     /**
      * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true, then
      * it's actually static evaluation of <code>lhs != rhs</code>.
@@ -1550,8 +1593,8 @@ public class DeadCodeElimination {
       // simplify: null == null -> true
       AnalysisResult analysisResult = staticallyEvaluateEq(lhs, rhs);
       if (analysisResult != AnalysisResult.UNKNOWN) {
-        ctx.replaceMe(simplifyNonSideEffects(
-            program.getLiteralBoolean(negate ^ (analysisResult == AnalysisResult.TRUE)), lhs, rhs));
+        ctx.replaceMe(JjsUtils.createOptimizedMultiExpression(
+            lhs, rhs, program.getLiteralBoolean(negate ^ (analysisResult == AnalysisResult.TRUE))));
         return;
       }
 
@@ -1971,5 +2014,5 @@ public class DeadCodeElimination {
     return stats;
   }
 
-  private enum AnalysisResult { TRUE, FALSE, UNKNOWN };
+  private enum AnalysisResult { TRUE, FALSE, UNKNOWN }
 }

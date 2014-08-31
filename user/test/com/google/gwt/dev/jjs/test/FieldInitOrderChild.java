@@ -56,19 +56,8 @@ class FieldInitOrderChild extends FieldInitOrderBase {
     // i3, i4 and i7 would be directly converted into strings hence show undefined instead of null.
     // String operations should take care of corner cases where a string is null or undefined
     // see issue 8257.
-    seenValues.add("i1=" + i1 + ",i2=" + i2 + ",i3=" + undefinedToNull(i3) +
-        ",i4=" +  undefinedToNull(i4) + ",i5=" + i5 + ",i6=" + i6
-        + ",i7=" + undefinedToNull(i7));
-  }
-
-  // Convert undefined to null this way {@code undefinedToNull(i)} instead of
-  // {@code i == null ? "null" : i} to avoid the shortcomings of our nullness analysis in
-  // {@link TypeTightener}, which will infer that i3 is never null.
-  private String undefinedToNull(Object o) {
-    String s = "" + o;
-    if (s.equals("undefined")) {
-      return "null";
-    }
-    return s;
+    seenValues.add("i1=" + i1 + ",i2=" + i2 + ",i3=" + (i3 == null ? null : i3) +
+        ",i4=" +  (i4 == null ? null : i4) + ",i5=" + i5 + ",i6=" + i6
+        + ",i7=" + (i7 == null ? null : i7));
   }
 }

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
@@ -26,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsLiteral;
@@ -35,15 +37,72 @@ import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.lang.LongLib;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.Collections2;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Translates Java literals into JavaScript literals.
+ * General utilities related to Java AST manipulation.
  */
 public class JjsUtils {
 
+  /**
+   * Creates a multi expression from a list of expressions, removing expressions that do
+   * not have side effects if possible.
+   */
+  public static JExpression createOptimizedMultiExpression(JExpression... expressions) {
+    return createOptimizedMultiExpression(false, Arrays.asList(expressions));
+  }
+
+  /**
+   * Creates a multi expression from a list of expressions, removing expressions that do
+   * not have side effects if possible.
+   */
+  public static JExpression createOptimizedMultiExpression(boolean ignoringResult,
+      List<JExpression> expressions) {
+
+    int numberOfExpressions = expressions.size();
+    JExpression result = expressions.get(numberOfExpressions - 1);
+
+    numberOfExpressions = expressions.size();
+    if (numberOfExpressions == 0) {
+      return new JMultiExpression(SourceOrigin.UNKNOWN);
+    }
+
+    expressions =  Lists.newArrayList(Collections2.filter(
+        expressions.subList(0, numberOfExpressions - 1),
+        Predicates.and(
+            Predicates.notNull(),
+            new Predicate<JExpression>() {
+              @Override
+              public boolean apply(JExpression expression) {
+                return expression.hasSideEffects();
+              }
+            })));
+
+    if (result != null && (!ignoringResult || result.hasSideEffects())) {
+      expressions.add(result);
+    }
+
+    if (expressions.size() == 1) {
+      // Do not create a multi expression if it consists only of the result.
+      return expressions.iterator().next();
+    }
+
+    SourceInfo info = expressions.size() > 0 ? expressions.get(0).getSourceInfo() :
+        SourceOrigin.UNKNOWN;
+    return new JMultiExpression(info, expressions);
+  }
+
+  /**
+   * Translates a Java literal into a JavaScript literal.
+   */
   public static JsLiteral translateLiteral(JLiteral literal) {
     return translatorByLiteralClass.get(literal.getClass()).translate(literal);
   }

@@ -87,4 +87,11 @@ public final class Stack<T> implements Iterable<T> {
   public void push(T value) {
     elements.add(value);
   }
+
+  /**
+   * Creates a new Stack for type {@code T}.
+   */
+  public static <T> Stack<T> create() {
+    return new Stack<T>();
+  }
 }

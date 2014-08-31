@@ -847,6 +847,16 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return runtimeRebindRegistratorTypeName;
   }
 
+  public Collection<JType> getSubclasses(JType type) {
+    return Collections2.transform(typeOracle.getSubTypeNames(type.getName()),
+        new Function<String, JType>() {
+          public JType apply(String typeName) {
+            return getFromTypeMap(typeName);
+          }
+        }
+    );
+  }
+
   public JMethod getStaticImpl(JMethod method) {
     JMethod staticImpl = instanceToStaticMap.get(method);
     assert staticImpl == null || staticImpl.getEnclosingType().getMethods().contains(staticImpl);

@@ -170,6 +170,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
@@ -2949,16 +2950,8 @@ public class GenerateJavaScriptAST {
         // we can definitely initialize at top-scope, as JVM does so as well
         return true;
       }
-      // if the superclass can observe the field, we need to leave the default value
-      JDeclaredType current = x.getEnclosingType().getSuperClass();
-      while (current != null) {
-        if (canObserveSubclassFields.contains(current)) {
-          return false;
-        }
-        current = current.getSuperClass();
-      }
-      // should be safe to initialize at top-scope, as no one can observe the difference
-      return true;
+
+      return !uninitializedValuePotentiallyObservable.apply(x);
     }
 
     // Keep track of a translation stack.
@@ -3038,70 +3031,6 @@ public class GenerateJavaScriptAST {
 
     public static JsUnaryOperator get(JUnaryOperator op) {
       return uOpMap.get(op);
-    }
-  }
-
-  /**
-   * Determines which classes can potentially see uninitialized values of their subclasses' fields.
-   *
-   * If a class can not observe subclass uninitialized fields then the initialization of those could
-   * be hoisted to the prototype.
-   */
-  private class CanObserveSubclassUninitializedFieldsVisitor extends JVisitor {
-    private JDeclaredType currentClass;
-
-    @Override
-    public boolean visit(JConstructor x, Context ctx) {
-      // Only look at constructor bodies.
-      assert currentClass == null;
-      currentClass = x.getEnclosingType();
-      return true;
-    }
-
-    @Override
-    public void endVisit(JConstructor x, Context ctx) {
-      currentClass = null;
-    }
-
-    @Override
-    public boolean visit(JMethod x, Context ctx) {
-      if (x.getName().equals("$$init")) {
-        assert currentClass == null;
-        currentClass = x.getEnclosingType();
-        return true;
-      }
-      // Do not traverse the method body if it is not a constructor.
-      return false;
-    }
-
-    @Override
-    public void endVisit(JMethod x, Context ctx) {
-      currentClass = null;
-    }
-
-    @Override
-    public void endVisit(JMethodCall x, Context ctx) {
-      // This is a method call inside a constructor.
-      assert currentClass != null;
-      // Calls to this/super constructors are okay, as they will also get examined
-      if (x.getTarget().isConstructor() && x.getInstance() instanceof JThisRef) {
-        return;
-      }
-      // Calls to the instance initializer are okay, as execution will not escape it
-      if (x.getTarget().getName().equals("$$init")) {
-        return;
-      }
-      // Calls to static methods with no arguments are safe, because they have no
-      // way to trace back into our new instance.
-      if (x.getTarget().isStatic() && x.getTarget().getOriginalParamTypes().size() == 0) {
-        return;
-      }
-      // Technically we could get fancier about trying to track the "this" reference
-      // through other variable assignments, field assignments, and methods calls, to
-      // see if it calls a polymorphic method against ourself (which would let subclasses
-      // observe their fields), but that gets tricky, so we'll use the above heuristics
-      // for now.
-      canObserveSubclassFields.add(currentClass);
     }
   }
 
@@ -3314,7 +3243,7 @@ public class GenerateJavaScriptAST {
    * Classes that could potentially see uninitialized values for fields that are initialized in the
    * declaration.
    */
-  private final Set<JDeclaredType> canObserveSubclassFields = Sets.newHashSet();
+  private Predicate<JField> uninitializedValuePotentiallyObservable;
 
   private final Map<JAbstractMethodBody, JsFunction> methodBodyMap = Maps.newIdentityHashMap();
   private final Map<HasName, JsName> names = Maps.newIdentityHashMap();
@@ -3579,18 +3508,10 @@ public class GenerateJavaScriptAST {
     }
   }
 
-  private void assumeAllClassesCanObserveUninitializedSubclassFields(JProgram program) {
-    canObserveSubclassFields.addAll(program.getDeclaredTypes());
-  }
-
   private Pair<JavaToJavaScriptMap, Set<JsNode>> execImpl() {
     new FixNameClashesVisitor().accept(program);
-    if (optimize) {
-      new CanObserveSubclassUninitializedFieldsVisitor().accept(program);
-    } else {
-      // Assume the worst case.
-      assumeAllClassesCanObserveUninitializedSubclassFields(program);
-    }
+    uninitializedValuePotentiallyObservable = optimize ?
+        ComputePotentiallyObservableUninitializedValues.analyze(program) : Predicates.<JField>alwaysTrue();
     new FindNameOfTargets().accept(program);
     new SortVisitor().accept(program);
     if (hasWholeWorldKnowledge) {
