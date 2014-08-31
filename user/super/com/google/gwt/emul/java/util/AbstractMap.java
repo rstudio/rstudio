@@ -160,9 +160,14 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return size() == 0;
   }
 
+  @Override
   public Set<K> keySet() {
-    final Set<Entry<K, V>> entrySet = entrySet();
     return new AbstractSet<K>() {
+      @Override
+      public void clear() {
+        AbstractMap.this.clear();
+      }
+
       @Override
       public boolean contains(Object key) {
         return containsKey(key);
@@ -170,17 +175,20 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
       @Override
       public Iterator<K> iterator() {
-        final Iterator<Entry<K, V>> outerIter = entrySet.iterator();
+        final Iterator<Entry<K, V>> outerIter = entrySet().iterator();
         return new Iterator<K>() {
+          @Override
           public boolean hasNext() {
             return outerIter.hasNext();
           }
 
+          @Override
           public K next() {
-            Map.Entry<K, V> entry = outerIter.next();
+            Entry<K, V> entry = outerIter.next();
             return entry.getKey();
           }
 
+          @Override
           public void remove() {
             outerIter.remove();
           }
@@ -188,8 +196,17 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
       }
 
       @Override
+      public boolean remove(Object key) {
+        if (containsKey(key)) {
+          AbstractMap.this.remove(key);
+          return true;
+        }
+        return false;
+      }
+
+      @Override
       public int size() {
-        return entrySet.size();
+        return AbstractMap.this.size();
       }
     };
   }
@@ -233,9 +250,14 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return s + "}";
   }
 
+  @Override
   public Collection<V> values() {
-    final Set<Entry<K, V>> entrySet = entrySet();
     return new AbstractCollection<V>() {
+      @Override
+      public void clear() {
+        AbstractMap.this.clear();
+      }
+
       @Override
       public boolean contains(Object value) {
         return containsValue(value);
@@ -243,17 +265,20 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
       @Override
       public Iterator<V> iterator() {
-        final Iterator<Entry<K, V>> outerIter = entrySet.iterator();
+        final Iterator<Entry<K, V>> outerIter = entrySet().iterator();
         return new Iterator<V>() {
+          @Override
           public boolean hasNext() {
             return outerIter.hasNext();
           }
 
+          @Override
           public V next() {
-            V value = outerIter.next().getValue();
-            return value;
+            Entry<K, V> entry = outerIter.next();
+            return entry.getValue();
           }
 
+          @Override
           public void remove() {
             outerIter.remove();
           }
@@ -262,7 +287,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
       @Override
       public int size() {
-        return entrySet.size();
+        return AbstractMap.this.size();
       }
     };
   }

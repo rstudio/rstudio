@@ -36,18 +36,10 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements
     }
 
     Set<?> other = (Set<?>) o;
-
     if (other.size() != size()) {
       return false;
     }
-
-    for (Iterator<?> iter = other.iterator(); iter.hasNext();) {
-      Object otherItem = iter.next();
-      if (!contains(otherItem)) {
-        return false;
-      }
-    }
-    return true;
+    return containsAll(other);
   }
 
   @Override

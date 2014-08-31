@@ -26,30 +26,20 @@ package java.util;
 public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable {
 
   public LinkedHashSet() {
-    super(new LinkedHashMap<E, Object>(16, .75f));
+    super(new LinkedHashMap<E, Object>());
   }
 
-  /**
-   * @param c
-   */
   public LinkedHashSet(Collection<? extends E> c) {
-    super(new LinkedHashMap<E, Object>(16, .75f));
+    super(new LinkedHashMap<E, Object>());
     addAll(c);
   }
 
-  /**
-   * @param initialCapacity
-   */
-  public LinkedHashSet(int initialCapacity) {
-    super(new LinkedHashMap<E, Object>(initialCapacity, .75f));
+  public LinkedHashSet(int ignored) {
+    super(new LinkedHashMap<E, Object>(ignored));
   }
 
-  /**
-   * @param initialCapacity
-   * @param loadFactor
-   */
-  public LinkedHashSet(int initialCapacity, float loadFactor) {
-    super(new LinkedHashMap<E, Object>(initialCapacity, loadFactor));
+  public LinkedHashSet(int ignored, float alsoIgnored) {
+    super(new LinkedHashMap<E, Object>(ignored, alsoIgnored));
   }
 
   @Override

@@ -253,11 +253,6 @@ public class Collections {
     }
 
     @Override
-    public <T> T[] toArray(T[] a) {
-      return keySet().toArray(a);
-    }
-
-    @Override
     public String toString() {
       return keySet().toString();
     }
