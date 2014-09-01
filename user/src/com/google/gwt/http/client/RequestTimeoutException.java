@@ -26,8 +26,7 @@ package com.google.gwt.http.client;
  */
 public class RequestTimeoutException extends RequestException {
   private static String formatMessage(int timeoutMillis) {
-    return "A request timeout has expired after "
-        + Integer.toString(timeoutMillis) + " ms";
+    return "A request timeout has expired after " + timeoutMillis + " ms";
   }
 
   /**

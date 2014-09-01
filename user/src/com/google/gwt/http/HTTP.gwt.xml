@@ -19,6 +19,7 @@
 <!--                                                                        -->
 <module>
   <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.user.Timer"/>
   <inherits name="com.google.gwt.xhr.XMLHttpRequest"/>
   <inherits name="com.google.gwt.useragent.UserAgent"/>
   <source path="client" />
