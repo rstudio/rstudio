@@ -41,10 +41,12 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
+import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
@@ -719,13 +721,13 @@ public class TypeTightener {
       List<JReferenceType> typeList = new ArrayList<JReferenceType>();
 
       /*
-       * For fields without an initializer, add a null assignment, because the
+       * For fields that are not compile time constants, add a null assignment, because the
        * field might be accessed before initialized. Technically even a field
        * with an initializer might be accessed before initialization, but
        * presumably that is not the programmer's intent, so the compiler cheats
        * and assumes the initial null will not be seen.
        */
-      if ((x instanceof JField) && !x.hasInitializer()) {
+      if (!cannotBeSeenUninitialized(x)) {
         typeList.add(typeNull);
       }
 
@@ -769,6 +771,12 @@ public class TypeTightener {
         x.setType(resultType);
         madeChanges();
       }
+    }
+
+    private boolean cannotBeSeenUninitialized(JVariable x) {
+      return (x instanceof JField) && ((JField) x).isFinal() && x.getConstInitializer() != null &&
+          (x.getConstInitializer().getType() instanceof JPrimitiveType ||
+              x.getConstInitializer() instanceof JStringLiteral);
     }
   }
 

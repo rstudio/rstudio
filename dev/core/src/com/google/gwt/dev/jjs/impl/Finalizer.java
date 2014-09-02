@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -128,7 +129,6 @@ public class Finalizer {
    * Find all items that ARE overridden/subclassed/reassigned.
    */
   private class MarkVisitor extends JVisitor {
-
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.getOp().isAssignment()) {
@@ -150,7 +150,16 @@ public class Finalizer {
 
     @Override
     public void endVisit(JDeclarationStatement x, Context ctx) {
-      // This is not a reassignment, the target may still be final.
+      // This is should only be considered a reassignment if the uninitialized value for this field
+      // is observable.
+      // TODO(rluble): do static analysis to improve this pass.
+      if (x.getVariableRef() instanceof JFieldRef) {
+        JField field = ((JFieldRef) x.getVariableRef()).getField();
+        if (field.getLiteralInitializer() != null &&
+            !field.getLiteralInitializer().equals(field.getType().getDefaultValue())) {
+          recordAssignment(x.getVariableRef());
+        }
+      }
     }
 
     @Override
