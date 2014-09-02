@@ -60,8 +60,7 @@ class Job {
 
   /**
    * Creates a job to recompile a module.
-   * @param moduleName The name of the module to recompile, suitable for
-   *     passing to {@link Modules#get}.
+   * @param moduleName The client-side name of the module to recompile (after renaming).
    * @param bindingProperties  Properties that uniquely identify a permutation.
    *     (Otherwise, more than one permutation will be compiled.)
    * @param parentLogger  The parent of the logger that will be used for this job.

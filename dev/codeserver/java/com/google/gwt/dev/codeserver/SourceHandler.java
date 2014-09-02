@@ -74,10 +74,10 @@ class SourceHandler {
 
   static final String SOURCEROOT_TEMPLATE_VARIABLE = "$sourceroot_goes_here$";
 
-  private Modules modules;
+  private OutboxTable outboxes;
 
-  SourceHandler(Modules modules) {
-    this.modules = modules;
+  SourceHandler(OutboxTable outboxes) {
+    this.outboxes = outboxes;
   }
 
   static boolean isSourceMapRequest(String target) {
@@ -100,6 +100,13 @@ class SourceHandler {
       throw new RuntimeException("invalid request (shouldn't happen): " + target);
     }
 
+    Outbox box = outboxes.findByModuleName(moduleName);
+    if (box == null) {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND);
+      logger.log(TreeLogger.WARN, "unknown module; returned not found for request: " + target);
+      return;
+    }
+
     String rootDir = SOURCEMAP_PATH + moduleName + "/";
     String rest = target.substring(rootDir.length());
 
@@ -109,18 +116,15 @@ class SourceHandler {
       // This URL is no longer used by debuggers (we use the strong name) but is used for testing.
       // It's useful not to need the strong name to download the sourcemap.
       // (But this only works when there is one permutation.)
-      ModuleState moduleState = modules.get(moduleName);
-      sendSourceMap(moduleName, moduleState.findSourceMapForOnePermutation(), request, response,
-          logger);
+      sendSourceMap(moduleName, box.findSourceMapForOnePermutation(), request, response, logger);
     } else if (rest.endsWith("/")) {
       sendFileListPage(moduleName, rest, response, logger);
     } else if (rest.endsWith(".java")) {
-      sendSourceFile(moduleName, rest, request.getQueryString(), response, logger);
+      sendSourceFile(box, rest, request.getQueryString(), response, logger);
     } else {
       String strongName = getStrongNameFromSourcemapFilename(rest);
       if (strongName != null) {
-        ModuleState moduleState = modules.get(moduleName);
-        File sourceMap = moduleState.findSourceMap(strongName).getAbsoluteFile();
+        File sourceMap = box.findSourceMap(strongName).getAbsoluteFile();
         sendSourceMap(moduleName, sourceMap, request, response, logger);
       } else {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -205,10 +209,9 @@ class SourceHandler {
    * Sends an HTTP response containing a Java source. It will be sent as plain text by default,
    * or as HTML if the query string is equal to "html".
    */
-  private void sendSourceFile(String moduleName, String sourcePath, String query,
+  private void sendSourceFile(Outbox box, String sourcePath, String query,
       HttpServletResponse response, TreeLogger logger) throws IOException {
-    ModuleState moduleState = modules.get(moduleName);
-    InputStream pageBytes = moduleState.openSourceFile(sourcePath);
+    InputStream pageBytes = box.openSourceFile(sourcePath);
 
     if (pageBytes == null) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -218,7 +221,7 @@ class SourceHandler {
 
     if (query != null && query.equals("html")) {
       BufferedReader reader = new BufferedReader(new InputStreamReader(pageBytes));
-      sendSourceFileAsHtml(moduleName, sourcePath, reader, response, logger);
+      sendSourceFileAsHtml(box, sourcePath, reader, response, logger);
     } else {
       PageUtil.sendStream("text/plain", pageBytes, response);
     }
@@ -229,10 +232,11 @@ class SourceHandler {
    * that have corresponding JavaScript will be highlighted (as determined by reading the
    * source map).
    */
-  private void sendSourceFileAsHtml(String moduleName, String sourcePath, BufferedReader lines,
+  private void sendSourceFileAsHtml(Outbox box, String sourcePath, BufferedReader lines,
       HttpServletResponse response, TreeLogger logger) throws IOException {
 
-    ReverseSourceMap sourceMap = ReverseSourceMap.load(logger, modules.get(moduleName));
+    ReverseSourceMap sourceMap = ReverseSourceMap.load(logger,
+        box.findSourceMapForOnePermutation());
 
     File sourceFile = new File(sourcePath);
 
@@ -276,7 +280,7 @@ class SourceHandler {
   }
 
   private SourceMap loadSourceMap(String moduleName) {
-    ModuleState moduleState = modules.get(moduleName);
-    return SourceMap.load(moduleState.findSourceMapForOnePermutation());
+    Outbox box = outboxes.findByModuleName(moduleName);
+    return SourceMap.load(box.findSourceMapForOnePermutation());
   }
 }

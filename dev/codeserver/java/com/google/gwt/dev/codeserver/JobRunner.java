@@ -31,12 +31,12 @@ import java.util.concurrent.Executors;
  */
 public class JobRunner {
   private final ProgressTable table;
-  private final Modules modules;
+  private final OutboxTable outboxes;
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-  JobRunner(ProgressTable table, Modules modules) {
+  JobRunner(ProgressTable table, OutboxTable outboxes) {
     this.table = table;
-    this.modules = modules;
+    this.outboxes = outboxes;
   }
 
   /**
@@ -50,22 +50,22 @@ public class JobRunner {
     executor.submit(new Runnable() {
       @Override
       public void run() {
-        recompile(job, modules);
+        recompile(job, outboxes);
       }
     });
     job.getLogger().log(Type.TRACE, "added job to queue");
   }
 
-  private static void recompile(Job job, Modules modules) {
+  private static void recompile(Job job, OutboxTable outboxes) {
     job.getLogger().log(Type.INFO, "starting job: " + job.getId());
-    ModuleState m = modules.get(job.getModuleName());
-    if (m == null) {
+    Outbox box = outboxes.findOutbox(job);
+    if (box == null) {
       String msg = "skipped a compile job with an unknown module: " + job.getModuleName();
       job.getLogger().log(Type.WARN, msg);
       job.onFinished(new Result(job, null,  new RuntimeException(msg)));
       return;
     }
 
-    m.recompile(job);
+    box.recompile(job);
   }
 }

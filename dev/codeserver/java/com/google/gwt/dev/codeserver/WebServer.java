@@ -90,7 +90,7 @@ public class WebServer {
   private static final MimeTypes MIME_TYPES = new MimeTypes();
 
   private final SourceHandler handler;
-  private final Modules modules;
+  private final OutboxTable outboxes;
   private final JobRunner runner;
   private final ProgressTable progressTable;
 
@@ -99,10 +99,10 @@ public class WebServer {
 
   private Server server;
 
-  WebServer(SourceHandler handler, Modules modules, JobRunner runner,
+  WebServer(SourceHandler handler, OutboxTable outboxes, JobRunner runner,
       ProgressTable progressTable, String bindAddress, int port) {
     this.handler = handler;
-    this.modules = modules;
+    this.outboxes = outboxes;
     this.runner = runner;
     this.progressTable = progressTable;
     this.bindAddress = bindAddress;
@@ -153,7 +153,7 @@ public class WebServer {
    * Returns the location of the compiler output. (Changes after every recompile.)
    */
   public File getCurrentWarDir(String moduleName) {
-    return modules.get(moduleName).getWarDir();
+    return outboxes.findByModuleName(moduleName).getWarDir();
   }
 
   private void handleRequest(String target, HttpServletRequest request,
@@ -179,14 +179,14 @@ public class WebServer {
 
     if (target.equals("/")) {
       setHandled(request);
-      JsonObject config = modules.getConfig();
+      JsonObject config = outboxes.getConfig();
       PageUtil.sendJsonAndHtml("config", config, "frontpage.html", response, logger);
       return;
     }
 
     if (target.equals("/dev_mode_on.js")) {
       setHandled(request);
-      JsonObject config = modules.getConfig();
+      JsonObject config = outboxes.getConfig();
       PageUtil
           .sendJsonAndJavaScript("__gwt_codeserver_config", config, "dev_mode_on.js", response,
               logger);
@@ -198,8 +198,8 @@ public class WebServer {
     if (target.startsWith("/recompile/")) {
       setHandled(request);
       String moduleName = target.substring("/recompile/".length());
-      ModuleState moduleState = modules.get(moduleName);
-      if (moduleState == null) {
+      Outbox outbox = outboxes.findByModuleName(moduleName);
+      if (outbox == null) {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         logger.log(TreeLogger.WARN, "not found: " + target);
         return;
@@ -211,11 +211,11 @@ public class WebServer {
       // cause a spurious recompile, resulting in an unexpected permutation being loaded later.
       //
       // It would be unsafe to allow a configuration property to be changed.
-      Job job = new Job(moduleState.getModuleName(), getBindingProperties(request), logger);
+      Job job = new Job(outbox.getModuleName(), getBindingProperties(request), logger);
       runner.submit(job);
       boolean ok = job.waitForResult().isOk();
 
-      JsonObject config = modules.getConfig();
+      JsonObject config = outboxes.getConfig();
       config.put("status", ok ? "ok" : "failed");
       sendJsonResult(config, request, response, logger);
       return;
@@ -224,7 +224,7 @@ public class WebServer {
     if (target.startsWith("/log/")) {
       setHandled(request);
       String moduleName = target.substring("/log/".length());
-      File file = modules.get(moduleName).getCompileLog();
+      File file = outboxes.findByModuleName(moduleName).getCompileLog();
       sendLogPage(moduleName, file, response);
       return;
     }
@@ -299,12 +299,12 @@ public class WebServer {
 
     int secondSlash = target.indexOf('/', 1);
     String moduleName = target.substring(1, secondSlash);
-    ModuleState moduleState = modules.get(moduleName);
+    Outbox outbox = outboxes.findByModuleName(moduleName);
 
-    File file = moduleState.getOutputFile(target);
+    File file = outbox.getOutputFile(target);
     if (!file.isFile()) {
       // perhaps it's compressed
-      file = moduleState.getOutputFile(target + ".gz");
+      file = outbox.getOutputFile(target + ".gz");
       if (!file.isFile()) {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         logger.log(TreeLogger.WARN, "not found: " + file.toString());
@@ -332,7 +332,7 @@ public class WebServer {
 
   private void sendModulePage(String moduleName, HttpServletResponse response, TreeLogger logger)
       throws IOException {
-    ModuleState module = modules.get(moduleName);
+    Outbox module = outboxes.findByModuleName(moduleName);
     if (module == null) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
       logger.log(TreeLogger.WARN, "module not found: " + moduleName);
@@ -357,8 +357,8 @@ public class WebServer {
 
     out.startTag("h1").text("Policy Files").endTag("h1").nl();
 
-    for (String moduleName : modules) {
-      ModuleState module = modules.get(moduleName);
+    for (String moduleName : outboxes.getModuleNames()) {
+      Outbox module = outboxes.findByModuleName(moduleName);
       File manifest = module.getExtraFile("rpcPolicyManifest/manifest.txt");
       if (manifest.isFile()) {
         out.startTag("h2").text(moduleName).endTag("h2").nl();
@@ -415,8 +415,8 @@ public class WebServer {
       return;
     }
 
-    for (String moduleName : modules) {
-      ModuleState module = modules.get(moduleName);
+    for (String moduleName : outboxes.getModuleNames()) {
+      Outbox module = outboxes.findByModuleName(moduleName);
       File policy = module.getOutputFile(moduleName + "/" + rest);
       if (policy.isFile()) {
         PageUtil.sendFile("text/plain", policy, response);

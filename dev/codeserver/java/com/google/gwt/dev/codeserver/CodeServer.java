@@ -58,10 +58,10 @@ public class CodeServer {
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(options.getLogLevel());
 
-      Modules modules;
+      OutboxTable outboxes;
 
       try {
-        modules = makeModules(options, logger);
+        outboxes = makeOutboxes(options, logger);
       } catch (Throwable t) {
         t.printStackTrace();
         System.out.println("FAIL");
@@ -75,7 +75,7 @@ public class CodeServer {
         try {
           // TODO: actually test recompiling here.
           // (This is just running precompiles repeatedly.)
-          modules.defaultCompileAll(options.getNoPrecompile(), logger);
+          outboxes.defaultCompileAll(options.getNoPrecompile(), logger);
         } catch (Throwable t) {
           t.printStackTrace();
           System.out.println("FAIL");
@@ -116,13 +116,13 @@ public class CodeServer {
     topLogger.setMaxDetail(options.getLogLevel());
 
     TreeLogger startupLogger = topLogger.branch(Type.INFO, "Super Dev Mode starting up");
-    Modules modules = makeModules(options, startupLogger);
+    OutboxTable outboxes = makeOutboxes(options, startupLogger);
 
-    SourceHandler sourceHandler = new SourceHandler(modules);
+    SourceHandler sourceHandler = new SourceHandler(outboxes);
     ProgressTable progressTable = new ProgressTable();
-    JobRunner runner = new JobRunner(progressTable, modules);
+    JobRunner runner = new JobRunner(progressTable, outboxes);
 
-    WebServer webServer = new WebServer(sourceHandler, modules,
+    WebServer webServer = new WebServer(sourceHandler, outboxes,
         runner, progressTable, options.getBindAddress(), options.getPort());
     webServer.start(topLogger);
 
@@ -132,20 +132,20 @@ public class CodeServer {
   /**
    * Configures and compiles all the modules (unless {@link Options#getNoPrecompile} is false).
    */
-  private static Modules makeModules(Options options, TreeLogger logger)
+  private static OutboxTable makeOutboxes(Options options, TreeLogger logger)
       throws IOException, UnableToCompleteException {
 
     File workDir = ensureWorkDir(options);
     logger.log(Type.INFO, "workDir: " + workDir);
 
-    Modules modules = new Modules(options);
+    OutboxTable outboxes = new OutboxTable(options);
     for (String moduleName : options.getModuleNames()) {
       AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
 
       Recompiler recompiler = new Recompiler(appSpace, moduleName, options);
-      modules.addModuleState(new ModuleState(recompiler, options.getNoPrecompile(), logger));
+      outboxes.addOutbox(new Outbox(recompiler, options.getNoPrecompile(), logger));
     }
-    return modules;
+    return outboxes;
   }
 
   /**

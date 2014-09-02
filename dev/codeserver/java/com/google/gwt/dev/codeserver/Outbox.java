@@ -33,10 +33,10 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Contains everything that the code server knows about a GWT app (module), including how
- * to recompile it and where the compiler output is.
+ * Holds the compiler output for one module.
+ * TODO(skybrian) there will later be a separate Outbox for each set of binding properties.
  */
-class ModuleState {
+class Outbox {
 
   /**
    * The suffix that the GWT compiler uses when writing a sourcemap file.
@@ -46,8 +46,7 @@ class ModuleState {
   private final AtomicReference<Job.Result> published = new AtomicReference<Job.Result>();
   private final Recompiler recompiler;
 
-  ModuleState(Recompiler recompiler, boolean noPrecompile,
-      TreeLogger logger)
+  Outbox(Recompiler recompiler, boolean noPrecompile, TreeLogger logger)
       throws UnableToCompleteException {
     this.recompiler = recompiler;
     maybePrecompile(noPrecompile, logger);

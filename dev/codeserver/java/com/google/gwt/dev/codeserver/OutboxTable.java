@@ -22,52 +22,60 @@ import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.Map;
 
 /**
- * An in-memory directory of all the modules available on this code server. The {@link WebServer}
- * uses this directory to find the {@link ModuleState} associated with a URL and to list all the
+ * An in-memory table of all the outboxes available on this code server. The {@link WebServer}
+ * uses this directory to find the {@link Outbox} associated with a URL and to list all the
  * modules on the front page.
  */
-class Modules implements Iterable<String> {
+class OutboxTable {
   private final Options options;
-  private final Map<String, ModuleState> moduleStateMap = Maps.newHashMap();
 
-  public Modules(Options options) {
+  /**
+   * A map from client-side module names (after renaming) to its outbox.
+   */
+  private final Map<String, Outbox> outboxes = Maps.newHashMap();
+
+  OutboxTable(Options options) {
     this.options = options;
   }
 
   /**
-   * Adds a {@link ModuleState} to the map.
-   * @param state the module state to map
+   * Adds a {@link Outbox} to the table.
    */
-  public void addModuleState(ModuleState state) {
-    moduleStateMap.put(state.getModuleName(), state);
+  void addOutbox(Outbox outbox) {
+    outboxes.put(outbox.getModuleName(), outbox);
   }
 
   /**
-   * Retrieves a {@link ModuleState} corresponding to a given module name.
+   * Returns the outbox where the output of a compile job will be published,
+   * or null if it can't be found.
+   */
+  Outbox findOutbox(Job job) {
+    return findByModuleName(job.getModuleName());
+  }
+
+  /**
+   * Retrieves a {@link Outbox} corresponding to a given module name.
    * This should be the module name after renaming.
+   * TODO: remove and use an Outbox id instead.
    */
-  public ModuleState get(String moduleName) {
-    // TODO: maybe this lookup should also succeed if passed the module name before renaming?
-    // (I believe currently everything breaks if you change how a module is renamed, requiring
-    // a restart.)
-    return moduleStateMap.get(moduleName);
+  Outbox findByModuleName(String moduleName) {
+    return outboxes.get(moduleName);
   }
 
   /**
-   * Iterates over the list of modules.
+   * Returns the list of known module names (after renaming).
    */
-  @Override
-  public Iterator<String> iterator() {
-    return moduleStateMap.keySet().iterator();
+  Collection<String> getModuleNames() {
+    return outboxes.keySet();
   }
 
   void defaultCompileAll(boolean noPrecompile, TreeLogger logger) throws UnableToCompleteException {
-    for (ModuleState m: moduleStateMap.values()) {
-      m.maybePrecompile(noPrecompile, logger);
+    for (Outbox box: outboxes.values()) {
+      box.maybePrecompile(noPrecompile, logger);
     }
   }
 
@@ -78,7 +86,7 @@ class Modules implements Iterable<String> {
   JsonObject getConfig() {
     JsonObject config = JsonObject.create();
     JsonArray moduleNames = new JsonArray();
-    for (String module : this) {
+    for (String module : getModuleNames()) {
       moduleNames.add(module);
     }
     config.put("moduleNames", moduleNames);

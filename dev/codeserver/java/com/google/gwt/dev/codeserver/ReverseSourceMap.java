@@ -21,6 +21,8 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerV3;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapParseException;
 
+import java.io.File;
+
 /**
  * A mapping from Java lines to JavaScript.
  */
@@ -35,9 +37,9 @@ class ReverseSourceMap {
    * Reads a source map from disk and parses it into an in-memory representation.
    * If it can't be loaded, logs a warning and returns an empty source map.
    */
-  static ReverseSourceMap load(TreeLogger logger, ModuleState moduleState) {
+  static ReverseSourceMap load(TreeLogger logger, File sourceMapFile) {
     SourceMapConsumerV3 consumer = new SourceMapConsumerV3();
-    String unparsed = Util.readFileAsString(moduleState.findSourceMapForOnePermutation());
+    String unparsed = Util.readFileAsString(sourceMapFile);
     try {
       consumer.parse(unparsed);
       return new ReverseSourceMap(consumer);
