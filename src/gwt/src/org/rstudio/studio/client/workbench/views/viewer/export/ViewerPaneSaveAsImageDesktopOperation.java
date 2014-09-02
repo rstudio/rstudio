@@ -17,28 +17,21 @@ package org.rstudio.studio.client.workbench.views.viewer.export;
 
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.SavePlotAsImageOperation;
 
 public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOperation
 {
-   public ViewerPaneSaveAsImageDesktopOperation(GlobalDisplay globalDisplay)
-   {
-      globalDisplay_ = globalDisplay;
-   }
-   
    @Override
    public void attemptSave(final ProgressIndicator progressIndicator, 
                            final FileSystemItem targetPath,
                            final String format, 
                            final ExportPlotSizeEditor sizeEditor,
-                           final boolean overwrite, 
+                           final boolean overwrite,
                            final boolean viewAfterSave,
                            final Operation onCompleted)
    {
@@ -48,48 +41,20 @@ public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOpe
                @Override
                public void execute(Rectangle viewerRect)
                {
-                  // attempt the export
-                  boolean exported = Desktop.getFrame().exportPageRegionToFile(
+                  // perform the export
+                  Desktop.getFrame().exportPageRegionToFile(
                         targetPath.getPath(), 
                         format, 
                         viewerRect.getLeft(),
                         viewerRect.getTop(),
                         viewerRect.getWidth(),
-                        viewerRect.getHeight(),
-                        overwrite);
+                        viewerRect.getHeight());
                     
-                  if (exported) 
-                  {
-                     if (viewAfterSave)
-                        Desktop.getFrame().showFile(targetPath.getPath());
-                  }
-                  else if (!overwrite)
-                  {
-                     globalDisplay_.showYesNoMessage(
-                        MessageDialog.WARNING, 
-                        "File Exists", 
-                        "The specified file name already exists. " +
-                        "Do you want to overwrite it?", 
-                        new Operation() {
-                           @Override
-                           public void execute()
-                           {
-                              attemptSave(progressIndicator,
-                                          targetPath,
-                                          format,
-                                          sizeEditor,
-                                          true,
-                                          viewAfterSave,
-                                          onCompleted);
-                           }
-                        }, 
-                        true);
-                  }
+                  if (viewAfterSave) 
+                     Desktop.getFrame().showFile(targetPath.getPath());
                }
             },
             onCompleted
-         );  
+         );
    }
-   
-   private final GlobalDisplay globalDisplay_;
 }

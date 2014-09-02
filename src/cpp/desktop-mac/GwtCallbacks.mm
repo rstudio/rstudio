@@ -591,18 +591,15 @@ private:
 }
 
 
-- (Boolean) exportPageRegionToFile: (NSString*) targetPath
-                            format: (NSString*) format
-                              left: (int) left
-                               top: (int) top
-                             width: (int) width
-                            height: (int) height
-                         overwrite: (Boolean) overwrite
+- (void) exportPageRegionToFile: (NSString*) targetPath
+                         format: (NSString*) format
+                           left: (int) left
+                            top: (int) top
+                          width: (int) width
+                         height: (int) height
 {
-   // resolve path and check for overwrite
+   // resolve path
    targetPath = resolveAliasedPath(targetPath);
-   if (FilePath([targetPath UTF8String]).exists() && !overwrite)
-      return false;
    
    // get an image for the specified region
    NSRect regionRect = NSMakeRect(left, top, width, height);
@@ -640,9 +637,6 @@ private:
    
    // release the image
    [image release];
-  
-   // success
-   return true;
 }
 
 
@@ -1056,7 +1050,7 @@ enum RS_NSActivityOptions : uint64_t
       return @"copyImageToClipboard";
    else if (sel == @selector(copyPageRegionToClipboard:top:width:height:))
       return @"copyPageRegionToClipboard";
-   else if (sel == @selector(exportPageRegionToFile:format:left:top:width:height:overwrite:))
+   else if (sel == @selector(exportPageRegionToFile:format:left:top:width:height:))
       return @"exportPageRegionToFile";
    else if (sel == @selector(showMessageBox:caption:message:buttons:defaultButton:cancelButton:))
       return @"showMessageBox";
