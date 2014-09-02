@@ -4,8 +4,8 @@ setlocal
 
 set PATH=%PATH%;%CD%\tools
 
-call:install rmarkdown master
-call:install packrat master
+call:install rmarkdown v0.98.1000
+call:install packrat v0.98.1000
 
 GOTO:EOF
 
