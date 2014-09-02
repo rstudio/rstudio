@@ -478,18 +478,15 @@ void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int he
    QApplication::clipboard()->setPixmap(pixmap);
 }
 
-bool GwtCallback::exportPageRegionToFile(QString targetPath,
+void GwtCallback::exportPageRegionToFile(QString targetPath,
                                          QString format,
                                          int left,
                                          int top,
                                          int width,
-                                         int height,
-                                         bool overwrite)
+                                         int height)
 {
-   // resolve target path and check for existence
+   // resolve target path
    targetPath = resolveAliasedPath(targetPath);
-   if (QFile::exists(targetPath) && !overwrite)
-      return false;
 
    // get the pixmap
    QPixmap pixmap = QPixmap::grabWidget(pMainWindow_->webView(),
@@ -500,9 +497,6 @@ bool GwtCallback::exportPageRegionToFile(QString targetPath,
 
    // save the file
    pixmap.save(targetPath, format.toUtf8().constData(), 100);
-
-   // return success
-   return true;
 }
 
 

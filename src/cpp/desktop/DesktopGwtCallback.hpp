@@ -94,13 +94,12 @@ public slots:
 
    // coordinates are relative to entire containing web page
    void copyPageRegionToClipboard(int left, int top, int width, int height);
-   bool exportPageRegionToFile(QString targetPath,
+   void exportPageRegionToFile(QString targetPath,
                                QString format,
                                int left,
                                int top,
                                int width,
-                               int height,
-                               bool overwrite);
+                               int height);
 
    bool supportsClipboardMetafile();
 
