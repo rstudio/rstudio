@@ -112,8 +112,13 @@ public final class System {
 
   public static int identityHashCode(Object o) {
     return (o == null) ? 0 : (!(o instanceof String)) ? Impl.getHashCode(o)
-        : String.HashCache.getHashCode(String.unsafeCast(o));
+        : String.HashCache.getHashCode(unsafeCast(o));
   }
+
+  // TODO(goktug): replace unsafeCast with a real cast when the compiler can optimize it.
+  private static native String unsafeCast(Object string) /*-{
+    return string;
+  }-*/;
 
   public static native void setErr(PrintStream err) /*-{
     @java.lang.System::err = err;

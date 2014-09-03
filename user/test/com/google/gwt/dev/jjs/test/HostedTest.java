@@ -106,10 +106,6 @@ public class HostedTest extends GWTTestCase {
     return new Number(v);
   }-*/;
 
-  private native static String getBoxedStringAsString(String v) /*-{
-    return new String(v);
-  }-*/;
-
   private native static double getDouble(double v) /*-{
     return -v;
   }-*/;
@@ -215,14 +211,13 @@ public class HostedTest extends GWTTestCase {
    * Test that returning JavaScript boxed primitives works as expected. Note
    * that Boolean and Number cannot be supported properly in Production Mode, so
    * we do not support it in Development Mode and therefore do not test it here.
+   * Also we no longer support string boxing.
    */
   public void testAutoBoxing() {
     JavaScriptObject bvo = getBoxedBooleanAsObject(true);
     assertEquals(getJSOAsString(bvo), "true");
     JavaScriptObject nvo = getBoxedNumberAsObject(42);
     assertEquals(getJSOAsString(nvo), "42");
-    String sv = getBoxedStringAsString("test");
-    assertEquals(sv, "test");
   }
 
   public void testBasic() {

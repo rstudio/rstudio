@@ -18,7 +18,6 @@ package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.DoNotInline;
-import com.google.gwt.core.client.impl.SpecializeMethod;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -385,8 +384,6 @@ public final class String implements Comparable<String>, CharSequence,
   // CHECKSTYLE_ON
 
   private static native int compareTo(String thisStr, String otherStr) /*-{
-    // Coerce to a primitive string to force string comparison
-    thisStr = String(thisStr);
     if (thisStr == otherStr) {
       return 0;
     }
@@ -654,35 +651,20 @@ public final class String implements Comparable<String>, CharSequence,
     return __substr(this, length() - suffixlength, suffixlength).equals(suffix);
   }
 
-  // Marked with @DoNotInline because if it is inlined too early, then we might miss the
-  // opportunity for specialization. That means we can end with an extra instanceOf check till very
-  // end which might prevent further optimizations.
-  @SpecializeMethod(params = String.class, target = "equals")
+  // Marked with @DoNotInline because we don't have static eval for "==" yet.
   @DoNotInline
   @Override
   public boolean equals(Object other) {
-    return (other instanceof String) && equals(unsafeCast(other));
+    // Java equality is translated into triple equality which is a quick to compare strings for
+    // equality without any instanceOf checks.
+    return this == other;
   }
-
-  // This a non-standard overload for faster code path when the target type is string. Note that
-  // this method shouldn't be java inlined (and it'll not because it's native) otherwise it would
-  // break static eval.
-  private native boolean equals(String other) /*-{
-    // Coerce me to a primitive string to force string comparison
-    return String(this) == other;
-  }-*/;
-
-  // TODO(goktug): replace unsafeCast with a real cast when the compiler can optimize it.
-  static native String unsafeCast(Object string) /*-{
-    return string;
-  }-*/;
 
   public native boolean equalsIgnoreCase(String other) /*-{
     if (other == null) {
       return false;
     }
-    // Coerce to a primitive string to force string comparison
-    if (String(this) == other) {
+    if (this == other) {
       return true;
     }
     return (this.length == other.length) && (this.toLowerCase() == other.toLowerCase());
@@ -750,7 +732,7 @@ public final class String implements Comparable<String>, CharSequence,
   }-*/;
 
   public native String intern() /*-{
-    return String(this);
+    return this;
   }-*/;
 
   public native boolean isEmpty() /*-{

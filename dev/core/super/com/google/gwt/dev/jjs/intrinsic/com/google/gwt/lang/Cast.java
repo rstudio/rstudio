@@ -289,8 +289,7 @@ final class Cast {
    */
   // Visible for getIndexedMethod()
   static native boolean isJavaString(Object src) /*-{
-    // TODO(rluble): This might need to be specialized by browser.
-    return typeof(src) === "string" || src instanceof String;
+    return typeof(src) === "string";
   }-*/;
 
   /**
