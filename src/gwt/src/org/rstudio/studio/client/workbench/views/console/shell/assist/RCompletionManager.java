@@ -731,7 +731,8 @@ public class RCompletionManager implements CompletionManager
          
          if (results.length == 0)
          {
-            if (nativeEvent_ != null && nativeEvent_.getKeyCode() != KeyCodes.KEY_TAB) {
+            if (docDisplay_ == null ||
+                  (nativeEvent_ != null && nativeEvent_.getKeyCode() != KeyCodes.KEY_TAB)) {
                popup_.showErrorMessage(
                      "(No matches)", 
                      new PopupPositioner(input_.getCursorBounds(), popup_));
