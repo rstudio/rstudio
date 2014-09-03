@@ -52,6 +52,10 @@ public class AssertionError extends Error {
       ? (Throwable) message : null);
   }
 
+  public AssertionError(String message, Throwable cause) {
+    super(message, cause);
+  }
+
   private AssertionError(String message) {
     super(message);
   }
