@@ -200,10 +200,12 @@ public class Compiler {
             precompilation.removeSourceArtifacts(branch);
           }
 
-          Event compilePermutationsEvent = SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
+          Event compilePermutationsEvent =
+              SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
           Permutation[] allPerms = precompilation.getPermutations();
           List<PersistenceBackedObject<PermutationResult>> resultFiles =
-              CompilePerms.makeResultFiles(options.getCompilerWorkDir(moduleName), allPerms);
+              CompilePerms.makeResultFiles(
+                  options.getCompilerWorkDir(moduleName), allPerms, options);
           CompilePerms.compile(branch, compilerContext, precompilation, allPerms,
               options.getLocalWorkers(), resultFiles);
           compilePermutationsEvent.end();

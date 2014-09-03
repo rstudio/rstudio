@@ -663,7 +663,7 @@ public class Link {
         Precompilation precomp = (Precompilation) precompileResults;
         Permutation[] perms = precomp.getPermutations();
         List<PersistenceBackedObject<PermutationResult>> resultFiles =
-            CompilePerms.makeResultFiles(compilerWorkDir, perms);
+            CompilePerms.makeResultFiles(compilerWorkDir, perms, compilerContext.getOptions());
 
         // Check that all files are present
         for (PersistenceBackedObject<PermutationResult> file : resultFiles) {
