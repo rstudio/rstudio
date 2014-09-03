@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
@@ -72,6 +71,13 @@ public class CodeSearchOracle extends SuggestOracle
             {
                matchPos = j;
             }
+         }
+         
+         // More penalty for 'uninteresting' files (e.g. .Rd)
+         String extension = StringUtil.getExtension(suggestion);
+         if (extension.toLowerCase() == "rd")
+         {
+            matchPos += 3;
          }
          
          result += matchPos;

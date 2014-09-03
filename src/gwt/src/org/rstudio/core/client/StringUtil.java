@@ -566,6 +566,35 @@ public class StringUtil
       
    }
    
+   public static String getExtension(String string, int dots)
+   {
+      assert dots > 0;
+      int lastDotIndex = -1;
+      
+      if (dots == 1)
+      {
+         lastDotIndex = string.lastIndexOf('.');
+      }
+      else
+      {
+         String reversed = new StringBuilder(string).reverse().toString();
+         for (int i = 0; i < dots; i++)
+         {
+            lastDotIndex = reversed.indexOf('.', lastDotIndex);
+         }
+         lastDotIndex = string.length() - lastDotIndex;
+      }
+      
+      return lastDotIndex == -1 || lastDotIndex == string.length() - 1 ?
+            "" :
+            string.substring(lastDotIndex + 1, string.length());
+   }
+   
+   public static String getExtension(String string)
+   {
+      return getExtension(string, 1);
+   }
+   
    private static final String[] LABELS = {
          "B",
          "KB",
