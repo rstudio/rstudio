@@ -236,7 +236,7 @@ Error evaluateString(const std::string& str,
    r::sourceManager().reloadIfNecessary();
    
    // surrond the string with try in silent mode so we can capture error text
-   std::string rCode = "try(" + str + ", TRUE)";
+   std::string rCode = "base::try(" + str + ", TRUE)";
 
    // parse expression
    SEXP ps;
