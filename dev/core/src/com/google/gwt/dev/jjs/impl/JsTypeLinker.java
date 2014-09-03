@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.linker.impl.JsSourceMapExtractor;
 import com.google.gwt.core.ext.linker.impl.NamedRange;
 import com.google.gwt.core.ext.linker.impl.StatementRangesBuilder;
 import com.google.gwt.core.ext.linker.impl.StatementRangesExtractor;
-import com.google.gwt.dev.MinimalRebuildCache.PermutationRebuildCache;
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -46,7 +46,7 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
   private final StringBuilder jsBuilder = new StringBuilder();
   private final Set<String> linkedTypeNames = Sets.newHashSet();
   private TreeLogger logger;
-  private final PermutationRebuildCache permutationRebuildCache;
+  private final MinimalRebuildCache minimalRebuildCache;
   private final JsSourceMapExtractor jsSourceMapExtractor;
   private final StatementRangesBuilder statementRangesBuilder = new StatementRangesBuilder();
   private final JsSourceMapBuilder jsSourceMapBuilder = new JsSourceMapBuilder();
@@ -56,7 +56,7 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
 
   public JsTypeLinker(TreeLogger logger, JsAbstractTextTransformer textTransformer,
       List<NamedRange> typeRanges, NamedRange programTypeRange,
-      PermutationRebuildCache permutationRebuildCache, JTypeOracle typeOracle) {
+      MinimalRebuildCache minimalRebuildCache, JTypeOracle typeOracle) {
     super(textTransformer);
     this.logger = logger;
     this.statementRangesExtractor = new StatementRangesExtractor(statementRanges);
@@ -66,7 +66,7 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
         programTypeRange.getStartLineNumber());
     this.footerRange = new NamedRange(FOOTER_NAME, programTypeRange.getEndPosition(), js.length(),
         programTypeRange.getEndLineNumber(), sourceInfoMap.getLines());
-    this.permutationRebuildCache = permutationRebuildCache;
+    this.minimalRebuildCache = minimalRebuildCache;
     this.typeOracle = typeOracle;
   }
 
@@ -84,31 +84,31 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
 
   private List<String> computeReachableTypes() {
     List<String> reachableTypeNames =
-        Lists.newArrayList(permutationRebuildCache.computeReachableTypeNames());
+        Lists.newArrayList(minimalRebuildCache.computeReachableTypeNames());
     Collections.sort(reachableTypeNames);
     return reachableTypeNames;
   }
 
   private void extractOne(NamedRange typeRange) {
     String typeName = typeRange.getName();
-    permutationRebuildCache.setJsForType(logger, typeName,
+    minimalRebuildCache.setJsForType(logger, typeName,
         js.substring(typeRange.getStartPosition(), typeRange.getEndPosition()));
-    permutationRebuildCache.setStatementRangesForType(typeName,
+    minimalRebuildCache.setStatementRangesForType(typeName,
         statementRangesExtractor.extract(typeRange.getStartPosition(), typeRange.getEndPosition()));
-    permutationRebuildCache.setSourceMapForType(typeName, jsSourceMapExtractor.extract(
+    minimalRebuildCache.setSourceMapForType(typeName, jsSourceMapExtractor.extract(
         typeRange.getStartPosition(), typeRange.getEndPosition(), typeRange.getStartLineNumber(),
         typeRange.getEndLineNumber()));
   }
 
   private void linkAll(List<String> reachableTypeNames) {
     // Extract new JS.
-    if (permutationRebuildCache.getJs(HEADER_NAME) == null) {
+    if (minimalRebuildCache.getJs(HEADER_NAME) == null) {
       extractOne(headerRange);
     }
     for (NamedRange typeRange : typeRanges) {
       extractOne(typeRange);
     }
-    if (permutationRebuildCache.getJs(FOOTER_NAME) == null) {
+    if (minimalRebuildCache.getJs(FOOTER_NAME) == null) {
       extractOne(footerRange);
     }
 
@@ -136,7 +136,7 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
     }
     linkedTypeNames.add(typeName);
 
-    String typeJs = permutationRebuildCache.getJs(typeName);
+    String typeJs = minimalRebuildCache.getJs(typeName);
     if (typeJs == null) {
       return;
     }
@@ -148,8 +148,8 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
     }
 
     logger.log(TreeLogger.SPAM, "linking type " + typeName + " (" + typeJs.length() + " bytes)");
-    StatementRanges typeStatementRanges = permutationRebuildCache.getStatementRanges(typeName);
-    JsSourceMap typeSourceMap = permutationRebuildCache.getSourceMap(typeName);
+    StatementRanges typeStatementRanges = minimalRebuildCache.getStatementRanges(typeName);
+    JsSourceMap typeSourceMap = minimalRebuildCache.getSourceMap(typeName);
 
     jsBuilder.append(typeJs);
     statementRangesBuilder.append(typeStatementRanges);

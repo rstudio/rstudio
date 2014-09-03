@@ -19,6 +19,8 @@ import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.javac.GeneratedUnit;
+import com.google.gwt.dev.javac.Shared;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
@@ -35,105 +37,25 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimaps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.collect.Sets.SetView;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
  * MinimalRebuildCache contains compiler information that can be persisted between compiles to
  * decrease compilation time.
  * <p>
+ * Cached information is specific to a single permutation and it is the responsibility of the
+ * framework driving the Compiler to supply the right Cache instance for the right Module
+ * configuration and to make sure that the Compiler is only processing one permutation at a time.
+ * <p>
  * All type names referenced here are assumed to be binary names.
  */
 public class MinimalRebuildCache implements Serializable {
-
-  /**
-   * The permutation specific portion of persisted information.
-   */
-  public class PermutationRebuildCache {
-
-    // The implementation of a Type can vary between permutations because of permutation specific
-    // GWT.create() rewrites and JSO Devirtualization.
-    private final Map<String, String> jsByTypeName = Maps.newHashMap();
-    private final Multimap<String, String> referencedTypeNamesByTypeName = HashMultimap.create();
-    private final Map<String, JsSourceMap> sourceMapsByTypeName = Maps.newHashMap();
-    private final Map<String, StatementRanges> statementRangesByTypeName = Maps.newHashMap();
-    private final Multimap<String, String> typeNamesByReferencingTypeName = HashMultimap.create();
-
-    public void addTypeReference(String fromTypeName, String toTypeName) {
-      referencedTypeNamesByTypeName.put(fromTypeName, toTypeName);
-      typeNamesByReferencingTypeName.put(toTypeName, fromTypeName);
-    }
-
-    public void clearCachedTypeOutput(String typeName) {
-      jsByTypeName.remove(typeName);
-      statementRangesByTypeName.remove(typeName);
-      sourceMapsByTypeName.remove(typeName);
-    }
-
-    /**
-     * Computes and returns the names of the set of types that are transitively referencable
-     * starting from the set of root types.
-     */
-    public Set<String> computeReachableTypeNames() {
-      Set<String> openTypeNames = Sets.newHashSet(rootTypeNames);
-      Set<String> reachableTypeNames = Sets.newHashSet();
-
-      while (!openTypeNames.isEmpty()) {
-        Iterator<String> iterator = openTypeNames.iterator();
-        String toProcessTypeName = iterator.next();
-        iterator.remove();
-
-        reachableTypeNames.add(toProcessTypeName);
-
-        Collection<String> referencedTypes = referencedTypeNamesByTypeName.get(toProcessTypeName);
-        for (String referencedType : referencedTypes) {
-          if (reachableTypeNames.contains(referencedType)) {
-            continue;
-          }
-          openTypeNames.add(referencedType);
-        }
-      }
-      return reachableTypeNames;
-    }
-
-    public String getJs(String typeName) {
-      return jsByTypeName.get(typeName);
-    }
-
-    public JsSourceMap getSourceMap(String typeName) {
-      return sourceMapsByTypeName.get(typeName);
-    }
-
-    public StatementRanges getStatementRanges(String typeName) {
-      return statementRangesByTypeName.get(typeName);
-    }
-
-    public void removeReferencesFrom(String fromTypeName) {
-      Collection<String> toTypeNames = referencedTypeNamesByTypeName.get(fromTypeName);
-      for (String toTypeName : toTypeNames) {
-        typeNamesByReferencingTypeName.remove(toTypeName, fromTypeName);
-      }
-      referencedTypeNamesByTypeName.removeAll(fromTypeName);
-    }
-
-    public void setJsForType(TreeLogger logger, String typeName, String typeJs) {
-      logger.log(TreeLogger.SPAM, "caching JS for type " + typeName);
-      jsByTypeName.put(typeName, typeJs);
-    }
-
-    public void setSourceMapForType(String typeName, JsSourceMap sourceMap) {
-      sourceMapsByTypeName.put(typeName, sourceMap);
-    }
-
-    public void setStatementRangesForType(String typeName, StatementRanges statementRanges) {
-      statementRangesByTypeName.put(typeName, statementRanges);
-    }
-  }
 
   private static void appendSubTypes(Set<String> accumulatedTypeNames, Set<String> parentTypeNames,
       JTypeOracle typeOracle) {
@@ -147,22 +69,82 @@ public class MinimalRebuildCache implements Serializable {
     }
   }
 
-  private final Set<String> allCompilationUnitNames = Sets.newHashSet();
+  /**
+   * Diffs lastModifiedByResourcePath from the previous compile against currentResources from the
+   * current compile. modifiedResourcePaths is wiped and recreated to be a list of just the modified
+   * or deleted resources, deletedResourcePaths is wiped and recreated to be a list of just the
+   * deleted resources and modifiedResourcePaths is updated in place with new lastModified dates.
+   */
+  private static void recordModifiedResources(Map<String, Long> currentModifiedByResourcePath,
+      Map<String, Long> lastModifiedByResourcePath, Set<String> modifiedResourcePaths,
+      Set<String> deletedResourcePaths) {
+    deletedResourcePaths.clear();
+    modifiedResourcePaths.clear();
+
+    Set<String> currentResourcePaths = Sets.newHashSet();
+    for (Entry<String, Long> entry : currentModifiedByResourcePath.entrySet()) {
+      String currentResourcePath = entry.getKey();
+      Long currentResourceModified = entry.getValue();
+
+      currentResourcePaths.add(currentResourcePath);
+      Long lastKnownModified =
+          lastModifiedByResourcePath.put(currentResourcePath, currentResourceModified);
+      if (!Objects.equal(lastKnownModified, currentResourceModified)) {
+        // Added or Modified resource.
+        modifiedResourcePaths.add(currentResourcePath);
+      }
+    }
+
+    // Removed resources.
+    {
+      // Figure out which resources were removed.
+      Set<String> removedResourcePaths = Sets.newHashSet(
+          Sets.difference(lastModifiedByResourcePath.keySet(), currentResourcePaths));
+      // Log them as "modified".
+      deletedResourcePaths.addAll(removedResourcePaths);
+      modifiedResourcePaths.addAll(removedResourcePaths);
+      // Remove any path to modified date entries for them.
+      for (String removedResourcePath : removedResourcePaths) {
+        lastModifiedByResourcePath.remove(removedResourcePath);
+      }
+    }
+  }
+
+  private static Set<String> resourcePathsToCompilationUnitNames(Set<String> resourcePaths) {
+    Set<String> compilationUnitNames = Sets.newHashSet();
+    for (String resourcePath : resourcePaths) {
+      compilationUnitNames.add(Shared.toTypeName(resourcePath));
+    }
+    return compilationUnitNames;
+  }
+
+  private static Map<String, Long> resourcesToModifiedByPath(Collection<Resource> resources) {
+    Map<String, Long> modifiedByPath = Maps.newHashMap();
+    for (Resource resource : resources) {
+      modifiedByPath.put(resource.getPath(), resource.getLastModified());
+    }
+    return modifiedByPath;
+  }
+
+  protected final ImmediateTypeRelations immediateTypeRelations = new ImmediateTypeRelations();
   private final Multimap<String, String> compilationUnitTypeNameByNestedTypeName =
       HashMultimap.create();
+  private final Map<String, String> contentHashByGeneratedTypeName = Maps.newHashMap();
   private final Set<String> deletedCompilationUnitNames = Sets.newHashSet();
+  private final Set<String> deletedDiskSourcePaths = Sets.newHashSet();
+  private final Set<String> deletedResourcePaths = Sets.newHashSet();
   private final Set<String> dualJsoImplInterfaceNames = Sets.newHashSet();
   private final ArtifactSet generatedArtifacts = new ArtifactSet();
-  private final ImmediateTypeRelations immediateTypeRelations = new ImmediateTypeRelations();
   private final IntTypeIdGenerator intTypeIdGenerator = new IntTypeIdGenerator();
+  private final Map<String, String> jsByTypeName = Maps.newHashMap();
   private final Set<String> jsoStatusChangedTypeNames = Sets.newHashSet();
   private final Set<String> jsoTypeNames = Sets.newHashSet();
+  private final Map<String, Long> lastModifiedByDiskSourcePath = Maps.newHashMap();
   private final Map<String, Long> lastModifiedByResourcePath = Maps.newHashMap();
   private final Set<String> modifiedCompilationUnitNames = Sets.newHashSet();
+  private final Set<String> modifiedDiskSourcePaths = Sets.newHashSet();
   private final Set<String> modifiedResourcePaths = Sets.newHashSet();
   private final Multimap<String, String> nestedTypeNamesByUnitTypeName = HashMultimap.create();
-  private final Map<Integer, PermutationRebuildCache> permutationRebuildCacheById =
-      Maps.newHashMap();
   private final PersistentPrettyNamerState persistentPrettyNamerState =
       new PersistentPrettyNamerState();
   private final Set<String> preambleTypeNames = Sets.newHashSet();
@@ -170,8 +152,13 @@ public class MinimalRebuildCache implements Serializable {
   private final Multimap<String, String> reboundTypeNamesByGeneratedTypeName =
       HashMultimap.create();
   private final Multimap<String, String> reboundTypeNamesByInputResource = HashMultimap.create();
+  private final Multimap<String, String> referencedTypeNamesByTypeName = HashMultimap.create();
   private final Set<String> rootTypeNames = Sets.newHashSet();
   private final Set<String> singleJsoImplInterfaceNames = Sets.newHashSet();
+  private final Map<String, JsSourceMap> sourceMapsByTypeName = Maps.newHashMap();
+  private final Set<String> staleTypeNames = Sets.newHashSet();
+  private final Map<String, StatementRanges> statementRangesByTypeName = Maps.newHashMap();
+  private final Multimap<String, String> typeNamesByReferencingTypeName = HashMultimap.create();
 
   /**
    * Accumulates generated artifacts so that they can be output on recompiles even if no generators
@@ -186,6 +173,11 @@ public class MinimalRebuildCache implements Serializable {
     logger.log(TreeLogger.DEBUG, "adding to cached list of known modified compilation units "
         + modifiedCompilationUnitNames);
     this.modifiedCompilationUnitNames.addAll(modifiedCompilationUnitNames);
+  }
+
+  public void addTypeReference(String fromTypeName, String toTypeName) {
+    referencedTypeNamesByTypeName.put(fromTypeName, toTypeName);
+    typeNamesByReferencingTypeName.put(toTypeName, fromTypeName);
   }
 
   public void associateReboundTypeWithGeneratedType(String reboundTypeName,
@@ -205,9 +197,21 @@ public class MinimalRebuildCache implements Serializable {
   public void clearPerTypeJsCache() {
     rootTypeNames.clear();
     preambleTypeNames.clear();
-    modifiedCompilationUnitNames.clear();
-    modifiedCompilationUnitNames.addAll(allCompilationUnitNames);
-    permutationRebuildCacheById.clear();
+
+    deletedResourcePaths.clear();
+    modifiedResourcePaths.clear();
+    lastModifiedByResourcePath.clear();
+
+    deletedDiskSourcePaths.clear();
+    modifiedDiskSourcePaths.clear();
+    lastModifiedByDiskSourcePath.clear();
+    contentHashByGeneratedTypeName.clear();
+
+    jsByTypeName.clear();
+    referencedTypeNamesByTypeName.clear();
+    sourceMapsByTypeName.clear();
+    statementRangesByTypeName.clear();
+    typeNamesByReferencingTypeName.clear();
   }
 
   public void clearRebinderTypeAssociations(String rebinderTypeName) {
@@ -238,7 +242,9 @@ public class MinimalRebuildCache implements Serializable {
       return Sets.newHashSet();
     }
 
-    Set<String> staleTypeNames = Sets.newHashSet();
+    // Store calculate stale type names in a persisted field so that tests can inspect behavior.
+    staleTypeNames.clear();
+
     Set<String> modifiedTypeNames = computeModifiedTypeNames();
 
     // Accumulate the names of stale types resulting from some known type or resource modifications,
@@ -277,7 +283,7 @@ public class MinimalRebuildCache implements Serializable {
       clearCachedTypeOutput(staleTypeName);
     }
 
-    return staleTypeNames;
+    return Sets.newHashSet(staleTypeNames);
   }
 
   /**
@@ -327,9 +333,30 @@ public class MinimalRebuildCache implements Serializable {
     return modifiedTypeNames;
   }
 
-  @VisibleForTesting
-  public Set<String> getAllCompilationUnitNames() {
-    return allCompilationUnitNames;
+  /**
+   * Computes and returns the names of the set of types that are transitively referenceable starting
+   * from the set of root types.
+   */
+  public Set<String> computeReachableTypeNames() {
+    Set<String> openTypeNames = Sets.newHashSet(rootTypeNames);
+    Set<String> reachableTypeNames = Sets.newHashSet();
+
+    while (!openTypeNames.isEmpty()) {
+      Iterator<String> iterator = openTypeNames.iterator();
+      String toProcessTypeName = iterator.next();
+      iterator.remove();
+
+      reachableTypeNames.add(toProcessTypeName);
+
+      Collection<String> referencedTypes = referencedTypeNamesByTypeName.get(toProcessTypeName);
+      for (String referencedType : referencedTypes) {
+        if (reachableTypeNames.contains(referencedType)) {
+          continue;
+        }
+        openTypeNames.add(referencedType);
+      }
+    }
+    return reachableTypeNames;
   }
 
   public ArtifactSet getGeneratedArtifacts() {
@@ -344,18 +371,13 @@ public class MinimalRebuildCache implements Serializable {
     return intTypeIdGenerator;
   }
 
+  public String getJs(String typeName) {
+    return jsByTypeName.get(typeName);
+  }
+
   @VisibleForTesting
   public Set<String> getModifiedCompilationUnitNames() {
     return modifiedCompilationUnitNames;
-  }
-
-  public PermutationRebuildCache getPermutationRebuildCache(int permutationId) {
-    if (!permutationRebuildCacheById.containsKey(permutationId)) {
-      PermutationRebuildCache permutationRebuildCache = new PermutationRebuildCache();
-      permutationRebuildCacheById.put(permutationId, permutationRebuildCache);
-      return permutationRebuildCache;
-    }
-    return permutationRebuildCacheById.get(permutationId);
   }
 
   public PersistentPrettyNamerState getPersistentPrettyNamerState() {
@@ -366,16 +388,21 @@ public class MinimalRebuildCache implements Serializable {
     return preambleTypeNames;
   }
 
+  public JsSourceMap getSourceMap(String typeName) {
+    return sourceMapsByTypeName.get(typeName);
+  }
+
+  @VisibleForTesting
+  public Set<String> getStaleTypeNames() {
+    return staleTypeNames;
+  }
+
+  public StatementRanges getStatementRanges(String typeName) {
+    return statementRangesByTypeName.get(typeName);
+  }
+
   public boolean hasJs(String typeName) {
-    if (permutationRebuildCacheById.isEmpty()) {
-      return false;
-    }
-    for (PermutationRebuildCache permutationRebuildCache : permutationRebuildCacheById.values()) {
-      if (permutationRebuildCache.getJs(typeName) == null) {
-        return false;
-      }
-    }
-    return true;
+    return jsByTypeName.containsKey(typeName);
   }
 
   public boolean hasPreambleTypeNames() {
@@ -388,35 +415,56 @@ public class MinimalRebuildCache implements Serializable {
    * dates of build resources in the previous compile with those of the current compile.
    */
   public void recordBuildResources(ModuleDef module) {
-    // To start lastModifiedByResourcePath is data about the previous compile and by the end it
-    // contains data about the current compile.
+    Map<String, Long> currentModifiedByResourcePath =
+        resourcesToModifiedByPath(module.getBuildResourceOracle().getResources());
+    recordModifiedResources(currentModifiedByResourcePath, lastModifiedByResourcePath,
+        modifiedResourcePaths, deletedResourcePaths);
+  }
 
-    Set<Resource> currentResources = module.getBuildResourceOracle().getResources();
+  /**
+   * Records the paths and modification dates of source resources in the current compile and builds
+   * a list of known modified paths by comparing the paths and modification dates of source
+   * resources in the previous compile with those of the current compile.
+   */
+  @VisibleForTesting
+  public void recordDiskSourceResources(Map<String, Long> currentModifiedByDiskSourcePath) {
+    recordModifiedResources(currentModifiedByDiskSourcePath, lastModifiedByDiskSourcePath,
+        modifiedDiskSourcePaths, deletedDiskSourcePaths);
 
-    // Start with a from-scratch idea of which resources are modified.
-    modifiedResourcePaths.clear();
+    deletedCompilationUnitNames.clear();
+    deletedCompilationUnitNames.addAll(resourcePathsToCompilationUnitNames(deletedDiskSourcePaths));
+    modifiedCompilationUnitNames.clear();
+    modifiedCompilationUnitNames.addAll(
+        resourcePathsToCompilationUnitNames(modifiedDiskSourcePaths));
+  }
 
-    Set<String> currentResourcePaths = Sets.newHashSet();
-    for (Resource currentResource : currentResources) {
-      currentResourcePaths.add(currentResource.getPath());
-      Long lastKnownModified = lastModifiedByResourcePath.put(currentResource.getPath(),
-          currentResource.getLastModified());
-      if (!Objects.equal(lastKnownModified, currentResource.getLastModified())) {
+  /**
+   * Records the paths and modification dates of source resources in the current compile and builds
+   * a list of known modified paths by comparing the paths and modification dates of source
+   * resources in the previous compile with those of the current compile.
+   */
+  public void recordDiskSourceResources(ModuleDef module) {
+    Map<String, Long> currentModifiedByDiskSourcePath =
+        resourcesToModifiedByPath(module.getSourceResourceOracle().getResources());
+    recordDiskSourceResources(currentModifiedByDiskSourcePath);
+  }
+
+  /**
+   * Records the paths and content ids of generated source resources in the current compile and
+   * updates a list of known modified paths by comparing the paths and content ids of generated
+   * source resources in the previous compile with those of the current compile.
+   */
+  public void recordGeneratedUnits(Collection<GeneratedUnit> generatedUnits) {
+    // Not all Generators are run on each compile so it is not possible to compare previous and
+    // current generated units to detect deletions. As a result only modifications are tracked.
+
+    for (GeneratedUnit generatedUnit : generatedUnits) {
+      String currentStrongHash = generatedUnit.getStrongHash();
+      String lastKnownStrongHash =
+          contentHashByGeneratedTypeName.put(generatedUnit.getTypeName(), currentStrongHash);
+      if (!Objects.equal(lastKnownStrongHash, currentStrongHash)) {
         // Added or Modified resource.
-        modifiedResourcePaths.add(currentResource.getPath());
-      }
-    }
-
-    // Removed resources.
-    {
-      // Figure out which resources were removed.
-      SetView<String> removedResourcePaths =
-          Sets.difference(lastModifiedByResourcePath.keySet(), currentResourcePaths);
-      // Log them as "modified".
-      modifiedResourcePaths.addAll(removedResourcePaths);
-      // Remove any resource path to modified date entries for them.
-      for (String removedResourcePath : removedResourcePaths) {
-        lastModifiedByResourcePath.remove(removedResourcePath);
+        modifiedCompilationUnitNames.add(generatedUnit.getTypeName());
       }
     }
   }
@@ -445,16 +493,17 @@ public class MinimalRebuildCache implements Serializable {
     rebinderTypeNamesByReboundTypeName.put(reboundTypeName, rebinderType);
   }
 
-  public void setAllCompilationUnitNames(TreeLogger logger,
-      Set<String> newAllCompilationUnitNames) {
-    deletedCompilationUnitNames.clear();
-    deletedCompilationUnitNames.addAll(
-        Sets.difference(this.allCompilationUnitNames, newAllCompilationUnitNames));
-    logger.log(TreeLogger.DEBUG,
-        "caching list of known deleted compilation units " + deletedCompilationUnitNames);
+  public void removeReferencesFrom(String fromTypeName) {
+    Collection<String> toTypeNames = referencedTypeNamesByTypeName.get(fromTypeName);
+    for (String toTypeName : toTypeNames) {
+      typeNamesByReferencingTypeName.remove(toTypeName, fromTypeName);
+    }
+    referencedTypeNamesByTypeName.removeAll(fromTypeName);
+  }
 
-    this.allCompilationUnitNames.clear();
-    this.allCompilationUnitNames.addAll(newAllCompilationUnitNames);
+  public void setJsForType(TreeLogger logger, String typeName, String typeJs) {
+    logger.log(TreeLogger.SPAM, "caching JS for type " + typeName);
+    jsByTypeName.put(typeName, typeJs);
   }
 
   /**
@@ -463,12 +512,12 @@ public class MinimalRebuildCache implements Serializable {
    */
   public void setJsoTypeNames(Set<String> jsoTypeNames, Set<String> singleJsoImplInterfaceNames,
       Set<String> dualJsoImplInterfaceNames) {
-    jsoStatusChangedTypeNames.clear();
-
-    jsoStatusChangedTypeNames.addAll(Sets.symmetricDifference(this.jsoTypeNames, jsoTypeNames));
-    jsoStatusChangedTypeNames.addAll(
+    this.jsoStatusChangedTypeNames.clear();
+    this.jsoStatusChangedTypeNames.addAll(
+        Sets.symmetricDifference(this.jsoTypeNames, jsoTypeNames));
+    this.jsoStatusChangedTypeNames.addAll(
         Sets.symmetricDifference(this.singleJsoImplInterfaceNames, singleJsoImplInterfaceNames));
-    jsoStatusChangedTypeNames.addAll(
+    this.jsoStatusChangedTypeNames.addAll(
         Sets.symmetricDifference(this.dualJsoImplInterfaceNames, dualJsoImplInterfaceNames));
 
     this.jsoTypeNames.clear();
@@ -477,14 +526,6 @@ public class MinimalRebuildCache implements Serializable {
     this.singleJsoImplInterfaceNames.addAll(singleJsoImplInterfaceNames);
     this.dualJsoImplInterfaceNames.clear();
     this.dualJsoImplInterfaceNames.addAll(dualJsoImplInterfaceNames);
-  }
-
-  public void setModifiedCompilationUnitNames(TreeLogger logger,
-      Set<String> modifiedCompilationUnitNames) {
-    logger.log(TreeLogger.DEBUG,
-        "caching list of known modified compilation units " + modifiedCompilationUnitNames);
-    this.modifiedCompilationUnitNames.clear();
-    this.modifiedCompilationUnitNames.addAll(modifiedCompilationUnitNames);
   }
 
   public void setPreambleTypeNames(TreeLogger logger, Set<String> preambleTypeNames) {
@@ -497,14 +538,20 @@ public class MinimalRebuildCache implements Serializable {
     this.rootTypeNames.addAll(rootTypeNames);
   }
 
+  public void setSourceMapForType(String typeName, JsSourceMap sourceMap) {
+    sourceMapsByTypeName.put(typeName, sourceMap);
+  }
+
+  public void setStatementRangesForType(String typeName, StatementRanges statementRanges) {
+    statementRangesByTypeName.put(typeName, statementRanges);
+  }
+
   private void appendReferencingTypes(Set<String> accumulatedTypeNames,
       Collection<String> referencedTypeNames) {
     for (String referencedTypeName : referencedTypeNames) {
-      for (PermutationRebuildCache permutationRebuildCache : permutationRebuildCacheById.values()) {
-        Collection<String> referencingTypeNames =
-            permutationRebuildCache.typeNamesByReferencingTypeName.get(referencedTypeName);
-        accumulatedTypeNames.addAll(referencingTypeNames);
-      }
+      Collection<String> referencingTypeNames =
+          typeNamesByReferencingTypeName.get(referencedTypeName);
+      accumulatedTypeNames.addAll(referencingTypeNames);
     }
   }
 
@@ -536,9 +583,9 @@ public class MinimalRebuildCache implements Serializable {
   }
 
   private void clearCachedTypeOutput(String staleTypeName) {
-    for (PermutationRebuildCache permutationRebuildCache : permutationRebuildCacheById.values()) {
-      permutationRebuildCache.clearCachedTypeOutput(staleTypeName);
-    }
+    jsByTypeName.remove(staleTypeName);
+    statementRangesByTypeName.remove(staleTypeName);
+    sourceMapsByTypeName.remove(staleTypeName);
   }
 
   /**

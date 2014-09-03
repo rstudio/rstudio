@@ -13,7 +13,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.MinimalRebuildCache.PermutationRebuildCache;
+import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
@@ -41,15 +41,15 @@ import java.util.List;
  */
 public class TypeReferencesRecorder extends JVisitor {
 
-  public static void exec(JProgram program, PermutationRebuildCache permutationRebuildCache) {
-    new TypeReferencesRecorder(permutationRebuildCache).execImpl(program);
+  public static void exec(JProgram program, MinimalRebuildCache minimalRebuildCache) {
+    new TypeReferencesRecorder(minimalRebuildCache).execImpl(program);
   }
 
   private String fromTypeName;
-  private final PermutationRebuildCache permutationRebuildCache;
+  private final MinimalRebuildCache minimalRebuildCache;
 
-  public TypeReferencesRecorder(PermutationRebuildCache permutationRebuildCache) {
-    this.permutationRebuildCache = permutationRebuildCache;
+  public TypeReferencesRecorder(MinimalRebuildCache minimalRebuildCache) {
+    this.minimalRebuildCache = minimalRebuildCache;
   }
 
   @Override
@@ -135,7 +135,7 @@ public class TypeReferencesRecorder extends JVisitor {
   public boolean visit(JDeclaredType x, Context ctx) {
     fromTypeName = x.getName();
 
-    permutationRebuildCache.removeReferencesFrom(fromTypeName);
+    minimalRebuildCache.removeReferencesFrom(fromTypeName);
 
     // Gather superclass and implemented interface types.
     maybeRecordTypeRef(x.getSuperClass());
@@ -162,7 +162,7 @@ public class TypeReferencesRecorder extends JVisitor {
   }
 
   private void maybeRecordTypeRef(String fromTypeName, String toTypeName) {
-    permutationRebuildCache.addTypeReference(fromTypeName, toTypeName);
+    minimalRebuildCache.addTypeReference(fromTypeName, toTypeName);
   }
 
   private void maybeRecordTypeRefs(List<? extends JDeclaredType> toTypes) {

@@ -35,7 +35,6 @@ import com.google.gwt.core.ext.soyc.impl.StoryRecorder;
 import com.google.gwt.core.linker.SoycReportLinker;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.MinimalRebuildCache;
-import com.google.gwt.dev.MinimalRebuildCache.PermutationRebuildCache;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.ConfigProps;
@@ -280,9 +279,7 @@ public abstract class JavaToJavaScriptCompiler {
         if (options.shouldCompilePerFile()) {
           // Per file compilation needs the type reference graph to construct the set of reachable
           // types when linking.
-          PermutationRebuildCache permutationRebuildCache =
-              getMinimalRebuildCache().getPermutationRebuildCache(permutation.getId());
-          TypeReferencesRecorder.exec(jprogram, permutationRebuildCache);
+          TypeReferencesRecorder.exec(jprogram, getMinimalRebuildCache());
         }
         jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
 
@@ -531,9 +528,7 @@ public abstract class JavaToJavaScriptCompiler {
          */
         if (options.shouldCompilePerFile()) {
           transformer = new JsTypeLinker(logger, transformer, v.getClassRanges(),
-              v.getProgramClassRange(),
-              getMinimalRebuildCache().getPermutationRebuildCache(permutation.getId()),
-              jprogram.typeOracle);
+              v.getProgramClassRange(), getMinimalRebuildCache(), jprogram.typeOracle);
           transformer.exec();
         }
 
@@ -1041,9 +1036,10 @@ public abstract class JavaToJavaScriptCompiler {
 
       // Free up memory.
       rpo.clear();
+      Set<String> deletedTypeNames = options.shouldCompilePerFile()
+          ? getMinimalRebuildCache().computeDeletedTypeNames() : Sets.<String> newHashSet();
       jprogram.typeOracle.computeBeforeAST(StandardTypes.createFrom(jprogram),
-          jprogram.getDeclaredTypes(), jprogram.getModuleDeclaredTypes(),
-          getMinimalRebuildCache().computeDeletedTypeNames());
+          jprogram.getDeclaredTypes(), jprogram.getModuleDeclaredTypes(), deletedTypeNames);
       return compilationState;
     }
 

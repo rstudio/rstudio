@@ -1828,14 +1828,16 @@ public class GenerateJavaScriptAST {
 
       Set<JDeclaredType> preambleTypes = generatePreamble(x, globalStmts);
 
-      // Record the names of preamble types so that it's possible to invalidate caches when the
-      // preamble types are known to have become stale.
-      if (!minimalRebuildCache.hasPreambleTypeNames()) {
-        Set<String> preambleTypeNames =  Sets.newHashSet();
-        for (JDeclaredType preambleType : preambleTypes) {
-          preambleTypeNames.add(preambleType.getName());
+      if (compilePerFile) {
+        // Record the names of preamble types so that it's possible to invalidate caches when the
+        // preamble types are known to have become stale.
+        if (!minimalRebuildCache.hasPreambleTypeNames()) {
+          Set<String> preambleTypeNames =  Sets.newHashSet();
+          for (JDeclaredType preambleType : preambleTypes) {
+            preambleTypeNames.add(preambleType.getName());
+          }
+          minimalRebuildCache.setPreambleTypeNames(logger, preambleTypeNames);
         }
-        minimalRebuildCache.setPreambleTypeNames(logger, preambleTypeNames);
       }
 
       // Sort normal types according to superclass relationship.
@@ -3333,6 +3335,8 @@ public class GenerateJavaScriptAST {
 
   private final boolean modularCompile;
 
+  private final boolean compilePerFile;
+
   /**
    * All of the fields in String and Array need special handling for interop.
    */
@@ -3387,6 +3391,7 @@ public class GenerateJavaScriptAST {
         compilerContext.getOptions().getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
     this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic()
         && !compilerContext.getOptions().shouldCompilePerFile();
+    this.compilePerFile = compilerContext.getOptions().shouldCompilePerFile();
     this.modularCompile = !compilerContext.shouldCompileMonolithic();
     this.symbolTable = symbolTable;
     this.typeIdsByType = typeIdsByType;

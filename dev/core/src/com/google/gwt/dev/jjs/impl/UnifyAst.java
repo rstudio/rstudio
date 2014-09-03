@@ -672,7 +672,7 @@ public class UnifyAst {
    * after each Generator) to eagerly process stale types (some of which don't exist yet) from
    * becoming a performance problem.
    */
-  private Set<String> staleTypeNames;
+  private Set<String> staleTypeNames = Sets.newHashSet();
 
   /**
    * A work queue of methods whose bodies we need to traverse. Prevents
@@ -707,10 +707,11 @@ public class UnifyAst {
     this.compiledClassesBySourceName = compilationState.getClassFileMapBySource();
     initializeNameBasedLocators();
     this.minimalRebuildCache = compilerContext.getMinimalRebuildCache();
-    this.staleTypeNames =
-        minimalRebuildCache.clearStaleTypeJsAndStatements(logger, program.typeOracle);
-
-    checkPreambleTypesStillFresh(logger);
+    if (compilePerFile) {
+      this.staleTypeNames =
+          minimalRebuildCache.clearStaleTypeJsAndStatements(logger, program.typeOracle);
+      checkPreambleTypesStillFresh(logger);
+    }
   }
 
   public void addRootTypes(Collection<String> sourceTypeNames) throws UnableToCompleteException {
@@ -967,7 +968,9 @@ public class UnifyAst {
     }
     // Staleness calculations need to be able to trace from CompilationUnit name to the names of
     // immediately nested types. So record those associations now.
-    compilerContext.getMinimalRebuildCache().recordNestedTypeNamesPerType(unit);
+    if (compilePerFile) {
+      compilerContext.getMinimalRebuildCache().recordNestedTypeNamesPerType(unit);
+    }
     // TODO(zundel): ask for a recompile if deserialization fails?
     List<JDeclaredType> types = unit.getTypes();
     assert containsAllTypes(unit, types);

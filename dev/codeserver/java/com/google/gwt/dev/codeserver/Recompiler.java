@@ -27,6 +27,7 @@ import com.google.gwt.dev.CompilerOptions;
 import com.google.gwt.dev.IncrementalBuilder;
 import com.google.gwt.dev.IncrementalBuilder.BuildResultStatus;
 import com.google.gwt.dev.MinimalRebuildCache;
+import com.google.gwt.dev.NullRebuildCache;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
@@ -61,7 +62,8 @@ class Recompiler {
   private IncrementalBuilder incrementalBuilder;
   private String serverPrefix;
   private int compilesDone = 0;
-  private MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
+  private Map<Map<String, String>, MinimalRebuildCache> minimalRebuildCacheForProperties =
+      Maps.newHashMap();
 
   // after renaming
   private AtomicReference<String> moduleName = new AtomicReference<String>(null);
@@ -103,7 +105,7 @@ class Recompiler {
     ProgressTable dummy = new ProgressTable();
     Job job = new Job(originalModuleName, defaultProps, logger);
     job.onSubmitted(dummy);
-    Result result = compile(job, new MinimalRebuildCache());
+    Result result = compile(job);
     job.onFinished(result);
 
     assert result.isOk();
@@ -124,11 +126,7 @@ class Recompiler {
 
     Job.Result result;
     try {
-      if (options.shouldCompilePerFile()) {
-        result = compile(job, minimalRebuildCache);
-      } else {
-        result = compile(job, new MinimalRebuildCache());
-      }
+      result = compile(job);
     } catch (UnableToCompleteException e) {
       // No point in logging a stack trace for this exception
       job.getLogger().log(TreeLogger.Type.WARN, "recompile failed");
@@ -144,13 +142,13 @@ class Recompiler {
 
   /**
    * Calls the GWT compiler with the appropriate settings.
-   * Side-effect: the given cache will be used and saved in {@link #minimalRebuildCache}.
+   * Side-effect: a MinimalRebuildCache for the current binding properties will be found or created.
    *
    * @param job used for reporting progress. (Its result will not be set.)
    * @return a non-error Job.Result if successful.
    * @throws UnableToCompleteException for compile failures.
    */
-  private Job.Result compile(Job job, MinimalRebuildCache minimalRebuildCache)
+  private Job.Result compile(Job job)
       throws UnableToCompleteException {
 
     assert job.wasSubmitted();
@@ -186,7 +184,7 @@ class Recompiler {
 
         success = compileIncremental(compileLogger, compileDir);
       } else {
-        success = compileMonolithic(compileLogger, compileDir, job, minimalRebuildCache);
+        success = compileMonolithic(compileLogger, compileDir, job);
       }
     } finally {
       try {
@@ -201,9 +199,6 @@ class Recompiler {
       compileLogger.log(TreeLogger.Type.ERROR, "Compiler returned false");
       throw new UnableToCompleteException();
     }
-
-    // keep the minimal rebuild cache for the next compile
-    this.minimalRebuildCache = minimalRebuildCache;
 
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO,
@@ -297,8 +292,7 @@ class Recompiler {
     return buildResultStatus.isSuccess();
   }
 
-  private boolean compileMonolithic(TreeLogger compileLogger,
-      CompileDir compileDir, Job job, MinimalRebuildCache rebuildCache)
+  private boolean compileMonolithic(TreeLogger compileLogger, CompileDir compileDir, Job job)
       throws UnableToCompleteException {
 
     job.onCompilerProgress(
@@ -328,7 +322,9 @@ class Recompiler {
     CompilerOptions runOptions = new CompilerOptionsImpl(compileDir, newModuleName, options);
     compilerContext = compilerContextBuilder.options(runOptions).build();
 
-    boolean success = new Compiler(runOptions, rebuildCache).run(compileLogger, module);
+    // Looks up the matching rebuild cache using the final set of overridden binding properties.
+    MinimalRebuildCache minimalRebuildCache = getOrCreateMinimalRebuildCache(bindingProperties);
+    boolean success = new Compiler(runOptions, minimalRebuildCache).run(compileLogger, module);
     if (success) {
       publishedCompileDir = compileDir;
       lastBuildInput = input;
@@ -367,6 +363,21 @@ class Recompiler {
       parent.log(TreeLogger.ERROR, "unable to open log file: " + compileDir.getLogFile(), e);
       throw new UnableToCompleteException();
     }
+  }
+
+  private MinimalRebuildCache getOrCreateMinimalRebuildCache(
+      Map<String, String> bindingProperties) {
+    if (!options.shouldCompilePerFile()) {
+      return new NullRebuildCache();
+    }
+
+    MinimalRebuildCache minimalRebuildCache =
+        minimalRebuildCacheForProperties.get(bindingProperties);
+    if (minimalRebuildCache == null) {
+      minimalRebuildCache = new MinimalRebuildCache();
+      minimalRebuildCacheForProperties.put(bindingProperties, minimalRebuildCache);
+    }
+    return minimalRebuildCache;
   }
 
   /**

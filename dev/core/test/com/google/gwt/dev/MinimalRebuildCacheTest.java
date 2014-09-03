@@ -14,11 +14,13 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.MinimalRebuildCache.PermutationRebuildCache;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
+
+import java.util.Map;
 
 /**
  * Tests for {@link MinimalRebuildCache}.
@@ -29,8 +31,9 @@ public class MinimalRebuildCacheTest extends TestCase {
 
   public void testComputeAndClearStale() {
     // These three compilation units exist.
-    minimalRebuildCache.setAllCompilationUnitNames(TreeLogger.NULL,
-        Sets.newHashSet("Foo", "Bar", "Baz"));
+    Map<String, Long> currentModifiedBySourcePath = new ImmutableMap.Builder<String, Long>().put(
+        "Foo.java", 0L).put("Bar.java", 0L).put("Baz.java", 0L).build();
+    minimalRebuildCache.recordDiskSourceResources(currentModifiedBySourcePath);
 
     // They each contain a type and nested type.
     minimalRebuildCache.recordNestedTypeName("Foo", "Foo");
@@ -41,40 +44,41 @@ public class MinimalRebuildCacheTest extends TestCase {
     minimalRebuildCache.recordNestedTypeName("Baz", "Baz$Inner");
 
     // There's some JS for each type.
-    PermutationRebuildCache permutationRebuildCache =
-        minimalRebuildCache.getPermutationRebuildCache(0);
-    permutationRebuildCache.setJsForType(TreeLogger.NULL, "Foo", "Some Js for Foo");
-    permutationRebuildCache.setJsForType(TreeLogger.NULL, "Foo$Inner", "Some Js for Foo");
-    permutationRebuildCache.setJsForType(TreeLogger.NULL, "Bar", "Some Js for Bar");
-    permutationRebuildCache.setJsForType(TreeLogger.NULL, "Bar$Inner", "Some Js for Bar");
-    permutationRebuildCache.setJsForType(TreeLogger.NULL, "Baz", "Some Js for Baz");
-    permutationRebuildCache.setJsForType(TreeLogger.NULL, "Baz$Inner", "Some Js for Baz");
+    minimalRebuildCache.setJsForType(TreeLogger.NULL, "Foo", "Some Js for Foo");
+    minimalRebuildCache.setJsForType(TreeLogger.NULL, "Foo$Inner", "Some Js for Foo");
+    minimalRebuildCache.setJsForType(TreeLogger.NULL, "Bar", "Some Js for Bar");
+    minimalRebuildCache.setJsForType(TreeLogger.NULL, "Bar$Inner", "Some Js for Bar");
+    minimalRebuildCache.setJsForType(TreeLogger.NULL, "Baz", "Some Js for Baz");
+    minimalRebuildCache.setJsForType(TreeLogger.NULL, "Baz$Inner", "Some Js for Baz");
 
     // Record that Bar references Foo and Baz subclasses Foo.
-    permutationRebuildCache.addTypeReference("Bar", "Foo");
-    minimalRebuildCache.getImmediateTypeRelations()
-        .getImmediateSuperclassesByClass().put("Baz", "Foo");
+    minimalRebuildCache.addTypeReference("Bar", "Foo");
+    minimalRebuildCache.getImmediateTypeRelations().getImmediateSuperclassesByClass().put("Baz",
+        "Foo");
 
-    // In the next compile Foo is modified.
-    minimalRebuildCache.setModifiedCompilationUnitNames(TreeLogger.NULL, Sets.newHashSet("Foo"));
+    // In the next compile only Foo is modified.
+    Map<String, Long> laterModifiedBySourcePath = new ImmutableMap.Builder<String, Long>().put(
+        "Foo.java", 9999L).put("Bar.java", 0L).put("Baz.java", 0L).build();
+    minimalRebuildCache.recordDiskSourceResources(laterModifiedBySourcePath);
 
     // Request clearing of cache related to stale types.
     minimalRebuildCache.clearStaleTypeJsAndStatements(TreeLogger.NULL,
         new JTypeOracle(null, minimalRebuildCache, true));
 
     // Has the expected JS been cleared?
-    assertNull(permutationRebuildCache.getJs("Foo"));
-    assertNull(permutationRebuildCache.getJs("Foo$Inner"));
-    assertNull(permutationRebuildCache.getJs("Bar"));
-    assertNull(permutationRebuildCache.getJs("Baz"));
-    assertNotNull(permutationRebuildCache.getJs("Bar$Inner"));
-    assertNotNull(permutationRebuildCache.getJs("Baz$Inner"));
+    assertNull(minimalRebuildCache.getJs("Foo"));
+    assertNull(minimalRebuildCache.getJs("Foo$Inner"));
+    assertNull(minimalRebuildCache.getJs("Bar"));
+    assertNull(minimalRebuildCache.getJs("Baz"));
+    assertNotNull(minimalRebuildCache.getJs("Bar$Inner"));
+    assertNotNull(minimalRebuildCache.getJs("Baz$Inner"));
   }
 
   public void testComputeDeletedTypes() {
     // These three compilation units exist.
-    minimalRebuildCache.setAllCompilationUnitNames(TreeLogger.NULL,
-        Sets.newHashSet("Foo", "Bar", "Baz"));
+    Map<String, Long> currentModifiedBySourcePath = new ImmutableMap.Builder<String, Long>().put(
+        "Foo.java", 0L).put("Bar.java", 0L).put("Baz.java", 0L).build();
+    minimalRebuildCache.recordDiskSourceResources(currentModifiedBySourcePath);
 
     // They each contain a type and nested type.
     minimalRebuildCache.recordNestedTypeName("Foo", "Foo");
@@ -85,7 +89,9 @@ public class MinimalRebuildCacheTest extends TestCase {
     minimalRebuildCache.recordNestedTypeName("Baz", "Baz$Inner");
 
     // In the next compile it turns out there are fewer compilation units, Baz is gone.
-    minimalRebuildCache.setAllCompilationUnitNames(TreeLogger.NULL, Sets.newHashSet("Foo", "Bar"));
+    Map<String, Long> laterModifiedBySourcePath =
+        new ImmutableMap.Builder<String, Long>().put("Foo.java", 0L).put("Bar.java", 0L).build();
+    minimalRebuildCache.recordDiskSourceResources(laterModifiedBySourcePath);
 
     // Is the correct deleted type set calculated?
     assertEquals(Sets.newHashSet("Baz", "Baz$Inner"),

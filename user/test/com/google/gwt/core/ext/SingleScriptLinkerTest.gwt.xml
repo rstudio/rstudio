@@ -16,7 +16,7 @@
 	<inherits name='com.google.gwt.core.ext.LinkerTest' />
 	<add-linker name='sso' />
 
-	<define-property name='sso.test' values='one,two,three'/>
+	<define-property name='sso.test' values='two'/>
 	<property-provider name='sso.test'><![CDATA[
 		return "two";
 	]]></property-provider>

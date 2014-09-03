@@ -15,7 +15,7 @@
   <inherits name="com.google.gwt.useragent.UserAgent" />
   <source path="test" />
 
-  <define-property name="collapsedProperty" values="one,two"/>
+  <define-property name="collapsedProperty" values="one"/>
   <property-provider name="collapsedProperty"><![CDATA[
     return 'one';
   ]]></property-provider>

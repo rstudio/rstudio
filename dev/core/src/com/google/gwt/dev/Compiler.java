@@ -122,7 +122,8 @@ public class Compiler {
   private final CompilerOptionsImpl options;
 
   public Compiler(CompilerOptions compilerOptions) {
-    this(compilerOptions, new MinimalRebuildCache());
+    this(compilerOptions, compilerOptions.shouldCompilePerFile() ? new MinimalRebuildCache()
+        : new NullRebuildCache());
   }
 
   public Compiler(CompilerOptions compilerOptions, MinimalRebuildCache minimalRebuildCache) {

@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.linker.impl.NamedRange;
 import com.google.gwt.core.ext.linker.impl.StatementRangesBuilder;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.MinimalRebuildCache;
-import com.google.gwt.dev.MinimalRebuildCache.PermutationRebuildCache;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -74,8 +73,6 @@ public class JsTypeLinkerTest extends TestCase {
     String originalJs = sb.toString();
 
     MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
-    PermutationRebuildCache permutationRebuildCache =
-        minimalRebuildCache.getPermutationRebuildCache(1);
 
     // Create type inheritance.
     Map<String, String> superClassesByClass =
@@ -90,16 +87,16 @@ public class JsTypeLinkerTest extends TestCase {
     minimalRebuildCache.setRootTypeNames(Lists.newArrayList("com.some.app.EntryPoint"));
 
     // Record type references.
-    permutationRebuildCache.addTypeReference("com.some.app.EntryPoint",
+    minimalRebuildCache.addTypeReference("com.some.app.EntryPoint",
         "com.some.app.SomeController");
-    permutationRebuildCache.addTypeReference("com.some.app.SomeController",
+    minimalRebuildCache.addTypeReference("com.some.app.SomeController",
         "com.some.app.SomeBModel");
-    permutationRebuildCache.addTypeReference("com.some.app.SomeController",
+    minimalRebuildCache.addTypeReference("com.some.app.SomeController",
         "com.some.app.SomeAModel");
 
     JsTypeLinker jsTypeLinker = new JsTypeLinker(TreeLogger.NULL,
         new JsNoopTransformer(originalJs, srb.build(), smb.build()), classRanges, programRange,
-        permutationRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
+        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
 
     // Run the JS Type Linker.
     jsTypeLinker.exec();
@@ -119,7 +116,7 @@ public class JsTypeLinkerTest extends TestCase {
     superClassesByClass.put("com.some.app.SomeAModel", "com.some.app.SomeBModel");
     jsTypeLinker = new JsTypeLinker(TreeLogger.NULL,
         new JsNoopTransformer(originalJs, srb.build(), smb.build()), classRanges, programRange,
-        permutationRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
+        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
     jsTypeLinker.exec();
     assertEquals("<preamble>\n<java.lang.Object />\n<java.lang.Class />\n</preamble>\n"
         + "<com.some.app.EntryPoint>\n" + "<com.some.app.SomeModelB>\n"
@@ -133,12 +130,12 @@ public class JsTypeLinkerTest extends TestCase {
 
     // Stop referring to SomeModelA from the Controller and verify that SomeModelA is not in the
     // output.
-    permutationRebuildCache.removeReferencesFrom("com.some.app.SomeController");
-    permutationRebuildCache.addTypeReference("com.some.app.SomeController",
+    minimalRebuildCache.removeReferencesFrom("com.some.app.SomeController");
+    minimalRebuildCache.addTypeReference("com.some.app.SomeController",
         "com.some.app.SomeBModel");
     jsTypeLinker = new JsTypeLinker(TreeLogger.NULL,
         new JsNoopTransformer(originalJs, srb.build(), smb.build()), classRanges, programRange,
-        permutationRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
+        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
     jsTypeLinker.exec();
     assertEquals("<preamble>\n<java.lang.Object />\n<java.lang.Class />\n</preamble>\n"
         + "<com.some.app.EntryPoint>\n" + "<com.some.app.SomeModelB>\n"

@@ -47,6 +47,7 @@ import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.RemoveSpecializations;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeIdGenerator;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
@@ -120,8 +121,11 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         } else {
           TypeOrder typeIdOrder =
               options.shouldCompilePerFile() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
+          IntTypeIdGenerator typeIdGenerator = options.shouldCompilePerFile()
+              ? compilerContext.getMinimalRebuildCache().getIntTypeIdGenerator()
+              : new IntTypeIdGenerator();
           return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram, typeIdOrder,
-              compilerContext.getMinimalRebuildCache().getIntTypeIdGenerator());
+              typeIdGenerator);
         }
       } finally {
         event.end();

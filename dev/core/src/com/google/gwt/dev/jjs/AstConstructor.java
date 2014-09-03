@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
-import com.google.gwt.dev.MinimalRebuildCache;
+import com.google.gwt.dev.NullRebuildCache;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.javac.CompilationState;
@@ -51,7 +51,7 @@ public class AstConstructor {
     InternalCompilerException.preload();
 
     CompilerContext compilerContext = new CompilerContext.Builder().options(options)
-        .minimalRebuildCache(new MinimalRebuildCache()).build();
+        .minimalRebuildCache(new NullRebuildCache()).build();
 
     RebindPermutationOracle rpo = new RebindPermutationOracle() {
       @Override
