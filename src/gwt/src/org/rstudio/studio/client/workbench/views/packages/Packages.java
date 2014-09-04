@@ -651,7 +651,7 @@ public class Packages
       command.append(packageName);
       command.append("\"");
       command.append(", lib.loc=\"");
-      command.append(libName);
+      command.append(libName.replaceAll("\\\\", "\\\\\\\\"));
       command.append("\"");
       command.append(")");
       events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
