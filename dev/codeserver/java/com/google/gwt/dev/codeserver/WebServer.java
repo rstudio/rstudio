@@ -151,9 +151,10 @@ public class WebServer {
 
   /**
    * Returns the location of the compiler output. (Changes after every recompile.)
+   * @param outputModuleName the module name that the GWT compiler used in its output.
    */
-  public File getCurrentWarDir(String moduleName) {
-    return outboxes.findByModuleName(moduleName).getWarDir();
+  public File getCurrentWarDir(String outputModuleName) {
+    return outboxes.findByOutputModuleName(outputModuleName).getWarDir();
   }
 
   private void handleRequest(String target, HttpServletRequest request,
@@ -198,7 +199,7 @@ public class WebServer {
     if (target.startsWith("/recompile/")) {
       setHandled(request);
       String moduleName = target.substring("/recompile/".length());
-      Outbox outbox = outboxes.findByModuleName(moduleName);
+      Outbox outbox = outboxes.findByOutputModuleName(moduleName);
       if (outbox == null) {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         logger.log(TreeLogger.WARN, "not found: " + target);
@@ -211,7 +212,7 @@ public class WebServer {
       // cause a spurious recompile, resulting in an unexpected permutation being loaded later.
       //
       // It would be unsafe to allow a configuration property to be changed.
-      Job job = new Job(outbox.getModuleName(), getBindingProperties(request), logger);
+      Job job = new Job(outbox, getBindingProperties(request), logger);
       runner.submit(job);
       boolean ok = job.waitForResult().isOk();
 
@@ -224,7 +225,7 @@ public class WebServer {
     if (target.startsWith("/log/")) {
       setHandled(request);
       String moduleName = target.substring("/log/".length());
-      File file = outboxes.findByModuleName(moduleName).getCompileLog();
+      File file = outboxes.findByOutputModuleName(moduleName).getCompileLog();
       sendLogPage(moduleName, file, response);
       return;
     }
@@ -299,7 +300,7 @@ public class WebServer {
 
     int secondSlash = target.indexOf('/', 1);
     String moduleName = target.substring(1, secondSlash);
-    Outbox outbox = outboxes.findByModuleName(moduleName);
+    Outbox outbox = outboxes.findByOutputModuleName(moduleName);
 
     File file = outbox.getOutputFile(target);
     if (!file.isFile()) {
@@ -332,7 +333,7 @@ public class WebServer {
 
   private void sendModulePage(String moduleName, HttpServletResponse response, TreeLogger logger)
       throws IOException {
-    Outbox module = outboxes.findByModuleName(moduleName);
+    Outbox module = outboxes.findByOutputModuleName(moduleName);
     if (module == null) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
       logger.log(TreeLogger.WARN, "module not found: " + moduleName);
@@ -357,8 +358,8 @@ public class WebServer {
 
     out.startTag("h1").text("Policy Files").endTag("h1").nl();
 
-    for (String moduleName : outboxes.getModuleNames()) {
-      Outbox module = outboxes.findByModuleName(moduleName);
+    for (String moduleName : outboxes.getOutputModuleNames()) {
+      Outbox module = outboxes.findByOutputModuleName(moduleName);
       File manifest = module.getExtraFile("rpcPolicyManifest/manifest.txt");
       if (manifest.isFile()) {
         out.startTag("h2").text(moduleName).endTag("h2").nl();
@@ -415,8 +416,8 @@ public class WebServer {
       return;
     }
 
-    for (String moduleName : outboxes.getModuleNames()) {
-      Outbox module = outboxes.findByModuleName(moduleName);
+    for (String moduleName : outboxes.getOutputModuleNames()) {
+      Outbox module = outboxes.findByOutputModuleName(moduleName);
       File policy = module.getOutputFile(moduleName + "/" + rest);
       if (policy.isFile()) {
         PageUtil.sendFile("text/plain", policy, response);

@@ -20,9 +20,11 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,7 +36,7 @@ class OutboxTable {
   private final Options options;
 
   /**
-   * A map from client-side module names (after renaming) to its outbox.
+   * A map from outbox id (an opaque string) to its outbox.
    */
   private final Map<String, Outbox> outboxes = Maps.newHashMap();
 
@@ -46,31 +48,32 @@ class OutboxTable {
    * Adds a {@link Outbox} to the table.
    */
   void addOutbox(Outbox outbox) {
-    outboxes.put(outbox.getModuleName(), outbox);
+    outboxes.put(outbox.getId(), outbox);
   }
 
   /**
-   * Returns the outbox where the output of a compile job will be published,
-   * or null if it can't be found.
-   */
-  Outbox findOutbox(Job job) {
-    return findByModuleName(job.getModuleName());
-  }
-
-  /**
-   * Retrieves a {@link Outbox} corresponding to a given module name.
+   * Retrieves an {@link Outbox} corresponding to a given module name.
    * This should be the module name after renaming.
-   * TODO: remove and use an Outbox id instead.
+   * TODO: callers should use an Outbox id instead.
    */
-  Outbox findByModuleName(String moduleName) {
-    return outboxes.get(moduleName);
+  Outbox findByOutputModuleName(String moduleName) {
+    for (Outbox box : outboxes.values()) {
+      if (box.getOutputModuleName().equals(moduleName)) {
+        return box;
+      }
+    }
+    return null;
   }
 
   /**
    * Returns the list of known module names (after renaming).
    */
-  Collection<String> getModuleNames() {
-    return outboxes.keySet();
+  Collection<String> getOutputModuleNames() {
+    List<String> result = Lists.newArrayList();
+    for (Outbox box : outboxes.values()) {
+      result.add(box.getOutputModuleName());
+    }
+    return result;
   }
 
   void defaultCompileAll(boolean noPrecompile, TreeLogger logger) throws UnableToCompleteException {
@@ -86,7 +89,7 @@ class OutboxTable {
   JsonObject getConfig() {
     JsonObject config = JsonObject.create();
     JsonArray moduleNames = new JsonArray();
-    for (String module : getModuleNames()) {
+    for (String module : getOutputModuleNames()) {
       moduleNames.add(module);
     }
     config.put("moduleNames", moduleNames);

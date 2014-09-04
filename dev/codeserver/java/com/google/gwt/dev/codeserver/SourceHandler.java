@@ -100,7 +100,7 @@ class SourceHandler {
       throw new RuntimeException("invalid request (shouldn't happen): " + target);
     }
 
-    Outbox box = outboxes.findByModuleName(moduleName);
+    Outbox box = outboxes.findByOutputModuleName(moduleName);
     if (box == null) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
       logger.log(TreeLogger.WARN, "unknown module; returned not found for request: " + target);
@@ -280,7 +280,7 @@ class SourceHandler {
   }
 
   private SourceMap loadSourceMap(String moduleName) {
-    Outbox box = outboxes.findByModuleName(moduleName);
+    Outbox box = outboxes.findByOutputModuleName(moduleName);
     return SourceMap.load(box.findSourceMapForOnePermutation());
   }
 }

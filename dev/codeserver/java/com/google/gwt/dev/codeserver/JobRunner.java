@@ -16,7 +16,6 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.codeserver.Job.Result;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,14 +57,6 @@ public class JobRunner {
 
   private static void recompile(Job job, OutboxTable outboxes) {
     job.getLogger().log(Type.INFO, "starting job: " + job.getId());
-    Outbox box = outboxes.findOutbox(job);
-    if (box == null) {
-      String msg = "skipped a compile job with an unknown module: " + job.getModuleName();
-      job.getLogger().log(Type.WARN, msg);
-      job.onFinished(new Result(job, null,  new RuntimeException(msg)));
-      return;
-    }
-
-    box.recompile(job);
+    job.getOutbox().recompile(job);
   }
 }

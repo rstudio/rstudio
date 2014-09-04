@@ -138,12 +138,19 @@ public class CodeServer {
     File workDir = ensureWorkDir(options);
     logger.log(Type.INFO, "workDir: " + workDir);
 
+    int nextOutboxId = 1;
     OutboxTable outboxes = new OutboxTable(options);
     for (String moduleName : options.getModuleNames()) {
       AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
 
       Recompiler recompiler = new Recompiler(appSpace, moduleName, options);
-      outboxes.addOutbox(new Outbox(recompiler, options.getNoPrecompile(), logger));
+
+      // The id should be treated as an opaque string since we will change it again.
+      // TODO: change outbox id to include binding properties.
+      String outboxId = moduleName + "_" + nextOutboxId;
+      nextOutboxId++;
+
+      outboxes.addOutbox(new Outbox(outboxId, recompiler, options.getNoPrecompile(), logger));
     }
     return outboxes;
   }

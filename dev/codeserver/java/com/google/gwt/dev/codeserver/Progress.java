@@ -16,6 +16,7 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 
 /**
  * A snapshot of a {@link Job}'s current state, for progress dialogs.
@@ -27,12 +28,14 @@ class Progress {
    */
   final String jobId;
 
-  final String module;
+  final String inputModuleName;
+  final ImmutableSortedMap<String, String> bindings;
   final Status status;
 
   Progress(Job job, Status status) {
     this.jobId = job.getId();
-    this.module = job.getModuleName();
+    this.inputModuleName = job.getInputModuleName();
+    this.bindings = job.getBindingProperties();
     this.status = status;
   }
 
@@ -47,8 +50,17 @@ class Progress {
   JsonObject toJsonObject() {
     JsonObject out = new JsonObject();
     out.put("jobId", jobId);
-    out.put("module", module);
+    out.put("inputModule", inputModuleName);
+    out.put("bindings", getBindingsJson());
     out.put("status", status.jsonName);
+    return out;
+  }
+
+  private JsonObject getBindingsJson() {
+    JsonObject out = new JsonObject();
+    for (String name : bindings.keySet()) {
+      out.put(name, bindings.get(name));
+    }
     return out;
   }
 
@@ -97,10 +109,7 @@ class Progress {
 
     @Override
     JsonObject toJsonObject() {
-      JsonObject out = new JsonObject();
-      out.put("jobId", jobId);
-      out.put("module", module);
-      out.put("status", "compiling");
+      JsonObject out = super.toJsonObject();
       out.put("finishedSteps", finishedSteps);
       out.put("totalSteps", totalSteps);
       out.put("stepMessage", stepMessage);

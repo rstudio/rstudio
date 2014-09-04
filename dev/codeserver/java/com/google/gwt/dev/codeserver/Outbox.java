@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,13 +45,23 @@ class Outbox {
    */
   private static final String SOURCEMAP_FILE_SUFFIX = "_sourceMap0.json";
 
-  private final AtomicReference<Job.Result> published = new AtomicReference<Job.Result>();
+  private final String id;
   private final Recompiler recompiler;
 
-  Outbox(Recompiler recompiler, boolean noPrecompile, TreeLogger logger)
+  private final AtomicReference<Job.Result> published = new AtomicReference<Job.Result>();
+
+  Outbox(String id, Recompiler recompiler, boolean noPrecompile, TreeLogger logger)
       throws UnableToCompleteException {
+    this.id = id;
     this.recompiler = recompiler;
     maybePrecompile(noPrecompile, logger);
+  }
+
+  /**
+   * A unique id for this outbox. (This should be treated as an opaque string.)
+   */
+  String getId() {
+    return id;
   }
 
   /**
@@ -57,10 +69,21 @@ class Outbox {
    * Throws an exception if unable. (In this case, Super Dev Mode fails to start.)
    */
   void maybePrecompile(boolean noPrecompile, TreeLogger logger) throws UnableToCompleteException {
+    // TODO: each box will have its own binding properties.
+    Map<String, String> defaultProps = new HashMap<String, String>();
+    defaultProps.put("user.agent", "safari");
+    defaultProps.put("locale", "en");
+
+    // Create a dummy job for the first compile.
+    // Its progress is not visible externally but will still be logged.
+    ProgressTable dummy = new ProgressTable();
+    Job job = new Job(this, defaultProps, logger);
+    job.onSubmitted(dummy);
+
     if (noPrecompile) {
-      publish(recompiler.initWithoutPrecompile(logger));
+      publish(recompiler.initWithoutPrecompile(job));
     } else {
-      publish(recompiler.precompile(logger));
+      publish(recompiler.precompile(job));
     }
   }
 
@@ -98,10 +121,17 @@ class Outbox {
   }
 
   /**
-   * Returns the name of this module (after renaming).
+   * Returns the module name that will be sent to the compiler (before renaming).
    */
-  String getModuleName() {
-    return recompiler.getModuleName();
+  String getInputModuleName() {
+    return recompiler.getInputModuleName();
+  }
+
+  /**
+   * Returns the module name last received from the compiler (after renaming).
+   */
+  String getOutputModuleName() {
+    return recompiler.getOutputModuleName();
   }
 
   /**
@@ -140,7 +170,7 @@ class Outbox {
    *
    * @throws RuntimeException if unable
    */
-  public File findSourceMap(String strongName) {
+  File findSourceMap(String strongName) {
     File dir = findSymbolMapDir();
     File file = new File(dir, strongName + SOURCEMAP_FILE_SUFFIX);
     if (!file.isFile()) {
@@ -154,7 +184,7 @@ class Outbox {
    * @throws RuntimeException if unable
    */
   private File findSymbolMapDir() {
-    String moduleName = recompiler.getModuleName();
+    String moduleName = recompiler.getOutputModuleName();
     File symbolMapsDir = getOutputDir().findSymbolMapDir(moduleName);
     if (symbolMapsDir == null) {
       throw new RuntimeException("Can't find symbol map directory for " + moduleName);
@@ -223,19 +253,19 @@ class Outbox {
    * @return The location of the file, which might not actually exist.
    */
   File getExtraFile(String path) {
-    File prefix = new File(getOutputDir().getExtraDir(), getModuleName());
+    File prefix = new File(getOutputDir().getExtraDir(), getOutputModuleName());
     return new File(prefix, path);
   }
 
   JsonObject getTemplateVariables() {
     JsonObject result = new JsonObject();
-    result.put("moduleName", getModuleName());
+    result.put("moduleName", getOutputModuleName());
     result.put("files", listModuleFiles());
     return result;
   }
 
   private JsonArray listModuleFiles() {
-    File[] files = new File(getWarDir(), getModuleName()).listFiles();
+    File[] files = new File(getWarDir(), getOutputModuleName()).listFiles();
     if (files == null) {
       return new JsonArray();
     }

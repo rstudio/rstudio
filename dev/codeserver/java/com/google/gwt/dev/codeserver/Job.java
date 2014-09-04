@@ -18,7 +18,7 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.codeserver.Progress.Status;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.ListenableFuture;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.SettableFuture;
@@ -37,16 +37,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>Jobs are thread-safe.
  */
 class Job {
-  private static final ConcurrentMap<String, AtomicInteger> moduleToNextId =
+  private static final ConcurrentMap<String, AtomicInteger> prefixToNextId =
       new ConcurrentHashMap<String, AtomicInteger>();
 
   private final String id;
 
   // Input
 
-  private final String moduleName;
+  private final String inputModuleName;
 
-  private final ImmutableMap<String, String> bindingProperties;
+  private final ImmutableSortedMap<String, String> bindingProperties;
 
   // Output
 
@@ -54,27 +54,32 @@ class Job {
 
   // Listeners
 
+  private final Outbox outbox;
+
   private final LogSupplier logSupplier;
 
   private ProgressTable table; // non-null when submitted
 
   /**
-   * Creates a job to recompile a module.
-   * @param moduleName The client-side name of the module to recompile (after renaming).
+   * Creates a job to update an outbox.
    * @param bindingProperties  Properties that uniquely identify a permutation.
    *     (Otherwise, more than one permutation will be compiled.)
    * @param parentLogger  The parent of the logger that will be used for this job.
    */
-  Job(String moduleName, Map<String, String> bindingProperties, TreeLogger parentLogger) {
-    this.id = chooseNextId(moduleName);
-    this.moduleName = moduleName;
-    this.bindingProperties = ImmutableMap.copyOf(bindingProperties);
+  Job(Outbox box, Map<String, String> bindingProperties, TreeLogger parentLogger) {
+    this.id = chooseNextId(box);
+    this.outbox = box;
+    this.inputModuleName = box.getInputModuleName();
+    // TODO: we will use the binding properties to find or create the outbox,
+    // then take binding properties from the outbox here.
+    this.bindingProperties = ImmutableSortedMap.copyOf(bindingProperties);
     this.logSupplier = new LogSupplier(parentLogger, id);
   }
 
-  private static String chooseNextId(String moduleName) {
-    moduleToNextId.putIfAbsent(moduleName, new AtomicInteger(0));
-    return moduleName + "-" + moduleToNextId.get(moduleName).getAndIncrement();
+  private static String chooseNextId(Outbox box) {
+    String prefix = box.getId();
+    prefixToNextId.putIfAbsent(prefix, new AtomicInteger(0));
+    return prefix + "-" + prefixToNextId.get(prefix).getAndIncrement();
   }
 
   /**
@@ -88,17 +93,24 @@ class Job {
   }
 
   /**
-   * The module to compile.
+   * The module name that will be sent to the compiler.
    */
-  String getModuleName() {
-    return moduleName;
+  String getInputModuleName() {
+    return inputModuleName;
   }
 
   /**
    * The binding properties to use for this recompile.
    */
-  ImmutableMap<String, String> getBindingProperties() {
+  ImmutableSortedMap<String, String> getBindingProperties() {
     return bindingProperties;
+  }
+
+  /**
+   * The outbox that will serve the job's result (if successful).
+   */
+  Outbox getOutbox() {
+    return outbox;
   }
 
   /**

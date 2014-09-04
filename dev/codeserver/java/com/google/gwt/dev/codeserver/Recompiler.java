@@ -47,7 +47,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,7 +57,8 @@ import java.util.concurrent.atomic.AtomicReference;
 class Recompiler {
 
   private final AppSpace appSpace;
-  private final String originalModuleName;
+  private final String inputModuleName;
+
   private IncrementalBuilder incrementalBuilder;
   private String serverPrefix;
   private int compilesDone = 0;
@@ -66,7 +66,7 @@ class Recompiler {
       Maps.newHashMap();
 
   // after renaming
-  private AtomicReference<String> moduleName = new AtomicReference<String>(null);
+  private AtomicReference<String> outputModuleName = new AtomicReference<String>(null);
 
   private final AtomicReference<CompileDir> lastBuild = new AtomicReference<CompileDir>();
 
@@ -79,9 +79,9 @@ class Recompiler {
   private CompilerContext compilerContext;
   private Options options;
 
-  Recompiler(AppSpace appSpace, String moduleName, Options options) {
+  Recompiler(AppSpace appSpace, String inputModuleName, Options options) {
     this.appSpace = appSpace;
-    this.originalModuleName = moduleName;
+    this.inputModuleName = inputModuleName;
     this.options = options;
     this.serverPrefix = options.getPreferredHost() + ":" + options.getPort();
     compilerContext = compilerContextBuilder.build();
@@ -91,23 +91,9 @@ class Recompiler {
    * Compiles the first time, while Super Dev Mode is starting up.
    * Either this method or {@link #initWithoutPrecompile} should be called first.
    */
-  synchronized Job.Result precompile(TreeLogger logger) throws UnableToCompleteException {
-    Map<String, String> defaultProps = new HashMap<String, String>();
-    defaultProps.put("user.agent", "safari");
-    defaultProps.put("locale", "en");
-
-    // Create a dummy job for the first compile.
-    // Its progress is not visible externally but will still be logged.
-    //
-    // If we ever start reporting progress on this job, we should make the module name consistent.
-    // (We don't know what the module name will change to before loading the module, so we use
-    // the original name.)
-    ProgressTable dummy = new ProgressTable();
-    Job job = new Job(originalModuleName, defaultProps, logger);
-    job.onSubmitted(dummy);
+  synchronized Job.Result precompile(Job job) throws UnableToCompleteException {
     Result result = compile(job);
     job.onFinished(result);
-
     assert result.isOk();
     return result;
   }
@@ -170,7 +156,7 @@ class Recompiler {
 
     boolean listenerFailed = false;
     try {
-      options.getRecompileListener().startedCompile(originalModuleName, compileId, compileDir);
+      options.getRecompileListener().startedCompile(inputModuleName, compileId, compileDir);
     } catch (Exception e) {
       compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
       listenerFailed = true;
@@ -188,7 +174,7 @@ class Recompiler {
       }
     } finally {
       try {
-        options.getRecompileListener().finishedCompile(originalModuleName, compilesDone, success);
+        options.getRecompileListener().finishedCompile(inputModuleName, compilesDone, success);
       } catch (Exception e) {
         compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
         listenerFailed = true;
@@ -215,12 +201,7 @@ class Recompiler {
    * Creates a dummy output directory without compiling the module.
    * Either this method or {@link #precompile} should be called first.
    */
-  synchronized Job.Result initWithoutPrecompile(TreeLogger parentLogger)
-      throws UnableToCompleteException {
-    ProgressTable dummy = new ProgressTable();
-    Map<String, String> bindingProps = ImmutableMap.of();
-    Job job = new Job(originalModuleName, bindingProps, parentLogger);
-    job.onSubmitted(dummy);
+  synchronized Job.Result initWithoutPrecompile(Job job) throws UnableToCompleteException {
 
     long startTime = System.currentTimeMillis();
     CompileDir compileDir = makeCompileDir(++compilesDone, job.getLogger());
@@ -228,14 +209,14 @@ class Recompiler {
 
     ModuleDef module = loadModule(compileLogger);
     String newModuleName = module.getName();  // includes any rename.
-    moduleName.set(newModuleName);
+    outputModuleName.set(newModuleName);
 
     lastBuild.set(compileDir);
 
     try {
       // Prepare directory.
       File outputDir = new File(
-          compileDir.getWarDir().getCanonicalPath() + "/" + getModuleName());
+          compileDir.getWarDir().getCanonicalPath() + "/" + getOutputModuleName());
       if (!outputDir.exists()) {
         if (!outputDir.mkdir()) {
           compileLogger.log(TreeLogger.Type.WARN, "cannot create directory: " + outputDir);
@@ -244,8 +225,8 @@ class Recompiler {
 
       // Creates a "module_name.nocache.js" that just forces a recompile.
       String moduleScript = PageUtil.loadResource(Recompiler.class, "nomodule.nocache.js");
-      moduleScript = moduleScript.replace("__MODULE_NAME__", getModuleName());
-      PageUtil.writeFile(outputDir.getCanonicalPath() + "/" + getModuleName() + ".nocache.js",
+      moduleScript = moduleScript.replace("__MODULE_NAME__", getOutputModuleName());
+      PageUtil.writeFile(outputDir.getCanonicalPath() + "/" + getOutputModuleName() + ".nocache.js",
           moduleScript);
 
     } catch (IOException e) {
@@ -268,7 +249,7 @@ class Recompiler {
       resources = ResourceLoaders.forPathAndFallback(options.getSourcePath(), resources);
       this.resourceLoader.set(resources);
 
-      incrementalBuilder = new IncrementalBuilder(originalModuleName,
+      incrementalBuilder = new IncrementalBuilder(inputModuleName,
           compileDir.getWarDir().getPath(), compileDir.getWorkDir().getPath(),
           compileDir.getGenDir().getPath(), resourceLoader.get());
       buildResultStatus = incrementalBuilder.build(compileLogger);
@@ -279,7 +260,7 @@ class Recompiler {
     }
 
     if (incrementalBuilder.isRootModuleKnown()) {
-      moduleName.set(incrementalBuilder.getRootModuleName());
+      outputModuleName.set(incrementalBuilder.getRootModuleName());
     }
     // Unlike a monolithic compile, the incremental builder can successfully build but have no new
     // output (for example when no files have changed). So it's important to only publish the new
@@ -298,7 +279,7 @@ class Recompiler {
     job.onCompilerProgress(
         new Progress.Compiling(job, 0, 2, "Loading modules"));
 
-    CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, originalModuleName, options);
+    CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).build();
 
     ModuleDef module = loadModule(compileLogger);
@@ -307,7 +288,7 @@ class Recompiler {
 
     // Propagates module rename.
     String newModuleName = module.getName();
-    moduleName.set(newModuleName);
+    outputModuleName.set(newModuleName);
 
     // Check if we can skip the compile altogether.
     InputSummary input = new InputSummary(bindingProperties, module);
@@ -344,8 +325,18 @@ class Recompiler {
     return lastBuild.get().getLogFile();
   }
 
-  String getModuleName() {
-    return moduleName.get();
+  /**
+   * The module name that the recompiler passes as input to the GWT compiler (before renaming).
+   */
+  public String getInputModuleName() {
+    return inputModuleName;
+  }
+
+  /**
+   * The module name that the GWT compiler uses in compiled output (after renaming).
+   */
+  String getOutputModuleName() {
+    return outputModuleName.get();
   }
 
   ResourceLoader getResourceLoader() {
@@ -395,7 +386,7 @@ class Recompiler {
 
     // ModuleDefLoader.loadFromResources() checks for modified .gwt.xml files.
     ModuleDef moduleDef = ModuleDefLoader.loadFromResources(
-        logger, compilerContext, originalModuleName, resources, true);
+        logger, compilerContext, inputModuleName, resources, true);
     compilerContext = compilerContextBuilder.module(moduleDef).build();
 
     // A snapshot of the module's configuration before we modified it.
