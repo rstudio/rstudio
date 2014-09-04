@@ -362,6 +362,14 @@ GWT_DEV_TESTS = glob(
     ],
 )
 
+test_suite(
+    name = "alltests",
+    tests = [
+        ":tests",
+        "//third_party/java_src/gwt/svn/trunk/dev/codeserver:tests"
+    ]
+)
+
 GwtTestSuites(
     name = "tests",
     jvm_flags = ["-ea"],

@@ -41,6 +41,25 @@ java_library(
     ],
 )
 
+java_library(
+    name = "testlib",
+    testonly = 1,
+    srcs = glob(["test/**/*.java"]),
+    deps = [
+        ":codeserver-bare",
+        "//third_party/java/junit",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
+    ],
+)
+
+java_test(
+    name = "tests",
+    test_class = "com.google.gwt.dev.codeserver.SourceHandlerTest",
+    runtime_deps = [
+        ":testlib",
+    ],
+)
+
 # Repackaged codeserver for google3.
 AugmentedJar(
     name = "codeserver",

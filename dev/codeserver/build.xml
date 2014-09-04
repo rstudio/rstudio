@@ -19,7 +19,7 @@
     <mkdir dir="${javac.junit.out}" />
     <javac destdir="${javac.junit.out}">
       <src path="java" />
-      <src path="test" />
+      <src path="javatests" />
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.dev.jar}" />

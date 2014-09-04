@@ -1,25 +1,31 @@
+/*
+ * Copyright 2014 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.dev.util.Util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
+import junit.framework.TestCase;
 
 /**
  * Tests for {@link SourceHandler}
  */
-public class SourceHandlerTest {
+public class SourceHandlerTest extends TestCase {
 
   private static final String VALID_STRONG_NAME = Util.computeStrongName("foo-bar".getBytes());
 
-  /**
-   * Test {@link SourceHandler#isSourceMapRequest(String)}
-   */
-  @Test
   public void testIsSourceMapRequest() {
     checkSourceMapRequest("/sourcemaps/myModule/");
     checkSourceMapRequest("/sourcemaps/myModule/whatever");
@@ -31,10 +37,6 @@ public class SourceHandlerTest {
     checkNotSourceMapRequest("whatever/sourcemaps/myModule/");
   }
 
-  /**
-   * Test {@link SourceHandler#getModuleNameFromRequest(String)}
-   */
-  @Test
   public void testGetModuleNameFromRequest() {
     assertEquals("myModule", SourceHandler.getModuleNameFromRequest(
         "/sourcemaps/myModule/"));
@@ -42,10 +44,6 @@ public class SourceHandlerTest {
         "/sourcemaps/myModule/1234_sourcemap.json"));
   }
 
-  /**
-   * Test {@link SourceHandler#getStrongNameFromSourcemapFilename(String)}
-   */
-  @Test
   public void testGetStrongNameFromSourcemapFilename() {
     assertEquals(VALID_STRONG_NAME, SourceHandler
         .getStrongNameFromSourcemapFilename(VALID_STRONG_NAME + "_sourcemap.json"));
