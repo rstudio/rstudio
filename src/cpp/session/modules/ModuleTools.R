@@ -108,11 +108,15 @@
 )
 
 .rs.addFunction("getPackageRStudioProtocol", function(name) {
-   if (exists(".RStudio_protocol_version", envir = asNamespace(name),
+   needsUnloadAfter <- !(name %in% loadedNamespaces())
+   result <- if (exists(".RStudio_protocol_version", envir = asNamespace(name),
               mode = "integer")) 
       get(".RStudio_protocol_version", envir = asNamespace(name))
    else 
       0
+   if (needsUnloadAfter)
+      unloadNamespace(name)
+   result
 })
 
 .rs.addFunction("rstudioIDEPackageRequiresUpdate", function(name, sha1) {
