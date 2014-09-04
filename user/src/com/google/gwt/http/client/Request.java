@@ -114,7 +114,7 @@ public class Request {
   private final Timer timer = new Timer() {
     @Override
     public void run() {
-      fireOnTimeout(callback);
+      fireOnTimeout();
     }
   };
 
@@ -172,6 +172,12 @@ public class Request {
    * it has timed out no action is taken.
    */
   public void cancel() {
+    if (xmlHttpRequest == null) {
+      return;
+    }
+
+    timer.cancel();
+
     /*
      * There is a strange race condition that occurs on Mozilla when you cancel
      * a request while the response is coming in. It appears that in some cases
@@ -184,15 +190,11 @@ public class Request {
      * behavior in Mozilla but crashes IE. That is why we have chosen to fixed
      * this in Java by nulling out our reference to the XmlHttpRequest object.
      */
-    if (xmlHttpRequest != null) {
-      XMLHttpRequest xhr = xmlHttpRequest;
-      xmlHttpRequest = null;
+    final XMLHttpRequest xhr = xmlHttpRequest;
+    xmlHttpRequest = null;
 
-      xhr.clearOnReadyStateChange();
-      xhr.abort();
-
-      timer.cancel();
-    }
+    xhr.clearOnReadyStateChange();
+    xhr.abort();
   }
 
   /**
@@ -251,7 +253,7 @@ public class Request {
   /*
    * Method called when this request times out.
    */
-  private void fireOnTimeout(RequestCallback callback) {
+  private void fireOnTimeout() {
     if (xmlHttpRequest == null) {
       // the request has been received at this point
       return;
