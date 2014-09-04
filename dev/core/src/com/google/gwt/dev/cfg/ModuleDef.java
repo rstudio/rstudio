@@ -458,6 +458,13 @@ public class ModuleDef implements DepsInfoProvider {
   }
 
   /**
+   * Deactivate a linker by name. Returns false if the linker was not active, true otherwise.
+   */
+  public boolean deactivateLinker(String linkerName) {
+    return activeLinkers.remove(linkerName);
+  }
+
+  /**
    * Associate a Linker class with a symbolic name. If the name had been
    * previously assigned, this method will redefine the name. If the redefined
    * linker had been previously added to the set of active linkers, the old

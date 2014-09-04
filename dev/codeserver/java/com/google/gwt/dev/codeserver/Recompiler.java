@@ -405,6 +405,11 @@ class Recompiler {
       throw new UnableToCompleteException();
     }
 
+    // Deactivate precompress linker.
+    if (moduleDef.deactivateLinker("precompress")) {
+      logger.log(TreeLogger.WARN, "Deactivated PrecompressLinker");
+    }
+
     // Print a nice error if the superdevmode hook isn't present
     if (config.getStrings("devModeRedirectEnabled").isEmpty()) {
       throw new RuntimeException("devModeRedirectEnabled isn't set for module: " +
@@ -441,6 +446,7 @@ class Recompiler {
         "com/google/gwt/core/ext/linker/impl/properties.js");
 
     overrideBinding(moduleDef, "compiler.useSourceMaps", "true");
+    overrideBinding(moduleDef, "compiler.useSymbolMaps", "false");
     overrideBinding(moduleDef, "superdevmode", "on");
     return moduleDef;
   }
