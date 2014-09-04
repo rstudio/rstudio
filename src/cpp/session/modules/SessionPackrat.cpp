@@ -1028,18 +1028,15 @@ PackratContext packratContext()
       FilePath projectDir = projects::projectContext().directory();
       std::string projectPath =
          string_utils::utf8ToSystem(projectDir.absolutePath());
-      Error error = r::exec::RFunction(
-                           "packrat:::checkPackified",
-                           /* project = */ projectPath,
-                           /* silent = */ true).call(&context.packified);
-      if (error)
-         LOG_ERROR(error);
+      
+      // a project is packified if a lockfile exists (same logic used in packrat)
+      context.packified = projectDir.complete("packrat").complete("packrat.lock").exists();
 
       if (context.packified)
       {
-         error = r::exec::RFunction(
-                            ".rs.isPackratModeOn",
-                            projectPath).call(&context.modeOn);
+         Error error = r::exec::RFunction(
+                  ".rs.isPackratModeOn",
+                  projectPath).call(&context.modeOn);
          if (error)
             LOG_ERROR(error);
       }
