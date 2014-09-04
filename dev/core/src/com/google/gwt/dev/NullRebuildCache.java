@@ -50,7 +50,7 @@ public class NullRebuildCache extends MinimalRebuildCache {
   }
 
   @Override
-  public void associateReboundTypeWithGeneratedType(String reboundTypeName,
+  public void associateReboundTypeWithGeneratedCompilationUnitName(String reboundTypeName,
       String generatedTypeName) {
   }
 

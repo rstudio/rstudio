@@ -39,7 +39,11 @@ public class CauseShortRebindGenerator extends Generator {
       pw.println("package com.foo;");
       pw.println("import com.google.gwt.core.client.GWT;");
       pw.println("public class Baz {");
-      pw.println("  private Short someShort = GWT.create(Short.class);");
+      pw.println("  // Connect the dots via an inner class to make the staleness");
+      pw.println("  // trace more challenging.");
+      pw.println("  private class InnerBaz {");
+      pw.println("    private Short someShort = GWT.create(Short.class);");
+      pw.println("  }");
       pw.println("}");
       context.commit(logger, pw);
     }

@@ -649,7 +649,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     // FooResourceGenerator.
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
         Lists.<MockResource> newArrayList(classNameToGenerateResource), relinkMinimalRebuildCache,
-        stringSet("com.foo.TestEntryPoint", "com.foo.Baz", "com.foo.Bar",
+        stringSet("com.foo.TestEntryPoint", "com.foo.Baz$InnerBaz", "com.foo.Bar",
             "com.foo.HasCustomContent", "com.foo.FooReplacementOne"), output);
 
     // Generators were run again.

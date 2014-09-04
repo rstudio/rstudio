@@ -811,7 +811,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       typeName = packageName + '.' + simpleTypeName;
     }
 
-    compilerContext.getMinimalRebuildCache().associateReboundTypeWithGeneratedType(
+    compilerContext.getMinimalRebuildCache().associateReboundTypeWithGeneratedCompilationUnitName(
         currentRebindBinaryTypeName, typeName);
 
     // Is type already known to the host?
