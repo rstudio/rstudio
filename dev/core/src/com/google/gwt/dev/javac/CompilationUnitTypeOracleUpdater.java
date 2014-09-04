@@ -51,6 +51,9 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.collect.Collections2;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.PrintWriter;
@@ -65,6 +68,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Builds or rebuilds a {@link com.google.gwt.core.ext.typeinfo.TypeOracle} from a set of
@@ -319,8 +326,21 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
   }
 
   private final Set<String> resolvedTypeSourceNames = Sets.newHashSet();
-  private final Map<String, JRealClassType> typesByInternalName =
-      new HashMap<String, JRealClassType>();
+  private final Map<String, JRealClassType> typesByInternalName = Maps.newHashMap();
+  /**
+   * An executor service to parallelize some of the update process.
+   */
+  private static ExecutorService executor =
+      Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
+          new ThreadFactory() {
+            public Thread newThread(Runnable r) {
+              Thread t = new Thread(r);
+              // Make sure this executor lets the whole process terminate correctly even if there
+              // are still live threads.
+              t.setDaemon(true);
+              return t;
+            }
+          });
 
   public CompilationUnitTypeOracleUpdater(TypeOracle typeOracle) {
     super(typeOracle);
@@ -345,6 +365,27 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     Event visitClassFileEvent = SpeedTracerLogger.start(
         CompilerEventType.TYPE_ORACLE_UPDATER, "phase", "Visit Class Files");
     TypeOracleBuildContext context = getContext(argsLookup);
+    // Parse bytecode in parallel if there are many units to process by calling
+    // {@code TypeData.getCollectClassData()} in parallel.
+    try {
+      executor.<Void>invokeAll(Collections2.transform(typeDataList,
+          new Function<TypeData, Callable<Void>>() {
+            @Override
+            public Callable<Void> apply(final TypeData typeData) {
+              return new Callable<Void>() {
+                @Override
+                public Void call() {
+                  typeData.getCollectClassData();
+                  return null;
+                }
+              };
+            }
+          }));
+    } catch (InterruptedException e) {
+      // InterruptedException can be safely ignored here as the threads interrupted are only
+      // precomputing data in parallel that will otherwise be computed later sequentially if
+      // the threads are aborted.
+    }
 
     for (TypeData typeData : typeDataList) {
       CollectClassData classData = typeData.getCollectClassData();
