@@ -41,9 +41,14 @@
          if (!is.null(srcref))
          {
             # get the name of the file from which the function originated, and
-            # trim off the trailing space; see if it matches the filename
+            # trim off the trailing space
             fileattr <- attr(srcref, "srcfile")
-            if (normalizePath(fileattr$filename) == normalizePath(fileName))
+
+            # if the srcref has a srcfile, resolve it (if it exists) and
+            # compare with the input we were given
+            if (!is.null(fileattr) &&
+                (normalizePath(fileattr$filename, mustWork = FALSE) == 
+                 normalizePath(fileName)))
             {
                return (env)
             }
