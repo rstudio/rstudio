@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -74,7 +74,7 @@ public class UiBinderTest extends GWTTestCase {
    * <p>
    * The fields are {@code final} and we test that they've correctly been
    * modified by the template.
-   * 
+   *
    * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=7740
    */
   public void testProvidedWidgetWithCustomInitializer() {
@@ -131,6 +131,11 @@ public class UiBinderTest extends GWTTestCase {
   public void testAccessToNonStandardElement() {
     Element elm = widgetUi.nonStandardElement;
     assertEquals("I", elm.getTagName());
+  }
+
+  public void testElementWithTagName() {
+    Element elem = widgetUi.myElementWithTagName;
+    assertEquals("ELEMENT-WITH-TAGNAME", elem.getTagName());
   }
 
   public void testAddStyleNamesAndDebugId() {
@@ -475,12 +480,12 @@ public class UiBinderTest extends GWTTestCase {
     // assertEquals("Widget has top", 20, p.getWidgetTop(w));
     // }
   }
-  
+
   public void testNamedFrame() {
     NamedFrame p = widgetUi.myNamedFrame;
     assertNotNull("NamedFrame exists", p);
   }
-  
+
   public void testTree() {
     Tree tree = widgetUi.myTree;
     TreeItem complexItem = widgetUi.myTreeItemC;
@@ -635,15 +640,15 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("middle",
       widgetUi.myHorizontalPanel.getVerticalAlignment().getVerticalAlignString());
 
-    final String innerHtml = 
+    final String innerHtml =
       widgetUi.myHorizontalPanel.getElement().getInnerHTML();
     assertInOrder(innerHtml, "vertical-align: middle",
         "a stackpanel");
-    
+
     final String innerHtml2 = innerHtml.replace("\"", "");
     assertInOrder(innerHtml2, "align=left", "a stackpanel");
   }
-  
+
   public void testUrlResource() {
     assertEquals(new FakeBundle().aUrl(), widgetUi.myImage.getSrc());
   }

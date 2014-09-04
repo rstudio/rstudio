@@ -216,8 +216,10 @@ public class WidgetBasedUi extends Composite {
   @UiField HTML htmlWithComputedText;
   @UiField Label labelWithComputedText;
   @UiField FlowPanel flowPanelWithTag;
+  @UiField Element myElementWithTagName;
 
   ValueChangeEvent<Double> doubleValueChangeEvent;
+
   @UiHandler("myDoubleBox")
   void onValueChange(ValueChangeEvent<Double> event) {
     this.doubleValueChangeEvent = event;
@@ -269,6 +271,10 @@ public class WidgetBasedUi extends Composite {
   void onSelection_raw(SelectionEvent<List> event) { /* EMPTY */}
 
   public WidgetBasedUi() {
+    init();
+  }
+
+  protected void init() {
     external.style().ensureInjected();
     initWidget(binder.createAndBindUi(this));
   }

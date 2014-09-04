@@ -700,11 +700,13 @@
   <demo:ExtendsValueChangeWidget ui:field='myValueChangeWidget_extends' />
 
   <img src="{values.aUrl}" ui:field='myImage'/>
-  
+
   <gwt:HTML ui:field='htmlWithComputedSafeHtml'><ui:safehtml from="{constants.getSafeHtml}" /></gwt:HTML>
   <gwt:HTML ui:field='htmlWithComputedText'><ui:text from="{constants.getText}" /></gwt:HTML>
   <gwt:Label ui:field='labelWithComputedText'><ui:text from="{constants.getText}"/></gwt:Label>
 
+     <element-with-tagname ui:field='myElementWithTagName'/>
+     <js-element-type ui:field='myJsElementType'/>
    </gwt:HTMLPanel>
   </gwt:Dock>
 </gwt:DockPanel>
