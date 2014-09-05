@@ -141,6 +141,7 @@ public class MinimalRebuildCache implements Serializable {
   private final Map<String, String> jsByTypeName = Maps.newHashMap();
   private final Set<String> jsoStatusChangedTypeNames = Sets.newHashSet();
   private final Set<String> jsoTypeNames = Sets.newHashSet();
+  private Integer lastLinkedJsBytes;
   private final Map<String, Long> lastModifiedByDiskSourcePath = Maps.newHashMap();
   private final Map<String, Long> lastModifiedByResourcePath = Maps.newHashMap();
   private final Set<String> modifiedCompilationUnitNames = Sets.newHashSet();
@@ -245,7 +246,7 @@ public class MinimalRebuildCache implements Serializable {
       return Sets.newHashSet();
     }
 
-    // Store calculate stale type names in a persisted field so that tests can inspect behavior.
+    // Store stale type names in a persisted field so that tests can inspect behavior.
     staleTypeNames.clear();
 
     Set<String> modifiedTypeNames = computeModifiedTypeNames();
@@ -380,6 +381,10 @@ public class MinimalRebuildCache implements Serializable {
     return jsByTypeName.get(typeName);
   }
 
+  public int getLastLinkedJsBytes() {
+    return lastLinkedJsBytes;
+  }
+
   @VisibleForTesting
   public Set<String> getModifiedCompilationUnitNames() {
     return modifiedCompilationUnitNames;
@@ -412,6 +417,10 @@ public class MinimalRebuildCache implements Serializable {
 
   public boolean hasPreambleTypeNames() {
     return !preambleTypeNames.isEmpty();
+  }
+
+  public boolean knowsLastLinkedJsBytes() {
+    return lastLinkedJsBytes != null;
   }
 
   /**
@@ -531,6 +540,10 @@ public class MinimalRebuildCache implements Serializable {
     this.singleJsoImplInterfaceNames.addAll(singleJsoImplInterfaceNames);
     this.dualJsoImplInterfaceNames.clear();
     this.dualJsoImplInterfaceNames.addAll(dualJsoImplInterfaceNames);
+  }
+
+  public void setLastLinkedJsBytes(int lastLinkedJsBytes) {
+    this.lastLinkedJsBytes = lastLinkedJsBytes;
   }
 
   public void setPreambleTypeNames(TreeLogger logger, Set<String> preambleTypeNames) {

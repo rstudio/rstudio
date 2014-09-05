@@ -18,6 +18,7 @@ package com.google.gwt.dev.js;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsDoWhile;
@@ -31,7 +32,7 @@ import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -40,8 +41,7 @@ import java.util.List;
  */
 public class JsReportGenerationVisitor extends
     JsSourceGenerationVisitorWithSizeBreakdown {
-  private final LinkedHashMap<Range, SourceInfo> sourceInfoMap =
-      new LinkedHashMap<Range, SourceInfo>();
+  private final LinkedList<Range> ranges = Lists.newLinkedList();
   private final TextOutput out;
   private final boolean needSourcemapNames;
 
@@ -49,7 +49,7 @@ public class JsReportGenerationVisitor extends
    * The key of the most recently added Javascript range for a descendant
    * of the current node.
    */
-  private Range previousChildKey = null;
+  private Range previousRange = null;
 
   /**
    * The ancestor nodes whose Range and SourceInfo will be added to the sourcemap.
@@ -65,7 +65,7 @@ public class JsReportGenerationVisitor extends
 
   @Override
   protected <T extends JsVisitable> T generateAndBill(T node, JsName nameToBillTo) {
-    previousChildKey = null; // It's not our child because we haven't visited our children yet.
+    previousRange = null; // It's not our child because we haven't visited our children yet.
 
     if (!(node instanceof JsNode)) {
       return super.generateAndBill(node, nameToBillTo);
@@ -108,20 +108,36 @@ public class JsReportGenerationVisitor extends
     // Write some JavaScript (changing the position).
     T toReturn = super.generateAndBill(node, nameToBillTo);
 
-    if (willReportRange) {
-      parentStack.remove(parentStack.size() - 1);
+    if (!willReportRange) {
+      return toReturn;
+    }
+    parentStack.remove(parentStack.size() - 1);
+
+    SourceInfo info = ((JsNode) node).getSourceInfo();
+    Range range = new Range(beforePosition, out.getPosition(), beforeLine, beforeColumn,
+        out.getLine(), out.getColumn(), info);
+
+    if (out.getPosition() <= beforePosition || beforeLine < 0 || out.getLine() < 0) {
+      // Skip bogus entries.
+      // JavaClassHierarchySetupUtil:prototypesByTypeId is pruned here. Maybe others too?
+      return toReturn;
     }
 
-    if (out.getPosition() > beforePosition && willReportRange) {
-
-      SourceInfo info = ((JsNode) node).getSourceInfo();
-      Range javaScriptRange = new Range(beforePosition, out.getPosition(),
-        beforeLine, beforeColumn, out.getLine(), out.getColumn());
-      sourceInfoMap.put(javaScriptRange, info);
-
-      previousChildKey = javaScriptRange; // Report this child to its parent.
+    if (info == SourceOrigin.UNKNOWN || info.getFileName() == null || info.getStartLine() < 0) {
+      // Skip synthetic types (like 'true' and 'false' literals) with no Java source.
+      return toReturn;
     }
 
+    if (previousRange != null && previousRange.contains(range)) {
+      // Skip duplicate and nested range.
+      return toReturn;
+    }
+
+    // There is an opportunity to do a complex "overlapping range" combination here as well. But
+    // it's difficult to verify. If we need more speed consider adding this transformation.
+
+    ranges.add(range);
+    previousRange = range;
     return toReturn;
   }
 
@@ -144,18 +160,19 @@ public class JsReportGenerationVisitor extends
 
   @Override
   protected void billChildToHere() {
-    if (previousChildKey != null && previousChildKey.getEnd() < out.getPosition()) {
-      SourceInfo value = sourceInfoMap.get(previousChildKey);
-      Range newKey = previousChildKey.withNewEnd(out.getPosition(), out.getLine(),
-          out.getColumn());
-      sourceInfoMap.remove(previousChildKey);
-      sourceInfoMap.put(newKey, value);
-      previousChildKey = newKey;
+    if (previousRange != null && previousRange.getEnd() < out.getPosition()) {
+      // Expand overlapping range.
+      Range expandedRange =
+          previousRange.withNewEnd(out.getPosition(), out.getLine(), out.getColumn());
+      Range removedRange = ranges.removeLast();
+      assert removedRange == previousRange;
+      ranges.add(expandedRange);
+      previousRange = expandedRange;
     }
   }
 
   @Override
   public JsSourceMap getSourceInfoMap() {
-    return new JsSourceMap(sourceInfoMap, out.getPosition(), out.getLine());
+    return new JsSourceMap(ranges, out.getPosition(), out.getLine());
   }
 }

@@ -22,7 +22,6 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceInfoCorrelation;
-import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -30,14 +29,11 @@ import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapParseException;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import org.json.JSONException;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Creates Closure Compatible SourceMaps.
@@ -88,7 +84,7 @@ public class SourceMapRecorder {
   }
 
   private List<SyntheticArtifact> createArtifacts()
-      throws IOException, JSONException, SourceMapParseException {
+      throws IOException, SourceMapParseException {
     Event event = SpeedTracerLogger.start(CompilerEventType.SOURCE_MAP_RECORDER);
     List<SyntheticArtifact> toReturn = Lists.newArrayList();
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -129,25 +125,12 @@ public class SourceMapRecorder {
    * debugger has to load.
    */
   private void addMappings(SourceMappingWriter output, JsSourceMap mappings) {
-    Set<Range> rangeSet = mappings.keySet();
+    List<Range> ranges = Lists.newArrayList(mappings.getRanges());
+    Collections.sort(ranges, Range.DEPENDENCY_ORDER_COMPARATOR);
 
-    Range[] ranges = rangeSet.toArray(new Range[rangeSet.size()]);
-    Arrays.sort(ranges, Range.DEPENDENCY_ORDER_COMPARATOR);
-
-    for (Range r : ranges) {
-      SourceInfo info = mappings.get(r);
-
-      if (info == SourceOrigin.UNKNOWN || info.getFileName() == null || info.getStartLine() < 0) {
-        // skip a synthetic with no Java source
-        continue;
-      }
-      if (r.getStartLine() == 0 || r.getEndLine() == 0) {
-        // skip a bogus entry
-        // JavaClassHierarchySetupUtil:prototypesByTypeId is pruned here. Maybe others too?
-        continue;
-      }
-
-      output.addMapping(r, info, getJavaName(info));
+    for (Range range : ranges) {
+      SourceInfo info = range.getSourceInfo();
+      output.addMapping(range, getJavaName(info));
     }
     output.flush();
   }

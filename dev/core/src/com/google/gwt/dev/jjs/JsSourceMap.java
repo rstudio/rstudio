@@ -18,59 +18,45 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.core.ext.linker.impl.JsSourceMapExtractor;
 import com.google.gwt.core.ext.soyc.Range;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.List;
 
 /**
- * An unmodifiable container of mappings from one JavaScript file to the Java code it came from.
- *
- * (This class doesn't implement Map because we only use a few methods.)
+ * An unmodifiable container of Ranges that map from JavaScript to the Java it came from.
  */
 public class JsSourceMap {
 
   private final int bytes;
   private final int lines;
+
   /**
    * Maps JS ranges to Java ranges. The mapping is sparse thus the need for separately tracking
-   * total bytes and lines. Entries are ordered so that it is possible to extract and separate
-   * chunks in an efficient way.
+   * total bytes and lines.
    */
-  private final LinkedHashMap<Range, SourceInfo> sourceInfosByRange;
+  private final List<Range> ranges;
 
-  public JsSourceMap(LinkedHashMap<Range, SourceInfo> sourceInfosByRange, int bytes, int lines) {
-    this.sourceInfosByRange = sourceInfosByRange;
+  public JsSourceMap(List<Range> ranges, int bytes, int lines) {
+    this.ranges = ranges;
     this.bytes = bytes;
     this.lines = lines;
   }
 
   public JsSourceMapExtractor createExtractor() {
-    return new JsSourceMapExtractor(sourceInfosByRange);
-  }
-
-  public SourceInfo get(Range key) {
-    return sourceInfosByRange.get(key);
+    return new JsSourceMapExtractor(ranges);
   }
 
   public int getBytes() {
     return bytes;
   }
 
-  public Collection<Entry<Range, SourceInfo>> getEntries() {
-    return sourceInfosByRange.entrySet();
+  public List<Range> getRanges() {
+    return ranges;
   }
 
   public int getLines() {
     return lines;
   }
 
-  public Set<Range> keySet() {
-    return Collections.unmodifiableSet(sourceInfosByRange.keySet());
-  }
-
   public int size() {
-    return sourceInfosByRange.size();
+    return ranges.size();
   }
 }

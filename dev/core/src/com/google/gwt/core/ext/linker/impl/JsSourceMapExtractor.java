@@ -15,14 +15,10 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.JsSourceMap;
-import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 
 /**
  * An efficient JS source map chunk extractor.
@@ -33,27 +29,23 @@ import java.util.Map.Entry;
 public class JsSourceMapExtractor {
 
   private int lastTypeEndPosition;
-  private LinkedList<Entry<Range, SourceInfo>> rangeToSourceInfoMappings = Lists.newLinkedList();
+  private LinkedList<Range> ranges = Lists.newLinkedList();
 
-  public JsSourceMapExtractor(Map<Range, SourceInfo> sourceInfosByRange) {
-    rangeToSourceInfoMappings.addAll(sourceInfosByRange.entrySet());
+  public JsSourceMapExtractor(List<Range> ranges) {
+    this.ranges.addAll(ranges);
   }
 
   public JsSourceMap extract(int typeStartPosition, int typeEndPosition, int typeStartLineNumber,
       int typeEndLineNumber) {
-    assert !rangeToSourceInfoMappings
-        .isEmpty() : "Source mappings can't be extracted past the end.";
+    assert !ranges.isEmpty() : "Source mappings can't be extracted past the end.";
     skipTo(typeStartPosition);
 
     lastTypeEndPosition = typeEndPosition;
 
-    LinkedHashMap<Range, SourceInfo> typeSourceMappings = Maps.newLinkedHashMap();
+    List<Range> extractedRanges = Lists.newArrayList();
 
-    do {
-      Entry<Range, SourceInfo> rangeAndSourceInfo = rangeToSourceInfoMappings.getFirst();
-      Range range = rangeAndSourceInfo.getKey();
-      SourceInfo sourceInfo = rangeAndSourceInfo.getValue();
-
+    while (!ranges.isEmpty()) {
+      Range range = ranges.getFirst();
       if (range.getStart() < typeStartPosition || range.getStart() >= typeEndPosition) {
         break;
       }
@@ -61,24 +53,24 @@ public class JsSourceMapExtractor {
         break;
       }
 
-      rangeToSourceInfoMappings.removeFirst();
+      ranges.removeFirst();
 
       // Normalize range position relative to the beginning of the type that contains it.
       Range typeOffsetNormalizedRange =
           range.createNormalizedCopy(typeStartPosition, typeStartLineNumber);
-      typeSourceMappings.put(typeOffsetNormalizedRange, sourceInfo);
-    } while (!rangeToSourceInfoMappings.isEmpty());
+      extractedRanges.add(typeOffsetNormalizedRange);
+    }
 
     int typeBytes = typeEndPosition - typeStartPosition;
     int typeLines = typeEndLineNumber - typeStartLineNumber;
-    return new JsSourceMap(typeSourceMappings, typeBytes, typeLines);
+    return new JsSourceMap(extractedRanges, typeBytes, typeLines);
   }
 
   private void skipTo(int rangeEndPosition) {
     assert lastTypeEndPosition <= rangeEndPosition : "You can only skip forward.";
 
-    do {
-      Range range = rangeToSourceInfoMappings.getFirst().getKey();
+    while (!ranges.isEmpty()) {
+      Range range = ranges.getFirst();
 
       if (range.getStart() >= rangeEndPosition) {
         break;
@@ -87,7 +79,7 @@ public class JsSourceMapExtractor {
         break;
       }
 
-      rangeToSourceInfoMappings.removeFirst();
-    } while (!rangeToSourceInfoMappings.isEmpty());
+      ranges.removeFirst();
+    }
   }
 }

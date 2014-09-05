@@ -27,11 +27,12 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -159,12 +160,12 @@ public class StoryRecorder {
      * We want to iterate over the Ranges so that enclosing Ranges come before
      * their enclosed Ranges...
      */
-    Range[] dependencyOrder = sourceInfoMap.keySet().toArray(new Range[sourceInfoMap.size()]);
-    Arrays.sort(dependencyOrder, Range.DEPENDENCY_ORDER_COMPARATOR);
+    List<Range> dependencyOrder = Lists.newArrayList(sourceInfoMap.getRanges());
+    Collections.sort(dependencyOrder, Range.DEPENDENCY_ORDER_COMPARATOR);
 
     Stack<RangeInfo> dependencyScope = new Stack<RangeInfo>();
     for (Range range : dependencyOrder) {
-      SourceInfo info = sourceInfoMap.get(range);
+      SourceInfo info = range.getSourceInfo();
       assert info != null;
 
       // Infer dependency information
@@ -233,7 +234,7 @@ public class StoryRecorder {
      * this assert passes, we know that we've correctly generated a sequence of
      * non-overlapping Ranges that encompass the whole program.
      */
-    assert dependencyOrder[0].getEnd() == lastEnd;
+    assert dependencyOrder.get(0).getEnd() == lastEnd;
   }
 
   private void emitStory(StoryImpl story, Range range) throws IOException {

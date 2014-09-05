@@ -125,7 +125,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       return js;
     }
 
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder((int) (js.length() * 1.05));
     int bytesInCurrentChunk = 0;
 
     for (int i = 0; i < ranges.numStatements(); i++) {

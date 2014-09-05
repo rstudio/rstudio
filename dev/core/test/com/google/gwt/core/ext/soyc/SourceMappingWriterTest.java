@@ -95,13 +95,14 @@ public class SourceMappingWriterTest extends TestCase {
   }
 
   private void addMapping(String substring, int javaStartLine) {
-    writer.addMapping(findRange(substring), SourceOrigin.create(javaStartLine, JAVA_FILENAME), null);
+    SourceOrigin sourceInfo = SourceOrigin.create(javaStartLine, JAVA_FILENAME);
+    writer.addMapping(findRange(substring, sourceInfo), null);
   }
 
   /**
    * Returns the appropriate range for the given substring of the "javascript" field.
    */
-  private Range findRange(String substring) {
+  private Range findRange(String substring, SourceOrigin sourceInfo) {
     assertFalse("multiline strings not implemented", substring.contains("\n"));
 
     int startPos = javascript.indexOf(substring);
@@ -119,7 +120,7 @@ public class SourceMappingWriterTest extends TestCase {
     }
 
     return new Range(startPos, startPos + substring.length(),
-        startLine, startChar, startLine, startChar + substring.length());
+        startLine, startChar, startLine, startChar + substring.length(), sourceInfo);
   }
 
   private void checkMappings(String... lines) throws IOException, SourceMapParseException {

@@ -43,13 +43,13 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
   private static final String HEADER_NAME = "-header-";
   private final NamedRange footerRange;
   private final NamedRange headerRange;
-  private final StringBuilder jsBuilder = new StringBuilder();
+  private final StringBuilder jsBuilder;
+  private final JsSourceMapBuilder jsSourceMapBuilder = new JsSourceMapBuilder();
+  private final JsSourceMapExtractor jsSourceMapExtractor;
   private final Set<String> linkedTypeNames = Sets.newHashSet();
   private TreeLogger logger;
   private final MinimalRebuildCache minimalRebuildCache;
-  private final JsSourceMapExtractor jsSourceMapExtractor;
   private final StatementRangesBuilder statementRangesBuilder = new StatementRangesBuilder();
-  private final JsSourceMapBuilder jsSourceMapBuilder = new JsSourceMapBuilder();
   private final StatementRangesExtractor statementRangesExtractor;
   private final JTypeOracle typeOracle;
   private final List<NamedRange> typeRanges;
@@ -68,6 +68,10 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
         programTypeRange.getEndLineNumber(), sourceInfoMap.getLines());
     this.minimalRebuildCache = minimalRebuildCache;
     this.typeOracle = typeOracle;
+
+    // Presize the jsBuilder to avoid content copying during expansion.
+    this.jsBuilder = new StringBuilder(minimalRebuildCache.knowsLastLinkedJsBytes() ? (int) (
+        minimalRebuildCache.getLastLinkedJsBytes() * 1.05) : sourceInfoMap.getBytes());
   }
 
   @Override
@@ -125,6 +129,7 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
     js = jsBuilder.toString();
     statementRanges = statementRangesBuilder.build();
     sourceInfoMap = jsSourceMapBuilder.build();
+    minimalRebuildCache.setLastLinkedJsBytes(js.length());
     logger.log(TreeLogger.INFO, "postlink JS size = " + js.length());
     logger.log(TreeLogger.INFO, "postlink sourcemap = " + sourceInfoMap.getBytes() + " bytes and "
         + sourceInfoMap.getLines() + " lines");

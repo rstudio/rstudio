@@ -114,7 +114,6 @@ public class JsReportGenerationVisitorTest extends TestCase {
     program = parseJs("if(true) { x=1 } else { y=2 }");
     checkMappings(
         "if(true){x=1}else{y=2}",
-        "true",
         "x=1",
         "x",
         "1",
@@ -277,7 +276,7 @@ public class JsReportGenerationVisitorTest extends TestCase {
   }
 
   private String dumpMappings(String javascript, JsSourceMap mappings) {
-    List<Range> ranges = Lists.newArrayList(mappings.keySet());
+    List<Range> ranges = Lists.newArrayList(mappings.getRanges());
     Collections.sort(ranges, Range.DEPENDENCY_ORDER_COMPARATOR);
 
     StringBuilder out = new StringBuilder();

@@ -18,17 +18,17 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.JsSourceMap;
-import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.editdistance.GeneralEditDistance;
 import com.google.gwt.dev.util.editdistance.GeneralEditDistances;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -197,39 +197,32 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
       Range[] oldStatementRanges = statementShifts.keySet().toArray(new Range[0]);
       Arrays.sort(oldStatementRanges, Range.SOURCE_ORDER_COMPARATOR);
 
-      Range[] oldExpressionRanges = sourceInfoMap.keySet().toArray(new Range[0]);
-      Arrays.sort(oldExpressionRanges, Range.SOURCE_ORDER_COMPARATOR);
-
+      List<Range> oldExpressionRanges = Lists.newArrayList(sourceInfoMap.getRanges());
+      Collections.sort(oldExpressionRanges, Range.SOURCE_ORDER_COMPARATOR);
 
       // iterate over expression ranges and shift
-      LinkedHashMap<Range, SourceInfo> updatedInfoMap = new LinkedHashMap<Range, SourceInfo>();
+      List<Range> updatedRanges = Lists.newArrayList();
       Range entireProgram =
-        new Range(0, oldStatementRanges[oldStatementRanges.length - 1].getEnd());
-      for (int i = 0, j = 0; j < oldExpressionRanges.length; j++) {
-        Range oldExpression = oldExpressionRanges[j];
+          new Range(0, oldStatementRanges[oldStatementRanges.length - 1].getEnd());
+      for (int i = 0, j = 0; j < oldExpressionRanges.size(); j++) {
+        Range oldExpression = oldExpressionRanges.get(j);
         if (oldExpression.equals(entireProgram)) {
-          updatedInfoMap.put(oldExpression, sourceInfoMap.get(oldExpression));
+          updatedRanges.add(oldExpression);
           continue;
-        }
-
-        if (!oldStatementRanges[i].contains(oldExpressionRanges[j])) {
-          // expression should fall in the next statement
-          i++;
-          assert oldStatementRanges[i].contains(oldExpressionRanges[j]);
         }
 
         Range oldStatement = oldStatementRanges[i];
         Range newStatement = statementShifts.get(oldStatement);
         int shift = newStatement.getStart() - oldStatement.getStart();
 
-        Range oldExpressionRange = oldExpressionRanges[j];
+        Range oldExpressionRange = oldExpressionRanges.get(j);
         Range newExpressionRange = new Range(oldExpressionRange.getStart() + shift,
-            oldExpressionRange.getEnd() + shift);
-        updatedInfoMap.put(newExpressionRange, sourceInfoMap.get(oldExpressionRange));
+            oldExpressionRange.getEnd() + shift, oldExpressionRange.getSourceInfo());
+        updatedRanges.add(newExpressionRange);
       }
 
       sourceInfoMap =
-          new JsSourceMap(updatedInfoMap, sourceInfoMap.getBytes(), sourceInfoMap.getLines());
+          new JsSourceMap(updatedRanges, sourceInfoMap.getBytes(), sourceInfoMap.getLines());
     }
   }
 

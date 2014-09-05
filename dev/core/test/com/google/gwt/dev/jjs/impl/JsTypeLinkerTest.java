@@ -20,18 +20,14 @@ import com.google.gwt.core.ext.linker.impl.StatementRangesBuilder;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.JsSourceMap;
-import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import junit.framework.TestCase;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Tests for {@link JsTypeLinker}.
@@ -154,12 +150,9 @@ public class JsTypeLinkerTest extends TestCase {
         statement.replace(" />", "").replace("<", "").replace(">", "").replace("\n", "");
 
     statementRangesBuilder.addStartPosition(sb.length());
-    LinkedHashMap<Range, SourceInfo> sourceInfosByRange =
-        Maps.<Range, SourceInfo> newLinkedHashMap();
-    sourceInfosByRange.put(
-        new Range(0, statement.length(), lines, 0, lines + 1, statement.length()),
-        SourceOrigin.create(0, statement.length(), 0, typeName));
-    jsSourceMapBuilder.append(new JsSourceMap(sourceInfosByRange, statement.length(), 1));
+    List<Range> ranges = Lists.newArrayList(new Range(0, statement.length(), lines, 0, lines + 1,
+        statement.length(), SourceOrigin.create(0, statement.length(), 0, typeName)));
+    jsSourceMapBuilder.append(new JsSourceMap(ranges, statement.length(), 1));
     sb.append(statement);
     statementRangesBuilder.addEndPosition(sb.length());
 
@@ -177,8 +170,8 @@ public class JsTypeLinkerTest extends TestCase {
 
   private List<String> getTypeNames(JsSourceMap sourceInfoMap) {
     List<String> typeNames = Lists.newArrayList();
-    for (Entry<Range, SourceInfo> entry : sourceInfoMap.getEntries()) {
-      typeNames.add(entry.getValue().getFileName());
+    for (Range range : sourceInfoMap.getRanges()) {
+      typeNames.add(range.getSourceInfo().getFileName());
     }
     return typeNames;
   }

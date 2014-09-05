@@ -15,36 +15,32 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.JsSourceMap;
-import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
+import java.util.List;
 
 /**
  * A builder for combining existing JS source maps.
  * <p>
- * Takes care of rebasing the offset of appended SourceMaps onto the end of the previously
+ * Takes care of rebasing the offset of appended ranges onto the end of the previously
  * accumulated ranges.
  */
 public class JsSourceMapBuilder {
 
   private int bytes;
+  private final List<Range> ranges = Lists.newArrayList();
   private int lines;
-  private final LinkedHashMap<Range, SourceInfo> sourceInfosByRange = Maps.newLinkedHashMap();
 
-  public void append(JsSourceMap typeSourceMap) {
-    for (Entry<Range, SourceInfo> entry : typeSourceMap.getEntries()) {
-      Range normalizedRange = entry.getKey();
-      Range outputOffsetRange = normalizedRange.createOffsetCopy(bytes, lines);
-      SourceInfo sourceInfo = entry.getValue();
-      sourceInfosByRange.put(outputOffsetRange, sourceInfo);
+  public void append(JsSourceMap jsSourceMap) {
+    for (Range normalizedRange : jsSourceMap.getRanges()) {
+      Range offsetRange = normalizedRange.createOffsetCopy(bytes, lines);
+      ranges.add(offsetRange);
     }
-    bytes += typeSourceMap.getBytes();
-    lines += typeSourceMap.getLines();
+    bytes += jsSourceMap.getBytes();
+    lines += jsSourceMap.getLines();
   }
 
   public JsSourceMap build() {
-    return new JsSourceMap(sourceInfosByRange, bytes, lines);
+    return new JsSourceMap(ranges, bytes, lines);
   }
 }

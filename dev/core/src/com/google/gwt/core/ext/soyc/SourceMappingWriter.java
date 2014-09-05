@@ -52,7 +52,8 @@ class SourceMappingWriter {
    *
    * <p>The output is buffered, so the caller must call {@link #flush} when done.
    */
-  void addMapping(Range nextRange, SourceInfo nextInfo, String javaName) {
+  void addMapping(Range nextRange, String javaName) {
+    SourceInfo nextInfo = nextRange.getSourceInfo();
     if (!canMerge(nextRange, nextInfo, javaName)) {
       flush(null);
     }
