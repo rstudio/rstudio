@@ -33,11 +33,6 @@ public class JStringLiteral extends JValueLiteral {
   }
 
   @Override
-  public JValueLiteral cloneFrom(JValueLiteral value) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public JNonNullType getType() {
     return stringType.getNonNull();
   }

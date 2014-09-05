@@ -164,7 +164,9 @@ public class PrunerTest extends OptimizerTestBase {
 
     assertEquals(
         "interface EntryPoint$UsedInterface {\n" +
+        "  final static int usedConstant\n\n" +
         "  private static final void $clinit(){\n" +
+        "    final static int usedConstant = 3;\n" +
         "  }\n" +
         "\n" +
         "}",

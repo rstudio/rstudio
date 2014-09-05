@@ -37,19 +37,6 @@ public class JIntLiteral extends JValueLiteral {
   }
 
   @Override
-  public JValueLiteral cloneFrom(JValueLiteral value) {
-    Object valueObj = value.getValueObj();
-    if (valueObj instanceof Character) {
-      Character character = (Character) valueObj;
-      return new JIntLiteral(value.getSourceInfo(), character.charValue());
-    } else if (valueObj instanceof Number) {
-      Number number = (Number) valueObj;
-      return new JIntLiteral(value.getSourceInfo(), number.intValue());
-    }
-    return null;
-  }
-
-  @Override
   public JType getType() {
     return JPrimitiveType.INT;
   }

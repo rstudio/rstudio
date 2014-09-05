@@ -2878,7 +2878,8 @@ public class GenerateJavaScriptAST {
     }
 
     private JsInvocation maybeCreateClinitCall(JField x, boolean isExported) {
-      if (!x.isStatic()) {
+      if (!x.isStatic() || x.isCompileTimeConstant()) {
+        // Access to compile time constants do not trigger class initialization (JLS 12.4.1).
         return null;
       }
 
@@ -2939,7 +2940,7 @@ public class GenerateJavaScriptAST {
       if (x.getLiteralInitializer() == null) {
         return false;
       }
-      if (x.isFinal() || x.isStatic()) {
+      if (x.isFinal() || x.isStatic() || x.isCompileTimeConstant()) {
         // we can definitely initialize at top-scope, as JVM does so as well
         return true;
       }

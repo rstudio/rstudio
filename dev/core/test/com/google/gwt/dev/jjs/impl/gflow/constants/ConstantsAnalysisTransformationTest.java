@@ -48,7 +48,7 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
         "j = 2;");
     transform("void", "int i = 1; i = i + 1; int j = i;").into(
         "int i = 1;",
-        "i = 1 + 1;",
+        "i = 2;",
         "int j = 2;");
   }
 
@@ -84,13 +84,13 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
   public void testExpressionEvaluation() throws Exception {
     transform("void", "int i = 1; int j = i + 1;").into(
         "int i = 1;",
-        "int j = 1 + 1;");
+        "int j = 2;");
     transform("void", "int i = 1; int j = i - 1;").into(
         "int i = 1;",
-        "int j = 1 - 1;");
+        "int j = 0;");
     transform("void", "int i = 1; boolean b = i == 1;").into(
         "int i = 1;",
-        "boolean b = 1 == 1;");
+        "boolean b = true;");
   }
 
   public void testWhile() throws Exception {

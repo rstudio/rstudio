@@ -132,11 +132,12 @@ public class Simplifier {
     if (type == exp.getType()) {
       return exp;
     }
+
     if ((type instanceof JPrimitiveType) && (exp instanceof JValueLiteral)) {
       // Statically evaluate casting literals.
-      JPrimitiveType typePrim = (JPrimitiveType) type;
+      JPrimitiveType primitiveType = (JPrimitiveType) type;
       JValueLiteral expLit = (JValueLiteral) exp;
-      JValueLiteral casted = typePrim.coerceLiteral(expLit);
+      JValueLiteral casted = primitiveType.coerce(expLit);
       if (casted != null) {
         return casted;
       }

@@ -52,6 +52,10 @@ public class TypeCoercionNormalizerTest extends OptimizerTestBase {
 
   public void testCoerceCharLiteral_NonAssignment() throws Exception {
     optimize("void", "String a = \"a\" + 'b' ;").into("String a = \"a\" + \"b\" ;");
+
+    // Turn on dead code elimination to statically evaluate "b" + "a" to "ba" after coercion
+    // from 'b' to "b", because JDT will statically evaluate "b" + "a" on the right hand side.
+    runDeadCodeElimination = true;
     optimize("void", "String a =  'b' + \"a\" ;").into("String a = \"b\" + \"a\";");
   }
 

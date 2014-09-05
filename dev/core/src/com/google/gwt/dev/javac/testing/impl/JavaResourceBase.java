@@ -307,6 +307,7 @@ public class JavaResourceBase {
           "  }",
           "  private native boolean equals(String obj) /*-{ return false; }-*/;",
           "  public boolean equalsIgnoreCase(String str) { return false; }",
+          "  public native boolean isEmpty() /*-{ return true; }-*/;",
           "  public int length() { return 0; }",
           "  public static String valueOf(int i) { return \"\" + i; }",
           "  public static String valueOf(char c) { return \"\" + c; }",

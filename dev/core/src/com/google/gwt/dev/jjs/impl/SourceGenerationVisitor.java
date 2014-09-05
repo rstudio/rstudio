@@ -53,20 +53,20 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
 
     openBlock();
 
-    for (JField it : x.getFields()) {
-      accept(it);
+    for (JField field : x.getFields()) {
+      accept(field);
       newline();
       newline();
     }
-    for (JMethod it : x.getMethods()) {
-      if (JProgram.isClinit(it)) {
+    for (JMethod method : x.getMethods()) {
+      if (JProgram.isClinit(method)) {
         // Suppress empty clinit.
-        JMethodBody body = (JMethodBody) it.getBody();
+        JMethodBody body = (JMethodBody) method.getBody();
         if (body.getBlock().getStatements().isEmpty()) {
           continue;
         }
       }
-      accept(it);
+      accept(method);
       newline();
       newline();
     }
@@ -87,6 +87,13 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
       newline();
     }
     for (JMethod method : x.getMethods()) {
+      if (JProgram.isClinit(method)) {
+        // Suppress empty clinit.
+        JMethodBody body = (JMethodBody) method.getBody();
+        if (body.getBlock().getStatements().isEmpty()) {
+          continue;
+        }
+      }
       accept(method);
       newline();
       newline();

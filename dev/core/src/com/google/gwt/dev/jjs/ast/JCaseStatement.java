@@ -22,14 +22,14 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JCaseStatement extends JStatement {
 
-  private final JLiteral expr;
+  private JExpression expr;
 
-  public JCaseStatement(SourceInfo info, JLiteral expr) {
+  public JCaseStatement(SourceInfo info, JExpression expr) {
     super(info);
     this.expr = expr;
   }
 
-  public JLiteral getExpr() {
+  public JExpression getExpr() {
     return expr;
   }
 
@@ -37,7 +37,7 @@ public class JCaseStatement extends JStatement {
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       if (expr != null) {
-        visitor.accept(expr);
+        expr = visitor.accept(expr);
       }
     }
     visitor.endVisit(this, ctx);

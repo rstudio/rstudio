@@ -46,11 +46,6 @@ public class JNullLiteral extends JValueLiteral {
     visitor.endVisit(this, ctx);
   }
 
-  @Override
-  protected JValueLiteral cloneFrom(JValueLiteral value) {
-    throw new UnsupportedOperationException();
-  }
-
   /**
    * Note, if this ever becomes not-a-singleton, we'll need to check the
    * SourceInfo == SourceOrigin.UNKNOWN.

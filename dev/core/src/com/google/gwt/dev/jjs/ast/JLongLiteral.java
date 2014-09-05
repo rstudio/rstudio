@@ -37,19 +37,6 @@ public class JLongLiteral extends JValueLiteral {
   }
 
   @Override
-  public JValueLiteral cloneFrom(JValueLiteral value) {
-    Object valueObj = value.getValueObj();
-    if (valueObj instanceof Character) {
-      Character character = (Character) valueObj;
-      return new JLongLiteral(value.getSourceInfo(), character.charValue());
-    } else if (valueObj instanceof Number) {
-      Number number = (Number) valueObj;
-      return new JLongLiteral(value.getSourceInfo(), number.longValue());
-    }
-    return null;
-  }
-
-  @Override
   public JType getType() {
     return JPrimitiveType.LONG;
   }

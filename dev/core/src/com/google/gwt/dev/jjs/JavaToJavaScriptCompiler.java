@@ -65,6 +65,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.AstDumper;
+import com.google.gwt.dev.jjs.impl.CompileTimeConstantsReplacer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
@@ -264,23 +265,31 @@ public abstract class JavaToJavaScriptCompiler {
         // TypeOracle needs this to make decisions in several optimization passes
         jprogram.typeOracle.setJsInteropMode(compilerContext.getOptions().getJsInteropMode());
 
+        // Record initial set of type->type references.
+        // type->type references need to be collected in two phases, 1) before any process to the
+        // AST has happened (to record for example reference to types declaring compile-time
+        // constants) and 2) after all normalizations to collect synthetic references (e.g. to
+        // record references to runtime classes like LongLib).
+        maybeRecordTypeReferences(false);
+
+        // Replace compile time constants by their values.
+        // TODO(rluble): eventually move to normizeSemantics.
+        CompileTimeConstantsReplacer.exec(jprogram);
+
         // TODO(stalcup): move to after normalize.
-        // (4) Optimize the resolved Java AST
+        // (3) Optimize the resolved Java AST
         optimizeJava();
 
         // TODO(stalcup): move to before optimize.
-        // (3) Normalize the resolved Java AST
+        // (4) Normalize the resolved Java AST
         Map<JType, JLiteral> typeIdLiteralsByType = normalizeSemantics();
 
         // TODO(stalcup): this stage shouldn't exist, move into optimize.
         postNormalizationOptimizeJava();
 
-        // Now that the AST has stopped mutating gather some data.
-        if (options.shouldCompilePerFile()) {
-          // Per file compilation needs the type reference graph to construct the set of reachable
-          // types when linking.
-          TypeReferencesRecorder.exec(jprogram, getMinimalRebuildCache());
-        }
+        // Now that the AST has stopped mutating update with the final references.
+        maybeRecordTypeReferences(true);
+
         jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
 
         javaEvent.end();
@@ -359,6 +368,14 @@ public abstract class JavaToJavaScriptCompiler {
           logger.log(TreeLogger.TRACE,
               "Permutation took " + (System.currentTimeMillis() - permStartMs) + " ms");
         }
+      }
+    }
+
+    private void maybeRecordTypeReferences(boolean onlyUpdate) {
+      if (options.shouldCompilePerFile()) {
+        // Per file compilation needs the type reference graph to construct the set of reachable
+        // types when linking.
+        TypeReferencesRecorder.exec(jprogram, getMinimalRebuildCache(),onlyUpdate);
       }
     }
 

@@ -32,14 +32,10 @@ public class JEnumField extends JField {
 
   @Override
   public JEnumType getEnclosingType() {
-    // TODO Auto-generated method stub
     return (JEnumType) super.getEnclosingType();
   }
 
   public int ordinal() {
     return ordinal;
   }
-
-  // TODO: implement traverse?
-
 }

@@ -17,7 +17,7 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Map;
 
@@ -25,53 +25,43 @@ import java.util.Map;
  * Base class for all Java primitive types.
  */
 public class JPrimitiveType extends JType {
+  private static final Map<String, JPrimitiveType> primitiveTypeByName = Maps.newHashMap();
+
   /*
    * Primitive types are static singletons. Serialization via readResolve().
    */
-
-  private static final class Singletons {
-    public static final Map<String, JPrimitiveType> map = new HashMap<String, JPrimitiveType>();
-  }
-
-  public static final JPrimitiveType BOOLEAN = new JPrimitiveType("boolean", "Z",
-      "java.lang.Boolean", JBooleanLiteral.FALSE);
-
-  public static final JPrimitiveType BYTE = new JPrimitiveType("byte", "B", "java.lang.Byte",
-      JIntLiteral.ZERO);
-
-  public static final JPrimitiveType CHAR = new JPrimitiveType("char", "C", "java.lang.Character",
-      JCharLiteral.NULL);
-
-  public static final JPrimitiveType DOUBLE = new JPrimitiveType("double", "D", "java.lang.Double",
-      JDoubleLiteral.ZERO);
-
-  public static final JPrimitiveType FLOAT = new JPrimitiveType("float", "F", "java.lang.Float",
-      JFloatLiteral.ZERO);
-
-  public static final JPrimitiveType INT = new JPrimitiveType("int", "I", "java.lang.Integer",
-      JIntLiteral.ZERO);
-
-  public static final JPrimitiveType LONG = new JPrimitiveType("long", "J", "java.lang.Long",
-      JLongLiteral.ZERO);
-
-  public static final JPrimitiveType SHORT = new JPrimitiveType("short", "S", "java.lang.Short",
-      JIntLiteral.ZERO);
-
-  public static final JPrimitiveType VOID = new JPrimitiveType("void", "V", "java.lang.Void", null);
+  public static final JPrimitiveType BOOLEAN = new JPrimitiveType(
+      "boolean", "Z", "java.lang.Boolean", JBooleanLiteral.FALSE, Coercion.TO_BOOLEAN);
+  public static final JPrimitiveType BYTE =
+      new JPrimitiveType("byte", "B", "java.lang.Byte", JIntLiteral.ZERO, Coercion.TO_BYTE);
+  public static final JPrimitiveType CHAR =
+      new JPrimitiveType("char", "C", "java.lang.Character", JCharLiteral.NULL, Coercion.TO_CHAR);
+  public static final JPrimitiveType DOUBLE = new JPrimitiveType(
+      "double", "D", "java.lang.Double", JDoubleLiteral.ZERO, Coercion.TO_DOUBLE);
+  public static final JPrimitiveType FLOAT =
+      new JPrimitiveType("float", "F", "java.lang.Float", JFloatLiteral.ZERO, Coercion.TO_FLOAT);
+  public static final JPrimitiveType INT =
+      new JPrimitiveType("int", "I", "java.lang.Integer", JIntLiteral.ZERO, Coercion.TO_INT);
+  public static final JPrimitiveType LONG =
+      new JPrimitiveType("long", "J", "java.lang.Long", JLongLiteral.ZERO, Coercion.TO_LONG);
+  public static final JPrimitiveType SHORT =
+      new JPrimitiveType("short", "S", "java.lang.Short", JIntLiteral.ZERO, Coercion.TO_SHORT);
+  public static final JPrimitiveType VOID =
+      new JPrimitiveType("void", "V", "java.lang.VOID", null, Coercion.TO_VOID);
 
   private final transient JValueLiteral defaultValue;
-
   private final transient String signatureName;
-
   private final transient String wrapperTypeName;
+  private final transient Coercion coercion;
 
   private JPrimitiveType(String name, String signatureName, String wrapperTypeName,
-      JValueLiteral defaultValue) {
+      JValueLiteral defaultValue, Coercion coercion) {
     super(SourceOrigin.UNKNOWN, name);
     this.defaultValue = defaultValue;
     this.signatureName = StringInterner.get().intern(signatureName);
     this.wrapperTypeName = StringInterner.get().intern(wrapperTypeName);
-    Singletons.map.put(this.name, this);
+    this.coercion = coercion;
+    primitiveTypeByName.put(this.name, this);
   }
 
   /**
@@ -84,15 +74,8 @@ public class JPrimitiveType extends JType {
     return false;
   }
 
-  /**
-   * Returns a literal which has been coerced to this type, or <code>null</code>
-   * if no such coercion is possible.
-   */
-  public JValueLiteral coerceLiteral(JValueLiteral value) {
-    if (defaultValue != null) {
-      return defaultValue.cloneFrom(value);
-    }
-    return null;
+  public JValueLiteral coerce(JValueLiteral literal) {
+    return this.coercion.coerce(literal);
   }
 
   @Override
@@ -131,13 +114,148 @@ public class JPrimitiveType extends JType {
    * typeName is not the name of a primitive type.
    */
   public static JPrimitiveType getType(String typeName) {
-    return Singletons.map.get(typeName);
+    return primitiveTypeByName.get(typeName);
   }
 
   /**
    * Canonicalize to singleton; uses {@link JType#name}.
    */
   private Object readResolve() {
-    return Singletons.map.get(name);
+    return primitiveTypeByName.get(name);
+  }
+
+  private enum Coercion {
+    TO_CHAR() {
+      @Override
+      JValueLiteral coerce(JValueLiteral literal) {
+        if (literal instanceof JCharLiteral) {
+          return literal;
+        }
+
+        Object valueObject = literal.getValueObj();
+        if (valueObject instanceof Number) {
+          return new JCharLiteral(
+              literal.getSourceInfo(), (char) ((Number) valueObject).intValue());
+        }
+        return null;
+      }
+    },
+    TO_INT() {
+      @Override
+      JValueLiteral coerce(JValueLiteral literal) {
+        Object valueObject = literal.getValueObj();
+        if (!(valueObject instanceof Number) && !(valueObject instanceof Character)) {
+          return null;
+        }
+        int value = 0;
+        if (valueObject instanceof Number) {
+          value = ((Number) valueObject).intValue();
+        } else if (valueObject instanceof Character) {
+          value = ((Character) valueObject).charValue();
+        }
+        return new JIntLiteral(literal.getSourceInfo(), value);
+      }
+    },
+    TO_BYTE() {
+      @Override
+      JValueLiteral coerce(JValueLiteral literal) {
+        Object valueObject = literal.getValueObj();
+        if (!(valueObject instanceof Number) && !(valueObject instanceof Character)) {
+          return null;
+        }
+        byte value = 0;
+        if (valueObject instanceof Number) {
+          value = ((Number) valueObject).byteValue();
+        } else if (valueObject instanceof Character) {
+          value = (byte) ((Character) valueObject).charValue();
+        }
+        return new JIntLiteral(literal.getSourceInfo(), value);
+      }
+    },
+    TO_SHORT() {
+      @Override
+      JValueLiteral coerce(JValueLiteral literal) {
+        Object valueObject = literal.getValueObj();
+        if (!(valueObject instanceof Number) && !(valueObject instanceof Character)) {
+          return null;
+        }
+        short value = 0;
+        if (valueObject instanceof Number) {
+          value = ((Number) valueObject).shortValue();
+        } else if (valueObject instanceof Character) {
+          value = (short) ((Character) valueObject).charValue();
+        }
+        return new JIntLiteral(literal.getSourceInfo(), value);
+      }
+    },
+    TO_LONG() {
+      @Override
+      JValueLiteral coerce(JValueLiteral literal) {
+        Object valueObject = literal.getValueObj();
+        if (!(valueObject instanceof Number) && !(valueObject instanceof Character)) {
+          return null;
+        }
+        long value = 0;
+        if (valueObject instanceof Number) {
+          value = ((Number) valueObject).longValue();
+        } else if (valueObject instanceof Character) {
+          value = (long) ((Character) valueObject).charValue();
+        }
+        return new JLongLiteral(literal.getSourceInfo(), value);
+      }
+    },
+    TO_FLOAT() {
+      @Override
+      JValueLiteral coerce(JValueLiteral literal) {
+        Object valueObject = literal.getValueObj();
+        if (!(valueObject instanceof Number) && !(valueObject instanceof Character)) {
+          return null;
+        }
+        float value = 0;
+        if (valueObject instanceof Number) {
+          value = ((Number) valueObject).floatValue();
+        } else if (valueObject instanceof Character) {
+          value = (float) ((Character) valueObject).charValue();
+        }
+        return new JFloatLiteral(literal.getSourceInfo(), value);
+      }
+    },
+    TO_DOUBLE() {
+      @Override
+      JValueLiteral coerce(JValueLiteral literal) {
+        Object valueObject = literal.getValueObj();
+        if (!(valueObject instanceof Number) && !(valueObject instanceof Character)) {
+          return null;
+        }
+        double value = 0;
+        if (valueObject instanceof Number) {
+          value = ((Number) valueObject).doubleValue();
+        } else if (valueObject instanceof Character) {
+          value = (double) ((Character) valueObject).charValue();
+        }
+        return new JDoubleLiteral(literal.getSourceInfo(), value);
+      }
+    },
+    TO_BOOLEAN() {
+      @Override
+      public JValueLiteral coerce(JValueLiteral literal) {
+        if (literal instanceof JBooleanLiteral) {
+          return literal;
+        }
+        return null;
+      }
+    },
+    TO_VOID() {
+      @Override
+      public JValueLiteral coerce(JValueLiteral literal) {
+        return null;
+      }
+    };
+
+    /**
+     * Coerces a literal into a literal of (possibly) a different type; returns {@code null} if
+     * coercion is not valid.
+     */
+    abstract JValueLiteral coerce(JValueLiteral literal);
   }
 }

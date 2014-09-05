@@ -22,7 +22,6 @@ import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.MarkerAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.NormalAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.SingleMemberAnnotation;
-import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
@@ -94,10 +93,6 @@ public class BinaryTypeReferenceRestrictionsChecker {
     @Override
     protected void onBinaryTypeRef(BinaryTypeBinding binding,
         CompilationUnitDeclaration unitOfReferrer, Expression expression) {
-      if (expression.constant != null && expression.constant != Constant.NotAConstant) {
-        // Const expressions are ok, no source needed.
-        return;
-      }
       binaryTypeReferenceSites.add(new BinaryTypeReferenceSite(expression,
           binding));
     }

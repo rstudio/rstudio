@@ -28,7 +28,7 @@ import com.google.gwt.dev.jjs.impl.EnumOrdinalizer.Tracker;
 /**
  * A set of tests for the conditions under which ordinalization is and is not allowed.  The
  * ordinalization is performed when allowed.
- *
+ * <p>
  * A complete test of the resulting ordinalization is not performed.  However, the
  * ImplementCastsAndTypeChecks and the EqualityNormalizer are run after the EnumOrdinalizer, to help
  * ensure the integrity of the AST, such that there are no partially mismatched type assignments or
@@ -37,6 +37,11 @@ import com.google.gwt.dev.jjs.impl.EnumOrdinalizer.Tracker;
  * makes sense to test the output in this way.  Thus, we provide confidence that the AST is left in
  * a coherent state, but it is not a complete test that ordinalization has completed correctly in
  * every respec.
+ * <p>
+ * NOTE: the tests in this test case are very fragile. On one hand EnumOrdinalizer requires other
+ * passes to perform their cleanups to be effective; on the other some passes (DeadCodeElimination)
+ * optimize enums in a way that the tests might become ineffective and some artificial constructs
+ * are used to avoid this scenario. See {@link EnumOrdinalizerTest#setupNotInlineable()}.
  */
 public class EnumOrdinalizerTest extends OptimizerTestBase {
   /*
@@ -180,7 +185,8 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   public void testOrdinalizeConditional()
       throws UnableToCompleteException {
     setupFruitEnum();
-    Result result = optimize("void", "Fruit fruit = (true) ? Fruit.APPLE : Fruit.ORANGE;");
+    Result result = optimize("void",
+        "Fruit fruit = (new Integer(1)).toString().isEmpty() ? Fruit.APPLE : Fruit.ORANGE;");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
@@ -190,7 +196,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   public void testOrdinalizeFieldRefOrdinalMethodCall()
       throws UnableToCompleteException {
     setupFruitEnum();
-    Result result = optimize("void", "int i = Fruit.APPLE.ordinal();");
+    Result result = optimize("void", "int i = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
@@ -265,7 +271,8 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
       throws UnableToCompleteException {
     // this will cause a static field ref in the enum clinit
     setupFruitEnumWithStaticField();
-    Result result = optimize("void", "String y = Fruit.staticField + Fruit.APPLE.ordinal();");
+    Result result = optimize("void",
+        "String y = Fruit.staticField + Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
@@ -352,7 +359,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
       throws UnableToCompleteException {
     setupFruitEnum();
     Result result = optimize("void", "Class clazz = Fruit.class;",
-        "String clazzStr = clazz.toString() + Fruit.APPLE.ordinal();");
+        "String clazzStr = clazz.toString() + Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -364,7 +371,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
       throws UnableToCompleteException {
     setupFruitEnum();
     Result result = optimize("void", "Object Carrot = Enum.valueOf(Fruit.class, \"APPLE\");",
-        "String carrot = Carrot.toString() + Fruit.APPLE.ordinal();");
+        "String carrot = Carrot.toString() + Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -376,7 +383,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
       throws UnableToCompleteException {
     setupFruitEnum();
     Result result = optimize("void", "Class clazz = Fruit.APPLE.getClass();",
-        "String clazzStr = clazz.toString() + Fruit.APPLE.ordinal();");
+        "String clazzStr = clazz.toString() + Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -389,7 +396,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     setupFruitEnum();
     Result result = optimize("void", "Object obj = new Object();",
         "Fruit fruit = (Fruit) obj;",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -402,7 +409,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     setupFruitEnum();
     Result result = optimize("void", "Enum[] enumArray = new Enum[10];",
         "Fruit[] fruitArray = (Fruit[]) enumArray;",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -415,7 +422,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     setupFruitEnum();
     Result result = optimize("void", "Fruit[] fruitArray = new Fruit[10];",
         "Enum[] enumArray = (Enum[]) fruitArray;",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -428,7 +435,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     setupFruitEnum();
     Result result = optimize("void", "Enum[][] enumArray = new Enum[10][10];",
         "Fruit[][] fruitArray = (Fruit[][]) enumArray;",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -441,7 +448,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     setupFruitEnum();
     Result result = optimize("void", "Fruit[][] fruitArray = new Fruit[10][10];",
         "Enum[][] enumArray = (Enum[][]) fruitArray;",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -466,7 +473,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     setupFruitEnum();
     Result result = optimize("void", "int ord = " +
         "((Fruit) Enum.valueOf(Fruit.class,\"APPLE\")).ordinal();",
-        "int ord2 = Fruit.APPLE.ordinal();");
+        "int ord2 = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -507,7 +514,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "if (fruitObj instanceof Fruit) {",
         "  fruitObj = null;",
         "}",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -522,7 +529,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
     setupFruitEnum();
     Result result = optimize("void", "Fruit[] fruits = Fruit.values();",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -539,7 +546,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "}-*/");
     Result result = optimize("void", "instanceFruit = Fruit.APPLE;",
         "jsniMethod();",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -554,7 +561,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "  var x = @test.EntryPoint.Fruit::APPLE",
         "}-*/");
     Result result = optimize("void", "jsniMethod();",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -569,7 +576,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "  var x = @test.EntryPoint.Fruit::class",
         "}-*/");
     Result result = optimize("void", "jsniMethod();",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -598,7 +605,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     Result result = optimize("void", "if (uninitializedFruitAsNull != Fruit.APPLE) {",
         "  uninitializedFruitAsNull = Fruit.ORANGE;",
         "}",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -608,8 +615,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testNotOrdinalizableImplicitUpcastBinaryOpEquals()
       throws UnableToCompleteException {
-    setupFruitEnum();
-    setupVegetableEnum();
+    setupFruitAndVegetableEnums();
     Result result = optimize("void", "Fruit fruit = Fruit.APPLE;",
         "Enum carrot = (Enum) Vegetable.CARROT;",
         "boolean test = (fruit == carrot);");
@@ -624,8 +630,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testNotOrdinalizableImplicitUpcastBinaryOpNotEquals()
       throws UnableToCompleteException {
-    setupFruitEnum();
-    setupVegetableEnum();
+    setupFruitAndVegetableEnums();
     Result result = optimize("void", "Fruit fruit = Fruit.APPLE;",
         "Enum carrot = (Enum) Vegetable.CARROT;",
         // do in opposite order from OpEquals test
@@ -718,7 +723,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
       throws UnableToCompleteException {
     setupFruitEnum();
     Result result = optimize("void", "Fruit fruit = null;",
-        "int ord = fruit == null ? Fruit.APPLE.ordinal() : fruit.ordinal();");
+        "int ord = fruit == null ? Util.notInlineable(Fruit.APPLE).ordinal() : fruit.ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -731,7 +736,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     setupFruitEnum();
     Result result = optimize("void", "Fruit fruit;",
         "fruit = null;",
-        "int ord = fruit == null ? Fruit.APPLE.ordinal() : fruit.ordinal();");
+        "int ord = fruit == null ? Util.notInlineable(Fruit.APPLE).ordinal() : fruit.ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -753,11 +758,11 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testNotOrdinalizableImplicitUpcastConditional()
       throws UnableToCompleteException {
-    setupFruitEnum();
-    setupVegetableEnum();
+    setupFruitAndVegetableEnums();
     Result result = optimize("void", "Enum tomato = null;",
         "tomato = (true) ? Fruit.APPLE : Vegetable.CARROT;",
-        "int ord = Fruit.APPLE.ordinal() + Vegetable.CARROT.ordinal() + tomato.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal() +",
+        "    Util.notInlineable(Vegetable.CARROT).ordinal() + tomato.ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -949,7 +954,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "  var result = @test.EntryPoint::fruitSwitch(Ltest/EntryPoint$Fruit;)(myJso);",
         "}-*/");
     Result result = optimize("void", "fruitSwitchViaJsni();",
-        "int ord = Fruit.APPLE.ordinal();");
+        "int ord = Util.notInlineable(Fruit.APPLE).ordinal();");
 
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -977,8 +982,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testNotOrdinalizableImplicitUpcastReturnStatement()
       throws UnableToCompleteException {
-    setupFruitEnum();
-    setupVegetableEnum();
+    setupFruitAndVegetableEnums();
     addSnippetClassDecl("public static Enum returnAsEnum(int mode) {",
         "  if (mode == 0) {",
         "    return Fruit.APPLE;",
@@ -1005,6 +1009,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   private void setupFruitEnum() {
     addSnippetClassDecl("public enum Fruit {APPLE, ORANGE}");
+    setupNotInlineable("Fruit");
   }
 
   private void setupFruitEnumWithInstanceField() {
@@ -1014,12 +1019,14 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "    instanceField = str;",
         "  }",
         "}");
+    setupNotInlineable("Fruit");
   }
 
   private void setupFruitEnumWithStaticField() {
     addSnippetClassDecl("public enum Fruit {APPLE, ORANGE;",
         "  public static final String staticField = \"STATIC\";",
         "}");
+    setupNotInlineable("Fruit");
   }
 
   private void setupFruitEnumWithStaticMethod() {
@@ -1029,6 +1036,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "    return x;",
         "  }",
         "}");
+    setupNotInlineable("Fruit");
   }
 
   private void setupFruitEnumWithStaticMethodThatRefsValuesArray() {
@@ -1052,10 +1060,18 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "    return APPLE;",
         "  }",
         "}");
+    setupNotInlineable("Fruit");
   }
 
   private void setupVegetableEnum() {
     addSnippetClassDecl("public enum Vegetable {CARROT, SPINACH}");
+    setupNotInlineable("Vegetable");
+  }
+
+  private void setupFruitAndVegetableEnums() {
+    addSnippetClassDecl("public enum Fruit {APPLE, ORANGE}");
+    addSnippetClassDecl("public enum Vegetable {CARROT, SPINACH}");
+    setupNotInlineable("Fruit", "Vegetable");
   }
 
   private void setupFruitSwitchMethod() {
@@ -1066,6 +1082,17 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
         "   default: return \"Unknown\";",
         " }",
         "}");
+  }
+  private void setupNotInlineable(String... classes) {
+    addSnippetClassDecl("public static class Util {");
+    for (String clazz : classes) {
+      addSnippetClassDecl(
+          "  public static " + clazz + " notInlineable(" + clazz + " obj) {",
+          "    if (new Integer(1).toString().isEmpty()) return obj;",
+          "    return obj;",
+          "  }");
+    }
+    addSnippetClassDecl("}");
   }
 
   @Override

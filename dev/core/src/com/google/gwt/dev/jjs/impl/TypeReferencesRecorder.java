@@ -41,14 +41,17 @@ import java.util.List;
  */
 public class TypeReferencesRecorder extends JVisitor {
 
-  public static void exec(JProgram program, MinimalRebuildCache minimalRebuildCache) {
-    new TypeReferencesRecorder(minimalRebuildCache).execImpl(program);
+  public static void exec(JProgram program, MinimalRebuildCache minimalRebuildCache,
+      boolean onlyUpdate) {
+    new TypeReferencesRecorder(minimalRebuildCache, onlyUpdate).execImpl(program);
   }
 
   private String fromTypeName;
   private final MinimalRebuildCache minimalRebuildCache;
+  private final boolean onlyUpdate;
 
-  public TypeReferencesRecorder(MinimalRebuildCache minimalRebuildCache) {
+  public TypeReferencesRecorder(MinimalRebuildCache minimalRebuildCache, boolean onlyUpdate) {
+    this.onlyUpdate = onlyUpdate;
     this.minimalRebuildCache = minimalRebuildCache;
   }
 
@@ -134,8 +137,9 @@ public class TypeReferencesRecorder extends JVisitor {
   @Override
   public boolean visit(JDeclaredType x, Context ctx) {
     fromTypeName = x.getName();
-
-    minimalRebuildCache.removeReferencesFrom(fromTypeName);
+    if (!onlyUpdate) {
+      minimalRebuildCache.removeReferencesFrom(fromTypeName);
+    }
 
     // Gather superclass and implemented interface types.
     maybeRecordTypeRef(x.getSuperClass());

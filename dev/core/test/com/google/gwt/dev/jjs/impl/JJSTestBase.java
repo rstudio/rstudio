@@ -37,11 +37,13 @@ import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 
+import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -195,9 +197,9 @@ public abstract class JJSTestBase extends TestCase {
 
   protected final MockResourceOracle sourceOracle = new MockResourceOracle();
 
-  private final Set<String> snippetClassDecls = new TreeSet<String>();
+  private final List<String> snippetClassDecls = Lists.newArrayList();
 
-  private final Set<String> snippetImports = new TreeSet<String>();
+  private final Set<String> snippetImports = Sets.newTreeSet();
 
   public JJSTestBase() {
     sourceOracle.add(JavaAstConstructor.getCompilerTypes());
@@ -269,6 +271,7 @@ public abstract class JJSTestBase extends TestCase {
     CompilerContext compilerContext =
         new CompilerContext.Builder().compileMonolithic(compileMonolithic).build();
     compilerContext.getOptions().setSourceLevel(sourceLevel);
+    compilerContext.getOptions().setStrict(true);
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, compilerContext,
             sourceOracle.getResources(), getAdditionalTypeProviderDelegate());

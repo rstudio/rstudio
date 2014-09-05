@@ -51,7 +51,7 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
     analyze("void", "int i = 1 + 1;").into(
         "BLOCK -> [* T]",
         "STMT -> [* T]",
-        "WRITE(i, 2) -> [* {i = 2}]",
+        "WRITE(i, 1 + 1) -> [* {i = 2}]",
         "END");
   }
 

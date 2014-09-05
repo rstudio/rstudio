@@ -46,19 +46,6 @@ public class JDoubleLiteral extends JValueLiteral {
   }
 
   @Override
-  public JValueLiteral cloneFrom(JValueLiteral value) {
-    Object valueObj = value.getValueObj();
-    if (valueObj instanceof Character) {
-      Character character = (Character) valueObj;
-      return new JDoubleLiteral(value.getSourceInfo(), character.charValue());
-    } else if (valueObj instanceof Number) {
-      Number number = (Number) valueObj;
-      return new JDoubleLiteral(value.getSourceInfo(), number.doubleValue());
-    }
-    return null;
-  }
-
-  @Override
   public JType getType() {
     return JPrimitiveType.DOUBLE;
   }

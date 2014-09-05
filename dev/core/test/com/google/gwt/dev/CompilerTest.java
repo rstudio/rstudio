@@ -533,6 +533,12 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkPerFileRecompile_functionSignatureChange(JsOutputOption.DETAILED);
   }
 
+  public void testPerFileRecompile_compileTimeConstantChange() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    checkPerFileRecompile_compileTimeConstantChange(JsOutputOption.DETAILED);
+    checkPerFileRecompile_compileTimeConstantChange(JsOutputOption.PRETTY);
+  }
+
   public void testPerFileRecompile_regularClassMadeIntoJsoClass() throws UnableToCompleteException,
       IOException, InterruptedException {
     // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
@@ -769,6 +775,14 @@ public class CompilerTest extends ArgProcessorTestBase {
         stringSet("com.foo.TestEntryPoint", "com.foo.SimpleModel"), output);
   }
 
+  private void checkPerFileRecompile_compileTimeConstantChange(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    checkRecompiledModifiedApp("com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, simpleModelEntryPointResource,
+            simpleModelResource),
+        constantsModelResource, modifiedConstantsModelResource,
+        stringSet("com.foo.SimpleModel", "com.foo.Constants"), output);
+  }
   private void checkPerFileRecompile_typeHierarchyChange(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
     checkRecompiledModifiedApp("com.foo.SimpleModule", Lists.newArrayList(simpleModuleResource,
