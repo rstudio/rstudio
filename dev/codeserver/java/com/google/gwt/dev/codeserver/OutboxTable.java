@@ -18,8 +18,6 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.json.JsonArray;
-import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
@@ -33,16 +31,11 @@ import java.util.Map;
  * modules on the front page.
  */
 class OutboxTable {
-  private final Options options;
 
   /**
    * A map from outbox id (an opaque string) to its outbox.
    */
   private final Map<String, Outbox> outboxes = Maps.newHashMap();
-
-  OutboxTable(Options options) {
-    this.options = options;
-  }
 
   /**
    * Adds a {@link Outbox} to the table.
@@ -80,20 +73,5 @@ class OutboxTable {
     for (Outbox box: outboxes.values()) {
       box.maybePrecompile(noPrecompile, logger);
     }
-  }
-
-  /**
-   * Returns a configuration object containing the names of all the modules
-   * and warnings to display to the user.
-   */
-  JsonObject getConfig() {
-    JsonObject config = JsonObject.create();
-    JsonArray moduleNames = new JsonArray();
-    for (String module : getOutputModuleNames()) {
-      moduleNames.add(module);
-    }
-    config.put("moduleNames", moduleNames);
-    config.put("warnings", options.getWarningsAsJson());
-    return config;
   }
 }

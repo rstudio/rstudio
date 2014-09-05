@@ -90,6 +90,7 @@ public class WebServer {
   private static final MimeTypes MIME_TYPES = new MimeTypes();
 
   private final SourceHandler handler;
+  private final JsonExporter jsonExporter;
   private final OutboxTable outboxes;
   private final JobRunner runner;
   private final ProgressTable progressTable;
@@ -99,9 +100,10 @@ public class WebServer {
 
   private Server server;
 
-  WebServer(SourceHandler handler, OutboxTable outboxes, JobRunner runner,
-      ProgressTable progressTable, String bindAddress, int port) {
+  WebServer(SourceHandler handler, JsonExporter jsonExporter, OutboxTable outboxes,
+      JobRunner runner, ProgressTable progressTable, String bindAddress, int port) {
     this.handler = handler;
+    this.jsonExporter = jsonExporter;
     this.outboxes = outboxes;
     this.runner = runner;
     this.progressTable = progressTable;
@@ -180,17 +182,16 @@ public class WebServer {
 
     if (target.equals("/")) {
       setHandled(request);
-      JsonObject config = outboxes.getConfig();
-      PageUtil.sendJsonAndHtml("config", config, "frontpage.html", response, logger);
+      JsonObject json = jsonExporter.exportFrontPageVars();
+      PageUtil.sendJsonAndHtml("config", json, "frontpage.html", response, logger);
       return;
     }
 
     if (target.equals("/dev_mode_on.js")) {
       setHandled(request);
-      JsonObject config = outboxes.getConfig();
-      PageUtil
-          .sendJsonAndJavaScript("__gwt_codeserver_config", config, "dev_mode_on.js", response,
-              logger);
+      JsonObject json = jsonExporter.exportDevModeOnVars();
+      PageUtil.sendJsonAndJavaScript("__gwt_codeserver_config", json, "dev_mode_on.js", response,
+          logger);
       return;
     }
 
@@ -214,11 +215,9 @@ public class WebServer {
       // It would be unsafe to allow a configuration property to be changed.
       Job job = new Job(outbox, getBindingProperties(request), logger);
       runner.submit(job);
-      boolean ok = job.waitForResult().isOk();
-
-      JsonObject config = outboxes.getConfig();
-      config.put("status", ok ? "ok" : "failed");
-      sendJsonResult(config, request, response, logger);
+      Job.Result result = job.waitForResult();
+      JsonObject json = jsonExporter.exportRecompileResponse(result);
+      sendJsonResult(json, request, response, logger);
       return;
     }
 
@@ -257,7 +256,7 @@ public class WebServer {
         json = new JsonObject();
         json.put("status", "idle");
       } else {
-        json = progress.toJsonObject();
+        json = jsonExporter.exportProgressResponse(progress);
       }
       sendJsonResult(json, request, response, logger);
       return;
@@ -333,15 +332,14 @@ public class WebServer {
 
   private void sendModulePage(String moduleName, HttpServletResponse response, TreeLogger logger)
       throws IOException {
-    Outbox module = outboxes.findByOutputModuleName(moduleName);
-    if (module == null) {
+    Outbox box = outboxes.findByOutputModuleName(moduleName);
+    if (box == null) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
       logger.log(TreeLogger.WARN, "module not found: " + moduleName);
       return;
     }
-    PageUtil
-        .sendJsonAndHtml("config", module.getTemplateVariables(), "modulepage.html", response,
-            logger);
+    JsonObject json = jsonExporter.exportModulePageVars(box);
+    PageUtil.sendJsonAndHtml("config", json, "modulepage.html", response, logger);
   }
 
   private void sendPolicyIndex(HttpServletResponse response) throws IOException {

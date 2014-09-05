@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.codeserver;
 
-import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 
 /**
@@ -45,23 +44,6 @@ class Progress {
    */
   public boolean isActive() {
     return status == Status.WAITING || status == Status.COMPILING || status == Status.SERVING;
-  }
-
-  JsonObject toJsonObject() {
-    JsonObject out = new JsonObject();
-    out.put("jobId", jobId);
-    out.put("inputModule", inputModuleName);
-    out.put("bindings", getBindingsJson());
-    out.put("status", status.jsonName);
-    return out;
-  }
-
-  private JsonObject getBindingsJson() {
-    JsonObject out = new JsonObject();
-    for (String name : bindings.keySet()) {
-      out.put(name, bindings.get(name));
-    }
-    return out;
   }
 
   /**
@@ -105,15 +87,6 @@ class Progress {
       this.finishedSteps = finishedSteps;
       this.totalSteps = totalSteps;
       this.stepMessage = stepMessage;
-    }
-
-    @Override
-    JsonObject toJsonObject() {
-      JsonObject out = super.toJsonObject();
-      out.put("finishedSteps", finishedSteps);
-      out.put("totalSteps", totalSteps);
-      out.put("stepMessage", stepMessage);
-      return out;
     }
   }
 }

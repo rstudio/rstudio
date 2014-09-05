@@ -17,7 +17,6 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
 
 import java.io.BufferedReader;
@@ -74,10 +73,12 @@ class SourceHandler {
 
   static final String SOURCEROOT_TEMPLATE_VARIABLE = "$sourceroot_goes_here$";
 
-  private OutboxTable outboxes;
+  private final OutboxTable outboxes;
+  private final JsonExporter exporter;
 
-  SourceHandler(OutboxTable outboxes) {
+  SourceHandler(OutboxTable outboxes, JsonExporter exporter) {
     this.outboxes = outboxes;
+    this.exporter = exporter;
   }
 
   static boolean isSourceMapRequest(String target) {
@@ -171,38 +172,19 @@ class SourceHandler {
   private void sendDirectoryListPage(String moduleName, HttpServletResponse response,
       TreeLogger logger) throws IOException {
 
-    SourceMap map = loadSourceMap(moduleName);
-
-    JsonObject config = new JsonObject();
-    config.put("moduleName", moduleName);
-    JsonArray directories = new JsonArray();
-    for (String name : map.getSourceDirectories()) {
-      JsonObject dir = new JsonObject();
-      dir.put("name", name);
-      dir.put("link", name + "/");
-      directories.add(dir);
-    }
-    config.put("directories", directories);
-    PageUtil.sendJsonAndHtml("config", config, "directorylist.html", response, logger);
+    Outbox box = outboxes.findByOutputModuleName(moduleName);
+    SourceMap map = SourceMap.load(box.findSourceMapForOnePermutation());
+    JsonObject json = exporter.exportSourceMapDirectoryListVars(box, map);
+    PageUtil.sendJsonAndHtml("config", json, "directorylist.html", response, logger);
   }
 
   private void sendFileListPage(String moduleName, String rest, HttpServletResponse response,
       TreeLogger logger) throws IOException {
 
-    SourceMap map = loadSourceMap(moduleName);
-
-    JsonObject config = new JsonObject();
-    config.put("moduleName", moduleName);
-    config.put("directory", rest);
-    JsonArray files = new JsonArray();
-    for (String name : map.getSourceFilesInDirectory(rest)) {
-      JsonObject file = new JsonObject();
-      file.put("name", name);
-      file.put("link", name + "?html");
-      files.add(file);
-    }
-    config.put("files", files);
-    PageUtil.sendJsonAndHtml("config", config, "filelist.html", response, logger);
+    Outbox box = outboxes.findByOutputModuleName(moduleName);
+    SourceMap map = SourceMap.load(box.findSourceMapForOnePermutation());
+    JsonObject json = exporter.exportSourceMapFileListVars(box, map, rest);
+    PageUtil.sendJsonAndHtml("config", json, "filelist.html", response, logger);
   }
 
   /**
@@ -279,8 +261,4 @@ class SourceHandler {
     out.endTag("html").nl();
   }
 
-  private SourceMap loadSourceMap(String moduleName) {
-    Outbox box = outboxes.findByOutputModuleName(moduleName);
-    return SourceMap.load(box.findSourceMapForOnePermutation());
-  }
 }

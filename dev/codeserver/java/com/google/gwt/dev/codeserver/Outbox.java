@@ -19,8 +19,6 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.codeserver.Job.Result;
-import com.google.gwt.dev.json.JsonArray;
-import com.google.gwt.dev.json.JsonObject;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -29,7 +27,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -257,29 +254,4 @@ class Outbox {
     return new File(prefix, path);
   }
 
-  JsonObject getTemplateVariables() {
-    JsonObject result = new JsonObject();
-    result.put("moduleName", getOutputModuleName());
-    result.put("files", listModuleFiles());
-    return result;
-  }
-
-  private JsonArray listModuleFiles() {
-    File[] files = new File(getWarDir(), getOutputModuleName()).listFiles();
-    if (files == null) {
-      return new JsonArray();
-    }
-    Arrays.sort(files);
-
-    JsonArray result = new JsonArray();
-    for (File file : files) {
-      if (file.isFile()) {
-        JsonObject map = new JsonObject();
-        map.put("name", file.getName());
-        map.put("link", file.getName());
-        result.add(map);
-      }
-    }
-    return result;
-  }
 }

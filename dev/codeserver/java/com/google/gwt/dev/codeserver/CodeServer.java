@@ -118,11 +118,13 @@ public class CodeServer {
     TreeLogger startupLogger = topLogger.branch(Type.INFO, "Super Dev Mode starting up");
     OutboxTable outboxes = makeOutboxes(options, startupLogger);
 
-    SourceHandler sourceHandler = new SourceHandler(outboxes);
     ProgressTable progressTable = new ProgressTable();
     JobRunner runner = new JobRunner(progressTable, outboxes);
 
-    WebServer webServer = new WebServer(sourceHandler, outboxes,
+    JsonExporter exporter = new JsonExporter(options, outboxes);
+
+    SourceHandler sourceHandler = new SourceHandler(outboxes, exporter);
+    WebServer webServer = new WebServer(sourceHandler, exporter, outboxes,
         runner, progressTable, options.getBindAddress(), options.getPort());
     webServer.start(topLogger);
 
@@ -139,7 +141,7 @@ public class CodeServer {
     logger.log(Type.INFO, "workDir: " + workDir);
 
     int nextOutboxId = 1;
-    OutboxTable outboxes = new OutboxTable(options);
+    OutboxTable outboxes = new OutboxTable();
     for (String moduleName : options.getModuleNames()) {
       AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
 

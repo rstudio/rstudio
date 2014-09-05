@@ -18,7 +18,6 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.ArgProcessorBase;
-import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
@@ -217,14 +216,6 @@ public class Options {
 
   JsInteropMode getJsInteropMode() {
     return jsInteropMode;
-  }
-
-  JsonArray getWarningsAsJson() {
-    JsonArray warnings = new JsonArray();
-    if (compilePerFile) {
-      warnings.add("-XcompilePerFile is not done yet. Generators might not be run when needed.");
-    }
-    return warnings;
   }
 
   private class ArgProcessor extends ArgProcessorBase {
