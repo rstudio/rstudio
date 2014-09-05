@@ -44,14 +44,17 @@ class Outbox {
 
   private final String id;
   private final Recompiler recompiler;
+  private final Options options;
 
-  private final AtomicReference<Job.Result> published = new AtomicReference<Job.Result>();
+  private final AtomicReference<Result> published = new AtomicReference<Result>();
+  private Job publishedJob; // may be null if the Result wasn't created by a Job.
 
-  Outbox(String id, Recompiler recompiler, boolean noPrecompile, TreeLogger logger)
+  Outbox(String id, Recompiler recompiler, Options options, TreeLogger logger)
       throws UnableToCompleteException {
     this.id = id;
     this.recompiler = recompiler;
-    maybePrecompile(noPrecompile, logger);
+    this.options = options;
+    maybePrecompile(logger);
   }
 
   /**
@@ -65,8 +68,14 @@ class Outbox {
    * Loads the module and maybe compiles it. Sets up the output directory.
    * Throws an exception if unable. (In this case, Super Dev Mode fails to start.)
    */
-  void maybePrecompile(boolean noPrecompile, TreeLogger logger) throws UnableToCompleteException {
-    // TODO: each box will have its own binding properties.
+  void maybePrecompile(TreeLogger logger) throws UnableToCompleteException {
+
+    if (options.getNoPrecompile()) {
+      publish(recompiler.initWithoutPrecompile(logger), null);
+      return;
+    }
+
+    // TODO: each box will have its own binding properties
     Map<String, String> defaultProps = new HashMap<String, String>();
     defaultProps.put("user.agent", "safari");
     defaultProps.put("locale", "en");
@@ -74,14 +83,26 @@ class Outbox {
     // Create a dummy job for the first compile.
     // Its progress is not visible externally but will still be logged.
     ProgressTable dummy = new ProgressTable();
-    Job job = new Job(this, defaultProps, logger);
+    Job job = makeJob(defaultProps, logger);
     job.onSubmitted(dummy);
+    publish(recompiler.precompile(job), job);
 
-    if (noPrecompile) {
-      publish(recompiler.initWithoutPrecompile(job));
-    } else {
-      publish(recompiler.precompile(job));
+    if (options.isCompileTest()) {
+      // Listener errors are fatal in compile tests
+      Throwable error = job.getRecompileListenerFailure();
+      if (error != null) {
+        UnableToCompleteException e = new UnableToCompleteException();
+        e.initCause(error);
+        throw e;
+      }
     }
+  }
+
+  /**
+   * Creates a Job whose output will be saved in this outbox.
+   */
+  Job makeJob(Map<String, String> bindingProperties, TreeLogger parentLogger) {
+    return new Job(this, bindingProperties, parentLogger, options.getRecompileListener());
   }
 
   /**
@@ -97,7 +118,7 @@ class Outbox {
     Result result = recompiler.recompile(job);
 
     if (result.isOk()) {
-      publish(result);
+      publish(result, job);
     } else {
       job.getLogger().log(TreeLogger.Type.WARN, "continuing to serve previous version");
     }
@@ -105,12 +126,14 @@ class Outbox {
 
   /**
    * Makes the result of a compile downloadable via HTTP.
+   * @param job the job that created this result, or null if none.
    */
-  private void publish(Result result) {
-    Result previous = published.getAndSet(result);
-    if (previous != null) {
-      previous.job.onGone();
+  private synchronized void publish(Result result, Job job) {
+    if (publishedJob != null) {
+      publishedJob.onGone();
     }
+    publishedJob = job;
+    published.set(result);
   }
 
   private CompileDir getOutputDir() {

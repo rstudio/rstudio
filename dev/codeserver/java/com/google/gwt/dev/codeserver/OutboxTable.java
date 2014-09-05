@@ -69,9 +69,9 @@ class OutboxTable {
     return result;
   }
 
-  void defaultCompileAll(boolean noPrecompile, TreeLogger logger) throws UnableToCompleteException {
+  void defaultCompileAll(TreeLogger logger) throws UnableToCompleteException {
     for (Outbox box: outboxes.values()) {
-      box.maybePrecompile(noPrecompile, logger);
+      box.maybePrecompile(logger);
     }
   }
 }

@@ -75,7 +75,7 @@ public class CodeServer {
         try {
           // TODO: actually test recompiling here.
           // (This is just running precompiles repeatedly.)
-          outboxes.defaultCompileAll(options.getNoPrecompile(), logger);
+          outboxes.defaultCompileAll(logger);
         } catch (Throwable t) {
           t.printStackTrace();
           System.out.println("FAIL");
@@ -152,7 +152,7 @@ public class CodeServer {
       String outboxId = moduleName + "_" + nextOutboxId;
       nextOutboxId++;
 
-      outboxes.addOutbox(new Outbox(outboxId, recompiler, options.getNoPrecompile(), logger));
+      outboxes.addOutbox(new Outbox(outboxId, recompiler, options, logger));
     }
     return outboxes;
   }

@@ -40,6 +40,8 @@ class Job {
   private static final ConcurrentMap<String, AtomicInteger> prefixToNextId =
       new ConcurrentHashMap<String, AtomicInteger>();
 
+  // Primary key
+
   private final String id;
 
   // Input
@@ -55,10 +57,29 @@ class Job {
   // Listeners
 
   private final Outbox outbox;
-
+  private final RecompileListener recompileListener;
   private final LogSupplier logSupplier;
 
   private ProgressTable table; // non-null when submitted
+
+  // Progress
+
+  /**
+   * The number of calls to {@link #onCompilerProgress}.
+   */
+  private int finishedSteps = 0;
+
+  /**
+   * The estimated total number of calls to {@link #onCompilerProgress}.
+   */
+  private int totalSteps = -1; // non-negative after the compile has started
+
+  /**
+   * The id to report to the recompile listener.
+   */
+  private int compileId = -1; // non-negative after the compile has started
+
+  private Exception recompileListenerFailure;
 
   /**
    * Creates a job to update an outbox.
@@ -66,13 +87,15 @@ class Job {
    *     (Otherwise, more than one permutation will be compiled.)
    * @param parentLogger  The parent of the logger that will be used for this job.
    */
-  Job(Outbox box, Map<String, String> bindingProperties, TreeLogger parentLogger) {
+  Job(Outbox box, Map<String, String> bindingProperties,
+      TreeLogger parentLogger, RecompileListener recompileListener) {
     this.id = chooseNextId(box);
     this.outbox = box;
     this.inputModuleName = box.getInputModuleName();
     // TODO: we will use the binding properties to find or create the outbox,
     // then take binding properties from the outbox here.
     this.bindingProperties = ImmutableSortedMap.copyOf(bindingProperties);
+    this.recompileListener = recompileListener;
     this.logSupplier = new LogSupplier(parentLogger, id);
   }
 
@@ -134,6 +157,10 @@ class Job {
     return result;
   }
 
+  Exception getRecompileListenerFailure() {
+    return recompileListenerFailure;
+  }
+
   // === state transitions ===
 
   /**
@@ -162,14 +189,40 @@ class Job {
   }
 
   /**
-   * Reports that this job has made progress.
-   * @throws IllegalStateException if the job is not running.
+   * Reports that we started to compile the job.
    */
-  synchronized void onCompilerProgress(Progress.Compiling newProgress) {
+  synchronized void onStarted(int totalSteps, int compileId, CompileDir compileDir) {
+    if (totalSteps < 0) {
+      throw new IllegalArgumentException("totalSteps should not be negative: " + totalSteps);
+    }
     if (table == null || !table.isActive(this)) {
       throw new IllegalStateException("compile job is not active: " + id);
     }
-    table.publish(newProgress, getLogger());
+    if (this.totalSteps >= 0) {
+      throw new IllegalStateException("onStarted already called for " + id);
+    }
+    this.totalSteps = totalSteps;
+    this.compileId = compileId;
+
+    try {
+      recompileListener.startedCompile(inputModuleName, compileId, compileDir);
+    } catch (Exception e) {
+      getLogger().log(TreeLogger.Type.WARN, "recompile listener threw exception", e);
+      recompileListenerFailure = e;
+    }
+  }
+
+  /**
+   * Reports that this job has made progress.
+   * @throws IllegalStateException if the job is not running.
+   */
+  synchronized void onCompilerProgress(String stepMessage) {
+    if (table == null || !table.isActive(this)) {
+      throw new IllegalStateException("compile job is not active: " + id);
+    }
+    finishedSteps++;
+    table.publish(new Progress.Compiling(this, finishedSteps, totalSteps, stepMessage),
+        getLogger());
   }
 
   /**
@@ -180,6 +233,17 @@ class Job {
     if (table == null || !table.isActive(this)) {
       throw new IllegalStateException("compile job is not active: " + id);
     }
+
+    // Report that we finished unless the listener messed up already.
+    if (recompileListenerFailure == null) {
+      try {
+        recompileListener.finishedCompile(inputModuleName, compileId, newResult.isOk());
+      } catch (Exception e) {
+        getLogger().log(TreeLogger.Type.WARN, "recompile listener threw exception", e);
+        recompileListenerFailure = e;
+      }
+    }
+
     result.set(newResult);
     if (newResult.isOk()) {
       table.publish(new Progress(this, Status.SERVING), getLogger());
@@ -224,8 +288,6 @@ class Job {
    */
   static class Result {
 
-    final Job job;
-
     /**
      * non-null if successful
      */
@@ -236,10 +298,8 @@ class Job {
      */
     final Throwable error;
 
-    Result(Job job, CompileDir outputDir, Throwable error) {
-      assert job != null;
+    Result(CompileDir outputDir, Throwable error) {
       assert (outputDir == null) != (error == null);
-      this.job = job;
       this.outputDir = outputDir;
       this.error = error;
     }

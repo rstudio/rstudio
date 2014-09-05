@@ -116,10 +116,10 @@ class Recompiler {
     } catch (UnableToCompleteException e) {
       // No point in logging a stack trace for this exception
       job.getLogger().log(TreeLogger.Type.WARN, "recompile failed");
-      result = new Result(job, null, e);
+      result = new Result(null, e);
     } catch (Throwable error) {
       job.getLogger().log(TreeLogger.Type.WARN, "recompile failed", error);
-      result = new Result(job, null, error);
+      result = new Result(null, error);
     }
 
     job.onFinished(result);
@@ -134,8 +134,7 @@ class Recompiler {
    * @return a non-error Job.Result if successful.
    * @throws UnableToCompleteException for compile failures.
    */
-  private Job.Result compile(Job job)
-      throws UnableToCompleteException {
+  private Job.Result compile(Job job) throws UnableToCompleteException {
 
     assert job.wasSubmitted();
 
@@ -154,31 +153,15 @@ class Recompiler {
     CompileDir compileDir = makeCompileDir(compileId, job.getLogger());
     TreeLogger compileLogger = makeCompileLogger(compileDir, job.getLogger());
 
-    boolean listenerFailed = false;
-    try {
-      options.getRecompileListener().startedCompile(inputModuleName, compileId, compileDir);
-    } catch (Exception e) {
-      compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
-      listenerFailed = true;
-    }
+    int totalSteps = options.shouldCompileIncremental() ? 1 : 2;
+    job.onStarted(totalSteps, compileId, compileDir);
 
-    boolean success = false;
-    try {
-      if (options.shouldCompileIncremental()) {
-        // Just have one message for now.
-        job.onCompilerProgress(new Progress.Compiling(job, 0, 1, "Compiling"));
-
-        success = compileIncremental(compileLogger, compileDir);
-      } else {
-        success = compileMonolithic(compileLogger, compileDir, job);
-      }
-    } finally {
-      try {
-        options.getRecompileListener().finishedCompile(inputModuleName, compilesDone, success);
-      } catch (Exception e) {
-        compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
-        listenerFailed = true;
-      }
+    boolean success;
+    if (options.shouldCompileIncremental()) {
+      job.onCompilerProgress("Compiling (incrementally)");
+      success = compileIncremental(compileLogger, compileDir);
+    } else {
+      success = compileMonolithic(compileLogger, compileDir, job);
     }
 
     if (!success) {
@@ -190,22 +173,19 @@ class Recompiler {
     compileLogger.log(TreeLogger.Type.INFO,
         String.format("%.3fs total -- Compile completed", elapsedTime / 1000d));
 
-    if (options.isCompileTest() && listenerFailed) {
-      throw new UnableToCompleteException();
-    }
-
-    return new Result(job, publishedCompileDir, null);
+    return new Result(publishedCompileDir, null);
   }
 
   /**
    * Creates a dummy output directory without compiling the module.
    * Either this method or {@link #precompile} should be called first.
    */
-  synchronized Job.Result initWithoutPrecompile(Job job) throws UnableToCompleteException {
+  synchronized Job.Result initWithoutPrecompile(TreeLogger logger)
+      throws UnableToCompleteException {
 
     long startTime = System.currentTimeMillis();
-    CompileDir compileDir = makeCompileDir(++compilesDone, job.getLogger());
-    TreeLogger compileLogger = makeCompileLogger(compileDir, job.getLogger());
+    CompileDir compileDir = makeCompileDir(++compilesDone, logger);
+    TreeLogger compileLogger = makeCompileLogger(compileDir, logger);
 
     ModuleDef module = loadModule(compileLogger);
     String newModuleName = module.getName();  // includes any rename.
@@ -235,9 +215,7 @@ class Recompiler {
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO, "Module setup completed in " + elapsedTime + " ms");
 
-    Result result = new Result(job, compileDir, null);
-    job.onFinished(result);
-    return result;
+    return new Result(compileDir, null);
   }
 
   private boolean compileIncremental(TreeLogger compileLogger, CompileDir compileDir) {
@@ -276,8 +254,7 @@ class Recompiler {
   private boolean compileMonolithic(TreeLogger compileLogger, CompileDir compileDir, Job job)
       throws UnableToCompleteException {
 
-    job.onCompilerProgress(
-        new Progress.Compiling(job, 0, 2, "Loading modules"));
+    job.onCompilerProgress("Loading modules");
 
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).build();
@@ -297,7 +274,7 @@ class Recompiler {
       return true;
     }
 
-    job.onCompilerProgress(new Progress.Compiling(job, 1, 2, "Compiling"));
+    job.onCompilerProgress("Compiling");
     // TODO: use speed tracer to get more compiler events?
 
     CompilerOptions runOptions = new CompilerOptionsImpl(compileDir, newModuleName, options);

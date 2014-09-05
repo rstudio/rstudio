@@ -213,7 +213,7 @@ public class WebServer {
       // cause a spurious recompile, resulting in an unexpected permutation being loaded later.
       //
       // It would be unsafe to allow a configuration property to be changed.
-      Job job = new Job(outbox, getBindingProperties(request), logger);
+      Job job = outbox.makeJob(getBindingProperties(request), logger);
       runner.submit(job);
       Job.Result result = job.waitForResult();
       JsonObject json = jsonExporter.exportRecompileResponse(result);
