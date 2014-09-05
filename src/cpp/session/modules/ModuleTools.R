@@ -108,15 +108,31 @@
 )
 
 .rs.addFunction("getPackageRStudioProtocol", function(name) {
+
+   ## First check to see if the package has a '.rstudio-protocol' file
+   path <- system.file(".rstudio-protocol", package = name)
+   if (path != "") {
+      tryCatch(
+         expr = {
+            return(as.integer(read.dcf(path, all = TRUE)$Version))
+         },
+         warning = function(e) {},
+         error = function(e) {}
+      )
+   }
+
+   ## Otherwise, check the namespace
    needsUnloadAfter <- !(name %in% loadedNamespaces())
-   result <- if (exists(".RStudio_protocol_version", envir = asNamespace(name),
-              mode = "integer")) 
-      get(".RStudio_protocol_version", envir = asNamespace(name))
-   else 
-      0
+   rpv <- ".RStudio_protocol_version"
+   env <- asNamespace(name)
+   if (exists(rpv, envir = env, mode = "integer")) {
+      version <- get(rpv, envir = env)
+   } else {
+      version <- 0L
+   }
    if (needsUnloadAfter)
       unloadNamespace(name)
-   result
+   version
 })
 
 .rs.addFunction("rstudioIDEPackageRequiresUpdate", function(name, sha1) {
