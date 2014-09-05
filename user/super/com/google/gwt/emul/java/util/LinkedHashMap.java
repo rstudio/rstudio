@@ -128,14 +128,8 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
 
     @Override
     public boolean contains(Object o) {
-      if (!(o instanceof Map.Entry)) {
-        return false;
-      }
-      Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
-      Object key = entry.getKey();
-      if (LinkedHashMap.this.containsKey(key)) {
-        Object value = LinkedHashMap.this.get(key);
-        return Objects.equals(entry.getValue(), value);
+      if (o instanceof Map.Entry) {
+        return containsEntry((Map.Entry<?, ?>) o);
       }
       return false;
     }

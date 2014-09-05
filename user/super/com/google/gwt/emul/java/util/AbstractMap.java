@@ -113,6 +113,23 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return false;
   }
 
+  boolean containsEntry(Map.Entry<?, ?> entry) {
+    Object key = entry.getKey();
+    Object value = entry.getValue();
+    Object ourValue = get(key);
+
+    if (!Objects.equals(value, ourValue)) {
+      return false;
+    }
+
+    // Perhaps it was null and we don't contain the key?
+    if (ourValue == null && !containsKey(key)) {
+      return false;
+    }
+
+    return true;
+  }
+
   public abstract Set<Entry<K, V>> entrySet();
 
   @Override
@@ -129,12 +146,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     }
 
     for (Entry<?, ?> entry : otherMap.entrySet()) {
-      Object otherKey = entry.getKey();
-      Object otherValue = entry.getValue();
-      if (!containsKey(otherKey)) {
-        return false;
-      }
-      if (!Objects.equals(otherValue, get(otherKey))) {
+      if (!containsEntry(entry)) {
         return false;
       }
     }

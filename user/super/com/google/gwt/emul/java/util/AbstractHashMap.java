@@ -42,12 +42,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     @Override
     public boolean contains(Object o) {
       if (o instanceof Map.Entry) {
-        Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
-        Object key = entry.getKey();
-        if (AbstractHashMap.this.containsKey(key)) {
-          Object value = AbstractHashMap.this.get(key);
-          return AbstractHashMap.this.equals(entry.getValue(), value);
-        }
+        return containsEntry((Map.Entry<?, ?>) o);
       }
       return false;
     }

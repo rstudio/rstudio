@@ -37,12 +37,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
     @Override
     public boolean contains(Object o) {
       if (o instanceof Map.Entry) {
-        Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
-        Object key = entry.getKey();
-        if (EnumMap.this.containsKey(key)) {
-          Object value = EnumMap.this.get(key);
-          return Objects.equals(entry.getValue(), value);
-        }
+        return containsEntry((Map.Entry<?, ?>) o);
       }
       return false;
     }
