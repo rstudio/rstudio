@@ -875,6 +875,7 @@ public class GenerateJavaScriptAST {
       assert !program.immortalCodeGenTypes.contains(x);
       // Super classes should be emitted before the actual class.
       assert x.getSuperClass() == null || program.isReferenceOnly(x.getSuperClass()) ||
+          program.isJsTypePrototype(x.getSuperClass()) ||
           alreadyRan.contains(x.getSuperClass());
 
       alreadyRan.add(x);
@@ -1310,7 +1311,7 @@ public class GenerateJavaScriptAST {
          */
         JDeclaredType type = method.getEnclosingType();
         JDeclaredType clinitTarget = type.getClinitTarget();
-        if (clinitTarget == null) {
+        if (clinitTarget == null || program.isJsTypePrototype(clinitTarget)) {
           if (x.getInstance() != null) {
             pop(); // instance
           }
