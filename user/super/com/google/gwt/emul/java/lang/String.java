@@ -23,6 +23,7 @@ import com.google.gwt.core.client.impl.SpecializeMethod;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
+import java.util.Locale;
 
 /**
  * Intrinsic string class.
@@ -965,9 +966,49 @@ public final class String implements Comparable<String>, CharSequence,
     return charArr;
   }
 
+  /**
+   * Transforms the String to lower-case in a locale insensitive way.
+   * <p>
+   * Unlike JRE, we don't do locale specific transformation by default. That is backward compatible
+   * for GWT and in most of the cases that is what the developer actually wants. If you want to make
+   * a transformation based on native locale of the browser, you can do
+   * {@code toLowerCase(Locale.getDefault())} instead.
+   */
   public native String toLowerCase() /*-{
     return this.toLowerCase();
   }-*/;
+
+  /**
+   * Transforms the String to lower-case based on the native locale of the browser.
+   */
+  private native String toLocaleLowerCase() /*-{
+    return this.toLocaleLowerCase();
+  }-*/;
+
+  /**
+   * If provided {@code locale} is {@link Locale#getDefault()}, uses javascript's
+   * {@code toLocaleLowerCase} to do a locale specific transformation. Otherwise, it will fallback
+   * to {@code toLowerCase} which performs the right thing for the limited set of Locale's
+   * predefined in GWT Locale emulation.
+   */
+  public String toLowerCase(Locale locale) {
+    return locale == Locale.getDefault() ? toLocaleLowerCase() : toLowerCase();
+  }
+
+  // See the notes in lowerCase pair.
+  public native String toUpperCase() /*-{
+    return this.toUpperCase();
+  }-*/;
+
+  // See the notes in lowerCase pair.
+  private native String toLocaleUpperCase() /*-{
+    return this.toLocaleUpperCase();
+  }-*/;
+
+  // See the notes in lowerCase pair.
+  public String toUpperCase(Locale locale) {
+    return locale == Locale.getDefault() ? toLocaleUpperCase() : toUpperCase();
+  }
 
   @Override
   public String toString() {
@@ -977,10 +1018,6 @@ public final class String implements Comparable<String>, CharSequence,
      */
     return this;
   }
-
-  public native String toUpperCase() /*-{
-    return this.toUpperCase();
-  }-*/;
 
   public native String trim() /*-{
     if (this.length == 0 || (this[0] > '\u0020' && this[this.length - 1] > '\u0020')) {

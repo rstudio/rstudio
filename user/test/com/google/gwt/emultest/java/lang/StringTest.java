@@ -21,6 +21,7 @@ import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Locale;
 
 /**
  * TODO: COMPILER OPTIMIZATIONS HAVE MADE THIS TEST NOT ACTUALLY TEST ANYTHING!
@@ -453,9 +454,17 @@ public class StringTest extends GWTTestCase {
    * TODO: needs rewriting to avoid compiler optimizations.
    */
   public void testLowerCase() {
-    assertEquals("abc", StringCase.toLower("AbC"));
-    assertEquals("abc", StringCase.toLower("abc"));
-    assertEquals("", StringCase.toLower(""));
+    assertEquals("abc", "AbC".toLowerCase());
+    assertEquals("abc", "abc".toLowerCase());
+    assertEquals("", "".toLowerCase());
+
+    assertEquals("abc", "AbC".toLowerCase(Locale.US));
+    assertEquals("abc", "abc".toLowerCase(Locale.US));
+    assertEquals("", "".toLowerCase(Locale.US));
+
+    assertEquals("abc", "AbC".toLowerCase(Locale.getDefault()));
+    assertEquals("abc", "abc".toLowerCase(Locale.getDefault()));
+    assertEquals("", "".toLowerCase(Locale.getDefault()));
   }
 
   public void testMatch() {
@@ -705,9 +714,17 @@ public class StringTest extends GWTTestCase {
    * TODO: needs rewriting to avoid compiler optimizations.
    */
   public void testUpperCase() {
-    assertEquals("abc", StringCase.toLower("AbC"));
-    assertEquals("abc", StringCase.toLower("abc"));
-    assertEquals("", StringCase.toLower(""));
+    assertEquals("ABC", "AbC".toUpperCase());
+    assertEquals("ABC", "abc".toUpperCase());
+    assertEquals("", "".toUpperCase());
+
+    assertEquals("ABC", "AbC".toUpperCase(Locale.US));
+    assertEquals("ABC", "abc".toUpperCase(Locale.US));
+    assertEquals("", "".toUpperCase(Locale.US));
+
+    assertEquals("ABC", "AbC".toUpperCase(Locale.getDefault()));
+    assertEquals("ABC", "abc".toUpperCase(Locale.getDefault()));
+    assertEquals("", "".toUpperCase(Locale.getDefault()));
   }
 
   /*
