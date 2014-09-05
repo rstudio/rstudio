@@ -58,48 +58,19 @@ public class StorageMap extends AbstractMap<String, String> {
   /*
    * Represents a Map.Entry to a Storage item
    */
-  private class StorageEntry implements Map.Entry<String, String> {
-    private final String key;
-
+  private class StorageEntry extends SimpleEntry<String, String> {
     public StorageEntry(String key) {
-      this.key = key;
+      super(key, null);
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
-    public boolean equals(Object obj) {
-      if (obj == null) {
-        return false;
-      } else if (obj == this) {
-        return true;
-      } else if (!(obj instanceof Map.Entry)) {
-        return false;
-      }
-
-      Map.Entry e = (Map.Entry) obj;
-
-      return eq(key, e.getKey()) && eq(getValue(), e.getValue());
-    }
-
-    public String getKey() {
-      return key;
-    }
-
     public String getValue() {
-      return storage.getItem(key);
+      return get(getKey());
     }
 
     @Override
-    public int hashCode() {
-      String value = getValue();
-      return (key == null ? 0 : key.hashCode())
-          ^ (value == null ? 0 : value.hashCode());
-    }
-
     public String setValue(String value) {
-      String oldValue = storage.getItem(key);
-      storage.setItem(key, value);
-      return oldValue;
+      return put(getKey(), value);
     }
   }
 
