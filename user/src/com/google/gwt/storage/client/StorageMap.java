@@ -16,11 +16,14 @@
 
 package com.google.gwt.storage.client;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -44,11 +47,6 @@ import java.util.Set;
  * operate as intended;</li>
  * <li><em>No <code>null</code> values and keys</em> - The Storage doesn't
  * accept keys or values which are <code>null</code>;</li>
- * <li><em>JavaScriptException instead of NullPointerException</em> - Some Map
- * (or other Collection) methods mandate the use of a
- * {@link NullPointerException} if some argument is <code>null</code> (e.g.
- * {@link #remove(Object)} remove(null)). this Map emits
- * {@link com.google.gwt.core.client.JavaScriptException}s instead;</li>
  * <li><em>String values and keys</em> - All keys and values in this Map are
  * String types.</li>
  * </ol>
@@ -66,77 +64,72 @@ public class StorageMap extends AbstractMap<String, String> {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public boolean equals(Object obj) {
-      if (obj == null) {
-        return false;
-      } else if (obj == this) {
-        return true;
-      } else if (!(obj instanceof Map.Entry)) {
+      if (!(obj instanceof Map.Entry)) {
         return false;
       }
 
-      Map.Entry e = (Map.Entry) obj;
-
+      Map.Entry<?, ?> e = (Map.Entry<?, ?>) obj;
       return eq(key, e.getKey()) && eq(getValue(), e.getValue());
     }
 
+    @Override
     public String getKey() {
       return key;
     }
 
+    @Override
     public String getValue() {
-      return storage.getItem(key);
+      return get(key);
     }
 
     @Override
     public int hashCode() {
-      String value = getValue();
-      return (key == null ? 0 : key.hashCode())
-          ^ (value == null ? 0 : value.hashCode());
+      return hashCode(key) ^ hashCode(getValue());
     }
 
+    @Override
     public String setValue(String value) {
-      String oldValue = storage.getItem(key);
-      storage.setItem(key, value);
-      return oldValue;
+      return put(key, value);
+    }
+
+    // TODO: Use Objects.equals when GWT's source level >= 7.
+    private boolean eq(Object a, Object b) {
+      return (a == b) || (a != null && a.equals(b));
+    }
+
+    // TODO: Use Objects.hashCode when GWT's source level >= 7.
+    private int hashCode(Object o) {
+      return o != null ? o.hashCode() : 0;
     }
   }
 
   /*
    * Represents an Iterator over all Storage items
    */
-  private class StorageEntryIterator implements Iterator<
-      Map.Entry<String, String>> {
+  private class StorageEntryIterator implements Iterator<Map.Entry<String, String>> {
     private int index = -1;
-    private boolean removed = false;
+    private String lastKey;
 
+    @Override
     public boolean hasNext() {
       return index < size() - 1;
     }
 
+    @Override
     public Map.Entry<String, String> next() {
-      if (hasNext()) {
-        index++;
-        removed = false;
-        return new StorageEntry(storage.key(index));
-      }
-      throw new NoSuchElementException();
+      checkElement(hasNext());
+      index++;
+      lastKey = storage.key(index);
+      return new StorageEntry(lastKey);
     }
 
+    @Override
     public void remove() {
-      if (index >= 0 && index < size()) {
-        if (removed) {
-          throw new IllegalStateException(
-              "Cannot remove() Entry - already removed!");
-        }
-        storage.removeItem(storage.key(index));
-        removed = true;
-        index--;
-      } else {
-        throw new IllegalStateException(
-            "Cannot remove() Entry - index=" + index + ", size=" + size());
-      }
+      checkState(lastKey != null);
+      storage.removeItem(lastKey);
+      lastKey = null;
+      index--;
     }
   }
 
@@ -149,15 +142,15 @@ public class StorageMap extends AbstractMap<String, String> {
       StorageMap.this.clear();
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public boolean contains(Object o) {
-      if (o == null || !(o instanceof Map.Entry)) {
+      if (!(o instanceof Map.Entry)) {
         return false;
       }
-      Map.Entry e = (Map.Entry) o;
+      Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
       Object key = e.getKey();
-      return key != null && containsKey(key) && eq(get(key), e.getValue());
+      Object value = e.getValue();
+      return key != null && value != null && value.equals(get(key));
     }
 
     @Override
@@ -165,22 +158,13 @@ public class StorageMap extends AbstractMap<String, String> {
       return new StorageEntryIterator();
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public boolean remove(Object o) {
-      if (o == null || !(o instanceof Map.Entry)) {
+      if (!contains(o)) {
         return false;
       }
-      Map.Entry e = (Map.Entry) o;
-      if (e.getKey() == null) {
-        return false;
-      }
-      String key = e.getKey().toString();
-      String value = storage.getItem(key);
-      if (eq(value, e.getValue())) {
-        return StorageMap.this.remove(key) != null;
-      }
-      return false;
+      Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
+      return StorageMap.this.remove(entry.getKey()) != null;
     }
 
     @Override
@@ -189,8 +173,7 @@ public class StorageMap extends AbstractMap<String, String> {
     }
   }
 
-  private Storage storage;
-  private StorageEntrySet entrySet;
+  private final Storage storage;
 
   /**
    * Creates the Map with the specified Storage as data provider.
@@ -220,11 +203,7 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public boolean containsKey(Object key) {
-    if (key == null) {
-      throw new NullPointerException();
-    }
-
-    return storage.getItem(key.toString()) != null;
+    return get(key) != null;
   }
 
   /**
@@ -234,9 +213,7 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public boolean containsValue(Object value) {
-    if (value == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(value);
     int s = size();
     for (int i = 0; i < s; i++) {
       if (value.equals(storage.getItem(storage.key(i)))) {
@@ -251,10 +228,7 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public Set<Map.Entry<String, String>> entrySet() {
-    if (entrySet == null) {
-      entrySet = new StorageEntrySet();
-    }
-    return entrySet;
+    return new StorageEntrySet();
   }
 
   /**
@@ -265,9 +239,7 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public String get(Object key) {
-    if (key == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(key);
     return storage.getItem(key.toString());
   }
 
@@ -280,9 +252,8 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public String put(String key, String value) {
-    if (key == null || value == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(key);
+    checkNotNull(value);
     String old = storage.getItem(key);
     storage.setItem(key, value);
     return old;
@@ -298,10 +269,7 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public String remove(Object key) {
-    if (key == null) {
-      throw new NullPointerException();
-    }
-
+    checkNotNull(key);
     String k = key.toString();
     String old = storage.getItem(k);
     storage.removeItem(k);
@@ -317,15 +285,5 @@ public class StorageMap extends AbstractMap<String, String> {
   @Override
   public int size() {
     return storage.getLength();
-  }
-
-  private boolean eq(Object a, Object b) {
-    if (a == b) {
-      return true;
-    }
-    if (a == null) {
-      return false;
-    }
-    return a.equals(b);
   }
 }

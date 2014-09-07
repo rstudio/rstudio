@@ -19,7 +19,6 @@ package com.google.gwt.storage.client;
 import static java.util.Collections.singleton;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.testing.TestUtils;
 
@@ -717,21 +716,15 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
     final Entry<K, V> entryToAdd = mapEntry(null, null);
     try {
       entrySet.add(entryToAdd);
-      fail("Expected UnsupportedOperationException or JavaScriptException.");
-    } catch (UnsupportedOperationException e) {
-      // Expected.
-    } catch (JavaScriptException e) {
-      // Expected in GWT client.
+      fail("Expected UnsupportedOperationException.");
+    } catch (UnsupportedOperationException expected) {
     }
     assertInvariants(map);
 
     try {
       entrySet.addAll(singleton(entryToAdd));
-      fail("Expected UnsupportedOperationException or JavaScriptException.");
-    } catch (UnsupportedOperationException e) {
-      // Expected.
-    } catch (JavaScriptException e) {
-      // Expected in GWT client.
+      fail("Expected UnsupportedOperationException.");
+    } catch (UnsupportedOperationException expected) {
     }
     assertInvariants(map);
   }
