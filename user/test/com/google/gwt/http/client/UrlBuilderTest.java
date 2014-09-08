@@ -43,6 +43,16 @@ public class UrlBuilderTest extends GWTTestCase {
 
     builder = new UrlBuilder();
     builder.setHost("google.com");
+    builder.setPath("?not-query#not-hash");
+    builder.setParameter("not=value&not-next", "&not-next=pair");
+    builder.setParameter("#not-hash", "#not-hash");
+    builder.setHash("hash#in-hash");
+    assertEquals(
+        "http://google.com/%3Fnot-query%23not-hash?not%3Dvalue%26not-next=%26not-next%3Dpair&%23not-hash=%23not-hash#hash%23in-hash",
+        builder.buildString());
+
+    builder = new UrlBuilder();
+    builder.setHost("google.com");
     builder.setPath("path");
     builder.setHash("hash");
 
