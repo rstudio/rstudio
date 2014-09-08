@@ -82,9 +82,11 @@ public class Compiler {
    */
   public static UnitCache getOrCreateUnitCache(TreeLogger logger, CompilerOptions options) {
     File persistentUnitCacheDir = null;
-    if (options.getWarDir() != null && !options.getWarDir().getName().endsWith(".jar")) {
+    if (options.getWarDir() != null && options.getWarDir().isDirectory()) {
       persistentUnitCacheDir = new File(options.getWarDir(), "../");
     }
+    // TODO: returns the same UnitCache even if the passed directory changes. Make this less
+    // surprising.
     return UnitCacheSingleton.get(logger, persistentUnitCacheDir);
   }
 

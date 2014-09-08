@@ -189,7 +189,7 @@ class Recompiler {
 
     ModuleDef module = loadModule(compileLogger);
 
-    logger.log(TreeLogger.INFO, "Prebuilding/loading the compilation unit cache.");
+    logger.log(TreeLogger.INFO, "Loading Java files in " + inputModuleName + ".");
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).unitCache(
         Compiler.getOrCreateUnitCache(logger, loadOptions)).build();

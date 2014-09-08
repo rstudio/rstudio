@@ -91,6 +91,11 @@ public class Options {
       return false;
     }
 
+    if (compilePerFile && !noPrecompile) {
+      System.out.println("Turning off precompile in compilePerFile mode.");
+      noPrecompile = true;
+    }
+
     return true;
   }
 
