@@ -186,7 +186,7 @@ Error addCustomDictionary(const json::JsonRpcRequest& request,
    }
 
    // perform the add
-   using namespace rstudiorstudiocore::spelling;
+   using namespace rstudiocore::spelling;
    HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    error = dictManager.custom().add(dictPath);
    if (error)
@@ -210,7 +210,7 @@ Error removeCustomDictionary(const json::JsonRpcRequest& request,
       return error;
 
    // perform the remove
-   using namespace rstudiorstudiocore::spelling;
+   using namespace rstudiocore::spelling;
    HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    error = dictManager.custom().remove(name);
    if (error)
@@ -258,7 +258,7 @@ void onUserSettingsChanged()
 
 rstudiocore::json::Object spellingPrefsContextAsJson()
 {
-   using namespace rstudiorstudiocore::spelling;
+   using namespace rstudiocore::spelling;
 
    rstudiocore::json::Object contextJson;
 
@@ -297,7 +297,7 @@ Error initialize()
    r::routines::addCallMethod(methodDef);
 
    // initialize spelling engine
-   using namespace rstudiorstudiocore::spelling;
+   using namespace rstudiocore::spelling;
    HunspellSpellingEngine* pHunspell = new HunspellSpellingEngine(
                                              userSettings().spellingLanguage(),
                                              hunspellDictionaryManager(),

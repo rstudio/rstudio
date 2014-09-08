@@ -45,7 +45,7 @@ public:
       if (limitRpcClientUid != -1)
       {
          // always add current user
-         using namespace rstudiorstudiocore::system::user;
+         using namespace rstudiocore::system::user;
          permittedClients_.push_back(currentUserIdentity().userId);
 
          // also add rpc client

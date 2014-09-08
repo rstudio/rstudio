@@ -175,7 +175,7 @@ Error SessionManager::launchAndTrackSession(
                            const rstudiocore::r_util::SessionLaunchProfile& profile)
 {
    // if we are root then assume the identity of the user
-   using namespace rstudiorstudiocore::system;
+   using namespace rstudiocore::system;
    std::string runAsUser = realUserIsRoot() ? profile.username : "";
 
    // launch the session

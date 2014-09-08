@@ -65,7 +65,7 @@
 #include "session-config.h"
 
 using namespace rstudiocore;
-using namespace rstudiorstudiocore::shell_utils;
+using namespace rstudiocore::shell_utils;
 using session::console_process::ConsoleProcess;
 using namespace session::modules::vcs_utils;
 using session::modules::source_control::FileWithStatus;
@@ -271,7 +271,7 @@ protected:
                       std::string* pStdErr=NULL,
                       int* pExitCode=NULL)
    {
-      using namespace rstudiorstudiocore::system;
+      using namespace rstudiocore::system;
 
       ProcessResult result;
       Error error = gitExec(args, root_, &result);

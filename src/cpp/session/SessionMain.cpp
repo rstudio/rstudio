@@ -1473,7 +1473,7 @@ void registerGwtHandlers()
 Error registerSignalHandlers()
 {
    using boost::bind;
-   using namespace rstudiorstudiocore::system;
+   using namespace rstudiocore::system;
 
    // USR1 and USR2: perform suspend in server mode
    if (session::options().programMode() == kSessionProgramModeServer)
@@ -1548,7 +1548,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
    // execute core initialization functions
    using boost::bind;
-   using namespace rstudiorstudiocore::system;
+   using namespace rstudiocore::system;
    using namespace session::module_context;
    ExecBlock initialize ;
    initialize.addFunctions()

@@ -125,7 +125,7 @@ private:
 
    void start(const std::string& title, const FilePath& htmlFile, bool allowUpdate)
    {
-      using namespace rstudiorstudiocore::string_utils;
+      using namespace rstudiocore::string_utils;
       using namespace module_context;
 
       htmlFile_ = htmlFile;

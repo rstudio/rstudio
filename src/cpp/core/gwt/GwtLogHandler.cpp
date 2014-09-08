@@ -196,7 +196,7 @@ void handleLogMessageRequest(const std::string& username,
    }
    
    // convert level to appropriate enum and str
-   using namespace rstudiorstudiocore::system;
+   using namespace rstudiocore::system;
    LogLevel logLevel;
    std::string logLevelStr;
    switch(level)

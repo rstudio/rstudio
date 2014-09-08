@@ -147,7 +147,7 @@ std::vector<RVersion> enumerateRVersions(
    {
       if (!versionPath.isHidden() && (versionPath.filename() != "Current"))
       {
-         using namespace rstudiorstudiocore::system;
+         using namespace rstudiocore::system;
          rstudiocore::system::Options env;
          FilePath rHomePath = versionPath.childPath("Resources");
          FilePath rLibPath = rHomePath.childPath("lib");

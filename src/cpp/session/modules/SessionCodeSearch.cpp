@@ -111,7 +111,7 @@ public:
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
       // add all source files to the indexing queue
-      using namespace rstudiorstudiocore::system;
+      using namespace rstudiocore::system;
       for ( ; begin != end; ++begin)
       {
          if (isSourceFile(*begin))
@@ -320,7 +320,7 @@ private:
 
    bool dequeAndIndex()
    {
-      using namespace rstudiorstudiocore::system;
+      using namespace rstudiocore::system;
 
       if (!indexingQueue_.empty())
       {

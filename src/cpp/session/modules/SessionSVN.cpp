@@ -51,7 +51,7 @@
 #include "SessionGit.hpp"
 
 using namespace rstudiocore;
-using namespace rstudiorstudiocore::shell_utils;
+using namespace rstudiocore::shell_utils;
 using namespace session::modules::vcs_utils;
 using namespace session::console_process;
 

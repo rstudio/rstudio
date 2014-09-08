@@ -213,7 +213,7 @@ void enumProgramFiles(QList<RVersion>* pResults)
 
 void enumRegistry(Architecture architecture, QList<RVersion>* pResults)
 {
-   using namespace rstudiorstudiocore::system;
+   using namespace rstudiocore::system;
 
    REGSAM flags;
    switch (architecture)
@@ -295,7 +295,7 @@ QList<RVersion> allRVersions(QList<RVersion> versions)
 
 RVersion detectPreferredFromRegistry(Architecture architecture)
 {
-   using namespace rstudiorstudiocore::system;
+   using namespace rstudiocore::system;
 
    REGSAM flags;
    switch (architecture)

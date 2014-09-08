@@ -508,7 +508,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
 #ifdef RSTUDIO_SERVER
    // In server mode, passphrases are encrypted
-   using namespace rstudiorstudiocore::system::crypto;
+   using namespace rstudiocore::system::crypto;
    error = rsaPrivateDecrypt(passphrase, &passphrase);
    if (error)
       return error;

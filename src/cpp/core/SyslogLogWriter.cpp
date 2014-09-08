@@ -27,7 +27,7 @@ namespace {
 
 int logPriority(int logLevel)
 {
-   using namespace rstudiorstudiocore::system;
+   using namespace rstudiocore::system;
 
    // map universal log entry type to posix constant
    switch(logLevel)

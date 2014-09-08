@@ -99,7 +99,7 @@ Synctex::~Synctex()
 
 bool Synctex::parse(const FilePath& pdfPath)
 {
-   using namespace rstudiorstudiocore::string_utils;
+   using namespace rstudiocore::string_utils;
    pImpl_->pdfPath = pdfPath;
    std::string path = utf8ToSystem(pdfPath.absolutePath());
    std::string buildDir = utf8ToSystem(pdfPath.parent().absolutePath());

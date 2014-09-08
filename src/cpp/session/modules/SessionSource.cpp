@@ -423,7 +423,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
 Error saveDocumentDiff(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   using namespace rstudiorstudiocore::string_utils;
+   using namespace rstudiocore::string_utils;
 
    // unique id and jsonPath (can be null for auto-save)
    std::string id;

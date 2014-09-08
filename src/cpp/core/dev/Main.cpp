@@ -39,7 +39,7 @@ int test_main(int argc, char * argv[])
       if (error)
          LOG_ERROR(error);
 
-      using namespace rstudiorstudiocore::r_util;
+      using namespace rstudiocore::r_util;
 
       std::vector<RVersionNumber> vers;
       vers.push_back(RVersionNumber::parse("3.0"));

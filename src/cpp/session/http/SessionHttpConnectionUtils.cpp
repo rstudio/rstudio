@@ -185,7 +185,7 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
 
 bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
 {
-   using namespace rstudiorstudiocore::json;
+   using namespace rstudiocore::json;
    if (isMethod(ptrConnection, "suspend_session"))
    {
       bool force = false;
@@ -203,7 +203,7 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
       else
       {
          // send a signal to this process to suspend
-         using namespace rstudiorstudiocore::system;
+         using namespace rstudiocore::system;
          sendSignalToSelf(force ? SigUsr2 : SigUsr1);
 
          // send response
