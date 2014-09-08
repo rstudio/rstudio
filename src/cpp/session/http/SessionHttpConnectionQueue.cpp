@@ -21,7 +21,7 @@
 
 #include <core/http/Request.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {
 

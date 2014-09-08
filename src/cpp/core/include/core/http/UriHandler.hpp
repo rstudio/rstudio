@@ -23,7 +23,7 @@
 
 #include <core/http/Response.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 class Request;
@@ -84,7 +84,7 @@ inline void notFoundHandler(const Request& request, Response* pResponse)
 
    
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_URI_HANDLER_HPP
 

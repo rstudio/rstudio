@@ -18,7 +18,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
    class Settings;
@@ -34,19 +34,19 @@ namespace session {
 namespace module_context {
  
 // initialize
-core::Error initialize();
+rstudiocore::Error initialize();
       
 // suspend and resume
 
 void onSuspended(const r::session::RSuspendOptions& options,
-                 core::Settings* pPersistentState);
-void onResumed(const core::Settings& persistentState);
+                 rstudiocore::Settings* pPersistentState);
+void onResumed(const rstudiocore::Settings& persistentState);
 
 // notify of backgound processing
 void onBackgroundProcessing(bool isIdle);
 
 // source diagnostics
-core::FilePath sourceDiagnostics();
+rstudiocore::FilePath sourceDiagnostics();
 
 } // namespace module_context
 } // namespace session

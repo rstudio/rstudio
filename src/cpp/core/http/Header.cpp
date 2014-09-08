@@ -20,7 +20,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
    
 bool HeaderNamePredicate::operator()(const Header& header) const
@@ -95,4 +95,4 @@ void parseHeaders(std::istream& is, Headers* pHeaders)
 }   
    
 } // namespace http
-} // namespace core
+} // namespace rstudiocore

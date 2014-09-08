@@ -26,7 +26,7 @@
 
 #include "spirit/json_spirit.h"
 
-namespace core {
+namespace rstudiocore {
 namespace json {
 
 json_spirit::Value_type ObjectType = json_spirit::obj_type;
@@ -73,7 +73,7 @@ void writeFormatted(const Value& value, std::ostream& os)
 }   
    
 } // namespace json
-} // namespace core
+} // namespace rstudiocore
 
 
 

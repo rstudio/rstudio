@@ -16,7 +16,7 @@
 #ifndef SESSION_SHINY_APPS_HPP
 #define SESSION_SHINY_APPS_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace shiny_apps {
 
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace shiny_apps
 } // namespace modules

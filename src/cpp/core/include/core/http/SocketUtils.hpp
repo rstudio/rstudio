@@ -25,7 +25,7 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {  
 
 template <typename SocketService>
@@ -47,7 +47,7 @@ Error closeSocket(SocketService& socket)
    return Success() ; 
 }
 
-inline bool isConnectionTerminatedError(const core::Error& error)
+inline bool isConnectionTerminatedError(const rstudiocore::Error& error)
 {
    // look for errors that indicate the client closing the connection
    bool timedOut = error.code() == boost::asio::error::timed_out;
@@ -92,6 +92,6 @@ inline bool isConnectionUnavailableError(const Error& error)
 }
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_SOCKET_UTILS_HPP

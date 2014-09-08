@@ -25,7 +25,7 @@
 
 #include "SessionHttpConnectionListenerImpl.hpp"
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {
 
@@ -35,7 +35,7 @@ class LocalStreamHttpConnectionListener :
 {
 public:
    LocalStreamHttpConnectionListener(const FilePath& streamPath,
-                                     core::system::FileMode streamFileMode,
+                                     rstudiocore::system::FileMode streamFileMode,
                                      const std::string& secret,
                                      int limitRpcClientUid)
       : localStreamPath_(streamPath),
@@ -45,7 +45,7 @@ public:
       if (limitRpcClientUid != -1)
       {
          // always add current user
-         using namespace core::system::user;
+         using namespace rstudiorstudiocore::system::user;
          permittedClients_.push_back(currentUserIdentity().userId);
 
          // also add rpc client
@@ -74,8 +74,8 @@ private:
          int socket = ptrConnection->socket().native();
 
          // get client identity
-         core::system::user::UserIdentity userIdentity;
-         core::Error error = socketPeerIdentity(socket,&userIdentity);
+         rstudiocore::system::user::UserIdentity userIdentity;
+         rstudiocore::Error error = socketPeerIdentity(socket,&userIdentity);
          if (error)
          {
             LOG_ERROR(error);
@@ -120,8 +120,8 @@ protected:
    }
 
 private:
-   core::FilePath localStreamPath_;
-   core::system::FileMode streamFileMode_;
+   rstudiocore::FilePath localStreamPath_;
+   rstudiocore::system::FileMode streamFileMode_;
 
    // desktop shared secret
    std::string secret_;

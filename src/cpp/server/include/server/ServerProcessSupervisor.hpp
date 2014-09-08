@@ -28,14 +28,14 @@ namespace  core {
 namespace server {
 namespace process_supervisor {
 
-core::Error runProgram(
+rstudiocore::Error runProgram(
   const std::string& executable,
   const std::vector<std::string>& args,
   const std::string& input,
-  const core::system::ProcessOptions& options,
-  const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+  const rstudiocore::system::ProcessOptions& options,
+  const boost::function<void(const rstudiocore::system::ProcessResult&)>& onCompleted);
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace process_supervisor
 } // namespace server

@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -29,7 +29,7 @@ namespace presentation {
 namespace state {
 
 
-void init(const core::FilePath& filePath,
+void init(const rstudiocore::FilePath& filePath,
           const std::string& caption = "Presentation",
           bool isTutorial = false);
 void setSlideIndex(int index);
@@ -40,21 +40,21 @@ bool isActive();
 
 bool isTutorial();
 
-core::FilePath filePath();
+rstudiocore::FilePath filePath();
 
-core::FilePath directory();
+rstudiocore::FilePath directory();
 
-core::FilePath viewInBrowserPath();
+rstudiocore::FilePath viewInBrowserPath();
 
 void clear();
 
 
-core::json::Value asJson();
+rstudiocore::json::Value asJson();
 
 
 
-core::Error initialize();
-core::Error initializeOverlay();
+rstudiocore::Error initialize();
+rstudiocore::Error initializeOverlay();
 
 
 } // namespace state

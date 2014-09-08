@@ -16,7 +16,7 @@
 #ifndef SESSION_SESSION_FILES_QUOTAS_HPP
 #define SESSION_SESSION_FILES_QUOTAS_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -25,7 +25,7 @@ namespace modules {
 namespace files {
 namespace quotas {
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 void checkQuotaStatus();
    

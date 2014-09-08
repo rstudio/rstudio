@@ -26,7 +26,7 @@
 
 #include <session/SessionHttpConnection.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 

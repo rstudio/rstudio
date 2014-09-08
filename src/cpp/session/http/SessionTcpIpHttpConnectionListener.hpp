@@ -20,7 +20,7 @@
 #include "SessionHttpConnectionUtils.hpp"
 #include "SessionHttpConnectionListenerImpl.hpp"
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {
 

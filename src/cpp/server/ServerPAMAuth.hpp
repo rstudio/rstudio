@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -27,7 +27,7 @@ namespace pam_auth {
    
 bool pamLogin(const std::string& username, const std::string& password);
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace pam_auth
 } // namespace server

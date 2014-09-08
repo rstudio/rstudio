@@ -20,14 +20,14 @@
 
 #define kMinimalSuffix @"_minimal"
 
-using namespace core;
+using namespace rstudiocore;
 using namespace desktop;
 
 namespace {
    
 FilePath userHomePath()
 {
-   return core::system::userHomePath("R_USER|HOME");
+   return rstudiocore::system::userHomePath("R_USER|HOME");
 }
    
 NSString* createAliasedPath(NSString* path)
@@ -769,10 +769,10 @@ private:
    // append extra path entries to our path before launching
    if ([extraPathEntries length] > 0)
    {
-      std::string path = core::system::getenv("PATH");
+      std::string path = rstudiocore::system::getenv("PATH");
       std::string previousPath = path;
-      core::system::addToPath(&path, [extraPathEntries UTF8String]);
-      core::system::setenv("PATH", path);
+      rstudiocore::system::addToPath(&path, [extraPathEntries UTF8String]);
+      rstudiocore::system::setenv("PATH", path);
    }
    
    // call Terminal.app with an applescript that navigates it

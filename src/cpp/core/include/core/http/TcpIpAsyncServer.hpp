@@ -21,7 +21,7 @@
 #include <core/http/AsyncServerImpl.hpp>
 #include <core/http/TcpIpSocketUtils.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 class TcpIpAsyncServer : public AsyncServerImpl<boost::asio::ip::tcp>
@@ -41,7 +41,7 @@ public:
 };
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_TCP_IP_ASYNC_SERVER_HPP
 

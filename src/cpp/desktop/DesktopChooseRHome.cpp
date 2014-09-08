@@ -54,7 +54,7 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
     pOK_(NULL)
 {
     ui->setupUi(this);
-    if (!core::system::isWin64())
+    if (!rstudiocore::system::isWin64())
        ui->radioDefault64->setVisible(false);
 
     setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
@@ -98,7 +98,7 @@ void ChooseRHome::chooseOther()
 {
    if (lastDir_.isEmpty())
    {
-      lastDir_ = QString::fromLocal8Bit(core::system::getenv("ProgramFiles").c_str());
+      lastDir_ = QString::fromLocal8Bit(rstudiocore::system::getenv("ProgramFiles").c_str());
    }
 
    QString dir = QFileDialog::getExistingDirectory(

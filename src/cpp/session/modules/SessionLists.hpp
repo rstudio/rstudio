@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -26,9 +26,9 @@ namespace session {
 namespace modules { 
 namespace lists {
    
-core::json::Object allListsAsJson();
+rstudiocore::json::Object allListsAsJson();
 
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace lists
 } // namespace modules

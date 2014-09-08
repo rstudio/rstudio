@@ -28,7 +28,7 @@
 
 #include <core/StringUtils.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class FilePath;
 namespace http {
@@ -90,7 +90,7 @@ void handleSecureTemplateRequest(const std::string& username,
                                  http::Response* pResponse);
 
 } // namespace text
-} // namespace core
+} // namespace rstudiocore
 
 
 #endif // CORE_TEXT_TEMPLATE_FILTER_HPP

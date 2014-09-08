@@ -20,7 +20,7 @@
 
 // TODO: Implement ProcessOptions.workingDir for Windows
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace ssh {
@@ -35,12 +35,12 @@ void ProcessOptionsCreator::rmEnv(const std::string& name)
    env_.erase(name);
 }
 
-void ProcessOptionsCreator::addToPath(const core::FilePath& dir)
+void ProcessOptionsCreator::addToPath(const rstudiocore::FilePath& dir)
 {
    pathDirs_.push_back(dir);
 }
 
-void ProcessOptionsCreator::setWorkingDirectory(const core::FilePath& dir)
+void ProcessOptionsCreator::setWorkingDirectory(const rstudiocore::FilePath& dir)
 {
    workingDir_ = dir;
 }
@@ -50,25 +50,25 @@ void ProcessOptionsCreator::clearWorkingDirectory()
    workingDir_ = FilePath();
 }
 
-core::system::ProcessOptions ProcessOptionsCreator::processOptions() const
+rstudiocore::system::ProcessOptions ProcessOptionsCreator::processOptions() const
 {
-   core::system::ProcessOptions options = baseOptions_;
+   rstudiocore::system::ProcessOptions options = baseOptions_;
 
    // Set up environment
-   core::system::Options envOpts;
-   core::system::environment(&envOpts);
+   rstudiocore::system::Options envOpts;
+   rstudiocore::system::environment(&envOpts);
    typedef std::pair<std::string, std::string> StringPair;
    BOOST_FOREACH(StringPair var, env_)
    {
       if (var.second.empty())
-         core::system::unsetenv(&envOpts, var.first);
+         rstudiocore::system::unsetenv(&envOpts, var.first);
       else
-         core::system::setenv(&envOpts, var.first, var.second);
+         rstudiocore::system::setenv(&envOpts, var.first, var.second);
    }
 
    if (!pathDirs_.empty())
    {
-      std::string path = core::system::getenv(envOpts, "PATH");
+      std::string path = rstudiocore::system::getenv(envOpts, "PATH");
       BOOST_FOREACH(FilePath pathDir, pathDirs_)
       {
 #ifdef _WIN32
@@ -78,7 +78,7 @@ core::system::ProcessOptions ProcessOptionsCreator::processOptions() const
 #endif
          path += pathDir.absolutePathNative();
       }
-      core::system::setenv(&envOpts, "PATH", path);
+      rstudiocore::system::setenv(&envOpts, "PATH", path);
    }
 
    if (!workingDir_.empty())

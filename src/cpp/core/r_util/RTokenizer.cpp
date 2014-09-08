@@ -38,7 +38,7 @@
 #include <core/StringUtils.hpp>
 
 
-namespace core {
+namespace rstudiocore {
 namespace r_util {
 
 namespace {
@@ -368,6 +368,6 @@ RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 

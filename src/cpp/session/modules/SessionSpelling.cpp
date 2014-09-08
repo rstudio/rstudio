@@ -30,7 +30,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -39,7 +39,7 @@ namespace spelling {
 namespace {
 
 // underlying spelling engine
-boost::scoped_ptr<core::spelling::SpellingEngine> s_pSpellingEngine;
+boost::scoped_ptr<rstudiocore::spelling::SpellingEngine> s_pSpellingEngine;
 
 // R function for testing & debugging
 SEXP rs_checkSpelling(SEXP wordSEXP)
@@ -61,7 +61,7 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
 }
 
 
-json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
+json::Object dictionaryAsJson(const rstudiocore::spelling::HunspellDictionary& dict)
 {
    json::Object dictJson;
    dictJson["id"] = dict.id();
@@ -81,9 +81,9 @@ void syncSpellingEngineDictionaries()
 }
 
 
-core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
+rstudiocore::spelling::HunspellDictionaryManager hunspellDictionaryManager()
 {
-   core::spelling::HunspellDictionaryManager dictManager(
+   rstudiocore::spelling::HunspellDictionaryManager dictManager(
                                          options().hunspellDictionariesPath(),
                                          userDictionariesDir());
    return dictManager;
@@ -186,7 +186,7 @@ Error addCustomDictionary(const json::JsonRpcRequest& request,
    }
 
    // perform the add
-   using namespace core::spelling;
+   using namespace rstudiorstudiocore::spelling;
    HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    error = dictManager.custom().add(dictPath);
    if (error)
@@ -210,7 +210,7 @@ Error removeCustomDictionary(const json::JsonRpcRequest& request,
       return error;
 
    // perform the remove
-   using namespace core::spelling;
+   using namespace rstudiorstudiocore::spelling;
    HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    error = dictManager.custom().remove(name);
    if (error)
@@ -256,11 +256,11 @@ void onUserSettingsChanged()
 } // anonymous namespace
 
 
-core::json::Object spellingPrefsContextAsJson()
+rstudiocore::json::Object spellingPrefsContextAsJson()
 {
-   using namespace core::spelling;
+   using namespace rstudiorstudiocore::spelling;
 
-   core::json::Object contextJson;
+   rstudiocore::json::Object contextJson;
 
    HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    std::vector<HunspellDictionary> dictionaries;
@@ -268,10 +268,10 @@ core::json::Object spellingPrefsContextAsJson()
    if (error)
    {
       LOG_ERROR(error);
-      return core::json::Object();
+      return rstudiocore::json::Object();
    }
 
-   core::json::Array dictionariesJson;
+   rstudiocore::json::Array dictionariesJson;
    std::transform(dictionaries.begin(),
                   dictionaries.end(),
                   std::back_inserter(dictionariesJson),
@@ -279,7 +279,7 @@ core::json::Object spellingPrefsContextAsJson()
 
 
    std::vector<std::string> customDicts = dictManager.custom().dictionaries();
-   core::json::Array customDictsJson = json::toJsonArray(customDicts);
+   rstudiocore::json::Array customDictsJson = json::toJsonArray(customDicts);
 
    // return json
    contextJson["all_languages_installed"] = dictManager.allLanguagesInstalled();
@@ -297,7 +297,7 @@ Error initialize()
    r::routines::addCallMethod(methodDef);
 
    // initialize spelling engine
-   using namespace core::spelling;
+   using namespace rstudiorstudiocore::spelling;
    HunspellSpellingEngine* pHunspell = new HunspellSpellingEngine(
                                              userSettings().spellingLanguage(),
                                              hunspellDictionaryManager(),

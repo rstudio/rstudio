@@ -19,7 +19,7 @@
 #include <core/Error.hpp>
 #include <boost/function.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace parent_process_monitor {
 
 Error wrapFork(boost::function<void()> func);
@@ -34,6 +34,6 @@ enum ParentTermination {
 ParentTermination waitForParentTermination();
 
 } // namespace parent_process_monitor
-} // namespace core
+} // namespace rstudiocore
 
 #endif // PARENT_PROCESS_MONITOR_HPP

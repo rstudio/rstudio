@@ -27,14 +27,14 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 std::string stringifyStringPair(const std::pair<std::string,std::string>& pair)
 {
    return pair.first + "=\"" + string_utils::jsonLiteralEscape(pair.second) + "\"" ;
 }
 
-Error writeStringMapToFile(const core::FilePath& filePath,
+Error writeStringMapToFile(const rstudiocore::FilePath& filePath,
                            const std::map<std::string,std::string>& map)
 {
    return writeCollectionToFile<std::map<std::string,std::string> >(
@@ -74,7 +74,7 @@ ReadCollectionAction parseStringPair(
 }
 
 
-Error readStringMapFromFile(const core::FilePath& filePath,
+Error readStringMapFromFile(const rstudiocore::FilePath& filePath,
                             std::map<std::string,std::string>* pMap)
 {
    return readCollectionFromFile<std::map<std::string,std::string> >(
@@ -90,7 +90,7 @@ std::string stringifyString(const std::string& str)
 }
    
    
-Error writeStringVectorToFile(const core::FilePath& filePath,
+Error writeStringVectorToFile(const rstudiocore::FilePath& filePath,
                               const std::vector<std::string>& vector)
 {  
    return writeCollectionToFile<std::vector<std::string> >(filePath,
@@ -106,7 +106,7 @@ ReadCollectionAction parseString(const std::string& line, std::string* pStr)
    return ReadCollectionAddLine ;
 }
    
-Error readStringVectorFromFile(const core::FilePath& filePath,
+Error readStringVectorFromFile(const rstudiocore::FilePath& filePath,
                                std::vector<std::string>* pVector,
                                bool trimAndIgnoreBlankLines)
 {
@@ -256,5 +256,5 @@ bool stripBOM(std::string* pStr)
    return false;
 }
 
-} // namespace core
+} // namespace rstudiocore
 

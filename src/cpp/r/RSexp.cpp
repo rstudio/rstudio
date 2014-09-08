@@ -35,7 +35,7 @@
 #undef TRUE
 #undef FALSE
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace r {
    
@@ -271,7 +271,7 @@ void clearExternalPtr(SEXP extptr)
    R_ClearExternalPtr(extptr);
 }
 
-core::Error getNamedListSEXP(SEXP listSEXP,
+rstudiocore::Error getNamedListSEXP(SEXP listSEXP,
                              const std::string& name,
                              SEXP* pValueSEXP)
 {
@@ -281,12 +281,12 @@ core::Error getNamedListSEXP(SEXP listSEXP,
    {
       // get the appropriate value
       *pValueSEXP = VECTOR_ELT(listSEXP, valueIndex);
-      return core::Success();
+      return rstudiocore::Success();
    }
    else
    {
       // otherwise an error
-      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
+      rstudiocore::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
       error.addProperty("element", name);
       return error;
    }

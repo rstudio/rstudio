@@ -25,7 +25,7 @@
 
 #include "RSessionState.hpp"
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace r {
 namespace session {

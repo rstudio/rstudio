@@ -16,7 +16,7 @@
 
 #include "SlideMediaRenderer.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 

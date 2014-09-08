@@ -35,15 +35,15 @@ extern const char * const kSignOut;
 extern const char * const kRefreshCredentialsAndContinue;
 
 // functions which can be called on the handler directly
-std::string getUserIdentifier(const core::http::Request& request);
+std::string getUserIdentifier(const rstudiocore::http::Request& request);
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier);
 
-bool mainPageFilter(const core::http::Request& request,
-                    core::http::Response* pResponse);
+bool mainPageFilter(const rstudiocore::http::Request& request,
+                    rstudiocore::http::Response* pResponse);
 
-void signInThenContinue(const core::http::Request& request,
-                        core::http::Response* pResponse);
+void signInThenContinue(const rstudiocore::http::Request& request,
+                        rstudiocore::http::Response* pResponse);
 
 // Special uri handler which attempts to refresh the user's
 // credentials then continues on to the originally requested
@@ -51,26 +51,26 @@ void signInThenContinue(const core::http::Request& request,
 // auth back-end doesn't support this behavior then it should
 // redirect to the sign-in page
 void refreshCredentialsThenContinue(
-      boost::shared_ptr<core::http::AsyncConnection> pConnection);
+      boost::shared_ptr<rstudiocore::http::AsyncConnection> pConnection);
 
 
 // functions which must be provided by an auth handler
 struct Handler
 {
-   boost::function<std::string(const core::http::Request&)> getUserIdentifier;
+   boost::function<std::string(const rstudiocore::http::Request&)> getUserIdentifier;
    boost::function<std::string(const std::string&)>
                                                 userIdentifierToLocalUsername;
-   core::http::UriFilterFunction mainPageFilter;
-   core::http::UriHandlerFunction signInThenContinue;
-   core::http::AsyncUriHandlerFunction refreshCredentialsThenContinue;
-   core::http::AsyncUriHandlerFunction updateCredentials;
-   core::http::UriHandlerFunction signIn;
-   core::http::UriHandlerFunction signOut;
+   rstudiocore::http::UriFilterFunction mainPageFilter;
+   rstudiocore::http::UriHandlerFunction signInThenContinue;
+   rstudiocore::http::AsyncUriHandlerFunction refreshCredentialsThenContinue;
+   rstudiocore::http::AsyncUriHandlerFunction updateCredentials;
+   rstudiocore::http::UriHandlerFunction signIn;
+   rstudiocore::http::UriHandlerFunction signOut;
 
-   boost::function<void(const core::http::Request&,
+   boost::function<void(const rstudiocore::http::Request&,
                         const std::string&,
                         bool,
-                        core::http::Response*)> setSignInCookies;
+                        rstudiocore::http::Response*)> setSignInCookies;
 };
 
 // register the auth handler
@@ -81,14 +81,14 @@ bool isRegistered();
 
 // set sign in cookies
 bool canSetSignInCookies();
-void setSignInCookies(const core::http::Request& request,
+void setSignInCookies(const rstudiocore::http::Request& request,
                       const std::string& username,
                       bool persist,
-                      core::http::Response* pResponse);
+                      rstudiocore::http::Response* pResponse);
 
 // sign out
-void signOut(const core::http::Request& request,
-             core::http::Response* pResponse);
+void signOut(const rstudiocore::http::Request& request,
+             rstudiocore::http::Response* pResponse);
 
 } // namespace handler
 } // namespace auth

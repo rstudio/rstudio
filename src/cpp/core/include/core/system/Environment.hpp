@@ -20,7 +20,7 @@
 
 #include <core/system/Types.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 // NOTE: all environment variables are UTF8-encoded
@@ -82,6 +82,6 @@ void addToPath(Options* pEnvironment,
 bool parseEnvVar(const std::string envVar, Option* pEnvVar);
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_SYSTEM_ENVIRONMENT_HPP

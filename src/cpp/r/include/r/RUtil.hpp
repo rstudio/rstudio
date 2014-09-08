@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class FilePath;
    class Error;
 }
@@ -36,7 +36,7 @@ bool hasCapability(const std::string& capability);
 
 std::string rconsole2utf8(const std::string& encoded);
 
-core::Error iconvstr(const std::string& value,
+rstudiocore::Error iconvstr(const std::string& value,
                      const std::string& from,
                      const std::string& to,
                      bool allowSubstitution,

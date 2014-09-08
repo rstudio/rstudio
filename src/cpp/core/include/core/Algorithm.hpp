@@ -17,7 +17,7 @@
 #ifndef CORE_ALGORITHM_HPP
 #define CORE_ALGORITHM_HPP
 
-namespace core {
+namespace rstudiocore {
 namespace algorithm {
 
 template<typename InputIterator, typename OutputIterator, typename Predicate>
@@ -56,7 +56,7 @@ OutputIterator copy_transformed_if(InputIterator begin,
 
 
 } // namespace algorithm
-} // namespace core
+} // namespace rstudiocore
 
 
 #endif // CORE_ALGORITHM_HPP

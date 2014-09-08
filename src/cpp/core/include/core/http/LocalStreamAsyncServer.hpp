@@ -23,7 +23,7 @@
 
 #include <core/system/PosixUser.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 class LocalStreamAsyncServer
@@ -32,7 +32,7 @@ class LocalStreamAsyncServer
 public:
    LocalStreamAsyncServer(const std::string& serverName,
                           const std::string& baseUri,
-                          core::system::FileMode fileMode)
+                          rstudiocore::system::FileMode fileMode)
       : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri),
         fileMode_(fileMode)
    {
@@ -60,7 +60,7 @@ public:
    
    
 public:
-   Error init(const core::FilePath& localStreamPath)
+   Error init(const rstudiocore::FilePath& localStreamPath)
    {
       // set stream path
       localStreamPath_ = localStreamPath;
@@ -86,8 +86,8 @@ private:
                           http::Request* pRequest)
    {
       // get peer identity
-      core::system::user::UserIdentity peerIdentity;
-      Error error = core::system::user::socketPeerIdentity(pSocket->native(), 
+      rstudiocore::system::user::UserIdentity peerIdentity;
+      Error error = rstudiocore::system::user::socketPeerIdentity(pSocket->native(), 
                                                            &peerIdentity);
       if (error)
       {
@@ -114,13 +114,13 @@ private:
    }
    
 private:
-   core::system::FileMode fileMode_;
-   core::FilePath localStreamPath_;
+   rstudiocore::system::FileMode fileMode_;
+   rstudiocore::FilePath localStreamPath_;
 
 };
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
 

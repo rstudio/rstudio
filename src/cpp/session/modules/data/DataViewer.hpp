@@ -16,7 +16,7 @@
 #ifndef SESSION_DATA_VIEWER_HPP
 #define SESSION_DATA_VIEWER_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -25,7 +25,7 @@ namespace modules {
 namespace data {
 namespace viewer {
    
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace viewer
 } // namespace data

@@ -21,7 +21,7 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 namespace {
@@ -207,4 +207,4 @@ void PAM::close()
 }
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore

@@ -23,7 +23,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace core {
+namespace rstudiocore {
    
 class Error;
 
@@ -153,6 +153,6 @@ std::string pathAfterPrefix(const Request& request,
 } // namespace util
 
 } // namespace http
-} // namespace core 
+} // namespace rstudiocore 
 
 #endif // CORE_HTTP_UTIL_HPP

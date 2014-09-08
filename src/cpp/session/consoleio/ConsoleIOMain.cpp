@@ -25,7 +25,7 @@
 #include <core/BoostThread.hpp>
 #include <core/Error.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 HANDLE hSnapshotOutput;
 // Use this event to ensure that the transferConsoleOutToStdErr thread gets a

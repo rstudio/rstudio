@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 
@@ -29,6 +29,6 @@ Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol);
 Error closeLibrary(void* pLib);
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_SYSTEM_LIBRARY_LOADER_HPP

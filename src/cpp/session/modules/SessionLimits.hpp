@@ -16,7 +16,7 @@
 #ifndef SESSION_LIMITS_HPP
 #define SESSION_LIMITS_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace limits {
    
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace limits
 } // namespace modules

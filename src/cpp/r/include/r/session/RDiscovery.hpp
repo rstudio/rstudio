@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -31,7 +31,7 @@ struct RLocations
    std::string docPath;
 };
 
-core::Error discoverR(RLocations* pLocations);
+rstudiocore::Error discoverR(RLocations* pLocations);
 
 } // namespace session
 } // namespace r

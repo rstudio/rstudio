@@ -28,7 +28,7 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 class RegistryKey : boost::noncopyable
@@ -37,12 +37,12 @@ public:
     RegistryKey();
     virtual ~RegistryKey();
 
-    core::Error open(HKEY hKey, std::string subKey, REGSAM samDesired);
+    rstudiocore::Error open(HKEY hKey, std::string subKey, REGSAM samDesired);
     bool isOpen();
 
     HKEY handle();
 
-    core::Error getStringValue(std::string name, std::string* pValue);
+    rstudiocore::Error getStringValue(std::string name, std::string* pValue);
     std::string getStringValue(std::string name, std::string defaultValue);
 
     std::vector<std::string> keyNames();
@@ -52,6 +52,6 @@ private:
 };
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 #endif // REGISTRYKEY_HPP

@@ -70,7 +70,7 @@ extern "C" SA_TYPE SaveAction;
 // constants for graphics scratch subdirectory
 #define kGraphicsPath "graphics"
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace r {
 namespace session {
@@ -110,7 +110,7 @@ bool s_suppressOuput = false;
 
 FilePath rHistoryFilePath()
 {
-   std::string histFile = core::system::getenv("R_HISTFILE");
+   std::string histFile = rstudiocore::system::getenv("R_HISTFILE");
    boost::algorithm::trim(histFile);
    if (histFile.empty())
       histFile = ".Rhistory";
@@ -403,7 +403,7 @@ Error initialize()
    else
    {
       graphicsPath = r::session::utils::tempDir().complete(
-                              "rs-graphics-" + core::system::generateUuid());
+                              "rs-graphics-" + rstudiocore::system::generateUuid());
    }
 
    error = graphics::device::initialize(graphicsPath,
@@ -517,7 +517,7 @@ void rSuicide(const std::string& msg)
    {
       FilePath abendLogPath = s_options.logPath.complete(
                                                  "rsession_abort_msg.log");
-      Error error = core::writeStringToFile(abendLogPath, msg);
+      Error error = rstudiocore::writeStringToFile(abendLogPath, msg);
       if (error)
          LOG_ERROR(error);
    }
@@ -531,7 +531,7 @@ void rSuicide(const Error& error)
    // provide error message if the error was unexpected
    std::string msg;
    if (!error.expected())
-      msg = core::log::errorAsLogEntry(error);
+      msg = rstudiocore::log::errorAsLogEntry(error);
 
    rSuicide(msg);
 }
@@ -951,13 +951,13 @@ SEXP rs_browseURL(SEXP urlSEXP)
 
          // transform into FilePath
          std::string path = URL.substr(filePrefix.length());
-         path = core::http::util::urlDecode(path);
+         path = rstudiocore::http::util::urlDecode(path);
          FilePath filePath(r::util::fixPath(path));
 
          // sometimes R passes short paths (like for files within the
          // R home directory). Convert these to long paths
 #ifdef _WIN32
-         core::system::ensureLongPath(&filePath);
+         rstudiocore::system::ensureLongPath(&filePath);
 #endif
 
          // fire browseFile
@@ -984,7 +984,7 @@ SEXP rs_browseURL(SEXP urlSEXP)
 SEXP rs_createUUID()
 {
    r::sexp::Protect rProtect;
-   return r::sexp::create(core::system::generateUuid(false), &rProtect);
+   return r::sexp::create(rstudiocore::system::generateUuid(false), &rProtect);
 }
    
 SEXP rs_loadHistory(SEXP sFile)
@@ -1306,14 +1306,14 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
       return error;
 
    // R_HOME
-   core::system::setenv("R_HOME", rLocations.homePath);
+   rstudiocore::system::setenv("R_HOME", rLocations.homePath);
    
    // R_DOC_DIR (required by help-links.sh)
-   core::system::setenv("R_DOC_DIR", rLocations.docPath);
+   rstudiocore::system::setenv("R_DOC_DIR", rLocations.docPath);
 
    // R_LIBS_USER
    if (!s_options.rLibsUser.empty())
-      core::system::setenv("R_LIBS_USER", s_options.rLibsUser);
+      rstudiocore::system::setenv("R_LIBS_USER", s_options.rLibsUser);
    
    // set compatible graphics engine version
    int engineVersion = s_options.rCompatibleGraphicsEngineVersion;
@@ -1627,7 +1627,7 @@ bool isR3()
 
 bool isPackratModeOn()
 {
-   return !core::system::getenv("R_PACKRAT_MODE").empty();
+   return !rstudiocore::system::getenv("R_PACKRAT_MODE").empty();
 }
 
 bool isDefaultPrompt(const std::string& prompt)

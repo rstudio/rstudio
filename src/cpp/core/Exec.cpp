@@ -17,7 +17,7 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 ExecBlock& ExecBlock::add(Function function) 
 { 
@@ -42,7 +42,7 @@ Error ExecBlock::operator()() const
    return execute(); 
 }
    
-} // namespace core 
+} // namespace rstudiocore 
 
 
 

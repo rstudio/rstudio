@@ -26,20 +26,20 @@
 
 #include "config.h"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace {
 
 FilePath homePath()
 {
-   return core::system::userHomePath("R_USER|HOME");
+   return rstudiocore::system::userHomePath("R_USER|HOME");
 }
 
 // NOTE: this code is duplicated in diagnostics as well (and also in
 // SessionOptions.hpp although the code path isn't exactly the same)
 FilePath userLogPath()
 {
-   FilePath logPath = core::system::userSettingsPath(
+   FilePath logPath = rstudiocore::system::userSettingsPath(
          homePath(),
          "RStudio-Desktop"
          ).childPath("log");
@@ -56,7 +56,7 @@ void writeLogFile(const std::string& logFileName, std::ostream& ostr)
    if (logFilePath.exists())
    {
       std::string contents;
-      Error error = core::readStringFromFile(logFilePath, &contents);
+      Error error = rstudiocore::readStringFromFile(logFilePath, &contents);
       if (error)
          LOG_ERROR(error);
       if (contents.empty())
@@ -76,16 +76,16 @@ void writeLogFile(const std::string& logFileName, std::ostream& ostr)
 
 int main(int argc, char** argv)
 {
-  core::system::initializeStderrLog("rstudio-diagnostics",
-                                    core::system::kLogLevelWarning);
+  rstudiocore::system::initializeStderrLog("rstudio-diagnostics",
+                                    rstudiocore::system::kLogLevelWarning);
 
   // ignore SIGPIPE
-  Error error = core::system::ignoreSignal(core::system::SigPipe);
+  Error error = rstudiocore::system::ignoreSignal(rstudiocore::system::SigPipe);
   if (error)
      LOG_ERROR(error);
 
   writeLogFile("rdesktop.log", std::cout);
-  writeLogFile("rsession-" + core::system::username() + ".log", std::cout);
+  writeLogFile("rsession-" + rstudiocore::system::username() + ".log", std::cout);
 
   return EXIT_SUCCESS;
 }

@@ -23,7 +23,7 @@
 
 #include <core/spelling/HunspellCustomDictionaries.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 
@@ -83,7 +83,7 @@ public:
 
    bool allLanguagesInstalled() const { return allLanguagesDir().exists(); }
 
-   core::Error availableLanguages(
+   rstudiocore::Error availableLanguages(
                      std::vector<HunspellDictionary>* pDictionaries) const;
 
    HunspellDictionary dictionaryForLanguageId(const std::string& langId) const;
@@ -91,17 +91,17 @@ public:
    const HunspellCustomDictionaries& custom() const;
 
 private:
-   core::FilePath allLanguagesDir() const;
-   core::FilePath userLanguagesDir() const;
+   rstudiocore::FilePath allLanguagesDir() const;
+   rstudiocore::FilePath userLanguagesDir() const;
 
 private:
-   core::FilePath coreLanguagesDir_;
-   core::FilePath userDir_;
+   rstudiocore::FilePath coreLanguagesDir_;
+   rstudiocore::FilePath userDir_;
    HunspellCustomDictionaries customDicts_;
 };
 
 } // namespace spelling
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_SPELLING_HUNSPELL_DICTIONARY_MANAGER_HPP

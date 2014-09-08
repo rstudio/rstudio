@@ -27,7 +27,7 @@
 
 #define EX_CONTINUE 100
 
-namespace core {
+namespace rstudiocore {
 	class Error ;
    class Settings;
 } 
@@ -58,17 +58,17 @@ struct ROptions
          rProfileOnResume(false)
    {
    }
-   core::FilePath userHomePath;
-   core::FilePath userScratchPath;
-   core::FilePath scopedScratchPath;
-   core::FilePath logPath;
-   core::FilePath startupEnvironmentFilePath;
+   rstudiocore::FilePath userHomePath;
+   rstudiocore::FilePath userScratchPath;
+   rstudiocore::FilePath scopedScratchPath;
+   rstudiocore::FilePath logPath;
+   rstudiocore::FilePath startupEnvironmentFilePath;
    std::string sessionPort;
-   boost::function<core::Settings&()> persistentState;
-   boost::function<core::FilePath()> rEnvironmentDir;
-   boost::function<core::FilePath()> rHistoryDir;
+   boost::function<rstudiocore::Settings&()> persistentState;
+   boost::function<rstudiocore::FilePath()> rEnvironmentDir;
+   boost::function<rstudiocore::FilePath()> rHistoryDir;
    boost::function<bool()> alwaysSaveHistory;
-   core::FilePath rSourcePath;
+   rstudiocore::FilePath rSourcePath;
    std::string rLibsUser;
    std::string rCRANRepos;
    bool useInternet2;
@@ -116,16 +116,16 @@ extern const int kSerializationActionCompleted;
 struct RSuspendOptions;
 struct RCallbacks
 {
-   boost::function<core::Error(const RInitInfo&)> init ;
+   boost::function<rstudiocore::Error(const RInitInfo&)> init ;
    boost::function<bool(const std::string&,bool,RConsoleInput*)> consoleRead;
    boost::function<void(const std::string&)> browseURL;
-   boost::function<void(const core::FilePath&)> browseFile;
+   boost::function<void(const rstudiocore::FilePath&)> browseFile;
    boost::function<void(const std::string&)> showHelp;
-   boost::function<void(const std::string&, core::FilePath&, bool)> showFile;
+   boost::function<void(const std::string&, rstudiocore::FilePath&, bool)> showFile;
    boost::function<void(const std::string&, int)> consoleWrite;
    boost::function<void()> consoleHistoryReset;
    boost::function<bool(double*,double*)> locator;
-   boost::function<core::FilePath(bool)> chooseFile;
+   boost::function<rstudiocore::FilePath(bool)> chooseFile;
    boost::function<int(const std::string&)> editFile;
    boost::function<void(const std::string&)> showMessage ;
    boost::function<void(bool)> busy;
@@ -136,11 +136,11 @@ struct RCallbacks
    boost::function<void()> quit;
    boost::function<void(const std::string&)> suicide;
    boost::function<void(bool)> cleanup;
-   boost::function<void(int,const core::FilePath&)> serialization;
+   boost::function<void(int,const rstudiocore::FilePath&)> serialization;
 };
 
 // run the session   
-core::Error run(const ROptions& options, const RCallbacks& callbacks);
+rstudiocore::Error run(const ROptions& options, const RCallbacks& callbacks);
    
 // deferred deserialization of the session
 void ensureDeserialized();

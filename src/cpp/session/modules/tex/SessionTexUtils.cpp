@@ -27,7 +27,7 @@
 
 #include "SessionCompilePdfSupervisor.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -38,11 +38,11 @@ namespace {
 
 // this function attempts to emulate the behavior of tools::texi2dvi
 // in appending extra paths to TEXINPUTS, BIBINPUTS, & BSTINPUTS
-core::system::Option inputsEnvVar(const std::string& name,
+rstudiocore::system::Option inputsEnvVar(const std::string& name,
                                   const FilePath& extraPath,
                                   bool ensureForwardSlashes)
 {
-   std::string value = core::system::getenv(name);
+   std::string value = rstudiocore::system::getenv(name);
    if (value.empty())
       value = ".";
 
@@ -54,8 +54,8 @@ core::system::Option inputsEnvVar(const std::string& name,
 #endif
 
    std::string sysPath = string_utils::utf8ToSystem(extraPath.absolutePath());
-   core::system::addToPath(&value, sysPath);
-   core::system::addToPath(&value, ""); // trailing : required by tex
+   rstudiocore::system::addToPath(&value, sysPath);
+   rstudiocore::system::addToPath(&value, ""); // trailing : required by tex
 
    return std::make_pair(name, value);
 }
@@ -89,7 +89,7 @@ RTexmfPaths rTexmfPaths()
    FilePath rHomeSharePath(rHomeShare);
    if (!rHomeSharePath.exists())
    {
-      LOG_ERROR(core::pathNotFoundError(rHomeShare, ERROR_LOCATION));
+      LOG_ERROR(rstudiocore::pathNotFoundError(rHomeShare, ERROR_LOCATION));
       return RTexmfPaths();
    }
 
@@ -97,7 +97,7 @@ RTexmfPaths rTexmfPaths()
    FilePath rTexmfPath(rHomeSharePath.complete("texmf"));
    if (!rTexmfPath.exists())
    {
-      LOG_ERROR(core::pathNotFoundError(rTexmfPath.absolutePath(),
+      LOG_ERROR(rstudiocore::pathNotFoundError(rTexmfPath.absolutePath(),
                                         ERROR_LOCATION));
       return RTexmfPaths();
    }
@@ -113,9 +113,9 @@ RTexmfPaths rTexmfPaths()
 
 // build TEXINPUTS, BIBINPUTS etc. by composing any existing value in
 // the environment (or . if none) with the R dirs in share/texmf
-core::system::Options rTexInputsEnvVars()
+rstudiocore::system::Options rTexInputsEnvVars()
 {
-   core::system::Options envVars;
+   rstudiocore::system::Options envVars;
    RTexmfPaths texmfPaths = rTexmfPaths();
    if (!texmfPaths.empty())
    {
@@ -133,28 +133,28 @@ core::system::Options rTexInputsEnvVars()
 }
 
 Error runTexCompile(const FilePath& texProgramPath,
-                    const core::system::Options& envVars,
+                    const rstudiocore::system::Options& envVars,
                     const shell_utils::ShellArgs& args,
                     const FilePath& texFilePath,
-                    core::system::ProcessResult* pResult)
+                    rstudiocore::system::ProcessResult* pResult)
 {
    // copy extra environment variables
-   core::system::Options env;
-   core::system::environment(&env);
-   BOOST_FOREACH(const core::system::Option& var, envVars)
+   rstudiocore::system::Options env;
+   rstudiocore::system::environment(&env);
+   BOOST_FOREACH(const rstudiocore::system::Option& var, envVars)
    {
-      core::system::setenv(&env, var.first, var.second);
+      rstudiocore::system::setenv(&env, var.first, var.second);
    }
 
    // set options
-   core::system::ProcessOptions procOptions;
+   rstudiocore::system::ProcessOptions procOptions;
    procOptions.terminateChildren = true;
    procOptions.redirectStdErrToStdOut = true;
    procOptions.environment = env;
    procOptions.workingDir = texFilePath.parent();
 
    // run the program
-   return core::system::runProgram(
+   return rstudiocore::system::runProgram(
                string_utils::utf8ToSystem(texProgramPath.absolutePath()),
                buildArgs(args, texFilePath),
                "",
@@ -162,11 +162,11 @@ Error runTexCompile(const FilePath& texProgramPath,
                pResult);
 }
 
-core::Error runTexCompile(
-              const core::FilePath& texProgramPath,
-              const core::system::Options& envVars,
-              const core::shell_utils::ShellArgs& args,
-              const core::FilePath& texFilePath,
+rstudiocore::Error runTexCompile(
+              const rstudiocore::FilePath& texProgramPath,
+              const rstudiocore::system::Options& envVars,
+              const rstudiocore::shell_utils::ShellArgs& args,
+              const rstudiocore::FilePath& texFilePath,
               const boost::function<void(int,const std::string&)>& onExited)
 {
    return compile_pdf_supervisor::runProgram(

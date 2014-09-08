@@ -32,7 +32,7 @@ namespace ssh {
 class ProcessOptionsCreator
 {
 public:
-   ProcessOptionsCreator(core::system::ProcessOptions baseOptions)
+   ProcessOptionsCreator(rstudiocore::system::ProcessOptions baseOptions)
       : baseOptions_(baseOptions)
    {
    }
@@ -50,20 +50,20 @@ public:
    void rmEnv(const std::string& name);
 
    // Add a directory to the path of the child process
-   void addToPath(const core::FilePath& dir);
+   void addToPath(const rstudiocore::FilePath& dir);
 
-   void setWorkingDirectory(const core::FilePath& dir);
+   void setWorkingDirectory(const rstudiocore::FilePath& dir);
    void clearWorkingDirectory();
 
    // Create the actual ProcessOptions object from the state of this
    // object.
-   core::system::ProcessOptions processOptions() const;
+   rstudiocore::system::ProcessOptions processOptions() const;
 
 private:
-   core::system::ProcessOptions baseOptions_;
+   rstudiocore::system::ProcessOptions baseOptions_;
    std::map<std::string, std::string> env_;
-   std::vector<core::FilePath> pathDirs_;
-   core::FilePath workingDir_;
+   std::vector<rstudiocore::FilePath> pathDirs_;
+   rstudiocore::FilePath workingDir_;
 };
 
 } // namespace ssh

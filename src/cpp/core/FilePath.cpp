@@ -39,7 +39,7 @@
 
 typedef boost::filesystem::path path_t;
 
-namespace core {
+namespace rstudiocore {
 
 namespace {
 
@@ -159,7 +159,7 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
    // take the user home path from the system
    FilePath safePath = revertToPath;
    if (!safePath.exists())
-      safePath = core::system::userHomePath();
+      safePath = rstudiocore::system::userHomePath();
 
    Error error = safePath.makeCurrentPath();
    if (error)
@@ -1155,11 +1155,11 @@ bool RecursiveDirectoryIterator::finished() const
 namespace {
 void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
-              const core::ErrorLocation& errorLocation)
+              const rstudiocore::ErrorLocation& errorLocation)
 {
    Error error(e.code(), errorLocation) ;
    addErrorProperties(path, &error) ;
-   core::log::logError(error, errorLocation) ;
+   rstudiocore::log::logError(error, errorLocation) ;
 }
 
 void addErrorProperties(path_t path, Error* pError)
@@ -1168,4 +1168,4 @@ void addErrorProperties(path_t path, Error* pError)
 }
 }
 
-} // namespace core
+} // namespace rstudiocore

@@ -17,7 +17,7 @@
 #ifndef SESSION_ASYNC_R_PROCESS_HPP
 #define SESSION_ASYNC_R_PROCESS_HPP
 
-namespace core
+namespace rstudiocore
 {
    class FilePath;
 }
@@ -40,7 +40,7 @@ public:
    AsyncRProcess();
    virtual ~AsyncRProcess();
 
-   void start(const char* rCommand, const core::FilePath& workingDir,
+   void start(const char* rCommand, const rstudiocore::FilePath& workingDir,
               AsyncRProcessOptions rOptions);
    bool isRunning();
    void terminate();

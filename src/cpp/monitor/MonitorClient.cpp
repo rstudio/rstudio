@@ -21,7 +21,7 @@ namespace monitor {
 
 namespace {
 
-class MonitorLogWriter : public core::LogWriter
+class MonitorLogWriter : public rstudiocore::LogWriter
 {
 public:
    MonitorLogWriter(const std::string& programIdentity)
@@ -29,13 +29,13 @@ public:
    {
    }
 
-   virtual void log(core::system::LogLevel level, const std::string& message)
+   virtual void log(rstudiocore::system::LogLevel level, const std::string& message)
    {
       log(programIdentity_, level, message);
    }
 
    virtual void log(const std::string& programIdentity,
-                    core::system::LogLevel level,
+                    rstudiocore::system::LogLevel level,
                     const std::string& message)
    {
       client().logMessage(programIdentity, level, message);
@@ -51,10 +51,10 @@ Client* s_pClient = NULL;
 
 } // anonymous namespace
 
-boost::shared_ptr<core::LogWriter> Client::createLogWriter(
+boost::shared_ptr<rstudiocore::LogWriter> Client::createLogWriter(
                                     const std::string& programIdentity)
 {
-   return boost::shared_ptr<core::LogWriter>(
+   return boost::shared_ptr<rstudiocore::LogWriter>(
                                  new MonitorLogWriter(programIdentity));
 }
 

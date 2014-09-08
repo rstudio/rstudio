@@ -21,7 +21,7 @@
 
 #include "RGraphicsDevDesc.hpp"
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -47,7 +47,7 @@ struct DeviceContext
    void* pDeviceSpecific;
 
    // file info
-   core::FilePath targetPath;
+   rstudiocore::FilePath targetPath;
    int width;
    int height;
 
@@ -67,7 +67,7 @@ extern void (*setDeviceAttributes)(pDevDesc pDev);
 extern void (*onBeforeAddDevice)(DeviceContext* pDC);
 extern void (*onAfterAddDevice)(DeviceContext* pDC);
 
-extern core::Error (*writeToPNG)(const core::FilePath& targetPath,
+extern rstudiocore::Error (*writeToPNG)(const rstudiocore::FilePath& targetPath,
                                  DeviceContext* pDC);
 
 extern void (*circle)(double x,

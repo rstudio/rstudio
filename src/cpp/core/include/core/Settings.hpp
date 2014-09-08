@@ -24,7 +24,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error ;
 

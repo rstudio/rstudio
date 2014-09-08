@@ -24,7 +24,7 @@
 
 #include <core/ProgramStatus.hpp>
 
-namespace core {
+namespace rstudiocore {
    
 class Error;
 class ErrorLocation;
@@ -70,7 +70,7 @@ void reportWarnings(const std::string& warningMessages,
                     const ErrorLocation& location);
    
 } // namespace program_options
-} // namespace core 
+} // namespace rstudiocore 
 
 #endif // CORE_PROGRAM_OPTIONS_HPP
 

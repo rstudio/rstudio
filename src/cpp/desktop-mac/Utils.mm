@@ -12,7 +12,7 @@
 
 #import "Utils.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace desktop {
 namespace utils {
@@ -48,7 +48,7 @@ void initializeLang()
    // Next highest precedence: LANG environment variable.
    if (!lang)
    {
-      std::string envLang = core::system::getenv("LANG");
+      std::string envLang = rstudiocore::system::getenv("LANG");
       if (!envLang.empty())
       {
          lang = [NSString stringWithCString:envLang.c_str()
@@ -84,15 +84,15 @@ void initializeLang()
    }
    
    const char* clang = [lang cStringUsingEncoding:NSASCIIStringEncoding];
-   core::system::setenv("LANG", clang);
-   core::system::setenv("LC_CTYPE", clang);
+   rstudiocore::system::setenv("LANG", clang);
+   rstudiocore::system::setenv("LC_CTYPE", clang);
 }
  
 // PORT: from DesktopUtils.cpp
 FilePath userLogPath()
 {
-   FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
-   FilePath logPath = core::system::userSettingsPath(
+   FilePath userHomePath = rstudiocore::system::userHomePath("R_USER|HOME");
+   FilePath logPath = rstudiocore::system::userSettingsPath(
                                     userHomePath,
                                     "RStudio-Desktop").childPath("log");
    return logPath;
@@ -122,9 +122,9 @@ void browseURL(NSURL* nsurl)
    }
 }
    
-core::system::ProcessSupervisor& processSupervisor()
+rstudiocore::system::ProcessSupervisor& processSupervisor()
 {
-   static core::system::ProcessSupervisor instance;
+   static rstudiocore::system::ProcessSupervisor instance;
    return instance;
 }
    

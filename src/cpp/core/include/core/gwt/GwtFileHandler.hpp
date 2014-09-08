@@ -18,7 +18,7 @@
 
 #include <core/http/UriHandler.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace gwt {
       
 http::UriHandlerFunction fileHandlerFunction(
@@ -29,7 +29,7 @@ http::UriHandlerFunction fileHandlerFunction(
       bool useEmulatedStack = false);
    
 } // namespace gwt
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_GWT_FILE_HANDLER_HPP
 

@@ -46,7 +46,7 @@
 #include "SessionCompilePdfSupervisor.hpp"
 #include "SessionViewPdf.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -253,7 +253,7 @@ void enqueErrorsEvent(const json::Array& logEntriesJson)
 }
 
 // NOTE: sync changes with SessionBuildErrors.cpp compileErrorJson
-json::Object logEntryJson(const core::tex::LogEntry& logEntry)
+json::Object logEntryJson(const rstudiocore::tex::LogEntry& logEntry)
 {
    json::Object obj;
    obj["type"] = static_cast<int>(logEntry.type());
@@ -267,38 +267,38 @@ json::Object logEntryJson(const core::tex::LogEntry& logEntry)
    return obj;
 }
 
-void showLogEntries(const core::tex::LogEntries& logEntries,
+void showLogEntries(const rstudiocore::tex::LogEntries& logEntries,
                     const rnw_concordance::Concordances& rnwConcordances =
                                              rnw_concordance::Concordances())
 {
    json::Array logEntriesJson;
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   BOOST_FOREACH(const rstudiocore::tex::LogEntry& logEntry, logEntries)
    {
       using namespace tex::rnw_concordance;
-      core::tex::LogEntry rnwEntry = rnwConcordances.fixup(logEntry);
+      rstudiocore::tex::LogEntry rnwEntry = rnwConcordances.fixup(logEntry);
       logEntriesJson.push_back(logEntryJson(rnwEntry));
    }
 
    enqueErrorsEvent(logEntriesJson);
 }
 
-void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
+void writeLogEntriesOutput(const rstudiocore::tex::LogEntries& logEntries)
 {
    if (logEntries.empty())
       return;
 
    std::string output = "\n";
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   BOOST_FOREACH(const rstudiocore::tex::LogEntry& logEntry, logEntries)
    {
       switch(logEntry.type())
       {
-         case core::tex::LogEntry::Error:
+         case rstudiocore::tex::LogEntry::Error:
             output += "Error: ";
             break;
-         case core::tex::LogEntry::Warning:
+         case rstudiocore::tex::LogEntry::Warning:
             output += "Warning: ";
             break;
-         case core::tex::LogEntry::Box:
+         case rstudiocore::tex::LogEntry::Box:
             output += "Bad Box: ";
             break;
       }
@@ -317,36 +317,36 @@ void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
 }
 
 
-bool includeLogEntry(const core::tex::LogEntry& logEntry)
+bool includeLogEntry(const rstudiocore::tex::LogEntry& logEntry)
 {
    return true;
 }
 
 // filter out log entries which we view as superflous or distracting
-void filterLatexLog(const core::tex::LogEntries& logEntries,
-                    core::tex::LogEntries* pFilteredLogEntries)
+void filterLatexLog(const rstudiocore::tex::LogEntries& logEntries,
+                    rstudiocore::tex::LogEntries* pFilteredLogEntries)
 {
-   core::algorithm::copy_if(logEntries.begin(),
+   rstudiocore::algorithm::copy_if(logEntries.begin(),
                             logEntries.end(),
                             std::back_inserter(*pFilteredLogEntries),
                             includeLogEntry);
 }
 
-bool isLogEntryFromTargetFile(const core::tex::LogEntry& logEntry,
+bool isLogEntryFromTargetFile(const rstudiocore::tex::LogEntry& logEntry,
                               const FilePath& texPath)
 {
    return logEntry.filePath() == texPath;
 }
 
 void getLogEntries(const FilePath& texPath,
-                   core::tex::LogEntries* pLogEntries)
+                   rstudiocore::tex::LogEntries* pLogEntries)
 {
    // latex log file
    FilePath logPath = ancillaryFilePath(texPath, ".log");
    if (logPath.exists())
    {
-      core::tex::LogEntries logEntries;
-      Error error = core::tex::parseLatexLog(logPath, &logEntries);
+      rstudiocore::tex::LogEntries logEntries;
+      Error error = rstudiocore::tex::parseLatexLog(logPath, &logEntries);
       if (error)
          LOG_ERROR(error);
 
@@ -360,11 +360,11 @@ void getLogEntries(const FilePath& texPath,
    }
 
    // bibtex log file
-   core::tex::LogEntries bibtexLogEntries;
+   rstudiocore::tex::LogEntries bibtexLogEntries;
    logPath = ancillaryFilePath(texPath, ".blg");
    if (logPath.exists())
    {
-      Error error = core::tex::parseBibtexLog(logPath, &bibtexLogEntries);
+      Error error = rstudiocore::tex::parseBibtexLog(logPath, &bibtexLogEntries);
       if (error)
          LOG_ERROR(error);
    }
@@ -391,20 +391,20 @@ void removeExistingLatexAncillaryFiles(const FilePath& texFilePath)
    removeExistingAncillary(texFilePath, ".synctex.gz");
  }
 
-std::string buildIssuesMessage(const core::tex::LogEntries& logEntries)
+std::string buildIssuesMessage(const rstudiocore::tex::LogEntries& logEntries)
 {
    if (logEntries.empty())
       return std::string();
 
    // count error types
    int errors = 0, warnings = 0, badBoxes = 0;
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   BOOST_FOREACH(const rstudiocore::tex::LogEntry& logEntry, logEntries)
    {
-      if (logEntry.type() == core::tex::LogEntry::Error)
+      if (logEntry.type() == rstudiocore::tex::LogEntry::Error)
          errors++;
-      else if (logEntry.type() == core::tex::LogEntry::Warning)
+      else if (logEntry.type() == rstudiocore::tex::LogEntry::Warning)
          warnings++;
-      else if (logEntry.type() == core::tex::LogEntry::Box)
+      else if (logEntry.type() == rstudiocore::tex::LogEntry::Box)
          badBoxes++;
    }
 
@@ -472,9 +472,9 @@ public:
    }
 
    void preserveLogReferencedFiles(
-               const core::tex::LogEntries& logEntries)
+               const rstudiocore::tex::LogEntries& logEntries)
    {
-      BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+      BOOST_FOREACH(const rstudiocore::tex::LogEntry& logEntry, logEntries)
       {
          logRefFiles_.insert(logEntry.filePath());
       }
@@ -562,7 +562,7 @@ private:
    {
       if (targetFilePath_.exists())
       {
-         Error error = core::system::realPath(targetFilePath_, &targetFilePath_);
+         Error error = rstudiocore::system::realPath(targetFilePath_, &targetFilePath_);
          if (error)
             LOG_ERROR(error);
       }
@@ -591,7 +591,7 @@ private:
       }
 
       // parse magic comments
-      Error error = core::tex::parseMagicComments(targetFilePath_,
+      Error error = rstudiocore::tex::parseMagicComments(targetFilePath_,
                                                   &magicComments_);
       if (error)
          LOG_ERROR(error);
@@ -654,12 +654,12 @@ private:
       options.shellEscape = userSettings().enableLaTeXShellEscape();
 
       // get back-end version info
-      core::system::ProcessResult result;
-      Error error = core::system::runProgram(
+      rstudiocore::system::ProcessResult result;
+      Error error = rstudiocore::system::runProgram(
                   string_utils::utf8ToSystem(texProgramPath_.absolutePath()),
-                  core::shell_utils::ShellArgs() << "--version",
+                  rstudiocore::shell_utils::ShellArgs() << "--version",
                   "",
-                  core::system::ProcessOptions(),
+                  rstudiocore::system::ProcessOptions(),
                   &result);
       if (error)
          LOG_ERROR(error);
@@ -724,7 +724,7 @@ private:
                                 const rnw_concordance::Concordances& concords)
    {
       // collect errors from the log
-      core::tex::LogEntries logEntries;
+      rstudiocore::tex::LogEntries logEntries;
       getLogEntries(texFilePath, &logEntries);
 
       // determine whether they will be shown in the list
@@ -797,7 +797,7 @@ private:
       enqueCompletedWithFailureEvent(targetFilePath_, sourceLocation_);
    }
 
-   void terminateWithErrorLogEntries(const core::tex::LogEntries& logEntries)
+   void terminateWithErrorLogEntries(const rstudiocore::tex::LogEntries& logEntries)
    {
       showLogEntries(logEntries);
       enqueCompletedWithFailureEvent(targetFilePath_, sourceLocation_);
@@ -813,7 +813,7 @@ private:
    std::string encoding_;
    json::Object sourceLocation_;
    const boost::function<void()> onCompleted_;
-   core::tex::TexMagicComments magicComments_;
+   rstudiocore::tex::TexMagicComments magicComments_;
    FilePath texProgramPath_;
    AuxillaryFileCleanupContext auxillaryFileCleanupContext_;
 };
@@ -822,7 +822,7 @@ private:
 } // anonymous namespace
 
 
-bool startCompile(const core::FilePath& targetFilePath,
+bool startCompile(const rstudiocore::FilePath& targetFilePath,
                   const std::string& encoding,
                   const json::Object& sourceLocation,
                   const boost::function<void()>& onCompleted)

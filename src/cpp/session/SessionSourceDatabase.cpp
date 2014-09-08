@@ -54,7 +54,7 @@
 // One way to overcome this might be to use filesystem metadata to store
 // properties rather than a side-database
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace source_database {
@@ -321,7 +321,7 @@ void SourceDocument::checkForExternalEdit(std::time_t* pTime)
    if (lastKnownWriteTime_ == 0)
       return;
 
-   core::FilePath filePath = module_context::resolveAliasedPath(path_);
+   rstudiocore::FilePath filePath = module_context::resolveAliasedPath(path_);
    if (!filePath.exists())
       return;
 
@@ -336,7 +336,7 @@ void SourceDocument::updateLastKnownWriteTime()
    if (path_.empty())
       return;
 
-   core::FilePath filePath = module_context::resolveAliasedPath(path_);
+   rstudiocore::FilePath filePath = module_context::resolveAliasedPath(path_);
    if (!filePath.exists())
       return;
 

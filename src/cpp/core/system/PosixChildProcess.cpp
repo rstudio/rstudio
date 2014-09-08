@@ -43,7 +43,7 @@
 
 #include "ChildProcess.hpp"
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 namespace {
@@ -465,7 +465,7 @@ Error ChildProcess::run()
       }
 
       // clear the child signal mask
-      Error error = core::system::clearSignalMask();
+      Error error = rstudiocore::system::clearSignalMask();
       if (error)
       {
          LOG_ERROR(error);
@@ -524,7 +524,7 @@ Error ChildProcess::run()
       }
 
       // close all open file descriptors other than std streams
-      error = core::system::closeNonStdFileDescriptors();
+      error = rstudiocore::system::closeNonStdFileDescriptors();
       if (error)
       {
          LOG_ERROR(error);
@@ -544,7 +544,7 @@ Error ChildProcess::run()
       std::vector<std::string> args;
       args.push_back(exe_);
       args.insert(args.end(), args_.begin(), args_.end());
-      using core::system::ProcessArgs;
+      using rstudiocore::system::ProcessArgs;
       ProcessArgs* pProcessArgs = new ProcessArgs(args);
 
       if (options_.environment)
@@ -819,5 +819,5 @@ bool AsyncChildProcess::exited()
 }
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 

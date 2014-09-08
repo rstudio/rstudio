@@ -28,7 +28,7 @@
 
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 namespace {
@@ -155,7 +155,7 @@ Error captureStandardStreams(
    {
       // block all signals for launch of background thread (will cause it
       // to never receive signals)
-      core::system::SignalBlocker signalBlocker;
+      rstudiocore::system::SignalBlocker signalBlocker;
       Error error = signalBlocker.blockAll();
       if (error)
          LOG_ERROR(error);
@@ -175,5 +175,5 @@ Error captureStandardStreams(
 }
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 

@@ -19,7 +19,7 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace scope {
 
 template <class T>
@@ -66,7 +66,7 @@ private:
 };
 
 } // namespace scope
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_SCOPE_HPP

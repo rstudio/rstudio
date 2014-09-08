@@ -35,9 +35,9 @@
 
 #include <core/http/SocketUtils.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 void SocketProxy::readClient()
@@ -145,13 +145,13 @@ void SocketProxy::handleServerWrite(const boost::system::error_code& e,
 namespace {
 
 #ifndef _WIN32
-bool isSslShutdownError(const core::Error& error)
+bool isSslShutdownError(const rstudiocore::Error& error)
 {
    return error.code().category() == boost::asio::error::get_ssl_category() &&
           error.code().value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
 }
 #else
-bool isSslShutdownError(const core::Error& error)
+bool isSslShutdownError(const rstudiocore::Error& error)
 {
    return false;
 }
@@ -159,7 +159,7 @@ bool isSslShutdownError(const core::Error& error)
 } // anonymous namespace
 
 void SocketProxy::handleError(const boost::system::error_code& e,
-                              const core::ErrorLocation& location)
+                              const rstudiocore::ErrorLocation& location)
 {
    // log the error if it wasn't connection terminated
    Error error(e, location);
@@ -180,4 +180,4 @@ void SocketProxy::close()
 }
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore

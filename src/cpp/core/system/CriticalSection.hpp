@@ -20,7 +20,7 @@
 
 #include <windows.h>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 // critical section wrapper
@@ -71,7 +71,7 @@ private:
 
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 #endif // _WIN32
 

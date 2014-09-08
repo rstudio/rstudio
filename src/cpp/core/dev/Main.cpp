@@ -25,21 +25,21 @@
 #include <core/r_util/RVersionInfo.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 int test_main(int argc, char * argv[])
 {
    try
    { 
       // setup log
-      initializeStderrLog("coredev", core::system::kLogLevelWarning);
+      initializeStderrLog("coredev", rstudiocore::system::kLogLevelWarning);
 
       // ignore sigpipe
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      Error error = rstudiocore::system::ignoreSignal(rstudiocore::system::SigPipe);
       if (error)
          LOG_ERROR(error);
 
-      using namespace core::r_util;
+      using namespace rstudiorstudiocore::r_util;
 
       std::vector<RVersionNumber> vers;
       vers.push_back(RVersionNumber::parse("3.0"));

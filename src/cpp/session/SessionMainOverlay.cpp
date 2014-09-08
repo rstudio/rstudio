@@ -15,7 +15,7 @@
 
 #include <core/Error.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {
 namespace overlay {

@@ -20,7 +20,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -30,9 +30,9 @@ namespace modules {
 namespace tex {
 namespace compile_pdf {
 
-bool startCompile(const core::FilePath& targetFilePath,
+bool startCompile(const rstudiocore::FilePath& targetFilePath,
                   const std::string& encoding,
-                  const core::json::Object& sourceLocation,
+                  const rstudiocore::json::Object& sourceLocation,
                   const boost::function<void()>& onCompleted);
 
 bool compileIsRunning();
@@ -41,9 +41,9 @@ bool terminateCompile();
 
 void notifyTabClosed();
 
-core::json::Object currentStateAsJson();
+rstudiocore::json::Object currentStateAsJson();
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace compile_pdf
 } // namespace tex

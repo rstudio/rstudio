@@ -31,7 +31,7 @@
 #define KEY_WOW64_64KEY 0x0100
 #endif
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace desktop {
 
@@ -213,7 +213,7 @@ void enumProgramFiles(QList<RVersion>* pResults)
 
 void enumRegistry(Architecture architecture, QList<RVersion>* pResults)
 {
-   using namespace core::system;
+   using namespace rstudiorstudiocore::system;
 
    REGSAM flags;
    switch (architecture)
@@ -261,7 +261,7 @@ void enumRegistry(Architecture architecture, QList<RVersion>* pResults)
 void enumRegistry(QList<RVersion>* pResults)
 {
    enumRegistry(ArchX86, pResults);
-   if (core::system::isWin64())
+   if (rstudiocore::system::isWin64())
       enumRegistry(ArchX64, pResults);
 }
 
@@ -295,7 +295,7 @@ QList<RVersion> allRVersions(QList<RVersion> versions)
 
 RVersion detectPreferredFromRegistry(Architecture architecture)
 {
-   using namespace core::system;
+   using namespace rstudiorstudiocore::system;
 
    REGSAM flags;
    switch (architecture)
@@ -496,7 +496,7 @@ QString RVersion::description() const
 {
    QString result;
 
-   if (core::system::isWin64())
+   if (rstudiocore::system::isWin64())
    {
       if (architecture() == ArchX64)
          result.append(QString::fromUtf8("[64-bit] "));

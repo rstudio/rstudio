@@ -16,7 +16,7 @@
 #ifndef SESSION_HELP_HPP
 #define SESSION_HELP_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace help {
    
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace help
 } // namespace modules

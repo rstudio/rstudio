@@ -26,14 +26,14 @@
 #include <core/Error.hpp>
 #include <core/http/Socket.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 class SocketProxy : public boost::enable_shared_from_this<SocketProxy>
 {
 public:
-   static void create(boost::shared_ptr<core::http::Socket> ptrClient,
-                      boost::shared_ptr<core::http::Socket> ptrServer)
+   static void create(boost::shared_ptr<rstudiocore::http::Socket> ptrClient,
+                      boost::shared_ptr<rstudiocore::http::Socket> ptrServer)
    {
       boost::shared_ptr<SocketProxy> pProxy(new SocketProxy(ptrClient,
                                                             ptrServer));
@@ -42,8 +42,8 @@ public:
    }
 
 private:
-   SocketProxy(boost::shared_ptr<core::http::Socket> ptrClient,
-               boost::shared_ptr<core::http::Socket> ptrServer)
+   SocketProxy(boost::shared_ptr<rstudiocore::http::Socket> ptrClient,
+               boost::shared_ptr<rstudiocore::http::Socket> ptrServer)
       : ptrClient_(ptrClient), ptrServer_(ptrServer)
    {
    }
@@ -60,20 +60,20 @@ private:
    void handleServerWrite(const boost::system::error_code& e,
                           std::size_t bytesTransferred);
    void handleError(const boost::system::error_code& e,
-                    const core::ErrorLocation& location);
+                    const rstudiocore::ErrorLocation& location);
 
    void close();
 
 private:
-   boost::shared_ptr<core::http::Socket> ptrClient_;
-   boost::shared_ptr<core::http::Socket> ptrServer_;
+   boost::shared_ptr<rstudiocore::http::Socket> ptrClient_;
+   boost::shared_ptr<rstudiocore::http::Socket> ptrServer_;
    boost::array<char, 8192> clientBuffer_;
    boost::array<char, 8192> serverBuffer_;
    boost::mutex socketMutex_;
 };
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_SOCKET_PROXY_HPP
 

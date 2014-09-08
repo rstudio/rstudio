@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -26,7 +26,7 @@ namespace session {
 namespace modules {      
 namespace data {
 
-core::Error initialize();
+rstudiocore::Error initialize();
    
 } // namespace data
 } // namepace handlers

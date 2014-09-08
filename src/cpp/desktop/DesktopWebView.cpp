@@ -38,7 +38,7 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
     dpiZoomScaling_(getDpiZoomScaling())
 {
 #ifdef Q_WS_X11
-   if (!core::system::getenv("KDE_FULL_SESSION").empty())
+   if (!rstudiocore::system::getenv("KDE_FULL_SESSION").empty())
       setStyle(new QPlastiqueStyle());
 #endif
    pWebPage_ = new WebPage(baseUrl, this);
@@ -191,7 +191,7 @@ void WebView::unsupportedContent(QNetworkReply* pReply)
    if (contentType.contains(QRegExp(QString::fromAscii("^\\s*application/pdf($|;)"),
                                     Qt::CaseInsensitive)))
    {
-      core::FilePath dir(options().scratchTempDir());
+      rstudiocore::FilePath dir(options().scratchTempDir());
 
       QTemporaryFile pdfFile(QString::fromUtf8(
             dir.childPath("rstudio-XXXXXX.pdf").absolutePath().c_str()));

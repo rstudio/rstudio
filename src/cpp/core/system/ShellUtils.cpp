@@ -18,7 +18,7 @@
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace shell_utils {
 
 std::string pipe(const std::string& command1, const std::string& command2)

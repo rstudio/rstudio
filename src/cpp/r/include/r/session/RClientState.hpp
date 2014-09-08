@@ -23,7 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
 	class Error;
 } 
 
@@ -52,41 +52,41 @@ public:
    
    void putTemporary(const std::string& scope, 
                      const std::string& name,
-                     const core::json::Value& value);
+                     const rstudiocore::json::Value& value);
    
-   void putTemporary(const core::json::Object& temporaryState);
+   void putTemporary(const rstudiocore::json::Object& temporaryState);
    
    void putPersistent(const std::string& scope, 
                       const std::string& name,
-                      const core::json::Value& value);
+                      const rstudiocore::json::Value& value);
    
-   void putPersistent(const core::json::Object& persistentState); 
+   void putPersistent(const rstudiocore::json::Object& persistentState); 
 
    void putProjectPersistent(const std::string& scope,
                              const std::string& name,
-                             const core::json::Value& value);
+                             const rstudiocore::json::Value& value);
 
-   void putProjectPersistent(const core::json::Object& projectPersistentState);
-   core::json::Value getProjectPersistent(std::string scope,
+   void putProjectPersistent(const rstudiocore::json::Object& projectPersistentState);
+   rstudiocore::json::Value getProjectPersistent(std::string scope,
                                           std::string name);
 
-   core::Error commit(ClientStateCommitType commitType,
-                      const core::FilePath& stateDir,
-                      const core::FilePath& projectStateDir);
+   rstudiocore::Error commit(ClientStateCommitType commitType,
+                      const rstudiocore::FilePath& stateDir,
+                      const rstudiocore::FilePath& projectStateDir);
    
-   core::Error restore(const core::FilePath& stateDir,
-                       const core::FilePath& projectStateDir);
+   rstudiocore::Error restore(const rstudiocore::FilePath& stateDir,
+                       const rstudiocore::FilePath& projectStateDir);
    
-   void currentState(core::json::Object* pCurrentState) const;
+   void currentState(rstudiocore::json::Object* pCurrentState) const;
    
 private:
-   void restoreGlobalState(const core::FilePath& stateFile);
-   void restoreProjectState(const core::FilePath& stateFile);
+   void restoreGlobalState(const rstudiocore::FilePath& stateFile);
+   void restoreProjectState(const rstudiocore::FilePath& stateFile);
 
 private:
-   core::json::Object temporaryState_ ;
-   core::json::Object persistentState_ ;
-   core::json::Object projectPersistentState_;
+   rstudiocore::json::Object temporaryState_ ;
+   rstudiocore::json::Object persistentState_ ;
+   rstudiocore::json::Object projectPersistentState_;
 };
       
 } // namespace session

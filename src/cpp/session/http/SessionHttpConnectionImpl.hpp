@@ -75,25 +75,25 @@ public:
 public:
 
    // request/resposne (used by Handler)
-   virtual const core::http::Request& request() { return request_; }
+   virtual const rstudiocore::http::Request& request() { return request_; }
 
-   virtual void sendResponse(const core::http::Response &response)
+   virtual void sendResponse(const rstudiocore::http::Response &response)
    {
       try
       {
          // write the response
          boost::asio::write(socket_,
                             response.toBuffers(
-                                  core::http::Header::connectionClose()));
+                                  rstudiocore::http::Header::connectionClose()));
       }
       catch(const boost::system::system_error& e)
       {
          // establish error
-         core::Error error = core::Error(e.code(), ERROR_LOCATION);
+         rstudiocore::Error error = rstudiocore::Error(e.code(), ERROR_LOCATION);
          error.addProperty("request-uri", request_.uri());
 
          // log the error if it wasn't connection terminated
-         if (!core::http::isConnectionTerminatedError(error))
+         if (!rstudiocore::http::isConnectionTerminatedError(error))
             LOG_ERROR(error);
       }
       CATCH_UNEXPECTED_EXCEPTION
@@ -111,7 +111,7 @@ public:
    virtual void close()
    {
       // always close connection
-      core::Error error = core::http::closeSocket(socket_);
+      rstudiocore::Error error = rstudiocore::http::closeSocket(socket_);
       if (error)
          LOG_ERROR(error);
    }
@@ -158,16 +158,16 @@ private:
          if (!e)
          {
             // parse next chunk
-            core::http::RequestParser::status status = requestParser_.parse(
+            rstudiocore::http::RequestParser::status status = requestParser_.parse(
                                         request_,
                                         buffer_.data(),
                                         buffer_.data() + bytesTransferred);
 
             // error - return bad request
-            if (status == core::http::RequestParser::error)
+            if (status == rstudiocore::http::RequestParser::error)
             {
-               core::http::Response response;
-               response.setStatusCode(core::http::status::BadRequest);
+               rstudiocore::http::Response response;
+               response.setStatusCode(rstudiocore::http::status::BadRequest);
                sendResponse(response);
 
                // no more async operations w/ shared_from_this() initiated so this
@@ -175,7 +175,7 @@ private:
             }
 
             // incomplete -- keep reading
-            else if (status == core::http::RequestParser::incomplete)
+            else if (status == rstudiocore::http::RequestParser::incomplete)
             {
                readSome();
             }
@@ -198,8 +198,8 @@ private:
          else // error reading
          {
             // log the error if it wasn't connection terminated
-            core::Error error(e, ERROR_LOCATION);
-            if (!core::http::isConnectionTerminatedError(error))
+            rstudiocore::Error error(e, ERROR_LOCATION);
+            if (!rstudiocore::http::isConnectionTerminatedError(error))
                LOG_ERROR(error);
 
             // close the connection
@@ -215,8 +215,8 @@ private:
 private:
    typename ProtocolType::socket socket_;
    boost::array<char, 8192> buffer_ ;
-   core::http::RequestParser requestParser_ ;
-   core::http::Request request_;
+   rstudiocore::http::RequestParser requestParser_ ;
+   rstudiocore::http::Request request_;
    std::string requestId_;
    Handler handler_;
 };

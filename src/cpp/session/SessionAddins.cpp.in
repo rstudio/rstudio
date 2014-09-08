@@ -16,7 +16,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace addins {

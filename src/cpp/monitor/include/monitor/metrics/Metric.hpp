@@ -24,7 +24,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -146,12 +146,12 @@ typedef boost::function<void(const Metric&)> MetricHandler;
 typedef boost::function<void(const MultiMetric&)> MultiMetricHandler;
 
 // json serialization
-core::json::Object metricToJson(const Metric& metric);
-core::Error metricFromJson(const core::json::Object& metricJson,
+rstudiocore::json::Object metricToJson(const Metric& metric);
+rstudiocore::Error metricFromJson(const rstudiocore::json::Object& metricJson,
                            Metric* pMetric);
 
-core::json::Object metricToJson(const MultiMetric& multiMetric);
-core::Error metricFromJson(const core::json::Object& multiMetricJson,
+rstudiocore::json::Object metricToJson(const MultiMetric& multiMetric);
+rstudiocore::Error metricFromJson(const rstudiocore::json::Object& multiMetricJson,
                            MultiMetric* pMultiMetric);
 
 

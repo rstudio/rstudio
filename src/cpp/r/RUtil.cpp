@@ -27,7 +27,7 @@
 
 #include <R_ext/Riconv.h>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace r {
 namespace util {
@@ -90,7 +90,7 @@ std::string rconsole2utf8(const std::string& encoded)
    return output;
 }
 
-core::Error iconvstr(const std::string& value,
+rstudiocore::Error iconvstr(const std::string& value,
                      const std::string& from,
                      const std::string& to,
                      bool allowSubstitution,

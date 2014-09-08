@@ -25,7 +25,7 @@
 
 #include <r/session/RConsoleActions.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {
  

@@ -50,7 +50,7 @@
 
 #define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules {
@@ -800,7 +800,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
 
    // create temp file
    FilePath rmdTempFile = module_context::tempFile("Preview-", "Rmd");
-   error = core::writeStringToFile(rmdTempFile, source);
+   error = rstudiocore::writeStringToFile(rmdTempFile, source);
    if (error)
       return error;
 

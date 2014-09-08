@@ -27,7 +27,7 @@
 
 #define kScreenFontSubstitutionKey @"NSFontDefaultScreenFontSubstitutionEnabled"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace desktop {
    
@@ -140,11 +140,11 @@ void Options::setScriptsPath(const FilePath& scriptsPath)
    scriptsPath_ = scriptsPath;
 }
 
-core::FilePath Options::executablePath() const
+rstudiocore::FilePath Options::executablePath() const
 {
    if (executablePath_.empty())
    {
-      Error error = core::system::executablePath(NULL, &executablePath_);
+      Error error = rstudiocore::system::executablePath(NULL, &executablePath_);
       if (error)
          LOG_ERROR(error);
    }
@@ -156,7 +156,7 @@ FilePath Options::supportingFilePath() const
    if (supportingFilePath_.empty())
    {
       // default to install path
-      core::system::installPath("..", NULL, &supportingFilePath_);
+      rstudiocore::system::installPath("..", NULL, &supportingFilePath_);
       
       // adapt for OSX resource bundles
       if (supportingFilePath_.complete("Info.plist").exists())

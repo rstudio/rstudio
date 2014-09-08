@@ -20,7 +20,7 @@
 
 #include <boost/function.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 
@@ -31,7 +31,7 @@ Error captureStandardStreams(
          const boost::function<void(const std::string&)>& stderrHandler);
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_SYSTEM_OUTPUT_CAPTURE_HPP
 

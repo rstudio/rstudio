@@ -23,7 +23,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules {
@@ -47,10 +47,10 @@ void enqueueRefreshEvent()
    enqueRefreshEventWithDelay(0);
 }
 
-core::json::Object processResultToJson(
-      const core::system::ProcessResult& result)
+rstudiocore::json::Object processResultToJson(
+      const rstudiocore::system::ProcessResult& result)
 {
-   core::json::Object obj;
+   rstudiocore::json::Object obj;
    obj["output"] = result.stdOut;
    obj["exit_code"] = result.exitStatus;
    return obj;

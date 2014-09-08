@@ -28,7 +28,7 @@
 
 #include "synctex/synctex_parser.h"
 
-namespace core {
+namespace rstudiocore {
 namespace tex {
 
 namespace {
@@ -99,7 +99,7 @@ Synctex::~Synctex()
 
 bool Synctex::parse(const FilePath& pdfPath)
 {
-   using namespace core::string_utils;
+   using namespace rstudiorstudiocore::string_utils;
    pImpl_->pdfPath = pdfPath;
    std::string path = utf8ToSystem(pdfPath.absolutePath());
    std::string buildDir = utf8ToSystem(pdfPath.parent().absolutePath());
@@ -158,7 +158,7 @@ SourceLocation Synctex::inverseSearch(const PdfLocation& location)
          FilePath filePath = pImpl_->pdfPath.parent().complete(adjustedName);
 
          // fully normalize
-         Error error = core::system::realPath(filePath, &filePath);
+         Error error = rstudiocore::system::realPath(filePath, &filePath);
          if (error)
             LOG_ERROR(error);
 
@@ -236,7 +236,7 @@ std::string normalizeSynctexName(const std::string& name)
 }
 
 } // namespace tex
-} // namespace core 
+} // namespace rstudiocore 
 
 
 

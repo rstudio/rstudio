@@ -27,7 +27,7 @@
 #include <AppKit/NSPasteboard.h>
 #include <AppKit/NSImage.h>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace module_context {
@@ -55,9 +55,9 @@ bool hasOSXMavericksDeveloperTools()
 {
    if (isOSXMavericks())
    {
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand("xcode-select -p",
-                                             core::system::ProcessOptions(),
+      rstudiocore::system::ProcessResult result;
+      Error error = rstudiocore::system::runCommand("xcode-select -p",
+                                             rstudiocore::system::ProcessOptions(),
                                              &result);
       if (!error && (result.exitStatus == EXIT_SUCCESS))
          return true;

@@ -29,7 +29,7 @@
 
 #include "DesktopUtils.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 extern QString sharedSecret;
 
