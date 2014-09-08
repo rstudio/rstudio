@@ -188,6 +188,13 @@ class Recompiler {
     TreeLogger compileLogger = makeCompileLogger(compileDir, logger);
 
     ModuleDef module = loadModule(compileLogger);
+
+    logger.log(TreeLogger.INFO, "Prebuilding/loading the compilation unit cache.");
+    CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
+    compilerContext = compilerContextBuilder.options(loadOptions).unitCache(
+        Compiler.getOrCreateUnitCache(logger, loadOptions)).build();
+    module.getCompilationState(compileLogger, compilerContext);
+
     String newModuleName = module.getName();  // includes any rename.
     outputModuleName.set(newModuleName);
 

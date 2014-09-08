@@ -70,7 +70,7 @@ class Outbox {
    */
   void maybePrecompile(TreeLogger logger) throws UnableToCompleteException {
 
-    if (options.getNoPrecompile()) {
+    if (options.getNoPrecompile() || options.shouldCompilePerFile()) {
       publish(recompiler.initWithoutPrecompile(logger), null);
       return;
     }

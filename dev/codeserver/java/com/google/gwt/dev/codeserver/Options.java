@@ -307,7 +307,7 @@ public class Options {
 
     @Override
     public String getPurposeSnippet() {
-      return "Compiles faster by creating a JavaScript file per class. "
+      return "Compiles faster by creating/reusing a JS file per class. "
           + "Can't be used with -Xincremental.";
     }
 

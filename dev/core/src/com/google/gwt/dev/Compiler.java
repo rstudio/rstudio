@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.javac.UnitCache;
 import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.PermutationResult;
@@ -76,6 +77,17 @@ public class Compiler {
     }
   }
 
+  /**
+   * Locates the unit cache dir relative to the war dir and returns a UnitCache instance.
+   */
+  public static UnitCache getOrCreateUnitCache(TreeLogger logger, CompilerOptions options) {
+    File persistentUnitCacheDir = null;
+    if (options.getWarDir() != null && !options.getWarDir().getName().endsWith(".jar")) {
+      persistentUnitCacheDir = new File(options.getWarDir(), "../");
+    }
+    return UnitCacheSingleton.get(logger, persistentUnitCacheDir);
+  }
+
   public static void main(String[] args) {
     Memory.initialize();
     if (System.getProperty("gwt.jjs.dumpAst") != null) {
@@ -116,9 +128,9 @@ public class Compiler {
     // Exit w/ non-success code.
     System.exit(1);
   }
-
-  private final CompilerContext.Builder compilerContextBuilder;
   private CompilerContext compilerContext;
+  private final CompilerContext.Builder compilerContextBuilder;
+
   private final CompilerOptionsImpl options;
 
   public Compiler(CompilerOptions compilerOptions) {
@@ -170,12 +182,8 @@ public class Compiler {
         options.setNamespace(JsNamespaceOption.NONE);
       }
 
-      File persistentUnitCacheDir = null;
-      if (options.getWarDir() != null && !options.getWarDir().getName().endsWith(".jar")) {
-        persistentUnitCacheDir = new File(options.getWarDir(), "../");
-      }
-      compilerContext = compilerContextBuilder.unitCache(
-          UnitCacheSingleton.get(logger, persistentUnitCacheDir)).build();
+      compilerContext =
+          compilerContextBuilder.unitCache(getOrCreateUnitCache(logger, options)).build();
 
       for (ModuleDef module : modules) {
         compilerContext = compilerContextBuilder.module(module).build();
