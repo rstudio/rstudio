@@ -340,7 +340,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install pandoc
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.3")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.4.2")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(PROGRAMS ${PANDOC_FILES}
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
