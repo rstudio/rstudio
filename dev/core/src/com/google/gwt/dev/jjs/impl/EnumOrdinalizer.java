@@ -19,12 +19,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayType;
-import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumField;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -32,17 +29,13 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
-import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -55,7 +48,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Ordering;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.collect.TreeMultimap;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -86,7 +78,7 @@ import java.util.TreeSet;
  * any pass of this optimizer. Thus, this optimizer should be considered to be
  * stateless.
  *
- * The process is broken up into 3 separate passes over the AST, each
+ * The process is broken up into 2 separate passes over the AST, each
  * implemented as a separate visitor class. The first visitor,
  * {@link EnumOrdinalizer.CannotBeOrdinalAnalyzer} compiles information about
  * each enum class in the AST, and looks for reasons not to ordinalize each
@@ -99,10 +91,8 @@ import java.util.TreeSet;
  * subsequent passes of the optimizer will be invoked. The first,
  * {@link EnumOrdinalizer.ReplaceEnumTypesWithInteger}, replaces the type info
  * for each field or expression involved with a target enum constant with an
- * integer. The final visitor, descriptively named
- * {@link EnumOrdinalizer.ReplaceOrdinalFieldAndMethodRefsWithOrdinal}, will do
- * the job of replacing the value for references to the Enum ordinal field or
- * method of an enum constant that has been ordinalized.
+ * integer. Also replaces access to the field {@code ordinal} and to the method
+ * {@code ordinal} with the appropriate ordinal value.
  */
 public class EnumOrdinalizer {
   /**
@@ -294,7 +284,7 @@ public class EnumOrdinalizer {
    * <li>it's class literal is used explicitly.</li>
    * <li>has any field referenced, except for:</li>
    * <ul>
-   * <li>static fields, other than the synthetic $VALUES field.</li>
+   * <li>static fields.</li>
    * <li>Enum.ordinal.</li>
    * </ul>
    * <li>has any method called, except for:</li>
@@ -303,7 +293,7 @@ public class EnumOrdinalizer {
    * <li>Enum.ordinal().</li>
    * <li>Enum() super constructor.</li>
    * <li>Enum.createValueOfMap().</li>
-   * <li>static methods, other than values() or valueOf().</li>
+   * <li>static methods other than valueOf().</li>
    * </ul>
    * </ul>
    *
@@ -597,11 +587,11 @@ public class EnumOrdinalizer {
     }
 
     /**
-     * Blacklist the enum if there is a call to either MyEnum.valueOf() or MyEnum.values().
+     * Blacklist the enum if there is a call to  MyEnum.valueOf().
      */
     private void maybeBlackListDueToStaticCall(SourceInfo info, JMethod target) {
       if (target.getEnclosingType().isEnumOrSubclass() != null &&
-          (target.getName().equals("valueOf") || target.getName().equals("values"))) {
+          (target.getName().equals("valueOf"))) {
         blackListIfEnum(target.getEnclosingType(), info);
       }
     }
@@ -614,29 +604,19 @@ public class EnumOrdinalizer {
    * settable type. The overridden remap() method will be called in each
    * instance, and it will test whether the type is a candidate for replacement,
    * and if so, return the new type to set (JPrimitiveType.INT).
-   *
+   * <p>
    * Any reference to an enum field constant in an expression is replaced with
    * integer.
-   *
+   * <p>
    * This will also explicitly replace an enum's field constants with its
-   * ordinal int values, and remove initialization of enum constants and the
-   * $VALUES array in the clinit method for the enum.
+   * ordinal int values; also replaces access to the ordinal field and class to
+   * the ordinal() method with the corresponding int value.
    */
   private class ReplaceEnumTypesWithInteger extends TypeRemapper {
 
     @Override
     public boolean visit(JClassType x, Context ctx) {
-      // don't waste time visiting the large ClassLiteralHolder class
-      if (x == classLiteralHolderType) {
-        return false;
-      }
-
       if (canBeOrdinal(x)) {
-        /*
-         * Cleanup clinit method for ordinalizable enums.
-         */
-        updateClinit(x.getClinitMethod());
-
         /*
          * Remove any static impl mappings for any methods in an ordinal enum
          * class. An ordinalized enum will no longer have an instance passed as
@@ -652,30 +632,30 @@ public class EnumOrdinalizer {
       return true;
     }
 
-    /**
-     * Replace an enum field constant, with it's integer valued ordinal.
-     */
     @Override
-    public boolean visit(JField x, Context ctx) {
-      if (x instanceof JEnumField && canBeOrdinal(x.getEnclosingType())) {
-        int ordinal = ((JEnumField) x).ordinal();
-        x.setInitializer(new JDeclarationStatement(x.getSourceInfo(), new JFieldRef(x
-            .getSourceInfo(), null, x, x.getEnclosingType()), program.getLiteralInt(ordinal)));
-      }
-      return true;
-    }
-
-    /**
-     * Replace an enum field ref with it's integer valued ordinal.
-     */
-    @Override
-    public boolean visit(JFieldRef x, Context ctx) {
+    public void endVisit(JFieldRef x, Context ctx) {
+      super.endVisit(x, ctx);
       JField field = x.getField();
-      if (field instanceof JEnumField && canBeOrdinal(field.getEnclosingType())) {
+      if (field instanceof JEnumField && canBeOrdinal(field.getEnclosingType())
+          && !ctx.isLvalue()) {
         int ordinal = ((JEnumField) field).ordinal();
         ctx.replaceMe(program.getLiteralInt(ordinal));
+      } else if (x.getField() == enumOrdinalField &&
+          x.getInstance().getType() == JPrimitiveType.INT) {
+        // If it is a field access to ordinal, the instance would have already been replaced so
+        // we transform 1.ordinal into 1.
+        ctx.replaceMe(x.getInstance());
       }
-      return true;
+    }
+
+    @Override
+    public void endVisit(JMethodCall x, Context ctx) {
+      super.endVisit(x, ctx);
+      if (x.getTarget() == enumOrdinalMethod && x.getInstance().getType() == JPrimitiveType.INT) {
+        // If it is a call to ordinal(), the instance would have already been replaced so
+        // we transform 1.ordinal() into 1.
+        ctx.replaceMe(x.getInstance());
+      }
     }
 
     /**
@@ -686,11 +666,10 @@ public class EnumOrdinalizer {
     @Override
     protected JType remap(JType type) {
       JType remappedType = getOrdinalizedType(type);
-      if (remappedType != null) {
-        return remappedType;
-      } else {
+      if (remappedType == null) {
         return type;
       }
+      return remappedType;
     }
 
     private boolean canBeOrdinal(JType type) {
@@ -705,100 +684,18 @@ public class EnumOrdinalizer {
 
       boolean nonNull = type instanceof JNonNullType;
       JType uType = type.getUnderlyingType();
-      if (uType instanceof JArrayType) {
-        JArrayType aType = (JArrayType) uType;
-        JType leafType = aType.getLeafType();
-        if (canBeOrdinal(leafType)) {
-          JArrayType newAType = program.getOrCreateArrayType(JPrimitiveType.INT, aType.getDims());
-          return nonNull ? newAType.getNonNull() : newAType;
-        }
+      if (!(uType instanceof JArrayType)) {
+        return null;
+      }
+
+      JArrayType aType = (JArrayType) uType;
+      JType leafType = aType.getLeafType();
+      if (canBeOrdinal(leafType)) {
+        JArrayType newAType = program.getOrCreateArrayType(JPrimitiveType.INT, aType.getDims());
+        return nonNull ? newAType.getNonNull() : newAType;
       }
 
       return null;
-    }
-
-    /**
-     * Remove initialization of enum constants, and the $VALUES array, in the
-     * clinit for an ordinalizable enum.
-     */
-    private void updateClinit(JMethod method) {
-      assert JProgram.isClinit(method);
-      JDeclaredType enclosingType = method.getEnclosingType();
-      JBlock block = ((JMethodBody) method.getBody()).getBlock();
-      int removeIndex = 0;
-      // Make a copy to avoid concurrent modification.
-      for (JStatement stmt : new ArrayList<JStatement>(block.getStatements())) {
-        if (!(stmt instanceof JDeclarationStatement)) {
-          continue;
-        }
-        JVariableRef ref = ((JDeclarationStatement) stmt).getVariableRef();
-        if (!(ref instanceof JFieldRef)) {
-          continue;
-        }
-
-        // See if LHS is a field ref to the class being initialized.
-        JField field = ((JFieldRef) ref).getField();
-        if (field.isStatic() && field.getEnclosingType() == enclosingType &&
-            field instanceof JEnumField) {
-          block.removeStmt(removeIndex--);
-          field.setInitializer(null);
-        }
-        ++removeIndex;
-      }
-    }
-  }
-
-  /**
-   * Any references to the {@link Enum#ordinal()} method and
-   * {@link Enum#ordinal} field for ordinalized types are replaced with the
-   * qualifying instance.
-   *
-   * Note, this visitor must run after the ReplaceEnumTypesWithInteger visitor,
-   * since it depends on detecting the locations where the enumOrdinalField or
-   * enumOrdinalMethod have had their types changed to integer.
-   */
-  private class ReplaceOrdinalFieldAndMethodRefsWithOrdinal extends JModVisitor {
-    /**
-     * Replace any references to Enum.ordinal field with the qualifying
-     * instance, if that instance has been ordinalized (e.g. replace
-     * <code>4.ordinal</code> with <code>4</code>).
-     */
-    @Override
-    public void endVisit(JFieldRef x, Context ctx) {
-      if (x.getField() != enumOrdinalField) {
-        return;
-      }
-      replaceWithOrdinal(x.getInstance(), ctx);
-    }
-
-    /**
-     * Replace any references to Enum.ordinal() with the qualifying instance, if
-     * that instance has been ordinalized (e.g. replace <code>4.ordinal()</code>
-     * with <code>4</code>).
-     */
-    @Override
-    public void endVisit(JMethodCall x, Context ctx) {
-      if (x.getTarget() != enumOrdinalMethod) {
-        return;
-      }
-      replaceWithOrdinal(x.getInstance(), ctx);
-    }
-
-    @Override
-    public boolean visit(JClassType x, Context ctx) {
-      // don't waste time visiting the large ClassLiteralHolder class
-      if (x == classLiteralHolderType) {
-        return false;
-      }
-      return true;
-    }
-
-    private void replaceWithOrdinal(JExpression x, Context ctx) {
-      assert (x != null);
-      JType type = x.getType();
-      if (type == JPrimitiveType.INT) {
-        ctx.replaceMe(x);
-      }
     }
   }
 
@@ -891,16 +788,6 @@ public class EnumOrdinalizer {
 
     if (tracker != null) {
       tracker.maybeDumpAST(program, 1);
-    }
-
-    // Replace enum field and method refs
-    ReplaceOrdinalFieldAndMethodRefsWithOrdinal replaceOrdinalRefs =
-        new ReplaceOrdinalFieldAndMethodRefsWithOrdinal();
-    replaceOrdinalRefs.accept(program);
-    stats.recordModified(replaceOrdinalRefs.getNumMods());
-
-    if (tracker != null) {
-      tracker.maybeDumpAST(program, 2);
     }
 
     // Update enums ordinalized, and tracker stats

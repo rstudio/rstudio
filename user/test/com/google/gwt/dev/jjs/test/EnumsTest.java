@@ -319,6 +319,12 @@ public class EnumsTest extends GWTTestCase {
     assertEquals(Subclassing.C, subs[2]);
   }
 
+  public void testValues_Unmodifiable() {
+    Basic[] simples = Basic.values();
+    simples[0] = simples[1];
+    assertEquals(Basic.A, Basic.values()[0]);
+  }
+
   /*
    * Test that a call to an enum instance method, which gets transformed to a
    * static impl, produces valid executable javascript, once the enum gets

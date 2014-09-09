@@ -2188,33 +2188,17 @@ public class GwtAstBuilder {
       }
     }
 
-    private JField createEnumValuesField(JEnumType type) {
-      // $VALUES = new E[]{A,B,C};
+    private void writeEnumValuesMethod(JEnumType type, JMethod method) {
+      // return new E[]{A,B,C};
       JArrayType enumArrayType = new JArrayType(type);
-      JField valuesField = new JField(type.getSourceInfo(), JEnumType.VALUES_ARRAY_NAME, type,
-          enumArrayType, true, Disposition.FINAL);
-      type.addField(valuesField);
       SourceInfo info = type.getSourceInfo();
       List<JExpression> initializers = Lists.newArrayList();
       for (JEnumField field : type.getEnumList()) {
         JFieldRef fieldRef = new JFieldRef(info, null, field, type);
         initializers.add(fieldRef);
       }
-      JNewArray newExpr = JNewArray.createInitializers(info, enumArrayType, initializers);
-      JFieldRef valuesRef = new JFieldRef(info, null, valuesField, type);
-      JDeclarationStatement declStmt = new JDeclarationStatement(info, valuesRef, newExpr);
-      JBlock clinitBlock = ((JMethodBody) type.getClinitMethod().getBody()).getBlock();
-
-      /*
-       * HACKY: the $VALUES array must be initialized immediately after all of
-       * the enum fields, but before any user initialization (which might rely
-       * on $VALUES). The "1 + " is the statement containing the call to
-       * Enum.$clinit().
-       */
-      int insertionPoint = 1 + type.getEnumList().size();
-      assert clinitBlock.getStatements().size() >= initializers.size() + 1;
-      clinitBlock.addStmt(insertionPoint, declStmt);
-      return valuesField;
+      JNewArray valuesArrayCopy = JNewArray.createInitializers(info, enumArrayType, initializers);
+      implementMethod(method, valuesArrayCopy);
     }
 
     private JLocal createLocal(LocalDeclaration x) {
@@ -2476,18 +2460,16 @@ public class GwtAstBuilder {
     }
 
     private void processEnumType(JEnumType type) {
-      JField valuesField = createEnumValuesField(type);
-
       // $clinit, $init, getClass, valueOf, values
+      JMethod valueOfMethod = type.getMethods().get(3);
+      JMethod valuesMethod = type.getMethods().get(4);
       {
-        JMethod valueOfMethod = type.getMethods().get(3);
         assert "valueOf".equals(valueOfMethod.getName());
-        writeEnumValueOfMethod(type, valueOfMethod, valuesField);
+        writeEnumValueOfMethod(type, valueOfMethod, valuesMethod);
       }
       {
-        JMethod valuesMethod = type.getMethods().get(4);
         assert "values".equals(valuesMethod.getName());
-        writeEnumValuesMethod(type, valuesMethod, valuesField);
+        writeEnumValuesMethod(type, valuesMethod);
       }
     }
 
@@ -2828,7 +2810,7 @@ public class GwtAstBuilder {
       return call;
     }
 
-    private void writeEnumValueOfMethod(JEnumType type, JMethod method, JField valuesField) {
+    private void writeEnumValueOfMethod(JEnumType type, JMethod method, JMethod valuesMethod) {
       JField mapField;
       TypeBinding mapType;
       ReferenceBinding enumType = curCud.scope.getJavaLangEnum();
@@ -2837,7 +2819,7 @@ public class GwtAstBuilder {
          * Make an inner class to hold a lazy-init name-value map. We use a
          * class to take advantage of its clinit.
          *
-         * class Map { $MAP = Enum.createValueOfMap($VALUES); }
+         * class Map { $MAP = Enum.createValueOfMap(values()); }
          */
         SourceInfo info = type.getSourceInfo();
         JClassType mapClass = new JClassType(info, intern(type.getName() + "$Map"), false, true);
@@ -2859,7 +2841,7 @@ public class GwtAstBuilder {
         mapClass.addField(mapField);
 
         JMethodCall call = new JMethodCall(info, null, typeMap.get(createValueOfMapBinding));
-        call.addArg(new JFieldRef(info, null, valuesField, mapClass));
+        call.addArg(new JMethodCall(info, null, valuesMethod));
         JFieldRef mapRef = new JFieldRef(info, null, mapField, mapClass);
         JDeclarationStatement declStmt = new JDeclarationStatement(info, mapRef, call);
         JMethod clinit =
@@ -2886,12 +2868,6 @@ public class GwtAstBuilder {
         call.addArgs(mapRef, nameRef);
         implementMethod(method, call);
       }
-    }
-
-    private void writeEnumValuesMethod(JEnumType type, JMethod method, JField valuesField) {
-      // return $VALUES;
-      JFieldRef valuesRef = new JFieldRef(method.getSourceInfo(), null, valuesField, type);
-      implementMethod(method, valuesRef);
     }
   }
 
