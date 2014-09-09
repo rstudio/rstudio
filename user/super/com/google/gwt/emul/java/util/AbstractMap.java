@@ -28,17 +28,45 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
   /**
    * A mutable {@link Map.Entry} shared by several {@link Map} implementations.
    */
-  public static class SimpleEntry<K, V> extends AbstractMapEntry<K, V> {
-    private final K key;
-    private V value;
-
+  public static class SimpleEntry<K, V> extends AbstractEntry<K, V> {
     public SimpleEntry(K key, V value) {
-      this.key = key;
-      this.value = value;
+      super(key, value);
     }
 
     public SimpleEntry(Entry<? extends K, ? extends V> entry) {
-      this(entry.getKey(), entry.getValue());
+      super(entry.getKey(), entry.getValue());
+    }
+  }
+
+  /**
+   * An immutable {@link Map.Entry} shared by several {@link Map} implementations.
+   */
+  public static class SimpleImmutableEntry<K, V> extends AbstractEntry<K, V> {
+    public SimpleImmutableEntry(K key, V value) {
+      super(key, value);
+    }
+
+    public SimpleImmutableEntry(Entry<? extends K, ? extends V> entry) {
+      super(entry.getKey(), entry.getValue());
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  /**
+   * Basic {@link Map.Entry} implementation used by {@link SimpleEntry}
+   * and {@link SimpleImmutableEntry}.
+   */
+  private abstract static class AbstractEntry<K, V> implements Entry<K, V> {
+    private final K key;
+    private V value;
+
+    protected AbstractEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
     }
 
     @Override
@@ -57,37 +85,29 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
       this.value = value;
       return oldValue;
     }
-  }
 
-  /**
-   * An immutable {@link Map.Entry} shared by several {@link Map} implementations.
-   */
-  public static class SimpleImmutableEntry<K, V> extends AbstractMapEntry<K, V> {
-    private final K key;
-    private final V value;
-
-    public SimpleImmutableEntry(K key, V value) {
-      this.key = key;
-      this.value = value;
+    @Override
+    public boolean equals(Object other) {
+      if (!(other instanceof Entry)) {
+        return false;
+      }
+      Entry<?, ?> entry = (Entry<?, ?>) other;
+      return Objects.equals(key, entry.getKey())
+          && Objects.equals(value, entry.getValue());
     }
 
-    public SimpleImmutableEntry(Entry<? extends K, ? extends V> entry) {
-      this(entry.getKey(), entry.getValue());
+    /**
+     * Calculate the hash code using Sun's specified algorithm.
+     */
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(key) ^ Objects.hashCode(value);
     }
 
     @Override
-    public K getKey() {
-      return key;
-    }
-
-    @Override
-    public V getValue() {
-      return value;
-    }
-
-    @Override
-    public V setValue(V value) {
-      throw new UnsupportedOperationException();
+    public String toString() {
+      // for compatibility with the real Jre: issue 3422
+      return key + "=" + value;
     }
   }
 
