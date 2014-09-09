@@ -118,14 +118,14 @@ public class CodeServer {
     TreeLogger startupLogger = topLogger.branch(Type.INFO, "Super Dev Mode starting up");
     OutboxTable outboxes = makeOutboxes(options, startupLogger);
 
-    ProgressTable progressTable = new ProgressTable();
-    JobRunner runner = new JobRunner(progressTable, outboxes);
+    JobEventTable eventTable = new JobEventTable();
+    JobRunner runner = new JobRunner(eventTable, outboxes);
 
     JsonExporter exporter = new JsonExporter(options, outboxes);
 
     SourceHandler sourceHandler = new SourceHandler(outboxes, exporter);
     WebServer webServer = new WebServer(sourceHandler, exporter, outboxes,
-        runner, progressTable, options.getBindAddress(), options.getPort());
+        runner, eventTable, options.getBindAddress(), options.getPort());
     webServer.start(topLogger);
 
     return webServer;

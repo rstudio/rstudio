@@ -93,7 +93,7 @@ public class WebServer {
   private final JsonExporter jsonExporter;
   private final OutboxTable outboxes;
   private final JobRunner runner;
-  private final ProgressTable progressTable;
+  private final JobEventTable eventTable;
 
   private final String bindAddress;
   private final int port;
@@ -101,12 +101,12 @@ public class WebServer {
   private Server server;
 
   WebServer(SourceHandler handler, JsonExporter jsonExporter, OutboxTable outboxes,
-      JobRunner runner, ProgressTable progressTable, String bindAddress, int port) {
+      JobRunner runner, JobEventTable eventTable, String bindAddress, int port) {
     this.handler = handler;
     this.jsonExporter = jsonExporter;
     this.outboxes = outboxes;
     this.runner = runner;
-    this.progressTable = progressTable;
+    this.eventTable = eventTable;
     this.bindAddress = bindAddress;
     this.port = port;
   }
@@ -249,14 +249,14 @@ public class WebServer {
     if (target.equals("/progress")) {
       setHandled(request);
       // TODO: return a list of progress objects here, one for each job.
-      Progress progress = progressTable.getProgressForCompilingJob();
+      JobEvent event = eventTable.getCompilingJobEvent();
 
       JsonObject json;
-      if (progress == null) {
+      if (event == null) {
         json = new JsonObject();
         json.put("status", "idle");
       } else {
-        json = jsonExporter.exportProgressResponse(progress);
+        json = jsonExporter.exportProgressResponse(event);
       }
       sendJsonResult(json, request, response, logger);
       return;

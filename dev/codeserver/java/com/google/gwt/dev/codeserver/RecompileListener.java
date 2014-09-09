@@ -18,7 +18,10 @@ package com.google.gwt.dev.codeserver;
 /**
  * A callback interface that can be used to find out when Super Dev Mode starts and
  * finishes its compiles.
+ *
+ * @deprecated replaced by {@link JobChangeListener}.
  */
+@Deprecated
 public interface RecompileListener {
 
   /**

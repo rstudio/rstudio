@@ -17,7 +17,9 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.codeserver.Progress.Status;
+import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.codeserver.JobEvent.Status;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.ListenableFuture;
@@ -32,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A request for Super Dev Mode to compile something.
  *
  * <p>Each job has a lifecycle where it goes through up to four states. See
- * {@link Progress.Status}.
+ * {@link JobEvent.Status}.
  *
  * <p>Jobs are thread-safe.
  */
@@ -58,28 +60,21 @@ class Job {
 
   private final Outbox outbox;
   private final RecompileListener recompileListener;
+  private final JobChangeListener jobChangeListener;
   private final LogSupplier logSupplier;
 
-  private ProgressTable table; // non-null when submitted
+  private JobEventTable table; // non-null when submitted
 
-  // Progress
-
-  /**
-   * The number of calls to {@link #onCompilerProgress}.
-   */
-  private int finishedSteps = 0;
-
-  /**
-   * The estimated total number of calls to {@link #onCompilerProgress}.
-   */
-  private int totalSteps = -1; // non-negative after the compile has started
+  // Miscellaneous
 
   /**
    * The id to report to the recompile listener.
    */
   private int compileId = -1; // non-negative after the compile has started
 
-  private Exception recompileListenerFailure;
+  private CompileDir compileDir; // non-null after the compile has started
+
+  private Exception listenerFailure;
 
   /**
    * Creates a job to update an outbox.
@@ -88,21 +83,27 @@ class Job {
    * @param parentLogger  The parent of the logger that will be used for this job.
    */
   Job(Outbox box, Map<String, String> bindingProperties,
-      TreeLogger parentLogger, RecompileListener recompileListener) {
+      TreeLogger parentLogger, RecompileListener recompileListener,
+      JobChangeListener jobChangeListener) {
     this.id = chooseNextId(box);
     this.outbox = box;
     this.inputModuleName = box.getInputModuleName();
     // TODO: we will use the binding properties to find or create the outbox,
     // then take binding properties from the outbox here.
     this.bindingProperties = ImmutableSortedMap.copyOf(bindingProperties);
-    this.recompileListener = recompileListener;
+    this.recompileListener = Preconditions.checkNotNull(recompileListener);
+    this.jobChangeListener = Preconditions.checkNotNull(jobChangeListener);
     this.logSupplier = new LogSupplier(parentLogger, id);
+  }
+
+  static boolean isValidJobId(String id) {
+    return ModuleDef.isValidModuleName(id);
   }
 
   private static String chooseNextId(Outbox box) {
     String prefix = box.getId();
     prefixToNextId.putIfAbsent(prefix, new AtomicInteger(0));
-    return prefix + "-" + prefixToNextId.get(prefix).getAndIncrement();
+    return prefix + "_" + prefixToNextId.get(prefix).getAndIncrement();
   }
 
   /**
@@ -157,8 +158,8 @@ class Job {
     return result;
   }
 
-  Exception getRecompileListenerFailure() {
-    return recompileListenerFailure;
+  Exception getListenerFailure() {
+    return listenerFailure;
   }
 
   // === state transitions ===
@@ -180,49 +181,43 @@ class Job {
    * Starts sending updates to the JobTable.
    * @throws IllegalStateException if the job was already started.
    */
-  synchronized void onSubmitted(ProgressTable table) {
+  synchronized void onSubmitted(JobEventTable table) {
     if (wasSubmitted()) {
       throw new IllegalStateException("compile job has already started: " + id);
     }
     this.table = table;
-    table.publish(new Progress(this, Status.WAITING), getLogger());
+    table.publish(makeEvent(Status.WAITING), getLogger());
   }
 
   /**
    * Reports that we started to compile the job.
    */
-  synchronized void onStarted(int totalSteps, int compileId, CompileDir compileDir) {
-    if (totalSteps < 0) {
-      throw new IllegalArgumentException("totalSteps should not be negative: " + totalSteps);
-    }
+  synchronized void onStarted(int compileId, CompileDir compileDir) {
     if (table == null || !table.isActive(this)) {
       throw new IllegalStateException("compile job is not active: " + id);
     }
-    if (this.totalSteps >= 0) {
-      throw new IllegalStateException("onStarted already called for " + id);
-    }
-    this.totalSteps = totalSteps;
     this.compileId = compileId;
+    this.compileDir = compileDir;
 
     try {
       recompileListener.startedCompile(inputModuleName, compileId, compileDir);
     } catch (Exception e) {
       getLogger().log(TreeLogger.Type.WARN, "recompile listener threw exception", e);
-      recompileListenerFailure = e;
+      listenerFailure = e;
     }
+
+    publish(makeEvent(Status.COMPILING));
   }
 
   /**
-   * Reports that this job has made progress.
+   * Reports that this job has made progress while compiling.
    * @throws IllegalStateException if the job is not running.
    */
-  synchronized void onCompilerProgress(String stepMessage) {
-    if (table == null || !table.isActive(this)) {
-      throw new IllegalStateException("compile job is not active: " + id);
+  synchronized void onProgress(String stepMessage) {
+    if (table == null || table.getPublishedEvent(this).getStatus() != Status.COMPILING) {
+      throw new IllegalStateException("onProgress called for a job that isn't compiling: " + id);
     }
-    finishedSteps++;
-    table.publish(new Progress.Compiling(this, finishedSteps, totalSteps, stepMessage),
-        getLogger());
+    publish(makeEvent(Status.COMPILING, stepMessage));
   }
 
   /**
@@ -235,20 +230,20 @@ class Job {
     }
 
     // Report that we finished unless the listener messed up already.
-    if (recompileListenerFailure == null) {
+    if (listenerFailure == null) {
       try {
         recompileListener.finishedCompile(inputModuleName, compileId, newResult.isOk());
       } catch (Exception e) {
         getLogger().log(TreeLogger.Type.WARN, "recompile listener threw exception", e);
-        recompileListenerFailure = e;
+        listenerFailure = e;
       }
     }
 
     result.set(newResult);
     if (newResult.isOk()) {
-      table.publish(new Progress(this, Status.SERVING), getLogger());
+      publish(makeEvent(Status.SERVING));
     } else {
-      table.publish(new Progress(this, Status.GONE), getLogger());
+      publish(makeEvent(Status.ERROR));
     }
   }
 
@@ -259,7 +254,37 @@ class Job {
     if (table == null || !table.isActive(this)) {
       throw new IllegalStateException("compile job is not active: " + id);
     }
-    table.publish(new Progress(this, Status.GONE), getLogger());
+    publish(makeEvent(Status.GONE));
+  }
+
+  private JobEvent makeEvent(Status status) {
+    return makeEvent(status, null);
+  }
+
+  private JobEvent makeEvent(Status status, String message) {
+    JobEvent.Builder out = new JobEvent.Builder();
+    out.setJobId(getId());
+    out.setInputModuleName(getInputModuleName());
+    out.setBindings(getBindingProperties());
+    out.setStatus(status);
+    out.setMessage(message);
+    out.setCompileDir(compileDir);
+    return out.build();
+  }
+
+  /**
+   * Makes an event visible externally.
+   */
+  private void publish(JobEvent event) {
+    if (listenerFailure == null) {
+      try {
+        jobChangeListener.onJobChange(event);
+      } catch (Exception e) {
+        getLogger().log(Type.WARN, "JobChangeListener threw exception", e);
+        listenerFailure = e;
+      }
+    }
+    table.publish(event, getLogger());
   }
 
   /**

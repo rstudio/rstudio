@@ -153,12 +153,11 @@ class Recompiler {
     CompileDir compileDir = makeCompileDir(compileId, job.getLogger());
     TreeLogger compileLogger = makeCompileLogger(compileDir, job.getLogger());
 
-    int totalSteps = options.shouldCompileIncremental() ? 1 : 2;
-    job.onStarted(totalSteps, compileId, compileDir);
+    job.onStarted(compileId, compileDir);
 
     boolean success;
     if (options.shouldCompileIncremental()) {
-      job.onCompilerProgress("Compiling (incrementally)");
+      job.onProgress("Compiling (incrementally)");
       success = compileIncremental(compileLogger, compileDir);
     } else {
       success = compileMonolithic(compileLogger, compileDir, job);
@@ -261,7 +260,7 @@ class Recompiler {
   private boolean compileMonolithic(TreeLogger compileLogger, CompileDir compileDir, Job job)
       throws UnableToCompleteException {
 
-    job.onCompilerProgress("Loading modules");
+    job.onProgress("Loading modules");
 
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).build();
@@ -281,7 +280,7 @@ class Recompiler {
       return true;
     }
 
-    job.onCompilerProgress("Compiling");
+    job.onProgress("Compiling");
     // TODO: use speed tracer to get more compiler events?
 
     CompilerOptions runOptions = new CompilerOptionsImpl(compileDir, newModuleName, options);

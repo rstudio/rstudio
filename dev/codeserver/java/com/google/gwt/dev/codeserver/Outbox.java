@@ -18,7 +18,9 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.codeserver.Job.Result;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -51,10 +53,15 @@ class Outbox {
 
   Outbox(String id, Recompiler recompiler, Options options, TreeLogger logger)
       throws UnableToCompleteException {
+    Preconditions.checkArgument(isValidOutboxId(id));
     this.id = id;
     this.recompiler = recompiler;
     this.options = options;
     maybePrecompile(logger);
+  }
+
+  private boolean isValidOutboxId(String id) {
+    return ModuleDef.isValidModuleName(id);
   }
 
   /**
@@ -82,14 +89,16 @@ class Outbox {
 
     // Create a dummy job for the first compile.
     // Its progress is not visible externally but will still be logged.
-    ProgressTable dummy = new ProgressTable();
+    JobEventTable dummy = new JobEventTable();
     Job job = makeJob(defaultProps, logger);
     job.onSubmitted(dummy);
     publish(recompiler.precompile(job), job);
 
     if (options.isCompileTest()) {
+
       // Listener errors are fatal in compile tests
-      Throwable error = job.getRecompileListenerFailure();
+
+      Throwable error = job.getListenerFailure();
       if (error != null) {
         UnableToCompleteException e = new UnableToCompleteException();
         e.initCause(error);
@@ -102,7 +111,8 @@ class Outbox {
    * Creates a Job whose output will be saved in this outbox.
    */
   Job makeJob(Map<String, String> bindingProperties, TreeLogger parentLogger) {
-    return new Job(this, bindingProperties, parentLogger, options.getRecompileListener());
+    return new Job(this, bindingProperties, parentLogger,
+        options.getRecompileListener(), options.getJobChangeListener());
   }
 
   /**

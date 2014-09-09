@@ -17,7 +17,7 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.codeserver.Progress.Status;
+import com.google.gwt.dev.codeserver.JobEvent.Status;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
@@ -26,14 +26,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Contains the progress of all the jobs that have been submitted to the JobRunner.
+ * Contains the current status of each {@link Job}.
+ * (That is, the most recently reported event.)
  */
-class ProgressTable {
+class JobEventTable {
 
   /**
-   * The progress of each known job, by job id.
+   * The most recent event sent by each job.
    */
-  private final Map<String, Progress> progressById = Maps.newHashMap();
+  private final Map<String, JobEvent> eventsByJobId = Maps.newHashMap();
 
   /**
    * A set of submitted job ids that are still active, in the order they were submitted.
@@ -48,36 +49,47 @@ class ProgressTable {
   private final Set<String> compilingJobIds = new LinkedHashSet<String>();
 
   /**
+   * Returns the event that's currently published for the given job.
+   */
+  synchronized JobEvent getPublishedEvent(Job job) {
+    return eventsByJobId.get(job.getId());
+  }
+
+  /**
    * Publishes the progress of a job after it changed. (This replaces any previous progress.)
    */
-  synchronized void publish(Progress progress, TreeLogger logger) {
-    String id = progress.jobId;
+  synchronized void publish(JobEvent event, TreeLogger logger) {
+    String id = event.getJobId();
 
-    progressById.put(id, progress);
+    eventsByJobId.put(id, event);
 
     // Update indexes
 
-    if (progress.isActive()) {
+    if (isActive(event.getStatus())) {
       activeJobIds.add(id);
     } else {
       activeJobIds.remove(id);
     }
 
-    if (progress.status == Status.COMPILING) {
+    if (event.getStatus() == Status.COMPILING) {
       compilingJobIds.add(id);
       assert compilingJobIds.size() <= 1;
     } else {
       compilingJobIds.remove(id);
     }
 
-    logger.log(Type.TRACE, "job's progress set to " + progress.status + ": " + id);
+    logger.log(Type.TRACE, "job's progress set to " + event.getStatus() + ": " + id);
+  }
+
+  private static boolean isActive(Status status) {
+    return status == Status.WAITING || status == Status.COMPILING || status == Status.SERVING;
   }
 
   /**
    * Returns true if the job's status was ever published.
    */
   synchronized boolean wasSubmitted(Job job) {
-    return progressById.containsKey(job.getId());
+    return eventsByJobId.containsKey(job.getId());
   }
 
   synchronized boolean isActive(Job job) {
@@ -85,27 +97,29 @@ class ProgressTable {
   }
 
   /**
-   * Returns the progress of the job that's currently being compiled, or null if idle.
+   * Returns an event indicating the current status of the job that's currently being compiled,
+   * or null if idle.
    */
-  synchronized Progress getProgressForCompilingJob() {
+  synchronized JobEvent getCompilingJobEvent() {
     if (compilingJobIds.isEmpty()) {
       return null;
     }
 
     String id = compilingJobIds.iterator().next();
-    Progress progress = progressById.get(id);
-    assert progress != null;
-    return progress;
+    JobEvent event = eventsByJobId.get(id);
+    assert event != null;
+    return event;
   }
 
   /**
-   * Returns the progress of all active jobs, in the order submitted.
+   * Returns an event indicating the current status of each active job, in the order they were
+   * submitted.
    * TODO: hook this up.
    */
-  synchronized ImmutableList<Progress> getProgressForActiveJobs() {
-    ImmutableList.Builder<Progress> builder = ImmutableList.builder();
+  synchronized ImmutableList<JobEvent> getActiveEvents() {
+    ImmutableList.Builder<JobEvent> builder = ImmutableList.builder();
     for (String id : activeJobIds) {
-      Progress p = progressById.get(id);
+      JobEvent p = eventsByJobId.get(id);
       assert p != null;
       builder.add(p);
     }

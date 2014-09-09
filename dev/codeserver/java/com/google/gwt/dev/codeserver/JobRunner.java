@@ -29,11 +29,11 @@ import java.util.concurrent.Executors;
  * <p>JobRunners are thread-safe.
  */
 public class JobRunner {
-  private final ProgressTable table;
+  private final JobEventTable table;
   private final OutboxTable outboxes;
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-  JobRunner(ProgressTable table, OutboxTable outboxes) {
+  JobRunner(JobEventTable table, OutboxTable outboxes) {
     this.table = table;
     this.outboxes = outboxes;
   }

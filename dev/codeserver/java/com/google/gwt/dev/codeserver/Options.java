@@ -18,6 +18,7 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.ArgProcessorBase;
+import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
@@ -56,7 +57,10 @@ public class Options {
   private String bindAddress = "127.0.0.1";
   private String preferredHost = "localhost";
   private int port = 9876;
+
   private RecompileListener recompileListener = RecompileListener.NONE;
+  private JobChangeListener jobChangeListener = JobChangeListener.NONE;
+
   private TreeLogger.Type logLevel = TreeLogger.Type.INFO;
   // Use the same default as the GWT compiler.
   private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
@@ -102,13 +106,30 @@ public class Options {
   /**
    * A Java application that embeds Super Dev Mode can use this hook to find out
    * when compiles start and end.
+   *
+   * @deprecated replaced by {@link #setJobChangeListener}
    */
+  @Deprecated
   public void setRecompileListener(RecompileListener recompileListener) {
     this.recompileListener = recompileListener;
   }
 
   RecompileListener getRecompileListener() {
     return recompileListener;
+  }
+
+  /**
+   * A Java application that embeds Super Dev Mode can use this hook to find out
+   * when compile jobs change state.
+   *
+   * <p>Replaces {@link #setRecompileListener}
+   */
+  public void setJobChangeListener(JobChangeListener jobChangeListener) {
+    this.jobChangeListener = jobChangeListener;
+  }
+
+  JobChangeListener getJobChangeListener() {
+    return jobChangeListener;
   }
 
   /**
@@ -626,6 +647,10 @@ public class Options {
 
     @Override
     public boolean addExtraArg(String arg) {
+      if (!ModuleDef.isValidModuleName(arg)) {
+        System.err.println("Invalid module name: '" + arg + "'");
+        return false;
+      }
       moduleNames.add(arg);
       return true;
     }

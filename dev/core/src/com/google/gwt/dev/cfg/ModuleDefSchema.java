@@ -1192,21 +1192,30 @@ public class ModuleDefSchema extends Schema {
     @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
-      // Ensure each part of the name is valid.
-      //
-      String[] tokens = (value + ". ").split("\\.");
-      for (int i = 0; i < tokens.length - 1; i++) {
-        String token = tokens[i];
-        if (!Util.isValidJavaIdent(token)) {
-          Messages.PROPERTY_NAME_INVALID.log(logger, line, value, null);
-          throw new UnableToCompleteException();
-        }
+
+      if (!isValidPropertyName(value)) {
+        Messages.PROPERTY_NAME_INVALID.log(logger, line, value, null);
+        throw new UnableToCompleteException();
       }
 
       // It is a valid name.
       //
       return new PropertyName(value);
     }
+  }
+
+  public static boolean isValidPropertyName(String value) {
+    boolean isValid = true;
+    // Ensure each part of the name is valid.
+    //
+    String[] tokens = (value + ". ").split("\\.");
+    for (int i = 0; i < tokens.length - 1; i++) {
+      String token = tokens[i];
+      if (!Util.isValidJavaIdent(token)) {
+        isValid = false;
+      }
+    }
+    return isValid;
   }
 
   private static class PropertyValue {

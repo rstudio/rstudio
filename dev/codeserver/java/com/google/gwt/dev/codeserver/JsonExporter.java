@@ -54,19 +54,14 @@ class JsonExporter {
   /**
    * Creates the response to a /progress request.
    */
-  JsonObject exportProgressResponse(Progress progress) {
+  JsonObject exportProgressResponse(JobEvent progress) {
     // TODO: upgrade for multiple compiles and finalize API for 2.7.
     JsonObject out = new JsonObject();
-    out.put("jobId", progress.jobId);
-    out.put("status", progress.status.jsonName);
-    out.put("inputModule", progress.inputModuleName);
-    out.put("bindings", exportMap(progress.bindings));
-    if (progress instanceof Progress.Compiling) {
-      Progress.Compiling compiling = (Progress.Compiling) progress;
-      out.put("finishedSteps", compiling.finishedSteps);
-      out.put("totalSteps", compiling.totalSteps);
-      out.put("stepMessage", compiling.stepMessage);
-    }
+    out.put("jobId", progress.getJobId());
+    out.put("status", progress.getStatus().jsonName);
+    out.put("message", progress.getMessage());
+    out.put("inputModule", progress.getInputModuleName());
+    out.put("bindings", exportMap(progress.getBindings()));
     return out;
   }
 
